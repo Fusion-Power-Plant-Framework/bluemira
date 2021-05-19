@@ -65,7 +65,7 @@ TBD
   
 ## Developing
 
-For working on BLUEMIRA you will also need to install the development dependencies and the git pre-commit hook:  
+For working on BLUEMIRA you will also need to install the development dependencies and the git pre-commit hook:
 
 ```shell
 python -m pip install --no-cache-dir  -e .'[dev]'
