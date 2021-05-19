@@ -23,11 +23,19 @@ M. Bluteau<sup>1</sup>, M. Coleman,  J. Cook, S. Desai<sup>1</sup>, M. Foord<sup
 
 # Funding
 
-This work has been funded by:
+The work on BLUEMIRA is been funded by:
 
 * The RCUK Energy Programme [Grant Number EP/I501045]
 
 * The Euratom research and training programme 2019–2020+ [Grant Number 633053].
+
+Prior work on BLUEPRINT was funded by:
+
+* The RCUK Energy Programme [Grant Number EP/I501045]
+
+Prior work on MIRA was funded by:
+
+* TBD
 
 # Acknowledgements
 
@@ -48,3 +56,13 @@ We would like to thank:
 * Dr E. Surrey and C. Waldon for supporting our approach within UKAEA.
 
 * Dr G. Federici (EUROfusion), Dr G. Parks (University of Cambridge) and Dr E. Surrey (UKAEA) for their mentorship, support, wise words and guidance.
+
+* Prof. R. Stieglitz, Prof. H. Zohm and Dr. L.V. Boccaccini for their mentorship and scientific guidance.
+
+* Dr. I. Landmann and S. Petschanyi for their valuable contribution to the magnetic equilibrium and core physics modules of MIRA.
+
+* Dr. U. Fischer and Dr. Y. Qiu for their for their worthwhile aid regarding the neutron transport modelling part.
+
+* Dr. G. Pattabhi Vishnuvardhan and R. Heller for their help and advice on superconducting cable and magnets modelling.
+	
+	
