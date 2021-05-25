@@ -42,6 +42,7 @@ jobs:
 
     - name: pytest
       run: |
+        DISPLAY=
         pytest tests --cov-report=term --reactor
 
     - name: code_quality
