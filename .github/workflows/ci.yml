@@ -22,7 +22,7 @@ jobs:
         # Increase this value to reset cache if conda/environment.yml has not changed
         CACHE_NUMBER: 0
       with:
-        path: ~/conda_packages_dir
+        path: ~/conda_pkgs_dir
         key:
           ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
           hashFiles(
