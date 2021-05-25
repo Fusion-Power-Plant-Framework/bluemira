@@ -91,7 +91,7 @@ ignore_names =
     *4D*,
     *5D*,
     make_BP_path,
-    *get_BP_path,
+    *get_BP_path*,
     get_BP_root,
     BB,
     *VV*,

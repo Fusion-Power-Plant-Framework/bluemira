@@ -118,26 +118,21 @@ class SingleNullReactor(Reactor):
 if __name__ == "__main__":
     plt.close("all")
 
-    LOAD = True
+    LOAD = False
 
-    filename = "/home/dshort/code/BLUEPRINT/EUDEMO.pkl"
     if LOAD:
-        """
         filename = (
             make_BP_path(f"reactors/{REACTORNAME}", subfolder="data")
             + "/"
             + REACTORNAME
             + ".pkl"
         )
-        """
         R = SingleNullReactor.load(filename, generated_data_root="generated_data")
         R.TF.cross_section()
     else:
         R = SingleNullReactor(config, build_config, build_tweaks)
         R.build()
-        R.save(filename)
         # R.run_systems_code()
     plot_defaults()
     plt.ion()
     R.TF.show_CAD()
-

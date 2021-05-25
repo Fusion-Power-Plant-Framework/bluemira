@@ -31,9 +31,7 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     from neutronics_material_maker.utils import make_serpent_material
 
-from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.utilities.tools import is_num, kgm3togcm3, tokelvin
-from BLUEPRINT.materials import MaterialCache
 
 import tests
 from tests.materials.setup_methods import TEST_MATERIALS_CACHE
@@ -103,9 +101,7 @@ class TestMaterials:
         s = make_serpent_material(beryllium)
         s = s.splitlines()[0]
         # Check serpent header updated with correct density
-        assert float(s.split(" ")[2]) == pytest.approx(
-            kgm3togcm3(beryllium.density)
-        )
+        assert float(s.split(" ")[2]) == pytest.approx(kgm3togcm3(beryllium.density))
 
     def test_t_tmp(self):
         """

@@ -59,8 +59,8 @@ jobs:
 
     - name: code_quality
       run: |
-        flake8 --count
-        black --check .
+        flake8 --count BLUEPRINT examples tests
+        black --check BLUEPRINT examples tests
 
     - name: docs
       run: |

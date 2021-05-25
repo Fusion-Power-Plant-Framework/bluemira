@@ -21,7 +21,6 @@
 """
 CAD display utilities
 """
-from typing import Type
 import numpy as np
 from OCC.Display.SimpleGui import init_display
 from BLUEPRINT.base.lookandfeel import bpwarn
