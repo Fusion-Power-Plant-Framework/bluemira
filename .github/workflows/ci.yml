@@ -13,7 +13,7 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    - name: checkout
+    - name: Checkout
       uses: actions/checkout@v2
 
     - name: Cache pip
@@ -44,7 +44,7 @@ jobs:
             'setup.py'
           ) }}
 
-    - name: install_env
+    - name: Install Environment
       uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: bluemira
@@ -52,16 +52,16 @@ jobs:
         miniforge-version: "latest"
         use-only-tar-bz2: true
 
-    - name: pytest
+    - name: Run pytest
       run: |
         unset DISPLAY
         pytest tests --cov-report=term --reactor
 
-    - name: code_quality
+    - name: Check Code Quality
       run: |
         flake8 --count BLUEPRINT examples tests
         black --check BLUEPRINT examples tests
 
-    - name: docs
+    - name: Build Documentation
       run: |
         sphinx-build documentation/source documentation/build
