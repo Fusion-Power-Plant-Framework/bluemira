@@ -1,0 +1,15 @@
+{
+    "Toroidal_Field_Coil_2015": {
+        "material_class": "HomogenisedMixture",
+        "materials": {
+            "Nb3Sn - WST": 0.02895,
+            "Pure Cu": 0.1169,
+            "Epoxy resin": 0.18,
+            "Bronze": 0.0735,
+            "He": 0.1682,
+            "SS316-LN": 0.4319,
+            "Void": 0.00055
+        },
+        "temperature_in_K": 293.15
+    }
+}

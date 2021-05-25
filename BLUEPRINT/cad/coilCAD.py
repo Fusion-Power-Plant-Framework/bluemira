@@ -1,0 +1,851 @@
+# BLUEPRINT is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2019-2020  M. Coleman, S. McIntosh
+#
+# BLUEPRINT is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# BLUEPRINT is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with BLUEPRINT.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+Coil CAD routines
+"""
+import numpy as np
+from collections import OrderedDict
+
+try:
+    from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
+    from OCC.Core.gp import gp_Pnt, gp_Ax1, gp_Dir, gp_Ax2, gp_Vec, gp_Circ
+    from OCC.Core.GC import GC_MakeArcOfCircle
+    from OCC.Core.BRepFill import BRepFill_PipeShell
+    from OCC.Core.TopoDS import topods
+except ImportError:
+    from OCC.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
+    from OCC.gp import gp_Pnt, gp_Ax1, gp_Dir, gp_Ax2, gp_Vec, gp_Circ
+    from OCC.GC import GC_MakeArcOfCircle
+    from OCC.BRepFill import BRepFill_PipeShell
+    from OCC.TopoDS import topods
+from BLUEPRINT.base.palettes import BLUE
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.cad.component import ComponentCAD
+from BLUEPRINT.cad.cadtools import (
+    boolean_cut,
+    boolean_fuse,
+    revolve,
+    extrude,
+    make_box,
+    sweep,
+    rotate_shape,
+    make_axis,
+    make_face,
+    make_mixed_shell,
+    make_mixed_face,
+    translate_shape,
+    make_compound,
+    sew_shapes,
+    make_circle,
+    mirror_shape,
+    make_wire,
+    _make_OCCedge,
+    _make_OCCwire,
+    _make_OCCface,
+    _make_OCCsolid,
+)
+from BLUEPRINT.geometry.boolean import boolean_2d_difference
+
+
+class RingCAD:
+    """
+    CAD building object for circular components.
+    """
+
+    def _build_ring(self, ctype, angle=None):
+        pf = self.args[0]
+
+        if angle is None:
+            angle = 360 / pf.params.n_TF
+
+        for name, coil in pf.coils.items():
+            if coil.ctype == ctype:
+                pf_loop = Loop(x=coil.x_corner, z=coil.z_corner)
+                pf_loop.close()
+                pf_face = make_face(pf_loop)
+                ax = make_axis((0, 0, 0), (0, 0, 1))
+                shape = revolve(pf_face, ax, angle)
+                shape = rotate_shape(shape, ax, -angle / 2)
+                self.add_shape(shape, name=name)
+
+
+class PFSystemCAD(ComponentCAD):
+    """
+    CAD building class for the entire PoloidalFieldSystem.
+    """
+
+    def __init__(self, pf_system, **kwargs):
+        self.pf_system = pf_system
+        self.name = "Poloidal field system"
+        self.component = {
+            "shapes": [],
+            "names": [],
+            "sub_names": [],
+            "colors": [],
+            "transparencies": [],
+        }
+        self.n_shape = 0  # number of shapes within component
+        self.slice_flag = kwargs.get("slice_flag", False)
+        if kwargs.get("neutronics", False):
+            self.build_neutronics()
+        else:
+            self.build(from_compound=kwargs.get("from_compound", False))
+
+    @staticmethod
+    def _merge_components(pf_cad, cs_cad):
+        component = pf_cad.component.copy()
+
+        for key in component:
+            component[key].extend(cs_cad.component[key])
+        return component
+
+    def build(self, **kwargs):
+        """
+        Build the CAD for all of the PF and CS coils.
+        """
+        pf_cad = PFCoilCAD(self.pf_system, **kwargs)
+        cs_cad = CSCoilCAD(self.pf_system, **kwargs)
+        self.component = self._merge_components(pf_cad, cs_cad)
+
+    def build_neutronics(self, **kwargs):
+        """
+        Build the neutronics CAD for all of the PF and CS coils.
+        """
+        pf_cad = PFCoilCAD(self.pf_system, neutronics=True, **kwargs)
+        cs_cad = CSCoilCAD(self.pf_system, neutronics=True, **kwargs)
+        self.component = self._merge_components(pf_cad, cs_cad)
+
+
+class PFCoilCAD(RingCAD, ComponentCAD):
+    """
+    CAD building class for the PF coils.
+    """
+
+    def __init__(self, pf, **kwargs):
+        super().__init__(
+            "Poloidal field coils", pf, palette=[BLUE["PF"][0]], n_colors=6, **kwargs
+        )
+
+    def build(self, **kwargs):
+        """
+        Build the CAD for the PF coils.
+        """
+        self._build_ring("PF")
+
+    def build_neutronics(self, **kwargs):
+        """
+        Build the neutronics CAD for the PF coils.
+        """
+        self._build_ring("PF", angle=360)
+
+
+class CSCoilCAD(RingCAD, ComponentCAD):
+    """
+    CAD building class for the central solenoid.
+    """
+
+    def __init__(self, pf, **kwargs):
+        super().__init__(
+            "Central solenoid", pf, palette=[BLUE["CS"][0]], n_colors=6, **kwargs
+        )
+
+    def build(self, **kwargs):
+        """
+        Build the CAD for the solenoid.
+        """
+        self._build_ring("CS")
+
+    def build_neutronics(self, **kwargs):
+        """
+        Build the neutronics CAD for the solenoid.
+        """
+        self._build_ring("CS", angle=360)
+
+
+class TFCoilCAD(ComponentCAD):
+    """
+    Toroidal field coil CAD constructor class
+    """
+
+    def __init__(self, tf, **kwargs):
+        super().__init__(
+            "Toroidal field coils", tf, palette=BLUE["TF"], n_colors=12, **kwargs
+        )
+        self.n_TF = None
+
+    def build(self, **kwargs):
+        """
+        Build the CAD for the TF coils.
+        """
+        tf = self.args[0]
+        self.n_TF = tf.params.n_TF
+
+        tf_components = self._build(tf)
+
+        for name in tf_components:
+
+            tf_components[name] = rotate_shape(
+                tf_components[name], axis=None, angle=180 / self.n_TF
+            )
+            self.add_shape(tf_components[name], name=name)
+
+    @staticmethod
+    def _build(tf):
+        """
+        Strong and stable... and slow?. Suspect will help with neutronics
+        Yes, slower by 0.4 seconds (without the second lbox boolean)
+        But it works for everything... and a few 100 lines shorter
+        """
+        geom = tf.geom
+
+        depth = tf.section["winding_pack"]["depth"]
+        side = tf.section["case"]["side"]
+
+        if tf.inputs["shape_type"] != "TP":
+            # Winding Pack
+            wp = geom["TF WP"]
+            wp = wp.translate([0, -depth / 2, 0], update=False)
+            wp = make_mixed_shell(wp)
+            wp = extrude(wp, axis="y", length=depth)
+            # Case
+            case = Shell(geom["TF case in"].inner, geom["TF case out"].outer)
+            case = case.translate([0, -(depth + side) / 2, 0], update=False)
+            case = make_mixed_shell(case)
+
+            case = extrude(case, axis="y", length=depth + side)
+            case = boolean_cut(case, wp)
+            rbox = cut_box(side="right", n_TF=tf.params.n_TF)
+            lbox = cut_box(side="left", n_TF=tf.params.n_TF)
+            case = boolean_cut(case, rbox)
+            case = boolean_cut(case, lbox)
+
+        else:
+            # Make B Cyl
+            ri = np.min(tf.loops["b_cyl"]["x"])
+            ro = np.max(tf.loops["b_cyl"]["x"])
+            ci = make_circle([0, 0, 0], [0, 0, 1], ri)
+            co = make_circle([0, 0, 0], [0, 0, 1], ro)
+            b_cyl_face = boolean_cut(co, ci)
+            b_cyl = extrude(b_cyl_face, axis="z", length=np.max(tf.loops["b_cyl"]["z"]))
+            b_cyl_neg = extrude(
+                b_cyl_face, axis="z", length=-np.max(tf.loops["b_cyl"]["z"])
+            )
+            b_cyl = boolean_fuse(b_cyl, b_cyl_neg)
+
+            # Edit WP
+            tfcoil = geom["TF WP"]
+            coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
+            tfcoil = tfcoil.rotate(
+                theta=-coil_toroidal_angle / 2, p1=[0, 0, 0], p2=[0, 0, 1], update=False
+            )
+
+            # Central collumn
+            # ---
+            # Loop to cut the outer section of the TF coil to select the centrepost
+            x_outer_cut_loop = [
+                tf.params["r_cp_top"],
+                np.max(tf.loops["wp_out"]["x"]) + 2,
+                np.max(tf.loops["wp_out"]["x"]) + 2,
+                tf.params["r_cp_top"],
+            ]
+            z_outer_cut_loop = [
+                np.max(tf.loops["b_cyl"]["z"]),
+                np.max(tf.loops["b_cyl"]["z"]),
+                -np.max(tf.loops["b_cyl"]["z"]),
+                -np.max(tf.loops["b_cyl"]["z"]),
+            ]
+            outer_cut_loop = Loop(x=x_outer_cut_loop, z=z_outer_cut_loop)
+            outer_cut_loop.close()
+
+            # Cutting the TF shell to get the CP loop
+            tapered_cp = boolean_2d_difference(tfcoil, outer_cut_loop)
+            tapered_cp = tapered_cp[0]
+
+            # CP CAD building
+            tapered_cp = make_face(tapered_cp)
+            tapered_cp_pos_rotation = revolve(
+                tapered_cp, axis=None, angle=np.rad2deg(coil_toroidal_angle / 2)
+            )
+            tapered_cp_neg_rotation = revolve(
+                tapered_cp, axis=None, angle=-np.rad2deg(coil_toroidal_angle / 2)
+            )
+            tapered_cp = boolean_fuse(tapered_cp_pos_rotation, tapered_cp_neg_rotation)
+            # ---
+
+            # Outter leg
+            # ---
+            # Loop to cut the centrepost of the TF coil to select the outer legs
+            x_inner_cut_loop = [
+                tf.params["r_cp_top"],
+                0.0,
+                0.0,
+                tf.params["r_cp_top"],
+            ]
+            z_inner_cut_loop = [
+                np.max(tf.loops["wp_in"]["z"]),
+                np.max(tf.loops["wp_in"]["z"]),
+                -(np.max(tf.loops["wp_in"]["z"])),
+                -(np.max(tf.loops["wp_in"]["z"])),
+            ]
+            inner_cut_loop = Loop(x=x_inner_cut_loop, z=z_inner_cut_loop)
+            inner_cut_loop.close()
+
+            # Cutting the TF shell to get the outboard TF coil legs
+            tf_leg_loop = boolean_2d_difference(tfcoil, inner_cut_loop)
+            tf_leg_loop = tf_leg_loop[0]
+
+            # Make the outboard leg CAD
+            tf_leg_cad = make_mixed_face(tf_leg_loop)
+            tf_leg_cad_neg_y = extrude(tf_leg_cad, axis="y", length=-depth / 2)
+            tf_leg_cad_pos_y = extrude(tf_leg_cad, axis="y", length=depth / 2)
+            tf_leg_cad = boolean_fuse(tf_leg_cad_pos_y, tf_leg_cad_neg_y)
+            # ---
+
+            # Merging the centrepost and the leg CAD
+            # ---
+            tfcoil = boolean_cut(tf_leg_cad, tapered_cp)
+            tfcoil = boolean_fuse(tf_leg_cad, tapered_cp)
+            rbox = cut_box(side="right", n_TF=tf.params.n_TF)
+            lbox = cut_box(side="left", n_TF=tf.params.n_TF)
+            tfcoil = boolean_cut(tfcoil, rbox)
+            tfcoil = boolean_cut(tfcoil, lbox)
+            # ---
+
+        comp_dict = OrderedDict()
+        if tf.inputs["shape_type"] != "TP":
+            comp_dict["case"] = case
+            comp_dict["wp"] = wp
+        else:
+            comp_dict["b_cyl"] = b_cyl
+            comp_dict["wp"] = tfcoil
+
+        return comp_dict
+
+    # Storage.. old stuff from the Architect days (needed for neutronics)
+    def build_neutronics(self, **kwargs):
+        """
+        Build the neutronics CAD for the TF coils.
+        """
+        self.build(**kwargs)
+        self.component_pattern(self.n_TF)
+        component = {
+            "shapes": [],
+            "names": [],
+            "sub_names": [],
+            "colors": [],
+            "transparencies": [],
+        }  # Phoenix design pattern
+        for i, name in enumerate(self.component["names"]):
+            if name in ["Toroidal field coils_wp", "Toroidal field coils_case"]:
+                for k, v in self.component.items():
+                    component[k].append(v[i])
+        # tfc = self.component['shapes'][0]
+        # tfwp = self.component['shapes'][1]
+        # tfc = boolean_cut(tfc, tfwp)
+        # self.component['shapes'][0] = tfc
+        self.component = component
+
+    def for_neutronics(self):
+        """
+        An old decomposition for neutronics.
+        """
+        tfc = self.component["shapes"][0]
+        tfwp = self.component["shapes"][1]
+        self.component = {
+            "shapes": [],
+            "names": [],
+            "sub_names": [],
+            "colors": [],
+        }  # Phoenix design pattern
+        # Yes you made that name up
+        tfc = boolean_cut(tfc, tfwp)
+        self.add_shape(tfc, name="TF_case")
+        self.add_shape(tfwp, name="TF_wp")
+        return self.split(["TF_case", "TF_WP"], [["TF_case"], ["TF_wp"]])
+
+    def _get_OIS_collision(self):  # noqa (N802)
+        """
+        Gets x value of OIS collision.
+        """
+        ois = self.args[0].loop["OIS"]
+        m = []
+        for k, v in ois.items():
+            m.append(min(np.array(v["nodes"]).T[0]))
+        return min(m)
+
+
+class CoilStructureCAD(ComponentCAD):
+    """
+    Component CAD class for coil structures
+
+    Parameters
+    ----------
+    atec: Nova::CoilArchitect
+    """
+
+    def __init__(self, atec, **kwargs):
+        super().__init__(
+            "Coil structures", atec, palette=BLUE["ATEC"], n_colors=0, **kwargs
+        )
+        self.geom = None
+        self.n_TF = None
+
+    def build(self, **kwargs):
+        """
+        Builds the CAD for the coil structures
+
+        All items are built on the X-Z plane for simplicity, before being
+        rotated onto the correct planes
+        """
+        atec = self.args[0]
+        self.geom = atec.geom
+        self.n_TF = atec.params.n_TF
+
+        cad = {"CSseat": build_CS_seat(self.geom["feed 3D CAD"]["CS"])}
+
+        for k, v in self.geom["feed 3D CAD"]["PF"].items():
+            cad[k] = self._build_PF_seat(v)
+
+        for k, v in self.geom["feed 3D CAD"]["OIS"].items():
+            cad[k] = self._build_OIS(v)
+
+        if self.geom["feed 3D CAD"]["Gsupport"]["gs_type"] == "JT60SA":
+            cad["Gsupport"] = build_GS_JT60SA(self.geom["feed 3D CAD"]["Gsupport"])
+        elif self.geom["feed 3D CAD"]["Gsupport"]["gs_type"] == "ITER":
+            cad["Gsupport"] = build_GS_ITER(self.geom["feed 3D CAD"]["Gsupport"])
+
+        for name in cad:
+            cad[name] = rotate_shape(cad[name], axis=None, angle=180 / self.n_TF)
+            self.add_shape(cad[name], name=name)
+
+    def _build_OIS(self, support):  # noqa (N802)
+        """
+        Builds an individual outer inter-coil support
+
+        Parameters
+        ----------
+        support: dict
+            The OIS support dict
+
+        Returns
+        -------
+        ois: OCC Compound
+            The BRep of the OIS supports (on both sides of the TF)
+        """
+        theta = np.pi / self.n_TF
+        yo = self.geom["feed 3D CAD"]["other"]["PF"]["space"]
+        loop = support["loop"]
+        loop.translate([0, yo, 0], update=True)  # Snap to TF coil case edge
+
+        length = 10
+        dx = -np.sin(theta) * length
+        dy = np.cos(theta) * length
+
+        x = [loop.centroid[0], loop.centroid[0] + dx]
+        y = [yo, yo + dy]
+        z = [loop.centroid[1], loop.centroid[1]]
+        path = Loop(x=x, y=y, z=z)
+        face = make_face(loop)
+        path = make_wire(path)
+
+        left_ois = sweep(face, path)
+        cut = cut_box()
+        left_ois = boolean_cut(left_ois, cut)
+
+        axis = gp_Ax2(gp_Pnt(loop.x[0], 0, loop.z[0]), gp_Dir(0, 1, 0), gp_Dir(0, 0, 1))
+        right_ois = mirror_shape(
+            left_ois,
+            axis,
+        )
+
+        return make_compound([left_ois, right_ois])
+
+    def _build_PF_seat(self, seat):  # noqa (N802)
+        """
+        Builds an individual PF seat
+
+        Parameters
+        ----------
+        seat: dict
+            The PF support dict
+
+        Returns
+        -------
+        pf_seat: OCC Compound
+            The BRep object of the PF seat
+        """
+        tk = self.geom["feed 3D CAD"]["other"]["PF"]["tk"]
+        space = self.geom["feed 3D CAD"]["other"]["PF"]["space"]
+        n = self.geom["feed 3D CAD"]["other"]["PF"]["n"]
+
+        # Rib base loop
+        loop = seat["loop"]
+        # Offset by half-thickness
+        loop = loop.translate([0, -tk / 2, 0], update=False)
+
+        loops = [loop]
+        if n > 1:
+            # Linear pattern support ribs
+            l_loop = loop.translate([0, -space + tk / 2, 0], update=False)
+            loops.append(l_loop)
+            shift = (2 * space - tk) / (n - 1)
+
+            for i in range(1, n):
+                n_loop = l_loop.translate([0, i * shift, 0], update=False)
+                loops.append(n_loop)
+
+        pf_seat = []
+        for rib_loop in loops:
+            face = make_face(rib_loop)
+            body = extrude(face, vec=[0, tk, 0])
+            pf_seat.append(body)
+
+        plate, dt = self._make_PF_plate(seat, space, tk)
+
+        face = make_face(plate)
+
+        plate = extrude(face, vec=(0, 0, dt))
+
+        pf_seat.append(plate)
+        pf_seat = make_compound(pf_seat)
+        return pf_seat
+
+    @staticmethod
+    def _make_PF_plate(seat, width, thickness):  # noqa (N802)
+        """
+        Makes a flat plate for a PF coil to sit on.
+        NOTE: Butt ugly generalisation
+
+        Parameters
+        ----------
+        seat: dict
+            The PF support dict
+        width: float
+            The width of the plate
+        thickness: float
+            The thickness of the plate
+
+        Returns
+        -------
+        plate: Geometry::Loop
+            The loop of the plate
+        tk: float
+            The thickness (directional) of the plate
+        """
+        loop = seat["loop"]
+        if (seat["p"]["z"][0] - seat["p"]["z"][1]) < 0:
+            dt = -thickness
+            down = True
+        else:
+            dt = thickness
+            down = False
+
+        if down:
+            z_ref = np.min(loop.z)
+            mask = np.where(np.isclose(loop.z, z_ref, rtol=1e-3))
+            x_vals = loop.x[mask]
+            x_min = np.min(x_vals)
+            x_max = np.max(x_vals)
+
+        else:
+            z_ref = np.max(loop.z)
+            mask = np.where(np.isclose(loop.z, z_ref, rtol=1e-3))
+            x_vals = loop.x[mask]
+            x_min = np.min(x_vals)
+            x_max = np.max(x_vals)
+
+        plate = Loop(
+            x=[x_min, x_max, x_max, x_min, x_min],
+            y=[-width, -width, width, width, -width],
+            z=z_ref,
+        )
+        return plate, dt
+
+
+def cut_box(side="right", size=30, n_TF=16):
+    """
+    Builds an oriented box for cutting TF coil components
+
+    Parameters
+    ----------
+    side: str from ['right', 'left']
+        The side on which to make the cutbox
+    size: float
+        The size of the cube (in all directions) [m]
+    n_TF: int
+        The number of TF coils (sets the angle)
+
+    Returns
+    -------
+    box: OCC BRep
+        The oriented cut box
+    """
+    angle = np.pi / n_TF
+    if side == "right":
+        v1 = (size * np.cos(angle), size * np.sin(angle), 0)
+        v2 = (-size * np.tan(angle), size * np.cos(angle), 0)
+    elif side == "left":
+        v1 = (size * np.cos(angle), -size * np.sin(angle), 0)
+        v2 = (-size * np.sin(angle), -size * np.cos(angle), 0)
+    else:
+        raise ValueError(f"O que caralho e essa merda?! {side}")
+
+    return make_box((0, 0, -size / 2), v1, v2, (0, 0, size))
+
+
+def build_CS_seat(cs_support):  # noqa (N802)
+    """
+    Builds a single central solenoid support seat
+
+    Parameters
+    ----------
+    cs_support: dict
+        The CS seat support dict
+
+    Returns
+    -------
+    body: OCC BRep
+        The BRep of the CS support
+
+    """
+    ynose = cs_support["ynose"]
+    yfactor = 0.8
+
+    loop = cs_support["loop"].copy()
+    loop = loop.translate([0, -yfactor * ynose / 2, 0], update=False)
+
+    face = make_face(loop)
+    body = extrude(face, vec=[0, yfactor * ynose, 0])
+    return body
+
+
+def build_GS_JT60SA(g_support):
+    """
+    Builds a single gravity support (a la JST60-SA)
+
+    Parameters
+    ----------
+    g_support: dict
+        The gravity support dictionary
+
+    Returns
+    -------
+    g_support: OCC Compond
+        The BRep object for the gravity support
+    """
+    # Extract dimensions
+    gs_base_list = []
+    node = g_support["base"]
+    width = g_support["width"]
+    depth = g_support["tf_wp_depth"]
+    side = g_support["tk_tf_side"]
+    pin2pin = g_support["pin2pin"]
+    g_alpha = g_support["alpha"]
+    spread = g_support["spread"]
+    zbase = g_support["zground"]
+    rtube, ttube = g_support["rtube"], g_support["ttube"]
+    x_gs = np.mean([node[0][0], node[1][0]])
+    z_gs = node[1][1]
+
+    # Make GS base
+    loop = g_support["loop"].copy()
+    loop.translate([0, -depth / 2 - side, 0])
+
+    face = make_face(loop)
+    body = extrude(face, vec=[0, depth + 2 * side, 0])
+    gs_base_list.append(body)
+
+    gs_axis1 = make_axis((x_gs, 0, z_gs - width / 2), (1, 0, 0))
+    pin = make_circle((x_gs, 0, z_gs - width / 2), (1, 0, 0), width / 4)
+
+    pin = extrude(pin, vec=(width, 0, 0))
+    pin = translate_shape(pin, [-width / 2, 0, 0])
+    arc = GC_MakeArcOfCircle(
+        gp_Pnt(x_gs, -width / 2, z_gs - width / 2),
+        gp_Pnt(x_gs, 0, z_gs - width),
+        gp_Pnt(x_gs, width / 2, z_gs - width / 2),
+    )
+    arc = _make_OCCedge(arc.Value())
+
+    base = BRepBuilderAPI_MakePolygon()
+    base.Add(gp_Pnt(x_gs, -width / 2, z_gs - width / 2))
+    base.Add(gp_Pnt(x_gs, -width / 2, z_gs))
+    base.Add(gp_Pnt(x_gs, width / 2, z_gs))
+    base.Add(gp_Pnt(x_gs, width / 2, z_gs - width / 2))
+
+    gs_loop = _make_OCCwire([arc, base.Wire()])
+    gs_face = _make_OCCface(gs_loop)
+    gs_body = extrude(gs_face, vec=(width / 3, 0, 0))
+    gs_body = topods.Solid(gs_body)
+    gs_tag = translate_shape(gs_body, [-width / 6, 0, 0])
+    gs_base = translate_shape(gs_tag, [-width / 2 + width / 6, 0, 0])
+    gs_base = boolean_fuse(
+        gs_base, translate_shape(gs_tag, [width / 2 - width / 6, 0, 0])
+    )
+    gs_base = boolean_fuse(gs_base, pin)
+    gs_base_list.append(gs_base)
+    gs_base_final = make_compound(gs_base_list)
+    gs_base = rotate_shape(gs_base, gs_axis1, 180)
+    gs_base = translate_shape(gs_base, [0, 0, -pin2pin])
+    gb_axis2 = make_axis((x_gs, 0, z_gs - width / 2 - pin2pin), (0, 0, 1))
+    gs_base = rotate_shape(gs_base, gb_axis2, 90)
+
+    x_1, x_2 = x_gs + width, x_gs - width
+    z_1, z_2 = z_gs - width - pin2pin, z_gs - 3 * width - pin2pin
+    loop = Loop(x=[x_1, x_1, x_2, x_2, x_1], z=[z_1, z_2, z_2, z_1, z_1])
+    gs_face = make_face(loop)
+
+    gs_block = extrude(gs_face, vec=gp_Vec(0, width, 0))
+    gs_block = translate_shape(gs_block, [0, -width / 2, 0])
+    gs_block = topods.Solid(gs_block)
+    gs_base = make_compound([gs_block, gs_base])
+
+    loop = Loop(
+        x=x_gs,
+        y=[spread, spread, -spread, -spread, spread],
+        z=[zbase, zbase - 1.5 * width, zbase - 1.5 * width, zbase, zbase],
+    )
+    gs_face2 = make_face(loop)
+
+    gs_trim = extrude(gs_face2, vec=(2 * width, 0, 0))
+    gs_trim = translate_shape(gs_trim, [-width, 0, 0])
+    gs_base_left = rotate_shape(gs_base, gs_axis1, -g_alpha * 180 / np.pi)
+    gs_base_right = rotate_shape(gs_base_left, gs_axis1, 2 * g_alpha * 180 / np.pi)
+    gs_base_left = boolean_cut(gs_base_left, gs_trim)
+    gs_base_right = boolean_cut(gs_base_right, gs_trim)
+
+    # GS legs
+    gs_tag = rotate_shape(gs_tag, gs_axis1, 180)
+    r2c = 1.5 * width
+
+    # This is messy but it is the only thing that works
+    rect = BRepBuilderAPI_MakePolygon()
+    rect.Add(gp_Pnt(x_gs - width / 6, -width / 2, z_gs - width))
+    rect.Add(gp_Pnt(x_gs - width / 6, width / 2, z_gs - width))
+    rect.Add(gp_Pnt(x_gs + width / 6, width / 2, z_gs - width))
+    rect.Add(gp_Pnt(x_gs + width / 6, -width / 2, z_gs - width))
+    rect.Close()
+    rect_wire = rect.Wire()
+    rect_face = _make_OCCface(rect_wire)
+
+    rpath = _make_OCCedge(gp_Pnt(x_gs, 0, z_gs - width), gp_Pnt(x_gs, 0, z_gs - r2c))
+    rpath = _make_OCCwire(rpath)
+    circ = gp_Circ()
+    circ.SetRadius(rtube)
+    circ.SetAxis(gp_Ax1(gp_Pnt(x_gs, 0, z_gs - r2c), gp_Dir(0, 0, 1)))
+    circ = _make_OCCedge(circ)
+    circ = _make_OCCwire(circ)
+    circ_face = make_circle((x_gs, 0, z_gs - r2c), (0, 0, 1), rtube)
+    circ_cut = gp_Circ()
+    circ_cut.SetRadius(rtube - ttube)
+    circ_cut.SetAxis(gp_Ax1(gp_Pnt(x_gs, 0, z_gs - r2c), gp_Dir(0, 0, 1)))
+    circ_cut = _make_OCCedge(circ_cut)
+    circ_cut = _make_OCCwire(circ_cut)
+    circ_face_cut = _make_OCCface(circ_cut)
+    pipe = BRepFill_PipeShell(rpath)
+    pipe.Add(rect_wire)
+    pipe.Add(circ)
+    pipe.Build()
+    quilt = sew_shapes(pipe.Shape(), rect_face, circ_face)
+
+    gs_transition = _make_OCCsolid(quilt)
+    gs_transition = boolean_fuse(gs_transition, gs_tag)
+    gs_t_upper = boolean_cut(gs_transition, pin)  # make upper hole
+
+    tube_body = extrude(circ_face, vec=(0, 0, -(pin2pin + width - 2 * r2c)))
+    tube_body = topods.Solid(tube_body)
+    tube_body_cut = extrude(circ_face_cut, vec=(0, 0, -(pin2pin + width - 2 * r2c)))
+    tube_body_cut = topods.Solid(tube_body_cut)
+    tube_body = boolean_cut(tube_body, tube_body_cut)
+    gs_t_lower = rotate_shape(gs_t_upper, gs_axis1, 180)
+    gs_t_lower = translate_shape(gs_t_lower, [0, 0, -pin2pin])
+    gs_t_lower = rotate_shape(gs_t_lower, make_axis((x_gs, 0, z_gs), (0, 0, 1)), 90)
+    leg = boolean_fuse(gs_t_upper, tube_body)
+    leg = boolean_fuse(leg, gs_t_lower)
+    leftleg = rotate_shape(leg, gs_axis1, -g_alpha * 180 / np.pi)
+    rightleg = rotate_shape(leg, gs_axis1, g_alpha * 180 / np.pi)
+    gs_strut = boolean_fuse(leftleg, rightleg)
+    return make_compound([gs_base_final, gs_base_left, gs_base_right, gs_strut])
+
+
+def build_GS_ITER(g_support):
+    """
+    Builds a single gravity support (a la ITER)
+
+    Parameters
+    ----------
+    g_support: dict
+        The gravity support dictionary
+
+    Returns
+    -------
+    g_support: OCC Compond
+        The BRep object for the gravity support
+    """
+    depth = g_support["tf_wp_depth"]
+    side = g_support["tk_tf_side"]
+    p_width = g_support["plate_width"]
+    width = g_support["width"]
+
+    compound_list = []
+    # Make GS base
+    loop = g_support["loop"].copy()
+    loop.translate([0, -depth / 2 - side, 0])
+
+    face = make_face(loop)
+    body = extrude(face, vec=[0, depth + 2 * side, 0])
+    compound_list.append(body)
+
+    # Make GS plates
+    n_plates = width / (2 * p_width)
+    delta = (n_plates - int(n_plates)) * 2 * p_width
+    x_left = g_support["Xo"] - width / 2 + delta
+    loop = Loop(
+        x=[-p_width / 2, p_width / 2, p_width / 2, -p_width / 2, -p_width / 2],
+        y=[-width / 2, -width / 2, width / 2, width / 2, -width / 2],
+        z=g_support["zfloor"],
+    )
+    loop.translate([x_left, 0, 0])
+    for i in range(int(n_plates)):
+        p_loop = loop.translate([i * 2 * p_width, 0, 0], update=False)
+        face = make_face(p_loop)
+        plate = extrude(face, vec=[0, 0, g_support["zbase"] - g_support["zfloor"]])
+        compound_list.append(plate)
+
+    # Make GS floor
+    loop = Loop(
+        x=[-width / 2, width / 2, width / 2, -width / 2, -width / 2],
+        y=[-width / 2, -width / 2, width / 2, width / 2, -width / 2],
+        z=g_support["zfloor"],
+    )
+    loop.translate([g_support["Xo"], 0, 0])
+    face = make_face(loop)
+    floor = extrude(face, vec=[0, 0, -3 * p_width])
+    compound_list.append(floor)
+    return make_compound(compound_list)
+
+
+if __name__ == "__main__":
+    pass
+    # from BLUEPRINT import test
+    #
+    # test()
