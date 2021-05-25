@@ -20,7 +20,7 @@ jobs:
       uses: actions/cache@v2
       env:
         # Increase this value to reset cache if requirements.txt has not changed
-        PIP_CACHE_NUMBER: 0
+        PIP_CACHE_NUMBER: 1
       with:
         path: ~/.cache/pip
         key: 
@@ -32,7 +32,7 @@ jobs:
       uses: actions/cache@v2
       env:
         # Increase this value to reset cache if conda/environment.yml has not changed
-        CONDA_CACHE_NUMBER: 0
+        CONDA_CACHE_NUMBER: 1
       with:
         path: ~/conda_pkgs_dir
         key:
