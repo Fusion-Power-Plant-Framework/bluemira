@@ -1,0 +1,36 @@
+name: blueprint_ci
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - 8-github-actions
+
+jobs:
+  build-and-test:
+
+    runs-on: self-hosted
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: install_env
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        environment-file: conda/environment.yml
+        miniforge-version: 3-4.10
+
+    - name: pytest
+      run: |
+        pytest tests --cov-report=term --reactor
+
+    - name: code_quality
+      run: |
+        flake8 --count
+        black --check .
+
+    - name: docs
+      run: |
+        sphinx-build documentation/source documentation/build
