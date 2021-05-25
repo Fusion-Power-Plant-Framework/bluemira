@@ -1,4 +1,4 @@
-name: blueprint
+name: bluemira
 
 channels:
   - conda-forge

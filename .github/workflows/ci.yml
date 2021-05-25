@@ -16,11 +16,29 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
 
+    - name: Cache conda
+      uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if conda/environment.yml has not changed
+        CACHE_NUMBER: 0
+      with:
+        path: ~/conda_packages_dir
+        key:
+          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+          hashFiles(
+            'conda/environment.yml',
+            'requirements.txt',
+            'requirements-develop.txt',
+            'setup.py'
+          ) }}
+
     - name: install_env
       uses: conda-incubator/setup-miniconda@v2
       with:
+        activate-environment: bluemira
         environment-file: conda/environment.yml
         miniforge-version: 3-4.10
+        use-only-tar-bz2: true
 
     - name: pytest
       run: |
