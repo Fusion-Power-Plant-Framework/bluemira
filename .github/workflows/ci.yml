@@ -16,15 +16,27 @@ jobs:
     - name: checkout
       uses: actions/checkout@v2
 
+    - name: Cache pip
+      uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if requirements.txt has not changed
+        PIP_CACHE_NUMBER: 0
+      with:
+        path: ~/.cache/pip
+        key: 
+          ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
+          hashFiles('requirements.txt', 'requirements-develop.txt', 'setup.py') }}
+
+
     - name: Cache conda
       uses: actions/cache@v2
       env:
         # Increase this value to reset cache if conda/environment.yml has not changed
-        CACHE_NUMBER: 0
+        CONDA_CACHE_NUMBER: 0
       with:
         path: ~/conda_pkgs_dir
         key:
-          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+          ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
           hashFiles(
             'conda/environment.yml',
             'requirements.txt',
