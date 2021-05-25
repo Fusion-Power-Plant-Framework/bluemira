@@ -37,7 +37,7 @@ jobs:
       with:
         activate-environment: bluemira
         environment-file: conda/environment.yml
-        miniforge-version: 3-4.10
+        miniforge-version: 4.10-0.0
         use-only-tar-bz2: true
 
     - name: pytest
