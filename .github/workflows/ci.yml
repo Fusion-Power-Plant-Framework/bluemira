@@ -41,8 +41,9 @@ jobs:
         use-only-tar-bz2: true
 
     - name: pytest
+      env:
+        DISPLAY:
       run: |
-        DISPLAY=
         pytest tests --cov-report=term --reactor
 
     - name: code_quality
