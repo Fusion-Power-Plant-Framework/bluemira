@@ -54,8 +54,8 @@ jobs:
     - name: Check Code Quality
       shell: bash -l {0}
       run: |
-        flake8 --count BLUEPRINT examples tests
-        black --check BLUEPRINT examples tests
+        flake8 --count
+        black --check .
 
     - name: Build Documentation
       shell: bash -l {0}
