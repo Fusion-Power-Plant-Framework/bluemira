@@ -143,7 +143,6 @@ def IPB98y2(I_p, B_t, P_sep, n19, R_0, A, kappa):
 	\t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
 	"""
 ```
-  
 
 ## Releases and Packaging
 
@@ -151,4 +150,3 @@ Release versions of BLUEMIRA are generated from git tags, and [versioneer](https
 dynamically pulled into the BLUEMIRA itself to set `__version__` correctly. [Useage of versioneer for releases](https://github.com/python-versioneer/python-versioneer/blob/master/INSTALL.md#post-installation-usage) is 
 quite straightforward, and that link also gives details on how versioneer is installed, should it be necessary to do that again. If this fails and you haven't touched `versioneer.py` or `BLUEMIRA/_version.py`, then it is possible
 that versioneer needs to be updated: <https://github.com/python-versioneer/python-versioneer#updating-versioneer>
-
