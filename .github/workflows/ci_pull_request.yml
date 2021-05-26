@@ -1,4 +1,4 @@
-name: blueprint_ci_push
+name: bluemira_ci_pull_request
 
 on:
   pull_request:
@@ -51,11 +51,6 @@ jobs:
         miniforge-version: "latest"
         use-only-tar-bz2: true
 
-    - name: Run pytest
-      shell: bash -l {0}
-      run: |
-        pytest tests --cov-report=term --reactor
-
     - name: Check Code Quality
       shell: bash -l {0}
       run: |
@@ -66,3 +61,8 @@ jobs:
       shell: bash -l {0}
       run: |
         sphinx-build documentation/source documentation/build
+
+    - name: Run pytest
+      shell: bash -l {0}
+      run: |
+        pytest tests --cov-report=term --reactor
