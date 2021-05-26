@@ -29,7 +29,9 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = "BLUEPRINT"
-copyright = "2020, Matti Coleman, Simon McIntosh"
+copyright = (
+    "2021, M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short"
+)
 author = "Matti Coleman, Simon McIntosh, UKAEA & contributors"
 
 # The full version, including alpha/beta/rc tags
