@@ -3,7 +3,7 @@ name: bluemira_ci_push
 on:
   push:
     branches:
-      - master
+      - main
       - develop
 
 jobs:

@@ -3,7 +3,7 @@ name: bluemira_ci_pull_request
 on:
   pull_request:
     branches:
-      - master
+      - main
       - develop
 
 jobs:
