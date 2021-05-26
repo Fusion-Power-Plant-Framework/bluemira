@@ -45,6 +45,8 @@ jobs:
 
     - name: Install Environment
       uses: conda-incubator/setup-miniconda@v2
+      env:
+        CONDA: ~/miniconda
       with:
         activate-environment: bluemira
         environment-file: conda/environment.yml
