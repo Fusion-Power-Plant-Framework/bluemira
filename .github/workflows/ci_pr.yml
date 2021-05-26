@@ -1,0 +1,68 @@
+name: blueprint_ci_push
+
+on:
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  build-and-test:
+
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Cache pip
+      uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if requirements.txt has not changed
+        PIP_CACHE_NUMBER: 1
+      with:
+        path: ~/.cache/pip
+        key: 
+          ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
+          hashFiles('requirements.txt', 'requirements-develop.txt', 'setup.py') }}
+
+
+    - name: Cache conda
+      uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if conda/environment.yml has not changed
+        CONDA_CACHE_NUMBER: 1
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
+          hashFiles(
+            'conda/environment.yml',
+            'requirements.txt',
+            'requirements-develop.txt',
+            'setup.py'
+          ) }}
+
+    - name: Install Environment
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: bluemira
+        environment-file: conda/environment.yml
+        miniforge-version: "latest"
+        use-only-tar-bz2: true
+
+    - name: Run pytest
+      shell: bash -l {0}
+      run: |
+        pytest tests --cov-report=term --reactor
+
+    - name: Check Code Quality
+      shell: bash -l {0}
+      run: |
+        flake8 --count BLUEPRINT examples tests
+        black --check BLUEPRINT examples tests
+
+    - name: Build Documentation
+      shell: bash -l {0}
+      run: |
+        sphinx-build documentation/source documentation/build

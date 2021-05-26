@@ -1,16 +1,15 @@
-name: blueprint_ci
+name: blueprint_ci_push
 
 on:
   push:
     branches:
       - master
       - develop
-      - 8-github-actions
 
 jobs:
   build-and-test:
 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
