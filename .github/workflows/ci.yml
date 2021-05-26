@@ -53,16 +53,19 @@ jobs:
         use-only-tar-bz2: true
 
     - name: Run pytest
+      shell: bash -l {0}
       run: |
         unset DISPLAY
         conda activate bluemira
         pytest tests --cov-report=term --reactor
 
     - name: Check Code Quality
+      shell: bash -l {0}
       run: |
         flake8 --count BLUEPRINT examples tests
         black --check BLUEPRINT examples tests
 
     - name: Build Documentation
+      shell: bash -l {0}
       run: |
         sphinx-build documentation/source documentation/build
