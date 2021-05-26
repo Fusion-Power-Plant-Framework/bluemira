@@ -66,3 +66,19 @@ jobs:
       shell: bash -l {0}
       run: |
         pytest tests --cov-report=term --reactor
+
+    - name: Upload Code Coverage
+      uses: actions/upload-artifact@v2
+        with:
+          name: pytest-coverage
+          path: |
+            htmlcov
+          retention-days: 14
+
+    - name: Upload Documentation
+      uses: actions/upload-artifact@v2
+        with:
+          name: docs
+          path: |
+            documentation/build
+          retention-days: 14
