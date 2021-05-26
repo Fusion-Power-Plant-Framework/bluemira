@@ -3,7 +3,8 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+#                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,6 +24,7 @@ Test that the version can be retrieved as expected
 """
 
 import BLUEPRINT
+
 
 def test_version():
     """
