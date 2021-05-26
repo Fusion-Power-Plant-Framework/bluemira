@@ -1,15 +1,15 @@
 
 # Contributors
 
-### Copyright
+## Copyright
 
 M. Coleman<sup>1, 2 </sup>, J. Cook<sup> 1 </sup>, F. Franza<sup> 3 </sup>, I. Maione<sup> 3 </sup>, S. McIntosh<sup>1 ,4</sup>, J. Morris<sup> 1 </sup>, D. Short<sup> 1 </sup>
 
-### Contributors
+## Contributors
 
 M. Bluteau<sup>1</sup>, M. Coleman,  J. Cook, S. Desai<sup>1</sup>, M. Foord<sup>1, 5</sup>, F. Franza, M.Johnson<sup>1</sup>, S. Kahn<sup>1</sup>, L. Humphrey<sup>1</sup>, C. MacMackin<sup>1</sup>, I. Maione, S. McIntosh, J. Morris, D. Short, D. Vaccaro<sup>1</sup>
 
-#### Affiliations:
+### Affiliations:
 
 1: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
 
@@ -21,7 +21,7 @@ M. Bluteau<sup>1</sup>, M. Coleman,  J. Cook, S. Desai<sup>1</sup>, M. Foord<sup
 
 5: Agile Abstractions, Northampton, United Kingdom  
 
-# Funding
+## Funding
 
 The work on BLUEMIRA is been funded by:
 
@@ -37,7 +37,7 @@ Prior work on MIRA was funded by:
 
 * TBD
 
-# Acknowledgements
+## Acknowledgements
 
 We would like to thank:
 
