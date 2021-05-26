@@ -46,7 +46,7 @@ jobs:
     - name: Install Environment
       uses: conda-incubator/setup-miniconda@v2
       env:
-        CONDA: ~/actions-runner/_work/bluemira/miniconda
+        CONDA: /home/github-actions-runner/miniconda
       with:
         activate-environment: bluemira
         environment-file: conda/environment.yml
