@@ -55,8 +55,6 @@ jobs:
     - name: Run pytest
       shell: bash -l {0}
       run: |
-        unset DISPLAY
-        conda activate bluemira
         pytest tests --cov-report=term --reactor
 
     - name: Check Code Quality
