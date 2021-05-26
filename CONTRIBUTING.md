@@ -99,7 +99,6 @@ Abbreviations are allowed to be in capitals, e.g.:
 * `build_TF_coils`
 
 A full list of accepted abbreviations can be found in the `.flake8` file under `ignore_names`.
-  
 
 ## Documentation style guide
 
