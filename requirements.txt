@@ -1,3 +1,4 @@
+anytree==2.8.0
 aocutils==0.3.0; python_version == '3.6'
 aocxchange==0.3.0; python_version == '3.6'
 appdirs==1.4.4

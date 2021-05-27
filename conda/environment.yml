@@ -8,6 +8,12 @@ dependencies:
   - python=3.8
   - pythonocc-core=7.4.1
   - freecad=0.19.2
+  - freecad.python=0.0.3
+  - gmsh=4.8.4
+  - python-gmsh=4.8.4
+  - meshio==4.1.1=py_0
+  - mshr=2019.1.0
+  - fenics=2019.1.0
   - numba==0.53.1
   - numpy=1.19.5
   - fluids=0.1.77
