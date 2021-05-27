@@ -20,16 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Test that the version can be retrieved as expected
+Initialise the bluemira package.
 """
 
-import BLUEPRINT
-import bluemira
+from ._version import get_versions
 
-
-def test_version():
-    """
-    Test that we can get the version from BLUEPRINT.
-    """
-    assert BLUEPRINT.__version__
-    assert bluemira.__version__
+__version__ = get_versions()["version"]
