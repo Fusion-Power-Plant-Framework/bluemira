@@ -63,12 +63,12 @@ The merge request will be reviewed by a core developer before potentially being 
 
 ## Python style guide
 
-``Bluemira`` is an object-oriented code which is designed to run relatively fast. We use
-objects to represent physical entitities, as well as for certain solvers where it is
+``Bluemira`` is an object-oriented code and is designed to run relatively fast. We use
+objects to represent physical entities, as well as for certain solvers where it is
 useful to persist the state of some stored calculations in order to save run-time. When
-writing objects, make sure all attributes are initialised in the `__init__` method, and
-that all methods that are not user-facing are made private with a leading underscore: 
-`_private_method`.
+writing objects, make sure all attributes are initialised in the ``__init__`` method,
+and that all methods and variables that are not user-facing are made protected with a 
+leading underscore: ``_protected_method``.
 
 We try to keep functions as single-purposes as possible, with as few arguments and
 keyword arguments as possible. Similarly, with classes, we try to keep the number of 
@@ -76,15 +76,15 @@ attributes and methods relatively low.
 
 Python can run relatively slowly when compared with compiled languages, and in key areas
 we use a couple of tricks to speed things up:
-* Using `__slots__` on classes to save memory
-* Using `numba` just-in-time compilation to speed up certain bottleneck calculations
+* Using ``__slots__`` on classes to save memory
+* Using ``numba`` just-in-time compilation to speed up certain bottleneck calculations
 
 Please try and follow these relatively loose guidelines when developing ``bluemira``. We
 also recommend you use an integrated development environment with appropriate code
 linting to improve the code you contribute.
 
 ``Bluemira`` is strictly auto-formatted using the [black
-](https://pypi.org/project/black/)module. This is an opinionated subset of the 
+](https://pypi.org/project/black/) module. This is an opinionated subset of the 
 [Python PEP8 style guide](https://www.python.org/dev/peps/pep-0008/).
  
 If you don't like how ``black`` formats your code, join the club... the loss of 
@@ -117,9 +117,9 @@ quality using [flake8](https://flake8.pycqa.org/en/latest/) and various extensio
 . This is more a question of code style, which black doesn't cover in full.
 
 Code that is committed to a branch is automatically checked for quality using pre-commit
-. Violations detected by ``flake8`` are printed to the console for information. It does not
-prevent you from pushing code, but it will fail in the continuous integration. Please
-address issues raised by ``flake8`` prior to pushing your code.
+. Violations detected by ``flake8`` are printed to the console for information. It does
+not prevent you from pushing code, but it will fail in the continuous integration. 
+Please address issues raised by ``flake8`` prior to pushing your code.
 
 When writing code for ``bluemira``, please adhere to the following Python naming 
 conventions:
