@@ -50,7 +50,7 @@ jobs:
       with:
         activate-environment: bluemira
         environment-file: conda/environment.yml
-        miniforge-version: "latest"
+        miniforge-version: "4.10.1-3"
         use-only-tar-bz2: true
 
     - name: Check Code Quality
