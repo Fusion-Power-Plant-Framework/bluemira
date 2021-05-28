@@ -20,9 +20,56 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Initialise the BLUEPRINT package.
+BLUEPRINT path, testing, and versioning essentials.
 """
-
 from ._version import get_versions
 
 __version__ = get_versions()["version"]
+import pathlib  # noqa
+import subprocess  # noqa (S404)
+import sys  # noqa
+from BLUEPRINT.base.file import get_BP_root  # noqa
+
+__all__ = ["test", "__version__"]
+del get_versions
+
+
+def test(path=None, *, plotting=False):
+    """
+    Test utility function to run tests automatically from the source code file
+    in IDEs. Will run the tests in the mirrored testing directory.
+
+    Parameters
+    ----------
+    path: Union[str, None]
+        The path to run the tests for. Will default to test_xfile.py for xfile.py
+    plotting: bool
+        Whether or not to plot the tests
+    """
+    if path is None:
+        # Use the file we were called from
+        frame = sys._getframe(1)
+        path = frame.f_globals["__file__"]
+
+    # Relative path from project root to the file as a tuple
+    parts = pathlib.Path(path).absolute().relative_to(get_BP_root()).parts
+    # We want the directory path with "tests" instead of "BLUEPRINT" and
+    # without the filename
+    directory = ("tests",) + parts[1:-1]
+    test_file = "test_" + parts[-1]
+    full_path = pathlib.Path(get_BP_root(), *directory, test_file)
+    if not full_path.is_file():
+        sys.stderr.write(f'Test file "{full_path}" not found.\n')
+        sys.exit(1)
+
+    args = ["pytest", str(full_path)]
+    if plotting:
+        args.append("--plotting-on")
+    subprocess.run(args)  # noqa (S603, S607)
+
+
+import_path = pathlib.Path(__file__).parent.parent.parent / "PROCESS" / "utilities"
+
+if import_path.is_dir():
+    if str(import_path) not in sys.path:
+        sys.path.append(str(import_path))
