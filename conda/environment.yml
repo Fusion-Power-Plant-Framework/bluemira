@@ -6,8 +6,8 @@ channels:
 
 dependencies:
   - python=3.8
-  - pythonocc-core=7.5.1
-  - freecad=0.19.1
+  - pythonocc-core=7.4.1
+  - freecad=0.19.2
   - numba==0.53.1
   - numpy=1.19.5
   - fluids=0.1.77
