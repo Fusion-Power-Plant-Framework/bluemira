@@ -1,7 +1,7 @@
-# Contributing to BLUEPRINT
+# Contributing to bluemira
 
 When contributing to this repository, please first discuss the change you wish to make via issue, email, or any
-other method with the owners of this repository before making a change.  
+other method with the owners of this repository before making a change.
 
 ## Code of Conduct
 
@@ -15,7 +15,7 @@ In order to help us address your issue effectively, we ask that you follow this 
 
 * Check that the issue is not already described elsewhere in Issues
 * Write a fairly complete description of the bug/feature/problem in the issue, adding relevant tags
-* Tag the BLUEMIRA module(s) the issue concerns
+* Tag the bluemira module(s) the issue concerns
 * If the issue is linked to a Milestone please tag it
 
 ## Submitting a pull request
@@ -30,10 +30,10 @@ of parallel development work taking place, or implementation decisions / subtlet
 * Discuss any problems that arise in the associated issue, perhaps documenting your progress
 * Finally, submit a pull request onto the `develop` branch
   * Link the relevant issue(s) and milestone(s)
-  * Add a reviewer, who will be responsible for reviewing and merging the PR. This should be the person 
+  * Add an assignee, who will be responsible for reviewing and merging the PR. This should be the person 
   you feel has the most relevant technical background and/or the most familiar with the underlying
   issue or code.
-  * Add an assignee, who will be responsible for reviewing the PR
+  * Add a reviewer, who will be responsible for reviewing the PR
   * In practice, during the transition phase, the reviewer and the assignee should be from different review teams:
     * MIRA review team: [Fabrizio Franza]
     * BLUEPRINT review team: [Matti Coleman, James Cook, Dan Short]
@@ -42,20 +42,20 @@ The merge request will be reviewed by a core developer before potentially being 
 
 ## Submitting a bug report
 
-BLUEMIRA is software in development and is therefore likely to contain bugs. If you discover bugs, please follow this procedure:
+Bluemira is software in development and is therefore likely to contain bugs. If you discover bugs, please follow this procedure:
 
 * Raise an issue with a `bug` flag
-* Include a way to reproduce the bug in the issue, let us know the expected result and what actually happens  
+* Include a way to reproduce the bug in the issue, let us know the expected result and what actually happens
 
 ## Python style guide
 
-BLUEMIRA is strictly auto-formatted using the [black](https://pypi.org/project/black/) module. This is an opinionated subset of the [Python PEP8 style guide](https://www.python.org/dev/peps/pep-0008/).
+Bluemira is strictly auto-formatted using the [black](https://pypi.org/project/black/) module. This is an opinionated subset of the [Python PEP8 style guide](https://www.python.org/dev/peps/pep-0008/).
  
 If you don't like how black formats your code, join the club... the loss of aesthetics is the price to pay for 
 uniformity and consistency! The point of using it is that all code should more or less look the same, regardless
 of who writes it.
 
-Please read up on this if you need more details. For BLUEMIRA, black has the potential to generate very ugly 
+Please read up on this if you need more details. For bluemira, black has the potential to generate very ugly 
 code, especially if:
 
 * you are playing code golf
@@ -75,7 +75,7 @@ default_params = [
 # fmt: on
 ```
   
-On top of black, which only handles formatting, code in BLUEMIRA is also checked for quality using [flake8](https://flake8.pycqa.org/en/latest/) and 
+On top of black, which only handles formatting, code in bluemira is also checked for quality using [flake8](https://flake8.pycqa.org/en/latest/) and 
 various extensions to it. This is more a question of code style, which black doesn't cover in full.  
 
 Code that is committed to a branch is automatically checked for quality using pre-commit. Violations detected
@@ -83,7 +83,7 @@ by flake8 are printed to the console for information. It does not prevent you fr
 try and maintain or improve the overall level of quality of the source code over time. In particular, if you notice 
 that new code you are writing is adding new violations, you should address this.
 
-When writing code for BLUEMIRA, please adhere to the following Python naming conventions:
+When writing code for bluemira, please adhere to the following Python naming conventions:
 
 * `ALL_CAPITALS_SNAKE_CASE` for global constants
 
@@ -147,8 +147,8 @@ def IPB98y2(I_p, B_t, P_sep, n19, R_0, A, kappa):
 
 ## Releases and Packaging
 
-Release versions of BLUEMIRA are generated from git tags, and [versioneer](https://github.com/python-versioneer/python-versioneer) is used so that the most recent tag is 
-dynamically pulled into the BLUEMIRA itself to set `__version__` correctly. [Useage of versioneer for releases](https://github.com/python-versioneer/python-versioneer/blob/master/INSTALL.md#post-installation-usage) is 
-quite straightforward, and that link also gives details on how versioneer is installed, should it be necessary to do that again. If this fails and you haven't touched `versioneer.py` or `BLUEMIRA/_version.py`, then it is possible
+Release versions of bluemira are generated from git tags, and [versioneer](https://github.com/python-versioneer/python-versioneer) is used so that the most recent tag is 
+dynamically pulled into the bluemira itself to set `__version__` correctly. [Useage of versioneer for releases](https://github.com/python-versioneer/python-versioneer/blob/master/INSTALL.md#post-installation-usage) is 
+quite straightforward, and that link also gives details on how versioneer is installed, should it be necessary to do that again. If this fails and you haven't touched `versioneer.py` or `bluemira/_version.py`, then it is possible
 that versioneer needs to be updated: <https://github.com/python-versioneer/python-versioneer#updating-versioneer>
 
