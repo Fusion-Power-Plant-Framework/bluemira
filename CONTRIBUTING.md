@@ -7,7 +7,7 @@ other method with the owners of this repository before making a change.
 
 This project and everyone participating in it is governed by the  Contributor Covenant Code of Conduct. By 
 participating, you are expected to uphold this code. Please report unacceptable behavior to 
-[matti.coleman@ukaea.uk](mailto:matti.coleman@ukaea.uk) or [fabrizio.franza@kit.edu](mailto:fabrizio.franza@kit.edu).
+[matti.coleman@ukaea.uk](mailto:matti.coleman@ukaea.uk) and/or [fabrizio.franza@kit.edu](mailto:fabrizio.franza@kit.edu).
 
 ## Submitting an issue
 
@@ -76,7 +76,7 @@ default_params = [
 ```
   
 On top of black, which only handles formatting, code in bluemira is also checked for quality using [flake8](https://flake8.pycqa.org/en/latest/) and 
-various extensions to it. This is more a question of code style, which black doesn't cover in full.  
+various extensions to it. This is more a question of code style, which black doesn't cover in full.
 
 Code that is committed to a branch is automatically checked for quality using pre-commit. Violations detected
 by flake8 are printed to the console for information. It does not prevent you from pushing code, but you should 
