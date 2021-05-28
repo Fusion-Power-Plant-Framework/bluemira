@@ -90,6 +90,7 @@ numfig = True
 
 # --- Configuration for sphinx-autoapi ---
 extensions.append("sphinx.ext.inheritance_diagram")
+extensions.append("sphinx.ext.todo")
 extensions.append("autoapi.extension")
 
 autoapi_type = "python"

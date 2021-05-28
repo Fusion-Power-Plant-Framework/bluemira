@@ -11,4 +11,6 @@ Welcome to bluemira's Documentation!
    :caption: Contents:
    :hidden:
 
+   freecad
+   meshing
    autoapi/index
