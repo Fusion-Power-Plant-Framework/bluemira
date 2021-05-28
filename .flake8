@@ -70,7 +70,10 @@ exclude =
     BLUEPRINT/_version.py,
     bluemira/_version.py,
     # Ignore mirapy for now
-    mirapy
+    mirapy,
+    examples/meshing,
+    tests/test_emag.py,
+    tests/test_algebra.py
 
 max-complexity = 20
 max-doc-length = 89
