@@ -9,7 +9,7 @@ typical conceptual fusion reactor design activities.
 
 ## Modules
 
-Bluemira is composed of various modules: 
+``Bluemira`` is composed of various modules: 
 
 * **base [WIP]**: a collection of utilities which make up the software backbone of the 
   ``bluemira`` framework
