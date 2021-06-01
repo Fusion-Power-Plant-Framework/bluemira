@@ -1,22 +1,23 @@
-# BLUEPRINT is an integrated inter-disciplinary design tool for future fusion
+# bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2019-2020  M. Coleman, S. McIntosh
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+#                    D. Short
 #
-# BLUEPRINT is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
 #
-# BLUEPRINT is distributed in the hope that it will be useful,
+# bluemira is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU Affero General Public License
-# along with BLUEPRINT.  If not, see <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Script used to analyse T retention data
@@ -26,15 +27,14 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 import json
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import plot_defaults
-from BLUEPRINT.fuelcycle.tfvutils import convert_flux_to_flow
-from BLUEPRINT.fuelcycle.blocks import TCycleComponent
-from BLUEPRINT.fuelcycle.tfvutils import fit_sink_data, piecewise_sqrt_threshold
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.lookandfeel import plot_defaults
+from bluemira.fuel_cycle.tfv_utilities import convert_flux_to_flow, fit_sink_data, piecewise_sqrt_threshold
+from bluemira.fuel_cycle.blocks import TCycleComponent
 
 plot_defaults()
 
-PATH = get_BP_path("fuelcycle/blanket_fw_T_retention", subfolder="data")
+PATH = get_bluemira_path("fuelcycle/blanket_fw_T_retention", subfolder="data")
 
 # Get all the data files
 files = []
