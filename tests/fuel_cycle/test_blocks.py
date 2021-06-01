@@ -27,7 +27,7 @@ import pytest
 from scipy.interpolate import interp1d
 import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.fuel_cycle.tfvutils import (
+from bluemira.fuel_cycle.tfv_utilities import (
     convert_flux_to_flow,
     fit_sink_data,
     piecewise_sqrt_threshold,
@@ -70,7 +70,7 @@ class TestTCycleComponent:
 
 class TestSqrtFittedSinks:
     def test_fits(self):
-        path = get_BP_path("fuelcycle/blanket_fw_T_retention", subfolder="data")
+        path = get_bluemira_path("fuelcycle/blanket_fw_T_retention", subfolder="data")
 
         # Get all the data files
         files = []

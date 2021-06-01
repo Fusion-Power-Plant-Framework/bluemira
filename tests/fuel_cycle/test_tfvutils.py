@@ -23,12 +23,11 @@ import pytest
 import numpy as np
 from matplotlib import pyplot as plt
 from bluemira.base.constants import T_LAMBDA
-from bluemira.fuel_cycle.tfvutils import (
+from bluemira.fuel_cycle.tfv_utilities import (
     _dec_I_mdot,
     _find_t15,
     _fountain_linear_sink,
 )  # noqa
-
 import tests
 
 
