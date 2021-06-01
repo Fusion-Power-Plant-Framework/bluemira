@@ -25,17 +25,17 @@ Full fuel cycle model object
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import numpy as np
-from BLUEPRINT.fuelcycle.tfvutils import (
+from bluemira.fuelcycle.tfvutils import (
     _speed_recycle,
     find_max_load_factor,
     legal_limit,
 )
-from BLUEPRINT.fuelcycle.blocks import TCycleComponent, TCycleFlow
-from BLUEPRINT.utilities.tools import findnoisylocals, discretise_1d, tomols
-from BLUEPRINT.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
-from BLUEPRINT.base.lookandfeel import bprint
-from BLUEPRINT.base.parameter import ParameterFrame
-from BLUEPRINT.base.baseclass import ReactorSystem
+from bluemira.fuelcycle.blocks import TCycleComponent, TCycleFlow
+from bluemira.utilities.tools import findnoisylocals, discretise_1d, tomols
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
+from bluemira.base.lookandfeel import bprint
+from bluemira.base.parameter import ParameterFrame
+from bluemira.base.baseclass import ReactorSystem
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
 # It will be slower... and it will probably be less accurate! But the plots..

@@ -26,10 +26,10 @@ import numpy as np
 import numba as nb
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
-from BLUEPRINT.base.lookandfeel import bpwarn
-from BLUEPRINT.base.error import FuelCycleError
-from BLUEPRINT.utilities.tools import discretise_1d
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
+from bluemira.base.lookandfeel import bpwarn
+from bluemira.base.error import FuelCycleError
+from bluemira.utilities.tools import discretise_1d
 
 
 def convert_flux_to_flow(flux, area):

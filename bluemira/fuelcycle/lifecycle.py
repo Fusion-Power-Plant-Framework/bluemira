@@ -27,13 +27,13 @@ from matplotlib.lines import Line2D
 import json
 from typing import Type
 from scipy.optimize import brentq
-from BLUEPRINT.base.lookandfeel import bpwarn, bprint
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.constants import S_TO_YR, YR_TO_S
-from BLUEPRINT.utilities.tools import delta, is_num
-from BLUEPRINT.neutronics.simpleneutrons import NeutronicsRulesOfThumb as nROT
-from BLUEPRINT.fuelcycle.timeline import f_gompertz, histify, Timeline
+from bluemira.base.lookandfeel import bpwarn, bprint
+from bluemira.base import ReactorSystem, ParameterFrame
+from bluemira.base.file import get_BP_path
+from bluemira.base.constants import S_TO_YR, YR_TO_S
+from bluemira.utilities.tools import delta, is_num
+from bluemira.neutronics.simpleneutrons import NeutronicsRulesOfThumb as nROT
+from bluemira.fuelcycle.timeline import f_gompertz, histify, Timeline
 
 
 class LifeCycle(ReactorSystem):

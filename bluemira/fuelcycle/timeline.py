@@ -25,8 +25,8 @@ Partially randomised fusion reactor load signal object and tools
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
-from BLUEPRINT.base.lookandfeel import plot_defaults, bpwarn
-from BLUEPRINT.base.constants import S_TO_YR, YR_TO_S
+from bluemira.base.lookandfeel import plot_defaults, bpwarn
+from bluemira.base.constants import S_TO_YR, YR_TO_S
 
 plot_defaults()
 
