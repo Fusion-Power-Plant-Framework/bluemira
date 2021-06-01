@@ -19,16 +19,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
 from io import StringIO
 import numpy as np
 import pytest
 from unittest import mock
-from BLUEPRINT.base.error import BeamsError
-from BLUEPRINT.beams.model import FiniteElementModel, check_matrix_condition
-from BLUEPRINT.beams.crosssection import IBeam, RectangularBeam
-from BLUEPRINT.beams.material import SS316
-from BLUEPRINT.beams.loads import LoadCase
+from bluemira.base.error import BeamsError
+from bluemira.beams.model import FiniteElementModel, check_matrix_condition
+from bluemira.beams.crosssection import IBeam, RectangularBeam
+from bluemira.beams.material import SS316
+from bluemira.beams.loads import LoadCase
 
 import tests
 

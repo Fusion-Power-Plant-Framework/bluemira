@@ -22,11 +22,11 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.geomtools import circle_seg
-from BLUEPRINT.beams.material import SS316
-from BLUEPRINT.beams.crosssection import IBeam
-from BLUEPRINT.beams.transformation import cyclic_pattern
-from BLUEPRINT.beams.model import FiniteElementModel
+from bluemira.geometry.geomtools import circle_seg
+from bluemira.beams.material import SS316
+from bluemira.beams.crosssection import IBeam
+from bluemira.beams.transformation import cyclic_pattern
+from bluemira.beams.model import FiniteElementModel
 import tests
 
 SS316 = SS316()

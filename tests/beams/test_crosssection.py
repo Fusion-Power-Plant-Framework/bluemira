@@ -24,12 +24,12 @@ import pytest
 import numpy as np
 import pickle  # noqa (S403)
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.error import BeamsError
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.error import BeamsError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.beams.material import SS316, Concrete
-from BLUEPRINT.beams.crosssection import (
+from bluemira.beams.material import SS316, Concrete
+from bluemira.beams.crosssection import (
     IBeam,
     RectangularBeam,
     CircularBeam,
@@ -177,7 +177,7 @@ class TestComposite:
 class TestDuploRectangle:
     @classmethod
     def setup_class(cls):
-        path = get_BP_path("beams", subfolder="tests")
+        path = get_bluemira_path("beams", subfolder="tests")
         filename = os.sep.join([path, "tf_shell_sections.pkl"])
         with open(filename, "rb") as f:
             cls.shells = pickle.load(f)  # noqa (S301)

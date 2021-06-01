@@ -21,7 +21,7 @@
 
 import pytest
 import numpy as np
-from BLUEPRINT.beams.element import _k_array
+from bluemira.beams.element import _k_array
 
 
 class Testk:

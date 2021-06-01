@@ -20,13 +20,12 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-
 import numpy as np
 import itertools
 from matplotlib import pyplot as plt
-from BLUEPRINT.beams.node import Node
-from BLUEPRINT.beams.transformation import _direction_cosine_matrix, lambda_matrix
-from BLUEPRINT.beams.transformation import (
+from bluemira.beams.node import Node
+from bluemira.beams.transformation import _direction_cosine_matrix, lambda_matrix
+from bluemira.beams.transformation import (
     _direction_cosine_matrix_debugging as _dcm_debug,
 )
 

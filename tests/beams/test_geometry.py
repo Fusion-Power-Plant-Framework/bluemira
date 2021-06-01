@@ -23,9 +23,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
-from BLUEPRINT.beams.geometry import Geometry
-from BLUEPRINT.beams.material import SS316
-from BLUEPRINT.beams.crosssection import IBeam
+from bluemira.beams.geometry import Geometry
+from bluemira.beams.material import SS316
+from bluemira.beams.crosssection import IBeam
 import tests
 
 SS316 = SS316()
