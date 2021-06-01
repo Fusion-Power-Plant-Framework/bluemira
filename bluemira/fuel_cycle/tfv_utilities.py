@@ -27,7 +27,7 @@ import numba as nb
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, S_TO_YR
 from bluemira.base.lookandfeel import bpwarn
 from bluemira.base.error import FuelCycleError
 
@@ -289,6 +289,33 @@ def fit_sink_data(x, y, method="sqrt", plot=True):
 # Elementary flow processing functions ported to numba highly successful in
 # reducing runtimes by a factor of ~40
 # =============================================================================
+
+
+def delay_decay(t, m_t_flow, t_delay):
+    """
+    Time-shift a tritium flow with a delay and account for radioactive decay.
+
+    Parameters
+    ----------
+    t: np.array
+        The time vector
+    m_t_flow: np.array
+        The mass flow vector
+    t_delay: float
+        The delay duration [s]
+
+    Returns
+    -------
+    flow: np.array
+        The delayed flow
+    """
+    t_delay = t_delay*S_TO_YR
+    shift = np.argmin(np.abs(t-t_delay))
+    flow = np.zeros(shift)
+    deldec = np.exp(-T_LAMBDA*t_delay)
+    flow = np.append(flow, deldec*m_t_flow)
+    flow = flow[: len(t)]  # TODO: figure why you had to do this
+    return flow
 
 
 @nb.jit(nopython=True, cache=True)

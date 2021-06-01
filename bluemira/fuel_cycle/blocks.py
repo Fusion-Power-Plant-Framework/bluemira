@@ -24,13 +24,13 @@ Fuel cycle model fundamental building blocks
 """
 import numpy as np
 from bluemira.base.lookandfeel import bpwarn
-from bluemira.base.constants import T_LAMBDA, S_TO_YR
 from bluemira.base.error import FuelCycleError
 from bluemira.fuel_cycle.tfv_utilities import (
     linear_bathtub,
     fountain,
     fountain_bathtub,
     sqrt_bathtub,
+    delay_decay,
 )
 
 
@@ -49,23 +49,10 @@ class TCycleFlow:
     """
 
     def __init__(self, t, in_flow, t_duration):
-        def _deldec(m_t_flow, t_delay):
-            """
-            Diese Funktion ändert ein T flow mit einem Verzug [s] und rechnet\n
-            dem radioaktiven Zerfall ab [y].
-            """
-            t_delay = t_delay * S_TO_YR
-            shift = np.argmin(np.abs(t - t_delay))
-            flow = np.zeros(shift)
-            deldec = np.exp(-T_LAMBDA * t_delay)
-            flow = np.append(flow, deldec * m_t_flow)
-            flow = flow[: len(t)]  # TODO: figure why you had to do this
-            return flow
-
         if t_duration == 0:
             self.out_flow = in_flow
         else:
-            self.out_flow = _deldec(in_flow, t_duration)
+            self.out_flow = delay_decay(t, in_flow, t_duration)
 
     def split(self, number, fractions):
         """
