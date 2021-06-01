@@ -25,18 +25,19 @@ Full fuel cycle model object
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import numpy as np
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
+from bluemira.base.lookandfeel import bprint
+from bluemira.base.parameter import ParameterFrame
+from bluemira.base.baseclass import ReactorSystem
 from bluemira.fuel_cycle.tfv_utilities import (
     _speed_recycle,
     find_max_load_factor,
     legal_limit,
     discretise_1d,
+    find_noisy_locals,
+    pam3s_to_mols,
 )
 from bluemira.fuel_cycle.blocks import TCycleComponent, TCycleFlow
-from bluemira.utilities.tools import findnoisylocals, tomols
-from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
-from bluemira.base.lookandfeel import bprint
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.baseclass import ReactorSystem
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
 # It will be slower... and it will probably be less accurate! But the plots..
@@ -188,8 +189,8 @@ class FuelCycle(ReactorSystem):
         """
         n_bins = max(int(len(self.m_T) / 4500), 400)
         # Hand tweak to get findnoisylocals looking good
-        self.max_T = findnoisylocals(self.m_T, x_bins=n_bins, mode="max")
-        self.min_T = findnoisylocals(self.m_T, x_bins=n_bins)
+        self.max_T = find_noisy_locals(self.m_T, x_bins=n_bins, mode="max")
+        self.min_T = find_noisy_locals(self.m_T, x_bins=n_bins)
         # self.max_T[1][-1] = self.max_T[1][-2]   #plothack
         self.m_T[-1] = self.max_T[1][-1]
         self.arg_t_d, self.t_d = self.calc_t_d()
@@ -207,7 +208,7 @@ class FuelCycle(ReactorSystem):
         self.DEMO_rt = np.array(timeline["fusion_time"][:n])
         self.DT_rate = timeline["DT_rate"][:n]
         self.DD_rate = timeline["DD_rate"][:n]
-        m_gas = T_MOLAR_MASS * tomols(self.params.m_gas) / 1000
+        m_gas = T_MOLAR_MASS*pam3s_to_mols(self.params.m_gas)/1000
         self.grate = m_gas * self.DT_rate / max(self.DT_rate)
         self.bci = timeline["blanket_change_index"]
         # Burn rate of T [kgs of T per second]

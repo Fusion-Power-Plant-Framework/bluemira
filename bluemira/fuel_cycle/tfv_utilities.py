@@ -36,6 +36,89 @@ from bluemira.base.error import FuelCycleError
 # Miscellaneous utility functions.
 # =============================================================================
 
+def pam3s_to_mols(flow_in_pam3_s):
+    """
+    Convert a flow in Pa.m^3/s to a flow in mols.
+
+    Parameters
+    ----------
+    flow_in_pam3_s: Union[float, np.array]
+        The flow in Pa.m^3/s to convert
+
+    Returns
+    -------
+    flow_in_mols: Union[float, np.array]
+        The flow in mol/s
+
+    Notes
+    -----
+    At 273.15 K for a diatomic gas
+    """
+    return flow_in_pam3_s / 2270
+
+
+def mols_to_pam3s(flow_in_mols):  # noqa (N802)
+    """
+    Convert a flow in Pa.m^3/s to a flow in mols.
+
+    Parameters
+    ----------
+    flow_in_mols: Union[float, np.array]
+        The flow in mol/s to convert
+
+    Returns
+    -------
+    flow_in_pam3_s: Union[float, np.array]
+        The flow in Pa.m^3/s
+
+    Notes
+    -----
+    At 273.15 K for a diatomic gas
+    """
+    return flow_in_mols * 2270
+
+
+def find_noisy_locals(x, x_bins=50, mode="min"):
+    """
+    Find local minima or maxima in a noisy signal.
+
+    Parameters
+    ----------
+    x: np.array
+        The noise data to search
+    x_bins: int
+        The number of bins to search with
+    mode: str from ["min", "max"]
+        The search mode
+
+    Returns
+    -------
+    local_mid_x: list
+        The argmuments of the local minima or maxima
+    local_m: list
+        The local minima or maxima
+    """
+    if mode == "max":
+        peak = np.max
+        arg_peak = np.argmax
+    elif mode == "min":
+        peak = np.min
+        arg_peak = np.argmin
+    else:
+        raise FuelCycleError(f"Unrecognised mode: {mode}.")
+
+    n = len(x)
+    bin_size = round(n / x_bins)
+    y_bins = [x[i: i+bin_size] for i in range(0, n, bin_size)]
+
+    local_m = np.zeros(len(y_bins))
+    local_mid_x = np.zeros(len(y_bins))
+    for i, y_bin in enumerate(y_bins):
+        local_m[i] = peak(y_bin)
+        local_mid_x[i] = arg_peak(y_bin)+i*bin_size
+    return local_mid_x, local_m
+
+
 def discretise_1d(x, y, n, method="linear"):
     """
     Discretise x and y for a given number of points.
