@@ -1,4 +1,4 @@
-These data were received from Rodrigo Arrendondo (IPP) on the 10/06/2020, and are 
+These data were received from Rodrigo Arredondo (IPP) on the 10/06/2020, and are 
 preliminary results only. These results were also published in:
 
 G. A. Spagnuolo et al., Integration issues on tritium management of the European DEMO 
