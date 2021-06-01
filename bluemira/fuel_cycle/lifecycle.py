@@ -33,7 +33,7 @@ from bluemira.base.file import get_BP_path
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.utilities.tools import delta, is_num
 from bluemira.neutronics.simpleneutrons import NeutronicsRulesOfThumb as nROT
-from bluemira.fuelcycle.timeline import f_gompertz, histify, Timeline
+from bluemira.fuel_cycle.timeline import f_gompertz, histify, Timeline
 
 
 class LifeCycle(ReactorSystem):

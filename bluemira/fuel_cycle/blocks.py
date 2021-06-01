@@ -26,7 +26,7 @@ import numpy as np
 from bluemira.base.lookandfeel import bpwarn
 from bluemira.base.constants import T_LAMBDA, S_TO_YR
 from bluemira.base.error import FuelCycleError
-from bluemira.fuelcycle.tfvutils import (
+from bluemira.fuel_cycle.tfv_utilities import (
     linear_bathtub,
     fountain,
     fountain_bathtub,

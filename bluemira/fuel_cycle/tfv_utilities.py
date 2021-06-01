@@ -24,12 +24,45 @@ Fuel cycle utility objects, including sink algorithms
 """
 import numpy as np
 import numba as nb
+from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
 from bluemira.base.lookandfeel import bpwarn
 from bluemira.base.error import FuelCycleError
-from bluemira.utilities.tools import discretise_1d
+
+
+# =============================================================================
+# Miscellaneous utility functions.
+# =============================================================================
+
+def discretise_1d(x, y, n, method="linear"):
+    """
+    Discretise x and y for a given number of points.
+
+    Parameters
+    ----------
+    x: np.array
+        The x data
+    y: np.array
+        The y data
+    n: int
+        The number of discretisation points
+    method: str
+        The interpolation method
+
+    Returns
+    -------
+    x_1d: np.array
+        The discretised x data
+    y_1d: np.array
+        The discretised y data
+    """
+    x = np.array(x)
+    y = np.array(y)
+    x_1d = np.linspace(x[0], x[-1], n)
+    y_1d = griddata(x, y, xi=x_1d, method=method)
+    return [x_1d, y_1d]
 
 
 def convert_flux_to_flow(flux, area):

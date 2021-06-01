@@ -25,13 +25,14 @@ Full fuel cycle model object
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import numpy as np
-from bluemira.fuelcycle.tfvutils import (
+from bluemira.fuel_cycle.tfv_utilities import (
     _speed_recycle,
     find_max_load_factor,
     legal_limit,
+    discretise_1d,
 )
-from bluemira.fuelcycle.blocks import TCycleComponent, TCycleFlow
-from bluemira.utilities.tools import findnoisylocals, discretise_1d, tomols
+from bluemira.fuel_cycle.blocks import TCycleComponent, TCycleFlow
+from bluemira.utilities.tools import findnoisylocals, tomols
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
 from bluemira.base.lookandfeel import bprint
 from bluemira.base.parameter import ParameterFrame
