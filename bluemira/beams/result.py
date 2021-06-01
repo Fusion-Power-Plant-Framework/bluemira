@@ -24,9 +24,9 @@
 FE result object
 """
 import numpy as np
-from BLUEPRINT.beams.transformation import cyclic_pattern
-from BLUEPRINT.beams.plotting import Plot3D
-from BLUEPRINT.beams.geometry import DeformedGeometry
+from bluemira.beams.transformation import cyclic_pattern
+from bluemira.beams.plotting import Plot3D
+from bluemira.beams.geometry import DeformedGeometry
 
 
 class Result:
@@ -158,6 +158,6 @@ class Result:
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

@@ -19,15 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-
 """
 Load objects
 """
 import numpy as np
-from BLUEPRINT.base.error import BeamsError
-from BLUEPRINT.base.lookandfeel import bpwarn
-from BLUEPRINT.beams.constants import LOAD_MAPPING, LOAD_TYPES
+from bluemira.base.error import BeamsError
+from bluemira.base.lookandfeel import bpwarn
+from bluemira.beams.constants import LOAD_MAPPING, LOAD_TYPES
 
 
 def _check_load_type(load_type):
@@ -239,6 +237,6 @@ class LoadCase(list):
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

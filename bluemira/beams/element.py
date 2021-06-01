@@ -19,21 +19,19 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-
 """
 Finite element class
 """
 import numpy as np
-from BLUEPRINT.base.error import BeamsError
+from bluemira.base.error import BeamsError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.base.constants import GRAVITY
-from BLUEPRINT.beams.constants import NU, SD_LIMIT, N_INTERP
-from BLUEPRINT.beams.node import get_midpoint
-from BLUEPRINT.beams.loads import point_load, distributed_load
-from BLUEPRINT.beams.transformation import lambda_matrix
-from BLUEPRINT.beams.stress import hermite_polynomials
+from bluemira.base.constants import GRAVITY
+from bluemira.beams.constants import NU, SD_LIMIT, N_INTERP
+from bluemira.beams.node import get_midpoint
+from bluemira.beams.loads import point_load, distributed_load
+from bluemira.beams.transformation import lambda_matrix
+from bluemira.beams.stress import hermite_polynomials
 
 # TODO: Clean up some class stuff with cached_property decorators.
 # Test some existing stuff (functools?), and your own custom class.
@@ -600,6 +598,6 @@ class Element:
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

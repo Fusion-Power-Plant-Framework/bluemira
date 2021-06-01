@@ -19,8 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-
 """
 Matrix manipulation methods for finite element solver
 """
@@ -115,6 +113,6 @@ def cyclic_decomposition(k, p, l_nodes, r_nodes):
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

@@ -23,8 +23,8 @@
 FE transformation matrices and methods
 """
 import numpy as np
-from BLUEPRINT.geometry.geomtools import rotate_matrix
-from BLUEPRINT.beams.constants import FLOAT_TYPE
+from bluemira.geometry.geomtools import rotate_matrix
+from bluemira.beams.constants import FLOAT_TYPE
 
 
 def _nb_isclose(a, b, rtol=1.0e-5, atol=0.0e-8):
@@ -294,6 +294,6 @@ def cyclic_pattern(geometry, axis, angle, n, include_first=True):
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

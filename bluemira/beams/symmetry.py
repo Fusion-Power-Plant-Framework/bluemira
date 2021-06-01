@@ -23,13 +23,13 @@
 Symmetry boundary conditions
 """
 import numpy as np
-from BLUEPRINT.base.error import BeamsError
-from BLUEPRINT.geometry.geomtools import (
+from bluemira.base.error import BeamsError
+from bluemira.geometry.geomtools import (
     project_point_axis,
     rotate_matrix,
     get_angle_between_points,
 )
-from BLUEPRINT.beams.matrixops import cyclic_decomposition
+from bluemira.beams.matrixops import cyclic_decomposition
 
 
 class CyclicSymmetry:
@@ -195,6 +195,6 @@ class CyclicSymmetry:
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test(plotting=True)

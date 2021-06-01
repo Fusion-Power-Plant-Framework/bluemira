@@ -19,8 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-
 """
 Objects and tools for calculating cross-sectional properties
 """
@@ -32,9 +30,9 @@ from sectionproperties.pre.pre import Material as SPMaterial
 from sectionproperties.analysis.cross_section import CrossSection as _CrossSection
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geomtools import circle_seg, get_control_point
-from BLUEPRINT.base.error import BeamsError
-from BLUEPRINT.beams.constants import NEAR_ZERO
+from bluemira.geometry.geomtools import circle_seg, get_control_point
+from bluemira.base.error import BeamsError
+from bluemira.beams.constants import NEAR_ZERO
 
 
 @nb.jit(nopython=True, cache=True)
@@ -949,6 +947,6 @@ class AnalyticalShellComposite(CompositeCrossSection):
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test(plotting=True)

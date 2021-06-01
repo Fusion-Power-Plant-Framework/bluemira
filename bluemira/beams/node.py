@@ -19,16 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-
 """
 Finite element Node object
 """
 import numpy as np
 from copy import deepcopy
-from BLUEPRINT.base.error import BeamsError
-from BLUEPRINT.beams.loads import node_load
-from BLUEPRINT.beams.constants import FLOAT_TYPE, D_TOLERANCE
+from bluemira.base.error import BeamsError
+from bluemira.beams.loads import node_load
+from bluemira.beams.constants import FLOAT_TYPE, D_TOLERANCE
 
 
 class Node:
@@ -246,6 +244,6 @@ def get_midpoint(node1, node2):
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

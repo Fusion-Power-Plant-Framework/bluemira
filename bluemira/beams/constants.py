@@ -19,8 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-
 """
 Constants for use in the beams module.
 """
@@ -95,6 +93,6 @@ DEFLECT_COLOR = cm.get_cmap("viridis", 1000)
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

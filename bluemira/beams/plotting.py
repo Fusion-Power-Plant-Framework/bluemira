@@ -19,15 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-
 """
 FE plotting tools
 """
 import numpy as np
 from matplotlib.colors import DivergingNorm, Normalize
-from BLUEPRINT.utilities.plottools import Plot3D
-from BLUEPRINT.beams.constants import (
+from bluemira.utilities.plottools import Plot3D
+from bluemira.beams.constants import (
     LOAD_STR_VECTORS,
     LOAD_INT_VECTORS,
     FLOAT_TYPE,
@@ -529,6 +527,6 @@ class StressDeformedGeometryPlotter(BasePlotter):
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

@@ -19,21 +19,19 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-
-
 """
 Finite element modeal
 """
 import numpy as np
 from copy import deepcopy
 from scipy.sparse.linalg import spsolve
-from BLUEPRINT.base.error import BeamsError
-from BLUEPRINT.base.lookandfeel import bpwarn
-from BLUEPRINT.beams.geometry import Geometry
-from BLUEPRINT.beams.loads import LoadCase
-from BLUEPRINT.beams.constants import CONDEPS, R_LARGE_DISP
-from BLUEPRINT.beams.symmetry import CyclicSymmetry
-from BLUEPRINT.beams.result import Result
+from bluemira.base.error import BeamsError
+from bluemira.base.lookandfeel import bpwarn
+from bluemira.beams.geometry import Geometry
+from bluemira.beams.loads import LoadCase
+from bluemira.beams.constants import CONDEPS, R_LARGE_DISP
+from bluemira.beams.symmetry import CyclicSymmetry
+from bluemira.beams.result import Result
 
 
 def check_matrix_condition(matrix, digits):
@@ -608,6 +606,6 @@ class FiniteElementModel:
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()
