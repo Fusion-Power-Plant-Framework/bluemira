@@ -927,6 +927,6 @@ def fountain_bathtub(flow, t, fs, max_inventory, min_inventory):
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()

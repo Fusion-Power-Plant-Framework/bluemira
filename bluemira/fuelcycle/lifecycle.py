@@ -625,6 +625,6 @@ class LifeCycle(ReactorSystem):
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test()
