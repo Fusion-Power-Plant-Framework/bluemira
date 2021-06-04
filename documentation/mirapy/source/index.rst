@@ -38,9 +38,6 @@ Contents
 .. toctree::
    :maxdepth: 2
    
-   License <license>
-   Authors <authors>
-   Changelog <changelog>
    Introduction <introduction>
 
    Installation <install>
@@ -49,7 +46,7 @@ Contents
    geometry
    meshing
       
-   Module Reference <api/modules>
+   Module Reference <autoapi/index>
    
 Testing and Code coverage
 =========================

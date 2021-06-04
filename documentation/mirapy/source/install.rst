@@ -3,8 +3,6 @@
 Installation
 ============
 
-.. include:: ../INSTALL.rst
-
 ===========================
 Spyder developed enviroment
 ===========================
@@ -22,9 +20,7 @@ Pyscaffold (docs generation)
 The mirapy project has been created using the Pyscaffold project template...
 
 Docs generation (html and pdf):
-    
-    Examples
-    --------
+
     >>> python setup.py docs
     >>> sphinx-build -b latex docs/ build/sphinx/latex/
     or (from docs folder)
@@ -32,6 +28,4 @@ Docs generation (html and pdf):
 
 Run tests:
    
-    Examples
-    --------    
     >>> python setup.py tests
