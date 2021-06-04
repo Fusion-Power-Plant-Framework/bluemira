@@ -205,7 +205,7 @@ show_CAD(cutlet)
 # For this we're going to load some Loop shapes from files
 
 # %%
-path = get_BP_path("cad/test_data", subfolder="tests")
+path = get_BP_path("BLUEPRINT/cad/test_data", subfolder="tests")
 name = "plasmaloop.json"
 filename = os.sep.join([path, name])
 

@@ -268,7 +268,7 @@ ax.set_title("aloop from a numpy array")
 # First we need to get the folder where some Loops are stored:
 
 # %%
-path = get_BP_path("cad/test_data", subfolder="tests")
+path = get_BP_path("BLUEPRINT/cad/test_data", subfolder="tests")
 
 print(path)
 

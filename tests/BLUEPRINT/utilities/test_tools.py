@@ -78,7 +78,7 @@ class TestLeviCivitaTensor:
 
 class TestNumpyJSONEncoder:
     def test_childclass(self):
-        fp = get_BP_path("geometry/test_data", subfolder="tests")
+        fp = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "testJSONEncoder"])
         d = {"x": np.array([1, 2, 3.4, 4]), "y": [1, 3], "z": 3, "a": "aryhfdhsdf"}
         with open(fn, "w") as file:
