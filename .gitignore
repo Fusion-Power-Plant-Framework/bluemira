@@ -39,7 +39,7 @@ pip-delete-this-directory.txt
 
 # Unit test / coverage reports
 report.html
-htmlcov/
+htmlcov*/
 .tox/
 .nox/
 .coverage
@@ -139,26 +139,26 @@ dmypy.json
 
 # Images
 *.png
-!documentation/BLUEPRINT/images/*.png
-!documentation/BLUEPRINT/images/*/*.png
+!documentation/**/images/*.png
+!documentation/**/images/**/*.png
 !tests/test_data/reactors/SMOKE-TEST/plots/*.png
 !tests/utilities/test_data/*.png
 tests/utilities/test_data/*_new.png
 !tests/geometry/test_data/*.png
 tests/geometry/test_data/*_new.png
 *.jpeg
-!documentation/BLUEPRINT/images/*.jpeg
-!documentation/BLUEPRINT/images/*/*.jpeg
+!documentation/**/images/*.jpeg
+!documentation/**/images/**/*.jpeg
 *.JPG
-!documentation/BLUEPRINT/images/*.JPG
-!documentation/BLUEPRINT/images/*/*.JPG
+!documentation/**/images/*.JPG
+!documentation/**/images/*/*.JPG
 *.JPEG
-!documentation/BLUEPRINT/images/*.JPEG
-!documentation/BLUEPRINT/images/*/*.JPEG
-!documentation/BLUEPRINT/images/*.JPEG
+!documentation/**/images/*.JPEG
+!documentation/**/images/**/*.JPEG
+!documentation/**/images/*.JPEG
 *.gif
-!documentation/BLUEPRINT/images/*.gif
-!documentation/BLUEPRINT/images/*/*.gif
+!documentation/**/images/*.gif
+!documentation/**/images/**/*.gif
 
 # Ignore example output json files
 examples/systems/config_data/*_out.json
@@ -171,7 +171,7 @@ autoapi
 
 # Project specific
 generated_data
-tests/test_generated_data
-tests/geometry/test_data/testG-Shell
-tests/geometry/test_data/testh-Loop
-tests/geometry/test_data/testJ-MultiLoop
+tests/BLUEPRINT/test_generated_data
+tests/BLUEPRINT/geometry/test_data/testG-Shell
+tests/BLUEPRINT/geometry/test_data/testh-Loop
+tests/BLUEPRINT/geometry/test_data/testJ-MultiLoop
