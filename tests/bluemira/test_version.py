@@ -23,11 +23,11 @@
 Test that the version can be retrieved as expected
 """
 
-import BLUEPRINT
+import bluemira
 
 
 def test_version():
     """
     Test that we can get the version from BLUEPRINT.
     """
-    assert BLUEPRINT.__version__
+    assert bluemira.__version__
