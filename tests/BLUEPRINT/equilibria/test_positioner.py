@@ -41,7 +41,11 @@ from BLUEPRINT.equilibria.positioner import (
 )
 from BLUEPRINT.equilibria.gridops import Grid
 
-from tests.BLUEPRINT.equilibria.setup_methods import _coilset_setup, _make_square, _make_star
+from tests.BLUEPRINT.equilibria.setup_methods import (
+    _coilset_setup,
+    _make_square,
+    _make_star,
+)
 
 
 class TestXZLMapper:

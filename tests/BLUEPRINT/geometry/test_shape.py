@@ -80,7 +80,9 @@ class TestShape:
 
     def test_readwrite(self):
         read_directory = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
-        write_directory = make_BP_path("BLUEPRINT/geometry/test_generated_data", subfolder="tests")
+        write_directory = make_BP_path(
+            "BLUEPRINT/geometry/test_generated_data", subfolder="tests"
+        )
         shp = Shape(
             "tester_S_rw",
             family="S",
