@@ -29,8 +29,10 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = "BLUEPRINT"
-copyright = "2020, Matti Coleman, Simon McIntosh"
-author = "Matti Coleman, Simon McIntosh, UKAEA & contributors"
+copyright = (
+    "2021, M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short"
+)
+author = "M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short, UKAEA & contributors"
 
 # The full version, including alpha/beta/rc tags
 release = get_versions()["version"]
@@ -91,7 +93,7 @@ extensions.append("sphinx.ext.inheritance_diagram")
 extensions.append("autoapi.extension")
 
 autoapi_type = "python"
-autoapi_dirs = ["../../BLUEPRINT"]
+autoapi_dirs = ["../../../BLUEPRINT"]
 autoapi_keep_files = False
 autoapi_options = [
     "members",
