@@ -17,8 +17,6 @@ def setup(app):
     # https://stackoverflow.com/questions/14110790/numbered-math-equations-in-restructuredtext
     app.add_css_file("css/custom.css")
 
-    app.connect("autoapi-skip-member", SkipAlreadyDocumented())
-
 
 # To use markdown instead of rst see:
 # https://www.sphinx-doc.org/en/master/usage/markdown.html
@@ -46,6 +44,7 @@ release = get_versions()["version"]
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
     "sphinx_rtd_theme",
 ]
 
