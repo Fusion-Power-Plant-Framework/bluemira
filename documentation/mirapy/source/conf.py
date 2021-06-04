@@ -7,9 +7,9 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath("../../"))  # noqa (E402)
+sys.path.insert(0, os.path.abspath("../../../"))  # noqa (E402)
 
-from BLUEPRINT._version import get_versions
+from mirapy._version import get_versions
 
 
 def setup(app):
