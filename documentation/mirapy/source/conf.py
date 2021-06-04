@@ -28,9 +28,11 @@ def setup(app):
 
 # -- Project information -----------------------------------------------------
 
-project = "BLUEPRINT"
-copyright = "2020, Matti Coleman, Simon McIntosh"
-author = "Matti Coleman, Simon McIntosh, UKAEA & contributors"
+project = "mirapy"
+copyright = (
+    "2021, M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short"
+)
+author = "M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short, UKAEA & contributors"
 
 # The full version, including alpha/beta/rc tags
 release = get_versions()["version"]
@@ -91,7 +93,7 @@ extensions.append("sphinx.ext.inheritance_diagram")
 extensions.append("autoapi.extension")
 
 autoapi_type = "python"
-autoapi_dirs = ["../../BLUEPRINT"]
+autoapi_dirs = ["../../../mirapy"]
 autoapi_keep_files = False
 autoapi_options = [
     "members",
@@ -101,32 +103,3 @@ autoapi_options = [
     "show-module-summary",
     "special-members",
 ]
-
-
-class SkipAlreadyDocumented:
-    """
-    Skip already documented items for autoapi.
-
-    For use with global variables that are defined twice
-    for instance in try..except import expressions and similar situations
-    """
-
-    def __init__(self):
-        lis = [
-            "BLUEPRINT.syscodes.PROCESSwrapper.PATH",
-            "BLUEPRINT.systems.maintenance.RMMetrics.normalise",
-            "BLUEPRINT.reactor.PROCESS_ENABLED",
-        ]
-
-        self.dict = {i: 0 for i in lis}
-
-    def __call__(self, app, what, name, obj, skip, options):
-        """autoapi-skip-member definition"""
-        if name in self.dict:
-            # Skip first occurrence
-            if self.dict[name] < 1:
-                skip = True
-            else:
-                skip = False
-            self.dict[name] += 1
-        return skip
