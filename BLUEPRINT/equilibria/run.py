@@ -381,11 +381,11 @@ class EquilibriumProblem:
         cs_names = self.coilset.get_CS_names()
         for name in cs_names:
             max_currents = self.coilset.coils[name].get_max_current()
-            self.coilset.coils[name].set_current(max_currents)
+            self.coilset.coils[name].current = max_currents
             self.coilset.coils[name].mesh_coil(0.3)
         pf_names = self.coilset.get_PF_names()
         for name in pf_names:
-            self.coilset.coils[name].set_current(self.Ip)
+            self.coilset.coils[name].current = self.Ip
             self.coilset.coils[name].make_size()
             self.coilset.coils[name].fix_size()
             self.coilset.coils[name].mesh_coil(0.4)

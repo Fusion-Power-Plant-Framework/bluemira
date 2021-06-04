@@ -25,6 +25,7 @@ Coil and coil grouping objects
 
 from copy import deepcopy
 import numpy as np
+import types
 from scipy.interpolate import RectBivariateSpline
 from BLUEPRINT.magnetostatics.greens import (
     greens_psi,
@@ -114,9 +115,9 @@ class Coil:
     __slots___ = [
         "x",
         "z",
-        "current",
-        "dx",
-        "dz",
+        "_current",
+        "_dx",
+        "_dz",
         "j_max",
         "b_max",
         "n_filaments",
@@ -144,7 +145,7 @@ class Coil:
 
         self.x = x
         self.z = z
-        self.current = current
+        self._current = current
         self.j_max = j_max
         self.b_max = b_max
 
@@ -154,7 +155,7 @@ class Coil:
         if "dx" and "dz" not in kwargs:
             self.make_size()
         else:
-            self.dx, self.dz = kwargs["dx"], kwargs["dz"]
+            self._dx, self._dz = kwargs["dx"], kwargs["dz"]
             self._make_corners()
         self.n_filaments = kwargs.get("n_filaments", 1)  # Number of filaments
         self.n_turns = n_turns
@@ -162,36 +163,61 @@ class Coil:
         self.ctype = ctype
         if name is None:
             name = "Coil"
+
         self.name = name
         self.sub_coils = None
 
-    def set_current(self, current):
+    @property
+    def current(self):
         """
-        Sets the current in a Coil object
+        Get current.
+        """
+        return self._current
+
+    @current.setter
+    def current(self, val):
+        """
+        Sets the current in a Coil object.
 
         Parameters
         ----------
-        current: float
+        val: float
             The current to set in the coil
         """
-        self.current = current
+        self._current = val
         if self.sub_coils is not None:
             for coil in self.sub_coils.values():
-                coil.set_current(current / len(self.sub_coils))
+                coil.current = self._current / len(self.sub_coils)
 
-    def adjust_current(self, d_current):
+    @property
+    def dx(self):
         """
-        Adjusts the current in a Coil object
+        Get dx.
+        """
+        return self._dx
 
-        Parameters
-        ----------
-        d_current: float
-            The change in current to apply to the coil
+    @dx.setter
+    def dx(self, val):
         """
-        self.current += d_current
-        if self.sub_coils is not None:
-            for coil in self.sub_coils.values():
-                coil.adjust_current(d_current / len(self.sub_coils))
+        Adjusts the vertical thickness of the Coil object (meshing not handled).
+        """
+        self._dx = val
+        self._make_corners()
+
+    @property
+    def dz(self):
+        """
+        Get dz.
+        """
+        return self._dz
+
+    @dz.setter
+    def dz(self, val):
+        """
+        Adjusts the radial thickness of the Coil object (meshing not handled).
+        """
+        self._dz = val
+        self._make_corners()
 
     def set_position(self, x, z, dz=None):
         """
@@ -214,7 +240,7 @@ class Coil:
             if self.ctype == "CS":
                 self._make_corners()
         else:
-            self.set_dz(dz)
+            self.dz = dz
         self.sub_coils = None  # Need to re-mesh if this is what you want
 
     def adjust_position(self, dx, dz):
@@ -230,20 +256,6 @@ class Coil:
         """
         self.set_position(self.x + dx, self.z + dz)
 
-    def set_dx(self, dx):
-        """
-        Adjusts the radial thickness of the Coil object (meshing not handled)
-        """
-        self.dx = dx
-        self._make_corners()
-
-    def set_dz(self, dz):
-        """
-        Adjusts the vertical thickness of the Coil object (meshing not handled)
-        """
-        self.dz = dz
-        self._make_corners()
-
     def make_size(self, current=None):
         """
         Calculate coil corner locations (ANTI-CLOCKWISE ordered)
@@ -253,7 +265,7 @@ class Coil:
                 current = self.current
 
             half_width = (abs(current) / (1e6 * self.j_max)) ** 0.5 / 2
-            self.dx, self.dz = half_width, half_width
+            self._dx, self._dz = half_width, half_width
             self._make_corners()
             self.sub_coils = None  # Need to re-mesh if this is what you want
         else:
@@ -263,7 +275,7 @@ class Coil:
         """
         Makes the coil corner vectors
         """
-        self.rc = np.sqrt(self.dx ** 2 + self.dz ** 2) / 2
+        self.rc = np.sqrt(self._dx ** 2 + self._dz ** 2) / 2
         self.x_corner, self.z_corner = make_coil_corners(
             self.x, self.z, self.dx, self.dz
         )
@@ -656,6 +668,20 @@ class Coil:
         """
         Plots the Coil object onto `ax`. Should only be used for individual
         coils. Use CoilSet.plot() for CoilSet objects
+
+        Parameters
+        ----------
+        ax: axis object
+            Matplotlib axis object, optional
+        subcoil: bool
+            Whether or not to plot the Coil subcoils
+        **kwargs
+            arguments passed to Matplotlib
+
+        Returns
+        -------
+        CoilPlotter
+
         """
         return CoilPlotter(self, ax=ax, subcoil=subcoil, **kwargs)
 
@@ -719,14 +745,74 @@ class CoilGroup:
         except AttributeError:  # Coils still unnamed (list)
             return "\n".join(c.__str__() for c in self.coils)
 
-    def to_dict(self):
+    def circuit_expander(self):
         """
-        Returns a dict of coil dicts:
+        Expand circuits into their constituent coils.
+
+        Returns
+        -------
+        coils: dict
+
+        extra_coils: dict
+            A dictionary containing the number of extra CS and PF coils from splitting
+        """
+        coils = {}
+        extra_coils = {"PF": 0, "CS": 0}
+        for coil in self.coils.values():
+            if hasattr(coil, "splittable"):
+                for ii, circuit_coil in enumerate(coil.split()):
+                    coils[circuit_coil.name] = circuit_coil
+                    if ii > 0:
+                        extra_coils[circuit_coil.ctype] += 1
+            else:
+                coils[coil.name] = coil
+        return coils, extra_coils
+
+    def splitter(self, split_circuits):
+        """
+        Split circuits and add new coils to Group.
+
+        Parameters
+        ----------
+        split_circuits: bool
+            Split circuits or not
+
+        """
+        if split_circuits:
+            self.coils, extra_coils = self.circuit_expander()
+            self.n_PF += extra_coils["PF"]
+            self.n_CS += extra_coils["CS"]
+            self.n_coils += extra_coils["PF"] + extra_coils["CS"]
+
+    def to_dict(self, split_circuits=True):
+        """
+        Convert Group to dictionary.
+
+        Parameters
+        ----------
+        split_circuits: bool, optional
+            split circuit coils into the constituent coils, by default True
+
+        Returns
+        -------
+        dict
+            a dict of coil dicts
+
+        Notes
+        -----
+        Example output:
+
         {'PF_1': {'X': 10.4, 'Z': 4.4, 'I': 36, ...},
         'PF_2': {'X': 4.4, ....}}
         """
         cdict = {}
-        for name, coil in self.coils.items():
+
+        if split_circuits:
+            coils, _ = self.circuit_expander()
+        else:
+            coils = self.coils
+
+        for name, coil in coils.items():
             cdict[name] = coil.to_dict()
         return cdict
 
@@ -736,9 +822,14 @@ class CoilGroup:
         """
         return deepcopy(self)
 
-    def to_group_vecs(self):
+    def to_group_vecs(self, split_circuits=True):
         """
         Convert CoilGroup properties to numpy arrays
+
+        Parameters
+        ----------
+        split_circuits: bool, optional
+            split circuit coils into the constituent coils, by default True.
 
         Returns
         -------
@@ -752,11 +843,19 @@ class CoilGroup:
             The coil size in the z-direction.
         currents: np.ndarray(n_coils)
             The coil currents.
+
         """
-        x, z = np.zeros(self.n_coils), np.zeros(self.n_coils)
-        dx, dz = np.zeros(self.n_coils), np.zeros(self.n_coils)
-        currents = np.zeros(self.n_coils)
-        for i, coil in enumerate(self.coils.values()):
+        if split_circuits:
+            coils, extra_coils = self.circuit_expander()
+            n_coils = self.n_coils + extra_coils["PF"] + extra_coils["CS"]
+        else:
+            coils = self.coils
+            n_coils = self.n_coils
+
+        x, z = np.zeros(n_coils), np.zeros(n_coils)
+        dx, dz = np.zeros(n_coils), np.zeros(n_coils)
+        currents = np.zeros(n_coils)
+        for i, coil in enumerate(coils.values()):
             x[i], z[i] = coil.x, coil.z
             dx[i], dz[i] = coil.dx, coil.dz
             currents[i] = coil.current
@@ -1218,12 +1317,12 @@ class Solenoid(CoilGroup):
         old_currents = [coil.current for coil in self.coils]
         for coil in self.coils:
             max_current = coil.get_max_current()
-            coil.set_current(max_current)
+            coil.current = max_current
         self.mesh_coils(0.2)
         psimax = self.psi(x, z)
 
         for current, coil in zip(old_currents, self.coils):
-            coil.set_current(current)
+            coil.current = current
         return 2 * np.pi * psimax
 
 
@@ -1648,14 +1747,14 @@ class CoilSet(CoilGroup):
         Modify currents in coils: [I]<--[I]+[dI]
         """
         for coil, d_i in zip(self._ccoils, current_change):
-            coil.adjust_current(d_i)
+            coil.current += d_i
 
     def set_control_currents(self, currents, update_size=True):
         """
         Sets the currents in the coils being controlled
         """
         for coil, current in zip(self._ccoils, currents):
-            coil.set_current(current)
+            coil.current = current
         if update_size:
             self.adjust_sizes()
             self.mesh_coils()
@@ -1703,7 +1802,11 @@ class CoilSet(CoilGroup):
         return PulsePlotter(self, ax=ax)
 
     def generate_cross_sections(
-        self, mesh_sizes=None, geometry_names=None, verbose=True
+        self,
+        mesh_sizes=None,
+        geometry_names=None,
+        verbose=True,
+        split_circuits=True,
     ):
         """
         Generate the meshed `CrossSection` for this CoilSet
@@ -1731,6 +1834,8 @@ class CoilSet(CoilGroup):
         verbose : bool, optional
             Determines if verbose mesh cleaning output should be provided,
             by default True.
+        split_circuits: bool, optional
+            Split circuit coils into individual coils, by default True.
 
         Returns
         -------
@@ -1741,7 +1846,11 @@ class CoilSet(CoilGroup):
         """
         cross_sections = []
         loops = []
-        coils = self.coils.values()
+        if split_circuits:
+            coils, _ = self.circuit_expander()
+            coils = coils.values()
+        else:
+            coils = self.coils.values()
         if geometry_names:
             coils = [self.coils[name] for name in geometry_names]
         for coil in coils:
@@ -1755,15 +1864,92 @@ class CoilSet(CoilGroup):
         return cross_sections, loops
 
 
-class Circuit(Coil):
+class SymmetricCircuit(Coil):
     """
-    Represents a set of coils connected in a circuit.
+    Represents a set of Symmetric coils in the z direction connected in a circuit.
+    The coils are identical except for their z position.
 
-    NOTE: At the moment, only represents two symmetric coils but should be easy
-    to adapt to a generic case. Likely need to change the initialisation to take
-    coil objects rather than paramaters for a single coil. Also consider if
+    Parameters
+    ----------
+    *args
+        Coil positional arguments
+    **kwargs
+        Coil keyword arguments
+
+    Notes
+    -----
+    At the moment, only represents two symmetric coils but should be easy
+    to adapt to a generic case. Possibly need to change the initialisation to take
+    coil objects rather than paramaters for a single coil. The other option is to take
+    a list of positional parameters to iterate over. Also consider if
     ForceField class needs adapting to work with such a case.
+    Fractional current is another extension to the class.
+
+    If any of these are implemented a subclass that is based on a generic circuit
+    could be made where the generic circuit probably will contain most of the current
+    functionality.
+
     """
+
+    __slots__ = ["_n_coils", "_pm", "_meshed", "splittable"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.splittable = True
+        self._n_coils = 2
+        self._pm = "±"
+        self._meshed = False
+
+    def split(self):
+        """
+        Split a circuit into its individual coils.
+
+        Returns
+        -------
+        list
+          An single element list of the coil if not splittable
+
+        Yields
+        ------
+        Coil-like
+            a split circuit coil
+
+        """
+        if not self.splittable:
+            return [self]
+        for n_c in range(self._n_coils):
+            coil = self.copy()
+            coil._set_properties(n_c)
+            coil.splittable = False
+            yield coil
+
+    def _set_properties(self, coil_number):
+        """
+        Explicitly set properties of the coil that are implicit in the circuit.
+
+        Parameters
+        ----------
+        coil_number: int
+            coil number within circuit (0 indexed)
+
+        """
+        if coil_number == 1:
+            self._set_coil2_properties(existing_copy=True)
+
+        self._pm = ""
+
+        # Use Coil methods instead of circuit methods
+        for method in [
+            "_control_Bx_greens",
+            "_control_Bx_analytical",
+            "_control_Bz_greens",
+            "_control_Bz_analytical",
+            "_points_inside_coil",
+            "control_psi",
+            "mesh_coil",
+            "plot",
+        ]:
+            setattr(self, method, types.MethodType(getattr(Coil, method), self))
 
     def _points_inside_coil(self, x, z):
         """
@@ -1927,8 +2113,72 @@ class Circuit(Coil):
         Pretty circuit printing for debug.
         """
         return (
-            f"X={self.x:.2f} m, Z=+-{self.z:.2f} m, I={self.current/1e6:.2f} MA "
+            f"X={self.x:.2f} m, Z={self._pm}{self.z:.2f} m, I={self.current/1e6:.2f} MA "
             f"control={self.control}"
+        )
+
+    def mesh_coil(self, d_coil):
+        """
+        Mesh a coil as done in Coil.
+        """
+        super().mesh_coil(d_coil)
+        self._meshed = d_coil
+
+    def _remesh(self):
+        """
+        Mesh a coil with the last meshing value
+        if the coil has been meshed.
+        """
+        if self._meshed:
+            self.mesh_coil(self._meshed)
+
+    def _set_coil2_properties(self, coil_number=1, existing_copy=False):
+        """
+        Set the properties of the virtual coil on a copy of the
+        current instance of the circuit.
+
+        Parameter
+        ---------
+        coil_number: int
+            number of coil
+        existing_copy: bool
+            make a copy of the current instance, default is False
+
+        Returns
+        -------
+        coil2: instance
+            instance of SymmetricCircuit
+
+        """
+        coil2 = self if existing_copy else self.copy()
+        coil2.z = -coil2.z
+        coil2._make_corners()
+        coil2._remesh()
+        coil2.name += f".{coil_number}"
+        return coil2
+
+    def plot(self, ax=None, subcoil=True, **kwargs):
+        """
+        Plots the Coil object onto `ax`. Should only be used for individual
+        coils. Use CoilSet.plot() for CoilSet objects
+
+        Parameters
+        ----------
+        ax: axis object
+            Matplotlib axis object, optional
+        subcoil: bool
+            Whether or not to plot the Coil subcoils
+        **kwargs
+            arguments passed to Matplotlib
+
+        Returns
+        -------
+        CoilPlotter
+
+        """
+        ret_ax = super().plot(ax=ax, subcoil=subcoil, **kwargs)
+        return super(SymmetricCircuit, self._set_coil2_properties()).plot(
+            ax=ret_ax(), subcoil=subcoil, **kwargs
         )
 
 

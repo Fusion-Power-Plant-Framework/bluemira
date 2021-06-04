@@ -428,15 +428,15 @@ class Reactor(ReactorSystem):
 
         # Load all PROCESS vars mapped with a BLUEPRINT inputs
         if read_all:
-            v = []
-            for k in self.params.keys():
-                p = self.params.get(k)
-                if p.mapping is not None and "PROCESS" in p.mapping:
-                    v.append(k)
+            var = []
+            for key in self.params.keys():
+                param = self.params.get(key)
+                if param.mapping is not None and "PROCESS" in param.mapping:
+                    var.append(key)
 
         # Load a reduced set of inputs
         else:
-            v = [
+            var = [
                 "R_0",
                 "I_p",
                 "B_0",
@@ -462,8 +462,8 @@ class Reactor(ReactorSystem):
                 "P_fus_DT",
                 "P_fus_DD",
             ]
-        p = self.__PROCESS__.extract_outputs(v)
-        self.add_parameters(dict(zip(v, p)))
+        param = self.__PROCESS__.extract_outputs(var)
+        self.add_parameters(dict(zip(var, param)), source="PROCESS")
 
     def _mock_PROCESS_run(self):
         """
@@ -475,7 +475,7 @@ class Reactor(ReactorSystem):
         with open(filename, "r") as fh:
             process = json.load(fh)
 
-        self.add_parameters(process)
+        self.add_parameters(process, source="Input")
         self.add_parameter(
             "f_DD_fus",
             "Fraction of DD fusion",
@@ -644,28 +644,28 @@ class Reactor(ReactorSystem):
         shaf = d["shaf_shift"]
         shaf = np.sqrt(shaf[0] ** 2 + shaf[1] ** 2)  # absolute shaf shift
         # fmt: off
-        p = [['I_p', 'Plasma current', d['Ip'] / 1e6, 'MA', None, 'equilibria'],
-             ['q_95', 'Plasma safety factor', d['q_95'], 'N/A', None, 'equilibria'],
-             ['Vp', 'Plasma volume', d['V'], 'm^3', None, 'equilibria'],
-             ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure',
-              d['beta_p'], 'N/A', None, 'equilibria'],
-             ['li', 'Normalised plasma internal inductance', d['li'], 'N/A', None, 'equilibria'],
-             ['li3', 'Normalised plasma internal inductance (ITER def)', d['li(3)'], 'N/A', None, 'equilibria'],
-             ['Li', 'Plasma internal inductance', d['Li'], 'H', None, 'equilibria'],
-             ['Wp', 'Plasma energy', d['W'] / 1e6, 'MJ', None, 'equilibria'],
-             ['delta_95', '95th percentile plasma triangularity', d['delta_95'], 'N/A', None, 'equilibria'],
-             ['kappa_95', '95th percentile plasma elongation', d['kappa_95'], 'N/A', None, 'equilibria'],
-             ['delta', 'Plasma triangularity', d['delta'], 'N/A', None, 'equilibria'],
-             ['kappa', 'Plasma elongation', d['kappa'], 'N/A', None, 'equilibria'],
-             ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', shaf, 'm', None, 'equilibria'],
-             ['lambda_q', 'Scrape-off layer power decay length', lq, 'm', None, 'Eich scaling']]
+        params = [['I_p', 'Plasma current', d['Ip'] / 1e6, 'MA', None, 'equilibria'],
+                  ['q_95', 'Plasma safety factor', d['q_95'], 'N/A', None, 'equilibria'],
+                  ['Vp', 'Plasma volume', d['V'], 'm^3', None, 'equilibria'],
+                  ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure',
+                  d['beta_p'], 'N/A', None, 'equilibria'],
+                  ['li', 'Normalised plasma internal inductance', d['li'], 'N/A', None, 'equilibria'],
+                  ['li3', 'Normalised plasma internal inductance (ITER def)', d['li(3)'], 'N/A', None, 'equilibria'],
+                  ['Li', 'Plasma internal inductance', d['Li'], 'H', None, 'equilibria'],
+                  ['Wp', 'Plasma energy', d['W'] / 1e6, 'MJ', None, 'equilibria'],
+                  ['delta_95', '95th percentile plasma triangularity', d['delta_95'], 'N/A', None, 'equilibria'],
+                  ['kappa_95', '95th percentile plasma elongation', d['kappa_95'], 'N/A', None, 'equilibria'],
+                  ['delta', 'Plasma triangularity', d['delta'], 'N/A', None, 'equilibria'],
+                  ['kappa', 'Plasma elongation', d['kappa'], 'N/A', None, 'equilibria'],
+                  ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', shaf, 'm', None, 'equilibria'],
+                  ['lambda_q', 'Scrape-off layer power decay length', lq, 'm', None, 'Eich scaling']]
         # fmt: on
-        self.add_parameters(p)
+        self.add_parameters(params)
         # self.EM = EquilibriumManipulator(self.eqref)
         # self.EM.classify_legs(lq)
         self.PL.update_separatrix(eq.get_separatrix())
         self.PL.update_LCFS(eq.get_LCFS())
-        self.PL.add_parameters(p)
+        self.PL.add_parameters(params)
         self.PF = PoloidalFieldCoils(self.params)
         self.PF.update_coilset(self.EQ.coilset)
 
@@ -1232,11 +1232,11 @@ class Reactor(ReactorSystem):
         }
         rm = RMMetrics(self.params, to_rm)
         # fmt: off
-        p = [['bmd', 'Blanket mainteance duration', rm.FM, 'days', None, 'BLUEPRINT'],
-             ['dmd', 'Divertor maintenance duration', rm.DM, 'days', None, 'BLUEPRINT'],
-             ['RMTFI', 'RM Technical Feasibility Index', rm.RMTFI, 'N/A', None, 'BLUEPRINT']]
+        params = [['bmd', 'Blanket mainteance duration', rm.FM, 'days', None, 'BLUEPRINT'],
+                  ['dmd', 'Divertor maintenance duration', rm.DM, 'days', None, 'BLUEPRINT'],
+                  ['RMTFI', 'RM Technical Feasibility Index', rm.RMTFI, 'N/A', None, 'BLUEPRINT']]
         # fmt: on
-        self.add_parameters(p)
+        self.add_parameters(params)
 
     def define_HCD_strategy(self, method="power"):
         """
@@ -1326,11 +1326,11 @@ class Reactor(ReactorSystem):
             self.TFV.run_model(time_dicts)
         m = self.TFV.get_startup_inventory(method=method)
         t = self.TFV.get_doubling_time(method=method)
-        p = [
+        params = [
             ["m_T_start", "Tritium start-up inventory", m, "kg", None, "BLUEPRINT"],
             ["t_d", "Tritium doubling time", t, "years", None, "BLUEPRINT"],
         ]
-        self.add_parameters(p)
+        self.add_parameters(params)
         if plot:
             self.TFV.dist_plot()
 
@@ -1366,11 +1366,11 @@ class Reactor(ReactorSystem):
         self.BOP = BalanceOfPlantClass(self.params, to_bop)
 
         p_el_net, eta = self.BOP.build()
-        p = [
+        params = [
             ["P_el_net", "Net electric power", p_el_net, "MWe", None, "BLUEPRINT"],
             ["eta_plant", "Plant efficiency", eta * 100, "%", None, "BLUEPRINT"],
         ]
-        self.add_parameters(p)
+        self.add_parameters(params)
         if plot:
             self.BOP.plot()
 

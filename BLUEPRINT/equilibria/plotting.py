@@ -461,37 +461,61 @@ class CoilPlotter(Plotter):
         Whether or not to plot labels on the coils
     force: None or np.array((1, 2))
         Whether to plot force vectors, and if so the array of force vectors
+    centre: None or np.array((1, 2))
+        Set the central point of the coil label
     """
 
-    def __init__(self, coil, ax=None, subcoil=True, label=False, force=None):
-        super(CoilPlotter, self).__init__(ax)
+    def __init__(
+        self, coil, ax=None, subcoil=True, label=False, force=None, centre=None, **kwargs
+    ):
+        super().__init__(ax)
         self.coil = coil
-        self.plot_coil(subcoil=subcoil, label=label, force=force)
+        self.plot_coil(
+            subcoil=subcoil,
+            label=label,
+            force=force,
+            centre=centre,
+            is_coilset=kwargs.pop("is_coilset", False),
+            **kwargs,
+        )
 
-    def plot_coil(self, subcoil, label, force):
+    def plot_coil(
+        self,
+        subcoil=True,
+        label=False,
+        fill=True,
+        force=None,
+        centre=None,
+        linewidth=None,
+        is_coilset=False,
+        **kwargs,
+    ):
         """
         Plot a coil onto the Axes.
         """
         if subcoil:
             if self.coil.sub_coils is None:
-                bpwarn(
-                    "No sub-coils to plot. Use coil.mesh_coil(d_coil) to create sub-coils."
-                )
+                if not is_coilset:
+                    bpwarn(
+                        "No sub-coils to plot. Use coil.mesh_coil(d_coil) to create sub-coils."
+                    )
             else:
-                for name, sc in self.coil.sub_coils.items():
-                    _plot_coil(self.ax, sc, fill=False)
-        _plot_coil(self.ax, self.coil, fill=True)
+                for name, sub_coil in self.coil.sub_coils.items():
+                    _plot_coil(
+                        self.ax, sub_coil, fill=False, linewidth=linewidth, **kwargs
+                    )
+        _plot_coil(self.ax, self.coil, fill=fill, linewidth=linewidth, **kwargs)
         if force is not None:
             d_fx, d_fz = force / M_PER_MN
             self.ax.arrow(self.coil.x, self.coil.z, 0, d_fz, color="r", width=0.1)
         if label:
-            self.annotate_coil(force)
+            self.annotate_coil(force=force, centre=centre)
 
-    def annotate_coil(self, force=None):
+    def annotate_coil(self, force=None, centre=None):
         """
         Annotate a coil (name, current, force).
         """
-        _annotate_coil(self.ax, self.coil, force=force)
+        _annotate_coil(self.ax, self.coil, force=force, centre=centre)
 
 
 class PlasmaCoilPlotter(Plotter):
@@ -558,15 +582,9 @@ class CoilSetPlotter(Plotter):
     ):
         super().__init__(ax)
         self.coilset = coilset
-        self.colors = kwargs.get("facecolor", None)
-        if "facecolor" in kwargs:
-            del kwargs["facecolor"]
-        self.linewidth = kwargs.get("linewidth", 2)
-        if "linewidth" in kwargs:
-            del kwargs["linewidth"]
-        self.edgecolor = kwargs.get("edgecolor", "k")
-        if "edgecolor" in kwargs:
-            del kwargs["edgecolor"]
+        self.colors = kwargs.pop("facecolor", None)
+        self.linewidth = kwargs.pop("linewidth", 2)
+        self.edgecolor = kwargs.pop("edgecolor", "k")
         if "alpha" in kwargs:
             # Alpha can be provided as a list or cycle to other systems, so make sure we
             # support that here.
@@ -594,66 +612,33 @@ class CoilSetPlotter(Plotter):
                 elif coil.ctype == "CS":
                     kwargs["facecolor"] = self.colors[1]
             if not coil.control:
-                self.plot_coil(coil, label=False)
+                coil.plot(  # include self.linewidth here?
+                    ax=self.ax, label=False, is_coilset=True, **kwargs
+                )
             else:
                 if force is None:
-                    self.plot_coil(
-                        coil,
+                    coil.plot(
+                        ax=self.ax,
                         subcoil=subcoil,
                         color=self.edgecolor,
                         linewidth=self.linewidth,
                         label=label,
                         centre=centre,
+                        is_coilset=True,
                         **kwargs,
                     )
                 else:
-                    self.plot_coil(
-                        coil,
+                    coil.plot(
+                        ax=self.ax,
                         subcoil=subcoil,
                         color=self.edgecolor,
                         linewidth=self.linewidth,
                         label=label,
                         force=force[i],
                         centre=centre,
+                        is_coilset=True,
                         **kwargs,
                     )
-
-    def plot_coil(
-        self,
-        coil,
-        label=True,
-        fill=True,
-        subcoil=True,
-        force=None,
-        centre=None,
-        linewidth=2,
-        **kwargs,
-    ):
-        """
-        Plot a single coil.
-        """
-        if subcoil:
-            if coil.sub_coils is not None:
-                for name, sc in coil.sub_coils.items():
-                    self.plot_coil(
-                        sc,
-                        label=False,
-                        fill=False,
-                        linewidth=self.linewidth * 0.5,
-                        **kwargs,
-                    )
-        _plot_coil(self.ax, coil, fill, linewidth=linewidth, **kwargs)
-        if force is not None:
-            d_fx, d_fz = force / M_PER_MN
-            self.ax.arrow(coil.x, coil.z, 0, d_fz, color="r", width=0.1)
-        if label:
-            self.annotate_coil(coil, centre=centre, force=force)
-
-    def annotate_coil(self, coil, force=None, centre=None):
-        """
-        Annotate a coil (name, current, force).
-        """
-        _annotate_coil(self.ax, coil, force=force, centre=centre)
 
     def get_centre(self):
         """
@@ -794,7 +779,7 @@ class XZLPlotter(Plotter):
     """
 
     def __init__(self, xzl_mapper, ax=None):
-        super(XZLPlotter, self).__init__(ax)
+        super().__init__(ax)
         self.xzl = xzl_mapper
 
         for loop in self.xzl.excl_zones:
@@ -805,6 +790,21 @@ class XZLPlotter(Plotter):
 
         for loop in self.xzl.incl_loops:
             loop.plot(self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--")
+
+
+class RegionPlotter(Plotter):
+    """
+    Utility class for plotting 2D L constraints
+    """
+
+    def __init__(self, region_mapper, ax=None):
+        super().__init__(ax)
+        self.rmp = region_mapper
+
+        for intpltr in self.rmp.regions.values():
+            intpltr.loop.plot(
+                self.ax, fill=True, alpha=0.2, zorder=1, facecolor="g", edgecolor="g"
+            )
 
 
 if __name__ == "__main__":

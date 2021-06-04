@@ -165,7 +165,7 @@ class ReactorPlotter:
         self.axxz = None
 
     @staticmethod
-    def set_defaults():
+    def set_defaults(force=False):
         """
         Set the defaults for the Reactor plot.
         """
@@ -173,7 +173,7 @@ class ReactorPlotter:
         plt.rcParams["legend.fontsize"] = 14
         plt.rcParams["figure.figsize"] = [18, 18]
         plt.rcParams["lines.linewidth"] = 0.1
-        plot_defaults()
+        plot_defaults(force=force)
 
     def plot_1D(self, width=1.0):
         """
@@ -183,7 +183,7 @@ class ReactorPlotter:
         # into the fold...
         plot_PROCESS(self.reactor.__PROCESS__.filename, width=width)
 
-    def plot_xz(self, x=None, z=None, show_eq=False):
+    def plot_xz(self, x=None, z=None, show_eq=False, force=False):
         """
         Plots the X-Z cross-section of the reactor through the middle of a
         sector. Colors will be ditacted by the reactor palette object.
@@ -204,7 +204,7 @@ class ReactorPlotter:
             z = [-22, 15]
         if x is None:
             x = [0, 22]
-        ReactorPlotter.set_defaults()
+        ReactorPlotter.set_defaults(force=force)
         failed = []
         _, self.axxz = plt.subplots(figsize=[14, 10])
         for name in ["PL", "PF", "TF", "ATEC", "DIV", "BB", "VV", "TS", "CR", "RS"]:
@@ -255,7 +255,7 @@ class ReactorPlotter:
             _, self.axxz = plt.subplots(figsize=[14, 10])
         eq.plot(ax=self.axxz)
 
-    def plot_xy(self, x=None, y=None):
+    def plot_xy(self, x=None, y=None, force=False):
         """
         Plots the midplane x-y cross-section of the reactor as seen from above
         the upper port.
@@ -271,7 +271,7 @@ class ReactorPlotter:
             y = [-8, 8]
         if x is None:
             x = [1, 20]
-        ReactorPlotter.set_defaults()
+        ReactorPlotter.set_defaults(force=force)
         failed = []
         _, self.axxy = plt.subplots(figsize=[14, 10])
         for name in ["PL", "BB", "TF", "VV", "TS", "CR", "RS"]:

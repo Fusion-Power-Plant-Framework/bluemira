@@ -40,7 +40,7 @@ from BLUEPRINT.geometry.geomtools import lengthnorm, loop_plane_intersect
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.inscribedrect import inscribed_rect_in_poly
 from BLUEPRINT.equilibria.coils import Coil, CoilSet, PF_COIL_NAME, Solenoid
-from BLUEPRINT.equilibria.plotting import XZLPlotter
+from BLUEPRINT.equilibria.plotting import XZLPlotter, RegionPlotter
 from BLUEPRINT.utilities import tools
 
 
@@ -509,9 +509,9 @@ class RegionMapper:
     def _regionname(self, region):
         if not isinstance(region, str):
             return self.name_str.format(region)
-        elif re.match("^R_[0-9]+$", region):
+        elif re.match("^R_[0-9]+([.][0-9]+)?$", region):
             return region
-        elif re.match("^PF_[0-9]+$", region):
+        elif re.match("^PF_[0-9]+([.][0-9]+)?$", region):
             return self._name_converter(region, True)
         else:
             raise NameError("RegionName not valid")
@@ -607,6 +607,12 @@ class RegionMapper:
             )
 
         return self.max_currents
+
+    def plot(self, ax=None):
+        """
+        Plot the RegionMapper.
+        """
+        return RegionPlotter(self, ax=ax)
 
 
 class RegionInterpolator:

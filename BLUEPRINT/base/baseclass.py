@@ -202,14 +202,14 @@ class ReactorSystem(TypeBase):
         """
         self.params.add_parameter(var, name, value, unit, descr, source, mapping)
 
-    def add_parameters(self, record_list):
+    def add_parameters(self, record_list, source=None):
         """
         Handles lists for new Parameters or dicts for existing keywords only
         """
         if isinstance(record_list, list):
-            self.params.add_parameters(record_list)
+            self.params.add_parameters(record_list, source=source)
         elif isinstance(record_list, dict):
-            self.params.update_kw_parameters(record_list)
+            self.params.update_kw_parameters(record_list, source=source)
 
     def build_CAD(self):
         """

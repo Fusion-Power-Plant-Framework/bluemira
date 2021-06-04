@@ -34,6 +34,13 @@ from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.parameterisations import flatD
 from BLUEPRINT.equilibria.run import AbInitioEquilibriumProblem
 from BLUEPRINT.equilibria.profiles import DoublePowerFunc
+from BLUEPRINT.equilibria.positioner import CoilPositioner
+from BLUEPRINT.equilibria.coils import (
+    CoilSet,
+    SymmetricCircuit,
+    PF_COIL_NAME,
+    CS_COIL_NAME,
+)
 
 try:
     get_ipython().run_line_magic("matplotlib", "qt")
@@ -41,11 +48,32 @@ except AttributeError:
     pass
 
 # %%[markdown]
-# Set some plotting defaults
+# Set some plotting defaults, the Circuit run flag and the number of coils
 
 # %%
 plt.close("all")
 plot_defaults()
+
+# %%[markdown]
+# Set some problem defaults
+
+# %%
+USE_CIRCUITS = True
+
+n_PF = 6
+n_CS = 7
+
+R_0 = 6.8
+kappa = 1.7
+delta = 0.3
+r_cs = 1.555
+tk_cs = 0.3
+
+B_0 = 5.2
+A = 2
+Ip = 14e6
+betap = 0.7
+li = 0.7
 
 # %%[markdown]
 # Build a basis function along which to optimise the positions of the PF coils
@@ -58,6 +86,76 @@ clip = np.where(TF.x >= 2.6)
 TF = Loop(TF.x[clip], z=TF.z[clip])
 
 # %%[markdown]
+# Make coilset for circuits if required
+
+# %%
+
+
+def build_circuit_coilset(coilset, odd):
+    """
+    Build circuit based coilset
+    """
+    old_coils, pf_coils, cs_coils = [], [], []
+    central = None
+    for i in reversed(range(1, coilset.n_PF + 1)):
+        coil_name = PF_COIL_NAME.format(i)
+        if i <= coilset.n_PF // 2:
+            old_coils.append(coilset.coils[coil_name])
+
+    for i in reversed(range(1, coilset.n_CS + 1)):
+        coil_name = CS_COIL_NAME.format(i)
+        if i <= coilset.n_CS // 2:
+            old_coils.append(coilset.coils[coil_name])
+        elif odd and i == coilset.n_CS // 2 + 1:
+            central = coilset.coils[coil_name]
+
+    for old_coil in old_coils:
+        coil = SymmetricCircuit(
+            old_coil.x,
+            old_coil.z,
+            dx=old_coil.dx,
+            dz=old_coil.dz,
+            current=old_coil.current,
+            ctype=old_coil.ctype,
+            name=old_coil.name,
+            control=old_coil.control,
+            j_max=old_coil.j_max,
+            b_max=old_coil.b_max,
+        )
+        if coil.ctype == "PF":
+            pf_coils.append(coil)
+        elif coil.ctype == "CS":
+            cs_coils.append(coil)
+
+    if central is not None:
+        cs_coils.append(central)
+
+    return pf_coils, cs_coils
+
+
+if USE_CIRCUITS:
+
+    cs = CoilPositioner(
+        R_0=R_0,
+        A=A,
+        kappa=kappa,
+        delta=delta,
+        x_cs=r_cs,
+        tk_cs=tk_cs,
+        track=TF,
+        n_PF=n_PF,
+        n_CS=n_CS,
+        rtype="Normal",
+    )
+    pf_coils, cs_coils = build_circuit_coilset(cs.make_coilset(), odd=cs.n_CS % 2 == 1)
+
+    coilset = CoilSet(pf_coils + cs_coils, R_0=R_0)
+    n_PF, n_CS = None, None
+else:
+    coilset = None
+
+
+# %%[markdown]
 # Choose a plasma profile parameterisation (with initial values)
 
 # %%
@@ -68,23 +166,26 @@ profile = DoublePowerFunc([2, 2])
 
 # %%
 DN = AbInitioEquilibriumProblem(
-    R_0=6.8,
-    B_0=5.2,
-    A=2,
-    Ip=14e6,
-    betap=0.7,
-    li=0.7,
-    kappa=1.7,
-    delta=0.3,
-    r_cs=1.555,
-    tk_cs=0.3,
+    R_0=R_0,
+    B_0=B_0,
+    A=A,
+    Ip=Ip,
+    betap=betap,
+    li=li,
+    kappa=kappa,
+    delta=delta,
+    r_cs=r_cs,
+    tk_cs=tk_cs,
     tfbnd=TF,
-    n_PF=6,
-    n_CS=7,
+    n_PF=n_PF,
+    n_CS=n_CS,
     eqtype="DN",
     rtype="Normal",
     profile=profile,
+    coilset=coilset,
 )
+
+print(DN.coilset)
 
 # %%[markdown]
 # Let's assign some materials to the PF and CS coils

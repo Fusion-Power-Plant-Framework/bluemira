@@ -1407,6 +1407,8 @@ class Loop(GeomBase):
             return np.all(np.allclose(self.xyz, other.xyz))
         except ValueError:
             return False
+        except AttributeError:
+            return False
 
     def __hash__(self):
         """

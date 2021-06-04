@@ -190,7 +190,7 @@ class ParameterFrame:
         """
         Convert the ParameterFrame to a record of lists
         """
-        return [list(self.__dict__[k].to_list()) for k in self.__dict__.keys()]
+        return [list(self.__dict__[key].to_list()) for key in self.__dict__.keys()]
 
     def __eq__(self, other):
         """
@@ -254,40 +254,56 @@ class ParameterFrame:
             allow_new=True,
         )
 
-    def add_parameters(self, record_list):
+    def add_parameters(self, record_list, source=None):
         """
-        Handles a record_list for ParameterFrames and updates accordingly
-        if a dict is used, passes to update_kw_parameters
+        Handles a record_list for ParameterFrames and updates accordingly.
+        Items in record_list may be Parameter objects or lists in the following format:
+        [var, name, value, unit, description, source]. If a record_list is a dict, it is
+        passed to update_kw_parameters with the specified source.
+
+        Parameters
+        ----------
+        source: str
+            Updates the source parameter for each item in record_list with the
+            specified value, by default None (i.e. the value is left unchanged).
         """
         if isinstance(record_list, dict):
-            self.update_kw_parameters(record_list)
+            self.update_kw_parameters(record_list, source=source)
         else:
-            for p in record_list:
-                if isinstance(p, Parameter):
-                    self.add_parameter(p)
+            for param in record_list:
+                if isinstance(param, Parameter):
+                    if source is not None:
+                        param.source = source
+                    self.add_parameter(param)
                 else:
-                    self.add_parameter(*p)
+                    # List handling
+                    if source is not None:
+                        param[Parameter.__slots__.index("source")] = source
+                    self.add_parameter(*param)
 
     def set_parameter(self, var, value, source=None):
         """
         Updates only the value of a parameter in the ParameterFrame
         """
         self.__dict__[var].value = value
-        self.__dict__[var].source = source
+        if source is not None:
+            self.__dict__[var].source = source
 
-    def update_kw_parameters(self, kwargs):
+    def update_kw_parameters(self, kwargs, source=None):
         """
         Handles dictionary keys like update
         """
         # TODO: remove me ?
-        for k, v in kwargs.items():
-            if k not in self.__dict__:
+        for key, var in kwargs.items():
+            if key not in self.__dict__:
                 # Skip keys that aren't parameters, note this could mask typos!
                 continue
-            if isinstance(v, Parameter):
-                self.__dict__[k].value = v.value
+            if isinstance(var, Parameter):
+                self.__dict__[key].value = var.value
+                if source is not None:
+                    self.__dict__[key].source = source
             else:
-                self.__dict__[k].value = v
+                self.__dict__[key].value = var
 
     def items(self):
         """
@@ -499,16 +515,16 @@ class ParameterFrame:
             The ParameterFrame created from the dictionary.
         """
         records = [
-            [k]
+            [key]
             + [
-                v.get("name"),
-                v.get("value", None),
-                v.get("unit", None),
-                v.get("description", None),
-                v.get("source", None),
-                v.get("mapping", None),
+                val.get("name"),
+                val.get("value", None),
+                val.get("unit", None),
+                val.get("description", None),
+                val.get("source", None),
+                val.get("mapping", None),
             ]
-            for (k, v) in the_dict.items()
+            for (key, val) in the_dict.items()
         ]
         return cls(records)
 
@@ -648,7 +664,7 @@ class ParameterFrame:
                 raise ValueError(
                     f"Setting the values on a {self.__class__.__name__} using set_values_from_json requires a concise json format."
                 )
-            self.update_kw_parameters(the_data)
+            self.update_kw_parameters(the_data, source="Input")
 
     def diff_params(self, other: "ParameterFrame", include_new=False):
         """
