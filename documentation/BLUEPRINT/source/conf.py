@@ -29,9 +29,7 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = "BLUEPRINT"
-copyright = (
-    "2021, M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short"
-)
+copyright = "2020, Matti Coleman, Simon McIntosh"
 author = "Matti Coleman, Simon McIntosh, UKAEA & contributors"
 
 # The full version, including alpha/beta/rc tags
@@ -90,7 +88,6 @@ numfig = True
 
 # --- Configuration for sphinx-autoapi ---
 extensions.append("sphinx.ext.inheritance_diagram")
-extensions.append("sphinx.ext.todo")
 extensions.append("autoapi.extension")
 
 autoapi_type = "python"

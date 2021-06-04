@@ -1,5 +1,5 @@
 ========
-Meshing
+Mesh
 ========
 
 mirapy.meshing
@@ -12,13 +12,13 @@ it is possible to mesh the different components considering shape
 primitives, easily changing the mesh size, embedding points, etc.
 
 .. note:: At present, the module is limited to 2D mesh. It could be
-    easily extended to 3D mesh implementing an adequate mirapy.geo.Shape3D.
+    easily extended to 3D mesh implementing an adeguate mirapy.geo.Shape3D.
 
 A basic example for the creation of a mesh is reported in the following:
 
-.. literalinclude:: ../../examples/meshing/plasma_mesh_example.py
+.. literalinclude:: _static/demos/mesh/plasma_mesh_example.py
 
-.. figure:: _static/images/meshing/plasma_mesh_example.png
+.. figure:: _static/images/demos/mesh/plasma_mesh_example.png
    :width: 200
 
    Example of mesh for a typical plasma shape with embedded points

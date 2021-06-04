@@ -139,26 +139,26 @@ dmypy.json
 
 # Images
 *.png
-!documentation/images/*.png
-!documentation/images/*/*.png
+!documentation/BLUEPRINT/images/*.png
+!documentation/BLUEPRINT/images/*/*.png
 !tests/test_data/reactors/SMOKE-TEST/plots/*.png
 !tests/utilities/test_data/*.png
 tests/utilities/test_data/*_new.png
 !tests/geometry/test_data/*.png
 tests/geometry/test_data/*_new.png
 *.jpeg
-!documentation/images/*.jpeg
-!documentation/images/*/*.jpeg
+!documentation/BLUEPRINT/images/*.jpeg
+!documentation/BLUEPRINT/images/*/*.jpeg
 *.JPG
-!documentation/images/*.JPG
-!documentation/images/*/*.JPG
+!documentation/BLUEPRINT/images/*.JPG
+!documentation/BLUEPRINT/images/*/*.JPG
 *.JPEG
-!documentation/images/*.JPEG
-!documentation/images/*/*.JPEG
-!documentation/images/*.JPEG
+!documentation/BLUEPRINT/images/*.JPEG
+!documentation/BLUEPRINT/images/*/*.JPEG
+!documentation/BLUEPRINT/images/*.JPEG
 *.gif
-!documentation/images/*.gif
-!documentation/images/*/*.gif
+!documentation/BLUEPRINT/images/*.gif
+!documentation/BLUEPRINT/images/*/*.gif
 
 # Ignore example output json files
 examples/systems/config_data/*_out.json
