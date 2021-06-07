@@ -38,7 +38,8 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
-htmlcov/
+report.html
+htmlcov*/
 .tox/
 .nox/
 .coverage
@@ -127,3 +128,50 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# CAD
+*.stl
+*.STL
+*.STP
+*.STEP
+*.step
+*.stp
+
+# Images
+*.png
+!documentation/**/images/*.png
+!documentation/**/images/**/*.png
+!tests/BLUEPRINT/test_data/reactors/SMOKE-TEST/plots/*.png
+!tests/BLUEPRINT/utilities/test_data/*.png
+tests/BLUEPRINT/utilities/test_data/*_new.png
+!tests/BLUEPRINT/geometry/test_data/*.png
+tests/BLUEPRINT/geometry/test_data/*_new.png
+*.jpeg
+!documentation/**/images/*.jpeg
+!documentation/**/images/**/*.jpeg
+*.JPG
+!documentation/**/images/*.JPG
+!documentation/**/images/*/*.JPG
+*.JPEG
+!documentation/**/images/*.JPEG
+!documentation/**/images/**/*.JPEG
+!documentation/**/images/*.JPEG
+*.gif
+!documentation/**/images/*.gif
+!documentation/**/images/**/*.gif
+
+# Ignore example output json files
+examples/systems/config_data/*_out.json
+
+# Ignore API documentation - it should be regenerated, not stored in git
+autoapi
+
+# Jupyter checkpoints
+.ipynb_checkpoints
+
+# Project specific
+generated_data
+tests/BLUEPRINT/test_generated_data
+tests/BLUEPRINT/geometry/test_data/testG-Shell
+tests/BLUEPRINT/geometry/test_data/testh-Loop
+tests/BLUEPRINT/geometry/test_data/testJ-MultiLoop
