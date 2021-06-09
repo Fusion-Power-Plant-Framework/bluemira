@@ -290,9 +290,9 @@ def get_area_2d(x, y):
 
     Parameters
     ----------
-    x: Iterable
+    x: np.array
         The first set of coordinates [m]
-    y: Iterable
+    y: np.array
         The second set of coordinates [m]
 
     Returns
@@ -320,11 +320,11 @@ def get_area_3d(x, y, z):
 
     Parameters
     ----------
-    x: Iterable
+    x: np.array
         The first set of coordinates [m]
-    y: Iterable
+    y: np.array
         The second set of coordinates [m]
-    z: Union[Iterable, None]
+    z: np.array
         The third set of coordinates or None (for a 2-D polygon)
 
     Returns
@@ -354,11 +354,11 @@ def get_area(x, y, z=None):
 
     Parameters
     ----------
-    x: Iterable
+    x: np.array
         The first set of coordinates [m]
-    y: Iterable
+    y: np.array
         The second set of coordinates [m]
-    z: Union[Iterable, None]
+    z: Union[np.array, None]
         The third set of coordinates or None (for a 2-D polygon)
 
     Returns
@@ -372,6 +372,7 @@ def get_area(x, y, z=None):
         return get_area_3d(x, y, z)
 
 
+@nb.jit(cache=True, nopython=True)
 def get_centroid_2d(x, z):
     """
     Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
@@ -650,8 +651,8 @@ def rotate_matrix(theta, axis="z"):
         The (active) rotation matrix about the axis for an angle theta
     """
     if isinstance(axis, str):
-        # All das hier lass ich rein, damit alle verstehen koennen, dass es
-        # sich um normalen Rotation Matrices handelt.
+        # I'm leaving all this in here, because it is easier to understand
+        # what is going on, and that these are just "normal" rotation matrices
         if axis == "z":
             r_matrix = np.array(
                 [
@@ -682,7 +683,7 @@ def rotate_matrix(theta, axis="z"):
                 "please select from: ['x', 'y', 'z']"
             )
     else:
-        # Mignon, mais difficile de savoir ce qui se passe
+        # Cute, but hard to understand!
         axis = np.array(axis) / np.linalg.norm(axis)  # Unit vector
         cos = np.cos(theta)
         sin = np.sin(theta)
