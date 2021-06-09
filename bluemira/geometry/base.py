@@ -26,10 +26,11 @@ Base class and Plane object for use with Loop.
 import os
 import numpy as np
 import json
-import pickle
+import pickle  # noqa (S403)
 from copy import deepcopy
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import NumpyJSONEncoder
-from bluemira.geometry.constants import TOLERANCE
+from bluemira.geometry.constants import D_TOLERANCE
 
 
 class GeometryError(Exception):
@@ -147,16 +148,16 @@ class Plane(GeomBase):
         self.parameters = [cp[0], cp[1], cp[2], d]
 
     def _get_plan_dims(self, v):
-        if np.isclose(abs(v[0]), 1, rtol=0, atol=TOLERANCE):
+        if np.isclose(abs(v[0]), 1, rtol=0, atol=D_TOLERANCE):
             self.plan_dims = ["y", "z"]
-        elif np.isclose(abs(v[1]), 1, rtol=0, atol=TOLERANCE):
+        elif np.isclose(abs(v[1]), 1, rtol=0, atol=D_TOLERANCE):
             self.plan_dims = ["x", "z"]
-        elif np.isclose(abs(v[2]), 1, rtol=0, atol=TOLERANCE):
+        elif np.isclose(abs(v[2]), 1, rtol=0, atol=D_TOLERANCE):
             self.plan_dims = ["x", "y"]
         else:
             pass
 
-    def check_plane(self, point, e=TOLERANCE):
+    def check_plane(self, point, e=D_TOLERANCE):
         """
         Check that a point lies on the Plane.
         """

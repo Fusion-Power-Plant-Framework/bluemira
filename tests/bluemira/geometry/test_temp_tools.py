@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import tests
+import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
@@ -278,3 +279,7 @@ class TestInPolygon:
 
         hits = np.count_nonzero(mask)
         assert hits == 1171, hits  # Recursion test
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

@@ -26,7 +26,8 @@ A collection of geometry tools.
 import numpy as np
 import numba as nb
 from numba.np.extensions import cross2d
-from bluemira.base.constants import EPS
+
+EPS = np.finfo(np.float).eps  # from bluemira.base.constants import EPS
 from bluemira.geometry.base import GeometryError
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 
@@ -38,7 +39,7 @@ from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 @nb.jit(cache=True, nopython=True)
 def check_linesegment(point_a, point_b, point_c):
     """
-    Check that point C is on the line between points A and B
+    Check that point C is on the line between points A and B.
 
     Parameters
     ----------
@@ -195,33 +196,34 @@ def check_ccw(x, z):
     return a < 0
 
 
-def close_coordinates(x, y, z):
+# =============================================================================
+# Coordinate analysis
+# =============================================================================
+
+
+def distance_between_points(p1, p2):
     """
-    Close an ordered set of coordinates.
+    Calculates the distance between two points
 
     Parameters
     ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coordinates
-    z: np.array
-        The z coordinates
+    p1: (float, float)
+        The coordinates of the first point
+    p2: (float, float)
+        The coordinates of the second point
 
     Returns
     -------
-    x: np.array
-        The closed x coordinates
-    y: np.array
-        The closed y coordinates
-    z: np.array
-        The closed z coordinates
+    d: float
+        The distance between the two points [m]
     """
-    if distance_between_points([x[0], y[0], z[0]], [x[-1], y[-1], z[-1]]) > EPS:
-        x = np.append(x, x[0])
-        y = np.append(y, y[0])
-        z = np.append(z, z[0])
-    return x, y, z
+    if len(p1) != len(p2):
+        raise GeometryError("Need two points of the same number of coordinates.")
+
+    if (len(p1) not in [2, 3]) or (len(p2) not in [2, 3]):
+        raise GeometryError("Need 2- or 3-D sized points.")
+
+    return np.sqrt(sum([(p2[i] - p1[i]) ** 2 for i in range(len(p2))]))
 
 
 def get_normal_vector(x, y, z):
@@ -306,20 +308,54 @@ def bounding_box(x, y, z):
 
 
 # =============================================================================
+# Coordinate manipulation
+# =============================================================================
+
+
+def close_coordinates(x, y, z):
+    """
+    Close an ordered set of coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: np.array
+        The z coordinates
+
+    Returns
+    -------
+    x: np.array
+        The closed x coordinates
+    y: np.array
+        The closed y coordinates
+    z: np.array
+        The closed z coordinates
+    """
+    if distance_between_points([x[0], y[0], z[0]], [x[-1], y[-1], z[-1]]) > EPS:
+        x = np.append(x, x[0])
+        y = np.append(y, y[0])
+        z = np.append(z, z[0])
+    return x, y, z
+
+
+# =============================================================================
 # Intersection tools
 # =============================================================================
 
 
 def loop_plane_intersect(loop, plane):
     """
-    Calculates the intersection of a loop with a plane
+    Calculate the intersection of a loop with a plane.
 
     Parameters
     ----------
-    loop: BLUEPRINT Loop object
+    loop: Loop
         The loop to calculate the intersection on
-    plane: BLUEPRINT Plane object
-        The plan to calculate the intersection with
+    plane: Plane
+        The plane to calculate the intersection with
 
     Returns
     -------
