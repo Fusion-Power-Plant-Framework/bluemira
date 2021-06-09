@@ -61,7 +61,7 @@ class GeomBase:
         ext = os.path.splitext(filename)[-1]
         if ext == ".pkl":
             raise DeprecationWarning(
-                "GeomBase objects should no longer be saved as " "pickle files"
+                "GeomBase objects should no longer be saved as pickle files."
             )
             with open(filename, "rb") as data:
                 return pickle.load(data)  # noqa (S301)

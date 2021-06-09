@@ -21,6 +21,7 @@
 
 import tests
 import pytest
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
@@ -34,6 +35,8 @@ from bluemira.geometry.temp_tools import (
     polygon_in_polygon,
 )
 from bluemira.geometry.loop import Loop
+
+TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
 
 
 class TestCheckLineSegment:
@@ -255,30 +258,31 @@ class TestInPolygon:
         assert np.all(~polygon_in_polygon(np.array(out_points), loop.d2.T))
 
     def test_big(self):
-        filename = get_bluemira_path("geometry/test_data", subfolder="tests")
-        filename += "/in_polygon_test.pkl"
-        with open(filename, "rb") as file:
-            data = pickle.load(file)  # noqa (S301)
+        """
+        Regression test on a closed LCFS and an equilibrium grid.
+        """
+        filename = os.sep.join([TEST_PATH, "in_polygon_test.json"])
 
-        x = data["X"]
-        z = data["Z"]
+        lcfs = Loop.from_file(filename)
 
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
+        x = np.linspace(4.383870967741935, 13.736129032258066, 65)
+        z = np.linspace(-7.94941935483871, 7.94941935483871, 65)
+        x, z = np.meshgrid(x, z, indexing="ij")
 
         n, m = x.shape
         mask = np.zeros((n, m))
         for i in range(n):
             for j in range(m):
-                if in_polygon(x[i, j], z[i, j], data["LCFS"].d2.T):
+                if in_polygon(x[i, j], z[i, j], lcfs.d2.T):
                     mask[i, j] = 1
         if tests.PLOTTING:
-            data["LCFS"].plot(ax, fill=False, edgecolor="k")
-            ax.contourf(data["X"], data["Z"], mask, levels=[0, 0.5, 1])
+            f, ax = plt.subplots()
+            lcfs.plot(ax, fill=False, edgecolor="k")
+            ax.contourf(x, z, mask, levels=[0, 0.5, 1])
             plt.show()
 
         hits = np.count_nonzero(mask)
-        assert hits == 1171, hits  # Recursion test
+        assert hits == 1171, hits
 
 
 if __name__ == "__main__":
