@@ -20,13 +20,18 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+import io
+import sys
 from bluemira.base.file import get_bluemira_root
+from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
 from bluemira.base.look_and_feel import (
     get_git_version,
     get_git_branch,
     count_slocs,
     user_banner,
     version_banner,
+    bluemira_warn,
+    bluemira_print,
 )
 
 
@@ -56,6 +61,62 @@ def test_user_banner():
 
 def test_version_banner():
     assert len(version_banner()) == 3
+
+
+def test_bluemira_warn():
+    capture = io.StringIO()
+    sys.stdout = capture
+    bluemira_warn("bad")
+    sys.stdout = sys.__stdout__
+
+    result = capture.getvalue().splitlines()
+    assert len(result) == 3
+    assert ANSI_COLOR["red"] in result[0]
+    assert "WARNING:" in result[1]
+    assert "bad" in result[1]
+    assert EXIT_COLOR in result[-1]
+
+    capture = io.StringIO()
+    sys.stdout = capture
+    bluemira_warn(
+        "test a very long and verbacious warning message that is bound to be boxed in over two lines."
+    )
+    sys.stdout = sys.__stdout__
+    result = capture.getvalue().splitlines()
+
+    assert len(result) == 4
+    assert "WARNING:" in result[1]
+    assert "test" in result[1]
+    assert "WARNING:" not in result[2]
+    assert "boxed" in result[2]
+    assert EXIT_COLOR in result[-1]
+
+
+def test_bluemira_print():
+    capture = io.StringIO()
+    sys.stdout = capture
+    bluemira_print("good")
+    sys.stdout = sys.__stdout__
+
+    result = capture.getvalue().splitlines()
+    assert len(result) == 3
+    assert ANSI_COLOR["blue"] in result[0]
+    assert "good" in result[1]
+    assert EXIT_COLOR in result[-1]
+
+    capture = io.StringIO()
+    sys.stdout = capture
+    bluemira_print(
+        "test a very long and verbacious warning message that is bound to be boxed in over two lines."
+    )
+    sys.stdout = sys.__stdout__
+    result = capture.getvalue().splitlines()
+
+    assert len(result) == 4
+    assert ANSI_COLOR["blue"] in result[0]
+    assert "test" in result[1]
+    assert "boxed" in result[2]
+    assert EXIT_COLOR in result[-1]
 
 
 if __name__ == "__main__":

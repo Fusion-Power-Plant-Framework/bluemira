@@ -52,8 +52,6 @@ except FileNotFoundError:
     # Approximately
     LOCAL_LINES = 550
 
-EV_TO_J = 5
-
 # =============================================================================
 # Getters for miscellaneous information
 # =============================================================================
