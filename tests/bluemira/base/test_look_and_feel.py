@@ -32,6 +32,7 @@ from bluemira.base.look_and_feel import (
     version_banner,
     bluemira_warn,
     bluemira_print,
+    print_banner,
 )
 
 
@@ -63,26 +64,33 @@ def test_version_banner():
     assert len(version_banner()) == 3
 
 
-def test_bluemira_warn():
+def capture_output(func, input_str):
+    """
+    Print testing utility function.
+    """
     capture = io.StringIO()
     sys.stdout = capture
-    bluemira_warn("bad")
+    if input_str is None:
+        func()
+    else:
+        func(input_str)
     sys.stdout = sys.__stdout__
+    return capture.getvalue().splitlines()
 
-    result = capture.getvalue().splitlines()
+
+def test_bluemira_warn():
+    result = capture_output(bluemira_warn, "bad")
+
     assert len(result) == 3
     assert ANSI_COLOR["red"] in result[0]
     assert "WARNING:" in result[1]
     assert "bad" in result[1]
     assert EXIT_COLOR in result[-1]
 
-    capture = io.StringIO()
-    sys.stdout = capture
-    bluemira_warn(
-        "test a very long and verbacious warning message that is bound to be boxed in over two lines."
+    result = capture_output(
+        bluemira_warn,
+        "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
     )
-    sys.stdout = sys.__stdout__
-    result = capture.getvalue().splitlines()
 
     assert len(result) == 4
     assert "WARNING:" in result[1]
@@ -93,29 +101,30 @@ def test_bluemira_warn():
 
 
 def test_bluemira_print():
-    capture = io.StringIO()
-    sys.stdout = capture
-    bluemira_print("good")
-    sys.stdout = sys.__stdout__
+    result = capture_output(bluemira_print, "good")
 
-    result = capture.getvalue().splitlines()
     assert len(result) == 3
     assert ANSI_COLOR["blue"] in result[0]
     assert "good" in result[1]
     assert EXIT_COLOR in result[-1]
 
-    capture = io.StringIO()
-    sys.stdout = capture
-    bluemira_print(
-        "test a very long and verbacious warning message that is bound to be boxed in over two lines."
+    result = capture_output(
+        bluemira_print,
+        "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
     )
-    sys.stdout = sys.__stdout__
-    result = capture.getvalue().splitlines()
 
     assert len(result) == 4
     assert ANSI_COLOR["blue"] in result[0]
     assert "test" in result[1]
     assert "boxed" in result[2]
+    assert EXIT_COLOR in result[-1]
+
+
+def test_print_banner():
+    result = capture_output(print_banner, None)
+
+    assert len(result) == 15
+    assert ANSI_COLOR["blue"] in result[0]
     assert EXIT_COLOR in result[-1]
 
 
