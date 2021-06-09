@@ -28,7 +28,7 @@ from textwrap import fill, dedent
 
 class BluemiraError(Exception):
     """
-    Base exception class
+    Base exception class. Sub-class from this for module level Errors.
     """
 
     def __str__(self):
