@@ -25,9 +25,9 @@ A coordinate-series object class.
 
 import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.constants import TOLERANCE
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.base import GeomBase, GeometryError, Plane
-from bluemira.geometry.geometry_tools import (
+from bluemira.geometry.temp_tools import (
     check_ccw,
     qrotate,
     get_centroid,
@@ -677,7 +677,7 @@ class Loop(GeomBase):
         # NOTE: This has tolerancing built-in
         return np.isclose(self.xyz.T, self._point_23d(p)).all(axis=1).any()
 
-    def _check_plane(self, point, tolerance=TOLERANCE):
+    def _check_plane(self, point, tolerance=D_TOLERANCE):
         """
         Checks if a point is on the same plane as the Loop object
 
