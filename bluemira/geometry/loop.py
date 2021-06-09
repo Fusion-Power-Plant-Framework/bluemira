@@ -249,11 +249,11 @@ class Loop(GeomBase):
         return abs(np.dot(a / 2, self.n_hat))
 
     @property
-    def length(self):
+    def length(self) -> float:
         """
         Perimeter
         """
-        d = np.sqrt(np.diff(self.x) ** 2 + np.diff(self.y) ** 2 + np.diff(self.z) ** 2)
+        d = np.sqrt(np.sum(np.diff(self.xyz) ** 2, axis=0))
         return np.sum(d)
 
     # =========================================================================
@@ -523,8 +523,8 @@ class Loop(GeomBase):
 
         Parameters
         ----------
-        dcm: np.array((3, 3))
-            The direction cosine matrix array
+        dcm: np.array
+            The 3 x 3 direction cosine matrix array
         update: bool (default = True)
             if True: will update the Loop object
             if False: will return a new Loop object, and leave this one alone
