@@ -26,7 +26,7 @@ Aesthetic and ambiance functions.
 import os
 import sys
 import numpy as np
-import subprocess
+import subprocess  # noqa (S404)
 import platform
 from getpass import getuser
 from textwrap import wrap, dedent
