@@ -21,19 +21,12 @@
 
 """
 A coordinate-series object class.
-
-NOTE: The Loop object should no longer be used for geometries that will later
-be made into CAD. Please use Shape2D and Shape3D when making geometries and
-CAD. The make direct use of CAD primitives and lead to better CAD.
-
-Loop will potentially be deprecated in future, and should only be used as a
-utility for discretised geometries.
 """
 
 import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import TOLERANCE
-from bluemira.geometry.geometry_base import GeomBase, GeometryError, Plane
+from bluemira.geometry.base import GeomBase, GeometryError, Plane
 from bluemira.geometry.geometry_tools import (
     check_ccw,
     qrotate,
@@ -71,6 +64,15 @@ class Loop(GeomBase):
 
     If only two coordinate sets are provided, will automatically backfill
     the third coordinate with np.zeros(n)
+
+    Notes
+    -----
+    The Loop object should no longer be used for geometries that will later
+    be made into CAD. Please use Shape2D and Shape3D when making geometries and
+    CAD. The make direct use of CAD primitives and lead to better CAD.
+
+    Loop will potentially be deprecated in future, and should only be used as a
+    utility for discretised geometries.
     """
 
     __slots__ = [

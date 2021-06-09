@@ -21,7 +21,7 @@
 
 import pytest
 import numpy as np
-from bluemira.geometry.geometry_base import Plane
+from bluemira.geometry.base import Plane
 from bluemira.geometry.loop import Loop
 
 

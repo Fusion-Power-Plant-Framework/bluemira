@@ -25,7 +25,7 @@ import numpy as np
 import os
 from random import uniform
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.geometry_base import GeometryError
+from bluemira.geometry.base import GeometryError
 from bluemira.geometry.loop import Loop
 
 
