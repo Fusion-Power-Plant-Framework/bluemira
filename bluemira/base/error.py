@@ -19,44 +19,20 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-from bluemira.base.file import get_bluemira_root
-from bluemira.base.look_and_feel import (
-    get_git_version,
-    get_git_branch,
-    count_slocs,
-    user_banner,
-    version_banner,
-)
+"""
+Bluemira base error class
+"""
+
+from textwrap import fill, dedent
 
 
-ROOT = get_bluemira_root()
+class BluemiraError(Exception):
+    """
+    Base exception class
+    """
 
-
-def test_get_git_version():
-    assert isinstance(get_git_version(ROOT), bytes)
-
-
-def test_get_git_branch():
-    assert isinstance(get_git_branch(ROOT), str)
-
-
-def test_count_slocs():
-    branch = get_git_branch(ROOT)
-    slocs = count_slocs(ROOT, branch)
-    assert slocs[".py"] > 0
-    assert slocs["total"] > 0
-    total = sum(slocs.values()) - slocs["total"]
-    assert total == slocs["total"]
-
-
-def test_user_banner():
-    assert len(user_banner()) == 2
-
-
-def test_version_banner():
-    assert len(version_banner()) == 3
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    def __str__(self):
+        """
+        Prettier handling of the Exception strings
+        """
+        return fill(dedent(self.args[0]))

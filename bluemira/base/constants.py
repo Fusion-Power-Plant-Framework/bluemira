@@ -20,14 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-A collection of generic physical constants and conversions
+A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
 import numpy as np
+import seaborn as sns
 
 
 # =============================================================================
-# PHYSICAL CONSTANTS
+# Physical constants
 # =============================================================================
 
 # Speed of light
@@ -87,11 +88,8 @@ ABS_ZERO_K = 0  # [K]
 # Absolute zero in Celsius
 ABS_ZERO_C = -273.15  # [°C]
 
-# Numpy's default float precision limit
-EPS = np.finfo(np.float).eps
-
 # =============================================================================
-# CONVERSIONS
+# Conversions
 # =============================================================================
 
 # Electron-volts to Joules
@@ -110,9 +108,13 @@ YR_TO_S = 60 * 60 * 24 * 365
 S_TO_YR = 1 / YR_TO_S
 
 # =============================================================================
-# Levi Civita Tensors
+# Working constants
 # =============================================================================
 
+# Numpy's default float precision limit
+EPS = np.finfo(np.float).eps
+
+# Levi Civita Tensors
 E_IJK = np.zeros((3, 3, 3))
 E_IJK[0, 1, 2] = E_IJK[1, 2, 0] = E_IJK[2, 0, 1] = 1
 E_IJK[0, 2, 1] = E_IJK[2, 1, 0] = E_IJK[1, 0, 2] = -1
@@ -122,7 +124,7 @@ E_IJ = np.array([[0, 1], [-1, 0]])
 E_I = np.array([1])
 
 # =============================================================================
-# ALPHABETS
+# Alphabets
 # =============================================================================
 
 GREEK_ALPHABET = [
@@ -154,7 +156,7 @@ GREEK_ALPHABET = [
 GREEK_ALPHABET_CAPS = [s.capitalize() for s in GREEK_ALPHABET]
 
 # =============================================================================
-# COLORS
+# Colors
 # =============================================================================
 
 EXIT_COLOR = "\x1b[0m"
@@ -176,3 +178,20 @@ ANSI_COLOR = {
     "pink": "\x1b[95m",
     "lightcyan": "\x1b[96m",
 }
+
+
+# This is specifically NOT the MATLAB color palette.
+BLUEMIRA_PAL_MAP = {
+    "blue": "#0072c2",
+    "orange": "#d85319",
+    "yellow": "#f0b120",
+    "purple": "#7d2f8e",
+    "green": "#75ac30",
+    "cyan": "#4cbdf0",
+    "red": "#a21430",
+    "pink": "#f77ec7",
+    "grey": "#a8a495",
+}
+
+
+BLUEMIRA_PALETTE = sns.color_palette(list(BLUEMIRA_PAL_MAP.values()))
