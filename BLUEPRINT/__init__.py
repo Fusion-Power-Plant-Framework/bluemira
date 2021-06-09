@@ -55,7 +55,7 @@ def test(path=None, *, plotting=False):
     parts = pathlib.Path(path).absolute().relative_to(get_BP_root()).parts
     # We want the directory path with "tests" instead of "BLUEPRINT" and
     # without the filename
-    directory = ("tests",) + parts[1:-1]
+    directory = ("tests/BLUEPRINT",) + parts[1:-1]
     test_file = "test_" + parts[-1]
     full_path = pathlib.Path(get_BP_root(), *directory, test_file)
     if not full_path.is_file():
