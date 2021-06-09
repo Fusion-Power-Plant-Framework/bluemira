@@ -3,8 +3,8 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
-#                    D. Short
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                    J. Morris, D. Short
 #
 # bluemira is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -19,11 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-Initialise the bluemira package.
-"""
+import bluemira.geometry as geo
 
-from . import geometry
-from ._version import get_versions
-
-__version__ = get_versions()["version"]
+if __name__ == "__main__":
+    print("This is a simple tutorial for the geometric module")
+    print("1. Creation of a wire")
+    pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
+    wire = geo.tools.make_polygon(pntslist, closed=True)
+    print("wire: {}, length: {}".format(wire, wire.Length))

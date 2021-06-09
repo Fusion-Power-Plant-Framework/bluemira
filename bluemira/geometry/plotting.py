@@ -3,8 +3,8 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
-#                    D. Short
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                    J. Morris, D. Short
 #
 # bluemira is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,5 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Initialise the bluemira package.
+Plotting functionality for the bluemira geometry module.
 """
-
-from . import geometry
-from ._version import get_versions
-
-__version__ = get_versions()["version"]
