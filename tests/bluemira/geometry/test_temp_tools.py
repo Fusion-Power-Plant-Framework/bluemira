@@ -25,7 +25,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.base import Plane
+from bluemira.geometry.base import Plane, GeometryError
 from bluemira.geometry.temp_tools import (
     check_linesegment,
     bounding_box,
@@ -33,6 +33,8 @@ from bluemira.geometry.temp_tools import (
     in_polygon,
     loop_plane_intersect,
     polygon_in_polygon,
+    get_normal_vector,
+    get_area,
 )
 from bluemira.geometry.loop import Loop
 
@@ -92,6 +94,54 @@ class TestBoundingBox:
         assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
 
 
+class TestGetNormal:
+    def test_simple(self):
+        x = np.array([0, 2, 2, 0, 0])
+        z = np.array([0, 0, 2, 2, 0])
+        y = np.zeros(5)
+        n_hat = get_normal_vector(x, y, z)
+        assert np.allclose(np.abs(n_hat), np.array([0, 1, 0]))
+
+    def test_edge(self):
+        x = np.array([1, 2, 3])
+        y = np.array([1, 2, 3])
+        z = np.array([1, 2, 4])
+        n_hat = get_normal_vector(x, y, z)
+        assert np.allclose(n_hat, 0.5 * np.array([np.sqrt(2), -np.sqrt(2), 0]))
+
+    def test_error(self):
+        fails = [
+            [[0, 1], [0, 1], [0, 1]],
+            [[0, 1, 2], [0, 1, 2], [0, 1]],
+            [[0, 0, 0], [1, 1, 1], [2, 2, 2]],
+        ]
+        for fail in fails:
+            with pytest.raises(GeometryError):
+                get_normal_vector(
+                    np.array(fail[0]), np.array(fail[1]), np.array(fail[2])
+                )
+
+
+class TestArea:
+    def test_area(self):
+        """
+        Checked with:
+        https://www.analyzemath.com/Geometry_calculators/irregular_polygon_area.html
+        """
+        x = np.array([0, 1, 2, 3, 4, 5, 6, 4, 3, 2])
+        y = np.array([0, -5, -3, -5, -1, 0, 2, 6, 4, 1])
+        assert get_area(x, y) == 29.5
+        loop = Loop(x=x, y=y)
+        loop.rotate(43, p1=[3, 2, 1], p2=[42, 2, 1])
+        assert np.isclose(get_area(*loop.xyz), 29.5)
+
+    def test_error(self):
+        x = np.array([0, 1, 2, 3, 4, 5, 6, 4, 3, 2])
+        y = np.array([0, -5, -3, -5, -1, 0, 2, 6, 4, 1])
+        with pytest.raises(GeometryError):
+            get_area(x, y[:-1])
+
+
 class TestOnPolygon:
     def test_simple(self):
         loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
@@ -119,24 +169,33 @@ class TestLoopPlane:
         plane = Plane([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
         intersect = loop_plane_intersect(loop, plane)
         assert len(intersect) == 2
-        f, ax = plt.subplots()
-        loop.plot(ax)
+
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            loop.plot(ax)
+
         for i in intersect:
+            if tests.PLOTTING:
+                ax.plot(i[0], i[2], marker="o", color="r")
             assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
+
         plane = Plane([0, 0, 2.7], [1, 0, 2.7], [0, 1, 2.7])  # x-y offset
         intersect = loop_plane_intersect(loop, plane)
         assert len(intersect) == 4
+
         for i in intersect:
+            if tests.PLOTTING:
+                ax.plot(i[0], i[2], marker="o", color="r")
             assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
 
         plane = Plane([0, 0, 4], [1, 0, 4], [0, 1, 4])  # x-y offset
         intersect = loop_plane_intersect(loop, plane)
         assert len(intersect) == 1
         for i in intersect:
+            if tests.PLOTTING:
+                ax.plot(i[0], i[2], marker="o", color="r")
+
             assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
 
         plane = Plane([0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005])  # x-y offset
         intersect = loop_plane_intersect(loop, plane)
@@ -150,10 +209,13 @@ class TestLoopPlane:
         plane = Plane([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
         intersect = loop_plane_intersect(loop, plane)
         assert len(intersect) == 2
-        f, ax = plt.subplots()
-        loop.plot(ax)
-        for i in intersect:
-            ax.plot(i[0], i[2], marker="o", color="r")
+
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            loop.plot(ax)
+            for i in intersect:
+                ax.plot(i[0], i[2], marker="o", color="r")
+            plt.show()
 
         plane = Plane([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
         intersect = loop_plane_intersect(loop, plane)
@@ -167,11 +229,14 @@ class TestLoopPlane:
         loop.translate([-2, 0, 0])
         plane = Plane([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
         intersect = loop_plane_intersect(loop, plane)
-        f, ax = plt.subplots()
-        loop.plot(ax)
+
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            loop.plot(ax)
         for i in intersect:
+            if tests.PLOTTING:
+                ax.plot(i[0], i[2], marker="o", color="r")
             assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
 
     def test_flat_intersect(self):
         # test that a shared segment with plane only gives two intersects

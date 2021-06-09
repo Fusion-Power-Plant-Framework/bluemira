@@ -29,8 +29,8 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.base import GeomBase, GeometryError, Plane
 from bluemira.geometry.temp_tools import (
     check_ccw,
-    qrotate,
-    get_centroid,
+    quart_rotate,
+    get_centroid_2d,
     get_centroid_3d,
 )
 from bluemira.utilities.tools import is_num
@@ -225,7 +225,7 @@ class Loop(GeomBase):
         if not self.closed:
             bluemira_warn("Returning centroid of an open polygon.")
         if self.ndim == 2:
-            x, z = get_centroid(*self.d2)
+            x, z = get_centroid_2d(*self.d2)
             if np.abs(x) == np.inf or np.abs(z) == np.inf:
                 return np.array(get_centroid_3d(*self.xyz))
             else:
@@ -509,7 +509,7 @@ class Loop(GeomBase):
         xo: [float, float, float]
             Origin of rotation vector
         """
-        rotated = qrotate(self.as_dict(), theta=np.radians(theta), **kwargs)
+        rotated = quart_rotate(self.as_dict(), theta=np.radians(theta), **kwargs)
         if update:
             for k in ["x", "y", "z"]:
                 self.__setattr__(k, rotated[k])

@@ -26,6 +26,7 @@ A collection of geometry tools.
 import numpy as np
 import numba as nb
 from numba.np.extensions import cross2d
+from pyquaternion import Quaternion
 
 EPS = np.finfo(np.float).eps  # from bluemira.base.constants import EPS
 from bluemira.geometry.base import GeometryError
@@ -182,8 +183,10 @@ def check_ccw(x, z):
 
     Parameters
     ----------
-    x, z: 1-D np.array, 1-D np.array
-        Coordinates of polygon
+    x:
+        The x coordinates of the polygon
+    z: np.array
+        The z coordinates of the polygon
 
     Returns
     -------
@@ -226,6 +229,7 @@ def distance_between_points(p1, p2):
     return np.sqrt(sum([(p2[i] - p1[i]) ** 2 for i in range(len(p2))]))
 
 
+@nb.jit(cache=True, nopython=True)
 def get_normal_vector(x, y, z):
     """
     Calculate the normal vector from a series of planar points.
@@ -248,9 +252,11 @@ def get_normal_vector(x, y, z):
         raise GeometryError(
             "Cannot get a normal vector for a set of points with" "length less than 3."
         )
-    if (len(x) != len(y)) or (len(x) != len(z)) or (len(y) != len(z)):
+
+    if not (len(x) == len(y) == len(z)):
         raise GeometryError("Point coordinate vectors must be of equal length.")
 
+    n_hat = np.array([0.0, 0.0, 0.0])  # Force numba to type to floats
     p1 = np.array([x[0], y[0], z[0]])
     p2 = np.array([x[1], y[1], z[1]])
     v1 = p2 - p1
@@ -260,17 +266,198 @@ def get_normal_vector(x, y, z):
     for i in range(2, i_max):
         p3 = np.array([x[i], y[i], z[i]])
         v2 = p3 - p2
-        if np.allclose(v2, 0):
+
+        if np.all(np.abs(v2) < EPS):  # np.allclose not available in numba
             v2 = p3 - p1
-            if np.allclose(v2, 0):
+            if np.all(np.abs(v2) < EPS):
                 continue
-        n_hat = np.cross(v1, v2)
-        if not np.allclose(n_hat, 0):
+
+        n_hat[:] = np.cross(v1, v2)
+
+        if not np.all(np.abs(n_hat) < EPS):
             break
     else:
         raise GeometryError("Unable to find a normal vector from set of points.")
 
     return n_hat / np.linalg.norm(n_hat)
+
+
+@nb.jit(cache=True, nopython=True)
+def get_area_2d(x, y):
+    """
+    Calculate the area inside a closed polygon with x, y coordinate vectors.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+
+    Parameters
+    ----------
+    x: Iterable
+        The first set of coordinates [m]
+    y: Iterable
+        The second set of coordinates [m]
+
+    Returns
+    -------
+    area: float
+        The area of the polygon [m^2]
+    """
+    x = np.asfarray(x)
+    y = np.asfarray(y)
+
+    if len(x) != len(y):
+        raise GeometryError("Coordinate vectors must have same length.")
+
+    # No np.roll in numba
+    x1 = np.append(x[-1], x[:-1])
+    y1 = np.append(y[-1], y[:-1])
+    return 0.5 * np.abs(np.dot(x, y1) - np.dot(y, x1))
+
+
+@nb.jit(cache=True, nopython=True)
+def get_area_3d(x, y, z):
+    """
+    Calculate the area inside a closed polygon with x, y coordinate vectors.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+
+    Parameters
+    ----------
+    x: Iterable
+        The first set of coordinates [m]
+    y: Iterable
+        The second set of coordinates [m]
+    z: Union[Iterable, None]
+        The third set of coordinates or None (for a 2-D polygon)
+
+    Returns
+    -------
+    area: float
+        The area of the polygon [m^2]
+    """
+    x = np.asfarray(x)
+    y = np.asfarray(y)
+    z = np.asfarray(z)
+    v3 = get_normal_vector(x, y, z)
+    m = np.zeros((3, len(x)))
+    m[0, :] = x
+    m[1, :] = y
+    m[2, :] = z
+    a = np.array([0.0, 0.0, 0.0])
+    for i in range(len(z)):
+        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
+    a *= 0.5
+    return abs(np.dot(a, v3))
+
+
+def get_area(x, y, z=None):
+    """
+    Calculate the area inside a closed polygon with x, y coordinate vectors.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+
+    Parameters
+    ----------
+    x: Iterable
+        The first set of coordinates [m]
+    y: Iterable
+        The second set of coordinates [m]
+    z: Union[Iterable, None]
+        The third set of coordinates or None (for a 2-D polygon)
+
+    Returns
+    -------
+    area: float
+        The area of the polygon [m^2]
+    """
+    if z is None:
+        return get_area_2d(x, y)
+    else:
+        return get_area_3d(x, y, z)
+
+
+def get_centroid_2d(x, z):
+    """
+    Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
+
+    Parameters
+    ----------
+    x: np.array
+        x coordinates of the loop to calculate on
+    z: np.array
+        z coordinates of the loop to calculate on
+
+    Returns
+    -------
+    centroid: List[float]
+        The x, z coordinates of the centroid [m]
+    """
+    if not check_ccw(x, z):
+        x = x[::-1]
+        z = z[::-1]
+    area = get_area_2d(x, z)
+
+    cx, cz = 0, 0
+    for i in range(len(x) - 1):
+        a = x[i] * z[i + 1] - x[i + 1] * z[i]
+        cx += (x[i] + x[i + 1]) * a
+        cz += (z[i] + z[i + 1]) * a
+
+    if area != 0:
+        # Zero division protection
+        cx /= 6 * area
+        cz /= 6 * area
+
+    return [cx, cz]
+
+
+def get_centroid_3d(x, y, z):
+    """
+    Calculate the centroid of a non-self-intersecting counterclockwise polygon
+    in 3-D.
+
+    Parameters
+    ----------
+    x: Iterable
+        The x coordinates
+    y: Iterable
+        The y coordinates
+    z: Iterable
+        The z coordinates
+
+    Returns
+    -------
+    centroid: List[float]
+        The x, y, z coordinates of the centroid [m]
+    """
+    cx, cy = get_centroid_2d(x, y)
+    cx2, cz = get_centroid_2d(x, z)
+    cy2, cz2 = get_centroid_2d(y, z)
+
+    # The following is an "elegant" but computationally more expensive way of
+    # dealing with the 0-area edge cases
+    # (of which there are more than you think)
+    cx = np.array([cx, cx2])
+    cy = np.array([cy, cy2])
+    cz = np.array([cz, cz2])
+
+    def get_rational(i, array):
+        """
+        Gets rid of infinity and nan coordinates
+        """
+        args = np.argwhere(np.isfinite(array))
+        if len(args) == 0:
+            # 2-D shape with a simple axis offset
+            # Get the first value of the coordinate set which is equal to the
+            # offset
+            return [x, y, z][i][0]
+        elif len(args) == 1:
+            return array[args[0][0]]
+        else:
+            if not np.isclose(array[0], array[1]):
+                # Occasionally the two c values are not the same, and one is 0
+                # Take non-trivial value (this works in the case of 2 zeros)
+                return array[np.argmax(np.abs(array))]
+            else:
+                return array[0]
+
+    return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
 
 
 def bounding_box(x, y, z):
@@ -339,6 +526,171 @@ def close_coordinates(x, y, z):
         y = np.append(y, y[0])
         z = np.append(z, z[0])
     return x, y, z
+
+
+# =============================================================================
+# Rotations
+# =============================================================================
+
+
+def quart_rotate(point, **kwargs):
+    """
+    Rotate a point cloud by angle theta around vector (right-hand coordinates).
+    Uses black quarternion magic.
+
+    Parameters
+    ----------
+    point: Union[np.array(n, 3), dict('x': [], 'y': [], 'z': [])]
+        The coordinates of the points to be rotated
+    kwargs:
+        theta: float
+            Rotation angle [radians]
+        p1: [float, float, float]
+            Origin of rotation vector
+        p2: [float, float, float]
+            Second point defining rotation axis
+    kwargs: (alternatively)
+        theta: float
+            Rotation angle [radians]
+        xo: [float, float, float]
+            Origin of rotation vector
+        dx: [float, float, float] or one of 'x', 'y', 'z'
+            Direction vector definition rotation axis from origin. If a string
+            is specified the dx vector is automatically calculated, e.g.
+            'z': (0, 0, 1)
+    kwargs: (alternatively)
+        quart: Quarternion object
+            The rotation quarternion
+        xo: [float, float, float]
+            Origin of rotation vector
+
+    Returns
+    -------
+    rpoint: Union[np.array(n, 3), dict('x': [], 'y': [], 'z': [])]
+        The rotated coordinates. Output in numpy array or dict, depending on
+        input type
+    """
+    if "quart" in kwargs:
+        quart = kwargs["quart"]
+        xo = kwargs.get("xo", np.zeros(3))
+    else:
+        theta = kwargs["theta"]
+        if "p1" in kwargs and "p2" in kwargs:
+            p1, p2 = kwargs["p1"], kwargs["p2"]
+            if not isinstance(p1, np.ndarray) or not isinstance(p1, np.ndarray):
+                p1, p2 = np.array(p1), np.array(p2)
+            xo = p1
+            dx = p2 - p1
+            dx = tuple(dx)
+        elif "xo" in kwargs and "dx" in kwargs:
+            xo, dx = kwargs["xo"], kwargs["dx"]
+        elif "dx" in kwargs:
+            dx = kwargs["dx"]
+            if isinstance(dx, str):
+                index = ["x", "y", "z"].index(dx)
+                dx = np.zeros(3)
+                dx[index] = 1
+            xo = np.zeros(3)
+        else:
+            errtxt = "error in kwargs input\n"
+            errtxt += "rotation vector input as ether:\n"
+            errtxt += "\tpair of points, p1=[x,y,z] and p2=[x,y,z]\n"
+            errtxt += "\torigin and vector, xo=[x,y,z] and dx=[x,y,z]\n"
+            raise GeometryError(errtxt)
+
+        dx /= np.linalg.norm(dx)  # normalise rotation axis
+        quart = Quaternion(axis=dx, angle=theta)
+
+    if isinstance(point, dict):
+        isdict = True
+        p = np.zeros((len(point["x"]), 3))
+        for i, var in enumerate(["x", "y", "z"]):
+            p[:, i] = point[var]
+        point = p
+    else:
+        isdict = False
+    if np.ndim(point) == 1 and len(point) == 3:
+        point = np.array([point])
+    if np.shape(point)[1] != 3:
+        errtxt = "point vector required as numpy.array size=(:,3)"
+        raise GeometryError(errtxt)
+
+    trans = np.ones((len(point), 1)) * xo  # expand vector origin
+    p = point - trans  # translate to rotation vector's origin (xo)
+    rpoint = np.zeros(np.shape(point))
+    for i, po in enumerate(p):
+        rpoint[i, :] = quart.rotate(po)
+    rpoint += trans  # translate from rotation vector's origion (xo)
+
+    if isdict:  # return to dict
+        p = {}
+        for i, var in enumerate(["x", "y", "z"]):
+            p[var] = rpoint[:, i]
+        rpoint = p
+    return rpoint
+
+
+def rotate_matrix(theta, axis="z"):
+    """
+    Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
+    \t:math:`\\mathbf{x^{'}}=\\mathbf{R_{u}}(\\theta)\\mathbf{x}`
+
+    \t:math:`\\mathbf{R_{u}}(\\theta)=cos(\\theta)\\mathbf{I}+sin(\\theta)[\\mathbf{u}]_{\\times}(1-cos(\\theta))(\\mathbf{u}\\otimes\\mathbf{u})`
+
+    Parameters
+    ----------
+    theta: float
+        The rotation angle [radians] (counter-clockwise about axis!)
+    axis: Union[str, iterable(3)]
+        The rotation axis (specified by axis label or vector)
+
+    Returns
+    -------
+    r_matrix: np.array((3, 3))
+        The (active) rotation matrix about the axis for an angle theta
+    """
+    if isinstance(axis, str):
+        # All das hier lass ich rein, damit alle verstehen koennen, dass es
+        # sich um normalen Rotation Matrices handelt.
+        if axis == "z":
+            r_matrix = np.array(
+                [
+                    [np.cos(theta), -np.sin(theta), 0],
+                    [np.sin(theta), np.cos(theta), 0],
+                    [0, 0, 1],
+                ]
+            )
+        elif axis == "y":
+            r_matrix = np.array(
+                [
+                    [np.cos(theta), 0, np.sin(theta)],
+                    [0, 1, 0],
+                    [-np.sin(theta), 0, np.cos(theta)],
+                ]
+            )
+        elif axis == "x":
+            r_matrix = np.array(
+                [
+                    [1, 0, 0],
+                    [0, np.cos(theta), -np.sin(theta)],
+                    [0, np.sin(theta), np.cos(theta)],
+                ]
+            )
+        else:
+            raise GeometryError(
+                f"Incorrect rotation axis: {axis}\n"
+                "please select from: ['x', 'y', 'z']"
+            )
+    else:
+        # Mignon, mais difficile de savoir ce qui se passe
+        axis = np.array(axis) / np.linalg.norm(axis)  # Unit vector
+        cos = np.cos(theta)
+        sin = np.sin(theta)
+        x, y, z = axis
+        u_x = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
+        u_o_u = np.outer(axis, axis)
+        r_matrix = cos * np.eye(3) + sin * u_x + (1 - cos) * u_o_u
+    return r_matrix
 
 
 # =============================================================================
