@@ -411,7 +411,7 @@ def print_banner():
 
 
 def version_banner():
-    """_print_color(_banner_BLUEMIRA2(), color="blue"))
+    """
     Get the string for the version banner.
 
     Returns

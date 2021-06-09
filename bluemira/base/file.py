@@ -128,47 +128,7 @@ def make_bluemira_path(path="", subfolder="bluemira"):
         return _get_relpath(bpath, path)
     except ValueError:
         os.makedirs(os.sep.join([bpath, path]))
-        # make_BP_path(path)  # Recursao nao funcione..
         return _get_relpath(bpath, path)
-
-
-def get_PROCESS_root():
-    """
-    Gets the PROCESS install folder
-
-    Returns
-    -------
-    root: str
-        The full path to the PROCESS root folder, e.g.:
-            '/home/user/code/PROCESS'
-    """
-    root = get_bluemira_root()
-    code_path = "/"
-    if "egg" not in root:
-        code_path = os.path.split(root)[0]
-
-    def exists(*subfolders):
-        full = os.path.join(code_path, *subfolders)
-        if os.path.isdir(full):
-            return full
-        return False
-
-    process_path = exists("PROCESS")
-    if not process_path:
-        process_path = exists("process")
-
-    if os.path.isdir(process_path):
-        return process_path
-    else:
-        raise FileNotFoundError("PROCESS not in root folder, or not installed.")
-
-
-def get_PROCESS_path(path=""):
-    """
-    Get a PROCESS path of a module subfolder. Defaults to root folder.
-    """
-    process_path = get_PROCESS_root()
-    return _get_relpath(process_path, path)
 
 
 def get_files_by_ext(folder, extension):
