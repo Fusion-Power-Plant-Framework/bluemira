@@ -316,7 +316,7 @@ def bluemira_print_flush(string):
     sys.stdout.flush()
 
 
-class BClock:
+class BluemiraClock:
     """
     A printed progress bar.
 

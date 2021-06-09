@@ -26,8 +26,8 @@ from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 @pytest.mark.parametrize(
     "path,subfolder,allow_missing,expect_none",  # noqa(N802)
     [
-        ("base", "tests", False, False),
-        ("base", "tests", True, False),
+        ("bluemira", "tests", False, False),  # NOTE: Change "bluemira" to e.g. "base"
+        ("bluemira", "tests", True, False),  # NOTE: Change "bluemira" to e.g. "base"
         ("spam", "tests", True, True),
         ("spam", "ham", True, True),
     ],
