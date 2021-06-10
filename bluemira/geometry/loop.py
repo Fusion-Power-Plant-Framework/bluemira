@@ -24,6 +24,7 @@ A coordinate-series object class.
 """
 
 import numpy as np
+from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from bluemira.base.look_and_feel import bluemira_warn
@@ -544,6 +545,44 @@ class Loop(GeomBase):
                 self.__setattr__(k, t[i])
         else:
             return Loop(**dict(zip(["x", "y", "z"], t)))
+
+    # =========================================================================
+    # Queries
+    # =========================================================================
+
+    def distance_to(self, point):
+        """
+        Calculates the distances from each point in the loop to the point
+
+        Parameters
+        ----------
+        point: iterable(2 or 3)
+            The point to which to calculate the distances
+
+        Returns
+        -------
+        distances: np.array(N)
+            The vector of distances to the point
+        """
+        if len(point) == 2:
+            point = self._point_23d(point)
+        point = np.array(point)
+        point = point.reshape(3, 1).T
+        return cdist(self.xyz.T, point, "euclidean")
+
+    def argmin(self, point2d):
+        """
+        Parameters
+        ----------
+        point2d: iterable(2)
+            The point to which to calculate the distances
+
+        Returns
+        -------
+        arg: int
+            The index of the closest point
+        """
+        return np.argmin(self.distance_to(point2d))
 
     def offset(self, delta):
         """

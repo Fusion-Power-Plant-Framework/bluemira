@@ -962,3 +962,72 @@ def get_intersect(loop1, loop2):
     if len(x) > 0:
         x, z = np.unique([x, z], axis=1)
     return x, z
+
+
+@nb.jit(cache=True, nopython=True)
+def _intersect_count(x_inter, z_inter, x2, z2):
+    args = []
+    for i in range(len(x_inter)):
+        for j in range(len(x2) - 1):
+            if check_linesegment(
+                np.array([x2[j], z2[j]]),
+                np.array([x2[j + 1], z2[j + 1]]),
+                np.array([x_inter[i], z_inter[i]]),
+            ):
+                args.append(j)
+                break
+    return np.array(args)
+
+
+def join_intersect(loop1, loop2, get_arg=False):
+    """
+    Add the intersection points between Loop1 and Loop2 to Loop1.
+
+    Parameters
+    ----------
+    loop1: Loop
+        The Loop to which the intersection points should be added
+    loop2: Loop
+        The intersecting Loop
+    get_arg: bool (default = False)
+
+    Returns
+    -------
+    (if get_arg is True)
+    args: list(int, int, ..) of len(N_intersections)
+        The arguments of Loop1 in which the intersections were added.
+
+    Notes
+    -----
+    Modifies loop1
+    """
+    x_inter, z_inter = get_intersect(loop1, loop2)
+    xz = loop1.d2
+    args = _intersect_count(x_inter, z_inter, xz[0], xz[1])
+
+    orderr = args.argsort()
+    x_int = x_inter[orderr]
+    z_int = z_inter[orderr]
+
+    args = _intersect_count(x_int, z_int, xz[0], xz[1])
+
+    # TODO: Check for duplicates and order correctly based on distance
+    # u, counts = np.unique(args, return_counts=True)
+
+    count = 0
+    for i, arg in enumerate(args):
+        if i > 0 and args[i - 1] == arg:
+            # Two intersection points, one after the other
+            bump = 0
+        else:
+            bump = 1
+        if not loop1._check_already_in([x_int[i], z_int[i]]):
+            # Only increment counter if the intersection isn't already in the Loop
+            loop1.insert([x_int[i], z_int[i]], pos=arg + count + bump)
+            count += 1
+
+    if get_arg:
+        args = []
+        for x, z in zip(x_inter, z_inter):
+            args.append(loop1.argmin([x, z]))
+        return list(set(args))

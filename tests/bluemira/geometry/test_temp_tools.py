@@ -37,6 +37,8 @@ from bluemira.geometry.temp_tools import (
     get_area,
     rotation_matrix,
     offset,
+    get_intersect,
+    join_intersect,
 )
 from bluemira.geometry.loop import Loop
 
@@ -436,6 +438,121 @@ class TestOffset:
             ax.plot(x, y, "k")
             ax.plot(*c, "r", marker="o")
             ax.set_aspect("equal")
+
+
+class TestIntersections:
+    def test_get_intersect(self):
+        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], z=[1, 1, 1, 1, 2, 5, 5])
+        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
+        shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
+        intersect = np.array(get_intersect(loop1, loop2))
+        correct = np.array(shouldbe).T
+        assert np.allclose(intersect, correct)
+
+        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
+        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
+        shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
+        intersect = np.array(get_intersect(loop1, loop2))
+        correct = np.array(shouldbe).T
+        assert np.allclose(intersect, correct)
+
+        loop1 = Loop(z=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
+        loop2 = Loop(z=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
+        shouldbe = [[1.5, 1][::-1], [2.5, 1.5][::-1], [2.5, 5][::-1]]
+        intersect = np.array(get_intersect(loop1, loop2))
+        correct = np.array(shouldbe).T
+        assert np.allclose(intersect, correct)
+
+    def test_join_intersect(self):
+        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 5, 4.5, 4, 0], z=[1, 1, 1, 1, 2, 4, 4.5, 5, 5])
+        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
+        join_intersect(loop1, loop2)
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            loop1.plot(ax, fill=False, edgecolor="k", points=True)
+            loop2.plot(ax, fill=False, edgecolor="r", points=True)
+            plt.show()
+        assert np.allclose(loop1[3], [1.5, 0, 1])
+        assert np.allclose(loop1[5], [2.5, 0, 1.5])
+        assert np.allclose(loop1[10], [2.5, 0, 5])
+
+        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
+        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
+        join_intersect(loop1, loop2)
+
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            loop1.plot(ax, fill=False, edgecolor="k", points=True)
+            loop2.plot(ax, fill=False, edgecolor="r", points=True)
+            plt.show()
+        assert np.allclose(loop1[3], [1.5, 1, 0])
+        assert np.allclose(loop1[5], [2.5, 1.5, 0])
+        assert np.allclose(loop1[8], [2.5, 5, 0])
+
+        loop1 = Loop(z=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
+        loop2 = Loop(z=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
+        join_intersect(loop1, loop2)
+
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            loop1.plot(ax, fill=False, edgecolor="k", points=True)
+            loop2.plot(ax, fill=False, edgecolor="r", points=True)
+            plt.show()
+        assert np.allclose(loop1[1], [0, 5, 2.5])
+        assert np.allclose(loop1[4], [0, 1.5, 2.5])
+        assert np.allclose(loop1[6], [0, 1, 1.5])
+
+    def test_join_intersect_arg1(self):
+        tf = Loop.from_file(os.sep.join([TEST_PATH, "test_TF_intersect.json"]))
+        lp = Loop.from_file(os.sep.join([TEST_PATH, "test_LP_intersect.json"]))
+        eq = Loop.from_file(os.sep.join([TEST_PATH, "test_EQ_intersect.json"]))
+        up = Loop.from_file(os.sep.join([TEST_PATH, "test_UP_intersect.json"]))
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            for loop in [tf, up, eq, lp]:
+                loop.plot(ax, fill=False)
+
+        args = []
+        intx, intz = [], []
+        for loop in [lp, eq, up]:
+            i = get_intersect(tf, loop)
+            a = join_intersect(tf, loop, get_arg=True)
+            args.extend(a)
+            intx.extend(i[0])
+            intz.extend(i[1])
+        if tests.PLOTTING:
+            for loop in [tf, up, eq, lp]:
+                loop.plot(ax, fill=False, points=True)
+            ax.plot(*tf.d2.T[args].T, "s", marker="o", color="r")
+            ax.plot(intx, intz, "s", marker="^", color="k")
+        assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
+        assert np.allclose(np.sort(intx), np.sort(tf.x[args]))
+        assert np.allclose(np.sort(intz), np.sort(tf.z[args]))
+
+    def test_join_intersect_arg2(self):
+        tf = Loop.from_file(os.sep.join([TEST_PATH, "test_TF_intersect2.json"]))
+        lp = Loop.from_file(os.sep.join([TEST_PATH, "test_LP_intersect2.json"]))
+        eq = Loop.from_file(os.sep.join([TEST_PATH, "test_EQ_intersect2.json"]))
+        up = Loop.from_file(os.sep.join([TEST_PATH, "test_UP_intersect2.json"]))
+        if tests.PLOTTING:
+            f, ax = plt.subplots()
+            for loop in [tf, up, eq, lp]:
+                loop.plot(ax, fill=False)
+
+        args = []
+        intx, intz = [], []
+        for loop in [lp, eq, up]:
+            i = get_intersect(tf, loop)
+            a = join_intersect(tf, loop, get_arg=True)
+            args.extend(a)
+            intx.extend(i[0])
+            intz.extend(i[1])
+        if tests.PLOTTING:
+            ax.plot(*tf.d2.T[args].T, "s", marker="o", color="r")
+            ax.plot(intx, intz, "s", marker="^", color="k")
+        assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
+        assert np.allclose(np.sort(intx), np.sort(tf.x[args])), f"{intx} != {tf.x[args]}"
+        assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
 
 
 if __name__ == "__main__":
