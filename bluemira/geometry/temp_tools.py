@@ -27,10 +27,39 @@ import numpy as np
 import numba as nb
 from numba.np.extensions import cross2d
 from pyquaternion import Quaternion
-
-EPS = np.finfo(np.float).eps  # from bluemira.base.constants import EPS
+from bluemira.base.constants import EPS
 from bluemira.geometry.base import GeometryError
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
+
+
+# =============================================================================
+# Pre-processing utilities
+# =============================================================================
+
+
+def xyz_process(func):
+    """
+    Decorator for parsing x, y, z coordinates to numpy float arrays and dimension
+    checking.
+    """
+
+    def wrapper(x, y, z=None):
+        x = np.ascontiguousarray(x, dtype=np.float_)
+        y = np.ascontiguousarray(y, dtype=np.float_)
+        if z is None:
+            if len(x) != len(y):
+                raise GeometryError("Coordinate vectors must have same length.")
+            return func(x, y, z)
+        else:
+            z = np.ascontiguousarray(z, dtype=np.float_)
+
+            if not (len(x) == len(y) == len(z)):
+                raise GeometryError("Coordinate vectors must have same length.")
+
+            return func(x, y, z)
+
+    return wrapper
+
 
 # =============================================================================
 # Boolean checks
@@ -183,7 +212,7 @@ def check_ccw(x, z):
 
     Parameters
     ----------
-    x:
+    x: np.array
         The x coordinates of the polygon
     z: np.array
         The z coordinates of the polygon
@@ -282,6 +311,99 @@ def get_normal_vector(x, y, z):
     return n_hat / np.linalg.norm(n_hat)
 
 
+@xyz_process
+def get_perimeter(x, y, z=None):
+    """
+    Calculate the perimeter of a set of coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: Union[None, np.array]
+        The z coordinates
+
+    Returns
+    -------
+    perimeter: float
+        The perimeter of the coordinates
+    """
+    if z is None:
+        return get_perimeter_2d(x, y)
+    else:
+        return get_perimeter_3d(x, y, z)
+
+
+@nb.jit(cache=True, nopython=True)
+def get_perimeter_2d(x, y):
+    """
+    Calculate the perimeter of a 2-D set of coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+
+    Returns
+    -------
+    perimeter: float
+        The perimeter of the coordinates
+    """
+    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+
+
+@nb.jit(cache=True, nopython=True)
+def get_perimeter_3d(x, y, z):
+    """
+    Calculate the perimeter of a set of 3-D coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: np.array
+        The z coordinates
+
+    Returns
+    -------
+    perimeter: float
+        The perimeter of the coordinates
+    """
+    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2))
+
+
+@xyz_process
+def get_area(x, y, z=None):
+    """
+    Calculate the area inside a closed polygon with x, y coordinate vectors.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+
+    Parameters
+    ----------
+    x: np.array
+        The first set of coordinates [m]
+    y: np.array
+        The second set of coordinates [m]
+    z: Union[np.array, None]
+        The third set of coordinates or None (for a 2-D polygon)
+
+    Returns
+    -------
+    area: float
+        The area of the polygon [m^2]
+    """
+    if z is None:
+        return get_area_2d(x, y)
+    else:
+        return get_area_3d(x, y, z)
+
+
 @nb.jit(cache=True, nopython=True)
 def get_area_2d(x, y):
     """
@@ -300,12 +422,6 @@ def get_area_2d(x, y):
     area: float
         The area of the polygon [m^2]
     """
-    x = np.asfarray(x)
-    y = np.asfarray(y)
-
-    if len(x) != len(y):
-        raise GeometryError("Coordinate vectors must have same length.")
-
     # No np.roll in numba
     x1 = np.append(x[-1], x[:-1])
     y1 = np.append(y[-1], y[:-1])
@@ -332,9 +448,6 @@ def get_area_3d(x, y, z):
     area: float
         The area of the polygon [m^2]
     """
-    x = np.asfarray(x)
-    y = np.asfarray(y)
-    z = np.asfarray(z)
     v3 = get_normal_vector(x, y, z)
     m = np.zeros((3, len(x)))
     m[0, :] = x
@@ -345,31 +458,6 @@ def get_area_3d(x, y, z):
         a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
     a *= 0.5
     return abs(np.dot(a, v3))
-
-
-def get_area(x, y, z=None):
-    """
-    Calculate the area inside a closed polygon with x, y coordinate vectors.
-    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
-
-    Parameters
-    ----------
-    x: np.array
-        The first set of coordinates [m]
-    y: np.array
-        The second set of coordinates [m]
-    z: Union[np.array, None]
-        The third set of coordinates or None (for a 2-D polygon)
-
-    Returns
-    -------
-    area: float
-        The area of the polygon [m^2]
-    """
-    if z is None:
-        return get_area_2d(x, y)
-    else:
-        return get_area_3d(x, y, z)
 
 
 @nb.jit(cache=True, nopython=True)
@@ -566,40 +654,6 @@ def normal_vector(side_vectors):
     nan = np.isnan(a)
     a[nan] = 0
     return a
-
-
-def vector_intersect(p1, p2, p3, p4):
-    """
-
-    Parameters
-    ----------
-    p1: np.array(2)
-        The first point on the first vector
-    p2: np.array(2)
-        The second point on the first vector
-    p3: np.array(2)
-        The first point on the second vector
-    p4: np.array(2)
-        The second point on the second vector
-
-    Returns
-    -------
-    p_inter: np.array(2)
-        The point of the intersection between the two vectors
-    """
-    da = p2 - p1
-    db = p4 - p3
-
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
-        # NOTE: careful modifying this, different behaviour required...
-        point = p2
-    else:
-        dp = p1 - p3
-        dap = normal_vector(da)
-        denom = np.dot(dap, db)
-        num = np.dot(dap, dp)
-        point = num / denom.astype(float) * db + p3
-    return point
 
 
 def offset(x, z, offset_value):
@@ -857,6 +911,41 @@ def rotation_matrix_v1v2(v1, v2):
 # =============================================================================
 # Intersection tools
 # =============================================================================
+
+
+def vector_intersect(p1, p2, p3, p4):
+    """
+    Get the intersection point between two vectors.
+
+    Parameters
+    ----------
+    p1: np.array(2)
+        The first point on the first vector
+    p2: np.array(2)
+        The second point on the first vector
+    p3: np.array(2)
+        The first point on the second vector
+    p4: np.array(2)
+        The second point on the second vector
+
+    Returns
+    -------
+    p_inter: np.array(2)
+        The point of the intersection between the two vectors
+    """
+    da = p2 - p1
+    db = p4 - p3
+
+    if np.isclose(np.cross(da, db), 0):  # vectors parallel
+        # NOTE: careful modifying this, different behaviour required...
+        point = p2
+    else:
+        dp = p1 - p3
+        dap = normal_vector(da)
+        denom = np.dot(dap, db)
+        num = np.dot(dap, dp)
+        point = num / denom.astype(float) * db + p3
+    return point
 
 
 def loop_plane_intersect(loop, plane):

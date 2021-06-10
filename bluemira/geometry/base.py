@@ -25,9 +25,12 @@ Base class and Plane object for use with Loop.
 
 import os
 import numpy as np
+import abc
 import json
 import pickle  # noqa (S403)
 from copy import deepcopy
+from typing import Union
+from collections import Iterable
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import NumpyJSONEncoder
 from bluemira.geometry.constants import D_TOLERANCE
@@ -38,10 +41,26 @@ class GeometryError(Exception):
     pass
 
 
-class GeomBase:
+class GeomBase(abc.ABC):
     """
     Base object for geometry classes. Need to think about this more...
     """
+
+    plan_dims: Union[None, Iterable]
+
+    @abc.abstractmethod
+    def as_dict(self):
+        """
+        Cast the GeomBase as a dictionary.
+        """
+        pass
+
+    @abc.abstractmethod
+    def from_dict(self, d):
+        """
+        Initialise a GeomBase from a dictionary.
+        """
+        pass
 
     def to_json(self, filename):
         """
@@ -119,6 +138,19 @@ class Plane(GeomBase):
         d = np.dot(cp, self.p3)
         self._get_plan_dims(cp)
         self.parameters = [cp[0], cp[1], cp[2], d]
+
+    def as_dict(self):
+        """
+        Cast the GeomBase as a dictionary.
+        """
+        return {"p1": self.p1, "p2": self.p2, "p3": self.p3}
+
+    @classmethod
+    def from_dict(cls, d):
+        """
+        Initialise a GeomBase from a dictionary.
+        """
+        return cls(d["p1"], d["p2"], d["p3"])
 
     def _get_plan_dims(self, v):
         if np.isclose(abs(v[0]), 1, rtol=0, atol=D_TOLERANCE):

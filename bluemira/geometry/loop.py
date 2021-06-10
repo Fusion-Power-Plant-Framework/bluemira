@@ -40,6 +40,7 @@ from bluemira.geometry.temp_tools import (
     quart_rotate,
     rotation_matrix_v1v2,
     bounding_box,
+    get_perimeter,
     get_area,
     get_centroid_2d,
     get_centroid_3d,
@@ -156,7 +157,7 @@ class Loop(GeomBase):
         return cls(*xyz_array)
 
     # =========================================================================
-    #      Conversions
+    # Conversions
     # =========================================================================
 
     def as_dict(self):
@@ -168,7 +169,7 @@ class Loop(GeomBase):
         d: dict
             Dictionary with {'x': [], 'y': [], 'z':[]}
         """
-        return {"x": self["x"], "y": self["y"], "z": self["z"]}
+        return {"x": self.x, "y": self.y, "z": self.z}
 
     # =========================================================================
     # Public properties
@@ -264,8 +265,9 @@ class Loop(GeomBase):
         """
         The perimeter of the Loop.
         """
-        d = np.sqrt(np.sum(np.diff(self.xyz) ** 2, axis=0))
-        return np.sum(d)
+        return get_perimeter(*self.xyz)
+        # d = np.sqrt(np.sum(np.diff(self.xyz) ** 2, axis=0))
+        # return np.sum(d)
 
     # =========================================================================
     # Support properties
