@@ -23,7 +23,21 @@ import bluemira.geometry as geo
 
 if __name__ == "__main__":
     print("This is a simple tutorial for the geometric module")
-    print("1. Creation of a wire")
+
+    print("1. Creation of a closed wire")
     pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
     wire = geo.tools.make_polygon(pntslist, closed=True)
-    print("wire: {}, length: {}".format(wire, wire.Length))
+    print("wire: {}, length: {}, isClosed: {}".format(wire, wire.Length,
+                                                      wire.isClosed()))
+    print("2. Creation of a bluemira wire")
+    s = geo.bluemirawire.BluemiraWire(wire, "s")
+    print(s)
+
+    print("3. Make some operations on bluemira wire")
+    print("3.1 Discretize it")
+    points = s.discretize(10)
+    print(points)
+    print("3.2 Discretize it considering the edges")
+    points = s.discretize(10, byedges=True)
+    print(points)
+
