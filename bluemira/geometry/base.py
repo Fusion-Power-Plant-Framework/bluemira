@@ -36,8 +36,12 @@ from bluemira.utilities.tools import NumpyJSONEncoder
 from bluemira.geometry.constants import D_TOLERANCE
 
 
+# TODO: delete and use geometry/error.py
 class GeometryError(Exception):
-    # TODO: Decide on bluemira Error structure
+    """
+    Geometry error base class
+    """
+
     pass
 
 
