@@ -35,6 +35,8 @@ from bluemira.geometry.temp_tools import (
     polygon_in_polygon,
     get_normal_vector,
     get_area,
+    rotation_matrix,
+    offset,
 )
 from bluemira.geometry.loop import Loop
 
@@ -348,6 +350,92 @@ class TestInPolygon:
 
         hits = np.count_nonzero(mask)
         assert hits == 1171, hits
+
+
+class TestRotationMatrix:
+    def test_axes(self):
+        axes = ["x", "y", "z"]
+        axes2 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+
+        for a1, a2 in zip(axes, axes2):
+            r_1 = rotation_matrix(np.pi / 6, a1)
+            r_2 = rotation_matrix(np.pi / 6, a2)
+            assert np.allclose(r_1, r_2), a1
+
+        axes = ["fail", "somthing", "1"]
+        for axis in axes:
+            with pytest.raises(GeometryError):
+                rotation_matrix(30, axis)
+
+    def test_ccw(self):
+        p1 = [9, 0, 0]
+
+        r_matrix = rotation_matrix(np.pi / 2, axis="z")
+        p2 = r_matrix @ p1
+
+        assert np.isclose(p2[1], 9), p2
+
+
+class TestOffset:
+    plot = tests.PLOTTING
+
+    @classmethod
+    def setup_class(cls):
+        pass
+
+    def test_rectangle(self):
+        # Rectangle - positive offset
+        x = [1, 3, 3, 1, 1, 3]
+        y = [1, 1, 3, 3, 1, 1]
+        o = offset(x, y, 0.25)
+        assert sum(o[0] - np.array([0.75, 3.25, 3.25, 0.75, 0.75])) == 0
+        assert sum(o[1] - np.array([0.75, 0.75, 3.25, 3.25, 0.75])) == 0
+        if self.plot:
+            f, ax = plt.subplots()
+            ax.plot(x, y, "k")
+            ax.plot(*o, "r", marker="o")
+            ax.set_aspect("equal")
+
+    def test_triangle(self):
+        x = [1, 2, 1.5, 1, 2]
+        y = [1, 1, 4, 1, 1]
+        t = offset(x, y, -0.25)
+        assert (
+            abs(sum(t[0] - np.array([1.29511511, 1.70488489, 1.5, 1.29511511])) - 0)
+            < 1e-3
+        )
+        assert abs(sum(t[1] - np.array([1.25, 1.25, 2.47930937, 1.25])) - 0) < 1e-3
+        if self.plot:
+            f, ax = plt.subplots()
+            ax.plot(x, y, "k")
+            ax.plot(*t, "r", marker="o")
+            ax.set_aspect("equal")
+
+    def test_complex_open(self):
+        # fmt:off
+        x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2]
+        y = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1]
+        # fmt:on
+
+        c = offset(x, y, 1)
+        if self.plot:
+            f, ax = plt.subplots()
+            ax.plot(x, y, "k")
+            ax.plot(*c, "r", marker="o")
+            ax.set_aspect("equal")
+
+    def test_complex_closed(self):
+        # fmt:off
+        x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -3]
+        y = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 1, 0, 2]
+        # fmt:on
+
+        c = offset(x, y, 1)
+        if self.plot:
+            f, ax = plt.subplots()
+            ax.plot(x, y, "k")
+            ax.plot(*c, "r", marker="o")
+            ax.set_aspect("equal")
 
 
 if __name__ == "__main__":

@@ -83,33 +83,6 @@ class GeomBase:
         d = cls.load(filename)
         return cls.from_dict(d)
 
-    @staticmethod
-    def rotation_matrix(v1, v2):
-        """
-        Get a rotation matrix based on two vectors.
-        """
-        v1 /= np.linalg.norm(v1)
-        v2 /= np.linalg.norm(v2)
-
-        cos_angle = np.dot(v1, v2)
-        d = np.cross(v1, v2)
-        sin_angle = np.linalg.norm(d)
-
-        if sin_angle == 0:
-            matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
-        else:
-            d /= sin_angle
-
-            eye = np.eye(3)
-            ddt = np.outer(d, d)
-            skew = np.array(
-                [[0, d[2], -d[1]], [-d[2], 0, d[0]], [d[1], -d[0], 0]], dtype=np.float64
-            )
-
-            matrix = ddt + cos_angle * (eye - ddt) + sin_angle * skew
-
-        return matrix
-
     def copy(self):
         """
         Get a deep copy of the geometry object.

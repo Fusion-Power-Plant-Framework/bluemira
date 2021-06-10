@@ -24,22 +24,34 @@ A coordinate-series object class.
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import PathPatch
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.plot_tools import (
+    coordinates_to_path,
+    Plot3D,
+    BluemiraPathPatch3D,
+)
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.base import GeomBase, GeometryError, Plane
 from bluemira.geometry.temp_tools import (
     check_ccw,
     quart_rotate,
+    rotation_matrix_v1v2,
+    bounding_box,
+    get_area,
     get_centroid_2d,
     get_centroid_3d,
+    get_normal_vector,
+    offset,
 )
 from bluemira.utilities.tools import is_num
 
 
 class Loop(GeomBase):
     """
-    The BLUEPRINT Loop object, which holds a set of connected 2D/3D coordinates
-    and provides methods to manipulate them.
+    The Loop object, which holds a set of connected 2D/3D coordinates and
+    provides methods to manipulate them.
 
     Loops must be comprised of planar coordinates for some methods to work.
 
@@ -220,7 +232,7 @@ class Loop(GeomBase):
     @property
     def centroid(self):
         """
-        Centroid
+        The centroid of the Loop.
         """
         if not self.closed:
             bluemira_warn("Returning centroid of an open polygon.")
@@ -237,23 +249,19 @@ class Loop(GeomBase):
     @property
     def area(self) -> float:
         """
-        Returns the area inside a closed Loop.
-        Shoelace method: https://en.wikipedia.org/wiki/Shoelace_formula
+        The area inside a closed Loop.
 
         Returns
         -------
         area: float
             The area of the polygon [m^2]
         """
-        a = np.zeros(3)
-        for i in range(len(self)):
-            a += np.cross(self[i], self[(i + 1) % len(self)])
-        return abs(np.dot(a / 2, self.n_hat))
+        return get_area(*self.xyz)
 
     @property
     def length(self) -> float:
         """
-        Perimeter
+        The perimeter of the Loop.
         """
         d = np.sqrt(np.sum(np.diff(self.xyz) ** 2, axis=0))
         return np.sum(d)
@@ -267,9 +275,9 @@ class Loop(GeomBase):
         """
         Support plane
         """
-        # TODO: This is weak...
         if self._plane is None:
             if len(self) > 4:
+                # TODO: This is weak...
                 self._plane = Plane(self[0], self[int(len(self) / 2)], self[-2])
             else:
                 self._plane = Plane(self[0], self[1], self[2])
@@ -296,31 +304,7 @@ class Loop(GeomBase):
         Normal vector
         """
         if self._n_hat is None:
-            if len(self) > 4:
-                v3, i = [0], 2
-                v1 = self[1] - self[0]
-                try:
-                    while sum(v3) == 0 or np.isnan(v3).any():
-                        v3 = np.cross(v1, self[i] - self[-1])
-                        i += 1
-
-                except IndexError:
-                    # This is a tricky one, we'll use the centroid
-                    # (potentially less accurate for 2-D loops, but sometimes the
-                    # only way for 3-D loops)
-                    centroid = self.centroid
-                    v1 = centroid - self[0]
-                    v2 = centroid - self[1]
-                    v3 = np.cross(v1, v2)
-
-            else:
-                v1 = self[1] - self[0]
-                v2 = self[len(self) - 1] - self[len(self) - 2]
-                v3 = np.cross(v1, v2)
-                if np.allclose(v3, np.zeros(3)):
-                    self._n_hat = np.zeros(3)  # Dodge Zero division
-
-            self._n_hat = v3 / np.linalg.norm(v3)
+            self._n_hat = get_normal_vector(*self.xyz)
 
         return self._n_hat
 
@@ -378,7 +362,7 @@ class Loop(GeomBase):
     # Modification methods
     # =========================================================================
 
-    def open_(self):
+    def open(self):
         """
         Open a closed Loop to make an open Loop.
         """
@@ -560,6 +544,128 @@ class Loop(GeomBase):
                 self.__setattr__(k, t[i])
         else:
             return Loop(**dict(zip(["x", "y", "z"], t)))
+
+    def offset(self, delta):
+        """
+        Get a new loop offset by `delta` from existing Loop.
+        3rd coordinate is also matched in the new Loop
+
+        Parameters
+        ----------
+        delta: float
+            The offset to take from the Loop. Negative numbers mean a smaller
+            Loop
+
+        Returns
+        -------
+        delta_loop: Loop
+            A new Loop object offset from this Loop
+        """
+        if delta == 0.0:
+            return self.copy()
+
+        o = offset(self[self.plan_dims[0]], self[self.plan_dims[1]], delta)
+        new = {self.plan_dims[0]: o[0], self.plan_dims[1]: o[1]}
+        c = list({"x", "y", "z"} - set(self.plan_dims))[0]
+        new[c] = [self[c][0]]  # Third coordinate must be all equal (flat)
+        return Loop(**new)
+
+    # =========================================================================
+    # Plotting
+    # =========================================================================
+
+    def plot(self, ax=None, points=False, **kwargs):
+        """
+        Only deals with unique colors - no cycles here please
+        Handle all kwargs explicitly here, no kwargs-magic beyond this point
+
+        Parameters
+        ----------
+        ax: Axes object
+            The matplotlib axes on which to plot the Loop
+        points: bool
+            Whether or not to plot individual points (with numbering)
+
+        Other Parameters
+        ----------------
+        edgecolor: str
+            The edgecolor to plot the Loop with
+        facecolor: str
+            The facecolor to plot the Loop fill with
+        alpha: float
+            The transparency to plot the Loop fill with
+        """
+        if self.ndim == 2 and ax is None:
+            ax = kwargs.get("ax", plt.gca())
+        fc = kwargs.get("facecolor", "royalblue")
+        lw = kwargs.get("linewidth", 2)
+        ls = kwargs.get("linestyle", "-")
+        alpha = kwargs.get("alpha", 1)
+
+        if self.closed:
+            fill = kwargs.get("fill", True)
+            ec = kwargs.get("edgecolor", "k")
+        else:
+            fill = kwargs.get("fill", False)
+            ec = kwargs.get("edgecolor", "r")
+
+        if self.ndim == 2 and not hasattr(ax, "zaxis"):
+            a, b = self.plan_dims
+            marker = "o" if points else None
+            ax.set_xlabel(a + " [m]")
+            ax.set_ylabel(b + " [m]")
+            if fill:
+                poly = coordinates_to_path(*self.d2)
+                p = PathPatch(poly, color=fc, alpha=alpha)
+                ax.add_patch(p)
+            ax.plot(*self.d2, color=ec, marker=marker, linewidth=lw, linestyle=ls)
+            if points:
+                for i, p in enumerate(self.d2.T):
+                    ax.annotate(i, xy=(p[0], p[1]))
+            if not hasattr(ax, "zaxis"):
+                ax.set_aspect("equal")
+        else:
+            kwargs = {
+                "edgecolor": ec,
+                "facecolor": fc,
+                "linewidth": lw,
+                "linestyle": ls,
+                "alpha": alpha,
+                "fill": fill,
+            }
+            self._plot_3d(ax, **kwargs)
+
+    def _plot_3d(self, ax=None, **kwargs):
+        if ax is None:
+            ax = Plot3D()
+            # Maintenant on re-arrange un peu pour que matplotlib puisse nous
+            # montrer qqchose un peu plus correct
+            x_bb, y_bb, z_bb = bounding_box(*self.xyz)
+            for x, y, z in zip(x_bb, y_bb, z_bb):
+                ax.plot([x], [y], [z], color="w")
+
+        ax.plot(*self.xyz, color=kwargs["edgecolor"], lw=kwargs["linewidth"])
+        if kwargs["fill"]:
+            dcm = rotation_matrix_v1v2(-self.n_hat, np.array([0.0, 0.0, 1.0]))
+
+            loop = self.rotate_dcm(dcm.T, update=False)
+
+            c = np.array(loop._point_23d(loop.centroid))
+            loop.translate(-c, update=True)
+
+            # Pour en faire un objet que matplotlib puisse comprendre
+            poly = coordinates_to_path(*loop.d2)
+
+            # En suite en re-transforme l'objet matplotlib en 3-D!
+            c = self._point_23d(self.centroid)
+
+            p = BluemiraPathPatch3D(
+                poly, -self.n_hat, c, color=kwargs["facecolor"], alpha=kwargs["alpha"]
+            )
+            ax.add_patch(p)
+
+        if not hasattr(ax, "zaxis"):
+            ax.set_aspect("equal")
 
     # =========================================================================
     # Type checking, dim-checking, and janitorial work

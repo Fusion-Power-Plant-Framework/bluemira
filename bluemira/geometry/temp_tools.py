@@ -529,6 +529,139 @@ def close_coordinates(x, y, z):
     return x, y, z
 
 
+def side_vector(polygon_array):
+    """
+    Calculates the side vectors of an anti-clockwise polygon
+
+    Parameters
+    ----------
+    polygon_array: np.array(2, N)
+        The array of polygon point coordinates
+
+    Returns
+    -------
+    sides: np.array(N, 2)
+        The array of the polygon side vectors
+    """
+    return polygon_array - np.roll(polygon_array, 1)
+
+
+def normal_vector(side_vectors):
+    """
+    Anti-clockwise
+
+    Parameters
+    ----------
+    side_vectors: np.array(N, 2)
+        The side vectors of a polygon
+
+    Returns
+    -------
+    a: np.array(2, N)
+        The array of 2-D normal vectors of each side of a polygon
+    """
+    a = -np.array([-side_vectors[1], side_vectors[0]]) / np.sqrt(
+        side_vectors[0] ** 2 + side_vectors[1] ** 2
+    )
+    nan = np.isnan(a)
+    a[nan] = 0
+    return a
+
+
+def vector_intersect(p1, p2, p3, p4):
+    """
+
+    Parameters
+    ----------
+    p1: np.array(2)
+        The first point on the first vector
+    p2: np.array(2)
+        The second point on the first vector
+    p3: np.array(2)
+        The first point on the second vector
+    p4: np.array(2)
+        The second point on the second vector
+
+    Returns
+    -------
+    p_inter: np.array(2)
+        The point of the intersection between the two vectors
+    """
+    da = p2 - p1
+    db = p4 - p3
+
+    if np.isclose(np.cross(da, db), 0):  # vectors parallel
+        # NOTE: careful modifying this, different behaviour required...
+        point = p2
+    else:
+        dp = p1 - p3
+        dap = normal_vector(da)
+        denom = np.dot(dap, db)
+        num = np.dot(dap, dp)
+        point = num / denom.astype(float) * db + p3
+    return point
+
+
+def offset(x, z, offset_value):
+    """
+    Get a square-based offset of the coordinates (no splines). N-sized output
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinate vector
+    z: np.array
+        The x coordinate vector
+    offset_value: float
+        The offset value [m]
+
+    Returns
+    -------
+    xo: np.array(N)
+        The x offset coordinates
+    zo: np.array(N)
+        The z offset coordinates
+    """
+    # check numpy arrays:
+    x, z = np.array(x), np.array(z)
+    # check closed:
+    if (x[-2:] == x[:2]).all() and (z[-2:] == z[:2]).all():
+        closed = True
+    elif x[0] == x[-1] and z[0] == z[-1]:
+        closed = True
+        # Need to "double lock" it for closed curves
+        x = np.append(x, x[1])
+        z = np.append(z, z[1])
+    else:
+        closed = False
+    p = np.array([np.array(x), np.array(z)])
+    # Normal vectors for each side
+    v = normal_vector(side_vector(p))
+    # Construct points offset
+    off_p = np.column_stack(p + offset_value * v)
+    off_p2 = np.column_stack(np.roll(p, 1) + offset_value * v)
+    off_p = np.array([off_p[:, 0], off_p[:, 1]])
+    off_p2 = np.array([off_p2[:, 0], off_p2[:, 1]])
+    ox = np.empty((off_p2[0].size + off_p2[0].size,))
+    oz = np.empty((off_p2[1].size + off_p2[1].size,))
+    ox[0::2], ox[1::2] = off_p2[0], off_p[0]
+    oz[0::2], oz[1::2] = off_p2[1], off_p[1]
+    off_s = np.array([ox[2:], oz[2:]]).T
+    pnts = []
+    for i in range(len(off_s[:, 0]) - 2)[0::2]:
+        pnts.append(vector_intersect(off_s[i], off_s[i + 1], off_s[i + 3], off_s[i + 2]))
+    pnts.append(pnts[0])
+    pnts = np.array(pnts)[:-1][::-1]  # sorted ccw nicely
+    if closed:
+        pnts = np.concatenate((pnts, [pnts[0]]))  # Closed
+    else:  # Add end points
+        pnts = np.concatenate((pnts, [off_s[0]]))
+        pnts = np.concatenate(([off_s[-1]], pnts))
+    # sorted ccw nicely - i know looks weird but.. leave us kids alone
+    # drop nan values
+    return pnts[~np.isnan(pnts).any(axis=1)][::-1].T
+
+
 # =============================================================================
 # Rotations
 # =============================================================================
@@ -631,7 +764,7 @@ def quart_rotate(point, **kwargs):
     return rpoint
 
 
-def rotate_matrix(theta, axis="z"):
+def rotation_matrix(theta, axis="z"):
     """
     Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
     \t:math:`\\mathbf{x^{'}}=\\mathbf{R_{u}}(\\theta)\\mathbf{x}`
@@ -694,6 +827,33 @@ def rotate_matrix(theta, axis="z"):
     return r_matrix
 
 
+def rotation_matrix_v1v2(v1, v2):
+    """
+    Get a rotation matrix based off two vectors.
+    """
+    v1 /= np.linalg.norm(v1)
+    v2 /= np.linalg.norm(v2)
+
+    cos_angle = np.dot(v1, v2)
+    d = np.cross(v1, v2)
+    sin_angle = np.linalg.norm(d)
+
+    if sin_angle == 0:
+        matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
+    else:
+        d /= sin_angle
+
+        eye = np.eye(3)
+        ddt = np.outer(d, d)
+        skew = np.array(
+            [[0, d[2], -d[1]], [-d[2], 0, d[0]], [d[1], -d[0], 0]], dtype=np.float64
+        )
+
+        matrix = ddt + cos_angle * (eye - ddt) + sin_angle * skew
+
+    return matrix
+
+
 # =============================================================================
 # Intersection tools
 # =============================================================================
@@ -736,3 +896,69 @@ def _loop_plane_intersect(array, p1, vec2):
             if (fac >= 0) and (fac <= 1):
                 out.append(array[i] + fac * vec1)
     return out
+
+
+def get_intersect(loop1, loop2):
+    """
+    Calculates the intersection points between two Loops. Will return unique
+    list of x, z intersections (no duplicates in x-z space)
+
+    Parameters
+    ----------
+    loop1: Loop
+        The Loops between which intersection points should be calculated
+    loop2: Loop
+        The Loops between which intersection points should be calculated
+
+    Returns
+    -------
+    xi: np.array(N_itersection)
+        The x coordinates of the intersection points
+    zi: np.array(N_itersection)
+        The z coordinates of the intersection points#
+
+    Note
+    ----
+    D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
+    """  # noqa (W505)
+    x1, y1 = loop1.d2
+    x2, y2 = loop2.d2
+
+    def inner_inter(x_1, x_2):
+        n1, n2 = x_1.shape[0] - 1, x_2.shape[0] - 1
+        xx1 = np.c_[x_1[:-1], x_1[1:]]
+        xx2 = np.c_[x_2[:-1], x_2[1:]]
+        return (
+            np.less_equal(
+                np.tile(xx1.min(axis=1), (n2, 1)).T, np.tile(xx2.max(axis=1), (n1, 1))
+            ),
+            np.greater_equal(
+                np.tile(xx1.max(axis=1), (n2, 1)).T, np.tile(xx2.min(axis=1), (n1, 1))
+            ),
+        )
+
+    x_x = inner_inter(x1, x2)
+    z_z = inner_inter(y1, y2)
+    m, k = np.nonzero(x_x[0] & x_x[1] & z_z[0] & z_z[1])
+    n = len(m)
+    a_m, xz, b_m = np.zeros((4, 4, n)), np.zeros((4, n)), np.zeros((4, n))
+    a_m[0:2, 2, :] = -1
+    a_m[2:4, 3, :] = -1
+    a_m[0::2, 0, :] = np.diff(np.c_[x1, y1], axis=0)[m, :].T
+    a_m[1::2, 1, :] = np.diff(np.c_[x2, y2], axis=0)[k, :].T
+    b_m[0, :] = -x1[m].ravel()
+    b_m[1, :] = -x2[k].ravel()
+    b_m[2, :] = -y1[m].ravel()
+    b_m[3, :] = -y2[k].ravel()
+    for i in range(n):
+        try:
+            xz[:, i] = np.linalg.solve(a_m[:, :, i], b_m[:, i])
+        except np.linalg.LinAlgError:
+            # Parallel segments. Will raise numpy RuntimeWarnings
+            xz[0, i] = np.nan
+    in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)
+    xz = xz[2:, in_range].T
+    x, z = xz[:, 0], xz[:, 1]
+    if len(x) > 0:
+        x, z = np.unique([x, z], axis=1)
+    return x, z

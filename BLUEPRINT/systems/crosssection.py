@@ -218,7 +218,7 @@ class ReactorCrossSection(ReactorSystem):
                 # inside the KOZ
                 if count > 0:
                     inner.reorder(i, 0)
-                    inner.open_()
+                    inner.open()
                     break
                 count += 1  # (Second point inside the loop)
 
@@ -268,7 +268,7 @@ class ReactorCrossSection(ReactorSystem):
                 # inside the KOZ
                 if count > 1:
                     inner.reorder(0, i)
-                    inner.open_()
+                    inner.open()
                     break
                 count += 1  # (Second point inside the loop)
 

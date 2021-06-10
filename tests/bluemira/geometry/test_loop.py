@@ -21,15 +21,18 @@
 
 
 import pytest
-import numpy as np
+import tests
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 from random import uniform
 from bluemira.base.file import get_bluemira_path
+from bluemira.utilities.plot_tools import Plot3D
 from bluemira.geometry.base import GeometryError
 from bluemira.geometry.loop import Loop
 
 
-TEST = get_bluemira_path("geometry/test_data", subfolder="tests")
+TEST = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
 
 
 class TestLoop:
@@ -80,7 +83,7 @@ class TestLoop:
         self.h.close()
         assert self.h.closed is True
         assert self.t.closed is True
-        self.t.open_()
+        self.t.open()
         assert self.t.closed is False
 
     def test_closed(self):
@@ -197,3 +200,40 @@ class TestLoop:
         a = Loop(y=[0, 4, 4, 0, 0], z=[0, 0, 2, 2, 0])
         assert a._check_already_in([4, 0])
         assert not a._check_already_in([4, 4])
+
+
+@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
+class Test3Dplotting:
+    def test_looks_good(self):
+        loop = Loop(x=[0.4, 4, 6, 7, 8, 4, 0.4], y=[1, 1, 2, 2, 3, 3, 1], z=0)
+        ax = Plot3D()
+        loop.rotate(30, p1=[0, 0, 0], p2=[0, 1, 0])  # Killer edge case
+        loop.plot(ax)
+        loop.rotate(40, p1=[0, 0, 0], p2=[0, 0, 1])
+        loop.plot(ax)
+        loop.rotate(30, p1=[0, 0, 0], p2=[0, 1, 2])  # Killer edge case
+        loop.plot(ax)
+        loop.translate([10, 0.0, -5])
+        loop.plot(ax)
+        loop.rotate(-70, p1=[0, 1, 0], p2=[-9, -8, 4])
+        loop.plot(ax)
+        plt.show()
+
+    def test_edges_again(self):
+        loop = Loop(x=[0, 2, 2, 0, 0], y=[0, 0, 2, 2, 0])
+        loop.translate([10, 10, 10])
+        ax = Plot3D()
+        loop.plot(ax)
+        loop.rotate(30, p1=[0, 0, 0], p2=[0, 0, 1])
+        loop.plot(ax)
+        loop.rotate(-30, p1=[0, 0, 0], p2=[0, 0, 1])
+        loop.rotate(30, p1=[0, 0, 0], p2=[0, 1, 0])  # this is the killer!
+        loop.plot(ax)
+        u_loop = Loop([0, 0, 1, 1, 0], [0, 0, 0, 0, 0], [2, 0, 0, 2, 2])
+        u_loop.translate([3, 0, 0])
+        u_loop.plot(ax)
+        plt.show()
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

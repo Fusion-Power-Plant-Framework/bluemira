@@ -30,7 +30,7 @@ from bluemira.utilities.tools import NumpyJSONEncoder, is_num
 class TestNumpyJSONEncoder:
     def test_childclass(self):
         fp = get_bluemira_path("bluemira/utilities/test_data", subfolder="tests")
-        fn = os.sep.join([fp, "testJSONEncoder"])
+        fn = os.sep.join([fp, "testJSONEncoder.json"])
         d = {"x": np.array([1, 2, 3.4, 4]), "y": [1, 3], "z": 3, "a": "aryhfdhsdf"}
         with open(fn, "w") as file:
             json.dump(d, file, cls=NumpyJSONEncoder)
