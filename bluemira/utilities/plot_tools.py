@@ -44,8 +44,7 @@ def ring_coding(n):
 
 def coordinates_to_path(x, z):
     """
-    Convert coordinates to path vertices. Objects produced by Shapely's
-    analytic methods have the proper coordinate order, no need to sort.
+    Convert coordinates to path vertices.
     """
     if not check_ccw(x, z):
         x = x[::-1]
