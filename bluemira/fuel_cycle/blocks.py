@@ -23,8 +23,8 @@
 Fuel cycle model fundamental building blocks
 """
 import numpy as np
-from bluemira.base.lookandfeel import bpwarn
-from bluemira.base.error import FuelCycleError
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.fuel_cycle.error import FuelCycleError
 from bluemira.fuel_cycle.tfv_utilities import (
     linear_bathtub,
     fountain,
