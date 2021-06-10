@@ -34,6 +34,7 @@ from bluemira.geometry.temp_tools import (
     loop_plane_intersect,
     polygon_in_polygon,
     get_normal_vector,
+    get_perimeter,
     get_area,
     rotation_matrix,
     offset,
@@ -43,6 +44,14 @@ from bluemira.geometry.temp_tools import (
 from bluemira.geometry.loop import Loop
 
 TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
+
+
+class TestPerimeter:
+    def test_simple(self):
+        # 2 x 2 square
+        x = [0, 2, 2, 0, 0]
+        y = [0, 0, 2, 2, 0]
+        assert get_perimeter(x, y) == 8.0
 
 
 class TestCheckLineSegment:

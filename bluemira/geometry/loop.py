@@ -243,7 +243,7 @@ class Loop(GeomBase):
             if np.abs(x) == np.inf or np.abs(z) == np.inf:
                 return np.array(get_centroid_3d(*self.xyz))
             else:
-                return [x, z]
+                return np.array([x, z])
 
         else:
             return np.array(get_centroid_3d(*self.xyz))
@@ -266,8 +266,6 @@ class Loop(GeomBase):
         The perimeter of the Loop.
         """
         return get_perimeter(*self.xyz)
-        # d = np.sqrt(np.sum(np.diff(self.xyz) ** 2, axis=0))
-        # return np.sum(d)
 
     # =========================================================================
     # Support properties

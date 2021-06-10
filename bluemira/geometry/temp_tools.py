@@ -460,6 +460,30 @@ def get_area_3d(x, y, z):
     return abs(np.dot(a, v3))
 
 
+@xyz_process
+def get_centroid(x, y, z=None):
+    """
+    Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
+
+    Parameters
+    ----------
+    x: np.array
+        x coordinates of the loop to calculate on
+    y: np.array
+        y coordinates of the loop to calculate on
+    z: Union[None, np.array]
+
+    Returns
+    -------
+    centroid: np.array
+        The x, y, [z] coordinates of the centroid [m]
+    """
+    if z is None:
+        return get_centroid_2d(x, y)
+    else:
+        return get_centroid_3d(x, y, z)
+
+
 @nb.jit(cache=True, nopython=True)
 def get_centroid_2d(x, z):
     """

@@ -73,6 +73,12 @@ class TestLoop:
         assert self.h.ccw
         assert self.t.ccw
 
+    def test_length(self):
+        square = self.a.copy()
+        assert square.length == 4.0
+        square.rotate(2 * np.random.rand(1), p1=np.random.rand(3), p2=np.random.rand(3))
+        assert np.isclose(square.length, 4.0)
+
     def test_area(self):
         assert self.t.area == 8
         assert self.s.area == 4
