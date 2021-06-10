@@ -3,8 +3,8 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
-#                    J. Morris, D. Short
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+#                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -37,7 +37,97 @@ import numpy
 from typing import Union
 
 
+###################################
+# Part.Wire manipulation
+###################################
+def wire_closure(wire: Part.Wire):
+    """
+    Closes a wire with a line segment, if not already closed.
+    A new wire is returned.
+    """
+    closure = None
+    if not wire.isClosed():
+        vertexes = wire.OrderedVertexes
+        points = [v.Point for v in vertexes]
+        closure = make_polygon([points[-1], points[0]])
+    return closure
+
+def close_wire(wire: Part.Wire):
+    """
+    Closes a wire with a line segment, if not already closed.
+    A new wire is returned.
+    """
+    if not wire.isClosed():
+        vertexes = wire.OrderedVertexes
+        points = [v.Point for v in vertexes]
+        wline = make_polygon([points[-1], points[0]])
+        wire = Part.Wire([wire, wline])
+    return wire
+
+
+def discretize(w: Part.Wire, ndiscr: int):
+    """Discretize a wire.
+
+    Parameters
+    ----------
+    w : Part.Wire
+        wire to be discretized.
+    ndiscr : int
+        number of points for the whole wire discretization.
+
+    Returns
+    -------
+    output : list(Base.Vector)
+        list of Base.Vector points.
+
+    """
+    # discretization points array
+    output = w.discretize(ndiscr)
+    return output
+
+
+def discretize_by_edges(w: Part.Wire, ndiscr: int):
+    """Discretize a wire taking into account the edges of which it consists of.
+
+    Parameters
+    ----------
+    w : Part.Wire
+        wire to be discretized.
+    ndiscr : int
+        number of points for the whole wire discretization.
+
+    Returns
+    -------
+    output : list(Base.Vector)
+        list of Base.Vector points.
+
+    """
+    # discretization points array
+    output = []
+    # a dl is calculated for the discretization of the different edges
+    dl = w.Length/float(ndiscr)
+    # edges are discretised taking into account their orientation
+    # Note: this is a tricky part in Freecad. Reversed wires need a
+    # reverse operation for the generated points and the list of generated
+    # points for each edge.
+    for e in w.OrderedEdges:
+        pointse = e.discretize(Distance=dl)
+        # if edge orientation is reversed, the generated list of points
+        # must be reversed
+        if e.Orientation == "Reversed":
+            pointse.reverse()
+        output += pointse[:-1]
+    if w.isClosed():
+        output += pointse[-1:]
+    # if wire orientation is reversed, output must be reversed
+    if w.Orientation == "Reversed":
+        output.reverse()
+    return output
+
+
+###################################
 # Geometry creation
+###################################
 def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False,
               placement=None) -> Part.Wire:
     """Make a polygon from a set of points.

@@ -1,23 +1,23 @@
-#  bluemira is an integrated inter-disciplinary design tool for future fusion
-#  reactors. It incorporates several modules, some of which rely on other
-#  codes, to carry out a range of typical conceptual fusion reactor design
-#  activities.
-#  #
-#  Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
-#                     J. Morris, D. Short
-#  #
-#  bluemira is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU Lesser General Public
-#  License as published by the Free Software Foundation; either
-#  version 2.1 of the License, or (at your option) any later version.
-#  #
-#  bluemira is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-#  Lesser General Public License for more details.
-#  #
-#  You should have received a copy of the GNU Lesser General Public
-#  License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+#                    D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
 Base classes and functionality for the bluemira geometry module.
@@ -40,16 +40,18 @@ from abc import ABC, abstractmethod
 import logging
 module_logger = logging.getLogger(__name__)
 
+
 class BluemiraGeo(ABC):
     """Base abstract class for geometry"""
     def __init__(
             self,
             boundary,
             label: str = "",
-            lcar: Union[float, [float]] = 0.1
+            lcar: Union[float, [float]] = 0.1,
+            boundary_classes: [cls] = None
     ):
 
-        self.__boundary_classes = []
+        self.__boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
         self.lcar = lcar
@@ -73,11 +75,13 @@ class BluemiraGeo(ABC):
     def boundary(self, objs):
         self._boundary = None
         # if objs is not a list, it is converted into a list.
+        if not hasattr(objs, '__len__'):
+            objs = [objs]
         if self.__check_objs(objs):
             self._boundary = objs
         else:
-            raise ValueError("Only {} objects can be used for {}".format(
-                self.__boundary_classes, self.__class__()))
+            raise TypeError("Only {} objects can be used for {}".format(
+                self.__boundary_classes, self.__class__))
 
     @property
     @abstractmethod
@@ -107,7 +111,7 @@ class BluemiraGeo(ABC):
 
         Returns
         -------
-        output : list(Shape
+        output : [BluemiraGeo]
             list of shapes that have the specified label.
 
         """
@@ -115,6 +119,15 @@ class BluemiraGeo(ABC):
         if self.label == label:
             output.append(self)
         for o in self.boundary:
-            if isinstance(o, BluemiraBase):
+            if isinstance(o, BluemiraGeo):
                 output += o.search(label)
         return output
+
+    def __repr__(self):
+        new = []
+        new.append("([{}] = Label: {}".format(type(self).__name__, self.label))
+        new.append(" Length: {}".format(self.Length))
+        new.append(" Area: {}".format(self.Area))
+        new.append(" Volume: {}".format(self.Volume))
+        new.append(")")
+        return ", ".join(new)
