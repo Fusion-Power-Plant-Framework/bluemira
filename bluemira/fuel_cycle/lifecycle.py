@@ -29,9 +29,9 @@ from typing import Type
 from scipy.optimize import brentq
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base import ParameterFrame
-from bluemira.base.file import get_bluemira_path
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.utilities.tools import abs_rel_difference, is_num
+from bluemira.fuel_cycle.error import FuelCycleError
 from bluemira.fuel_cycle.tools import f_gompertz, histify
 from bluemira.fuel_cycle.timeline import Timeline
 
@@ -76,6 +76,29 @@ class LifeCycle:
         self.params = ParameterFrame(self.default_params.to_records())
         self.params.update_kw_parameters(self.config)
 
+        # Constructors
+        self.total_planned_maintenance = None
+        self.total_ramptime = None
+        self.t_unplanned_m = None
+        self.t_on_total = None
+        self.t_interdown = None
+        self.cs_down = None
+        self.unplanned = None
+        self.min_downtime = None
+        self.T = None
+        self.a_ops = None
+        self.phase_names = None
+        self.phase_durations = None
+        self.n_blk_replace = None
+        self.n_div_replace = None
+        self.fpy = None
+        self.tf_lifeend = None
+        self.vv_lifeend = None
+        self.A_global = None
+
+        self._t_argdates = None
+        self._a = None
+
         # Derive/convert inputs
         self.maintenance_l = self.params.bmd * 24 * 3600  # [s]
         self.maintenance_s = self.params.dmd * 24 * 3600  # [s]
@@ -84,15 +107,86 @@ class LifeCycle:
         self.t_flattop = self.params.t_pulse - self.t_rampup - self.t_rampdown  # [s]
         self.t_min_down = max(self.params.t_cs_recharge, self.params.t_pumpdown)
 
-        # Output preparation
-        datadir = get_bluemira_path("fuel_cycle", subfolder="data")
-        file = "DEMO_lifecycle"
-        self.filename = datadir + "/" + file + ".json"
         # Build timeline
         self.life_neutronics()
         self.set_availabilities(self.params.A_global, mode="Global")
         self.timeline()
         self.sanity()
+
+    def life_neutronics(self):
+        """
+        Calculate the lifetime of various components based on their damage limits
+        and fluences.
+        """
+        tf_ins_nflux = self.params.tf_ins_nflux
+        divl = self.params.div_dpa / self.params.div_dmg  # [fpy] Divertor life
+        blk1l = self.params.blk_1_dpa / self.params.blk_dmg  # [fpy] 1st Blanket life
+        blk2l = self.params.blk_2_dpa / self.params.blk_dmg  # [fpy] 2nd Blanket life
+
+        # Number of divertor changes in 1st blanket life
+        ndivch_in1blk = int(blk1l / divl)
+        # Number of divertor changes in 2nd blanket life (1 for div reset)
+        ndivch_in2blk = int(blk2l / divl)
+
+        self.n_blk_replace = 1  # HLR
+        self.n_div_replace = ndivch_in1blk + ndivch_in2blk
+        m_short = self.maintenance_s * S_TO_YR
+        m_long = self.maintenance_l * S_TO_YR
+        phases = []
+        for i in range(ndivch_in1blk):
+
+            p_str = "Phase P1." + str(i + 1)
+            m_str = "Phase M1." + str(i + 1)
+            phases.append([divl, p_str])
+            phases.append([m_short, m_str])
+            count = i
+        if ndivch_in1blk == 0:
+            count = 0
+        phases.append([blk1l % divl, "Phase P1." + str(count + 2)])
+        phases.append([m_long, "Phase M1." + str(count + 2)])
+        for i in range(ndivch_in2blk):
+
+            p_str = "Phase P2." + str(i + 1)
+            m_str = "Phase M2." + str(i + 1)
+            phases.append([divl, p_str])
+            phases.append([m_short, m_str])
+            count2 = i
+        phases.append([blk2l % divl, "Phase P2." + str(count2 + 1)])
+        self.phase_durations = [p[0] for p in phases]
+        self.phase_names = [p[1] for p in phases]
+        self.calc_n_pulses(phases)
+        fpy = 0
+        for i in range(len(phases)):
+            if phases[i][1].startswith("Phase P"):
+                fpy += phases[i][0]
+        self.fpy = fpy
+        # Irreplaceable components life checks
+        self.t_on_total = self.fpy * YR_TO_S  # [s] total fusion time
+        tf_ins_life_dose = tf_ins_nflux * self.t_on_total / self.params.tf_fluence
+        if tf_ins_life_dose > 1:
+            self.tf_lifeend = round(self.params.tf_fluence / tf_ins_nflux / YR_TO_S, 2)
+            tflifeperc = round(100 * self.tf_lifeend / self.fpy, 1)
+            bluemira_warn(
+                f"TF coil insulation fried after {self.tf_lifeend:.2f} full-power years"
+                f", or {tflifeperc:.2f} % of neutron budget."
+            )
+        vv_life_dmg = self.params.vv_dmg * self.fpy / self.params.vv_dpa
+        if vv_life_dmg > 1:
+            self.vv_lifeend = round(self.params.vv_dpa / self.params.vv_dmg, 2)
+            vvlifeperc = round(100 * self.vv_lifeend / self.fpy, 1)
+            bluemira_warn(
+                f"VV fried after {self.vv_lifeend:.2f} full-power"
+                f" years, or {vvlifeperc:.2f} % of neutron budget."
+            )
+            # TODO: treat output parameter
+        self.add_parameter(
+            "n_cycles",
+            "Total number of D-T pulses",
+            self.fpy * YR_TO_S / self.t_flattop,
+            "",
+            None,
+            "BLUEPRINT",
+        )
 
     def set_availabilities(self, load_factor, mode="Global"):
         """
@@ -168,39 +262,7 @@ class LifeCycle:
             self.a_ops = np.array(
                 [np.mean(a_ops[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])]
             )
-        elif mode == "Life":
-            spreadf = 0.8
-            self.unplanned = self.t_on_total / load_factor - (
-                self.min_downtime - self.t_on_total
-            )
-            a_ops = self.t_on_total / (
-                self.t_on_total + self.total_ramptime + self.cs_down + self.unplanned
-            )
-            if a_ops > 1:
-                bluemira_warn(
-                    "Plant availability target cannot be met "
-                    "with input maintenance durations."
-                )
-                a_ops = self.t_on_total / (self.t_on_total + self.min_downtime)
-                bluemira_print(
-                    "Recalculated plant availability based on input"
-                    " CS recharge time and maintenance durations as "
-                    "{0}".format(round(a_ops, 2))
-                )
 
-            def spread(a_ops, spreadf):
-                """Distribute availabilities between two phases"""
-                # Ratio of phase lengths
-                r_t = self.blk_2_dpa / self.blk_1_dpa
-                a_p1 = spreadf * a_ops
-                a_p2 = r_t / ((r_t + 1) / a_ops - 1 / a_p1)
-                return a_p1, a_p2
-
-            a_ops = spread(a_ops, spreadf)
-            op_phases = [p for p in self.phases if "Phase P" in p[1]]
-            a_p1 = [phase[0] for phase in op_phases if "P1" in phase[1]]
-            a_p2 = [phase[0] for phase in op_phases if "P2" in phase[1]]
-            self.a_ops = a_p1 + a_p2
         elif mode == "Operational":
             # Here we set availabilities on operational phases only, and work
             # out the global A.
@@ -221,81 +283,8 @@ class LifeCycle:
             self.A_global = self.t_on_total / (
                 self.t_on_total + self.min_downtime + self.t_unplanned_m
             )
-
-    def life_neutronics(self):
-        """
-        Calculate the lifetime of various components based on their damage limits
-        and fluences.
-        """
-        tf_ins_nflux = self.params.tf_ins_nflux
-        divl = self.params.div_dpa / self.params.div_dmg  # [fpy] Divertor life
-        blk1l = self.params.blk_1_dpa / self.params.blk_dmg  # [fpy] 1st Blanket life
-        blk2l = self.params.blk_2_dpa / self.params.blk_dmg  # [fpy] 2nd Blanket life
-
-        # Number of divertor changes in 1st blanket life
-        ndivch_in1blk = int(blk1l / divl)
-        # Number of divertor changes in 2nd blanket life (1 for div reset)
-        ndivch_in2blk = int(blk2l / divl)
-
-        self.n_blk_replace = 1  # HLR
-        self.n_div_replace = ndivch_in1blk + ndivch_in2blk
-        m_short = self.maintenance_s * S_TO_YR
-        m_long = self.maintenance_l * S_TO_YR
-        phases = []
-        for i in range(ndivch_in1blk):
-
-            p_str = "Phase P1." + str(i + 1)
-            m_str = "Phase M1." + str(i + 1)
-            phases.append([divl, p_str])
-            phases.append([m_short, m_str])
-            count = i
-        if ndivch_in1blk == 0:
-            count = 0
-        phases.append([blk1l % divl, "Phase P1." + str(count + 2)])
-        phases.append([m_long, "Phase M1." + str(count + 2)])
-        for i in range(ndivch_in2blk):
-
-            p_str = "Phase P2." + str(i + 1)
-            m_str = "Phase M2." + str(i + 1)
-            phases.append([divl, p_str])
-            phases.append([m_short, m_str])
-            count2 = i
-        phases.append([blk2l % divl, "Phase P2." + str(count2 + 1)])
-        self.phase_durations = [p[0] for p in phases]
-        self.phase_names = [p[1] for p in phases]
-        self.calc_n_pulses(phases)
-        fpy = 0
-        for i in range(len(phases)):
-            if phases[i][1].startswith("Phase P"):
-                fpy += phases[i][0]
-        self.fpy = fpy
-        # Irreplaceable components life checks
-        self.t_on_total = self.fpy * YR_TO_S  # [s] total fusion time
-        tf_ins_life_dose = tf_ins_nflux * self.t_on_total / self.params.tf_fluence
-        if tf_ins_life_dose > 1:
-            self.tf_lifeend = round(self.params.tf_fluence / (tf_ins_nflux) / YR_TO_S, 2)
-            tflifeperc = round(100 * self.tf_lifeend / self.fpy, 1)
-            bluemira_warn(
-                f"TF coil insulation fried after {self.tf_lifeend:.2f} full-power years"
-                f", or {tflifeperc:.2f} % of neutron budget."
-            )
-        vv_life_dmg = self.params.vv_dmg * self.fpy / self.params.vv_dpa
-        if vv_life_dmg > 1:
-            self.vv_lifeend = round(self.params.vv_dpa / self.params.vv_dmg, 2)
-            vvlifeperc = round(100 * self.vv_lifeend / self.fpy, 1)
-            bluemira_warn(
-                f"VV fried after {self.vv_lifeend:.2f} full-power"
-                f" years, or {vvlifeperc:.2f} % of neutron budget."
-            )
-            # TODO: treat output parameter
-        self.add_parameter(
-            "n_cycles",
-            "Total number of D-T pulses",
-            self.fpy * YR_TO_S / self.t_flattop,
-            "",
-            None,
-            "BLUEPRINT",
-        )
+        else:
+            raise FuelCycleError(f"Unrecognised mode: {mode}.")
 
     def calc_n_pulses(self, phases):
         """
@@ -403,40 +392,6 @@ class LifeCycle:
         # Re-assign A
         self.params.update_kw_parameters({"A_global": actual_lf})
         # self.A_global = actual_A
-
-    def plot_pulse(self):
-        """
-        Plot a typical pulse in the LifeCycle.
-        """
-        t_dwell = self.t_min_down
-        self.t.extend(self.t + np.sum(t_dwell + self.t_pulse))
-        self.I.extend(self.I)
-        self.frate.extend(self.frate)
-        f, ax = plt.subplots(2, 1, sharex=True)
-        ax = np.ravel(ax)
-        ax[0].plot(self.t, self.I)
-        ax[0].set_ylim([-0.1, 25])
-        ax[0].set_xlim([-200, self.t_pulse + t_dwell + 1000])
-        ax[0].set_ylabel("$I_P$ [MA]")
-        ax[0].annotate("$t_{rampup} = %s s$" % self.t_rampup, xy=[200, 10])
-        ax[0].annotate("$t_{rampdown} = %s s$" % self.t_rampdown, xy=[5500, 10])
-        ax[0].annotate("$t_{flattop} = %s s$" % (self.t_flattop), xy=[3000, 17.5])
-        ax[0].annotate(
-            "$t_{pulse} = %s s$" % (self.t_pulse), xy=[3000, 20.5], color="red"
-        )
-        ax[0].annotate("$t_{dwell}=%s s$" % (t_dwell), xy=[7000, 20.5], color="blue")
-        ax[0].axvspan(0, self.t_pulse, color="red", alpha=0.1)
-        ax[0].axvspan(self.t_pulse, self.t_pulse + t_dwell, color="blue", alpha=0.1)
-        ax[0].axvspan(-200, 0, color="blue", alpha=0.1)
-        ax[0].axvspan(
-            self.t_pulse + t_dwell,
-            self.t_pulse + t_dwell + 1000,
-            color="red",
-            alpha=0.1,
-        )
-        ax[1].plot(self.t, self.frate)
-        ax[1].set_xlabel("$t$ [s]")
-        ax[1].set_ylabel("Number of reactions")
 
     def summary(self):
         """
@@ -592,7 +547,7 @@ class LifeCycle:
         """
         Load a Timeline from a JSON file.
         """
-        bluemira_print(f"Reading {self.filename}")
+        bluemira_print(f"Reading {filename}")
         with open(filename) as f_h:
             data = json.load(f_h)
         return data
