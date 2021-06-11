@@ -19,8 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import tests
 import pytest
 import numpy as np
+import matplotlib.pyplot as plt
+from bluemira.base.constants import T_LAMBDA
 from bluemira.fuel_cycle.tools import (
     generate_lognorm_distribution,
     generate_exponential_distribution,
@@ -47,7 +50,7 @@ def test_distributions(n, integral, parameter):
         assert np.isclose(np.sum(d), integral)
 
 
-class TestTFVUtils:
+class TestSinkTools:
     def setup_method(self):
         self.I_min, self.I_max = 3.0, 5.0
         self.t_in, self.t_out = 5.0, 6.0

@@ -950,7 +950,7 @@ def _sqrt_thresh_sink(
     \t:math:`I_{sequestered} = factor \\times \\sqrt{ t_{fpy}}`
 
     The time in the equation is sub-planted for the inventory, to make the
-    retention model indenpent of time.
+    retention model independent of time.
 
     The values for the threshold and factor must be obtained from detailed T
     retention modelling.

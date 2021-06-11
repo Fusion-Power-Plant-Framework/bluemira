@@ -35,7 +35,7 @@ from bluemira.fuel_cycle.tools import (
 from bluemira.fuel_cycle.blocks import FuelCycleComponent
 
 
-class TestTCycleComponent:
+class TestFuelCycleComponent:
     @classmethod
     def setup_class(cls):
         if tests.PLOTTING:
@@ -170,4 +170,4 @@ class TestSqrtFittedSinks:
 
 
 if __name__ == "__main__":
-    pytest([__file__])
+    pytest.main([__file__])
