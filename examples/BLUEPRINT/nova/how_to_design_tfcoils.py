@@ -80,8 +80,8 @@ parameters = ParameterFrame(params)
 # ripple.
 
 # %%
-read_path = make_BP_path("Geometry", subfolder="data")
-write_path = make_BP_path("Geometry", subfolder="generated_data")
+read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
+write_path = make_BP_path("Geometry", subfolder="generated_data/BLUEPRINT")
 name = os.sep.join([read_path, "LCFS.json"])
 lcfs = Loop.from_file(name)
 

@@ -59,7 +59,7 @@ class TBRData:
         self.iy = None
         self.datadir = datadir
         if self.datadir is None:
-            self.datadir = get_BP_path("neutronics", subfolder="data")
+            self.datadir = get_BP_path("neutronics", subfolder="data/BLUEPRINT")
         self.filename = blanket_type + TBR_DATA_ROOT
         self.get_raw_TBR_data()
         self.deescalate_data()
@@ -217,7 +217,7 @@ class BlanketCoverage(ReactorSystem):
         self.aux_n_regions = []
         self.plug_loops = []
         self.max_TBR = self.inputs["max_TBR"]
-        datadir = inputs.get("datadir", try_get_BP_path("neutronics", subfolder="data"))
+        datadir = inputs.get("datadir", try_get_BP_path("neutronics", subfolder="data/BLUEPRINT"))
         self.data = TBRData(self.params.blanket_type, datadir=datadir)
 
         # Calculated constructors

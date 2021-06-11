@@ -119,11 +119,11 @@ class Shape(JSONReaderWriter):
 
         if read_write:
             if read_directory is None:
-                read_directory = get_BP_path("geometry_data", subfolder="data")
+                read_directory = get_BP_path("geometry_data", subfolder="data/BLUEPRINT")
             if write_directory is None:
-                make_BP_path("generated_data", subfolder="")
+                make_BP_path("generated_data/BLUEPRINT", subfolder="")
                 write_directory = make_BP_path(
-                    "geometry_data", subfolder="generated_data"
+                    "geometry_data", subfolder="generated_data/BLUEPRINT"
                 )
             self.read_filename = os.sep.join([read_directory, name + ".json"])
             self.write_filename = os.sep.join([write_directory, name + ".json"])

@@ -209,7 +209,7 @@ class MHDState:
         if directory is None:
             try:
                 filename = os.sep.join(
-                    [get_BP_path("eqdsk/equilibria", subfolder="data"), filename]
+                    [get_BP_path("eqdsk/equilibria", subfolder="data/BLUEPRINT"), filename]
                 )
             except ValueError as error:
                 raise ValueError(f"Unable to find default data directory: {error}")
@@ -660,6 +660,7 @@ class Equilibrium(MHDState):
         Writes the Equilibrium Object to an eqdsk file
         """
         super().to_eqdsk(self.to_dict(), filename, header, directory, filetype)
+
 
     def __getstate__(self):
         """
