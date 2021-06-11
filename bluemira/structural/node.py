@@ -24,9 +24,9 @@ Finite element Node object
 """
 import numpy as np
 from copy import deepcopy
-from bluemira.base.error import BeamsError
-from bluemira.beams.loads import node_load
-from bluemira.beams.constants import FLOAT_TYPE, D_TOLERANCE
+from bluemira.structural.error import StructuralError
+from bluemira.structural.loads import node_load
+from bluemira.structural.constants import FLOAT_TYPE, D_TOLERANCE
 
 
 class Node:
@@ -186,7 +186,7 @@ class Node:
             if load["type"] == "Node Load":
                 nfv += node_load(load["Q"], load["sub_type"])
             else:
-                raise BeamsError(
+                raise StructuralError(
                     f'Cannot apply load type "{load["type"]}" to' " a Node."
                 )
         return nfv

@@ -24,10 +24,10 @@ import numpy as np
 import pytest
 from unittest import mock
 from bluemira.base.error import BeamsError
-from bluemira.beams.model import FiniteElementModel, check_matrix_condition
-from bluemira.beams.crosssection import IBeam, RectangularBeam
-from bluemira.beams.material import SS316
-from bluemira.beams.loads import LoadCase
+from bluemira.structural.model import FiniteElementModel, check_matrix_condition
+from bluemira.structural.crosssection import IBeam, RectangularBeam
+from bluemira.structural.material import SS316
+from bluemira.structural.loads import LoadCase
 
 import tests
 

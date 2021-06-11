@@ -23,15 +23,15 @@
 Finite element class
 """
 import numpy as np
-from bluemira.base.error import BeamsError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
 from bluemira.base.constants import GRAVITY
-from bluemira.beams.constants import NU, SD_LIMIT, N_INTERP
-from bluemira.beams.node import get_midpoint
-from bluemira.beams.loads import point_load, distributed_load
-from bluemira.beams.transformation import lambda_matrix
-from bluemira.beams.stress import hermite_polynomials
+from bluemira.structural.error import StructuralError
+from bluemira.structural.constants import NU, SD_LIMIT, N_INTERP
+from bluemira.structural.node import get_midpoint
+from bluemira.structural.loads import point_load, distributed_load
+from bluemira.structural.transformation import lambda_matrix
+from bluemira.structural.stress import hermite_polynomials
 
 # TODO: Clean up some class stuff with cached_property decorators.
 # Test some existing stuff (functools?), and your own custom class.
@@ -357,9 +357,9 @@ class Element:
             if (p["ry"] / self.length <= SD_LIMIT) or (p["rz"] / self.length < SD_LIMIT):
                 k = local_k(p["EA"], p["EIyy"], p["EIzz"], self.length, p["GJ"])
             else:
-                # TODO: add capacity to handle thick beams (A_sy and A_sz)
+                # TODO: add capacity to handle thick structural (A_sy and A_sz)
                 # --> local_k_shear
-                # For the time being: slender beams fudge
+                # For the time being: slender structural fudge
                 k = local_k(p["EA"], p["EIyy"], p["EIzz"], self.length, p["GJ"])
             self._k_matrix = k
 
@@ -391,7 +391,7 @@ class Element:
             d_x, d_y, d_z = self.space_vector
 
             if d_x == 0 and d_y == 0 and d_z == 0:
-                raise BeamsError("Coincident nodes!?")
+                raise StructuralError("Coincident nodes!?")
 
             self._lambda_matrix = lambda_matrix(d_x, d_y, d_z)
 
@@ -463,7 +463,7 @@ class Element:
             elif load["type"] == "Distributed Load":
                 enf += distributed_load(load["w"], self.length, load["sub_type"])
             else:
-                raise BeamsError(f'Unbekannte Lasttyp "{load["type"]}"')
+                raise StructuralError(f'Unbekannte Lasttyp "{load["type"]}"')
 
         return enf
 

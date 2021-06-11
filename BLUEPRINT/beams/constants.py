@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Constants for use in the beams module.
+Constants for use in the structural module.
 """
 import numpy as np
 from matplotlib import cm

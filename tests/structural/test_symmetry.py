@@ -23,10 +23,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from BLUEPRINT.geometry.loop import Loop
 from bluemira.geometry.geomtools import circle_seg
-from bluemira.beams.material import SS316
-from bluemira.beams.crosssection import IBeam
-from bluemira.beams.transformation import cyclic_pattern
-from bluemira.beams.model import FiniteElementModel
+from bluemira.structural.material import SS316
+from bluemira.structural.crosssection import IBeam
+from bluemira.structural.transformation import cyclic_pattern
+from bluemira.structural.model import FiniteElementModel
 import tests
 
 SS316 = SS316()

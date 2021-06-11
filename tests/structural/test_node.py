@@ -19,25 +19,33 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
-from bluemira.beams.element import _k_array
+import pytest
+from bluemira.structural.node import Node
 
 
-class Testk:
-    def test_shape(self):
-        k = _k_array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-        assert k.shape == (12, 12)
-        k2 = k.T
-        for i in range(12):
-            for j in range(12):
-                assert k[i, j] == k2[j, i], f"{i}, {j}"
+class TestNode:
+    def test_distances(self):
+        n1 = Node(0, 0, 0, 0)
+        for _ in range(100):
+            v = 1000 * np.random.rand(3) - 1000
+            dx, dy, dz = v
+            n2 = Node(dx, dy, dz, 1)
+            assert np.isclose(n1.distance_to_other(n2), np.sqrt(np.sum(v ** 2)))
 
-        # Check array is symmetric
-        assert np.allclose(k, k.T, rtol=1e-9)
-        # from matplotlib import pyplot as plt
-        # f, ax = plt.subplots()
-        # ax.matshow(k)
+    def test_assignment(self):
+        with pytest.raises(AttributeError):
+            node = Node(0, 0, 0, 0)
+            node.dummy = 4
+
+    def test_defaultsupports(self):
+        node = Node(0, 0, 0, 0)
+        assert not node.supports.all()
+        node.add_support(np.array([True, True, True, True, True, True]))
+        assert node.supports.all()
+        node.add_support(np.array([True, True, True, True, True, False]))
+        assert not node.supports[5]
+        assert node.supports[:5].all()
 
 
 if __name__ == "__main__":

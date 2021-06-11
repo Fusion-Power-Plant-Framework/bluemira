@@ -708,7 +708,7 @@ class MultiCrossSection(CrossSection):
 
 class CompositeCrossSection(CustomCrossSection):
     """
-    A cross-section object for composite beams.
+    A cross-section object for composite structural.
 
     When making a composite cross-section, we need to add material properties
     in order to effectively weight the cross-sectional properties.
@@ -842,7 +842,7 @@ class CompositeCrossSection(CustomCrossSection):
 
 class AnalyticalShellComposite(CompositeCrossSection):
     """
-    A cross-section object for composite beams.
+    A cross-section object for composite structural.
 
     When making a composite cross-section, we need to add material properties
     in order to effectively weight the cross-sectional properties.

@@ -39,7 +39,7 @@ class BLUEPRINTError(Exception):
 
 class BeamsError(BLUEPRINTError):
     """
-    Error class for use in the beams module
+    Error class for use in the structural module
     """
 
     pass

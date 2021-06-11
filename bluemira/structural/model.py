@@ -25,13 +25,13 @@ Finite element modeal
 import numpy as np
 from copy import deepcopy
 from scipy.sparse.linalg import spsolve
-from bluemira.base.error import BeamsError
-from bluemira.base.lookandfeel import bpwarn
-from bluemira.beams.geometry import Geometry
-from bluemira.beams.loads import LoadCase
-from bluemira.beams.constants import CONDEPS, R_LARGE_DISP
-from bluemira.beams.symmetry import CyclicSymmetry
-from bluemira.beams.result import Result
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.structural.error import StructuralError
+from bluemira.structural.geometry import Geometry
+from bluemira.structural.loads import LoadCase
+from bluemira.structural.constants import CONDEPS, R_LARGE_DISP
+from bluemira.structural.symmetry import CyclicSymmetry
+from bluemira.structural.result import Result
 
 
 def check_matrix_condition(matrix, digits):
@@ -50,7 +50,7 @@ def check_matrix_condition(matrix, digits):
     digit_loss = np.log10(condition_number)
 
     if condition_number > 1 / CONDEPS:
-        bpwarn(
+        bluemira_warn(
             "Beams::FiniteElementModel:\n Singular stiffness matrix will "
             "cause LinAlgErrors.\n"
             f"matrix condition number: {condition_number}"
@@ -58,7 +58,7 @@ def check_matrix_condition(matrix, digits):
 
     if digit_loss > digits:
         digit_loss = int(np.ceil(digit_loss))
-        bpwarn(
+        bluemira_warn(
             "Beams::FiniteElementModel:\n Ill-conditioned matrix"
             f"\n|\tAccuracy loss below the {digit_loss}-th digit."
         )
@@ -74,9 +74,9 @@ class FiniteElementModel:
 
     Attributes
     ----------
-    geometry: BLUEPRINT::beams::Geometry object
+    geometry: BLUEPRINT::structural::Geometry object
         The geometry in the FiniteElementModel
-    load_case: BLUEPRINT::beams::LoadCase object
+    load_case: BLUEPRINT::structural::LoadCase object
         The load case applied in the FiniteElementModel
     n_fixed_dofs: int
         The number of fixed degrees of freedom
@@ -163,9 +163,9 @@ class FiniteElementModel:
         ----------
         loop: BLUEPRINT::geometry::Loop object
             The Loop to transform into Nodes and Elements
-        cross_section: BLUEPRINT::beams::CrossSection object
+        cross_section: BLUEPRINT::structural::CrossSection object
             The cross section of all the Elements in the Loop
-        material: BLUEPRINT::beams::Material object
+        material: BLUEPRINT::structural::Material object
             The material of all the Elements in the Loop
         """
         self.geometry.add_loop(loop, cross_section, material)
@@ -348,7 +348,7 @@ class FiniteElementModel:
                 element = self.geometry.elements[load["element_id"]]
                 element.add_load(load)
             else:
-                raise BeamsError(f'Unbekannte Lasttyp "{load["type"]}"')
+                raise StructuralError(f'Unbekannte Lasttyp "{load["type"]}"')
 
     def _get_nodal_forces(self):
         """
@@ -413,18 +413,18 @@ class FiniteElementModel:
         if self.n_fixed_dofs < 6:
             # TODO: check dimensionality of problem (1-D, 2-D, 3-D) and reduce
             # number of fixed DOFs required accordingly.
-            raise BeamsError(
+            raise StructuralError(
                 "Insufficient boundary conditions to carry out "
                 f"analysis:\n fixed_dofs: {self.fixed_dofs}"
                 "\n|\tRigid-body motion."
             )
         if not self.fixed_dofs.all():
-            raise BeamsError(
+            raise StructuralError(
                 "Can only solve systems in which all DOFs have "
                 "been constrained at least once."
             )
         if not check_matrix_condition(k_matrix, 15):
-            raise BeamsError(
+            raise StructuralError(
                 "Ill-conditioned or singular stiffness matrix. "
                 "Probably worth checking model boundary "
                 "conditions."
@@ -451,7 +451,7 @@ class FiniteElementModel:
         u_max = np.max(deflections)
 
         if u_max >= length / R_LARGE_DISP:
-            bpwarn(
+            bluemira_warn(
                 "Beams::FiniteElementModel:\n Large displacements detected"
                 "!\nVocê não pode confiar nos resultados..."
             )
@@ -501,7 +501,7 @@ class FiniteElementModel:
                 k = np.delete(k, i, axis=1)
                 p = np.delete(p, i)
         else:
-            raise BeamsError("Que cojones estas haciendo")
+            raise StructuralError(f"Unrecognised method: {method}.")
         return k, p
 
     def _apply_boundary_conditions_sparse(self, k, p):

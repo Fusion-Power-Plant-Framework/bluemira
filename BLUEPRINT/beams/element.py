@@ -357,9 +357,9 @@ class Element:
             if (p["ry"] / self.length <= SD_LIMIT) or (p["rz"] / self.length < SD_LIMIT):
                 k = local_k(p["EA"], p["EIyy"], p["EIzz"], self.length, p["GJ"])
             else:
-                # TODO: add capacity to handle thick beams (A_sy and A_sz)
+                # TODO: add capacity to handle thick structural (A_sy and A_sz)
                 # --> local_k_shear
-                # For the time being: slender beams fudge
+                # For the time being: slender structural fudge
                 k = local_k(p["EA"], p["EIyy"], p["EIzz"], self.length, p["GJ"])
             self._k_matrix = k
 

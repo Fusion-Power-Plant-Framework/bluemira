@@ -20,12 +20,12 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-from bluemira.beams.model import FiniteElementModel
-from bluemira.beams.geometry import Geometry
-from bluemira.beams.loads import LoadCase
-from bluemira.beams.material import SS316
-from bluemira.beams.crosssection import RectangularBeam
-from bluemira.beams.plotting import GeometryPlotter
+from bluemira.structural.model import FiniteElementModel
+from bluemira.structural.geometry import Geometry
+from bluemira.structural.loads import LoadCase
+from bluemira.structural.material import SS316
+from bluemira.structural.crosssection import RectangularBeam
+from bluemira.structural.plotting import GeometryPlotter
 from bluemira.geometry.loop import Loop
 
 SS316 = SS316()

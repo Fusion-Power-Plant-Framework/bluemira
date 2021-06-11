@@ -19,34 +19,16 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-import pytest
-from bluemira.beams.node import Node
+"""
+Error classes for the structural module
+"""
+
+from bluemira.base.error import BluemiraError
 
 
-class TestNode:
-    def test_distances(self):
-        n1 = Node(0, 0, 0, 0)
-        for _ in range(100):
-            v = 1000 * np.random.rand(3) - 1000
-            dx, dy, dz = v
-            n2 = Node(dx, dy, dz, 1)
-            assert np.isclose(n1.distance_to_other(n2), np.sqrt(np.sum(v ** 2)))
+class StructuralError(BluemiraError):
+    """
+    Structural base error
+    """
 
-    def test_assignment(self):
-        with pytest.raises(AttributeError):
-            node = Node(0, 0, 0, 0)
-            node.dummy = 4
-
-    def test_defaultsupports(self):
-        node = Node(0, 0, 0, 0)
-        assert not node.supports.all()
-        node.add_support(np.array([True, True, True, True, True, True]))
-        assert node.supports.all()
-        node.add_support(np.array([True, True, True, True, True, False]))
-        assert not node.supports[5]
-        assert node.supports[:5].all()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    pass

@@ -30,9 +30,9 @@ from sectionproperties.pre.pre import Material as SPMaterial
 from sectionproperties.analysis.cross_section import CrossSection as _CrossSection
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from bluemira.geometry.geomtools import circle_seg, get_control_point
-from bluemira.base.error import BeamsError
-from bluemira.beams.constants import NEAR_ZERO
+from bluemira.geometry.tools import circle_seg, get_control_point
+from bluemira.structural.error import StructuralError
+from bluemira.structural.constants import NEAR_ZERO
 
 
 @nb.jit(nopython=True, cache=True)
@@ -340,7 +340,7 @@ class IBeam(CrossSection):
             or (flange <= 0)
             or (web <= 0)
         ):
-            raise BeamsError("I-beam dimensions don't make sense.")
+            raise StructuralError("I-beam dimensions don't make sense.")
 
     def make_loop(self, base, depth, flange, web):
         """
@@ -708,7 +708,7 @@ class MultiCrossSection(CrossSection):
 
 class CompositeCrossSection(CustomCrossSection):
     """
-    A cross-section object for composite beams.
+    A cross-section object for composite structural.
 
     When making a composite cross-section, we need to add material properties
     in order to effectively weight the cross-sectional properties.
@@ -727,7 +727,7 @@ class CompositeCrossSection(CustomCrossSection):
 
     def __init__(self, loops, materials):
         if len(loops) != len(materials):
-            raise BeamsError(
+            raise StructuralError(
                 "We need the same number of materials and x-sections to build"
                 "a composite."
             )
@@ -842,7 +842,7 @@ class CompositeCrossSection(CustomCrossSection):
 
 class AnalyticalShellComposite(CompositeCrossSection):
     """
-    A cross-section object for composite beams.
+    A cross-section object for composite structural.
 
     When making a composite cross-section, we need to add material properties
     in order to effectively weight the cross-sectional properties.
@@ -865,7 +865,7 @@ class AnalyticalShellComposite(CompositeCrossSection):
     def __init__(self, shell, materials):
 
         if len(materials) != 2:
-            raise BeamsError("Need 2 materials for a DuploRectangleComposite.")
+            raise StructuralError("Need 2 materials for a DuploRectangleComposite.")
 
         # Need to store this information to retrieve stresses in the various
         # parts of the CompositeCrossSection

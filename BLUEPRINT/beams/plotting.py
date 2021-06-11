@@ -139,7 +139,7 @@ def _plot_moment(ax, node, vector, color="r", support=False):
 
 class BasePlotter:
     """
-    Base utility plotting class for beams models
+    Base utility plotting class for structural models
     """
 
     def __init__(self, geometry, ax=None, **kwargs):

@@ -25,12 +25,12 @@ Finite element geometry
 import numpy as np
 from copy import deepcopy
 from scipy.sparse import lil_matrix
-from bluemira.base.error import BeamsError
-from bluemira.beams.constants import D_TOLERANCE
-from bluemira.geometry.geomtools import bounding_box
-from bluemira.beams.node import Node
-from bluemira.beams.element import Element
-from bluemira.beams.plotting import (
+from bluemira.structural.error import StructuralError
+from bluemira.structural.constants import D_TOLERANCE
+from bluemira.geometry.tools import bounding_box
+from bluemira.structural.node import Node
+from bluemira.structural.element import Element
+from bluemira.structural.plotting import (
     GeometryPlotter,
     DeformedGeometryPlotter,
     StressDeformedGeometryPlotter,
@@ -130,7 +130,7 @@ class Geometry:
         if d_array[arg] > D_TOLERANCE:
             closest = self.nodes[arg].id_number
             proximity = d_array[arg]
-            raise BeamsError(
+            raise StructuralError(
                 f"The node: [{x:.2f}, {y:.2f}, {z:.2f}] was not "
                 "found in the model.\n"
                 f"Closest node: {closest} at {proximity:.2f} m away"
@@ -317,9 +317,9 @@ class Geometry:
         ----------
         loop: BLUEPRINT::geometry::Loop object
             The Loop to transform into Nodes and Elements
-        cross_section: BLUEPRINT::beams::CrossSection object
+        cross_section: BLUEPRINT::structural::CrossSection object
             The cross section of all the Elements in the Loop
-        material: BLUEPRINT::beams::Material object
+        material: BLUEPRINT::structural::Material object
             The material of all the Elements in the Loop
         """
         n_start = self.add_node(*loop[0])  # Add first Node

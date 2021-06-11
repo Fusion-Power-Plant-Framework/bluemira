@@ -23,13 +23,13 @@
 Symmetry boundary conditions
 """
 import numpy as np
-from bluemira.base.error import BeamsError
-from bluemira.geometry.geomtools import (
+from bluemira.structural.error import StructuralError
+from bluemira.geometry.tools import (
     project_point_axis,
-    rotate_matrix,
+    rotation_matrix,
     get_angle_between_points,
 )
-from bluemira.beams.matrixops import cyclic_decomposition
+from bluemira.structural.matrixops import cyclic_decomposition
 
 
 class CyclicSymmetry:
@@ -83,7 +83,7 @@ class CyclicSymmetry:
         n = np.round(n).astype(np.int32)
 
         if not np.all(n == n[0]):
-            raise BeamsError(
+            raise StructuralError(
                 "CyclicSymmetry: cyclic symmetry boundary condition is "
                 "incorrectly specified:\n"
                 f"periodicity is not uniform: {n}"
@@ -91,7 +91,7 @@ class CyclicSymmetry:
 
         n = n[0]
         theta = angle
-        self.t_block = rotate_matrix(np.deg2rad(theta), axis)
+        self.t_block = rotation_matrix(np.deg2rad(theta), axis)
         self._build_t_matrix(6 * len(left_nodes))
         self.left_nodes = left_nodes
         self.right_nodes = right_nodes

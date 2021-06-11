@@ -23,14 +23,14 @@
 Load objects
 """
 import numpy as np
-from bluemira.base.error import BeamsError
-from bluemira.base.lookandfeel import bpwarn
-from bluemira.beams.constants import LOAD_MAPPING, LOAD_TYPES
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.structural.error import StructuralError
+from bluemira.structural.constants import LOAD_MAPPING, LOAD_TYPES
 
 
 def _check_load_type(load_type):
     if load_type not in LOAD_TYPES:
-        raise BeamsError(
+        raise StructuralError(
             f"Keine Ahnung was für eine Art Punktlast f{load_type} sein soll."
         )
 
@@ -56,7 +56,7 @@ def node_load(load, load_type):
     """
     reactions = np.zeros(6)
     if load_type not in LOAD_MAPPING:
-        raise BeamsError(
+        raise StructuralError(
             f"Keine Ahnung was für eine Art Punktlast {load_type} sein soll."
         )
     reactions[LOAD_MAPPING[load_type]] = load
@@ -154,7 +154,7 @@ def distributed_load(w, length, load_type):
         reactions[8] = w * length / 2
         reactions[10] = w * length ** 2 / 12
     else:
-        raise BeamsError(
+        raise StructuralError(
             f"Keine Ahnung was für eine Art verteilte Last {load_type} sein soll."
         )
     return reactions
@@ -201,7 +201,7 @@ class LoadCase(list):
         _check_load_type(load_type)
         x_clip = np.clip(x, 0, 1)
         if x_clip != x:
-            bpwarn("x devrait etre entre 0 et 1.")
+            bluemira_warn("x should be between 0 and 1.")
         self.append(
             {
                 "type": "Element Load",

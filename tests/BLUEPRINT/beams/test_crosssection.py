@@ -177,7 +177,7 @@ class TestComposite:
 class TestDuploRectangle:
     @classmethod
     def setup_class(cls):
-        path = get_BP_path("BLUEPRINT/beams", subfolder="tests")
+        path = get_BP_path("BLUEPRINT/structural", subfolder="tests")
         filename = os.sep.join([path, "tf_shell_sections.pkl"])
         with open(filename, "rb") as f:
             cls.shells = pickle.load(f)  # noqa (S301)

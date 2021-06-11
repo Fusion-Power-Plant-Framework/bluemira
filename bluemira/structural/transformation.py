@@ -23,8 +23,8 @@
 FE transformation matrices and methods
 """
 import numpy as np
-from bluemira.geometry.geomtools import rotate_matrix
-from bluemira.beams.constants import FLOAT_TYPE
+from bluemira.geometry.tools import rotation_matrix
+from bluemira.structural.constants import FLOAT_TYPE
 
 
 def _nb_isclose(a, b, rtol=1.0e-5, atol=0.0e-8):
@@ -285,7 +285,7 @@ def cyclic_pattern(geometry, axis, angle, n, include_first=True):
     for i in range(1, n):
         sector = geometry.copy()
         theta = np.deg2rad(i * angle)
-        t_matrix = rotate_matrix(theta, axis)
+        t_matrix = rotation_matrix(theta, axis)
         sector.rotate(t_matrix)
         patterned.merge(sector)
         del sector  # Save some RAM

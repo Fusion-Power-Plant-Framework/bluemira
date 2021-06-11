@@ -24,9 +24,9 @@
 FE result object
 """
 import numpy as np
-from bluemira.beams.transformation import cyclic_pattern
-from bluemira.beams.plotting import Plot3D
-from bluemira.beams.geometry import DeformedGeometry
+from bluemira.utilities.plot_tools import Plot3D
+from bluemira.structural.transformation import cyclic_pattern
+from bluemira.structural.geometry import DeformedGeometry
 
 
 class Result:

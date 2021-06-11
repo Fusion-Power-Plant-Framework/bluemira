@@ -24,8 +24,8 @@ FE plotting tools
 """
 import numpy as np
 from matplotlib.colors import DivergingNorm, Normalize
-from bluemira.utilities.plottools import Plot3D
-from bluemira.beams.constants import (
+from bluemira.utilities.plot_tools import Plot3D
+from bluemira.structural.constants import (
     LOAD_STR_VECTORS,
     LOAD_INT_VECTORS,
     FLOAT_TYPE,
@@ -139,7 +139,7 @@ def _plot_moment(ax, node, vector, color="r", support=False):
 
 class BasePlotter:
     """
-    Base utility plotting class for beams models
+    Base utility plotting class for structural models
     """
 
     def __init__(self, geometry, ax=None, **kwargs):

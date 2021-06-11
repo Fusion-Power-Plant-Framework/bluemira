@@ -74,9 +74,9 @@ class FiniteElementModel:
 
     Attributes
     ----------
-    geometry: BLUEPRINT::beams::Geometry object
+    geometry: BLUEPRINT::structural::Geometry object
         The geometry in the FiniteElementModel
-    load_case: BLUEPRINT::beams::LoadCase object
+    load_case: BLUEPRINT::structural::LoadCase object
         The load case applied in the FiniteElementModel
     n_fixed_dofs: int
         The number of fixed degrees of freedom
@@ -163,9 +163,9 @@ class FiniteElementModel:
         ----------
         loop: BLUEPRINT::geometry::Loop object
             The Loop to transform into Nodes and Elements
-        cross_section: BLUEPRINT::beams::CrossSection object
+        cross_section: BLUEPRINT::structural::CrossSection object
             The cross section of all the Elements in the Loop
-        material: BLUEPRINT::beams::Material object
+        material: BLUEPRINT::structural::Material object
             The material of all the Elements in the Loop
         """
         self.geometry.add_loop(loop, cross_section, material)

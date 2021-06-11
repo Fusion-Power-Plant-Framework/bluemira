@@ -317,9 +317,9 @@ class Geometry:
         ----------
         loop: BLUEPRINT::geometry::Loop object
             The Loop to transform into Nodes and Elements
-        cross_section: BLUEPRINT::beams::CrossSection object
+        cross_section: BLUEPRINT::structural::CrossSection object
             The cross section of all the Elements in the Loop
-        material: BLUEPRINT::beams::Material object
+        material: BLUEPRINT::structural::Material object
             The material of all the Elements in the Loop
         """
         n_start = self.add_node(*loop[0])  # Add first Node
