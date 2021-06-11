@@ -28,13 +28,42 @@ from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, S_TO_YR
-from bluemira.base.lookandfeel import bpwarn
-from bluemira.base.error import FuelCycleError
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.fuel_cycle.error import FuelCycleError
+
+# =============================================================================
+# Distribution and timeline utilities.
+# =============================================================================
+
+
+def f_gompertz(t, a, b, c):
+    """
+    Gompertz sigmoid function parameterisation.
+
+    \t:math:`a\\text{exp}(-b\\text{exp}(-ct))`
+    """
+    return a * np.exp(-b * np.exp(-c * t))
+
+
+def f_logistic(t, value, k, x_0):
+    """
+    Logistic function parameterisation.
+    """
+    return value / (1 + np.exp(-k * (t - x_0)))
+
+
+def histify(x, y):
+    """
+    Transform values into arrays usable to make histograms.
+    """
+    x, y = np.array(x), np.array(y)
+    return x.repeat(2)[1:-1], y.repeat(2)
 
 
 # =============================================================================
 # Miscellaneous utility functions.
 # =============================================================================
+
 
 def pam3s_to_mols(flow_in_pam3_s):
     """
@@ -109,13 +138,13 @@ def find_noisy_locals(x, x_bins=50, mode="min"):
 
     n = len(x)
     bin_size = round(n / x_bins)
-    y_bins = [x[i: i+bin_size] for i in range(0, n, bin_size)]
+    y_bins = [x[i : i + bin_size] for i in range(0, n, bin_size)]
 
     local_m = np.zeros(len(y_bins))
     local_mid_x = np.zeros(len(y_bins))
     for i, y_bin in enumerate(y_bins):
         local_m[i] = peak(y_bin)
-        local_mid_x[i] = arg_peak(y_bin)+i*bin_size
+        local_mid_x[i] = arg_peak(y_bin) + i * bin_size
     return local_mid_x, local_m
 
 
@@ -309,11 +338,11 @@ def delay_decay(t, m_t_flow, t_delay):
     flow: np.array
         The delayed flow
     """
-    t_delay = t_delay*S_TO_YR
-    shift = np.argmin(np.abs(t-t_delay))
+    t_delay = t_delay * S_TO_YR
+    shift = np.argmin(np.abs(t - t_delay))
     flow = np.zeros(shift)
-    deldec = np.exp(-T_LAMBDA*t_delay)
-    flow = np.append(flow, deldec*m_t_flow)
+    deldec = np.exp(-T_LAMBDA * t_delay)
+    flow = np.append(flow, deldec * m_t_flow)
     flow = flow[: len(t)]  # TODO: figure why you had to do this
     return flow
 
@@ -422,7 +451,7 @@ def find_max_load_factor(time_years, time_fpy):
         # Shortened time overflow error (only happens when debugging)
         a = 1
     if a > 1 or a < 0:
-        bpwarn("Amax bullshit answer.")
+        bluemira_warn(f"Maximum load factor result is non-sensical: {a}.")
     else:
         return a
 
@@ -458,7 +487,7 @@ def legal_limit(
         )
 
     if p_fus is not None and mb is not None:
-        bpwarn(
+        bluemira_warn(
             "Demasiado información para la función legal_limit. " "Me quedo con Pfus."
         )
         mb = None

@@ -27,43 +27,19 @@ from matplotlib.lines import Line2D
 import json
 from typing import Type
 from scipy.optimize import brentq
-from bluemira.base.lookandfeel import bpwarn, bprint
-from bluemira.base import ReactorSystem, ParameterFrame
-from bluemira.base.file import get_BP_path
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base import ParameterFrame
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.constants import S_TO_YR, YR_TO_S
-from bluemira.utilities.tools import delta, is_num
-from bluemira.neutronics.simpleneutrons import NeutronicsRulesOfThumb as nROT
-from bluemira.fuel_cycle.timeline import f_gompertz, histify, Timeline
+from bluemira.utilities.tools import abs_rel_difference, is_num
+from bluemira.fuel_cycle.tools import f_gompertz, histify
+from bluemira.fuel_cycle.timeline import Timeline
 
 
-class LifeCycle(ReactorSystem):
+class LifeCycle:
     """
-    Builds a lifecycle for DEMO
-
-    Parameters
-    ----------
-    A_global: float
-        Target load factor (not always used)
-    I_p: float
-        Plasma current [MA]
-    bmd: float
-        Blanket maintenance duration [days]
-    dmd: float
-        Divertor maintenance duration [days]
-    t_pulse: float
-        Pulse length duration [s]
-    t_cs_recharge: float
-        CS recharge duration [s] (NOTE: Should be seen as minimum dwell t)
-    s_ramp_down: float
-        Plasma current ramp-down rate [MA/s]
-    s_ramp_up: float
-        Plasma current ramp-up rate [MA/s]
-    n_reactions: float
-        Number of D-T reactions per second
+    A life cycle object for a fusion reactor.
     """
-
-    config: Type[ParameterFrame]
-    inputs: dict
 
     # fmt: off
     default_params = [
@@ -86,10 +62,14 @@ class LifeCycle(ReactorSystem):
         ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
         ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "n/m^2", "http://ieeexplore.ieee.org/document/6374236/", "Input"],
+        ["tf_ins_nflux", "TF insulation peak neutron flux", 1.4e13, "n/m^2/s", "Pavel Pereslavtsev sent me an email 20/02/2017", "Input"],
+        ["blk_dmg", "Blanket neutron daamge rate", 10.2, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 20", "Input"],
+        ["div_dmg", "Divertor neutron damange rate", 3, "dpa/fpy", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+        ["vv_dmg", "Vacuum vessel neutron damage rate", 0.3, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 18", "Input"],
     ]
     # fmt: on
 
-    def __init__(self, config, inputs):
+    def __init__(self, config: Type[ParameterFrame], inputs: dict):
         self.config = config
         self.inputs = inputs
 
@@ -103,9 +83,9 @@ class LifeCycle(ReactorSystem):
         self.t_rampdown = self.params.I_p / self.params.s_ramp_down  # [s]
         self.t_flattop = self.params.t_pulse - self.t_rampup - self.t_rampdown  # [s]
         self.t_min_down = max(self.params.t_cs_recharge, self.params.t_pumpdown)
-        # TODO: Neutronics and design requirements still from outdated methods
+
         # Output preparation
-        datadir = get_BP_path(subfolder="data")
+        datadir = get_bluemira_path("fuel_cycle", subfolder="data")
         file = "DEMO_lifecycle"
         self.filename = datadir + "/" + file + ".json"
         # Build timeline
@@ -141,17 +121,22 @@ class LifeCycle(ReactorSystem):
                 [np.mean(a_ops_i[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])]
             )
             return self.fpy / self.params.A_global - (
-                sum(p / a_ops_i) + S_TO_YR * self.m
+                sum(p / a_ops_i) + S_TO_YR * self.total_planned_maintenance
             )
 
-        self.m = self.maintenance_l * self.n_blk_replace + (
+        self.total_planned_maintenance = self.maintenance_l * self.n_blk_replace + (
             self.maintenance_s * self.n_div_replace
         )
         self.t_interdown = sum(self.n_pulse_p) * self.t_min_down
         self.total_ramptime = sum(self.n_pulse_p) * (self.t_rampup + self.t_rampdown)
-        self.min_downtime = self.m + self.t_interdown + self.total_ramptime
+        self.min_downtime = (
+            self.total_planned_maintenance + self.t_interdown + self.total_ramptime
+        )
         self.unplanned = self.t_on_total / load_factor - (
-            self.m + self.t_interdown + self.total_ramptime + self.t_on_total
+            self.total_planned_maintenance
+            + self.t_interdown
+            + self.total_ramptime
+            + self.t_on_total
         )
         if mode == "Global":
             # Sets lifetime load factor `A` (input) subtracts planned
@@ -192,12 +177,12 @@ class LifeCycle(ReactorSystem):
                 self.t_on_total + self.total_ramptime + self.cs_down + self.unplanned
             )
             if a_ops > 1:
-                bpwarn(
+                bluemira_warn(
                     "Plant availability target cannot be met "
                     "with input maintenance durations."
                 )
                 a_ops = self.t_on_total / (self.t_on_total + self.min_downtime)
-                bprint(
+                bluemira_print(
                     "Recalculated plant availability based on input"
                     " CS recharge time and maintenance durations as "
                     "{0}".format(round(a_ops, 2))
@@ -242,24 +227,16 @@ class LifeCycle(ReactorSystem):
         Calculate the lifetime of various components based on their damage limits
         and fluences.
         """
-        # Neutron flux in TF coil insulation [MC: based on PP email 20/02/17 -
-        # difficult to read figure] 2:actual 1.4:make it look good
-        neutrons = nROT()
-        self.tf_ins_nflux = neutrons.tf_ins_nflux  # [n/m^2/s]
-        # Blanket outboard midplane EUROFER dmg rate [PP: 2M7HN3 fig. 20]
-        self.blk_dmg = neutrons.blk_dmg  # [dpa/FPY]
-        # Divertor region CuCrZr dmg rate [MC: CB assumption]
-        self.div_dmg = neutrons.div_dmg  # [dpa/MW.annum/m^2]
-        # VV peak SS316LN-IG dmg rate [MC: PP 2M7HN3 fig. 18]
-        self.vv_dmg = neutrons.vv_dmg  # [dpa/MW.annum/m^2]
-        divl = self.params.div_dpa / self.div_dmg  # [fpy] Divertor life
-        blk1l = self.params.blk_1_dpa / self.blk_dmg  # [fpy] 1st Blanket life
-        blk2l = self.params.blk_2_dpa / self.blk_dmg  # [fpy] 2nd Blanket life
-        # vvl = self.params.vv_dpa / self.vv_dmg  # [fpy] VV life
+        tf_ins_nflux = self.params.tf_ins_nflux
+        divl = self.params.div_dpa / self.params.div_dmg  # [fpy] Divertor life
+        blk1l = self.params.blk_1_dpa / self.params.blk_dmg  # [fpy] 1st Blanket life
+        blk2l = self.params.blk_2_dpa / self.params.blk_dmg  # [fpy] 2nd Blanket life
+
         # Number of divertor changes in 1st blanket life
         ndivch_in1blk = int(blk1l / divl)
         # Number of divertor changes in 2nd blanket life (1 for div reset)
         ndivch_in2blk = int(blk2l / divl)
+
         self.n_blk_replace = 1  # HLR
         self.n_div_replace = ndivch_in1blk + ndivch_in2blk
         m_short = self.maintenance_s * S_TO_YR
@@ -294,26 +271,23 @@ class LifeCycle(ReactorSystem):
         self.fpy = fpy
         # Irreplaceable components life checks
         self.t_on_total = self.fpy * YR_TO_S  # [s] total fusion time
-        tf_ins_life_dose = self.tf_ins_nflux * self.t_on_total / self.params.tf_fluence
+        tf_ins_life_dose = tf_ins_nflux * self.t_on_total / self.params.tf_fluence
         if tf_ins_life_dose > 1:
-            self.tf_lifeend = round(
-                self.params.tf_fluence / (self.tf_ins_nflux) / (3600 * 24 * 365), 2
-            )
+            self.tf_lifeend = round(self.params.tf_fluence / (tf_ins_nflux) / YR_TO_S, 2)
             tflifeperc = round(100 * self.tf_lifeend / self.fpy, 1)
-            bpwarn(
-                "TF coil insulation fried after {0} full-power years"
-                ", or {1} % of neutron budget"
-                ".".format(self.tf_lifeend, tflifeperc)
+            bluemira_warn(
+                f"TF coil insulation fried after {self.tf_lifeend:.2f} full-power years"
+                f", or {tflifeperc:.2f} % of neutron budget."
             )
-        vv_life_dmg = self.vv_dmg * self.fpy / self.params.vv_dpa
+        vv_life_dmg = self.params.vv_dmg * self.fpy / self.params.vv_dpa
         if vv_life_dmg > 1:
-            self.vv_lifeend = round(self.params.vv_dpa / self.vv_dmg, 2)
+            self.vv_lifeend = round(self.params.vv_dpa / self.params.vv_dmg, 2)
             vvlifeperc = round(100 * self.vv_lifeend / self.fpy, 1)
-            bpwarn(
-                "VV fried after {0} full-power"
-                " years, or {1} % of neutron budget"
-                ".".format(self.vv_lifeend, vvlifeperc)
+            bluemira_warn(
+                f"VV fried after {self.vv_lifeend:.2f} full-power"
+                f" years, or {vvlifeperc:.2f} % of neutron budget."
             )
+            # TODO: treat output parameter
         self.add_parameter(
             "n_cycles",
             "Total number of D-T pulses",
@@ -372,14 +346,14 @@ class LifeCycle(ReactorSystem):
             n_DD_reactions,
             Ip,
             self.params.A_global,
-            self.blk_dmg,
+            self.params.blk_dmg,
             self.params.blk_1_dpa,
             self.params.blk_2_dpa,
-            self.div_dmg,
+            self.params.div_dmg,
             self.params.div_dpa,
-            self.tf_ins_nflux,
+            self.params.tf_ins_nflux,
             self.params.tf_fluence,
-            self.vv_dmg,
+            self.params.vv_dmg,
             self.params.vv_dpa,
         )
         self.T = timeline
@@ -396,14 +370,14 @@ class LifeCycle(ReactorSystem):
             self.t_on_total
             + self.total_ramptime
             + self.t_interdown
-            + self.m
+            + self.total_planned_maintenance
             + self.t_unplanned_m
         )
         actual_lf = self.fpy / actual_life
-        delt = delta(actual_life, life)
-        delta2 = delta(actual_lf, self.params.A_global)
+        delt = abs_rel_difference(actual_life, life)
+        delta2 = abs_rel_difference(actual_lf, self.params.A_global)
         if delt > 0.015:
-            bpwarn(
+            bluemira_warn(
                 "FuelCycle::Lifecyle: discrepancy between actual and planned\n"
                 "reactor lifetime\n"
                 f"Actual: {actual_life:.2f}\n"
@@ -414,8 +388,8 @@ class LifeCycle(ReactorSystem):
             self.__init__(self.config, self.inputs)  # Phoenix
 
         if delta2 > 0.015:
-            bpwarn(
-                "FuelCycle::Lifecyle: availability discrepancy greated that\n"
+            bluemira_warn(
+                "FuelCycle::Lifecyle: availability discrepancy greated than\n"
                 "specified tolerance\n"
                 f"Actual: {actual_lf:.4f}\n"
                 f"Planned: {self.params.A_global:.4f}\n"
@@ -425,7 +399,7 @@ class LifeCycle(ReactorSystem):
             self.__init__(self.config, self.inputs)  # Phoenix
 
         if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
-            bpwarn("FuelCycle::Lifecyle: Input availability is unachievable.")
+            bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
         # Re-assign A
         self.params.update_kw_parameters({"A_global": actual_lf})
         # self.A_global = actual_A
@@ -577,7 +551,7 @@ class LifeCycle(ReactorSystem):
             self.t_on_total,
             self.total_ramptime,
             self.t_interdown,
-            self.m,
+            self.total_planned_maintenance,
             self.t_unplanned_m,
         ]
         if typ == "pie":
@@ -605,21 +579,21 @@ class LifeCycle(ReactorSystem):
             )
         )
 
-    def write(self):
+    def write(self, filename):
         """
         Save a Timeline to a JSON file.
         """
-        bprint("Writing {0}".format(self.filename))
+        bluemira_print(f"Writing {filename}")
         data = self.T.to_dict()
-        with open(self.filename, "w") as f_h:
+        with open(filename, "w") as f_h:
             json.dump(data, f_h, indent=4)
 
-    def read(self):
+    def read(self, filename):
         """
         Load a Timeline from a JSON file.
         """
-        bprint("Reading {0}".format(self.filename))
-        with open(self.filename) as f_h:
+        bluemira_print(f"Reading {self.filename}")
+        with open(filename) as f_h:
             data = json.load(f_h)
         return data
 

@@ -25,34 +25,10 @@ Partially randomised fusion reactor load signal object and tools
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
-from bluemira.base.lookandfeel import plot_defaults, bpwarn
+from bluemira.base.look_and_feel import plot_defaults, bluemira_warn
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 
 plot_defaults()
-
-
-def f_gompertz(t, a, b, c):
-    """
-    Gompertz sigmoid function parameterisation.
-
-    \t:math:`a\\text{exp}(-b\\text{exp}(-ct))`
-    """
-    return a * np.exp(-b * np.exp(-c * t))
-
-
-def f_logistic(t, value, k, x_0):
-    """
-    Logistic function parameterisation.
-    """
-    return value / (1 + np.exp(-k * (t - x_0)))
-
-
-def histify(x, y):
-    """
-    Transform values into arrays usable to make histograms.
-    """
-    x, y = np.array(x), np.array(y)
-    return x.repeat(2)[1:-1], y.repeat(2)
 
 
 class Phase:
@@ -222,7 +198,7 @@ class OperationPhase(Phase):
                 j = 0
                 mean_norm = m * 1.2  # Start again...
                 delta = 1
-                bpwarn("FuelCycle::OperationPhase has a headache...")
+                bluemira_warn("FuelCycle::OperationPhase has a headache...")
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
         t_dwell = np.random.permutation(dist)

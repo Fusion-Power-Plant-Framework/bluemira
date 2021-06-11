@@ -29,8 +29,12 @@ from matplotlib import pyplot as plt
 import json
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.lookandfeel import plot_defaults
-from bluemira.fuel_cycle.tfv_utilities import convert_flux_to_flow, fit_sink_data, piecewise_sqrt_threshold
-from bluemira.fuel_cycle.blocks import TCycleComponent
+from bluemira.fuel_cycle.tools import (
+    convert_flux_to_flow,
+    fit_sink_data,
+    piecewise_sqrt_threshold,
+)
+from bluemira.fuel_cycle.blocks import FuelCycleComponent
 
 plot_defaults()
 
@@ -115,7 +119,7 @@ for k, v in data.items():
     m_flow = convert_flux_to_flow(flux, 1400)
     m = m_flow * np.ones(1000)
 
-    component = TCycleComponent(
+    component = FuelCycleComponent(
         label, t, v["p_opt"][0], v["p_opt"][2], retention_model="sqrt_bathtub"
     )
     component.add_in_flow(m)

@@ -26,10 +26,10 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import numpy as np
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
-from bluemira.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.baseclass import ReactorSystem
-from bluemira.fuel_cycle.tfv_utilities import (
+from bluemira.fuel_cycle.tools import (
     _speed_recycle,
     find_max_load_factor,
     legal_limit,
@@ -37,7 +37,7 @@ from bluemira.fuel_cycle.tfv_utilities import (
     find_noisy_locals,
     pam3s_to_mols,
 )
-from bluemira.fuel_cycle.blocks import TCycleComponent, TCycleFlow
+from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
 # It will be slower... and it will probably be less accurate! But the plots..
@@ -208,7 +208,7 @@ class FuelCycle(ReactorSystem):
         self.DEMO_rt = np.array(timeline["fusion_time"][:n])
         self.DT_rate = timeline["DT_rate"][:n]
         self.DD_rate = timeline["DD_rate"][:n]
-        m_gas = T_MOLAR_MASS*pam3s_to_mols(self.params.m_gas)/1000
+        m_gas = T_MOLAR_MASS * pam3s_to_mols(self.params.m_gas) / 1000
         self.grate = m_gas * self.DT_rate / max(self.DT_rate)
         self.bci = timeline["blanket_change_index"]
         # Burn rate of T [kgs of T per second]
@@ -276,7 +276,7 @@ class FuelCycle(ReactorSystem):
         m_out: np.array(N)
             Flow-rate out of the system [kg/s]
         """
-        plasma = TCycleComponent(
+        plasma = FuelCycleComponent(
             "Plasma",
             self.DEMO_t,
             eta_iv,
@@ -308,7 +308,7 @@ class FuelCycle(ReactorSystem):
             Flow-rate out of the system [kg/s]
         """
         m_T_bred = self.params.TBR * self.brate
-        blanket = TCycleComponent(
+        blanket = FuelCycleComponent(
             "Blanket", self.DEMO_t, eta_b, max_inventory, bci=self.bci, summing=True
         )
         blanket.add_in_flow(m_T_bred)
@@ -335,7 +335,7 @@ class FuelCycle(ReactorSystem):
             Flow-rate out of the system [kg/s]
         """
         # Runs in compressed time
-        tfv = TCycleComponent(
+        tfv = FuelCycleComponent(
             "TFV systems",
             self.t,
             eta_tfv,
@@ -346,7 +346,7 @@ class FuelCycle(ReactorSystem):
         for flow in flows:
             tfv.add_in_flow(flow)
         tfv.run()
-        m_tfv_out = TCycleFlow(self.t, tfv.m_out, 0)
+        m_tfv_out = FuelCycleFlow(self.t, tfv.m_out, 0)
         self.I_tfv = tfv.inventory
         # Exhaust processing
         m_in_isotope_re, m_in_exhaust_det = m_tfv_out.split(2, [self.params.f_exh_split])
@@ -355,7 +355,7 @@ class FuelCycle(ReactorSystem):
         # Fließt direkt zum Injektor
         # Exhaust detritiation
         # Combines Water Detritiation and Isotope Separation
-        m_in_exhaust_det = TCycleFlow(self.t, m_in_exhaust_det, self.params.t_detrit)
+        m_in_exhaust_det = FuelCycleFlow(self.t, m_in_exhaust_det, self.params.t_detrit)
         m_exh_stor, m_ex_stack = m_in_exhaust_det.split(2, [self.params.f_detrit_split])
         return m_in_isotope_re + m_exh_stor, m_ex_stack
 
@@ -363,7 +363,7 @@ class FuelCycle(ReactorSystem):
         """
         Exhaust to environment
         """
-        stack = TCycleComponent(
+        stack = FuelCycleComponent(
             "Stack", self.t, 0, float("inf"), retention_model="bathtub", summing=True
         )
         for flow in flows:
@@ -377,7 +377,7 @@ class FuelCycle(ReactorSystem):
         """
         Pellet injection system assumed
         """
-        injector = TCycleComponent("Injector", self.t, 1, 0)
+        injector = FuelCycleComponent("Injector", self.t, 1, 0)
         for flow in flows:
             if flow is not None:
                 injector.add_in_flow(flow)
@@ -418,27 +418,27 @@ class FuelCycle(ReactorSystem):
         # Flow out of the vacuum vessel
         t, m_T_out = discretise_1d(self.DEMO_t, m_T_out, n_ts)
         # Direct Internal Recycling
-        m_plasma_out = TCycleFlow(t, m_T_out, 0)  # Initialise flow 0 t
+        m_plasma_out = FuelCycleFlow(t, m_T_out, 0)  # Initialise flow 0 t
 
         m_direct, m_indirect = m_plasma_out.split(2, [self.params.f_dir])
         # DIR separation
         # Flow 9
-        direct = TCycleFlow(t, m_direct, self.params.t_pump)
+        direct = FuelCycleFlow(t, m_direct, self.params.t_pump)
         # Flow 10 with (time delay t_10+t_11/12)
-        indirect = TCycleFlow(t, m_indirect, self.params.t_pump + self.params.t_exh)
+        indirect = FuelCycleFlow(t, m_indirect, self.params.t_pump + self.params.t_exh)
         # Blanket
         m_T_bred = self.blanket(self.params.eta_bb, self.params.I_mbb)
         t, m_bred = discretise_1d(self.DEMO_t, m_T_bred, n_ts)
-        m_T_bred = TCycleFlow(t, m_bred, self.params.t_ters)
+        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters)
         # Tritium extraction and recovery system + coolant water purification
         m_T_bred_totfv, m_T_bred_tostack = m_T_bred.split(2, [self.params.f_terscwps])
         # TFV systems - runs in t
         m_tfv_out, m_tfv_stack = self.tfv(self.params.eta_tfv, flows=[indirect.out_flow])
         # Release to environment
         self.stack([m_T_bred_tostack, m_tfv_stack])
-        m_tfv_out = TCycleFlow(t, m_tfv_out, 0)
+        m_tfv_out = FuelCycleFlow(t, m_tfv_out, 0)
         # Store
-        store = TCycleComponent("Store", t, 1, np.inf)
+        store = FuelCycleComponent("Store", t, 1, np.inf)
         # Flow 11+13
         store.add_in_flow(m_tfv_out.out_flow)
         # Flow 16
@@ -455,7 +455,7 @@ class FuelCycle(ReactorSystem):
         store.run()
         # This is conservative... need to find a way to make gas available
         # instantaneously. At present this means gas puffs get "frozen" first
-        m_store = TCycleFlow(t, store.m_out, self.params.t_freeze).out_flow
+        m_store = FuelCycleFlow(t, store.m_out, self.params.t_freeze).out_flow
         # Add a correction flow for instantaneous gas puffing
 
         # m_store += gpuff_corr
@@ -480,7 +480,7 @@ class FuelCycle(ReactorSystem):
             if self.verbose:
                 old_m_start = self.m_T_start + self.params.I_tfv_min
                 new_m_start = self.m_T_start - min_tritium + self.params.I_tfv_min
-                bprint(
+                bluemira_print(
                     f"m_T_start old: {old_m_start:.2f} kg \n"
                     f"m_T_start new: {new_m_start:.2f}"
                     f" kg\niterations: {self.iterations}"
