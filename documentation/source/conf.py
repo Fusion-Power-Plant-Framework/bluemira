@@ -7,7 +7,7 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath("../../../"))
+sys.path.insert(0, os.path.abspath("../../"))  # noqa (E402)
 
 from bluemira._version import get_versions  # noqa (E402)
 
@@ -91,7 +91,7 @@ extensions.append("sphinx.ext.inheritance_diagram")
 extensions.append("autoapi.extension")
 
 autoapi_type = "python"
-autoapi_dirs = ["../../../bluemira"]
+autoapi_dirs = ["../../bluemira"]
 autoapi_keep_files = False
 autoapi_options = [
     "members",
