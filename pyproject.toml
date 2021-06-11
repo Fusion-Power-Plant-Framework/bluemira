@@ -1,0 +1,27 @@
+[tool.black]
+line-length = 89
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | \.env
+  | _build
+  | buck-out
+  | build
+  | dist
+  | mirapy
+  | examples/meshing
+)/
+'''
+
+[tool.coverage.report]
+"exclude_lines" = [
+  "if __name__ == .__main__.:"
+]
+"omit" = [
+  "BLUEPRINT/_version.py"
+]
