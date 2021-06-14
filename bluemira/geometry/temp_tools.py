@@ -1144,3 +1144,105 @@ def join_intersect(loop1, loop2, get_arg=False):
         for x, z in zip(x_inter, z_inter):
             args.append(loop1.argmin([x, z]))
         return list(set(args))
+
+
+# =============================================================================
+# Coordinate creation
+# =============================================================================
+
+
+def make_circle_arc(
+    radius, x_centre=0, y_centre=0, angle=2 * np.pi, n_points=200, start_angle=0
+):
+    """
+    Make a circle arc of a specified radius and angle at a given location.
+
+    Parameters
+    ----------
+    radius: float
+        The radius of the circle arc
+    x_centre: float
+        The x coordinate of the circle arc centre
+    y_centre: float
+        The y coordinate of the circle arc centre
+    angle: float
+        The angle of the circle arc [radians]
+    n_points: int
+        The number of points on the circle
+    start_angle: float
+        The starting angle of the circle arc
+
+    Returns
+    -------
+    x: np.array
+        The x coordinates of the circle arc
+    y: np.array
+        The y coordinates of the circle arc
+    """
+    n = np.linspace(start_angle, start_angle + angle, n_points)
+    x = x_centre + radius * np.cos(n)
+    y = y_centre + radius * np.sin(n)
+    if angle == 2 * np.pi:
+        # Small number correction (close circle exactly)
+        x[-1] = x[0]
+        y[-1] = y[0]
+    return x, y
+
+
+def get_control_point(loop):
+    """
+    Find an arbitrary control point which sits inside a specified Loop
+
+    If a Shell is given, finds a point which sits on the solid part of the Shell.
+
+    Parameters
+    ----------
+    loop: Loop or Shell
+        The geometry to find a control point for. Must be 2-D.
+
+    Returns
+    -------
+    float, float
+        An arbitrary control point for the Loop or Shell.
+    """
+    if loop.__class__.__name__ == "Loop":
+        cp = [loop.centroid[0], loop.centroid[1]]
+        if loop.point_in_poly(cp):
+            return cp
+        else:
+            return _montecarloloopcontrol(loop)
+    else:
+        raise GeometryError(f"Unrecognised type: {type(loop)}.")
+
+
+def _montecarloloopcontrol(loop):
+    """
+    Find an arbitrary point inside a Loop
+
+    If the centroid doesn't work, will use brute force...
+
+    Parameters
+    ----------
+    loop: Loop
+        The geometry to find a control point for. Must be 2-D.
+
+    Returns
+    -------
+    float, float
+        An arbitrary control point for the Loop.
+    """
+    xmin, xmax = np.min(loop.d2[0]), np.max(loop.d2[0])
+    dx = xmax - xmin
+    ymin, ymax = np.min(loop.d2[1]), np.max(loop.d2[1])
+    dy = ymax - ymin
+    i = 0
+    while i < 1000:
+        i += 1
+        n, m = np.random.rand(2)
+        x = xmin + n * dx
+        y = ymin + m * dy
+        if loop.point_in_poly([x, y]):
+            return [x, y]
+    raise GeometryError(
+        "Unable to find a control point for this Loop using brute force."
+    )
