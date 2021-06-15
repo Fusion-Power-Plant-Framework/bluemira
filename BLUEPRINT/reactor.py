@@ -38,13 +38,13 @@ from typing import Type, Union
 from BLUEPRINT.base import (
     ReactorSystem,
     BLUE,
-    banner,
     get_files_by_ext,
 )
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
+from bluemira.base.error import BluemiraError
 from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.base.file import FileManager
-from BLUEPRINT.base.error import BLUEPRINTError, GeometryError
+from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.base.parameter import ParameterFrame
 
 # Utility imports
@@ -232,7 +232,7 @@ class Reactor(ReactorSystem):
         """
         Runs through the full reactor build sequence
         """
-        banner()
+        print_banner()
         tic = time()
 
         # Run 0-1D systems code modules
@@ -300,7 +300,7 @@ class Reactor(ReactorSystem):
         if (not PROCESS_ENABLED) and (
             process_mode in ["run", "read", "read all", "run input"]
         ):
-            raise BLUEPRINTError("PROCESS not (properly) installed")
+            raise BluemiraError("PROCESS not (properly) installed")
 
         elif process_mode == "run":
             self.run_PROCESS(run_input=False)
@@ -323,7 +323,7 @@ class Reactor(ReactorSystem):
             self._mock_PROCESS_run()
 
         else:
-            raise BLUEPRINTError("Option d'usage de PROCESS inconnu.")
+            raise BluemiraError("Option d'usage de PROCESS inconnu.")
 
     def estimate_kappa_95(self):
         """

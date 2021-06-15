@@ -29,7 +29,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 import tabulate
-from bluemira.base.look_and_feel import bluemira_warn, bprintflush
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
 from BLUEPRINT.base.error import EquilibriaError
 from BLUEPRINT.base.file import try_get_BP_path
 from BLUEPRINT.geometry.geomtools import circle_seg
@@ -410,7 +410,7 @@ class PositionOptimiser:
         self.rms_error = self.update_positions(pos_vector)
         if grad.size > 0:
             grad[:] = approx_fprime(pos_vector, self.update_positions, 1e-3, self.bounds)
-        bprintflush(
+        bluemira_print_flush(
             f"EQUILIBRIA position optimisation iteration {self.iter}: "
             f"f_obj = {self.rms_error:.2f}"
         )

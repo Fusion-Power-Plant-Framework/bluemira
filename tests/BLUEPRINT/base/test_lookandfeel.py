@@ -31,7 +31,6 @@ from BLUEPRINT.base.palettes import LONDON
 from BLUEPRINT.base.file import get_BP_path, get_BP_root, get_PROCESS_root
 from BLUEPRINT.base.lookandfeel import (
     banner,
-    count_slocs,
     bpinfo,
 )
 from bluemira.base.look_and_feel import (
@@ -40,6 +39,7 @@ from bluemira.base.look_and_feel import (
     get_git_branch,
     user_banner,
     _print_color,
+    count_slocs,
 )
 
 

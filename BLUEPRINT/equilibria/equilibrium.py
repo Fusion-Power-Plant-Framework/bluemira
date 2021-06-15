@@ -30,7 +30,7 @@ from scipy.optimize import minimize
 from pandas import DataFrame
 import tabulate
 from BLUEPRINT.base.lookandfeel import get_BP_path
-from bluemira.base.look_and_feel import bluemira_warn, bprintflush
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
 from BLUEPRINT.base.constants import MU_0
 from BLUEPRINT.base.error import EquilibriaError
 from BLUEPRINT.equilibria.boundary import FixedBoundary, FreeBoundary, apply_boundary
@@ -858,7 +858,7 @@ class Equilibrium(MHDState):
                 # Scipy's callback argument doesn't seem to work, so we do this
                 # instead...
                 raise StopIteration
-            bprintflush(f"EQUILIBRIA li iter {self._li_iter}: li: {li:.3f}")
+            bluemira_print_flush(f"EQUILIBRIA li iter {self._li_iter}: li: {li:.3f}")
             self._li_iter += 1
             return abs(self._li - li)
 

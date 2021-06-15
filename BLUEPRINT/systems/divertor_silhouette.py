@@ -24,7 +24,7 @@ Classes that provide divertor shapes built from tracking psi and grazing angle a
 leg length.
 """
 
-from bluemira.base.look_and_feel import bluemira_warn, bprintflush
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
 import matplotlib.pyplot as plt
 import numpy as np
 import operator
@@ -270,7 +270,7 @@ class DivertorSilhouette(DivertorProfile):
             )
 
             if self.debug:
-                bprintflush(
+                bluemira_print_flush(
                     f"opt: {theta} ... {np.degrees(grazing_angle)} ... "
                     f"{np.abs(grazing_angle - np.radians(self.params.div_graze_angle))}"
                 )
@@ -451,7 +451,7 @@ class DivertorSilhouette(DivertorProfile):
                 debug_section = np.array([baffle_section_start, baffle_section_end])
                 section_diff = np.diff(debug_section.T)
                 graze = np.degrees(self.sf.get_graze(baffle_section_start, section_diff))
-                bprintflush(f"baffle: {graze}")
+                bluemira_print_flush(f"baffle: {graze}")
                 ax.plot(*debug_section.T)  # type: ignore (reportUnboundVariable)
         baffle = np.array(baffle)
         return baffle if leg == Leg.outer else baffle[::-1]

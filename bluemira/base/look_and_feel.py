@@ -36,13 +36,6 @@ import shutil
 import functools
 import seaborn as sns
 from PyQt5 import QtWidgets
-
-from BLUEPRINT import get_BP_root, __version__
-from BLUEPRINT.base.constants import ANSI_COLOR, EXIT_COLOR
-from BLUEPRINT.base.file import get_BP_path
-
-from BLUEPRINT.base.lookandfeel import count_slocs
-from BLUEPRINT.base.palettes import B_PALETTE
 from bluemira import __version__
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR, BLUEMIRA_PALETTE
 from bluemira.base.file import get_bluemira_root, get_bluemira_path
@@ -578,41 +571,3 @@ def plot_defaults(force=False):
         }
     )
     sns.set_palette(BLUEMIRA_PALETTE)
-
-
-def _bprintsingleflush(string, width=73, color="blue"):
-    """
-    Creates the text string for coloured, boxed text to flush print to the
-    console.
-
-    Parameters
-    ----------
-    string: str
-        The string of text to colour and box
-    width: int (default = 73)
-        The width of the box (leave this alone for best results)
-    color: str from ['blue', 'red', 'green']
-        The color to print the text in
-
-    Returns
-    -------
-    ss: str
-        The text string of the boxed coloured text to flush print
-    """
-    a = width - len(string) - 2
-    text = "| " + string + a * " " + " |"
-    return _print_color(text, color)
-
-
-def bprintflush(string):
-    """
-    Prints a coloured, boxed line to the console and flushes it. Useful for
-    updating information
-
-    Parameters
-    ----------
-    string: str
-        The string to colour flush print
-    """
-    sys.stdout.write("\r" + _bprintsingleflush(string))
-    sys.stdout.flush()
