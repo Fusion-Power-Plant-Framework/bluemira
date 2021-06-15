@@ -31,7 +31,7 @@ import sys
 import getpass
 from typing import Type
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.base.constants import GRAVITY
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
 
@@ -310,7 +310,7 @@ class BuildRMDB:
     def write(self, fname):
         datadir = get_BP_path("Data")
         self.filename = datadir + "/" + fname + ".json"
-        bprint("Writing {0}".format(self.filename))
+        bluemira_print("Writing {0}".format(self.filename))
         self.RMDB.to_json(self.filename, orient="columns")
 
     def input_RMdurations(self, R_D_Inputs):

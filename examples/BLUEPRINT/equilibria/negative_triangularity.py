@@ -29,7 +29,7 @@ NT pulsed equilibrium example
 from IPython import get_ipython
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.parameterisations import PictureFrame
 from BLUEPRINT.equilibria.run import AbInitioEquilibriumProblem

@@ -33,7 +33,7 @@ from BLUEPRINT.fuelcycle.tfvutils import (
 from BLUEPRINT.fuelcycle.blocks import TCycleComponent, TCycleFlow
 from BLUEPRINT.utilities.tools import findnoisylocals, discretise_1d, tomols
 from BLUEPRINT.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.base.baseclass import ReactorSystem
 
@@ -478,7 +478,7 @@ class FuelCycle(ReactorSystem):
             if self.verbose:
                 old_m_start = self.m_T_start + self.params.I_tfv_min
                 new_m_start = self.m_T_start - min_tritium + self.params.I_tfv_min
-                bprint(
+                bluemira_print(
                     f"m_T_start old: {old_m_start:.2f} kg \n"
                     f"m_T_start new: {new_m_start:.2f}"
                     f" kg\niterations: {self.iterations}"

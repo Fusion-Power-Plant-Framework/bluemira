@@ -30,7 +30,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
 from BLUEPRINT.base.constants import MU_0
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.offset import offset_smc
 from BLUEPRINT.geometry.boolean import clean_loop, simplify_loop
@@ -181,7 +181,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         x_koz_max = np.max(self.inputs["koz_loop"].x)
 
         if x_koz_min < r_tf_in_out_mid:
-            bpwarn(
+            bluemira_warn(
                 "TF coil radial build issue, resetting TF inboard outer edge in the "
                 f"mid-plane from {r_tf_in_out_mid:.6f} to {x_koz_min:.6f}."
             )
@@ -616,12 +616,14 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         tol = 0.002
         self.max_ripple = max(self.cage.ripple)
         if self.max_ripple > (1 + tol) * self.ripple_limit:
-            bpwarn(
+            bluemira_warn(
                 "TF coil ripple exceeds optimiser specification: "
                 f"{self.max_ripple:.3f} %."
             )
         elif self.max_ripple < (1 - tol) * self.ripple_limit:
-            bpwarn("TF coil ripple is supra-optimised: " f"{self.max_ripple:.3f} %.")
+            bluemira_warn(
+                "TF coil ripple is supra-optimised: " f"{self.max_ripple:.3f} %."
+            )
 
     def load_shape(self):
         """

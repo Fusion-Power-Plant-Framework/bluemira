@@ -29,7 +29,7 @@ from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
 from BLUEPRINT.base.constants import EPS
 from BLUEPRINT.base.error import EquilibriaError, GeometryError
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_common,
     boolean_2d_difference,
@@ -143,7 +143,7 @@ class CoilPositioner:
         Defines a Solenoid object with DEMO like layout of nCS modules
         """
         if n_CS <= 2 or n_CS % 2 == 0:
-            bpwarn(
+            bluemira_warn(
                 "So was kann ich mit einem DEMO-spacing nicht machen. "
                 "Stattdessen gib ich dir einen ITER-spacing CS."
             )
@@ -573,7 +573,7 @@ class RegionMapper:
             try:
                 coil = coilset[self._name_converter(region)]
             except KeyError:
-                bpwarn(f"{self._name_converter(region)} not found in coilset")
+                bluemira_warn(f"{self._name_converter(region)} not found in coilset")
                 continue
 
             self.l_values[no] = self.xz_to_L(region, coil.x, coil.z)

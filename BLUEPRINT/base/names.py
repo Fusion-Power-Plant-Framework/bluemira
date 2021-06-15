@@ -22,7 +22,7 @@
 """
 An attempt at some naming conventions
 """
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 
 NAME_SHORT_TO_LONG = {
     "VV": "Reactor vacuum vessel",
@@ -71,7 +71,7 @@ def name_mapper(name_dict, target_dict, map_dict):
             try:
                 k = map_dict[k]
             except KeyError:
-                bpwarn("Unknown key in name mapper")
+                bluemira_warn("Unknown key in name mapper")
         out[k] = v
     return out
 

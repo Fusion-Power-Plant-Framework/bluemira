@@ -31,13 +31,15 @@ from BLUEPRINT.base.palettes import LONDON
 from BLUEPRINT.base.file import get_BP_path, get_BP_root, get_PROCESS_root
 from BLUEPRINT.base.lookandfeel import (
     banner,
-    user_banner,
     count_slocs,
-    get_git_branch,
-    _print_color,
-    bpwarn,
     bpinfo,
-    bprint,
+)
+from bluemira.base.look_and_feel import (
+    bluemira_warn,
+    bluemira_print,
+    get_git_branch,
+    user_banner,
+    _print_color,
 )
 
 
@@ -107,7 +109,7 @@ class TestColors:
 
     def test_warn(self):
         print("\n")
-        bpwarn("test warning")
+        bluemira_warn("test warning")
 
     def test_into(self):
         print("\n")
@@ -115,7 +117,7 @@ class TestColors:
 
     def test_bprint(self):
         print("\n")
-        bprint("test normal blue")
+        bluemira_print("test normal blue")
 
 
 class TestMisc:

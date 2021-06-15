@@ -229,9 +229,9 @@ def get_files_by_ext(folder, extension):
         if file.endswith(extension):
             files.append(file)
     if len(files) == 0:
-        from BLUEPRINT.base.lookandfeel import bpwarn
+        from bluemira.base.look_and_feel import bluemira_warn
 
-        bpwarn(f"No files with extension {extension} found in folder {folder}")
+        bluemira_warn(f"No files with extension {extension} found in folder {folder}")
     return files
 
 

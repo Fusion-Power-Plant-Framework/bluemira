@@ -24,7 +24,7 @@ Classes that provide divertor shapes built from tracking psi and grazing angle a
 leg length.
 """
 
-from BLUEPRINT.base.lookandfeel import bprintflush, bpwarn
+from bluemira.base.look_and_feel import bluemira_warn, bprintflush
 import matplotlib.pyplot as plt
 import numpy as np
 import operator
@@ -257,7 +257,7 @@ class DivertorSilhouette(DivertorProfile):
             message = (
                 "Rotation side must be either -1 for anti-clockwise or 1 for clockwise."
             )
-            bpwarn(message)
+            bluemira_warn(message)
             raise SystemsError(message)
 
         def opt(theta):

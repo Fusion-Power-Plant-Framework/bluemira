@@ -29,7 +29,7 @@ import pytest
 import time
 from matplotlib import pyplot as plt
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.equilibria.run import (
     AbExtraEquilibriumProblem,
@@ -72,7 +72,7 @@ class TestAbInitioEquilibriumProblem:
         b = AbExtraEquilibriumProblem(fn)
         b.solve()
         b.regrid()
-        bprint(f"Runtime: {time.time()-t:.2f} seconds")
+        bluemira_print(f"Runtime: {time.time()-t:.2f} seconds")
         plt.close("all")
         a.plot()
         plt.show()

@@ -25,7 +25,7 @@ Partially randomised fusion reactor load signal object and tools
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
-from BLUEPRINT.base.lookandfeel import plot_defaults, bpwarn
+from bluemira.base.look_and_feel import bluemira_warn, plot_defaults
 from BLUEPRINT.base.constants import S_TO_YR, YR_TO_S
 
 plot_defaults()
@@ -222,7 +222,7 @@ class OperationPhase(Phase):
                 j = 0
                 mean_norm = m * 1.2  # Start again...
                 delta = 1
-                bpwarn("FuelCycle::OperationPhase has a headache...")
+                bluemira_warn("FuelCycle::OperationPhase has a headache...")
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
         t_dwell = np.random.permutation(dist)

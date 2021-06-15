@@ -26,7 +26,7 @@ import numpy as np
 from numpy import dot, eye
 from numpy.linalg import inv, pinv, LinAlgError
 from scipy.optimize._constraints import old_constraint_to_new
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import distance_between_points, normal, get_intersect
@@ -163,7 +163,7 @@ def tikhonov(A, b, gamma):
     try:
         return dot(inv(dot(A.T, A) + gamma ** 2 * eye(A.shape[1])), dot(A.T, b))
     except LinAlgError:
-        bpwarn("utilities/optimisation.py: Tikhonov singular matrix..!")
+        bluemira_warn("utilities/optimisation.py: Tikhonov singular matrix..!")
         return dot(pinv(dot(A.T, A) + gamma ** 2 * eye(A.shape[1])), dot(A.T, b))
 
 
@@ -210,12 +210,12 @@ def process_scipy_result(res):
         return res.x
 
     if not hasattr(res, "status"):
-        bpwarn("Scipy optimisation was not succesful. Failed without status.")
+        bluemira_warn("Scipy optimisation was not succesful. Failed without status.")
         raise InternalOptError("\n".join([res.message, res.__str__()]))
 
     elif res.status == 8:
         # This can happen when scipy is not convinced that it has found a minimum.
-        bpwarn(
+        bluemira_warn(
             "\nOptimiser (scipy) found a positive directional derivative,\n"
             "returning suboptimal result. \n"
             "\n".join([res.message, res.__str__()])
@@ -223,7 +223,7 @@ def process_scipy_result(res):
         return res.x
 
     elif res.status == 9:
-        bpwarn(
+        bluemira_warn(
             "\nOptimiser (scipy) exceeded number of iterations, returning "
             "suboptimal result. \n"
             "\n".join([res.message, res.__str__()])
@@ -245,7 +245,7 @@ def process_NLOPT_result(opt):  # noqa (N802)
     """
     result = opt.last_optimize_result()
     if result < 0:
-        bpwarn(
+        bluemira_warn(
             "\nNLOPT Optimiser failed with internal error code (see below)"
             "\nreturning last optimum value\n"
             "\n".join([str(result)])

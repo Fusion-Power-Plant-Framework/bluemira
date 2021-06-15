@@ -29,7 +29,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 import tabulate
-from BLUEPRINT.base.lookandfeel import bpwarn, bprintflush
+from bluemira.base.look_and_feel import bluemira_warn, bprintflush
 from BLUEPRINT.base.error import EquilibriaError
 from BLUEPRINT.base.file import try_get_BP_path
 from BLUEPRINT.geometry.geomtools import circle_seg
@@ -387,7 +387,7 @@ class PositionOptimiser:
             positions = opt.optimize(l_0)
         except nlopt.RoundoffLimited:  # Dodgy SLSQP. Normalerweise gut genug
             positions = self._store
-            bpwarn("NLopt RoundoffLimited!")
+            bluemira_warn("NLopt RoundoffLimited!")
 
         self.current_optimiser.sanity()
         self.rms = opt.last_optimum_value()
@@ -487,7 +487,7 @@ class PositionOptimiser:
         try:  # For shifting CS coils.. need to update I constraint vector
             self.current_optimiser.update_current_constraint(i_max)
         except AttributeError:
-            bpwarn("No update_current_constraint implemented in sub-optimiser")
+            bluemira_warn("No update_current_constraint implemented in sub-optimiser")
             pass
 
         return self._get_current_rms_error()
@@ -621,7 +621,7 @@ class SanityReporter:
         for con, val, name in zip(cons, vals, names):
             for c, v in zip(con, val):
                 if v > (1 + self.constraint_tol) * c:
-                    bpwarn(f"FBI {name} constraint violated: |{v:.2f}| > {c:.2f}")
+                    bluemira_warn(f"FBI {name} constraint violated: |{v:.2f}| > {c:.2f}")
 
     def report(self, verbose=True):
         """

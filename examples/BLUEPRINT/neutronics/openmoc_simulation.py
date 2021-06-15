@@ -35,7 +35,7 @@ import openmoc
 from openmoc import plotter as plotter
 
 # Some BLUEPRINT imports
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.neutronics.openmoc_geometry_tools import (
     get_source_fsr_map,
     populate_source_cells,
@@ -74,7 +74,7 @@ max_iters = options.max_iters
 # Create the TrackGenerator and generate the tracks
 ###################################################
 
-bprint("Initializing the track generator")
+bluemira_print("Initializing the track generator")
 
 track_generator = openmoc.TrackGenerator(geometry, num_azim, azim_spacing)
 track_generator.setNumThreads(num_threads)
@@ -85,7 +85,7 @@ track_generator.generateTracks()
 # Setup the simulation
 ######################
 
-bprint("Setting up the simulation")
+bluemira_print("Setting up the simulation")
 
 solver = openmoc.CPULSSolver(track_generator)
 solver.setNumThreads(num_threads)
@@ -96,7 +96,7 @@ solver.setConvergenceThreshold(tolerance)
 # Create the plasma source
 ##########################
 
-bprint("Creating the plasma source")
+bluemira_print("Creating the plasma source")
 
 neutron_source = plasma.export_neutron_source()
 plasma_source = PlasmaSource(**neutron_source)
@@ -108,7 +108,7 @@ plasma_fsr_map = get_source_fsr_map(geometry, plasma_cells)
 
 populate_source_cells(geometry, solver, plasma_source, plasma_cells, plasma_sections)
 
-bprint("Created the plasma source")
+bluemira_print("Created the plasma source")
 
 ####################
 # Run the simulation
@@ -119,13 +119,13 @@ solver.printTimerReport()
 
 end = datetime.now()
 
-bprint(f"Simulation completed in {end - start}")
+bluemira_print(f"Simulation completed in {end-start}")
 
 #######################
 # Generate some plots
 #######################
 
-bprint("Plotting data")
+bluemira_print("Plotting data")
 
 start = datetime.now()
 
@@ -189,10 +189,10 @@ with warnings.catch_warnings():
     )
 
 # Plots are generated in a plots sub-directory of the current working directory
-bprint(f"Plots available in {os.getcwd()}/plots")
+bluemira_print(f"Plots available in {os.getcwd()}/plots")
 
 end = datetime.now()
 
-bprint(f"Plotting completed in {end - start}")
+bluemira_print(f"Plotting completed in {end-start}")
 
-bprint("Finished")
+bluemira_print("Finished")

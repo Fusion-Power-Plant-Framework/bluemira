@@ -23,7 +23,7 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 from BLUEPRINT.base.constants import MU_0
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.geometry.geomtools import circle_seg
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.magnetostatics.greens import (

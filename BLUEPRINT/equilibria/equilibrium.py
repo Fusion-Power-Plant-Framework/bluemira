@@ -29,7 +29,8 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
 from pandas import DataFrame
 import tabulate
-from BLUEPRINT.base.lookandfeel import get_BP_path, bprintflush, bpwarn
+from BLUEPRINT.base.lookandfeel import get_BP_path
+from bluemira.base.look_and_feel import bluemira_warn, bprintflush
 from BLUEPRINT.base.constants import MU_0
 from BLUEPRINT.base.error import EquilibriaError
 from BLUEPRINT.equilibria.boundary import FixedBoundary, FreeBoundary, apply_boundary
@@ -533,7 +534,7 @@ class Equilibrium(MHDState):
         cls._eqdsk = e
 
         if e["nx"] * e["nz"] > 10000 and not load_large_file:
-            bpwarn(
+            bluemira_warn(
                 "This is a large eqdsk file you are loading: disabling jtor "
                 "reconstruction by default. You can enable this (slow) behaviour "
                 "with load_large_file=True."

@@ -25,7 +25,7 @@ A collection of useful 0-D physics calculations
 import numpy as np
 from typing import Union
 from BLUEPRINT.base.typebase import typechecked
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import PowerLawScaling
 from BLUEPRINT.base.constants import (
     MU_0,
@@ -216,7 +216,7 @@ def IPB98y2(Ip, b_tor, p_sep, n19, R_0, A, kappa):  # noqa (N802)
 
     \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
     """  # noqa (W505)
-    bpwarn("IPB98y2 parameterisation possibly incorrect!")
+    bluemira_warn("IPB98y2 parameterisation possibly incorrect!")
     m_t = T_MOLAR_MASS - ELECTRON_MOLAR_MASS
     m_d = D_MOLAR_MASS - ELECTRON_MOLAR_MASS
     m_he = HE_MOLAR_MASS - 2 * ELECTRON_MOLAR_MASS

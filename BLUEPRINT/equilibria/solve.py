@@ -33,7 +33,7 @@ from BLUEPRINT.equilibria.constants import (
     PLT_PAUSE,
 )
 from BLUEPRINT.utilities.plottools import savefig, makegif
-from BLUEPRINT.base.lookandfeel import bprintflush, bprint, bpwarn
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, bprintflush
 from BLUEPRINT.base.file import try_get_BP_path
 
 
@@ -576,11 +576,11 @@ class PicardBaseIterator(ABC):
                 next(iterator)
             except StopIteration:
                 print()
-                bprint("EQUILIBRIA G-S converged value found.")
+                bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
         else:
             print()
-            bpwarn(
+            bluemira_warn(
                 f"EQUILIBRIA G-S unable to find converged value after {self.i} iterations."
             )
         self._teardown()
@@ -632,7 +632,7 @@ class PicardBaseIterator(ABC):
         try:
             next(self)
         except StopIteration:
-            bprint("EQUILIBRIA G-S converged value found, nothing to do.")
+            bluemira_print("EQUILIBRIA G-S converged value found, nothing to do.")
             self._teardown()
 
     def check_converged(self, print_status=True):

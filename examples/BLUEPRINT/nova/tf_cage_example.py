@@ -26,7 +26,7 @@ from IPython import get_ipython
 import matplotlib.pyplot as plt
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.nova.structuralsolver import StructuralSolver
 
 try:

@@ -33,7 +33,7 @@ from pyclipper import (
     JT_SQUARE,
 )
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import innocent_smoothie
 from BLUEPRINT.geometry.geomtools import order, normal
 from BLUEPRINT.geometry.geomtools import normal_vector, side_vector, vector_intersect
@@ -140,7 +140,7 @@ def offset_clipper(loop, delta, method="square", miter_limit=2.0):
     if method == "square":
         tool = SquareOffset(loop, delta)
     elif method == "round":
-        bpwarn(
+        bluemira_warn(
             "Je ne sais pas pourquoi, mais c'est tres lent.. vaut mieux se"
             " servir d'autre chose..."
         )
