@@ -29,7 +29,7 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
 from pandas import DataFrame
 import tabulate
-from BLUEPRINT.base.lookandfeel import get_BP_path
+from BLUEPRINT.base.file import get_BP_path
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
 from BLUEPRINT.base.constants import MU_0
 from BLUEPRINT.base.error import EquilibriaError

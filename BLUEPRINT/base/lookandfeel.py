@@ -31,6 +31,8 @@ from bluemira.base.look_and_feel import (
     bluemira_print,
 )
 
+KEY_TO_PLOT = False
+
 
 def color_kwargs(**kwargs):
     """
