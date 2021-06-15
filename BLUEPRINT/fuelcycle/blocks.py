@@ -24,7 +24,7 @@ Fuel cycle model fundamental building blocks
 """
 import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.constants import T_LAMBDA, S_TO_YR
+from bluemira.base.constants import T_LAMBDA, S_TO_YR
 from BLUEPRINT.base.error import FuelCycleError
 from BLUEPRINT.fuelcycle.tfvutils import (
     linear_bathtub,

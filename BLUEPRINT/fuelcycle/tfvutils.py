@@ -26,7 +26,7 @@ import numpy as np
 import numba as nb
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import FuelCycleError
 from BLUEPRINT.utilities.tools import discretise_1d

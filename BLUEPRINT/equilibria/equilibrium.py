@@ -31,7 +31,7 @@ from pandas import DataFrame
 import tabulate
 from BLUEPRINT.base.file import get_BP_path
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from BLUEPRINT.base.error import EquilibriaError
 from BLUEPRINT.equilibria.boundary import FixedBoundary, FreeBoundary, apply_boundary
 from BLUEPRINT.equilibria.gridops import Grid

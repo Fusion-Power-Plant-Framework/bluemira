@@ -22,7 +22,7 @@
 """
 Grid object and grid operations
 """
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.equilibria.constants import X_AXIS_MIN
 from BLUEPRINT.equilibria.plotting import GridPlotter

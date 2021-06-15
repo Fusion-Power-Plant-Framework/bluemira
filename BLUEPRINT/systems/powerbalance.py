@@ -29,7 +29,7 @@ from BLUEPRINT.utilities.plottools import SuperSankey
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import B_PAL_MAP
-from BLUEPRINT.base.constants import (
+from bluemira.base.constants import (
     HE_MOLAR_MASS,
     NEUTRON_MOLAR_MASS,
     HE3_MOLAR_MASS,

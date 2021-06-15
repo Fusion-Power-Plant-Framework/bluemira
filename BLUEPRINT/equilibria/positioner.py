@@ -27,7 +27,7 @@ import re
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
-from BLUEPRINT.base.constants import EPS
+from bluemira.base.constants import EPS
 from BLUEPRINT.base.error import EquilibriaError, GeometryError
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.geometry.boolean import (

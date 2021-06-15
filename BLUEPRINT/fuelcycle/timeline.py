@@ -26,7 +26,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
 from bluemira.base.look_and_feel import bluemira_warn, plot_defaults
-from BLUEPRINT.base.constants import S_TO_YR, YR_TO_S
+from bluemira.base.constants import S_TO_YR, YR_TO_S
 
 plot_defaults()
 

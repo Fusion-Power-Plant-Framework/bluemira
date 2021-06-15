@@ -27,7 +27,7 @@ from typing import Union
 from BLUEPRINT.base.typebase import typechecked
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import PowerLawScaling
-from BLUEPRINT.base.constants import (
+from bluemira.base.constants import (
     MU_0,
     C_LIGHT,
     T_MOLAR_MASS,

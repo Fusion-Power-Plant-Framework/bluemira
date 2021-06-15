@@ -33,7 +33,7 @@ import nlopt
 import re
 from json import JSONEncoder
 from collections import OrderedDict, Mapping, Iterable
-from BLUEPRINT.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
+from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from BLUEPRINT.geometry.geomtools import lengthnorm
 

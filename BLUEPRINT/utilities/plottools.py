@@ -36,7 +36,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 
 
 class SuperSankey(Sankey):

@@ -32,7 +32,7 @@ import getpass
 from typing import Type
 from BLUEPRINT.base.file import get_BP_path
 from bluemira.base.look_and_feel import bluemira_print
-from BLUEPRINT.base.constants import GRAVITY
+from bluemira.base.constants import GRAVITY
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
 
 

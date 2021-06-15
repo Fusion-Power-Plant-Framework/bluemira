@@ -28,7 +28,7 @@ from typing import Type
 from scipy.interpolate import interp1d
 from scipy.interpolate import InterpolatedUnivariateSpline
 from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import SystemsError

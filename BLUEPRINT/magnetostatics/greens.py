@@ -25,7 +25,7 @@ Green's functions mappings for psi, Bx, and Bz
 import numpy as np
 import numba as nb
 from scipy.special import ellipk, ellipe
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 
 
 # Offset from 0<x<1

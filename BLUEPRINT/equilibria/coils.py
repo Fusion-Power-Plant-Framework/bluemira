@@ -39,7 +39,7 @@ from BLUEPRINT.equilibria.plotting import (
     CoilPlotter,
     PlasmaCoilPlotter,
 )
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from BLUEPRINT.equilibria.constants import (
     I_MIN,
     J_TOR_MIN,

@@ -29,7 +29,7 @@ import numpy as np
 import numba as nb
 import matplotlib.pyplot as plt
 from copy import deepcopy
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from BLUEPRINT.geometry.geomtools import loop_volume
 from BLUEPRINT.equilibria.find import in_plasma, find_LCFS_separatrix
 from BLUEPRINT.equilibria.plotting import ProfilePlotter
