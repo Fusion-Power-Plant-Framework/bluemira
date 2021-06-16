@@ -249,7 +249,7 @@ class BiotSavartFilament(CurrentSource):
         axis: Union[np.array(3), str]
             The axis of rotation
         """
-        r = rotate_matrix(angle, axis)
+        r = rotatation_matrix(angle, axis)
         self.points = self.points @ r
         self.d_l = self.d_l @ r
         self.mid_points = self.mid_points @ r
