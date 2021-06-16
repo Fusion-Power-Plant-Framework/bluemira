@@ -51,55 +51,65 @@ class BluemiraGeo(ABC):
             boundary_classes: [cls] = None
     ):
 
-        self.__boundary_classes = boundary_classes
+        self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
         self.lcar = lcar
 
-    def __check_objs(self, objs):
-        """Check if objects in objs are of the correct type for this class"""
+    @abstractmethod
+    def _check_boundary(self, objs):
+        """Check if objects objs can be used as boundaries"""
         if not hasattr(objs, '__len__'):
             objs = [objs]
         check = False
-        for c in self.__boundary_classes:
+        for c in self._boundary_classes:
             check = check or (all(isinstance(o, c) for o in objs))
             if check:
-                return check
-        return check
+                return objs
+        raise TypeError("Only {} objects can be used for {}".format(
+            self._boundary_classes))
 
     @property
     def boundary(self):
         return self._boundary
 
     @boundary.setter
+    @abstractmethod
     def boundary(self, objs):
-        self._boundary = None
-        # if objs is not a list, it is converted into a list.
-        if not hasattr(objs, '__len__'):
-            objs = [objs]
-        if self.__check_objs(objs):
-            self._boundary = objs
-        else:
-            raise TypeError("Only {} objects can be used for {}".format(
-                self.__boundary_classes, self.__class__))
+        self._boundary = self._check_boundary(objs)
 
     @property
     @abstractmethod
+    def shape(self):
+        """Representative shape of the object"""
+        pass
+
+    @property
     def Length(self):
         """float: total length of the shape."""
-        pass
+
+        # Note:the method is recursively implemented considering that
+        # the used FreeCAD object in self.shape has a similar Length property.
+
+        return self.shape.Length
 
     @property
-    @abstractmethod
     def Area(self):
         """float: total area of the shape."""
-        pass
+
+        # Note:the method is recursively implemented considering that
+        # the used FreeCAD object in self.shape has a similar Area property.
+
+        return self.shape.Area
 
     @property
-    @abstractmethod
     def Volume(self):
         """float: total volume of the shape."""
-        pass
+
+        # Note:the method is recursively implemented considering that
+        # the used FreeCAD object in self.shape has a similar Volume property.
+
+        return self.shape.Volume
 
     def search(self, label: str):
         """Search for a shape with the specified label

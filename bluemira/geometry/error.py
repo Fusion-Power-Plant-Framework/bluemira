@@ -50,3 +50,17 @@ class NotClosedWire(BluemiraError):
     """
 
     pass
+
+class DisjointedFace(BluemiraError):
+    """
+
+    """
+
+    pass
+
+class DisjointedSolid(BluemiraError):
+    """
+
+    """
+
+    pass
