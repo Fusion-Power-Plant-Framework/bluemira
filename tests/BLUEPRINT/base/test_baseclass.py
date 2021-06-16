@@ -23,7 +23,7 @@ import pytest
 from typing import Type
 
 from BLUEPRINT.base.baseclass import ReactorSystem
-from BLUEPRINT.base.error import BLUEPRINTError
+from bluemira.base.error import BluemiraError
 from BLUEPRINT.nova.firstwall import DivertorProfile
 from BLUEPRINT.systems.blanket import BreedingBlanket
 from BLUEPRINT.systems.divertor import Divertor
@@ -71,11 +71,11 @@ class TestBaseClass:
         ],
     )
     def test_get_class_fail(self, the_class, name):
-        with pytest.raises(BLUEPRINTError):
+        with pytest.raises(BluemiraError):
             TestBaseClass.MyReactorSystem.get_class("NotAClass")
 
     def test_avoid_duplicate_classes(self):
-        with pytest.raises(BLUEPRINTError):
+        with pytest.raises(BluemiraError):
 
             class MyReactorSystem(ReactorSystem):
                 pass
@@ -194,7 +194,7 @@ class TestDefineSystemClass:
         """
         Test a non-existent class in the build config raises an error.
         """
-        with pytest.raises(BLUEPRINTError):
+        with pytest.raises(BluemiraError):
             TestDefineSystemClass.DummyReactorSystem(
                 {"div_class_name": "AnotherDivertor"}
             )
@@ -203,7 +203,7 @@ class TestDefineSystemClass:
         """
         Test providing class that does not match the system raises an error.
         """
-        with pytest.raises(BLUEPRINTError):
+        with pytest.raises(BluemiraError):
             TestDefineSystemClass.DummyReactorSystem(
                 {"div_class_name": "BreedingBlanket"}
             )
@@ -213,7 +213,7 @@ class TestDefineSystemClass:
         Test that getting a system that doesn't exist raises an error.
         """
         my_system = TestDefineSystemClass.DummyReactorSystem({})
-        with pytest.raises(BLUEPRINTError):
+        with pytest.raises(BluemiraError):
             my_system.get_subsystem_class("DIVERTOR")
 
 

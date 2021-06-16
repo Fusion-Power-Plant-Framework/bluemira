@@ -292,7 +292,7 @@ class Reactor(ReactorSystem):
 
         Raises
         ------
-        BLUEPRINTError
+        BluemiraError
             If PROCESS is being "run" but is not installed
         """
         process_mode = self.build_config["process_mode"]
