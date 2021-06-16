@@ -30,14 +30,19 @@ if __name__ == "__main__":
     print("wire: {}, length: {}, isClosed: {}".format(wire, wire.Length,
                                                       wire.isClosed()))
     print("2. Creation of a bluemira wire")
-    s = geo.bluemirawire.BluemiraWire(wire, "s")
-    print(s)
+    bmwire = geo.bluemirawire.BluemiraWire(wire, "bmwire")
+    print(bmwire)
 
     print("3. Make some operations on bluemira wire")
-    print("3.1 Discretize it")
-    points = s.discretize(10)
+    ndiscr = 10
+    print("3.1 Discretize in {} points".format(ndiscr))
+    points = bmwire.discretize(ndiscr)
     print(points)
-    print("3.2 Discretize it considering the edges")
-    points = s.discretize(10, byedges=True)
+    print("3.2 Discretize considering the edges")
+    points = bmwire.discretize(ndiscr, byedges=True)
     print(points)
+
+    print("4. Creation of a bluemira face")
+    bmface = geo.bluemiraface.BluemiraFace(bmwire, "bmface")
+    print(bmface)
 

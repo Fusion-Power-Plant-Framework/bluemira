@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Wrapper for FreeCAD Part.Wire objects
+Wrapper for FreeCAD Part.Face objects
 """
 
 from __future__ import annotations
@@ -33,45 +33,61 @@ import Part
 
 # import from bluemira
 from bluemira.geometry.bluemirageo import BluemiraGeo
-from bluemira.geometry.tools import (
-    discretize_by_edges, discretize, close_wire
-)
+from bluemira.geometry.bluemirawire import BluemiraWire
 
 # import from error
-from bluemira.geometry.error import NotClosedWire
+from bluemira.geometry.error import NotClosedWire, DisjointedFace
 
 
-class BluemiraWire(BluemiraGeo):
-    """Bluemira Wire class."""
+class BluemiraFace(BluemiraGeo):
+    """Bluemira Face class."""
     def __init__(
             self,
             boundary,
             label: str = "",
             lcar: Union[float, List[float]] = 0.1
     ):
-        boundary_classes = [self.__class__, Part.Wire]
+        boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, lcar, boundary_classes)
 
     def _check_boundary(self, objs):
-        """Check if objects objs can be used as boundaries"""
+        """Check if objects in objs are of the correct type for this class"""
         if not hasattr(objs, '__len__'):
             objs = [objs]
         check = False
         for c in self._boundary_classes:
             check = check or (all(isinstance(o, c) for o in objs))
             if check:
-                return objs
+                if all(o.isClosed() for o in objs):
+                    return objs
+                else:
+                    raise NotClosedWire("Only closed BluemiraWire are accepted.")
         raise TypeError("Only {} objects can be used for {}".format(
-            self._boundary_classes))
+            self._boundary_classes, self.__class__))
 
     @BluemiraGeo.boundary.setter
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
+        # The face is created here to have consistency between boundary and face.
+        self._face = self._createFace()
+
+    def _createFace(self):
+        """ """
+        external: BluemiraWire = self.boundary[0]
+        face = Part.Face(external.shape)
+        if len(self.boundary) > 1:
+            fholes = [Part.Face(h.shape) for h in self.boundary[1:]]
+            face = face.cut(fholes)
+            if len(face.Faces) == 1:
+                face = face.Faces[0]
+            else:
+                raise DisjointedFace("Any or more than one face has been created.")
+        return face
 
     @property
     def shape(self):
         """Part.Wire: shape of the object as a single wire"""
-        return Part.Wire(self.Wires)
+        return self._face
 
     @property
     def Wires(self) -> List[Part.Wire]:
@@ -85,34 +101,12 @@ class BluemiraWire(BluemiraGeo):
             wires += o.Wires
         return wires
 
-    def isClosed(self):
-        """True if the shape is closed"""
-
-        # Note: isClosed is also a function of Part.Wire.
-        # This will help in recursive functions.
-
-        return self.shape.isClosed()
-
-    def close_shape(self):
-        """Close the shape with a LineSegment between shape's end and
-            start point. This function modify the object boundary.
-        """
-        if not self.isClosed():
-            closure = close_wire(self.shape)
-            self.boundary.append(closure)
-
-        # check that the new boundary is closed
-        if not self.isClosed():
-            raise NotClosedWire("The open boundary has not been closed correctly.")
-
-    def discretize(self, ndiscr: int = 100, byedges: bool = False):
-
-        """Discretize the wire in ndiscr equidistant points.
-        If byedges is True, each edges is discretized separately using and approximated
-        distance (wire.Length/ndiscr)."""
-
-        if byedges:
-            points = discretize_by_edges(self.shape, ndiscr)
-        else:
-            points = discretize(self.shape, ndiscr)
-        return points
+    @staticmethod
+    def create(cls, obj: Part.Face):
+        if isinstance(obj, Part.Face):
+            wires = obj.Wires
+            bmwire = BluemiraWire(wires)
+            bmface = BluemiraFace(bmwire)
+            return bmface
+        raise TypeError("Only Part.Face objects can be used to create a {} "
+                        "instance".format(cls))

@@ -37,6 +37,42 @@ import numpy
 from typing import Union
 
 
+#########################################
+# Array, List, Vector, Point manipulation
+#########################################
+def to_list(data_type):
+    """Decorator to manage """
+    def _apply_to_list(func):
+        def wrapper(*args, **kwargs):
+            output = []
+            objs = args[0]
+            is_list = isinstance(objs, list)
+            if not is_list:
+                objs = [objs]
+            if all(isinstance(o, data_type) for o in objs):
+                output = func(*args, **kwargs)
+                if not is_list:
+                    output = output[0]
+            else:
+                for o in objs:
+                    print(type(o))
+                raise TypeError("Only {} instances can be concerted to {}".format(
+                    data_type, type(output)))
+            return output
+        return wrapper
+    return _apply_to_list
+
+@to_list(Base.Vector)
+def vector_to_numpy(vectors):
+    """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
+    return numpy.array([numpy.array(v) for v in vectors])
+
+@to_list(Part.Point)
+def point_to_numpy(points):
+    """Converts a FreeCAD Part.Point or list(Part.Point) into a numpy array"""
+    return numpy.array([numpy.array([p.X, p.Y, p.Z]) for p in points])
+
+
 ###################################
 # Part.Wire manipulation
 ###################################
@@ -83,6 +119,7 @@ def discretize(w: Part.Wire, ndiscr: int):
     """
     # discretization points array
     output = w.discretize(ndiscr)
+    output = vector_to_numpy(output)
     return output
 
 
@@ -122,6 +159,7 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int):
     # if wire orientation is reversed, output must be reversed
     if w.Orientation == "Reversed":
         output.reverse()
+    output = vector_to_numpy(output)
     return output
 
 
