@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import pytest
 import numpy as np
 import tests
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
@@ -100,3 +101,7 @@ class TestCircularArcCurrentSource:
         self.arc.field([self.arc.radius, 0, 1])
         self.arc.field([self.arc.radius, 0, 0])
         self.arc.field([0, 0, -1])
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

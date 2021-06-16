@@ -188,5 +188,4 @@ def test_inductance():
 
 
 if __name__ == "__main__":
-    tests.PLOTTING = True
     pytest.main([__file__])
