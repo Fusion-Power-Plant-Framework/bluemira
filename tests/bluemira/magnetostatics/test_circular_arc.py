@@ -74,7 +74,18 @@ class TestCircularArcCurrentSource:
         if tests.PLOTTING:
             self.arc.plot()
             _plot_verification_test(
-                xc, zc, dx, dz, xx, zz, Bx_coil, Bz_coil, Bp_coil, Bx, Bz, Bp
+                self.xc,
+                self.zc,
+                self.dx,
+                self.dz,
+                xx,
+                zz,
+                Bx_coil,
+                Bz_coil,
+                Bp_coil,
+                Bx,
+                Bz,
+                Bp,
             )
 
     def test_singularities(self):
