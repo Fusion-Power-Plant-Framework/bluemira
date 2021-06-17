@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import bluemira_warn
 
 
-__all__ = ["GridPlotter"]
+__all__ = ["GridPlotter", "ConstraintPlotter"]
 
 PLOT_DEFAULTS = {
     "grid_edge_lw": 2,
@@ -85,3 +85,19 @@ class GridPlotter(Plotter):
         lw = kwargs.get("grid_edge_lw", PLOT_DEFAULTS["grid_edge_lw"])
         color = kwargs.get("grid_color", PLOT_DEFAULTS["grid_color"])
         self.ax.plot(*self.grid.bounds, color, linewidth=lw)
+
+
+class ConstraintPlotter(Plotter):
+    """
+    Utility class for Constraint plotting.
+    """
+
+    _color = "b"
+
+    def __init__(self, constraint_set, ax=None, **kwargs):
+        super().__init__(ax)
+        self._color = kwargs.get("color", self._color)
+        self.constraint_set = constraint_set
+
+        for constraint in self.constraint_set.constraints:
+            constraint.plot(self.ax)
