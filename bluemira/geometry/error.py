@@ -23,18 +23,7 @@
 Errors for geometry module
 """
 
-
-# This error class is intended to be moved in bluemira/base/error.py
-class BluemiraError(Exception):
-    """
-    Base exception class. Sub-class from this for module level Errors.
-    """
-
-    def __str__(self):
-        """
-        Prettier handling of the Exception strings
-        """
-        return fill(dedent(self.args[0]))
+from bluemira.base.error import BluemiraError
 
 
 class GeometryError(BluemiraError):

@@ -40,8 +40,16 @@ from typing import Union
 #########################################
 # Array, List, Vector, Point manipulation
 #########################################
-def to_list(data_type):
-    """Decorator to manage """
+def check_data_type(data_type):
+    """Decorator to check the data type of the first parameter input (args[0] of a
+    function.
+
+    Raises
+    ______
+    TypeError
+        If args[0] objects are not instances of data_type
+    """
+
     def _apply_to_list(func):
         def wrapper(*args, **kwargs):
             output = []
@@ -59,15 +67,19 @@ def to_list(data_type):
                 raise TypeError("Only {} instances can be concerted to {}".format(
                     data_type, type(output)))
             return output
+
         return wrapper
+
     return _apply_to_list
 
-@to_list(Base.Vector)
+
+@check_data_type(Base.Vector)
 def vector_to_numpy(vectors):
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
     return numpy.array([numpy.array(v) for v in vectors])
 
-@to_list(Part.Point)
+
+@check_data_type(Part.Point)
 def point_to_numpy(points):
     """Converts a FreeCAD Part.Point or list(Part.Point) into a numpy array"""
     return numpy.array([numpy.array([p.X, p.Y, p.Z]) for p in points])
@@ -77,16 +89,14 @@ def point_to_numpy(points):
 # Part.Wire manipulation
 ###################################
 def wire_closure(wire: Part.Wire):
-    """
-    Closes a wire with a line segment, if not already closed.
-    A new wire is returned.
-    """
+    """ Create a line segment wire that closes an open wire"""
     closure = None
     if not wire.isClosed():
         vertexes = wire.OrderedVertexes
         points = [v.Point for v in vertexes]
         closure = make_polygon([points[-1], points[0]])
     return closure
+
 
 def close_wire(wire: Part.Wire):
     """
@@ -141,8 +151,8 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int):
     """
     # discretization points array
     output = []
-    # a dl is calculated for the discretization of the different edges
-    dl = w.Length/float(ndiscr)
+    # a dl is calculated for the discretisation of the different edges
+    dl = w.Length / float(ndiscr)
     # edges are discretised taking into account their orientation
     # Note: this is a tricky part in Freecad. Reversed wires need a
     # reverse operation for the generated points and the list of generated
@@ -166,8 +176,7 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int):
 ###################################
 # Geometry creation
 ###################################
-def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False,
-              placement=None) -> Part.Wire:
+def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
     """Make a polygon from a set of points.
 
     Args:
@@ -186,6 +195,4 @@ def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False,
         # add a line that closes the wire
         line = Part.makePolygon([pntslist[-1], pntslist[0]])
         wire = Part.Wire([wire, line])
-    if placement:
-        wire.Placement = placement
     return wire
