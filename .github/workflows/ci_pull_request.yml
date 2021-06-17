@@ -95,7 +95,7 @@ jobs:
         name: pytest-coverage-mirapy
         path: |
           htmlcov_mirapy
-        retention-days: 14
+        retention-days: 5
 
     - name: Upload BLUEPRINT Code Coverage
       uses: actions/upload-artifact@v2
@@ -103,7 +103,7 @@ jobs:
         name: pytest-coverage-BLUEPRINT
         path: |
           htmlcov_BLUEPRINT
-        retention-days: 14
+        retention-days: 5
 
     - name: Upload bluemira Code Coverage
       uses: actions/upload-artifact@v2
@@ -111,28 +111,4 @@ jobs:
         name: pytest-coverage-bluemira
         path: |
           htmlcov_bluemira
-        retention-days: 14
-
-    - name: Upload BLUEPRINT Documentation
-      uses: actions/upload-artifact@v2
-      with:
-        name: docs-BLUEPRINT
-        path: |
-          documentation/BLUEPRINT/build
-        retention-days: 14
-
-    - name: Upload mirapy Documentation
-      uses: actions/upload-artifact@v2
-      with:
-        name: docs-mirapy
-        path: |
-          documentation/mirapy/build
-        retention-days: 14
-
-    - name: Upload bluemira Documentation
-      uses: actions/upload-artifact@v2
-      with:
-        name: docs-bluemira
-        path: |
-          documentation/bluemira/build
-        retention-days: 14
+        retention-days: 5
