@@ -419,8 +419,8 @@ class MagneticConstraintSet(ABC):
         """
         return deepcopy(self)
 
-    def plot(self, ax=None, **kwargs):
+    def plot(self, ax=None):
         """
         Plots constraints
         """
-        return ConstraintPlotter(self, ax=ax, **kwargs)
+        return ConstraintPlotter(self, ax=ax)
