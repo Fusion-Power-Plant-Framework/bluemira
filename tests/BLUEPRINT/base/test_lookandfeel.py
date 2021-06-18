@@ -30,33 +30,16 @@ from BLUEPRINT.utilities.colortools import map_palette
 from BLUEPRINT.base.palettes import LONDON
 from BLUEPRINT.base.file import get_BP_path, get_BP_root, get_PROCESS_root
 from BLUEPRINT.base.lookandfeel import (
-    banner,
     bpinfo,
 )
 from bluemira.base.look_and_feel import (
     bluemira_warn,
     bluemira_print,
-    get_git_branch,
-    user_banner,
     _print_color,
-    count_slocs,
 )
 
 
 class TestLookAndFeel:
-    @pytest.mark.longrun
-    def test_banner(self):
-        banner()
-
-    @pytest.mark.longrun
-    def test_user_banner(self):
-        user_banner()
-
-    @pytest.mark.longrun
-    def test_count_slocs(self):
-        directory = get_BP_root()
-        count_slocs(directory, get_git_branch(directory))
-
     def test_map_pal(self):
         pal = {
             "Plasma": "Hammersmith and City",
