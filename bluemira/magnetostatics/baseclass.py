@@ -31,6 +31,9 @@ from bluemira.geometry.tools import rotatation_matrix, bounding_box
 from bluemira.utilities.plot_tools import Plot3D
 
 
+__all__ = ["CurrentSource", "RectangularCrossSectionCurrentSource", "SourceGroup"]
+
+
 class CurrentSource(ABC):
     """
     Abstract base class for a current source.

@@ -28,6 +28,8 @@ from scipy.special import ellipk, ellipe
 from bluemira.base.constants import MU_0
 
 
+__all__ = ["greens_psi", "greens_Bx", "greens_Bz", "greens_all"]
+
 # Offset from 0<x<1
 #     Used in calculating Green's functions to avoid np.nan
 GREENS_ZERO = 1e-8
