@@ -26,7 +26,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.base import Plane, GeometryError
-from bluemira.geometry.temp_tools import (
+from bluemira.geometry.tools import (
     check_linesegment,
     bounding_box,
     on_polygon,

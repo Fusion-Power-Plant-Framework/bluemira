@@ -29,7 +29,7 @@ from matplotlib.path import Path
 from matplotlib.patches import Patch, PathPatch
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from mpl_toolkits.mplot3d import Axes3D
-from bluemira.geometry.temp_tools import rotation_matrix_v1v2, check_ccw
+from bluemira.geometry.tools import rotation_matrix_v1v2, check_ccw
 
 
 def ring_coding(n):
