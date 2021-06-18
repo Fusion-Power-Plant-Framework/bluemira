@@ -24,9 +24,9 @@ Three-dimensional current source terms.
 """
 
 import numpy as np
-from BLUEPRINT.geometry.geomtools import (
+from bluemira.geometry.tools import (
     get_angle_between_vectors,
-    rotate_matrix,
+    rotatation_matrix,
     get_normal_vector,
     close_coordinates,
 )
@@ -155,8 +155,8 @@ class HelmholtzCage(SourceGroup):
         planes = [np.pi / self.n_TF, 0]  # rotate (inline, ingap)
 
         for i, theta in enumerate(planes):
-            sr = np.dot(point, rotate_matrix(theta))
-            nr = np.dot(n, rotate_matrix(theta))
+            sr = np.dot(point, rotatation_matrix(theta))
+            nr = np.dot(n, rotatation_matrix(theta))
             field = self.field(sr)
             ripple_field[i] = np.dot(nr, field)
 
