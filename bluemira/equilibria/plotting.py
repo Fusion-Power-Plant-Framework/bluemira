@@ -25,12 +25,13 @@ Plot utilities for equilibria
 
 import numpy as np
 import matplotlib.pyplot as plt
+from itertools import cycle
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.plot_tools import str_to_latex
 from bluemira.equilibria.constants import M_PER_MN
 
 
-__all__ = ["GridPlotter", "ConstraintPlotter", "LimiterPlotter"]
+__all__ = ["GridPlotter", "ConstraintPlotter", "LimiterPlotter", "CoilSetPlotter"]
 
 PLOT_DEFAULTS = {
     "grid": {
@@ -49,6 +50,8 @@ PLOT_DEFAULTS = {
             "Plasma": "r",
             "Passive": "grey",
         },
+        "edgecolor": "k",
+        "linewidth": 2,
         "fontsize": 6,
     },
 }
@@ -240,3 +243,83 @@ class CoilPlotter(Plotter):
                 for name, sc in self.coil.sub_coils.items():
                     _plot_coil(self.ax, sc, fill=False)
         _plot_coil(self.ax, self.coil, fill=True)
+
+
+class CoilSetPlotter(Plotter):
+    """
+    Utility class for plotting CoilSets
+
+    Parameters
+    ----------
+    coilset: CoilSet object
+        The CoilSet to be plotted
+    ax: Matplotlib axis object
+        The ax on which to plot the CoilSet. (plt.gca() default)
+    subcoil: bool
+        Whether or not to plot subcoils
+    label: bool
+        Whether or not to plot labels on the coils
+    force: None or np.array((n_coils, 2))
+        Whether to plot force vectors, and if so the array of force vectors
+    """
+
+    def __init__(
+        self, coilset, ax=None, subcoil=False, label=True, force=None, **kwargs
+    ):
+        super().__init__(ax)
+        self.coilset = coilset
+        self.colors = kwargs.pop("facecolor", None)
+        self.linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
+        self.edgecolor = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
+        if "alpha" in kwargs:
+            # Alpha can be provided as a list or cycle to other systems, so make sure we
+            # support that here.
+            alpha = kwargs["alpha"]
+            if isinstance(alpha, cycle):
+                kwargs["alpha"] = next(alpha)
+            if isinstance(kwargs["alpha"], list):
+                kwargs["alpha"] = alpha[0]
+
+        self.plot_coils(subcoil=subcoil, label=label, force=force, **kwargs)
+        if label:  # Margins and labels fighting
+            self.ax.set_xlim(left=-2)
+            ymin, ymax = self.ax.get_ylim()
+            self.ax.set_ylim(bottom=ymin - 1)
+            self.ax.set_ylim(top=ymax + 1)
+
+    def plot_coils(self, subcoil=False, label=True, force=None, **kwargs):
+        """
+        Plots all coils in CoilSet.
+        """
+        centre = self.get_centre()
+        for i, (name, coil) in enumerate(self.coilset.coils.items()):
+            if self.colors is not None:
+                if coil.ctype == "PF":
+                    kwargs["facecolor"] = self.colors[0]
+                elif coil.ctype == "CS":
+                    kwargs["facecolor"] = self.colors[1]
+            if not coil.control:
+                coil.plot(  # include self.linewidth here?
+                    ax=self.ax, label=False, **kwargs
+                )
+            else:
+                coil_force = None if force is None else force[i]
+                coil.plot(
+                    ax=self.ax,
+                    subcoil=subcoil,
+                    color=self.edgecolor,
+                    linewidth=self.linewidth,
+                    label=label,
+                    force=coil_force,
+                    centre=centre,
+                    **kwargs,
+                )
+
+    def get_centre(self):
+        """
+        Get a "centre" position for the coils to arrange the labels.
+        """
+        x, z = self.coilset.get_positions()
+        xc = (max(x) + min(x)) / 2
+        zc = (max(z) + min(z)) / 2
+        return xc, zc

@@ -172,7 +172,7 @@ def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa (N802)
 @nb.jit(nopython=True, cache=True)
 def inv_2x2_matrix(a, b, c, d):
     """
-    Inverse Jacobian of a 2 x 2 [[a, b], c, d]] matrix.
+    Inverse of a 2 x 2 [[a, b], c, d]] matrix.
     """
     return np.array([[d, -b], [-c, a]]) / (a * d - b * c)
 

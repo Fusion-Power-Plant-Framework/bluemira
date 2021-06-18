@@ -23,7 +23,11 @@
 A collection of plotting tools.
 """
 
+import os
+from natsort import natsorted
+import imageio
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.base.file import get_bluemira_path
 
 
 __all__ = ["str_to_latex"]
@@ -69,3 +73,53 @@ def str_to_latex(string):
     s = [gsymbolify(sec) for sec in s]
     ss = "".join(["_" + "{" + lab for i, lab in enumerate(s[1:])])
     return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
+
+
+def make_gif(folder, figname, formatt="png", clean=True):
+    """
+    Makes a GIF image from a set of images with similar names in a folder
+    Cleans up the temporary figure files (deletes!)
+    Creates a GIF file in the folder directory
+
+    Parameters
+    ----------
+    folder: str
+        Full path folder name
+    figname: str
+        Figure name prefix. E.g. 'figure_A'[1, 2, 3, ..]
+    formatt: str (default = 'png')
+        Figure filename extension
+    clean: bool (default = True)
+        Delete figures after completion?
+    """
+    ims = []
+    for filename in os.listdir(folder):
+        if filename.startswith(figname):
+            if filename.endswith(formatt):
+                fp = os.path.join(folder, filename)
+                ims.append(fp)
+    ims = natsorted(ims)
+    images = [imageio.imread(fp) for fp in ims]
+    if clean:
+        for fp in ims:
+            os.remove(fp)
+    gifname = os.path.join(folder, figname) + ".gif"
+    kwargs = {"duration": 0.5, "loop": 3}
+    imageio.mimsave(gifname, images, "GIF-FI", **kwargs)
+
+
+def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
+    """
+    Saves a figure to the directory if save flag active
+    Meant to be used to switch on/off output figs from main BLUEPRINT run,
+    typically flagged in reactor.py
+    """
+    if save is True:
+        if folder is None:
+            folder = get_bluemira_path("plots", subfolder="data")
+        name = os.sep.join([folder, name]) + "." + formatt
+        if os.path.isfile(name):
+            os.remove(name)  # f.savefig will otherwise not overwrite
+        fig.savefig(name, dpi=dpi, bbox_inches="tight", format=formatt, **kwargs)
+    else:
+        pass

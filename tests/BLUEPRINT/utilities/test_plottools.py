@@ -102,7 +102,7 @@ class TestSuperSankey:
 
         path = get_BP_path("BLUEPRINT/utilities/test_data", subfolder="tests")
         name_new = os.sep.join([path, "sankey_test_new.png"])
-        figure.savefig(name_new)
+        figure.save_figure(name_new)
         name_old = os.sep.join([path, "sankey_test.png"])
 
         assert filecmp.cmp(name_new, name_old, shallow=False)

@@ -45,7 +45,7 @@ from bluemira.equilibria.constants import (
     X_TOLERANCE,
 )
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.plotting import CoilPlotter
+from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter
 
 
 PF_COIL_NAME = "PF_{}"
