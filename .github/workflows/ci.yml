@@ -23,7 +23,7 @@ jobs:
         PIP_CACHE_NUMBER: 1
       with:
         path: ~/.cache/pip
-        key: 
+        key:
           ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
           hashFiles('requirements.txt', 'requirements-develop.txt', 'setup.py') }}
 
@@ -71,7 +71,7 @@ jobs:
     - name: Build Documentation bluemira
       shell: bash -l {0}
       run: |
-        sphinx-build -W documentation/bluemira/source documentation/bluemira/build
+        sphinx-build -W documentation/source documentation/build
 
     - name: Run pytest mirapy
       shell: bash -l {0}
