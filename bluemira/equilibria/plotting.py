@@ -28,12 +28,38 @@ import matplotlib.pyplot as plt
 from itertools import cycle
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.plot_tools import str_to_latex
-from bluemira.equilibria.constants import M_PER_MN
+from bluemira.equilibria.constants import M_PER_MN, J_TOR_MIN
+from bluemira.equilibria.find import Xpoint
+from bluemira.equilibria.physics import get_psi
 
 
 __all__ = ["GridPlotter", "ConstraintPlotter", "LimiterPlotter", "CoilSetPlotter"]
 
 PLOT_DEFAULTS = {
+    "psi": {
+        "nlevels": 15,
+        "cmap": "viridis",
+    },
+    "field": {
+        "nlevels": 15,
+        "cmap": "magma",
+    },
+    "current": {
+        "nlevels": 30,
+        "cmap": "plasma",
+    },
+    "separatrix": {
+        "color": "r",
+        "linewidth": 3,
+    },
+    "opoint": {
+        "marker": "o",
+        "color": "g",
+    },
+    "xpoint": {
+        "marker": "X",
+        "color": "k",
+    },
     "grid": {
         "edgewidth": 2,
         "linewidth": 1,
@@ -323,3 +349,157 @@ class CoilSetPlotter(Plotter):
         xc = (max(x) + min(x)) / 2
         zc = (max(z) + min(z)) / 2
         return xc, zc
+
+
+class EquilibriumPlotter(Plotter):
+    """
+    Utility class for Equilibrium plotting
+    """
+
+    def __init__(
+        self,
+        equilibrium,
+        ax=None,
+        plasma=False,
+        show_ox=True,
+        field=False,
+    ):
+        super().__init__(ax)
+        self.eq = equilibrium
+
+        # Do some housework
+        self.psi = self.eq.psi()
+        self.o_points, self.x_points = self.eq.get_OX_points(self.psi, force_update=True)
+
+        if self.x_points:
+            self.xp_psi = self.x_points[0][2]  # Psi at separatrix
+            self.op_psi = self.o_points[0][2]  # Psi at O-point
+        else:
+            bluemira_warn(
+                "No X-point found in plotted equilibrium. Cannot normalise psi."
+            )
+            self.xp_psi = np.amax(self.psi)
+            self.op_psi = np.amin(self.psi)
+
+        if not field:
+            self.plot_plasma_current()
+            self.plot_psi()
+        else:
+            self.plot_Bp()
+
+        if self.o_points and self.x_points:
+            # Only plot if we can normalise psi
+            self.plot_separatrix()
+            self.plot_flux_surface(1.05, "pink")
+
+        if show_ox:
+            self.plot_X_points()
+            self.plot_O_points()
+
+        if plasma:
+            _plot_coil(self.ax, self.eq.plasma_coil())
+
+    def plot_Bp(self, **kwargs):
+        """
+        Plots the poloidal field onto the Axes.
+        """
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["field"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["field"]["cmap"])
+
+        Bp = self.eq.Bp()
+        levels = np.linspace(1e-36, np.amax(Bp), nlevels)
+        c = self.ax.contourf(self.eq.x, self.eq.z, Bp, levels=levels, cmap=cmap)
+        cbar = plt.colorbar(c)
+        cbar.set_label("$B_{p}$ [T]")
+
+    def plot_psi(self, **kwargs):
+        """
+        Plot flux surfaces
+        """
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
+
+        levels = np.linspace(np.amin(self.psi), np.amax(self.psi), nlevels)
+        self.ax.contour(
+            self.eq.x, self.eq.z, self.psi, levels=levels, cmap=cmap, zorder=8
+        )
+
+    def plot_plasma_current(self, **kwargs):
+        """
+        Plots flux surfaces inside plasma
+        """
+        if self.eq._jtor is None:
+            return
+
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["current"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])
+
+        levels = np.linspace(J_TOR_MIN, np.amax(self.eq._jtor), nlevels)
+        self.ax.contourf(
+            self.eq.x, self.eq.z, self.eq._jtor, levels=levels, cmap=cmap, zorder=7
+        )
+
+    def plot_flux_surface(self, psi_norm, color="k"):
+        """
+        Plots a normalised flux surface relative to the separatrix with
+        increasing values going outwards from plasma core.
+        """
+        psi = get_psi(psi_norm, self.op_psi, self.xp_psi)
+        self.ax.contour(
+            self.eq.x, self.eq.z, self.psi, levels=[psi], colors=color, zorder=9
+        )
+
+    def plot_separatrix(self):
+        """
+        Plot the separatrix.
+        """
+        separatrix = self.eq.get_separatrix()
+        if isinstance(separatrix, MultiLoop):
+            loops = separatrix.loops
+        else:
+            loops = [separatrix]
+
+        for loop in loops:
+            x, z = loop.d2
+            self.ax.plot(
+                x,
+                z,
+                color=PLOT_DEFAULTS["separatrix"]["color"],
+                linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
+                zorder=9,
+            )
+
+    def plot_X_points(self):  # noqa (N802)
+        """
+        Plot X-points.
+        """
+        for p in self.x_points:
+            if isinstance(p, Xpoint):
+                self.ax.plot(
+                    p.x,
+                    p.z,
+                    marker=PLOT_DEFAULTS["xpoint"]["marker"],
+                    color=PLOT_DEFAULTS["xpoint"]["color"],
+                    zorder=10,
+                )
+
+    def plot_O_points(self):  # noqa (N802)
+        """
+        Plot O-points.
+        """
+        for p in self.o_points:
+            self.ax.plot(
+                p.x,
+                p.z,
+                marker=PLOT_DEFAULTS["opoint"]["marker"],
+                color=PLOT_DEFAULTS["opoint"]["color"],
+                zorder=10,
+            )
+
+    def plot_plasma_coil(self):
+        """
+        Plot the plasma coil.
+        """
+        pcoil = self.eq.plasma_coil()
+        for coil in pcoil.values():
+            _plot_coil(self.ax, coil)

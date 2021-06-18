@@ -1045,11 +1045,7 @@ class Equilibrium(MHDState):
         Returns
         -------
         psi: np.array(self.nx, self.nz)
-            2-D X, Z array of the poloidal magnetic flux [V.s/rad]
-        OR:
-
-        psi: float or np.array(self.nx, self.nz)
-            Values of psi at (x, z) [V.s/rad]
+           Array of the poloidal magnetic flux [V.s/rad]
         """
         if x is None and z is None:
             # Defaults to the full psi map (fast)
@@ -1082,14 +1078,14 @@ class Equilibrium(MHDState):
 
     def psi_norm(self):
         """
-        2-D X, Z normalised poloidal flux map
+        2-D x-z normalised poloidal flux map
         """
         psi = self.psi()
         return get_psi_norm(psi, *self.get_OX_psis(psi))
 
     def pressure_map(self):
         """
-        Returns plasma pressure map
+        Get plasma pressure map.
         """
         o_points, x_points = self.get_OX_points()
         mask = in_plasma(
@@ -1100,19 +1096,19 @@ class Equilibrium(MHDState):
 
     def q(self, psinorm, o_points=None, x_points=None):
         """
-        Return the safety factor at given psinorm
+        Get the safety factor at given psinorm.
         """
         return calc_q(self, psinorm, o_points=o_points, x_points=x_points)
 
     def fRBpol(self, psinorm):
         """
-        Return f = R*Bt at specified values of normalised psi
+        Get f = R*Bt at specified values of normalised psi.
         """
         return self._profiles.fRBpol(psinorm)
 
     def fvac(self):
         """
-        Return vacuum f = R*Bt
+        Get vacuum f = R*Bt.
         """
         try:
             return self._profiles.fvac()
@@ -1248,7 +1244,7 @@ class Equilibrium(MHDState):
 
     def get_midplane(self, x, z, x_psi):
         """
-        Retorna a posição no midplane para um valor de psi
+        Get the position at the midplane for a given psi value.
 
         Parameters
         ----------
@@ -1269,7 +1265,7 @@ class Equilibrium(MHDState):
         # NOTE: Moved from EquilibriumManipulator
         def psi_err(x_opt, *args):
             """
-            A função de erro do psi
+            The psi error minimisation objective function.
             """
             z_opt = args[0]
             psi = self.psi(x_opt, z_opt)[0]
@@ -1286,7 +1282,7 @@ class Equilibrium(MHDState):
 
     def calc_dx_sep(self):
         """
-        Calculates the magnitude of the minimum separation between the flux
+        Calculate the magnitude of the minimum separation between the flux
         surfaces of null points in the equilibrium at the outboard midplane.
 
         Returns
@@ -1312,8 +1308,8 @@ class Equilibrium(MHDState):
 
     def calc_shaf_shift(self, R_0=None, Z_0=None):
         """
-        Calculates the Shafranov shift vector (from the geometric centre to the
-        magnetic axis)
+        Calculate the Shafranov shift vector (from the geometric centre to the
+        magnetic axis).
 
         Returns
         -------
@@ -1334,7 +1330,7 @@ class Equilibrium(MHDState):
 
     def calc_li(self):
         """
-        Calculates the normalised internal inductance of the plasma
+        Calculate the normalised internal inductance of the plasma.
 
         Returns
         -------
@@ -1345,7 +1341,7 @@ class Equilibrium(MHDState):
 
     def calc_q0(self):
         """
-        Calculates the MHD safety factor on the plasma axis
+        Calculate the MHD safety factor on the plasma axis.
         """
         opoint = self.get_OX_points()[0][0]
         psi_xx = self.psi_func(opoint.x, opoint.z, dx=2, grid=False)
@@ -1357,7 +1353,7 @@ class Equilibrium(MHDState):
 
     def _analyse_flux_surf(self, psi_n, psi=None):
         """
-        Analyses shape parameters of plasma core at specified normalised flux
+        Analyse shape parameters of plasma core at specified normalised flux.
 
         Parameters
         ----------
@@ -1437,13 +1433,13 @@ class Equilibrium(MHDState):
 
     def analyse_separatrix(self, psi=None):
         """
-        Analyses shape parameters of plasma separatrix
+        Analyse shape parameters of plasma separatrix.
         """
         return self.analyse_flux_surface(1, psi=psi)
 
     def analyse_core(self, psi=None, n=50, plot=True, ax=None):
         """
-        Analyses the shape and characteristics of the plasma core
+        Analyse the shape and characteristics of the plasma core.
 
         Parameters
         ----------
@@ -1506,7 +1502,7 @@ class Equilibrium(MHDState):
 
     def analyse_plasma(self):
         """
-        Analyses the energetic and magnetic characteristics of the plasma
+        Analyse the energetic and magnetic characteristics of the plasma.
         """
         d = calc_summary(self)
         f95 = self.analyse_flux_surface(0.95)
@@ -1526,8 +1522,8 @@ class Equilibrium(MHDState):
 
     def analyse_coils(self):
         """
-        Analyses and summarises the electro-magneto-mechanical characteristics
-        of the equilbrium and coilset
+        Analyse and summarise the electro-magneto-mechanical characteristics
+        of the equilbrium and coilset.
         """
         c_names = self.coilset.get_control_names()
         currents = self.coilset.get_control_currents() / 1e6
@@ -1564,7 +1560,7 @@ class Equilibrium(MHDState):
 
     def plot(self, ax=None, plasma=False, update_ox=False, show_ox=True):
         """
-        Plots the equilibrium magnetic flux surfaces object onto `ax`
+        Plot the equilibrium magnetic flux surfaces object onto `ax`.
         """
         return EquilibriumPlotter(
             self, ax, plasma=plasma, update_ox=update_ox, show_ox=show_ox
@@ -1572,7 +1568,7 @@ class Equilibrium(MHDState):
 
     def plot_field(self, ax=None, update_ox=False, show_ox=True):
         """
-        Plots the equilibrium field structure onto `ax`
+        Plot the equilibrium field structure onto `ax`.
         """
         return EquilibriumPlotter(
             self,
@@ -1585,6 +1581,6 @@ class Equilibrium(MHDState):
 
     def plot_core(self, ax=None):
         """
-        Plots a 1-D section through the magnetic axis
+        Plot a 1-D section through the magnetic axis.
         """
         return CorePlotter2(self, ax)
