@@ -570,7 +570,7 @@ class DivertorSilhouette(DivertorProfile):
                 # inside the KOZ
                 if count > 1:
                     inner.reorder(i, 0)
-                    inner.open()
+                    inner.open_()
                     break
                 count += 1  # (Second point inside the loop)
 
