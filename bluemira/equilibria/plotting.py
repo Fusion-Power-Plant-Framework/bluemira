@@ -27,12 +27,18 @@ import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import bluemira_warn
 
 
-__all__ = ["GridPlotter"]
+__all__ = ["GridPlotter", "ConstraintPlotter", "LimiterPlotter"]
 
 PLOT_DEFAULTS = {
-    "grid_edge_lw": 2,
-    "grid_line_lw": 1,
-    "grid_color": "k",
+    "grid": {
+        "edgewidth": 2,
+        "linewidth": 1,
+        "color": "k",
+    },
+    "limiter": {
+        "marker": "o",
+        "color": "b",
+    },
 }
 
 
@@ -71,8 +77,8 @@ class GridPlotter(Plotter):
         """
         Plots the gridlines of the grid
         """
-        lw = kwargs.get("grid_line_lw", PLOT_DEFAULTS["grid_line_lw"])
-        color = kwargs.get("grid_color", PLOT_DEFAULTS["grid_color"])
+        lw = kwargs.get("linewidth", PLOT_DEFAULTS["grid"]["linewidth"])
+        color = kwargs.get("color", PLOT_DEFAULTS["grid"]["color"])
         for i in self.grid.x_1d:
             self.ax.plot([i, i], [self.grid.z_min, self.grid.z_max], color, linewidth=lw)
         for i in self.grid.z_1d:
@@ -82,6 +88,38 @@ class GridPlotter(Plotter):
         """
         Plots a thicker boundary edge for the grid
         """
-        lw = kwargs.get("grid_edge_lw", PLOT_DEFAULTS["grid_edge_lw"])
-        color = kwargs.get("grid_color", PLOT_DEFAULTS["grid_color"])
+        lw = kwargs.get("edgewidth", PLOT_DEFAULTS["grid"]["edgewidth"])
+        color = kwargs.get("color", PLOT_DEFAULTS["grid"]["color"])
         self.ax.plot(*self.grid.bounds, color, linewidth=lw)
+
+
+class ConstraintPlotter(Plotter):
+    """
+    Utility class for Constraint plotting.
+    """
+
+    def __init__(self, constraint_set, ax=None):
+        super().__init__(ax)
+        self.constraint_set = constraint_set
+
+        for constraint in self.constraint_set.constraints:
+            constraint.plot(self.ax)
+
+
+class LimiterPlotter(Plotter):
+    """
+    Utility class for plotting Limiter objects
+    """
+
+    def __init__(self, limiter, ax=None, **kwargs):
+        super().__init__(ax)
+        self.limiter = limiter
+        self.plot_limiter(**kwargs)
+
+    def plot_limiter(self, **kwargs):
+        """
+        Plot the limiter onto the Axes.
+        """
+        color = kwargs.get("color", PLOT_DEFAULTS["limiter"]["color"])
+        marker = kwargs.get("marker", PLOT_DEFAULTS["limiter"]["marker"])
+        self.ax.plot(self.limiter.x, self.limiter.z, "s", color=color, marker=marker)
