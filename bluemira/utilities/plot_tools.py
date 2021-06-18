@@ -30,7 +30,7 @@ from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
 
 
-__all__ = ["str_to_latex"]
+__all__ = ["str_to_latex", "make_gif", "save_figure"]
 
 
 def gsymbolify(string):

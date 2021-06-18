@@ -40,6 +40,18 @@ from bluemira.base.look_and_feel import (
 )
 from bluemira.base.file import try_get_bluemira_path
 
+__all__ = [
+    "DudsonConvergence",
+    "CunninghamConvergence",
+    "JsourceConvergence",
+    "JeonConvergence",
+    "JrelConvergence",
+    "PicardLiAbsIterator",
+    "PicardAbsIterator",
+    "PicardDeltaIterator",
+    "PicardLiDeltaIterator",
+]
+
 
 class ConvergenceCriterion(ABC):
     """

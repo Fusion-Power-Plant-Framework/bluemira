@@ -387,7 +387,7 @@ class Coil:
             current = self.current / self.n_filaments  # Current per coil filament
 
             for i, (xc, zc) in enumerate(zip(x_sc.flat, z_sc.flat)):
-                sub_name = self.name + "_{:1.0f}".format(i + 1)
+                sub_name = self.name + f"_{i + 1:1.0f}"
                 c = Coil(
                     xc,
                     zc,
@@ -658,7 +658,7 @@ class Coil:
         """
         Pretty console coil rendering.
         """
-        return "Coil(" + self.__str__() + ")"
+        return f"{self.__class__.__name__}({self.__str__()})"
 
     def __str__(self):
         """
@@ -779,7 +779,7 @@ class CoilGroup:
 
     def add_coil(self, coil):
         """
-        Adds a coil to the CoilGroup
+        Add a coil to the CoilGroup.
 
         Parameters
         ----------
@@ -790,7 +790,7 @@ class CoilGroup:
 
     def remove_coil(self, coilname):
         """
-        Removes a coil from the CoilGroup
+        Remove a coil from the CoilGroup.
 
         Parameters
         ----------

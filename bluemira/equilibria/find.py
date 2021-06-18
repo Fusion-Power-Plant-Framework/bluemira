@@ -34,7 +34,16 @@ from BLUEPRINT.geometry.geomtools import in_polygon, polyarea
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from bluemira.equilibria.constants import X_TOLERANCE, B_TOLERANCE
 
-__all__ = ["Xpoint", "Opoint", "Lpoint", "find_OX_points", "find_LCFS_separatrix"]
+__all__ = [
+    "Xpoint",
+    "Opoint",
+    "Lpoint",
+    "find_OX_points",
+    "find_LCFS_separatrix",
+    "find_flux_surf",
+    "in_zone",
+    "in_plasma",
+]
 
 
 # =============================================================================
