@@ -22,3 +22,50 @@
 """
 A collection of plotting tools.
 """
+
+from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+
+
+__all__ = ["str_to_latex"]
+
+
+def gsymbolify(string):
+    """
+    Convert a string to a LaTEX printable greek letter if detected.
+
+    Parameters
+    ----------
+    string: str
+        The string to add Greek symbols to
+
+    Returns
+    -------
+    string: str
+        The modified string. Returns input if no changes made
+    """
+    if string in GREEK_ALPHABET or string in GREEK_ALPHABET_CAPS:
+        return "\\" + string
+    else:
+        return string
+
+
+def str_to_latex(string):
+    """
+    Create a new string which can be printed in LaTEX nicely.
+
+    Parameters
+    ----------
+    string: str
+        The string to be converted
+
+    Returns
+    -------
+    string: str
+        The mathified string
+
+    'I_m_p' ==> '$I_{m_{p}}$'
+    """
+    s = string.split("_")
+    s = [gsymbolify(sec) for sec in s]
+    ss = "".join(["_" + "{" + lab for i, lab in enumerate(s[1:])])
+    return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
