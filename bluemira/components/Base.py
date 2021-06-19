@@ -72,11 +72,23 @@ class Component(NodeMixin):
         return c
 
     def __repr__(self):
-        return self.name
+        return self.name + " (" + self.__class__.__name__ + ")"
 
 
 class PhysicalComponent(Component):
-    """A physical component. It includes shape and materials."""
+    """A physical component. It includes shape and materials.
+
+        Parameters
+        ----------
+        name: str
+            name of the component
+        shape: BluemiraGeo
+            main shape of the component
+        material: Material
+            material dictionary of the component (structure still to be agreed)
+        parent: Component or None
+        children: list(Component) or None
+    """
 
     def __init__(self, name: str, shape, material=None, parent: Component = None,
                  children: Component = None):
@@ -99,3 +111,39 @@ class PhysicalComponent(Component):
     @shape.setter
     def material(self, value):
         self._material = self._material
+
+
+class MagneticComponent(PhysicalComponent):
+    """A magnetic component. It includes a source conductor"""
+
+    def __init__(self, name: str, shape, material=None, conductor=None,
+                 parent: Component = None, children: Component = None):
+        """
+        MagneticComponent constructor
+
+        Parameters
+        ----------
+        name: str
+            name of the component
+        shape: BluemiraGeo
+            main shape of the component
+        material: Material
+            material dictionary of the component (structure still to be agreed)
+        conductor: SourceConductor
+            conductor based on SourceConductor implemented in Magnetostatic (tba).
+            It should include materials for the conductor (it's not the same as
+            material for the shape)
+        parent: Component or None
+        children: list(Component) or None
+
+        """
+        super().__init__(name, shape, material, parent, children)
+        self._conductor = conductor
+
+    @property
+    def conductor(self):
+        return self._conductor
+
+    @conductor.setter
+    def conductor(self, value):
+        self._conductor = value
