@@ -26,6 +26,7 @@ Plot utilities for equilibria
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import cycle
+import warnings
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.plot_tools import str_to_latex
 from bluemira.equilibria.constants import M_PER_MN, J_TOR_MIN
@@ -33,7 +34,14 @@ from bluemira.equilibria.find import Xpoint
 from bluemira.equilibria.physics import get_psi
 
 
-__all__ = ["GridPlotter", "ConstraintPlotter", "LimiterPlotter", "CoilSetPlotter"]
+__all__ = [
+    "GridPlotter",
+    "ConstraintPlotter",
+    "LimiterPlotter",
+    "CoilSetPlotter",
+    "EquilibriumPlotter",
+    "BreakdownPlotter",
+]
 
 PLOT_DEFAULTS = {
     "psi": {
@@ -503,3 +511,60 @@ class EquilibriumPlotter(Plotter):
         pcoil = self.eq.plasma_coil()
         for coil in pcoil.values():
             _plot_coil(self.ax, coil)
+
+
+class BreakdownPlotter(Plotter):
+    """
+    Utility class for Breakdown plotting
+    """
+
+    def __init__(self, breakdown, ax=None, Bp=False):
+        super().__init__(ax)
+        self.bd = breakdown
+
+        self.psi = self.bd.psi()
+        self.psi_bd = self.bd.breakdown_psi
+        self.Bp = self.bd.Bp(self.bd.x, self.bd.z)
+
+        self.plot_contour()
+        self.plot_zone()
+        if Bp:
+            self.plot_Bp()
+
+    def plot_contour(self):
+        """
+        Plot flux surfaces.
+        """
+        levels = np.linspace(self.psi_bd - 0.1, self.psi_bd, 3)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.ax.contour(self.bd.x, self.bd.z, self.psi, levels=levels, colors="r")
+
+    def plot_Bp(self, **kwargs):
+        """
+        Plots the poloidal field onto the Axes.
+        """
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["field"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["field"]["cmap"])
+        levels = np.linspace(1e-36, np.amax(self.Bp), nlevels)
+        c = self.ax.contourf(self.bd.x, self.bd.z, self.Bp, levels=levels, cmap=cmap)
+        cbar = plt.colorbar(c)
+        cbar.set_label("$B_{p}$ [T]")
+
+    def plot_zone(self):
+        """
+        Plot the low field zones with a dashed line.
+        """
+        colors = ["b"]
+        self.ax.contour(
+            self.bd.x,
+            self.bd.z,
+            self.Bp,
+            levels=[B_BREAKDOWN],
+            colors=colors,
+            linestyles="dashed",
+        )
+
+        if self.psi_bd is not None:
+            self.ax.set_title("$\\psi_{b}$ = " + f"{2*np.pi*self.psi_bd:.2f} V.s")
