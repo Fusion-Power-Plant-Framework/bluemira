@@ -41,8 +41,10 @@ pf_coils = Comp.Component("PFCoils", parent=magnets)
 
 # %%
 for i in range(6):
-    Comp.PhysicalComponent("PF" + str(i), shape="pf_shape" + str(i),
-                           material="pf_material" + str(i), parent=pf_coils)
+    Comp.MagneticComponent("PF" + str(i), shape="pf_shape" + str(i),
+                            material="pf_material" + str(i), conductor="pf_conductor"
+                                                                       + str(i),
+                            parent=pf_coils)
 
 # %%[markdown]
 # # Do the same for the CS coils
@@ -50,8 +52,10 @@ for i in range(6):
 # %%
 cs_coils = Comp.Component("CSCoils", parent=magnets)
 for i in range(6):
-    Comp.PhysicalComponent("CS" + str(i), shape="cs_shape" + str(i),
-                           material="cs_material" + str(i), parent=cs_coils)
+    Comp.MagneticComponent("CS" + str(i), shape="cs_shape" + str(i),
+                           material="cs_material" + str(i),
+                           conductor="cs_conductor" + str(i),
+                           parent=cs_coils)
 
 # %%[markdown]
 # # Adding in vessel components
