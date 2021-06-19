@@ -59,11 +59,11 @@ from bluemira.equilibria.plotting import (
 )
 from bluemira.equilibria.coils import Coil, CoilSet, PlasmaCoil
 from bluemira.equilibria.limiter import Limiter
-from BLUEPRINT.equilibria.numvcontrol import VirtualController, DummyController
-from BLUEPRINT.equilibria.force import ForceField
+from bluemira.equilibria.num_control import VirtualController, DummyController
+from bluemira.equilibria.force_field import ForceField
 from bluemira.equilibria.constants import PSI_NORM_TOL, LI_REL_TOL
 from bluemira.equilibria.file import EQDSKInterface
-from BLUEPRINT.equilibria.profiles import CustomProfile
+from bluemira.equilibria.profiles import CustomProfile
 from BLUEPRINT.utilities.tools import delta
 from BLUEPRINT.utilities.optimisation import process_scipy_result
 from BLUEPRINT.geometry.loop import Loop

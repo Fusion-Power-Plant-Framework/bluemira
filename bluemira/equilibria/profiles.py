@@ -37,6 +37,15 @@ from bluemira.equilibria.plotting import ProfilePlotter
 from bluemira.equilibria.grid import integrate_dx_dz, volume_integral
 from bluemira.equilibria.file import EQDSKInterface
 
+__all__ = [
+    "BetaIpProfile",
+    "CustomProfile",
+    "SinglePowerFunc",
+    "DoublePowerFunc",
+    "LaoPolynomialFunc",
+    "LuxonExpFunc",
+]
+
 
 def fitfunc(func, data, order=None):
     """
@@ -91,7 +100,7 @@ def pshape(shape, psinorm, psio, psix):
     Integral of jtorshape to calculate pressure
     NOTE: factor to convert from normalised psi integral
     """
-    si, _ = quad(shape, psinorm, 1, limit=100)
+    si = quad(shape, psinorm, 1, limit=100)[0]
     si *= psix - psio
     return si
 

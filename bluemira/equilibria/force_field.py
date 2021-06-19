@@ -24,6 +24,8 @@ Force and field calculations - used in constrained optimisation classes
 """
 import numpy as np
 
+__all__ = ["ForceField"]
+
 
 class ForceField:
     """

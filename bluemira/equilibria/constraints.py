@@ -29,6 +29,8 @@ import numpy as np
 from copy import deepcopy
 from bluemira.equilibria.plotting import ConstraintPlotter
 
+__all__ = ["MagneticConstraintSet"]
+
 
 class MagneticConstraint(ABC):
     """
