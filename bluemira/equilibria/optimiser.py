@@ -45,7 +45,7 @@ from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 
-__all__ = ["FBIOptimiser", "BreakdownOptimiser", "PositionOptimiser"]
+__all__ = ["FBIOptimiser", "BreakdownOptimiser", "PositionOptimiser", "Norm2Tikhonov"]
 
 
 class EquilibriumOptimiser:
