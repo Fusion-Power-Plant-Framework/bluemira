@@ -30,7 +30,7 @@ import warnings
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.plot_tools import str_to_latex
 from bluemira.equilibria.constants import M_PER_MN, J_TOR_MIN
-from bluemira.equilibria.find import Xpoint
+from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import get_psi
 
 
@@ -38,6 +38,8 @@ __all__ = [
     "GridPlotter",
     "ConstraintPlotter",
     "LimiterPlotter",
+    "CoilPlotter",
+    "PlasmaCoilPlotter",
     "CoilSetPlotter",
     "EquilibriumPlotter",
     "BreakdownPlotter",
@@ -277,6 +279,48 @@ class CoilPlotter(Plotter):
                 for name, sc in self.coil.sub_coils.items():
                     _plot_coil(self.ax, sc, fill=False)
         _plot_coil(self.ax, self.coil, fill=True)
+
+
+class PlasmaCoilPlotter(Plotter):
+    """
+    Utility class for plotting PlasmaCoils
+
+    Parameters
+    ----------
+    plasma_coil: PlasmaCoil
+        The PlasmaCoil to be plotted
+    ax: Matplotlib axis object
+        The ax on which to plot the PlasmaCoil. (plt.gca() default)
+    """
+
+    def __init__(self, plasma_coil, ax=None, **kwargs):
+        super().__init__(ax)
+        self.plasma_coil = plasma_coil
+        if self.plasma_coil.j_tor is None:
+            # No coils to plot
+            pass
+        else:
+            contour = get_contours(
+                self.plasma_coil.grid.x,
+                self.plasma_coil.grid.z,
+                self.plasma_coil.j_tor,
+                J_TOR_MIN,
+            )
+            x, z = contour[0].T
+            sq_x, sq_z = grid_2d_contour(x, z)
+
+            nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["current"]["nlevels"])
+            cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])
+
+            levels = np.linspace(J_TOR_MIN, np.amax(self.plasma_coil.j_tor), nlevels)
+            self.ax.contourf(
+                self.plasma_coil.grid.x,
+                self.plasma_coil.grid.z,
+                self.plasma_coil.j_tor,
+                cmap=cmap,
+                levels=levels,
+            )
+            self.ax.plot(sq_x, sq_z, linewidth=1.5, color="k")
 
 
 class CoilSetPlotter(Plotter):

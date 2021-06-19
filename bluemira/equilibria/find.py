@@ -38,11 +38,13 @@ __all__ = [
     "Xpoint",
     "Opoint",
     "Lpoint",
+    "get_contours",
     "find_OX_points",
     "find_LCFS_separatrix",
     "find_flux_surf",
     "in_zone",
     "in_plasma",
+    "grid_2d_contour",
 ]
 
 
@@ -741,6 +743,48 @@ def find_LCFS_separatrix(
         loops.sort(key=lambda loop: -loop.length)
         separatrix = MultiLoop(loops[:2])
     return lcfs, separatrix
+
+
+def grid_2d_contour(x, z):
+    """
+    Grid a smooth contour and get the outline of the cells it encompasses.
+
+    Parameters
+    ----------
+    x: np.array
+        The closed ccw x coordinates
+    z: np.array
+        The closed ccw z coordinates
+
+    Returns
+    -------
+    x_new: np.array
+        The x coordinates of the grid-loop
+    z_new: np.array
+        The z coordinates of the grid-loop
+    """
+    x_new, z_new = [], []
+    for i, (xi, zi) in enumerate(zip(x[:-1], z[:-1])):
+        x_new.append(xi)
+        z_new.append(zi)
+        if not np.isclose(xi, x[i + 1]) and not np.isclose(zi, z[i + 1]):
+            # Add an intermediate point (ccw)
+            if x[i + 1] > xi and z[i + 1] < zi:
+                x_new.append(x[i + 1])
+                z_new.append(zi)
+            elif x[i + 1] > xi and z[i + 1] > zi:
+                x_new.append(xi)
+                z_new.append(z[i + 1])
+            elif x[i + 1] < xi and z[i + 1] > zi:
+                x_new.append(x[i + 1])
+                z_new.append(zi)
+            else:
+                x_new.append(xi)
+                z_new.append(z[i + 1])
+
+    x_new.append(x[0])
+    z_new.append(z[0])
+    return np.array(x_new), np.array(z_new)
 
 
 # =============================================================================

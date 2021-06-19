@@ -46,6 +46,10 @@ __all__ = [
     "LuxonExpFunc",
 ]
 
+# =============================================================================
+# Flux function parameterisations
+# =============================================================================
+
 
 def fitfunc(func, data, order=None):
     """
@@ -331,6 +335,11 @@ class LuxonExpFunc(ShapeFunction):
         return luxonexp(x, *args)
 
 
+# =============================================================================
+# Profile classes
+# =============================================================================
+
+
 class Profile:
     """
     Profile base class
@@ -500,7 +509,6 @@ class BetaIpProfile(Profile):
         self._B_0 = B_0  # Store for eqdsk only
         if shape is None:
             self.shape = DoublePowerFunc([1, 0.8])
-            # self.shape = LaoPolynomialFunc([1.7, .1, -0.8])
         else:
             self.shape = shape
         if Ip < 0:  # Reverse Ip
@@ -648,8 +656,7 @@ class CustomProfile(Profile):
         if mask is not None:
             jtor *= mask
         if self.Ip is not None:
-            # Isso e uma maneira muito simples de manter a corrente do plasma
-            # constante.
+            # This is a simple way to prescribe the plasma current
             Ip = self.int2d(jtor)
             scale = self.Ip / Ip
             jtor *= scale
