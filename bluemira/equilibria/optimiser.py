@@ -34,8 +34,8 @@ from bluemira.base.file import try_get_bluemira_path
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.tools import circle_seg
 from bluemira.utilities.plot_tools import save_figure
-from BLUEPRINT.utilities.optimisation import (
-    leastsquares,
+from bluemira.utilities.opt_tools import (
+    least_squares,
     tikhonov,
     process_NLOPT_result,
     approx_fprime,
@@ -157,7 +157,7 @@ class LeastSquares(EquilibriumOptimiser):
         """
         Optimise the prescribed problem.
         """
-        self.x = leastsquares(self.A, self.b)
+        self.x = least_squares(self.A, self.b)
         self.calc_error()
         return self.x
 
