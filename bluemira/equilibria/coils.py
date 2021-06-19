@@ -27,7 +27,6 @@ from copy import deepcopy
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.magnetostatics.greens import (
     greens_psi,
     greens_Bx,
@@ -596,12 +595,12 @@ class Coil:
                 Bz = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
             else:
                 Bz = 0
-            # acaba sendo zero de qualquer maneira..
-            Bx = 0  # veranlasst aber geistige Gesundheit!
+            Bx = 0  # Should be 0 anyway
+
         else:
             Bz = coil.control_Bz(self.x, self.z)
-            Bx = coil.control_Bx(self.x, self.z)  # Oh doch mein Freundchen!
-        return 2 * np.pi * self.x * np.array([Bz, -Bx])  # angry B
+            Bx = coil.control_Bx(self.x, self.z)
+        return 2 * np.pi * self.x * np.array([Bz, -Bx])  # 1 cross B
 
     def toggle_control(self):
         """
