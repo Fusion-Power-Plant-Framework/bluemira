@@ -22,6 +22,7 @@
 """
 Coil positioning routines (automatic and adjustable)
 """
+
 import numpy as np
 import re
 from scipy.interpolate import interp1d

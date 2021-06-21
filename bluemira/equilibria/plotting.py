@@ -43,6 +43,8 @@ __all__ = [
     "CoilSetPlotter",
     "EquilibriumPlotter",
     "BreakdownPlotter",
+    "XZLPlotter",
+    "RegionPlotter",
 ]
 
 PLOT_DEFAULTS = {
@@ -612,3 +614,37 @@ class BreakdownPlotter(Plotter):
 
         if self.psi_bd is not None:
             self.ax.set_title("$\\psi_{b}$ = " + f"{2*np.pi*self.psi_bd:.2f} V.s")
+
+
+class XZLPlotter(Plotter):
+    """
+    Utility class for plotting L constraints
+    """
+
+    def __init__(self, xzl_mapper, ax=None):
+        super().__init__(ax)
+        self.xzl = xzl_mapper
+
+        for loop in self.xzl.excl_zones:
+            loop.plot(self.ax, fill=True, alpha=0.2, facecolor="r", edgecolor="r")
+
+        for loop in self.xzl.excl_loops:
+            loop.plot(self.ax, fill=False, edgecolor="r", zorder=1, linestyle="--")
+
+        for loop in self.xzl.incl_loops:
+            loop.plot(self.ax, fill=False, edgecolor="k", zorder=1, linestyle="--")
+
+
+class RegionPlotter(Plotter):
+    """
+    Utility class for plotting 2D L constraints
+    """
+
+    def __init__(self, region_mapper, ax=None):
+        super().__init__(ax)
+        self.rmp = region_mapper
+
+        for intpltr in self.rmp.regions.values():
+            intpltr.loop.plot(
+                self.ax, fill=True, alpha=0.2, zorder=1, facecolor="g", edgecolor="g"
+            )
