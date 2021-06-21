@@ -33,7 +33,11 @@ from BLUEPRINT.equilibria.constants import (
     PLT_PAUSE,
 )
 from BLUEPRINT.utilities.plottools import savefig, makegif
-from BLUEPRINT.base.lookandfeel import bprintflush, bprint, bpwarn
+from bluemira.base.look_and_feel import (
+    bluemira_warn,
+    bluemira_print,
+    bluemira_print_flush,
+)
 from BLUEPRINT.base.file import try_get_BP_path
 
 
@@ -150,7 +154,7 @@ class DudsonConvergence(ConvergenceCriterion):
         dpsi_max = np.amax(abs(dpsi))
         dpsi_rel = dpsi_max / (np.amax(psi) - np.amin(psi))
         if print_status:
-            bprintflush(
+            bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: relative delta_psi: " f"{100*dpsi_rel:.2f} %"
             )
         return self.check_converged(dpsi_rel)
@@ -196,7 +200,7 @@ class JrelConvergence(ConvergenceCriterion):
         d_j_max = np.amax(abs(d_j))
         d_j_rel = d_j_max / (np.amax(j_new) - np.amin(j_new))
         if print_status:
-            bprintflush(
+            bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: relative delta_J: " f"{100*d_j_rel:.2f} %"
             )
         return self.check_converged(d_j_rel)
@@ -239,7 +243,7 @@ class LacknerConvergence(ConvergenceCriterion):
         """
         conv = np.amax(np.abs((psi - psi_old) / psi))
         if print_status:
-            bprintflush(f"EQUILIBRIA G-S iter {i}: psi convergence: {conv:e}")
+            bluemira_print_flush(f"EQUILIBRIA G-S iter {i}: psi convergence: {conv:e}")
         return self.check_converged(conv)
 
 
@@ -279,7 +283,9 @@ class JeonConvergence(ConvergenceCriterion):
         """
         conv = np.linalg.norm(psi_old - psi)
         if print_status:
-            bprintflush(f"EQUILIBRIA G-S iter {i}: psi norm convergence: {conv:e}")
+            bluemira_print_flush(
+                f"EQUILIBRIA G-S iter {i}: psi norm convergence: {conv:e}"
+            )
         return self.check_converged(conv)
 
 
@@ -322,7 +328,9 @@ class CunninghamConvergence(ConvergenceCriterion):
         d_j = j_old - j_new
         conv = np.sum(d_j ** 2) / np.sum(j_new)
         if print_status:
-            bprintflush(f"EQUILIBRIA G-S iter {i}: J_phi source convergence: {conv:e}")
+            bluemira_print_flush(
+                f"EQUILIBRIA G-S iter {i}: J_phi source convergence: {conv:e}"
+            )
         self._conv = conv
         return self.check_converged(conv)
 
@@ -366,7 +374,7 @@ class JsourceConvergence(ConvergenceCriterion):
         conv = np.linalg.norm(j_old - j_new)
         if print_status:
             # Format convergence
-            bprintflush(
+            bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: ||J_phi_old-J_phi|| convergence: {conv:e}"
             )
         return self.check_converged(conv)
@@ -576,11 +584,11 @@ class PicardBaseIterator(ABC):
                 next(iterator)
             except StopIteration:
                 print()
-                bprint("EQUILIBRIA G-S converged value found.")
+                bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
         else:
             print()
-            bpwarn(
+            bluemira_warn(
                 f"EQUILIBRIA G-S unable to find converged value after {self.i} iterations."
             )
         self._teardown()
@@ -632,7 +640,7 @@ class PicardBaseIterator(ABC):
         try:
             next(self)
         except StopIteration:
-            bprint("EQUILIBRIA G-S converged value found, nothing to do.")
+            bluemira_print("EQUILIBRIA G-S converged value found, nothing to do.")
             self._teardown()
 
     def check_converged(self, print_status=True):

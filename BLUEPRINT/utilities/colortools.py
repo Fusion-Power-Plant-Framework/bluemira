@@ -188,9 +188,9 @@ def shift_rgb_color(rgb, alpha):
     if isinstance(rgb, str):
         rgb = hex2color(rgb)
     if alpha < -1 or alpha > 1:
-        from BLUEPRINT.base.lookandfeel import bpwarn
+        from bluemira.base.look_and_feel import bluemira_warn
 
-        bpwarn("shift_RGBcolor: alpha ! belong [-1, 1]")
+        bluemira_warn("shift_RGBcolor: alpha ! belong [-1, 1]")
         alpha = np.clip(alpha, -1, 1)
     rgb = np.array(rgb)
     if alpha <= 0:

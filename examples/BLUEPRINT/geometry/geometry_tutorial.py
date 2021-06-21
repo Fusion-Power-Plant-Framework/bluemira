@@ -35,7 +35,7 @@ Feel free to change parameters!
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
@@ -133,7 +133,7 @@ print(triangle)
 # That doesn't look great.. does it?
 
 # %%
-bprint(str(triangle))  # :)
+bluemira_print(str(triangle))  # :)
 
 # %%[markdown]
 # So let's look at the triangle, and its points
@@ -172,7 +172,7 @@ triangle.plot(edgecolor="k", facecolor="grey")
 # Let's see what else this thing can do:
 
 # %%
-bprint(
+bluemira_print(
     "Summary of the triangle loop:\n"
     f"|   area: {triangle.area:.2f} m\n"
     f"|   perimeter: {triangle.length:.2f} m\n"

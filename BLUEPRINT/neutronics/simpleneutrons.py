@@ -28,7 +28,7 @@ import os
 import json
 from typing import Type
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.base.lookandfeel import bprint, plot_defaults
+from bluemira.base.look_and_feel import bluemira_print, plot_defaults
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop
@@ -298,7 +298,7 @@ class BlanketCoverage(ReactorSystem):
         if tor_cont:
             weight = pol_depth_f
             if tor_width_f != 1:
-                bprint(
+                bluemira_print(
                     "tor_width is being ignored because you have " "specified tor_cont."
                 )
         volume = loop_volume(plug["loop"]["x"], plug["loop"]["z"]) * weight

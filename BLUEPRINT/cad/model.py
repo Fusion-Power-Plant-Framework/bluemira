@@ -29,7 +29,7 @@ import re
 import os
 from matplotlib.colors import to_rgb
 from BLUEPRINT.base.names import name_short_long
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.cad.cadtools import (
@@ -304,7 +304,7 @@ class Patterner:
         elif pattern in ["sector", "s"]:
             n = 1
         elif pattern == "n":
-            bpwarn("This thing you thought you could deprecate is being used.")
+            bluemira_warn("This thing you thought you could deprecate is being used.")
             n = 0  # use part subpattern number
         else:
             raise ValueError(

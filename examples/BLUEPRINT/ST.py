@@ -25,7 +25,8 @@ import matplotlib.pyplot as plt
 import os
 
 from BLUEPRINT.base.file import make_BP_path, get_BP_root
-from BLUEPRINT.base.lookandfeel import plot_defaults, banner
+from BLUEPRINT.base.lookandfeel import banner
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import Spherical
 

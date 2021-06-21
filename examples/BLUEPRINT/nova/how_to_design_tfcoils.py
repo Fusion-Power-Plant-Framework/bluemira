@@ -34,7 +34,7 @@ import os
 import matplotlib.pyplot as plt
 from BLUEPRINT.base.file import make_BP_path
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 
@@ -210,7 +210,7 @@ tf1.show_CAD()
 # Run the optimisation problem (minimise length, constrain ripple)
 
 # %%
-bprint("Optimising 'S' TF coil... could take about 20 s..")
+bluemira_print("Optimising 'S' TF coil... could take about 20 s..")
 tf1.optimise()
 
 # %%[markdown]
@@ -246,7 +246,7 @@ tf1.plot_ripple(ax=ax, fig=f)
 to_tf["shape_type"] = "D"  # This is the key for a Princeton-D shape
 
 tf2 = ToroidalFieldCoils(parameters, to_tf)
-bprint("Optimising 'D' TF coil... could take about 4 s..")
+bluemira_print("Optimising 'D' TF coil... could take about 4 s..")
 tf2.optimise()
 
 # %%[markdown]
@@ -293,7 +293,7 @@ tf2.plot_ripple(ax=ax, fig=f)
 to_tf["shape_type"] = "P"  # This is the key for a PictureFrame shape
 
 tf3 = ToroidalFieldCoils(parameters, to_tf)
-bprint("Optimising 'P' TF coil... could take about 3 s..")
+bluemira_print("Optimising 'P' TF coil... could take about 3 s..")
 tf3.optimise()
 
 # %%[markdown]
@@ -330,7 +330,7 @@ to_tf = {
 
 tf3 = ToroidalFieldCoils(parameters, to_tf)
 
-bprint(
+bluemira_print(
     "Optimising a rectangular TF coil with multiple current filaments..\n"
     "This is going to take about 44 seconds."
 )

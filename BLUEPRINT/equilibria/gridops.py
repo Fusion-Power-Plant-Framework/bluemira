@@ -22,8 +22,8 @@
 """
 Grid object and grid operations
 """
-from BLUEPRINT.base.constants import MU_0
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.constants import MU_0
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.equilibria.constants import X_AXIS_MIN
 from BLUEPRINT.equilibria.plotting import GridPlotter
 from scipy.interpolate import RectBivariateSpline
@@ -56,12 +56,12 @@ class Grid:
             x_min = X_AXIS_MIN
         if x_min > x_max:
             print("")  # stdout flusher
-            bpwarn("Equilibria::Grid Xmin sollte niemals mehr als Xmax sein!")
+            bluemira_warn("Equilibria::Grid Xmin sollte niemals mehr als Xmax sein!")
             x_min, x_max = x_max, x_min
 
         if z_min > z_max:
             print("")  # stdout flusher
-            bpwarn("Equilibria::Grid Zmin sollte niemals mehr als Zmax sein!")
+            bluemira_warn("Equilibria::Grid Zmin sollte niemals mehr als Zmax sein!")
             z_min, z_max = z_max, z_min
 
         self.x_min = x_min

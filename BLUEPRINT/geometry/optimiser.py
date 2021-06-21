@@ -25,7 +25,7 @@ Shape optimiser object and interfaces to scipy.
 
 import time
 from scipy.optimize import minimize, differential_evolution, shgo
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.utilities.optimisation import (
     process_scipy_result,
     convert_scipy_constraints,
@@ -203,7 +203,7 @@ class ShapeOptimiser:
             result = self.optimise_global(b_norm)
 
         # We always want to see this (for now)
-        bprint(
+        bluemira_print(
             f"{self.parameterisation.name} optimisation time: {time.time()-tic:1.1f} s"
         )
 
