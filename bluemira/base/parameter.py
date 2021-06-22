@@ -95,30 +95,6 @@ class Parameter(wrapt.ObjectProxy):
     Once a Parameter has been created it will act like the type of value.
 
     All operations you would normally do with for instance an 'int' will work the same
-
-    Attributes
-    ----------
-    var: str
-        The parameter variable name, as referenced by the ParameterFrame.
-    name: Optional[str]
-        The parameter name.
-    value: Any
-        The value of the parameter, by default None.
-    unit: Optional[str]
-        The unit of the parameter, by default None.
-    description: Optional[str]
-        The description of the parameter.
-    source: Optional[str]
-        The source (reference and/or code) that the parameter was obtained from,
-        by default None.
-    mapping: Optional[Dict[str, ParameterMapping]]
-        The names used for this parameter in external software, and whether
-        that parameter should be written to and/or read from the external tool,
-        by default, None.
-    value_history: Optional[List[Any]]
-        History of the value
-    source_history: Optional[List[str]]
-        History of the source of the value
     """
 
     __slots__ = (
