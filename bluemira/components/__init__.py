@@ -23,4 +23,6 @@
 Initialise the components module.
 """
 
-from .base import *
+from .base import Component, GroupingComponent, PhysicalComponent, MagneticComponent
+
+__all__ = ["Component", "GroupingComponent", "PhysicalComponent", "MagneticComponent"]
