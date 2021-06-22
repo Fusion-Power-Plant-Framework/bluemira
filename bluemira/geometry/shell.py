@@ -32,12 +32,9 @@ import freecad
 import Part
 
 # import from bluemira
-from bluemira.geometry.bluemirageo import BluemiraGeo
-from bluemira.geometry.bluemirawire import BluemiraWire
-from bluemira.geometry.bluemiraface import BluemiraFace
-
-# import from error
-from bluemira.geometry.error import NotClosedWire, DisjointedFace
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.face import BluemiraFace
 
 
 class BluemiraShell(BluemiraGeo):
@@ -63,11 +60,11 @@ class BluemiraShell(BluemiraGeo):
 
     def _createShell(self):
         """ Creation of the shell"""
-        faces = [f.shape for f in self.boundary]
+        faces = [f._shape for f in self.boundary]
         return Part.makeShell(faces)
 
     @property
-    def shape(self):
+    def _shape(self):
         """Part.Wire: shape of the object as a single wire"""
         return self._shell
 
@@ -76,7 +73,7 @@ class BluemiraShell(BluemiraGeo):
         if isinstance(obj, Part.Shell):
             faces = obj.Faces
             bmfaces = []
-            for f in faces:
+            for face in faces:
                 wires = face.Wires
                 bmwire = BluemiraWire(wires)
                 bmfaces.append(BluemiraFace(bmwire))

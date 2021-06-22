@@ -32,8 +32,8 @@ import freecad
 import Part
 
 # import from bluemira
-from bluemira.geometry.bluemirageo import BluemiraGeo
-from bluemira.geometry.bluemirawire import BluemiraWire
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.wire import BluemiraWire
 
 # import from error
 from bluemira.geometry.error import NotClosedWire, DisjointedFace
@@ -58,7 +58,7 @@ class BluemiraFace(BluemiraGeo):
         for c in self._boundary_classes:
             check = check or (all(isinstance(o, c) for o in objs))
             if check:
-                if all(o.isClosed() for o in objs):
+                if all(o.is_closed() for o in objs):
                     return objs
                 else:
                     raise NotClosedWire("Only closed BluemiraWire are accepted.")
@@ -74,9 +74,9 @@ class BluemiraFace(BluemiraGeo):
     def _createFace(self):
         """ """
         external: BluemiraWire = self.boundary[0]
-        face = Part.Face(external.shape)
+        face = Part.Face(external._shape)
         if len(self.boundary) > 1:
-            fholes = [Part.Face(h.shape) for h in self.boundary[1:]]
+            fholes = [Part.Face(h._shape) for h in self.boundary[1:]]
             face = face.cut(fholes)
             if len(face.Faces) == 1:
                 face = face.Faces[0]
@@ -85,7 +85,7 @@ class BluemiraFace(BluemiraGeo):
         return face
 
     @property
-    def shape(self):
+    def _shape(self):
         """Part.Wire: shape of the object as a single wire"""
         return self._face
 

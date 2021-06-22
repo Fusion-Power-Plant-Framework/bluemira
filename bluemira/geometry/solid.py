@@ -32,8 +32,10 @@ import freecad
 import Part
 
 # import from bluemira
-from bluemira.geometry.bluemirageo import BluemiraGeo
-from bluemira.geometry.bluemirashell import BluemiraShell
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.shell import BluemiraShell
+
+from bluemira.geometry.error import DisjointedSolid
 
 
 class BluemiraSolid(BluemiraGeo):

@@ -25,11 +25,6 @@ Base classes and functionality for the bluemira geometry module.
 
 from __future__ import annotations
 
-# import from freecad
-import freecad
-import Part
-from FreeCAD import Base
-
 # import typing
 from typing import Union
 
@@ -40,9 +35,13 @@ from abc import ABC, abstractmethod
 import logging
 module_logger = logging.getLogger(__name__)
 
-
 class BluemiraGeo(ABC):
     """Base abstract class for geometry"""
+
+    props = {'length': 'Length', 'area': 'Area', 'volume': 'Volume'}
+    metds = {'is_closed': 'isClosed', 'scale': 'scale'}
+    attrs = {**props, **metds}
+
     def __init__(
             self,
             boundary,
@@ -55,6 +54,24 @@ class BluemiraGeo(ABC):
         self.boundary = boundary
         self.label = label
         self.lcar = lcar
+
+    @staticmethod
+    def _converter(func):
+        return func
+
+    def __getattr__(self, key):
+        """
+        Transfer the key getattr to underlying shape object.
+        """
+        if key in type(self).attrs:
+            output = getattr(self._shape, type(self).attrs[key])
+            if callable(output):
+                return self.__class__._converter(output)
+            else:
+                return output
+        else:
+            raise AttributeError("'{}' has no attribute '{}'".format(str(type(
+                self).__name__), key))
 
     @abstractmethod
     def _check_boundary(self, objs):
@@ -80,36 +97,9 @@ class BluemiraGeo(ABC):
 
     @property
     @abstractmethod
-    def shape(self):
-        """Representative shape of the object"""
+    def _shape(self):
+        """Primitive shape of the object"""
         pass
-
-    @property
-    def Length(self):
-        """float: total length of the shape."""
-
-        # Note:the method is recursively implemented considering that
-        # the used FreeCAD object in self.shape has a similar Length property.
-
-        return self.shape.Length
-
-    @property
-    def Area(self):
-        """float: total area of the shape."""
-
-        # Note:the method is recursively implemented considering that
-        # the used FreeCAD object in self.shape has a similar Area property.
-
-        return self.shape.Area
-
-    @property
-    def Volume(self):
-        """float: total volume of the shape."""
-
-        # Note:the method is recursively implemented considering that
-        # the used FreeCAD object in self.shape has a similar Volume property.
-
-        return self.shape.Volume
 
     def search(self, label: str):
         """Search for a shape with the specified label
@@ -136,8 +126,8 @@ class BluemiraGeo(ABC):
     def __repr__(self):
         new = []
         new.append("([{}] = Label: {}".format(type(self).__name__, self.label))
-        new.append(" Length: {}".format(self.Length))
-        new.append(" Area: {}".format(self.Area))
-        new.append(" Volume: {}".format(self.Volume))
+        new.append(" length: {}".format(self.length))
+        new.append(" area: {}".format(self.area))
+        new.append(" volume: {}".format(self.volume))
         new.append(")")
         return ", ".join(new)

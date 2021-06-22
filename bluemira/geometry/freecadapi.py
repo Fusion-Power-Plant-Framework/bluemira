@@ -41,7 +41,7 @@ from typing import Union
 # Array, List, Vector, Point manipulation
 #########################################
 def check_data_type(data_type):
-    """Decorator to check the data type of the first parameter input (args[0] of a
+    """Decorator to check the data type of the first parameter input (args[0]) of a
     function.
 
     Raises
@@ -64,7 +64,7 @@ def check_data_type(data_type):
             else:
                 for o in objs:
                     print(type(o))
-                raise TypeError("Only {} instances can be concerted to {}".format(
+                raise TypeError("Only {} instances can be converted to {}".format(
                     data_type, type(output)))
             return output
 
@@ -180,9 +180,9 @@ def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Pa
     """Make a polygon from a set of points.
 
     Args:
-        points (Union[list, numpy.ndarray]): list of points. It can be given \
+        points (Union[list, numpy.ndarray]): list of points. It can be given
             as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be\
+        closed (bool, optional): if True, the first and last points will be
             connected in order to form a closed polygon. Defaults to False.
 
     Returns:
@@ -191,8 +191,28 @@ def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Pa
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
     wire = Part.makePolygon(pntslist)
-    if closed and not wire.isClosed():
-        # add a line that closes the wire
-        line = Part.makePolygon([pntslist[-1], pntslist[0]])
-        wire = Part.Wire([wire, line])
+    if closed:
+        wire = close_wire(wire)
+    return wire
+
+
+def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
+    """Make a bezier curve from a set of points.
+
+    Args:
+        points (Union[list, numpy.ndarray]): list of points. It can be given
+            as a list of 3D tuples, a 3D numpy array, or similar.
+        closed (bool, optional): if True, the first and last points will be
+            connected in order to form a closed polygon. Defaults to False.
+
+    Returns:
+        Part.Wire: a FreeCAD wire that contains the polygon
+    """
+    # Points must be converted into FreeCAD Vectors
+    pntslist = [Base.Vector(x) for x in points]
+    bc = Part.BezierCurve()
+    bc.setPoles(pntslist)
+    wire = Part.Wire(bc.toShape())
+    if closed:
+        wire = close_wire(wire)
     return wire

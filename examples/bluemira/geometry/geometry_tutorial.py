@@ -21,17 +21,21 @@
 
 import bluemira.geometry as geo
 
+
 if __name__ == "__main__":
     print("This is a simple tutorial for the geometric module")
 
     print("1. Creation of a closed wire")
     pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
-    wire = geo.tools.make_polygon(pntslist, closed=True)
+    wire = geo.freecadapi.make_polygon(pntslist, closed=True)
     print("wire: {}, length: {}, isClosed: {}".format(wire, wire.Length,
                                                       wire.isClosed()))
     print("2. Creation of a bluemira wire")
-    bmwire = geo.bluemirawire.BluemiraWire(wire, "bmwire")
+    bmwire = geo.wire.BluemiraWire(wire, "bmwire")
     print(bmwire)
+
+    bmwire1 = geo.wire.BluemiraWire.make_polygon(pntslist, closed=True)
+    print(bmwire1)
 
     print("3. Make some operations on bluemira wire")
     ndiscr = 10
@@ -43,6 +47,9 @@ if __name__ == "__main__":
     print(points)
 
     print("4. Creation of a bluemira face")
-    bmface = geo.bluemiraface.BluemiraFace(bmwire, "bmface")
+    bmface = geo.face.BluemiraFace(bmwire, "bmface")
     print(bmface)
+
+    w = bmwire.scale(1)
+    print(w)
 

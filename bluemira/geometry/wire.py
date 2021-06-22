@@ -32,10 +32,13 @@ import freecad
 import Part
 
 # import from bluemira
-from bluemira.geometry.bluemirageo import BluemiraGeo
-from bluemira.geometry.tools import (
-    discretize_by_edges, discretize, close_wire
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.freecadapi import (
+    discretize_by_edges, discretize, close_wire, make_polygon
 )
+
+# import mathematical library
+import numpy
 
 # import from error
 from bluemira.geometry.error import NotClosedWire
@@ -43,6 +46,10 @@ from bluemira.geometry.error import NotClosedWire
 
 class BluemiraWire(BluemiraGeo):
     """Bluemira Wire class."""
+
+    # # Necessary only if there are changes to the base attrs dictionary
+    # attrs = {**BluemiraGeo.attrs}
+
     def __init__(
             self,
             boundary,
@@ -51,6 +58,15 @@ class BluemiraWire(BluemiraGeo):
     ):
         boundary_classes = [self.__class__, Part.Wire]
         super().__init__(boundary, label, lcar, boundary_classes)
+
+    @staticmethod
+    def _converter(func):
+        def wrapper(*args, **kwargs):
+            output = func(*args, **kwargs)
+            if isinstance(output, Part.Wire):
+                output = BluemiraWire(output)
+            return output
+        return wrapper
 
     def _check_boundary(self, objs):
         """Check if objects objs can be used as boundaries"""
@@ -69,50 +85,49 @@ class BluemiraWire(BluemiraGeo):
         self._boundary = self._check_boundary(objs)
 
     @property
-    def shape(self):
+    def _shape(self) -> Part.Wire:
         """Part.Wire: shape of the object as a single wire"""
-        return Part.Wire(self.Wires)
+        return Part.Wire(self._wires)
 
     @property
-    def Wires(self) -> List[Part.Wire]:
+    def _wires(self) -> List[Part.Wire]:
         """list(Part.Wire): list of wires of which the shape consists of."""
-
-        # Note:the method is recursively implemented considering that
-        # Part.Wire has a similar Wires property.
 
         wires = []
         for o in self.boundary:
-            wires += o.Wires
+            if isinstance(o, Part.Wire):
+                wires += o.Wires
+            else:
+                wires += o._wires
         return wires
-
-    def isClosed(self):
-        """True if the shape is closed"""
-
-        # Note: isClosed is also a function of Part.Wire.
-        # This will help in recursive functions.
-
-        return self.shape.isClosed()
 
     def close_shape(self):
         """Close the shape with a LineSegment between shape's end and
             start point. This function modify the object boundary.
         """
-        if not self.isClosed():
-            closure = close_wire(self.shape)
+        if not self.is_closed():
+            closure = close_wire(self._shape)
             self.boundary.append(closure)
 
         # check that the new boundary is closed
-        if not self.isClosed():
+        if not self.is_closed():
             raise NotClosedWire("The open boundary has not been closed correctly.")
 
-    def discretize(self, ndiscr: int = 100, byedges: bool = False):
+    def discretize(self, ndiscr: int = 100, byedges: bool = False) -> numpy.ndarray:
 
         """Discretize the wire in ndiscr equidistant points.
         If byedges is True, each edges is discretized separately using and approximated
         distance (wire.Length/ndiscr)."""
 
         if byedges:
-            points = discretize_by_edges(self.shape, ndiscr)
+            points = discretize_by_edges(self._shape, ndiscr)
         else:
-            points = discretize(self.shape, ndiscr)
+            points = discretize(self._shape, ndiscr)
         return points
+
+    @staticmethod
+    def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> \
+            BluemiraWire:
+        """Make a BluemiraWire polygon from a set of points. If closed is True,
+        the wire will be forced to be closed."""
+        return BluemiraWire(make_polygon(points, closed))
