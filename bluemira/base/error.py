@@ -36,3 +36,11 @@ class BluemiraError(Exception):
         Prettier handling of the Exception strings
         """
         return fill(dedent(self.args[0]))
+
+
+class ParameterError(BluemiraError):
+    """
+    Exception class for parameters.
+    """
+
+    pass
