@@ -49,19 +49,6 @@ class Component(NodeMixin):
       "FusionPowerPlant" -> "TFCoilSystem" -> {"TFWindingPack" "TFCasing"}
 
     A Component cannot be used directly - only subclasses should be instantiated.
-
-    Attributes
-    ----------
-    name: str
-        The name that identifies the Component.
-    config: Dict[str, Any]
-        The parameterisation of the Component.
-    inputs: Dict[str, Any]
-        The external inputs for the Component.
-    parent: Optional[Component]
-        The parent of this Component, by default None.
-    children: Optional[List[Component]]
-        The children of this Component, by default None.
     """
 
     name: str
@@ -332,23 +319,6 @@ class GroupingComponent(Component):
 class PhysicalComponent(Component):
     """
     A physical component. It includes shape and materials.
-
-    Attributes
-    ----------
-    name: str
-        The name that identifies the Component.
-    config: Dict[str, Any]
-        The parameterisation of the Component.
-    inputs: Dict[str, Any]
-        The external inputs for the Component.
-    shape: Any
-        The geometric shape of the Component.
-    material: Any
-        The material that the Component is built from.
-    parent: Optional[Component]
-        The parent of this Component, by default None.
-    children: Optional[List[Component]]
-        The children of this Component, by default None.
     """
 
     def __init__(
@@ -391,25 +361,6 @@ class PhysicalComponent(Component):
 class MagneticComponent(PhysicalComponent):
     """
     A magnetic component. It includes a shape, a material, and a source conductor.
-
-    Attributes
-    ----------
-    name: str
-        The name that identifies the Component.
-    config: Dict[str, Any]
-        The parameterisation of the Component.
-    inputs: Dict[str, Any]
-        The external inputs for the Component.
-    shape: Any
-        The geometric shape of the Component.
-    material: Any
-        The material that the Component is built from.
-    conductor: Any
-        The conductor used by current-carrying filaments.
-    parent: Optional[Component]
-        The parent of this Component, by default None.
-    children: Optional[List[Component]]
-        The children of this Component, by default None.
     """
 
     def __init__(
