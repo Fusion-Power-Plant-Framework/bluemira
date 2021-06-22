@@ -20,7 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Initialise the components module.
+The error classes for the components module.
 """
 
-from .base import *
+from bluemira.base.error import BluemiraError
+
+
+class ComponentError(BluemiraError):
+    """
+    Exception class for Components.
+    """
+
+    pass

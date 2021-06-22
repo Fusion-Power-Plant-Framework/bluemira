@@ -47,7 +47,10 @@ per-file-ignores =
         D403,
         D404,
         D406,
-        D409
+        D409,
+    __init__.py:
+        F401,
+        F403,
         
 
 exclude =
