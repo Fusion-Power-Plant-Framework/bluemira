@@ -19,58 +19,91 @@
 #  You should have received a copy of the GNU Lesser General Public
 #  License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-# %%
-from anytree import NodeMixin, RenderTree
-import bluemira.components.Base as Comp
-
-# %%[markdown]
-# # Example of a Tree structure
-# # Definition of some Components as groups
+"""
+An example of how to use Components to represent a set of objects in a reactor.
+"""
 
 # %%
-reactor = Comp.Component("Reactor")
-
-magnets = Comp.Component("Magnets", parent=reactor)
-tf_coils = Comp.Component("TFCoils", parent=magnets)
-pf_coils = Comp.Component("PFCoils", parent=magnets)
+from anytree import RenderTree
+import bluemira.components as bm_comp
 
 # %%[markdown]
-# # Definition of some sub-components as physical components
-# # Note: it is not necessary to store the component in a variable. It is already
-# # stored as child of the parent, if any.
+# Example of a Tree structure
+# Definition of some Components as groups. These do not have a physical shape / material
+# but represent common systems within a reactor (or indeed the reactor itself).
+
+# %%
+reactor = bm_comp.GroupingComponent("Reactor", config={}, inputs={})
+
+magnets = bm_comp.GroupingComponent("Magnets", config={}, inputs={}, parent=reactor)
+tf_coils = bm_comp.GroupingComponent("TFCoils", config={}, inputs={}, parent=magnets)
+pf_coils = bm_comp.GroupingComponent("PFCoils", config={}, inputs={}, parent=magnets)
+
+# %%[markdown]
+# Definition of some sub-components as physical components
+# Note: it is not necessary to store the component in a variable. It is already
+# stored as child of the parent, if any.
 
 # %%
 for i in range(6):
-    Comp.MagneticComponent("PF" + str(i), shape="pf_shape" + str(i),
-                            material="pf_material" + str(i), conductor="pf_conductor"
-                                                                       + str(i),
-                            parent=pf_coils)
+    bm_comp.MagneticComponent(
+        "PF" + str(i),
+        config={},
+        inputs={},
+        shape="pf_shape" + str(i),
+        material="pf_material" + str(i),
+        conductor="pf_conductor" + str(i),
+        parent=pf_coils,
+    )
 
 # %%[markdown]
-# # Do the same for the CS coils
+# Do the same for the CS coils
 
 # %%
-cs_coils = Comp.Component("CSCoils", parent=magnets)
+cs_coils = bm_comp.GroupingComponent("CSCoils", config={}, inputs={}, parent=magnets)
 for i in range(6):
-    Comp.MagneticComponent("CS" + str(i), shape="cs_shape" + str(i),
-                           material="cs_material" + str(i),
-                           conductor="cs_conductor" + str(i),
-                           parent=cs_coils)
+    bm_comp.MagneticComponent(
+        "CS" + str(i),
+        config={},
+        inputs={},
+        shape="cs_shape" + str(i),
+        material="cs_material" + str(i),
+        conductor="cs_conductor" + str(i),
+        parent=cs_coils,
+    )
 
 # %%[markdown]
-# # Adding in vessel components
+# Adding in vessel components
 
 # %%
-in_vessel = Comp.Component("InVessel", parent=reactor)
-blanket = Comp.PhysicalComponent("Blanket", shape="BB_shape", material="BB_material",
-                                 parent=in_vessel)
-divertor = Comp.PhysicalComponent("Divertor", shape="Div_shape",
-                                  material="Div_material", parent=in_vessel)
-vessel = Comp.PhysicalComponent("Vessel", shape="VV_shape",
-                                  material="VV_material", parent=in_vessel)
+in_vessel = bm_comp.GroupingComponent("InVessel", config={}, inputs={}, parent=reactor)
+blanket = bm_comp.PhysicalComponent(
+    "Blanket",
+    config={},
+    inputs={},
+    shape="BB_shape",
+    material="BB_material",
+    parent=in_vessel,
+)
+divertor = bm_comp.PhysicalComponent(
+    "Divertor",
+    config={},
+    inputs={},
+    shape="Div_shape",
+    material="Div_material",
+    parent=in_vessel,
+)
+vessel = bm_comp.PhysicalComponent(
+    "Vessel",
+    config={},
+    inputs={},
+    shape="VV_shape",
+    material="VV_material",
+    parent=in_vessel,
+)
 
 # %%[markdown]
-# # Printing the tree
+# Printing the tree
 
 # %%
 print(RenderTree(reactor))
