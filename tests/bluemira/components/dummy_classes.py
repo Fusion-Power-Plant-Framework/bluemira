@@ -22,7 +22,7 @@
 from bluemira.components.base import PhysicalComponent
 
 
-class DivertorProfile(PhysicalComponent):
+class DummyDivertorProfile(PhysicalComponent):
     """
     Builds the divertor profile based on the desired reference equilibria
     Needs a Nova StreamFlow object
@@ -48,7 +48,7 @@ class DivertorProfile(PhysicalComponent):
     # fmt: on
 
 
-class BreedingBlanket(PhysicalComponent):
+class DummyBreedingBlanket(PhysicalComponent):
     # fmt: off
     default_params = [
         ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
@@ -78,7 +78,7 @@ class BreedingBlanket(PhysicalComponent):
     # fmt: on
 
 
-class Divertor(PhysicalComponent):
+class DummyDivertor(PhysicalComponent):
     # fmt: off
     default_params = [
         ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
