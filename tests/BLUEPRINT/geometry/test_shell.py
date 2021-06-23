@@ -25,7 +25,7 @@ import pytest
 import matplotlib.pyplot as plt
 import filecmp
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geomtools import rotate_matrix

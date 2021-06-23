@@ -21,7 +21,7 @@
 import pytest
 import numpy as np
 
-from BLUEPRINT.base.constants import E_IJK, E_IJ, E_I
+from bluemira.base.constants import E_IJK, E_IJ, E_I
 from BLUEPRINT.utilities.tools import levi_civita_tensor
 
 

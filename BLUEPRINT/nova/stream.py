@@ -34,7 +34,7 @@ from collections import OrderedDict
 from matplotlib._contour import QuadContourGenerator
 from BLUEPRINT.equilibria.eqdsk import EQDSKInterface
 from BLUEPRINT.equilibria.find import find_OX
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.utilities.tools import innocent_smoothie
 from BLUEPRINT.geometry.geomtools import theta_sort, length, lengthnorm, clock
@@ -996,7 +996,9 @@ class StreamFlow:
             index -= 1
         if l2d > l_sol[-1]:
             l2d = l_sol[-1]
-            bpwarn("Requested SOL target outside grid. " f"{leg} L2D = {l2d:.2f} m")
+            bluemira_warn(
+                "Requested SOL target outside grid. " f"{leg} L2D = {l2d:.2f} m"
+            )
         x_end, z_end = interp1d(l_sol, x_sol)(l2d), interp1d(l_sol, z_sol)(l2d)
         x_sol, z_sol = x_sol[:index], z_sol[:index]  # trim to strike point
         x_sol, z_sol = np.append(x_sol, x_end), np.append(z_sol, z_end)

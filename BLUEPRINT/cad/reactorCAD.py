@@ -32,7 +32,7 @@ from BLUEPRINT.cad.cryostatCAD import CryostatCAD
 from BLUEPRINT.cad.buildingCAD import RadiationCAD
 from BLUEPRINT.cad.vesselCAD import VesselCAD
 from BLUEPRINT.cad.shieldCAD import ThermalShieldCAD
-from BLUEPRINT.base.lookandfeel import bprint, BClock
+from bluemira.base.look_and_feel import bluemira_print, BluemiraClock
 
 
 class ReactorCAD(CADModel):
@@ -76,11 +76,11 @@ class ReactorCAD(CADModel):
         Build the CAD for the reactor.
         """
         n = len(self.fun)
-        clock = BClock(n)
+        clock = BluemiraClock(n)
         for i, (name, component) in enumerate(self.fun.items()):
             self.add_part(component())
             clock.tock()
-        bprint("CAD built in {:1.1f} seconds".format(clock.stop()))
+        bluemira_print("CAD built in {:1.1f} seconds".format(clock.stop()))
 
 
 if __name__ == "__main__":

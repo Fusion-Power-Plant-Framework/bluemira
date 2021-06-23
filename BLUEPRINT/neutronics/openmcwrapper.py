@@ -27,7 +27,7 @@ import os
 from copy import deepcopy
 from itertools import cycle
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.base.file import get_files_by_ext
+from bluemira.base.file import get_files_by_ext
 from BLUEPRINT.cad.blanketCAD import BlanketCAD
 from BLUEPRINT.cad.divertorCAD import DivertorCAD
 from BLUEPRINT.cad.vesselCAD import VesselCAD

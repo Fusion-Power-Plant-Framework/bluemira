@@ -25,7 +25,7 @@ Base shape object for optimisations with parameterised shapes
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.file import make_BP_path, try_get_BP_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.geombase import JSONReaderWriter
@@ -225,7 +225,7 @@ class Shape(JSONReaderWriter):
         Plots the geometric bounds of the shape optimisation problem
         """
         if self.bound == {}:
-            bpwarn("Geometry::Shape No bounds to plot...")
+            bluemira_warn("Geometry::Shape No bounds to plot...")
             return
 
         if ax is None:
@@ -405,7 +405,7 @@ class Shape(JSONReaderWriter):
             if os.path.isfile(self.read_filename):
                 self.loop_dict = super().load()
             else:
-                bpwarn(
+                bluemira_warn(
                     f"Geometry::Shape file {self.read_filename} not found\n"
                     "initializing new loop_dict"
                 )

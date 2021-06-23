@@ -21,7 +21,7 @@
 import pytest
 
 import numpy as np
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.magnetostatics.greens import (
     greens_psi,
     greens_all,

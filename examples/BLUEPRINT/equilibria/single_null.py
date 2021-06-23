@@ -31,7 +31,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.equilibria.run import AbInitioEquilibriumProblem
 from BLUEPRINT.equilibria.profiles import DoublePowerFunc

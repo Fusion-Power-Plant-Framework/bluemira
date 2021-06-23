@@ -27,7 +27,7 @@ from matplotlib import pyplot as plt
 import tests
 from unittest.mock import patch
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from BLUEPRINT.equilibria.gridops import Grid
 from BLUEPRINT.equilibria.coils import Coil, CoilSet
 from tests.BLUEPRINT.equilibria.setup_methods import _coilset_setup, _coil_circuit_setup

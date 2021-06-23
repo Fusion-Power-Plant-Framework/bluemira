@@ -28,7 +28,7 @@ from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 import matplotlib
 from BLUEPRINT.magnetostatics.biot_savart import BiotSavartLoop
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.utilities.tools import innocent_smoothie
 from BLUEPRINT.utilities.plottools import Plot3D

@@ -29,7 +29,7 @@ from typing import Type
 from scipy.optimize import minimize_scalar, minimize
 from scipy.optimize import fmin_slsqp
 from BLUEPRINT.geometry.geomtools import normal
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.geometry.constants import VERY_BIG
@@ -920,7 +920,7 @@ class OISOptimiser:
             **kwargs,
         )
         if imode != 0:
-            bpwarn("Nova::OISOptimiser exit code != 0.")
+            bluemira_warn("Nova::OISOptimiser exit code != 0.")
 
         return self.xlmap.L_to_xz(xnorm)
 

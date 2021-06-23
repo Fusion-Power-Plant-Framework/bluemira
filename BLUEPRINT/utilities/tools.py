@@ -33,8 +33,8 @@ import nlopt
 import re
 from json import JSONEncoder
 from collections import OrderedDict, Mapping, Iterable
-from BLUEPRINT.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
-from BLUEPRINT.base.lookandfeel import bprint, bpwarn
+from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from BLUEPRINT.geometry.geomtools import lengthnorm
 
 
@@ -146,7 +146,7 @@ class PowerLawScaling:
             c = [(self.c + self.cerr) / self.c, (self.c - self.cerr) / self.c]
         else:
             if self.cerr != 0:
-                bpwarn("PowerLawScaling object overspecified, ignoring cerr.")
+                bluemira_warn("PowerLawScaling object overspecified, ignoring cerr.")
             c = [np.exp(self.cexperr), np.exp(-self.cexperr)]
         up = max(c) * self.calculate(*args, exponents=self.exponents + self.errors)
         down = min(c) * self.calculate(*args, exponents=self.exponents - self.errors)
@@ -533,13 +533,13 @@ def perc_change(v2, v1ref, verbose=False):
             change = "decrease"
         else:
             change = "increase"
-        bprint("This is a {0} % ".format(round(perc, 3)) + change)
+        bluemira_print("This is a {0} % ".format(round(perc, 3)) + change)
         factor = v2 / v1ref
         if factor < 1:
             fchange = "lower"
         else:
             fchange = "higher"
-        bprint("This is " + fchange + f" by a factor of {factor:.2f}")
+        bluemira_print("This is " + fchange + f" by a factor of {factor:.2f}")
     return perc
 
 

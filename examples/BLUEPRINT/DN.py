@@ -26,8 +26,7 @@ import matplotlib.pyplot as plt
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
 from BLUEPRINT.base.file import make_BP_path
-from BLUEPRINT.base.lookandfeel import plot_defaults
-
+from bluemira.base.look_and_feel import plot_defaults
 
 plot_defaults()
 KEY_TO_PLOT = False
