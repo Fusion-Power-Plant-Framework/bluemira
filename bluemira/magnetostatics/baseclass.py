@@ -204,7 +204,7 @@ class SourceGroup(ABC):
         """
         for source in self.sources:
             source.rotate(angle, axis)
-        self.points = self.points @ rotatation_matrix(angle, axis)
+        self.points = self.points @ rotation_matrix(angle, axis)
 
     def plot(self, ax=None, show_coord_sys=False):
         """
