@@ -24,7 +24,7 @@ Module containing the base Component class.
 """
 
 import anytree
-from anytree import NodeMixin
+from anytree import NodeMixin, RenderTree
 import copy
 from typing import Any, Dict, List, Optional, Type, Union
 
@@ -77,7 +77,9 @@ class Component(NodeMixin):
         Constructor for Component class.
         """
         if cls is Component:
-            raise TypeError("Component cannot be initialised directly - use a subclass.")
+            raise ComponentError(
+                "Component cannot be initialised directly - use a subclass."
+            )
         return super().__new__(cls)
 
     def __init_subclass__(cls):
@@ -119,11 +121,17 @@ class Component(NodeMixin):
                     if len(ty.__args__) == 1 and issubclass(ty.__args__[0], Component):
                         cls._subsystem_base_classes[name] = ty.__args__[0]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         The string representation of the instance
         """
         return self.name + " (" + self.__class__.__name__ + ")"
+
+    def tree(self) -> str:
+        """
+        Get the tree of descendants of this instance.
+        """
+        return str(RenderTree(self))
 
     @classmethod
     def get_class(cls, name: str) -> "Component":
@@ -211,15 +219,16 @@ class Component(NodeMixin):
 
         Returns
         -------
-        the_component: Union[Component, List[Component]]
-            The first component of the search.
+        found_components: Union[Component, List[Component]]
+            The first component of the search if first is True, else all components
+            matching the search.
         """
-        the_component = anytree.search.findall_by_attr(self, name)
-        if the_component is None:
+        found_components = anytree.search.findall_by_attr(self.root, name)
+        if len(found_components) == 0:
             return None
         if first:
-            return the_component[0]
-        return the_component
+            return found_components[0]
+        return found_components
 
     def add_parameter(
         self,
@@ -332,8 +341,8 @@ class PhysicalComponent(Component):
         children: Component = None,
     ):
         super().__init__(name, config, inputs, parent, children)
-        self._shape = shape
-        self._material = material
+        self.shape = shape
+        self.material = material
 
     @property
     def shape(self):
@@ -375,7 +384,7 @@ class MagneticComponent(PhysicalComponent):
         children: Component = None,
     ):
         super().__init__(name, config, inputs, shape, material, parent, children)
-        self._conductor = conductor
+        self.conductor = conductor
 
     @property
     def conductor(self):
