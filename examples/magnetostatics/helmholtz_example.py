@@ -24,11 +24,12 @@ Simple HelmholzCage example with different current sources.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from bluemira.utilities.plottools import Plot3D
-from bluemira.geometry.parameterisations import princetonD
+from bluemira.utilities.plot_tools import Plot3D
+from bluemira.geometry.tools import make_circle_arc
 from bluemira.geometry.loop import Loop
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-from bluemira.magnetostatics.current_source import (
+from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
@@ -38,12 +39,15 @@ n_TF = 6
 current = 20e6
 breadth = 0.5
 depth = 1.0
-x, z = princetonD(4, 16, 0, npoints=50)
+radius = 6
+x_c = 9
+z_c = 0
+x, z = make_circle_arc(radius, x_c, z_c, n_points=200, start_angle=np.pi)
 
 # Make a Biot-Savart filament (which needs to be properly discretised)
 n_filaments_x = 2
 n_filaments_y = 3
-radius = 0.5 * (breadth + depth) / (n_filaments_x * n_filaments_y)
+fil_radius = 0.5 * (breadth + depth) / (n_filaments_x * n_filaments_y)
 
 loop = Loop(x=x, z=z)
 loop.close()
@@ -61,19 +65,33 @@ for dx in dx_offsets:
         loops.append(new_loop)
 
 biotsavart_circuit = BiotSavartFilament(
-    loops, radius=radius, current=current / (n_filaments_x * n_filaments_y)
+    loops, radius=fil_radius, current=current / (n_filaments_x * n_filaments_y)
 )
 
-# Make an analytical circuit with a rectangular cross-section
-loop = Loop(x=x, z=z)
+# Make an analytical circuit with a rectangular cross-section comprised
+# of several trapezoidal prism elements
 loop.close()
-analytical_circuit = ArbitraryPlanarRectangularXSCircuit(
+analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
     loop, breadth=breadth, depth=depth, current=current
 )
 
-# Pattern the two circuits
+# Make an analytical circuit of a circle arc with a rectangular cross-section
+
+analytical_circuit2 = CircularArcCurrentSource(
+    [x_c, 0, z_c],
+    [0, 0, 1],
+    [1, 0, 0],
+    [0, 1, 0],
+    breadth=breadth,
+    depth=depth,
+    radius=radius,
+    dtheta=2 * np.pi,
+    current=current,
+)
+# Pattern the three circuits
 biotsavart_tf_cage = HelmholtzCage(biotsavart_circuit, n_TF=n_TF)
-analytical_tf_cage = HelmholtzCage(analytical_circuit, n_TF=n_TF)
+analytical_tf_cage1 = HelmholtzCage(analytical_circuit1, n_TF=n_TF)
+analytical_tf_cage2 = HelmholtzCage(analytical_circuit2, n_TF=n_TF)
 
 # Calculate the fields in the x-y plane
 nx, ny = 50, 50
@@ -89,7 +107,7 @@ for i in range(nx):
             np.sum(biotsavart_tf_cage.field([x[i], y[j], 0]) ** 2)
         )
         analytical_xy_fields[i, j] = np.sqrt(
-            np.sum(analytical_tf_cage.field([x[i], y[j], 0]) ** 2)
+            np.sum(analytical_tf_cage1.field([x[i], y[j], 0]) ** 2)
         )
 
 # Calculate the fields in the x-z plane
@@ -106,7 +124,7 @@ for i in range(nx):
             np.sum(biotsavart_tf_cage.field([x[i], 0, z[j]]) ** 2)
         )
         analytical_xz_fields[i, j] = np.sqrt(
-            np.sum(analytical_tf_cage.field([x[i], 0, z[j]]) ** 2)
+            np.sum(analytical_tf_cage1.field([x[i], 0, z[j]]) ** 2)
         )
 
 
@@ -151,5 +169,5 @@ def plot_cage_results(cage, xz_fields, xy_fields):
 
 
 # Plot the two cages and the results in the two planes
-plot_cage_results(analytical_tf_cage, analytical_xz_fields, analytical_xy_fields)
+plot_cage_results(analytical_tf_cage1, analytical_xz_fields, analytical_xy_fields)
 plot_cage_results(biotsavart_tf_cage, biotsavart_xz_fields, biotsavart_xy_fields)

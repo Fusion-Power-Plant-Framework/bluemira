@@ -271,10 +271,8 @@ class BiotSavartFilament(CurrentSource):
             ax = Plot3D()
             # If no ax provided, we assume that we want to plot only this source,
             # and thus set aspect ratio equality on this term only
-            edge_points = np.concatenate(self.points)
-
             # Invisible bounding box to set equal aspect ratio plot
-            xbox, ybox, zbox = bounding_box(*edge_points)
+            xbox, ybox, zbox = bounding_box(*self.points.T)
             ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
 
         # Split sub-filaments up for plotting purposes

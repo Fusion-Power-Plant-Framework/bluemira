@@ -628,7 +628,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
     depth: float
         The depth of the current source (half-height) [m]
     radius: float
-        The radius of the circular arec from the origin [m]
+        The radius of the circular arc from the origin [m]
     dtheta: float
         The azimuthal width of the arc [rad]
     current: float
