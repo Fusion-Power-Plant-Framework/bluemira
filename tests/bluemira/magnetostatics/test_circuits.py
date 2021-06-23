@@ -130,7 +130,7 @@ class TestCariddiBenchmark:
 
     @classmethod
     def setup_class(cls):
-        root = get_bluemira_path("magnetostatics/test_data", subfolder="tests")
+        root = get_bluemira_path("bluemira/magnetostatics/test_data", subfolder="tests")
         width = 0.64
         depth = 1.15
         B_0 = 5.77

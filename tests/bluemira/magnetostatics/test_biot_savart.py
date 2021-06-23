@@ -24,7 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import plot_defaults
-from bluemira.geometry.tools import circle_seg
+from bluemira.geometry.tools import make_circle_arc
 from bluemira.geometry.loop import Loop
 from bluemira.magnetostatics.greens import (
     greens_all,
@@ -54,7 +54,7 @@ def test_biot_savart_loop():
     # Analytical field values
     _, Bx, Bz = greens_all(x_coil, z_coil, x_2d, z_2d)
 
-    xc, yc = circle_seg(x_coil, h=[0, z_coil], npoints=2000)
+    xc, yc = make_circle_arc(x_coil, 0, z_coil, n_points=2000)
     loop = Loop(xc, yc, 0)
     bsf = BiotSavartFilament(loop, radius)
 
@@ -166,7 +166,7 @@ def test_inductance():
 
     ind3 = np.zeros((100, 100))
     for i, r in enumerate(radii):
-        x, y = circle_seg(r, npoints=200)
+        x, y = make_circle_arc(r, n_points=200)
         loop = Loop(x=x, z=y)
         for j, rc in enumerate(rci):
             bsf = BiotSavartFilament(loop, rc)

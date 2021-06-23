@@ -25,6 +25,7 @@ A coordinate-series object class.
 
 import numpy as np
 from scipy.spatial.distance import cdist
+from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from bluemira.base.look_and_feel import bluemira_warn
@@ -47,6 +48,7 @@ from bluemira.geometry._deprecated_tools import (
     get_centroid_3d,
     get_normal_vector,
     offset,
+    vector_lengthnorm,
 )
 from bluemira.utilities.tools import is_num
 
@@ -546,6 +548,16 @@ class Loop(GeomBase):
                 self.__setattr__(k, t[i])
         else:
             return Loop(**dict(zip(["x", "y", "z"], t)))
+
+    def interpolate(self, n_points):
+        """
+        Repurposed from S. McIntosh geom.py
+        """
+        ll = vector_lengthnorm(*self.xyz)
+        linterp = np.linspace(0, 1, int(n_points))
+        self.x = interp1d(ll, self.x)(linterp)
+        self.y = interp1d(ll, self.y)(linterp)
+        self.z = interp1d(ll, self.z)(linterp)
 
     # =========================================================================
     # Queries

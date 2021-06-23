@@ -642,6 +642,31 @@ def bounding_box(x, y, z):
     return x_b, y_b, z_b
 
 
+def vector_lengthnorm(x, y, z):
+    """
+    Get a normalised 1-D parameterisation of a set of x-y-z coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: np.array
+        The z coordinates
+
+    Returns
+    -------
+    length_: np.array(n)
+        The normalised length vector
+    """
+    length_ = np.append(
+        0,
+        np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)),
+    )
+    return length_ / length_[-1]
+
+
 # =============================================================================
 # Coordinate manipulation
 # =============================================================================
