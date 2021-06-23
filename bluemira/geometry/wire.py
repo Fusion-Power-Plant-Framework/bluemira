@@ -33,6 +33,7 @@ import Part
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
+
 from bluemira.geometry.freecadapi import (
     discretize_by_edges, discretize, close_wire, make_polygon
 )

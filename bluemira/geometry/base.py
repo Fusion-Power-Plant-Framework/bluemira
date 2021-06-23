@@ -57,6 +57,7 @@ class BluemiraGeo(ABC):
 
     @staticmethod
     def _converter(func):
+        """"Function used in __getattr__ to modify the added functions"""
         return func
 
     def __getattr__(self, key):

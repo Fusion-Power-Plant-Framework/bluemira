@@ -41,6 +41,10 @@ from bluemira.geometry.error import NotClosedWire, DisjointedFace
 
 class BluemiraFace(BluemiraGeo):
     """Bluemira Face class."""
+
+#    metds = {'is_closed': 'isClosed', 'scale': 'scale'}
+#    attrs = {**BluemiraGeo.attrs, **metds}
+
     def __init__(
             self,
             boundary,
@@ -49,6 +53,17 @@ class BluemiraFace(BluemiraGeo):
     ):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, lcar, boundary_classes)
+
+    @staticmethod
+    def _converter(func):
+        def wrapper(*args, **kwargs):
+            output = func(*args, **kwargs)
+            if isinstance(output, Part.Wire):
+                output = BluemiraWire(output)
+            if isinstance(output, Part.Face):
+                output = BluemiraFace._create(output)
+            return output
+        return wrapper
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""
@@ -85,24 +100,24 @@ class BluemiraFace(BluemiraGeo):
         return face
 
     @property
-    def _shape(self):
-        """Part.Wire: shape of the object as a single wire"""
+    def _shape(self) -> Part.Face:
+        """Part.Face: shape of the object as a primitive face"""
         return self._face
 
     @property
-    def Wires(self) -> List[Part.Wire]:
+    def _wires(self) -> List[Part.Wire]:
         """list(Part.Wire): list of wires of which the shape consists of."""
-
-        # Note:the method is recursively implemented considering that
-        # Part.Wire has a similar Wires property.
 
         wires = []
         for o in self.boundary:
-            wires += o.Wires
+            if isinstance(o, Part.Wire):
+                wires += o.Wires
+            else:
+                wires += o._wires
         return wires
 
-    @staticmethod
-    def create(cls, obj: Part.Face):
+    @classmethod
+    def _create(cls, obj: Part.Face) -> BluemiraFace:
         if isinstance(obj, Part.Face):
             wires = obj.Wires
             bmwire = BluemiraWire(wires)
