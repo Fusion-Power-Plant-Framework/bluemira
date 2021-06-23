@@ -24,7 +24,7 @@ An example of how to generate materials
 """
 
 # %%
-from BLUEPRINT.materials.cache import MaterialCache
+from bluemira.materials import MaterialCache
 
 # %%[markdown]
 # # Material Definitions
@@ -53,15 +53,15 @@ material_dict = {
         # Let's try an equation with some temperature bounds
         "youngs_modulus": {
             "value": "polynomial.Polynomial([1, 2e-5, 3e-7])(temperature_in_C)",
-            "temp_min_celcius": 0.0,
-            "temp_max_celcius": 100.0,
+            "temp_min_celsius": 0.0,
+            "temp_max_celsius": 100.0,
             "reference": "I made it up.",
         },
         # Let's try a linear interpolated property from some data
         "coefficient_thermal_expansion": {
             "value": "interp(temperature_in_C, [20, 100, 200, 400], [10.3, 3.3, 2.2, 1.1])",
-            "temp_min_celcius": 20.0,
-            "temp_max_celcius": 400.0,
+            "temp_min_celsius": 20.0,
+            "temp_max_celsius": 400.0,
         },
     },
     "Cream": {

@@ -31,12 +31,11 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import neutronics_material_maker as nmm
 
-from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.materials.constants import MATERIAL_BEAM_MAP, T_DEFAULT
-from BLUEPRINT.materials.material import (
-    MaterialsError,
-    SerialisedMaterial,
-)
+from ..base.look_and_feel import bluemira_warn
+
+from .constants import MATERIAL_BEAM_MAP, T_DEFAULT
+from .error import MaterialsError
+from .material import SerialisedMaterial
 
 
 class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
@@ -142,7 +141,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         return mat_dict
 
     @classmethod
-    def from_dict(cls, name, materials_dict, materials_cache):
+    def from_dict(cls, name, material_dict, material_cache):
         """
         Generate an instance of the mixture from a dictionary of materials.
 
@@ -152,7 +151,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
             The name of the mixture.
         materials_dict: Dict[str, Any]
             The dictionary defining this and any additional mixtures.
-        materials_cache: MaterialCache
+        material_cache: MaterialCache
             The cache to load the constituent materials from.
 
         Returns
@@ -160,21 +159,15 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         mixture : SerialisedMaterial
             The mixture.
         """
-        mat_dict = copy.deepcopy(materials_dict[name])
-        if "materials" not in materials_dict[name].keys():
+        mat_dict = copy.deepcopy(material_dict[name])
+        if "materials" not in material_dict[name].keys():
             raise MaterialsError("Mixture must define constituent materials.")
 
-        for mat in materials_dict[name]["materials"]:
+        for mat in material_dict[name]["materials"]:
             if isinstance(mat, str):
                 del mat_dict["materials"][mat]
-                material_inst = materials_cache.get_material(mat, False)
-                material_value = materials_dict[name]["materials"][mat]
+                material_inst = material_cache.get_material(mat, False)
+                material_value = material_dict[name]["materials"][mat]
                 mat_dict["materials"][material_inst] = material_value
 
         return super().from_dict(name, {name: mat_dict})
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

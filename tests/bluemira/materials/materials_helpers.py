@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -19,25 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-Constants for use in the materials package.
-"""
+import os
 
-T_DEFAULT = 293.15  # Default temperature for all liquids [K]
-P_DEFAULT = 101325  # Default pressure for all liquids [Pa]
+from bluemira.base.file import get_bluemira_path
+from bluemira.materials import MaterialCache
 
-
-# Sigh.. cba to fix
-MATERIAL_BEAM_MAP = {
-    "rho": "rho",
-    "mu": "nu",
-    "CTE": "alpha",
-    "E": "E",
-    "Sy": "sigma_y",
-}
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
+MATERIAL_DATA_PATH = get_bluemira_path("materials", subfolder="data")
+MATERIAL_CACHE = MaterialCache()
+MATERIAL_CACHE.load_from_file(os.sep.join([MATERIAL_DATA_PATH, "materials.json"]))
+MATERIAL_CACHE.load_from_file(os.sep.join([MATERIAL_DATA_PATH, "mixtures.json"]))

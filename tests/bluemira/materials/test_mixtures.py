@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -18,26 +18,24 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import pytest
+
+# =============================================================================
+# Material mixture utility classes
+# =============================================================================
+from bluemira.materials.constants import MATERIAL_BEAM_MAP
+
+from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
 
 
-"""
-Module-level functionality for materials.
-"""
+class TestMatDict:
+    def test_wp(self):
+        tf = MATERIAL_CACHE.get_material("Toroidal_Field_Coil_2015")
+        mat_dict = tf.make_mat_dict(294)
 
-import os
+        for key in MATERIAL_BEAM_MAP.values():
+            assert key in mat_dict
 
-from BLUEPRINT.base.file import get_BP_path
-from bluemira.base.look_and_feel import bluemira_warn
 
-from .cache import MaterialCache
-
-materials_cache = MaterialCache()
-try:
-    material_dir = get_BP_path("materials", subfolder="data/BLUEPRINT")
-    material_file = os.sep.join([material_dir, "materials.json"])
-    mixture_file = os.sep.join([material_dir, "mixtures.json"])
-    materials_cache.load_from_file(material_file)
-    materials_cache.load_from_file(mixture_file)
-except ValueError:
-    bluemira_warn("Unable to load default materials cache")
-    pass
+if __name__ == "__main__":
+    pytest.main([__file__])
