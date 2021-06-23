@@ -953,6 +953,17 @@ class ParameterFrame:
                 for (key, parameter) in self.__dict__.items()
             }
 
+    def __len__(self) -> int:
+        """
+        Get the number of parameters in the frame.
+
+        Returns
+        -------
+        count: int
+            The number of parameters in the frame.
+        """
+        return len(self.__dict__.items())
+
     @classmethod
     def from_dict(cls, the_dict: dict):
         """
