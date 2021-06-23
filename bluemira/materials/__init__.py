@@ -24,10 +24,6 @@
 Module-level functionality for materials.
 """
 
-import os
-
-from ..base.look_and_feel import bluemira_warn
-
 from .cache import MaterialCache
 from .material import (
     BePebbleBed,

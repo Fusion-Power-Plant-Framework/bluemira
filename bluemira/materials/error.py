@@ -19,12 +19,16 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+Error classes for the materials module.
+"""
+
 from ..base.error import BluemiraError
 
 
 class MaterialsError(BluemiraError):
     """
-    Error type for the materials module
+    Error type for the materials module.
     """
 
     pass
