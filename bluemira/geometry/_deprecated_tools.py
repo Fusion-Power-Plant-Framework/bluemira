@@ -258,6 +258,41 @@ def distance_between_points(p1, p2):
     return np.sqrt(sum([(p2[i] - p1[i]) ** 2 for i in range(len(p2))]))
 
 
+def get_angle_between_vectors(v1, v2, signed=False):
+    """
+    Angle between vectors. Will return the signed angle if specified.
+
+    Parameters
+    ----------
+    v1: np.array
+        The first vector
+    v2: np.array
+        The second vector
+
+    Returns
+    -------
+    angle: float
+        The angle between the vector [radians]
+    """
+    if not all(isinstance(p, np.ndarray) for p in [v1, v2]):
+        v1, v2 = np.array(v1), np.array(v2)
+    v1n = v1 / np.linalg.norm(v1)
+    v2n = v2 / np.linalg.norm(v2)
+    cos_angle = np.dot(v1n, v2n)
+    # clip to dodge a NaN
+    angle = np.arccos(np.clip(cos_angle, -1, 1))
+    sign = 1
+    if signed:
+        det = np.linalg.det(np.stack((v1n[-2:], v2n[-2:])))
+        if det == 0:
+            # Vectors parallel
+            sign = 1
+        else:
+            sign = np.sign(det)
+
+    return sign * angle
+
+
 @nb.jit(cache=True, nopython=True)
 def get_normal_vector(x, y, z):
     """

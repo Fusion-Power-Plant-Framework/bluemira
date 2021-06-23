@@ -28,7 +28,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.constants import MU_0_4PI
 from bluemira.magnetostatics.tools import jit_llc3, jit_llc4, integrate
-from bluemira.geometry.tools import circle_seg
+from bluemira.geometry.tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
 
 __all__ = ["CircularArcCurrentSource"]
@@ -764,12 +764,12 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
 
         # Circle arcs
         n = 200
-        theta = np.rad2deg(self.dtheta)
+        theta = self.dtheta
         ones = np.ones(n)
-        arc_1x, arc_1y = circle_seg(r - a, (0, 0), angle=theta, start=0, npoints=n)
-        arc_2x, arc_2y = circle_seg(r + a, (0, 0), angle=theta, start=0, npoints=n)
-        arc_3x, arc_3y = circle_seg(r + a, (0, 0), angle=theta, start=0, npoints=n)
-        arc_4x, arc_4y = circle_seg(r - a, (0, 0), angle=theta, start=0, npoints=n)
+        arc_1x, arc_1y = make_circle_arc(r - a, 0, 0, angle=theta, n_points=n)
+        arc_2x, arc_2y = make_circle_arc(r + a, 0, 0, angle=theta, n_points=n)
+        arc_3x, arc_3y = make_circle_arc(r + a, 0, 0, angle=theta, n_points=n)
+        arc_4x, arc_4y = make_circle_arc(r - a, 0, 0, angle=theta, n_points=n)
         arc_1 = np.array([arc_1x, arc_1y, -b * ones]).T
         arc_2 = np.array([arc_2x, arc_2y, -b * ones]).T
         arc_3 = np.array([arc_3x, arc_3y, b * ones]).T
@@ -801,9 +801,9 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         """
         super().plot(ax=ax, show_coord_sys=show_coord_sys)
         ax = plt.gca()
-        theta = np.rad2deg(self.dtheta)
-        x, y = circle_seg(
-            self.radius, (0, 0), angle=theta / 2, start=theta / 4, npoints=200
+        theta = self.dtheta
+        x, y = make_circle_arc(
+            self.radius, 0, 0, angle=theta / 2, start_angle=theta / 4, n_points=200
         )
         centre_arc = np.array([x, y, np.zeros(200)]).T
         points = self._local_to_global(centre_arc)

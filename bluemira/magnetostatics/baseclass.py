@@ -27,7 +27,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from typing import List
 from copy import deepcopy
-from bluemira.geometry.tools import rotatation_matrix, bounding_box
+from bluemira.geometry.tools import rotation_matrix, bounding_box
 from bluemira.utilities.plot_tools import Plot3D
 
 
@@ -114,7 +114,7 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
         axis: Union[np.array(3), str]
             The axis of rotation
         """
-        r = rotatation_matrix(angle, axis)
+        r = rotation_matrix(angle, axis)
         self.origin = self.origin @ r
         self.points = np.array([p @ r for p in self.points], dtype=object)
         self.dcm = self.dcm @ r

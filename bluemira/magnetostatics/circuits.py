@@ -26,7 +26,7 @@ Three-dimensional current source terms.
 import numpy as np
 from bluemira.geometry.tools import (
     get_angle_between_vectors,
-    rotatation_matrix,
+    rotation_matrix,
     get_normal_vector,
     close_coordinates,
 )
@@ -69,12 +69,11 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         self.d_l = np.diff(self.shape, axis=0)
         self.midpoints = self.shape[:-1, :] + self.d_l / 2
         sources = []
-        beta = np.deg2rad(get_angle_between_vectors(self.d_l[-1], self.d_l[0])) / 2
+        beta = get_angle_between_vectors(self.d_l[-1], self.d_l[0]) / 2
 
         for i, (midpoint, d_l) in enumerate(zip(self.midpoints, self.d_l)):
-            angle = np.deg2rad(
-                get_angle_between_vectors(self.d_l[i - 1], d_l, signed=True)
-            )
+            angle = get_angle_between_vectors(self.d_l[i - 1], d_l, signed=True)
+
             alpha = angle / 2
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
@@ -155,8 +154,9 @@ class HelmholtzCage(SourceGroup):
         planes = [np.pi / self.n_TF, 0]  # rotate (inline, ingap)
 
         for i, theta in enumerate(planes):
-            sr = np.dot(point, rotatation_matrix(theta))
-            nr = np.dot(n, rotatation_matrix(theta))
+            r_matrix = rotation_matrix(theta)
+            sr = np.dot(point, r_matrix)
+            nr = np.dot(n, r_matrix)
             field = self.field(sr)
             ripple_field[i] = np.dot(nr, field)
 
