@@ -32,7 +32,7 @@ import freecad
 import Part
 
 # import from bluemira
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.bmbase import BluemiraGeo
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 
