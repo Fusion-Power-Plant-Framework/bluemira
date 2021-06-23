@@ -121,13 +121,6 @@ class Norm2Tikhonov(EquilibriumOptimiser):
         """
         Optimise the prescribed problem.
         """
-        # Determine why the below violates recursion...
-        # =============================================================================
-        #         if self.inv_A_T_A is None:
-        #             self.inv_A_T_A = inv(dot(self.A.T, self.A) +
-        #                                  self.gamma**2*eye(self.A.shape[1]))
-        #         self.x = dot(self.inv_A_T_A, dot(self.A.T, self.b))
-        # =============================================================================
         self.x = tikhonov(self.A, self.b, self.gamma)
         self.calc_error()
         return self.x

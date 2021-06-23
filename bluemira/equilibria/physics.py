@@ -31,18 +31,44 @@ from bluemira.equilibria.grid import volume_integral
 from bluemira.geometry.tools import loop_volume
 
 
-def get_psi_norm(psi, opsi, xpsi):
+def calc_psi_norm(psi, opsi, xpsi):
     """
-    Returns normalised psi
-    \t:math:`\\psi_{N}=\\dfrac{\\psi_{O}-\\psi}{\\psi_{O}-\\psi_{X}}`
+    Calculate normalised magnetic flux.
+
+    Parameters
+    ----------
+    psi: Union[float, np.array]
+        The magnetic flux per radian
+    opsi: float
+        The psi value at the O-point
+    xpsi: float
+        The psi value at the X-point
+
+    Returns
+    -------
+    psi_n: Union[float, np.array]
+        The normalised magnetic flux value(s)
     """
     return (opsi - psi) / (opsi - xpsi)
 
 
-def get_psi(psi_norm, opsi, xpsi):
+def calc_psi(psi_norm, opsi, xpsi):
     """
-    Returns absolute psi
-    \t:math:`\\psi=\\psi_{0}-\\psi_{N}(\\psi_{O}-\\psi_{X})`
+    Calculate the absolute psi values from normalised psi values
+
+    Parameters
+    ----------
+    psi_norm: Union[float, np.array]
+        The normalised psi values
+    opsi: float
+        The psi value at the O-point
+    xpsi: float
+        The psi value at the X-point
+
+    Returns
+    -------
+    psi: Union[float, np.array]
+        The magnetic flux per radian
     """
     return opsi - psi_norm * (opsi - xpsi)
 

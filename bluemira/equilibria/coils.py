@@ -447,7 +447,7 @@ class Coil:
         """
         Calculate poloidal flux at (x, z) due to a unit current
         """
-        if self.sub_coils is None:  # Filamentary Green's coil function
+        if self.sub_coils is None:
             return greens_psi(self.x, self.z, x, z, self.dx, self.dz) * self.n_turns
 
         gpsi = [greens_psi(c.x, c.z, x, z, c.dx, c.dz) for c in self.sub_coils.values()]

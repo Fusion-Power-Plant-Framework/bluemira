@@ -43,7 +43,7 @@ from bluemira.equilibria.find import (
     in_plasma,
 )
 from bluemira.equilibria.physics import (
-    get_psi_norm,
+    calc_psi_norm,
     calc_q,
     calc_q0,
     calc_li,
@@ -1081,7 +1081,7 @@ class Equilibrium(MHDState):
         2-D x-z normalised poloidal flux map
         """
         psi = self.psi()
-        return get_psi_norm(psi, *self.get_OX_psis(psi))
+        return calc_psi_norm(psi, *self.get_OX_psis(psi))
 
     def pressure_map(self):
         """
@@ -1169,7 +1169,7 @@ class Equilibrium(MHDState):
         flux surface: Loop
         """
         psi = self.psi(x, z)
-        psi_n = get_psi_norm(psi, *self.get_OX_psis())
+        psi_n = calc_psi_norm(psi, *self.get_OX_psis())
         return self.get_flux_surface(psi_n)
 
     def get_LCFS(self, psi=None):
@@ -1300,7 +1300,7 @@ class Equilibrium(MHDState):
         for xp in x_points:
             if "Xpoint" in xp.__class__.__name__:
                 if count > 0:
-                    psinorm = get_psi_norm(xp.psi, o_points[0].psi, x_points[0].psi)
+                    psinorm = calc_psi_norm(xp.psi, o_points[0].psi, x_points[0].psi)
                     if psinorm > 1:
                         d_x.append(self.get_midplane(*lfp, xp.psi)[0])
                 count += 1

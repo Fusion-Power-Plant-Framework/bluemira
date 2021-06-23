@@ -31,7 +31,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.plot_tools import str_to_latex
 from bluemira.equilibria.constants import M_PER_MN, J_TOR_MIN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
-from bluemira.equilibria.physics import get_psi
+from bluemira.equilibria.physics import calc_psi
 
 
 __all__ = [
@@ -498,7 +498,7 @@ class EquilibriumPlotter(Plotter):
         Plots a normalised flux surface relative to the separatrix with
         increasing values going outwards from plasma core.
         """
-        psi = get_psi(psi_norm, self.op_psi, self.xp_psi)
+        psi = calc_psi(psi_norm, self.op_psi, self.xp_psi)
         self.ax.contour(
             self.eq.x, self.eq.z, self.psi, levels=[psi], colors=color, zorder=9
         )
