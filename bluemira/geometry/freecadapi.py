@@ -28,6 +28,7 @@ from __future__ import annotations
 # import from freecad
 import freecad
 import Part
+import FreeCAD
 from FreeCAD import Base
 
 # import numpy lib
@@ -35,6 +36,9 @@ import numpy
 
 # import typing
 from typing import Union
+
+# import errors
+from bluemira.geometry.error import GeometryError
 
 
 #########################################
@@ -216,3 +220,106 @@ def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Par
     if closed:
         wire = close_wire(wire)
     return wire
+
+
+###################################
+# Save functions
+###################################
+
+def save_as_STEP(shapes, filename="test", scale=1):
+    """
+    Saves a series of Shape objects as a STEP assembly
+
+    Parameters
+    ----------
+    shapes: (Shape, ..)
+        Iterable of shape objects to be saved
+    filename: str
+        Full path filename of the STP assembly
+    scale: float (default 1)
+        The scale in which to save the Shape objects
+    """
+
+    if not filename.endswith(".STP"):
+        filename += ".STP"
+
+    if not isinstance(shapes, list):
+        shapes = [shapes]
+
+    if not all(not shape.isNull() for shape in shapes):
+        raise GeometryError("Shape is null.")
+
+    compound = make_compound(shapes)
+
+    if scale != 1:
+        # scale the compound. Since the scale function modifies directly the shape,
+        # a copy of the compound is made to avoid modification of the original shapes.
+        compound = compound.copy().scale(scale)
+
+    doc = FreeCAD.newDocument()
+    obj = FreeCAD.ActiveDocument.addObject("App::DocumentObject", "Test")
+
+    freecad_comp = FreeCAD.ActiveDocument.addObject("Part::Feature")
+
+    # link the solid to the object
+    freecad_comp.Shape = compound
+
+    Part.export([freecad_comp], filename)
+
+
+# # =============================================================================
+# # Shape manipulations
+# # =============================================================================
+def scale_shape(shape, factor) -> None:
+    """
+    Apply scaling with factor to the shape
+
+    Parameters
+    ----------
+    shape: FreeCAD Shape object
+        The shape to be scaled
+    factor: float
+        The scaling factor
+
+    Returns
+    -------
+    None: the object is directly modified
+    """
+
+    return shape.scale(factor)
+
+
+def translate_shape(shape, vector: tuple) -> None:
+    """
+    Apply scaling with factor to the shape
+
+    Parameters
+    ----------
+    shape: FreeCAD Shape object
+        The shape to be scaled
+    vector: tuple (x,y,z)
+        The translation vector
+
+    Returns
+    -------
+    None: the object is directly modified
+    """
+
+    return shape.translate(vector)
+
+def make_compound(shapes):
+    """
+    Make an FreeCAD compound object out of many shapes
+
+    Parameters
+    ----------
+    *shapes: list of FreeCAD shape objects
+        A set of objects to be compounded
+
+    Returns
+    -------
+    compound: FreeCAD compound object
+        A compounded set of shapes
+    """
+    compound = Part.makeCompound(shapes)
+    return compound

@@ -21,6 +21,7 @@
 
 import bluemira.geometry as geo
 
+# Note: this tutorial must to be translated into a set of pytests
 
 if __name__ == "__main__":
     print("This is a simple tutorial for the geometric module")
@@ -33,9 +34,6 @@ if __name__ == "__main__":
     print("2. Creation of a bluemira wire")
     bmwire = geo.wire.BluemiraWire(wire, "bmwire")
     print(bmwire)
-
-    bmwire1 = geo.wire.BluemiraWire.make_polygon(pntslist, closed=True)
-    print(bmwire1)
 
     print("3. Make some operations on bluemira wire")
     ndiscr = 10
@@ -50,6 +48,40 @@ if __name__ == "__main__":
     bmface = geo.face.BluemiraFace(bmwire, "bmface")
     print(bmface)
 
-    w = bmwire.scale(1)
-    print(w)
+    print("5. Test of scale function.")
+    print("Note: scale function modifies the original object")
+    print("5.1 Scale a BluemiraWire")
+    print("Original object: {}".format(bmwire))
+    bmwire.scale(2)
+    print("Scaled object: {}".format(bmwire))
+    print("NOTE: since bmface is connected to bmwire, a scale operation on bmwire will"
+          " affect also bmface")
+    print("5.1 Scale a BluemiraFace")
+    print("Original object: {}".format(bmface))
+    bmface.scale(2)
+    print("Scaled object: {}".format(bmface))
+
+    print("6. Test Save as STEP file.")
+    shapes = [bmwire._shape, bmface._shape]
+    print(shapes)
+    geo.freecadapi.save_as_STEP(shapes)
+
+    print("7. Test BluemiraWire.close")
+    print("7.1 when boundary is list(Part.Wire)")
+    pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
+    wire = geo.freecadapi.make_polygon(pntslist, closed=False)
+    bmwire_nc = geo.wire.BluemiraWire(wire)
+    print(bmwire_nc)
+    bmwire_nc.close()
+    print(bmwire_nc)
+    print(bmwire_nc.boundary)
+
+    print("7.2 when boundary is list(BluemiraWire)")
+    bmwire_nc = geo.wire.BluemiraWire(geo.wire.BluemiraWire(wire))
+    print(bmwire_nc)
+    bmwire_nc.close()
+    print(bmwire_nc)
+    print(bmwire_nc.boundary)
+
+    print("7. Test Translate")
 

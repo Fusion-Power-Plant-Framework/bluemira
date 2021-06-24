@@ -35,7 +35,7 @@ import Part
 from bluemira.geometry.bmbase import BluemiraGeo
 
 from bluemira.geometry.freecadapi import (
-    discretize_by_edges, discretize, close_wire, make_polygon
+    discretize_by_edges, discretize, wire_closure, scale_shape, translate_shape
 )
 
 # import mathematical library
@@ -102,17 +102,20 @@ class BluemiraWire(BluemiraGeo):
                 wires += o._wires
         return wires
 
-    def close_shape(self):
+    def close(self) -> None:
         """Close the shape with a LineSegment between shape's end and
             start point. This function modify the object boundary.
         """
         if not self.is_closed():
-            closure = close_wire(self._shape)
-            self.boundary.append(closure)
+            closure = wire_closure(self._shape)
+            if isinstance(self.boundary[0], Part.Wire):
+                self.boundary.append(closure)
+            else:
+                self.boundary.append(BluemiraWire(closure))
 
         # check that the new boundary is closed
         if not self.is_closed():
-            raise NotClosedWire("The open boundary has not been closed correctly.")
+            raise NotClosedWire("The open boundary has not been closed.")
 
     def discretize(self, ndiscr: int = 100, byedges: bool = False) -> numpy.ndarray:
 
@@ -126,9 +129,18 @@ class BluemiraWire(BluemiraGeo):
             points = discretize(self._shape, ndiscr)
         return points
 
-    @staticmethod
-    def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> \
-            BluemiraWire:
-        """Make a BluemiraWire polygon from a set of points. If closed is True,
-        the wire will be forced to be closed."""
-        return BluemiraWire(make_polygon(points, closed))
+    def scale(self, factor) -> None:
+        """Apply scaling with factor to this object"""
+        for o in self.boundary:
+            if isinstance(o, Part.Wire):
+                scale_shape(o, factor)
+            else:
+                o.scale(factor)
+
+    def translate(self, vector) -> None:
+        """Translate this shape with the vector"""
+        for o in self.boundary:
+            if isinstance(o, Part.Wire):
+                translate_shape(o, vector)
+            else:
+                o.translate(vector)

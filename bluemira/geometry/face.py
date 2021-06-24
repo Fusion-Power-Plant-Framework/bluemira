@@ -83,11 +83,9 @@ class BluemiraFace(BluemiraGeo):
     @BluemiraGeo.boundary.setter
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
-        # The face is created here to have consistency between boundary and face.
-        self._face = self._createFace()
 
-    def _createFace(self):
-        """ """
+    def _create_face(self):
+        """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
         face = Part.Face(external._shape)
         if len(self.boundary) > 1:
@@ -102,7 +100,7 @@ class BluemiraFace(BluemiraGeo):
     @property
     def _shape(self) -> Part.Face:
         """Part.Face: shape of the object as a primitive face"""
-        return self._face
+        return self._create_face()
 
     @property
     def _wires(self) -> List[Part.Wire]:

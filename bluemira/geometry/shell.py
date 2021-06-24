@@ -55,8 +55,6 @@ class BluemiraShell(BluemiraGeo):
     @BluemiraGeo.boundary.setter
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
-        # The shell is created here to have consistency between boundary and face.
-        self._shell = self._createShell()
 
     def _createShell(self):
         """ Creation of the shell"""
@@ -65,8 +63,8 @@ class BluemiraShell(BluemiraGeo):
 
     @property
     def _shape(self):
-        """Part.Wire: shape of the object as a single wire"""
-        return self._shell
+        """Part.Shell: shape of the object as a primitive shell"""
+        return self._createShell()
 
     @staticmethod
     def create(cls, obj: Part.Shell):

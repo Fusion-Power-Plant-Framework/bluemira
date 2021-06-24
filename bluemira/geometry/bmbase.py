@@ -39,7 +39,7 @@ class BluemiraGeo(ABC):
     """Base abstract class for geometry"""
 
     props = {'length': 'Length', 'area': 'Area', 'volume': 'Volume'}
-    metds = {'is_closed': 'isClosed', 'scale': 'scale'}
+    metds = {'is_null': 'isNull', 'is_closed': 'isClosed'}
     attrs = {**props, **metds}
 
     def __init__(
@@ -92,7 +92,6 @@ class BluemiraGeo(ABC):
         return self._boundary
 
     @boundary.setter
-    @abstractmethod
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
 
@@ -123,6 +122,17 @@ class BluemiraGeo(ABC):
             if isinstance(o, BluemiraGeo):
                 output += o.search(label)
         return output
+
+    def scale(self, factor) -> None:
+        """Apply scaling with factor to this object"""
+
+        for o in self.boundary:
+            o.scale(factor)
+
+    def translate(self, vector) -> None:
+        """Translate this shape with the vector"""
+        for o in self.boundary:
+            o.translate(vector)
 
     def __repr__(self):
         new = []

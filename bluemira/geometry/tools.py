@@ -28,7 +28,7 @@ import numba as nb
 from numba.np.extensions import cross2d
 from pyquaternion import Quaternion
 from bluemira.base.constants import EPS
-from bluemira.geometry.base import GeometryError
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 
 
@@ -1246,3 +1246,24 @@ def _montecarloloopcontrol(loop):
     raise GeometryError(
         "Unable to find a control point for this Loop using brute force."
     )
+
+# =============================================================================
+# Loop conversion
+# =============================================================================
+
+from bluemira.geometry.loop import Loop
+import bluemira.geometry.bmtools as bmtools
+
+
+def simplify_loop(loop, **kwargs) -> Loop:
+    """This function simplify the loop into splines as made in BLUEPRINT with the
+    MixedFaceMaker. TO BE IMPLEMENTED."""
+    return loop
+
+
+def convert_loop_to_shape(loop, label="", simplify=False, **kwargs):
+    if simplify:
+        loop = simplify_loop(loop, **kwargsf)
+    points = loop.xyz
+    shape = bmtools.make_polygon(points, label=label)
+    return shape
