@@ -222,6 +222,27 @@ def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Par
     return wire
 
 
+def make_bspline(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
+    """Make a bspline curve from a set of points.
+
+    Args:
+        points (Union[list, numpy.ndarray]): list of points. It can be given
+            as a list of 3D tuples, a 3D numpy array, or similar.
+        closed (bool, optional): if True, the first and last points will be
+            connected in order to form a closed polygon. Defaults to False.
+
+    Returns:
+        Part.Wire: a FreeCAD wire that contains the polygon
+    """
+    # In this case, it is not really necessary to convert points in FreeCAD vector. Just
+    # left for consistency with other methods.
+    pntslist = [Base.Vector(x) for x in points]
+    bc = Part.BSplineCurve(pntslist)
+    wire = Part.Wire(bc.toShape())
+    if closed:
+        wire = close_wire(wire)
+    return wire
+
 ###################################
 # Save functions
 ###################################

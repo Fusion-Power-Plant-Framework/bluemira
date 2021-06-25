@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     print("1. Creation of a closed wire")
     pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
-    wire = geo.freecadapi.make_polygon(pntslist, closed=True)
+    wire = geo._freecadapi.make_polygon(pntslist, closed=True)
     print("wire: {}, length: {}, isClosed: {}".format(wire, wire.Length,
                                                       wire.isClosed()))
     print("2. Creation of a bluemira wire")
@@ -64,12 +64,12 @@ if __name__ == "__main__":
     print("6. Test Save as STEP file.")
     shapes = [bmwire._shape, bmface._shape]
     print(shapes)
-    geo.freecadapi.save_as_STEP(shapes)
+    geo._freecadapi.save_as_STEP(shapes)
 
     print("7. Test BluemiraWire.close")
     print("7.1 when boundary is list(Part.Wire)")
     pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
-    wire = geo.freecadapi.make_polygon(pntslist, closed=False)
+    wire = geo._freecadapi.make_polygon(pntslist, closed=False)
     bmwire_nc = geo.wire.BluemiraWire(wire)
     print(bmwire_nc)
     bmwire_nc.close()
@@ -84,4 +84,11 @@ if __name__ == "__main__":
     print(bmwire_nc.boundary)
 
     print("7. Test Translate")
+    bmface.translate((5., 2., 0.))
+    geo.bmtools.save_as_STEP([bmwire, bmface], "test_translate")
 
+
+    pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
+    wire = geo._freecadapi.make_bspline(pntslist, closed=False)
+    bmwire_nc = geo.wire.BluemiraWire(wire)
+    geo.bmtools.save_as_STEP([bmwire_nc], "test_bspline")

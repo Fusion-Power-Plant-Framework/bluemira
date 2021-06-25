@@ -34,7 +34,7 @@ import Part
 # import from bluemira
 from bluemira.geometry.bmbase import BluemiraGeo
 
-from bluemira.geometry.freecadapi import (
+from bluemira.geometry._freecadapi import (
     discretize_by_edges, discretize, wire_closure, scale_shape, translate_shape
 )
 
@@ -59,6 +59,7 @@ class BluemiraWire(BluemiraGeo):
     ):
         boundary_classes = [self.__class__, Part.Wire]
         super().__init__(boundary, label, lcar, boundary_classes)
+        self._bp_loop = None
 
     @staticmethod
     def _converter(func):

@@ -23,10 +23,13 @@
 Useful functions for bluemira geometries.
 """
 # import from freecadapi
-from . import freecadapi
+from . import _freecadapi
 
 # import bluemira geometries
 from .wire import BluemiraWire
+
+# import mathematical modules
+import numpy
 
 # import typing
 from typing import Union
@@ -51,4 +54,33 @@ def make_polygon(points: Union[list, numpy.ndarray], label: str = "", closed: bo
         BluemiraWire: a bluemira wire that contains the polygon
     """
 
-    return BluemiraWire(freecadapi.make_polygon(points, closed), label=label)
+    return BluemiraWire(_freecadapi.make_polygon(points, closed), label=label)
+
+
+###################################
+# Save functions
+###################################
+
+def save_as_STEP(shapes, filename="test", scale=1):
+    """
+    Saves a series of Shape objects as a STEP assembly
+
+    Parameters
+    ----------
+    shapes: (Shape, ..)
+        Iterable of shape objects to be saved
+    filename: str
+        Full path filename of the STP assembly
+    scale: float (default 1)
+        The scale in which to save the Shape objects
+    """
+
+    if not filename.endswith(".STP"):
+        filename += ".STP"
+
+    if not isinstance(shapes, list):
+        shapes = [shapes]
+
+    freecad_shapes = [s._shape for s in shapes]
+    _freecadapi.save_as_STEP(freecad_shapes, filename, scale)
+
