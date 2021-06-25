@@ -1390,10 +1390,35 @@ def make_mixed_face(
     debug=False,
 ):
     """
+    Construct a BluemiraFace object from the provided coordinates using a combination of
+    polygon and spline wires. Polygons are determined by having a median length larger
+    than the threshold or an angle that is more acute than the threshold.
+
     Parameters
     ----------
-    loop: BLUEPRINT Loop object
-        The Loop of coordinates to be converted to a OCC Face object
+    x: np.ndarray
+        The x coordinates of points to be converted to a BluemiraFace object
+    y: np.ndarray
+        The y coordinates of points to be converted to a BluemiraFace object
+    z: np.ndarray
+        The z coordinates of points to be converted to a BluemiraFace object
+    label: str
+        The label for the resulting BluemiraFace object
+    lcar: Union[float, List[float]]
+        The characteristic length for the resulting BluemiraFace object
+
+    Other Parameters
+    ----------------
+    median_factor: float
+        The factor of the median for which to filter segment lengths
+        (below median_factor*median_length --> spline)
+    n_segments: int
+        The minimum number of segments for a spline
+    a_acute: float
+        The angle [degrees] between two consecutive segments deemed to be too
+        acute to be fit with a spline.
+    debug: bool
+        Whether or not to print debugging information
 
     Returns
     -------
@@ -1436,13 +1461,23 @@ def make_wire(x, y, z, label="", lcar=0.1, spline=False):
     Parameters
     ----------
     x: np.ndarray
-        The x coordinates
+        The x coordinates of points to be converted to a BluemiraWire object
     y: np.ndarray
-        Flag for using make_spline_face
+        The y coordinates of points to be converted to a BluemiraWire object
+    z: np.ndarray
+        The z coordinates of points to be converted to a BluemiraWire object
+    label: str
+        The label for the resulting BluemiraWire object
+    lcar: Union[float, List[float]]
+        The characteristic length for the resulting BluemiraWire object
+    spline: bool
+        If True then creates the BluemiraWire using a Bezier spline curve, by default
+        False
 
     Returns
     -------
-    face: OCC Face object
+    wire: BluemiraWire
+        The BluemiraWire bound by the coordinates
     """
     wire_func = _freecadapi.make_bspline if spline else _freecadapi.make_polygon
     return BluemiraWire(wire_func(np.array([x, y, z]).T), label=label, lcar=lcar)
@@ -1455,13 +1490,23 @@ def make_face(x, y, z, label="", lcar=0.1, spline=False):
     Parameters
     ----------
     x: np.ndarray
-        The x coordinates
+        The x coordinates of points to be converted to a BluemiraFace object
     y: np.ndarray
-        Flag for using make_spline_face
+        The y coordinates of points to be converted to a BluemiraFace object
+    z: np.ndarray
+        The z coordinates of points to be converted to a BluemiraFace object
+    label: str
+        The label for the resulting BluemiraFace object
+    lcar: Union[float, List[float]]
+        The characteristic length for the resulting BluemiraFace object
+    spline: bool
+        If True then creates the BluemiraFace using a Bezier spline curve, by default
+        False
 
     Returns
     -------
-    face: OCC Face object
+    face: BluemiraFace
+        The BluemiraFace bound by the coordinates
     """
     wire = make_wire(x, y, z, label=label, lcar=lcar, spline=spline)
     return BluemiraFace(wire, label=label, lcar=lcar)
@@ -1469,18 +1514,22 @@ def make_face(x, y, z, label="", lcar=0.1, spline=False):
 
 class MixedFaceMaker:
     """
-    Utility class for the creation of Faces that combine splines and polygons. This is a
-    decomposition of what would otherwise be a very long function.
+    Utility class for the creation of Faces that combine splines and polygons.
+
     Polygons are detected by median length and turning angle.
 
     Parameters
     ----------
     x: np.ndarray
-        The x coordinates of points to be converted to a OCC Face object
+        The x coordinates of points to be converted to a BluemiraFace object
     y: np.ndarray
-        The y coordinates of points to be converted to a OCC Face object
+        The y coordinates of points to be converted to a BluemiraFace object
     z: np.ndarray
-        The z coordinates of points to be converted to a OCC Face object
+        The z coordinates of points to be converted to a BluemiraFace object
+    label: str
+        The label for the resulting BluemiraFace object
+    lcar: Union[float, List[float]]
+        The characteristic length for the resulting BluemiraFace object
 
     Other Parameters
     ----------------
