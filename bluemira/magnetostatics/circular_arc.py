@@ -71,7 +71,7 @@ def brc_integrand_full(psi, r_pc, r_j, z_k):
 
 
 @jit_llc4
-def bzc_integrand_full(psi, r_pc, r_j, z_k):
+def bzc_integrand_full_p1(psi, r_pc, r_j, z_k):
     """
     Calculate the Bzc integrand without singularities.
 
@@ -92,18 +92,10 @@ def bzc_integrand_full(psi, r_pc, r_j, z_k):
         The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
-    sin_psi = np.sin(psi)
     sqrt_term = np.sqrt(r_pc ** 2 - 2 * r_pc * r_j * cos_psi + r_j ** 2 + z_k ** 2)
-    result = -z_k * np.log(r_j - r_pc * cos_psi + sqrt_term) - r_pc * cos_psi * np.log(
+    return -z_k * np.log(r_j - r_pc * cos_psi + sqrt_term) - r_pc * cos_psi * np.log(
         -z_k + sqrt_term
     )
-    if sin_psi != 0 and r_pc != 0:
-        result += (
-            r_pc
-            * sin_psi
-            * np.arctan((z_k * (r_j - r_pc * cos_psi)) / (r_pc * sin_psi * sqrt_term))
-        )
-    return result
 
 
 # Integrands to treat singularities
@@ -328,9 +320,6 @@ def bf3_integrand(psi, r_pc, r_j, z_k):
     -------
     result: float
         The result of the integrand at a single point
-
-    Notes
-    -----
     Treats the sin(psi) = 0 singularity
     """
     cos_psi = np.cos(psi)
@@ -488,7 +477,9 @@ def primitive_bzc(r_pc, r_j, z_k, phi_pc, theta):
     bf3_singularities = r_pc == 0
     if not bf1_singularities and not bf2_singularities and not bf3_singularities:
         # No singularities (almost)
-        return integrate(bzc_integrand_full, args, -phi_pc, theta - phi_pc)
+        return integrate(
+            bzc_integrand_full_p1, args, -phi_pc, theta - phi_pc
+        ) + integrate(bf3_integrand, args, -phi_pc, theta - phi_pc)
 
     # Treat singularities
     result = 0
@@ -786,7 +777,8 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         arc_3 = np.array([arc_3x, arc_3y, b * ones]).T
         arc_4 = np.array([arc_4x, arc_4y, b * ones]).T
 
-        slices = np.linspace(0, n - 1, 5, endpoint=True, dtype=np.int)
+        n_slices = int(2 + self.dtheta // (0.25 * np.pi))
+        slices = np.linspace(0, n - 1, n_slices, endpoint=True, dtype=np.int)
         points = [arc_1, arc_2, arc_3, arc_4]
 
         # Rectangles

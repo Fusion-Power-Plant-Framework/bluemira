@@ -233,7 +233,12 @@ def integrate(func, args, bound1, bound2):
     except IntegrationWarning:
         # Bad integrand behaviour for Bz near 0 and np.pi
         # TODO: Improve treatment in integrand
-        result = quad(func, bound1 + 1e-6, bound2 - 1e-6, args=args, limit=200)[0]
+        points = [
+            0.25 * (bound2 - bound1),
+            0.5 * (bound2 - bound1),
+            0.75 * (bound2 - bound1),
+        ]
+        result = quad(func, bound1, bound2, args=args, points=points, limit=200)[0]
         warnings.filterwarnings("default", category=IntegrationWarning)
         return result
 

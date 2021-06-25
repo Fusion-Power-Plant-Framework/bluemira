@@ -79,8 +79,8 @@ analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
 
 analytical_circuit2 = CircularArcCurrentSource(
     [x_c, 0, z_c],
+    [-1, 0, 0],
     [0, 0, 1],
-    [1, 0, 0],
     [0, 1, 0],
     breadth=breadth,
     depth=depth,
