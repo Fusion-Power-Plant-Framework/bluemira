@@ -27,8 +27,13 @@ https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.constants import MU_0_4PI
-from bluemira.magnetostatics.tools import jit_llc3, jit_llc4, integrate
 from bluemira.geometry.tools import make_circle_arc
+from bluemira.magnetostatics.tools import (
+    jit_llc3,
+    jit_llc4,
+    integrate,
+    process_xyz_array,
+)
 from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
 
 __all__ = ["CircularArcCurrentSource"]
@@ -482,7 +487,7 @@ def primitive_bzc(r_pc, r_j, z_k, phi_pc, theta):
     bf2_singularities = (r_j == r_pc) and (z_k >= 0) and (0 <= phi_pc <= theta)
     bf3_singularities = r_pc == 0
     if not bf1_singularities and not bf2_singularities and not bf3_singularities:
-        # No singularities
+        # No singularities (almost)
         return integrate(bzc_integrand_full, args, -phi_pc, theta - phi_pc)
 
     # Treat singularities
@@ -731,21 +736,27 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         bz = Bz_analytical_circular(r1, r2, z1, z2, self.dtheta, rp, tp)
         return np.array([bx, 0, bz])
 
-    def field(self, point):
+    @process_xyz_array
+    def field(self, x, y, z):
         """
         Calculate the magnetic field at a point due to the current source.
 
         Parameters
         ----------
-        point: np.array(3)
-            The target point in global coordinates [m]
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the field
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the field
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
         field: np.array(3)
             The magnetic field vector {Bx, By, Bz} in [T]
         """
-        point = np.array(point)
+
+        point = np.array([x, y, z])
         # Convert to local cylindrical coordinates
         point = self._global_to_local([point])[0]
         rp, tp, zp = self._local_to_cylindrical(point)

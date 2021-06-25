@@ -92,20 +92,27 @@ class BiotSavartFilament(CurrentSource):
         self.radius = radius
         self.current = current
 
-    def potential(self, point):
+    @process_xyz_array
+    def potential(self, x, y, z):
         """
         Calculate the vector potential of an arbitrarily shaped loop.
 
         Parameters
         ----------
-        point: np.array(3)
-            The point at which to calculate the field
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the potential
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the potential
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the potential
+
 
         Returns
         -------
         potential: np.array(3)
             The vector potential at the point due to the arbitrarily shaped loop
         """
+        point = np.array([x, y, z])
         r = point - self.points
         r_mag = tools.norm(r, axis=1)
         r_mag[r_mag < EPS] = EPS
@@ -118,19 +125,24 @@ class BiotSavartFilament(CurrentSource):
             "i, ji, ... -> j", core, self.d_l / r_mag[None], ONE_4PI * self.current
         )
 
-    def field_old(self, point):
+    @process_xyz_array
+    def field_old(self, x, y, z):
         """
         Calculate the field due to the arbitrarily shaped loop.
 
         Parameters
         ----------
-        point: np.array(3)
-            The point at which to calculate the field
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the field
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the field
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        B: np.array(3)
-            The field at the point due to the arbitrarily shaped loop
+        B: np.array
+            The field at the point(s) due to the arbitrarily shaped loop
 
         Notes
         -----
@@ -139,6 +151,7 @@ class BiotSavartFilament(CurrentSource):
         This is the original Biot-Savart equation, without centre-averaged
         smoothing. Do not use for values near the coil current centreline.
         """  # noqa (W505)
+        point = np.arary([x, y, z])
         r = point - self.mid_points
         r3 = np.linalg.norm(r, axis=1) ** 3
 

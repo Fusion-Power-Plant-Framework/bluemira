@@ -30,7 +30,7 @@ from bluemira.geometry.tools import (
     get_normal_vector,
     close_coordinates,
 )
-from bluemira.magnetostatics.tools import process_loop_array
+from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
@@ -135,20 +135,26 @@ class HelmholtzCage(SourceGroup):
         for source in self.sources:
             source.current = current
 
-    def ripple(self, point):
+    @process_xyz_array
+    def ripple(self, x, y, z):
         """
         Get the toroidal field ripple at a point.
 
         Parameters
         ----------
-        point: Iterable(3)
-            The x, y, z point at which to calcuate the variable
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the ripple
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the ripple
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the ripple
 
         Returns
         -------
         ripple: float
-            The value of the TF ripple at the point [%]
+            The value of the TF ripple at the point(s) [%]
         """
+        point = np.array([x, y, z])
         ripple_field = np.zeros(2)
         n = np.array([0, 1, 0])
         planes = [np.pi / self.n_TF, 0]  # rotate (inline, ingap)

@@ -99,16 +99,13 @@ x = np.linspace(0, 18, nx)
 y = np.linspace(-18, 0, ny)
 xx1, yy = np.meshgrid(x, y, indexing="ij")
 
-biotsavart_xy_fields = np.zeros((nx, ny))
-analytical_xy_fields = np.zeros((nx, ny))
-for i in range(nx):
-    for j in range(ny):
-        biotsavart_xy_fields[i, j] = np.sqrt(
-            np.sum(biotsavart_tf_cage.field([x[i], y[j], 0]) ** 2)
-        )
-        analytical_xy_fields[i, j] = np.sqrt(
-            np.sum(analytical_tf_cage1.field([x[i], y[j], 0]) ** 2)
-        )
+biotsavart_xy_fields = biotsavart_tf_cage.field(xx1, yy, np.zeros_like(xx1))
+analytical_xy_fields = analytical_tf_cage1.field(xx1, yy, np.zeros_like(xx1))
+analytical_xy_fields2 = analytical_tf_cage2.field(xx1, yy, np.zeros_like(xx1))
+
+biotsavart_xy_fields = np.sqrt(np.sum(biotsavart_xy_fields ** 2, axis=2))
+analytical_xy_fields = np.sqrt(np.sum(analytical_xy_fields ** 2, axis=2))
+analytical_xy_fields2 = np.sqrt(np.sum(analytical_xy_fields2 ** 2, axis=2))
 
 # Calculate the fields in the x-z plane
 nx, nz = 50, 50
@@ -117,15 +114,12 @@ z = np.linspace(0, 14, nz)
 xx, zz = np.meshgrid(x, z, indexing="ij")
 
 biotsavart_xz_fields = biotsavart_tf_cage.field(xx, np.zeros_like(xx), zz)
-analytical_xz_fields = np.zeros((nx, nz))
-for i in range(nx):
-    for j in range(nz):
-        biotsavart_xz_fields[i, j] = np.sqrt(
-            np.sum(biotsavart_tf_cage.field([x[i], 0, z[j]]) ** 2)
-        )
-        analytical_xz_fields[i, j] = np.sqrt(
-            np.sum(analytical_tf_cage1.field([x[i], 0, z[j]]) ** 2)
-        )
+analytical_xz_fields = analytical_tf_cage1.field(xx, np.zeros_like(xx), zz)
+analytical_xz_fields2 = analytical_tf_cage2.field(xx, np.zeros_like(xx), zz)
+
+biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields ** 2, axis=2))
+analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields ** 2, axis=2))
+analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2 ** 2, axis=2))
 
 
 def plot_cage_results(cage, xz_fields, xy_fields):
@@ -170,4 +164,5 @@ def plot_cage_results(cage, xz_fields, xy_fields):
 
 # Plot the two cages and the results in the two planes
 plot_cage_results(analytical_tf_cage1, analytical_xz_fields, analytical_xy_fields)
+plot_cage_results(analytical_tf_cage2, analytical_xz_fields2, analytical_xy_fields2)
 plot_cage_results(biotsavart_tf_cage, biotsavart_xz_fields, biotsavart_xy_fields)

@@ -40,6 +40,7 @@ __all__ = [
     "integrate",
     "n_integrate",
     "process_loop_array",
+    "process_xyz_array",
 ]
 
 

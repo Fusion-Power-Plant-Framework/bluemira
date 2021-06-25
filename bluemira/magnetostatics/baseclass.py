@@ -42,18 +42,22 @@ class CurrentSource(ABC):
     current: float
 
     @abstractmethod
-    def field(self, point):
+    def field(self, x, y, z):
         """
-        Calculate the magnetic field at a point.
+        Calculate the magnetic field at a set of coordinates.
 
         Parameters
         ----------
-        point: np.array(3)
-            The target point in global coordinates [m]
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the field
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the field
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        field: np.array(3)
+        field: np.array
             The magnetic field vector {Bx, By, Bz} in [T]
         """
         pass
@@ -175,21 +179,25 @@ class SourceGroup(ABC):
         self.sources = sources
         self.points = np.vstack([np.vstack(s.points) for s in self.sources])
 
-    def field(self, point):
+    def field(self, x, y, z):
         """
         Calculate the magnetic field at a point.
 
         Parameters
         ----------
-        point: np.array(3)
-            The target point in global coordinates [m]
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the field
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the field
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        field: np.array(3)
+        field: np.array
             The magnetic field vector {Bx, By, Bz} in [T]
         """
-        return np.sum([source.field(point) for source in self.sources], axis=0)
+        return np.sum([source.field(x, y, z) for source in self.sources], axis=0)
 
     def rotate(self, angle, axis):
         """

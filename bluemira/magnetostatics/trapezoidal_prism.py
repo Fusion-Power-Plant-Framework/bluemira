@@ -30,6 +30,7 @@ https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 import numpy as np
 import numba as nb
 from bluemira.base.constants import MU_0_4PI
+from bluemira.magnetostatics.tools import process_xyz_array
 from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
 
 __all__ = ["TrapezoidalPrismCurrentSource"]
@@ -355,21 +356,26 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         bz = Bz_analytical_prism(self.alpha, self.beta, l1, l2, q1, q2, r1, r2)
         return np.array([bx, 0, bz])
 
-    def field(self, point):
+    @process_xyz_array
+    def field(self, x, y, z):
         """
         Calculate the magnetic field at a point due to the current source.
 
         Parameters
         ----------
-        point: np.array(3)
-            The target point in global coordinates [m]
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the field
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the field
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
         field: np.array(3)
             The magnetic field vector {Bx, By, Bz} in [T]
         """
-        point = np.array(point)
+        point = np.array([x, y, z])
         # Convert to local coordinates
         point = self._global_to_local([point])[0]
         # Evaluate field in local coordinates
