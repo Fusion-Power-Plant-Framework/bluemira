@@ -103,9 +103,9 @@ biotsavart_xy_fields = biotsavart_tf_cage.field(xx1, yy, np.zeros_like(xx1))
 analytical_xy_fields = analytical_tf_cage1.field(xx1, yy, np.zeros_like(xx1))
 analytical_xy_fields2 = analytical_tf_cage2.field(xx1, yy, np.zeros_like(xx1))
 
-biotsavart_xy_fields = np.sqrt(np.sum(biotsavart_xy_fields ** 2, axis=2))
-analytical_xy_fields = np.sqrt(np.sum(analytical_xy_fields ** 2, axis=2))
-analytical_xy_fields2 = np.sqrt(np.sum(analytical_xy_fields2 ** 2, axis=2))
+biotsavart_xy_fields = np.sqrt(np.sum(biotsavart_xy_fields ** 2, axis=0))
+analytical_xy_fields = np.sqrt(np.sum(analytical_xy_fields ** 2, axis=0))
+analytical_xy_fields2 = np.sqrt(np.sum(analytical_xy_fields2 ** 2, axis=0))
 
 # Calculate the fields in the x-z plane
 nx, nz = 50, 50
@@ -117,9 +117,9 @@ biotsavart_xz_fields = biotsavart_tf_cage.field(xx, np.zeros_like(xx), zz)
 analytical_xz_fields = analytical_tf_cage1.field(xx, np.zeros_like(xx), zz)
 analytical_xz_fields2 = analytical_tf_cage2.field(xx, np.zeros_like(xx), zz)
 
-biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields ** 2, axis=2))
-analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields ** 2, axis=2))
-analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2 ** 2, axis=2))
+biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields ** 2, axis=0))
+analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields ** 2, axis=0))
+analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2 ** 2, axis=0))
 
 
 def plot_cage_results(cage, xz_fields, xy_fields):

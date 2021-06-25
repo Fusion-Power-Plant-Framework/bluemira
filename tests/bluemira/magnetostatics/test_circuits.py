@@ -53,8 +53,8 @@ def test_analyticalsolvergrouper():
 
     points = np.random.uniform(low=-10, high=10, size=(10, 3))
     for point in points:
-        field = solver.field(point)  # random point :)
-        field2 = a.field(point) + a2.field(point)
+        field = solver.field(*point)  # random point :)
+        field2 = a.field(*point) + a2.field(*point)
         assert np.all(field == field2)
 
 
@@ -94,12 +94,8 @@ def test_mixedsourcesolver():
     x = np.linspace(-4, 4, nx)
     z = np.linspace(-4, 4, nz)
     xx, zz = np.meshgrid(x, z, indexing="ij")
-    B = np.zeros((nx, nz, 3))
-    for i, xi in enumerate(x):
-        for j, zi in enumerate(z):
-            B[i, j, :] = solver.field([xi, 0, zi])
 
-    Bt = B[:, :, 1]
+    _, Bt, _ = solver.field(xx, np.zeros_like(xx), zz)
 
     # Test symmetry of the field in four quadranrs (rotation by matrix manipulations :))
     # Bottom-left (reference)
@@ -167,17 +163,17 @@ class TestCariddiBenchmark:
 
         # Set the current in the HelmholtzCage to generate the desired B_T,0 field
         cage = HelmholtzCage(circuit, n_TF)
-        field_response = cage.field([R_0, 0, 0])[1]
+        field_response = cage.field(R_0, 0, 0)[1]
         current = B_0 / field_response
         cage.set_current(current)
         cls.cage = cage
 
     def test_cariddi(self):
-        ripple = []
-        for xr, zr in zip(self.x_rip[1:19], self.z_rip[1:19]):
-            ripple.append(self.cage.ripple([xr, 0, zr]))
+        # ripple = []
+        # for xr, zr in zip(self.x_rip[1:19], self.z_rip[1:19]):
+        #     ripple.append(self.cage.ripple(xr, 0, zr))
 
-        ripple = np.array(ripple)
+        ripple = self.cage.ripple(self.x_rip[1:19], np.zeros(18), self.z_rip[1:19])
 
         if tests.PLOTTING:
             f, (ax2, ax) = plt.subplots(1, 2)

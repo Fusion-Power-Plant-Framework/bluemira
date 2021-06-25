@@ -44,7 +44,7 @@ def test_paper_example():
         np.pi / 6,
         4e5,
     )
-    field = source.field([2, 2, 2])
+    field = source.field(2, 2, 2)
     abs_field = 1e3 * np.sqrt(sum(field ** 2))  # Field in mT
     # As per Babic and Aykel paper
     # Assume truncated last digit and not rounded...
@@ -53,7 +53,7 @@ def test_paper_example():
     assert field_7decimals == field_7true
 
     # Test singularity treatments:
-    field = source.field([1, 1, 1])
+    field = source.field(1, 1, 1)
     abs_field = 1e3 * np.sqrt(sum(field ** 2))  # Field in mT
     # Assume truncated last digit and not rounded...
     field_9decimals = np.trunc(abs_field * 10 ** 9) / 10 ** 9

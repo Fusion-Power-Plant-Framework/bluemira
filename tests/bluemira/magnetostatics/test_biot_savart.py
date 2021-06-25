@@ -58,12 +58,7 @@ def test_biot_savart_loop():
     loop = Loop(xc, yc, 0)
     bsf = BiotSavartFilament(loop, radius)
 
-    Bx2, Bz2 = np.zeros((nx, nz)), np.zeros((nx, nz))
-    for i in range(nx):
-        for j in range(nz):
-            bx, _, bz = bsf.field([x_1d[i], 0, z_1d[j]])
-            Bx2[i, j] = bx
-            Bz2[i, j] = bz
+    Bx2, _, Bz2 = bsf.field(x_2d, np.zeros_like(x_2d), z_2d)
 
     Bx *= current
     Bz *= current
@@ -99,9 +94,10 @@ def test_biot_savart_loop():
 
     # Current on axis analytical relation
     centreline = np.c_[np.zeros(100), np.zeros(100), np.linspace(-10, 10, 100)]
-    bz_differential = np.zeros(100)
-    for i in range(100):
-        bz_differential[i] = current * bsf.field(centreline[i])[2]
+
+    _, _, bz_differential = current * bsf.field(
+        np.zeros(100), np.zeros(100), np.linspace(-10, 10, 100)
+    )
 
     bz_analytical = (
         (MU_0 / (4 * np.pi))

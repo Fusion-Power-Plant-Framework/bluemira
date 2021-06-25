@@ -163,7 +163,7 @@ class HelmholtzCage(SourceGroup):
             r_matrix = rotation_matrix(theta)
             sr = np.dot(point, r_matrix)
             nr = np.dot(n, r_matrix)
-            field = self.field(sr)
+            field = self.field(*sr)
             ripple_field[i] = np.dot(nr, field)
 
         ripple = 1e2 * (ripple_field[0] - ripple_field[1]) / np.sum(ripple_field)

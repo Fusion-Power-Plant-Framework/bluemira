@@ -66,14 +66,14 @@ def process_xyz_array(func):
             return func(cls, x[0], y[0], z[0])
         elif len(x.shape) == 1:
             # 1-D array handling
-            return np.array([func(cls, xi, yi, zi) for xi, yi, zi in zip(x, y, z)])
+            return np.array([func(cls, xi, yi, zi) for xi, yi, zi in zip(x, y, z)]).T
         elif len(x.shape) == 2:
             # 2-D array handling
             m, n = x.shape
-            result = np.zeros((m, n, 3))
+            result = np.zeros((3, m, n))
             for i in range(m):
                 for j in range(n):
-                    result[i, j, :] = np.array([func(cls, x[i, j], y[i, j], z[i, j])])
+                    result[:, i, j] = np.array([func(cls, x[i, j], y[i, j], z[i, j])])
             return result
 
         else:
@@ -231,8 +231,6 @@ def integrate(func, args, bound1, bound2):
     try:
         return quad(func, bound1, bound2, args=args)[0]
     except IntegrationWarning:
-        # Bad integrand behaviour for Bz near 0 and np.pi
-        # TODO: Improve treatment in integrand
         points = [
             0.25 * (bound2 - bound1),
             0.5 * (bound2 - bound1),

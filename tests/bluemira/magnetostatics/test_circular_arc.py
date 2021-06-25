@@ -54,19 +54,14 @@ class TestCircularArcCurrentSource:
         z = np.linspace(self.zc - 2, self.zc + 2, nz)
         xx, zz = np.meshgrid(x, z, indexing="ij")
 
-        B = np.zeros((nx, nz, 3))
-        for i, xi in enumerate(x):
-            for j, zi in enumerate(z):
-                B[i, j] = self.arc.field([xi, 0, zi])
+        Bx, _, Bz = self.arc.field(xx, np.zeros_like(xx), zz)
+        Bp = np.hypot(Bx, Bz)
 
         cBx = semianalytic_Bx(self.xc, self.zc, xx, zz, self.dx, self.dz)
         cBz = semianalytic_Bz(self.xc, self.zc, xx, zz, self.dx, self.dz)
         Bx_coil = self.current * cBx
         Bz_coil = self.current * cBz
         Bp_coil = np.hypot(Bx_coil, Bz_coil)
-        Bx = B[:, :, 0]
-        Bz = B[:, :, 2]
-        Bp = np.hypot(Bx, Bz)
 
         # Because this is a circular calculation, we expect them to be almost identical
         assert np.allclose(Bx_coil, Bx)
@@ -93,14 +88,14 @@ class TestCircularArcCurrentSource:
         """
         Trigger singularities (ZeroDivisionErrors and such should not come up)
         """
-        self.arc.field([self.arc.radius - self.arc.breadth, 0, 0])
-        self.arc.field([self.arc.radius - self.arc.breadth, 0, self.arc.depth])
-        self.arc.field([self.arc.radius - self.arc.breadth, 0, -self.arc.depth])
-        self.arc.field([self.arc.radius + self.arc.breadth, 0, self.arc.depth])
-        self.arc.field([self.arc.radius + self.arc.breadth, 0, -self.arc.depth])
-        self.arc.field([self.arc.radius, 0, 1])
-        self.arc.field([self.arc.radius, 0, 0])
-        self.arc.field([0, 0, -1])
+        self.arc.field(self.arc.radius - self.arc.breadth, 0, 0)
+        self.arc.field(self.arc.radius - self.arc.breadth, 0, self.arc.depth)
+        self.arc.field(self.arc.radius - self.arc.breadth, 0, -self.arc.depth)
+        self.arc.field(self.arc.radius + self.arc.breadth, 0, self.arc.depth)
+        self.arc.field(self.arc.radius + self.arc.breadth, 0, -self.arc.depth)
+        self.arc.field(self.arc.radius, 0, 1)
+        self.arc.field(self.arc.radius, 0, 0)
+        self.arc.field(0, 0, -1)
 
 
 if __name__ == "__main__":
