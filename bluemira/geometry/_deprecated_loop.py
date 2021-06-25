@@ -35,7 +35,7 @@ from bluemira.utilities.plot_tools import (
 )
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.base import GeomBase, GeometryError, Plane
-from bluemira.geometry.tools import (
+from bluemira.geometry._deprecated_tools import (
     check_ccw,
     quart_rotate,
     rotation_matrix_v1v2,
