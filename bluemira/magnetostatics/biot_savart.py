@@ -27,7 +27,7 @@ from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
 from bluemira.geometry.tools import rotation_matrix, bounding_box, close_coordinates
-from bluemira.magnetostatics.tools import process_loop_array
+from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.baseclass import CurrentSource
 
 __all__ = ["BiotSavartFilament"]
@@ -153,19 +153,24 @@ class BiotSavartFilament(CurrentSource):
         core[ds_mag > self.radius] = 1
         return MU_0_4PI * self.current * np.sum(core * ds / r3[:, np.newaxis], axis=0)
 
-    def field(self, point):
+    @process_xyz_array
+    def field(self, x, y, z):
         """
         Calculate the field due to the arbitrarily shaped loop.
 
         Parameters
         ----------
-        point: np.array(3)
-            The point at which to calculate the field
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the field
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the field
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        B: np.array(3)
-            The field at the point due to the arbitrarily shaped loop
+        B: np.array
+            The field(s) at the point(s) due to the arbitrarily shaped loop
 
         Notes
         -----
@@ -177,6 +182,7 @@ class BiotSavartFilament(CurrentSource):
         Masking about coil core.
         """  # noqa (W505)
         # point array -> point-segment vectors
+        point = np.array([x, y, z])
         r = np.atleast_2d(point) - self.points
         r1 = r - self.d_l / 2
         r2 = r + self.d_l / 2

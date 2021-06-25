@@ -116,7 +116,7 @@ x = np.linspace(0, 18, nx)
 z = np.linspace(0, 14, nz)
 xx, zz = np.meshgrid(x, z, indexing="ij")
 
-biotsavart_xz_fields = np.zeros((nx, nz))
+biotsavart_xz_fields = biotsavart_tf_cage.field(xx, np.zeros_like(xx), zz)
 analytical_xz_fields = np.zeros((nx, nz))
 for i in range(nx):
     for j in range(nz):

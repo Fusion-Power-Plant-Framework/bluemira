@@ -47,6 +47,42 @@ __all__ = [
 # Significant speed gains by using LowLevelCallable (> x2)
 
 
+def process_xyz_array(func):
+    """
+    Decorator for coordinate input handling in array-return functions and methods.
+    """
+
+    def wrapper(cls, x, y, z):
+        x = np.atleast_1d(x)
+        y = np.atleast_1d(y)
+        z = np.atleast_1d(z)
+
+        if not len(x) == len(y) == len(z):
+            raise MagnetostaticsError("Coordinate vector lengths must be equal.")
+
+        if len(x) == 1:
+            # Float handling
+            return func(cls, x[0], y[0], z[0])
+        elif len(x.shape) == 1:
+            # 1-D array handling
+            return np.array([func(cls, xi, yi, zi) for xi, yi, zi in zip(x, y, z)])
+        elif len(x.shape) == 2:
+            # 2-D array handling
+            m, n = x.shape
+            result = np.zeros((m, n, 3))
+            for i in range(m):
+                for j in range(n):
+                    result[i, j, :] = np.array([func(cls, x[i, j], y[i, j], z[i, j])])
+            return result
+
+        else:
+            raise MagnetostaticsError(
+                "This operation only supports floats and 1-D and 2-D arrays."
+            )
+
+    return wrapper
+
+
 def process_loop_array(shape):
     """
     Parse a Loop or array to an array.

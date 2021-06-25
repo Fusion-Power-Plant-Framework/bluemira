@@ -551,7 +551,7 @@ class Loop(GeomBase):
 
     def interpolate(self, n_points):
         """
-        Repurposed from S. McIntosh geom.py
+        Interpolate the Loop, modifying the underlying array.
         """
         ll = vector_lengthnorm(*self.xyz)
         linterp = np.linspace(0, 1, int(n_points))
