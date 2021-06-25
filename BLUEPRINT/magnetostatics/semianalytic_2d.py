@@ -32,7 +32,7 @@ from BLUEPRINT.utilities.tools import is_num
 __all__ = ["semianalytic_Bx", "semianalytic_Bz", "semianalytic_psi"]
 
 
-@nb.jit(nopython=True, cache=True)
+@nb.jit(nopython=True)
 def _partial_x_integrand(phi, rr, zz):
     """
     Integrand edge cases derived to constant integrals. Much faster than
@@ -68,7 +68,7 @@ def _full_x_integrand(phi, r1, r2, z1, z2):
     )
 
 
-@nb.jit(nopython=True, cache=True)
+@nb.jit(nopython=True)
 def _partial_z_integrand(phi, rr, zz):
     """
     Integrand edge cases derived to constant integrals. Much faster than
@@ -112,7 +112,7 @@ def _full_z_integrand(phi, r1, r2, z1, z2):
     )
 
 
-@nb.jit(nopython=True, cache=True)
+@nb.jit(nopython=True)
 def _get_working_coords(xc, zc, x, z, d_xc, d_zc):
     """
     Convert coil and global coordinates to working coordinates.
