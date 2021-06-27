@@ -74,7 +74,6 @@ class BluemiraGeo(ABC):
             raise AttributeError("'{}' has no attribute '{}'".format(str(type(
                 self).__name__), key))
 
-    @abstractmethod
     def _check_boundary(self, objs):
         """Check if objects objs can be used as boundaries"""
         if not hasattr(objs, '__len__'):
@@ -85,7 +84,7 @@ class BluemiraGeo(ABC):
             if check:
                 return objs
         raise TypeError("Only {} objects can be used for {}".format(
-            self._boundary_classes))
+            self._boundary_classes, self.__class__))
 
     @property
     def boundary(self):

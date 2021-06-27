@@ -80,7 +80,7 @@ class BluemiraWire(BluemiraGeo):
             if check:
                 return objs
         raise TypeError("Only {} objects can be used for {}".format(
-            self._boundary_classes))
+            self._boundary_classes, self.__class__))
 
     @BluemiraGeo.boundary.setter
     def boundary(self, objs):
@@ -98,7 +98,8 @@ class BluemiraWire(BluemiraGeo):
         wires = []
         for o in self.boundary:
             if isinstance(o, Part.Wire):
-                wires += o.Wires
+                for w in o.Wires:
+                    wires += [Part.Wire(w.OrderedEdges)]
             else:
                 wires += o._wires
         return wires

@@ -27,6 +27,9 @@ from . import _freecadapi
 
 # import bluemira geometries
 from .wire import BluemiraWire
+from .face import BluemiraFace
+from .shell import BluemiraShell
+from .solid import BluemiraSolid
 
 # import mathematical modules
 import numpy
@@ -34,9 +37,32 @@ import numpy
 # import typing
 from typing import Union
 
-###################################
-# Geometry creation
-###################################
+# import freecad
+import freecad
+import Part
+
+# # =============================================================================
+# # Decorators
+# # =============================================================================
+
+
+def convert_to_bluemirageo(func):
+    def wrapper(*args, **kwargs):
+        output = func(*args, **kwargs)
+        if isinstance(output, Part.Wire):
+            output = BluemiraWire(output)
+        elif isinstance(output, Part.Face):
+            output = BluemiraFace(output)
+        elif isinstance(output, Part.Shell):
+            output = BluemiraShell(output)
+        elif isinstance(output, Part.Solid):
+            output = BluemiraSolid(output)
+        return output
+    return wrapper
+
+# # =============================================================================
+# # Geometry creation
+# # =============================================================================
 
 
 def make_polygon(points: Union[list, numpy.ndarray], label: str = "", closed: bool =
@@ -57,9 +83,44 @@ def make_polygon(points: Union[list, numpy.ndarray], label: str = "", closed: bo
     return BluemiraWire(_freecadapi.make_polygon(points, closed), label=label)
 
 
-###################################
-# Save functions
-###################################
+# # =============================================================================
+# # Shape manipulations
+# # =============================================================================
+@convert_to_bluemirageo
+def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0., 1.),
+                  degree: float = 180):
+    """
+    Apply the revolve (base, dir, degree) to this shape
+
+    Parameters
+    ----------
+    shape: FreeCAD Shape object
+        The shape to be revolved
+    base: tuple (x,y,z)
+        Origin location of the revolution
+    direction: tuple (x,y,z)
+        The direction vector
+    degree: double
+        revolution angle
+
+    Returns
+    -------
+    shape:
+        the revolved shape.
+
+    """
+    solid = _freecadapi.revolve_shape(shape._shape, base, direction, degree)
+    faces = solid.Faces
+    bmfaces = []
+    for face in faces:
+        bmfaces.append(BluemiraFace._create(face))
+    bmshell = BluemiraShell(bmfaces)
+    bmsolid = BluemiraSolid(bmshell)
+    return bmsolid
+
+# # =============================================================================
+# # Save functions
+# # =============================================================================
 
 def save_as_STEP(shapes, filename="test", scale=1):
     """

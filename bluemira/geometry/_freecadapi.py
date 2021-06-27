@@ -328,6 +328,63 @@ def translate_shape(shape, vector: tuple) -> None:
 
     return shape.translate(vector)
 
+
+def rotate_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0., 1.),
+                 degree: float = 180):
+    """
+    Apply the rotation (base, dir, degree) to this shape
+
+    Parameters
+    ----------
+    shape: FreeCAD Shape object
+        The shape to be rotated
+    base: tuple (x,y,z)
+        Origin location of the rotation
+    direction: tuple (x,y,z)
+        The direction vector
+    degree: double
+        rotation angle
+
+    Returns
+    -------
+    shape:
+        the rotate shape.
+
+    Notes
+    -----
+    this operation modifies the shape object.
+    """
+
+    return shape.rotate(base, direction, degree)
+
+
+def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0., 1.),
+                  degree: float = 180):
+    """
+    Apply the revolve (base, dir, degree) to this shape
+
+    Parameters
+    ----------
+    shape: FreeCAD Shape object
+        The shape to be revolved
+    base: tuple (x,y,z)
+        Origin location of the revolution
+    direction: tuple (x,y,z)
+        The direction vector
+    degree: double
+        revolution angle
+
+    Returns
+    -------
+    shape:
+        the revolved shape.
+
+    """
+    base = Base.Vector(base)
+    direction = Base.Vector(direction)
+    return shape.revolve(base, direction, degree)
+
+
 def make_compound(shapes):
     """
     Make an FreeCAD compound object out of many shapes

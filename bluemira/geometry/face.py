@@ -117,9 +117,10 @@ class BluemiraFace(BluemiraGeo):
     @classmethod
     def _create(cls, obj: Part.Face) -> BluemiraFace:
         if isinstance(obj, Part.Face):
-            wires = obj.Wires
-            bmwire = BluemiraWire(wires)
-            bmface = BluemiraFace(bmwire)
+            bmwires = []
+            for w in obj.Wires:
+                bmwires += [BluemiraWire(w)]
+            bmface = BluemiraFace(bmwires)
             return bmface
         raise TypeError("Only Part.Face objects can be used to create a {} "
                         "instance".format(cls))

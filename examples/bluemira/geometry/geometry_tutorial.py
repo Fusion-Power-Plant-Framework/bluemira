@@ -87,8 +87,24 @@ if __name__ == "__main__":
     bmface.translate((5., 2., 0.))
     geo.bmtools.save_as_STEP([bmwire, bmface], "test_translate")
 
-
+    print("8. Test bspline")
     pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
     wire = geo._freecadapi.make_bspline(pntslist, closed=False)
     bmwire_nc = geo.wire.BluemiraWire(wire)
     geo.bmtools.save_as_STEP([bmwire_nc], "test_bspline")
+
+    print("9. Test revolve")
+    bmsolid = geo.bmtools.revolve_shape(bmface, direction=(0., 1., 0.))
+    geo.bmtools.save_as_STEP([bmsolid], "test_revolve")
+
+    print("10. Face and solid with hole")
+    pntslist_out = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
+    delta = 0.3
+    pntslist_in = [(1. - delta, 1. - delta, 0.), (0. + delta, 1. - delta, 0.),
+                         (0. + delta, 0. + delta, 0.), (1. - delta, 0. + delta, 0.)]
+    wire_out = geo.bmtools.make_polygon(pntslist_out, closed=True)
+    wire_in = geo.bmtools.make_polygon(pntslist_in, closed=True)
+    bmface = geo.face.BluemiraFace([wire_out, wire_in])
+    geo.bmtools.save_as_STEP([bmface], "test_face_with_hole")
+    bmsolid = geo.bmtools.revolve_shape(bmface, direction=(0., 1., 0.))
+    geo.bmtools.save_as_STEP([bmsolid], "test_solid_with_hole")

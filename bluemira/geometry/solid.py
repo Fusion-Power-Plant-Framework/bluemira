@@ -51,28 +51,27 @@ class BluemiraSolid(BluemiraGeo):
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""
+        print("solid :{}".format(objs))
         return super()._check_boundary(objs)
 
     @BluemiraGeo.boundary.setter
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
-        # The solid is created here to have consistency between boundary and face.
-        self._shape = self._createShape()
 
-    def _createShape(self):
+    def _create_solid(self):
         """ Creation of the solid"""
-        new_shell = self.boundary[0].shape
-        for o in self.boundary[1:]:
-            new_shell = new_shell.fuse(o.shape)
+        new_shell = self.boundary[0]._shape
+        # for o in self.boundary[1:]:
+        #     new_shell = new_shell.fuse(o._shape)
         return Part.makeSolid(new_shell)
 
     @property
-    def shape(self):
+    def _shape(self):
         """Part.Solid: shape of the object as a single solid"""
-        return self._shape
+        return self._create_solid()
 
-    @staticmethod
-    def create(cls, obj: Part.Solid):
+    @classmethod
+    def _create(cls, obj: Part.Solid):
         if isinstance(obj, Part.Solid):
             shells = obj.Shells
             if len(shells) == 1:

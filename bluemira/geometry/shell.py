@@ -56,7 +56,7 @@ class BluemiraShell(BluemiraGeo):
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
 
-    def _createShell(self):
+    def _create_shell(self):
         """ Creation of the shell"""
         faces = [f._shape for f in self.boundary]
         return Part.makeShell(faces)
@@ -64,17 +64,15 @@ class BluemiraShell(BluemiraGeo):
     @property
     def _shape(self):
         """Part.Shell: shape of the object as a primitive shell"""
-        return self._createShell()
+        return self._create_shell()
 
-    @staticmethod
-    def create(cls, obj: Part.Shell):
+    @classmethod
+    def _create(cls, obj: Part.Shell):
         if isinstance(obj, Part.Shell):
             faces = obj.Faces
             bmfaces = []
             for face in faces:
-                wires = face.Wires
-                bmwire = BluemiraWire(wires)
-                bmfaces.append(BluemiraFace(bmwire))
+                bmfaces.append(BluemiraFace._create(face))
             bmshell = BluemiraShell(bmfaces)
             return bmshell
         raise TypeError("Only Part.Shell objects can be used to create a {} "
