@@ -28,8 +28,8 @@ import numba as nb
 from numba.np.extensions import cross2d
 from pyquaternion import Quaternion
 from bluemira.base.constants import EPS
-from bluemira.geometry.base import GeometryError
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
+from bluemira.geometry.error import GeometryError
 
 
 # =============================================================================

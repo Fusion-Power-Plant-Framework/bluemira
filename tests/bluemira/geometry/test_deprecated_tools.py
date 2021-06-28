@@ -25,8 +25,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.base import Plane, GeometryError
-from bluemira.geometry.tools import (
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_tools import (
     check_linesegment,
     bounding_box,
     on_polygon,
@@ -41,7 +41,8 @@ from bluemira.geometry.tools import (
     get_intersect,
     join_intersect,
 )
-from bluemira.geometry.loop import Loop
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.error import GeometryError
 
 TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
 

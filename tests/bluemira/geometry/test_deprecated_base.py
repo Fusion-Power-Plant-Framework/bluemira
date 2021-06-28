@@ -21,8 +21,8 @@
 
 import pytest
 import numpy as np
-from bluemira.geometry.base import Plane
-from bluemira.geometry.loop import Loop
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_loop import Loop
 
 
 def test_read_write_geombase(tmpdir):

@@ -34,15 +34,7 @@ from collections import Iterable
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import NumpyJSONEncoder
 from bluemira.geometry.constants import D_TOLERANCE
-
-
-# TODO: delete and use geometry/error.py
-class GeometryError(Exception):
-    """
-    Geometry error base class
-    """
-
-    pass
+from bluemira.geometry.error import GeometryError
 
 
 class GeomBase(abc.ABC):
