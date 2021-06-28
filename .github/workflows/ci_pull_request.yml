@@ -62,17 +62,17 @@ jobs:
     - name: Build Documentation mirapy
       shell: bash -l {0}
       run: |
-        sphinx-build documentation/mirapy/source documentation/mirapy/build
+        sphinx-build -W documentation/mirapy/source documentation/mirapy/build
 
     - name: Build Documentation BLUEPRINT
       shell: bash -l {0}
       run: |
-        sphinx-build documentation/BLUEPRINT/source documentation/BLUEPRINT/build
+        sphinx-build -W documentation/BLUEPRINT/source documentation/BLUEPRINT/build
 
     - name: Build Documentation bluemira
       shell: bash -l {0}
       run: |
-        sphinx-build documentation/bluemira/source documentation/bluemira/build
+        sphinx-build -W documentation/bluemira/source documentation/bluemira/build
 
     - name: Run pytest mirapy
       shell: bash -l {0}
