@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - danshort12/install-graphviz
 
 jobs:
   build-and-test:
