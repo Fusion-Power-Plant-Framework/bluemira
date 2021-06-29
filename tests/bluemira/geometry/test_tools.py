@@ -603,12 +603,12 @@ class TestMixedFaces:
                 100,
                 {
                     "center_of_mass": (
-                        3.5051207124203336,
-                        4.17724020150331,
-                        1.1683908129112384,
+                        3.500452375372449,
+                        4.171929004715665,
+                        1.1859408984439188,
                     ),
-                    "volume": 106.04366428842452,
-                    "area": 348.29727090293534,
+                    "volume": 105.18190628225133,
+                    "area": 347.68512772589065,
                 },
             ),
             (
@@ -616,12 +616,12 @@ class TestMixedFaces:
                 15,
                 {
                     "center_of_mass": (
-                        11.583613492691775,
-                        1.52501164739993,
-                        -0.18976515896142937,
+                        11.596880374395973,
+                        1.5253538266061644,
+                        -0.21212609235933916,
                     ),
-                    "volume": 42.949740303457624,
-                    "area": 121.54648513674483,
+                    "volume": 43.104392997200826,
+                    "area": 122.09576962217787,
                 },
             ),
         ],
@@ -643,12 +643,12 @@ class TestMixedFaces:
                 (0, 1, 0),
                 {
                     "center_of_mass": (
-                        9.458790543925387,
+                        9.45847,
                         0.5,
-                        -2.130186477920172e-05,
+                        -9.3475e-4,
                     ),
-                    "volume": 185.18032364061102,
-                    "area": 423.9937851471826,
+                    "volume": 184.654,
+                    "area": 422.696,
                 },
             ),
             (
@@ -656,12 +656,12 @@ class TestMixedFaces:
                 (0, 2, 0),
                 {
                     "center_of_mass": (
-                        8.032021916381938,
-                        0.9900000000000005,
-                        -6.44420412332881,
+                        8.03232,
+                        0.99007,
+                        -6.44426,
                     ),
-                    "volume": 4.587743503495517,
-                    "area": 29.217329193714182,
+                    "volume": 4.58755,
+                    "area": 29.199,
                 },
             ),
             (
@@ -669,12 +669,12 @@ class TestMixedFaces:
                 (0, 2, 0),
                 {
                     "center_of_mass": (
-                        8.035475284774666,
-                        0.9900000000000002,
-                        -6.447539796697995,
+                        8.0323,
+                        0.99,
+                        -6.4449,
                     ),
-                    "volume": 4.6210952635486455,
-                    "area": 29.178274456894467,
+                    "volume": 4.5911,
+                    "area": 29.169,
                 },
             ),
         ],
@@ -693,11 +693,11 @@ class TestMixedFaces:
         """
         Tests a particularly tricky face that can result in a seg fault...
         """
-        fn1 = os.sep.join([TEST_PATH, "divertor_seg_fault_LDS.json"])
-        div1 = Loop.from_file(fn1)
-        face = make_mixed_face(div1)
+        fn = os.sep.join([TEST_PATH, "divertor_seg_fault_LDS.json"])
+        loop: Loop = Loop.from_file(fn)
+        face = make_mixed_face(*loop.xyz)
         true_props = {
-            "area": 2.2628475048504892,
+            "area": 2.27623,
         }
         self.assert_properties(true_props, face)
 
@@ -707,19 +707,19 @@ class TestMixedFaces:
             (
                 "shell_mixed_test",
                 {
-                    "area": 6.376828474581714,
+                    "area": 6.8238,
                 },
             ),
             (
                 "failing_mixed_shell",
                 {
-                    "area": 31.499831941417227,
+                    "area": 31.464,
                 },
             ),
             (
                 "tf_wp_tricky",
                 {
-                    "area": 31.056371264721975,
+                    "area": 31.034,
                 },
             ),
         ],
