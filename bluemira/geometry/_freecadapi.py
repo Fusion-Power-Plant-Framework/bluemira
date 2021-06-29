@@ -385,6 +385,27 @@ def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0.,
     return shape.revolve(base, direction, degree)
 
 
+def extrude_shape(shape, vec: tuple):
+    """
+    Apply the extrusion along vec to this shape
+
+    Parameters
+    ----------
+    shape: FreeCAD Shape object
+        The shape to be extruded
+    vec: tuple (x,y,z)
+        The vector along which to extrude
+
+    Returns
+    -------
+    shape:
+        The extruded shape.
+
+    """
+    vec = Base.Vector(vec)
+    return shape.extrude(vec)
+
+
 def make_compound(shapes):
     """
     Make an FreeCAD compound object out of many shapes
