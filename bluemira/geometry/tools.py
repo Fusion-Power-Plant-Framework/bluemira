@@ -1377,6 +1377,75 @@ def convert_loop_to_shape(loop, label="", simplify=False, **kwargs):
     return shape
 
 
+def make_mixed_wire(
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
+    label="",
+    lcar=0.1,
+    *,
+    median_factor=2.0,
+    n_segments=4,
+    a_acute=150,
+    debug=False,
+):
+    """
+    Construct a BluemiraWire object from the provided coordinates using a combination of
+    polygon and spline wires. Polygons are determined by having a median length larger
+    than the threshold or an angle that is more acute than the threshold.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates of points to be converted to a BluemiraWire object
+    y: np.ndarray
+        The y coordinates of points to be converted to a BluemiraWire object
+    z: np.ndarray
+        The z coordinates of points to be converted to a BluemiraWire object
+    label: str
+        The label for the resulting BluemiraWire object
+    lcar: Union[float, List[float]]
+        The characteristic length for the resulting BluemiraWire object
+
+    Other Parameters
+    ----------------
+    median_factor: float
+        The factor of the median for which to filter segment lengths
+        (below median_factor*median_length --> spline)
+    n_segments: int
+        The minimum number of segments for a spline
+    a_acute: float
+        The angle [degrees] between two consecutive segments deemed to be too
+        acute to be fit with a spline.
+    debug: bool
+        Whether or not to print debugging information
+
+    Returns
+    -------
+    wire: BluemiraWire
+        The BluemiraWire of the mixed polygon/spline Loop
+    """
+    mfm = MixedFaceMaker(
+        x,
+        y,
+        z,
+        label=label,
+        lcar=lcar,
+        median_factor=median_factor,
+        n_segments=n_segments,
+        a_acute=a_acute,
+        debug=debug,
+    )
+    try:
+        mfm.build()
+
+    except RuntimeError:
+        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
+        return make_wire(x, y, z, label=label, lcar=lcar)
+
+    return mfm.wire
+
+
 def make_mixed_face(
     x: np.ndarray,
     y: np.ndarray,
