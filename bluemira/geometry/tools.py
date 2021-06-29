@@ -1522,6 +1522,84 @@ def make_mixed_face(
         return make_face(x, y, z, label=label, lcar=lcar)
 
 
+def make_mixed_shell(
+    x_inner: np.ndarray,
+    y_inner: np.ndarray,
+    z_inner: np.ndarray,
+    x_outer: np.ndarray,
+    y_outer: np.ndarray,
+    z_outer: np.ndarray,
+    label="",
+    lcar=0.1,
+    *,
+    median_factor=2.0,
+    n_segments=4,
+    a_acute=150,
+    debug=False,
+):
+    """
+    Construct a BluemiraFace object from the provided coordinates using a combination of
+    polygon and spline wires. Polygons are determined by having a median length larger
+    than the threshold or an angle that is more acute than the threshold.
+
+    Parameters
+    ----------
+    x_inner: np.ndarray
+        The inner x coordinates of points to be converted to a BluemiraFace object
+    y_inner: np.ndarray
+        The inner y coordinates of points to be converted to a BluemiraFace object
+    z_inner: np.ndarray
+        The inner z coordinates of points to be converted to a BluemiraFace object
+    x_outer: np.ndarray
+        The outer x coordinates of points to be converted to a BluemiraFace object
+    y_outer: np.ndarray
+        The outer y coordinates of points to be converted to a BluemiraFace object
+    z_outer: np.ndarray
+        The outer z coordinates of points to be converted to a BluemiraFace object
+    label: str
+        The label for the resulting BluemiraFace object
+    lcar: Union[float, List[float]]
+        The characteristic length for the resulting BluemiraFace object
+
+    Other Parameters
+    ----------------
+    median_factor: float
+        The factor of the median for which to filter segment lengths
+        (below median_factor*median_length --> spline)
+    n_segments: int
+        The minimum number of segments for a spline
+    a_acute: float
+        The angle [degrees] between two consecutive segments deemed to be too
+        acute to be fit with a spline.
+    debug: bool
+        Whether or not to print debugging information
+
+    Returns
+    -------
+    face: OCC Face object
+        The OCC face of the mixed polygon/spline Loop
+    """
+    outer = make_mixed_wire(
+        x_outer,
+        y_outer,
+        z_outer,
+        median_factor=median_factor,
+        n_segments=n_segments,
+        a_acute=a_acute,
+        debug=debug,
+    )
+    inner = make_mixed_wire(
+        x_inner,
+        y_inner,
+        z_inner,
+        median_factor=median_factor,
+        n_segments=n_segments,
+        a_acute=a_acute,
+        debug=debug,
+    )
+    return BluemiraFace([outer, inner], label=label, lcar=lcar)
+
+
 def make_wire(x, y, z, label="", lcar=0.1, spline=False):
     """
     Makes a wire from a set of coordinates.
