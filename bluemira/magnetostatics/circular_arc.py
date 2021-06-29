@@ -27,7 +27,7 @@ https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.constants import MU_0_4PI
-from bluemira.geometry.tools import make_circle_arc
+from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.magnetostatics.tools import (
     jit_llc3,
     jit_llc4,

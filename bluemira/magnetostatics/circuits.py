@@ -24,7 +24,7 @@ Three-dimensional current source terms.
 """
 
 import numpy as np
-from bluemira.geometry.tools import (
+from bluemira.geometry._deprecated_tools import (
     get_angle_between_vectors,
     rotation_matrix,
     get_normal_vector,

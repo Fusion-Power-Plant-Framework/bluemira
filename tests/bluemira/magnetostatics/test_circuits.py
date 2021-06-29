@@ -27,7 +27,7 @@ import json
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.utilities.tools import innocent_smoothie
 from BLUEPRINT.geometry.geomtools import circle_seg
-from bluemira.geometry.loop import Loop
+from bluemira.geometry._deprecated_loop import Loop
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,

@@ -27,7 +27,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from typing import List
 from copy import deepcopy
-from bluemira.geometry.tools import rotation_matrix, bounding_box
+from bluemira.geometry._deprecated_tools import rotation_matrix, bounding_box
 from bluemira.utilities.plot_tools import Plot3D
 
 

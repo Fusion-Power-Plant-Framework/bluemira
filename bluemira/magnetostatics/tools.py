@@ -29,7 +29,7 @@ from numba.types import intc, CPointer, float64
 from scipy import LowLevelCallable
 from scipy.integrate import quad, nquad, IntegrationWarning
 from bluemira.magnetostatics.error import MagnetostaticsError
-from bluemira.geometry.loop import Loop
+from bluemira.geometry._deprecated_loop import Loop
 
 
 __all__ = [

@@ -26,7 +26,11 @@ import numpy as np
 from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
-from bluemira.geometry.tools import rotation_matrix, bounding_box, close_coordinates
+from bluemira.geometry._deprecated_tools import (
+    rotation_matrix,
+    bounding_box,
+    close_coordinates,
+)
 from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.baseclass import CurrentSource
 
