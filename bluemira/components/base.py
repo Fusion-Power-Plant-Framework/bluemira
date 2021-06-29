@@ -99,7 +99,7 @@ class Component(NodeMixin):
             cls.__available_classes[cls.__name__] = cls
         else:
             raise ComponentError(
-                f"A class with name {cls.__name__} is already defined in BLUEPRINT as a "
+                f"A class with name {cls.__name__} is already defined in bluemira as a "
                 f"ReactorSystem : {cls.__available_classes[cls.__name__]} from "
                 f"{cls.__available_classes[cls.__name__].__module__}. You tried to "
                 f"specify {cls} from {cls.__module__}."
@@ -206,10 +206,6 @@ class Component(NodeMixin):
         """
         Find the components with the specified name.
 
-        .. note::
-            this function is just a wrapper of the anytree.search.findall_by_attr
-            function.
-
         Parameters
         ----------
         name: str
@@ -222,6 +218,11 @@ class Component(NodeMixin):
         found_components: Union[Component, List[Component]]
             The first component of the search if first is True, else all components
             matching the search.
+
+        Notes
+        -----
+            This function is just a wrapper of the anytree.search.findall_by_attr
+            function.
         """
         found_components = anytree.search.findall_by_attr(self.root, name)
         if len(found_components) == 0:
