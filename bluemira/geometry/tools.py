@@ -1436,7 +1436,6 @@ def make_mixed_face(
         a_acute=a_acute,
         debug=debug,
     )
-    mfm.build()
     try:
         mfm.build()
 
