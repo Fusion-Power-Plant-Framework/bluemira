@@ -41,9 +41,9 @@ from typing import Union
 from bluemira.geometry.error import GeometryError
 
 
-#########################################
-# Array, List, Vector, Point manipulation
-#########################################
+# # =============================================================================
+# # Array, List, Vector, Point manipulation
+# # =============================================================================
 def check_data_type(data_type):
     """Decorator to check the data type of the first parameter input (args[0]) of a
     function.
@@ -89,9 +89,52 @@ def point_to_numpy(points):
     return numpy.array([numpy.array([p.X, p.Y, p.Z]) for p in points])
 
 
-###################################
-# Part.Wire manipulation
-###################################
+# # =============================================================================
+# # Object's properties
+# # =============================================================================
+def length(obj):
+    prop = "Length"
+    if hasattr(obj, prop):
+        return getattr(obj, prop)
+    else:
+        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+
+
+def area(obj):
+    prop = "Area"
+    if hasattr(obj, prop):
+        return getattr(obj, prop)
+    else:
+        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+
+
+def volume(obj):
+    prop = "Volume"
+    if hasattr(obj, prop):
+        return getattr(obj, prop)
+    else:
+        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+
+
+def is_null(obj):
+    prop = "isNull"
+    if hasattr(obj, prop):
+        return getattr(obj, prop)()
+    else:
+        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+
+
+def is_closed(obj):
+    prop = "isClosed"
+    if hasattr(obj, prop):
+        return getattr(obj, prop)()
+    else:
+        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+
+
+# # =============================================================================
+# # Part.Wire manipulation
+# # =============================================================================
 def wire_closure(wire: Part.Wire):
     """ Create a line segment wire that closes an open wire"""
     closure = None
@@ -177,9 +220,9 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int):
     return output
 
 
-###################################
-# Geometry creation
-###################################
+# # =============================================================================
+# # Geometry creation
+# # =============================================================================
 def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
     """Make a polygon from a set of points.
 
@@ -243,10 +286,10 @@ def make_bspline(points: Union[list, numpy.ndarray], closed: bool = False) -> Pa
         wire = close_wire(wire)
     return wire
 
-###################################
-# Save functions
-###################################
 
+# # =============================================================================
+# # Save functions
+# # =============================================================================
 def save_as_STEP(shapes, filename="test", scale=1):
     """
     Saves a series of Shape objects as a STEP assembly
@@ -277,15 +320,17 @@ def save_as_STEP(shapes, filename="test", scale=1):
         # a copy of the compound is made to avoid modification of the original shapes.
         compound = compound.copy().scale(scale)
 
-    doc = FreeCAD.newDocument()
-    obj = FreeCAD.ActiveDocument.addObject("App::DocumentObject", "Test")
+    # doc = FreeCAD.newDocument()
+    # obj = FreeCAD.ActiveDocument.addObject("App::DocumentObject", "Test")
+    #
+    # freecad_comp = FreeCAD.ActiveDocument.addObject("Part::Feature")
+    #
+    # # link the solid to the object
+    # freecad_comp.Shape = compound
+    #
+    # Part.export([freecad_comp], filename)
 
-    freecad_comp = FreeCAD.ActiveDocument.addObject("Part::Feature")
-
-    # link the solid to the object
-    freecad_comp.Shape = compound
-
-    Part.export([freecad_comp], filename)
+    compound.exportStep(filename)
 
 
 # # =============================================================================

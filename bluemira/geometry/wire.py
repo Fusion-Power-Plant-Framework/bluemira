@@ -59,6 +59,8 @@ class BluemiraWire(BluemiraGeo):
     ):
         boundary_classes = [self.__class__, Part.Wire]
         super().__init__(boundary, label, lcar, boundary_classes)
+
+        #connection variable with BLUEPRINT Loop
         self._bp_loop = None
 
     @staticmethod
@@ -105,9 +107,9 @@ class BluemiraWire(BluemiraGeo):
         return wires
 
     def close(self) -> None:
-        """Close the shape with a LineSegment between shape's end and
-            start point. This function modify the object boundary.
-        """
+        """Close the shape with a line segment between shape's end and start point.
+        This function modify the object boundary."""
+
         if not self.is_closed():
             closure = wire_closure(self._shape)
             if isinstance(self.boundary[0], Part.Wire):
@@ -120,10 +122,15 @@ class BluemiraWire(BluemiraGeo):
             raise NotClosedWire("The open boundary has not been closed.")
 
     def discretize(self, ndiscr: int = 100, byedges: bool = False) -> numpy.ndarray:
+        """Discretize the wire in ndiscr equidistant points. If byedges is True,
+        each edges is discretized separately using and approximated distance (
+        wire.Length/ndiscr).
 
-        """Discretize the wire in ndiscr equidistant points.
-        If byedges is True, each edges is discretized separately using and approximated
-        distance (wire.Length/ndiscr)."""
+        Returns
+        -------
+        points:
+            a numpy array with the x,y,z coordinates of the discretized points.
+        """
 
         if byedges:
             points = discretize_by_edges(self._shape, ndiscr)
@@ -132,7 +139,8 @@ class BluemiraWire(BluemiraGeo):
         return points
 
     def scale(self, factor) -> None:
-        """Apply scaling with factor to this object"""
+        """Apply scaling with factor to this object. This function modifies the self
+        object."""
         for o in self.boundary:
             if isinstance(o, Part.Wire):
                 scale_shape(o, factor)
@@ -140,7 +148,8 @@ class BluemiraWire(BluemiraGeo):
                 o.scale(factor)
 
     def translate(self, vector) -> None:
-        """Translate this shape with the vector"""
+        """Translate this shape with the vector. This function modifies the self
+        object."""
         for o in self.boundary:
             if isinstance(o, Part.Wire):
                 translate_shape(o, vector)
