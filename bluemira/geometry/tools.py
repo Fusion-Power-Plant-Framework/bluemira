@@ -1378,9 +1378,9 @@ def convert_loop_to_shape(loop, label="", simplify=False, **kwargs):
 
 
 def make_mixed_face(
-    x: np.array,
-    y: np.array,
-    z: np.array,
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
     label="",
     lcar=0.1,
     *,
@@ -1422,8 +1422,8 @@ def make_mixed_face(
 
     Returns
     -------
-    face: OCC Face object
-        The OCC face of the mixed polygon/spline Loop
+    face: BluemiraFace
+        The BluemiraFace of the mixed polygon/spline Loop
     """
     mfm = MixedFaceMaker(
         x,
