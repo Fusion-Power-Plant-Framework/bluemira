@@ -1515,7 +1515,7 @@ def make_mixed_face(
     # Sometimes there won't be a RuntimeError, and you get a free SIGSEGV for your
     # troubles.
     area = mfm.face.area
-    if np.isclose(get_area(x, y, z), area, rtol=5e-3):
+    if np.isclose(get_area(x, y, z), area, rtol=5e-2):
         return mfm.face
     else:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
