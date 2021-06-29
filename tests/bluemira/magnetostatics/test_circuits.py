@@ -25,8 +25,7 @@ import pytest
 import tests
 import json
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.utilities.tools import innocent_smoothie
-from BLUEPRINT.geometry.geomtools import circle_seg
+from bluemira.geometry._deprecated_tools import make_circle_arc, innocent_smoothie
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
@@ -43,7 +42,7 @@ def test_analyticalsolvergrouper():
     dx_coil, dz_coil = 0.5, 0.75
 
     # Build a corresponding arbitrary current loop
-    xl, yl = circle_seg(xc, (0, 0), npoints=10)
+    xl, yl = make_circle_arc(xc, 0, 0, n_points=10)
     loop = Loop(x=xl, y=yl)
     loop.translate([0, 0, zc], update=True)
     a = ArbitraryPlanarRectangularXSCircuit(loop, dx_coil, dz_coil, current)

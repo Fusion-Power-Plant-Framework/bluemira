@@ -26,6 +26,7 @@ A collection of geometry tools.
 import numpy as np
 import numba as nb
 from numba.np.extensions import cross2d
+from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
 from bluemira.base.constants import EPS
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
@@ -1306,3 +1307,82 @@ def _montecarloloopcontrol(loop):
     raise GeometryError(
         "Unable to find a control point for this Loop using brute force."
     )
+
+
+# =============================================================================
+# Coordinate interpolation
+# =============================================================================
+
+
+def length(x, z):
+    """
+    Get a 1-D parameterisation of an x, z loop.
+
+    Parameters
+    ----------
+    x: array_like
+        x coordinates of the loop [m]
+    z: array_like
+        z coordinates of the loop [m]
+
+    Returns
+    -------
+    lengt: np.array(N)
+        The cumulative length of each individual segment in the loop
+    """
+    lengt = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
+    return lengt
+
+
+def lengthnorm(x, z):
+    """
+    Get a normalised 1-D parameterisation of an x, z loop.
+
+    Parameters
+    ----------
+    x: array_like
+        x coordinates of the loop [m]
+    z: array_like
+        z coordinates of the loop [m]
+
+    Returns
+    -------
+    total_length: np.array(N)
+        The cumulative normalised length of each individual segment in the loop
+    """
+    total_length = length(x, z)
+    return total_length / total_length[-1]
+
+
+def innocent_smoothie(x, z, n=500, s=0):
+    """
+    Get a smoothed interpolated set of coordinates.
+
+    Parameters
+    ----------
+    x: array_like
+        x coordinates of the loop [m]
+    z: array_like
+        z coordinates of the loop [m]
+    n: int
+        The number of interpolation points
+    s: Union[int, float]
+        The smoothing parameter to use. 0 results in no smoothing (default)
+
+    Returns
+    -------
+    x: array_like
+        Smoothed, interpolated x coordinates of the loop [m]
+    z: array_like
+        Smoothed, interpolated z coordinates of the loop [m]
+    """
+    length_norm = lengthnorm(x, z)
+    n = int(n)
+    l_interp = np.linspace(0, 1, n)
+    if s == 0:
+        x = interp1d(length_norm, x)(l_interp)
+        z = interp1d(length_norm, z)(l_interp)
+    else:
+        x = UnivariateSpline(length_norm, x, s=s)(l_interp)
+        z = UnivariateSpline(length_norm, z, s=s)(l_interp)
+    return x, z
