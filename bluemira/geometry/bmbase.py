@@ -38,7 +38,12 @@ module_logger = logging.getLogger(__name__)
 class BluemiraGeo(ABC):
     """Base abstract class for geometry"""
 
-    props = {'length': 'Length', 'area': 'Area', 'volume': 'Volume'}
+    props = {
+        'length': 'Length',
+        'area': 'Area',
+        'volume': 'Volume',
+        'center_of_mass': 'CenterOfMass'
+    }
     metds = {'is_null': 'isNull', 'is_closed': 'isClosed'}
     attrs = {**props, **metds}
 
