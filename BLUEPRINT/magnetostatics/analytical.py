@@ -26,7 +26,7 @@ of rectangular cross-section.
 import numpy as np
 import abc
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.geometry.geomtools import (
     get_angle_between_vectors,
     bounding_box,
@@ -446,7 +446,7 @@ class ArbitraryPlanarCurrentLoop(MultiCurrentSource):
         self.loop = loop.copy()
 
         if not self.loop.closed:
-            bpwarn("Closed current loop required.")
+            bluemira_warn("Closed current loop required.")
             self.loop.close()
 
         # Set up geometry, calculating all trapezoial prism sources

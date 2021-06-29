@@ -25,7 +25,7 @@ cross-section.
 """
 import numpy as np
 import numba as nb
-from BLUEPRINT.base.constants import EPS
+from bluemira.base.constants import EPS
 from BLUEPRINT.magnetostatics.utilities import jit_llc5, jit_llc7, integrate, n_integrate
 from BLUEPRINT.utilities.tools import is_num
 

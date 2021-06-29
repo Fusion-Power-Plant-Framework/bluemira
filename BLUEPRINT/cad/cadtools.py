@@ -185,7 +185,7 @@ from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import get_dl, get_angle_between_points
 from BLUEPRINT.base.error import CADError
 from BLUEPRINT.base.file import file_name_maker
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import expand_nested_list
 from BLUEPRINT.utilities.plottools import Plot3D
 from BLUEPRINT.cad.display import QtDisplayer
@@ -825,7 +825,7 @@ def make_mixed_face(loop, **kwargs):
         mfm.build()
 
     except RuntimeError:
-        bpwarn("CAD: MixedFaceMaker failed to build as expected.")
+        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
         return make_face(loop, **kwargs)
 
     # Sometimes there won't be a RuntimeError, and you get a free SIGSEGV for your
@@ -834,7 +834,7 @@ def make_mixed_face(loop, **kwargs):
     if np.isclose(loop.area, area, rtol=5e-3):
         return mfm.face
     else:
-        bpwarn("CAD: MixedFaceMaker failed to build as expected.")
+        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
         return make_face(loop, **kwargs)
 
 
@@ -854,7 +854,7 @@ def make_mixed_wire(loop, **kwargs):
     try:
         mfm.build()
     except RuntimeError:
-        bpwarn("CAD: MixedFaceMaker failed to build as expected.")
+        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
         return make_wire(loop)
 
     return mfm.wire
@@ -1557,7 +1557,7 @@ def extrude(profile, **kwargs):
         else:
             vec = kwargs["vec"]
     else:
-        bpwarn("Use extrude with correct kwargs")
+        bluemira_warn("Use extrude with correct kwargs")
     if vec is None:
         raise CADError("CAD::extrude kein Vector!")
 

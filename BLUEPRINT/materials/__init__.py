@@ -27,7 +27,7 @@ Module-level functionality for materials.
 import os
 
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 
 from .cache import MaterialCache
 
@@ -39,5 +39,5 @@ try:
     materials_cache.load_from_file(material_file)
     materials_cache.load_from_file(mixture_file)
 except ValueError:
-    bpwarn("Unable to load default materials cache")
+    bluemira_warn("Unable to load default materials cache")
     pass

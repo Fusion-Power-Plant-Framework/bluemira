@@ -32,8 +32,7 @@ from pypet.utils.explore import cartesian_product
 from pypet.utils.hdf5compression import compact_hdf5_file
 from pypet.trajectory import Trajectory
 from pypet import pypetconstants
-from BLUEPRINT.base.lookandfeel import bprint
-
+from bluemira.base.look_and_feel import bluemira_print
 
 logger = logging.getLogger()
 logger.setLevel("INFO")
@@ -136,7 +135,7 @@ class DataBase:
         exploration = cartesian_product(parameter_dict)
         new_runs = self.check_for_duplicates(exploration)
         if new_runs is None:
-            bprint("Already fully explored this parameter set.")
+            bluemira_print("Already fully explored this parameter set.")
             self.lock = True
         else:
             self.traj.f_explore(new_runs.to_dict(orient="list"))
@@ -164,7 +163,7 @@ class DataBase:
             if len(new) == 0:
                 return None
             else:
-                bprint("Dropping duplicate parameter entries.")
+                bluemira_print("Dropping duplicate parameter entries.")
                 return new.drop("_merge", axis=1)
         else:
             return exploration
@@ -186,7 +185,7 @@ class DataBase:
         """
         # self.env.disable_logging()
         if self.lock:
-            bprint("Add new parameter explorations before running.")
+            bluemira_print("Add new parameter explorations before running.")
             return None
         self.env.run(self.function)
         if self.traj_old:

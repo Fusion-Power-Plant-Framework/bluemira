@@ -28,7 +28,8 @@ from typing import Union, Type
 
 from BLUEPRINT.base.typebase import TypeBase
 from BLUEPRINT.base.parameter import ParameterFrame
-from BLUEPRINT.base.error import BLUEPRINTError, SystemsError
+from bluemira.base.error import BluemiraError
+from BLUEPRINT.base.error import SystemsError
 
 
 class ReactorSystem(TypeBase):
@@ -74,7 +75,7 @@ class ReactorSystem(TypeBase):
         if cls.__name__ not in cls.__available_classes:
             cls.__available_classes[cls.__name__] = cls
         else:
-            raise BLUEPRINTError(
+            raise BluemiraError(
                 f"A class with name {cls.__name__} is already defined in BLUEPRINT as a "
                 f"ReactorSystem : {cls.__available_classes[cls.__name__]} from "
                 f"{cls.__available_classes[cls.__name__].__module__}. You tried to "
@@ -126,7 +127,7 @@ class ReactorSystem(TypeBase):
             The class with the specified name.
         """
         if name not in cls.__available_classes:
-            raise BLUEPRINTError(
+            raise BluemiraError(
                 f"{name} is not known as a BLUEPRINT ReactorSystem. Either ensure that "
                 "the class inherits from a ReactorSystem or check that you have "
                 "imported the required module."
@@ -136,9 +137,7 @@ class ReactorSystem(TypeBase):
         if issubclass(the_class, cls):
             return the_class
         else:
-            raise BLUEPRINTError(
-                f"Unable to find {name} as a subclass of {cls.__name__}"
-            )
+            raise BluemiraError(f"Unable to find {name} as a subclass of {cls.__name__}")
 
     def _generate_subsystem_classes(self, config):
         """

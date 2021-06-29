@@ -33,7 +33,7 @@ from BLUEPRINT.equilibria.gridops import Grid
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import circle_seg
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.utilities.plottools import mathify
 from BLUEPRINT.equilibria.eqdsk import EQDSKInterface
 

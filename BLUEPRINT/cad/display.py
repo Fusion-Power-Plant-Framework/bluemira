@@ -24,7 +24,7 @@ CAD display utilities
 """
 import numpy as np
 from OCC.Display.SimpleGui import init_display
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 
 try:
     from OCC.Core.Quantity import Quantity_Color, Quantity_TOC_RGB
@@ -81,7 +81,7 @@ class QtDisplayer:
             color = np.random.rand(3)
         if len(color) != 3:
             color = color[:3]
-            bpwarn("RGB color tuples being violated somehow.")
+            bluemira_warn("RGB color tuples being violated somehow.")
         if transparency != 0:
             try:
                 qc = Quantity_Color(*color, Quantity_TOC_RGB)
