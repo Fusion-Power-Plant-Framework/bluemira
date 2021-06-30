@@ -23,6 +23,7 @@
 Useful functions for bluemira geometries.
 """
 # import from freecadapi
+from bluemira.geometry.bmbase import BluemiraGeo
 from . import _freecadapi
 
 # import bluemira geometries
@@ -117,6 +118,39 @@ def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0.,
     bmshell = BluemiraShell(bmfaces)
     bmsolid = BluemiraSolid(bmshell)
     return bmsolid
+
+
+@convert_to_bluemirageo
+def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None, lcar=None) -> BluemiraSolid:
+    """
+    Apply the extrusion along vec to this shape
+
+    Parameters
+    ----------
+    shape: BluemiraGeo
+        The shape to be extruded
+    vec: tuple (x,y,z)
+        The vector along which to extrude
+
+    Returns
+    -------
+    shape: BluemiraSolid
+        The extruded shape.
+    """
+    if label is None:
+        label = shape.label
+    if lcar is None:
+        lcar = shape.lcar
+
+    solid = _freecadapi.extrude_shape(shape._shape, vec)
+    faces = solid.Faces
+    bmfaces = []
+    for face in faces:
+        bmfaces.append(BluemiraFace._create(face))
+    bmshell = BluemiraShell(bmfaces)
+    bmsolid = BluemiraSolid(bmshell, label, lcar)
+    return bmsolid
+
 
 # # =============================================================================
 # # Save functions

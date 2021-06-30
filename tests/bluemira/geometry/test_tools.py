@@ -24,6 +24,8 @@ import pytest
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import Any, Dict
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.base import Plane, GeometryError
 from bluemira.geometry.tools import (
@@ -40,8 +42,12 @@ from bluemira.geometry.tools import (
     offset,
     get_intersect,
     join_intersect,
+    make_mixed_face,
+    make_mixed_shell,
 )
 from bluemira.geometry.loop import Loop
+from bluemira.geometry.bmbase import BluemiraGeo
+from bluemira.geometry.bmtools import revolve_shape, extrude_shape
 
 TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
 
@@ -562,6 +568,170 @@ class TestIntersections:
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
         assert np.allclose(np.sort(intx), np.sort(tf.x[args])), f"{intx} != {tf.x[args]}"
         assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
+
+
+class TestMixedFaces:
+    """
+    Various tests of the MixedFaceMaker functionality. Checks the 3-D geometric
+    properties of the results with some regression results done when everything was
+    working correctly.
+    """
+
+    def assert_properties(self, true_props: Dict[str, Any], part: BluemiraGeo):
+        """
+        Helper function to pull out the properties to be compared, and to make the
+        comparison in an output-friendly way.
+        """
+        error = False
+        keys, expected, actual = [], [], []
+        for key, value in true_props.items():
+            comp_method = np.allclose if isinstance(value, tuple) else np.isclose
+            result = getattr(part, key, None)
+            if not comp_method(value, result):
+                error = True
+                keys.append(key)
+                expected.append(value)
+                actual.append(result)
+        if error:
+            assert False, list(zip(keys, expected, actual))
+
+    @pytest.mark.parametrize(
+        "filename,degree,true_props",
+        [
+            (
+                "IB_test.json",
+                100,
+                {
+                    "center_of_mass": (
+                        3.500452375372449,
+                        4.171929004715665,
+                        1.1859408984439188,
+                    ),
+                    "volume": 105.18190628225133,
+                    "area": 347.68512772589065,
+                },
+            ),
+            (
+                "OB_test.json",
+                15,
+                {
+                    "center_of_mass": (
+                        11.596880374395973,
+                        1.5253538266061644,
+                        -0.21212609235933916,
+                    ),
+                    "volume": 43.104392997200826,
+                    "area": 122.09576962217787,
+                },
+            ),
+        ],
+    )
+    def test_face_revolve(self, filename, degree, true_props):
+        """
+        Tests some blanket faces that combine splines and polygons.
+        """
+        loop: Loop = Loop.from_file(os.sep.join([TEST_PATH, filename]))
+        face = make_mixed_face(*loop.xyz)
+        part = revolve_shape(face, degree=degree)
+        self.assert_properties(true_props, part)
+
+    @pytest.mark.parametrize(
+        "filename,vec,true_props",
+        [
+            (
+                "TF_case_in_test.json",
+                (0, 1, 0),
+                {
+                    "center_of_mass": (
+                        9.45847,
+                        0.5,
+                        -9.3475e-4,
+                    ),
+                    "volume": 184.654,
+                    "area": 422.696,
+                },
+            ),
+            (
+                "div_test_mfm.json",
+                (0, 2, 0),
+                {
+                    "center_of_mass": (
+                        8.03232,
+                        0.99007,
+                        -6.44426,
+                    ),
+                    "volume": 4.58755,
+                    "area": 29.199,
+                },
+            ),
+            (
+                "div_test_mfm2.json",
+                (0, 2, 0),
+                {
+                    "center_of_mass": (
+                        8.0323,
+                        0.99,
+                        -6.4449,
+                    ),
+                    "volume": 4.5911,
+                    "area": 29.169,
+                },
+            ),
+        ],
+    )
+    def test_face_extrude(self, filename, vec, true_props):
+        """
+        Tests TF and divertor faces that combine splines and polygons.
+        """
+        fn = os.sep.join([TEST_PATH, filename])
+        loop: Loop = Loop.from_file(fn)
+        face = make_mixed_face(*loop.xyz)
+        part = extrude_shape(face, vec=vec)
+        self.assert_properties(true_props, part)
+
+    def test_face_seg_fault(self):
+        """
+        Tests a particularly tricky face that can result in a seg fault...
+        """
+        fn = os.sep.join([TEST_PATH, "divertor_seg_fault_LDS.json"])
+        loop: Loop = Loop.from_file(fn)
+        face = make_mixed_face(*loop.xyz)
+        true_props = {
+            "area": 2.27623,
+        }
+        self.assert_properties(true_props, face)
+
+    @pytest.mark.parametrize(
+        "name,true_props",
+        [
+            (
+                "shell_mixed_test",
+                {
+                    "area": 6.8238,
+                },
+            ),
+            (
+                "failing_mixed_shell",
+                {
+                    "area": 31.464,
+                },
+            ),
+            (
+                "tf_wp_tricky",
+                {
+                    "area": 31.034,
+                },
+            ),
+        ],
+    )
+    def test_shell(self, name, true_props):
+        """
+        Tests some shell mixed faces
+        """
+        inner: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_inner.json"]))
+        outer: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_outer.json"]))
+        face = make_mixed_shell(*inner.xyz, *outer.xyz)
+        self.assert_properties(true_props, face)
 
 
 if __name__ == "__main__":

@@ -50,12 +50,22 @@ class BluemiraGeo(ABC):
         identification label for the shape
     lcar: Union[float, [float]]
         characteristic mesh length
+    boundary_classes:
+        list of allowed class types for shape's boundary
     """
 
     # # Obsolete
     # # a set of property and methods that are inherited from FreeCAD objects
-    # props = {'length': 'Length', 'area': 'Area', 'volume': 'Volume'}
-    # metds = {'is_null': 'isNull', 'is_closed': 'isClosed'}
+    # props = {
+    #     'length': 'Length',
+    #     'area': 'Area',
+    #     'volume': 'Volume',
+    #     'center_of_mass': 'CenterOfMass'
+    # }
+    # metds = {
+    #     'is_null': 'isNull',
+    #     'is_closed': 'isClosed'
+    # }
     # attrs = {**props, **metds}
 
     def __init__(
