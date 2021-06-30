@@ -25,7 +25,7 @@ Green's functions mappings for psi, Bx, and Bz
 import numpy as np
 import numba as nb
 from scipy.special import ellipk, ellipe
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import MU_0, MU_0_4PI
 
 
 __all__ = ["greens_psi", "greens_Bx", "greens_Bz", "greens_all"]
@@ -260,7 +260,7 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):
     i2 = 4 * e / (a ** 3 * (1 - k2))
     part_a = (z - zc) ** 2 + x ** 2 + xc ** 2
     part_b = -2 * x * xc
-    return 1e-7 * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
+    return MU_0_4PI * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
 
 
 @nb.jit(nopython=True)
@@ -303,8 +303,7 @@ def greens_all(xc, zc, x, z):
     i_2 = 4 * e / (a ** 3 * (1 - k2))
     a_part = (z - zc) ** 2 + x ** 2 + xc ** 2
     b_part = -2 * x * xc
-    mu0_4pi = 1e-7  # MU_0 / (4*np.pi)
-    g_bx = mu0_4pi * xc * (z - zc) * (i_1 - i_2 * a_part) / b_part
-    g_bz = mu0_4pi * xc * ((xc + x * a_part / b_part) * i_2 - i_1 * x / b_part)
-    g_psi = mu0_4pi * a * ((2 - k2) * k - 2 * e)
+    g_bx = MU_0_4PI * xc * (z - zc) * (i_1 - i_2 * a_part) / b_part
+    g_bz = MU_0_4PI * xc * ((xc + x * a_part / b_part) * i_2 - i_1 * x / b_part)
+    g_psi = MU_0_4PI * a * ((2 - k2) * k - 2 * e)
     return g_psi, g_bx, g_bz
