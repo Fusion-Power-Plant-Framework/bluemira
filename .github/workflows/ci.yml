@@ -2,6 +2,10 @@ name: bluemira_ci
 
 on:
   pull_request:
+  push:
+    branches:
+      - develop
+      - main
 
 jobs:
   build-and-test:
