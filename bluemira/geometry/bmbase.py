@@ -35,26 +35,46 @@ from abc import ABC, abstractmethod
 import logging
 module_logger = logging.getLogger(__name__)
 
-class BluemiraGeo(ABC):
-    """Base abstract class for geometry"""
+# import freecad api
+from . import _freecadapi
 
-    props = {
-        'length': 'Length',
-        'area': 'Area',
-        'volume': 'Volume',
-        'center_of_mass': 'CenterOfMass'
-    }
-    metds = {'is_null': 'isNull', 'is_closed': 'isClosed'}
-    attrs = {**props, **metds}
+
+class BluemiraGeo(ABC):
+    """Base abstract class for geometry
+
+    Parameters
+    ----------
+    boundary:
+        shape's boundary
+    label: str
+        identification label for the shape
+    lcar: Union[float, [float]]
+        characteristic mesh length
+    boundary_classes:
+        list of allowed class types for shape's boundary
+    """
+
+    # # Obsolete
+    # # a set of property and methods that are inherited from FreeCAD objects
+    # props = {
+    #     'length': 'Length',
+    #     'area': 'Area',
+    #     'volume': 'Volume',
+    #     'center_of_mass': 'CenterOfMass'
+    # }
+    # metds = {
+    #     'is_null': 'isNull',
+    #     'is_closed': 'isClosed'
+    # }
+    # attrs = {**props, **metds}
 
     def __init__(
             self,
             boundary,
             label: str = "",
             lcar: Union[float, [float]] = 0.1,
-            boundary_classes: [cls] = None
+            boundary_classes=None
     ):
-
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
@@ -65,19 +85,19 @@ class BluemiraGeo(ABC):
         """"Function used in __getattr__ to modify the added functions"""
         return func
 
-    def __getattr__(self, key):
-        """
-        Transfer the key getattr to underlying shape object.
-        """
-        if key in type(self).attrs:
-            output = getattr(self._shape, type(self).attrs[key])
-            if callable(output):
-                return self.__class__._converter(output)
-            else:
-                return output
-        else:
-            raise AttributeError("'{}' has no attribute '{}'".format(str(type(
-                self).__name__), key))
+    # def __getattr__(self, key):
+    #     """
+    #     Transfer the key getattr to shape object.
+    #     """
+    #     if key in type(self).attrs:
+    #         output = getattr(self._shape, type(self).attrs[key])
+    #         if callable(output):
+    #             return self.__class__._converter(output)
+    #         else:
+    #             return output
+    #     else:
+    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
+    #             self).__name__), key))
 
     def _check_boundary(self, objs):
         """Check if objects objs can be used as boundaries"""
@@ -103,14 +123,38 @@ class BluemiraGeo(ABC):
     @abstractmethod
     def _shape(self):
         """Primitive shape of the object"""
+        # Note: this is the "hidden" connection with primitive shapes
         pass
+
+    @property
+    def length(self):
+        """Shape length"""
+        return _freecadapi.length(self._shape)
+
+    @property
+    def area(self):
+        """Shape length"""
+        return _freecadapi.area(self._shape)
+
+    @property
+    def volume(self):
+        """Shape length"""
+        return _freecadapi.volume(self._shape)
+
+    def is_null(self):
+        """Checks if the shape is null."""
+        return _freecadapi.is_null(self._shape)
+
+    def is_closed(self):
+        """Checks if the shape is closed"""
+        return _freecadapi.is_closed(self._shape)
 
     def search(self, label: str):
         """Search for a shape with the specified label
 
         Parameters
         ----------
-        label : str :
+        label : str
             shape label.
 
         Returns
@@ -128,13 +172,14 @@ class BluemiraGeo(ABC):
         return output
 
     def scale(self, factor) -> None:
-        """Apply scaling with factor to this object"""
-
+        """Apply scaling with factor to this object. This function modifies the self
+        object."""
         for o in self.boundary:
             o.scale(factor)
 
     def translate(self, vector) -> None:
-        """Translate this shape with the vector"""
+        """Translate this shape with the vector. This function modifies the self
+        object"""
         for o in self.boundary:
             o.translate(vector)
 
