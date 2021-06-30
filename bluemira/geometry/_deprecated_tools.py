@@ -26,6 +26,7 @@ A collection of geometry tools.
 import numpy as np
 import numba as nb
 from numba.np.extensions import cross2d
+from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
 from bluemira.base.constants import EPS
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
@@ -256,6 +257,41 @@ def distance_between_points(p1, p2):
         raise GeometryError("Need 2- or 3-D sized points.")
 
     return np.sqrt(sum([(p2[i] - p1[i]) ** 2 for i in range(len(p2))]))
+
+
+def get_angle_between_vectors(v1, v2, signed=False):
+    """
+    Angle between vectors. Will return the signed angle if specified.
+
+    Parameters
+    ----------
+    v1: np.array
+        The first vector
+    v2: np.array
+        The second vector
+
+    Returns
+    -------
+    angle: float
+        The angle between the vector [radians]
+    """
+    if not all(isinstance(p, np.ndarray) for p in [v1, v2]):
+        v1, v2 = np.array(v1), np.array(v2)
+    v1n = v1 / np.linalg.norm(v1)
+    v2n = v2 / np.linalg.norm(v2)
+    cos_angle = np.dot(v1n, v2n)
+    # clip to dodge a NaN
+    angle = np.arccos(np.clip(cos_angle, -1, 1))
+    sign = 1
+    if signed:
+        det = np.linalg.det(np.stack((v1n[-2:], v2n[-2:])))
+        if det == 0:
+            # Vectors parallel
+            sign = 1
+        else:
+            sign = np.sign(det)
+
+    return sign * angle
 
 
 @nb.jit(cache=True, nopython=True)
@@ -605,6 +641,86 @@ def bounding_box(x, y, z):
     y_b = 0.5 * size * np.array([-1, -1, 1, 1, -1, -1, 1, 1]) + 0.5 * (ymax + ymin)
     z_b = 0.5 * size * np.array([-1, 1, -1, 1, -1, 1, -1, 1]) + 0.5 * (zmax + zmin)
     return x_b, y_b, z_b
+
+
+def vector_lengthnorm(x, y, z):
+    """
+    Get a normalised 1-D parameterisation of a set of x-y-z coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: np.array
+        The z coordinates
+
+    Returns
+    -------
+    length_: np.array(n)
+        The normalised length vector
+    """
+    length_ = np.append(
+        0,
+        np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)),
+    )
+    return length_ / length_[-1]
+
+
+def vector_lengthnorm_2d(x, z):
+    """
+    Get a normalised 1-D parameterisation of an x, z loop.
+
+    Parameters
+    ----------
+    x: array_like
+        x coordinates of the loop [m]
+    z: array_like
+        z coordinates of the loop [m]
+
+    Returns
+    -------
+    total_length: np.array(N)
+        The cumulative normalised length of each individual segment in the loop
+    """
+
+    total_length = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
+    return total_length / total_length[-1]
+
+
+def innocent_smoothie(x, z, n=500, s=0):
+    """
+    Get a smoothed interpolated set of coordinates.
+
+    Parameters
+    ----------
+    x: array_like
+        x coordinates of the loop [m]
+    z: array_like
+        z coordinates of the loop [m]
+    n: int
+        The number of interpolation points
+    s: Union[int, float]
+        The smoothing parameter to use. 0 results in no smoothing (default)
+
+    Returns
+    -------
+    x: array_like
+        Smoothed, interpolated x coordinates of the loop [m]
+    z: array_like
+        Smoothed, interpolated z coordinates of the loop [m]
+    """
+    length_norm = vector_lengthnorm_2d(x, z)
+    n = int(n)
+    l_interp = np.linspace(0, 1, n)
+    if s == 0:
+        x = interp1d(length_norm, x)(l_interp)
+        z = interp1d(length_norm, z)(l_interp)
+    else:
+        x = UnivariateSpline(length_norm, x, s=s)(l_interp)
+        z = UnivariateSpline(length_norm, z, s=s)(l_interp)
+    return x, z
 
 
 # =============================================================================
