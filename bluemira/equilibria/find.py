@@ -565,29 +565,6 @@ def find_flux_loops(x, z, psi, psinorm, o_points=None, x_points=None):
     return get_contours(x, z, psi, psinormed)
 
 
-def find_field_surfs(x, z, Bp, field):
-    """
-    Finds all field loops with a given field.
-
-    Parameters
-    ----------
-    x: np.array(N, M)
-        The spatial x coordinates of the grid points [m]
-    z: np.array(N, M)
-        The spatial z coordinates of the grid points [m]
-    Bp: 2-D numpy array
-        The field map
-    field: float
-        The value of the desired field surfaces
-
-    Returns
-    -------
-    B_loops: [np.array(P, K), ..]
-        The list of all field loops
-    """
-    return get_contours(x, z, Bp, field)
-
-
 def find_field_surf(x, z, Bp, field):
     """
     Picks a field surface most likely to be the desired breakdown region
@@ -617,7 +594,7 @@ def find_field_surf(x, z, Bp, field):
         """
         return np.sum((np.mean(x_opt) - xo) ** 2 + (np.mean(z_opt) - zo) ** 2)
 
-    surfaces = find_field_surfs(x, z, Bp, field)
+    surfaces = get_contours(x, z, Bp, field)
     err = []
     areas = []
     for group in surfaces:  # Choisir la surface la plus "logique"
@@ -670,9 +647,9 @@ def find_LCFS_separatrix(
     -------
     lcfs: Loop
         The last closed flux surface
-    separatrix: Union[Loop, MultiLoop]
+    separatrix: Union[Loop, list]
         The plasma separatrix (first open flux surface). Will return a
-        MultiLoop for double_null=True, with all four separatrix legs being
+        list of Loops for double_null=True, with all four separatrix legs being
         captured.
 
     Notes
@@ -838,7 +815,7 @@ def in_zone(x, z, zone):
     return _in_plasma(x, z, mask, zone)
 
 
-@nb.jit
+@nb.jit(nopython=True, cache=True)
 def _in_plasma(x, z, mask, sep):
     """
     Get a masking matrix for a specified zone. JIT compilation utility.
