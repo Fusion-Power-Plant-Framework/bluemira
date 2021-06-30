@@ -141,6 +141,11 @@ class BluemiraGeo(ABC):
         """Shape length"""
         return _freecadapi.volume(self._shape)
 
+    @property
+    def center_of_mass(self):
+        """Shape center of mass"""
+        return _freecadapi.center_of_mass(self._shape)
+
     def is_null(self):
         """Checks if the shape is null."""
         return _freecadapi.is_null(self._shape)

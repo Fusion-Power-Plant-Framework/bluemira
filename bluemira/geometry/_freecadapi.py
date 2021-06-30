@@ -116,6 +116,14 @@ def volume(obj):
         raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
 
 
+def center_of_mass(obj):
+    prop = "CenterOfMass"
+    if hasattr(obj, prop):
+        return getattr(obj, prop)
+    else:
+        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+
+
 def is_null(obj):
     prop = "isNull"
     if hasattr(obj, prop):
