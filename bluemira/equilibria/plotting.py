@@ -508,8 +508,8 @@ class EquilibriumPlotter(Plotter):
         Plot the separatrix.
         """
         separatrix = self.eq.get_separatrix()
-        if isinstance(separatrix, MultiLoop):
-            loops = separatrix.loops
+        if isinstance(separatrix, list):
+            loops = separatrix
         else:
             loops = [separatrix]
 

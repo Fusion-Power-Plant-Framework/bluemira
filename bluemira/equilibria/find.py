@@ -32,7 +32,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry._deprecated_tools import in_polygon, get_area_2d
 from bluemira.geometry._deprecated_loop import Loop
-from BLUEPRINT.geometry.loop import MultiLoop
 from bluemira.equilibria.constants import X_TOLERANCE, B_TOLERANCE
 
 __all__ = [
@@ -742,7 +741,7 @@ def find_LCFS_separatrix(
         coords = find_flux_loops(x, z, psi, high, o_points=o_points, x_points=x_points)
         loops = [Loop(x=c.T[0], z=c.T[1]) for c in coords]
         loops.sort(key=lambda loop: -loop.length)
-        separatrix = MultiLoop(loops[:2])
+        separatrix = loops[:2]
     return lcfs, separatrix
 
 
