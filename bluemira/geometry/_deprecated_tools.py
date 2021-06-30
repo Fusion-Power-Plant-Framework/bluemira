@@ -36,6 +36,7 @@ from bluemira.geometry import _freecadapi
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
+import bluemira.geometry.tools as bmtools
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -1359,11 +1360,8 @@ def _montecarloloopcontrol(loop):
 # Loop conversion
 # =============================================================================
 
-from bluemira.geometry._deprecated_loop import Loop
-import bluemira.geometry.tools as bmtools
 
-
-def simplify_loop(loop, **kwargs) -> Loop:
+def simplify_loop(loop, **kwargs):
     """This function simplify the loop into splines as made in BLUEPRINT with the
     MixedFaceMaker. TO BE IMPLEMENTED."""
     return loop

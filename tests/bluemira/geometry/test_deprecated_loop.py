@@ -27,7 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from random import uniform
 from bluemira.base.file import get_bluemira_path
-from bluemira.utilities.plot_tools import Plot3D
+import bluemira.utilities.plot_tools as plot_tools
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry._deprecated_loop import Loop
 
@@ -211,7 +211,7 @@ class TestLoop:
 class Test3Dplotting:
     def test_looks_good(self):
         loop = Loop(x=[0.4, 4, 6, 7, 8, 4, 0.4], y=[1, 1, 2, 2, 3, 3, 1], z=0)
-        ax = Plot3D()
+        ax = plot_tools.Plot3D()
         loop.rotate(30, p1=[0, 0, 0], p2=[0, 1, 0])  # Killer edge case
         loop.plot(ax)
         loop.rotate(40, p1=[0, 0, 0], p2=[0, 0, 1])
@@ -227,7 +227,7 @@ class Test3Dplotting:
     def test_edges_again(self):
         loop = Loop(x=[0, 2, 2, 0, 0], y=[0, 0, 2, 2, 0])
         loop.translate([10, 10, 10])
-        ax = Plot3D()
+        ax = plot_tools.Plot3D()
         loop.plot(ax)
         loop.rotate(30, p1=[0, 0, 0], p2=[0, 0, 1])
         loop.plot(ax)
