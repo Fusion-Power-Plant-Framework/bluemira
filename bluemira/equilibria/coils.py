@@ -292,31 +292,19 @@ class Coil:
         z_min, z_max = self.z - self.dz - atol, self.z + self.dz + atol
         return (x >= x_min) & (x <= x_max) & (z >= z_min) & (z <= z_max)
 
-    def assign_material(self, material, j_max=None, b_max=None):
+    def assign_material(self, j_max=NBTI_J_MAX, b_max=NBTI_B_MAX):
         """
         Assigns EM material properties to coil
 
         Parameters
         ----------
-        material: str
-            The name of the material from ['NbTi', 'Nb3Sn']
         j_max: float (default None)
             Overwrite default constant material max current density [MA/m^2]
         b_max: float (default None)
             Overwrite default constant material max field [T]
         """
-        if material == "NbTi":
-            self.j_max = NBTI_J_MAX
-            self.b_max = NBTI_B_MAX
-        elif material == "Nb3Sn":
-            self.j_max = NB3SN_J_MAX
-            self.b_max = NB3SN_B_MAX
-        else:
-            raise EquilibriaError(f"Unrecognised coil material: {material}.")
-        if j_max is not None:
-            self.j_max = j_max
-        if b_max is not None:
-            self.b_max = b_max
+        self.j_max = j_max
+        self.b_max = b_max
 
     def get_max_current(self):
         """
@@ -1449,7 +1437,7 @@ class CoilSet(CoilGroup):
             z[i] = float(coil.z)
         return x, z
 
-    def assign_coil_materials(self, name, material="Nb3Sn", j_max=None, b_max=None):
+    def assign_coil_materials(self, name, j_max=None, b_max=None):
         """
         Assigns material limits to coils
 
@@ -1458,9 +1446,6 @@ class CoilSet(CoilGroup):
         name: str
             Name of the coil to assign the material to
             from ['PF', 'CS', 'PF_x', 'CS_x'] with x a valid str(int)
-        material: str
-            Name of the material
-            from ['NbTi', 'Nb3Sn']
         j_max: float (default None)
             Overwrite default constant material max current density [MA/m^2]
         b_max: float (default None)
@@ -1468,14 +1453,14 @@ class CoilSet(CoilGroup):
         """
         if name == "PF":
             names = self.get_PF_names()
-            for n in names:
-                self.assign_coil_materials(n, material, j_max=j_max, b_max=b_max)
+            for name in names:
+                self.assign_coil_materials(name, j_max=j_max, b_max=b_max)
         elif name == "CS":
             names = self.get_CS_names()
-            for n in names:
-                self.assign_coil_materials(n, material, j_max=j_max, b_max=b_max)
+            for name in names:
+                self.assign_coil_materials(name, j_max=j_max, b_max=b_max)
         else:
-            self.coils[name].assign_material(material, j_max=j_max, b_max=b_max)
+            self.coils[name].assign_material(j_max=j_max, b_max=b_max)
 
     def get_max_fields(self):
         """

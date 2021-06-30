@@ -48,8 +48,7 @@ class FreeBoundary:
         x, z = grid.x, grid.z
         self.dx, self.dz = grid.dx, grid.dz
         self.edges = grid.edges
-        # Small speed optimisation: compute Green's functions on the domain
-        # boundary only once
+ 
         values = np.zeros((len(self.edges), grid.nx, grid.nz))
         for i, (j, k) in enumerate(self.edges):
             g = greens_psi(x, z, x[j, k], z[j, k])
