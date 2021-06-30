@@ -564,7 +564,7 @@ class BreakdownPlotter(Plotter):
     Utility class for Breakdown plotting
     """
 
-    def __init__(self, breakdown, ax=None, Bp=False):
+    def __init__(self, breakdown, ax=None, Bp=False, B_breakdown=0.003):
         super().__init__(ax)
         self.bd = breakdown
 
@@ -573,7 +573,7 @@ class BreakdownPlotter(Plotter):
         self.Bp = self.bd.Bp(self.bd.x, self.bd.z)
 
         self.plot_contour()
-        self.plot_zone()
+        self.plot_zone(B_breakdown)
         if Bp:
             self.plot_Bp()
 
@@ -598,7 +598,7 @@ class BreakdownPlotter(Plotter):
         cbar = plt.colorbar(c)
         cbar.set_label("$B_{p}$ [T]")
 
-    def plot_zone(self):
+    def plot_zone(self, field):
         """
         Plot the low field zones with a dashed line.
         """
@@ -607,7 +607,7 @@ class BreakdownPlotter(Plotter):
             self.bd.x,
             self.bd.z,
             self.Bp,
-            levels=[B_BREAKDOWN],
+            levels=[field],
             colors=colors,
             linestyles="dashed",
         )

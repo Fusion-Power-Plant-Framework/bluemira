@@ -28,7 +28,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import get_area_2d, get_centroid_2d
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.constants import X_AXIS_MIN, MIN_N_DISCR
-from bluemira.equilibria.plotting import GridPlotter
 
 
 __all__ = ["Grid", "integrate_dx_dz", "volume_integral", "revolved_volume"]
@@ -185,6 +184,7 @@ class Grid:
         """
         Plot the Grid object onto an ax.
         """
+        from bluemira.equilibria.plotting import GridPlotter  # noqa (circular import)
         return GridPlotter(self, ax=ax, **kwargs)
 
 
