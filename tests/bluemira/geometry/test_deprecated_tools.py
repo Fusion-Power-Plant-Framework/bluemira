@@ -27,8 +27,8 @@ import matplotlib.pyplot as plt
 from typing import Any, Dict
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.base import Plane, GeometryError
-from bluemira.geometry.tools import (
+from bluemira.geometry._deprecated_base import Plane, GeometryError
+from bluemira.geometry._deprecated_tools import (
     check_linesegment,
     bounding_box,
     on_polygon,
@@ -45,9 +45,9 @@ from bluemira.geometry.tools import (
     make_mixed_face,
     make_mixed_shell,
 )
-from bluemira.geometry.loop import Loop
-from bluemira.geometry.bmbase import BluemiraGeo
-from bluemira.geometry.bmtools import revolve_shape, extrude_shape
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.tools import revolve_shape, extrude_shape
 
 TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
 

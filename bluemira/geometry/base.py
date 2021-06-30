@@ -20,215 +20,174 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Base class and Plane object for use with Loop.
+Base classes and functionality for the bluemira geometry module.
 """
 
-import os
-import numpy as np
-import abc
-import json
-import pickle  # noqa (S403)
-from copy import deepcopy
+from __future__ import annotations
+
+# import typing
 from typing import Union
-from collections import Iterable
-from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import NumpyJSONEncoder
-from bluemira.geometry.constants import D_TOLERANCE
-from bluemira.geometry.error import GeometryError
+
+# import for abstract class
+from abc import ABC, abstractmethod
+
+# import for logging
+import logging
+module_logger = logging.getLogger(__name__)
+
+# import freecad api
+from . import _freecadapi
 
 
-class GeomBase(abc.ABC):
-    """
-    Base object for geometry classes. Need to think about this more...
-    """
-
-    plan_dims: Union[None, Iterable]
-
-    @abc.abstractmethod
-    def as_dict(self):
-        """
-        Cast the GeomBase as a dictionary.
-        """
-        pass
-
-    @abc.abstractmethod
-    def from_dict(self, d):
-        """
-        Initialise a GeomBase from a dictionary.
-        """
-        pass
-
-    def to_json(self, filename):
-        """
-        Exports a JSON of a geometry object
-        """
-        d = self.as_dict()
-        filename = os.path.splitext(filename)[0]
-        filename += ".json"
-        with open(filename, "w") as f:
-            json.dump(d, f, cls=NumpyJSONEncoder)
-
-    @classmethod
-    def load(cls, filename):
-        """
-        Load a geometry object either from a JSON or pickle.
-        """
-        ext = os.path.splitext(filename)[-1]
-        if ext == ".pkl":
-            raise DeprecationWarning(
-                "GeomBase objects should no longer be saved as pickle files."
-            )
-            with open(filename, "rb") as data:
-                return pickle.load(data)  # noqa (S301)
-
-        elif ext == ".json":
-            with open(filename, "r") as data:
-                return json.load(data)
-        elif ext == "":
-            # Default to JSON if no extension specified
-            return cls.load(filename + ".json")
-        else:
-            raise GeometryError(f"File extension {ext} not recognised.")
-
-    @classmethod
-    def from_file(cls, filename):
-        """
-        Just in case the above objects become too complicated?
-        """
-        d = cls.load(filename)
-        return cls.from_dict(d)
-
-    def copy(self):
-        """
-        Get a deep copy of the geometry object.
-        """
-        return deepcopy(self)
-
-    def _get_3rd_dim(self):
-        return [c for c in ["x", "y", "z"] if c not in self.plan_dims][0]
-
-
-class Plane(GeomBase):
-    """
-    Hessian normal form Plane object
-
-    \t:math:`ax+by+cz+d=0`
+class BluemiraGeo(ABC):
+    """Base abstract class for geometry
 
     Parameters
     ----------
-    point1: iterable(3)
-        The first point on the Plane
-    point2: iterable(3)
-        The second point on the Plane
-    point3: iterable(3)
-        The third point on the Plane
+    boundary:
+        shape's boundary
+    label: str
+        identification label for the shape
+    lcar: Union[float, [float]]
+        characteristic mesh length
+    boundary_classes:
+        list of allowed class types for shape's boundary
     """
 
-    def __init__(self, point1, point2, point3):
-        self.p1 = np.array(point1)
-        self.p2 = np.array(point2)
-        self.p3 = np.array(point3)
-        self.v1, self.v2 = self.p3 - self.p1, self.p2 - self.p1
-        self.plan_dims = None
-        cp = np.cross(self.v1, self.v2)
-        d = np.dot(cp, self.p3)
-        self._get_plan_dims(cp)
-        self.parameters = [cp[0], cp[1], cp[2], d]
+    # # Obsolete
+    # # a set of property and methods that are inherited from FreeCAD objects
+    # props = {
+    #     'length': 'Length',
+    #     'area': 'Area',
+    #     'volume': 'Volume',
+    #     'center_of_mass': 'CenterOfMass'
+    # }
+    # metds = {
+    #     'is_null': 'isNull',
+    #     'is_closed': 'isClosed'
+    # }
+    # attrs = {**props, **metds}
 
-    def as_dict(self):
-        """
-        Cast the GeomBase as a dictionary.
-        """
-        return {"p1": self.p1, "p2": self.p2, "p3": self.p3}
+    def __init__(
+            self,
+            boundary,
+            label: str = "",
+            lcar: Union[float, [float]] = 0.1,
+            boundary_classes=None
+    ):
+        self._boundary_classes = boundary_classes
+        self.boundary = boundary
+        self.label = label
+        self.lcar = lcar
 
-    @classmethod
-    def from_dict(cls, d):
-        """
-        Initialise a GeomBase from a dictionary.
-        """
-        return cls(d["p1"], d["p2"], d["p3"])
+    @staticmethod
+    def _converter(func):
+        """"Function used in __getattr__ to modify the added functions"""
+        return func
 
-    def _get_plan_dims(self, v):
-        if np.isclose(abs(v[0]), 1, rtol=0, atol=D_TOLERANCE):
-            self.plan_dims = ["y", "z"]
-        elif np.isclose(abs(v[1]), 1, rtol=0, atol=D_TOLERANCE):
-            self.plan_dims = ["x", "z"]
-        elif np.isclose(abs(v[2]), 1, rtol=0, atol=D_TOLERANCE):
-            self.plan_dims = ["x", "y"]
-        else:
-            pass
+    # def __getattr__(self, key):
+    #     """
+    #     Transfer the key getattr to shape object.
+    #     """
+    #     if key in type(self).attrs:
+    #         output = getattr(self._shape, type(self).attrs[key])
+    #         if callable(output):
+    #             return self.__class__._converter(output)
+    #         else:
+    #             return output
+    #     else:
+    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
+    #             self).__name__), key))
 
-    def check_plane(self, point, e=D_TOLERANCE):
-        """
-        Check that a point lies on the Plane.
-        """
-        n_hat = self.n_hat
-        return (
-            abs(n_hat.dot(np.array(point) - self.p1)) < e
-            and abs(n_hat.dot(np.array(point) - self.p2)) < e
-            and abs(n_hat.dot(np.array(point) - self.p3)) < e
-        )
+    def _check_boundary(self, objs):
+        """Check if objects objs can be used as boundaries"""
+        if not hasattr(objs, '__len__'):
+            objs = [objs]
+        check = False
+        for c in self._boundary_classes:
+            check = check or (all(isinstance(o, c) for o in objs))
+            if check:
+                return objs
+        raise TypeError("Only {} objects can be used for {}".format(
+            self._boundary_classes, self.__class__))
 
     @property
-    def p(self):
-        """
-        Plane parameters.
-        """
-        i = self.parameters
-        return i[-1] / np.sqrt(sum([x ** 2 for x in i[:-1]]))
+    def boundary(self):
+        return self._boundary
+
+    @boundary.setter
+    def boundary(self, objs):
+        self._boundary = self._check_boundary(objs)
 
     @property
-    def n_hat(self):
-        """
-        Plane normal vector.
-        """
-        v3 = np.cross(self.v2, self.v1)
-        if np.all(v3 == 0):
-            return np.zeros(3)
-        return v3 / np.sqrt(v3.dot(v3))
+    @abstractmethod
+    def _shape(self):
+        """Primitive shape of the object"""
+        # Note: this is the "hidden" connection with primitive shapes
+        pass
 
-    def intersect(self, other):
-        """
-        Get the intersection line between two Planes.
+    @property
+    def length(self):
+        """Shape length"""
+        return _freecadapi.length(self._shape)
+
+    @property
+    def area(self):
+        """Shape length"""
+        return _freecadapi.area(self._shape)
+
+    @property
+    def volume(self):
+        """Shape length"""
+        return _freecadapi.volume(self._shape)
+
+    def is_null(self):
+        """Checks if the shape is null."""
+        return _freecadapi.is_null(self._shape)
+
+    def is_closed(self):
+        """Checks if the shape is closed"""
+        return _freecadapi.is_closed(self._shape)
+
+    def search(self, label: str):
+        """Search for a shape with the specified label
 
         Parameters
         ----------
-        other: Plane
-            The other Plane with which to intersect
+        label : str
+            shape label.
 
         Returns
         -------
-        point: np.array(3)
-            A point on the line of intersection
-        vector: np.array(3)
-            The vector of the plane-plane intersection line
+        output : [BluemiraGeo]
+            list of shapes that have the specified label.
 
-        Notes
-        -----
-        https://www.sciencedirect.com/science/article/pii/B9780080507552500531
         """
-        p1, p2 = self.parameters, other.parameters
-        m, n = self.n_hat, other.n_hat
-        vector = np.cross(m, n)
+        output = []
+        if self.label == label:
+            output.append(self)
+        for o in self.boundary:
+            if isinstance(o, BluemiraGeo):
+                output += o.search(label)
+        return output
 
-        if np.all(vector == 0):
-            bluemira_warn("Co-incident or parallel Planes.")
-            return None, None
+    def scale(self, factor) -> None:
+        """Apply scaling with factor to this object. This function modifies the self
+        object."""
+        for o in self.boundary:
+            o.scale(factor)
 
-        # Pick the longest coordinate and set the point on the line to 0 in
-        # that dimension.
-        point = np.zeros(3)
-        coord = np.argmax(np.abs(vector))
-        l_w = vector[coord]
-        if coord == 0:
-            u, v, w = 1, 2, 0
-        elif coord == 1:
-            u, v, w = 0, 2, 1
-        else:
-            u, v, w = 0, 1, 2
+    def translate(self, vector) -> None:
+        """Translate this shape with the vector. This function modifies the self
+        object"""
+        for o in self.boundary:
+            o.translate(vector)
 
-        point[u] = (m[v] * p2[-1] - n[v] * p1[-1]) / l_w
-        point[v] = (n[u] * p1[-1] - m[u] * p2[-1]) / l_w
-        point[w] = 0.0
-
-        return point, vector
+    def __repr__(self):
+        new = []
+        new.append("([{}] = Label: {}".format(type(self).__name__, self.label))
+        new.append(" length: {}".format(self.length))
+        new.append(" area: {}".format(self.area))
+        new.append(" volume: {}".format(self.volume))
+        new.append(")")
+        return ", ".join(new)
