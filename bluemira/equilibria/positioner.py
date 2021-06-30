@@ -37,9 +37,9 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     boolean_2d_union,
 )
-from bluemira.geometry.base import Plane
-from bluemira.geometry.tools import lengthnorm, loop_plane_intersect
-from bluemira.geometry.loop import Loop
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_tools import vector_lengthnorm_2d, loop_plane_intersect
+from bluemira.geometry._deprecated_loop import Loop
 from BLUEPRINT.geometry.inscribedrect import inscribed_rect_in_poly
 from bluemira.equilibria.coils import Coil, CoilSet, PF_COIL_NAME, Solenoid
 from bluemira.equilibria.plotting import XZLPlotter, RegionPlotter
@@ -129,7 +129,7 @@ class CoilPositioner:
         except ValueError:
             argu = len(track) - 1
         tf_loop = Loop(*track[argl : argu + 1])
-        l_norm = lengthnorm(tf_loop["x"], tf_loop["z"])
+        l_norm = vector_lengthnorm_2d(tf_loop["x"], tf_loop["z"])
         xint, zint = interp1d(l_norm, tf_loop["x"]), interp1d(l_norm, tf_loop["z"])
         pos = np.linspace(0, 1, n_PF)
         return [Coil(x, z) for x, z in zip(xint(pos), zint(pos))]

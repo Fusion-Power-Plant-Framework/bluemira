@@ -32,7 +32,7 @@ import tabulate
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.geometry.tools import circle_seg
+from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.utilities.plot_tools import save_figure
 from bluemira.utilities.opt_tools import (
     least_squares,
@@ -40,7 +40,7 @@ from bluemira.utilities.opt_tools import (
     process_NLOPT_result,
     approx_fprime,
 )
-from BLUEPRINT.equilibria.positioner import XZLMapper, RegionMapper
+from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -918,7 +918,7 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
 
         # Set up stray field region
         self.zone = np.array(
-            circle_seg(self.r_zone, [self.x_zone, self.z_zone], npoints=20)
+            make_circle_arc(self.r_zone, self.x_zone, self.z_zone, n_points=20)
         )
         # Add centre and overwrite duplicate point
         self.zone[0][-1] = self.x_zone

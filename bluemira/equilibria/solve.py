@@ -26,7 +26,7 @@ from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.utilities.optimisation import ExternalOptError
+from bluemira.utilities.opt_tools import ExternalOptError
 from bluemira.utilities.plot_tools import save_figure, make_gif
 from bluemira.equilibria.constants import (
     PSI_REL_TOL,

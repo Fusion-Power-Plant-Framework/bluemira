@@ -25,12 +25,13 @@ Grid object and operations for equilibria.
 import numpy as np
 import numba as nb
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry._deprecated_tools import get_area_2d, get_centroid_2d
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.constants import X_AXIS_MIN, MIN_N_DISCR
 from bluemira.equilibria.plotting import GridPlotter
 
 
-__all__ = ["Grid", "integrate_dx_dz", "volume_integral"]
+__all__ = ["Grid", "integrate_dx_dz", "volume_integral", "revolved_volume"]
 
 
 class Grid:
@@ -233,3 +234,24 @@ def volume_integral(func, x, d_x, d_z):
         The integral value of the field in 3-D space
     """
     return 2 * np.pi * integrate_dx_dz(func * x, d_x, d_z)
+
+
+def revolved_volume(x, z):
+    """
+    Calculate the revolved volume of a set of x, z coordinates. Revolution about [0, 0, 1].
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    z: np.array
+        The z coordinates
+
+    Returns
+    -------
+    volume: float
+        The volume of the revolved x, z coordinates
+    """
+    area = get_area_2d(x, z)
+    cx, _ = get_centroid_2d(x, z)
+    return 2 * np.pi * cx * area

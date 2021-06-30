@@ -30,8 +30,9 @@ from scipy.optimize import minimize
 from matplotlib._contour import QuadContourGenerator
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
-from BLUEPRINT.geometry.geomtools import in_polygon, polyarea
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
+from bluemira.geometry._deprecated_tools import in_polygon, get_area_2d
+from bluemira.geometry._deprecated_loop import Loop
+from BLUEPRINT.geometry.loop import MultiLoop
 from bluemira.equilibria.constants import X_TOLERANCE, B_TOLERANCE
 
 __all__ = [
@@ -622,7 +623,7 @@ def find_field_surf(x, z, Bp, field):
     areas = []
     for group in surfaces:  # Choisir la surface la plus "logique"
         err.append(f_min(*group.T))
-        areas.append(polyarea(*group.T))
+        areas.append(get_area_2d(*group.T))
 
     if areas:
         if np.argmax(areas) != np.argmin(err):

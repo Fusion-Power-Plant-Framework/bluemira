@@ -27,8 +27,7 @@ import numpy as np
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.find import find_flux_surf, _parse_OXp, in_plasma
-from bluemira.equilibria.grid import volume_integral
-from bluemira.geometry.tools import loop_volume
+from bluemira.equilibria.grid import volume_integral, revolved_volume
 
 
 def calc_psi_norm(psi, opsi, xpsi):
@@ -267,7 +266,7 @@ def calc_volume(eq):
     Calculates plasma volume [m^3]
     """
     lcfs = eq.get_LCFS().d2
-    return loop_volume(*lcfs)
+    return revolved_volume(*lcfs)
 
 
 def calc_energy(eq):

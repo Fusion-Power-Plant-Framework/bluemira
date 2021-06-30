@@ -31,10 +31,9 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from copy import deepcopy
 from bluemira.base.constants import MU_0
-from bluemira.geometry.tools import loop_volume
 from bluemira.equilibria.find import in_plasma, find_LCFS_separatrix
 from bluemira.equilibria.plotting import ProfilePlotter
-from bluemira.equilibria.grid import integrate_dx_dz, volume_integral
+from bluemira.equilibria.grid import integrate_dx_dz, volume_integral, revolved_volume
 from bluemira.equilibria.file import EQDSKInterface
 
 __all__ = [
@@ -555,7 +554,7 @@ class BetaIpProfile(Profile):
             lcfs, _ = find_LCFS_separatrix(
                 x, z, psi, o_points=o_points, x_points=x_points
             )
-            v_plasma = loop_volume(*lcfs.d2)
+            v_plasma = revolved_volume(*lcfs.d2)
             Bp = MU_0 * self.Ip / lcfs.length
             p_avg = volume_integral(pfunc, x, self.dx, self.dz) / v_plasma
             beta_p_actual = 2 * MU_0 * p_avg / Bp ** 2
