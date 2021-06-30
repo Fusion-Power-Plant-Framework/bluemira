@@ -28,11 +28,7 @@ from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.plot_tools import (
-    coordinates_to_path,
-    Plot3D,
-    BluemiraPathPatch3D,
-)
+import bluemira.utilities.plot_tools as plot_tools
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
 from bluemira.geometry._deprecated_tools import (
@@ -654,7 +650,7 @@ class Loop(GeomBase):
             ax.set_xlabel(a + " [m]")
             ax.set_ylabel(b + " [m]")
             if fill:
-                poly = coordinates_to_path(*self.d2)
+                poly = plot_tools.coordinates_to_path(*self.d2)
                 p = PathPatch(poly, color=fc, alpha=alpha)
                 ax.add_patch(p)
             ax.plot(*self.d2, color=ec, marker=marker, linewidth=lw, linestyle=ls)
@@ -676,7 +672,7 @@ class Loop(GeomBase):
 
     def _plot_3d(self, ax=None, **kwargs):
         if ax is None:
-            ax = Plot3D()
+            ax = plot_tools.Plot3D()
             # Maintenant on re-arrange un peu pour que matplotlib puisse nous
             # montrer qqchose un peu plus correct
             x_bb, y_bb, z_bb = bounding_box(*self.xyz)
@@ -693,12 +689,12 @@ class Loop(GeomBase):
             loop.translate(-c, update=True)
 
             # Pour en faire un objet que matplotlib puisse comprendre
-            poly = coordinates_to_path(*loop.d2)
+            poly = plot_tools.coordinates_to_path(*loop.d2)
 
             # En suite en re-transforme l'objet matplotlib en 3-D!
             c = self._point_23d(self.centroid)
 
-            p = BluemiraPathPatch3D(
+            p = plot_tools.BluemiraPathPatch3D(
                 poly, -self.n_hat, c, color=kwargs["facecolor"], alpha=kwargs["alpha"]
             )
             ax.add_patch(p)
