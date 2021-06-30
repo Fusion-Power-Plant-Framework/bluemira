@@ -214,12 +214,9 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa (N802)
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     i1 = ellipk_nb(k2) / a
     i2 = ellipe_nb(k2) / (a ** 3 * (1 - k2))
-    if d_xc == 0:
-        return 2e-7 * (  # MU_0 / (2 * np.pi)
-            (z - zc) * (-i1 + i2 * ((z - zc) ** 2 + x ** 2 + xc ** 2)) / x
-        )
-    else:
-        return (greens_Bx(xc, zc, x, z + d_zc) + greens_Bx(xc, zc, x, z - d_zc)) / 2
+    return 2e-7 * (  # MU_0 / (2 * np.pi)
+        (z - zc) * (-i1 + i2 * ((z - zc) ** 2 + x ** 2 + xc ** 2)) / x
+    )
 
 
 @nb.jit(nopython=True)
@@ -263,12 +260,7 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):
     i2 = 4 * e / (a ** 3 * (1 - k2))
     part_a = (z - zc) ** 2 + x ** 2 + xc ** 2
     part_b = -2 * x * xc
-    if d_xc == 0:
-        return 1e-7 * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
-    else:
-        g_in = greens_Bz(xc, zc, x - d_xc, z)
-        g_out = greens_Bz(xc, zc, x + d_xc, z)
-        return (g_in + g_out) / 2
+    return 1e-7 * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
 
 
 @nb.jit(nopython=True)
