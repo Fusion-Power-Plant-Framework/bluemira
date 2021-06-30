@@ -1,6 +1,7 @@
 name: bluemira_ci
 
-on: [pull_request, push]
+on:
+  pull_request:
 
 jobs:
   build-and-test:
