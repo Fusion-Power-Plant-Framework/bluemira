@@ -1,14 +1,6 @@
 name: bluemira_ci
 
-on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
+on: [pull_request, push]
 
 jobs:
   build-and-test:
