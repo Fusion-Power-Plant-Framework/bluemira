@@ -88,6 +88,77 @@ def point_to_numpy(points):
     """Converts a FreeCAD Part.Point or list(Part.Point) into a numpy array"""
     return numpy.array([numpy.array([p.X, p.Y, p.Z]) for p in points])
 
+@check_data_type(Part.Vertex)
+def vertex_to_numpy(vertexes):
+    """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a numpy array"""
+    return numpy.array([numpy.array([v.X, v.Y, v.Z]) for v in vertexes])
+
+# # =============================================================================
+# # Geometry creation
+# # =============================================================================
+def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
+    """Make a polygon from a set of points.
+
+    Args:
+        points (Union[list, numpy.ndarray]): list of points. It can be given
+            as a list of 3D tuples, a 3D numpy array, or similar.
+        closed (bool, optional): if True, the first and last points will be
+            connected in order to form a closed polygon. Defaults to False.
+
+    Returns:
+        Part.Wire: a FreeCAD wire that contains the polygon
+    """
+    # Points must be converted into FreeCAD Vectors
+    pntslist = [Base.Vector(x) for x in points]
+    wire = Part.makePolygon(pntslist)
+    if closed:
+        wire = close_wire(wire)
+    return wire
+
+
+def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
+    """Make a bezier curve from a set of points.
+
+    Args:
+        points (Union[list, numpy.ndarray]): list of points. It can be given
+            as a list of 3D tuples, a 3D numpy array, or similar.
+        closed (bool, optional): if True, the first and last points will be
+            connected in order to form a closed polygon. Defaults to False.
+
+    Returns:
+        Part.Wire: a FreeCAD wire that contains the polygon
+    """
+    # Points must be converted into FreeCAD Vectors
+    pntslist = [Base.Vector(x) for x in points]
+    bc = Part.BezierCurve()
+    bc.setPoles(pntslist)
+    wire = Part.Wire(bc.toShape())
+    if closed:
+        wire = close_wire(wire)
+    return wire
+
+
+def make_bspline(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
+    """Make a bspline curve from a set of points.
+
+    Args:
+        points (Union[list, numpy.ndarray]): list of points. It can be given
+            as a list of 3D tuples, a 3D numpy array, or similar.
+        closed (bool, optional): if True, the first and last points will be
+            connected in order to form a closed polygon. Defaults to False.
+
+    Returns:
+        Part.Wire: a FreeCAD wire that contains the polygon
+    """
+    # In this case, it is not really necessary to convert points in FreeCAD vector. Just
+    # left for consistency with other methods.
+    pntslist = [Base.Vector(x) for x in points]
+    bc = Part.BSplineCurve(pntslist)
+    wire = Part.Wire(bc.toShape())
+    if closed:
+        wire = close_wire(wire)
+    return wire
+
 
 # # =============================================================================
 # # Object's properties
@@ -227,72 +298,6 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int):
     output = vector_to_numpy(output)
     return output
 
-
-# # =============================================================================
-# # Geometry creation
-# # =============================================================================
-def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
-    """Make a polygon from a set of points.
-
-    Args:
-        points (Union[list, numpy.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed polygon. Defaults to False.
-
-    Returns:
-        Part.Wire: a FreeCAD wire that contains the polygon
-    """
-    # Points must be converted into FreeCAD Vectors
-    pntslist = [Base.Vector(x) for x in points]
-    wire = Part.makePolygon(pntslist)
-    if closed:
-        wire = close_wire(wire)
-    return wire
-
-
-def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
-    """Make a bezier curve from a set of points.
-
-    Args:
-        points (Union[list, numpy.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed polygon. Defaults to False.
-
-    Returns:
-        Part.Wire: a FreeCAD wire that contains the polygon
-    """
-    # Points must be converted into FreeCAD Vectors
-    pntslist = [Base.Vector(x) for x in points]
-    bc = Part.BezierCurve()
-    bc.setPoles(pntslist)
-    wire = Part.Wire(bc.toShape())
-    if closed:
-        wire = close_wire(wire)
-    return wire
-
-
-def make_bspline(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
-    """Make a bspline curve from a set of points.
-
-    Args:
-        points (Union[list, numpy.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed polygon. Defaults to False.
-
-    Returns:
-        Part.Wire: a FreeCAD wire that contains the polygon
-    """
-    # In this case, it is not really necessary to convert points in FreeCAD vector. Just
-    # left for consistency with other methods.
-    pntslist = [Base.Vector(x) for x in points]
-    bc = Part.BSplineCurve(pntslist)
-    wire = Part.Wire(bc.toShape())
-    if closed:
-        wire = close_wire(wire)
-    return wire
 
 
 # # =============================================================================
