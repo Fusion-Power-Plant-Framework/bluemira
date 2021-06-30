@@ -127,12 +127,16 @@ def calc_psib(psi_bd, R_0, Ip, li, c_ejima=0.4):
 
 def calc_q(eq, psinorm=None, o_points=None, x_points=None):
     """
+<<<<<<< Updated upstream
     Calculates the safety factor profile of the plasma core. Verwendet einen
     subtilen intuitiven von dir geschaffenen Hack, den du noch nicht
     vollständig kapiert hast..! Es hat einfach so mit dem average geklappt.
 
     Note: Safety factor is the ratio of the number of toroidal turns in one
     poloidal turn of a given field line.
+=======
+    Calculate the safety factor profile of the plasma core.
+>>>>>>> Stashed changes
 
     \t:math:`q=\\dfrac{rB_t}{XB_p}`
 
@@ -155,7 +159,13 @@ def calc_q(eq, psinorm=None, o_points=None, x_points=None):
     Notes
     -----
     For psinorm, 0 and 1 and "chopped" at PSI_NORM_TOL to avoid calculation
+<<<<<<< Updated upstream
     errors
+=======
+
+    This flux surface averaged approach is incorrect, but a reasonable estimate.
+    TODO: Fix this...
+>>>>>>> Stashed changes
     """
     x, z, psi = eq.x, eq.z, eq.psi()
     o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
@@ -175,10 +185,6 @@ def calc_q(eq, psinorm=None, o_points=None, x_points=None):
         x_0, z_0 = np.mean(fs[0]), np.mean(fs[1])
         r = np.abs(np.sqrt((fs[0] - x_0) ** 2 + (fs[1] - z_0) ** 2))
         Bt = eq.fRBpol(pn) / fs[0]
-        # Bp = np.zeros(fs.shape[1])
-        # for j, p in enumerate(fs.T):
-        #     Bp[j] = eq.Bp(*p)
-        # Bp = np.array(Bp)
         Bp = eq.Bp(*fs)
         q[i] = np.average(np.abs(r * Bt / (fs[0] * Bp)))
     if len(q) == 1:
