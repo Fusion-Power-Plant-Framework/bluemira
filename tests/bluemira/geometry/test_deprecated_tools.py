@@ -587,6 +587,7 @@ class TestMixedFaces:
         for key, value in true_props.items():
             comp_method = np.allclose if isinstance(value, tuple) else np.isclose
             result = getattr(part, key, None)
+            assert result is not None, f"Attribute {key} not defined on part {part}."
             if not comp_method(value, result):
                 error = True
                 keys.append(key)

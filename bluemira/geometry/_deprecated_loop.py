@@ -28,25 +28,10 @@ from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.plot_tools import (
-    coordinates_to_path,
-    Plot3D,
-    BluemiraPathPatch3D,
-)
+import bluemira.utilities.plot_tools as plot_tools
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
-from bluemira.geometry._deprecated_tools import (
-    check_ccw,
-    quart_rotate,
-    rotation_matrix_v1v2,
-    bounding_box,
-    get_perimeter,
-    get_area,
-    get_centroid_2d,
-    get_centroid_3d,
-    get_normal_vector,
-    offset,
-)
+import bluemira.geometry._deprecated_tools as tools
 from bluemira.utilities.tools import is_num
 
 
@@ -239,14 +224,14 @@ class Loop(GeomBase):
         if not self.closed:
             bluemira_warn("Returning centroid of an open polygon.")
         if self.ndim == 2:
-            x, z = get_centroid_2d(*self.d2)
+            x, z = tools.get_centroid_2d(*self.d2)
             if np.abs(x) == np.inf or np.abs(z) == np.inf:
-                return np.array(get_centroid_3d(*self.xyz))
+                return np.array(tools.get_centroid_3d(*self.xyz))
             else:
                 return np.array([x, z])
 
         else:
-            return np.array(get_centroid_3d(*self.xyz))
+            return np.array(tools.get_centroid_3d(*self.xyz))
 
     @property
     def area(self) -> float:
@@ -258,14 +243,14 @@ class Loop(GeomBase):
         area: float
             The area of the polygon [m^2]
         """
-        return get_area(*self.xyz)
+        return tools.get_area(*self.xyz)
 
     @property
     def length(self) -> float:
         """
         The perimeter of the Loop.
         """
-        return get_perimeter(*self.xyz)
+        return tools.get_perimeter(*self.xyz)
 
     # =========================================================================
     # Support properties
@@ -305,7 +290,7 @@ class Loop(GeomBase):
         Normal vector
         """
         if self._n_hat is None:
-            self._n_hat = get_normal_vector(*self.xyz)
+            self._n_hat = tools.get_normal_vector(*self.xyz)
 
         return self._n_hat
 
@@ -393,7 +378,7 @@ class Loop(GeomBase):
             self.__setattr__(c, p[::-1])
         self.ccw = not self.ccw
 
-    def insert(self, point: [float, float, float], pos=0):
+    def insert(self, point, pos=0):
         """
         Insert a point into the Loop.
 
@@ -494,7 +479,7 @@ class Loop(GeomBase):
         xo: [float, float, float]
             Origin of rotation vector
         """
-        rotated = quart_rotate(self.as_dict(), theta=np.radians(theta), **kwargs)
+        rotated = tools.quart_rotate(self.as_dict(), theta=np.radians(theta), **kwargs)
         if update:
             for k in ["x", "y", "z"]:
                 self.__setattr__(k, rotated[k])
@@ -603,7 +588,7 @@ class Loop(GeomBase):
         if delta == 0.0:
             return self.copy()
 
-        o = offset(self[self.plan_dims[0]], self[self.plan_dims[1]], delta)
+        o = tools.offset(self[self.plan_dims[0]], self[self.plan_dims[1]], delta)
         new = {self.plan_dims[0]: o[0], self.plan_dims[1]: o[1]}
         c = list({"x", "y", "z"} - set(self.plan_dims))[0]
         new[c] = [self[c][0]]  # Third coordinate must be all equal (flat)
@@ -654,7 +639,7 @@ class Loop(GeomBase):
             ax.set_xlabel(a + " [m]")
             ax.set_ylabel(b + " [m]")
             if fill:
-                poly = coordinates_to_path(*self.d2)
+                poly = plot_tools.coordinates_to_path(*self.d2)
                 p = PathPatch(poly, color=fc, alpha=alpha)
                 ax.add_patch(p)
             ax.plot(*self.d2, color=ec, marker=marker, linewidth=lw, linestyle=ls)
@@ -676,16 +661,16 @@ class Loop(GeomBase):
 
     def _plot_3d(self, ax=None, **kwargs):
         if ax is None:
-            ax = Plot3D()
+            ax = plot_tools.Plot3D()
             # Maintenant on re-arrange un peu pour que matplotlib puisse nous
             # montrer qqchose un peu plus correct
-            x_bb, y_bb, z_bb = bounding_box(*self.xyz)
+            x_bb, y_bb, z_bb = tools.bounding_box(*self.xyz)
             for x, y, z in zip(x_bb, y_bb, z_bb):
                 ax.plot([x], [y], [z], color="w")
 
         ax.plot(*self.xyz, color=kwargs["edgecolor"], lw=kwargs["linewidth"])
         if kwargs["fill"]:
-            dcm = rotation_matrix_v1v2(-self.n_hat, np.array([0.0, 0.0, 1.0]))
+            dcm = tools.rotation_matrix_v1v2(-self.n_hat, np.array([0.0, 0.0, 1.0]))
 
             loop = self.rotate_dcm(dcm.T, update=False)
 
@@ -693,12 +678,12 @@ class Loop(GeomBase):
             loop.translate(-c, update=True)
 
             # Pour en faire un objet que matplotlib puisse comprendre
-            poly = coordinates_to_path(*loop.d2)
+            poly = plot_tools.coordinates_to_path(*loop.d2)
 
             # En suite en re-transforme l'objet matplotlib en 3-D!
             c = self._point_23d(self.centroid)
 
-            p = BluemiraPathPatch3D(
+            p = plot_tools.BluemiraPathPatch3D(
                 poly, -self.n_hat, c, color=kwargs["facecolor"], alpha=kwargs["alpha"]
             )
             ax.add_patch(p)
@@ -791,7 +776,7 @@ class Loop(GeomBase):
         if self.ndim == 3:
             return True  # Assume ccw if 3D Loop
 
-        return check_ccw(*self.d2)
+        return tools.check_ccw(*self.d2)
 
     def _remove_duplicates(self, enforce_ccw):
         """
