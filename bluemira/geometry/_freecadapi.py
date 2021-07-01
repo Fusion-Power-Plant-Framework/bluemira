@@ -58,14 +58,15 @@ def check_data_type(data_type):
         def wrapper(*args, **kwargs):
             output = []
             objs = args[0]
-            print("objs = {}".format(objs))
             is_list = isinstance(objs, list)
             if not is_list:
                 objs = [objs]
-                args[0] = objs
+                if len(args) > 1:
+                    args = [objs, args[1:]]
+                else:
+                    args = [objs]
             if all(isinstance(o, data_type) for o in objs):
                 output = func(*args, **kwargs)
-                print("output = {}".format(output))
                 if not is_list:
                     output = output[0]
             else:
@@ -83,6 +84,7 @@ def check_data_type(data_type):
 @check_data_type(Base.Vector)
 def vector_to_numpy(vectors):
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
+    print("vectors = {}".format(vectors))
     return numpy.array([numpy.array(v) for v in vectors])
 
 
