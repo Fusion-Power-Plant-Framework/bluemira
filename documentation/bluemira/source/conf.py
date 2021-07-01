@@ -7,9 +7,9 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath("../../../"))  # noqa (E402)
+sys.path.insert(0, os.path.abspath("../../../"))
 
-from bluemira._version import get_versions
+from bluemira._version import get_versions  # noqa (E402)
 
 
 def setup(app):
