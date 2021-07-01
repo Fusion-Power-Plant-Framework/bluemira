@@ -684,7 +684,6 @@ def vector_lengthnorm_2d(x, z):
     total_length: np.array(N)
         The cumulative normalised length of each individual segment in the loop
     """
-
     total_length = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
     return total_length / total_length[-1]
 

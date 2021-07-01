@@ -746,7 +746,6 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         field: np.array(3)
             The magnetic field vector {Bx, By, Bz} in [T]
         """
-
         point = np.array([x, y, z])
         # Convert to local cylindrical coordinates
         point = self._global_to_local([point])[0]
