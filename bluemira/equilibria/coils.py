@@ -39,8 +39,6 @@ from bluemira.equilibria.constants import (
     J_TOR_MIN,
     NBTI_B_MAX,
     NBTI_J_MAX,
-    NB3SN_B_MAX,
-    NB3SN_J_MAX,
     X_TOLERANCE,
 )
 from bluemira.equilibria.file import EQDSKInterface
@@ -959,6 +957,9 @@ class CoilGroup:
 
     @property
     def n_coils(self):
+        """
+        The number of coils.
+        """
         return len(self.coils)
 
     @property

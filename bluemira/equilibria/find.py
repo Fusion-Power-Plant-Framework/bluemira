@@ -164,7 +164,10 @@ def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa (N802)
 
     Returns
     -------
-
+    x: Union[float, None]
+        The x coordinate of the minimum. None if the minimum is not valid.
+    z: float
+        The z coordinate of the minimum
     """
     x_0 = np.array([x0, z0])
     # BFGS expensive with many grid points?
@@ -206,7 +209,10 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
 
     Returns
     -------
-
+    x: Union[float, None]
+        The x coordinate of the minimum. None if the minimum is not valid.
+    z: float
+        The z coordinate of the minimum
     """
     xi, zi = x0, z0
     count = 0

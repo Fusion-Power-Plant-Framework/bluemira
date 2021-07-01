@@ -238,7 +238,8 @@ def volume_integral(func, x, d_x, d_z):
 
 def revolved_volume(x, z):
     """
-    Calculate the revolved volume of a set of x, z coordinates. Revolution about [0, 0, 1].
+    Calculate the revolved volume of a set of x, z coordinates. Revolution about
+    [0, 0, 1].
 
     Parameters
     ----------
