@@ -40,6 +40,13 @@ class TestFreecadapi:
         with pytest.raises(TypeError):
             arr = freecadapi.point_to_numpy(self.square_points)
 
+    def test_single_vector_to_numpy(self):
+        input = numpy.array((1., 0.5, 2.))
+        vector = Base.Vector(input)
+        arr = freecadapi.vector_to_numpy(vector)
+        comparison = arr == input
+        assert comparison.all()
+
     def test_vector_to_numpy(self):
         vectors = [Base.Vector(v) for v in self.square_points]
         arr = freecadapi.vector_to_numpy(vectors)
@@ -103,7 +110,6 @@ class TestFreecadapi:
     def test_center_of_mass(self):
         wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
         face: Part.Face = Part.Face(wire)
-        print(freecadapi.center_of_mass(wire))
         comparison = freecadapi.center_of_mass(wire) == numpy.array((0.5, 0.5, 0.))
         assert comparison.all()
 
