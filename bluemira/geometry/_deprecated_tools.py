@@ -25,6 +25,7 @@ A collection of geometry tools.
 
 from functools import partial
 from itertools import zip_longest
+from numba.np.arraymath import array_sum_axis
 import numpy as np
 import numba as nb
 from numba.np.extensions import cross2d
@@ -1365,9 +1366,10 @@ def convert_coordinates_to_wire(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
+    *,
+    method="mixed",
     label="",
     lcar=0.1,
-    method="mixed",
     **kwargs,
 ):
     """
@@ -1405,6 +1407,10 @@ def convert_coordinates_to_wire(
         "polygon": partial(make_wire, spline=False),
         "spline": partial(make_wire, spline=True),
     }
+    if method not in method_map:
+        raise ValueError(
+            f"Method {method} not defined for converting coordinates to wire"
+        )
     wire = method_map[method](x, y, z, label=label, lcar=lcar, **kwargs)
     return wire
 
@@ -1413,6 +1419,7 @@ def convert_coordinates_to_face(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
+    *,
     method="mixed",
     label="",
     lcar=0.1,
@@ -1453,6 +1460,10 @@ def convert_coordinates_to_face(
         "polygon": partial(make_face, spline=False),
         "spline": partial(make_face, spline=True),
     }
+    if method not in method_map:
+        raise ValueError(
+            f"Method {method} not defined for converting coordinates to face"
+        )
     face = method_map[method](x, y, z, label=label, lcar=lcar, **kwargs)
     return face
 

@@ -797,11 +797,50 @@ class TestCoordsConversion:
             ("IB_test.json", generate_wire_mixed),
         ],
     )
-    def test_coordinates_to_wire_polygon(self, filename, method):
+    def test_coordinates_to_wire(self, filename, method):
         fn = os.sep.join([TEST_PATH, filename])
         loop: Loop = Loop.from_file(fn)
         wire, converted_wire = method(self, *loop.xyz)
         assert wire.area == converted_wire.area
+
+    @pytest.mark.parametrize(
+        "filename,func,options",
+        [
+            ("IB_test.json", convert_coordinates_to_wire, {"label": "thing", "lcar": 1}),
+            (
+                "IB_test.json",
+                convert_coordinates_to_wire,
+                {"label": "thing", "lcar": 1, "a_acute": 140},
+            ),
+            ("IB_test.json", convert_coordinates_to_wire, {"a_acute": 140}),
+            ("IB_test.json", convert_coordinates_to_face, {"label": "thing", "lcar": 1}),
+            (
+                "IB_test.json",
+                convert_coordinates_to_face,
+                {"label": "thing", "lcar": 1, "a_acute": 140},
+            ),
+            ("IB_test.json", convert_coordinates_to_face, {"a_acute": 140}),
+        ],
+    )
+    def test_options(self, filename, func, options):
+        fn = os.sep.join([TEST_PATH, filename])
+        loop: Loop = Loop.from_file(fn)
+        func(*loop.xyz, **options)
+
+    @pytest.mark.parametrize(
+        "func",
+        [
+            convert_coordinates_to_wire,
+            convert_coordinates_to_face,
+        ],
+    )
+    def test_bad_method(self, func):
+        bad_method = "badness"
+        x = np.array([1, 2, 3])
+        y = np.array([1, 2, 3])
+        z = np.array([1, 2, 3])
+        with pytest.raises(ValueError):
+            func(x, y, z, method=bad_method)
 
 
 if __name__ == "__main__":
