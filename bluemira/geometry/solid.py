@@ -41,12 +41,7 @@ from bluemira.geometry.error import DisjointedSolid
 class BluemiraSolid(BluemiraGeo):
     """Bluemira Solid class."""
 
-    def __init__(
-            self,
-            boundary,
-            label: str = "",
-            lcar: Union[float, List[float]] = 0.1
-    ):
+    def __init__(self, boundary, label: str = "", lcar: Union[float, List[float]] = 0.1):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, lcar, boundary_classes)
 
@@ -76,5 +71,6 @@ class BluemiraSolid(BluemiraGeo):
                 return bmsolid
             else:
                 raise DisjointedSolid("Disjointed solids are not accepted.")
-        raise TypeError("Only Part.Solid objects can be used to create a {} "
-                        "instance".format(cls))
+        raise TypeError(
+            "Only Part.Solid objects can be used to create a {} " "instance".format(cls)
+        )

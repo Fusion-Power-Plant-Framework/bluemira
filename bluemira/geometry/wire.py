@@ -35,7 +35,11 @@ import Part
 from bluemira.geometry.base import BluemiraGeo
 
 from bluemira.geometry._freecadapi import (
-    discretize_by_edges, discretize, wire_closure, scale_shape, translate_shape
+    discretize_by_edges,
+    discretize,
+    wire_closure,
+    scale_shape,
+    translate_shape,
 )
 
 # import mathematical library
@@ -51,12 +55,7 @@ class BluemiraWire(BluemiraGeo):
     # # Necessary only if there are changes to the base attrs dictionary
     # attrs = {**BluemiraGeo.attrs}
 
-    def __init__(
-            self,
-            boundary,
-            label: str = "",
-            lcar: Union[float, List[float]] = 0.1
-    ):
+    def __init__(self, boundary, label: str = "", lcar: Union[float, List[float]] = 0.1):
         boundary_classes = [self.__class__, Part.Wire]
         super().__init__(boundary, label, lcar, boundary_classes)
 
@@ -70,19 +69,23 @@ class BluemiraWire(BluemiraGeo):
             if isinstance(output, Part.Wire):
                 output = BluemiraWire(output)
             return output
+
         return wrapper
 
     def _check_boundary(self, objs):
         """Check if objects objs can be used as boundaries"""
-        if not hasattr(objs, '__len__'):
+        if not hasattr(objs, "__len__"):
             objs = [objs]
         check = False
         for c in self._boundary_classes:
             check = check or (all(isinstance(o, c) for o in objs))
             if check:
                 return objs
-        raise TypeError("Only {} objects can be used for {}".format(
-            self._boundary_classes, self.__class__))
+        raise TypeError(
+            "Only {} objects can be used for {}".format(
+                self._boundary_classes, self.__class__
+            )
+        )
 
     @property
     def _shape(self) -> Part.Wire:

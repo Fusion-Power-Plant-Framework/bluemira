@@ -69,10 +69,11 @@ def check_data_type(data_type):
                 if not is_list:
                     output = output[0]
             else:
-                for o in objs:
-                    print(type(o))
-                raise TypeError("Only {} instances can be converted to {}".format(
-                    data_type, type(output)))
+                raise TypeError(
+                    "Only {} instances can be converted to {}".format(
+                        data_type, type(output)
+                    )
+                )
             return output
 
         return wrapper
@@ -393,8 +394,12 @@ def translate_shape(shape, vector: tuple) -> None:
     return shape.translate(vector)
 
 
-def rotate_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0., 1.),
-                 degree: float = 180):
+def rotate_shape(
+    shape,
+    base: tuple = (0.0, 0.0, 0.0),
+    direction: tuple = (0.0, 0.0, 1.0),
+    degree: float = 180,
+):
     """
     Apply the rotation (base, dir, degree) to this shape
 
@@ -422,8 +427,12 @@ def rotate_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0., 
     return shape.rotate(base, direction, degree)
 
 
-def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0., 1.),
-                  degree: float = 180):
+def revolve_shape(
+    shape,
+    base: tuple = (0.0, 0.0, 0.0),
+    direction: tuple = (0.0, 0.0, 1.0),
+    degree: float = 180,
+):
     """
     Apply the revolve (base, dir, degree) to this shape
 

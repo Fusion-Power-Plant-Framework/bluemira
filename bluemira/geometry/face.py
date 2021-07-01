@@ -42,15 +42,10 @@ from bluemira.geometry.error import NotClosedWire, DisjointedFace
 class BluemiraFace(BluemiraGeo):
     """Bluemira Face class."""
 
-#    metds = {'is_closed': 'isClosed', 'scale': 'scale'}
-#    attrs = {**BluemiraGeo.attrs, **metds}
+    #    metds = {'is_closed': 'isClosed', 'scale': 'scale'}
+    #    attrs = {**BluemiraGeo.attrs, **metds}
 
-    def __init__(
-            self,
-            boundary,
-            label: str = "",
-            lcar: Union[float, List[float]] = 0.1
-    ):
+    def __init__(self, boundary, label: str = "", lcar: Union[float, List[float]] = 0.1):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, lcar, boundary_classes)
 
@@ -63,11 +58,12 @@ class BluemiraFace(BluemiraGeo):
             if isinstance(output, Part.Face):
                 output = BluemiraFace._create(output)
             return output
+
         return wrapper
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""
-        if not hasattr(objs, '__len__'):
+        if not hasattr(objs, "__len__"):
             objs = [objs]
         check = False
         for c in self._boundary_classes:
@@ -77,8 +73,11 @@ class BluemiraFace(BluemiraGeo):
                     return objs
                 else:
                     raise NotClosedWire("Only closed BluemiraWire are accepted.")
-        raise TypeError("Only {} objects can be used for {}".format(
-            self._boundary_classes, self.__class__))
+        raise TypeError(
+            "Only {} objects can be used for {}".format(
+                self._boundary_classes, self.__class__
+            )
+        )
 
     def _create_face(self):
         """Create the primitive face"""
@@ -117,5 +116,6 @@ class BluemiraFace(BluemiraGeo):
                 bmwires += [BluemiraWire(w)]
             bmface = BluemiraFace(bmwires)
             return bmface
-        raise TypeError("Only Part.Face objects can be used to create a {} "
-                        "instance".format(cls))
+        raise TypeError(
+            "Only Part.Face objects can be used to create a {} " "instance".format(cls)
+        )

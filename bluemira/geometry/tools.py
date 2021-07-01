@@ -42,8 +42,9 @@ from typing import Union
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
-def make_polygon(points: Union[list, numpy.ndarray], label: str = "", closed: bool =
-                 False) -> BluemiraWire:
+def make_polygon(
+    points: Union[list, numpy.ndarray], label: str = "", closed: bool = False
+) -> BluemiraWire:
     """Make a polygon from a set of points.
 
     Args:
@@ -63,8 +64,12 @@ def make_polygon(points: Union[list, numpy.ndarray], label: str = "", closed: bo
 # # =============================================================================
 # # Shape manipulations
 # # =============================================================================
-def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0., 1.),
-                  degree: float = 180):
+def revolve_shape(
+    shape,
+    base: tuple = (0.0, 0.0, 0.0),
+    direction: tuple = (0.0, 0.0, 1.0),
+    degree: float = 180,
+):
     """
     Apply the revolve (base, dir, degree) to this shape
 
@@ -95,8 +100,9 @@ def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0.,
     return bmsolid
 
 
-def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None, lcar=None) -> \
-        BluemiraSolid:
+def extrude_shape(
+    shape: BluemiraGeo, vec: tuple, label=None, lcar=None
+) -> BluemiraSolid:
     """
     Apply the extrusion along vec to this shape
 

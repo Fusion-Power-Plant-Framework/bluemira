@@ -27,10 +27,11 @@ if __name__ == "__main__":
     print("This is a simple tutorial for the geometric module")
 
     print("1. Creation of a closed wire")
-    pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
+    pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
     wire = geo._freecadapi.make_polygon(pntslist, closed=True)
-    print("wire: {}, length: {}, isClosed: {}".format(wire, wire.Length,
-                                                      wire.isClosed()))
+    print(
+        "wire: {}, length: {}, isClosed: {}".format(wire, wire.Length, wire.isClosed())
+    )
     print("2. Creation of a bluemira wire")
     bmwire = geo.wire.BluemiraWire(wire, "bmwire")
     print(bmwire)
@@ -54,8 +55,10 @@ if __name__ == "__main__":
     print("Original object: {}".format(bmwire))
     bmwire.scale(2)
     print("Scaled object: {}".format(bmwire))
-    print("NOTE: since bmface is connected to bmwire, a scale operation on bmwire will"
-          " affect also bmface")
+    print(
+        "NOTE: since bmface is connected to bmwire, a scale operation on bmwire will"
+        " affect also bmface"
+    )
     print("5.1 Scale a BluemiraFace")
     print("Original object: {}".format(bmface))
     bmface.scale(2)
@@ -68,7 +71,7 @@ if __name__ == "__main__":
 
     print("7. Test BluemiraWire.close")
     print("7.1 when boundary is list(Part.Wire)")
-    pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
+    pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
     wire = geo._freecadapi.make_polygon(pntslist, closed=False)
     bmwire_nc = geo.wire.BluemiraWire(wire)
     print(bmwire_nc)
@@ -84,27 +87,31 @@ if __name__ == "__main__":
     print(bmwire_nc.boundary)
 
     print("7. Test Translate")
-    bmface.translate((5., 2., 0.))
+    bmface.translate((5.0, 2.0, 0.0))
     geo.tools.save_as_STEP([bmwire, bmface], "test_translate")
 
     print("8. Test bspline")
-    pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
+    pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
     wire = geo._freecadapi.make_bspline(pntslist, closed=False)
     bmwire_nc = geo.wire.BluemiraWire(wire)
     geo.tools.save_as_STEP([bmwire_nc], "test_bspline")
 
     print("9. Test revolve")
-    bmsolid = geo.tools.revolve_shape(bmface, direction=(0., 1., 0.))
+    bmsolid = geo.tools.revolve_shape(bmface, direction=(0.0, 1.0, 0.0))
     geo.tools.save_as_STEP([bmsolid], "test_revolve")
 
     print("10. Face and solid with hole")
-    pntslist_out = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
+    pntslist_out = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
     delta = 0.3
-    pntslist_in = [(1. - delta, 1. - delta, 0.), (0. + delta, 1. - delta, 0.),
-                   (0. + delta, 0. + delta, 0.), (1. - delta, 0. + delta, 0.)]
+    pntslist_in = [
+        (1.0 - delta, 1.0 - delta, 0.0),
+        (0.0 + delta, 1.0 - delta, 0.0),
+        (0.0 + delta, 0.0 + delta, 0.0),
+        (1.0 - delta, 0.0 + delta, 0.0),
+    ]
     wire_out = geo.tools.make_polygon(pntslist_out, closed=True)
     wire_in = geo.tools.make_polygon(pntslist_in, closed=True)
     bmface = geo.face.BluemiraFace([wire_out, wire_in])
     geo.tools.save_as_STEP([bmface], "test_face_with_hole")
-    bmsolid = geo.tools.revolve_shape(bmface, direction=(0., 1., 0.))
+    bmsolid = geo.tools.revolve_shape(bmface, direction=(0.0, 1.0, 0.0))
     geo.tools.save_as_STEP([bmsolid], "test_solid_with_hole")

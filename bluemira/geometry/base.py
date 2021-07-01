@@ -65,11 +65,11 @@ class BluemiraGeo(ABC):
     # attrs = {**props, **metds}
 
     def __init__(
-            self,
-            boundary,
-            label: str = "",
-            lcar: Union[float, [float]] = 0.1,
-            boundary_classes=None
+        self,
+        boundary,
+        label: str = "",
+        lcar: Union[float, [float]] = 0.1,
+        boundary_classes=None,
     ):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
@@ -97,15 +97,18 @@ class BluemiraGeo(ABC):
 
     def _check_boundary(self, objs):
         """Check if objects objs can be used as boundaries"""
-        if not hasattr(objs, '__len__'):
+        if not hasattr(objs, "__len__"):
             objs = [objs]
         check = False
         for c in self._boundary_classes:
             check = check or (all(isinstance(o, c) for o in objs))
             if check:
                 return objs
-        raise TypeError("Only {} objects can be used for {}".format(
-            self._boundary_classes, self.__class__))
+        raise TypeError(
+            "Only {} objects can be used for {}".format(
+                self._boundary_classes, self.__class__
+            )
+        )
 
     @property
     def boundary(self):
