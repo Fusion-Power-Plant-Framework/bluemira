@@ -78,7 +78,7 @@ class BluemiraGeo(ABC):
 
     @staticmethod
     def _converter(func):
-        """"Function used in __getattr__ to modify the added functions"""
+        """Function used in __getattr__ to modify the added functions"""
         return func
 
     # def __getattr__(self, key):
@@ -112,6 +112,7 @@ class BluemiraGeo(ABC):
 
     @property
     def boundary(self):
+        """Shape's boundary"""
         return self._boundary
 
     @boundary.setter
@@ -177,17 +178,19 @@ class BluemiraGeo(ABC):
 
     def scale(self, factor) -> None:
         """Apply scaling with factor to this object. This function modifies the self
-        object."""
+        object.
+        """
         for o in self.boundary:
             o.scale(factor)
 
     def translate(self, vector) -> None:
         """Translate this shape with the vector. This function modifies the self
-        object"""
+        object.
+        """
         for o in self.boundary:
             o.translate(vector)
 
-    def __repr__(self):
+    def __repr__(self):  # noqa D105
         new = []
         new.append("([{}] = Label: {}".format(type(self).__name__, self.label))
         new.append(" length: {}".format(self.length))

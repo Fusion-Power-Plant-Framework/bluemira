@@ -48,9 +48,8 @@ def check_data_type(data_type):
     function.
 
     Raises
-    ______
-    TypeError
-        If args[0] objects are not instances of data_type
+    ------
+    TypeError: If args[0] objects are not instances of data_type
     """
 
     def _apply_to_list(func):
@@ -106,13 +105,15 @@ def vertex_to_numpy(vertexes):
 def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
     """Make a polygon from a set of points.
 
-    Args:
+    Parameters
+    ----------
         points (Union[list, numpy.ndarray]): list of points. It can be given
             as a list of 3D tuples, a 3D numpy array, or similar.
         closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed polygon. Defaults to False.
+            connected in order to form a closed shape. Defaults to False.
 
-    Returns:
+    Returns
+    -------
         Part.Wire: a FreeCAD wire that contains the polygon
     """
     # Points must be converted into FreeCAD Vectors
@@ -126,14 +127,16 @@ def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Pa
 def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
     """Make a bezier curve from a set of points.
 
-    Args:
+    Parameters
+    ----------
         points (Union[list, numpy.ndarray]): list of points. It can be given
             as a list of 3D tuples, a 3D numpy array, or similar.
         closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed polygon. Defaults to False.
+            connected in order to form a closed shape. Defaults to False.
 
-    Returns:
-        Part.Wire: a FreeCAD wire that contains the polygon
+    Returns
+    -------
+        Part.Wire: a FreeCAD wire that contains the bezier curve
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -148,14 +151,16 @@ def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Par
 def make_bspline(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
     """Make a bspline curve from a set of points.
 
-    Args:
+    Parameters
+    ----------
         points (Union[list, numpy.ndarray]): list of points. It can be given
             as a list of 3D tuples, a 3D numpy array, or similar.
         closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed polygon. Defaults to False.
+            connected in order to form a closed shape. Defaults to False.
 
-    Returns:
-        Part.Wire: a FreeCAD wire that contains the polygon
+    Returns
+    -------
+        Part.Wire: a FreeCAD wire that contains the bspline
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
@@ -171,6 +176,7 @@ def make_bspline(points: Union[list, numpy.ndarray], closed: bool = False) -> Pa
 # # Object's properties
 # # =============================================================================
 def length(obj) -> float:
+    """Object's length"""
     prop = "Length"
     if hasattr(obj, prop):
         return getattr(obj, prop)
@@ -179,6 +185,7 @@ def length(obj) -> float:
 
 
 def area(obj) -> float:
+    """Object's Area"""
     prop = "Area"
     if hasattr(obj, prop):
         return getattr(obj, prop)
@@ -187,6 +194,7 @@ def area(obj) -> float:
 
 
 def volume(obj) -> float:
+    """Object's volume"""
     prop = "Volume"
     if hasattr(obj, prop):
         return getattr(obj, prop)
@@ -195,6 +203,7 @@ def volume(obj) -> float:
 
 
 def center_of_mass(obj) -> numpy.ndarray:
+    """Object's center of mass"""
     prop = "CenterOfMass"
     if hasattr(obj, prop):
         # CenterOfMass returns a vector.
@@ -204,6 +213,7 @@ def center_of_mass(obj) -> numpy.ndarray:
 
 
 def is_null(obj):
+    """True if obj is null"""
     prop = "isNull"
     if hasattr(obj, prop):
         return getattr(obj, prop)()
@@ -212,6 +222,7 @@ def is_null(obj):
 
 
 def is_closed(obj):
+    """True if obj is closed"""
     prop = "isClosed"
     if hasattr(obj, prop):
         return getattr(obj, prop)()
@@ -223,7 +234,7 @@ def is_closed(obj):
 # # Part.Wire manipulation
 # # =============================================================================
 def wire_closure(wire: Part.Wire):
-    """ Create a line segment wire that closes an open wire"""
+    """Create a line segment wire that closes an open wire"""
     closure = None
     if not wire.isClosed():
         vertexes = wire.OrderedVertexes
@@ -323,7 +334,6 @@ def save_as_STEP(shapes, filename="test", scale=1):
     scale: float (default 1)
         The scale in which to save the Shape objects
     """
-
     if not filename.endswith(".STP"):
         filename += ".STP"
 
@@ -371,7 +381,6 @@ def scale_shape(shape, factor) -> None:
     -------
     None: the object is directly modified
     """
-
     return shape.scale(factor)
 
 
@@ -390,7 +399,6 @@ def translate_shape(shape, vector: tuple) -> None:
     -------
     None: the object is directly modified
     """
-
     return shape.translate(vector)
 
 
@@ -423,7 +431,6 @@ def rotate_shape(
     -----
     this operation modifies the shape object.
     """
-
     return shape.rotate(base, direction, degree)
 
 

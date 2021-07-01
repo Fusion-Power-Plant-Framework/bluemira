@@ -32,7 +32,12 @@ import bluemira.geometry._freecadapi as freecadapi
 class TestFreecadapi:
     @classmethod
     def setup_class(cls):
-        cls.square_points = ([(0., 0., 0.), (1., 0., 0.), (1., 1., 0.), (0., 1., 0.)])
+        cls.square_points = [
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (1.0, 1.0, 0.0),
+            (0.0, 1.0, 0.0),
+        ]
 
     def test_fail_vector_to_numpy(self):
         with pytest.raises(TypeError):
@@ -43,7 +48,7 @@ class TestFreecadapi:
             arr = freecadapi.point_to_numpy(self.square_points)
 
     def test_single_vector_to_numpy(self):
-        input = numpy.array((1., 0.5, 2.))
+        input = numpy.array((1.0, 0.5, 2.0))
         vector = Base.Vector(input)
         arr = freecadapi.vector_to_numpy(vector)
         comparison = arr == input
@@ -99,26 +104,26 @@ class TestFreecadapi:
 
     def test_length(self):
         open_wire: Part.Wire = freecadapi.make_polygon(self.square_points)
-        assert freecadapi.length(open_wire) == open_wire.Length == 3.
+        assert freecadapi.length(open_wire) == open_wire.Length == 3.0
         closed_wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
-        assert freecadapi.length(closed_wire) == closed_wire.Length == 4.
+        assert freecadapi.length(closed_wire) == closed_wire.Length == 4.0
 
     def test_area(self):
         wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
-        assert freecadapi.area(wire) == wire.Area == 0.
+        assert freecadapi.area(wire) == wire.Area == 0.0
         face: Part.Face = Part.Face(wire)
-        assert freecadapi.area(face) == face.Area == 1.
+        assert freecadapi.area(face) == face.Area == 1.0
 
     def test_center_of_mass(self):
         wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
         face: Part.Face = Part.Face(wire)
-        comparison = freecadapi.center_of_mass(wire) == numpy.array((0.5, 0.5, 0.))
+        comparison = freecadapi.center_of_mass(wire) == numpy.array((0.5, 0.5, 0.0))
         assert comparison.all()
 
     def test_scale_shape(self):
-        factor = 2.
+        factor = 2.0
         wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
         scaled_wire = freecadapi.scale_shape(wire, factor)
         face: Part.Face = Part.Face(scaled_wire)
-        assert freecadapi.area(face) == 1. * factor**2
-        assert freecadapi.length(face) == freecadapi.length(scaled_wire) == 4. * factor
+        assert freecadapi.area(face) == 1.0 * factor ** 2
+        assert freecadapi.length(face) == freecadapi.length(scaled_wire) == 4.0 * factor

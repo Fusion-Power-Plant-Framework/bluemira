@@ -47,17 +47,18 @@ def make_polygon(
 ) -> BluemiraWire:
     """Make a polygon from a set of points.
 
-    Args:
+    Parameters
+    ----------
         points (Union[list, numpy.ndarray]): list of points. It can be given
             as a list of 3D tuples, a 3D numpy array, or similar.
         label (str): a label string.
         closed (bool, optional): if True, the first and last points will be
             connected in order to form a closed polygon. Defaults to False.
 
-    Returns:
+    Returns
+    -------
         BluemiraWire: a bluemira wire that contains the polygon
     """
-
     return BluemiraWire(_freecadapi.make_polygon(points, closed), label=label)
 
 
@@ -151,7 +152,6 @@ def save_as_STEP(shapes, filename="test", scale=1):
     scale: float (default 1)
         The scale in which to save the Shape objects
     """
-
     if not filename.endswith(".STP"):
         filename += ".STP"
 

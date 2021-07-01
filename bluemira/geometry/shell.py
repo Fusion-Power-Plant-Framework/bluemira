@@ -48,7 +48,7 @@ class BluemiraShell(BluemiraGeo):
         return super()._check_boundary(objs)
 
     def _create_shell(self):
-        """ Creation of the shell"""
+        """Creation of the shell"""
         faces = [f._shape for f in self.boundary]
         return Part.makeShell(faces)
 

@@ -95,7 +95,6 @@ class BluemiraWire(BluemiraGeo):
     @property
     def _wires(self) -> List[Part.Wire]:
         """list(Part.Wire): list of wires of which the shape consists of."""
-
         wires = []
         for o in self.boundary:
             if isinstance(o, Part.Wire):
@@ -107,8 +106,8 @@ class BluemiraWire(BluemiraGeo):
 
     def close(self) -> None:
         """Close the shape with a line segment between shape's end and start point.
-        This function modify the object boundary."""
-
+        This function modify the object boundary.
+        """
         if not self.is_closed():
             closure = wire_closure(self._shape)
             if isinstance(self.boundary[0], Part.Wire):
@@ -130,7 +129,6 @@ class BluemiraWire(BluemiraGeo):
         points:
             a numpy array with the x,y,z coordinates of the discretized points.
         """
-
         if byedges:
             points = discretize_by_edges(self._shape, ndiscr)
         else:
@@ -139,7 +137,8 @@ class BluemiraWire(BluemiraGeo):
 
     def scale(self, factor) -> None:
         """Apply scaling with factor to this object. This function modifies the self
-        object."""
+        object.
+        """
         for o in self.boundary:
             if isinstance(o, Part.Wire):
                 scale_shape(o, factor)
@@ -148,7 +147,8 @@ class BluemiraWire(BluemiraGeo):
 
     def translate(self, vector) -> None:
         """Translate this shape with the vector. This function modifies the self
-        object."""
+        object.
+        """
         for o in self.boundary:
             if isinstance(o, Part.Wire):
                 translate_shape(o, vector)
