@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import Union, List
 
 # import from freecad
-import freecad
+import freecad  # noqa: F401
 import Part
 
 # import from bluemira
@@ -40,6 +40,7 @@ from bluemira.geometry.error import DisjointedSolid
 
 class BluemiraSolid(BluemiraGeo):
     """Bluemira Solid class."""
+
     def __init__(
             self,
             boundary,
@@ -51,15 +52,10 @@ class BluemiraSolid(BluemiraGeo):
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""
-        print("solid :{}".format(objs))
         return super()._check_boundary(objs)
 
-    @BluemiraGeo.boundary.setter
-    def boundary(self, objs):
-        self._boundary = self._check_boundary(objs)
-
     def _create_solid(self):
-        """ Creation of the solid"""
+        """Creation of the solid"""
         new_shell = self.boundary[0]._shape
         # for o in self.boundary[1:]:
         #     new_shell = new_shell.fuse(o._shape)

@@ -28,12 +28,11 @@ from __future__ import annotations
 from typing import Union, List
 
 # import from freecad
-import freecad
+import freecad  # noqa: F401
 import Part
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 
 
@@ -51,10 +50,6 @@ class BluemiraShell(BluemiraGeo):
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""
         return super()._check_boundary(objs)
-
-    @BluemiraGeo.boundary.setter
-    def boundary(self, objs):
-        self._boundary = self._check_boundary(objs)
 
     def _create_shell(self):
         """ Creation of the shell"""

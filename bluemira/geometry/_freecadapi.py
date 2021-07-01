@@ -26,9 +26,8 @@ Supporting functions for the bluemira geometry module.
 from __future__ import annotations
 
 # import from freecad
-import freecad
+import freecad  # noqa: F401
 import Part
-import FreeCAD
 from FreeCAD import Base
 
 # import numpy lib
@@ -93,10 +92,12 @@ def point_to_numpy(points):
     """Converts a FreeCAD Part.Point or list(Part.Point) into a numpy array"""
     return numpy.array([numpy.array([p.X, p.Y, p.Z]) for p in points])
 
+
 @check_data_type(Part.Vertex)
 def vertex_to_numpy(vertexes):
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a numpy array"""
     return numpy.array([numpy.array([v.X, v.Y, v.Z]) for v in vertexes])
+
 
 # # =============================================================================
 # # Geometry creation
@@ -303,7 +304,6 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int):
         output.reverse()
     output = vector_to_numpy(output)
     return output
-
 
 
 # # =============================================================================

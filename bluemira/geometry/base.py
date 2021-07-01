@@ -31,10 +31,6 @@ from typing import Union
 # import for abstract class
 from abc import ABC, abstractmethod
 
-# import for logging
-import logging
-module_logger = logging.getLogger(__name__)
-
 # import freecad api
 from . import _freecadapi
 

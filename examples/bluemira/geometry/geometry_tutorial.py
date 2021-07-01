@@ -101,7 +101,7 @@ if __name__ == "__main__":
     pntslist_out = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
     delta = 0.3
     pntslist_in = [(1. - delta, 1. - delta, 0.), (0. + delta, 1. - delta, 0.),
-                         (0. + delta, 0. + delta, 0.), (1. - delta, 0. + delta, 0.)]
+                   (0. + delta, 0. + delta, 0.), (1. - delta, 0. + delta, 0.)]
     wire_out = geo.tools.make_polygon(pntslist_out, closed=True)
     wire_in = geo.tools.make_polygon(pntslist_in, closed=True)
     bmface = geo.face.BluemiraFace([wire_out, wire_in])

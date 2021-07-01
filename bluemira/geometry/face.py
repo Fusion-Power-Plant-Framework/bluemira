@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import Union, List
 
 # import from freecad
-import freecad
+import freecad  # noqa: F401
 import Part
 
 # import from bluemira
@@ -80,10 +80,6 @@ class BluemiraFace(BluemiraGeo):
         raise TypeError("Only {} objects can be used for {}".format(
             self._boundary_classes, self.__class__))
 
-    @BluemiraGeo.boundary.setter
-    def boundary(self, objs):
-        self._boundary = self._check_boundary(objs)
-
     def _create_face(self):
         """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
@@ -105,7 +101,6 @@ class BluemiraFace(BluemiraGeo):
     @property
     def _wires(self) -> List[Part.Wire]:
         """list(Part.Wire): list of wires of which the shape consists of."""
-
         wires = []
         for o in self.boundary:
             if isinstance(o, Part.Wire):

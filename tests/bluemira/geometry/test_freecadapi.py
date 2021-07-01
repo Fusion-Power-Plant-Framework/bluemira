@@ -21,11 +21,13 @@
 
 import pytest
 import numpy
-import freecad
+
+import freecad  # noqa: F401
 import Part
 from FreeCAD import Base
 
 import bluemira.geometry._freecadapi as freecadapi
+
 
 class TestFreecadapi:
     @classmethod

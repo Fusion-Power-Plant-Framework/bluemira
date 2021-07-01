@@ -23,7 +23,6 @@
 Initialise the bluemira package.
 """
 
-from . import geometry
 from ._version import get_versions
 
 __version__ = get_versions()["version"]

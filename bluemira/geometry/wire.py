@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import Union, List
 
 # import from freecad
-import freecad
+import freecad  # noqa: F401
 import Part
 
 # import from bluemira
@@ -60,7 +60,7 @@ class BluemiraWire(BluemiraGeo):
         boundary_classes = [self.__class__, Part.Wire]
         super().__init__(boundary, label, lcar, boundary_classes)
 
-        #connection variable with BLUEPRINT Loop
+        # connection variable with BLUEPRINT Loop
         self._bp_loop = None
 
     @staticmethod
@@ -83,10 +83,6 @@ class BluemiraWire(BluemiraGeo):
                 return objs
         raise TypeError("Only {} objects can be used for {}".format(
             self._boundary_classes, self.__class__))
-
-    @BluemiraGeo.boundary.setter
-    def boundary(self, objs):
-        self._boundary = self._check_boundary(objs)
 
     @property
     def _shape(self) -> Part.Wire:

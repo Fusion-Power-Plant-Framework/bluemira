@@ -33,6 +33,7 @@ class GeometryError(BluemiraError):
 
     pass
 
+
 class NotClosedWire(BluemiraError):
     """
     Not Closed Wire Error
@@ -40,16 +41,18 @@ class NotClosedWire(BluemiraError):
 
     pass
 
+
 class DisjointedFace(BluemiraError):
     """
-
+    Disjointed Face Error
     """
 
     pass
 
+
 class DisjointedSolid(BluemiraError):
     """
-
+    Disjointed Solid Error
     """
 
     pass

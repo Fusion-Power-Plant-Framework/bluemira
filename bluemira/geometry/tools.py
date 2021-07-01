@@ -38,34 +38,10 @@ import numpy
 # import typing
 from typing import Union
 
-# import freecad
-import freecad
-import Part
-
-# # =============================================================================
-# # Decorators
-# # =============================================================================
-
-
-def convert_to_bluemirageo(func):
-    def wrapper(*args, **kwargs):
-        output = func(*args, **kwargs)
-        if isinstance(output, Part.Wire):
-            output = BluemiraWire(output)
-        elif isinstance(output, Part.Face):
-            output = BluemiraFace(output)
-        elif isinstance(output, Part.Shell):
-            output = BluemiraShell(output)
-        elif isinstance(output, Part.Solid):
-            output = BluemiraSolid(output)
-        return output
-    return wrapper
 
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
-
-
 def make_polygon(points: Union[list, numpy.ndarray], label: str = "", closed: bool =
                  False) -> BluemiraWire:
     """Make a polygon from a set of points.
@@ -87,7 +63,6 @@ def make_polygon(points: Union[list, numpy.ndarray], label: str = "", closed: bo
 # # =============================================================================
 # # Shape manipulations
 # # =============================================================================
-@convert_to_bluemirageo
 def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0., 1.),
                   degree: float = 180):
     """
@@ -120,8 +95,8 @@ def revolve_shape(shape, base: tuple = (0., 0., 0.), direction: tuple = (0., 0.,
     return bmsolid
 
 
-@convert_to_bluemirageo
-def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None, lcar=None) -> BluemiraSolid:
+def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None, lcar=None) -> \
+        BluemiraSolid:
     """
     Apply the extrusion along vec to this shape
 
@@ -131,7 +106,9 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None, lcar=None) -> Blue
         The shape to be extruded
     vec: tuple (x,y,z)
         The vector along which to extrude
-
+    label: str
+        label of the output shape
+    lcar: Union[li
     Returns
     -------
     shape: BluemiraSolid
@@ -155,7 +132,6 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None, lcar=None) -> Blue
 # # =============================================================================
 # # Save functions
 # # =============================================================================
-
 def save_as_STEP(shapes, filename="test", scale=1):
     """
     Saves a series of Shape objects as a STEP assembly
@@ -178,4 +154,3 @@ def save_as_STEP(shapes, filename="test", scale=1):
 
     freecad_shapes = [s._shape for s in shapes]
     _freecadapi.save_as_STEP(freecad_shapes, filename, scale)
-
