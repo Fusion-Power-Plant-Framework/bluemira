@@ -108,10 +108,3 @@ if __name__ == "__main__":
     geo.tools.save_as_STEP([bmface], "test_face_with_hole")
     bmsolid = geo.tools.revolve_shape(bmface, direction=(0., 1., 0.))
     geo.tools.save_as_STEP([bmsolid], "test_solid_with_hole")
-
-    import Part
-    pntslist = [(1., 1., 0.), (0., 1., 0.), (0., 0., 0.), (1., 0., 0.)]
-    vertexes = [Part.Vertex(v) for v in pntslist]
-    arr = geo._freecadapi.vertex_to_numpy(vertexes)
-
-    bezier = geo._freecadapi.make_bezier(pntslist, closed=False)

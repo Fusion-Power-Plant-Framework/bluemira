@@ -58,11 +58,14 @@ def check_data_type(data_type):
         def wrapper(*args, **kwargs):
             output = []
             objs = args[0]
+            print("objs = {}".format(objs))
             is_list = isinstance(objs, list)
             if not is_list:
                 objs = [objs]
+                args[0] = objs
             if all(isinstance(o, data_type) for o in objs):
                 output = func(*args, **kwargs)
+                print("output = {}".format(output))
                 if not is_list:
                     output = output[0]
             else:
@@ -163,7 +166,7 @@ def make_bspline(points: Union[list, numpy.ndarray], closed: bool = False) -> Pa
 # # =============================================================================
 # # Object's properties
 # # =============================================================================
-def length(obj):
+def length(obj) -> float:
     prop = "Length"
     if hasattr(obj, prop):
         return getattr(obj, prop)
@@ -171,7 +174,7 @@ def length(obj):
         raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
 
 
-def area(obj):
+def area(obj) -> float:
     prop = "Area"
     if hasattr(obj, prop):
         return getattr(obj, prop)
@@ -179,7 +182,7 @@ def area(obj):
         raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
 
 
-def volume(obj):
+def volume(obj) -> float:
     prop = "Volume"
     if hasattr(obj, prop):
         return getattr(obj, prop)
@@ -187,9 +190,10 @@ def volume(obj):
         raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
 
 
-def center_of_mass(obj):
+def center_of_mass(obj) -> numpy.ndarray:
     prop = "CenterOfMass"
     if hasattr(obj, prop):
+        # CenterOfMass returns a vector.
         return getattr(obj, prop)
     else:
         raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))

@@ -99,3 +99,18 @@ class TestFreecadapi:
         assert freecadapi.area(wire) == wire.Area == 0.
         face: Part.Face = Part.Face(wire)
         assert freecadapi.area(face) == face.Area == 1.
+
+    def test_center_of_mass(self):
+        wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
+        face: Part.Face = Part.Face(wire)
+        print(freecadapi.center_of_mass(wire))
+        comparison = freecadapi.center_of_mass(wire) == numpy.array((0.5, 0.5, 0.))
+        assert comparison.all()
+
+    def test_scale_shape(self):
+        factor = 2.
+        wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
+        scaled_wire = freecadapi.scale_shape(wire, factor)
+        face: Part.Face = Part.Face(scaled_wire)
+        assert freecadapi.area(face) == 1. * factor**2
+        assert freecadapi.length(face) == freecadapi.length(scaled_wire) == 4. * factor
