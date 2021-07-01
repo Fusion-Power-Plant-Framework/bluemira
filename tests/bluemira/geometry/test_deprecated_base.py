@@ -22,14 +22,14 @@
 import pytest
 import numpy as np
 from bluemira.geometry._deprecated_base import Plane
-import bluemira.geometry._deprecated_loop as loop
+from bluemira.geometry._deprecated_loop import Loop
 
 
 def test_read_write_geombase(tmpdir):
     # Make some geometry objects
     x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1]
     y = [-4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 1]
-    h = loop.Loop(x, y)
+    h = Loop(x, y)
     g = h.offset(1)
     j = g.offset(2)  # Note this breaks offset :'(
 
@@ -38,11 +38,11 @@ def test_read_write_geombase(tmpdir):
     # Test no extension
     filename = str(path.join("testh-Loop"))
     h.to_json(filename)
-    h2 = loop.Loop.from_file(filename)
+    h2 = Loop.from_file(filename)
     assert np.all(h.xyz - h2.xyz == 0)
     filename = str(path.join("testh-Loop.json"))
     h.to_json(filename)
-    h2 = loop.Loop.from_file(filename)
+    h2 = Loop.from_file(filename)
     assert np.all(h.xyz - h2.xyz == 0)
 
 

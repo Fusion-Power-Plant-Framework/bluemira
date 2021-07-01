@@ -30,7 +30,7 @@ from matplotlib.patches import Patch, PathPatch
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from mpl_toolkits.mplot3d import Axes3D
 
-import bluemira.geometry._deprecated_tools as tools
+from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2, check_ccw
 
 
 def ring_coding(n):
@@ -47,7 +47,7 @@ def coordinates_to_path(x, z):
     """
     Convert coordinates to path vertices.
     """
-    if not tools.check_ccw(x, z):
+    if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
     vertices = np.array([x, z]).T
@@ -98,7 +98,7 @@ class BluemiraPathPatch3D(PathPatch3D):
         self._code3d = path.codes
         self._facecolor3d = self._patch2d.get_facecolor
 
-        r_matrix = tools.rotation_matrix_v1v2(normal, (0, 0, 1))
+        r_matrix = rotation_matrix_v1v2(normal, (0, 0, 1))
         t_matrix = np.array(translation)
 
         points = path.vertices

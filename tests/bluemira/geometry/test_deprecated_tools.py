@@ -42,11 +42,16 @@ from bluemira.geometry._deprecated_tools import (
     offset,
     get_intersect,
     join_intersect,
+    make_wire,
+    make_face,
+    make_mixed_wire,
     make_mixed_face,
-    make_mixed_shell,
+    convert_coordinates_to_wire,
+    convert_coordinates_to_face,
 )
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import revolve_shape, extrude_shape
 
 TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
@@ -731,8 +736,72 @@ class TestMixedFaces:
         """
         inner: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_inner.json"]))
         outer: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_outer.json"]))
-        face = make_mixed_shell(*inner.xyz, *outer.xyz)
+        inner_wire = make_mixed_wire(*inner.xyz)
+        outer_wire = make_mixed_wire(*outer.xyz)
+        face = BluemiraFace([outer_wire, inner_wire])
         self.assert_properties(true_props, face)
+
+
+class TestCoordsConversion:
+    def generate_face_polygon(self, x, y, z):
+        face = make_face(x, y, z, spline=False)
+        converted_face = convert_coordinates_to_face(x, y, z, method="polygon")
+        return face, converted_face
+
+    def generate_face_spline(self, x, y, z):
+        face = make_face(x, y, z, spline=True)
+        converted_face = convert_coordinates_to_face(x, y, z, method="spline")
+        return face, converted_face
+
+    def generate_face_mixed(self, x, y, z):
+        face = make_mixed_face(x, y, z)
+        converted_face = convert_coordinates_to_face(x, y, z)
+        return face, converted_face
+
+    def generate_wire_polygon(self, x, y, z):
+        wire = make_wire(x, y, z, spline=False)
+        converted_wire = convert_coordinates_to_wire(x, y, z, method="polygon")
+        return wire, converted_wire
+
+    def generate_wire_spline(self, x, y, z):
+        wire = make_wire(x, y, z, spline=True)
+        converted_wire = convert_coordinates_to_wire(x, y, z, method="spline")
+        return wire, converted_wire
+
+    def generate_wire_mixed(self, x, y, z):
+        wire = make_mixed_wire(x, y, z)
+        converted_wire = convert_coordinates_to_wire(x, y, z)
+        return wire, converted_wire
+
+    @pytest.mark.parametrize(
+        "filename,method",
+        [
+            ("IB_test.json", generate_face_polygon),
+            ("IB_test.json", generate_face_spline),
+            ("IB_test.json", generate_face_mixed),
+        ],
+    )
+    def test_coordinates_to_face(self, filename, method):
+        fn = os.sep.join([TEST_PATH, filename])
+        loop: Loop = Loop.from_file(fn)
+        face, converted_face = method(self, *loop.xyz)
+        assert face.area == converted_face.area
+        assert face.volume == converted_face.volume
+        assert face.center_of_mass == converted_face.center_of_mass
+
+    @pytest.mark.parametrize(
+        "filename,method",
+        [
+            ("IB_test.json", generate_wire_polygon),
+            ("IB_test.json", generate_wire_spline),
+            ("IB_test.json", generate_wire_mixed),
+        ],
+    )
+    def test_coordinates_to_wire_polygon(self, filename, method):
+        fn = os.sep.join([TEST_PATH, filename])
+        loop: Loop = Loop.from_file(fn)
+        wire, converted_wire = method(self, *loop.xyz)
+        assert wire.area == converted_wire.area
 
 
 if __name__ == "__main__":

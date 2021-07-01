@@ -23,6 +23,7 @@
 A collection of geometry tools.
 """
 
+from functools import partial
 from itertools import zip_longest
 import numpy as np
 import numba as nb
@@ -36,7 +37,6 @@ from bluemira.geometry import _freecadapi
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-import bluemira.geometry.tools as bmtools
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -1357,22 +1357,104 @@ def _montecarloloopcontrol(loop):
 
 
 # =============================================================================
-# Loop conversion
+# Coordinates conversion
 # =============================================================================
 
 
-def simplify_loop(loop, **kwargs):
-    """This function simplify the loop into splines as made in BLUEPRINT with the
-    MixedFaceMaker. TO BE IMPLEMENTED."""
-    return loop
+def convert_coordinates_to_wire(
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
+    label="",
+    lcar=0.1,
+    method="mixed",
+    **kwargs,
+):
+    """
+    Converts the provided coordinates into a BluemiraWire using the specified method.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates of points to be converted to a BluemiraWire object
+    y: np.ndarray
+        The y coordinates of points to be converted to a BluemiraWire object
+    z: np.ndarray
+        The z coordinates of points to be converted to a BluemiraWire object
+    method: str
+        The conversion method to be used:
+
+            - mixed (default): results in a mix of splines and polygons
+            - polygon: pure polygon representation
+            - spline: pure spline representation
+
+    label: str
+        The label for the resulting BluemiraWire object
+    lcar: Union[float, List[float]]
+        The characteristic length for the resulting BluemiraWire object
+    kwargs: Dict[str, Any]
+        Any other arguments for the conversion method, see e.g. make_mixed_face
+
+    Returns
+    -------
+    face: BluemiraWire
+        The resulting BluemiraWire from the conversion
+    """
+    method_map = {
+        "mixed": make_mixed_wire,
+        "polygon": partial(make_wire, spline=False),
+        "spline": partial(make_wire, spline=True),
+    }
+    wire = method_map[method](x, y, z, label=label, lcar=lcar, **kwargs)
+    return wire
 
 
-def convert_loop_to_shape(loop, label="", simplify=False, **kwargs):
-    if simplify:
-        loop = simplify_loop(loop, **kwargs)
-    points = loop.xyz
-    shape = bmtools.make_polygon(points, label=label)
-    return shape
+def convert_coordinates_to_face(
+    x: np.ndarray,
+    y: np.ndarray,
+    z: np.ndarray,
+    method="mixed",
+    label="",
+    lcar=0.1,
+    **kwargs,
+):
+    """
+    Converts the provided coordinates into a BluemiraFace using the specified method.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        The x coordinates of points to be converted to a BluemiraFace object
+    y: np.ndarray
+        The y coordinates of points to be converted to a BluemiraFace object
+    z: np.ndarray
+        The z coordinates of points to be converted to a BluemiraFace object
+    method: str
+        The conversion method to be used:
+
+            - mixed (default): results in a mix of splines and polygons
+            - polygon: pure polygon representation
+            - spline: pure spline representation
+
+    label: str
+        The label for the resulting BluemiraFace object
+    lcar: Union[float, List[float]]
+        The characteristic length for the resulting BluemiraFace object
+    kwargs: Dict[str, Any]
+        Any other arguments for the conversion method, see e.g. make_mixed_face
+
+    Returns
+    -------
+    face: BluemiraFace
+        The resulting BluemiraFace from the conversion
+    """
+    method_map = {
+        "mixed": make_mixed_face,
+        "polygon": partial(make_face, spline=False),
+        "spline": partial(make_face, spline=True),
+    }
+    face = method_map[method](x, y, z, label=label, lcar=lcar, **kwargs)
+    return face
 
 
 def make_mixed_wire(
@@ -1518,84 +1600,6 @@ def make_mixed_face(
     else:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
         return make_face(x, y, z, label=label, lcar=lcar)
-
-
-def make_mixed_shell(
-    x_inner: np.ndarray,
-    y_inner: np.ndarray,
-    z_inner: np.ndarray,
-    x_outer: np.ndarray,
-    y_outer: np.ndarray,
-    z_outer: np.ndarray,
-    label="",
-    lcar=0.1,
-    *,
-    median_factor=2.0,
-    n_segments=4,
-    a_acute=150,
-    debug=False,
-):
-    """
-    Construct a BluemiraFace object from the provided coordinates using a combination of
-    polygon and spline wires. Polygons are determined by having a median length larger
-    than the threshold or an angle that is more acute than the threshold.
-
-    Parameters
-    ----------
-    x_inner: np.ndarray
-        The inner x coordinates of points to be converted to a BluemiraFace object
-    y_inner: np.ndarray
-        The inner y coordinates of points to be converted to a BluemiraFace object
-    z_inner: np.ndarray
-        The inner z coordinates of points to be converted to a BluemiraFace object
-    x_outer: np.ndarray
-        The outer x coordinates of points to be converted to a BluemiraFace object
-    y_outer: np.ndarray
-        The outer y coordinates of points to be converted to a BluemiraFace object
-    z_outer: np.ndarray
-        The outer z coordinates of points to be converted to a BluemiraFace object
-    label: str
-        The label for the resulting BluemiraFace object
-    lcar: Union[float, List[float]]
-        The characteristic length for the resulting BluemiraFace object
-
-    Other Parameters
-    ----------------
-    median_factor: float
-        The factor of the median for which to filter segment lengths
-        (below median_factor*median_length --> spline)
-    n_segments: int
-        The minimum number of segments for a spline
-    a_acute: float
-        The angle [degrees] between two consecutive segments deemed to be too
-        acute to be fit with a spline.
-    debug: bool
-        Whether or not to print debugging information
-
-    Returns
-    -------
-    face: OCC Face object
-        The OCC face of the mixed polygon/spline Loop
-    """
-    outer = make_mixed_wire(
-        x_outer,
-        y_outer,
-        z_outer,
-        median_factor=median_factor,
-        n_segments=n_segments,
-        a_acute=a_acute,
-        debug=debug,
-    )
-    inner = make_mixed_wire(
-        x_inner,
-        y_inner,
-        z_inner,
-        median_factor=median_factor,
-        n_segments=n_segments,
-        a_acute=a_acute,
-        debug=debug,
-    )
-    return BluemiraFace([outer, inner], label=label, lcar=lcar)
 
 
 def make_wire(x, y, z, label="", lcar=0.1, spline=False):
