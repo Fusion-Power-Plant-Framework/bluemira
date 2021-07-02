@@ -309,7 +309,7 @@ class TestDefineSystemClass:
         Test Component with a divertor sub-system.
         """
 
-        div: Type[DummyDivertor]
+        div: DummyDivertor
 
         def __init__(self, inputs):
             self.inputs = inputs
@@ -333,14 +333,14 @@ class TestDefineSystemClass:
         Checks that the new annotations don't break the parent class's annotations.
         """
 
-        bb: Type[DummyBreedingBlanket]
+        bb: DummyBreedingBlanket
 
     class DummySecondComponent(GroupingComponent):
         """
         Test Component that also defines a div subsystem but with a different type.
         """
 
-        div: Type[DummyDivertorProfile]
+        div: DummyDivertorProfile
 
         def __init__(self, inputs):
             self.inputs = inputs
