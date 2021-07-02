@@ -321,7 +321,37 @@ class GroupingComponent(Component):
     A Component that groups other Components.
     """
 
-    pass
+    def add_child(self, child: Component):
+        """
+        Add a single child to this node
+
+        Parameters
+        ----------
+        child: Component
+            The child to be added
+        """
+        if child in self.children:
+            raise ComponentError(f"Component {child} is already a child of {self}")
+        self.children = list(self.children) + [child]
+
+    def add_children(self, children: List[Component]):
+        """
+        Add multiple children to this node
+
+        Parameters
+        ----------
+        children: List[Component]
+            The children to be added
+        """
+        duplicates = []
+        for child in children:
+            if child in self.children:
+                duplicates += [child]
+        if duplicates != []:
+            raise ComponentError(
+                f"Components {duplicates} are already a children of {self}"
+            )
+        self.children = list(self.children) + children
 
 
 class PhysicalComponent(Component):
