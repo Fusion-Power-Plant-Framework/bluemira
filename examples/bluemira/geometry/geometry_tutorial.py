@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+Some examples of using bluemira geometry objects.
+"""
+
 import bluemira.geometry as geo
 
 # Note: this tutorial must to be translated into a set of pytests
