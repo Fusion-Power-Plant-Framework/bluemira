@@ -257,6 +257,36 @@ class TestComponentClass:
         assert component.parent.name == parent.name
         assert all([child_.name == grandchild.name for child_ in child.children])
 
+    def test_add_child(self):
+        parent = GroupingComponent("Parent", {}, {})
+        child = GroupingComponent("Child", {}, {})
+
+        parent.add_child(child)
+        assert parent.children == (child,)
+
+    def test_fail_add_duplicate_child(self):
+        parent = GroupingComponent("Parent", {}, {})
+        child = GroupingComponent("Child", {}, {}, parent=parent)
+
+        with pytest.raises(ComponentError):
+            parent.add_child(child)
+
+    def test_add_children(self):
+        parent = GroupingComponent("Parent", {}, {})
+        child1 = GroupingComponent("Child1", {}, {})
+        child2 = GroupingComponent("Child2", {}, {})
+
+        parent.add_children([child1, child2])
+        assert parent.children == (child1, child2)
+
+    def test_fail_add_duplicate_children(self):
+        parent = GroupingComponent("Parent", {}, {})
+        child1 = GroupingComponent("Child1", {}, {}, parent=parent)
+        child2 = GroupingComponent("Child2", {}, {})
+
+        with pytest.raises(ComponentError):
+            parent.add_children([child1, child2])
+
 
 class TestPhysicalComponent:
     """
