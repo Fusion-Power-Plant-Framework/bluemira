@@ -21,7 +21,6 @@
 
 from bluemira.base.parameter import Parameter
 import pytest
-from typing import Type
 
 from bluemira.components.base import (
     Component,
@@ -258,6 +257,36 @@ class TestComponentClass:
         assert component.parent.name == parent.name
         assert all([child_.name == grandchild.name for child_ in child.children])
 
+    def test_add_child(self):
+        parent = GroupingComponent("Parent", {}, {})
+        child = GroupingComponent("Child", {}, {})
+
+        parent.add_child(child)
+        assert parent.children == (child,)
+
+    def test_fail_add_duplicate_child(self):
+        parent = GroupingComponent("Parent", {}, {})
+        child = GroupingComponent("Child", {}, {}, parent=parent)
+
+        with pytest.raises(ComponentError):
+            parent.add_child(child)
+
+    def test_add_children(self):
+        parent = GroupingComponent("Parent", {}, {})
+        child1 = GroupingComponent("Child1", {}, {})
+        child2 = GroupingComponent("Child2", {}, {})
+
+        parent.add_children([child1, child2])
+        assert parent.children == (child1, child2)
+
+    def test_fail_add_duplicate_children(self):
+        parent = GroupingComponent("Parent", {}, {})
+        child1 = GroupingComponent("Child1", {}, {}, parent=parent)
+        child2 = GroupingComponent("Child2", {}, {})
+
+        with pytest.raises(ComponentError):
+            parent.add_children([child1, child2])
+
 
 class TestPhysicalComponent:
     """
@@ -309,7 +338,7 @@ class TestDefineSystemClass:
         Test Component with a divertor sub-system.
         """
 
-        div: Type[DummyDivertor]
+        div: DummyDivertor
 
         def __init__(self, inputs):
             self.inputs = inputs
@@ -333,14 +362,14 @@ class TestDefineSystemClass:
         Checks that the new annotations don't break the parent class's annotations.
         """
 
-        bb: Type[DummyBreedingBlanket]
+        bb: DummyBreedingBlanket
 
     class DummySecondComponent(GroupingComponent):
         """
         Test Component that also defines a div subsystem but with a different type.
         """
 
-        div: Type[DummyDivertorProfile]
+        div: DummyDivertorProfile
 
         def __init__(self, inputs):
             self.inputs = inputs

@@ -26,6 +26,7 @@ Module containing the base Component class.
 import anytree
 from anytree import NodeMixin, RenderTree
 import copy
+import inspect
 from typing import Any, Dict, List, Optional, Type, Union
 
 from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping
@@ -114,12 +115,9 @@ class Component(NodeMixin):
         # Add any new subsystem base classes (or perform any overrides)
         if hasattr(cls, "__annotations__"):
             for name, ty in cls.__annotations__.items():
-                if hasattr(ty, "__origin__") and (
-                    ty.__origin__ is Type or ty.__origin__ is type
-                ):
-                    # Only handle single base classes for now.
-                    if len(ty.__args__) == 1 and issubclass(ty.__args__[0], Component):
-                        cls._subsystem_base_classes[name] = ty.__args__[0]
+                # Only handle single base classes for now.
+                if inspect.isclass(ty) and issubclass(ty, Component):
+                    cls._subsystem_base_classes[name] = ty
 
     def __repr__(self) -> str:
         """
@@ -323,7 +321,37 @@ class GroupingComponent(Component):
     A Component that groups other Components.
     """
 
-    pass
+    def add_child(self, child: Component):
+        """
+        Add a single child to this node
+
+        Parameters
+        ----------
+        child: Component
+            The child to be added
+        """
+        if child in self.children:
+            raise ComponentError(f"Component {child} is already a child of {self}")
+        self.children = list(self.children) + [child]
+
+    def add_children(self, children: List[Component]):
+        """
+        Add multiple children to this node
+
+        Parameters
+        ----------
+        children: List[Component]
+            The children to be added
+        """
+        duplicates = []
+        for child in children:
+            if child in self.children:
+                duplicates += [child]
+        if duplicates != []:
+            raise ComponentError(
+                f"Components {duplicates} are already a children of {self}"
+            )
+        self.children = list(self.children) + children
 
 
 class PhysicalComponent(Component):
