@@ -34,12 +34,12 @@ from BLUEPRINT.geometry.geomtools import qrotate, rainbow_arc
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.boolean import boolean_2d_common, boolean_2d_difference
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, mirror
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.systems.mixins import Meshable
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
-class BreedingBlanket(Meshable, ReactorSystem):
+class BreedingBlanket(GroupingComponent):
     """
     Breeding blanket reactor system.
     """
@@ -77,12 +77,11 @@ class BreedingBlanket(Meshable, ReactorSystem):
     CADConstructor = BlanketCAD
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = BreedingBlanketPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         # Constructors
         self.n_segments = 5 * self.params.n_TF
@@ -225,7 +224,7 @@ class BreedingBlanket(Meshable, ReactorSystem):
         angles = np.linspace(0, 360, self.params.n_TF, endpoint=False)
         for name, part in self._xy_generator():
             self.geom[name] = pattern(part, angles)
-        return super()._generate_xy_plot_loops()
+        # return super()._generate_xy_plot_loops()
 
     def plot_wireframe(self):
         """

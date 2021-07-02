@@ -103,6 +103,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['g_cd_ec', 'EC current drive efficiency', 0.15, 'MA/MW.m', 'Check units!', 'Input'],
         ['eta_ec', 'EC electrical efficiency', 0.35, 'N/A', 'Check units!', 'Input'],
         ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input'],
+        ['f_aux', 'Auxiliary current drive fraction', 0.1, 'N/A', None, 'Input'],
+        ['f_ohm', 'Ohmic current drive fraction', 0.1, 'N/A', None, 'Input'],
 
         # First wall and divertor profile
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],

@@ -86,7 +86,7 @@ class PassiveVacuumVessel:
 
     Parameters
     ----------
-    vacuum_vessel: VacuumVessel(ReactorSystem)
+    vacuum_vessel: VacuumVessel
         A BLUEPRINT double-shelled vacuum vessel object
     d_coil: float
         The shell discretisation size [m]

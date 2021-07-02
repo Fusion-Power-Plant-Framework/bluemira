@@ -29,8 +29,8 @@ from typing import Type
 from BLUEPRINT.cad.shieldCAD import ThermalShieldCAD, SegmentedThermalShieldCAD
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.base import ReactorSystem
-from BLUEPRINT.base import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     boolean_2d_union,
@@ -43,7 +43,7 @@ from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.utilities.tools import get_max_PF
 
 
-class ThermalShield(ReactorSystem):
+class ThermalShield(GroupingComponent):
     """
     The thermal shield system for the tokamak hall cold mass
     """
@@ -70,12 +70,12 @@ class ThermalShield(ReactorSystem):
     CADConstructor = ThermalShieldCAD
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = ThermalShieldPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
+
         self.tf_min_surf()
 
         self.build_vvts(inboardoff=self.params.g_vv_ts, topbotoff=self.params.g_vv_ts)
@@ -341,7 +341,7 @@ class ThermalShield(ReactorSystem):
             return [d_point[0], d_point[1] - self.params.g_vv_ts]  # C
 
         beta = np.pi / self.params.n_TF
-        lp_angle = self.config["LPangle"]
+        lp_angle = self.params.LPangle.value
         lp_height = inputs["lp_height"] + 0.5  # clearance
         div_cog = inputs["Div_cog"]
         x_straight = x_kink + 6
@@ -455,7 +455,7 @@ class ThermalShield(ReactorSystem):
         except KeyError:
             # Cryostat TS information not yet available!
             pass
-        return super()._generate_xz_plot_loops()
+        # return super()._generate_xz_plot_loops()
 
     @staticmethod
     def _make_xz_shell(loop, vector, thickness):
@@ -517,10 +517,10 @@ class ThermalShield(ReactorSystem):
         plane = Plane([0, 0, 0], [1, 0, 0], [0, 1, 0])
         inter = self.geom["Cryostat TS"].section(plane)
         self.geom["Cryostat TS X-Y"] = make_ring(inter[0][0], inter[1][0])
-        return super()._generate_xy_plot_loops()
+        # return super()._generate_xy_plot_loops()
 
 
-class SegmentedThermalShield(ReactorSystem):
+class SegmentedThermalShield(GroupingComponent):
     """
     Segmented thermal shield (TS) class
 
@@ -602,20 +602,14 @@ class SegmentedThermalShield(ReactorSystem):
     CADConstructor = SegmentedThermalShieldCAD
 
     def __init__(self, config, inputs):
+        super().__init__(self.__class__.__name__, config, inputs)
 
         # Set the thremal shield graphical   color scheme
         self.color = (0.28627450980392155, 0.98431372549019602, 0.14509803921568629)
 
-        # Loading the default parameters
-        self.config = config
-        self.inputs = inputs
         self._plotter = ThermalShieldPlotter()
 
-        # Loading the input parameters
-        # Rem: config does not seems to be a config file but rather containing
-        #      the genuine class inputs.
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         # Loading the inputs loops into class attributes
         self.tf_inner_loop = self.inputs["TF inner loop"]

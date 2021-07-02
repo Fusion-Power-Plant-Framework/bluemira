@@ -29,7 +29,8 @@ from scipy.optimize import minimize
 from collections import OrderedDict
 from typing import Type
 from BLUEPRINT.nova.firstwall import DivertorProfile, FirstWallProfile
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
@@ -45,7 +46,7 @@ from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.utilities.tools import innocent_smoothie
 
 
-class ReactorCrossSection(ReactorSystem):
+class ReactorCrossSection(GroupingComponent):
     """
     Reactor cross-section object used to calculate 2-D cross-sections from the
     radial build
@@ -60,7 +61,7 @@ class ReactorCrossSection(ReactorSystem):
     config: Type[ParameterFrame]
     inputs: dict
 
-    div_profile: Type[DivertorProfile]
+    div_profile: DivertorProfile
 
     # fmt: off
     default_params = [
@@ -102,12 +103,11 @@ class ReactorCrossSection(ReactorSystem):
     # fmt: on
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = ReactorCrossSectionPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         self.configuration = self.params.Name + "_cross_section"
         self.sf = self.inputs["sf"]
@@ -304,7 +304,7 @@ class ReactorCrossSection(ReactorSystem):
             self.geom["upper_divertor"] = self.geom["divertor"]["upper"]["divertor"]
         else:
             self.geom["lower_divertor"] = self.geom["divertor"]["divertor"]
-        return super()._generate_xz_plot_loops()
+        # return super()._generate_xz_plot_loops()
 
     def _set_vessel_bounds(
         self, vessel_shape, r_inboard, r_outboard, height, x_koz, z_koz

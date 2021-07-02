@@ -33,7 +33,8 @@ from typing import Type
 from BLUEPRINT.base.file import get_BP_path
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.constants import GRAVITY
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 
 
 if sys.platform != "darwin" and getpass.getuser() != "mcintos":  # !!!
@@ -42,7 +43,7 @@ if sys.platform != "darwin" and getpass.getuser() != "mcintos":  # !!!
         from openpyxl import Workbook
 
 
-class RMMetrics(ReactorSystem):
+class RMMetrics(GroupingComponent):
     config: Type[ParameterFrame]
     inputs: dict
 
@@ -51,11 +52,7 @@ class RMMetrics(ReactorSystem):
     ref = {"RMTFI": 322.283, "RMSI": 554.095}
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
-
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        super().__init__(self.__class__.__name__, config, inputs)
 
         self.segments = self.inputs["BBgeometry"]
         self.get_AHPw()

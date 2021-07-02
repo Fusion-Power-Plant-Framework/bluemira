@@ -96,11 +96,7 @@ class DivertorSilhouette(DivertorProfile):
     # fmt: on
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
-
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        super.__init__(config, inputs)
 
         self._validate_inputs()
         self.sf = self.inputs["sf"]

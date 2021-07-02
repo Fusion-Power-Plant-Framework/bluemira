@@ -436,6 +436,8 @@ class Shape(JSONReaderWriter):
                 cdict[key] = getattr(self.parameterisation, key)
         for key in ["family", "objective", "n_TF"]:
             cdict[key] = getattr(self, key)
+            if hasattr(cdict[key], "value"):
+                cdict[key] = cdict[key].value
         if self.read_write:  # write loop to file
             super().write(cdict)
 

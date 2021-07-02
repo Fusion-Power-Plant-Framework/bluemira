@@ -29,12 +29,13 @@ from BLUEPRINT.cad.buildingCAD import RadiationCAD
 from BLUEPRINT.geometry.loop import Loop, make_ring
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geombase import Plane
-from BLUEPRINT.systems.mixins import Meshable, OnionRing
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.systems.mixins import OnionRing
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
-class RadiationShield(Meshable, OnionRing, ReactorSystem):
+class RadiationShield(OnionRing, GroupingComponent):
     """
     Radiation Shield reactor system.
     """
@@ -56,12 +57,11 @@ class RadiationShield(Meshable, OnionRing, ReactorSystem):
     CADConstructor = RadiationCAD
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = RadiationShieldPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         self.plugs = {}
         self.build_radiation_shield()
@@ -143,7 +143,7 @@ class RadiationShield(Meshable, OnionRing, ReactorSystem):
         ri = inter[0][0]
         ro = inter[1][0]
         self.geom["Shield X-Y"] = make_ring(ri, ro)
-        return super()._generate_xy_plot_loops()
+        # return super()._generate_xy_plot_loops()
 
 
 class RadiationShieldPlotter(ReactorSystemPlotter):

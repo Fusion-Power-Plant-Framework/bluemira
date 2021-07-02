@@ -26,7 +26,8 @@ from typing import Type
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-from BLUEPRINT.base import ParameterFrame, ReactorSystem
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.base.lookandfeel import KEY_TO_PLOT
 from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.utilities.plottools import savefig
@@ -37,7 +38,7 @@ from BLUEPRINT.fuelcycle.cycle import FuelCycle
 plot_defaults()
 
 
-class TFVSystem(ReactorSystem):
+class TFVSystem(GroupingComponent):
     """
     Tritium Fuelling and Vacuum System
     Initialises the TFV system object without reactor information
@@ -98,10 +99,7 @@ class TFVSystem(ReactorSystem):
     }
 
     def __init__(self, config):
-        self.config = config
-
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        super().__init__(self.__class__.__name__, config, {})
 
     def get_startup_inventory(self, query="max", method="run"):
         """

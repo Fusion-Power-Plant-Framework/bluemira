@@ -29,12 +29,13 @@ from typing import Type
 from BLUEPRINT.cad.cryostatCAD import CryostatCAD
 from BLUEPRINT.geometry.loop import Loop, make_ring
 from BLUEPRINT.geometry.geombase import Plane
-from BLUEPRINT.systems.mixins import Meshable, OnionRing
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.systems.mixins import OnionRing
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
-class Cryostat(Meshable, OnionRing, ReactorSystem):
+class Cryostat(OnionRing, GroupingComponent):
     """
     Cryostat reactor system.
     """
@@ -54,12 +55,11 @@ class Cryostat(Meshable, OnionRing, ReactorSystem):
     CADConstructor = CryostatCAD
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = CryostatPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         self.plugs = {}
         self.build_cyrostatvv()
@@ -186,7 +186,7 @@ class Cryostat(Meshable, OnionRing, ReactorSystem):
         ri = inter[0][0]
         ro = inter[1][0]
         self.geom["Cryostat VV X-Y"] = make_ring(ri, ro)
-        return super()._generate_xy_plot_loops()
+        # return super()._generate_xy_plot_loops()
 
 
 class CryostatPlotter(ReactorSystemPlotter):

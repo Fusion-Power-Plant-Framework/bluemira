@@ -24,7 +24,8 @@ Flux surface attributes and first wall profile based on heat flux calculation
 """
 import numpy as np
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.boolean import (
     convex_hull,
@@ -246,7 +247,7 @@ class FluxSurface(EqInputs):
         return heat_flux
 
 
-class FirstWall(EqInputs, ReactorSystem):
+class FirstWall(EqInputs, GroupingComponent):
     """
     Reactor First Wall (FW) system
     """
@@ -286,11 +287,7 @@ class FirstWall(EqInputs, ReactorSystem):
     ]
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
-
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        super().__init__(self.__class__.__name__, config, inputs)
 
         self.equilibrium = inputs["equilibrium"]
         super().load_equilibrium()

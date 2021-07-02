@@ -29,13 +29,13 @@ from BLUEPRINT.geometry.geomtools import loop_volume
 from BLUEPRINT.geometry.loop import make_ring
 from BLUEPRINT.systems.physicstoolbox import n_DT_reactions, r_T_burn, P_LH
 from bluemira.base.constants import MU_0
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.cad.plasmaCAD import PlasmaCAD
-from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
-class Plasma(Meshable, ReactorSystem):
+class Plasma(GroupingComponent):
     """
     Plasma reactor system
     """
@@ -82,19 +82,20 @@ class Plasma(Meshable, ReactorSystem):
     CADConstructor = PlasmaCAD
 
     def __init__(self, config, profiles, method):
-        self.config = config
+        super().__init__(self.__class__.__name__, config, {})
+
         self.profiles = profiles
         self.method = method
         self._plotter = PlasmaPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         if len(self.profiles) != 0:
             self.profiles = self.profiles.copy()
             self._adjust_psi()
             self._get_current()
-        self.n_TF = self.config["n_TF"]
+        self.n_TF = self.params.n_TF.value
+        self.Z_eff = config["Z_eff"]
         self.derive_fuelling_requirements()
 
     def _adjust_psi(self):
@@ -296,7 +297,7 @@ class Plasma(Meshable, ReactorSystem):
     def _generate_xy_plot_loops(self):
         shell = make_ring(min(self.geom["LCFS"].x), max(self.geom["LCFS"].x))
         self.geom["LCFS X-Y"] = shell
-        return super()._generate_xy_plot_loops()
+        # return super()._generate_xy_plot_loops()
 
     def _get_params(self):
         # fmt: off
@@ -340,7 +341,7 @@ class Plasma(Meshable, ReactorSystem):
         kappa = self.params.kappa
         r_plasma = (
             2.15e-9
-            * self.config["Z_eff"]
+            * self.Z_eff
             * self.params.R_0
             / (kappa * a ** 2 * (self.params.T_e / 10) ** 1.5)
         )  # [Ohms]

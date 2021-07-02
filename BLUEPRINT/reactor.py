@@ -32,22 +32,20 @@ import json
 from pathlib import Path, PosixPath
 
 from types import ModuleType
-from typing import Type, Union
+from typing import Union
 
 # Framework imports
-from BLUEPRINT.base import (
-    ReactorSystem,
-    BLUE,
-)
+from BLUEPRINT.base import BLUE
 from bluemira.base.file import get_files_by_ext
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
 from bluemira.base.error import BluemiraError
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.base.file import FileManager
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 
 # Utility imports
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop, point_loop_cast
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.parameterisations import flatD, negativeD
@@ -118,7 +116,7 @@ except (ModuleNotFoundError, FileNotFoundError):
     bluemira_warn("PROCESS not installed on this machine; cannot run PROCESS.")
 
 
-class Reactor(ReactorSystem):
+class Reactor(GroupingComponent):
     """
     Nuclear fusion reactor object (implicitly: a tokamak)
 
@@ -130,8 +128,7 @@ class Reactor(ReactorSystem):
         The configuration dictionary of parameter variations from the config
         class
     build_config: dict
-        The dictionary of build configuration (i.e. run vs. read, design objec-
-        tives, etc.
+        The dictionary of build configuration (i.e. run vs. read, design objectives, ...)
     build_tweaks: dict
         The dictionary of numerical tweaks for the various calculations
 
@@ -142,45 +139,44 @@ class Reactor(ReactorSystem):
     build_config: dict
     build_tweaks: dict
 
-    # ReactorSystem declarations
-    BB: Type[BreedingBlanket]
-    BC: Type[BlanketCoverage]
-    CR: Type[Cryostat]
-    FW: Type[FirstWallProfile]
-    PL: Type[Plasma]
-    RS: Type[RadiationShield]
-    TS: Type[ThermalShield]
-    TF: Type[ToroidalFieldCoils]
-    PF: Type[PoloidalFieldCoils]
-    VV: Type[VacuumVessel]
-    BOP: Type[BalanceOfPlant]
-    DIV: Type[Divertor]
-    HCD: Type[HCDSystem]
-    TFV: Type[TFVSystem]
-    ATEC: Type[CoilArchitect]
+    # Component declarations
+    BB: BreedingBlanket
+    BC: BlanketCoverage
+    CR: Cryostat
+    FW: FirstWallProfile
+    PL: Plasma
+    RS: RadiationShield
+    TS: ThermalShield
+    TF: ToroidalFieldCoils
+    PF: PoloidalFieldCoils
+    VV: VacuumVessel
+    BOP: BalanceOfPlant
+    DIV: Divertor
+    HCD: HCDSystem
+    TFV: TFVSystem
+    ATEC: CoilArchitect
 
     # Construction and calculation class declarations
-    EQ: Union[Type[AbInitioEquilibriumProblem], Type[AbExtraEquilibriumProblem]]
-    RB: Type[ReactorCrossSection]
-    SO: Type[StructuralOptimiser]
-    CAD: Type[ReactorCAD]
-    n_CAD: Type[ReactorCAD]
+    EQ: Union[AbInitioEquilibriumProblem, AbExtraEquilibriumProblem]
+    RB: ReactorCrossSection
+    SO: StructuralOptimiser
+    CAD: ReactorCAD
+    n_CAD: ReactorCAD
 
     PlotConstructor = ReactorPlotter
-    file_manager: Type[FileManager]
+    file_manager: FileManager
 
     # Input parameter declaration in config.py. Config values will overwrite
     # defaults in Configuration.
     default_params = SingleNull().to_records()
 
     def __init__(self, config, build_config, build_tweaks):
+        super().__init__(config.get("Name", self.__class__.__name__), config, {})
 
         # Initialise Reactor object with inputs
-        self.config = config
         self.build_config = build_config
         self.build_tweaks = build_tweaks
 
-        self.params = ParameterFrame(self.default_params.to_records())
         self.prepare_params()
 
         self.nmodel = None
@@ -223,7 +219,6 @@ class Reactor(ReactorSystem):
         """
         Prepare the parameters so they are ready for building.
         """
-        self.params.update_kw_parameters(self.config)
         if self.build_config["process_mode"] == "mock":
             self.estimate_kappa_95()
             self.derive_inputs()
@@ -598,7 +593,7 @@ class Reactor(ReactorSystem):
         print("")  # stdout flusher
 
         directory = self.file_manager.generated_data_dirs["equilibria"]
-        a.eq.to_eqdsk(self.config["Name"] + "_eqref", directory=directory)
+        a.eq.to_eqdsk(self.params.Name.value + "_eqref", directory=directory)
         self.EQ = a
         self.eqref = a.eq.copy()
         self.process_equilibrium(self.eqref)
@@ -667,6 +662,7 @@ class Reactor(ReactorSystem):
         self.PL.add_parameters(params)
         self.PF = PoloidalFieldCoils(self.params)
         self.PF.update_coilset(self.EQ.coilset)
+        self.add_children([self.PL, self.PF])
 
     def shape_firstwall(self):
         """
@@ -686,8 +682,8 @@ class Reactor(ReactorSystem):
         )
         bluemira_print(
             "Designing first wall with:\n"
-            f"psi_n: {self.params.fw_psi_n}\n"
-            f"dx: {self.params.tk_sol_ib}"
+            f"psi_n: {self.params.fw_psi_n.value}\n"
+            f"dx: {self.params.tk_sol_ib.value}"
         )
 
         sym = self.params.plasma_type == "DN"
@@ -715,6 +711,7 @@ class Reactor(ReactorSystem):
                 flux_fit=True,
             )
             self.sf = StreamFlow(filename=self.eqref.filename)
+        self.add_child(self.FW)
 
     def build_cross_section(self):
         """
@@ -762,6 +759,7 @@ class Reactor(ReactorSystem):
 
         BlanketClass = self.get_subsystem_class("BB")
         self.BB = BlanketClass(self.params, to_bb)
+        self.add_child(self.BB)
 
     def build_vessels(self):
         """
@@ -776,6 +774,8 @@ class Reactor(ReactorSystem):
         to_ts = {"VV 2D outer": self.VV.geom["2D profile"].outer}
         ThermalShieldClass = self.get_subsystem_class("TS")
         self.TS = ThermalShieldClass(self.params, to_ts)
+
+        self.add_children([self.VV, self.TS])
 
     def build_containments(self):
         """
@@ -805,6 +805,8 @@ class Reactor(ReactorSystem):
 
         to_vv = {"CRplates": self.CR.geom["plates"], "tk": self.CR.params.g_cr_ts}
         self.VV.adjust_ports(to_vv)
+
+        self.add_children([self.CR, self.RS])
 
     def build_ports(self):
         """
@@ -908,6 +910,8 @@ class Reactor(ReactorSystem):
                 self.build_TF_coils(ny, nr, nrippoints, objective, shape_type)
         self.add_parameters(self.TF.params.to_records())
 
+        self.add_child(self.TF)
+
     def build_PF_system(self):
         """
         Design and optimise the reactor poloidal field system.
@@ -949,13 +953,14 @@ class Reactor(ReactorSystem):
         for name, snap in self.EQ.snapshots.items():
             if name != "Breakdown":
                 snap.eq.to_eqdsk(
-                    self.config["Name"] + f"_{name}",
+                    self.params.Name + f"_{name}",
                     directory=self.file_manager.generated_data_dirs["equilibria"],
                 )
 
         PoloidalFieldCoilsClass = self.get_subsystem_class("PF")
         self.PF = PoloidalFieldCoilsClass(self.params)
         self.PF.update_coilset(self.EQ.coilset)
+        self.add_child(self.PF)
 
     def build_coil_cage(self):
         """
@@ -973,6 +978,8 @@ class Reactor(ReactorSystem):
         self.ATEC = CoilArchitectClass(self.params, to_atec)
 
         self.ATEC.build()
+
+        self.add_child(self.ATEC)
 
     def optimise_coil_cage(self):
         """
@@ -1275,8 +1282,8 @@ class Reactor(ReactorSystem):
                 hcd_current = self.HCD.NB.params.I
                 f_aux = hcd_current / self.params["I_p"]
                 f_ohm = 1 - self.params.f_bs - f_aux
-                self.config["f_aux"] = f_aux
-                self.config["f_ohm"] = f_ohm
+                self.params.f_aux = f_aux
+                self.params.f_ohm = f_ohm
             elif method == "fraction":
                 self.add_parameter(
                     "f_aux",
@@ -1289,17 +1296,17 @@ class Reactor(ReactorSystem):
                 self.HCD.allocate("I_cd", f_NBI=1)
                 self.HCD.build()
             elif method == "free":
-                self.config["f_aux"] = 1 - self.params["f_bs"] - self.config["f_ohm"]
-                self.HCD.set_requirement("I_cd", self.params.I_p * self.config["f_aux"])
+                self.params.f_aux.value = 1 - self.params.f_bs - self.params.f_ohm
+                self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_aux)
                 self.HCD.allocate("I_cd", f_NBI=1)
         elif self.params["op_mode"] == "Steady-state":
-            if "f_ohm" in self.config.keys() and self.config["f_ohm"] != 0:
+            if "f_ohm" in self.params.keys() and self.params["f_ohm"] != 0:
                 bluemira_print(
                     "Steady-state operation cannot rely on an inductively"
                     "driven current. Setting f_ohm=0."
                 )
-                self.config["f_ohm"] = 0
-            self.config["f_aux"] = 1 - self.params["f_bs"]
+                self.params.f_ohm.value = 0
+            self.params.f_aux.value = 1 - self.params["f_bs"]
             self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_aux)
             self.HCD.allocate("I_cd", f_NBI=1)
 

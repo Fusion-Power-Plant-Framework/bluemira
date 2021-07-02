@@ -28,7 +28,8 @@ import json
 from typing import Type
 from scipy.optimize import brentq
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.base.file import get_BP_path
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from BLUEPRINT.utilities.tools import delta, is_num
@@ -36,7 +37,7 @@ from BLUEPRINT.neutronics.simpleneutrons import NeutronicsRulesOfThumb as nROT
 from BLUEPRINT.fuelcycle.timeline import f_gompertz, histify, Timeline
 
 
-class LifeCycle(ReactorSystem):
+class LifeCycle(GroupingComponent):
     """
     Builds a lifecycle for DEMO
 
@@ -90,11 +91,7 @@ class LifeCycle(ReactorSystem):
     # fmt: on
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
-
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        super().__init__(self.__class__.__name__, config, inputs)
 
         # Derive/convert inputs
         self.maintenance_l = self.params.bmd * 24 * 3600  # [s]
@@ -411,7 +408,7 @@ class LifeCycle(ReactorSystem):
                 f"% diff: {100*delt:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(self.config, self.inputs)  # Phoenix
+            self.__init__(self.params, self.inputs)  # Phoenix
 
         if delta2 > 0.015:
             bluemira_warn(
@@ -422,7 +419,7 @@ class LifeCycle(ReactorSystem):
                 f"% diff: {100*delta2:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(self.config, self.inputs)  # Phoenix
+            self.__init__(self.params, self.inputs)  # Phoenix
 
         if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
             bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")

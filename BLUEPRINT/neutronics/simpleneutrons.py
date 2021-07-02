@@ -27,8 +27,9 @@ import numpy as np
 import os
 import json
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
 from bluemira.base.look_and_feel import bluemira_print, plot_defaults
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop
@@ -163,7 +164,7 @@ class NeutronicsRulesOfThumb:
         self.vv_dmg = 0.3  # [dpa/MW.annum/m^2]
 
 
-class BlanketCoverage(ReactorSystem):
+class BlanketCoverage(GroupingComponent):
     """
     Simplified neutron accountancy for TBR and volumetric heat deposition
 
@@ -203,11 +204,7 @@ class BlanketCoverage(ReactorSystem):
     # fmt: on
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
-
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        super().__init__(self.__class__.__name__, config, inputs)
 
         self.nb_regions = []
         self.lgh_regions = []

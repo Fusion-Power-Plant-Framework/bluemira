@@ -25,12 +25,12 @@ Heating and current drive system
 import numpy as np
 from typing import Type
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base import ReactorSystem
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
-class HCDSystem(ReactorSystem):
+class HCDSystem(GroupingComponent):
     """
     Heating and current drive reactor system.
     """
@@ -45,25 +45,27 @@ class HCDSystem(ReactorSystem):
         ['p_nb', 'NB launcher power', 1, 'MA', 'Maximum launcher current drive in a port', 'Input'],
         ['g_cd_ec', 'EC current drive efficiency', 0.15, 'MA/MW.m', 'Check units!', 'Input'],
         ['eta_ec', 'EC electrical efficiency', 0.35, 'N/A', 'Check units!', 'Input'],
-        ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input']
+        ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input'],
+        ['f_aux', 'Auxiliary current drive fraction', 0.1, 'N/A', None, 'Input'],
+        ['f_bs', 'Bootstrap fraction', 0.5, 'N/A', None, 'Input'],
+        ['op_mode', 'Mode of operation', 'Pulsed', 'N/A', None, 'Input'],
     ]
     # fmt: on
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = HCDSystemPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.requirements = {}
 
-        self.f_bs = self.config["f_bs"]
-        if self.config["op_mode"] == "Pulsed":
+        self.f_bs = self.params.f_bs.value
+        if self.params.op_mode == "Pulsed":
             self.pulsed = True
-        elif self.config["op_mode"] == "Steady-state":
+        elif self.params.op_mode == "Steady-state":
             self.pulsed = False
-        self.NB = NeutralBeam(self.config, self.inputs, 0.5, 0.3, 1)
-        self.EC = ElectronCyclotron(self.config, self.inputs, 0.15, 0.35, 10)
+        self.NB = NeutralBeam(config, self.inputs, 0.5, 0.3, 1)
+        self.EC = ElectronCyclotron(config, self.inputs, 0.15, 0.35, 10)
         self.P_LH = self.inputs["P_LH"]
         self.requirements["P_LH"] = self.P_LH
         self.allocate("P_LH", f_NBI=0.2, f_ECD=0.8)
@@ -129,7 +131,7 @@ class HCDSystem(ReactorSystem):
         return self.NB.requirements["I_cd"] / self.requirements["I_cd"]
 
 
-class GenericHCD(ReactorSystem):
+class GenericHCD(GroupingComponent):
     """
     Generic HCD sub-system base class.
     """
@@ -140,14 +142,13 @@ class GenericHCD(ReactorSystem):
     default_params = []
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
+        self.requirements = {}
 
-        self.R_0 = self.config["R_0"]
-        self.n_TF = self.config["n_TF"]
+        self.R_0 = config["R_0"]
+        self.n_TF = config["n_TF"]
 
     def set_requirement(self, req, value):
         """

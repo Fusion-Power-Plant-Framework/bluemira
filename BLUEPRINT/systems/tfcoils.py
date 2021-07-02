@@ -29,7 +29,8 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import InterpolatedUnivariateSpline
 from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
 from bluemira.base.constants import MU_0
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.offset import offset_smc
@@ -39,12 +40,11 @@ from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
 from BLUEPRINT.geometry.shell import Shell, MultiShell
 from BLUEPRINT.geometry.shape import Shape
 from BLUEPRINT.cad.coilCAD import TFCoilCAD
-from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
 
 
-class ToroidalFieldCoils(Meshable, ReactorSystem):
+class ToroidalFieldCoils(GroupingComponent):
     """
     Reactor toroidal field (TF) coil system
     """
@@ -82,13 +82,11 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
     CADConstructor = TFCoilCAD
 
     def __init__(self, config, inputs):
+        super().__init__(self.__class__.__name__, config, inputs)
 
-        self.config = config
-        self.inputs = inputs
         self._plotter = ToroidalFieldCoilsPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         # Constructors
         self.flag_new = False
@@ -917,7 +915,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             b_cyl = clean_loop(b_cyl)
             b_cyl.reorder(0, 2)
             self.geom["B Cyl"] = b_cyl
-            return super()._generate_xz_plot_loops()
+            # return super()._generate_xz_plot_loops()
 
         case_out = Loop(**self.loops["out"])
         case_out = clean_loop(case_out)
@@ -928,7 +926,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         case_in = clean_loop(case_in)
         case_in.reorder(0, 2)
         self.geom["TF case in"] = Shell(case_in, wp_in)
-        return super()._generate_xz_plot_loops()
+        # return super()._generate_xz_plot_loops()
 
     def _generate_xy_plot_loops(self):
         """
@@ -1090,7 +1088,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 self.geom[key + " single"] = loop
                 self.geom[key] = pattern(loop, betas)
 
-        return super()._generate_xy_plot_loops()
+        # return super()._generate_xy_plot_loops()
 
     def loop_interpolators(self, trim=[0, 1], offset=0.75, full=False):
         """

@@ -25,7 +25,8 @@ Reactor vacuum vessel system
 from itertools import cycle
 import numpy as np
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.cad.vesselCAD import VesselCAD, SegmentedVesselCAD
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
@@ -36,11 +37,11 @@ from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import loop_plane_intersect
-from BLUEPRINT.systems.mixins import Meshable, UpperPort
+from BLUEPRINT.systems.mixins import UpperPort
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
-class VacuumVessel(Meshable, ReactorSystem):
+class VacuumVessel(GroupingComponent):
     """
     Vacuum vessel reactor system
     """
@@ -62,12 +63,11 @@ class VacuumVessel(Meshable, ReactorSystem):
     CADConstructor = VesselCAD
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = VacuumVesselPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
         self.geom["2D profile"] = self.inputs["vessel_shell"]
 
         self.up_shift = False
@@ -191,7 +191,7 @@ class VacuumVessel(Meshable, ReactorSystem):
             max(self.geom["2D profile"].inner.x), max(self.geom["2D profile"].outer.x)
         )
         self.geom["Outer X-Y"] = outer
-        return super()._generate_xy_plot_loops()
+        # return super()._generate_xy_plot_loops()
 
     def _generate_xz_plot_loops(self):
         # This the more verbose boolean approach... keeping boolean ops simple
@@ -236,7 +236,7 @@ class VacuumVessel(Meshable, ReactorSystem):
         final = boolean_2d_difference(outer, aub.inner)
         self.geom["Full 2D profile"] = MultiLoop(final, stitch=False)
         self._generate_duct_loop()
-        return super()._generate_xz_plot_loops()
+        # return super()._generate_xz_plot_loops()
 
     @staticmethod
     def _make_xz_shell(loop, vector, thickness):
@@ -305,7 +305,7 @@ class VacuumVessel(Meshable, ReactorSystem):
         self.geom["Duct xz loop2"] = MultiLoop([loop, u_loop])
 
 
-class SegmentedVaccumVessel(Meshable, ReactorSystem):
+class SegmentedVaccumVessel(GroupingComponent):
     """
     Segmented Vaccum vessel (VV) class
 
@@ -368,12 +368,11 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
     CADConstructor = SegmentedVesselCAD
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = VacuumVesselPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         self.ts_inboard_loop = self.inputs["TS inboard loop"]
         self.ts_outboard_loop = self.inputs["TS outboard loop"]

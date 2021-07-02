@@ -34,15 +34,14 @@ from BLUEPRINT.fuelcycle.blocks import TCycleComponent, TCycleFlow
 from BLUEPRINT.utilities.tools import findnoisylocals, discretise_1d, tomols
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print
-from BLUEPRINT.base.parameter import ParameterFrame
-from BLUEPRINT.base.baseclass import ReactorSystem
+from bluemira.components import GroupingComponent
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
 # It will be slower... and it will probably be less accurate! But the plots..
 # FIXED: You hacked the plot
 
 
-class FuelCycle(ReactorSystem):
+class FuelCycle(GroupingComponent):
     """
     Tritium fuel cycle object.
 
@@ -124,9 +123,7 @@ class FuelCycle(ReactorSystem):
     # fmt: on
 
     def __init__(self, config, inputs, timeline):
-        # Handle parameters
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(config)
+        super().__init__(self.__class__.__name__, config, inputs)
 
         # Handle calculation information
         self.verbose = inputs.get("verbose", False)

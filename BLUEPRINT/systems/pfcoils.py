@@ -23,15 +23,15 @@
 Poloidal field system
 """
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.coilCAD import PFSystemCAD
 from BLUEPRINT.geometry.geomtools import get_boundary
-from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
-class PoloidalFieldCoils(Meshable, ReactorSystem):
+class PoloidalFieldCoils(GroupingComponent):
     """
     Reactor poloidal field (PF) coil system
     """
@@ -48,15 +48,13 @@ class PoloidalFieldCoils(Meshable, ReactorSystem):
     CADConstructor = PFSystemCAD
 
     def __init__(self, config):
-        self.config = config
+        super().__init__(self.__class__.__name__, config, {})
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
         self._plotter = PoloidalFieldCoilsPlotter()
 
     def update_coilset(self, coilset):
         """
-        Passes a CoilSet object from equilibria into the ReactorSystem
+        Passes a CoilSet object from equilibria into the Component
         """
         self.coils = coilset.coils
         self._coilset = coilset

@@ -30,7 +30,8 @@ from scipy.optimize import minimize_scalar, minimize
 from scipy.optimize import fmin_slsqp
 from BLUEPRINT.geometry.geomtools import normal
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+from bluemira.components import GroupingComponent
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.geombase import Plane
@@ -49,7 +50,7 @@ from BLUEPRINT.cad.coilCAD import CoilStructureCAD
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
-class CoilArchitect(ReactorSystem):
+class CoilArchitect(GroupingComponent):
     """
     The architect object for designing tokamak coil structures:
     - outer inter-coil structures
@@ -86,12 +87,11 @@ class CoilArchitect(ReactorSystem):
     CADConstructor = CoilStructureCAD
 
     def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
+        super().__init__(self.__class__.__name__, config, inputs)
+
         self._plotter = CoilArchitectPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.geom = {}
 
         self.tf = self.inputs["tf"]
         self.pf = self.inputs["pf"]
