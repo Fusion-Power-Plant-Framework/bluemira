@@ -366,7 +366,7 @@ def save_as_STEP(shapes, filename="test", scale=1):
 # # =============================================================================
 # # Shape manipulations
 # # =============================================================================
-def scale_shape(shape, factor) -> None:
+def scale_shape(shape, factor):
     """
     Apply scaling with factor to the shape
 
@@ -379,12 +379,12 @@ def scale_shape(shape, factor) -> None:
 
     Returns
     -------
-    None: the object is directly modified
+    shape: the modified shape
     """
     return shape.scale(factor)
 
 
-def translate_shape(shape, vector: tuple) -> None:
+def translate_shape(shape, vector: tuple):
     """
     Apply scaling with factor to the shape
 
@@ -397,7 +397,7 @@ def translate_shape(shape, vector: tuple) -> None:
 
     Returns
     -------
-    None: the object is directly modified
+    shape: the modified shape
     """
     return shape.translate(vector)
 
@@ -424,12 +424,7 @@ def rotate_shape(
 
     Returns
     -------
-    shape:
-        the rotate shape.
-
-    Notes
-    -----
-    this operation modifies the shape object.
+    shape: the modified shape
     """
     return shape.rotate(base, direction, degree)
 
@@ -458,7 +453,6 @@ def revolve_shape(
     -------
     shape:
         the revolved shape.
-
     """
     base = Base.Vector(base)
     direction = Base.Vector(direction)
@@ -480,7 +474,6 @@ def extrude_shape(shape, vec: tuple):
     -------
     shape:
         The extruded shape.
-
     """
     vec = Base.Vector(vec)
     return shape.extrude(vec)

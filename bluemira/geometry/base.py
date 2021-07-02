@@ -44,7 +44,7 @@ class BluemiraGeo(ABC):
         shape's boundary
     label: str
         identification label for the shape
-    lcar: Union[float, [float]]
+    lcar: Union[float, list(float)]
         characteristic mesh length
     boundary_classes:
         list of allowed class types for shape's boundary
@@ -68,7 +68,7 @@ class BluemiraGeo(ABC):
         self,
         boundary,
         label: str = "",
-        lcar: Union[float, [float]] = 0.1,
+        lcar: Union[float, list(float)] = 0.1,
         boundary_classes=None,
     ):
         self._boundary_classes = boundary_classes
@@ -81,6 +81,10 @@ class BluemiraGeo(ABC):
         """Function used in __getattr__ to modify the added functions"""
         return func
 
+    # Obsolete.
+    # It was used to getattr from the primitive object, but it was replaced
+    # with specific implementation into the respective api. However it could be still
+    # useful (for this reason is just commented).
     # def __getattr__(self, key):
     #     """
     #     Transfer the key getattr to shape object.
@@ -128,22 +132,22 @@ class BluemiraGeo(ABC):
 
     @property
     def length(self):
-        """Shape length"""
+        """Shape's length"""
         return _freecadapi.length(self._shape)
 
     @property
     def area(self):
-        """Shape length"""
+        """Shape's area"""
         return _freecadapi.area(self._shape)
 
     @property
     def volume(self):
-        """Shape length"""
+        """Shape's volume"""
         return _freecadapi.volume(self._shape)
 
     @property
     def center_of_mass(self):
-        """Shape center of mass"""
+        """Shape's center of mass"""
         return _freecadapi.center_of_mass(self._shape)
 
     def is_null(self):

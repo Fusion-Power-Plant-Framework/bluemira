@@ -123,7 +123,11 @@ class TestFreecadapi:
     def test_scale_shape(self):
         factor = 2.0
         wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
-        scaled_wire = freecadapi.scale_shape(wire, factor)
+        scaled_wire = freecadapi.scale_shape(wire.copy(), factor)
         face: Part.Face = Part.Face(scaled_wire)
         assert freecadapi.area(face) == 1.0 * factor ** 2
         assert freecadapi.length(face) == freecadapi.length(scaled_wire) == 4.0 * factor
+        face_from_wire = Part.Face(wire)
+        scaled_face = freecadapi.scale_shape(face_from_wire.copy(), factor)
+        assert freecadapi.length(scaled_face) == freecadapi.length(face)
+        assert freecadapi.area(scaled_face) == freecadapi.area(face)

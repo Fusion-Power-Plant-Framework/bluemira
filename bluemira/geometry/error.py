@@ -28,7 +28,7 @@ from bluemira.base.error import BluemiraError
 
 class GeometryError(BluemiraError):
     """
-    Error class for use in the beams module
+    Error class for use in the geometry module
     """
 
     pass

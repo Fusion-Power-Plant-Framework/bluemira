@@ -37,7 +37,7 @@ from bluemira.geometry.face import BluemiraFace
 
 
 class BluemiraShell(BluemiraGeo):
-    """Bluemira Solid class."""
+    """Bluemira Shell class."""
 
     def __init__(self, boundary, label: str = "", lcar: Union[float, List[float]] = 0.1):
         boundary_classes = [BluemiraFace]

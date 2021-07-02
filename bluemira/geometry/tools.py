@@ -49,11 +49,14 @@ def make_polygon(
 
     Parameters
     ----------
-        points (Union[list, numpy.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        label (str): a label string.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed polygon. Defaults to False.
+        points: Union[list, numpy.ndarray]
+            list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+            or similar.
+        label: str
+            a label string.
+        closed: bool (optional)
+            if True, the first and last points will be connected in order to form a
+            closed polygon. Defaults to False.
 
     Returns
     -------
@@ -76,7 +79,7 @@ def revolve_shape(
 
     Parameters
     ----------
-    shape: FreeCAD Shape object
+    shape: BluemiraGeo
         The shape to be revolved
     base: tuple (x,y,z)
         Origin location of the revolution
