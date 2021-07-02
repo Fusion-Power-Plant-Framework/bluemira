@@ -21,7 +21,6 @@
 
 from bluemira.base.parameter import Parameter
 import pytest
-from typing import Type
 
 from bluemira.components.base import (
     Component,
