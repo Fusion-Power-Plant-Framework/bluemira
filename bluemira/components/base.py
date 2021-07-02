@@ -26,6 +26,7 @@ Module containing the base Component class.
 import anytree
 from anytree import NodeMixin, RenderTree
 import copy
+import inspect
 from typing import Any, Dict, List, Optional, Type, Union
 
 from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping
@@ -114,12 +115,9 @@ class Component(NodeMixin):
         # Add any new subsystem base classes (or perform any overrides)
         if hasattr(cls, "__annotations__"):
             for name, ty in cls.__annotations__.items():
-                if hasattr(ty, "__origin__") and (
-                    ty.__origin__ is Type or ty.__origin__ is type
-                ):
-                    # Only handle single base classes for now.
-                    if len(ty.__args__) == 1 and issubclass(ty.__args__[0], Component):
-                        cls._subsystem_base_classes[name] = ty.__args__[0]
+                # Only handle single base classes for now.
+                if inspect.isclass(ty) and issubclass(ty, Component):
+                    cls._subsystem_base_classes[name] = ty
 
     def __repr__(self) -> str:
         """
