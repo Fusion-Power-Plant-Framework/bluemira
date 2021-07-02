@@ -49,7 +49,7 @@ per-file-ignores =
         D406,
         D409
     # Allow unused imports in __init__.py, so we can expose at parent module level
-    bluemira/**/__init__.py:F401
+    bluemira/**/__init__.py: F401
         
 
 exclude =
