@@ -711,7 +711,6 @@ class Reactor(GroupingComponent):
                 flux_fit=True,
             )
             self.sf = StreamFlow(filename=self.eqref.filename)
-        self.add_child(self.FW)
 
     def build_cross_section(self):
         """
@@ -759,7 +758,7 @@ class Reactor(GroupingComponent):
 
         BlanketClass = self.get_subsystem_class("BB")
         self.BB = BlanketClass(self.params, to_bb)
-        self.add_child(self.BB)
+        self.add_children([self.DIV, self.BB])
 
     def build_vessels(self):
         """
