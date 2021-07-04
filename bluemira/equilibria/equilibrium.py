@@ -422,6 +422,9 @@ class Equilibrium(MHDState):
         The set of coil objects which the equilibrium will be solved with
     grid: Grid object
         The grid on which to calculate the Equilibrium
+    force_symmetry: bool in (optional) default = False
+        Controls whether symmetry of the plasma contribution to psi across z=0
+        is strictly enforced in the linear system formed during solve step.
     vcontrol: str in ['virtual'] or None (optional)
         Type of virtual plasma control to enact
     limiter: LimiterObject
@@ -448,6 +451,7 @@ class Equilibrium(MHDState):
         self,
         coilset,
         grid,
+        force_symmetry=False,
         vcontrol=None,
         limiter=None,
         psi=None,
@@ -478,6 +482,7 @@ class Equilibrium(MHDState):
         self.plasma_Bz = None
         self.plasma_Bp = None
 
+        self.force_symmetry = force_symmetry
         self.controller = None
         self.coilset = coilset
 
@@ -674,10 +679,8 @@ class Equilibrium(MHDState):
             The grid upon which to solve the Equilibrium
         """
         super().set_grid(grid)
-        generator = GSoperator(
-            self.grid.x_min, self.grid.x_max, self.grid.z_min, self.grid.z_max
-        )
-        self._solver = DirectSolver(generator(self.grid.nx, self.grid.nz))
+        
+        self._solver = GSSolver(grid, force_symmetry=self.force_symmetry)
 
     def reset_grid(self, grid, **kwargs):
         """
