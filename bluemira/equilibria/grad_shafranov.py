@@ -28,8 +28,10 @@ from scipy.sparse.linalg import factorized
 from scipy.sparse import lil_matrix
 from bluemira.equilibria.error import EquilibriaError
 
+__all__ = ["GSSolver"]
 
-class GSoperator:
+
+class GSOperator:
     """
     Calculates sparse matrix for the Grad-Shafranov operator
 
@@ -170,7 +172,7 @@ class GSSolver(DirectSolver):
         self.grid = grid
         self.force_symmetry = force_symmetry
 
-        gsoperator = GSoperator(
+        gsoperator = GSOperator(
             self.grid.x_min,
             self.grid.x_max,
             self.grid.z_min,

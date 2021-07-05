@@ -50,7 +50,7 @@ from bluemira.equilibria.physics import (
     calc_summary,
     calc_li3minargs,
 )
-from bluemira.equilibria.grad_shafranov import GSoperator, DirectSolver
+from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.plotting import (
     EquilibriumPlotter,
     CorePlotter,
