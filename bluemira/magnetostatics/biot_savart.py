@@ -124,7 +124,7 @@ class BiotSavartFilament(CurrentSource):
         core[r_mag > self.radius] = 1
 
         # The below einsum operation is equivalent to:
-        # np.sum(core * self.d_l.T / r_mag, axis=0) / (4 * np.pi)
+        # self.current * np.sum(core * self.d_l.T / r_mag, axis=0) / (4 * np.pi)
         return np.einsum(
             "i, ji, ... -> j", core, self.d_l / r_mag[None], ONE_4PI * self.current
         )
@@ -216,7 +216,7 @@ class BiotSavartFilament(CurrentSource):
         core = ds_mag ** 2 / self.radius ** 2
         core[ds_mag > self.radius] = 1
         # The below einsum operation is equivalent to:
-        # MU_0_4PI * sum(core * np.cross(ds, r2_hat - r1_hat) / ds_mag ** 2)
+        # self.current * MU_0_4PI * sum(core * np.cross(ds, r2_hat - r1_hat) / ds_mag ** 2)
         return np.einsum(
             "..., i, ij -> j",
             MU_0_4PI * self.current,
