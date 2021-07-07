@@ -65,6 +65,73 @@ def make_polygon(
     return BluemiraWire(_freecadapi.make_polygon(points, closed), label=label)
 
 
+def make_bspline(
+    points: Union[list, numpy.ndarray], label: str = "", closed: bool = False
+) -> BluemiraWire:
+    """Make a bspline from a set of points.
+
+    Parameters
+    ----------
+        points: Union[list, numpy.ndarray]
+            list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+            or similar.
+        label: str
+            a label string.
+        closed: bool (optional)
+            if True, the first and last points will be connected in order to form a
+            closed bspline. Defaults to False.
+
+    Returns
+    -------
+        BluemiraWire: a bluemira wire that contains the bspline
+    """
+    return BluemiraWire(_freecadapi.make_bspline(points, closed), label=label)
+
+
+def make_bezier(
+    points: Union[list, numpy.ndarray], label: str = "", closed: bool = False
+) -> BluemiraWire:
+    """Make a bspline from a set of points.
+
+    Parameters
+    ----------
+        points: Union[list, numpy.ndarray]
+            list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+            or similar.
+        label: str
+            a label string.
+        closed: bool (optional)
+            if True, the first and last points will be connected in order to form a
+            closed bspline. Defaults to False.
+
+    Returns
+    -------
+        BluemiraWire: a bluemira wire that contains the bspline
+    """
+    return BluemiraWire(_freecadapi.make_bezier(points, closed), label=label)
+
+
+def wire_closure(bmwire: BluemiraWire, label="closure", lcar=0.1) -> BluemiraWire:
+    """Close this wire with a line segment
+
+    Parameters
+    ----------
+        bmwire: BluemiraWire
+            supporting wire for the closure
+        label: str
+            label of the closure wire.
+        lcar: float
+            lcar of the closure wire
+
+    Returns
+    -------
+        BluemiraWire: closure wire
+    """
+    wire = bmwire._shape
+    closure = BluemiraWire(_freecadapi.wire_closure(wire), label=label, lcar=lcar)
+    return closure
+
+
 # # =============================================================================
 # # Shape manipulations
 # # =============================================================================

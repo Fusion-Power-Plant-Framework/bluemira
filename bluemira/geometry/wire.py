@@ -69,7 +69,6 @@ class BluemiraWire(BluemiraGeo):
             if isinstance(output, Part.Wire):
                 output = BluemiraWire(output)
             return output
-
         return wrapper
 
     def _check_boundary(self, objs):
@@ -103,6 +102,18 @@ class BluemiraWire(BluemiraGeo):
             else:
                 wires += o._wires
         return wires
+
+    def __add__(self, other):
+        # # Note: not sure if a deepcopy should be made
+        # s = copy.deepcopy(self)
+        # s += other
+        output = None
+        if isinstance(other, BluemiraWire):
+            output = BluemiraWire([self, other])
+        else:
+            raise TypeError("{} is not an instance of BluemiraWire.".format(type(
+                other)))
+        return output
 
     def close(self) -> None:
         """Close the shape with a line segment between shape's end and start point.
