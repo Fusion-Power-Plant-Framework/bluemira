@@ -52,7 +52,7 @@ class TestXZLMapper:
     @classmethod
     def setup_class(cls):
         f, cls.ax = plt.subplots()
-        fp = get_BP_path("Geometry", subfolder="data")
+        fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)

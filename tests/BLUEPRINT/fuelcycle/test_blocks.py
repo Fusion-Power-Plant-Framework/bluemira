@@ -70,7 +70,9 @@ class TestTCycleComponent:
 
 class TestSqrtFittedSinks:
     def test_fits(self):
-        path = get_BP_path("fuelcycle/blanket_fw_T_retention", subfolder="data")
+        path = get_BP_path(
+            "fuelcycle/blanket_fw_T_retention", subfolder="data/BLUEPRINT"
+        )
 
         # Get all the data files
         files = []

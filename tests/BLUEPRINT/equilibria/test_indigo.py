@@ -49,7 +49,7 @@ class TestEUDEMO1:
 
     @classmethod
     def setup_class(cls):
-        cls.fp = get_BP_path("eqdsk", subfolder="data")
+        cls.fp = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
         cls.eof = os.path.join(cls.fp, "AR3d1_2015_04_v2_EOF_CSred_fine_final.eqdsk")
         cls.sof = os.path.join(cls.fp, "AR3d1_2015_04_v2_SOF_CSred_fine_final.eqdsk")
         cls.coilset = CoilSet.from_eqdsk(cls.eof)
