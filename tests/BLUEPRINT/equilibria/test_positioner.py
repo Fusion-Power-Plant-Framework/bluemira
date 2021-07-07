@@ -191,7 +191,7 @@ class TestZLMapper:
         """
         Sets up an XZLMapper that with a "normal" set of exclusion zones
         """
-        fp = get_BP_path("Geometry", subfolder="data")
+        fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
@@ -244,7 +244,7 @@ class TestZLMapperEdges:
         the start or end of a track
         """
 
-        fp = get_BP_path("Geometry", subfolder="data")
+        fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
