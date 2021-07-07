@@ -1,8 +1,7 @@
 import numpy as np
 from bluemira.magnetostatics.greens import greens_psi, greens_Bx, greens_Bz
 
-coil_x = 4
-coil_z = 5
+coil_x, coil_z = 4, 5
 x = np.linspace(0.1, 10, 100)
 z = np.linspace(0, 10, 100)
 xx, zz = np.meshgrid(x, z)

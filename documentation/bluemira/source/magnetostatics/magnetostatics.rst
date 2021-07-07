@@ -37,6 +37,14 @@ Biot-Savart law is used, as developed by [Zhang_2012]_. Numerical integration is
 one dimension, and some singularities in the equations are resolved numerically and
 analytically.
 
+.. literalinclude:: doc_semianalytic.py
+    :language: python
+
+.. figure:: pic_semianalytic.png
+    :name: fig:Semianalytic
+
+
+
 .. Hint::
     The above semi-analytical functions are best used for points inside or near the
     current source. If you favour speed over accuracy, for points further away from the
