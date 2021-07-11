@@ -102,7 +102,7 @@ def process_loop_array(shape):
         # TODO: Raise DeprecationWarning
         shape = shape.xyz.T
 
-    elif isinstance(shape, np.array):
+    elif isinstance(shape, np.ndarray):
         pass
 
     else:

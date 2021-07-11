@@ -76,7 +76,7 @@ Semi-analytical
 ###############
 
 If the infinitely thin approximation is not appropriate for your use case, consider
-using one of the ``RectangularCrossSection`` ``CurrentSource`` objects.
+using one of the ``RectangularCrossSectionCurrentSource`` objects.
 
 Trapezoidal prisms
 ******************
@@ -100,6 +100,14 @@ The ``ArbitraryPlanarRectangularXSCircuit`` is a utility provided to enable the 
 easily set up a planar circuit with a rectangular cross-section using
 ``TrapezoidalPrismCurrentSource`` objects.
 
+.. literalinclude:: doc_planar.py
+    :language: python
+
+.. figure:: pic_planar.png
+    :name: fig:planar
+
+
+
 Circular arcs
 *************
 
@@ -113,7 +121,10 @@ described in [Feng_1985]_.
 .. figure:: pic_circular.png
     :name: fig:circular
 
+Finite element
+##############
 
+TBD.
 
 .. rubric:: References
 
