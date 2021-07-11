@@ -77,9 +77,7 @@ def plot_wire(
     ------
     ValueError
         in case the obj is not a Bluemira.Wire
-
     """
-
     # Note: only BluemiraWire objects are allowed as input for this function.
     # However, any object that can be discretized by means of the function
     # "discretizeByEdges" would be suitable. In case the function can be
@@ -116,7 +114,7 @@ def plot_wire(
     return axis
 
 
-def plotFace2D(
+def plot_face(
     faces,
     axis=None,
     show: bool = False,
@@ -151,15 +149,10 @@ def plotFace2D(
 
     **kwargs :
 
-
     Returns
     -------
     axis:
-
-
-
     """
-
     if not foptions and not woptions and not poptions:
         return axis
 

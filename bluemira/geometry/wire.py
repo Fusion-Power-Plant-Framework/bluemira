@@ -105,9 +105,11 @@ class BluemiraWire(BluemiraGeo):
         return wires
 
     def get_single_wire(self) -> BluemiraWire:
+        """Get a single wire representing the object"""
         return BluemiraWire(Part.Wire(self._wires))
 
     def __add__(self, other):
+        """Add two wires"""
         # # Note: not sure if a deepcopy should be made
         # s = copy.deepcopy(self)
         # s += other
