@@ -83,7 +83,6 @@ def check_data_type(data_type):
 @check_data_type(Base.Vector)
 def vector_to_numpy(vectors):
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
-    print("vectors = {}".format(vectors))
     return numpy.array([numpy.array(v) for v in vectors])
 
 
@@ -226,6 +225,19 @@ def is_closed(obj):
     prop = "isClosed"
     if hasattr(obj, prop):
         return getattr(obj, prop)()
+    else:
+        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+
+
+def bounding_box(obj):
+    """Object's bounding box"""
+    prop = "BoundBox"
+    if hasattr(obj, prop):
+        # FreeCAD BoundBox is a FreeCAD object. For the moment there is not a
+        # complementary object in bluemira. Thus, this method will just return
+        # (XMin, YMin, Zmin, XMax, YMax, ZMax)
+        box = getattr(obj, prop)
+        return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
     else:
         raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
 

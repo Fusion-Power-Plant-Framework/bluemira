@@ -69,6 +69,7 @@ class BluemiraWire(BluemiraGeo):
             if isinstance(output, Part.Wire):
                 output = BluemiraWire(output)
             return output
+
         return wrapper
 
     def _check_boundary(self, objs):
@@ -103,6 +104,9 @@ class BluemiraWire(BluemiraGeo):
                 wires += o._wires
         return wires
 
+    def get_single_wire(self) -> BluemiraWire:
+        return BluemiraWire(Part.Wire(self._wires))
+
     def __add__(self, other):
         # # Note: not sure if a deepcopy should be made
         # s = copy.deepcopy(self)
@@ -111,8 +115,7 @@ class BluemiraWire(BluemiraGeo):
         if isinstance(other, BluemiraWire):
             output = BluemiraWire([self, other])
         else:
-            raise TypeError("{} is not an instance of BluemiraWire.".format(type(
-                other)))
+            raise TypeError("{} is not an instance of BluemiraWire.".format(type(other)))
         return output
 
     def close(self) -> None:

@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
     print("10. Face and solid with hole")
     pntslist_out = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
-    delta = 0.3
+    delta = 0.25
     pntslist_in = [
         (1.0 - delta, 1.0 - delta, 0.0),
         (0.0 + delta, 1.0 - delta, 0.0),

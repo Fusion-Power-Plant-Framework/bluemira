@@ -133,7 +133,7 @@ def wire_closure(bmwire: BluemiraWire, label="closure", lcar=0.1) -> BluemiraWir
 
 
 # # =============================================================================
-# # Shape manipulations
+# # Shape operation
 # # =============================================================================
 def revolve_shape(
     shape,

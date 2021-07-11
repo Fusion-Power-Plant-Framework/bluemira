@@ -150,6 +150,11 @@ class BluemiraGeo(ABC):
         """Shape's center of mass"""
         return _freecadapi.center_of_mass(self._shape)
 
+    @property
+    def bounding_box(self):
+        """Checks if the shape is closed"""
+        return _freecadapi.bounding_box(self._shape)
+
     def is_null(self):
         """Checks if the shape is null."""
         return _freecadapi.is_null(self._shape)
