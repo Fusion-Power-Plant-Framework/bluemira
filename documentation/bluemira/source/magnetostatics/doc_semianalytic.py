@@ -1,7 +1,9 @@
 import numpy as np
-from bluemira.magnetostatics.semianalytic_2d import (semianalytic_psi,
-                                                     semianalytic_Bx,
-                                                     semianalytic_Bz)
+from bluemira.magnetostatics.semianalytic_2d import (
+    semianalytic_psi,
+    semianalytic_Bx,
+    semianalytic_Bz,
+)
 
 coil_x, coil_z = 4, 5
 coil_dx, coil_dz = 1, 2

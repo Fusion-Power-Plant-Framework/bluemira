@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Analytical expressions for the field inside a circular current arc of
+Analytical expressions for the field due to a circular current arc of
 rectangular cross-section, following equations as described in:
 
 https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259

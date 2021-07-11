@@ -23,7 +23,8 @@ current source at point :math:`(x_c, z_c)`:
 .. figure:: pic_greens.png 
     :name: fig:greens
 
-
+To obtain the actual :math:`\psi`, :math:`B_x`, and :math:`B_z` in V.s / rad and T,
+simply multiply the Green's functions by the current at the source point in Ampères. 
 
 .. Note::
     The above Green's functions are effectively for an infinitely thin filament and 
@@ -40,9 +41,9 @@ analytically.
 .. literalinclude:: doc_semianalytic.py
     :language: python
 
-.. figure:: pic_semianalytic.png
-    :name: fig:Semianalytic
 
+.. figure:: pic_semianalytic.png
+    :name: fig:semianalytic
 
 
 .. Hint::
@@ -54,13 +55,69 @@ analytically.
 3-D current sources
 -------------------
 
+Several options are available for calculating magnetic fields due to three-dimensional
+current sources.
+
 Biot-Savart
 ###########
 
+The `Biot-Savart equation <https://en.wikipedia.org/wiki/Biot%E2%80%93Savart_law>`_
+can be solved assuming the current sources are infinitely thin wires, as is done in the
+``BiotSavartFilament`` object.
+
+
+.. Note::
+    The discretisation of geometry input should be carefully checked. In general, many
+    points will give better approximations to long, thin wires.
+
+
+
 Semi-analytical
 ###############
+
+If the infinitely thin approximation is not appropriate for your use case, consider
+using one of the ``RectangularCrossSection`` ``CurrentSource`` objects.
+
+Trapezoidal prisms
+******************
+
+A ``TrapezoidalPrismCurrentSource`` object is used for straight bars of uniform 
+current density, with taperings at either end. The magnetic field can be calculated at
+any point, following equations described in [Babic_2005a]_ and [Babic_2005b]_.
+
+.. literalinclude:: doc_trapezoidal.py
+    :language: python
+
+.. figure:: pic_trapezoidal.png
+    :name: fig:trapezoidal
+
+
+The tapering at either end of the current source is to facilitate treatment of
+curvilinear circuits. As the tapering is only in one plane however, this treatment
+is only directly applicable to planar curvilinear circuits.
+
+The ``ArbitraryPlanarRectangularXSCircuit`` is a utility provided to enable the user to
+easily set up a planar circuit with a rectangular cross-section using
+``TrapezoidalPrismCurrentSource`` objects.
+
+Circular arcs
+*************
+
+A ``CircularArcCurrentSource`` object is used for circular arcs of uniform current
+density. The magnetic field can be calculated at any point, following equations
+described in [Feng_1985]_.
+
+.. literalinclude:: doc_circular.py
+    :language: python
+
+.. figure:: pic_circular.png
+    :name: fig:circular
+
 
 
 .. rubric:: References
 
 .. [Zhang_2012] D. Zhang, C. S. Koh, An Efficient Semianalytic Computation Method of Magnetic Field for a Circular Coil With Rectangular Cross Section, IEEE Transactions on Magnetics, 2012, pp. 62-68
+.. [Babic_2005a] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005, vol. 18, pp. 493-504
+.. [Babic_2005b] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section - Erratum, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005
+.. [Feng_1985] Z. X. Feng, The treatment of singularities in calculation of magnetic field using integral method, IEEE Transactions on Magnetics, 1985, vol. 21
