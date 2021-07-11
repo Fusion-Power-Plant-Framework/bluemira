@@ -1,15 +1,16 @@
-name: bluemira_ci_pull_request
+name: bluemira_ci
 
 on:
   pull_request:
+  push:
     branches:
-      - main
       - develop
+      - main
 
 jobs:
   build-and-test:
 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
@@ -45,12 +46,10 @@ jobs:
 
     - name: Install Environment
       uses: conda-incubator/setup-miniconda@v2
-      env:
-        CONDA: /home/github-actions-runner/miniconda
       with:
         activate-environment: bluemira
         environment-file: conda/environment.yml
-        miniforge-version: "4.10.1-3"
+        miniforge-version: "latest"
         use-only-tar-bz2: true
 
     - name: Check Code Quality
