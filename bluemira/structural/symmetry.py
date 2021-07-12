@@ -24,7 +24,7 @@ Symmetry boundary conditions
 """
 import numpy as np
 from bluemira.structural.error import StructuralError
-from bluemira.geometry.tools import (
+from bluemira.geometry._deprecated_tools import (
     project_point_axis,
     rotation_matrix,
     get_angle_between_points,

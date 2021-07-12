@@ -27,7 +27,7 @@ from copy import deepcopy
 from scipy.sparse import lil_matrix
 from bluemira.structural.error import StructuralError
 from bluemira.structural.constants import D_TOLERANCE
-from bluemira.geometry.tools import bounding_box
+from bluemira.geometry._deprecated_tools import bounding_box
 from bluemira.structural.node import Node
 from bluemira.structural.element import Element
 from bluemira.structural.plotting import (

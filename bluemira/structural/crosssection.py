@@ -22,15 +22,17 @@
 """
 Objects and tools for calculating cross-sectional properties
 """
+import bluemira
 import numpy as np
 import numba as nb
 from copy import deepcopy
 from sectionproperties.pre.sections import CustomSection, MergedSection
 from sectionproperties.pre.pre import Material as SPMaterial
 from sectionproperties.analysis.cross_section import CrossSection as _CrossSection
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
+from bluemira.geometry._deprecated_loop import Loop
+from BLUEPRINT.geometry.loop import MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from bluemira.geometry.tools import circle_seg, get_control_point
+from bluemira.geometry._deprecated_tools import make_circle_arc, get_control_point
 from bluemira.structural.error import StructuralError
 from bluemira.structural.constants import NEAR_ZERO
 
@@ -260,7 +262,7 @@ class CircularBeam(CrossSection):
         self.rz = radius / 2
         self.centroid = 0.0, 0.0
 
-        y, z = circle_seg(radius, self.centroid, npoints=20)
+        y, z = make_circle_arc(radius, *self.centroid, n_points=20)
         loop = Loop(y=y, z=z)
         loop.close()
         self.geometry = loop
@@ -289,8 +291,8 @@ class CircularHollowBeam(CrossSection):
         self.rz = np.sqrt((r_outer ** 2 + r_inner ** 2) / 4)
         self.centroid = 0.0, 0.0
 
-        y1, z1 = circle_seg(r_inner, self.centroid, npoints=20)
-        y2, z2 = circle_seg(r_outer, self.centroid, npoints=20)
+        y1, z1 = make_circle_arc(r_inner, *self.centroid, n_points=20)
+        y2, z2 = make_circle_arc(r_outer, *self.centroid, n_points=20)
         inner = Loop(y=y1, z=z1)
         inner.close()
         outer = Loop(y=y2, z=z2)

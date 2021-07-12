@@ -23,7 +23,7 @@
 FE transformation matrices and methods
 """
 import numpy as np
-from bluemira.geometry.tools import rotation_matrix
+from bluemira.geometry._deprecated_tools import rotation_matrix
 from bluemira.structural.constants import FLOAT_TYPE
 
 
