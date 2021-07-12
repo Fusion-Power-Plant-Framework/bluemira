@@ -445,4 +445,4 @@ geometry.setRootUniverse(root_universe)
 
 end = datetime.now()
 
-bluemira_print(f"Geometry created in {end-start}")
+bluemira_print(f"Geometry created in {end - start}")

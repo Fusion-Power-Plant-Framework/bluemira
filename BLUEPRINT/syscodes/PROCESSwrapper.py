@@ -153,7 +153,7 @@ def get_PROCESS_read_mapping(inputs, read_all=False) -> Dict[str, str]:
     """
     read_mapping = {}
     for k in inputs.keys():
-        p = inputs.get(k)
+        p = inputs.get_param(k)
         if p.mapping is not None and "PROCESS" in p.mapping:
             m = p.mapping["PROCESS"]
             if read_all or m.read:

@@ -63,7 +63,9 @@ class TestShape:
             )
 
     def test_write(self):
-        write_directory = make_BP_path("geometry/test_generated_data", subfolder="tests")
+        write_directory = make_BP_path(
+            "BLUEPRINT/geometry/test_generated_data", subfolder="tests"
+        )
         shp = Shape(
             "tester_S",
             family="S",

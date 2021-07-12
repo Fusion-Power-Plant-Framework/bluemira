@@ -493,8 +493,8 @@ class CoilArchitect(ReactorSystem):
             self.tfl["cl_fe"]["x"][i], self.tfl["cl_fe"]["z"][i] = x, z
 
     def _build_gravity_supports(self):
-        width = self.params.w_g_support
-        x_support = self.params.x_g_support
+        width = self.params.w_g_support.value
+        x_support = self.params.x_g_support.value
         # bounds to force negative (lower half of tf) result
         x_star = self._min_x(x_support - width / 2, self.tf_fun["out"], bounds=[0, 0.5])
         coil = {
@@ -518,8 +518,8 @@ class CoilArchitect(ReactorSystem):
             "gs_type": self.inputs["gs_type"],
             "Xo": x_support,
             "width": width,
-            "tf_wp_depth": self.params.tf_wp_depth,
-            "tk_tf_side": self.params.tk_tf_side,
+            "tf_wp_depth": self.params.tf_wp_depth.value,
+            "tk_tf_side": self.params.tk_tf_side.value,
             "zbase": z_base,
             "zfloor": floor,
             "base": nodes,

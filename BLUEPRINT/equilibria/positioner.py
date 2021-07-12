@@ -603,7 +603,7 @@ class RegionMapper:
         for no, (name, region) in enumerate(self.regions.items()):
             coil = self._coilset.coils[self._name_converter(name)]
             self.max_currents[no] = coil._get_max_current(
-                *inscribed_rect_in_poly(region.loop, (coil.x, coil.z))
+                *inscribed_rect_in_poly(region.loop, (coil.x, coil.z), coil.dx / coil.dz)
             )
 
         return self.max_currents

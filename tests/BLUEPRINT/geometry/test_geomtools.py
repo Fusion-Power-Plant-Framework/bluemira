@@ -49,6 +49,7 @@ from BLUEPRINT.geometry.geomtools import (
     polyarea,
     loop_surface,
     lineq,
+    get_normal_vector,
 )
 import tests
 
@@ -662,6 +663,32 @@ class TestSurfaceArea:
 
         s_area = loop_surface(x, z)
         assert np.isclose(s_area, area)
+
+
+class TestGetNormal:
+    def test_simple(self):
+        x = [0, 2, 2, 0, 0]
+        z = [0, 0, 2, 2, 0]
+        y = np.zeros(5)
+        n_hat = get_normal_vector(x, y, z)
+        assert np.allclose(np.abs(n_hat), np.array([0, 1, 0]))
+
+    def test_edge(self):
+        x = [1, 2, 3]
+        y = [1, 2, 3]
+        z = [1, 2, 4]
+        n_hat = get_normal_vector(x, y, z)
+        assert np.allclose(n_hat, 0.5 * np.array([np.sqrt(2), -np.sqrt(2), 0]))
+
+    def test_error(self):
+        fails = [
+            [[0, 1], [0, 1], [0, 1]],
+            [[0, 1, 2], [0, 1, 2], [0, 1]],
+            [[0, 0, 0], [1, 1, 1], [2, 2, 2]],
+        ]
+        for fail in fails:
+            with pytest.raises(GeometryError):
+                get_normal_vector(*fail)
 
 
 if __name__ == "__main__":

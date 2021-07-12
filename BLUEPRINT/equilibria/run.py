@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame, concat
 import tabulate
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from BLUEPRINT.base.file import try_get_BP_path
 from BLUEPRINT.utilities.plottools import makegif
 from BLUEPRINT.utilities.tools import delta

@@ -119,7 +119,7 @@ solver.printTimerReport()
 
 end = datetime.now()
 
-bluemira_print(f"Simulation completed in {end-start}")
+bluemira_print(f"Simulation completed in {end - start}")
 
 #######################
 # Generate some plots
@@ -193,6 +193,6 @@ bluemira_print(f"Plots available in {os.getcwd()}/plots")
 
 end = datetime.now()
 
-bluemira_print(f"Plotting completed in {end-start}")
+bluemira_print(f"Plotting completed in {end - start}")
 
 bluemira_print("Finished")

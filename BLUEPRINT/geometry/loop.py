@@ -1175,7 +1175,7 @@ class Loop(GeomBase):
         """
         _len = max([len(c) for c in [self.x, self.y, self.z] if hasattr(c, "__len__")])
         if _len <= 3:
-            # bpwarn('Geometry::Loop Loop of length <= 3...')
+            # bluemira_warn('Geometry::Loop Loop of length <= 3...')
             pass
         d = []
         axes = ["x", "y", "z"]

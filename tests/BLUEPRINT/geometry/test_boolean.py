@@ -106,7 +106,7 @@ class TestBooleanSimple:
 class TestBooleanOpen:
     @pytest.mark.longrun
     def test_openclip(self):
-        fp = get_BP_path("geometry/test_data", subfolder="tests")
+        fp = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "loopcut_data.pkl"])
         with open(fn, "rb") as f:
             data = pickle.load(f)  # noqa (S301)
@@ -214,7 +214,7 @@ class TestBooleanShell:
 class TestCleanloop:
     @pytest.mark.longrun
     def test_hanging_chad(self):
-        fp = get_BP_path("geometry/test_data", subfolder="tests")
+        fp = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "classic_hanging_chad.json"])
         loop = Loop.from_file(fn)
         f, ax = plt.subplots()

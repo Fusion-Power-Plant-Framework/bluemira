@@ -562,8 +562,8 @@ class DivertorProfile(ReactorSystem):
         self.sf = self.inputs["sf"]
         self.targets = self.inputs["targets"]
         self.debug = self.inputs["debug"]
-        self.p.dx_div = self.p.tk_div
-        self.p.bb_gap = self.p.c_rm
+        self.p.dx_div = self.p.tk_div.value
+        self.p.bb_gap = self.p.c_rm.value
 
         if self.inputs["flux_conformal"]:
             loop = self.sf.firstwall_loop(psi_n=self.p.fw_psi_n)

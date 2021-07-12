@@ -94,6 +94,8 @@ class ConfigurationSchema:
     g_cd_ec: Parameter
     eta_ec: Parameter
     p_ec: Parameter
+    f_cd_aux: Parameter
+    f_cd_ohm: Parameter
 
     # First wall and divertor profile
     fw_psi_n: Parameter

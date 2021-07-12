@@ -27,8 +27,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.geometry.geomtools import qrotate
-from bluemira.base.look_and_feel import bluemira_warn, plot_defaults
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.syscodes.postPROCESS import plot_PROCESS
 from BLUEPRINT.utilities.colortools import color_kwargs
 

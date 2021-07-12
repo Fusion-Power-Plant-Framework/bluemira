@@ -24,7 +24,7 @@ Classes that provide divertor shapes built from tracking psi and grazing angle a
 leg length.
 """
 
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
+from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 import matplotlib.pyplot as plt
 import numpy as np
 import operator

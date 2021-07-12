@@ -94,7 +94,7 @@ class Plasma(Meshable, ReactorSystem):
             self.profiles = self.profiles.copy()
             self._adjust_psi()
             self._get_current()
-        self.n_TF = self.config["n_TF"]
+        self.n_TF = self.params.n_TF
         self.derive_fuelling_requirements()
 
     def _adjust_psi(self):

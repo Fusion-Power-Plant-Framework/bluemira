@@ -122,7 +122,7 @@ class CADModel:
                 self.partcolors[name] = cycle(colors)
             else:
                 pass
-                # bpwarn(f'Palette key "{name}" not in CAD model parts silo.')
+                # bluemira_warn(f'Palette key "{name}" not in CAD model parts silo.')
 
         # Catch colors for parts that don't have an assigned name
         for name in self.parts:
@@ -178,7 +178,7 @@ class CADModel:
         self._Q = qt_display  # for debugging
         qt_display.show()
 
-    def save_as_STEP_assembly(self, filename, scale=1):  # noqa (N802)
+    def save_as_STEP_assembly(self, filename, partname=None, scale=1):  # noqa (N802)
         """
         Saves the CADModel to a STEP assembly file
 
@@ -186,6 +186,8 @@ class CADModel:
         ----------
         filename: str
             Full path filename to save the CADModel to
+        partname: str
+            The part name in the STEP file
         scale: float (default=1)
             The factor with which to scale the geometry
         """
@@ -195,7 +197,7 @@ class CADModel:
         for component in self.silo.values():
             for compounds in component["compounds"]:
                 shapes.append(compounds)
-        save_as_STEP_assembly(shapes, filename=filename, scale=scale)
+        save_as_STEP_assembly(shapes, filename=filename, partname=partname, scale=scale)
 
     def save_as_STEP(self, filepath, scale=1):  # noqa (N802)
         """
