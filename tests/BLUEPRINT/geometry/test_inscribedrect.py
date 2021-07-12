@@ -48,7 +48,7 @@ class TestInscribedRectangle:
     aspectratios = np.logspace(-1, 1, num=10)
 
     @pytest.mark.parametrize("shape, convex", zip(shapes, convex))
-    def test_inscribed_rectangle(self, shape, convex):
+    def test_inscribed_rectangle(self, shape, convex, capsys):
         x = y = 5
         self.r = False
         # Random points in a rectangular grid of the shape

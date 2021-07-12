@@ -98,7 +98,7 @@ class TestColors:
         print("\n")
         bpinfo("test info")
 
-    def test_bprint(self):
+    def test_bluemira_print(self):
         print("\n")
         bluemira_print("test normal blue")
 
