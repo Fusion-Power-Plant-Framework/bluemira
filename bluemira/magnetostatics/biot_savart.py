@@ -30,7 +30,6 @@ from bluemira.utilities.plot_tools import Plot3D
 from bluemira.geometry._deprecated_tools import (
     rotation_matrix,
     bounding_box,
-    close_coordinates,
 )
 from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.baseclass import CurrentSource
@@ -90,7 +89,7 @@ class BiotSavartFilament(CurrentSource):
         self._array_lengths = [len(p) for p in points]
         self.radius = radius
         self.current = current
-    
+
     def _check_discretisation(self, d_l):
         """
         Check the discretisation of the array.
