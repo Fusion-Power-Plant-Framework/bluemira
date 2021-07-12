@@ -7,6 +7,7 @@ Bluemira Modules
     :hidden:
  
     base
+    equilibria/equilibria
     geometry
     utilities
 
