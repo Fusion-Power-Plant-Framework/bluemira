@@ -62,8 +62,18 @@ Biot-Savart
 ###########
 
 The `Biot-Savart equation <https://en.wikipedia.org/wiki/Biot%E2%80%93Savart_law>`_
-can be solved assuming the current sources are infinitely thin wires, as is done in the
+can be solved assuming the current sources are thin wires, as is done in the
 ``BiotSavartFilament`` object.
+
+A ``radius`` argument can be specified, which makes use of a square decay law for values
+inside the filament ``radius``. The field from a filament thus reaches a maximum at the
+surface of the filament.
+
+.. literalinclude:: doc_biotsavart.py
+    :language: python
+
+.. figure:: pic_biotsavart.png
+    :name: fig:biotsavart
 
 
 .. Note::
