@@ -27,7 +27,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 import matplotlib
-from BLUEPRINT.magnetostatics.biot_savart import BiotSavartLoop
+from BLUEPRINT.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.base.constants import MU_0
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.utilities.tools import innocent_smoothie
@@ -235,7 +235,7 @@ class HelmholtzCage:
         self.coil_loop = Loop(x=coil_centreline["x"], z=coil_centreline["z"])
         self.npoints = len(self.coil_loop)
         loops = self.pattern()
-        self.bsl = BiotSavartLoop(loops, self.rc)
+        self.bsl = BiotSavartFilament(loops, self.rc)
         self.amp_turns()
 
     def loop_ripple(self):

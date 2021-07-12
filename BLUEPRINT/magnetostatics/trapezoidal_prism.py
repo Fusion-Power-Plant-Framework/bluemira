@@ -29,8 +29,10 @@ https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
 import numpy as np
 import numba as nb
+from bluemira.base.constants import MU_0_4PI
+from BLUEPRINT.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
 
-__all__ = ["Bx_analytical_prism", "Bz_analytical_prism"]
+__all__ = ["TrapezoidalPrismCurrentSource"]
 
 
 @nb.jit(cache=True)
@@ -282,3 +284,130 @@ def Bz_analytical_prism(alpha, beta, l1, l2, q1, q2, r1, r2):
         + primitive_szn(beta, r2, l2, q1, q2)
         - primitive_szn(beta, r2, l1, q1, q2)
     )
+
+
+class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
+    """
+    3-D trapezoidal prism current source with a retangular cross-section and
+    uniform current distribution.
+
+    The current direction is along the local y coordinate.
+
+    Parameters
+    ----------
+    origin: np.array(3)
+        The origin of the current source in global coordinates [m]
+    ds: np.array(3)
+        The direction vector of the current source in global coordinates [m]
+    normal: np.array(3)
+        The normalised normal vector of the current source in global coordinates [m]
+    t_vec: np.array(3)
+        The normalised tangent vector of the current source in global coordinates [m]
+    breadth: float
+        The breadth of the current source (half-width) [m]
+    depth: float
+        The depth of the current source (half-height) [m]
+    alpha: float
+        The first angle of the trapezoidal prism [rad]
+    beta: float
+        The second angle of the trapezoidal prism [rad]
+    current: float
+        The current flowing through the source [A]
+    """
+
+    def __init__(self, origin, ds, normal, t_vec, breadth, depth, alpha, beta, current):
+        self.origin = origin
+
+        length = np.linalg.norm(ds)
+        # Normalised direction cosine matrix
+        self.dcm = np.array([t_vec, ds / length, normal])
+        self.length = 0.5 * (length - breadth * np.tan(alpha) - breadth * np.tan(beta))
+        self.breadth = breadth
+        self.depth = depth
+        self.alpha = alpha
+        self.beta = beta
+        # Current density
+        self.rho = current / (4 * breadth * depth)
+        self.points = self._calculate_points()
+
+    def _xyzlocal_to_rql(self, x_local, y_local, z_local):
+        """
+        Convert local x, y, z coordinates to working coordinates.
+        """
+        b = self.length
+        c = self.depth
+        d = self.breadth
+
+        l1 = -d - x_local
+        l2 = d - x_local
+        q1 = -c - z_local
+        q2 = c - z_local
+        r1 = (d + x_local) * np.tan(self.alpha) + b - y_local
+        r2 = (d + x_local) * np.tan(self.beta) + b + y_local
+        return l1, l2, q1, q2, r1, r2
+
+    def _BxByBz(self, point):
+        """
+        Calculate the field at a point in local coordinates.
+        """
+        l1, l2, q1, q2, r1, r2 = self._xyzlocal_to_rql(*point)
+        bx = Bx_analytical_prism(self.alpha, self.beta, l1, l2, q1, q2, r1, r2)
+        bz = Bz_analytical_prism(self.alpha, self.beta, l1, l2, q1, q2, r1, r2)
+        return np.array([bx, 0, bz])
+
+    def field(self, point):
+        """
+        Calculate the magnetic field at a point due to the current source.
+
+        Parameters
+        ----------
+        point: np.array(3)
+            The target point in global coordinates [m]
+
+        Returns
+        -------
+        field: np.array(3)
+            The magnetic field vector {Bx, By, Bz} in [T]
+        """
+        point = np.array(point)
+        # Convert to local coordinates
+        point = self._global_to_local([point])[0]
+        # Evaluate field in local coordinates
+        b_local = MU_0_4PI * self.rho * self._BxByBz(point)
+        # Convert vector back to global coordinates
+        return self.dcm.T @ b_local
+
+    def _calculate_points(self):
+        """
+        Calculate extrema points of the current source for plotting and debugging.
+        """
+        b = self.length
+        c = self.depth
+        d = self.breadth
+        # Lower rectangle
+        p1 = np.array([-d, -b, -c])
+        p2 = np.array([d, -b - 2 * d * np.tan(self.beta), -c])
+        p3 = np.array([d, -b - 2 * d * np.tan(self.beta), c])
+        p4 = np.array([-d, -b, c])
+
+        # Upper rectangle
+        p5 = np.array([-d, b, -c])
+        p6 = np.array([d, b + 2 * d * np.tan(self.alpha), -c])
+        p7 = np.array([d, b + 2 * d * np.tan(self.alpha), c])
+        p8 = np.array([-d, b, c])
+
+        points_array = []
+        points = [
+            np.vstack([p1, p2, p3, p4, p1]),
+            np.vstack([p5, p6, p7, p8, p5]),
+            # Lines between rectangle corners
+            np.vstack([p1, p5]),
+            np.vstack([p2, p6]),
+            np.vstack([p3, p7]),
+            np.vstack([p4, p8]),
+        ]
+
+        for p in points:
+            points_array.append(self._local_to_global(p))
+
+        return np.array(points_array, dtype=object)

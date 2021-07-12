@@ -34,6 +34,7 @@ from pypet.trajectory import Trajectory
 from pypet import pypetconstants
 from bluemira.base.look_and_feel import bluemira_print
 
+
 logger = logging.getLogger()
 logger.setLevel("INFO")
 

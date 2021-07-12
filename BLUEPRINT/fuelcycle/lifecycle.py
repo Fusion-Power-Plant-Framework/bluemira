@@ -105,7 +105,9 @@ class LifeCycle(ReactorSystem):
         self.t_min_down = max(self.params.t_cs_recharge, self.params.t_pumpdown)
         # TODO: Neutronics and design requirements still from outdated methods
         # Output preparation
-        datadir = get_BP_path(subfolder="data")
+        datadir = inputs.get("datadir", None)
+        if datadir is None:
+            datadir = get_BP_path(subfolder="data")
         file = "DEMO_lifecycle"
         self.filename = datadir + "/" + file + ".json"
         # Build timeline

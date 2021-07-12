@@ -26,9 +26,13 @@ rectangular cross-section, following equations as described in:
 https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 """
 import numpy as np
+import matplotlib.pyplot as plt
+from bluemira.base.constants import MU_0_4PI
 from BLUEPRINT.magnetostatics.utilities import jit_llc3, jit_llc4, integrate
+from BLUEPRINT.geometry.geomtools import circle_seg
+from BLUEPRINT.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
 
-__all__ = ["Bx_analytical_circular", "Bz_analytical_circular"]
+__all__ = ["CircularArcCurrentSource"]
 
 
 # Full integrands free of singularities
@@ -603,3 +607,206 @@ def Bz_analytical_circular(r1, r2, z1, z2, theta, r_p, theta_p):
         - primitive_bzc(r_p, r2, z1, theta_p, theta)
         + primitive_bzc(r_p, r2, z2, theta_p, theta)
     )
+
+
+class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
+    """
+    3-D circular arc prism current source with a retangular cross-section and
+    uniform current distribution.
+
+    Parameters
+    ----------
+    origin: np.array(3)
+        The origin of the current source in global coordinates [m]
+    ds: np.array(3)
+        The direction vector of the current source in global coordinates [m]
+    normal: np.array(3)
+        The normalised normal vector of the current source in global coordinates [m]
+    t_vec: np.array(3)
+        The normalised tangent vector of the current source in global coordinates [m]
+    breadth: float
+        The breadth of the current source (half-width) [m]
+    depth: float
+        The depth of the current source (half-height) [m]
+    radius: float
+        The radius of the circular arec from the origin [m]
+    dtheta: float
+        The azimuthal width of the arc [rad]
+    current: float
+        The current flowing through the source [A]
+
+    Notes
+    -----
+    The origin is at the centre of the circular arc, with the ds vector pointing
+    towards the start of the circular arc.
+
+    Cylindrical coordinates are used for calculations under the hood.
+    """
+
+    def __init__(
+        self, origin, ds, normal, t_vec, breadth, depth, radius, dtheta, current
+    ):
+        self.origin = origin
+        self._breadth = breadth
+        self.depth = depth
+        self.length = 0.5 * (breadth + depth)  # For plotting only
+        self._radius = radius
+        self._update_r1r2()
+
+        self.dtheta = dtheta
+        self.rho = current / (4 * breadth * depth)
+        self.dcm = np.array([ds, normal, t_vec])
+        self.points = self._calculate_points()
+
+    @property
+    def radius(self):
+        """
+        Get the radius of the CircularArcCurrentSource
+        """
+        return self._radius
+
+    @radius.setter
+    def radius(self, radius):
+        """
+        Set the radius.
+
+        Parameters
+        ----------
+        radius: float
+            The radius of the CircularArcCurrentSource
+        """
+        self._radius = radius
+        self._update_r1r2()
+
+    @property
+    def breadth(self):
+        """
+        Get the breadth of the CircularArcCurrentSource.
+        """
+        return self._breadth
+
+    @breadth.setter
+    def breadth(self, breadth):
+        """
+        Set the breadth of the CircularArcCurrentSource.
+
+        Parameters
+        ----------
+        breadth: float
+            The breadth of the CircularArcCurrentSource
+        """
+        self._breadth = breadth
+        self._update_r1r2()
+
+    def _update_r1r2(self):
+        """
+        Update
+        """
+        self._r1 = self.radius - self.breadth
+        self._r2 = self.radius + self.breadth
+
+    @staticmethod
+    def _local_to_cylindrical(point):
+        """
+        Convert from local to cylindrical coordinates.
+        """
+        x, y, z = point
+        rho = np.sqrt(x ** 2 + y ** 2)
+        theta = np.arctan2(y, x)
+        return np.array([rho, theta, z])
+
+    def _cylindrical_to_working(self, zp):
+        """
+        Convert from local cylindrical coordinates to working coordinates.
+        """
+        z1 = zp + self.depth
+        z2 = zp - self.depth
+        return self._r1, self._r2, z1, z2
+
+    def _BxByBz(self, rp, tp, zp):
+        """
+        Calculate the field at a point in local coordinates.
+        """
+        r1, r2, z1, z2 = self._cylindrical_to_working(zp)
+        bx = Bx_analytical_circular(r1, r2, z1, z2, self.dtheta, rp, tp)
+        bz = Bz_analytical_circular(r1, r2, z1, z2, self.dtheta, rp, tp)
+        return np.array([bx, 0, bz])
+
+    def field(self, point):
+        """
+        Calculate the magnetic field at a point due to the current source.
+
+        Parameters
+        ----------
+        point: np.array(3)
+            The target point in global coordinates [m]
+
+        Returns
+        -------
+        field: np.array(3)
+            The magnetic field vector {Bx, By, Bz} in [T]
+        """
+        point = np.array(point)
+        # Convert to local cylindrical coordinates
+        point = self._global_to_local([point])[0]
+        rp, tp, zp = self._local_to_cylindrical(point)
+        # Calculate field in local coordindates
+        b_local = MU_0_4PI * self.rho * self._BxByBz(rp, tp, zp)
+        # Convert field to global coordinates
+        return self.dcm.T @ b_local
+
+    def _calculate_points(self):
+        """
+        Calculate extrema points of the current source for plotting and debugging.
+        """
+        r = self.radius
+        a = self.breadth
+        b = self.depth
+
+        # Circle arcs
+        n = 200
+        theta = np.rad2deg(self.dtheta)
+        ones = np.ones(n)
+        arc_1x, arc_1y = circle_seg(r - a, (0, 0), angle=theta, start=0, npoints=n)
+        arc_2x, arc_2y = circle_seg(r + a, (0, 0), angle=theta, start=0, npoints=n)
+        arc_3x, arc_3y = circle_seg(r + a, (0, 0), angle=theta, start=0, npoints=n)
+        arc_4x, arc_4y = circle_seg(r - a, (0, 0), angle=theta, start=0, npoints=n)
+        arc_1 = np.array([arc_1x, arc_1y, -b * ones]).T
+        arc_2 = np.array([arc_2x, arc_2y, -b * ones]).T
+        arc_3 = np.array([arc_3x, arc_3y, b * ones]).T
+        arc_4 = np.array([arc_4x, arc_4y, b * ones]).T
+
+        slices = np.linspace(0, n - 1, 5, endpoint=True, dtype=np.int)
+        points = [arc_1, arc_2, arc_3, arc_4]
+
+        # Rectangles
+        for s in slices:
+            points.append(np.vstack([arc_1[s], arc_2[s], arc_3[s], arc_4[s], arc_1[s]]))
+
+        points_array = []
+        for p in points:
+            points_array.append(self._local_to_global(p))
+
+        return np.array(points_array, dtype=object)
+
+    def plot(self, ax=None, show_coord_sys=False):
+        """
+        Plot the CircularArcCurrentSource.
+
+        Parameters
+        ----------
+        ax: Union[None, Axes]
+            The matplotlib axes to plot on
+        show_coord_sys: bool
+            Whether or not to plot the coordinate systems
+        """
+        super().plot(ax=ax, show_coord_sys=show_coord_sys)
+        ax = plt.gca()
+        theta = np.rad2deg(self.dtheta)
+        x, y = circle_seg(
+            self.radius, (0, 0), angle=theta / 2, start=theta / 4, npoints=200
+        )
+        centre_arc = np.array([x, y, np.zeros(200)]).T
+        points = self._local_to_global(centre_arc)
+        ax.plot(*points.T, color="r")
+        ax.plot([points[-1][0]], [points[-1][1]], [points[-1][2]], marker="^", color="r")

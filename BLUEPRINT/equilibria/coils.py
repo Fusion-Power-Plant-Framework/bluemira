@@ -1866,7 +1866,7 @@ class CoilSet(CoilGroup):
 
 class SymmetricCircuit(Coil):
     """
-    Represents a set of Symmetric coils in the z direction connected in a circuit.
+    Represents a set of coils, symmetric about z = 0, connected in a circuit.
     The coils are identical except for their z position.
 
     Parameters

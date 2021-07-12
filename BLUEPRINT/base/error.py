@@ -81,6 +81,14 @@ class MaterialsError(BluemiraError):
     pass
 
 
+class MagnetostaticsError(BluemiraError):
+    """
+    Error class for use in the magnetostatics module
+    """
+
+    pass
+
+
 class SysCodesError(BluemiraError):
     """
     Error class for use in the syscodes module

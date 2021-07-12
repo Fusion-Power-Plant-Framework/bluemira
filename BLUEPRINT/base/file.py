@@ -28,6 +28,7 @@ import sys
 from BLUEPRINT.base.typebase import TypeBase
 from bluemira.base.file import _get_relpath
 
+KEYWORD = "!BP_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
 
 
@@ -242,7 +243,7 @@ class FileManager(TypeBase):
         """
         return self._reference_data_root
 
-    def replace_bp_root(self, keyword="!BP_ROOT!"):
+    def replace_bp_root(self, keyword=KEYWORD):
         """
         Replaces keyword in input paths with path to local BLUEPRINT installation.
         """

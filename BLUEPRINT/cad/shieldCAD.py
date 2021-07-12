@@ -212,10 +212,19 @@ class SegmentedThermalShieldCAD(OnionCAD, ComponentCAD):
         """
         thermal_shield, n_TF = self.args
 
-        for name, profile in [
-            ["inboard_thermal_shield", thermal_shield["Inboard profile"]],
-            ["outboard_thermal_shield", thermal_shield["Outboard profile"]],
-        ]:
+        if "Cryostat TS" in thermal_shield:
+            loop_list = [
+                ["inboard_thermal_shield", thermal_shield["Inboard profile"]],
+                ["outboard_thermal_shield", thermal_shield["Outboard profile"]],
+                ["cryostat_thermal_sheild", thermal_shield["Cryostat TS"]],
+            ]
+        else:
+            loop_list = [
+                ["inboard_thermal_shield", thermal_shield["Inboard profile"]],
+                ["outboard_thermal_shield", thermal_shield["Outboard profile"]],
+            ]
+
+        for name, profile in loop_list:
             # First get the VVTS shape and simplify it
             # Making sure the inner-outter loops are Ok
             profile_vv_2d = simplify_loop(profile)
