@@ -65,14 +65,9 @@ class BiotSavartFilament(CurrentSource):
         d_ls, mids_points = [], []
         points = []
         for i, array in enumerate(arrays):
-            array = process_loop_array(array)
-            # Ensure array is closed
-            xyz = np.array(close_coordinates(*array.T)).T
+            xyz = process_loop_array(array)
 
-            diff = np.diff(xyz, axis=0)
-            d_l = np.r_[[diff[-1, :]], diff]  # prepend
-            # central difference average segment length vectors
-            d_l = 0.5 * (d_l[1:] + d_l[:-1])
+            d_l = np.diff(xyz, axis=0)
 
             mid_points = xyz[:-1, :] + 0.5 * d_l
             d_ls.append(d_l)
@@ -83,7 +78,7 @@ class BiotSavartFilament(CurrentSource):
                 self.ref_mid_points = mid_points
                 self.ref_d_l = d_l
 
-                lengths = np.sqrt(np.sum(diff ** 2, axis=1))
+                lengths = np.sqrt(np.sum(d_l ** 2, axis=1))
                 self.length = np.sum(lengths)
                 self.length_scale = np.min(lengths)
 
@@ -130,7 +125,7 @@ class BiotSavartFilament(CurrentSource):
         )
 
     @process_xyz_array
-    def field_old(self, x, y, z):
+    def field(self, x, y, z):
         """
         Calculate the field due to the arbitrarily shaped loop.
 
@@ -155,7 +150,7 @@ class BiotSavartFilament(CurrentSource):
         This is the original Biot-Savart equation, without centre-averaged
         smoothing. Do not use for values near the coil current centreline.
         """  # noqa (W505)
-        point = np.arary([x, y, z])
+        point = np.array([x, y, z])
         r = point - self.mid_points
         r3 = np.linalg.norm(r, axis=1) ** 3
 
@@ -169,60 +164,6 @@ class BiotSavartFilament(CurrentSource):
         core = ds_mag ** 2 / self.radius ** 2
         core[ds_mag > self.radius] = 1
         return MU_0_4PI * self.current * np.sum(core * ds / r3[:, np.newaxis], axis=0)
-
-    @process_xyz_array
-    def field(self, x, y, z):
-        """
-        Calculate the field due to the arbitrarily shaped loop.
-
-        Parameters
-        ----------
-        x: Union[float, np.array]
-            The x coordinate(s) of the points at which to calculate the field
-        y: Union[float, np.array]
-            The y coordinate(s) of the points at which to calculate the field
-        z: Union[float, np.array]
-            The z coordinate(s) of the points at which to calculate the field
-
-        Returns
-        -------
-        B: np.array
-            The field(s) at the point(s) due to the arbitrarily shaped loop
-
-        Notes
-        -----
-        \t:math:`\\dfrac{\\mu_{0}}{4\\pi}\\oint \\dfrac{Idl \\times\\mathbf{r^{'}}}{|\\mathbf{r^{'}}|^{3}}`
-
-        Uses Simon McIntosh's centre-averaged difference approach to smooth
-        field near filaments.
-
-        Masking about coil core.
-        """  # noqa (W505)
-        # point array -> point-segment vectors
-        point = np.array([x, y, z])
-        r = np.atleast_2d(point) - self.points
-        r1 = r - self.d_l / 2
-        r2 = r + self.d_l / 2
-
-        r1_hat = r1 / tools.norm(r1, axis=1)[:, None]
-        r2_hat = r2 / tools.norm(r2, axis=1)[:, None]
-
-        d_l_hat = self.d_l_hat[:, None]
-
-        ds = np.cross(self.d_l, r) / d_l_hat
-        ds_mag = tools.norm(ds, axis=1)
-        ds = np.cross(self.d_l, ds) / d_l_hat
-        ds_mag[ds_mag < EPS] = EPS
-        core = ds_mag ** 2 / self.radius ** 2
-        core[ds_mag > self.radius] = 1
-        # The below einsum operation is equivalent to:
-        # self.current * MU_0_4PI * sum(core * np.cross(ds, r2_hat - r1_hat) / ds_mag ** 2)
-        return np.einsum(
-            "..., i, ij -> j",
-            MU_0_4PI * self.current,
-            core / ds_mag ** 2,
-            np.cross(ds, r2_hat - r1_hat),
-        )
 
     def inductance(self):
         """
