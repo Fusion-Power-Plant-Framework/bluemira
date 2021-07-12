@@ -24,6 +24,7 @@ Biot-Savart filament object
 """
 import numpy as np
 from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
 from bluemira.geometry._deprecated_tools import (
@@ -55,8 +56,6 @@ class BiotSavartFilament(CurrentSource):
 
     def __init__(self, arrays, radius, current=1.0):
 
-        # TODO: Check / modify discretisation
-
         if not isinstance(arrays, list):
             # Handle single Loop/array
             arrays = [arrays]
@@ -68,6 +67,7 @@ class BiotSavartFilament(CurrentSource):
             xyz = process_loop_array(array)
 
             d_l = np.diff(xyz, axis=0)
+            self._check_discretisation(d_l)
 
             mid_points = xyz[:-1, :] + 0.5 * d_l
             d_ls.append(d_l)
@@ -90,6 +90,17 @@ class BiotSavartFilament(CurrentSource):
         self._array_lengths = [len(p) for p in points]
         self.radius = radius
         self.current = current
+    
+    def _check_discretisation(self, d_l):
+        """
+        Check the discretisation of the array.
+        """
+        lengths = np.sqrt(np.sum(d_l ** 2, axis=1))
+        total = np.sum(lengths)
+        max_d_l = np.max(lengths)
+        if max_d_l > 0.03 * total:
+            bluemira_warn("Biot-Savart discretisation possibly insufficient.")
+        # TODO: Improve check and modify discretisation
 
     @process_xyz_array
     def potential(self, x, y, z):
