@@ -41,8 +41,8 @@ from tests.BLUEPRINT.test_reactor import config
 from tests.BLUEPRINT.test_reactor import build_config
 from tests.BLUEPRINT.test_reactor import build_tweaks
 
-INDIR = os.path.join(get_BP_root(), "tests", "cli", "test_indir")
-OUTDIR = os.path.join(get_BP_root(), "tests", "cli", "test_outdir")
+INDIR = os.path.join(get_BP_root(), "tests", "BLUEPRINT", "cli", "test_indir")
+OUTDIR = os.path.join(get_BP_root(), "tests", "BLUEPRINT", "cli", "test_outdir")
 NEWNAME = "CLI-TEST"
 
 # Initialise testing directories.
@@ -261,15 +261,20 @@ def test_cli_reactornameout(
     source = os.path.join(
         get_BP_root(),
         "tests",
+        "BLUEPRINT",
         "test_data",
         "reactors",
         REACTORNAME,
     )
-    destination = os.path.join(tempdir, "test_data", "reactors", REACTORNAME)
+    destination = os.path.join(
+        tempdir, "BLUEPRINT", "test_data", "reactors", REACTORNAME
+    )
     shutil.copytree(source, destination)
 
     # Generate the input files for this test, using the new reference data root.
-    temp_reactor.build_config["reference_data_root"] = os.path.join(tempdir, "test_data")
+    temp_reactor.build_config["reference_data_root"] = os.path.join(
+        tempdir, "BLUEPRINT", "test_data"
+    )
     temp_indir = os.path.join(tempdir, "temp_indir")
     Path(temp_indir).mkdir(parents=True, exist_ok=True)
     temp_reactor.config_to_json(temp_indir)
@@ -335,7 +340,7 @@ def test_cli_bproot_keyword(mock_build, mock_plot_xz, mock_plot_xy, mock_save_CA
     runner = CliRunner()
 
     # Set temp outdir and ensure directory does not already exist.
-    outdir_flag = os.path.join(KEYWORD, "tests", "cli", "temp_outdir")
+    outdir_flag = os.path.join(KEYWORD, "tests", "BLUEPRINT", "cli", "temp_outdir")
     outdir_path = outdir_flag.replace(KEYWORD, get_BP_root())
     if os.path.exists(outdir_path):
         shutil.rmtree(outdir_path)

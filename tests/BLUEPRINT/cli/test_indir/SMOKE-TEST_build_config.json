@@ -1,6 +1,6 @@
 {
-  "reference_data_root": "!BP_ROOT!/tests/test_data",
-  "generated_data_root": "!BP_ROOT!/tests/test_generated_data",
+  "reference_data_root": "!BP_ROOT!/tests/BLUEPRINT/test_data",
+  "generated_data_root": "!BP_ROOT!/tests/BLUEPRINT/test_generated_data",
   "plot_flag": false,
   "process_mode": "mock",
   "plasma_mode": "run",
