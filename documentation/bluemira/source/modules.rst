@@ -8,6 +8,7 @@ Bluemira Modules
  
     base
     geometry
+    magnetostatics
     utilities
 
 Bluemira consists of a set of modules that support reactor design routines. A description
