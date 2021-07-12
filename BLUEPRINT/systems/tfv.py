@@ -27,7 +27,8 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from BLUEPRINT.base import ParameterFrame, ReactorSystem
-from BLUEPRINT.base.lookandfeel import plot_defaults, KEY_TO_PLOT
+from BLUEPRINT.base.lookandfeel import KEY_TO_PLOT
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.utilities.plottools import savefig
 from BLUEPRINT.utilities.powerlearn import PowerLaw
 from BLUEPRINT.utilities.pypetdatabase import DataBase

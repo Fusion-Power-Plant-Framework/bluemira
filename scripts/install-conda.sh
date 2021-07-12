@@ -2,9 +2,9 @@ set -e
 
 # Get and install miniforge
 if [ ! -d "$HOME/miniforge3" ]; then
-  curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge-$(uname)-$(uname -m).sh
-  bash Miniforge-$(uname)-$(uname -m).sh -b
-  rm Miniforge-$(uname)-$(uname -m).sh
+  curl -L -O https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh
+  bash Miniforge3-$(uname)-$(uname -m).sh -b
+  rm Miniforge3-$(uname)-$(uname -m).sh
 fi
 
 # Make an init file so we don't need to edit bashrc

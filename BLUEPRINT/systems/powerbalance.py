@@ -27,9 +27,9 @@ from typing import Type
 import matplotlib.pyplot as plt
 from BLUEPRINT.utilities.plottools import SuperSankey
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import B_PAL_MAP
-from BLUEPRINT.base.constants import (
+from bluemira.base.constants import (
     HE_MOLAR_MASS,
     NEUTRON_MOLAR_MASS,
     HE3_MOLAR_MASS,
@@ -155,7 +155,7 @@ def superheated_rankine(blanket_power, div_power, bb_outlet_temp):
     d_t_turb = 20  # Turbine inlet delta-T to BB_out [K]
     t_turb = tokelvin(bb_outlet_temp - d_t_turb)
     if t_turb < 657 or t_turb > 915:
-        bpwarn("BoP turbine inlet temperature outside range of validity.")
+        bluemira_warn("BoP turbine inlet temperature outside range of validity.")
     f_lgh = div_power / (blanket_power + div_power)
     delta_eta = 0.339 * f_lgh
     return 0.1802 * np.log(t_turb) - 0.7823 - delta_eta
@@ -413,12 +413,14 @@ class BalanceOfPlant(ReactorSystem):
             delta = sum(flow)
             block = label
             if round(delta) != 0:
-                bpwarn(f"O bloque {block} agora ta fodido.. {delta:.2f} MW perdidos")
+                bluemira_warn(
+                    f"O bloque {block} agora ta fodido.. {delta:.2f} MW perdidos"
+                )
 
         # Global check
         delta_truth = sum(np.sum(list(self.flow_dict.values())))
         if round(delta_truth) != 0:
-            bpwarn(
+            bluemira_warn(
                 f"Você não sabe o que está fazendo, cara. O seu modelo "
                 f"BOP tem {delta_truth:.2f} MW perdidos."
             )

@@ -26,7 +26,7 @@ import numpy as np
 from copy import deepcopy
 from scipy.sparse.linalg import spsolve
 from BLUEPRINT.base.error import BeamsError
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.beams.geometry import Geometry
 from BLUEPRINT.beams.loads import LoadCase
 from BLUEPRINT.beams.constants import CONDEPS, R_LARGE_DISP
@@ -50,7 +50,7 @@ def check_matrix_condition(matrix, digits):
     digit_loss = np.log10(condition_number)
 
     if condition_number > 1 / CONDEPS:
-        bpwarn(
+        bluemira_warn(
             "Beams::FiniteElementModel:\n Singular stiffness matrix will "
             "cause LinAlgErrors.\n"
             f"matrix condition number: {condition_number}"
@@ -58,7 +58,7 @@ def check_matrix_condition(matrix, digits):
 
     if digit_loss > digits:
         digit_loss = int(np.ceil(digit_loss))
-        bpwarn(
+        bluemira_warn(
             "Beams::FiniteElementModel:\n Ill-conditioned matrix"
             f"\n|\tAccuracy loss below the {digit_loss}-th digit."
         )
@@ -451,7 +451,7 @@ class FiniteElementModel:
         u_max = np.max(deflections)
 
         if u_max >= length / R_LARGE_DISP:
-            bpwarn(
+            bluemira_warn(
                 "Beams::FiniteElementModel:\n Large displacements detected"
                 "!\nVocê não pode confiar nos resultados..."
             )

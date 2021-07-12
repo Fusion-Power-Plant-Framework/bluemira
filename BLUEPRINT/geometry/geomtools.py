@@ -30,7 +30,7 @@ from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
-from BLUEPRINT.base.lookandfeel import bpwarn, bprint
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 
@@ -202,7 +202,7 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
         x = np.array([x1, x1])
         t2 = r ** 2 - (x1 - x_c) ** 2
         if t2 < 0:
-            bpwarn("No intersection between line and circle!")
+            bluemira_warn("No intersection between line and circle!")
             return None
         t = np.sqrt(t2)
         if t == 0:  # tangency
@@ -215,7 +215,7 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
         z = np.array([y1, y1])
         t2 = r ** 2 - (y1 - z_c) ** 2
         if t2 < 0:
-            bpwarn("No intersection between line and circle!")
+            bluemira_warn("No intersection between line and circle!")
             return None
         t = np.sqrt(t2)
         if t == 0:  # tangency
@@ -227,7 +227,7 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
     det = x1 * y2 - x2 * y1
     delta = r ** 2 * dr2 - det ** 2
     if delta < 0:
-        bpwarn("No intersection between line and circle!")
+        bluemira_warn("No intersection between line and circle!")
         return None
 
     t = np.sqrt(r ** 2 * dr2 - det ** 2)
@@ -427,7 +427,7 @@ def lineq(point_a, point_b, show=False):
         m = 0
     c = point_b[1] - m * point_b[0]
     if show is True:
-        bprint("Equation of line: y = {0}x + {1}".format(m, c))
+        bluemira_print("Equation of line: y = {0}x + {1}".format(m, c))
     return m, c
 
 

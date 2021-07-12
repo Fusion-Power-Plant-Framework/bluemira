@@ -26,7 +26,7 @@ import numpy as np
 from BLUEPRINT.base.error import BeamsError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.base.constants import GRAVITY
+from bluemira.base.constants import GRAVITY
 from BLUEPRINT.beams.constants import NU, SD_LIMIT, N_INTERP
 from BLUEPRINT.beams.node import get_midpoint
 from BLUEPRINT.beams.loads import point_load, distributed_load

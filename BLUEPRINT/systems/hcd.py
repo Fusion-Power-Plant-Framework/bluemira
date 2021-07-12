@@ -24,7 +24,7 @@ Heating and current drive system
 """
 import numpy as np
 from typing import Type
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base import ReactorSystem
 from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
@@ -87,7 +87,7 @@ class HCDSystem(ReactorSystem):
         """
         if f_ICRH != 0:
             f_ICRH = 0  # noqa
-            bpwarn("Not on my watch.")
+            bluemira_warn("Not on my watch.")
         if f_ECD == 0:
             f_ECD = 1 - f_NBI  # noqa
         if f_NBI + f_ECD != 1:

@@ -488,14 +488,14 @@ class TestRegionMapper:
             }
         )
 
-        with patch("BLUEPRINT.equilibria.positioner.bpwarn") as bpwarn:
+        with patch("BLUEPRINT.equilibria.positioner.bluemira_warn") as bluemira_warn:
             self.Rmap.get_Lmap(
                 CoilSet(
                     [Coil(3, 3, ctype="PF"), Coil(4, 4, ctype="CS")],
                     9.0,
                 )
             )
-            bpwarn.assert_called()
+            bluemira_warn.assert_called()
 
     def test_name_converter(self):
         rm = RegionMapper({})

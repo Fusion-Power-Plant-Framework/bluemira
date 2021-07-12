@@ -35,7 +35,7 @@ from BLUEPRINT import blueprint_cli
 from BLUEPRINT.blueprint_cli import cli
 
 REACTORNAME = "EU-DEMO"
-INDIR = os.path.join(get_BP_root(), "examples", "cli", "indir")
+INDIR = os.path.join(get_BP_root(), "examples", "BLUEPRINT", "cli", "indir")
 OUTDIR = os.path.join(get_BP_root(), "tests", "BLUEPRINT", "cli")
 Path(OUTDIR).mkdir(parents=True, exist_ok=True)
 

@@ -21,7 +21,8 @@
 import pytest
 
 import os
-from BLUEPRINT.base.file import get_BP_path, get_files_by_ext
+from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_files_by_ext
 from BLUEPRINT.utilities.tools import compare_dicts
 from BLUEPRINT.equilibria.eqdsk import EQDSKInterface
 

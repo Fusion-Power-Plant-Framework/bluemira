@@ -23,7 +23,7 @@ import pytest
 import numpy as np
 from matplotlib import pyplot as plt
 
-from BLUEPRINT.base.constants import T_LAMBDA
+from bluemira.base.constants import T_LAMBDA
 from BLUEPRINT.fuelcycle.tfvutils import (
     _dec_I_mdot,
     _find_t15,

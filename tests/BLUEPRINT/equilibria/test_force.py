@@ -23,7 +23,7 @@ import pytest
 import numpy as np
 from scipy.special import ellipe, ellipk
 from BLUEPRINT.equilibria.force import ForceField
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 
 
 class TestForceField:

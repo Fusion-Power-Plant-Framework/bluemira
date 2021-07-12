@@ -31,7 +31,7 @@ import re
 from BLUEPRINT.base.file import get_PROCESS_root, get_BP_path
 from BLUEPRINT.base import ParameterFrame
 from BLUEPRINT.base.error import SysCodesError
-from BLUEPRINT.base.lookandfeel import bpwarn, bprint
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 
 from process.io.mfile import MFile
 from process.io.python_fortran_dicts import get_dicts
@@ -41,7 +41,7 @@ try:
     from process.io.obsolete_vars import OBS_VARS
 except (ModuleNotFoundError, FileNotFoundError):
     OBS_VARS = dict()
-    bpwarn("The OBS_VAR dict is not installed in your PROCESS installed version")
+    bluemira_warn("The OBS_VAR dict is not installed in your PROCESS installed version")
 
 # Load dicts from dicts JSON file
 PROCESS_DICT = get_dicts()
@@ -97,7 +97,7 @@ def update_obsolete_vars(process_map_name: str) -> str:
     while process_name in OBS_VARS:
         process_name = OBS_VARS[process_name]
     if not process_name == process_map_name:
-        bprint(
+        bluemira_print(
             f"Obsolete {process_map_name} PROCESS mapping name."
             f"The current PROCESS name is {process_name}"
         )
@@ -316,7 +316,7 @@ class BMFile(MFile):
                     break  # only keep one!
             if not found:
                 out.append(0.0)
-                bpwarn(
+                bluemira_warn(
                     f'BLUEPRINT variable "{var}" a.k.a. '
                     f'PROCESS variable "{self.btop_mapping[var]}" '
                     "not found in PROCESS output. Value set to 0.0."
@@ -441,14 +441,14 @@ class PROCESSRunner:
                             f"PROCESS generated an empty {filename} "
                             f"file in {self.run_dir} - check PROCESS logs."
                         )
-                        bpwarn(message)
+                        bluemira_warn(message)
                         raise SysCodesError(message)
             else:
                 message = (
                     f"PROCESS run did not generate the {filename} "
                     f"file in {self.run_dir} - check PROCESS logs."
                 )
-                bpwarn(message)
+                bluemira_warn(message)
                 raise SysCodesError(message)
 
     @staticmethod
@@ -472,7 +472,7 @@ class PROCESSRunner:
                 f"PROCESS did not find a feasible solution. ifail = {error_code}."
                 " Check PROCESS logs."
             )
-            bpwarn(message)
+            bluemira_warn(message)
             raise SysCodesError(message)
 
     def _run(self):
