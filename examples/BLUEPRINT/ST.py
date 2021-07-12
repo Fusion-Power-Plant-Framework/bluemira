@@ -25,8 +25,7 @@ import matplotlib.pyplot as plt
 import os
 
 from BLUEPRINT.base.file import make_BP_path, get_BP_root
-from BLUEPRINT.base.lookandfeel import banner
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults, print_banner
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import Spherical
 
@@ -122,7 +121,7 @@ class SphericalTokamak(Reactor):
     def __init__(self, config, build_config, build_tweaks):
         super().__init__(config, build_config, build_tweaks)
 
-        banner()
+        print_banner()
 
         self.params.update_kw_parameters(self.config)
 

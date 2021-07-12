@@ -78,7 +78,7 @@ core_c.R_0
 
 # %%
 # Or we can get the underlying parameter by accessing via the get function:
-param = core_c.get("R_0")
+param = core_c.get_param("R_0")
 
 # %%
 # And we can look at the metadata on the parameter, for example as a dictionary:

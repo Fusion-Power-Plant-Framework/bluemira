@@ -28,6 +28,7 @@ from BLUEPRINT.systems.config import SingleNull
 from BLUEPRINT.base.file import make_BP_path
 from bluemira.base.look_and_feel import plot_defaults
 
+
 plot_defaults()
 KEY_TO_PLOT = False
 
