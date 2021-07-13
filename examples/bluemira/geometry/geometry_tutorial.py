@@ -24,8 +24,9 @@ Some examples of using bluemira geometry objects.
 """
 
 import bluemira.geometry as geo
+from operator import itemgetter
 
-# Note: this tutorial must to be translated into a set of pytests
+# Note: this tutorial shall to be translated into a set of pytests
 
 if __name__ == "__main__":
     print("This is a simple tutorial for the geometric module")
@@ -119,3 +120,19 @@ if __name__ == "__main__":
     geo.tools.save_as_STEP([bmface], "test_face_with_hole")
     bmsolid = geo.tools.revolve_shape(bmface, direction=(0.0, 1.0, 0.0))
     geo.tools.save_as_STEP([bmsolid], "test_solid_with_hole")
+
+    print("11. Solid creation from Shell")
+    vertexes = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+                (0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 1.0, 1.0)]
+    # faces creation
+    faces = []
+    v_index = [(0,1,2,3),(5,4,7,6),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
+    for ind, value in enumerate(v_index):
+        wire = geo.tools.make_polygon(list(itemgetter(*value)(vertexes)), closed=True)
+        faces.append(geo.face.BluemiraFace(wire, "face"+str(ind)))
+    # shell creation
+    shell = geo.shell.BluemiraShell(faces, "shell")
+    # solid creation from shell
+    solid = geo.solid.BluemiraSolid(shell, "solid")
+    print(solid)
+    geo.tools.save_as_STEP([solid], "test_cube")

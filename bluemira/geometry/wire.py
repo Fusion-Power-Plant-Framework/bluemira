@@ -55,9 +55,9 @@ class BluemiraWire(BluemiraGeo):
     # # Necessary only if there are changes to the base attrs dictionary
     # attrs = {**BluemiraGeo.attrs}
 
-    def __init__(self, boundary, label: str = "", lcar: Union[float, List[float]] = 0.1):
+    def __init__(self, boundary, label: str = ""):
         boundary_classes = [self.__class__, Part.Wire]
-        super().__init__(boundary, label, lcar, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)
 
         # connection variable with BLUEPRINT Loop
         self._bp_loop = None

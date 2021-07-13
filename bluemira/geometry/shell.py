@@ -39,9 +39,9 @@ from bluemira.geometry.face import BluemiraFace
 class BluemiraShell(BluemiraGeo):
     """Bluemira Shell class."""
 
-    def __init__(self, boundary, label: str = "", lcar: Union[float, List[float]] = 0.1):
+    def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraFace]
-        super().__init__(boundary, label, lcar, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""

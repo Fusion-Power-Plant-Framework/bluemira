@@ -77,6 +77,35 @@ A basic example for the creation of the geometrical objects:
 
     .. note:: the length of the face is equal to the total length of the boundary.
 
+* a `BluemiraShell`
+
+    A BluemiraShell object is defined by its boundary that must to be a set of
+    BluemiraFace objects.
+
+    .. warning:: faces shall not intersect. No internal check is implemented for the
+        moment, so the check is on the user.
+
+    .. code-block:: pycon
+        vertexes = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
+                    (0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 1.0, 1.0)]
+        # faces creation
+        faces = []
+        v_index = [(0,1,2,3),(5,4,7,6),(0,4,5,1),(1,5,6,2),(2,6,7,3),(3,7,4,0)]
+        for ind, value in enumerate(v_index):
+            wire = geo.tools.make_polygon(list(itemgetter(*value)(vertexes)),closed=True)
+            faces.append(geo.face.BluemiraFace(wire, "face"+str(ind)))
+        # shell creation
+        shell = geo.shell.BluemiraShell(faces, "shell")
+
+
+* a `BluemiraSolid`
+
+    A BluemiraSolid object is defined by its boundary that must to be a closed
+    BluemiraShell object.
+
+    .. code-block:: pycon
+        # solid creation from shell
+        solid = geo.solid.BluemiraSolid(shell, "solid")
 
 Shape operations
 ----------------

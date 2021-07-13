@@ -1366,7 +1366,6 @@ def convert_coordinates_to_wire(
     y: np.ndarray,
     z: np.ndarray,
     label="",
-    lcar=0.1,
     method="mixed",
     **kwargs,
 ):
@@ -1390,8 +1389,6 @@ def convert_coordinates_to_wire(
 
     label: str
         The label for the resulting BluemiraWire object
-    lcar: Union[float, List[float]]
-        The characteristic length for the resulting BluemiraWire object
     kwargs: Dict[str, Any]
         Any other arguments for the conversion method, see e.g. make_mixed_face
 
@@ -1405,7 +1402,7 @@ def convert_coordinates_to_wire(
         "polygon": partial(make_wire, spline=False),
         "spline": partial(make_wire, spline=True),
     }
-    wire = method_map[method](x, y, z, label=label, lcar=lcar, **kwargs)
+    wire = method_map[method](x, y, z, label=label, **kwargs)
     return wire
 
 
@@ -1415,7 +1412,6 @@ def convert_coordinates_to_face(
     z: np.ndarray,
     method="mixed",
     label="",
-    lcar=0.1,
     **kwargs,
 ):
     """
@@ -1438,8 +1434,6 @@ def convert_coordinates_to_face(
 
     label: str
         The label for the resulting BluemiraFace object
-    lcar: Union[float, List[float]]
-        The characteristic length for the resulting BluemiraFace object
     kwargs: Dict[str, Any]
         Any other arguments for the conversion method, see e.g. make_mixed_face
 
@@ -1453,7 +1447,7 @@ def convert_coordinates_to_face(
         "polygon": partial(make_face, spline=False),
         "spline": partial(make_face, spline=True),
     }
-    face = method_map[method](x, y, z, label=label, lcar=lcar, **kwargs)
+    face = method_map[method](x, y, z, label=label, **kwargs)
     return face
 
 
@@ -1462,7 +1456,6 @@ def make_mixed_wire(
     y: np.ndarray,
     z: np.ndarray,
     label="",
-    lcar=0.1,
     *,
     median_factor=2.0,
     n_segments=4,
@@ -1484,8 +1477,6 @@ def make_mixed_wire(
         The z coordinates of points to be converted to a BluemiraWire object
     label: str
         The label for the resulting BluemiraWire object
-    lcar: Union[float, List[float]]
-        The characteristic length for the resulting BluemiraWire object
 
     Other Parameters
     ----------------
@@ -1510,7 +1501,6 @@ def make_mixed_wire(
         y,
         z,
         label=label,
-        lcar=lcar,
         median_factor=median_factor,
         n_segments=n_segments,
         a_acute=a_acute,
@@ -1521,7 +1511,7 @@ def make_mixed_wire(
 
     except RuntimeError:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_wire(x, y, z, label=label, lcar=lcar)
+        return make_wire(x, y, z, label=label)
 
     return mfm.wire
 
@@ -1531,7 +1521,6 @@ def make_mixed_face(
     y: np.ndarray,
     z: np.ndarray,
     label="",
-    lcar=0.1,
     *,
     median_factor=2.0,
     n_segments=4,
@@ -1553,8 +1542,6 @@ def make_mixed_face(
         The z coordinates of points to be converted to a BluemiraFace object
     label: str
         The label for the resulting BluemiraFace object
-    lcar: Union[float, List[float]]
-        The characteristic length for the resulting BluemiraFace object
 
     Other Parameters
     ----------------
@@ -1579,7 +1566,6 @@ def make_mixed_face(
         y,
         z,
         label=label,
-        lcar=lcar,
         median_factor=median_factor,
         n_segments=n_segments,
         a_acute=a_acute,
@@ -1590,7 +1576,7 @@ def make_mixed_face(
 
     except RuntimeError:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_face(x, y, z, label=label, lcar=lcar)
+        return make_face(x, y, z, label=label)
 
     # Sometimes there won't be a RuntimeError, and you get a free SIGSEGV for your
     # troubles.
@@ -1599,10 +1585,10 @@ def make_mixed_face(
         return mfm.face
     else:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_face(x, y, z, label=label, lcar=lcar)
+        return make_face(x, y, z, label=label)
 
 
-def make_wire(x, y, z, label="", lcar=0.1, spline=False):
+def make_wire(x, y, z, label="", spline=False):
     """
     Makes a wire from a set of coordinates.
 
@@ -1616,8 +1602,6 @@ def make_wire(x, y, z, label="", lcar=0.1, spline=False):
         The z coordinates of points to be converted to a BluemiraWire object
     label: str
         The label for the resulting BluemiraWire object
-    lcar: Union[float, List[float]]
-        The characteristic length for the resulting BluemiraWire object
     spline: bool
         If True then creates the BluemiraWire using a Bezier spline curve, by default
         False
@@ -1628,10 +1612,10 @@ def make_wire(x, y, z, label="", lcar=0.1, spline=False):
         The BluemiraWire bound by the coordinates
     """
     wire_func = _freecadapi.make_bspline if spline else _freecadapi.make_polygon
-    return BluemiraWire(wire_func(np.array([x, y, z]).T), label=label, lcar=lcar)
+    return BluemiraWire(wire_func(np.array([x, y, z]).T), label=label)
 
 
-def make_face(x, y, z, label="", lcar=0.1, spline=False):
+def make_face(x, y, z, label="", spline=False):
     """
     Makes a face from a set of coordinates.
 
@@ -1645,8 +1629,6 @@ def make_face(x, y, z, label="", lcar=0.1, spline=False):
         The z coordinates of points to be converted to a BluemiraFace object
     label: str
         The label for the resulting BluemiraFace object
-    lcar: Union[float, List[float]]
-        The characteristic length for the resulting BluemiraFace object
     spline: bool
         If True then creates the BluemiraFace using a Bezier spline curve, by default
         False
@@ -1656,8 +1638,8 @@ def make_face(x, y, z, label="", lcar=0.1, spline=False):
     face: BluemiraFace
         The BluemiraFace bound by the coordinates
     """
-    wire = make_wire(x, y, z, label=label, lcar=lcar, spline=spline)
-    return BluemiraFace(wire, label=label, lcar=lcar)
+    wire = make_wire(x, y, z, label=label, spline=spline)
+    return BluemiraFace(wire, label=label)
 
 
 class MixedFaceMaker:
@@ -1676,8 +1658,6 @@ class MixedFaceMaker:
         The z coordinates of points to be converted to a BluemiraFace object
     label: str
         The label for the resulting BluemiraFace object
-    lcar: Union[float, List[float]]
-        The characteristic length for the resulting BluemiraFace object
 
     Other Parameters
     ----------------
@@ -1699,7 +1679,6 @@ class MixedFaceMaker:
         y: np.ndarray,
         z: np.ndarray,
         label="",
-        lcar=0.1,
         *,
         median_factor=2.0,
         n_segments=4,
@@ -1713,7 +1692,6 @@ class MixedFaceMaker:
         self.num_points = len(x)
 
         self.label = label
-        self.lcar = lcar
 
         self.median_factor = median_factor
         self.n_segments = n_segments
@@ -1757,7 +1735,7 @@ class MixedFaceMaker:
 
         # Finally, make the OCC face from the wire formed from the boundary wires
         self._make_wire()
-        self.face = BluemiraFace(self.wire, label=self.label, lcar=self.lcar)
+        self.face = BluemiraFace(self.wire, label=self.label)
 
     def _find_polygon_vertices(self):
         """

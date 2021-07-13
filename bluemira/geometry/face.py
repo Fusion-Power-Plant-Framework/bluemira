@@ -45,9 +45,9 @@ class BluemiraFace(BluemiraGeo):
     #    metds = {'is_closed': 'isClosed', 'scale': 'scale'}
     #    attrs = {**BluemiraGeo.attrs, **metds}
 
-    def __init__(self, boundary, label: str = "", lcar: Union[float, List[float]] = 0.1):
+    def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraWire]
-        super().__init__(boundary, label, lcar, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)
 
     @staticmethod
     def _converter(func):

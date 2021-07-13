@@ -44,8 +44,6 @@ class BluemiraGeo(ABC):
         shape's boundary
     label: str
         identification label for the shape
-    lcar: Union[float, list(float)]
-        characteristic mesh length
     boundary_classes:
         list of allowed class types for shape's boundary
     """
@@ -68,13 +66,11 @@ class BluemiraGeo(ABC):
         self,
         boundary,
         label: str = "",
-        lcar: Union[float, list(float)] = 0.1,
         boundary_classes=None,
     ):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
-        self.lcar = lcar
 
     @staticmethod
     def _converter(func):

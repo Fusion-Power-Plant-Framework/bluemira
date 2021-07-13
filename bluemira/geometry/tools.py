@@ -111,7 +111,7 @@ def make_bezier(
     return BluemiraWire(_freecadapi.make_bezier(points, closed), label=label)
 
 
-def wire_closure(bmwire: BluemiraWire, label="closure", lcar=0.1) -> BluemiraWire:
+def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     """Close this wire with a line segment
 
     Parameters
@@ -120,15 +120,13 @@ def wire_closure(bmwire: BluemiraWire, label="closure", lcar=0.1) -> BluemiraWir
             supporting wire for the closure
         label: str
             label of the closure wire.
-        lcar: float
-            lcar of the closure wire
 
     Returns
     -------
         BluemiraWire: closure wire
     """
     wire = bmwire._shape
-    closure = BluemiraWire(_freecadapi.wire_closure(wire), label=label, lcar=lcar)
+    closure = BluemiraWire(_freecadapi.wire_closure(wire), label=label)
     return closure
 
 
@@ -171,9 +169,7 @@ def revolve_shape(
     return bmsolid
 
 
-def extrude_shape(
-    shape: BluemiraGeo, vec: tuple, label=None, lcar=None
-) -> BluemiraSolid:
+def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
     """
     Apply the extrusion along vec to this shape
 
@@ -185,7 +181,7 @@ def extrude_shape(
         The vector along which to extrude
     label: str
         label of the output shape
-    lcar: Union[li
+
     Returns
     -------
     shape: BluemiraSolid
@@ -193,8 +189,6 @@ def extrude_shape(
     """
     if label is None:
         label = shape.label
-    if lcar is None:
-        lcar = shape.lcar
 
     solid = _freecadapi.extrude_shape(shape._shape, vec)
     faces = solid.Faces
@@ -202,7 +196,7 @@ def extrude_shape(
     for face in faces:
         bmfaces.append(BluemiraFace._create(face))
     bmshell = BluemiraShell(bmfaces)
-    bmsolid = BluemiraSolid(bmshell, label, lcar)
+    bmsolid = BluemiraSolid(bmshell, label)
     return bmsolid
 
 
