@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import Union, List
+from typing import List
 
 # import from freecad
 import freecad  # noqa: F401

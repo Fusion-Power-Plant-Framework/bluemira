@@ -25,9 +25,6 @@ Base classes and functionality for the bluemira geometry module.
 
 from __future__ import annotations
 
-# import typing
-from typing import Union
-
 # import for abstract class
 from abc import ABC, abstractmethod
 

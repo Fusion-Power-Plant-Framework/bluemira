@@ -25,8 +25,6 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import Union, List
-
 # import from freecad
 import freecad  # noqa: F401
 import Part
