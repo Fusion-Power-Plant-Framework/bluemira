@@ -33,11 +33,11 @@ import bluemira.components as bm_comp
 # but represent common systems within a reactor (or indeed the reactor itself).
 
 # %%
-reactor = bm_comp.GroupingComponent("Reactor", config={}, inputs={})
+reactor = bm_comp.GroupingComponent("Reactor")
 
-magnets = bm_comp.GroupingComponent("Magnets", config={}, inputs={}, parent=reactor)
-tf_coils = bm_comp.GroupingComponent("TFCoils", config={}, inputs={}, parent=magnets)
-pf_coils = bm_comp.GroupingComponent("PFCoils", config={}, inputs={}, parent=magnets)
+magnets = bm_comp.GroupingComponent("Magnets", parent=reactor)
+tf_coils = bm_comp.GroupingComponent("TFCoils", parent=magnets)
+pf_coils = bm_comp.GroupingComponent("PFCoils", parent=magnets)
 
 # %%[markdown]
 # Definition of some sub-components as physical components
@@ -48,8 +48,6 @@ pf_coils = bm_comp.GroupingComponent("PFCoils", config={}, inputs={}, parent=mag
 for i in range(6):
     bm_comp.MagneticComponent(
         "PF" + str(i),
-        config={},
-        inputs={},
         shape="pf_shape" + str(i),
         material="pf_material" + str(i),
         conductor="pf_conductor" + str(i),
@@ -60,12 +58,10 @@ for i in range(6):
 # Do the same for the CS coils
 
 # %%
-cs_coils = bm_comp.GroupingComponent("CSCoils", config={}, inputs={}, parent=magnets)
+cs_coils = bm_comp.GroupingComponent("CSCoils", parent=magnets)
 for i in range(6):
     bm_comp.MagneticComponent(
         "CS" + str(i),
-        config={},
-        inputs={},
         shape="cs_shape" + str(i),
         material="cs_material" + str(i),
         conductor="cs_conductor" + str(i),
@@ -76,27 +72,21 @@ for i in range(6):
 # Adding in vessel components
 
 # %%
-in_vessel = bm_comp.GroupingComponent("InVessel", config={}, inputs={}, parent=reactor)
+in_vessel = bm_comp.GroupingComponent("InVessel", parent=reactor)
 blanket = bm_comp.PhysicalComponent(
     "Blanket",
-    config={},
-    inputs={},
     shape="BB_shape",
     material="BB_material",
     parent=in_vessel,
 )
 divertor = bm_comp.PhysicalComponent(
     "Divertor",
-    config={},
-    inputs={},
     shape="Div_shape",
     material="Div_material",
     parent=in_vessel,
 )
 vessel = bm_comp.PhysicalComponent(
     "Vessel",
-    config={},
-    inputs={},
     shape="VV_shape",
     material="VV_material",
     parent=in_vessel,
