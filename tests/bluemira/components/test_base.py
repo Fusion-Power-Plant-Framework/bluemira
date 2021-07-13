@@ -29,12 +29,6 @@ from bluemira.components.base import (
 )
 from bluemira.components.error import ComponentError
 
-from tests.bluemira.components.dummy_classes import (
-    DummyDivertorProfile,
-    DummyBreedingBlanket,
-    DummyDivertor,
-)
-
 
 class TestComponentClass:
     """
