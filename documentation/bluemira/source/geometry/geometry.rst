@@ -86,6 +86,7 @@ A basic example for the creation of the geometrical objects:
         moment, so the check is on the user.
 
     .. code-block:: pycon
+
         vertexes = [(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0),
                     (0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (1.0, 1.0, 1.0), (0.0, 1.0, 1.0)]
         # faces creation
@@ -104,6 +105,7 @@ A basic example for the creation of the geometrical objects:
     BluemiraShell object.
 
     .. code-block:: pycon
+
         # solid creation from shell
         solid = geo.solid.BluemiraSolid(shell, "solid")
 
