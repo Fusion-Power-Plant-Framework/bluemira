@@ -64,8 +64,8 @@ from bluemira.equilibria.force_field import ForceField
 from bluemira.equilibria.constants import PSI_NORM_TOL, LI_REL_TOL
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.profiles import CustomProfile
-from BLUEPRINT.utilities.tools import delta
-from BLUEPRINT.utilities.optimisation import process_scipy_result
+from bluemira.utilities.tools import delta
+from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.geometry._deprecated_loop import Loop
 
 EQ_FOLDER = get_bluemira_path("equilibria/files", subfolder="data")

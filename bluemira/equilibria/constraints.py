@@ -313,7 +313,7 @@ class MagneticConstraintSet(ABC):
 
         - Inherit from this class
         - Add a __init__(args) method
-        - Populate constraints: List[MagneticConstraint]
+        - Populate constraints with super().__init__(List[MagneticConstraint])
     """
 
     constraints: List[MagneticConstraint]

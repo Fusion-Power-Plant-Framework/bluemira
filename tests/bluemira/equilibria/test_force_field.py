@@ -35,11 +35,11 @@ class TestForceField:
 
         x = [5, 5]
         z = [5, -5]
-        for xi, zi in zip(x, z):
-            c = Coil(xi, zi, current=0)
+        for i, (xi, zi) in enumerate(zip(x, z)):
+            c = Coil(xi, zi, current=0, ctype="PF", name=f"PF_{i+1}")
 
             coils.append(c)
-        cls.coilset = CoilSet(coils, 5)
+        cls.coilset = CoilSet(coils)
         dummy = Coil(5, 0, current=0, ctype="Plasma")
         cls.ff = ForceField(cls.coilset, dummy)
 

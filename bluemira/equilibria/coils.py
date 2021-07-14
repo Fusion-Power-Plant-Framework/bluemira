@@ -1027,7 +1027,7 @@ class CoilGroup:
 
 class Solenoid(CoilGroup):
     """
-    Solenoid object for a vertically arranged stack of PF coils. Will default
+    Solenoid object for a vertically arranged stack of CS coils. Will default
     to an ITER-like equispaced arrangement.
 
     Parameters
@@ -1042,7 +1042,7 @@ class Solenoid(CoilGroup):
         Number of central solenoid modules
     """
 
-    control = True  # List sort utility (also kind of true)
+    control = True
 
     def __init__(self, x, dx, z_min, z_max, n_CS, gap=0.1, j_max=12.5, coils=None):
         self.radius = x
@@ -1109,20 +1109,6 @@ class Solenoid(CoilGroup):
             dz=dz,
         )
         self.coils.append(coil)
-
-    def psi(self, x, z):
-        """
-        Poloidal magnetic flux at x, z
-        """
-        return self._sum_all(self.coils, "psi", x, z)
-
-    def mesh_coils(self, d_coil):
-        """
-        Sub-divide coils into subcoils based on size. Coils are meshed within
-        the Coil object.
-        """
-        for coil in self.coils:
-            coil.mesh_coil(d_coil)
 
     def calc_psi_max(self, x, z):
         """
@@ -1279,7 +1265,6 @@ class CoilSet(CoilGroup):
     """
 
     def __init__(self, coils, d_coil=0.5):
-        coils = self.sort_coils(coils)
         super().__init__(coils)
         self._classify_control()
 

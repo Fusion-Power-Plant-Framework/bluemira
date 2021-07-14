@@ -73,10 +73,10 @@ dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99
 coils = []
 for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
     ctype = "PF" if i < 6 else "CS"
-    coil = Coil(xi, zi, current=0, dx=dxi, dz=dzi, ctype=ctype, control=True)
+    coil = Coil(xi, zi, current=0, dx=dxi, dz=dzi, ctype=ctype, name=f"{ctype}_{i+1}", control=True)
     coils.append(coil)
 
-coilset = CoilSet(coils, 9)
+coilset = CoilSet(coils)
 
 # Assign current density and peak field constraints
 coilset.assign_coil_materials("CS", "Nb3Sn")
