@@ -324,6 +324,9 @@ class MagneticConstraintSet(ABC):
 
     __slots__ = ["constraints", "eq", "coilset", "A", "target", "background"]
 
+    def __init__(self, constraints):
+        self.constraints = constraints
+
     def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa (N803)
 
         if I_not_dI:

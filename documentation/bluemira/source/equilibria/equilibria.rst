@@ -185,7 +185,7 @@ not constant, and changes at each iteration step.
 A Dirichlet boundary condition is implemented such that at each
 iteration step :math:`\psi` is specified at the finite difference domain
 boundary, :math:`\partial\Omega_{FD}`, accounting for the (changing)
-plasma current:
+plasma current distribution:
 
 .. math::
 
@@ -195,8 +195,8 @@ plasma current:
    ~~\forall \mathbf{p}\in \partial\Omega_{FD}
    \end{split}\end{aligned}
 
-Green’s functions for external coils
-####################################
+External coils
+##############
 
 The contributions of external coil currents are calculated using Green’s
 functions for a point source with a toroidal current in cylindrical
@@ -298,134 +298,100 @@ the grid, ensuring that such terms are only non-zero in
 Application to reactor design
 -----------------------------
 
-Design decisions
-################
+Plasma profiles
+###############
 
-The reactor designer is presented with an important design decision
-early on: “Should one install the poloidal field (PF) coils inside the
-toroidal field (TF) coils, or vice versa?”
+The 1-D plasma profiles for toroidal current density and pressure are determined by the
+flux functions :math:`FF'` and :math:`p'`. 
 
-Generally speaking, the production of net electricity in a fusion power
-plant demands the use of cryogenically-cooled superconducting coils to
-avoid large resistive losses [1]_.
+Two approaches to determining the flux functions are available:
 
-Joints, and in particular separable joints, are extremely problematic
-for superconducting winding packs — due to the complexity of the
-underlying conductors and the requirement to achieve nano-Ohmic
-resistances in large surface areas of brazed joints. Thus,
-superconducting PF coils are typically placed outside the TF coils. This
-places significant spatial constraints on the positions of the PF coils,
-which are considerably further away from the plasma than the copper
-coils in many present-day machines.
+* ``CustomProfile`` can be used to set the flux functions to fixed values, regardless of
+  the plasma geometry. This is useful when loading experimental profiles, or using 
+  profiles from 1.5-D transport and fixed boundary equilibrium solvers.
 
-Next the choice of superconductor must be made: low temperature
-superconductors (LTS, e.g. NbTi or Nb\ :sub:`3`\ Sn) or high temperature
-superconductors (HTS), which then impose practical field and winding
-pack current density constraints to be considered in the design of the
-poloidal field system. A typical decision is to use more expensive,
-higher current density materials (Nb\ :sub:`3`\ Sn or HTS) for the
-central solenoid (CS), resulting in higher flux swings which in turn
-enable longer flat-top durations. The PF coils are then often chosen to
-be made of cheaper, lower current density NbTi, given their much longer
-winding lengths, and the fact that their size is less important to the
-minimisation of the reactor major radius.
+* ``BetaIpProfile`` can be used to constrain plasma integral parameters :math:`\beta_p`,
+  :math:`I_p`, and optionally :math:`l_i`, see elsewhere. The flux function shape
+  parameterisation can be selected, and the parameters are optimised to meet the
+  integral constraints.
 
-We assume some default values for LTS materials: see Table [tab:coils]. These
-values are taken over the entirety of the coil cross-section (i.e. they
-include conductor jacketing, insulation, copper, etc.) and are used
-throughout the rest of the paper.
-
-[tab:coils]
-
-.. container::
-   :name: tab:coils
-
-   .. table:: Default engineering constraints for LTS materials
-
-      ================================ ================ ====
-      \                                Nb\ :sub:`3`\ Sn NbTi
-      ================================ ================ ====
-      :math:`J_{max}` [MA/m\ :sup:`2`] 16.5             12.5
-      :math:`B_{max}` [T]              13               11.5
-      ================================ ================ ====
-
-The number of PF coils, :math:`n_{PF}`, and the number of CS coils,
-:math:`n_{CS}`, must be chosen (the total number of coils,
-:math:`n_C \equiv n_{PF}+n_{CS}`).
-
-Finally, a sub-system design objective for the equilibrium and poloidal
-field system must be selected. Many options are valid here [2]_. One
-can:
-
-#. minimise the error relative to the plasma physics constraints
-
-#. minimise the volume of magnets, weighted to the relative cost(s) of
-   the magnet materials chosen (ersatz for capital cost)
-
-#. minimise the total sum of the maximum absolute currents in the coils
-   (ersatz for capital and operational costs)
-
-#. multiple objectives or weighted combinations of the above.
-
-Plasma integral constraints
-###########################
-
-The 1-D plasma current and pressure profile parameterisations must be
-chosen to satisfy some integral parameters based on a given reactor
-design. A typical approach, see e.g. [Albanese_1998]_, [Albanese_2018]_,
-is to constrain the plasma current, :math:`I_p`, the ratio of the plasma
-pressure to the poloidal magnetic field pressure, :math:`\beta_{p}`, and
-the normalised internal plasma inductance, :math:`l_i`.
-
-.. math::
-   :label: Ip
-
-   I_p = \int_{\Omega_p} J_{\phi} d\Omega_p
-
-.. math::
-   :label: betap
-
-   \beta_p = \frac{\langle p \rangle}{B_p^2/2\mu_0} = \frac{4}{\mu_0R_0I_p^2}\int_{\Omega_p} p d\Omega_p
-
-.. math::
-   :label: li
-
-   l_i = \frac{4}{\mu_0R_0I_p^2}\int_{\Omega_p} \frac{\lvert\lvert B_p^2\rvert\rvert}{2\mu_0} d\Omega_p
-
-From Equations :eq:`Jphi` and :eq:`betap`, following an approach
-taken in [Jeon_2015]_, we can determine two
-of the unknowns, :math:`\lambda` and :math:`\beta_0`, thus ensuring that
-the :math:`I_p` and :math:`\beta_p` constraints are met, as in done in
-e.g. [Jeon_2015]_, [Dudson_2019]_.
-
-To enforce the :math:`l_i` constraint, one must determine the shape
-parameters, :math:`\boldsymbol{\alpha}`, of the selected flux function. As the
-plasma shape is irregular and varies during each iteration of the
-Grad-Shafranov solution, a minimisation problem is set up during each
-Grad-Shafranov iteration, in order to find the optimal shape parameter
-vector [3]_, :math:`\boldsymbol{\alpha^{*}}`:
-
-.. math::
-   :label: liopt
-
-   \begin{aligned}
-   \boldsymbol{\alpha^{*}}~=~& \underset{\boldsymbol{\alpha}}{\text{minimise}}:
-   & & \bigg{\lvert}l_{i_{target}}-\frac{4}{\mu_0 R_0 I_p^2}\int_{\Omega_p}\frac{\lvert\lvert B_p^2\rvert\rvert}{2\mu_0} d\Omega_p \bigg{\rvert}\\
-   \end{aligned}
-
-Constraints may be applied to :math:`\boldsymbol{\alpha}` in order to impose
-certain current and/or pressure profiles, and to improve convergence.
+  The 1-D plasma current and pressure profile parameterisations must be
+  chosen to satisfy some integral parameters based on a given reactor
+  design. A typical approach, see e.g. [Albanese_1998]_, [Albanese_2018]_,
+  is to constrain the plasma current, :math:`I_p`, the ratio of the plasma
+  pressure to the poloidal magnetic field pressure, :math:`\beta_{p}`, and
+  the normalised internal plasma inductance, :math:`l_i`.
+  
+  .. math::
+     :label: Ip
+  
+     I_p = \int_{\Omega_p} J_{\phi} d\Omega_p
+  
+  .. math::
+     :label: betap
+  
+     \beta_p = \frac{\langle p \rangle}{B_p^2/2\mu_0} = \frac{4}{\mu_0R_0I_p^2}\int_{\Omega_p} p d\Omega_p
+  
+  .. math::
+     :label: li
+  
+     l_i = \frac{4}{\mu_0R_0I_p^2}\int_{\Omega_p} \frac{\lvert\lvert B_p^2\rvert\rvert}{2\mu_0} d\Omega_p
+  
+  From Equations :eq:`Jphi` and :eq:`betap`, following an approach
+  taken in [Jeon_2015]_, we can determine two
+  of the unknowns, :math:`\lambda` and :math:`\beta_0`, thus ensuring that
+  the :math:`I_p` and :math:`\beta_p` constraints are met, as in done in
+  e.g. [Jeon_2015]_, [Dudson_2019]_.
+  
+  To enforce the :math:`l_i` constraint, one must determine the shape
+  parameters, :math:`\boldsymbol{\alpha}`, of the selected flux function. As the
+  plasma shape is irregular and varies during each iteration of the
+  Grad-Shafranov solution, a minimisation problem is set up during each
+  Grad-Shafranov iteration, in order to find the optimal shape parameter
+  vector [3]_, :math:`\boldsymbol{\alpha^{*}}`:
+  
+  .. math::
+     :label: liopt
+  
+     \begin{aligned}
+     \boldsymbol{\alpha^{*}}~=~& \underset{\boldsymbol{\alpha}}{\text{minimise}}:
+     & & \bigg{\lvert}l_{i_{target}}-\frac{4}{\mu_0 R_0 I_p^2}\int_{\Omega_p}\frac{\lvert\lvert B_p^2\rvert\rvert}{2\mu_0} d\Omega_p \bigg{\rvert}\\
+     \end{aligned}
+  
+  Constraints may be applied to :math:`\boldsymbol{\alpha}` in order to impose
+  certain current and/or pressure profiles, and to improve convergence.
 
 Equilibrium constraints
 #######################
 
-Next, a series of constraints is defined to produce a desired plasma
+In order to find an optimal set of currents that produce a certain equilibrium, it is
+common to apply a set of magnetic constraints to the equilibrium problem. These can be
+based on measurements from experiments or based on some design criteria the user wishes
+to meet.
+
+A ``MagneticConstraintSet`` can be sub-classed or initialised with ``MagneticConstraints``.
+
+Two categories of magnetic constraints are supported: absolute and relative magnetic
+constraints.
+
+.. literalinclude:: doc_magnetic_constraints.py
+   :language: python
+
+.. Note::
+   We recommend you sub-class ``MagneticConstraintSet`` such that a parametric set of 
+   magnetic constraints applicable to your problem can directly be used. Some common
+   plasma LCFS shape parameterisations are provided to assist you.
+
+In the example below, a series of constraints is defined to produce a desired plasma
 shape, which we specify in terms of :math:`R_0`, :math:`A`,
 :math:`\kappa`, and :math:`\delta` using the Johner parameterisation
 [Johner_2011]_. This parameterisation can
 handle single and double null plasma shapes, and can be used to make
 up-down and in-out asymmetric boundary shapes.
 
+.. literalinclude:: doc_parametric_constraints.py
+   :language: python
+ 
 A set of :math:`n_T` constraints are applied on the calculated plasma
 boundary, in the form of :math:`\psi`, :math:`B_x`, and :math:`B_z`
 constraints. The :math:`\psi` values are set to a desired value,
@@ -437,7 +403,7 @@ to ensure that the positions of the divertor strike points remain more
 or less fixed over the course of a pulse. Equations :eq:`psiXZ`,
 :eq:`BxXZ`, and :eq:`BzXZ` are used to set up an equation of the
 form:
-
+  
 .. math::
    :label: Ax-b
 
@@ -455,7 +421,7 @@ where:
 -  :math:`\mathbf{b_{p}}` is a :math:`n_T` vector of the contribution of
    the passive currents (including the plasma) to the desired
    constraints.
-
+ 
 A general, unconstrained solution to this minimisation problem proves
 useful during the first few stages of non-linear iterations. As Zakharov
 [Zakharov_1973]_ and Lackner [Lackner_1976]_ note, the problem of the
@@ -480,8 +446,11 @@ Equation :eq:`tikhonov` can be solved analytically as:
 
 .. math::
    :label: x_star_tikh
-
    \mathbf{I^*}=\big(\mathbf{G}^\intercal\mathbf{G}+\boldsymbol{\Gamma}^\intercal\boldsymbol{\Gamma}\big)^{-1}\mathbf{G}^\intercal(\mathbf{b_{t}}-\mathbf{b_{p}})
+
+.. Note::
+   The :math:`Ax-b` formulation of the constraints can be set up as an optimisation
+   objective or a constraint of the form :math:`Ax-b < value`
 
 .. _sec:eng_constraints:
 
@@ -696,6 +665,13 @@ half plane will maintain the same current as its symmetrical counterpart,
 resulting in a converged (or not) equilbrium that should be symmetric as a result
 of a perfectly symmetrical system of coils to aid in convergence.
 
+.. Note::
+    When solving purely symmetric equilibria with a symmetric ``CoilSet``, we recommend
+    you use the ``force_symmetry`` flag in ``Equilibrium``. This solves the
+    Grad-Shafranov equation on half of the FD grid, and mirrors the result to the other
+    half, resulting in a more stable solution. This approach presently only works for
+    grids centred around ``z = 0``.
+
 Appendix 1: Green’s functions and discretised coils
 ###################################################
 
@@ -779,7 +755,10 @@ where:
 -  :math:`dz_c =` coil half-height in the :math:`z` direction
 
 
-Equation :eq:`field_primitives` is solved by numerical integration and used for evaluation points inside the coils. This semi-analytic formulation does result in some singularities which are treated analytically and numerically as described in [Zhang_2012]_.
+Equation :eq:`field_primitives` is solved by numerical integration and used for
+evaluation points inside the coils. This semi-analytic formulation does result in some
+singularities which are treated analytically and numerically as described in
+[Zhang_2012]_.
 
 
 Appendix 2: optimisation Jacobians

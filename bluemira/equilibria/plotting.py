@@ -112,6 +112,7 @@ class Plotter:
             self.ax = ax
         self.ax.set_xlabel("$x$ [m]")
         self.ax.set_ylabel("$z$ [m]")
+        self.ax.set_aspect("equal")
 
 
 class GridPlotter(Plotter):
