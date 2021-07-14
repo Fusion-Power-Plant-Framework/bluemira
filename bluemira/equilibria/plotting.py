@@ -25,7 +25,9 @@ Plot utilities for equilibria
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 from itertools import cycle
+from scipy.interpolate import RectBivariateSpline
 import warnings
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.plot_tools import str_to_latex
@@ -649,3 +651,88 @@ class RegionPlotter(Plotter):
             intpltr.loop.plot(
                 self.ax, fill=True, alpha=0.2, zorder=1, facecolor="g", edgecolor="g"
             )
+
+
+class CorePlotter(Plotter):
+    """
+    Utility class for plotting equilibrium normalised radius characteristic
+    profiles.
+    """
+
+    def __init__(self, dictionary, ax=None):
+        r, c = int((len(dictionary) - 1) / 2) + 1, 2
+        gs = GridSpec(r, c)
+        self.ax = [plt.subplot(gs[i]) for i in range(r * c)]
+        ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
+        for i, (k, v) in enumerate(dictionary.items()):
+            color = next(ccycle)
+            self.ax[i].plot(
+                dictionary["psi_n"], dictionary[k], label=str_to_latex(k), color=color
+            )
+            self.ax[i].legend()
+
+
+
+class CorePlotter2(Plotter):
+    """
+    Utility class for plotting plasma equilibrium cross-core profiles.
+    """
+
+    def __init__(self, eq, ax=None):
+        jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
+        p = eq.pressure_map()
+        pfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], p)
+        o_points, _ = eq.get_OX_points()
+        xmag, zmag = o_points[0].x, o_points[0].z
+        psia, psib = eq.get_OX_psis()
+        n = 50
+        xx = np.linspace(eq.grid.x_min, eq.grid.x_max, n)
+        zz = np.linspace(zmag, zmag, n)
+        gs = GridSpec(3, 1)
+        ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
+        psi = []
+        for x, z in zip(xx, zz):
+            psi.append(eq.psi(x, z)[0])
+        psi = np.array(psi) * 2 * np.pi
+        self.ax = [plt.subplot(gs[i]) for i in range(3)]
+        self.ax[0].plot(xx, pfunc(xx, zz, grid=False), color=next(ccycle))
+        self.ax[0].annotate("$p$", xy=[0.05, 0.8], xycoords="axes fraction")
+        self.ax[0].set_ylabel("[Pa]")
+        self.ax[1].plot(xx, jfunc(xx, zz, grid=False), color=next(ccycle))
+        self.ax[1].set_ylabel("[A/m^2]")
+        self.ax[1].annotate("$J_{\\phi}$", xy=[0.05, 0.8], xycoords="axes fraction")
+        self.ax[2].plot(xx, psi, color=next(ccycle))
+        self.ax[2].set_ylabel("[V.s]")
+        self.ax[2].annotate("$\\psi$", xy=[0.05, 0.8], xycoords="axes fraction")
+        self.ax[2].axhline(psib * 2 * np.pi, color="r", linestyle="--")
+        for ax in self.ax:
+            ax.axvline(xmag, color="r")
+
+
+class ProfilePlotter(Plotter):
+    """
+    Utility class for plotting profile objects
+    """
+
+    def __init__(self, profiles, ax=None):
+        super().__init__(ax)
+        self.prof = profiles
+        self.plot_profiles()
+
+    def plot_profiles(self, n=50):
+        """
+        Plot the plasma profiles.
+        """
+        x = np.linspace(0, 1, n)
+        self.ax.plot(x, self.prof.shape(x), label="shape function")
+        self.ax.plot(x, self.prof.fRBpol(x) / max(self.prof.fRBpol(x)), label="fRBpol")
+        self.ax.plot(
+            x, self.prof.ffprime(x) / max(abs(self.prof.ffprime(x))), label="FFprime"
+        )
+        self.ax.plot(
+            x, self.prof.pprime(x) / max(abs(self.prof.pprime(x))), label="pprime"
+        )
+        self.ax.plot(
+            x, self.prof.pressure(x) / max(abs(self.prof.pressure(x))), label="pressure"
+        )
+        self.ax.legend()

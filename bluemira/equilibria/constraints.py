@@ -27,6 +27,7 @@ from typing import List, Union
 from dataclasses import dataclass
 import numpy as np
 from copy import deepcopy
+from bluemira.utilities.tools import delta
 from bluemira.equilibria.plotting import ConstraintPlotter
 
 __all__ = ["MagneticConstraintSet"]
@@ -81,7 +82,7 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
     x: Union[float, np.array]
     z: Union[float, np.array]
     target_value: float
-    weight = NotImplemented  # TODO: address weights in future MR
+    weights: Union[float, np.array] = 1.0
 
 
 @dataclass
@@ -96,7 +97,7 @@ class RelativeMagneticConstraint(MagneticConstraint):
     ref_x: float
     ref_z: float
     target_value: float = 0.0
-    weight = NotImplemented  # TODO: address weights in future MR
+    weights: Union[float, np.array] = 1.0
 
     @abstractmethod
     def update(self, eq):
@@ -322,7 +323,7 @@ class MagneticConstraintSet(ABC):
     target: np.array
     background: np.array
 
-    __slots__ = ["constraints", "eq", "coilset", "A", "target", "background"]
+    __slots__ = ["constraints", "eq", "coilset", "A", "w", "target", "background"]
 
     def __init__(self, constraints):
         self.constraints = constraints
@@ -354,12 +355,26 @@ class MagneticConstraintSet(ABC):
             self.build_target()
 
         self.build_background()
+        self.build_weight_matrix()
 
     def __len__(self):
         """
         The mathematical size of the constraint set.
         """
         return sum([len(c) for c in self.constraints])
+
+    def build_weight_matrix(self):
+        """
+        Build the weight matrix used in optimisation.
+        Assumed to be diagonal.
+        """
+        self.w = np.zeros(len(self))
+
+        i = 0
+        for constraint in self.constraints:
+            n = len(constraint)
+            self.w[i : i + n] = constraint.weights
+            i += n
 
     def build_control_matrix(self):
         """
@@ -429,3 +444,58 @@ class MagneticConstraintSet(ABC):
         Plots constraints
         """
         return ConstraintPlotter(self, ax=ax)
+
+
+class AutoConstraints(MagneticConstraintSet):
+    """
+    Utility class for crude reconstruction of magnetic constraints from a
+    specified LCFS set of coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates of the LCFS
+    z: np.array
+        The z coordinates of the LCFS
+    psi_boundary: Union[None, float]
+        The psi boundary value to use as a constraint. If None, an
+        isoflux constraint is used.
+    n_points: int
+        The number of interpolated points to use
+    """
+
+    def __init__(x, z, psi_boundary=None, n_points=40):
+        z_max = max(z)
+        z_min = min(z)
+        x_z_max = x[np.argmax(z)]
+        x_z_min = x[np.argmin(z)]
+
+        # Determine if we are dealing with SN or DN
+        single_null = delta(abs(z_min), z_max) > 0.05
+
+        if single_null:
+            # Determine if it is an upper or lower SN
+            lower = abs(z_min) > z_max
+
+            if lower:
+                constraints = [FieldNullConstraint(x_z_min, z_min)]
+            else:
+                constraints = [FieldNullConstraint(x_z_max, z_max)]
+        
+        else:
+            constraints = [FieldNullConstraint(x_z_min, z_min), FieldNullConstraint(x_z_max, z_max)]
+        
+        # Interpolate some points on the LCFS
+        x_boundary, z_boundary = x, z
+
+        # Apply an appropriate constraint on the LCFS
+        if psi_boundary is None:
+            arg_inner = np.argmin(x_boundary**2+z_boundary**2)
+            ref_x = x_boundary[arg_inner]
+            ref_z = z_boundary[arg_inner]
+
+            constraints.append(IsofluxConstraint(x_boundary, z_boundary, ref_x, ref_z))
+        
+        else:
+            constraints.append(PsiBoundaryConstraint(x_boundary, z_boundary, psi_boundary))
+        super().__init__(constraints)

@@ -89,6 +89,12 @@ class EquilibriumOptimiser:
 
         self.A = constraints.A
         self.b = constraints.b
+        self.w = constraints.w
+
+        # Scale the control matrix and constraint vector by weights
+        self.A = self.w[:, np.newaxis] * self.A
+        self.b *= self.w
+
 
         # TODO: Apply weightings to constraints (optionally)
 

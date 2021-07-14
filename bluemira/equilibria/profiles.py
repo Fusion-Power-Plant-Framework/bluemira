@@ -327,7 +327,7 @@ class LuxonExpFunc(ShapeFunction):
             self.n = 1
             self.coeffs = [coeffs]
         else:
-            raise ValueError("A função do Luxon não tem mais de um coeff.")
+            raise ValueError("The Luxon function only has one coefficient.")
 
     @staticmethod
     def _dfunc(x, *args):

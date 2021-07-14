@@ -35,7 +35,7 @@ from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
-from bluemira.equilibria.constraints import XzTesting
+from bluemira.equilibria.constraints import AutoConstraints
 from bluemira.equilibria.profiles import CustomProfile, BetaIpProfile, DoublePowerFunc
 from bluemira.equilibria.optimiser import FBIOptimiser, BreakdownOptimiser
 from bluemira.equilibria.physics import calc_psib
@@ -220,10 +220,10 @@ eof = Equilibrium(
 #   * Field null at lower X-point
 #   * divertor legs are not treated, but could easily be added
 
-sof_constraints = XzTesting(
+sof_constraints = AutoConstraints(
     sof_dict["xbdry"], sof_dict["zbdry"], psi_sof / 2 / np.pi, n=100
 )
-eof_constraints = XzTesting(
+eof_constraints = AutoConstraints(
     eof_dict["xbdry"], eof_dict["zbdry"], psi_eof / 2 / np.pi, n=100
 )
 

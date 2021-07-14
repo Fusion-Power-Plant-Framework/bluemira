@@ -23,6 +23,7 @@
 Coil and coil grouping objects
 """
 
+from BLUEPRINT.magnetostatics.analytical import CircularArcCurrentSource
 from copy import deepcopy
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
@@ -714,7 +715,7 @@ class CoilGroup:
 
     def __getitem__(self, name):
         """
-        list-like behaviour for CoilSet object
+        Dict-like behaviour for CoilSet object
         """
         try:
             return self.coils[name]
@@ -1250,6 +1251,43 @@ class PlasmaCoil:
         return f"{self.__class__.__name__}: {n_filaments} filaments"
 
 
+class Circuit(CoilGroup):
+
+    def __init__(self, coils, factor=1.0):
+        if len(coils) < 2:
+            raise EquilibriaError("A Circuit must be initialised with more than 1 Coil.")
+
+        super().__init__(coils)
+        self.factor = factor
+        self.current = 0.0
+        self.control = True
+
+    def set_control_currents(self, current):
+        for i, coil in enumerate(self.coils.values()):
+            if i == 0:
+                self.current = current
+                coil.set_current(current)
+            else:
+                coil.set_current(self.factor * current)
+
+    def get_control_currents(self):
+        currents = self.factor * self.current * np.ones(len(self.coils))
+        currents[0] = self.current 
+        return currents
+
+
+class SymmetricCircuit(Circuit):
+
+    def __init__(self, coil, factor=1.0):
+
+        if coil.z == 0:
+            raise EquilibriaError("SymmetricCircuit must be initialised with a Coil with z != 0.")
+
+        mirror = Coil(x=coil.x, z=-coil.z, current=coil.current, n_turns=coil.n_turns, control=coil.control, ctype=coil.ctype, j_max=coil.j_max, b_max=coil.b_max, name=coil.name+"_1")
+
+        super().__init__([coil, mirror], factor=factor)
+
+
 class CoilSet(CoilGroup):
     """
     Poloidal field coil set
@@ -1292,6 +1330,8 @@ class CoilSet(CoilGroup):
         pfcoils = []
         cscoils = []
         passivecoils = []
+        i_pf = 1
+        i_cs = 1
         for i in range(groupvecs["ncoil"]):
             dx = groupvecs["dxc"][i]
             dz = groupvecs["dzc"][i]
@@ -1304,7 +1344,7 @@ class CoilSet(CoilGroup):
                         current=0,
                         dx=dx,
                         dz=dz,
-                        ctype="PF",
+                        ctype="Passive",
                         control=False,
                     )
                 )
@@ -1318,8 +1358,10 @@ class CoilSet(CoilGroup):
                             dx=dx,
                             dz=dz,
                             ctype="CS",
+                            name=CS_COIL_NAME.format(i_cs)
                         )
                     )
+                    i_cs += 1
                 else:
                     coil = Coil(
                         groupvecs["xc"][i],
@@ -1328,7 +1370,9 @@ class CoilSet(CoilGroup):
                         dx=dx,
                         dz=dz,
                         ctype="PF",
+                        name=PF_COIL_NAME.format(i_pf)
                     )
+                    i_pf += 1
                     coil.fix_size()  # Oh ja
                     pfcoils.append(coil)
         R_0 = groupvecs["xgrid1"] + groupvecs["xdim"] / 2  # Rough and ready
