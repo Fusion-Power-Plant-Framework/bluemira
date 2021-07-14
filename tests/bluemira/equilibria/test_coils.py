@@ -28,7 +28,7 @@ import tests
 from unittest.mock import patch
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.coils import Coil, CoilGroup, CoilSet
 from tests.bluemira.equilibria.setup_methods import _coilset_setup
 
 
@@ -204,3 +204,56 @@ class TestSemiAnalytic:
             ax[0].set_title("Green's functions")
             ax[1].set_title("Combined Green's and semi-analytic")
             ax[2].set_title("Semi-analytic method")
+
+
+class TestCoilGroup:
+
+    @staticmethod
+    def make_coilgroup():
+        coils = [Coil(6, 6, ctype="CS", name="CS_8"),
+            Coil(7, 7, ctype="CS", name="CS_0"),
+            Coil(8, 8, ctype="plasma", name="plasma_1"),
+            Coil(4, 4, ctype="PF", name="PF_1"),
+            Coil(4, 5, ctype="PF", name="PF_0")]
+
+        return CoilGroup(coils)
+
+    def test_init_sort(self):
+        group = self.make_coilgroup()
+        coil_list = list(group.coils.values())
+        assert len(coil_list) == 5
+        assert coil_list[0].name == "PF_0"
+        assert coil_list[1].name == "PF_1"
+        assert coil_list[2].name == "CS_0"
+        assert coil_list[3].name == "CS_8"
+        assert coil_list[4].name == "plasma_1"
+    
+    def test_add(self):
+        group = self.make_coilgroup()
+        group.add_coil(Coil(3, 3, ctype="PF", name="PF_3"))
+        group.add_coil(Coil(9, 9, ctype="CS", name="CS_9"))
+        group.add_coil(Coil(10, 10, ctype="plasma", name="plasma_10"))
+
+        coil_list = list(group.coils.values())
+        assert len(coil_list) == 8
+        assert coil_list[0].name == "PF_0"
+        assert coil_list[1].name == "PF_1"
+        assert coil_list[2].name == "PF_3"
+        assert coil_list[3].name == "CS_0"
+        assert coil_list[4].name == "CS_8"
+        assert coil_list[5].name == "CS_9"
+        assert coil_list[6].name == "plasma_1"
+        assert coil_list[7].name == "plasma_10"
+    
+    def test_remove(self):
+        group = self.make_coilgroup()
+        group.remove_coil("PF_0")
+        group.remove_coil("PF_1")
+
+        coil_list = list(group.coils.values())
+        assert len(coil_list) == 3
+        assert coil_list[0].name == "CS_0"
+
+        with pytest.raises(KeyError):
+            group.remove_coil("PF_1")
+        

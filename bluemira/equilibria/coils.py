@@ -47,6 +47,7 @@ from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoil
 
 PF_COIL_NAME = "PF_{}"
 CS_COIL_NAME = "CS_{}"
+NONAME_N = 0
 
 
 def make_coil_corners(x_c, z_c, dx, dz):
@@ -153,7 +154,11 @@ class Coil:
         self.control = control
         self.ctype = ctype
         if name is None:
-            name = "Coil"
+            # We need to have a reasonable coil name
+            global NONAME_N
+            name = f"Unnamed_Coil_{NONAME_N}"
+            NONAME_N += 1
+
         self.name = name
         self.sub_coils = None
 
@@ -677,11 +682,35 @@ class Coil:
 
 class CoilGroup:
     """
-    Abstract grouping of Coil objects
+    Abstract grouping of Coil objects. Handles ordering of coils by type and name,
+    and grouping of methods.
+
+    Parameters
+    ----------
+    coils: List[Coil]
+        The list of Coils to group together
     """
 
     def __init__(self, coils):
-        self.coils = coils
+        self.coils = self.sort_coils(coils)
+
+    @staticmethod
+    def sort_coils(coils):
+        """
+        Sort coils in an ordered dictionary, by type and by name.
+        """
+        pf_coils = [coil for coil in coils if coil.ctype == "PF"]
+        cs_coils = [coil for coil in coils if coil.ctype == "CS"]
+        other = [coil for coil in coils if coil.ctype not in ["PF", "CS"]]
+
+        pf_coils.sort(key=lambda x: x.name)
+        cs_coils.sort(key=lambda x: x.name)
+        other.sort(key=lambda x: x.name)
+
+        all_coils = pf_coils + cs_coils + other
+
+        return {coil.name: coil for coil in all_coils}
+
 
     def __getitem__(self, name):
         """
@@ -772,6 +801,7 @@ class CoilGroup:
             The coil to be added to the CoilGroup
         """
         self.coils[coil.name] = coil
+        self.coils = self.sort_coils(list(self.coils.values()))
 
     def remove_coil(self, coilname):
         """
@@ -1248,11 +1278,7 @@ class CoilSet(CoilGroup):
         Coil mesh length [m]
     """
 
-    def __init__(self, coils, R_0, d_coil=0.5):
-        self._classifier = CoilClassifier(R_0)
-        self.n_CS = None
-        self.n_PF = None
-
+    def __init__(self, coils, d_coil=0.5):
         coils = self.sort_coils(coils)
         super().__init__(coils)
         self._classify_control()
@@ -1326,22 +1352,13 @@ class CoilSet(CoilGroup):
             solenoid = Solenoid.from_coils(cscoils)
             coils.append(solenoid)
         coils.extend(passivecoils)
-        return cls(coils, R_0)
-
-    def sort_coils(self, coils):
-        """
-        Sorts coils using a CoilClassifier Object which returns a dict of
-        arrange PF and CS coil objects.
-        Coil type-numbers also extracted and assigned to self
-        """
-        coils, self.n_PF, self.n_CS, self.n_coils = self._classifier(coils)
-        return coils
+        return cls(coils)
 
     def reassign_coils(self, coils):
         """
         Re-set the coils in the CoilSet.
         """
-        self.coils = coils
+        self.coils = self.sort_coils(coils)
         self._classify_control()
 
     def add_coil(self, coil):
@@ -1349,7 +1366,6 @@ class CoilSet(CoilGroup):
         Add a coil to the CoilSet and re-order coil numbering.
         """
         super().add_coil(coil)
-        self.coils = self.sort_coils(self.coils.values())
         self._classify_control()
 
     def remove_coil(self, coilname):
@@ -1357,7 +1373,6 @@ class CoilSet(CoilGroup):
         Remove a coil from the Coilset and re-order coil numbering.
         """
         super().remove_coil(coilname)
-        self.coils = self.sort_coils(self.coils.values())
         self._classify_control()
 
     def reset(self):

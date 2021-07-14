@@ -240,3 +240,93 @@ wrap = EinsumWrapper()
 norm = wrap.norm
 dot = wrap.dot
 cross = wrap.cross
+
+
+
+def compare_dicts(d1, d2, almost_equal=False, verbose=True):
+    """
+    Compares two dictionaries. Will print information about the differences
+    between the two to the console. Dictionaries are compared by length, keys,
+    and values per common keys
+
+    Parameters
+    ----------
+    d1: dict
+        The reference dictionary
+    d2: dict
+        The dictionary to be compared with the reference
+    almost_equal: bool (default = False)
+        Whether or not to use np.isclose and np.allclose for numbers and arrays
+    verbose: bool (default = True)
+        Whether or not to print to the console
+
+    Returns
+    -------
+    the_same: bool
+        Whether or not the dictionaries are the same
+    """
+    nkey_diff = len(d1) - len(d2)
+    k1 = set(d1.keys())
+    k2 = set(d2.keys())
+    intersect = k1.intersection(k2)
+    new_diff = k1 - k2
+    old_diff = k2 - k1
+    same, different = [], []
+
+    # Define functions to use for comparison in either the array, dict, or
+    # numeric cases.
+    def dict_eq(value_1, value_2):
+        return compare_dicts(value_1, value_2, almost_equal, verbose)
+
+    if almost_equal:
+        array_eq, num_eq = np.allclose, np.isclose
+    else:
+        array_eq, num_eq = lambda val1, val2: (val1 == val2).all(), operator.eq
+
+    # Map the comparison functions to the keys based on the type of value in d1.
+    comp_map = {
+        key: array_eq
+        if isinstance(val, np.ndarray)
+        else dict_eq
+        if isinstance(val, dict)
+        else num_eq
+        if is_num(val)
+        else operator.eq
+        for key, val in d1.items()
+    }
+
+    # Do the comparison
+    for k in intersect:
+        v1, v2 = d1[k], d2[k]
+        try:
+            if comp_map[k](v1, v2):
+                same.append(k)
+            else:
+                different.append(k)
+        except ValueError:  # One is an array and the other not
+            different.append(k)
+
+    the_same = False
+    result = "===========================================================\n"
+    if nkey_diff != 0:
+        compare = "more" if nkey_diff > 0 else "fewer"
+        result += f"d1 has {nkey_diff} {compare} keys than d2" + "\n"
+    if new_diff != set():
+        result += "d1 has the following keys which d2 does not have:\n"
+        new_diff = ["\t" + str(i) for i in new_diff]
+        result += "\n".join(new_diff) + "\n"
+    if old_diff != set():
+        result += "d2 has the following keys which d1 does not have:\n"
+        old_diff = ["\t" + str(i) for i in old_diff]
+        result += "\n".join(old_diff) + "\n"
+    if different:
+        result += "the following shared keys have different values:\n"
+        different = ["\t" + str(i) for i in different]
+        result += "\n".join(different) + "\n"
+    if nkey_diff == 0 and new_diff == set() and old_diff == set() and different == []:
+        the_same = True
+    else:
+        result += "==========================================================="
+        if verbose:
+            print(result)
+    return the_same
