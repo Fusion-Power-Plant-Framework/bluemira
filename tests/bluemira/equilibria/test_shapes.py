@@ -115,36 +115,36 @@ class TestManickam:
 
 johner_names = [
     "kappa_u",
+    "kappa_l",
     "delta_u",
     "delta_l",
     "psi_u_neg",
     "psi_u_pos",
     "psi_l_neg",
     "psi_l_pos",
-    "upper",
     "ax",
     "label",
 ]
 johner_params = [
-    [1.6, 0.33, 0.4, -20, 5, 60, 30, True, [0, 0], "SN upper, positive $\\delta$"],
-    [1.6, 0.33, 0.4, -20, 5, 60, 30, False, [1, 0], "SN down, positive $\\delta$"],
-    [1.6, 0.33, 0.4, -20, 5, 60, 30, False, [2, 0], "SN down, positive $\\delta$, Z0=5"],
-    [1.9, 0.40, 0.4, 60, 30, 60, 30, True, [3, 0], "DN, positive $\\delta$"],
-    [1.6, -0.33, -0.4, -20, 5, 60, 30, True, [0, 1], "SN upper, negative $\\delta$"],
-    [1.6, -0.33, -0.4, -20, 5, 60, 30, False, [1, 1], "SN down, negative $\\delta$"],
+    [1.6, 1.9, 0.33, 0.4, -20, 5, 60, 30, [0, 0], "SN upper, positive $\\delta$"],
+    [1.9, 1.6, 0.4, 0.33, 60, 30, -20, 5, [1, 0], "SN down, positive $\\delta$"],
+    [1.6, 1.9, 0.33, 0.4, -20, 5, 60, 30, [2, 0], "SN down, positive $\\delta$, Z0=5"],
+    [1.6, 1.6, 0.4, 0.4, 60, 30, 60, 30, [3, 0], "DN, positive $\\delta$"],
+    [1.6, 1.9, -0.33, -0.4, -20, 5, 60, 30, [0, 1], "SN upper, negative $\\delta$"],
+    [1.9, 1.6, -0.4, -0.33, 60, 30, -20, 5, [1, 1], "SN down, negative $\\delta$"],
     [
         1.6,
+        1.9,
         -0.33,
         -0.4,
         -20,
         5,
         60,
         30,
-        False,
         [2, 1],
         "SN down, negative $\\delta$, Z0=-5",
     ],
-    [1.9, -0.40, -0.4, 60, 20, 60, 20, False, [3, 1], "DN, negative $\\delta$"],
+    [1.9, 1.9, -0.40, -0.4, 60, 20, 60, 20, [3, 1], "DN, negative $\\delta$"],
 ]
 
 johner_params = [
@@ -152,7 +152,7 @@ johner_params = [
 ]
 
 
-@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
+#@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestJohner:
     @classmethod
     def setup_class(cls):
@@ -162,7 +162,7 @@ class TestJohner:
     def test_johner(self, kwargs):
         ax0, ax1 = kwargs.pop("ax")
         label = kwargs.pop("label")
-        f_s = flux_surface_johner(9, 0, 9 / 3, kappa_l=1.9, n=100, **kwargs)
+        f_s = flux_surface_johner(9, 0, 9 / 3, n=100, **kwargs)
         self.ax[ax0, ax1].plot(f_s.x, f_s.z, label=label)
         self.ax[ax0, ax1].set_aspect("equal")
         self.ax[ax0, ax1].legend()
@@ -170,6 +170,7 @@ class TestJohner:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Johner parameterisations")
+        plt.show()
 
 
 if __name__ == "__main__":

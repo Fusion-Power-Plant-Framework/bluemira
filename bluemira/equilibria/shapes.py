@@ -146,7 +146,6 @@ def flux_surface_johner(
     psi_l_neg,
     psi_l_pos,
     n=100,
-    upper=True,
 ):
     """
     Initial plasma shape parametrerisation from HELIOS author
@@ -182,8 +181,6 @@ def flux_surface_johner(
         Lower outer angle [°]
     n: int (defeault = 100)
         Number of point to generate on the flux surface Loop
-    upper: bool
-        Upper or lower single null
 
     Returns
     -------
@@ -296,7 +293,6 @@ def flux_surface_johner(
     if negative:
         x -= 2 * r_0
         x = -x
-    if not upper:
-        z = -z
+
     z += z_0
     return Loop(x=x, z=z)

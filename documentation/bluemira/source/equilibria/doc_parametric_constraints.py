@@ -23,7 +23,6 @@ class ClassicalSNConstraints(MagneticConstraintSet):
             psi_u_pos=5,
             psi_l_neg=-120,
             psi_l_pos=30,
-            upper=True,
             n=n_points,
         )
 

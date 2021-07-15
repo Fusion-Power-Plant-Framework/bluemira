@@ -1173,7 +1173,7 @@ class PlasmaCoil:
             Bz = self.psi_func(grid.x, grid.z, dx=1, grid=False) / grid.x
             self.plasma_Bx = Bx
             self.plasma_Bz = Bz
-            self.plasma_Bp = np.sqrt(Bx ** 2 + Bz ** 2)
+            self.plasma_Bp = np.hypot(Bx, Bz)
 
         else:  # Breakdown state (no plasma at all)
             self._ii, self._jj = [], []
@@ -1230,7 +1230,7 @@ class PlasmaCoil:
         if x is None and z is None:
             return self.plasma_Bx
         else:
-            return np.sqrt(self.Bx(x, z) ** 2 + self.Bz(x, z) ** 2)
+            return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
     def plot(self, ax=None):
         """
@@ -1262,6 +1262,14 @@ class Circuit(CoilGroup):
         self.current = 0.0
         self.control = True
 
+    def adjust_currents(self, d_current):
+        for i, coil in enumerate(self.coils.values()):
+            if i == 0:
+                self.current += d_current
+                coil.adjust_current(d_current)
+            else:
+                coil.adjust_current(self.factor * d_current)
+
     def set_control_currents(self, current):
         for i, coil in enumerate(self.coils.values()):
             if i == 0:
@@ -1283,7 +1291,7 @@ class SymmetricCircuit(Circuit):
         if coil.z == 0:
             raise EquilibriaError("SymmetricCircuit must be initialised with a Coil with z != 0.")
 
-        mirror = Coil(x=coil.x, z=-coil.z, current=coil.current, n_turns=coil.n_turns, control=coil.control, ctype=coil.ctype, j_max=coil.j_max, b_max=coil.b_max, name=coil.name+"_1")
+        mirror = Coil(x=coil.x, z=-coil.z, current=coil.current, n_turns=coil.n_turns, control=coil.control, ctype=coil.ctype, j_max=coil.j_max, b_max=coil.b_max, name=coil.name+"_mirror")
 
         super().__init__([coil, mirror], factor=factor)
 
