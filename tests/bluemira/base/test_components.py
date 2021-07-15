@@ -21,13 +21,13 @@
 
 import pytest
 
-from bluemira.components.base import (
+from bluemira.base.components import (
     Component,
     GroupingComponent,
     PhysicalComponent,
     MagneticComponent,
 )
-from bluemira.components.error import ComponentError
+from bluemira.base.error import ComponentError
 
 
 class TestComponentClass:

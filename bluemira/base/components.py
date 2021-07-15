@@ -28,7 +28,7 @@ from anytree import NodeMixin, RenderTree
 import copy
 from typing import Any, List, Optional, Type, Union
 
-from bluemira.components.error import ComponentError
+from .error import ComponentError
 
 
 class Component(NodeMixin):
