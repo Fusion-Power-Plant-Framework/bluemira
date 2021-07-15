@@ -243,7 +243,7 @@ class Breakdown(MHDState):
         if e["nlim"] == 0:
             limiter = None
         elif e["nlim"] < 5:
-            limiter = Limiter(list(zip(e["xlim"], e["zlim"])))
+            limiter = Limiter(e["xlim"], e["zlim"])
         else:
             limiter = None  # CREATE..
         cls._eqdsk = e
@@ -530,7 +530,7 @@ class Equilibrium(MHDState):
         if e["nlim"] == 0:
             limiter = None
         elif e["nlim"] < 5:
-            limiter = Limiter(list(zip(e["xlim"], e["zlim"])))
+            limiter = Limiter(e["xlim"], e["zlim"])
         else:
             limiter = None  # CREATE..
         cls._eqdsk = e

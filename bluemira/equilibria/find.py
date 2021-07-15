@@ -226,7 +226,7 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
             b = -f_psi(xi, zi, dy=2)[0][0] / xi
             c = -Bz / xi + f_psi(xi, zi, dx=2) / xi
             d = f_psi(xi, zi, dx=1, dy=1)[0][0] / xi
-            inv_jac = inv_2x2_matrix(a, b, c, d)
+            inv_jac = inv_2x2_matrix(float(a),float(b), float(c), float(d))
             delta = np.dot(inv_jac, [Bx, Bz])
             xi -= delta[0]
             zi -= delta[1]
@@ -376,7 +376,7 @@ def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa (N802)
 
     points = drop_space_duplicates(points)
 
-    x_points, o_points = triage_OX_points(f, points)
+    o_points, x_points = triage_OX_points(f, points)
 
     if len(o_points) == 0:
         print("")  # stdout flusher
@@ -531,6 +531,10 @@ def find_flux_surf(x, z, psi, psinorm, o_points=None, x_points=None):
     o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
     xo, zo, _ = o_points[0]
     psi_surfs = find_flux_surfs(x, z, psi, psinorm, o_points=o_points, x_points=x_points)
+
+    if not psi_surfs:
+        raise EquilibriaError(f"No flux surface found for psi_norm = {psinorm:.4f}")
+
     err = []
 
     for group in psi_surfs:  # Choisir la surface la plus "logique"

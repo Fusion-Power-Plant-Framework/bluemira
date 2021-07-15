@@ -1378,10 +1378,23 @@ class CoilSet(CoilGroup):
         R_0 = groupvecs["xgrid1"] + groupvecs["xdim"] / 2  # Rough and ready
         coils = pfcoils
         if len(cscoils) != 0:
-            solenoid = Solenoid.from_coils(cscoils)
-            coils.append(solenoid)
+            coils.extend(cscoils)
         coils.extend(passivecoils)
         return cls(coils)
+    
+    @property
+    def n_PF(self):
+        """
+        The number of PF coils.
+        """
+        return len([c for c in self.coils.values() if c.ctype == "PF"])
+
+    @property
+    def n_CS(self):
+        """
+        The number of CS coils.
+        """
+        return len([c for c in self.coils.values() if c.ctype == "CS"])
 
     def reassign_coils(self, coils):
         """

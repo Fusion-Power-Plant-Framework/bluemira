@@ -19,9 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import os
 import pytest
 import numpy as np
-from bluemira.equilibria.find import find_local_minima, inv_2x2_matrix
+from bluemira.equilibria.find import find_local_minima, inv_2x2_matrix, find_LCFS_separatrix
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.base.file import get_bluemira_path
+
+DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
 
 
 def test_find_local_minima():
@@ -56,6 +61,59 @@ def test_inv_2x2_jacobian():
     inv_jac_true = np.linalg.inv(np.array([[a, b], [c, d]]))
     inv_jac = inv_2x2_matrix(a, b, c, d)
     assert np.allclose(inv_jac_true, inv_jac)
+
+class TestFindLCFSSeparatrix:
+
+    def test_other_grid(self):
+        fn = os.sep.join([DATA, "eqref_OOB.json"])
+        sof = Equilibrium.from_eqdsk(fn)
+        psi = sof.psi()
+        o_points, x_points = sof.get_OX_points(psi)
+        grid_tol = np.hypot(sof.grid.dx, sof.grid.dz)
+        for tolerance in [1e-6, 1e-7, 1e-8, 1e-9]:
+            lcfs, separatrix = find_LCFS_separatrix(
+                sof.x,
+                sof.z,
+                sof.psi(),
+                o_points=o_points,
+                x_points=x_points,
+                psi_n_tol=tolerance,
+            )
+            assert lcfs.closed
+            assert not separatrix.closed
+            primary_xp = x_points[0]
+            distances = lcfs.distance_to([primary_xp.x, primary_xp.z])
+            assert np.amin(distances) <= grid_tol
+            distances = separatrix.distance_to([primary_xp.x, primary_xp.z])
+            assert np.amin(distances) <= grid_tol
+
+    def test_double_null(self):
+        fn = os.sep.join([DATA, "DN-DEMO_eqref.json"])
+        sof = Equilibrium.from_eqdsk(fn)
+        psi = sof.psi()
+        o_points, x_points = sof.get_OX_points(psi)
+        grid_tol = np.hypot(sof.grid.dx, sof.grid.dz)
+        for tolerance in [1e-6, 1e-7, 1e-8, 1e-9]:
+            lcfs, separatrix = find_LCFS_separatrix(
+                sof.x,
+                sof.z,
+                sof.psi(),
+                o_points=o_points,
+                x_points=x_points,
+                psi_n_tol=tolerance,
+                double_null=True,
+            )
+
+            assert lcfs.closed
+            primary_xp = x_points[0]
+            distances = lcfs.distance_to([primary_xp.x, primary_xp.z])
+            assert np.amin(distances) <= grid_tol
+
+            assert isinstance(separatrix, list)
+            for loop in separatrix:
+                assert not loop.closed
+                distances = loop.distance_to([primary_xp.x, primary_xp.z])
+                assert np.amin(distances) <= grid_tol
 
 
 if __name__ == "__main__":

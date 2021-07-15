@@ -42,7 +42,7 @@ X_TOLERANCE = 1e-5
 
 # Absolute tolerance on field [T]
 #     Used as a threshold to determine if the poloidal field is null
-B_TOLERANCE = 1e-6
+B_TOLERANCE = 1e-3
 
 # Absolute minimum radius for grid
 X_AXIS_MIN = 0.1
