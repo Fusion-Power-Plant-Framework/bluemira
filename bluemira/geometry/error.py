@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-The error classes for the geometry module.
+Errors for geometry module
 """
 
 from bluemira.base.error import BluemiraError
@@ -28,7 +28,31 @@ from bluemira.base.error import BluemiraError
 
 class GeometryError(BluemiraError):
     """
-    Exception class for the geometry module.
+    Error class for use in the geometry module
+    """
+
+    pass
+
+
+class NotClosedWire(BluemiraError):
+    """
+    Not Closed Wire Error
+    """
+
+    pass
+
+
+class DisjointedFace(BluemiraError):
+    """
+    Disjointed Face Error
+    """
+
+    pass
+
+
+class DisjointedSolid(BluemiraError):
+    """
+    Disjointed Solid Error
     """
 
     pass

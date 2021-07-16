@@ -26,10 +26,10 @@ ignore =
 
 per-file-ignores =
     tests/*:
-	# Use of assert detected. The enclosed code will be removed when compiling
-	# to optimised byte code. (ignored because of pytest)
-	S101,
-	# Sometimes the tests just run code without using local variables 
+     	# Use of assert detected. The enclosed code will be removed when compiling
+	    # to optimised byte code. (ignored because of pytest)
+        S101,
+	    # Sometimes the tests just run code without using local variables 
         F841,
         # We don't require documentation in tests
         D100,
@@ -48,6 +48,8 @@ per-file-ignores =
         D404,
         D406,
         D409
+    # Allow unused imports in __init__.py, so we can expose at parent module level
+    bluemira/**/__init__.py: F401
         
 
 exclude =

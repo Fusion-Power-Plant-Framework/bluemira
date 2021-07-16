@@ -28,9 +28,8 @@ import matplotlib.pyplot as plt
 from random import uniform
 from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.plot_tools import Plot3D
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.error import GeometryError
-
+from bluemira.geometry._deprecated_loop import Loop
 
 TEST = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
 

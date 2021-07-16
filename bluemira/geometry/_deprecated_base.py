@@ -30,7 +30,7 @@ import json
 import pickle  # noqa (S403)
 from copy import deepcopy
 from typing import Union
-from collections.abc import Iterable
+from collections import Iterable
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import NumpyJSONEncoder
 from bluemira.geometry.constants import D_TOLERANCE

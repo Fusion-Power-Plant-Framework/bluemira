@@ -31,7 +31,6 @@ CROSS_P_TOL = 1e-14
 # Dot product tolerance
 DOT_P_TOL = 1e-6
 
-
 # Very big number (for large distance projection) - can't go too large because
 # of clipperlib conversions
 VERY_BIG = 10e4  # [m]

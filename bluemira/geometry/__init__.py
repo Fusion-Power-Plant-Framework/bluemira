@@ -22,3 +22,14 @@
 """
 Methods and classes for geometry creation and manipulation.
 """
+
+from . import base
+from . import wire
+from . import face
+from . import shell
+from . import solid
+from . import _freecadapi
+from . import constants
+from . import error
+from . import plotting
+from . import tools
