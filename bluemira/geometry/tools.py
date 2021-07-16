@@ -33,7 +33,7 @@ from .shell import BluemiraShell
 from .solid import BluemiraSolid
 
 # import mathematical modules
-import numpy
+import numpy as np
 
 # import typing
 from typing import Union
@@ -43,13 +43,13 @@ from typing import Union
 # # Geometry creation
 # # =============================================================================
 def make_polygon(
-    points: Union[list, numpy.ndarray], label: str = "", closed: bool = False
+    points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
     """Make a polygon from a set of points.
 
     Parameters
     ----------
-        points: Union[list, numpy.ndarray]
+        points: Union[list, np.ndarray]
             list of points. It can be given as a list of 3D tuples, a 3D numpy array,
             or similar.
         label: str
@@ -66,13 +66,13 @@ def make_polygon(
 
 
 def make_bspline(
-    points: Union[list, numpy.ndarray], label: str = "", closed: bool = False
+    points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
     """Make a bspline from a set of points.
 
     Parameters
     ----------
-        points: Union[list, numpy.ndarray]
+        points: Union[list, np.ndarray]
             list of points. It can be given as a list of 3D tuples, a 3D numpy array,
             or similar.
         label: str
@@ -89,13 +89,13 @@ def make_bspline(
 
 
 def make_bezier(
-    points: Union[list, numpy.ndarray], label: str = "", closed: bool = False
+    points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
     """Make a bspline from a set of points.
 
     Parameters
     ----------
-        points: Union[list, numpy.ndarray]
+        points: Union[list, np.ndarray]
             list of points. It can be given as a list of 3D tuples, a 3D numpy array,
             or similar.
         label: str

@@ -102,9 +102,7 @@ class BluemiraGeo(ABC):
             if check:
                 return objs
         raise TypeError(
-            "Only {} objects can be used for {}".format(
-                self._boundary_classes, self.__class__
-            )
+            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
     @property
@@ -194,9 +192,9 @@ class BluemiraGeo(ABC):
 
     def __repr__(self):  # noqa D105
         new = []
-        new.append("([{}] = Label: {}".format(type(self).__name__, self.label))
-        new.append(" length: {}".format(self.length))
-        new.append(" area: {}".format(self.area))
-        new.append(" volume: {}".format(self.volume))
+        new.append(f"([{type(self).__name__}] = Label: {self.label}")
+        new.append(f" length: {self.length}")
+        new.append(f" area: {self.area}")
+        new.append(f" volume: {self.volume}")
         new.append(")")
         return ", ".join(new)

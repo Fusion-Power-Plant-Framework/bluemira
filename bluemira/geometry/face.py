@@ -74,9 +74,7 @@ class BluemiraFace(BluemiraGeo):
                 else:
                     raise NotClosedWire("Only closed BluemiraWire are accepted.")
         raise TypeError(
-            "Only {} objects can be used for {}".format(
-                self._boundary_classes, self.__class__
-            )
+            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
     def _create_face(self):
@@ -116,6 +114,4 @@ class BluemiraFace(BluemiraGeo):
                 bmwires += [BluemiraWire(w)]
             bmface = BluemiraFace(bmwires)
             return bmface
-        raise TypeError(
-            "Only Part.Face objects can be used to create a {} " "instance".format(cls)
-        )
+        raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")

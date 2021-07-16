@@ -82,9 +82,7 @@ class BluemiraWire(BluemiraGeo):
             if check:
                 return objs
         raise TypeError(
-            "Only {} objects can be used for {}".format(
-                self._boundary_classes, self.__class__
-            )
+            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
     @property
@@ -110,14 +108,11 @@ class BluemiraWire(BluemiraGeo):
 
     def __add__(self, other):
         """Add two wires"""
-        # # Note: not sure if a deepcopy should be made
-        # s = copy.deepcopy(self)
-        # s += other
         output = None
         if isinstance(other, BluemiraWire):
             output = BluemiraWire([self, other])
         else:
-            raise TypeError("{} is not an instance of BluemiraWire.".format(type(other)))
+            raise TypeError(f"{type(other)} is not an instance of BluemiraWire.")
         return output
 
     def close(self) -> None:

@@ -70,5 +70,5 @@ class BluemiraSolid(BluemiraGeo):
             else:
                 raise DisjointedSolid("Disjointed solids are not accepted.")
         raise TypeError(
-            "Only Part.Solid objects can be used to create a {} " "instance".format(cls)
+            f"Only Part.Solid objects can be used to create a {cls} instance"
         )

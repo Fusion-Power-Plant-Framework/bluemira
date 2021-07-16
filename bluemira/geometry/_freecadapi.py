@@ -31,7 +31,7 @@ import Part
 from FreeCAD import Base
 
 # import numpy lib
-import numpy
+import numpy as np
 
 # import typing
 from typing import Union
@@ -69,9 +69,7 @@ def check_data_type(data_type):
                     output = output[0]
             else:
                 raise TypeError(
-                    "Only {} instances can be converted to {}".format(
-                        data_type, type(output)
-                    )
+                    f"Only {data_type} instances can be converted to {type(output)}"
                 )
             return output
 
@@ -83,30 +81,30 @@ def check_data_type(data_type):
 @check_data_type(Base.Vector)
 def vector_to_numpy(vectors):
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
-    return numpy.array([numpy.array(v) for v in vectors])
+    return np.array([np.array(v) for v in vectors])
 
 
 @check_data_type(Part.Point)
 def point_to_numpy(points):
     """Converts a FreeCAD Part.Point or list(Part.Point) into a numpy array"""
-    return numpy.array([numpy.array([p.X, p.Y, p.Z]) for p in points])
+    return np.array([np.array([p.X, p.Y, p.Z]) for p in points])
 
 
 @check_data_type(Part.Vertex)
 def vertex_to_numpy(vertexes):
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a numpy array"""
-    return numpy.array([numpy.array([v.X, v.Y, v.Z]) for v in vertexes])
+    return np.array([np.array([v.X, v.Y, v.Z]) for v in vertexes])
 
 
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
-def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
+def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
     """Make a polygon from a set of points.
 
     Parameters
     ----------
-        points (Union[list, numpy.ndarray]): list of points. It can be given
+        points (Union[list, np.ndarray]): list of points. It can be given
             as a list of 3D tuples, a 3D numpy array, or similar.
         closed (bool, optional): if True, the first and last points will be
             connected in order to form a closed shape. Defaults to False.
@@ -123,12 +121,12 @@ def make_polygon(points: Union[list, numpy.ndarray], closed: bool = False) -> Pa
     return wire
 
 
-def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
+def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
     """Make a bezier curve from a set of points.
 
     Parameters
     ----------
-        points (Union[list, numpy.ndarray]): list of points. It can be given
+        points (Union[list, np.ndarray]): list of points. It can be given
             as a list of 3D tuples, a 3D numpy array, or similar.
         closed (bool, optional): if True, the first and last points will be
             connected in order to form a closed shape. Defaults to False.
@@ -147,12 +145,12 @@ def make_bezier(points: Union[list, numpy.ndarray], closed: bool = False) -> Par
     return wire
 
 
-def make_bspline(points: Union[list, numpy.ndarray], closed: bool = False) -> Part.Wire:
+def make_bspline(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
     """Make a bspline curve from a set of points.
 
     Parameters
     ----------
-        points (Union[list, numpy.ndarray]): list of points. It can be given
+        points (Union[list, np.ndarray]): list of points. It can be given
             as a list of 3D tuples, a 3D numpy array, or similar.
         closed (bool, optional): if True, the first and last points will be
             connected in order to form a closed shape. Defaults to False.
@@ -180,7 +178,7 @@ def length(obj) -> float:
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def area(obj) -> float:
@@ -189,7 +187,7 @@ def area(obj) -> float:
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def volume(obj) -> float:
@@ -198,17 +196,17 @@ def volume(obj) -> float:
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
 
 
-def center_of_mass(obj) -> numpy.ndarray:
+def center_of_mass(obj) -> np.ndarray:
     """Object's center of mass"""
     prop = "CenterOfMass"
     if hasattr(obj, prop):
         # CenterOfMass returns a vector.
         return getattr(obj, prop)
     else:
-        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def is_null(obj):
@@ -217,7 +215,7 @@ def is_null(obj):
     if hasattr(obj, prop):
         return getattr(obj, prop)()
     else:
-        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def is_closed(obj):
@@ -226,7 +224,7 @@ def is_closed(obj):
     if hasattr(obj, prop):
         return getattr(obj, prop)()
     else:
-        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def bounding_box(obj):
@@ -239,7 +237,7 @@ def bounding_box(obj):
         box = getattr(obj, prop)
         return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
     else:
-        raise GeometryError("FreeCAD object {} has not property {}".format(obj, prop))
+        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
 
 
 # # =============================================================================

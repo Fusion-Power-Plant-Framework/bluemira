@@ -1,7 +1,7 @@
 geometry
 ========
 
-The geometrical core of mirapy is based on FreeCAD package. A basic api has been
+The geometrical core of bluemira is based on FreeCAD package. A basic api has been
 implemented to interface with main FreeCAD objects and functions.
 
 .. note:: Currently only a minor part of the FreeCAD potentiality has been
@@ -51,7 +51,7 @@ A basic example for the creation of the geometrical objects:
 
 * a `BluemiraFace`:
 
-    A BluemiraFace object is defined by its boundary that must to be a closed
+    A BluemiraFace object is defined by its boundary that must be a closed
     BluemiraWire. If a list of BlumiraWire (with more than one wire) is given, the
     first wire is used as outer boundary of the face, while the others are considered
     as face holes.
@@ -79,7 +79,7 @@ A basic example for the creation of the geometrical objects:
 
 * a `BluemiraShell`
 
-    A BluemiraShell object is defined by its boundary that must to be a set of
+    A BluemiraShell object is defined by its boundary that must be a set of
     BluemiraFace objects.
 
     .. warning:: faces shall not intersect. No internal check is implemented for the
@@ -101,7 +101,7 @@ A basic example for the creation of the geometrical objects:
 
 * a `BluemiraSolid`
 
-    A BluemiraSolid object is defined by its boundary that must to be a closed
+    A BluemiraSolid object is defined by its boundary that must be a closed
     BluemiraShell object.
 
     .. code-block:: pycon
@@ -119,9 +119,9 @@ example, the following command applies a translation with the specified vector:
         vector = (5.0, 2.0, 0.0)
         bmface.translate(vector)
 
-Shape operations that, applied, create a new shape topology are implemented into
+Shape operations that, when applied, create a new shape topology are implemented into
 ``bluemira.geometry.tools``. For example, the following command creates a solid
-revolving a face of 30 degree along the z-axis:
+revolving a face of 30 degrees along the z-axis:
 
     .. code-block:: pycon
 

@@ -29,21 +29,24 @@ from operator import itemgetter
 # Note: this tutorial shall to be translated into a set of pytests
 
 if __name__ == "__main__":
-    print("This is a simple tutorial for the geometric module")
+    print("This is a simple tutorial for the geometric module.")
 
-    print("1. Creation of a closed wire")
+    print("1. Creation of a bluemira wire")
     pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
-    wire = geo._freecadapi.make_polygon(pntslist, closed=True)
-    print(
-        "wire: {}, length: {}, isClosed: {}".format(wire, wire.Length, wire.isClosed())
-    )
-    print("2. Creation of a bluemira wire")
-    bmwire = geo.wire.BluemiraWire(wire, "bmwire")
+    bmwire = geo.tools.make_polygon(pntslist)
+    # # Same result using _freecadapi
+    # wire = geo._freecadapi.make_polygon(pntslist)
+    # print(f"Freecad wire: {wire}, length: {wire.Length}, isClosed: {wire.isClosed()}")
+    # bmwire = geo.wire.BluemiraWire(wire, "bmwire")
+    print(bmwire)
+
+    print("2. Creation of a closed bluemira wire")
+    bmwire = geo.tools.make_polygon(pntslist, closed=True)
     print(bmwire)
 
     print("3. Make some operations on bluemira wire")
     ndiscr = 10
-    print("3.1 Discretize in {} points".format(ndiscr))
+    print(f"3.1 Discretize in {ndiscr} points")
     points = bmwire.discretize(ndiscr)
     print(points)
     print("3.2 Discretize considering the edges")
@@ -57,17 +60,17 @@ if __name__ == "__main__":
     print("5. Test of scale function.")
     print("Note: scale function modifies the original object")
     print("5.1 Scale a BluemiraWire")
-    print("Original object: {}".format(bmwire))
+    print(f"Original object: {bmwire}")
     bmwire.scale(2)
-    print("Scaled object: {}".format(bmwire))
+    print(f"Scaled object: {bmwire}")
     print(
         "NOTE: since bmface is connected to bmwire, a scale operation on bmwire will"
         " affect also bmface"
     )
     print("5.1 Scale a BluemiraFace")
-    print("Original object: {}".format(bmface))
+    print(f"Original object: {bmface}")
     bmface.scale(2)
-    print("Scaled object: {}".format(bmface))
+    print(f"Scaled object: {bmface}")
 
     print("6. Test Save as STEP file.")
     shapes = [bmwire._shape, bmface._shape]
@@ -97,8 +100,11 @@ if __name__ == "__main__":
 
     print("8. Test bspline")
     pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
-    wire = geo._freecadapi.make_bspline(pntslist, closed=False)
-    bmwire_nc = geo.wire.BluemiraWire(wire)
+    bmwire_nc = geo.tools.make_bspline(pntslist, closed=False)
+    # # Same result using _freecadapi
+    # wire = geo._freecadapi.make_bspline(pntslist, closed=False)
+    # bmwire_nc = geo.wire.BluemiraWire(wire)
+    print(bmwire_nc)
     geo.tools.save_as_STEP([bmwire_nc], "test_bspline")
 
     print("9. Test revolve")

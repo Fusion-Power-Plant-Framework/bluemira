@@ -65,5 +65,5 @@ class BluemiraShell(BluemiraGeo):
             bmshell = BluemiraShell(bmfaces)
             return bmshell
         raise TypeError(
-            "Only Part.Shell objects can be used to create a {} " "instance".format(cls)
+            f"Only Part.Shell objects can be used to create a {cls} instance"
         )
