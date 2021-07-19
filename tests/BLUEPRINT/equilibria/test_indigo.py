@@ -195,7 +195,7 @@ class TestFreeBoundary:
 @pytest.mark.longrun
 class TestAbInitioBreakdown:
     def test_breakdown(self):
-        fp = get_BP_path("eqdsk", subfolder="data")
+        fp = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
         fn = os.path.join(fp, "AR3d1_2015_04_v2_EOF_CSred_fine_final.eqdsk")
         eq = Equilibrium.from_eqdsk(fn)
         coilset = eq.coilset.copy()
@@ -229,7 +229,7 @@ class TestAbInitioBreakdown:
 @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestFBI:
     def test_breakdown(self):
-        fp = get_BP_path("eqdsk", subfolder="data")
+        fp = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
         fn = os.path.join(fp, "AR3d1_2015_04_v2_EOF_CSred_fine_final.eqdsk")
         eq = Equilibrium.from_eqdsk(fn)
         coilset = eq.coilset.copy()
