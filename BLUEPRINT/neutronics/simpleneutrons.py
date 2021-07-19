@@ -217,7 +217,9 @@ class BlanketCoverage(ReactorSystem):
         self.aux_n_regions = []
         self.plug_loops = []
         self.max_TBR = self.inputs["max_TBR"]
-        datadir = inputs.get("datadir", try_get_BP_path("neutronics", subfolder="data/BLUEPRINT"))
+        datadir = inputs.get(
+            "datadir", try_get_BP_path("neutronics", subfolder="data/BLUEPRINT")
+        )
         self.data = TBRData(self.params.blanket_type, datadir=datadir)
 
         # Calculated constructors
