@@ -31,7 +31,7 @@ import numpy as np
 import shutil
 import tempfile
 
-from BLUEPRINT.base.file import get_BP_path
+from BLUEPRINT.base.file import make_BP_path
 from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
