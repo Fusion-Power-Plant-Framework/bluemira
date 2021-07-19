@@ -31,7 +31,7 @@ import numpy as np
 import shutil
 import tempfile
 
-from BLUEPRINT.base.file import make_BP_path
+from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
@@ -73,7 +73,7 @@ class TestTFCoil:
 
         cls.parameters = ParameterFrame(params)
 
-        read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
+        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         # Load a target plasma separatrix
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
@@ -157,7 +157,7 @@ class TestTaperedPictureFrameTF:
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
-        read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
+        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
         name = os.sep.join([read_path, "KOZ_PF_test1.json"])
