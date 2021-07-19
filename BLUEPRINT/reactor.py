@@ -192,7 +192,7 @@ class Reactor(ReactorSystem):
         self.specify_palette(BLUE)
 
         # Create the file manager for this reactor
-        reactor_name = self.param.get("Name", "DEFAULT_REACTOR")
+        reactor_name = self.params.get("Name", "DEFAULT_REACTOR")
         reference_data_root = build_config.get(
             "reference_data_root", "!BP_ROOT!/data/BLUEPRINT"
         )
