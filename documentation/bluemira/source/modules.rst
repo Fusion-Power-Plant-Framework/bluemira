@@ -8,7 +8,7 @@ Bluemira Modules
  
     base
     components
-    geometry
+    geometry/geometry
     utilities
 
 Bluemira consists of a set of modules that support reactor design routines. A description
