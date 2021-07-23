@@ -42,6 +42,7 @@ from bluemira.equilibria.find import (
     in_zone,
     in_plasma,
 )
+#from BLUEPRINT.equilibria.find import find_OX as find_OX_points
 from bluemira.equilibria.physics import (
     calc_psi_norm,
     calc_q,
@@ -1557,6 +1558,9 @@ class Equilibrium(MHDState):
         """
         _, x_points = self.get_OX_points()
 
+        if len(x_points) < 2:
+            return False
+
         psi_1 = x_points[0].psi
         psi_2 = x_points[1].psi
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
@@ -1566,7 +1570,7 @@ class Equilibrium(MHDState):
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
         """
         return EquilibriumPlotter(
-            self, ax, plasma=plasma, update_ox=update_ox, show_ox=show_ox
+            self, ax, plasma=plasma, show_ox=show_ox
         )
 
     def plot_field(self, ax=None, update_ox=False, show_ox=True):

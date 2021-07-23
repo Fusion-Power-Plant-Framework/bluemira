@@ -33,7 +33,7 @@ from BLUEPRINT.equilibria.constraints import (
     MagneticConstraintSet,
     IsofluxConstraint,
 )
-from BLUEPRINT.equilibria.coils import Coil, CoilSet, Circuit
+from BLUEPRINT.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from BLUEPRINT.equilibria.equilibrium import Equilibrium
 from BLUEPRINT.equilibria.optimiser import Norm2Tikhonov
 from BLUEPRINT.equilibria.solve import PicardDeltaIterator
@@ -147,7 +147,7 @@ for i in range(len(coil_x)):
         ctype = "CS"
     else:
         ctype = "PF"
-    coil = Circuit(
+    coil = SymmetricCircuit(
         coil_x[i],
         coil_z[i],
         dx=coil_dx[i] / 2,

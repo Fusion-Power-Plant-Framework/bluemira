@@ -23,7 +23,6 @@
 Coil and coil grouping objects
 """
 
-from BLUEPRINT.magnetostatics.analytical import CircularArcCurrentSource
 from copy import deepcopy
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
@@ -615,6 +614,20 @@ class Coil:
         return deepcopy(self)
 
     @property
+    def n_control(self):
+        """
+        The length of the controls.
+        """
+        return 1
+
+    def n_constraints(self):
+        """
+        The length of the constraints.
+        """
+        return 1
+
+
+    @property
     def area(self):
         """
         The cross-sectional area of the coil
@@ -977,6 +990,15 @@ class CoilGroup:
             forces[i, :] = coil.F(eqcoil)
         return forces
 
+    def control_F(self, coil):
+        """
+        Returns a list of control responses for F at the given coil location(s)
+        """
+        c_forces = np.zeros((self.n_coils, 2))
+        for i, coil in enumerate(self.coils.values()):
+            c_forces[i, :] = coil.control_F(coil)
+        return c_forces
+
     def toggle_control(self, *name):
         """
         Toggles the control of a coil in a CoilGroup. Tracks control of a coil
@@ -1252,48 +1274,121 @@ class PlasmaCoil:
 
 
 class Circuit(CoilGroup):
+    """
+    A grouping of Coils that are force to have the same current. The first coil in
+    the Circuit is the controlled Coil.
 
-    def __init__(self, coils, factor=1.0):
+    Parameters
+    ----------
+    coils: List[Coil]
+        The list of Coils to group into a Circuit
+    factor: float
+        The factor of the current control between the primary and secondary
+        coils
+    """
+
+    def __init__(self, coils):
         if len(coils) < 2:
             raise EquilibriaError("A Circuit must be initialised with more than 1 Coil.")
 
         super().__init__(coils)
-        self.factor = factor
-        self.current = 0.0
         self.control = True
+        self.current = coils[0].current
 
-    def adjust_currents(self, d_current):
+    def adjust_current(self, d_current):
         for i, coil in enumerate(self.coils.values()):
-            if i == 0:
-                self.current += d_current
-                coil.adjust_current(d_current)
-            else:
-                coil.adjust_current(self.factor * d_current)
+            coil.adjust_current(d_current)
+        self.current += d_current
 
-    def set_control_currents(self, current):
+    def set_control_current(self, current):
         for i, coil in enumerate(self.coils.values()):
-            if i == 0:
-                self.current = current
-                coil.set_current(current)
-            else:
-                coil.set_current(self.factor * current)
+            coil.set_current(current)
+        self.current = current
 
-    def get_control_currents(self):
-        currents = self.factor * self.current * np.ones(len(self.coils))
-        currents[0] = self.current 
-        return currents
+    def get_control_current(self):
+        return self.current * np.ones(len(self.coils))
+
+    def map_psi_greens(self, x, z):
+        """
+        Mapping of the psi Greens functions into a dict for each coil
+        """
+        return {self.name: self.control_psi(x, z)}
+
+    def psi_greens(self, pgreen):
+        """
+        Calculate plasma psi from Greens functions and current
+        """
+        return self.current * pgreen
+
+    def control_Bx(self, x, z):
+        return sum(super().control_Bx(x, z))
+    
+    def control_Bz(self, x, z):
+        return sum(super().control_Bz(x, z))
+
+    def control_psi(self, x, z):
+        return sum(super().control_psi(x, z))
+    
+    def control_F(self, coil):
+        return np.sum(super().control_F(coil), axis=0)
+
+    def F(self, eqcoil):
+        return np.sum(super().F(eqcoil), axis=0)
+
+    @property
+    def n_control(self):
+        """
+        The length of the controls.
+        """
+        return 1
+    
+    @property
+    def n_constraints(self):
+        """
+        The length of the constraints.
+        """
+        return len(self.coils)
+    
+    def make_size(self, current=None):
+        for coil in self.coils.values():
+            coil.make_size(current=current)
+    
+    def plot(self, ax=None, subcoil=True, **kwargs):
+        for coil in self.coils:
+            coil.plot(ax=ax, subcoil=subcoil, **kwargs)
+
 
 
 class SymmetricCircuit(Circuit):
 
-    def __init__(self, coil, factor=1.0):
+    def __init__(self, coil):
 
         if coil.z == 0:
             raise EquilibriaError("SymmetricCircuit must be initialised with a Coil with z != 0.")
 
-        mirror = Coil(x=coil.x, z=-coil.z, current=coil.current, n_turns=coil.n_turns, control=coil.control, ctype=coil.ctype, j_max=coil.j_max, b_max=coil.b_max, name=coil.name+"_mirror")
+        self.ctype = coil.ctype
+        self.name = coil.name
+        coil.name += ".1"
 
-        super().__init__([coil, mirror], factor=factor)
+        mirror = Coil(x=coil.x, z=-coil.z, current=coil.current, n_turns=coil.n_turns, control=coil.control, ctype=coil.ctype, j_max=coil.j_max, b_max=coil.b_max, name=coil.name+".2")
+
+        super().__init__([coil, mirror])
+    
+    @property
+    def x(self):
+        return self.coils[self.name+".1"].x
+    
+    @property
+    def z(self):
+        return self.coils[self.name+".1"].z
+    
+    @property
+    def dx(self):
+        return self.coils[self.name+".1"].dx
+    
+    @property
+    def dz(self):
+        return self.coils[self.name+".1"].dz
 
 
 class CoilSet(CoilGroup):
@@ -1403,6 +1498,20 @@ class CoilSet(CoilGroup):
         The number of CS coils.
         """
         return len([c for c in self.coils.values() if c.ctype == "CS"])
+    
+    @property
+    def n_control(self):
+        """
+        The length of the controls.
+        """
+        return sum([coil.n_control for coil in self.coils])
+
+    @property
+    def n_constraints(self):
+        """
+        The length of the constraints.
+        """
+        return sum([coil.n_constraints for coil in self.coils])
 
     def reassign_coils(self, coils):
         """
@@ -1572,7 +1681,7 @@ class CoilSet(CoilGroup):
         Modify currents in coils: [I]<--[I]+[dI]
         """
         for coil, d_i in zip(self._ccoils, current_change):
-            coil.current += d_i
+            coil.adjust_current(d_i)
 
     def set_control_currents(self, currents, update_size=True):
         """

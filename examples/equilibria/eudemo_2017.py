@@ -180,17 +180,6 @@ psi_eof -= 10
 shape = DoublePowerFunc([2, 3])
 profile = BetaIpProfile(beta_p * 1.2, I_p, R_0, B_0, shape=shape)
 
-# %%[markdown]
-
-# Or use a CustomProfile (this is one for STs, so it's nonsense here)
-
-# %%
-
-custom_profile = True
-folder = get_bluemira_path("eqdsk", subfolder="data")
-name = "jetto.eqdsk_out"
-filename = os.sep.join([folder, name])
-profile = CustomProfile.from_eqdsk(filename)
 
 # %%[markdown]
 # Solve the SOF and EOF equilibria
@@ -236,10 +225,7 @@ optimiser = FBIOptimiser(
 )
 optimiser.update_current_constraint(coilset.get_max_currents(0))
 
-if custom_profile:
-    solver = PicardAbsIterator
-else:
-    solver = PicardLiAbsIterator
+solver = PicardLiAbsIterator
 
 iterator = solver(sof, profile, sof_constraints, optimiser, plot=True)
 iterator()

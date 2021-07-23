@@ -139,8 +139,8 @@ def find_local_minima(f):
         (
             (f < np.roll(f, 1, 0))
             & (f < np.roll(f, -1, 0))
-            # & (f <= np.roll(f, 0, 1))
-            # & (f <= np.roll(f, 0, -1))
+            & (f <= np.roll(f, 0, 1))
+            & (f <= np.roll(f, 0, -1))
             & (f < np.roll(f, 1, 1))
             & (f < np.roll(f, -1, 1))
         )
@@ -186,7 +186,7 @@ def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa (N802)
 @nb.jit(nopython=True, cache=True)
 def inv_2x2_matrix(a, b, c, d):
     """
-    Inverse of a 2 x 2 [[a, b], c, d]] matrix.
+    Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
     """
     return np.array([[d, -b], [-c, a]]) / (a * d - b * c)
 
@@ -226,7 +226,7 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
             b = -f_psi(xi, zi, dy=2)[0][0] / xi
             c = -Bz / xi + f_psi(xi, zi, dx=2) / xi
             d = f_psi(xi, zi, dx=1, dy=1)[0][0] / xi
-            inv_jac = inv_2x2_matrix(float(a),float(b), float(c), float(d))
+            inv_jac = inv_2x2_matrix(float(a), float(b), float(c), float(d))
             delta = np.dot(inv_jac, [Bx, Bz])
             xi -= delta[0]
             zi -= delta[1]

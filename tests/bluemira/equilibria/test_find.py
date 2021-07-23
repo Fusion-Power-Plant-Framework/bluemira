@@ -22,9 +22,11 @@
 import os
 import pytest
 import numpy as np
-from bluemira.equilibria.find import find_local_minima, inv_2x2_matrix, find_LCFS_separatrix
-from bluemira.equilibria.equilibrium import Equilibrium
+import json
 from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.find import find_local_minima, inv_2x2_matrix, find_LCFS_separatrix, _in_plasma
+from bluemira.equilibria.equilibrium import Equilibrium
+
 
 DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
 
@@ -115,6 +117,20 @@ class TestFindLCFSSeparatrix:
                 distances = loop.distance_to([primary_xp.x, primary_xp.z])
                 assert np.amin(distances) <= grid_tol
 
+
+
+class TestInPlasma:
+    def test_recursion(self):
+        fn = os.sep.join([DATA, "in_plasma_test.json"])
+        with open(fn, "rb") as f:
+            data = json.load(f)  # noqa (S301)
+        x, z = np.array(data["X"]), np.array(data["Z"])
+        lcfs = np.array(data["LCFS"])
+        result = np.array(data["result"])
+        mask = np.zeros_like(x)
+
+        result2 = _in_plasma(x, z, mask, lcfs)
+        assert np.allclose(result, result2)
 
 if __name__ == "__main__":
     pytest.main([__file__])
