@@ -27,6 +27,7 @@ import Part
 from FreeCAD import Base
 
 import bluemira.geometry._freecadapi as freecadapi
+from bluemira.geometry.constants import D_TOLERANCE
 
 
 class TestFreecadapi:
@@ -98,9 +99,24 @@ class TestFreecadapi:
         assert type(curve) == Part.BezierCurve
 
     def test_make_bspline(self):
-        bspline: Part.Wire = freecadapi.make_bspline(self.square_points)
+        pntslist = self.square_points
+        bspline: Part.Wire = freecadapi.make_bspline(pntslist)
         curve = bspline.Edges[0].Curve
         assert type(curve) == Part.BSplineCurve
+        # assert that the bspline pass through the points
+        # get the points parameter
+        params = [curve.parameter(Base.Vector(p)) for p in pntslist]
+        # get the points on the curve at the calculated parameters
+        test_points = freecadapi.vector_to_list([curve.value(par) for par in params])
+        # assert that the points on the curve are equal (within a tolerance) to the
+        # points used to generate the bspline
+        comparison = True
+        for index in range(len(pntslist)):
+            for i in range(3):
+                comparison = comparison & (
+                    test_points[index][i] - pntslist[index][i] < D_TOLERANCE
+                )
+        assert comparison
 
     def test_length(self):
         open_wire: Part.Wire = freecadapi.make_polygon(self.square_points)
