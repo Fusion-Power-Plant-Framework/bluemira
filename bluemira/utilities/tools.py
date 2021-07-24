@@ -242,7 +242,6 @@ dot = wrap.dot
 cross = wrap.cross
 
 
-
 def compare_dicts(d1, d2, almost_equal=False, verbose=True):
     """
     Compares two dictionaries. Will print information about the differences
@@ -330,6 +329,7 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True):
         if verbose:
             print(result)
     return the_same
+
 
 def delta(v2, v1ref):
     """

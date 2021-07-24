@@ -37,8 +37,13 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     boolean_2d_union,
 )
+from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_tools import vector_lengthnorm_2d, loop_plane_intersect
+from bluemira.geometry._deprecated_tools import (
+    vector_lengthnorm_2d,
+    loop_plane_intersect,
+    join_intersect,
+)
 from bluemira.geometry._deprecated_loop import Loop
 from BLUEPRINT.geometry.inscribedrect import inscribed_rect_in_poly
 from bluemira.equilibria.coils import Coil, CoilSet, PF_COIL_NAME, Solenoid
@@ -115,20 +120,45 @@ class CoilPositioner:
         """
         a = np.rad2deg(np.arctan(abs(self.delta) / self.kappa))
         if self.rtype == "Normal":
-            au = 90 + a * 1.6
-            al = -90 - a * 1.6
+            angle_upper = 90 + a * 1.6
+            angle_lower = -90 - a * 1.6
         elif self.rtype == "ST":
-            au = 90 + a * 1.2
-            al = -90 - a * 1.2
-        try:
-            argl = track.receive_projection(self.ref, al, get_arg=True)
-        except ValueError:
-            argl = 0
-        try:
-            argu = track.receive_projection(self.ref, au, get_arg=True)
-        except ValueError:
-            argu = len(track) - 1
-        tf_loop = Loop(*track[argl : argu + 1])
+            angle_upper = 90 + a * 1.2
+            angle_lower = -90 - a * 1.
+
+        angle = np.radians(angle_lower)
+
+        line = Loop(x=[self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
+                    z=[self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)])
+        
+        arg_lower = join_intersect(track, line, get_arg=True)
+
+        angle = np.radians(angle_upper)
+
+        line = Loop(x=[self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
+                    z=[self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)])
+        
+        arg_upper = join_intersect(track, line, get_arg=True)
+
+        if arg_lower:
+            arg_lower = arg_lower[0]
+        else:
+            arg_lower = 0
+        
+        if arg_upper:
+            arg_upper = arg_upper[0]
+        else:
+            arg_upper = len(track) - 1
+        
+        # try:
+        #     argl = track.receive_projection(self.ref, angle_lower, get_arg=True)
+        # except ValueError:
+        #     argl = 0
+        # try:
+        #     argu = track.receive_projection(self.ref, angle_upper, get_arg=True)
+        # except ValueError:
+        #     argu = len(track) - 1
+        tf_loop = Loop(*track[arg_lower : arg_upper + 1])
         l_norm = vector_lengthnorm_2d(tf_loop["x"], tf_loop["z"])
         xint, zint = interp1d(l_norm, tf_loop["x"]), interp1d(l_norm, tf_loop["z"])
         pos = np.linspace(0, 1, n_PF)
@@ -162,7 +192,7 @@ class CoilPositioner:
         heights = length / 2 * np.ones(n_CS)
         heights[n_CS // 2] = length  # Central module
         c = [Coil(x_cs, z, dx=tk_cs, dz=dz, ctype="CS") for z, dz in zip(z_cs, heights)]
-        return Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap, coils=c)
+        return c# Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap, coils=c)
 
     def make_coilset(self, d_coil=0.5):
         """
@@ -177,12 +207,12 @@ class CoilPositioner:
                     self.equispace_CS(self.x_cs, self.tk_cs, z_min, z_max, self.n_CS)
                 )
             elif self.cslayout == "DEMO":
-                coils.append(
+                coils.extend(
                     self.demospace_CS(self.x_cs, self.tk_cs, z_min, z_max, self.n_CS)
                 )
             else:
                 raise ValueError("Elige entre ITER y DEMO. " "Mas opciones no hay.")
-        return CoilSet(coils, self.R_0, d_coil=d_coil)
+        return CoilSet(coils, d_coil=d_coil)
 
 
 class XZLMapper:

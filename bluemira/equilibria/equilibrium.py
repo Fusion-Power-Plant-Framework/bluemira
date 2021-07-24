@@ -42,7 +42,9 @@ from bluemira.equilibria.find import (
     in_zone,
     in_plasma,
 )
+
 #from BLUEPRINT.equilibria.find import find_OX as find_OX_points
+#from BLUEPRINT.equilibria.find import find_LCFS_separatrix
 from bluemira.equilibria.physics import (
     calc_psi_norm,
     calc_q,
@@ -680,7 +682,7 @@ class Equilibrium(MHDState):
             The grid upon which to solve the Equilibrium
         """
         super().set_grid(grid)
-        
+
         self._solver = GSSolver(grid, force_symmetry=self.force_symmetry)
 
     def reset_grid(self, grid, **kwargs):
@@ -1569,9 +1571,7 @@ class Equilibrium(MHDState):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
         """
-        return EquilibriumPlotter(
-            self, ax, plasma=plasma, show_ox=show_ox
-        )
+        return EquilibriumPlotter(self, ax, plasma=plasma, show_ox=show_ox)
 
     def plot_field(self, ax=None, update_ox=False, show_ox=True):
         """

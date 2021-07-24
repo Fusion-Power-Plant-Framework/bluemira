@@ -45,8 +45,8 @@ from bluemira.equilibria.physics import calc_psib, calc_li, calc_betap
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.constraints import (
     AutoConstraints,
-    SNReference,
-    DNReference,
+    EUDEMOSingleNullConstraints,
+    EUDEMODoubleNullConstraints,
 )
 from bluemira.equilibria.optimiser import (
     Norm2Tikhonov,
@@ -60,7 +60,7 @@ from bluemira.equilibria.solve import (
     PicardAbsIterator,
     EquilibriumConverger,
 )
-from bluemira.equilibria.grid import Grid, regrid
+from bluemira.equilibria.grid import Grid
 
 
 class Snapshot:
@@ -225,28 +225,6 @@ class EquilibriumProblem:
         if self.li is None:
             self.li = self.eq.calc_li()
         return self.eq.copy()
-
-    def regrid(self, nx=129, nz=129):
-        """
-        Maps existing EqObject to a larger grid at a higher resolution.
-        Resolves equilibrium with Picard iterations to meet the same
-        convergence criterion
-
-        Parameters
-        ----------
-        nx: int
-            Resolution in X
-        nz: int
-            Resolution in Z
-        """
-        incr = 5
-        z = incr * (1.5 * self.kappa * self.R_0 / self.A // incr + 1)
-        self.old = self.eq
-        self.nx, self.nz = nx, nz
-        grid = Grid(0, incr * (self.R_0 * 2.2 // incr + 1), -z, z, nx, nz)
-        self.eq = regrid(self.eq, grid)
-        self.solve()
-        self.update_psi()
 
     def update_psi(self):
         """
@@ -793,8 +771,16 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
         Ip,
         betap,
         li,
-        kappa,
-        delta,
+        kappa_u,
+        kappa_l,
+        delta_u,
+        delta_l,
+        psi_u_neg,
+        psi_u_pos,
+        psi_l_neg,
+        psi_l_pos,
+        div_l_ib,
+        div_l_ob,
         r_cs,
         tk_cs,
         tfbnd,
@@ -812,6 +798,8 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
         # Make FD grid for G-S solver
         sx, sz = 1.6, 1.7  # grid scales from plasma
         self.nx, self.nz = 65, 65
+        kappa = max(kappa_l, kappa_u)
+        delta = max(delta_l, delta_u)
         x_min, x_max = R_0 - sx * (R_0 / A), R_0 + sx * (R_0 / A)
         z_min, z_max = -sz * (kappa * R_0 / A), sz * (kappa * R_0 / A)
 
@@ -826,9 +814,35 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
         # Set up plasma position constraints
         if rtype == "Normal":
             if eqtype == "SN":
-                self.constraints = SNReference(R_0, 0, A, kappa, delta, 0)
+                self.constraints = EUDEMOSingleNullConstraints(
+                    R_0,
+                    0,
+                    A,
+                    kappa_u,
+                    kappa_l,
+                    delta_u,
+                    delta_l,
+                    psi_u_neg,
+                    psi_u_pos,
+                    psi_l_neg,
+                    psi_l_pos,
+                    div_l_ib,
+                    div_l_ob,
+                    0,
+                )
             elif eqtype == "DN":
-                self.constraints = DNReference(R_0, 0, A, kappa, delta, 0)
+                self.constraints = EUDEMODoubleNullConstraints(
+                    R_0,
+                    0,
+                    A,
+                    kappa_u,
+                    delta_u,
+                    psi_u_neg,
+                    psi_u_pos,
+                    div_l_ib,
+                    div_l_ob,
+                    0,
+                )
         elif rtype == "ST":
             raise ValueError(
                 "Spherical reactors not yet supported through this interface."
@@ -855,7 +869,7 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
         self.coilset.assign_coil_materials("PF", "NbTi")
         self.coilset.assign_coil_materials("CS", "Nb3Sn")
         # Limiter for mathematical stability (occasionally)
-        self.lim = Limiter([(x_min + 0.3, 0), (x_max - 0.3, 0)])
+        self.lim = Limiter(x=[x_min + 0.3, x_max - 0.3], z=[0, 0])
         # Equilibrium object
         self.eq = Equilibrium(
             self.coilset,

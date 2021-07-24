@@ -430,12 +430,18 @@ class EquilibriumPlotter(Plotter):
 
         if self.x_points:
             self.xp_psi = self.x_points[0][2]  # Psi at separatrix
-            self.op_psi = self.o_points[0][2]  # Psi at O-point
         else:
             bluemira_warn(
                 "No X-point found in plotted equilibrium. Cannot normalise psi."
             )
             self.xp_psi = np.amax(self.psi)
+        
+        if self.o_points:
+            self.op_psi = self.o_points[0][2]  # Psi at O-point
+        else:
+            bluemira_warn(
+                "No O-point found in plotted equilibrium. Cannot normalise psi."
+            )
             self.op_psi = np.amin(self.psi)
 
         if not field:
@@ -670,7 +676,6 @@ class CorePlotter(Plotter):
                 dictionary["psi_n"], dictionary[k], label=str_to_latex(k), color=color
             )
             self.ax[i].legend()
-
 
 
 class CorePlotter2(Plotter):

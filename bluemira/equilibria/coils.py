@@ -626,7 +626,6 @@ class Coil:
         """
         return 1
 
-
     @property
     def area(self):
         """
@@ -724,7 +723,6 @@ class CoilGroup:
         all_coils = pf_coils + cs_coils + other
 
         return {coil.name: coil for coil in all_coils}
-
 
     def __getitem__(self, name):
         """
@@ -1322,13 +1320,13 @@ class Circuit(CoilGroup):
 
     def control_Bx(self, x, z):
         return sum(super().control_Bx(x, z))
-    
+
     def control_Bz(self, x, z):
         return sum(super().control_Bz(x, z))
 
     def control_psi(self, x, z):
         return sum(super().control_psi(x, z))
-    
+
     def control_F(self, coil):
         return np.sum(super().control_F(coil), axis=0)
 
@@ -1341,54 +1339,64 @@ class Circuit(CoilGroup):
         The length of the controls.
         """
         return 1
-    
+
     @property
     def n_constraints(self):
         """
         The length of the constraints.
         """
         return len(self.coils)
-    
+
     def make_size(self, current=None):
         for coil in self.coils.values():
             coil.make_size(current=current)
-    
+
     def plot(self, ax=None, subcoil=True, **kwargs):
         for coil in self.coils:
             coil.plot(ax=ax, subcoil=subcoil, **kwargs)
 
 
-
 class SymmetricCircuit(Circuit):
-
     def __init__(self, coil):
 
         if coil.z == 0:
-            raise EquilibriaError("SymmetricCircuit must be initialised with a Coil with z != 0.")
+            raise EquilibriaError(
+                "SymmetricCircuit must be initialised with a Coil with z != 0."
+            )
 
         self.ctype = coil.ctype
         self.name = coil.name
         coil.name += ".1"
 
-        mirror = Coil(x=coil.x, z=-coil.z, current=coil.current, n_turns=coil.n_turns, control=coil.control, ctype=coil.ctype, j_max=coil.j_max, b_max=coil.b_max, name=coil.name+".2")
+        mirror = Coil(
+            x=coil.x,
+            z=-coil.z,
+            current=coil.current,
+            n_turns=coil.n_turns,
+            control=coil.control,
+            ctype=coil.ctype,
+            j_max=coil.j_max,
+            b_max=coil.b_max,
+            name=coil.name + ".2",
+        )
 
         super().__init__([coil, mirror])
-    
+
     @property
     def x(self):
-        return self.coils[self.name+".1"].x
-    
+        return self.coils[self.name + ".1"].x
+
     @property
     def z(self):
-        return self.coils[self.name+".1"].z
-    
+        return self.coils[self.name + ".1"].z
+
     @property
     def dx(self):
-        return self.coils[self.name+".1"].dx
-    
+        return self.coils[self.name + ".1"].dx
+
     @property
     def dz(self):
-        return self.coils[self.name+".1"].dz
+        return self.coils[self.name + ".1"].dz
 
 
 class CoilSet(CoilGroup):
@@ -1461,7 +1469,7 @@ class CoilSet(CoilGroup):
                             dx=dx,
                             dz=dz,
                             ctype="CS",
-                            name=CS_COIL_NAME.format(i_cs)
+                            name=CS_COIL_NAME.format(i_cs),
                         )
                     )
                     i_cs += 1
@@ -1473,7 +1481,7 @@ class CoilSet(CoilGroup):
                         dx=dx,
                         dz=dz,
                         ctype="PF",
-                        name=PF_COIL_NAME.format(i_pf)
+                        name=PF_COIL_NAME.format(i_pf),
                     )
                     i_pf += 1
                     coil.fix_size()  # Oh ja
@@ -1484,7 +1492,7 @@ class CoilSet(CoilGroup):
             coils.extend(cscoils)
         coils.extend(passivecoils)
         return cls(coils)
-    
+
     @property
     def n_PF(self):
         """
@@ -1498,7 +1506,7 @@ class CoilSet(CoilGroup):
         The number of CS coils.
         """
         return len([c for c in self.coils.values() if c.ctype == "CS"])
-    
+
     @property
     def n_control(self):
         """

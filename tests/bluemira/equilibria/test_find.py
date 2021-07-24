@@ -24,7 +24,12 @@ import pytest
 import numpy as np
 import json
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.find import find_local_minima, inv_2x2_matrix, find_LCFS_separatrix, _in_plasma
+from bluemira.equilibria.find import (
+    find_local_minima,
+    inv_2x2_matrix,
+    find_LCFS_separatrix,
+    _in_plasma,
+)
 from bluemira.equilibria.equilibrium import Equilibrium
 
 
@@ -64,8 +69,8 @@ def test_inv_2x2_jacobian():
     inv_jac = inv_2x2_matrix(a, b, c, d)
     assert np.allclose(inv_jac_true, inv_jac)
 
-class TestFindLCFSSeparatrix:
 
+class TestFindLCFSSeparatrix:
     def test_other_grid(self):
         fn = os.sep.join([DATA, "eqref_OOB.json"])
         sof = Equilibrium.from_eqdsk(fn)
@@ -118,7 +123,6 @@ class TestFindLCFSSeparatrix:
                 assert np.amin(distances) <= grid_tol
 
 
-
 class TestInPlasma:
     def test_recursion(self):
         fn = os.sep.join([DATA, "in_plasma_test.json"])
@@ -131,6 +135,7 @@ class TestInPlasma:
 
         result2 = _in_plasma(x, z, mask, lcfs)
         assert np.allclose(result, result2)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

@@ -152,7 +152,7 @@ johner_params = [
 ]
 
 
-#@pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
+# @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestJohner:
     @classmethod
     def setup_class(cls):

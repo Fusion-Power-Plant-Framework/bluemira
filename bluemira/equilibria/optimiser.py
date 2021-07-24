@@ -95,7 +95,6 @@ class EquilibriumOptimiser:
         self.A = self.w[:, np.newaxis] * self.A
         self.b *= self.w
 
-
         # TODO: Apply weightings to constraints (optionally)
 
         self.n_PF, self.n_CS = eq.coilset.n_PF, eq.coilset.n_CS

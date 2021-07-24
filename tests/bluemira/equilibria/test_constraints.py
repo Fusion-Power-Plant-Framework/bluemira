@@ -32,7 +32,7 @@ from bluemira.equilibria.constraints import (
 )
 
 
-#@pytest.mark.longrun
+# @pytest.mark.longrun
 class TestWeightedConstraints:
     def test_constraint_weights(self):
         """
@@ -58,16 +58,24 @@ class TestWeightedConstraints:
             w_psi = np.array([2.0, 0.5, 3.0])
 
             if apply_weights:
-                constraint_set = MagneticConstraintSet([
-                    IsofluxConstraint(x_iso, z_iso, ref_x=0.5, ref_z=0.5, weights=w_iso),
-                    PsiBoundaryConstraint(x_psi, z_psi, target_value=0.0, weights=w_psi),
-                ])
+                constraint_set = MagneticConstraintSet(
+                    [
+                        IsofluxConstraint(
+                            x_iso, z_iso, ref_x=0.5, ref_z=0.5, weights=w_iso
+                        ),
+                        PsiBoundaryConstraint(
+                            x_psi, z_psi, target_value=0.0, weights=w_psi
+                        ),
+                    ]
+                )
                 weights = np.concatenate([w_iso, w_psi])
             else:
-                constraint_set = MagneticConstraintSet([
-                    IsofluxConstraint(x_iso, z_iso, ref_x=0.5, ref_z=0.5),
-                    PsiBoundaryConstraint(x_psi, z_psi, target_value=0.0),
-                ])
+                constraint_set = MagneticConstraintSet(
+                    [
+                        IsofluxConstraint(x_iso, z_iso, ref_x=0.5, ref_z=0.5),
+                        PsiBoundaryConstraint(x_psi, z_psi, target_value=0.0),
+                    ]
+                )
                 weights = np.ones(len(constraint_set))
 
             # Populate constraint set based on test equilibrium

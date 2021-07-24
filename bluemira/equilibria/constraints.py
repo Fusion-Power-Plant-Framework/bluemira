@@ -29,6 +29,7 @@ import numpy as np
 from copy import deepcopy
 from bluemira.utilities.tools import delta
 from bluemira.equilibria.plotting import ConstraintPlotter
+from bluemira.equilibria.shapes import flux_surface_johner
 
 __all__ = ["MagneticConstraintSet"]
 
@@ -481,21 +482,177 @@ class AutoConstraints(MagneticConstraintSet):
                 constraints = [FieldNullConstraint(x_z_min, z_min)]
             else:
                 constraints = [FieldNullConstraint(x_z_max, z_max)]
-        
+
         else:
-            constraints = [FieldNullConstraint(x_z_min, z_min), FieldNullConstraint(x_z_max, z_max)]
-        
+            constraints = [
+                FieldNullConstraint(x_z_min, z_min),
+                FieldNullConstraint(x_z_max, z_max),
+            ]
+
         # Interpolate some points on the LCFS
         x_boundary, z_boundary = x, z
 
         # Apply an appropriate constraint on the LCFS
         if psi_boundary is None:
-            arg_inner = np.argmin(x_boundary**2+z_boundary**2)
+            arg_inner = np.argmin(x_boundary ** 2 + z_boundary ** 2)
             ref_x = x_boundary[arg_inner]
             ref_z = z_boundary[arg_inner]
 
             constraints.append(IsofluxConstraint(x_boundary, z_boundary, ref_x, ref_z))
-        
+
         else:
-            constraints.append(PsiBoundaryConstraint(x_boundary, z_boundary, psi_boundary))
+            constraints.append(
+                PsiBoundaryConstraint(x_boundary, z_boundary, psi_boundary)
+            )
+        super().__init__(constraints)
+
+
+class DivertorLegCalculator:
+    @staticmethod
+    def calc_line(p1, p2, n):
+        """
+        Calculate a linearly spaced series of points on a line between p1 and p2.
+        """
+        xn = np.linspace(p1[0], p2[0], int(n))
+        zn = np.linspace(p1[1], p2[1], int(n))
+        return xn, zn
+
+    def calc_divertor_leg(
+        self, x_point, angle, length, n, loc="lower", pos="outer"
+    ):  # noqa (N802)
+        """
+        Calculate the position of a straight line divertor leg.
+        """
+        if loc == "upper":
+            z = x_point[1] + length * np.sin(np.deg2rad(angle))
+        elif loc == "lower":
+            z = x_point[1] - length * np.sin(np.deg2rad(angle))
+        else:
+            raise ValueError('Please specify loc: "upper" or "lower" X-point.')
+        if pos == "inner":
+            x = x_point[0] - length * np.cos(np.deg2rad(angle))
+        elif pos == "outer":
+            x = x_point[0] + length * np.cos(np.deg2rad(angle))
+        else:
+            raise ValueError('Please specify pos: "inner" or "outer" X leg.')
+        return self.calc_line(x_point, (x, z), n)
+
+
+class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
+    """
+    Parameterised family of magnetic constraints for a typical EU-DEMO-like single
+    null equilibrium.
+    """
+
+    def __init__(
+        self,
+        R_0,
+        Z_0,
+        A,
+        kappa_u,
+        kappa_l,
+        delta_u,
+        delta_l,
+        psi_u_neg,
+        psi_u_pos,
+        psi_l_neg,
+        psi_l_pos,
+        div_l_ib,
+        div_l_ob,
+        psibval,
+        lower=True,
+        n=100,
+    ):
+        constraints = []
+        f_s = flux_surface_johner(
+            R_0,
+            Z_0,
+            R_0 / A,
+            kappa_u,
+            kappa_l,
+            delta_u,
+            delta_l,
+            psi_u_neg,
+            psi_u_pos,
+            psi_l_neg,
+            psi_l_pos,
+            n=200,
+        )
+
+        if lower:
+            arg_x = np.argmin(f_s.z)
+        else:
+            arg_x = np.argmax(f_s.z)
+
+        x_point = [f_s.x[arg_x], f_s.z[arg_x]]
+
+        constraints = [FieldNullConstraint(*x_point)]
+
+        f_s.interpolate(n)
+        x_s, z_s = f_s.x, f_s.z
+
+        constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
+
+        x_leg1, z_leg1 = self.calc_divertor_leg(
+            x_point, 50, div_l_ob, int(n / 10), loc="lower", pos="outer"
+        )
+
+        x_leg2, z_leg2 = self.calc_divertor_leg(
+            x_point, 40, div_l_ib, int(n / 10), loc="lower", pos="inner"
+        )
+
+        x_legs = np.append(x_leg1, x_leg2)
+        z_legs = np.append(z_leg1, z_leg2)
+        constraints.append(PsiBoundaryConstraint(x_legs, z_legs, psibval))
+
+        super().__init__(constraints)
+
+
+class EUDEMODoubleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
+    """
+    Parameterised family of magnetic constraints for a typical EU-DEMO-like double
+    null equilibrium.
+    """
+
+    def __init__(
+        self,
+        R_0,
+        Z_0,
+        A,
+        kappa,
+        delta,
+        psi_neg,
+        psi_pos,
+        div_l_ib,
+        div_l_ob,
+        psibval,
+        n=400,
+    ):
+        super().__init__()
+        f_s = flux_surface_johner(
+            R_0,
+            Z_0,
+            R_0 / A,
+            kappa,
+            kappa,
+            delta,
+            delta,
+            psi_neg,
+            psi_pos,
+            psi_neg,
+            psi_pos,
+            n=200,
+        )
+
+        arg_xl = np.argmin(f_s.z)
+        arg_xu = np.argmax(f_s.z)
+        constraints = [
+            FieldNullConstraint(f_s.x[arg_xl], f_s.z[arg_xl]),
+            FieldNullConstraint(f_s.x[arg_xu], f_s.z[arg_xu]),
+        ]
+        f_s.interpolate(n)
+        x_s, z_s = f_s.x, f_s.z
+
+        constraints.append(PsiBoundaryConstraint(x_s, z_s, psibval))
+
         super().__init__(constraints)
