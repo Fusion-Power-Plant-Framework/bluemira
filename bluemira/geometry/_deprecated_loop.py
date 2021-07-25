@@ -49,6 +49,7 @@ from bluemira.geometry._deprecated_tools import (
     get_normal_vector,
     offset,
     vector_lengthnorm,
+    in_polygon,
 )
 from bluemira.utilities.tools import is_num
 
@@ -562,6 +563,26 @@ class Loop(GeomBase):
     # =========================================================================
     # Queries
     # =========================================================================
+
+    def point_in_poly(self, point, include_edges=False):
+        """
+        Determines whether or not a point is within in the Loop
+
+        Parameters
+        ----------
+        point: iterable(2-3)
+            The 2-D or 3-D coordinates of the point (coord conversion handled)
+        include_edges: bool
+            Whether or not to return True if a point is on the perimeter of the
+            Loop
+
+        Returns
+        -------
+        in_polygon: bool
+            Whether or not the point is within the Loop
+        """
+        point = self._point32d(point)
+        return in_polygon(*point, self.d2.T, include_edges=include_edges)
 
     def distance_to(self, point):
         """

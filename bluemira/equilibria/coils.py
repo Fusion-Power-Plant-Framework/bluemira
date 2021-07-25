@@ -249,7 +249,7 @@ class Coil:
             if current is None:
                 current = self.current
 
-            half_width = (abs(current) / (1e6 * self.j_max)) ** 0.5 / 2
+            half_width = 0.5 * np.sqrt((abs(current) / (1e6 * self.j_max)))
             self.dx, self.dz = half_width, half_width
             self._make_corners()
             self.sub_coils = None  # Need to re-mesh if this is what you want
@@ -260,7 +260,7 @@ class Coil:
         """
         Makes the coil corner vectors
         """
-        self.rc = np.sqrt(self.dx ** 2 + self.dz ** 2) / 2
+        self.rc = 0.5 * np.hypot(self.dx, self.dz)
         self.x_corner, self.z_corner = make_coil_corners(
             self.x, self.z, self.dx, self.dz
         )

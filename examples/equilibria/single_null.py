@@ -104,3 +104,88 @@ SN = AbInitioEquilibriumProblem(
 
 # %%
 eqref = SN.solve()
+
+# %%[markdown]
+# Make all coils use by making regions for coils
+
+# %%
+pf_coilregions = {}
+region_coils = {
+    1: {"x": 6.01, "z": 10.09},
+    3: {"x": 19.00, "z": 3.67},
+    5: {"x": 10.92, "z": -10.77},
+}
+for coil in SN.coilset.coils.values():
+    coil_number = int(coil.name.split("_")[-1])
+    if coil.ctype != "PF" or coil_number not in region_coils:
+        continue
+    dx, dz = coil.dx * 4, coil.dz * 4  # Arbitrarily sized region
+    pf_coilregions[coil.name] = Loop(
+        x=region_coils[coil_number]["x"] + np.array([-dx, dx, dx, -dx, -dx]),
+        z=region_coils[coil_number]["z"] + np.array([-dz, -dz, dz, dz, -dz]),
+    )
+
+# %%[markdown]
+# Let's look at the coilset on its own
+
+# %%
+SN.coilset.plot()
+
+# %%[markdown]
+# Define some exclusion zones for the PF coils
+
+# %%
+UP = Loop(x=[7.5, 14, 14, 7.5, 7.5], z=[3, 3, 14.5, 14.5, 3])
+LP = Loop(x=[10, 10, 15, 22, 22, 15, 10], z=[-6, -10, -13, -13, -8, -8, -6])
+EQ = Loop(x=[14, 22, 22, 14, 14], z=[-1.4, -1.4, 1.4, 1.4, -1.4])
+
+# %%[markdown]
+# Look at the "track" for the PF coil locations, and the exclusion zones:
+
+# %%
+f, ax = plt.subplots()
+
+TF.plot(ax, fill=False)
+UP.plot(ax, edgecolor="r", facecolor="r", alpha=0.5)
+LP.plot(ax, edgecolor="r", facecolor="r", alpha=0.5)
+EQ.plot(ax, edgecolor="r", facecolor="r", alpha=0.5)
+
+# %%[markdown]
+# Now let's optimise:
+# *  positions of the PF coils
+# *  currents of the PF and CS coils
+#
+# constraining:
+# *  plasma shape
+# *  plasma integral values (I_p, beta_p, l_i)
+# *  coil positions         (L)
+# *  coil currents          (I)
+# *  coil forces            (F)
+# *  field at coils         (B)
+# *  pulse length           (tau_flattop)
+#
+# The resulting equilbria will automatically be converged once the coil sizes
+# have been fixed at their maximum
+# (sometimes problematic for end of flattop)
+
+# The following method will:
+# *  calculate the breakdown flux for this reactor
+# *  optimise the coil positions for the start and end of flat-top
+# *  converge the resulting SOF and EOF equilibria
+
+# %%
+SN.optimise_positions(
+    max_PF_current=25e6,  # [A]
+    PF_Fz_max=400e6,  # [N]
+    CS_Fz_sum=300e6,  # [N]
+    CS_Fz_sep=250e6,  # [N]
+    tau_flattop=1.5 * 3600,  # [s]
+    v_burn=0.04,  # [V]
+    psi_bd=None,
+    pfcoiltrack=TF,
+    pf_exclusions=[LP, EQ, UP],
+    pf_coilregions=pf_coilregions,
+    CS=False,
+    plot=True,
+    gif=False,
+)

@@ -93,6 +93,7 @@ PLOT_DEFAULTS = {
         "edgecolor": "k",
         "linewidth": 2,
         "fontsize": 6,
+        "alpha": 0.5,
     },
 }
 
@@ -189,18 +190,19 @@ def _plot_coil(ax, coil, fill=True, **kwargs):
 
     fcolor = kwargs.pop("facecolor", PLOT_DEFAULTS["coil"]["facecolor"][coil.ctype])
 
-    kwargs["color"] = kwargs.get("color", "k")
-    x, z = (
-        np.append(coil.x_corner, coil.x_corner[0]),
-        np.append(coil.z_corner, coil.z_corner[0]),
-    )
-    ax.plot(x, z, zorder=11, **kwargs)
+    color = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
+    linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
+    alpha = kwargs.pop("alpha", PLOT_DEFAULTS["coil"]["alpha"])
+    
+    x = np.append(coil.x_corner, coil.x_corner[0])
+    z = np.append(coil.z_corner, coil.z_corner[0])
+
+    ax.plot(x, z, zorder=11, color=color, linewidth=linewidth)
     if fill:
         if mask:
             ax.fill(x, z, color="w", zorder=10, alpha=1)
-        kwargs["alpha"] = 0.5
-        del kwargs["color"]
-        ax.fill(x, z, zorder=10, color=fcolor, **kwargs)
+
+        ax.fill(x, z, zorder=10, color=fcolor, alpha=alpha)
 
 
 def _annotate_coil(ax, coil, force=None, centre=None):
@@ -262,10 +264,10 @@ class CoilPlotter(Plotter):
         Whether to plot force vectors, and if so the array of force vectors
     """
 
-    def __init__(self, coil, ax=None, subcoil=True, label=False, force=None):
+    def __init__(self, coil, ax=None, subcoil=True, label=False, force=None, **kwargs):
         super().__init__(ax)
         self.coil = coil
-        self.plot_coil(subcoil=subcoil)
+        self.plot_coil(subcoil=subcoil, **kwargs)
         if label:
             _annotate_coil(self.ax, self.coil, force=force)
 
@@ -273,7 +275,7 @@ class CoilPlotter(Plotter):
             d_fx, d_fz = force / M_PER_MN
             self.ax.arrow(self.coil.x, self.coil.z, 0, d_fz, color="r", width=0.1)
 
-    def plot_coil(self, subcoil):
+    def plot_coil(self, subcoil, **kwargs):
         """
         Plot a coil onto the Axes.
         """
@@ -282,8 +284,8 @@ class CoilPlotter(Plotter):
                 pass
             else:
                 for name, sc in self.coil.sub_coils.items():
-                    _plot_coil(self.ax, sc, fill=False)
-        _plot_coil(self.ax, self.coil, fill=True)
+                    _plot_coil(self.ax, sc, fill=False, **kwargs)
+        _plot_coil(self.ax, self.coil, fill=True, **kwargs)
 
 
 class PlasmaCoilPlotter(Plotter):

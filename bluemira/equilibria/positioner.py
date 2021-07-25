@@ -25,7 +25,7 @@ Coil positioning routines (automatic and adjustable)
 
 import numpy as np
 import re
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
 from bluemira.base.constants import EPS
@@ -43,10 +43,11 @@ from bluemira.geometry._deprecated_tools import (
     vector_lengthnorm_2d,
     loop_plane_intersect,
     join_intersect,
+    vector_lengthnorm_2d,
 )
 from bluemira.geometry._deprecated_loop import Loop
 from BLUEPRINT.geometry.inscribedrect import inscribed_rect_in_poly
-from bluemira.equilibria.coils import Coil, CoilSet, PF_COIL_NAME, Solenoid
+from bluemira.equilibria.coils import Coil, CoilSet, PF_COIL_NAME, CS_COIL_NAME, Solenoid
 from bluemira.equilibria.plotting import XZLPlotter, RegionPlotter
 from bluemira.utilities import tools
 
@@ -160,9 +161,9 @@ class CoilPositioner:
         #     argu = len(track) - 1
         tf_loop = Loop(*track[arg_lower : arg_upper + 1])
         l_norm = vector_lengthnorm_2d(tf_loop["x"], tf_loop["z"])
-        xint, zint = interp1d(l_norm, tf_loop["x"]), interp1d(l_norm, tf_loop["z"])
         pos = np.linspace(0, 1, n_PF)
-        return [Coil(x, z) for x, z in zip(xint(pos), zint(pos))]
+        xint, zint = interp1d(l_norm, tf_loop["x"])(pos), interp1d(l_norm, tf_loop["z"])(pos)
+        return [Coil(xint[i], zint[i], name=PF_COIL_NAME.format(n_PF-i)) for i in range(n_PF)]
 
     def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS):
         """
@@ -191,7 +192,7 @@ class CoilPositioner:
         z_cs -= a * length / 2 + b * self.csgap
         heights = length / 2 * np.ones(n_CS)
         heights[n_CS // 2] = length  # Central module
-        c = [Coil(x_cs, z, dx=tk_cs, dz=dz, ctype="CS") for z, dz in zip(z_cs, heights)]
+        c = [Coil(x_cs, z_cs[i], dx=tk_cs, dz=heights[i], name=CS_COIL_NAME.format(i+1), ctype="CS") for i in range(n_CS)]
         return c# Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap, coils=c)
 
     def make_coilset(self, d_coil=0.5):
@@ -238,7 +239,18 @@ class XZLMapper:
     def __init__(self, pftrack, cs_x=1, cs_zmin=1, cs_zmax=1, cs_gap=0.1, CS=False):
 
         self.pfloop = pftrack.copy()  # Stored as loop too
-        self.pftrack = self.pfloop.interpolator()
+
+        ln = vector_lengthnorm_2d(pftrack.x, pftrack.z)
+
+        x_ius = InterpolatedUnivariateSpline(ln, pftrack.x)
+        z_ius = InterpolatedUnivariateSpline(ln, pftrack.z)
+        self.pftrack = {
+            "x": x_ius,
+            "z": z_ius,
+            "L": self.pfloop.length,
+            "dx": x_ius.derivative(),
+            "dz": z_ius.derivative(),
+        }
 
         self.flag_CS = CS
         if self.flag_CS:

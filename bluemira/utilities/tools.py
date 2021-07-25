@@ -349,3 +349,33 @@ def delta(v2, v1ref):
         The absolute relative difference between v2 and v1ref
     """
     return abs((v2 - v1ref) / v1ref)
+
+
+def clip(val, val_min, val_max):
+    """
+    Clips (limits) val between val_min and val_max.
+    This function wraps the numpy core umath minimum and maximum functions
+    in order to avoid the standard numpy clip function, as described in:
+    https://github.com/numpy/numpy/issues/14281
+
+    Handles scalars using built-ins.
+
+    Parameters
+    ----------
+    val: scalar or array
+        The value to be clipped.
+    val_min: scalar or array
+        The minimum value.
+    val_max: scalar or array
+        The maximum value.
+
+    Returns
+    -------
+    clipped_val: scalar or array
+        The clipped values.
+    """
+    if isinstance(val, np.ndarray):
+        np.core.umath.clip(val, val_min, val_max, out=val)
+    else:
+        val = val_min if val < val_min else val_max if val > val_max else val
+    return val

@@ -22,6 +22,7 @@
 """
 Main interface for building and loading equilibria and coilset designs
 """
+from BLUEPRINT.equilibria.constants import NB3SN_B_MAX, NB3SN_J_MAX, NBTI_B_MAX, NBTI_J_MAX
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
@@ -866,8 +867,8 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
             self.coilset = positioner.make_coilset()
         else:  # Input coilset object
             self.coilset = coilset.copy()
-        self.coilset.assign_coil_materials("PF", "NbTi")
-        self.coilset.assign_coil_materials("CS", "Nb3Sn")
+        self.coilset.assign_coil_materials("PF", j_max=NBTI_J_MAX, b_max=NBTI_B_MAX)
+        self.coilset.assign_coil_materials("CS", j_max=NB3SN_J_MAX, b_max=NB3SN_B_MAX)
         # Limiter for mathematical stability (occasionally)
         self.lim = Limiter(x=[x_min + 0.3, x_max - 0.3], z=[0, 0])
         # Equilibrium object
