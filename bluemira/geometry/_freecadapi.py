@@ -174,10 +174,7 @@ def make_bspline(
             as a list of 3D tuples, a 3D numpy array, or similar.
         closed (bool, optional): if True, the first and last points will be
             connected in order to form a closed shape. Defaults to False.
-
-    Optional
-    --------
-        Parameters: knot sequence
+        Parameters: (optional) knot sequence
 
     Returns
     -------
