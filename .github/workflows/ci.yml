@@ -10,7 +10,7 @@ on:
 jobs:
   build-and-test:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - name: Checkout
@@ -49,7 +49,7 @@ jobs:
       with:
         activate-environment: bluemira
         environment-file: conda/environment.yml
-        miniforge-version: "4.10.3"
+        miniforge-version: "4.10.3-3"
         use-only-tar-bz2: true
 
     - name: Check Code Quality
