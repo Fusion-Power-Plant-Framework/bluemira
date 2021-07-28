@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ class TestInscribedRectangle:
     aspectratios = np.logspace(-1, 1, num=10)
 
     @pytest.mark.parametrize("shape, convex", zip(shapes, convex))
-    def test_inscribed_rectangle(self, shape, convex):
+    def test_inscribed_rectangle(self, shape, convex, capsys):
         x = y = 5
         self.r = False
         # Random points in a rectangular grid of the shape

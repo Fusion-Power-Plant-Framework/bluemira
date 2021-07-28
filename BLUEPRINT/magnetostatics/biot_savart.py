@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -20,64 +20,77 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Green field loop object
+Biot-Savart filament object
 """
 import numpy as np
-from scipy.linalg import norm
+from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
+from BLUEPRINT.utilities import tools
+from BLUEPRINT.utilities.plottools import Plot3D
+from BLUEPRINT.geometry.geomtools import rotate_matrix, bounding_box, close_coordinates
+from BLUEPRINT.magnetostatics.utilities import process_loop_array
+from BLUEPRINT.magnetostatics.baseclass import CurrentSource
+
+__all__ = ["BiotSavartFilament"]
 
 
-class BiotSavartLoop:
+class BiotSavartFilament(CurrentSource):
     """
-    Class to calculate field and vector potential from an arbitrary loop shape.
+    Class to calculate field and vector potential from an arbitrary filament.
 
     Parameters
     ----------
-    loops: Loop or List[Loop]
+    arrays: Union[Loop, np.array(n, 3), List[Loop, np.array(n, 3)]]
         The arbitrarily shaped closed current Loop. Alternatively provide the
         list of Loop objects.
     radius: float
         The nominal radius of the coil
+    current: float
+        The current flowing through the filament [A]. Defaults to 1 A to enable
+        current to be optimised separately from the field response.
     """
 
-    def __init__(self, loops, radius):
+    def __init__(self, arrays, radius, current=1.0):
 
-        if not isinstance(loops, list):
-            # Handle single Loop
-            loops = [loops]
+        # TODO: Check / modify discretisation
 
-        # Handle list of Loops (potentially of different sizes)
-        d_ls, d_l_hats, mids_points = [], [], []
+        if not isinstance(arrays, list):
+            # Handle single Loop/array
+            arrays = [arrays]
+
+        # Handle list of Loops/arrays (potentially of different sizes)
+        d_ls, mids_points = [], []
         points = []
-        for i, loop in enumerate(loops):
-            loop = loop.copy()
-            # Ensure loop is closed
-            loop.close()
-            d_l = np.diff(loop.xyz).T
-            d_l = np.append(np.reshape(d_l[-1, :], (1, 3)), d_l, axis=0)  # prepend
-            # central difference average segment length vectors
-            d_l = (d_l[1:] + d_l[:-1]).T / 2
+        for i, array in enumerate(arrays):
+            array = process_loop_array(array)
+            # Ensure array is closed
+            xyz = np.array(close_coordinates(*array.T)).T
 
-            d_l_hat = np.linalg.norm(d_l.T, axis=1)
-            mid_points = loop.xyz[:, :-1] + d_l / 2
+            diff = np.diff(xyz, axis=0)
+            d_l = np.r_[[diff[-1, :]], diff]  # prepend
+            # central difference average segment length vectors
+            d_l = 0.5 * (d_l[1:] + d_l[:-1])
+
+            mid_points = xyz[:-1, :] + 0.5 * d_l
             d_ls.append(d_l)
-            d_l_hats.append(d_l_hat)
-            points.append(loop.xyz[:, :-1])
+            points.append(xyz[:-1, :])
             mids_points.append(mid_points)
             if i == 0:
                 # Take the first loop as a reference for inductance calculation
-                self.ref_loop = loop
                 self.ref_mid_points = mid_points
                 self.ref_d_l = d_l
 
-        # Assemble arrays and vector
-        self.d_l = np.hstack(d_ls)
-        self.d_l_hat = np.hstack(d_l_hats)
-        self.mid_points = np.hstack(mids_points)
-        self.points = np.hstack(points)
+                lengths = np.sqrt(np.sum(diff ** 2, axis=1))
+                self.length = np.sum(lengths)
+                self.length_scale = np.min(lengths)
 
-        self.loop = loops[0] if len(loops) == 1 else loops
+        # Assemble arrays and vector
+        self.d_l = np.vstack(d_ls)
+        self.d_l_hat = np.linalg.norm(self.d_l, axis=1)
+        self.mid_points = np.vstack(mids_points)
+        self.points = np.vstack(points)
+        self._array_lengths = [len(p) for p in points]
         self.radius = radius
-        self.length_scale = self.ref_loop.get_min_length()
+        self.current = current
 
     def potential(self, point):
         """
@@ -93,14 +106,17 @@ class BiotSavartLoop:
         potential: np.array(3)
             The vector potential at the point due to the arbitrarily shaped loop
         """
-        # TODO: Remove once regression tests complete
-        # (stored energy now calculated via inductance)
-        r = point - self.points.T
-        r_mag = np.tile(norm(r, axis=1), (3, 1)).T
-        r_mag[r_mag < 1e-16] = 1e-16
+        r = point - self.points
+        r_mag = tools.norm(r, axis=1)
+        r_mag[r_mag < EPS] = EPS
         core = r_mag / self.radius
         core[r_mag > self.radius] = 1
-        return np.sum(core * self.d_l.T / r_mag, axis=0) / (4 * np.pi)
+
+        # The below einsum operation is equivalent to:
+        # np.sum(core * self.d_l.T / r_mag, axis=0) / (4 * np.pi)
+        return np.einsum(
+            "i, ji, ... -> j", core, self.d_l / r_mag[None], ONE_4PI * self.current
+        )
 
     def field_old(self, point):
         """
@@ -123,20 +139,19 @@ class BiotSavartLoop:
         This is the original Biot-Savart equation, without centre-averaged
         smoothing. Do not use for values near the coil current centreline.
         """  # noqa (W505)
-        r = point - self.mid_points.T
+        r = point - self.mid_points
         r3 = np.linalg.norm(r, axis=1) ** 3
 
-        ds = np.cross(self.d_l.T, r)
+        ds = np.cross(self.d_l, r)
 
         # Coil core correction
-        d_l_hat = np.tile(norm(self.d_l.T, axis=1), (3, 1)).T
+        d_l_hat = self.d_l_hat[:, None]
         ds_mag = np.linalg.norm(ds / d_l_hat, axis=1)
         ds_mag = np.tile(ds_mag, (3, 1)).T
-        ds_mag[ds_mag < 1e-16] = 1e-16
+        ds_mag[ds_mag < EPS] = EPS
         core = ds_mag ** 2 / self.radius ** 2
         core[ds_mag > self.radius] = 1
-
-        return 1e-7 * np.sum(core * ds / r3[:, np.newaxis], axis=0)
+        return MU_0_4PI * self.current * np.sum(core * ds / r3[:, np.newaxis], axis=0)
 
     def field(self, point):
         """
@@ -161,21 +176,30 @@ class BiotSavartLoop:
 
         Masking about coil core.
         """  # noqa (W505)
-        r = point - self.points.T
+        # point array -> point-segment vectors
+        r = np.atleast_2d(point) - self.points
+        r1 = r - self.d_l / 2
+        r2 = r + self.d_l / 2
 
-        r1 = r - self.d_l.T / 2
-        r1_hat = r1 / np.tile(norm(r1, axis=1), (3, 1)).T
-        r2 = r + self.d_l.T / 2
-        r2_hat = r2 / np.tile(norm(r2, axis=1), (3, 1)).T
-        d_l_hat = np.tile(norm(self.d_l.T, axis=1), (3, 1)).T
-        ds = np.cross(self.d_l.T, r) / d_l_hat
-        ds_mag = np.tile(norm(ds, axis=1), (3, 1)).T
-        ds = np.cross(self.d_l.T, ds) / d_l_hat
-        ds_mag[ds_mag < 1e-16] = 1e-16
+        r1_hat = r1 / tools.norm(r1, axis=1)[:, None]
+        r2_hat = r2 / tools.norm(r2, axis=1)[:, None]
+
+        d_l_hat = self.d_l_hat[:, None]
+
+        ds = np.cross(self.d_l, r) / d_l_hat
+        ds_mag = tools.norm(ds, axis=1)
+        ds = np.cross(self.d_l, ds) / d_l_hat
+        ds_mag[ds_mag < EPS] = EPS
         core = ds_mag ** 2 / self.radius ** 2
         core[ds_mag > self.radius] = 1
-
-        return 1e-7 * sum(core * np.cross(ds, r2_hat - r1_hat) / ds_mag ** 2)
+        # The below einsum operation is equivalent to:
+        # MU_0_4PI * sum(core * np.cross(ds, r2_hat - r1_hat) / ds_mag ** 2)
+        return np.einsum(
+            "..., i, ij -> j",
+            MU_0_4PI * self.current,
+            core / ds_mag ** 2,
+            np.cross(ds, r2_hat - r1_hat),
+        )
 
     def inductance(self):
         """
@@ -199,22 +223,74 @@ class BiotSavartLoop:
         # TODO: Validate inductance calculate properly and compare stored
         # energy of systems
         inductance = 0
-        for i, (x1, dx1) in enumerate(zip(self.ref_mid_points.T, self.ref_d_l.T)):
+        for i, (x1, dx1) in enumerate(zip(self.ref_mid_points, self.ref_d_l)):
             # We create a mask to drop the point where x1 == x2
-            r = x1 - self.mid_points.T
+            r = x1 - self.mid_points
             mask = np.sum(r ** 2, axis=1) > self.radius
             inductance += np.sum(
-                np.dot(dx1, self.d_l.T[mask].T) / np.linalg.norm(r[mask], axis=1)
+                np.dot(dx1, self.d_l[mask].T) / np.linalg.norm(r[mask], axis=1)
             )
 
         # Self-inductance correction (Y = 0.5 for homogenous current distribution)
         inductance += (
-            2
-            * self.ref_loop.length
-            * (np.log(2 * self.length_scale / self.radius) + 0.25)
+            2 * self.length * (np.log(2 * self.length_scale / self.radius) + 0.25)
         )
 
-        return 1e-7 * inductance
+        return MU_0_4PI * inductance
+
+    def rotate(self, angle, axis):
+        """
+        Rotate the CurrentSource about an axis.
+
+        Parameters
+        ----------
+        angle: float
+            The rotation degree [rad]
+        axis: Union[np.array(3), str]
+            The axis of rotation
+        """
+        r = rotate_matrix(angle, axis)
+        self.points = self.points @ r
+        self.d_l = self.d_l @ r
+        self.mid_points = self.mid_points @ r
+        self.ref_d_l = self.ref_d_l @ r
+        self.ref_mid_points = self.ref_mid_points @ r
+
+    def plot(self, ax=None, show_coord_sys=False):
+        """
+        Plot the CurrentSource.
+
+        Parameters
+        ----------
+        ax: Union[None, Axes]
+            The matplotlib axes to plot on
+        show_coord_sys: bool
+            Whether or not to plot the coordinate systems
+        """
+        if ax is None:
+            ax = Plot3D()
+            # If no ax provided, we assume that we want to plot only this source,
+            # and thus set aspect ratio equality on this term only
+            edge_points = np.concatenate(self.points)
+
+            # Invisible bounding box to set equal aspect ratio plot
+            xbox, ybox, zbox = bounding_box(*edge_points)
+            ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
+
+        # Split sub-filaments up for plotting purposes
+        i = 0
+        for length in self._array_lengths:
+            ax.plot(*self.points[i : i + length].T, color="b", linewidth=1)
+            i += length
+
+        # Plot local coordinate system
+        if show_coord_sys:
+            origin = [0, 0, 0]
+            dcm = np.eye(3)
+            ax.scatter([0, 0, 0], color="k")
+            ax.quiver(*origin, *dcm[0], length=self.length_scale, color="r")
+            ax.quiver(*origin, *dcm[1], length=self.length_scale, color="r")
+            ax.quiver(*origin, *dcm[2], length=self.length_scale, color="r")
 
 
 if __name__ == "__main__":

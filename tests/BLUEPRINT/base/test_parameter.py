@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -85,13 +85,59 @@ class TestParameter:
     )
     g_str = "B_0 = 5.7 T (Toroidal field at R_0) : Toroidal field at the centre of the plasma"
 
-    def test_p(self):
-        assert self.p.value == 9
+    def test_p(self, capsys):
+        # make a copy of p
+        _p = Parameter(**self.p.to_dict())
 
-    @pytest.mark.parametrize("param", (p, g))
-    def test_to_from_dict(self, param):
-        p_dict = param.to_dict()
-        assert p_dict == {
+        # Assert printing is correct
+        print(_p, end="")
+        out, err = capsys.readouterr()
+        assert out == self.p_str
+
+        # Assert no type change on value change
+        assert isinstance(_p, Parameter)
+        _p.value = 4
+        assert isinstance(_p, Parameter)
+        _p.source = "here"
+
+        # Assert value as expected
+        assert _p == 4
+        assert _p.source == "here"
+        assert _p == _p.value
+
+        # Assert attribute access
+        assert _p.description == "marjogrgrbg"
+
+        # Assert equal to as well as not equal to works
+        assert not _p == 9
+        _p.value = 9
+        assert _p == 9
+
+        # Assert source and value history
+        assert _p.value_history == [9, 4, 9]
+        assert _p.source_history == [None, "here", False]
+
+        # Maths
+        _p += 1
+        _p -= 1
+        _p *= 1
+        _p /= 1
+        assert isinstance(_p, Parameter)
+
+        a = _p + 1
+        b = _p - 1
+        c = _p * 1
+        d = _p / 1
+        assert all([a == 10, b == 8, c == 9, d == 9])
+
+        assert self.p + _p == 18
+
+    @pytest.mark.parametrize(
+        "param, ignore_var", ((p, True), (p, False), (g, True), (g, False))
+    )
+    def test_to_from_dict(self, param, ignore_var):
+        p_dict = param.to_dict(ignore_var=ignore_var)
+        mapping = {
             "var": param.var,
             "name": param.name,
             "value": param.value,
@@ -100,33 +146,20 @@ class TestParameter:
             "source": param.source,
             "mapping": param.mapping,
         }
-
+        if ignore_var:
+            mapping.pop("var")
+        assert p_dict == mapping
+        if ignore_var:
+            p_dict["var"] = param.var
         p_new = Parameter(**p_dict)
+        if ignore_var:
+            p_dict.pop("var")
         assert id(self.p) != id(p_new)
-        assert p_dict.keys() == p_new.to_dict().keys()
-        assert all(
-            [p_dict[key] == new_val for (key, new_val) in p_new.to_dict().items()]
-        )
-
-    @pytest.mark.parametrize("param", (p, g))
-    def test_to_from_dict_ignore_var(self, param):
-        p_dict = param.to_dict(ignore_var=True)
-        assert p_dict == {
-            "name": param.name,
-            "value": param.value,
-            "unit": param.unit,
-            "description": param.description,
-            "source": param.source,
-            "mapping": param.mapping,
-        }
-
-        p_new = Parameter(var=param.var, **p_dict)
-        assert id(self.p) != id(p_new)
-        assert p_dict.keys() == p_new.to_dict(ignore_var=True).keys()
+        assert p_dict.keys() == p_new.to_dict(ignore_var=ignore_var).keys()
         assert all(
             [
                 p_dict[key] == new_val
-                for (key, new_val) in p_new.to_dict(ignore_var=True).items()
+                for (key, new_val) in p_new.to_dict(ignore_var=ignore_var).items()
             ]
         )
 
@@ -211,7 +244,15 @@ class TestParameterFrame:
             {"PROCESS": ParameterMapping("bt", False, True)},
         ],
     ]
-    params = ParameterFrame(default_params)
+
+    # ParameterFrame.set_default_parameters(default_params)
+
+    def setup(self):
+        self.params = ParameterFrame(self.default_params)
+
+    # @classmethod
+    # def teardown_class(cls):
+    #     ParameterFrame._clean()
 
     def test_keys(self):
         assert list(self.params.keys()) == [p[0] for p in self.default_params]
@@ -228,17 +269,23 @@ class TestParameterFrame:
         assert params_copy != self.params
 
     def test_get(self):
-        assert isinstance(self.params.get("n_TF"), Parameter)
-        assert isinstance(self.params.get(["n_TF", "n_PF"]), ParameterFrame)
+        assert isinstance(self.params.get("n_TF"), int)
+        out = self.params.get("n_TF_", 4)
+        assert isinstance(out, int)
+        assert out == 4
 
-    def test_getitem(self):
+    def test_get_param(self):
+        assert isinstance(self.params.get_param("n_TF"), Parameter)
+        assert isinstance(self.params.get_param(["n_TF", "n_PF"]), ParameterFrame)
+
+    def test_get_failure(self):
         assert self.params.n_TF == 16
-        with pytest.raises(KeyError):
-            self.params.get("notathing")
+        with pytest.raises(AttributeError):
+            self.params.get_param("notathing")
 
     def test_add(self):
         p = Parameter("R_0", "Major radius", 9.5, "m", "marjogrgrbg", None)
-        g = Parameter("T_0", "somehthing new", 5.7, "T", "bla", None)
+        g = Parameter("T_0", "something new", 5.7, "T", "bla", None)
         self.params.add_parameter(p)
         assert self.params.R_0 == 9.5
         self.params.add_parameter(g)
@@ -272,10 +319,14 @@ class TestParameterFrame:
         }
         params_copy.update_kw_parameters(p)
         assert params_copy.R_0 == 10
-        assert params_copy.get("R_0").name == self.params.get("R_0").name
-        assert params_copy.get("R_0").unit == self.params.get("R_0").unit
-        assert params_copy.get("R_0").description == self.params.get("R_0").description
-        assert params_copy.get("R_0").source == self.params.get("R_0").source
+        assert params_copy.get_param("R_0").name == self.params.get_param("R_0").name
+        assert params_copy.get_param("R_0").unit == self.params.get_param("R_0").unit
+        assert (
+            params_copy.get_param("R_0").description
+            == self.params.get_param("R_0").description
+        )
+        # The source should be updated because it has changed
+        # assert params_copy.get("R_0").source == self.params.get("R_0").source
 
     def test_add_parameters_source_using_class_format(self):
         """
@@ -296,9 +347,9 @@ class TestParameterFrame:
         ]
         new_source = "New Source"
         params_copy.add_parameters(record_list, source=new_source)
-        assert params_copy.get("R_0").source == new_source
-        assert params_copy.get("B_0").source == new_source
-        assert params_copy.get("n_TF").source == new_source
+        assert params_copy.get_param("R_0").source == new_source
+        assert params_copy.get_param("B_0").source == new_source
+        assert params_copy.get_param("n_TF").source == new_source
 
     def test_add_parameters_source_using_list_format(self):
         """
@@ -313,9 +364,9 @@ class TestParameterFrame:
         ]
         new_source = "New Source"
         params_copy.add_parameters(record_list, source=new_source)
-        assert params_copy.get("R_0").source == new_source
-        assert params_copy.get("B_0").source == new_source
-        assert params_copy.get("n_TF").source == new_source
+        assert params_copy.get_param("R_0").source == new_source
+        assert params_copy.get_param("B_0").source == new_source
+        assert params_copy.get_param("n_TF").source == new_source
 
     def test_add_parameters_source_via_update_kw_parameters(self):
         """
@@ -337,9 +388,9 @@ class TestParameterFrame:
         }
         new_source = "New Source"
         params_copy.add_parameters(record_list, source=new_source)
-        assert params_copy.get("R_0").source == new_source
-        assert params_copy.get("B_0").source == new_source
-        assert params_copy.get("n_TF").source == new_source
+        assert params_copy.get_param("R_0").source == new_source
+        assert params_copy.get_param("B_0").source == new_source
+        assert params_copy.get_param("n_TF").source == new_source
 
     def test_bad_index(self):
         """
@@ -362,7 +413,7 @@ class TestParameterFrame:
         Test that the ParameterFrame fails gracefully on a mismatched attribute.
         """
         with pytest.raises(ValueError) as ex_info:
-            self.params.R_0 = self.params.get("B_0")
+            self.params.R_0 = self.params.get_param("B_0")
         assert (
             str(ex_info.value)
             == "Mismatch between parameter var B_0 and attribute to be set R_0."
@@ -384,12 +435,12 @@ class TestParameterFrame:
         assert all(
             d[key]
             == {
-                "name": self.params.get(key).name,
-                "value": self.params.get(key).value,
-                "unit": self.params.get(key).unit,
-                "description": self.params.get(key).description,
-                "source": self.params.get(key).source,
-                "mapping": self.params.get(key).mapping,
+                "name": self.params.get_param(key).name,
+                "value": self.params.get_param(key).value,
+                "unit": self.params.get_param(key).unit,
+                "description": self.params.get_param(key).description,
+                "source": self.params.get_param(key).source,
+                "mapping": self.params.get_param(key).mapping,
             }
             for key in self.params.keys()
         )
@@ -400,7 +451,7 @@ class TestParameterFrame:
     def test_set_values_from_dict(self):
         d = self.params.to_dict()
         assert d.keys() == self.params.keys()
-        assert all([d[key] == self.params[key] for key in self.params.keys()])
+        assert all([d[key]["value"] == self.params[key] for key in self.params.keys()])
         params_copy = self.params.copy()
         params_copy.R_0 = 60.0
         params_copy.B_0 = 0.0
@@ -413,12 +464,13 @@ class TestParameterFrame:
             [
                 all(
                     [
-                        param_list[0] == self.params.get(param_list[0]).var,
-                        param_list[1] == self.params.get(param_list[0]).name,
-                        param_list[2] == self.params.get(param_list[0]).value,
-                        param_list[3] == self.params.get(param_list[0]).unit,
-                        param_list[4] == self.params.get(param_list[0]).description,
-                        param_list[5] == self.params.get(param_list[0]).source,
+                        param_list[0] == self.params.get_param(param_list[0]).var,
+                        param_list[1] == self.params.get_param(param_list[0]).name,
+                        param_list[2] == self.params.get_param(param_list[0]).value,
+                        param_list[3] == self.params.get_param(param_list[0]).unit,
+                        param_list[4]
+                        == self.params.get_param(param_list[0]).description,
+                        param_list[5] == self.params.get_param(param_list[0]).source,
                     ]
                 )
                 for param_list in test_list
@@ -481,6 +533,12 @@ class TestParameterFrame:
 
 class TestReactorSystem:
 
+    # def setup(self):
+    #     self.params = ParameterFrame(with_defaults=True)
+
+    # @classmethod
+    # def teardown_class(cls):
+    #     ParameterFrame._clean()
     DIV = Dummy({"T_in": 88})
 
     def test_input_handling(self):

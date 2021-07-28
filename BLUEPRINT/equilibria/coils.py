@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -1866,7 +1866,7 @@ class CoilSet(CoilGroup):
 
 class SymmetricCircuit(Coil):
     """
-    Represents a set of Symmetric coils in the z direction connected in a circuit.
+    Represents a set of coils, symmetric about z = 0, connected in a circuit.
     The coils are identical except for their z position.
 
     Parameters

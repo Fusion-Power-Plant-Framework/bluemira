@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from tests.test_reactor import (
+from tests.BLUEPRINT.test_reactor import (
     SmokeTestSingleNullReactor,
     config,
     build_config,

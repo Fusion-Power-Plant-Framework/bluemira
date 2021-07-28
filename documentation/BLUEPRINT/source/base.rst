@@ -133,5 +133,77 @@ The type-checking functionality has a global on/off switch: :py:const:`ENGAGE_TY
 
 If functions annotations are not used in a function or class, type-checking is not implemented.
 
+Parameters and ParameterFrames
+------------------------------
+
+Parameter class
+^^^^^^^^^^^^^^^
 
 
+The Parameter class uses a :py:class:`wrapt.ObjectProxy` to make all access to a Parameter act as if it is the same type as the value of Parameter (except where required).
+There are a few extra builtin methods to enable copying, array manipulation and pickling.
+A Parameter has a source history and a value history which are updated on a change to source or value.
+
+If the source is not provided for a Parameter a warning will be produced.
+
+.. code-block:: python
+
+    p = Parameter(var='var', name='variable', value=5.0)
+
+    print(p)  # var = 5.0 (variable)
+
+    isinstance(p, float)  # True
+
+    a = p + 5  # a = 10.0
+
+    p += 5
+
+    print(p)  # var = 10.0 (variable)
+
+Idioms of the Parameter class
+"""""""""""""""""""""""""""""
+
+For very low types (eg `str`) it is not possible to modify how an object is treated:
+
+.. code-block:: python
+
+    p = Parameter(var='var', name='var', value='hello')
+
+    print(p)  # 'hello'
+
+    isinstance(p, str)  # True
+
+    repr(p)          # 'hello'
+    str.__repr__(p)  # TypeError
+
+    p.join('world')  # 'helloworld'
+
+    ''.join(p, 'world') # TypeError
+
+    ''.join(p.value, 'world') # 'helloworld'
+
+
+This only affects some situations, the usual culprit is when leaving python for C. So far this comes down to internal use of :py:func:`__repr__` for example :py:func:`float.__repr__` or :py:func:`str.__repr__` for type checking. As a general rule :py:func:`__repr__` shouldn't be used for type checking anyway but occasionally is internally in python.
+
+ParameterFrame class
+^^^^^^^^^^^^^^^^^^^^
+
+The ParameterFrame class follows the 'borg' pattern where state is passed round (on request) but each instance is not the same (therefore not a singleton).
+The default state of the frame is stored in :py:attr:`__default_params` and populated with the :py:meth:`set_default_parameters` classmethod.
+
+In turn the default state can then populate :py:attr:`__dict__` (as a copy, but this could be in future be changed to a per reactor class variable).
+To update the default Parameter values globally :py:meth:`_force_update_default` can be used which updates the Parameter in all ParameterFrame instances as well as the ParameterFrame class.
+
+The attributes of a ParameterFrame are Parameter objects but the value of the Parameter can be accessed directly as a dictionary or with the `value` attribute as with a singular Parameter.
+
+If a ParameterFrame.param is set to a 2 element tuple the second element is assumed to be its source if it is set to a Parameter (with the same name ONLY) the value and source are taken only.
+A dictionary of :py:data:`{"value": .., "source":..}` can also be provided.:
+
+.. code-block:: python
+
+    pf = ParameterFrame(config)
+    pf.attr = (1., 'here')
+    pf.attr = Parameter(var='attr', name='attr', value=1.)
+    pf.attr = {"value":1., "source": 'here'}
+
+The concise json representation returns :py:data:`{"value": .., "source":..}` of each Parameter and the verbose representation returns all the attributes of the Parameter.

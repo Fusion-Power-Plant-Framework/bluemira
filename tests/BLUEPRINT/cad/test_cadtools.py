@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -211,7 +211,12 @@ class TestCADOperations:
         ):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                save_as_STEP_assembly(case, wp, filename=filename)
+                partname = "Test_NAME_OF_PART_BP_REACTOR"
+                save_as_STEP_assembly(case, wp, filename=filename, partname=partname)
+
+        if hasattr(OCC, "PYTHONOCC_VERSION_MAJOR") and OCC.PYTHONOCC_VERSION_MAJOR >= 7:
+            with open(filename + ".STP", "r") as file:
+                assert self._line_checker(file, partname)
 
     # This fails on my laptop...
     # =============================================================================
@@ -225,6 +230,14 @@ class TestCADOperations:
     #         save_as_STL(part, os.sep.join([self.path, 'IBmixed']))
     #         save_as_STL(part2, os.sep.join([self.path, 'OBmixed']))
     # =============================================================================
+
+    @staticmethod
+    def _line_checker(file, string):
+        for line in file:
+            if string in line:
+                return True
+        return False
+
     def test_STL_meshes(self):  # noqa (N802)
         results = {}
         for file in [f for f in os.listdir(self.path) if f.endswith(".stl")]:

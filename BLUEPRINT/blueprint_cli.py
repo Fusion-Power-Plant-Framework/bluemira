@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,9 +24,7 @@ BLUEPRINT Command Line Interface
 """
 
 import click
-import copy
 from dataclasses import dataclass
-import glob
 import json
 import matplotlib.pyplot as plt
 import os
@@ -34,78 +32,286 @@ from pathlib import Path
 import shutil
 import sys
 import tarfile
+from typing import Optional
 
+
+from BLUEPRINT.base.file import KEYWORD
 from BLUEPRINT.base.file import get_BP_root
 from BLUEPRINT.reactor import ConfigurableReactor
 
+try:
+    from functools import cached_property
+except ImportError:
+    from cached_property import cached_property
+
 
 @dataclass
-class Output:
+class InputManager:
     """
-    Class to determine what outputs should be produced from a BLUEPRINT run.
+    A class to manage the inputs to the CLI.
+
+    Parameters
+    ----------
+    template: str
+        Name of the file containing the template parameter configuration.
+    config: str
+        Name of the file containing the specific parameter configuration for the run.
+    build_config: str
+        Name of the file containing the build configuration.
+    build_tweaks: str
+        Name of the file containing the tweaking parameters configuration.
+    indir: str
+        Path to the directory containing the input configuration files.
+    reactornamein: str
+        The name of the input reactor name providing any template reference data.
+    outdir: str
+        Path to the output directory.
+    reactornameout: str
+        The name of the output reactor for the run.
     """
 
-    name: str
-    log: bool = False
-    data: bool = False
-    plot_xz: bool = False
-    plot_xy: bool = False
-    cad: bool = False
+    template: str
+    config: str
+    build_config: str
+    build_tweaks: str
+    indir: str
+    reactornamein: str
+    outdir: str
+    reactornameout: str
 
-    name_offset = 10
+    def _build_path_in(self, file_name: str) -> str:
+        if self.reactornamein is not None:
+            file_name = f"{self.reactornamein}_{file_name}"
+        return os.path.join(self.indir, file_name)
 
-    def __str__(self):
+    @property
+    def template_path_in(self) -> str:
         """
-        Format the string representation of the Output.
+        The input template configuration file path.
         """
-        name_pad = self.name_offset - len(self.name)
+        return self._build_path_in(self.template)
 
-        settings = []
-        for name, value in self.__dict__.items():
-            if name != "name":
-                settings.append(name if value else "_" * len(name))
-        settings = ", ".join(settings)
-        return f"{self.name}{' ' * name_pad}: {settings}"
-
-    def __setattr__(self, name, value):
+    @property
+    def config_path_in(self) -> str:
         """
-        Avoid changing the value of an attribute to None.
+        The input run configuration file path.
         """
-        if value is not None:
-            self.__dict__[name] = value
+        return self._build_path_in(self.config)
 
-    def clone(self):
+    @property
+    def build_config_path_in(self) -> str:
         """
-        Create a copy of the Output.
+        The input build configuration file path.
         """
-        return copy.copy(self)
+        return self._build_path_in(self.build_config)
+
+    @property
+    def build_tweaks_path_in(self) -> str:
+        """
+        The input tweaking parameters configuration file path.
+        """
+        return self._build_path_in(self.build_tweaks)
+
+    @property
+    def reactor_name(self) -> str:
+        """
+        The derived name of the reactor for this run.
+
+        Notes
+        -----
+        This will provide the reactornameout, if provided, else the reactornamein if
+        provided, else it will read the reactor name from the specified run configuration
+        file.
+        """
+        if self.reactornameout is not None:
+            return self.reactornameout
+        elif self.reactornamein is not None:
+            return self.reactornamein
+        else:
+            with open(self.config_path_in, "r") as fh:
+                config_dict = json.load(fh)
+            return config_dict["Name"]
+
+    @cached_property
+    def build_config_dict(self) -> str:
+        """
+        The dictionary representation of the build configuration.
+        """
+        return self.read_json(self.build_config_path_in)
+
+    @cached_property
+    def config_dict(self) -> str:
+        """
+        The dictionary representation of the run configuration.
+        """
+        return self.read_json(self.config_path_in)
+
+    @cached_property
+    def output_root_path(self) -> str:
+        """
+        The root output path, excluding the reactor subdirectory for the run.
+        """
+        return self._try_get_path_from_config(
+            "generated_data_root", "generated_data", dir=self.outdir
+        )
+
+    @cached_property
+    def output_path(self) -> str:
+        """
+        The full output path, including the reactor and reactor_name subdirectories for
+        the run.
+        """
+        return os.path.join(self.output_root_path, "reactors", self.reactor_name)
+
+    @cached_property
+    def reference_root_path(self) -> str:
+        """
+        The root reference data path, excluding the reactor subdirectory for the run
+        """
+        return self._try_get_path_from_config("reference_data_root", "data")
+
+    @cached_property
+    def reference_path(self) -> str:
+        """
+        The full reference data path, including the reactor and reactor_name
+        subdirectories for the run
+        """
+        return os.path.join(self.reference_root_path, "reactors", self.reactor_name)
+
+    def _try_get_path_from_config(
+        self, key: str, default_value: str, dir: Optional[str] = None
+    ) -> str:
+        path = dir
+        if path is None:
+            if key in self.build_config_dict:
+                path = self.build_config_dict[key]
+            else:
+                path = os.path.join(get_BP_root(), default_value)
+                click.echo(
+                    "Warning: outdir not specified in command line and no "
+                    f"{key} found in {self.build_config}. Reverting to "
+                    f"default path {path}."
+                )
+
+        if KEYWORD in path:
+            path = path.replace(KEYWORD, get_BP_root())
+
+        return path
+
+    def read_json(self, file):
+        """
+        Reads a json file and returns a dict object of its contents.
+        """
+        with open(file, "r") as fh:
+            file_dict = json.load(fh)
+        return file_dict
 
 
-DEFAULT = Output("default", log=True, data=True, plot_xz=True, plot_xy=True)
-FULL = Output("full", log=True, data=True, plot_xz=True, plot_xy=True, cad=True)
-LITE = Output("lite", log=True, data=True)
-CAD = Output("cad", log=True, cad=True)
-NONE = Output("none")
-
-
-def set_output_mode(mode):
+class OutputManager:
     """
-    Set the Output as specified by the mode string.
-    """
-    result = None
-    if mode == "default" or mode is None:
-        result = DEFAULT
-    elif mode == "full":
-        result = FULL
-    elif mode == "lite":
-        result = LITE
-    elif mode == "cad":
-        result = CAD
-    elif mode == "none":
-        result = NONE
+    A class to manage the output paths for the run.
 
-    if result is not None:
-        return result.clone()
+    Parameters
+    ----------
+    template: str
+        Path of the output file containing the template parameter configuration.
+    config: str
+        Path of the output file containing the specific parameter configuration for the
+        run.
+    build_config: str
+        Path of the output file containing the build configuration.
+    build_tweaks: str
+        Path of the output file containing the tweaking parameters configuration.
+    output: str
+        Path of the output file containing the stdout text dump.
+    errors: str
+        Path of the output file containing the stderr text dump.
+    params: str
+        Path of the output file containing the optimised parameter configuration produced
+        by the run.
+    plot_xz: str
+        Path of the output file containing the 2D plot in the xz plane.
+    plot_xy: str
+        Path of the output file containing the 2D plot in the xy plane.
+    cad: str
+        Path of the output file containing the 3D CAD model.
+    tar: str
+        Path of the compressed tarball of the output directory.
+    """
+
+    template: str
+    config: str
+    build_config: str
+    build_tweaks: str
+    output: str
+    errors: str
+    params: str
+    plot_xz: str
+    plot_xy: str
+    cad: str
+    tar: str
+
+    def _make_path(self, inputs: InputManager, key: str, ext: str, subdir=""):
+        path = os.path.join(
+            inputs.output_path, subdir, f"{inputs.reactor_name}_{key}.{ext}"
+        )
+        if "_." in path:
+            path = path.replace("_.", ".")
+        return path
+
+    def __init__(self, inputs: InputManager):
+        self.template = self._make_path(inputs, "template", "json")
+        self.config = self._make_path(inputs, "config", "json")
+        self.build_config = self._make_path(inputs, "build_config", "json")
+        self.build_tweaks = self._make_path(inputs, "build_tweaks", "json")
+        self.output = self._make_path(inputs, "output", "txt")
+        self.errors = self._make_path(inputs, "errors", "txt")
+        self.params = self._make_path(inputs, "params", "json")
+        self.plot_xz = self._make_path(inputs, "XZ", "png", subdir="plots")
+        self.plot_xy = self._make_path(inputs, "XY", "png", subdir="plots")
+        self.cad = self._make_path(inputs, "CAD_MODEL", "stp", subdir="CAD")
+        self.tar = self._make_path(inputs, "", "tar.gz")
+
+    def copy_files(self, inputs: InputManager):
+        """
+        Copy the input paths to the output paths
+
+        Parameters
+        ----------
+        inputs: InputManager
+            The Input instance containing the template, config, build_config, and
+            build_tweaks paths to copy the files from
+        """
+        shutil.copy(inputs.template_path_in, self.template)
+        shutil.copy(inputs.config_path_in, self.config)
+        shutil.copy(inputs.build_config_path_in, self.build_config)
+        shutil.copy(inputs.build_tweaks_path_in, self.build_tweaks)
+
+
+def dump_json(dict_object: dict, output_path: str):
+    """
+    Saves a dict object as a json file.
+    """
+    with open(output_path, "w") as fh:
+        json.dump(dict_object, fh)
+
+
+def _check_path(name, path: str, force: bool = False, make: bool = True):
+    if os.path.exists(path):
+        if force:
+            click.echo(
+                f"Warning: Force rerun flag detected. Overwriting {name} directory "
+                f"{path} for this reactor."
+            )
+            shutil.rmtree(path)
+        else:
+            raise FileExistsError(
+                f"{name.capitalize()} directory {path} already exists for this reactor. "
+                "Select a new outdir, change the reactor name, or remove the existing "
+                "directory and run again."
+            )
+    if make:
+        Path(path).mkdir(parents=True)
 
 
 @click.command()
@@ -134,7 +340,7 @@ def set_output_mode(mode):
     "-o",
     "--outdir",
     type=click.Path(writable=True),
-    default=f"{get_BP_root()}/generated_data/reactors",
+    default=None,
     help="Specifies the directory in which to store output files. Note that outputs \
     will be stored in a subdirectory within the directory provided, corresponding to \
     the specified reactor name. The directory must not exist before running BLUEPRINT \
@@ -144,7 +350,7 @@ def set_output_mode(mode):
     "-ro",
     "--reactornameout",
     default=None,
-    help="Specifies a reactor name, overiding the value in the input config file. \
+    help="Specifies a reactor name, overriding the value in the input config file. \
     Also used as the output subdirectory name and as a prefix to each output file.",
 )
 @click.option(
@@ -154,50 +360,36 @@ def set_output_mode(mode):
     help="Enables verbose mode. When on, output data will include metadata.",
 )
 @click.option(
+    "-f",
+    "--force_rerun",
+    is_flag=True,
+    help="Forces a rerun of BLUEPRINT when existing data is detected. When on, existing \
+    data will be overwritten.",
+)
+@click.option(
     "-t",
     "--tarball",
     is_flag=True,
     help="Enables creation of a tarball of the output directory.",
 )
 @click.option(
-    "-m",
-    "--outmode",
-    default="default",
-    help="""
-Sets the output mode, specifying which outputs to save.\n\
-Can be:
-
-\b
-"""
-    + "\n".join([str(DEFAULT), str(FULL), str(LITE), str(CAD), str(NONE)])
-    + """
-
-To override the outmode setting for a specific output, use the options below.
-""",
-)
-@click.option(
     "--log/--no_log",
-    default=None,
+    default=True,
     help="Enables/disables output of BLUEPRINT text dump.",
 )
 @click.option(
     "--data/--no_data",
-    default=None,
+    default=True,
     help="Enables/disables output of the .json data file.",
 )
 @click.option(
-    "--plot_xz/--no_plot_xz",
-    default=None,
-    help="Enables/disables output of the 2D reactor image in the xz plane.",
-)
-@click.option(
-    "--plot_xy/--no_plot_xy",
-    default=None,
-    help="Enables/disables output of the 2D reactor image in the xy plane.",
+    "--plots/--no_plots",
+    default=True,
+    help="Enables/disables output of the 2D reactor images in the xz and xy planes.",
 )
 @click.option(
     "--cad/--no_cad",
-    default=None,
+    default=False,
     help="Enables/disables output of the 3D cad model.",
 )
 def cli(
@@ -210,12 +402,11 @@ def cli(
     outdir,
     reactornameout,
     verbose,
+    force_rerun,
     tarball,
-    outmode,
     log,
     data,
-    plot_xz,
-    plot_xy,
+    plots,
     cad,
 ):
     """
@@ -231,148 +422,107 @@ def cli(
     4.  build_tweaks  [default = build_tweaks.json]
             file containing additional build parameters.
     """
-    # Set output flags according to outmode.
-    output = set_output_mode(outmode)
+    inputs = InputManager(
+        template=template,
+        config=config,
+        build_config=build_config,
+        build_tweaks=build_tweaks,
+        indir=indir,
+        reactornamein=reactornamein,
+        outdir=outdir,
+        reactornameout=reactornameout,
+    )
 
-    if output is None:
-        click.echo("Invalid outmode. See blueprint --help for options.")
-        return
-
-    # Set any explicit output flags.
-    # Note that the Output class skips assignment if a value is None.
-    output.log = log
-    output.data = data
-    output.plot_xz = plot_xz
-    output.plot_xy = plot_xy
-    output.cad = cad
-
-    # Set input paths.
-    if reactornamein is not None:
-        template = f"{reactornamein}_{template}"
-        config = f"{reactornamein}_{config}"
-        build_config = f"{reactornamein}_{build_config}"
-        build_tweaks = f"{reactornamein}_{build_tweaks}"
-
-    template_path = os.path.join(indir, template)
-    config_path = os.path.join(indir, config)
-    build_config_path = os.path.join(indir, build_config)
-    build_tweaks_path = os.path.join(indir, build_tweaks)
-
-    # Get reactor name, using override if provided.
-    if reactornameout is not None:
-        reactorname = reactornameout
-    elif reactornamein is not None:
-        reactorname = reactornamein
-    else:
-        with open(config_path, "r") as fh:
-            config_dict = json.load(fh)
-        reactorname = config_dict["Name"]
-
-    # Set output directory path.
-    output_path = os.path.join(outdir, reactorname)
-    if os.path.exists(output_path):
-        raise FileExistsError(
-            f"Output directory {output_path} already exists for this reactor. "
-            "Select a new outdir, change the reactor name, or remove the existing "
-            "directory and run again."
-        )
-    Path(output_path).mkdir(parents=True, exist_ok=True)
-    click.echo(f"Saving outputs in {output_path}/")
+    outputs = OutputManager(inputs)
+    click.echo(f"Output directory set to {inputs.output_path}")
+    _check_path("output", inputs.output_path, force=force_rerun)
 
     # Copy inputs to output directory.
-    template_path = shutil.copy(
-        template_path,
-        os.path.join(output_path, f"{reactorname}_template.json"),
-    )
-    config_path = shutil.copy(
-        config_path,
-        os.path.join(output_path, f"{reactorname}_config.json"),
-    )
-    build_config_path = shutil.copy(
-        build_config_path,
-        os.path.join(output_path, f"{reactorname}_build_config.json"),
-    )
-    build_tweaks_path = shutil.copy(
-        build_tweaks_path,
-        os.path.join(output_path, f"{reactorname}_build_tweaks.json"),
-    )
+    click.echo(f"Copying inputs from {inputs.indir} to {inputs.output_path}")
+    outputs.copy_files(inputs)
 
-    # Override reactor name if specified.
-    if reactornameout is not None:
-        config_dict = {}
-        with open(config_path, "r") as fh:
-            config_dict = json.load(fh)
-        config_dict["Name"] = reactorname
-        with open(config_path, "w") as fh:
-            json.dump(config_dict, fh)
+    # Update generated_data_root to value given in CLI options.
+    inputs.build_config_dict["generated_data_root"] = inputs.output_root_path
+    dump_json(inputs.build_config_dict, outputs.build_config)
+
+    # Update reactor name and make a copy of reference data to a subdirectory using the
+    # new reactor name.
+    if inputs.reactornameout is not None:
+        old_reactorname = inputs.config_dict["Name"]
+        if isinstance(old_reactorname, dict):
+            old_reactorname = old_reactorname["value"]
+            inputs.config_dict["Name"]["value"] = inputs.reactor_name
+            if inputs.config_dict["Name"]["source"] is None:
+                inputs.config_dict["Name"]["source"] = "Input"
+        else:
+            inputs.config_dict["Name"] = inputs.reactor_name
+
+        _check_path("input", inputs.reference_path, force=force_rerun, make=False)
+        reference_source = os.path.join(
+            inputs.reference_root_path, "reactors", old_reactorname
+        )
+        shutil.copytree(reference_source, inputs.reference_path)
+        dump_json(inputs.config_dict, outputs.config)
 
     # Instantiate BLUEPRINT reactor class.
-    CR = ConfigurableReactor.from_json(
-        template_path, config_path, build_config_path, build_tweaks_path
+    reactor = ConfigurableReactor.from_json(
+        outputs.template,
+        outputs.config,
+        outputs.build_config,
+        outputs.build_tweaks,
     )
 
     # Return output log.
-    if output.log:
-        filename_out = "output.txt"
-        filename_err = "errors.txt"
-        path_to_out = os.path.join(output_path, filename_out)
-        path_to_err = os.path.join(output_path, filename_err)
-        click.echo(f"Use tail -f {path_to_out} to view output while BLUEPRINT runs.")
-        click.echo(f"See {path_to_err} to view error messages.")
+    if log:
+        click.echo(
+            f"Redirecting stdout to {outputs.output} and stderr to {outputs.errors}."
+        )
+        click.echo(
+            f"In a new terminal window, use the following command to view outputs\
+         while BLUEPRINT runs: tail -f {outputs.output}"
+        )
 
-        sys.stdout = open(os.path.join(output_path, filename_out), "w")
-        sys.stderr = open(os.path.join(output_path, filename_err), "w")
-        click.echo(f"Saving output log as {filename_out}")
-        click.echo(f"Saving errors log as {filename_err}")
-
-    # Return user inputs.
-    CR.config_to_json(output_path)
+        sys.stdout = open(outputs.output, "w")
+        click.echo(f"Saving output log as {outputs.output}")
+        sys.stderr = open(outputs.errors, "w")
+        click.echo(f"Saving errors log as {outputs.errors}")
 
     # Run BLUEPRINT build.
     click.echo("Running BLUEPRINT build.")
-    CR.build()
+    reactor.build()
     click.echo("BLUEPRINT build complete.")
 
     # Return specified outputs.
-    generated_data_directory = CR.file_manager.generated_data_dirs["root"]
+    click.echo(f"Saving outputs to {inputs.output_path}")
 
-    if output.data:
-        filename = f"{reactorname}_params.json"
-        click.echo(f"Saving output data as {filename}")
-        CR.params.to_json(
-            output_path=os.path.join(generated_data_directory, filename),
+    if data:
+        click.echo(f"Saving output data as {outputs.params}")
+        reactor.params.to_json(
+            output_path=outputs.params,
             verbose=verbose,
         )
 
-    if output.plot_xz:
-        filename = f"{reactorname}_XZ.png"
-        click.echo(f"Saving output xz image as {filename}")
-        CR.plot_xz()
-        plt.savefig(os.path.join(generated_data_directory, "plots", filename))
+    if plots:
+        click.echo(f"Saving output xz image as {outputs.plot_xz}")
+        reactor.plot_xz()
+        plt.savefig(outputs.plot_xz)
+        click.echo(f"Saving output xy image as {outputs.plot_xy}")
+        reactor.plot_xy()
+        plt.savefig(outputs.plot_xy)
 
-    if output.plot_xy:
-        filename = f"{reactorname}_XY.png"
-        click.echo(f"Saving output xy image as {filename}")
-        CR.plot_xy()
-        plt.savefig(os.path.join(generated_data_directory, "plots", filename))
-
-    if output.cad:
-        filename = f"{reactorname}_CAD_MODEL.stp"
-        click.echo(f"Saving output CAD model as {filename}")
+    if cad:
+        click.echo(f"Saving output CAD model as {outputs.cad}")
         click.echo("Generating CAD model.")
-        CR.save_CAD_model(pattern="full")
+        reactor.save_CAD_model(pattern="full")
         click.echo("CAD generation complete.")
 
-    # Move all generated data to output directory.
-    files = glob.glob(os.path.join(generated_data_directory, "*"))
-    for f in files:
-        shutil.move(f, output_path)
     click.echo("BLUEPRINT run complete.")
-    click.echo(f"All requested outputs have been generated, available at: {output_path}")
+    click.echo(
+        f"All requested outputs have been generated, available in: {inputs.output_path}"
+    )
 
     # Create tarball of output directory.
     if tarball:
-        filename = f"{reactorname}.tar"
-        click.echo(f"Creating tarball of output directory as {filename}")
-        with tarfile.open(os.path.join(output_path, filename), "w:gz") as tar:
-            tar.add(os.path.join(output_path), arcname=os.path.sep)
+        click.echo(f"Creating tarball of output directory as {outputs.tar}")
+        with tarfile.open(outputs.tar, "w:gz") as tar:
+            tar.add(os.path.join(inputs.output_path), arcname=os.path.sep)

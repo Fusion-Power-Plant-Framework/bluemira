@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ from OCC.Core.TDocStd import TDocStd_Document
 from OCC.Core.TDF import TDF_LabelSequence
 from OCC.Core.XCAFDoc import XCAFDoc_ColorGen, XCAFDoc_DocumentTool
 from OCC.Core.XSControl import XSControl_WorkSession
-
+from OCC.Core.Interface import Interface_Static_SetCVal
 
 from BLUEPRINT.base.error import CADError
 
@@ -46,8 +46,9 @@ class StepWriter(object):
     Based on (the seemingly defunct) aocxchange package.
     """
 
-    def __init__(self, filename, layer_name="layer-00"):
+    def __init__(self, filename, layer_name="layer-00", partname=None):
         self.filename = filename
+        self.partname = partname
 
         self.doc = TDocStd_Document(TCollection_ExtendedString("MDTV-CAF"))
 
@@ -145,6 +146,9 @@ class StepWriter(object):
         """
         work_session = XSControl_WorkSession()
         writer = STEPCAFControl_Writer(work_session, False)
+
+        if self.partname is not None:
+            Interface_Static_SetCVal("write.step.product.name", self.partname)
 
         transfer_status = writer.Transfer(self.doc, STEPControl_AsIs)
         if transfer_status != IFSelect_RetDone:
