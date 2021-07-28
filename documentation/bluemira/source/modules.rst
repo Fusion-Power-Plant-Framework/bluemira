@@ -7,6 +7,7 @@ Bluemira Modules
     :hidden:
  
     base
+    components
     geometry/geometry
     utilities
 
