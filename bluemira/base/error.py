@@ -36,3 +36,11 @@ class BluemiraError(Exception):
         Prettier handling of the Exception strings
         """
         return fill(dedent(self.args[0]))
+
+
+class ComponentError(BluemiraError):
+    """
+    Exception class for Components.
+    """
+
+    pass

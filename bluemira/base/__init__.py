@@ -22,3 +22,5 @@
 """
 Base classes and functionality for the bluemira code.
 """
+
+from .components import GroupingComponent, PhysicalComponent, MagneticComponent
