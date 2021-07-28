@@ -1850,6 +1850,7 @@ class MixedFaceMaker:
             )
             angles = np.append(angles, join_angle)
 
+        angles = np.rad2deg(angles)
         sharp_indices = np.where((angles <= self.a_acute) & (angles != 0))[0]
         # Convert angle numbering to segment numbering (both segments of angle)
         sharp_edge_indices = []
