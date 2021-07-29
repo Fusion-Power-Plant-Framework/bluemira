@@ -21,7 +21,6 @@
 """
 A typical spherical tokamak fusion power reactor.
 """
-import matplotlib.pyplot as plt
 import os
 
 from BLUEPRINT.base.file import make_BP_path, get_BP_root
