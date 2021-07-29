@@ -231,7 +231,7 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
             xi -= delta[0]
             zi -= delta[1]
             count += 1
-            if (np.hypot(xi - x0, zi - z0) > radius) or (count > 50):
+            if ((xi - x0) ** 2 + (zi - z0) ** 2 > radius) or (count > 50):
                 return None
 
 
@@ -537,7 +537,7 @@ def find_flux_surf(x, z, psi, psinorm, o_points=None, x_points=None):
 
     err = []
 
-    for group in psi_surfs:  # Choisir la surface la plus "logique"
+    for group in psi_surfs:  # Choose the most logical flux surface
         err.append(f_min(*group.T))
 
     return psi_surfs[np.argmin(err)].T

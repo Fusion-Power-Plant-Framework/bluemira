@@ -22,6 +22,7 @@
 ST equilibrium attempt
 """
 
+from BLUEPRINT.equilibria.coils import PF_COIL_NAME
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import plot_defaults
@@ -79,78 +80,18 @@ grid = Grid(r0, r1, z0, z1, nx, nz)
 
 
 # Set up a custom profile object
+pprime = np.array([-850951, -844143, -782311, -714610, -659676, -615987, -572963,
+       -540556, -509991, -484261, -466462, -445186, -433472, -425413,
+       -416325, -411020, -410672, -406795, -398001, -389309, -378528,
+       -364607, -346119, -330297, -312817, -293764, -267515, -261466,
+       -591725, -862663])
+ffprime = np.array([ 7.23,  5.89,  4.72,  3.78,  3.02,  2.39,  1.86,  1.43,  1.01,
+        0.62,  0.33,  0.06, -0.27, -0.61, -0.87, -1.07, -1.24, -1.18,
+       -0.83, -0.51, -0.2 ,  0.08,  0.24,  0.17,  0.13,  0.1 ,  0.07,
+        0.05,  0.15,  0.28])
+#pprime = LaoPolynomialFunc([3.65, -9.72, 13.2])
+#ffprime = LaoPolynomialFunc([0.96, -4.44, 5.05])
 
-pprime = LaoPolynomialFunc([3.65, -9.72, 13.2])
-ffprime = LaoPolynomialFunc([0.96, -4.44, 5.05])
-
-pprime = np.array(
-    [
-        -850951.204,
-        -844143.13017241,
-        -782311.79834483,
-        -714610.93044828,
-        -659676.93875862,
-        -615987.80786207,
-        -572963.3357931,
-        -540556.27062069,
-        -509991.1792069,
-        -484261.4017931,
-        -466462.60696552,
-        -445186.63089655,
-        -433472.80337931,
-        -425413.968,
-        -416325.90489655,
-        -411020.49496552,
-        -410672.2012069,
-        -406795.05444828,
-        -398001.66789655,
-        -389309.11858621,
-        -378528.69386207,
-        -364607.59772414,
-        -346119.5187931,
-        -330297.40131034,
-        -312817.87410345,
-        -293764.66482759,
-        -267515.93182759,
-        -261466.16955172,
-        -591725.6427931,
-        -862663.326,
-    ]
-)
-ffprime = np.array(
-    [
-        7.22630109,
-        5.89253475,
-        4.71921846,
-        3.78440677,
-        3.01944557,
-        2.39290352,
-        1.85861002,
-        1.43177377,
-        1.00779937,
-        0.6150774,
-        0.32635056,
-        0.05879146,
-        -0.27435619,
-        -0.60864614,
-        -0.86766641,
-        -1.07292296,
-        -1.23940376,
-        -1.17988594,
-        -0.83336877,
-        -0.50809497,
-        -0.20038229,
-        0.08219129,
-        0.23538989,
-        0.17365059,
-        0.13011496,
-        0.09814434,
-        0.06616453,
-        0.04913329,
-        0.14945902,
-        0.28081309,
-    ]
-)
 
 profile = CustomProfile(pprime, ffprime, R_0=R0, B_0=Bt, Ip=Ip)
 
@@ -192,6 +133,7 @@ for i in range(len(coil_x)):
         dz=coil_dz[i] / 2,
         current=currents[i],
         ctype="PF",
+        name=PF_COIL_NAME.format(i+1)
     )
     circuit = SymmetricCircuit(coil)
     circuits.append(circuit)
@@ -202,7 +144,7 @@ coilset_temp = CoilSet(circuits)
 
 # Temporarily add a simple plasma coil to get a good starting guess for psi
 coilset_temp.add_coil(
-    Coil(R0 + 0.5, Z0, dx=0, dz=0, current=-5 * Ip, name="plasma_dummy", control=False)
+    Coil(R0 + 0.5, Z0, dx=0, dz=0, current=Ip, name="plasma_dummy", control=False)
 )
 
 eq = Equilibrium(
@@ -222,7 +164,6 @@ coilset_temp.set_control_currents(currents)
 coilset.set_control_currents(currents)
 
 psi = coilset_temp.psi(grid.x, grid.z).copy()
-
 
 # Set up an equilibrium problem and solve it
 

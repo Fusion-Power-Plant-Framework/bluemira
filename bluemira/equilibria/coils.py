@@ -1298,7 +1298,7 @@ class Circuit(CoilGroup):
             coil.adjust_current(d_current)
         self.current += d_current
 
-    def set_control_current(self, current):
+    def set_current(self, current):
         for i, coil in enumerate(self.coils.values()):
             coil.set_current(current)
         self.current = current
@@ -1696,7 +1696,7 @@ class CoilSet(CoilGroup):
         Sets the currents in the coils being controlled
         """
         for coil, current in zip(self._ccoils, currents):
-            coil.current = current
+            coil.set_current(current)
         if update_size:
             self.adjust_sizes()
             self.mesh_coils()
