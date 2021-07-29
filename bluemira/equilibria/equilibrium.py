@@ -723,12 +723,6 @@ class Equilibrium(MHDState):
                 ' from: 1) "virtual" \n 2) "feedback" 3) None.'
             )
 
-    def solve_GS(self, rhs):  # noqa (N802)
-        """
-        Calls the psi Grad-Shafranov solver object
-        """
-        return self._solver(rhs)
-
     def solve(self, profiles, jtor=None, psi=None):
         """
         Re-calculates the plasma equilibrium given new profiles
@@ -754,6 +748,7 @@ class Equilibrium(MHDState):
         """
         self._reassign_profiles(profiles)
         self._clear_OX_points()
+
         if jtor is None:
             if psi is None:
                 psi = self.psi()
@@ -768,7 +763,7 @@ class Equilibrium(MHDState):
         rhs = -MU_0 * self.x * jtor  # RHS of GS equation
         apply_boundary(rhs, self.plasma_psi)
 
-        plasma_psi = self.solve_GS(rhs)
+        plasma_psi = self._solver(rhs)
         self._update_plasma_psi(plasma_psi)
 
         self._Ip = self._int_dxdz(jtor)
@@ -819,7 +814,7 @@ class Equilibrium(MHDState):
             rhs = -MU_0 * self.x * jtor_opt  # RHS of GS equation
             apply_boundary(rhs, self.plasma_psi)
 
-            plasma_psi = self.solve_GS(rhs)
+            plasma_psi = self._solver(rhs)
             self._update_plasma_psi(plasma_psi)
             li = calc_li3minargs(
                 self.x,

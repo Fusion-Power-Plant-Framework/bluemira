@@ -223,6 +223,7 @@ class EquilibriumProblem:
                 iterator = PicardAbsIterator(*args, **kwargs)
         iterator()
         self.coilset.adjust_sizes()
+        self.eq._remap_greens()
         if self.li is None:
             self.li = self.eq.calc_li()
         return self.eq.copy()

@@ -47,6 +47,7 @@ from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoil
 
 PF_COIL_NAME = "PF_{}"
 CS_COIL_NAME = "CS_{}"
+NO_COIL_NAME = "Unnamed_{}"
 NONAME_N = 0
 
 
@@ -65,10 +66,17 @@ def name_coil(coil, i):
     Name a coil based on its type and type-number. The coil naming convention
     is not directly enforced here.
     """
+    if i is None:
+        global NONAME_N
+        i = NONAME_N
+        NONAME_N += 1
+
     if coil.ctype == "CS":
         return CS_COIL_NAME.format(i)
-    else:
+    elif coil.ctype == "PF":
         return PF_COIL_NAME.format(i)
+    else:
+        return NO_COIL_NAME.format(i)
 
 
 class Coil:
@@ -155,9 +163,7 @@ class Coil:
         self.ctype = ctype
         if name is None:
             # We need to have a reasonable coil name
-            global NONAME_N
-            name = f"Unnamed_Coil_{NONAME_N}"
-            NONAME_N += 1
+            name_coil(self, None)
 
         self.name = name
         self.sub_coils = None
@@ -691,6 +697,25 @@ class Coil:
             "control": self.control,
             "name": self.name,
         }
+    
+    def to_group_vecs(self):
+        """
+        Convert Coil properties to numpy arrays
+
+        Returns
+        -------
+        x: np.ndarray(n_coils)
+            The x-positions of coils
+        z: np.ndarray(n_coils)
+            The z-positions of coils.
+        dx: np.ndarray(n_coils)
+            The coil size in the x-direction.
+        dz: np.ndarray(n_coils)
+            The coil size in the z-direction.
+        currents: np.ndarray(n_coils)
+            The coil currents.
+        """
+        return np.array([self.x]), np.array([self.z]), np.array([self.dx]), np.array([self.dz]), np.array([self.current])
 
 
 class CoilGroup:
@@ -789,19 +814,17 @@ class CoilGroup:
             The coil size in the z-direction.
         currents: np.ndarray(n_coils)
             The coil currents.
-
         """
-        coils = self.coils
-        n_coils = self.n_coils
+        x, z, dx, dz, currents = [], [], [], [], []
 
-        x, z = np.zeros(n_coils), np.zeros(n_coils)
-        dx, dz = np.zeros(n_coils), np.zeros(n_coils)
-        currents = np.zeros(n_coils)
-        for i, coil in enumerate(coils.values()):
-            x[i], z[i] = coil.x, coil.z
-            dx[i], dz[i] = coil.dx, coil.dz
-            currents[i] = coil.current
-        return x, z, dx, dz, currents
+        for coil in self.coils.values():
+            xi, zi, dxi, dzi, ci = coil.to_group_vecs()
+            x.extend(xi)
+            z.extend(zi)
+            dx.extend(dxi)
+            dz.extend(dzi)
+            currents.extend(ci)
+        return np.array(x), np.array(z), np.array(dx), np.array(dz), np.array(currents)
 
     def add_coil(self, coil):
         """
@@ -1371,6 +1394,8 @@ class SymmetricCircuit(Circuit):
         mirror = Coil(
             x=coil.x,
             z=-coil.z,
+            dx=coil.dx,
+            dz=coil.dz,
             current=coil.current,
             n_turns=coil.n_turns,
             control=coil.control,
@@ -1378,6 +1403,7 @@ class SymmetricCircuit(Circuit):
             j_max=coil.j_max,
             b_max=coil.b_max,
             name=coil.name + ".2",
+            flag_sizefix=coil.flag_sizefix,
         )
 
         super().__init__([coil, mirror])

@@ -31,6 +31,7 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from copy import deepcopy
 from bluemira.base.constants import MU_0
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import in_plasma, find_LCFS_separatrix
 from bluemira.equilibria.plotting import ProfilePlotter
 from bluemira.equilibria.grid import integrate_dx_dz, volume_integral, revolved_volume
@@ -432,7 +433,7 @@ class Profile:
             # e.g.
             # nx, nz = psi.shape
             # psio = psi[nx//2, nz//2]
-            raise ValueError("No O-points found!")
+            raise EquilibriaError("No O-points found!")
         else:
             psio = o_points[0][2]
         if x_points:
