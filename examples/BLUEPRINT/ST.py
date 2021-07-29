@@ -29,8 +29,6 @@ from bluemira.base.look_and_feel import plot_defaults, print_banner
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import Spherical
 
-plt.ion()
-plt.show()
 plot_defaults()
 KEY_TO_PLOT = False
 PLOTFOLDER = make_BP_path("Data/plots")
