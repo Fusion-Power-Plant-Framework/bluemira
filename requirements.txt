@@ -48,6 +48,9 @@ pyclipper==1.2.1
 Pygments==2.8.1
 pyparsing==2.4.7
 pypet==0.5.1
+PyQt5==5.15.4
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.8.1
 pyquaternion==0.9.9
 pytest==6.2.3
 python-dateutil==2.8.1

@@ -32,6 +32,7 @@ install_requires = [  # PYL = Version limited by python version
     "pandas",  # 1.1.5    PYL
     "pyclipper",  # 1.2.1
     "pypet",  # 0.5.1
+    "pyqt5",  # 5.15.4  pyqt6 exists?
     "pyquaternion",  # 0.9.9
     "scikit-learn",  # 0.24.1
     "seaborn",  # 0.11.1

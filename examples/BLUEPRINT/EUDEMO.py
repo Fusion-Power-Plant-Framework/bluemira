@@ -135,3 +135,4 @@ if __name__ == "__main__":
         R.build()
         # R.run_systems_code()
     plot_defaults()
+    plt.ion()
