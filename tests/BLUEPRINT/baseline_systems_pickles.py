@@ -26,7 +26,8 @@ reactor.TS.save(f"{root_path}/{reactor_name}_TS.pkl")
 reactor.VV.save(f"{root_path}/{reactor_name}_VV.pkl")
 
 if __name__ == "__main__":
+    plt.ion()
+    plt.show()
+
     # Plot the reactor to allow manual checks
     reactor.plot_xz()
-
-    plt.show()

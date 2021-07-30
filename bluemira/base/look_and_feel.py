@@ -35,7 +35,7 @@ import datetime
 import shutil
 import functools
 import seaborn as sns
-from PySide2 import QtWidgets
+from PyQt5 import QtWidgets
 from bluemira import __version__
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR, BLUEMIRA_PALETTE
 from bluemira.base.file import get_bluemira_root, get_bluemira_path
@@ -483,8 +483,8 @@ def get_primary_screen_size():
     app = QtWidgets.QApplication.instance()
     if app is None:
         # if IPython isn't open then a QApplication is created to get screen size
-        app = QtWidgets.QApplication([])
-        rect = app.primaryScreen().availableGeometry()
+        with QtWidgets.QApplication([]) as app:
+            rect = app.primaryScreen().availableGeometry()
     else:
         rect = app.primaryScreen().availableGeometry()
 
