@@ -151,14 +151,6 @@ class CoilPositioner:
         else:
             arg_upper = len(track) - 1
         
-        # try:
-        #     argl = track.receive_projection(self.ref, angle_lower, get_arg=True)
-        # except ValueError:
-        #     argl = 0
-        # try:
-        #     argu = track.receive_projection(self.ref, angle_upper, get_arg=True)
-        # except ValueError:
-        #     argu = len(track) - 1
         tf_loop = Loop(*track[arg_lower : arg_upper + 1])
         l_norm = vector_lengthnorm_2d(tf_loop["x"], tf_loop["z"])
         pos = np.linspace(0, 1, n_PF)
