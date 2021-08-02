@@ -1301,10 +1301,10 @@ def serialize_shape(shape):
     bluemira_debug(f"Serializing {type_}")
 
     if type_ == Part.Wire:
-        output = {}
+        output = []
         edges = shape.OrderedEdges
         for count, e in enumerate(edges):
-            output = {**output, **{'edge' + str(count): serialize_shape(e)}}
+            output.append({'edge': serialize_shape(e)})
         return {'Wire': output}
 
     if type_ == Part.Edge:
