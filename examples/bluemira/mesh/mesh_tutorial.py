@@ -43,5 +43,9 @@ part_2.segment(parameter, part_2.LastParameter)
 # Part.show(part_2.toShape())
 
 import bluemira.geometry._freecadapi as fcapi
-ser = fcapi.serialize_shape(bezCurve)
-print(ser)
+ser_bz = fcapi.serialize_shape(bezCurve)
+print(ser_bz)
+wire = Part.Wire(Part.Shape(bezCurve))
+ser_wire = fcapi.serialize_shape(wire)
+print(ser_wire)
+
