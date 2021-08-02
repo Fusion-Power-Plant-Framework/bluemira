@@ -1340,12 +1340,12 @@ def deserialize_shape(buffer):
 
     Parameters
     ----------
-        buffer: object serialization as stored by serialize_shape
+    buffer
+        Object serialization as stored by serialize_shape
 
     Returns
     -------
-        the deserialized FreeCAD object
-
+        The deserialized FreeCAD object
     """
     for type_, v in buffer.items():
         if type_ == "Wire":
