@@ -1,8 +1,10 @@
 name: bluemira
-
 channels:
   - conda-forge
   - nodefaults
+
+variables:
+  PYTHONNOUSERSITE: '1'
 
 dependencies:
   - python=3.8
