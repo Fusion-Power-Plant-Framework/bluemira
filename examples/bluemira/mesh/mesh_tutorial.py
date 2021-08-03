@@ -3,8 +3,11 @@ import FreeCAD
 import Part
 
 import bluemira.geometry._freecadapi as fcapi
+import bluemira.geometry as geo
 
 # Defining my parameters
+import bluemira.geometry.tools
+
 r1 = 49.5
 r2 = 87
 rn = 13.5
@@ -51,3 +54,7 @@ ser_wire = fcapi.serialize_shape(wire)
 print(ser_wire)
 des_wire = fcapi.deserialize_shape(ser_wire)
 print(des_wire)
+
+bmwire = geo.wire.BluemiraWire(wire)
+ser_bmwire = bluemira.geometry.tools.serialize_shape(bmwire)
+des_bmwire = bluemira.geometry.tools.deserialize_shape(ser_bmwire)
