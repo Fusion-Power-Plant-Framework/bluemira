@@ -29,7 +29,7 @@ from copy import deepcopy
 from typing import Union, Iterable
 
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.codes import _freecadapi as cadapi
 from .wire import BluemiraWire
@@ -717,3 +717,58 @@ def boolean_cut(shape, tools):
         return [convert(obj, shape.label) for obj in cut_shape]
 
     return convert(cut_shape, shape.label)
+
+
+# # =============================================================================
+# # Serialize and Deserialize
+# # =============================================================================
+def serialize_shape(shape: BluemiraGeo):
+    """
+    Serialize a BluemiraGeo object.
+    """
+    type_ = type(shape)
+
+    bluemira_debug(f"Serializing {type_}")
+
+    if type_ == BluemiraWire:
+        output = []
+        for wire in shape.boundary:
+            if type(wire) == BluemiraWire:
+                output.append(serialize_shape(wire))
+            else:
+                bluemira_debug(f"To cadapi: {shape}")
+                output.append(cadapi.serialize_shape(wire))
+        return {"BluemiraWire": output}
+
+    raise NotImplementedError(f"Serialization non implemented for {type_}")
+
+
+def deserialize_shape(buffer):
+    """
+    Deserialize a BluemiraGeo object obtained from serialize_shape.
+
+    Parameters
+    ----------
+    buffer
+        Object serialization as stored by serialize_shape
+
+    Returns
+    -------
+        The deserialized BluemiraGeo object.
+    """
+    for type_, v in buffer.items():
+        if type_ == "BluemiraWire":
+            temp_list = []
+            for item in v:
+                bluemira_debug(f"item: {item}")
+                for k, v1 in item.items():
+                    if k == "BluemiraWire":
+                        bluemira_debug(f"v1: {v1}")
+                        wire = deserialize_shape(v1)
+                    else:
+                        bluemira_debug(f"cadapi v1: {v1}")
+                        wire = cadapi.deserialize_shape(item)
+                    temp_list.append(wire)
+            return BluemiraWire(temp_list)
+
+        raise NotImplementedError(f"Deserialization non implemented for {type_}")
