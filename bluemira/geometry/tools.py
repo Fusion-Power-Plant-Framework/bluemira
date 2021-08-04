@@ -845,13 +845,10 @@ def deserialize_shape(buffer):
         if type_ == "BluemiraWire":
             temp_list = []
             for item in v:
-                bluemira_debug(f"item: {item}")
                 for k, v1 in item.items():
                     if k == "BluemiraWire":
-                        bluemira_debug(f"v1: {v1}")
                         wire = deserialize_shape(v1)
                     else:
-                        bluemira_debug(f"cadapi v1: {v1}")
                         wire = cadapi.deserialize_shape(item)
                     temp_list.append(wire)
             return BluemiraWire(temp_list)
