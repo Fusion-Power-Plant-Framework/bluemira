@@ -1,4 +1,29 @@
-import freecad
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                    J. Morris, D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+"""
+Some examples of using bluemira mesh module.
+"""
+
+import freecad  # noqa: F401
 import FreeCAD
 import Part
 
@@ -27,11 +52,11 @@ Points = [p1, p2, p3, p4, p5]
 # Creating the Bezier curve
 bez = Part.BezierCurve()
 bez.setPoles(Points)
-bezCurve = Part.Edge(bez)
-Part.show(bezCurve)
+bez_curve = Part.Edge(bez)
+Part.show(bez_curve)
 
 # Obtaining the length of the Bezier curve
-L = bezCurve.Length
+L = bez_curve.Length
 
 # find the parameter corresponding to the given distance
 distance = 0.3 * L
@@ -47,9 +72,9 @@ part_2.segment(parameter, part_2.LastParameter)
 # Part.show(part_1.toShape())
 # Part.show(part_2.toShape())
 
-ser_bz = fcapi.serialize_shape(bezCurve)
+ser_bz = fcapi.serialize_shape(bez_curve)
 print(ser_bz)
-wire = Part.Wire(Part.Shape(bezCurve))
+wire = Part.Wire(Part.Shape(bez_curve))
 ser_wire = fcapi.serialize_shape(wire)
 print(ser_wire)
 des_wire = fcapi.deserialize_shape(ser_wire)
