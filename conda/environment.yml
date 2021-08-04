@@ -5,6 +5,8 @@ channels:
 
 variables:
   PYTHONNOUSERSITE: '1'
+  LC_CTYPE: 'C'
+  PYTHONIOENCODING: 'utf-8'
 
 dependencies:
   - python=3.8
