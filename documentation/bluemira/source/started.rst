@@ -51,6 +51,7 @@ Download and installation instructions for PyCharm can be found at
 https://www.jetbrains.com/pycharm/
 
 .. warning::
+
     Due to a bug in PyCharm (see https://youtrack.jetbrains.com/issue/PY-38751),
     compiler env variables from conda environment are not passed to console.
     For this reason, the env variables defined to create the conda environment as in
