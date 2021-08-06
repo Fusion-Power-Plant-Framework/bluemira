@@ -40,3 +40,23 @@ BLUEPRINT environment by running:
 
     source ~/.miniforge-init.sh
     conda activate bluemira
+
+
+Setup your IDE
+--------------
+
+PyCharm
+.......
+Download and installation instructions for PyCharm can be found at
+https://www.jetbrains.com/pycharm/
+
+.. warning::
+    Due to a bug in PyCharm (see https://youtrack.jetbrains.com/issue/PY-38751),
+    compiler env variables from conda environment are not passed to console.
+    For this reason, the env variables defined to create the conda environment as in
+    conda/environment.yml may be not read when running scripts using the
+    PyCharm GUI.
+    In such a case, the needed env variables must be declared as optional
+    parameters into the Run/Debug configuration interface.
+
+.. image:: various/PyCharm_python_template.png
