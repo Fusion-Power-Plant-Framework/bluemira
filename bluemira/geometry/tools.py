@@ -821,9 +821,8 @@ def serialize_shape(shape: BluemiraGeo):
             if type(wire) == BluemiraWire:
                 output.append(serialize_shape(wire))
             else:
-                bluemira_debug(f"To cadapi: {shape}")
                 output.append(cadapi.serialize_shape(wire))
-        return {"BluemiraWire": output}
+        return {"BluemiraWire": {"label": shape.label, "boundary": output}}
 
     raise NotImplementedError(f"Serialization non implemented for {type_}")
 
@@ -843,14 +842,16 @@ def deserialize_shape(buffer):
     """
     for type_, v in buffer.items():
         if type_ == "BluemiraWire":
+            label = v['label']
+            boundary = v['boundary']
             temp_list = []
-            for item in v:
+            for item in boundary:
                 for k, v1 in item.items():
                     if k == "BluemiraWire":
                         wire = deserialize_shape(v1)
                     else:
                         wire = cadapi.deserialize_shape(item)
                     temp_list.append(wire)
-            return BluemiraWire(temp_list)
+            return BluemiraWire(label=label, boundary=temp_list)
 
         raise NotImplementedError(f"Deserialization non implemented for {type_}")
