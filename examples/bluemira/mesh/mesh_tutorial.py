@@ -65,8 +65,11 @@ parameter = bez.parameterAtDistance(distance, bez.FirstParameter)
 # creating the 2 parts
 part_1 = bez.copy()
 part_1.segment(part_1.FirstParameter, parameter)
+wire1 = Part.Wire(part_1.toShape())
+
 part_2 = bez.copy()
 part_2.segment(parameter, part_2.LastParameter)
+wire2 = Part.Wire(part_2.toShape())
 
 # display the 2 parts
 # Part.show(part_1.toShape())
@@ -83,3 +86,11 @@ print(des_wire)
 bmwire = geo.wire.BluemiraWire(wire)
 ser_bmwire = bluemira.geometry.tools.serialize_shape(bmwire)
 des_bmwire = bluemira.geometry.tools.deserialize_shape(ser_bmwire)
+print(des_bmwire)
+
+bmwire2 = geo.wire.BluemiraWire([geo.wire.BluemiraWire(wire1), geo.wire.BluemiraWire(wire2)])
+
+from bluemira.mesh.meshing import Mesh
+m = Mesh()
+buffer = m(bmwire2)
+
