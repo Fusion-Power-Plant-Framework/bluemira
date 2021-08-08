@@ -28,12 +28,13 @@ import gmsh
 import bluemira.geometry as geo
 from bluemira.geometry.wire import BluemiraWire
 
+
 class Mesh:
     def __init__(
-            self,
-            modelname="Mesh",
-            terminal=1,
-            meshfile="Mesh.geo_unrolled",
+        self,
+        modelname="Mesh",
+        terminal=1,
+        meshfile="Mesh.geo_unrolled",
     ):
 
         self.modelname = modelname
@@ -59,17 +60,18 @@ class Mesh:
         self._meshfile = self._check_meshfile(meshfile)
 
     def __call__(self, obj, clean=True):
-        objlist = (BluemiraWire)
+        objlist = BluemiraWire
         if isinstance(obj, objlist):
             _freecadGmsh._initialize_mesh(self.terminal, self.modelname)
-            mesh_dict = self.__mesh_obj(obj)
+            buffer = self.__mesh_obj(obj)
+            self.__apply_fragment(buffer)
             _freecadGmsh._generate_mesh()
             for file in self.meshfile:
                 _freecadGmsh._save_mesh(file)
             _freecadGmsh._finalize_mesh()
         else:
             raise ValueError(f"Only {objlist} can be meshed")
-        return mesh_dict
+        return buffer
 
     def __mesh_obj(self, obj):
         if not hasattr(obj, "ismeshed") or not obj.ismeshed:
@@ -82,38 +84,67 @@ class Mesh:
             print("Obj already meshed")
         return buffer
 
-    def get_mesh_dict(self, obj, dim=None):
-        mesh_dict = []
-        if hasattr(obj, "mesh_dict"):
-            mesh_dict += obj.mesh_dict
-        if isinstance(obj, BluemiraWire):
-            for o in obj.boundary:
-                mesh_dict += self.get_mesh_dict(o)
-        if dim is not None:
-            mesh_dict = [v for k, v in mesh_dict if k == dim]
-        return mesh_dict
+    def __apply_fragment(self, buffer, dim=[0, 1, 2], all_ent=None, tools=[]):
+        print(f"prev_buffer: {buffer}")
+        all_ent, oo, oov = _freecadGmsh._fragment(dim, all_ent, tools)
+        Mesh.__iterate_gmsh_dict(buffer, _freecadGmsh._map_mesh_dict, all_ent, oov)
+        print(f"post_buffer: {buffer}")
+
+    @staticmethod
+    def __iterate_gmsh_dict(buffer, function, *args):
+        if "BluemiraWire" in buffer:
+            boundary = buffer["BluemiraWire"]["boundary"]
+            if 'gmsh' in buffer['BluemiraWire']:
+                function(buffer['BluemiraWire']['gmsh'], *args)
+            for item in boundary:
+                for k, v1 in item.items():
+                    if k == "BluemiraWire":
+                        Mesh.__iterate_gmsh_dict(item, function, *args)
 
     def __convert_to_gmsh(self, buffer):
-        for type_, v in buffer.items():
-            if type_ == "BluemiraWire":
-                label = v['label']
-                boundary = v['boundary']
-                temp_list = []
-                for item in boundary:
-                    for k, v1 in item.items():
-                        if k == "BluemiraWire":
-                            wire = self.__convert_to_gmsh(item)
-                        else:
-                            wire = v1
-                            for c in wire:
-                                _freecadGmsh.create_gmsh_curve(c)
-                        temp_list = temp_list + wire
-                return temp_list
-        raise NotImplementedError(f"Serialization non implemented for {type_}")
+        if "BluemiraWire" in buffer:
+            label = buffer["BluemiraWire"]["label"]
+            boundary = buffer["BluemiraWire"]["boundary"]
+            buffer["BluemiraWire"]["gmsh"] = {}
+            for item in boundary:
+                for k, v1 in item.items():
+                    if k == "BluemiraWire":
+                        self.__convert_to_gmsh(item)
+                    else:
+                        for c in v1:
+                            buffer["BluemiraWire"]["gmsh"] = {
+                                **buffer["BluemiraWire"]["gmsh"],
+                                **_freecadGmsh.create_gmsh_curve(c),
+                            }
+        else:
+            raise NotImplementedError(f"Serialization non implemented")
+
+    def get_gmsh_dict(self, buffer):
+        gmsh_dict = {}
+        data = ['points_tag', 'cntrpoints_tag', 'curve_tag']
+        for d in data:
+            gmsh_dict[d] = []
+
+        if "BluemiraWire" in buffer:
+            boundary = buffer['BluemiraWire']['boundary']
+            if 'gmsh' in buffer['BluemiraWire']:
+                for d in data:
+                    if d in buffer['BluemiraWire']['gmsh']:
+                        gmsh_dict[d] += buffer['BluemiraWire']['gmsh'][d]
+            for item in boundary:
+                for k, v1 in item.items():
+                    if k == "BluemiraWire":
+                        temp_dict = self.get_gmsh_dict(item)
+                        for d in data:
+                            gmsh_dict[d] += temp_dict[d]
+
+            for d in data:
+                gmsh_dict[d] = list(dict.fromkeys(gmsh_dict[d]))
+
+        return gmsh_dict
 
 
 class _freecadGmsh:
-
     @staticmethod
     def _initialize_mesh(terminal=1, modelname="Mesh"):
 
@@ -158,23 +189,70 @@ class _freecadGmsh:
         # We can then generate a mesh...
         gmsh.model.mesh.generate(mesh_dim)
 
+    @staticmethod
     def create_gmsh_curve(buffer):
+        gmsh_dict = {}
+
         points_tag = []
         cntrpoints_tag = []
         curve_tag = []
 
-        for type_, v in buffer.items():
-            if type_ == "BezierCurve":
-                buffer[type_]['gmsh'] = {}
-                num = 0
-                poles = v['Poles']
-                for p in poles:
-                    cntrpoints_tag.append(gmsh.model.occ.addPoint(p[0], p[1], p[2]))
-                curve_tag.append(gmsh.model.occ.addBezier([cptag for cptag in cntrpoints_tag]))
-                points_tag.append(cntrpoints_tag[0])
-                points_tag.append(cntrpoints_tag[-1])
-                buffer[type_]['gmsh']['points_tag'] = points_tag
-                buffer[type_]['gmsh']['cntrpoints_tag'] = cntrpoints_tag
-                buffer[type_]['gmsh']['curve_tag'] = curve_tag
-            else:
-                raise NotImplementedError(f"Gmsh curve creation non implemented for {type_}")
+        if "BezierCurve" in buffer:
+            num = 0
+            poles = buffer["BezierCurve"]["Poles"]
+            for p in poles:
+                cntrpoints_tag.append(gmsh.model.occ.addPoint(p[0], p[1], p[2]))
+            curve_tag.append(
+                gmsh.model.occ.addBezier([cptag for cptag in cntrpoints_tag])
+            )
+            points_tag.append(cntrpoints_tag[0])
+            points_tag.append(cntrpoints_tag[-1])
+            gmsh_dict["points_tag"] = points_tag
+            gmsh_dict["cntrpoints_tag"] = cntrpoints_tag
+            gmsh_dict["curve_tag"] = curve_tag
+            gmsh.model.occ.synchronize()
+            return gmsh_dict
+        else:
+            raise NotImplementedError(f"Gmsh curve creation non implemented for {type_}")
+
+    @staticmethod
+    def _fragment(dim=[0, 1, 2], all_ent=None, tools=[]):
+        if not hasattr(dim, "__len__"):
+            dim = [dim]
+        if all_ent is None:
+            all_ent = []
+            for d in dim:
+                all_ent += gmsh.model.getEntities(d)
+        oo = []
+        oov = []
+        if len(all_ent) > 1:
+            oo, oov = gmsh.model.occ.fragment(all_ent, tools)
+            gmsh.model.occ.synchronize()
+
+        return all_ent, oo, oov
+
+    @staticmethod
+    def _map_mesh_dict(mesh_dict, all_ent, oov):
+        print(all_ent)
+        print(oov)
+        dim_dict = {'points_tag': 0, 'cntrpoints_tag': 0, 'curve_tag': 1}
+        new_gmsh_dict = {}
+        for key in dim_dict:
+            new_gmsh_dict[key] = []
+
+        print(mesh_dict)
+        for type_, values in mesh_dict.items():
+            for v in values:
+                dim = dim_dict[type_]
+                if (dim, v) in all_ent:
+                    if len(oov) > 0:
+                        for o in oov[all_ent.index((dim, v))]:
+                            new_gmsh_dict[type_].append(o[1])
+                else:
+                    new_gmsh_dict[type_].append(v)
+        print(f"new_gmsh_dict: {new_gmsh_dict}")
+
+        for key in dim_dict:
+            mesh_dict[key] = list(dict.fromkeys(new_gmsh_dict[key]))
+
+        return new_gmsh_dict
