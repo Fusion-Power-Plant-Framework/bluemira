@@ -95,6 +95,9 @@ bmwire2 = geo.wire.BluemiraWire(
     ],
     label="full_wire",
 )
+bmwire2.close()
+
+bmface = geo.face.BluemiraFace(bmwire2)
 
 from bluemira.mesh.meshing import Mesh
 
