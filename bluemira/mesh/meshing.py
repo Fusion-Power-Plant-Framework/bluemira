@@ -196,24 +196,39 @@ class _freecadGmsh:
         points_tag = []
         cntrpoints_tag = []
         curve_tag = []
+        for type_ in buffer:
+            if type_ == "LineSegment":
+                start_point = buffer[type_]["StartPoint"]
+                points_tag.append(gmsh.model.occ.addPoint(start_point[0], start_point[1], start_point[2]))
+                end_point = buffer[type_]["EndPoint"]
+                points_tag.append(gmsh.model.occ.addPoint(end_point[0], end_point[1], end_point[2]))
+                curve_tag.append(gmsh.model.occ.addLine(points_tag[0], points_tag[1]))
+            elif type_ == "BezierCurve":
+                poles = buffer[type_]["Poles"]
+                for p in poles:
+                    cntrpoints_tag.append(gmsh.model.occ.addPoint(p[0], p[1], p[2]))
+                curve_tag.append(
+                    gmsh.model.occ.addBezier(cntrpoints_tag)
+                )
+                points_tag.append(cntrpoints_tag[0])
+                points_tag.append(cntrpoints_tag[-1])
+            elif type_ == "BSplineCurve":
+                poles = buffer[type_]["Poles"]
+                for p in poles:
+                    cntrpoints_tag.append(gmsh.model.occ.addPoint(p[0], p[1], p[2]))
+                curve_tag.append(
+                    gmsh.model.occ.addBSpline(cntrpoints_tag)
+                )
+                points_tag.append(cntrpoints_tag[0])
+                points_tag.append(cntrpoints_tag[-1])
+            else:
+                raise NotImplementedError(f"Gmsh curve creation non implemented for {type_}")
 
-        if "BezierCurve" in buffer:
-            num = 0
-            poles = buffer["BezierCurve"]["Poles"]
-            for p in poles:
-                cntrpoints_tag.append(gmsh.model.occ.addPoint(p[0], p[1], p[2]))
-            curve_tag.append(
-                gmsh.model.occ.addBezier([cptag for cptag in cntrpoints_tag])
-            )
-            points_tag.append(cntrpoints_tag[0])
-            points_tag.append(cntrpoints_tag[-1])
-            gmsh_dict["points_tag"] = points_tag
-            gmsh_dict["cntrpoints_tag"] = cntrpoints_tag
-            gmsh_dict["curve_tag"] = curve_tag
-            gmsh.model.occ.synchronize()
-            return gmsh_dict
-        else:
-            raise NotImplementedError(f"Gmsh curve creation non implemented for {type_}")
+        gmsh_dict["points_tag"] = points_tag
+        gmsh_dict["cntrpoints_tag"] = cntrpoints_tag
+        gmsh_dict["curve_tag"] = curve_tag
+        gmsh.model.occ.synchronize()
+        return gmsh_dict
 
     @staticmethod
     def _fragment(dim=[0, 1, 2], all_ent=None, tools=[]):
