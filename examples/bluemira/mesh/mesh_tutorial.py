@@ -88,9 +88,17 @@ ser_bmwire = bluemira.geometry.tools.serialize_shape(bmwire)
 des_bmwire = bluemira.geometry.tools.deserialize_shape(ser_bmwire)
 print(des_bmwire)
 
-bmwire2 = geo.wire.BluemiraWire([geo.wire.BluemiraWire(wire1), geo.wire.BluemiraWire(wire2)])
+bmwire2 = geo.wire.BluemiraWire(
+    [
+        geo.wire.BluemiraWire(wire1, label="wire1"),
+        geo.wire.BluemiraWire(wire2, label="wire2"),
+    ],
+    label="full_wire",
+)
 
 from bluemira.mesh.meshing import Mesh
+
 m = Mesh()
 buffer = m(bmwire2)
 
+print(m.get_gmsh_dict(buffer))
