@@ -717,3 +717,126 @@ def boolean_cut(shape, tools):
         return [convert(obj, shape.label) for obj in cut_shape]
 
     return convert(cut_shape, shape.label)
+
+
+# # =============================================================================
+# # Serialize and Deserialize
+# # =============================================================================
+def serialize_shape(shape):
+    """Serialize a FreeCAD topological data object"""
+    type_ = type(shape)
+
+    output = []
+    if isinstance(shape, BluemiraGeo):
+        for obj in shape.boundary:
+            output.append(serialize_shape(obj))
+            dict = {"label": shape.label, "boundary": output}
+            if isinstance(shape, geo.base.GeoMeshable):
+                if shape.mesh_options is not None:
+                    if shape.mesh_options.lcar is not None:
+                        dict['lcar'] = shape.mesh_options.lcar
+                    if shape.mesh_options.physical_group is not None:
+                        dict['physical_group'] = shape.mesh_options.physical_group
+        return {str(type(shape).__name__): dict}
+    elif isinstance(shape, _freecadapi.Wire):
+        return _freecadapi.serialize_shape(shape)
+    else:
+        raise NotImplementedError(f"Serialization non implemented for {type_}")
+
+
+def deserialize_shape(buffer):
+    """Deserialize a FreeCAD topological data object obtained from serialize_shape.
+    Parameters
+    ----------
+        buffer: object serialization as stored by serialize_shape
+    Returns
+    -------
+        the deserialized FreeCAD object
+    """
+    from bluemira.utilities.tools import get_module
+
+    for type_, v in buffer.items():
+        if type_ == "BluemiraWire":
+            label = v['label']
+            boundary = v['boundary']
+
+            temp_list = []
+            for item in boundary:
+                for k, v1 in item.items():
+                    if k == "BluemiraWire":
+                        wire = deserialize_shape(item)
+                    else:
+                        wire = _freecadapi.deserialize_shape(item)
+                    temp_list.append(wire)
+
+            mesh_options = None
+            if 'lcar' in v:
+                if mesh_options is None:
+                    mesh_options = meshing.MeshOptions()
+                mesh_options.lcar = v['lcar']
+            if 'physical_group' in v:
+                if mesh_options is None:
+                    mesh_options = meshing.MeshOptions()
+                mesh_options.physical_group = v['physical_group']
+
+            wire = BluemiraWire(label=label, boundary=temp_list)
+            if mesh_options is not None:
+                wire.mesh_options = mesh_options
+            return wire
+        if type_ == "BluemiraFace":
+            label = v['label']
+            boundary = v['boundary']
+            temp_list = []
+            for item in boundary:
+                temp_list.append(deserialize_shape(item))
+
+            mesh_options = None
+            if 'lcar' in v:
+                if mesh_options is None:
+                    mesh_options = meshing.MeshOptions()
+                mesh_options.lcar = v['lcar']
+            if 'physical_group' in v:
+                if mesh_options is None:
+                    mesh = meshing.MeshOptions()
+                mesh_options.physical_group = v['physical_group']
+
+            face = BluemiraFace(label=label, boundary=temp_list)
+            if mesh_options is not None:
+                face.mesh_options = mesh_options
+            return face
+
+        if type_ == "BluemiraShell":
+            label = v['label']
+            boundary = v['boundary']
+            temp_list = []
+            for item in boundary:
+                temp_list.append(deserialize_shape(item))
+
+            mesh_options = None
+            if 'lcar' in v:
+                if mesh_options is None:
+                    mesh_options = meshing.MeshOptions()
+                mesh_options.lcar = v['lcar']
+            if 'physical_group' in v:
+                if mesh_options is None:
+                    mesh_options = meshing.MeshOptions()
+                mesh_options.physical_group = v['physical_group']
+
+            shell = BluemiraShell(label=label, boundary=temp_list)
+            if mesh_options is not None:
+                shell.mesh_options = mesh_options
+            return shell
+        raise NotImplementedError(f"Deserialization non implemented for {type_}")
+
+
+# # =============================================================================
+# # shape utils
+# # =============================================================================
+def get_shape_by_name(shape, name: str):
+    shapes = []
+    if hasattr(shape, 'label') and shape.label == name:
+        shapes.append(shape)
+    if hasattr(shape, 'boundary'):
+        for o in shape.boundary:
+            shapes += get_shape_by_name(o, name)
+    return shapes
