@@ -27,8 +27,10 @@ import freecad  # noqa: F401
 import FreeCAD
 import Part
 
-import bluemira.geometry._freecadapi as fcapi
+import bluemira.codes._freecadapi as cadapi
 import bluemira.geometry as geo
+
+from bluemira.mesh.meshing import Mesh
 
 # Defining my parameters
 import bluemira.geometry.tools
@@ -75,12 +77,12 @@ wire2 = Part.Wire(part_2.toShape())
 # Part.show(part_1.toShape())
 # Part.show(part_2.toShape())
 
-ser_bz = fcapi.serialize_shape(bez_curve)
+ser_bz = cadapi.serialize_shape(bez_curve)
 print(ser_bz)
 wire = Part.Wire(Part.Shape(bez_curve))
-ser_wire = fcapi.serialize_shape(wire)
+ser_wire = cadapi.serialize_shape(wire)
 print(ser_wire)
-des_wire = fcapi.deserialize_shape(ser_wire)
+des_wire = cadapi.deserialize_shape(ser_wire)
 print(des_wire)
 
 bmwire = geo.wire.BluemiraWire(wire)
@@ -97,11 +99,15 @@ bmwire2 = geo.wire.BluemiraWire(
 )
 bmwire2.close()
 
-bmface = geo.face.BluemiraFace(bmwire2)
-
-from bluemira.mesh.meshing import Mesh
-
 m = Mesh()
 buffer = m(bmwire2)
 
 print(m.get_gmsh_dict(buffer))
+
+bmface = geo.face.BluemiraFace(bmwire2)
+ser_bmface = geo.tools.serialize_shape(bmface)
+print(ser_bmface)
+
+des_bmface = geo.tools.deserialize_shape(ser_bmface)
+
+print(des_bmface)

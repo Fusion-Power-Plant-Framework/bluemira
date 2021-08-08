@@ -823,8 +823,13 @@ def serialize_shape(shape: BluemiraGeo):
             else:
                 output.append(cadapi.serialize_shape(wire))
         return {"BluemiraWire": {"label": shape.label, "boundary": output}}
+    if type_ == BluemiraFace:
+        output = []
+        for wire in shape.boundary:
+            output.append(serialize_shape(wire))
+        return {"BluemiraFace": {"label": shape.label, "boundary": output}}
 
-    raise NotImplementedError(f"Serialization non implemented for {type_}")
+    raise NotImplementedError(f"Serialization not implemented for {type_}")
 
 
 def deserialize_shape(buffer):
@@ -841,6 +846,7 @@ def deserialize_shape(buffer):
         The deserialized BluemiraGeo object.
     """
     for type_, v in buffer.items():
+        print(type_)
         if type_ == "BluemiraWire":
             label = v['label']
             boundary = v['boundary']
@@ -848,10 +854,17 @@ def deserialize_shape(buffer):
             for item in boundary:
                 for k, v1 in item.items():
                     if k == "BluemiraWire":
-                        wire = deserialize_shape(v1)
+                        wire = deserialize_shape(item)
                     else:
                         wire = cadapi.deserialize_shape(item)
                     temp_list.append(wire)
             return BluemiraWire(label=label, boundary=temp_list)
-
-        raise NotImplementedError(f"Deserialization non implemented for {type_}")
+        if type_ == "BluemiraFace":
+            label = v['label']
+            boundary = v['boundary']
+            temp_list = []
+            for item in boundary:
+                bluemira_debug(f"item = {item}")
+                temp_list.append(deserialize_shape(item))
+            return BluemiraFace(label=label, boundary=temp_list)
+        raise NotImplementedError(f"Deserialization not implemented for {type_}")
