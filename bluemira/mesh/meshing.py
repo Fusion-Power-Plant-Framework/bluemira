@@ -60,11 +60,17 @@ class Mesh:
         self._meshfile = self._check_meshfile(meshfile)
 
     def __call__(self, obj, clean=True):
-        objlist = BluemiraWire
+        objlist = (BluemiraWire)
         if isinstance(obj, objlist):
             _freecadGmsh._initialize_mesh(self.terminal, self.modelname)
             buffer = self.__mesh_obj(obj)
-            self.__apply_fragment(buffer)
+
+            #### Mesh size test - to be deleted
+            temp_dict = self.get_gmsh_dict(buffer)
+            dimTags = [(0, tag) for tag in temp_dict['points_tag']]
+            _freecadGmsh.set_mesh_size(dimTags, 0.1)
+            #####
+
             _freecadGmsh._generate_mesh()
             for file in self.meshfile:
                 _freecadGmsh._save_mesh(file)
@@ -79,6 +85,7 @@ class Mesh:
             for k, v in buffer.items():
                 if k == "BluemiraWire":
                     self.__convert_to_gmsh(buffer)
+                    self.__apply_fragment({k: v})
             obj.ismeshed = True
         else:
             print("Obj already meshed")
@@ -140,7 +147,6 @@ class Mesh:
 
             for d in data:
                 gmsh_dict[d] = list(dict.fromkeys(gmsh_dict[d]))
-
         return gmsh_dict
 
 
@@ -265,9 +271,13 @@ class _freecadGmsh:
                             new_gmsh_dict[type_].append(o[1])
                 else:
                     new_gmsh_dict[type_].append(v)
-        print(f"new_gmsh_dict: {new_gmsh_dict}")
 
         for key in dim_dict:
             mesh_dict[key] = list(dict.fromkeys(new_gmsh_dict[key]))
 
         return new_gmsh_dict
+
+    @staticmethod
+    def set_mesh_size(dimTags, size):
+        gmsh.model.occ.mesh.setSize(dimTags, size)
+        gmsh.model.occ.synchronize()
