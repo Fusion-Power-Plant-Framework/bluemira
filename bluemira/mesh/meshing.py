@@ -85,7 +85,6 @@ class Mesh:
             for k, v in buffer.items():
                 if k == "BluemiraWire":
                     self.__convert_to_gmsh(buffer)
-                    self.__apply_fragment({k: v})
             obj.ismeshed = True
         else:
             print("Obj already meshed")
@@ -109,26 +108,43 @@ class Mesh:
                         Mesh.__iterate_gmsh_dict(item, function, *args)
 
     def __convert_to_gmsh(self, buffer):
-        if "BluemiraWire" in buffer:
-            label = buffer["BluemiraWire"]["label"]
-            boundary = buffer["BluemiraWire"]["boundary"]
-            buffer["BluemiraWire"]["gmsh"] = {}
-            for item in boundary:
-                for k, v1 in item.items():
-                    if k == "BluemiraWire":
-                        self.__convert_to_gmsh(item)
-                    else:
-                        for c in v1:
-                            buffer["BluemiraWire"]["gmsh"] = {
-                                **buffer["BluemiraWire"]["gmsh"],
-                                **_freecadGmsh.create_gmsh_curve(c),
-                            }
-        else:
-            raise NotImplementedError(f"Serialization non implemented")
+        print(f"__convert_to_gmsh: buffer = {buffer}")
+        for type_, value in buffer.items():
+            if type_ == "BluemiraWire":
+                label = value["label"]
+                boundary = value["boundary"]
+                value["gmsh"] = {}
+                for item in boundary:
+                    for btype_, bvalue in item.items():
+                        if btype_ == "BluemiraWire":
+                            self.__convert_to_gmsh(item)
+                        else:
+                            for curve in bvalue:
+                                value["gmsh"] = {
+                                    **value["gmsh"],
+                                    **_freecadGmsh.create_gmsh_curve(curve),
+                                }
+                # get the dictionary of the BluemiraWire defined in buffer
+                # as default and gmsh format
+                dict_default = self.get_gmsh_dict(buffer)
+                dict_gmsh = self.get_gmsh_dict(buffer, 'gmsh')
 
-    def get_gmsh_dict(self, buffer):
+                # In order to avoid fragmentation of curves given by construction points
+                # the fragment function is applied in two steps:
+                # 1) fragment only points
+                all_ent = dict_gmsh['points_tag'] + dict_gmsh['cntrpoints_tag']
+                self.__apply_fragment(buffer, all_ent=all_ent)
+
+                # 2) fragment points_tag and curves
+                all_ent = dict_gmsh['points_tag'] + dict_gmsh['curve_tag']
+                self.__apply_fragment(buffer, all_ent=all_ent)
+
+            else:
+                raise NotImplementedError(f"Serialization non implemented for {type_}")
+
+    def get_gmsh_dict(self, buffer, format = 'default'):
         gmsh_dict = {}
-        data = ['points_tag', 'cntrpoints_tag', 'curve_tag']
+        data = {'points_tag': 0, 'cntrpoints_tag': 0, 'curve_tag': 1}
         for d in data:
             gmsh_dict[d] = []
 
@@ -147,7 +163,15 @@ class Mesh:
 
             for d in data:
                 gmsh_dict[d] = list(dict.fromkeys(gmsh_dict[d]))
-        return gmsh_dict
+
+            output = None
+            if format == 'default':
+                output = gmsh_dict
+            if format == 'gmsh':
+                output = {}
+                for d in data:
+                    output[d] = [(data[d], tag) for tag in gmsh_dict[d]]
+        return output
 
 
 class _freecadGmsh:
@@ -254,14 +278,11 @@ class _freecadGmsh:
 
     @staticmethod
     def _map_mesh_dict(mesh_dict, all_ent, oov):
-        print(all_ent)
-        print(oov)
         dim_dict = {'points_tag': 0, 'cntrpoints_tag': 0, 'curve_tag': 1}
         new_gmsh_dict = {}
         for key in dim_dict:
             new_gmsh_dict[key] = []
 
-        print(mesh_dict)
         for type_, values in mesh_dict.items():
             for v in values:
                 dim = dim_dict[type_]
