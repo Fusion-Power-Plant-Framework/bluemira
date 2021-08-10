@@ -108,6 +108,8 @@ bmface = geo.face.BluemiraFace(bmwire2)
 ser_bmface = geo.tools.serialize_shape(bmface)
 print(ser_bmface)
 
+buffer2 = m(bmface)
+
 # des_bmface = geo.tools.deserialize_shape(ser_bmface)
 
 # print(des_bmface)
