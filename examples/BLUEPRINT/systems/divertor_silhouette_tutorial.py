@@ -50,9 +50,6 @@ from BLUEPRINT.systems.divertor_silhouette import (  # noqa(F401)
     DivertorSilhouetteFlatDomePsiBaffle,
 )
 
-plt.ion()
-plt.show()
-
 # %%[markdown]
 # ## Setting BLUEPRINT Parameters
 # When creating any `ReactorSystem` in BLUEPRINT, we need to set the relevant parameters.
@@ -130,6 +127,8 @@ x, z = unique(x, z)[:2]
 fw_loop = Loop(x=x, z=z)
 fw_loop.plot()
 
+plt.show()
+
 # %%[markdown]
 # ## Targets Definitions
 # The divertor is shaped using a parameterisation of the targets. This is provided to
@@ -199,6 +198,8 @@ plt.plot(sol[0], sol[1], "--")
 sol = div.get_sol_leg("upper", "outer")
 plt.plot(sol[0], sol[1], "--")
 
+plt.show()
+
 # %%[markdown]
 # ## Make Some Domes
 # Next we'll make some dome sections, which connect the inner and outer targets.
@@ -214,6 +215,8 @@ domes["upper"] = div.make_dome(
 plt.plot(domes["lower"].T[0], domes["lower"].T[1])
 plt.plot(domes["upper"].T[0], domes["upper"].T[1])
 plt.gca().set_aspect("equal")
+
+plt.show()
 
 # %%[markdown]
 # ## Make Some Baffles
@@ -242,6 +245,8 @@ plt.plot(baffles["upper"]["inner"].T[0], baffles["upper"]["inner"].T[1])
 plt.plot(baffles["upper"]["outer"].T[0], baffles["upper"]["outer"].T[1])
 plt.gca().set_aspect("equal")
 
+plt.show()
+
 # %%[markdown]
 # ## The DivertorSilhouette Build
 # In reality we don't want to be building each section of the divertor by hand.
@@ -257,6 +262,10 @@ div.build(fw_loop)
 div.geom["divertors"]["upper"].plot()
 div.geom["divertors"]["lower"].plot()
 
+plt.show()
+
 # %%
 div_geom = div.make_divertor(fw_loop, "lower")
 div_geom["divertor"].plot()
+
+plt.show()
