@@ -404,4 +404,7 @@ if __name__ == "__main__":
     plot_component(reactor.component_trees["xz"])
     plot_component(reactor.component_trees["xy"])
 
+    print(reactor.component_trees["xz"].tree())
+    print(reactor.component_trees["xy"].tree())
+
     plt.show()
