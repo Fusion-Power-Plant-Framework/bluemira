@@ -23,6 +23,10 @@
 Reactor example of merged functionality
 """
 
+from __future__ import annotations
+
+import enum
+from typing import Dict, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -37,8 +41,20 @@ from BLUEPRINT.systems.config import SingleNull
 import bluemira.base as bm
 from bluemira.base.components import GroupingComponent
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry._deprecated_tools import make_mixed_face, make_mixed_wire
+from bluemira.geometry._deprecated_tools import (
+    convert_coordinates_to_face,
+    convert_coordinates_to_wire,
+)
 from bluemira.utilities.plot_tools import plot_component
+
+
+class ConversionMethod(enum.Enum):
+    """
+    Enumeration of the allowed conversion methods.
+    """
+    MIXED = "mixed"
+    POLYGON = "polygon"
+    SPLINE = "spline"
 
 
 class BluemiraReactor(Reactor):
@@ -58,17 +74,27 @@ class BluemiraReactor(Reactor):
             "xyz": bm.GroupingComponent(self.params.Name),
         }
 
-    def _convert_loop(self, tree: GroupingComponent, geom: Loop, geom_name: str):
+    def _convert_loop(
+        self,
+        tree: GroupingComponent,
+        geom: Loop,
+        geom_name: str,
+        method: ConversionMethod = ConversionMethod.MIXED
+    ):
         """
         Convert a Loop into a PhysicalComponent with the provided name and add it to the
         tree.
         """
-        face = make_mixed_face(*geom.xyz)
+        face = convert_coordinates_to_face(*geom.xyz, method=method.value)
         component = bm.PhysicalComponent(geom_name, face)
         tree.add_child(component)
 
     def _convert_multiloop(
-        self, tree: GroupingComponent, geom: MultiLoop, geom_name: str
+        self,
+        tree: GroupingComponent,
+        geom: MultiLoop,
+        geom_name: str,
+        method: ConversionMethod = ConversionMethod.MIXED
     ):
         """
         Convert a MultiLoop into a GroupingComponent with the provided name and add it to
@@ -82,32 +108,49 @@ class BluemiraReactor(Reactor):
             component_tree = GroupingComponent(geom_name, parent=tree)
 
         for idx, loop in enumerate(geom):
-            self._convert_loop(component_tree, loop, f"{geom_name} {idx}")
+            self._convert_loop(component_tree, loop, f"{geom_name} {idx}", method)
 
-    def _convert_shell(self, tree: GroupingComponent, geom: Shell, geom_name: str):
+    def _convert_shell(
+        self,
+        tree: GroupingComponent,
+        geom: Shell,
+        geom_name: str,
+        method: ConversionMethod = ConversionMethod.MIXED
+    ):
         """
         Convert a Shell into a PhysicalComponent with the provided name and add it to the
         tree.
         """
-        inner = make_mixed_wire(*geom.inner.xyz)
-        outer = make_mixed_wire(*geom.outer.xyz)
+        inner = convert_coordinates_to_wire(*geom.inner.xyz, method=method.value)
+        outer = convert_coordinates_to_wire(*geom.outer.xyz, method=method.value)
         face = BluemiraFace([outer, inner])
         component = bm.PhysicalComponent(geom_name, face)
         tree.add_child(component)
 
-    def _convert_geometry(self, tree: GroupingComponent, geom: GeomBase, geom_name: str):
+    def _convert_geometry(
+        self,
+        tree: GroupingComponent,
+        geom: GeomBase,
+        geom_name: str,
+        method: ConversionMethod = ConversionMethod.MIXED
+    ):
         """
         Convert the provided geometry into a Component with the provided name and add it
         to the tree.
         """
         if isinstance(geom, Loop):
-            self._convert_loop(tree, geom, geom_name)
+            self._convert_loop(tree, geom, geom_name, method)
         elif isinstance(geom, MultiLoop):
-            self._convert_multiloop(tree, geom, geom_name)
+            self._convert_multiloop(tree, geom, geom_name, method)
         elif isinstance(geom, Shell):
-            self._convert_shell(tree, geom, geom_name)
+            self._convert_shell(tree, geom, geom_name, method)
 
-    def convert_system_xy(self, system: ReactorSystem, system_name: str):
+    def convert_system_xy(
+        self,
+        system: ReactorSystem,
+        system_name: str,
+        method: Union[ConversionMethod, Dict[str, ConversionMethod]] = ConversionMethod.MIXED
+    ):
         """
         Convert a BLUEPRINT ReactorSystem into a bluemira Component assigned to the tree
         representing the xy build.
@@ -115,11 +158,19 @@ class BluemiraReactor(Reactor):
         system_comp = GroupingComponent(system_name, parent=self.component_trees["xy"])
         system._generate_xy_plot_loops()
         for geom_name in system.xy_plot_loop_names:
+            conversion = method
+            if isinstance(conversion, dict):
+                conversion = conversion[geom_name]
             self._convert_geometry(
-                system_comp, system.geom[geom_name], geom_name.rstrip(" X-Y")
+                system_comp, system.geom[geom_name], geom_name.rstrip(" X-Y"), conversion
             )
 
-    def convert_system_xz(self, system: ReactorSystem, system_name: str):
+    def convert_system_xz(
+        self,
+        system: ReactorSystem,
+        system_name: str,
+        method: Union[ConversionMethod, Dict[str, ConversionMethod]] = ConversionMethod.MIXED
+    ):
         """
         Convert a BLUEPRINT ReactorSystem into a bluemira Component assigned to the tree
         representing the xz build.
@@ -127,7 +178,12 @@ class BluemiraReactor(Reactor):
         system_comp = GroupingComponent(system_name, parent=self.component_trees["xz"])
         system._generate_xz_plot_loops()
         for geom_name in system.xz_plot_loop_names:
-            self._convert_geometry(system_comp, system.geom[geom_name], geom_name)
+            conversion = method
+            if isinstance(conversion, dict):
+                conversion = conversion[geom_name]
+            self._convert_geometry(
+                system_comp, system.geom[geom_name], geom_name, conversion
+            )
 
     def build_IVCs(self):
         """
@@ -138,10 +194,10 @@ class BluemiraReactor(Reactor):
         """
         super().build_IVCs()
 
-        self.convert_system_xy(self.PL, "Plasma")
-        self.convert_system_xz(self.PL, "Plasma")
+        self.convert_system_xy(self.PL, "Plasma", ConversionMethod.SPLINE)
+        self.convert_system_xz(self.PL, "Plasma", ConversionMethod.SPLINE)
 
-        self.convert_system_xz(self.DIV, "Divertor")
+        self.convert_system_xz(self.DIV, "Divertor", ConversionMethod.MIXED)
 
     def define_in_vessel_layout(self):
         """
@@ -151,8 +207,17 @@ class BluemiraReactor(Reactor):
         """
         super().define_in_vessel_layout()
 
-        self.convert_system_xy(self.BB, "Blanket")
-        self.convert_system_xz(self.BB, "Blanket")
+
+        self.convert_system_xy(self.BB, "Blanket", ConversionMethod.MIXED)
+
+        conversion = {}
+        geom_name: str
+        for geom_name in self.BB.geom:
+            if "bss" in geom_name:
+                conversion[geom_name] = ConversionMethod.MIXED
+            else:
+                conversion[geom_name] = ConversionMethod.POLYGON
+        self.convert_system_xz(self.BB, "Blanket", conversion)
 
     def build_TF_coils(
         self, ny=None, nr=None, nrippoints=None, objective=None, shape_type=None
@@ -193,8 +258,8 @@ class BluemiraReactor(Reactor):
             shape_type=shape_type,
         )
 
-        self.convert_system_xy(self.TF, "TF Coils")
-        self.convert_system_xz(self.TF, "TF Coils")
+        self.convert_system_xy(self.TF, "TF Coils", ConversionMethod.MIXED)
+        self.convert_system_xz(self.TF, "TF Coils", ConversionMethod.MIXED)
 
     def build_containments(self):
         """
@@ -208,11 +273,23 @@ class BluemiraReactor(Reactor):
         self.convert_system_xy(self.VV, "Vacuum Vessel")
         self.convert_system_xz(self.VV, "Vacuum Vessel")
 
-        self.convert_system_xy(self.TS, "Thermal Shield")
-        self.convert_system_xz(self.TS, "Thermal Shield")
+        conversion = {}
+        geom_name: str
+        self.TS._generate_xy_plot_loops()
+        self.TS._generate_xz_plot_loops()
+        for geom_name in self.TS.geom:
+            if "port" in geom_name:
+                conversion[geom_name] = ConversionMethod.POLYGON
+            elif geom_name == "Full 2D profile":
+                conversion[geom_name] = ConversionMethod.MIXED
+            else:
+                conversion[geom_name] = ConversionMethod.SPLINE
 
-        self.convert_system_xy(self.CR, "Cryostat")
-        self.convert_system_xz(self.CR, "Cryostat")
+        self.convert_system_xy(self.TS, "Thermal Shield", conversion)
+        self.convert_system_xz(self.TS, "Thermal Shield", conversion)
+
+        self.convert_system_xy(self.CR, "Cryostat", ConversionMethod.POLYGON)
+        self.convert_system_xz(self.CR, "Cryostat", ConversionMethod.POLYGON)
 
         self.convert_system_xy(self.RS, "Radiation Shield")
         self.convert_system_xz(self.RS, "Radiation Shield")
@@ -243,7 +320,7 @@ class BluemiraReactor(Reactor):
             x = np.append(coil.x_corner, coil.x_corner[0])
             y = np.zeros(len(x))
             z = np.append(coil.z_corner, coil.z_corner[0])
-            wire = make_mixed_wire(x, y, z)
+            wire = convert_coordinates_to_wire(x, y, z)
             face = BluemiraFace(wire)
             component = bm.PhysicalComponent(name, face)
             pf_comp.add_child(component)
