@@ -609,12 +609,12 @@ class TestMixedFaces:
                 100,
                 {
                     "center_of_mass": (
-                        3.500452375372449,
-                        4.171929004715665,
-                        1.1859408984439188,
+                        3.50441,
+                        4.17634,
+                        1.17872,
                     ),
-                    "volume": 105.18190628225133,
-                    "area": 347.68512772589065,
+                    "volume": 106.080,
+                    "area": 348.296,
                 },
             ),
             (
@@ -622,12 +622,12 @@ class TestMixedFaces:
                 15,
                 {
                     "center_of_mass": (
-                        11.596880374395973,
-                        1.5253538266061644,
-                        -0.21212609235933916,
+                        11.5832,
+                        1.52466,
+                        -0.186014,
                     ),
-                    "volume": 43.104392997200826,
-                    "area": 122.09576962217787,
+                    "volume": 43.0179,
+                    "area": 121.559,
                 },
             ),
         ],
@@ -649,12 +649,12 @@ class TestMixedFaces:
                 (0, 1, 0),
                 {
                     "center_of_mass": (
-                        9.45847,
+                        9.45890,
                         0.5,
-                        -9.3475e-4,
+                        -2.1267e-5,
                     ),
-                    "volume": 184.654,
-                    "area": 422.696,
+                    "volume": 184.931,
+                    "area": 423.427,
                 },
             ),
             (
@@ -662,12 +662,12 @@ class TestMixedFaces:
                 (0, 2, 0),
                 {
                     "center_of_mass": (
-                        8.03232,
-                        0.99007,
-                        -6.44426,
+                        8.03233,
+                        0.990000,
+                        -6.44430,
                     ),
-                    "volume": 4.58755,
-                    "area": 29.199,
+                    "volume": 4.58653,
+                    "area": 29.2196,
                 },
             ),
             (
@@ -675,12 +675,12 @@ class TestMixedFaces:
                 (0, 2, 0),
                 {
                     "center_of_mass": (
-                        8.0323,
-                        0.99,
-                        -6.4449,
+                        8.03242,
+                        0.990000,
+                        -6.44419,
                     ),
-                    "volume": 4.5911,
-                    "area": 29.169,
+                    "volume": 4.58702,
+                    "area": 29.1773,
                 },
             ),
         ],
@@ -703,7 +703,7 @@ class TestMixedFaces:
         loop: Loop = Loop.from_file(fn)
         face = make_mixed_face(*loop.xyz)
         true_props = {
-            "area": 2.27623,
+            "area": 2.26285,
         }
         self.assert_properties(true_props, face)
 
@@ -713,19 +713,19 @@ class TestMixedFaces:
             (
                 "shell_mixed_test",
                 {
-                    "area": 6.8238,
+                    "area": 6.35215,
                 },
             ),
             (
                 "failing_mixed_shell",
                 {
-                    "area": 31.464,
+                    "area": 31.4998,
                 },
             ),
             (
                 "tf_wp_tricky",
                 {
-                    "area": 31.034,
+                    "area": 31.0564,
                 },
             ),
         ],

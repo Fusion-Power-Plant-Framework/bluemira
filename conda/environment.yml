@@ -1,8 +1,18 @@
 name: bluemira
-
 channels:
   - conda-forge
   - nodefaults
+
+variables:
+  # Avoid use of .local
+  PYTHONNOUSERSITE: '1'
+
+  # The below settings are needed to support FreeCAD integration alongside click
+  # NOTE: This may produce a warning when activating the conda environment if overriding
+  # the machine's language
+  LANG: 'C'
+  LC_ALL: 'C'
+  PYTHONIOENCODING: 'utf-8'
 
 dependencies:
   - python=3.8

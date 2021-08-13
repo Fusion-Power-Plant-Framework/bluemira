@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -79,6 +79,24 @@ def check_data_type(data_type):
 
 
 @check_data_type(Base.Vector)
+def vector_to_list(vectors):
+    """Converts a FreeCAD Base.Vector or list(Base.Vector) into a list"""
+    return [list(v) for v in vectors]
+
+
+@check_data_type(Part.Point)
+def point_to_list(points):
+    """Converts a FreeCAD Part.Point or list(Part.Point) into a list"""
+    return [[p.X, p.Y, p.Z] for p in points]
+
+
+@check_data_type(Part.Vertex)
+def vertex_to_list(vertexes):
+    """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a list"""
+    return [[v.X, v.Y, v.Z] for v in vertexes]
+
+
+@check_data_type(Base.Vector)
 def vector_to_numpy(vectors):
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
     return np.array([np.array(v) for v in vectors])
@@ -145,8 +163,10 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
     return wire
 
 
-def make_bspline(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
-    """Make a bspline curve from a set of points.
+def make_bspline(
+    points: Union[list, np.ndarray], closed: bool = False, **kwargs
+) -> Part.Wire:
+    """Make a bezier curve from a set of points.
 
     Parameters
     ----------
@@ -154,18 +174,18 @@ def make_bspline(points: Union[list, np.ndarray], closed: bool = False) -> Part.
             as a list of 3D tuples, a 3D numpy array, or similar.
         closed (bool, optional): if True, the first and last points will be
             connected in order to form a closed shape. Defaults to False.
+        Parameters: (optional) knot sequence
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the bspline
+        Part.Wire: a FreeCAD wire that contains the bezier curve
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
     pntslist = [Base.Vector(x) for x in points]
-    bc = Part.BSplineCurve(pntslist)
-    wire = Part.Wire(bc.toShape())
-    if closed:
-        wire = close_wire(wire)
+    bsc = Part.BSplineCurve()
+    bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
+    wire = Part.Wire(bsc.toShape())
     return wire
 
 
