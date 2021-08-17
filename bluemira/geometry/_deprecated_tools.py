@@ -1460,6 +1460,7 @@ def make_mixed_wire(
     median_factor=2.0,
     n_segments=4,
     a_acute=150,
+    cleaning_atol=1e-6,
     debug=False,
 ):
     """
@@ -1488,6 +1489,11 @@ def make_mixed_wire(
     a_acute: float
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
+    cleaning_atol: float
+        If a point lies within this distance [m] of the previous point then it will be
+        treated as a duplicate and removed. This can stabilise the conversion in cases
+        where the point density is too high for a wire to be constructed as a spline.
+        By default this is set to 1e-6.
     debug: bool
         Whether or not to print debugging information
 
@@ -1504,6 +1510,7 @@ def make_mixed_wire(
         median_factor=median_factor,
         n_segments=n_segments,
         a_acute=a_acute,
+        cleaning_atol=cleaning_atol,
         debug=debug,
     )
     try:
@@ -1525,6 +1532,7 @@ def make_mixed_face(
     median_factor=2.0,
     n_segments=4,
     a_acute=150,
+    cleaning_atol=1e-6,
     debug=False,
 ):
     """
@@ -1553,6 +1561,11 @@ def make_mixed_face(
     a_acute: float
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
+    cleaning_atol: float
+        If a point lies within this distance [m] of the previous point then it will be
+        treated as a duplicate and removed. This can stabilise the conversion in cases
+        where the point density is too high for a wire to be constructed as a spline.
+        By default this is set to 1e-6.
     debug: bool
         Whether or not to print debugging information
 
@@ -1569,6 +1582,7 @@ def make_mixed_face(
         median_factor=median_factor,
         n_segments=n_segments,
         a_acute=a_acute,
+        cleaning_atol=cleaning_atol,
         debug=debug,
     )
     try:
@@ -1669,6 +1683,11 @@ class MixedFaceMaker:
     a_acute: float
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
+    cleaning_atol: float
+        If a point lies within this distance [m] of the previous point then it will be
+        treated as a duplicate and removed. This can stabilise the conversion in cases
+        where the point density is too high for a wire to be constructed as a spline.
+        By default this is set to 1e-6.
     debug: bool
         Whether or not to print debugging information
     """
@@ -1683,6 +1702,7 @@ class MixedFaceMaker:
         median_factor=2.0,
         n_segments=4,
         a_acute=150,
+        cleaning_atol=1e-6,
         debug=False,
     ):
         _validate_coordinates(x, y, z)
@@ -1696,6 +1716,7 @@ class MixedFaceMaker:
         self.median_factor = median_factor
         self.n_segments = n_segments
         self.a_acute = a_acute
+        self.cleaning_atol = cleaning_atol
         self.debug = debug
 
         # Constructors
@@ -1921,6 +1942,11 @@ class MixedFaceMaker:
 
         return spline_sequences
 
+    def _clean_points(self, coords: np.ndarray):
+        mask = ~np.isclose(segment_lengths(*coords), 0, atol=self.cleaning_atol)
+        mask = np.insert(mask, 0, True)
+        return coords[:, mask]
+
     def _make_subcoordinates(
         self, polygon_sequences: np.ndarray, spline_sequences: np.ndarray
     ):
@@ -1950,7 +1976,9 @@ class MixedFaceMaker:
                         self.z[seg[0] : seg[1] + 1],
                     ]
                 )
-            polygon_coords.append(coords)
+            clean_coords = self._clean_points(coords)
+            if all(shape >= 2 for shape in clean_coords.shape):
+                polygon_coords.append(clean_coords)
 
         for seg in spline_sequences:
             if seg[0] > seg[1]:
@@ -1975,7 +2003,9 @@ class MixedFaceMaker:
                         self.z[seg[0] : seg[1] + 1],
                     ]
                 )
-            spline_coords.append(coords)
+            clean_coords = self._clean_points(coords)
+            if all(shape >= 2 for shape in clean_coords.shape):
+                spline_coords.append(clean_coords)
 
         self.spline_coords = spline_coords
         self.polygon_coords = polygon_coords
