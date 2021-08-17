@@ -1991,7 +1991,7 @@ class MixedFaceMaker:
     def _clean_coordinates(self, coords: np.ndarray):
         """
         Clean the provided coordinates by removing any values that are closer than the
-        instances cleaning_atol value.
+        instance's cleaning_atol value.
 
         Parameters
         ----------
