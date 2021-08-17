@@ -278,9 +278,9 @@ class BluemiraReactor(Reactor):
         self.TS._generate_xy_plot_loops()
         self.TS._generate_xz_plot_loops()
         for geom_name in self.TS.geom:
-            if "port" in geom_name:
+            if "port" in geom_name or "Cryostat TS" in geom_name:
                 conversion[geom_name] = ConversionMethod.POLYGON
-            elif geom_name == "Full 2D profile":
+            elif "2D profile" in geom_name:
                 conversion[geom_name] = ConversionMethod.MIXED
             else:
                 conversion[geom_name] = ConversionMethod.SPLINE
