@@ -1748,9 +1748,6 @@ class MixedFaceMaker:
         # Make coordinates for all the segments
         self._make_subcoordinates(p_sequences, s_sequences)
 
-        if self.debug:
-            self.plot()
-
         # Make the wires for each of the sub-coordinates, and daisychain them
         self._make_subwires()
 
