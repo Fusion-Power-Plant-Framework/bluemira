@@ -41,6 +41,17 @@ from bluemira.geometry.wire import BluemiraWire
 
 
 # =============================================================================
+# Errors
+# =============================================================================
+
+class MixedFaceAreaError(GeometryError):
+    """
+    An error to raise when the area of a mixed face does not give a good match to the
+    area enclosed by the original coordinates.
+    """
+    pass
+
+# =============================================================================
 # Pre-processing utilities
 # =============================================================================
 
@@ -1461,6 +1472,7 @@ def make_mixed_wire(
     n_segments=4,
     a_acute=150,
     cleaning_atol=1e-6,
+    allow_fallback=True,
     debug=False,
 ):
     """
@@ -1494,6 +1506,9 @@ def make_mixed_wire(
         treated as a duplicate and removed. This can stabilise the conversion in cases
         where the point density is too high for a wire to be constructed as a spline.
         By default this is set to 1e-6.
+    allow_fallback: bool
+        If True then a failed attempt to make a mixed wire will fall back to a polygon
+        wire, else an exception will be raised. By default True.
     debug: bool
         Whether or not to print debugging information
 
@@ -1516,9 +1531,15 @@ def make_mixed_wire(
     try:
         mfm.build()
 
-    except RuntimeError:
-        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_wire(x, y, z, label=label)
+    except RuntimeError as e:
+        if allow_fallback:
+            bluemira_warn(
+                f"CAD: MixedFaceMaker failed with error {e} "
+                "- falling back to a polygon wire."
+            )
+            return make_wire(x, y, z, label=label)
+        else:
+            raise
 
     return mfm.wire
 
@@ -1533,6 +1554,8 @@ def make_mixed_face(
     n_segments=4,
     a_acute=150,
     cleaning_atol=1e-6,
+    area_rtol=5e-2,
+    allow_fallback=True,
     debug=False,
 ):
     """
@@ -1566,6 +1589,14 @@ def make_mixed_face(
         treated as a duplicate and removed. This can stabilise the conversion in cases
         where the point density is too high for a wire to be constructed as a spline.
         By default this is set to 1e-6.
+    area_rtol: float
+        If the area of the resulting face deviates by this relative value from the area
+        enclosed by the provided coordinates then the conversion will fail and either
+        fall back to a polygon-like face or raise an exception, depending on the setting
+        of `allow_fallback`.
+    allow_fallback: bool
+        If True then a failed attempt to make a mixed face will fall back to a polygon
+        wire, else an exception will be raised. By default True.
     debug: bool
         Whether or not to print debugging information
 
@@ -1588,18 +1619,34 @@ def make_mixed_face(
     try:
         mfm.build()
 
-    except RuntimeError:
-        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_face(x, y, z, label=label)
+    except RuntimeError as e:
+        if allow_fallback:
+            bluemira_warn(
+                f"CAD: MixedFaceMaker failed with error {e} "
+                "- falling back to a polygon face."
+            )
+            return make_face(x, y, z, label=label)
+        else:
+            raise
 
     # Sometimes there won't be a RuntimeError, and you get a free SIGSEGV for your
     # troubles.
-    area = mfm.face.area
-    if np.isclose(get_area(x, y, z), area, rtol=5e-2):
+    face_area = mfm.face.area
+    coords_area = get_area(x, y, z)
+    if np.isclose(coords_area, face_area, rtol=area_rtol):
         return mfm.face
     else:
-        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_face(x, y, z, label=label)
+        if allow_fallback:
+            bluemira_warn(
+                f"CAD: MixedFaceMaker resulted in a face with area {face_area} "
+                f"but the provided coordinates enclosed an area of {coords_area} "
+                "- falling back to a polygon face.")
+            return make_face(x, y, z, label=label)
+        else:
+            raise MixedFaceAreaError(
+                f"MixedFaceMaker resulted in a face with area {face_area} "
+                f"but the provided coordinates enclosed an area of {coords_area}."
+            )
 
 
 def make_wire(x, y, z, label="", spline=False):
