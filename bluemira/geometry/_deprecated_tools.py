@@ -673,13 +673,15 @@ def get_centroid_3d(x, y, z):
     return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
 
 
-def segment_lengths(x: np.array, z: np.array):
+def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray):
     """
     Returns the length of each individual segment in a set of coordinates
 
     Parameters
     ----------
     x: array_like
+        x coordinates of the loop [m]
+    y: array_like
         x coordinates of the loop [m]
     z: array_like
         z coordinates of the loop [m]
@@ -689,7 +691,7 @@ def segment_lengths(x: np.array, z: np.array):
     dL: np.array(N)
         The length of each individual segment in the loop
     """
-    return np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)
+    return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
 
 def bounding_box(x, y, z):
