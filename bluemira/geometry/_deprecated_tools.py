@@ -1813,7 +1813,7 @@ class MixedFaceMaker:
         vertices: np.ndarray(dtype=np.int)
             The vertices of the loop which are polygon-like
         """
-        seg_lengths = segment_lengths(self.x, self.z)
+        seg_lengths = segment_lengths(self.x, self.y, self.z)
         median = np.median(seg_lengths)
 
         long_indices = np.where(seg_lengths > self.median_factor * median)[0]
