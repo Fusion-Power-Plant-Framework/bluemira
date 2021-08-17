@@ -49,6 +49,7 @@ class MixedFaceAreaError(GeometryError):
     An error to raise when the area of a mixed face does not give a good match to the
     area enclosed by the original coordinates.
     """
+
     pass
 
 # =============================================================================
