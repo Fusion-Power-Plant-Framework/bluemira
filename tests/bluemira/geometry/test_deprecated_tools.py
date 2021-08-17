@@ -741,6 +741,14 @@ class TestMixedFaces:
         face = BluemiraFace([outer_wire, inner_wire])
         self.assert_properties(true_props, face)
 
+    def test_coordinate_cleaning(self):
+        fn = os.sep.join([TEST_PATH, "bb_ob_bss_test.json"])
+        loop: Loop = Loop.from_file(fn)
+        make_mixed_wire(*loop.xyz, allow_fallback=False)
+
+        with pytest.raises(RuntimeError):
+            make_mixed_wire(*loop.xyz, allow_fallback=False, cleaning_atol=1e-8)
+
 
 class TestCoordsConversion:
     def generate_face_polygon(self, x, y, z):
