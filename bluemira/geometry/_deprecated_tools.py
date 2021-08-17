@@ -44,6 +44,7 @@ from bluemira.geometry.wire import BluemiraWire
 # Errors
 # =============================================================================
 
+
 class MixedFaceAreaError(GeometryError):
     """
     An error to raise when the area of a mixed face does not give a good match to the
@@ -51,6 +52,7 @@ class MixedFaceAreaError(GeometryError):
     """
 
     pass
+
 
 # =============================================================================
 # Pre-processing utilities
@@ -1643,7 +1645,8 @@ def make_mixed_face(
             bluemira_warn(
                 f"CAD: MixedFaceMaker resulted in a face with area {face_area} "
                 f"but the provided coordinates enclosed an area of {coords_area} "
-                "- falling back to a polygon face.")
+                "- falling back to a polygon face."
+            )
             return make_face(x, y, z, label=label)
         else:
             raise MixedFaceAreaError(
