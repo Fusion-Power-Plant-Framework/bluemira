@@ -1995,7 +1995,7 @@ class MixedFaceMaker:
         ----------
         coords: np.ndarray
             3D array of coordinates to be cleaned.
-        
+
         Returns
         -------
         clean_coords: np.ndarray
@@ -2034,7 +2034,7 @@ class MixedFaceMaker:
                         self.z[seg[0] : seg[1] + 1],
                     ]
                 )
-            clean_coords = self._clean_points(coords)
+            clean_coords = self._clean_coordinates(coords)
             if all(shape >= 2 for shape in clean_coords.shape):
                 polygon_coords.append(clean_coords)
 
@@ -2061,7 +2061,7 @@ class MixedFaceMaker:
                         self.z[seg[0] : seg[1] + 1],
                     ]
                 )
-            clean_coords = self._clean_points(coords)
+            clean_coords = self._clean_coordinates(coords)
             if all(shape >= 2 for shape in clean_coords.shape):
                 spline_coords.append(clean_coords)
 
