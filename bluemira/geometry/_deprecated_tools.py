@@ -2087,9 +2087,9 @@ class MixedFaceMaker:
             if not (coords[:, -1] == coords_order[i + 1][:, 0]).all():
                 coords_order[i + 1] = coords_order[i + 1][:, ::-1]
                 if i == 0:
-                    if not coords[:, -1] == coords_order[i + 1][:, 0]:
+                    if not (coords[:, -1] == coords_order[i + 1][:, 0]).all():
                         coords = coords[:, ::-1]
-                        if not coords[:, -1] == coords_order[i + 1][:, 0]:
+                        if not (coords[:, -1] == coords_order[i + 1][:, 0]).all():
                             coords_order[i + 1] = coords_order[i + 1][:, ::-1]
 
         if self.flag_spline_first:
