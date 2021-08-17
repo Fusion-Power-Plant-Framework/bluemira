@@ -1939,7 +1939,21 @@ class MixedFaceMaker:
 
         return spline_sequences
 
-    def _clean_points(self, coords: np.ndarray):
+    def _clean_coordinates(self, coords: np.ndarray):
+        """
+        Clean the provided coordinates by removing any values that are closer than the
+        instances cleaning_atol value.
+
+        Parameters
+        ----------
+        coords: np.ndarray
+            3D array of coordinates to be cleaned.
+        
+        Returns
+        -------
+        clean_coords: np.ndarray
+            3D array of cleaned coordinates.
+        """
         mask = ~np.isclose(segment_lengths(*coords), 0, atol=self.cleaning_atol)
         mask = np.insert(mask, 0, True)
         return coords[:, mask]
