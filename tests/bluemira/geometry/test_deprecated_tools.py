@@ -649,12 +649,12 @@ class TestMixedFaces:
                 (0, 1, 0),
                 {
                     "center_of_mass": (
-                        9.45890,
+                        9.45877,
                         0.5,
-                        -2.1267e-5,
+                        -2.1217e-5,
                     ),
-                    "volume": 184.931,
-                    "area": 423.427,
+                    "volume": 185.185,
+                    "area": 423.998,
                 },
             ),
             (
@@ -667,7 +667,7 @@ class TestMixedFaces:
                         -6.44430,
                     ),
                     "volume": 4.58653,
-                    "area": 29.2196,
+                    "area": 29.2239,
                 },
             ),
             (
@@ -675,12 +675,12 @@ class TestMixedFaces:
                 (0, 2, 0),
                 {
                     "center_of_mass": (
-                        8.03242,
-                        0.990000,
-                        -6.44419,
+                        8.03267,
+                        0.990025,
+                        -6.44432,
                     ),
-                    "volume": 4.58702,
-                    "area": 29.1773,
+                    "volume": 4.58975,
+                    "area": 29.1873,
                 },
             ),
         ],
@@ -703,7 +703,7 @@ class TestMixedFaces:
         loop: Loop = Loop.from_file(fn)
         face = make_mixed_face(*loop.xyz)
         true_props = {
-            "area": 2.26285,
+            "area": 2.26163,
         }
         self.assert_properties(true_props, face)
 
@@ -725,7 +725,7 @@ class TestMixedFaces:
             (
                 "tf_wp_tricky",
                 {
-                    "area": 31.0564,
+                    "area": 31.0914,
                 },
             ),
         ],
