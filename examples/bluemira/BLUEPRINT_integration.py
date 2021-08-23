@@ -52,6 +52,7 @@ class ConversionMethod(enum.Enum):
     """
     Enumeration of the allowed conversion methods.
     """
+
     MIXED = "mixed"
     POLYGON = "polygon"
     SPLINE = "spline"
@@ -79,7 +80,7 @@ class BluemiraReactor(Reactor):
         tree: GroupingComponent,
         geom: Loop,
         geom_name: str,
-        method: ConversionMethod = ConversionMethod.MIXED
+        method: ConversionMethod = ConversionMethod.MIXED,
     ):
         """
         Convert a Loop into a PhysicalComponent with the provided name and add it to the
@@ -94,7 +95,7 @@ class BluemiraReactor(Reactor):
         tree: GroupingComponent,
         geom: MultiLoop,
         geom_name: str,
-        method: ConversionMethod = ConversionMethod.MIXED
+        method: ConversionMethod = ConversionMethod.MIXED,
     ):
         """
         Convert a MultiLoop into a GroupingComponent with the provided name and add it to
@@ -115,7 +116,7 @@ class BluemiraReactor(Reactor):
         tree: GroupingComponent,
         geom: Shell,
         geom_name: str,
-        method: ConversionMethod = ConversionMethod.MIXED
+        method: ConversionMethod = ConversionMethod.MIXED,
     ):
         """
         Convert a Shell into a PhysicalComponent with the provided name and add it to the
@@ -132,7 +133,7 @@ class BluemiraReactor(Reactor):
         tree: GroupingComponent,
         geom: GeomBase,
         geom_name: str,
-        method: ConversionMethod = ConversionMethod.MIXED
+        method: ConversionMethod = ConversionMethod.MIXED,
     ):
         """
         Convert the provided geometry into a Component with the provided name and add it
@@ -149,7 +150,9 @@ class BluemiraReactor(Reactor):
         self,
         system: ReactorSystem,
         system_name: str,
-        method: Union[ConversionMethod, Dict[str, ConversionMethod]] = ConversionMethod.MIXED
+        method: Union[
+            ConversionMethod, Dict[str, ConversionMethod]
+        ] = ConversionMethod.MIXED,
     ):
         """
         Convert a BLUEPRINT ReactorSystem into a bluemira Component assigned to the tree
@@ -169,7 +172,9 @@ class BluemiraReactor(Reactor):
         self,
         system: ReactorSystem,
         system_name: str,
-        method: Union[ConversionMethod, Dict[str, ConversionMethod]] = ConversionMethod.MIXED
+        method: Union[
+            ConversionMethod, Dict[str, ConversionMethod]
+        ] = ConversionMethod.MIXED,
     ):
         """
         Convert a BLUEPRINT ReactorSystem into a bluemira Component assigned to the tree
@@ -206,7 +211,6 @@ class BluemiraReactor(Reactor):
         Converts the Blanket system into a Component.
         """
         super().define_in_vessel_layout()
-
 
         self.convert_system_xy(self.BB, "Blanket", ConversionMethod.MIXED)
 
