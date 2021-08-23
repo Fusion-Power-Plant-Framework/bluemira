@@ -41,6 +41,20 @@ from bluemira.geometry.wire import BluemiraWire
 
 
 # =============================================================================
+# Errors
+# =============================================================================
+
+
+class MixedFaceAreaError(GeometryError):
+    """
+    An error to raise when the area of a mixed face does not give a good match to the
+    area enclosed by the original coordinates.
+    """
+
+    pass
+
+
+# =============================================================================
 # Pre-processing utilities
 # =============================================================================
 
@@ -662,13 +676,15 @@ def get_centroid_3d(x, y, z):
     return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
 
 
-def segment_lengths(x: np.array, z: np.array):
+def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray):
     """
     Returns the length of each individual segment in a set of coordinates
 
     Parameters
     ----------
     x: array_like
+        x coordinates of the loop [m]
+    y: array_like
         x coordinates of the loop [m]
     z: array_like
         z coordinates of the loop [m]
@@ -678,7 +694,7 @@ def segment_lengths(x: np.array, z: np.array):
     dL: np.array(N)
         The length of each individual segment in the loop
     """
-    return np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)
+    return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
 
 def bounding_box(x, y, z):
@@ -1460,6 +1476,8 @@ def make_mixed_wire(
     median_factor=2.0,
     n_segments=4,
     a_acute=150,
+    cleaning_atol=1e-6,
+    allow_fallback=True,
     debug=False,
 ):
     """
@@ -1488,6 +1506,14 @@ def make_mixed_wire(
     a_acute: float
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
+    cleaning_atol: float
+        If a point lies within this distance [m] of the previous point then it will be
+        treated as a duplicate and removed. This can stabilise the conversion in cases
+        where the point density is too high for a wire to be constructed as a spline.
+        By default this is set to 1e-6.
+    allow_fallback: bool
+        If True then a failed attempt to make a mixed wire will fall back to a polygon
+        wire, else an exception will be raised. By default True.
     debug: bool
         Whether or not to print debugging information
 
@@ -1504,14 +1530,21 @@ def make_mixed_wire(
         median_factor=median_factor,
         n_segments=n_segments,
         a_acute=a_acute,
+        cleaning_atol=cleaning_atol,
         debug=debug,
     )
     try:
         mfm.build()
 
-    except RuntimeError:
-        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_wire(x, y, z, label=label)
+    except RuntimeError as e:
+        if allow_fallback:
+            bluemira_warn(
+                f"CAD: MixedFaceMaker failed with error {e} "
+                "- falling back to a polygon wire."
+            )
+            return make_wire(x, y, z, label=label)
+        else:
+            raise
 
     return mfm.wire
 
@@ -1525,6 +1558,9 @@ def make_mixed_face(
     median_factor=2.0,
     n_segments=4,
     a_acute=150,
+    cleaning_atol=1e-6,
+    area_rtol=5e-2,
+    allow_fallback=True,
     debug=False,
 ):
     """
@@ -1553,6 +1589,19 @@ def make_mixed_face(
     a_acute: float
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
+    cleaning_atol: float
+        If a point lies within this distance [m] of the previous point then it will be
+        treated as a duplicate and removed. This can stabilise the conversion in cases
+        where the point density is too high for a wire to be constructed as a spline.
+        By default this is set to 1e-6.
+    area_rtol: float
+        If the area of the resulting face deviates by this relative value from the area
+        enclosed by the provided coordinates then the conversion will fail and either
+        fall back to a polygon-like face or raise an exception, depending on the setting
+        of `allow_fallback`.
+    allow_fallback: bool
+        If True then a failed attempt to make a mixed face will fall back to a polygon
+        wire, else an exception will be raised. By default True.
     debug: bool
         Whether or not to print debugging information
 
@@ -1569,23 +1618,41 @@ def make_mixed_face(
         median_factor=median_factor,
         n_segments=n_segments,
         a_acute=a_acute,
+        cleaning_atol=cleaning_atol,
         debug=debug,
     )
     try:
         mfm.build()
 
-    except RuntimeError:
-        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_face(x, y, z, label=label)
+    except RuntimeError as e:
+        if allow_fallback:
+            bluemira_warn(
+                f"CAD: MixedFaceMaker failed with error {e} "
+                "- falling back to a polygon face."
+            )
+            return make_face(x, y, z, label=label)
+        else:
+            raise
 
     # Sometimes there won't be a RuntimeError, and you get a free SIGSEGV for your
     # troubles.
-    area = mfm.face.area
-    if np.isclose(get_area(x, y, z), area, rtol=5e-2):
+    face_area = mfm.face.area
+    coords_area = get_area(x, y, z)
+    if np.isclose(coords_area, face_area, rtol=area_rtol):
         return mfm.face
     else:
-        bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
-        return make_face(x, y, z, label=label)
+        if allow_fallback:
+            bluemira_warn(
+                f"CAD: MixedFaceMaker resulted in a face with area {face_area} "
+                f"but the provided coordinates enclosed an area of {coords_area} "
+                "- falling back to a polygon face."
+            )
+            return make_face(x, y, z, label=label)
+        else:
+            raise MixedFaceAreaError(
+                f"MixedFaceMaker resulted in a face with area {face_area} "
+                f"but the provided coordinates enclosed an area of {coords_area}."
+            )
 
 
 def make_wire(x, y, z, label="", spline=False):
@@ -1669,6 +1736,11 @@ class MixedFaceMaker:
     a_acute: float
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
+    cleaning_atol: float
+        If a point lies within this distance [m] of the previous point then it will be
+        treated as a duplicate and removed. This can stabilise the conversion in cases
+        where the point density is too high for a wire to be constructed as a spline.
+        By default this is set to 1e-6.
     debug: bool
         Whether or not to print debugging information
     """
@@ -1683,6 +1755,7 @@ class MixedFaceMaker:
         median_factor=2.0,
         n_segments=4,
         a_acute=150,
+        cleaning_atol=1e-6,
         debug=False,
     ):
         _validate_coordinates(x, y, z)
@@ -1696,6 +1769,7 @@ class MixedFaceMaker:
         self.median_factor = median_factor
         self.n_segments = n_segments
         self.a_acute = a_acute
+        self.cleaning_atol = cleaning_atol
         self.debug = debug
 
         # Constructors
@@ -1727,9 +1801,6 @@ class MixedFaceMaker:
         # Make coordinates for all the segments
         self._make_subcoordinates(p_sequences, s_sequences)
 
-        if self.debug:
-            self.plot()
-
         # Make the wires for each of the sub-coordinates, and daisychain them
         self._make_subwires()
 
@@ -1746,7 +1817,7 @@ class MixedFaceMaker:
         vertices: np.ndarray(dtype=np.int)
             The vertices of the loop which are polygon-like
         """
-        seg_lengths = segment_lengths(self.x, self.z)
+        seg_lengths = segment_lengths(self.x, self.y, self.z)
         median = np.median(seg_lengths)
 
         long_indices = np.where(seg_lengths > self.median_factor * median)[0]
@@ -1921,6 +1992,25 @@ class MixedFaceMaker:
 
         return spline_sequences
 
+    def _clean_coordinates(self, coords: np.ndarray):
+        """
+        Clean the provided coordinates by removing any values that are closer than the
+        instance's cleaning_atol value.
+
+        Parameters
+        ----------
+        coords: np.ndarray
+            3D array of coordinates to be cleaned.
+
+        Returns
+        -------
+        clean_coords: np.ndarray
+            3D array of cleaned coordinates.
+        """
+        mask = ~np.isclose(segment_lengths(*coords), 0, atol=self.cleaning_atol)
+        mask = np.insert(mask, 0, True)
+        return coords[:, mask]
+
     def _make_subcoordinates(
         self, polygon_sequences: np.ndarray, spline_sequences: np.ndarray
     ):
@@ -1950,7 +2040,9 @@ class MixedFaceMaker:
                         self.z[seg[0] : seg[1] + 1],
                     ]
                 )
-            polygon_coords.append(coords)
+            clean_coords = self._clean_coordinates(coords)
+            if all(shape >= 2 for shape in clean_coords.shape):
+                polygon_coords.append(clean_coords)
 
         for seg in spline_sequences:
             if seg[0] > seg[1]:
@@ -1975,7 +2067,9 @@ class MixedFaceMaker:
                         self.z[seg[0] : seg[1] + 1],
                     ]
                 )
-            spline_coords.append(coords)
+            clean_coords = self._clean_coordinates(coords)
+            if all(shape >= 2 for shape in clean_coords.shape):
+                spline_coords.append(clean_coords)
 
         self.spline_coords = spline_coords
         self.polygon_coords = polygon_coords
@@ -1997,9 +2091,9 @@ class MixedFaceMaker:
             if not (coords[:, -1] == coords_order[i + 1][:, 0]).all():
                 coords_order[i + 1] = coords_order[i + 1][:, ::-1]
                 if i == 0:
-                    if not coords[:, -1] == coords_order[i + 1][:, 0]:
+                    if not (coords[:, -1] == coords_order[i + 1][:, 0]).all():
                         coords = coords[:, ::-1]
-                        if not coords[:, -1] == coords_order[i + 1][:, 0]:
+                        if not (coords[:, -1] == coords_order[i + 1][:, 0]).all():
                             coords_order[i + 1] = coords_order[i + 1][:, ::-1]
 
         if self.flag_spline_first:
