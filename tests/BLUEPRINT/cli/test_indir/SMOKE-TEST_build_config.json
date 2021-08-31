@@ -1,0 +1,19 @@
+{
+  "reference_data_root": "!BP_ROOT!/tests/BLUEPRINT/test_data",
+  "generated_data_root": "!BP_ROOT!/tests/BLUEPRINT/test_generated_data",
+  "plot_flag": false,
+  "process_mode": "mock",
+  "plasma_mode": "run",
+  "tf_mode": "run",
+  "TF_type": "S",
+  "TF_objective": "L",
+  "VV_parameterisation": "S",
+  "FW_parameterisation": "S",
+  "BB_segmentation": "radial",
+  "lifecycle_mode": "life",
+  "rm_shuffle": true,
+  "force": false,
+  "swing": false,
+  "HCD_method": "power",
+  "GS_type": "JT60SA"
+}

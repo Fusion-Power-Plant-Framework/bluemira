@@ -1,0 +1,38 @@
+name: bluemira
+channels:
+  - conda-forge
+  - nodefaults
+
+variables:
+  # Avoid use of .local
+  PYTHONNOUSERSITE: '1'
+
+  # The below settings are needed to support FreeCAD integration alongside click
+  # NOTE: This may produce a warning when activating the conda environment if overriding
+  # the machine's language
+  LANG: 'C'
+  LC_ALL: 'C'
+  PYTHONIOENCODING: 'utf-8'
+
+dependencies:
+  - python=3.8
+  - pythonocc-core=7.4.1
+  - freecad=0.19.2
+  - freecad.python=0.0.3
+  - gmsh=4.6.0
+  - python-gmsh=4.6.0
+  - meshio=4.4.5
+  - mshr=2019.1.0
+  - fenics=2019.1.0
+  - numba=0.53.1
+  - numpy=1.19.5
+  - fluids=0.1.77
+  - shapely=1.6.4
+  - MeshPy=2018.2.1
+  - pyside2=5.13.2
+  - scipy=1.4.1
+  - graphviz
+  - pip
+  - pip:
+    - -r ../requirements.txt
+    - -r ../requirements-develop.txt
