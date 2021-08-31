@@ -7,7 +7,7 @@ M. Coleman<sup>1, 2 </sup>, J. Cook<sup> 1 </sup>, F. Franza<sup> 3 </sup>, I. M
 
 ## Contributors
 
-M. Bluteau<sup>1</sup>, M. Coleman,  J. Cook, S. Desai<sup>1</sup>, M. Foord<sup>1, 5</sup>, F. Franza, M.Johnson<sup>1</sup>, S. Kahn<sup>1</sup>, L. Humphrey<sup>1</sup>, C. MacMackin<sup>1</sup>, I. Maione, S. McIntosh, J. Morris, D. Short, D. Vaccaro<sup>1</sup>
+A. I. Blair<sup>1</sup>, M. Bluteau<sup>1</sup>, M. Coleman,  J. Cook, S. Desai<sup>1</sup>, M. Foord<sup>1, 5</sup>, F. Franza, M.Johnson<sup>1</sup>, S. Kahn<sup>1</sup>, L. Humphrey<sup>1</sup>, C. MacMackin<sup>1</sup>, I. Maione, S. McIntosh, J. Morris, D. Short, D. Vaccaro<sup>1</sup>
 
 ### Affiliations:
 
@@ -29,13 +29,15 @@ The work on BLUEMIRA is been funded by:
 
 * The Euratom research and training programme 2019–2020+ [Grant Number 633053].
 
+* KIT, which is a member of the Helmholtz Association.
+
 Prior work on BLUEPRINT was funded by:
 
 * The RCUK Energy Programme [Grant Number EP/I501045]
 
 Prior work on MIRA was funded by:
 
-* TBD
+* KIT, which is a member of the Helmholtz Association. MIRA was developed under the FUSION program funding.
 
 ## Acknowledgements
 
