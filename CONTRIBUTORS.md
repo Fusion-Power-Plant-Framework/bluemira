@@ -29,7 +29,7 @@ The work on BLUEMIRA is been funded by:
 
 * The Euratom research and training programme 2019–2020+ [Grant Number 633053].
 
-* KIT, which is a member of the Helmholtz Association.
+* KIT, which is a member of the Helmholtz Association. BLUEMIRA is developed under the FUSION program funding.
 
 Prior work on BLUEPRINT was funded by:
 
