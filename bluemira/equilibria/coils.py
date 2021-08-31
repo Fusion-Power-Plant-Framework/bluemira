@@ -48,7 +48,7 @@ from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoil
 PF_COIL_NAME = "PF_{}"
 CS_COIL_NAME = "CS_{}"
 NO_COIL_NAME = "Unnamed_{}"
-NONAME_N = 0
+_NONAME_INCREMENTER = 0
 
 
 def make_coil_corners(x_c, z_c, dx, dz):
@@ -67,9 +67,9 @@ def name_coil(coil, i):
     is not directly enforced here.
     """
     if i is None:
-        global NONAME_N
-        i = NONAME_N
-        NONAME_N += 1
+        global _NONAME_INCREMENTER
+        i = _NONAME_INCREMENTER
+        _NONAME_INCREMENTER += 1
 
     if coil.ctype == "CS":
         return CS_COIL_NAME.format(i)
@@ -157,15 +157,17 @@ class Coil:
         else:
             self.dx, self.dz = kwargs["dx"], kwargs["dz"]
             self._make_corners()
+
         self.n_filaments = kwargs.get("n_filaments", 1)  # Number of filaments
         self.n_turns = n_turns
         self.control = control
         self.ctype = ctype
+
         if name is None:
             # We need to have a reasonable coil name
-            name_coil(self, None)
-
+            name = name_coil(self, None)
         self.name = name
+
         self.sub_coils = None
 
     def set_current(self, current):
