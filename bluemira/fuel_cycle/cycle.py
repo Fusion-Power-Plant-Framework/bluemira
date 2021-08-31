@@ -260,7 +260,7 @@ class FuelCycle(ReactorSystem):
 
     def plasma(self, eta_iv, max_inventory, flows=None):
         """
-        Plasmasystem // in-vessel environment
+        In-vessel environment
 
         Parameters
         ----------
@@ -319,8 +319,7 @@ class FuelCycle(ReactorSystem):
 
     def tfv(self, eta_tfv, flows):
         """
-        Ceci est le système TFV, où les debits de tritium du BB et du plasma
-        sont cumulés.
+        The TFV system where the tritium flows from the BB and plasma are combined.
 
         Parameters
         ----------
@@ -616,11 +615,8 @@ class FuelCycle(ReactorSystem):
 
     def calc_t_d(self):
         """
-        Calcula el doubling time de una machina, asumiendo (por el momento)
-        que un tokamak futuro necesita la misma cantidad de tritio que DEMO.
-        Claro que el momento exacto en que se da el tritio o en que DEMO
-        estaria listo para dar el tritio no es la misma cosa: es imposible de
-        predicer el futuro, amigo!
+        Calculate the doubling time of a fuel cycle timeline, assuming that a future
+        tokamak requires the same start-up inventory as the present one.
 
         Returns
         -------
@@ -676,8 +672,12 @@ class FuelCycle(ReactorSystem):
 
     def calc_m_release(self):
         """
-        Rechnet die Tritiumfreisetzungsrate von alle TFV systeme zur Umgebung
-        [g/yr]
+        Calculate the tritium release rate from the entire system to the environment.
+
+        Returns
+        -------
+        release_rate: float
+            Tritium release rate [g/yr]
         """
         max_load_factor = find_max_load_factor(self.DEMO_t, self.DEMO_rt)
         mb = 1000 * max(self.brate)
