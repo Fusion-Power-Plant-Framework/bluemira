@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ from matplotlib.gridspec import GridSpec
 from scipy.interpolate import RectBivariateSpline
 import numpy as np
 from itertools import cycle
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.plottools import mathify
 from BLUEPRINT.geometry.geomtools import grid_2d_contour
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
@@ -294,7 +294,9 @@ class EquilibriumPlotter(Plotter):
             self._psix = self.Xp[0][2]  # Psi at separatrix
             self._psio = self.Op[0][2]  # Psi at O-point
         except IndexError:
-            bpwarn("No X-point found in plotted equilibrium. " "Cannot normalise psi.")
+            bluemira_warn(
+                "No X-point found in plotted equilibrium. " "Cannot normalise psi."
+            )
             self._psix = 100
             self._psio = 0
         self.x, self.z = self.eq.x, self.eq.z
@@ -496,7 +498,7 @@ class CoilPlotter(Plotter):
         if subcoil:
             if self.coil.sub_coils is None:
                 if not is_coilset:
-                    bpwarn(
+                    bluemira_warn(
                         "No sub-coils to plot. Use coil.mesh_coil(d_coil) to create sub-coils."
                     )
             else:

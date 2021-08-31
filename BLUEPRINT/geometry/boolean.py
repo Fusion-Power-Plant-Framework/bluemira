@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ from pyclipper import (
 )
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 
 
 def loop_to_pyclippath(loop):
@@ -141,7 +141,7 @@ class PyclipperMixin:
         """
         Raise a warning if None is to be returned.
         """
-        bpwarn(
+        bluemira_warn(
             f"{self.name} operation on 2-D polygons returning None.\n"
             "Nothing to perform."
         )
@@ -487,7 +487,7 @@ def clean_loop(loop, verbose=False):
     if loop.closed:
         new_loop.close()
     if verbose and (len(loop) <= len(new_loop)):
-        bpwarn("Geometry::clean_loop: Loop simplification was not effective.")
+        bluemira_warn("Geometry::clean_loop: Loop simplification was not effective.")
     return new_loop
 
 

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 from BLUEPRINT.utilities.plottools import mathify
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.base.typebase import typechecked
 
 
@@ -180,7 +180,7 @@ class Law:
         """
         score = self.model.score(x, y)
         if show:
-            bprint("R\u00b2 = {0:.2f}".format(score))
+            bluemira_print("R\u00b2 = {0:.2f}".format(score))
         return round(score, 2)
 
     def score_model(self, bounds=False):
@@ -236,7 +236,7 @@ class Law:
         elif logged_input is True:
             pred = self.model.predict(x)
         if show:
-            bprint("{0} = {1:.2f}".format(self.target.name, pred[0]))
+            bluemira_print("{0} = {1:.2f}".format(self.target.name, pred[0]))
         return pred, c
 
     @staticmethod
@@ -338,7 +338,7 @@ class LinearLaw(Law):
             if i != len(varss) - 1:
                 eq += "+"
         eq += "\nR\u00b2 = {0:.2f}".format(self.r_2)
-        bprint(eq)
+        bluemira_print(eq)
 
 
 class PowerLaw(LinearLaw):
@@ -386,7 +386,7 @@ class PowerLaw(LinearLaw):
             if i != len(varss) - 1:
                 eq += "*"
         eq += "\nR\u00b2 = {0:.2f}".format(self.r_2)
-        bprint(eq)
+        bluemira_print(eq)
 
 
 @typechecked

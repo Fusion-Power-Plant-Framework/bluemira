@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pandas import DataFrame, concat
 import tabulate
-from BLUEPRINT.base.lookandfeel import bprint, bpwarn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from BLUEPRINT.base.file import try_get_BP_path
 from BLUEPRINT.utilities.plottools import makegif
 from BLUEPRINT.utilities.tools import delta
@@ -359,7 +359,7 @@ class EquilibriumProblem:
             r_zone = 0.5 * self.R_0 / self.A  # Augenapfel
         if b_zone_max is None:
             b_zone_max = B_BREAKDOWN
-        bprint("EQUILIBRIA: Calculating plasma breakdown flux")
+        bluemira_print("EQUILIBRIA: Calculating plasma breakdown flux")
         max_currents = self.coilset.get_max_currents(self.Ip * 1.4)
         max_fields = self.coilset.get_max_fields()
         optimiser = BreakdownOptimiser(
@@ -398,7 +398,7 @@ class EquilibriumProblem:
 
         bd._remap_greens()
         self.psi_bd = bd.breakdown_psi * 2 * np.pi
-        bprint(f"EQUILIBRIA: breakdown psi = {self.psi_bd:.2f} V.s")
+        bluemira_print(f"EQUILIBRIA: breakdown psi = {self.psi_bd:.2f} V.s")
         self.take_snapshot(
             "Breakdown",
             bd,
@@ -633,7 +633,7 @@ class EquilibriumProblem:
         psi_bd_new = bd.breakdown_psi * 2 * np.pi
 
         if delta(psi_bd_new, self.psi_bd) > 0.01:
-            bpwarn(
+            bluemira_warn(
                 "It appears there is a problem with pre-magnetisation. The new breakdown flux is "
                 "quite different from the old one:\n"
                 f"\t{psi_bd_new:.2f} !~= {self.psi_bd:.2f} [V.s]"

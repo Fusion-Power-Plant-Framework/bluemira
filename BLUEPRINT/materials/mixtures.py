@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import neutronics_material_maker as nmm
 
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.materials.constants import MATERIAL_BEAM_MAP, T_DEFAULT
 from BLUEPRINT.materials.material import (
     MaterialsError,
@@ -132,7 +132,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
                     )
                     for w in warn:
                         txt += f"{w[0]}: {w[1]}" + "\n"
-                    bpwarn(txt)
+                    bluemira_warn(txt)
 
             key = MATERIAL_BEAM_MAP[prop]
             if prop == "E":

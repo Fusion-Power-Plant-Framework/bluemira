@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@ import numpy as np
 import numba as nb
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import FuelCycleError
 from BLUEPRINT.utilities.tools import discretise_1d
 
@@ -279,7 +279,7 @@ def find_max_load_factor(time_years, time_fpy):
         # Shortened time overflow error (only happens when debugging)
         a = 1
     if a > 1 or a < 0:
-        bpwarn("Amax bullshit answer.")
+        bluemira_warn("Amax bullshit answer.")
     else:
         return a
 
@@ -315,7 +315,7 @@ def legal_limit(
         )
 
     if p_fus is not None and mb is not None:
-        bpwarn(
+        bluemira_warn(
             "Demasiado información para la función legal_limit. " "Me quedo con Pfus."
         )
         mb = None

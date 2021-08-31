@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -212,10 +212,19 @@ class SegmentedThermalShieldCAD(OnionCAD, ComponentCAD):
         """
         thermal_shield, n_TF = self.args
 
-        for name, profile in [
-            ["inboard_thermal_shield", thermal_shield["Inboard profile"]],
-            ["outboard_thermal_shield", thermal_shield["Outboard profile"]],
-        ]:
+        if "Cryostat TS" in thermal_shield:
+            loop_list = [
+                ["inboard_thermal_shield", thermal_shield["Inboard profile"]],
+                ["outboard_thermal_shield", thermal_shield["Outboard profile"]],
+                ["cryostat_thermal_sheild", thermal_shield["Cryostat TS"]],
+            ]
+        else:
+            loop_list = [
+                ["inboard_thermal_shield", thermal_shield["Inboard profile"]],
+                ["outboard_thermal_shield", thermal_shield["Outboard profile"]],
+            ]
+
+        for name, profile in loop_list:
             # First get the VVTS shape and simplify it
             # Making sure the inner-outter loops are Ok
             profile_vv_2d = simplify_loop(profile)

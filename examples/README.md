@@ -1,16 +1,16 @@
 # Running examples as Jupyter notebooks
 
-The BLUEPRINT examples have been written with the intention that they will be run as Jupyter notebooks. This allows the code to be run in convenient blocks and displays most images within the Jupyter session. However, it is still possible to run the examples directly in Python, or to manually select and run sections of the files in a Python interpreter.
+The bluemira examples have been written with the intention that they will be run as Jupyter notebooks. This allows the code to be run in convenient blocks and displays most images within the Jupyter session. However, it is still possible to run the examples directly in Python, or to manually select and run sections of the files in a Python interpreter.
 
 ## Setting up and running a Jupyter server
 
-Within your BLUEPRINT virtual environment, run the following to ensure Jupyter is installed with notebook support - this lets us run the examples within a web browser:
+Within your bluemira virtual environment, run the following to ensure Jupyter is installed with notebook support - this lets us run the examples within a web browser:
 
 ```bash
 pip install notebook
 ```
 
-When the install has completed, we can start a Jupyter server by running the following from your ~/code/BLUEPRINT directory:
+When the install has completed, we can start a Jupyter server by running the following from your ~/code/bluemira directory:
 
 ```bash
 python -m notebook --no-browser
@@ -28,7 +28,7 @@ Or copy and paste one of these URLs:
 
 Open a web browser (e.g. Firefox or Chrome) and navigate to [your local Jupyter server](http://localhost:8888) (you don't actually need the token that Jupyter creates, because everything is running locally and your computer already knows who you are).
 
-You should see a bunch of files, which correspond to what's in your BLUEPRINT directory.
+You should see a bunch of files, which correspond to what's in your bluemira directory.
 
 You can stop the Jupyter server by double-pressing `ctrl+c` in your terminal.
 

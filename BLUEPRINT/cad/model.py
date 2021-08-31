@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import re
 import os
 from matplotlib.colors import to_rgb
 from BLUEPRINT.base.names import name_short_long
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.cad.cadtools import (
@@ -122,7 +122,7 @@ class CADModel:
                 self.partcolors[name] = cycle(colors)
             else:
                 pass
-                # bpwarn(f'Palette key "{name}" not in CAD model parts silo.')
+                # bluemira_warn(f'Palette key "{name}" not in CAD model parts silo.')
 
         # Catch colors for parts that don't have an assigned name
         for name in self.parts:
@@ -178,7 +178,7 @@ class CADModel:
         self._Q = qt_display  # for debugging
         qt_display.show()
 
-    def save_as_STEP_assembly(self, filename, scale=1):  # noqa (N802)
+    def save_as_STEP_assembly(self, filename, partname=None, scale=1):  # noqa (N802)
         """
         Saves the CADModel to a STEP assembly file
 
@@ -186,6 +186,8 @@ class CADModel:
         ----------
         filename: str
             Full path filename to save the CADModel to
+        partname: str
+            The part name in the STEP file
         scale: float (default=1)
             The factor with which to scale the geometry
         """
@@ -195,7 +197,7 @@ class CADModel:
         for component in self.silo.values():
             for compounds in component["compounds"]:
                 shapes.append(compounds)
-        save_as_STEP_assembly(shapes, filename=filename, scale=scale)
+        save_as_STEP_assembly(shapes, filename=filename, partname=partname, scale=scale)
 
     def save_as_STEP(self, filepath, scale=1):  # noqa (N802)
         """
@@ -304,7 +306,7 @@ class Patterner:
         elif pattern in ["sector", "s"]:
             n = 1
         elif pattern == "n":
-            bpwarn("This thing you thought you could deprecate is being used.")
+            bluemira_warn("This thing you thought you could deprecate is being used.")
             n = 0  # use part subpattern number
         else:
             raise ValueError(

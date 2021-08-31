@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
 from scipy.linalg import inv
 from matplotlib._contour import QuadContourGenerator
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import EquilibriaError
 from BLUEPRINT.geometry.geomtools import in_polygon, polyarea
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
@@ -284,7 +284,7 @@ def find_OX(x, z, psi, limiter=None, x_min=None):  # noqa (N802)
             o_points.append(Opoint(xi, zi, f(xi, zi)[0][0]))
     if len(o_points) == 0:
         print("")  # stdout flusher
-        bpwarn("EQUILIBRIA::find_OX: No O-points found during an iteration.")
+        bluemira_warn("EQUILIBRIA::find_OX: No O-points found during an iteration.")
         return o_points, x_points
 
     def _cntr_sort(p):
@@ -657,14 +657,14 @@ def find_field_surf(x, z, Bp, field):
 
     if areas:
         if np.argmax(areas) != np.argmin(err):
-            bpwarn(
+            bluemira_warn(
                 "The most central field surface is not the largest one. You"
                 "need to check that this is what you want."
             )
         return surfaces[np.argmin(err)].T
 
     else:
-        bpwarn(f"No field surfaces at {field:.4f} T found.")
+        bluemira_warn(f"No field surfaces at {field:.4f} T found.")
         return None
 
 

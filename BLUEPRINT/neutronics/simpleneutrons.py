@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@ import os
 import json
 from typing import Type
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.base.lookandfeel import bprint, plot_defaults
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.look_and_feel import bluemira_print, plot_defaults
+from BLUEPRINT.base.file import get_BP_path, try_get_BP_path
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import (
@@ -49,7 +49,7 @@ class TBRData:
     TBR Data class.
     """
 
-    def __init__(self, blanket_type):
+    def __init__(self, blanket_type, datadir=None):
         self.angle = None
         self.percTBR = None
         self.dees_angle = None
@@ -57,6 +57,9 @@ class TBRData:
         self.decum_TBR = None
         self.ix = None
         self.iy = None
+        self.datadir = datadir
+        if self.datadir is None:
+            self.datadir = get_BP_path("neutronics", subfolder="data")
         self.filename = blanket_type + TBR_DATA_ROOT
         self.get_raw_TBR_data()
         self.deescalate_data()
@@ -70,7 +73,7 @@ class TBRData:
         Data valid for HCPB blankets. Open question on 1.25 or 1.27 ideal TBR.
         0° outboard midplane, anti-clockwise.
         """
-        fpath = os.sep.join([get_BP_path("neutronics", subfolder="data"), self.filename])
+        fpath = os.sep.join([self.datadir, self.filename])
 
         with open(fpath, "r") as file:
             data = json.load(file)
@@ -214,7 +217,8 @@ class BlanketCoverage(ReactorSystem):
         self.aux_n_regions = []
         self.plug_loops = []
         self.max_TBR = self.inputs["max_TBR"]
-        self.data = TBRData(self.params.blanket_type)
+        datadir = inputs.get("datadir", try_get_BP_path("neutronics", subfolder="data"))
+        self.data = TBRData(self.params.blanket_type, datadir=datadir)
 
         # Calculated constructors
         self.div_n_frac = 0
@@ -298,7 +302,7 @@ class BlanketCoverage(ReactorSystem):
         if tor_cont:
             weight = pol_depth_f
             if tor_width_f != 1:
-                bprint(
+                bluemira_print(
                     "tor_width is being ignored because you have " "specified tor_cont."
                 )
         volume = loop_volume(plug["loop"]["x"], plug["loop"]["z"]) * weight

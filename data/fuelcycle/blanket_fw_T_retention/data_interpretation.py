@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import json
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.fuelcycle.tfvutils import convert_flux_to_flow
 from BLUEPRINT.fuelcycle.blocks import TCycleComponent
 from BLUEPRINT.fuelcycle.tfvutils import fit_sink_data, piecewise_sqrt_threshold

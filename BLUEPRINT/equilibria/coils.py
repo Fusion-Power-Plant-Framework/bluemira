@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ from BLUEPRINT.equilibria.plotting import (
     CoilPlotter,
     PlasmaCoilPlotter,
 )
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from BLUEPRINT.equilibria.constants import (
     I_MIN,
     J_TOR_MIN,
@@ -50,7 +50,7 @@ from BLUEPRINT.equilibria.constants import (
     X_TOLERANCE,
 )
 from BLUEPRINT.equilibria.eqdsk import EQDSKInterface
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.geometry.loop import Loop
 
 
@@ -1391,7 +1391,7 @@ class CoilClassifier:
             elif coil.ctype == "CS":
                 cs_coils.append(coil)
             else:
-                bpwarn("Unbekannte Magnetspulart.")
+                bluemira_warn("Unbekannte Magnetspulart.")
         self.n_PF = npf
         pf_coils = self._sort_PF_coils(pf_coils, self.R_0)
         pf_coils = self._make_PF_dict(pf_coils)
@@ -1401,7 +1401,7 @@ class CoilClassifier:
             cs_coils = []
             j += 1
         if j < 1:
-            bpwarn("No CS specified.")
+            bluemira_warn("No CS specified.")
         elif j > 1:
             raise ValueError("More than 1 CS specified.")
         if solenoid:
@@ -1866,7 +1866,7 @@ class CoilSet(CoilGroup):
 
 class SymmetricCircuit(Coil):
     """
-    Represents a set of Symmetric coils in the z direction connected in a circuit.
+    Represents a set of coils, symmetric about z = 0, connected in a circuit.
     The coils are identical except for their z position.
 
     Parameters

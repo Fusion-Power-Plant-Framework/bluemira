@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -27,10 +27,10 @@ from matplotlib.lines import Line2D
 import json
 from typing import Type
 from scipy.optimize import brentq
-from BLUEPRINT.base.lookandfeel import bpwarn, bprint
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.constants import S_TO_YR, YR_TO_S
+from bluemira.base.constants import S_TO_YR, YR_TO_S
 from BLUEPRINT.utilities.tools import delta, is_num
 from BLUEPRINT.neutronics.simpleneutrons import NeutronicsRulesOfThumb as nROT
 from BLUEPRINT.fuelcycle.timeline import f_gompertz, histify, Timeline
@@ -105,7 +105,9 @@ class LifeCycle(ReactorSystem):
         self.t_min_down = max(self.params.t_cs_recharge, self.params.t_pumpdown)
         # TODO: Neutronics and design requirements still from outdated methods
         # Output preparation
-        datadir = get_BP_path(subfolder="data")
+        datadir = inputs.get("datadir", None)
+        if datadir is None:
+            datadir = get_BP_path(subfolder="data")
         file = "DEMO_lifecycle"
         self.filename = datadir + "/" + file + ".json"
         # Build timeline
@@ -192,12 +194,12 @@ class LifeCycle(ReactorSystem):
                 self.t_on_total + self.total_ramptime + self.cs_down + self.unplanned
             )
             if a_ops > 1:
-                bpwarn(
+                bluemira_warn(
                     "Plant availability target cannot be met "
                     "with input maintenance durations."
                 )
                 a_ops = self.t_on_total / (self.t_on_total + self.min_downtime)
-                bprint(
+                bluemira_print(
                     "Recalculated plant availability based on input"
                     " CS recharge time and maintenance durations as "
                     "{0}".format(round(a_ops, 2))
@@ -300,7 +302,7 @@ class LifeCycle(ReactorSystem):
                 self.params.tf_fluence / (self.tf_ins_nflux) / (3600 * 24 * 365), 2
             )
             tflifeperc = round(100 * self.tf_lifeend / self.fpy, 1)
-            bpwarn(
+            bluemira_warn(
                 "TF coil insulation fried after {0} full-power years"
                 ", or {1} % of neutron budget"
                 ".".format(self.tf_lifeend, tflifeperc)
@@ -309,7 +311,7 @@ class LifeCycle(ReactorSystem):
         if vv_life_dmg > 1:
             self.vv_lifeend = round(self.params.vv_dpa / self.vv_dmg, 2)
             vvlifeperc = round(100 * self.vv_lifeend / self.fpy, 1)
-            bpwarn(
+            bluemira_warn(
                 "VV fried after {0} full-power"
                 " years, or {1} % of neutron budget"
                 ".".format(self.vv_lifeend, vvlifeperc)
@@ -403,7 +405,7 @@ class LifeCycle(ReactorSystem):
         delt = delta(actual_life, life)
         delta2 = delta(actual_lf, self.params.A_global)
         if delt > 0.015:
-            bpwarn(
+            bluemira_warn(
                 "FuelCycle::Lifecyle: discrepancy between actual and planned\n"
                 "reactor lifetime\n"
                 f"Actual: {actual_life:.2f}\n"
@@ -414,7 +416,7 @@ class LifeCycle(ReactorSystem):
             self.__init__(self.config, self.inputs)  # Phoenix
 
         if delta2 > 0.015:
-            bpwarn(
+            bluemira_warn(
                 "FuelCycle::Lifecyle: availability discrepancy greated that\n"
                 "specified tolerance\n"
                 f"Actual: {actual_lf:.4f}\n"
@@ -425,7 +427,7 @@ class LifeCycle(ReactorSystem):
             self.__init__(self.config, self.inputs)  # Phoenix
 
         if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
-            bpwarn("FuelCycle::Lifecyle: Input availability is unachievable.")
+            bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
         # Re-assign A
         self.params.update_kw_parameters({"A_global": actual_lf})
         # self.A_global = actual_A
@@ -609,7 +611,7 @@ class LifeCycle(ReactorSystem):
         """
         Save a Timeline to a JSON file.
         """
-        bprint("Writing {0}".format(self.filename))
+        bluemira_print("Writing {0}".format(self.filename))
         data = self.T.to_dict()
         with open(self.filename, "w") as f_h:
             json.dump(data, f_h, indent=4)
@@ -618,7 +620,7 @@ class LifeCycle(ReactorSystem):
         """
         Load a Timeline from a JSON file.
         """
-        bprint("Reading {0}".format(self.filename))
+        bluemira_print("Reading {0}".format(self.filename))
         with open(self.filename) as f_h:
             data = json.load(f_h)
         return data

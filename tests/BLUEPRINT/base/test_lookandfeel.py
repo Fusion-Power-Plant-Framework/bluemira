@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -30,31 +30,16 @@ from BLUEPRINT.utilities.colortools import map_palette
 from BLUEPRINT.base.palettes import LONDON
 from BLUEPRINT.base.file import get_BP_path, get_BP_root, get_PROCESS_root
 from BLUEPRINT.base.lookandfeel import (
-    banner,
-    user_banner,
-    count_slocs,
-    get_git_branch,
-    _print_color,
-    bpwarn,
     bpinfo,
-    bprint,
+)
+from bluemira.base.look_and_feel import (
+    bluemira_warn,
+    bluemira_print,
+    _print_color,
 )
 
 
 class TestLookAndFeel:
-    @pytest.mark.longrun
-    def test_banner(self):
-        banner()
-
-    @pytest.mark.longrun
-    def test_user_banner(self):
-        user_banner()
-
-    @pytest.mark.longrun
-    def test_count_slocs(self):
-        directory = get_BP_root()
-        count_slocs(directory, get_git_branch(directory))
-
     def test_map_pal(self):
         pal = {
             "Plasma": "Hammersmith and City",
@@ -107,15 +92,15 @@ class TestColors:
 
     def test_warn(self):
         print("\n")
-        bpwarn("test warning")
+        bluemira_warn("test warning")
 
     def test_into(self):
         print("\n")
         bpinfo("test info")
 
-    def test_bprint(self):
+    def test_bluemira_print(self):
         print("\n")
-        bprint("test normal blue")
+        bluemira_print("test normal blue")
 
 
 class TestMisc:

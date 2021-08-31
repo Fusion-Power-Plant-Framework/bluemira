@@ -698,9 +698,7 @@ class FuelCycle(ReactorSystem):
 
     def sanity(self):
         """
-        Hier wolltest du nur sicher sein dass die ideale Welt entspricht
-        deinem Universum... Der einziger Unterschied ist wenn man Tritium von
-        System rausnimmt (wie bei einem BlanketWechsel)
+        Check that no tritium is lost (graphically).
         """
         f, ax = plt.subplots()
         m_ideal = self.tbreed(self.params.TBR, self.m_T_req)

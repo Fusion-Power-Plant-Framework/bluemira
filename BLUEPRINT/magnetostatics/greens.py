@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ Green's functions mappings for psi, Bx, and Bz
 import numpy as np
 import numba as nb
 from scipy.special import ellipk, ellipe
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 
 
 # Offset from 0<x<1

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -33,7 +33,11 @@ from BLUEPRINT.equilibria.constants import (
     PLT_PAUSE,
 )
 from BLUEPRINT.utilities.plottools import savefig, makegif
-from BLUEPRINT.base.lookandfeel import bprintflush, bprint, bpwarn
+from bluemira.base.look_and_feel import (
+    bluemira_print_flush,
+    bluemira_print,
+    bluemira_warn,
+)
 from BLUEPRINT.base.file import try_get_BP_path
 
 
@@ -150,7 +154,7 @@ class DudsonConvergence(ConvergenceCriterion):
         dpsi_max = np.amax(abs(dpsi))
         dpsi_rel = dpsi_max / (np.amax(psi) - np.amin(psi))
         if print_status:
-            bprintflush(
+            bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: relative delta_psi: " f"{100*dpsi_rel:.2f} %"
             )
         return self.check_converged(dpsi_rel)
@@ -196,7 +200,7 @@ class JrelConvergence(ConvergenceCriterion):
         d_j_max = np.amax(abs(d_j))
         d_j_rel = d_j_max / (np.amax(j_new) - np.amin(j_new))
         if print_status:
-            bprintflush(
+            bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: relative delta_J: " f"{100*d_j_rel:.2f} %"
             )
         return self.check_converged(d_j_rel)
@@ -239,7 +243,7 @@ class LacknerConvergence(ConvergenceCriterion):
         """
         conv = np.amax(np.abs((psi - psi_old) / psi))
         if print_status:
-            bprintflush(f"EQUILIBRIA G-S iter {i}: psi convergence: {conv:e}")
+            bluemira_print_flush(f"EQUILIBRIA G-S iter {i}: psi convergence: {conv:e}")
         return self.check_converged(conv)
 
 
@@ -279,7 +283,9 @@ class JeonConvergence(ConvergenceCriterion):
         """
         conv = np.linalg.norm(psi_old - psi)
         if print_status:
-            bprintflush(f"EQUILIBRIA G-S iter {i}: psi norm convergence: {conv:e}")
+            bluemira_print_flush(
+                f"EQUILIBRIA G-S iter {i}: psi norm convergence: {conv:e}"
+            )
         return self.check_converged(conv)
 
 
@@ -322,7 +328,9 @@ class CunninghamConvergence(ConvergenceCriterion):
         d_j = j_old - j_new
         conv = np.sum(d_j ** 2) / np.sum(j_new)
         if print_status:
-            bprintflush(f"EQUILIBRIA G-S iter {i}: J_phi source convergence: {conv:e}")
+            bluemira_print_flush(
+                f"EQUILIBRIA G-S iter {i}: J_phi source convergence: {conv:e}"
+            )
         self._conv = conv
         return self.check_converged(conv)
 
@@ -366,7 +374,7 @@ class JsourceConvergence(ConvergenceCriterion):
         conv = np.linalg.norm(j_old - j_new)
         if print_status:
             # Format convergence
-            bprintflush(
+            bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: ||J_phi_old-J_phi|| convergence: {conv:e}"
             )
         return self.check_converged(conv)
@@ -377,7 +385,7 @@ class CurrentOptimiser:
     Mixin class for performing optimisation of currents
     """
 
-    def _optimise_currents(self, psib=None, update_size=True, apply_weights=False):
+    def _optimise_currents(self, psib=None, update_size=True):
         """
         Finds optimal currents for the coilset
 
@@ -387,22 +395,16 @@ class CurrentOptimiser:
             The boundary psi values, by default None.
         update_size: bool, optional
             If True then update the coilset size, by default True.
-        apply_weights: bool, optional
-            If True then apply weights in the optimiser, by default False.
         """
         self.constraints(self.eq, I_not_dI=True)
         try:
-            currents = self.optimiser(
-                self.eq, self.constraints, psib, apply_weights=apply_weights
-            )
+            currents = self.optimiser(self.eq, self.constraints, psib)
             self.store.append(currents)
         except ExternalOptError:
             currents = self.store[-1]
         self.coilset.set_control_currents(currents, update_size)
 
-    def _initial_optimise_currents(
-        self, psib=None, update_size=True, apply_weights=False
-    ):
+    def _initial_optimise_currents(self, psib=None, update_size=True):
         """
         Finds optimal currents for the coilset for optimiser initialisation
 
@@ -412,10 +414,8 @@ class CurrentOptimiser:
             The boundary psi values, by default None.
         update_size: bool, optional
             If True then update the coilset size, by default True.
-        apply_weights: bool, optional
-            If True then apply weights in the optimiser, by default False.
         """
-        return self._optimise_currents(psib, update_size, apply_weights)
+        return self._optimise_currents(psib, update_size)
 
 
 class CurrentGradientOptimiser:
@@ -576,11 +576,11 @@ class PicardBaseIterator(ABC):
                 next(iterator)
             except StopIteration:
                 print()
-                bprint("EQUILIBRIA G-S converged value found.")
+                bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
         else:
             print()
-            bpwarn(
+            bluemira_warn(
                 f"EQUILIBRIA G-S unable to find converged value after {self.i} iterations."
             )
         self._teardown()
@@ -632,7 +632,7 @@ class PicardBaseIterator(ABC):
         try:
             next(self)
         except StopIteration:
-            bprint("EQUILIBRIA G-S converged value found, nothing to do.")
+            bluemira_print("EQUILIBRIA G-S converged value found, nothing to do.")
             self._teardown()
 
     def check_converged(self, print_status=True):
@@ -766,7 +766,7 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"psib": None, "update_size": True, "apply_weights": False}
+        return {"psib": None, "update_size": True}
 
     def _solve(self):
         """
@@ -788,7 +788,7 @@ class PicardLiAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"psib": None, "update_size": True, "apply_weights": False}
+        return {"psib": None, "update_size": True}
 
     def _solve(self):
         """
@@ -813,7 +813,7 @@ class EquilibriumConverger(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"update_size": False, "apply_weights": True}
+        return {"update_size": False}
 
     def __call__(self, psib):
         """
@@ -833,7 +833,7 @@ class EquilibriumConverger(CurrentOptimiser, PicardBaseIterator):
         super()._optimise_currents(self.psib, **self.current_optimiser_kwargs)
 
     def _initial_optimise_currents(self, **kwargs):
-        super()._optimise_currents(self.psib, update_size=False, apply_weights=False)
+        super()._optimise_currents(self.psib, update_size=False)
 
 
 if __name__ == "__main__":

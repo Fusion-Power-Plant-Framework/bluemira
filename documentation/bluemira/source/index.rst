@@ -7,6 +7,7 @@ Welcome to bluemira's documentation!
    :hidden:
 
    Getting Started <started>
+   Bluemira Modules <modules>
    Module Reference <autoapi/index>
 
 Bluemira is a framework for modelling fusion reactors in Python code. The models

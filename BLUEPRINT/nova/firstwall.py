@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ import nlopt
 from collections import OrderedDict
 from BLUEPRINT.nova.stream import StreamFlow
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
 from BLUEPRINT.geometry.stringgeom import String
@@ -253,7 +253,7 @@ class FirstWallProfile(ReactorSystem):
                 wtxt += "disabling flux fit for "
                 wtxt += "{:1.1f}% psi_n \n".format(1e2 * self.fw_config["psi_n"])
                 wtxt += "configuration: " + sf.filename + "\n"
-                bpwarn("Nova::FirstWallProfile:\n" + wtxt)
+                bluemira_warn("Nova::FirstWallProfile:\n" + wtxt)
                 return
 
         elif self.fw_config["flux_fit"] and self.params.plasma_type == "DN":
@@ -509,7 +509,7 @@ class Paneller:
         self.x_opt = opt.optimize(self.x_opt)
 
         if opt.last_optimize_result() < 0:
-            bpwarn("Nova::Paneller: optimiser unconverged")
+            bluemira_warn("Nova::Paneller: optimiser unconverged")
 
         p_corners = self.fw_corners(self.x_opt)[0]
         self.d2 = np.array([p_corners[:, 0], p_corners[:, 1]])
@@ -562,8 +562,8 @@ class DivertorProfile(ReactorSystem):
         self.sf = self.inputs["sf"]
         self.targets = self.inputs["targets"]
         self.debug = self.inputs["debug"]
-        self.p.dx_div = self.p.tk_div
-        self.p.bb_gap = self.p.c_rm
+        self.p.dx_div = self.p.tk_div.value
+        self.p.bb_gap = self.p.c_rm.value
 
         if self.inputs["flux_conformal"]:
             loop = self.sf.firstwall_loop(psi_n=self.p.fw_psi_n)
@@ -881,7 +881,9 @@ class DivertorProfile(ReactorSystem):
                 wtxt += " ".join(["target", str(phi_target), "phi", str(phi)])
                 wtxt += "\n"
                 wtxt += " ".join(["Nmax", str(i + 1), "L", str(l_1), "Lo", str(l_seed)])
-                bpwarn("Nova::DivertorProfile: phi target convergence " "error\n" + wtxt)
+                bluemira_warn(
+                    "Nova::DivertorProfile: phi target convergence " "error\n" + wtxt
+                )
                 if flag == 0:
                     break
                     gain *= -1  # reverse gain

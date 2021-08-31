@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 """
 An attempt at some naming conventions
 """
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 
 NAME_SHORT_TO_LONG = {
     "VV": "Reactor vacuum vessel",
@@ -71,7 +71,7 @@ def name_mapper(name_dict, target_dict, map_dict):
             try:
                 k = map_dict[k]
             except KeyError:
-                bpwarn("Unknown key in name mapper")
+                bluemira_warn("Unknown key in name mapper")
         out[k] = v
     return out
 

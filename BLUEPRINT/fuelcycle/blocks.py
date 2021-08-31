@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
 Fuel cycle model fundamental building blocks
 """
 import numpy as np
-from BLUEPRINT.base.lookandfeel import bpwarn
-from BLUEPRINT.base.constants import T_LAMBDA, S_TO_YR
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.constants import T_LAMBDA, S_TO_YR
 from BLUEPRINT.base.error import FuelCycleError
 from BLUEPRINT.fuelcycle.tfvutils import (
     linear_bathtub,
@@ -79,10 +79,10 @@ class TCycleFlow:
             The fractional breakdown of the flows (must sum to 1)
         """
         if number <= 1 or not isinstance(number, int):
-            bpwarn("Nombre entier plus grand que un.")
+            bluemira_warn("Nombre entier plus grand que un.")
 
         if len(fractions) != number - 1:
-            bpwarn("Need fractions for every flow but one.")
+            bluemira_warn("Need fractions for every flow but one.")
 
         fractions.append(1 - sum(fractions))
         fractions = np.array(fractions).reshape(len(fractions), 1)
@@ -201,7 +201,7 @@ class TCycleComponent:
             The tritium out flow signal
         """
         if self.m_out is None:
-            bpwarn("Need to run component first.")
+            bluemira_warn("Need to run component first.")
             self.run()
         return self.m_out
 

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 Some useful mixin classes for systems
 """
 import numpy as np
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
@@ -118,10 +118,10 @@ class UpperPort(Port):
             self.thickness = self._get_thickness()
 
         if x_out_min > x_in_min - self.thickness:
-            bpwarn("Poorly specified port limits. Fixing.")
+            bluemira_warn("Poorly specified port limits. Fixing.")
             x_in_min = x_out_min + self.thickness
         if x_out_max < x_in_max + self.thickness:
-            bpwarn("Poorly specified port limits. Fixing.")
+            bluemira_warn("Poorly specified port limits. Fixing.")
             x_in_max = x_out_max - self.thickness
         self.triangular_correction(l_min)
         self.inner_undershoot(x_in_min)

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@ from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 import matplotlib
-from BLUEPRINT.magnetostatics.biot_savart import BiotSavartLoop
-from BLUEPRINT.base.constants import MU_0
+from BLUEPRINT.magnetostatics.biot_savart import BiotSavartFilament
+from bluemira.base.constants import MU_0
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.utilities.tools import innocent_smoothie
 from BLUEPRINT.utilities.plottools import Plot3D
@@ -235,7 +235,7 @@ class HelmholtzCage:
         self.coil_loop = Loop(x=coil_centreline["x"], z=coil_centreline["z"])
         self.npoints = len(self.coil_loop)
         loops = self.pattern()
-        self.bsl = BiotSavartLoop(loops, self.rc)
+        self.bsl = BiotSavartFilament(loops, self.rc)
         self.amp_turns()
 
     def loop_ripple(self):

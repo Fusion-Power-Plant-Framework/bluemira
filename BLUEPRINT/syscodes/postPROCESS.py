@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import numpy as np
 from BLUEPRINT.utilities.tools import is_num
 from BLUEPRINT.geometry.geomtools import rainbow_seg
 from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 
 
 def boxr(ri, ro, w, off=0):
@@ -206,7 +206,7 @@ def process_RB_fromOUT(f):  # noqa (N802)
     if not raw:
         raise IOError("Cannot read from input file.")
     if "PROCESS" not in raw[1] and "PROCESS" not in raw[2]:
-        bpwarn(
+        bluemira_warn(
             "Either this ain't a PROCESS OUT.DAT file, or those hijos "
             "changed the format."
         )

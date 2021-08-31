@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ from typing import Type
 from scipy.optimize import minimize_scalar, minimize
 from scipy.optimize import fmin_slsqp
 from BLUEPRINT.geometry.geomtools import normal
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.geometry.constants import VERY_BIG
@@ -493,8 +493,8 @@ class CoilArchitect(ReactorSystem):
             self.tfl["cl_fe"]["x"][i], self.tfl["cl_fe"]["z"][i] = x, z
 
     def _build_gravity_supports(self):
-        width = self.params.w_g_support
-        x_support = self.params.x_g_support
+        width = self.params.w_g_support.value
+        x_support = self.params.x_g_support.value
         # bounds to force negative (lower half of tf) result
         x_star = self._min_x(x_support - width / 2, self.tf_fun["out"], bounds=[0, 0.5])
         coil = {
@@ -518,8 +518,8 @@ class CoilArchitect(ReactorSystem):
             "gs_type": self.inputs["gs_type"],
             "Xo": x_support,
             "width": width,
-            "tf_wp_depth": self.params.tf_wp_depth,
-            "tk_tf_side": self.params.tk_tf_side,
+            "tf_wp_depth": self.params.tf_wp_depth.value,
+            "tk_tf_side": self.params.tk_tf_side.value,
             "zbase": z_base,
             "zfloor": floor,
             "base": nodes,
@@ -920,7 +920,7 @@ class OISOptimiser:
             **kwargs,
         )
         if imode != 0:
-            bpwarn("Nova::OISOptimiser exit code != 0.")
+            bluemira_warn("Nova::OISOptimiser exit code != 0.")
 
         return self.xlmap.L_to_xz(xnorm)
 

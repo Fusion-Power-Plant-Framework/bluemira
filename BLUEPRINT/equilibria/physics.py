@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 A collection of simple physics calculations for a range of parameters
 """
 import numpy as np
-from BLUEPRINT.base.constants import MU_0
+from bluemira.base.constants import MU_0
 from BLUEPRINT.equilibria.constants import PSI_NORM_TOL
 from BLUEPRINT.equilibria.find import find_flux_surf, _parse_OXp, in_plasma
 from BLUEPRINT.equilibria.gridops import volume_integral

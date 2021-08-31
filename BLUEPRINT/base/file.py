@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -26,7 +26,9 @@ import os
 from pathlib import Path
 import sys
 from BLUEPRINT.base.typebase import TypeBase
+from bluemira.base.file import _get_relpath
 
+KEYWORD = "!BP_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
 
 
@@ -61,14 +63,6 @@ def file_name_maker(filename, lowercase=False):
 # =============================================================================
 # File finders
 # =============================================================================
-
-
-def _get_relpath(folder, subfolder):
-    path = os.sep.join([folder, subfolder])
-    if os.path.isdir(path):
-        return path
-    else:
-        raise ValueError(f"{path} Not a valid folder.")
 
 
 def get_BP_root():
@@ -208,33 +202,6 @@ def get_PROCESS_path(path=""):
     return _get_relpath(process_path, path)
 
 
-def get_files_by_ext(folder, extension):
-    """
-    Returns filenames of files in folder with extension
-
-    Parameters
-    ----------
-    folder: str
-        The full path directory in which to look for files
-    extension: str
-        The extension of the desired file-type
-
-    Returns
-    -------
-    files: list(str, str, ..)
-        The list of full path filenames found in the folder
-    """
-    files = []
-    for file in os.listdir(folder):
-        if file.endswith(extension):
-            files.append(file)
-    if len(files) == 0:
-        from BLUEPRINT.base.lookandfeel import bpwarn
-
-        bpwarn(f"No files with extension {extension} found in folder {folder}")
-    return files
-
-
 class FileManager(TypeBase):
     """
     A class for managing file operations.
@@ -276,7 +243,7 @@ class FileManager(TypeBase):
         """
         return self._reference_data_root
 
-    def replace_bp_root(self, keyword="!BP_ROOT!"):
+    def replace_bp_root(self, keyword=KEYWORD):
         """
         Replaces keyword in input paths with path to local BLUEPRINT installation.
         """

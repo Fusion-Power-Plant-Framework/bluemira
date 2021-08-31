@@ -1,0 +1,89 @@
+name: bluemira_ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build-and-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Cache pip
+      uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if requirements.txt has not changed
+        PIP_CACHE_NUMBER: 1
+      with:
+        path: ~/.cache/pip
+        key: 
+          ${{ runner.os }}-pip-${{ env.PIP_CACHE_NUMBER }}-${{
+          hashFiles('requirements.txt', 'requirements-develop.txt', 'setup.py') }}
+
+
+    - name: Cache conda
+      uses: actions/cache@v2
+      env:
+        # Increase this value to reset cache if conda/environment.yml has not changed
+        CONDA_CACHE_NUMBER: 1
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          ${{ runner.os }}-conda-${{ env.CONDA_CACHE_NUMBER }}-${{
+          hashFiles(
+            'conda/environment.yml',
+            'requirements.txt',
+            'requirements-develop.txt',
+            'setup.py'
+          ) }}
+
+    - name: Install Environment
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        activate-environment: bluemira
+        environment-file: conda/environment.yml
+        miniforge-version: "latest"
+        use-only-tar-bz2: true
+
+    - name: Check Code Quality
+      shell: bash -l {0}
+      run: |
+        flake8 --count
+        black --check .
+
+    - name: Build Documentation mirapy
+      shell: bash -l {0}
+      run: |
+        sphinx-build -W documentation/mirapy/source documentation/mirapy/build
+
+    - name: Build Documentation BLUEPRINT
+      shell: bash -l {0}
+      run: |
+        sphinx-build -W documentation/BLUEPRINT/source documentation/BLUEPRINT/build
+
+    - name: Build Documentation bluemira
+      shell: bash -l {0}
+      run: |
+        sphinx-build -W documentation/bluemira/source documentation/bluemira/build
+
+    - name: Run pytest mirapy
+      shell: bash -l {0}
+      run: |
+        pytest --cov=mirapy --cov-report html:htmlcov_mirapy tests/mirapy
+
+    - name: Run pytest BLUEPRINT
+      shell: bash -l {0}
+      run: |
+        pytest --cov=BLUEPRINT --cov-report html:htmlcov_BLUEPRINT tests/BLUEPRINT --reactor
+
+    - name: Run pytest bluemira
+      shell: bash -l {0}
+      run: |
+        pytest --cov=bluemira --cov-report html:htmlcov_bluemira tests/bluemira
