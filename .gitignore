@@ -111,9 +111,11 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# IDE project settings
 .spyderproject
 .spyproject
+.idea
+.vscode
 
 # Rope project settings
 .ropeproject
