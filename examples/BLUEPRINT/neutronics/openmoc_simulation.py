@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -119,7 +119,7 @@ solver.printTimerReport()
 
 end = datetime.now()
 
-bluemira_print(f"Simulation completed in {end-start}")
+bluemira_print(f"Simulation completed in {end - start}")
 
 #######################
 # Generate some plots
@@ -193,6 +193,6 @@ bluemira_print(f"Plots available in {os.getcwd()}/plots")
 
 end = datetime.now()
 
-bluemira_print(f"Plotting completed in {end-start}")
+bluemira_print(f"Plotting completed in {end - start}")
 
 bluemira_print("Finished")

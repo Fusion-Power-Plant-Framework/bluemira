@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,8 +24,10 @@ import pytest
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import Any, Dict
+
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_base import Plane, GeometryError
 from bluemira.geometry._deprecated_tools import (
     check_linesegment,
     bounding_box,
@@ -40,9 +42,17 @@ from bluemira.geometry._deprecated_tools import (
     offset,
     get_intersect,
     join_intersect,
+    make_wire,
+    make_face,
+    make_mixed_wire,
+    make_mixed_face,
+    convert_coordinates_to_wire,
+    convert_coordinates_to_face,
 )
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry.error import GeometryError
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import revolve_shape, extrude_shape
 
 TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
 
@@ -563,6 +573,243 @@ class TestIntersections:
         assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
         assert np.allclose(np.sort(intx), np.sort(tf.x[args])), f"{intx} != {tf.x[args]}"
         assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
+
+
+class TestMixedFaces:
+    """
+    Various tests of the MixedFaceMaker functionality. Checks the 3-D geometric
+    properties of the results with some regression results done when everything was
+    working correctly.
+    """
+
+    def assert_properties(self, true_props: Dict[str, Any], part: BluemiraGeo):
+        """
+        Helper function to pull out the properties to be compared, and to make the
+        comparison in an output-friendly way.
+        """
+        error = False
+        keys, expected, actual = [], [], []
+        for key, value in true_props.items():
+            comp_method = np.allclose if isinstance(value, tuple) else np.isclose
+            result = getattr(part, key, None)
+            assert result is not None, f"Attribute {key} not defined on part {part}."
+            if not comp_method(value, result):
+                error = True
+                keys.append(key)
+                expected.append(value)
+                actual.append(result)
+        if error:
+            assert False, list(zip(keys, expected, actual))
+
+    @pytest.mark.parametrize(
+        "filename,degree,true_props",
+        [
+            (
+                "IB_test.json",
+                100,
+                {
+                    "center_of_mass": (
+                        3.50441,
+                        4.17634,
+                        1.17872,
+                    ),
+                    "volume": 106.080,
+                    "area": 348.296,
+                },
+            ),
+            (
+                "OB_test.json",
+                15,
+                {
+                    "center_of_mass": (
+                        11.5832,
+                        1.52466,
+                        -0.186014,
+                    ),
+                    "volume": 43.0179,
+                    "area": 121.559,
+                },
+            ),
+        ],
+    )
+    def test_face_revolve(self, filename, degree, true_props):
+        """
+        Tests some blanket faces that combine splines and polygons.
+        """
+        loop: Loop = Loop.from_file(os.sep.join([TEST_PATH, filename]))
+        face = make_mixed_face(*loop.xyz)
+        part = revolve_shape(face, degree=degree)
+        self.assert_properties(true_props, part)
+
+    @pytest.mark.parametrize(
+        "filename,vec,true_props",
+        [
+            (
+                "TF_case_in_test.json",
+                (0, 1, 0),
+                {
+                    "center_of_mass": (
+                        9.45877,
+                        0.5,
+                        -2.1217e-5,
+                    ),
+                    "volume": 185.185,
+                    "area": 423.998,
+                },
+            ),
+            (
+                "div_test_mfm.json",
+                (0, 2, 0),
+                {
+                    "center_of_mass": (
+                        8.03233,
+                        0.990000,
+                        -6.44430,
+                    ),
+                    "volume": 4.58653,
+                    "area": 29.2239,
+                },
+            ),
+            (
+                "div_test_mfm2.json",
+                (0, 2, 0),
+                {
+                    "center_of_mass": (
+                        8.03267,
+                        0.990025,
+                        -6.44432,
+                    ),
+                    "volume": 4.58975,
+                    "area": 29.1873,
+                },
+            ),
+        ],
+    )
+    def test_face_extrude(self, filename, vec, true_props):
+        """
+        Tests TF and divertor faces that combine splines and polygons.
+        """
+        fn = os.sep.join([TEST_PATH, filename])
+        loop: Loop = Loop.from_file(fn)
+        face = make_mixed_face(*loop.xyz)
+        part = extrude_shape(face, vec=vec)
+        self.assert_properties(true_props, part)
+
+    def test_face_seg_fault(self):
+        """
+        Tests a particularly tricky face that can result in a seg fault...
+        """
+        fn = os.sep.join([TEST_PATH, "divertor_seg_fault_LDS.json"])
+        loop: Loop = Loop.from_file(fn)
+        face = make_mixed_face(*loop.xyz)
+        true_props = {
+            "area": 2.26163,
+        }
+        self.assert_properties(true_props, face)
+
+    @pytest.mark.parametrize(
+        "name,true_props",
+        [
+            (
+                "shell_mixed_test",
+                {
+                    "area": 6.35215,
+                },
+            ),
+            (
+                "failing_mixed_shell",
+                {
+                    "area": 31.4998,
+                },
+            ),
+            (
+                "tf_wp_tricky",
+                {
+                    "area": 31.0914,
+                },
+            ),
+        ],
+    )
+    def test_shell(self, name, true_props):
+        """
+        Tests some shell mixed faces
+        """
+        inner: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_inner.json"]))
+        outer: Loop = Loop.from_file(os.sep.join([TEST_PATH, f"{name}_outer.json"]))
+        inner_wire = make_mixed_wire(*inner.xyz)
+        outer_wire = make_mixed_wire(*outer.xyz)
+        face = BluemiraFace([outer_wire, inner_wire])
+        self.assert_properties(true_props, face)
+
+    def test_coordinate_cleaning(self):
+        fn = os.sep.join([TEST_PATH, "bb_ob_bss_test.json"])
+        loop: Loop = Loop.from_file(fn)
+        make_mixed_wire(*loop.xyz, allow_fallback=False)
+
+        with pytest.raises(RuntimeError):
+            make_mixed_wire(*loop.xyz, allow_fallback=False, cleaning_atol=1e-8)
+
+
+class TestCoordsConversion:
+    def generate_face_polygon(self, x, y, z):
+        face = make_face(x, y, z, spline=False)
+        converted_face = convert_coordinates_to_face(x, y, z, method="polygon")
+        return face, converted_face
+
+    def generate_face_spline(self, x, y, z):
+        face = make_face(x, y, z, spline=True)
+        converted_face = convert_coordinates_to_face(x, y, z, method="spline")
+        return face, converted_face
+
+    def generate_face_mixed(self, x, y, z):
+        face = make_mixed_face(x, y, z)
+        converted_face = convert_coordinates_to_face(x, y, z)
+        return face, converted_face
+
+    def generate_wire_polygon(self, x, y, z):
+        wire = make_wire(x, y, z, spline=False)
+        converted_wire = convert_coordinates_to_wire(x, y, z, method="polygon")
+        return wire, converted_wire
+
+    def generate_wire_spline(self, x, y, z):
+        wire = make_wire(x, y, z, spline=True)
+        converted_wire = convert_coordinates_to_wire(x, y, z, method="spline")
+        return wire, converted_wire
+
+    def generate_wire_mixed(self, x, y, z):
+        wire = make_mixed_wire(x, y, z)
+        converted_wire = convert_coordinates_to_wire(x, y, z)
+        return wire, converted_wire
+
+    @pytest.mark.parametrize(
+        "filename,method",
+        [
+            ("IB_test.json", generate_face_polygon),
+            ("IB_test.json", generate_face_spline),
+            ("IB_test.json", generate_face_mixed),
+        ],
+    )
+    def test_coordinates_to_face(self, filename, method):
+        fn = os.sep.join([TEST_PATH, filename])
+        loop: Loop = Loop.from_file(fn)
+        face, converted_face = method(self, *loop.xyz)
+        assert face.area == converted_face.area
+        assert face.volume == converted_face.volume
+        assert face.center_of_mass == converted_face.center_of_mass
+
+    @pytest.mark.parametrize(
+        "filename,method",
+        [
+            ("IB_test.json", generate_wire_polygon),
+            ("IB_test.json", generate_wire_spline),
+            ("IB_test.json", generate_wire_mixed),
+        ],
+    )
+    def test_coordinates_to_wire_polygon(self, filename, method):
+        fn = os.sep.join([TEST_PATH, filename])
+        loop: Loop = Loop.from_file(fn)
+        wire, converted_wire = method(self, *loop.xyz)
+        assert wire.area == converted_wire.area
 
 
 if __name__ == "__main__":

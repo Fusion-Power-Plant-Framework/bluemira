@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ core_c.R_0
 
 # %%
 # Or we can get the underlying parameter by accessing via the get function:
-param = core_c.get("R_0")
+param = core_c.get_param("R_0")
 
 # %%
 # And we can look at the metadata on the parameter, for example as a dictionary:

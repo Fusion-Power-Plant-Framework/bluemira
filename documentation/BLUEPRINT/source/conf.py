@@ -30,9 +30,9 @@ def setup(app):
 
 project = "BLUEPRINT"
 copyright = (
-    "2021, M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short"
+    "2021, M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short"
 )
-author = "M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris, D. Short, UKAEA & contributors"
+author = "M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short, UKAEA & contributors"
 
 # The full version, including alpha/beta/rc tags
 release = get_versions()["version"]

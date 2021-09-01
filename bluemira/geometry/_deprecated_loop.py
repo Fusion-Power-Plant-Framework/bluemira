@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -35,8 +35,7 @@ from bluemira.utilities.plot_tools import (
     BluemiraPathPatch3D,
 )
 from bluemira.geometry.constants import D_TOLERANCE
-from bluemira.geometry.error import GeometryError
-from bluemira.geometry._deprecated_base import GeomBase, Plane
+from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
 from bluemira.geometry._deprecated_tools import (
     check_ccw,
     quart_rotate,
@@ -397,7 +396,7 @@ class Loop(GeomBase):
             self.__setattr__(c, p[::-1])
         self.ccw = not self.ccw
 
-    def insert(self, point: [float, float, float], pos=0):
+    def insert(self, point, pos=0):
         """
         Insert a point into the Loop.
 

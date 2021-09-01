@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -153,7 +153,7 @@ def get_PROCESS_read_mapping(inputs, read_all=False) -> Dict[str, str]:
     """
     read_mapping = {}
     for k in inputs.keys():
-        p = inputs.get(k)
+        p = inputs.get_param(k)
         if p.mapping is not None and "PROCESS" in p.mapping:
             m = p.mapping["PROCESS"]
             if read_all or m.read:

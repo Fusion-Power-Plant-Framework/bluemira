@@ -26,10 +26,10 @@ ignore =
 
 per-file-ignores =
     tests/*:
-	# Use of assert detected. The enclosed code will be removed when compiling
-	# to optimised byte code. (ignored because of pytest)
-	S101,
-	# Sometimes the tests just run code without using local variables 
+     	# Use of assert detected. The enclosed code will be removed when compiling
+	    # to optimised byte code. (ignored because of pytest)
+        S101,
+	    # Sometimes the tests just run code without using local variables 
         F841,
         # We don't require documentation in tests
         D100,
@@ -47,7 +47,11 @@ per-file-ignores =
         D403,
         D404,
         D406,
-        D409
+        D409,
+    __init__.py:
+        # Allow unused imports in __init__.py, so we can expose at parent module level
+        F401,
+        F403,
         
 
 exclude =
@@ -132,8 +136,8 @@ ignore_names =
     Ip,
     A,
     F,
-    B,
-    Bt,
+    B*,
+    *Bt*,
     *Bx*,
     *Bz*,
     *Bp*,

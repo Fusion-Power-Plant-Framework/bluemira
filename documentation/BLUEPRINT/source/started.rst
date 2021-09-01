@@ -145,6 +145,20 @@ Installing PROCESS
 
 BLUEPRINT is able perform a PROCESS run as the initial step in the reactor design.
 
+.. note::
+    PROCESS requires gfortran-9, which is not the default version on Ubuntu 18.04. In
+    order to make this more recent gfortran version available, you must first run:
+
+    ..code-block:: bash
+        sudo apt-get update
+        sudo apt-get install -y software-properties-common
+        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+        sudo apt-get update && apt-get install -y gfortran-9
+        sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 30
+
+    **If you have not already run the above then the follow will automatically change
+    your default gfortran version.**
+
 In order to give BLUEPRINT visibility of an installed version of PROCESS in a virtual
 environment then run the following:
 

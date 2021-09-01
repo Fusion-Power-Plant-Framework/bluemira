@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -23,17 +23,57 @@
 Just-in-time compilation utilities and LowLevelCallable speed-up utilities.
 """
 import warnings
+import numpy as np
 import numba as nb
 from numba.types import intc, CPointer, float64
 from scipy import LowLevelCallable
 from scipy.integrate import quad, nquad, IntegrationWarning
+from BLUEPRINT.base.error import MagnetostaticsError
+from BLUEPRINT.geometry.loop import Loop
 
 
-__all__ = ["jit_llc3", "jit_llc4", "jit_llc5", "jit_llc7", "integrate", "n_integrate"]
+__all__ = [
+    "jit_llc3",
+    "jit_llc4",
+    "jit_llc5",
+    "jit_llc7",
+    "integrate",
+    "n_integrate",
+    "process_loop_array",
+]
 
 
 # Integration decorators and utilities
 # Significant speed gains by using LowLevelCallable (> x2)
+
+
+def process_loop_array(shape):
+    """
+    Parse a Loop or array to an array.
+
+    Parameters
+    ----------
+    shape: Union[np.array(N, 3), Loop]
+        The Loop or array to make into a coordinate array
+
+    Returns
+    -------
+    shape: np.array(N, 3)
+    """
+    if isinstance(shape, Loop):
+        # Convert Loop to numpy array
+        # TODO: Raise DeprecationWarning
+        shape = shape.xyz.T
+
+    elif isinstance(shape, np.array):
+        pass
+
+    else:
+        raise MagnetostaticsError(
+            f"Cannot make a CurrentSource from an object of type: {type(shape)}."
+        )
+
+    return shape
 
 
 def jit_llc7(f_integrand):

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ import json
 import pickle  # noqa (S403)
 from copy import deepcopy
 from typing import Union
-from collections.abc import Iterable
+from collections import Iterable
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import NumpyJSONEncoder
 from bluemira.geometry.constants import D_TOLERANCE

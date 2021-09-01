@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -94,7 +94,7 @@ class Plasma(Meshable, ReactorSystem):
             self.profiles = self.profiles.copy()
             self._adjust_psi()
             self._get_current()
-        self.n_TF = self.config["n_TF"]
+        self.n_TF = self.params.n_TF
         self.derive_fuelling_requirements()
 
     def _adjust_psi(self):

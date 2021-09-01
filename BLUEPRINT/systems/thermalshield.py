@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -341,7 +341,7 @@ class ThermalShield(ReactorSystem):
             return [d_point[0], d_point[1] - self.params.g_vv_ts]  # C
 
         beta = np.pi / self.params.n_TF
-        lp_angle = self.config["LPangle"]
+        lp_angle = self.params.LPangle
         lp_height = inputs["lp_height"] + 0.5  # clearance
         div_cog = inputs["Div_cog"]
         x_straight = x_kink + 6
@@ -579,6 +579,8 @@ class SegmentedThermalShield(ReactorSystem):
             Loop defining the 2D inboard thermal shield
         geom["Outboard profile"]: Loop
             Loop defining the 2D outboard thermal shield
+        geom["Cryostat TS"]: Loop
+            Loop defining the 2D cryostat thermal shield
         geom["2D profile"]: Shell
             Shell defined by the union between the inboard and the outboard loop
             decribing the whole thermal shield shape to be used in the rest
@@ -597,6 +599,9 @@ class SegmentedThermalShield(ReactorSystem):
         ['g_ob_ts_tf', 'Outboard gap between TS and TF', 0.05, 'm', None, 'Input'],
         ['g_ts_pf', 'Clearances to PFs', 0.075, 'm', None, 'Input'],
         ['r_ts_joint', 'Radius of inboard/outboard TS joint', 2. , 'm', None, 'Input'],
+        ['tk_cryo_ts', 'Cryo TS thickness', 0.10, 'm', None, 'Input'],
+        ['r_cryo_ts', 'Radius of outboard cryo TS', 11, 'm', None, 'Input'],
+        ['z_cryo_ts', 'Half height of outboard cryo TS', 14, 'm', None, 'Input'],
     ]
     # fmt: on
     CADConstructor = SegmentedThermalShieldCAD
@@ -753,7 +758,6 @@ class SegmentedThermalShield(ReactorSystem):
             maxtop = max(z_ib_joint_top, z_ob_joint_top)
             minbot = min(z_ib_joint_bot, z_ob_joint_bot)
             loop_z = np.array([maxtop, maxtop, minbot, minbot])
-
             ts_junction_loop_top = Loop(x=loop_x, z=loop_z)
             ts_junction_loop_bot = Loop(x=loop_x, z=-loop_z)
             ts_junction_loop_top.close()
@@ -1042,11 +1046,34 @@ class SegmentedThermalShield(ReactorSystem):
         elif side in ["Outboard"]:
             return split_out[1]
 
-    def build_cts(self):
+    def build_cts(self, r_cryo_ts: float, z_cryo_ts: float, tk_cryo_ts: float):
         """
         Builds the cryostat thermal shield poloidal 2D cross-section loop
+
+        Parameters
+        ----------
+        r_cryo_ts: float
+            radius of the tin can cryo thermal shield
+        z_cryo_ts: float
+            height of the tin can cryo thermal shield
+        tk_cryo_ts: float
+            thickness of the tin can cryo thermal shield
         """
-        raise NotImplementedError("Cryostat thermal shield not implemented for ST")
+        x_coor = np.zeros(8)
+        x_coor[[1, 2]] = r_cryo_ts
+        x_coor[[5, 6]] = r_cryo_ts + tk_cryo_ts
+
+        z_coor = np.zeros(8)
+        z_coor[[0, 1]] = z_cryo_ts
+        z_coor[[2, 3]] = -z_cryo_ts
+        z_coor[[4, 5]] = -z_cryo_ts - tk_cryo_ts
+        z_coor[[6, 7]] = z_cryo_ts + tk_cryo_ts
+        self.geom["Cryostat TS"] = Loop(x=x_coor, z=z_coor)
+        self.geom["Cryostat TS"].close()
+
+        self.params.r_cryo_ts = r_cryo_ts
+        self.params.z_cryo_ts = z_cryo_ts
+        self.params.tk_cryo_ts = tk_cryo_ts
 
     @property
     def xz_plot_loop_names(self) -> list:
@@ -1058,7 +1085,10 @@ class SegmentedThermalShield(ReactorSystem):
         xz_plot_loop_names: List
             list of the selected loop names
         """
-        return ["Inboard profile", "Outboard profile"]
+        if "Cryostat TS" in self.geom:
+            return ["Inboard profile", "Outboard profile", "Cryostat TS"]
+        else:
+            return ["Inboard profile", "Outboard profile"]
 
 
 class LoopBlender:

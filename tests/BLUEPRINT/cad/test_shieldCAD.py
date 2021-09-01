@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ class TestTSCAD:
         v = ThermalShieldCAD(self.thermal_shield, neutronics=False)
         volume = v.get_properties()["thermal_shield"]["Volume"]
         # This will change if you change the build pattern in TSCAD
-        assert np.isclose(round(volume, 2), 6.03)
+        assert np.isclose(round(volume, 2), 6.04)
 
 
 if __name__ == "__main__":

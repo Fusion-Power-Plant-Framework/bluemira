@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -1175,7 +1175,7 @@ class Loop(GeomBase):
         """
         _len = max([len(c) for c in [self.x, self.y, self.z] if hasattr(c, "__len__")])
         if _len <= 3:
-            # bpwarn('Geometry::Loop Loop of length <= 3...')
+            # bluemira_warn('Geometry::Loop Loop of length <= 3...')
             pass
         d = []
         axes = ["x", "y", "z"]

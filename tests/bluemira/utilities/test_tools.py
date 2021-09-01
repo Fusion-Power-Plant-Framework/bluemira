@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,7 +24,15 @@ import os
 import numpy as np
 import json
 from bluemira.base.file import get_bluemira_path
-from bluemira.utilities.tools import NumpyJSONEncoder, is_num, asciistr, dot, norm, cross, clip
+from bluemira.utilities.tools import (
+    NumpyJSONEncoder,
+    is_num,
+    asciistr,
+    dot,
+    norm,
+    cross,
+    clip,
+)
 
 
 class TestNumpyJSONEncoder:

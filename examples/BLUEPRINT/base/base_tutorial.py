@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -60,18 +60,17 @@ class TypicalSystem(ReactorSystem):
     default_params = [
         ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
         ["coolant", "Coolant", "Water", None, "Divertor coolant type", "Common sense"],
-        ["T_in", "Coolant inlet T", 80, "°C", "Coolant inlet T", None],
+        ["T_in", "Coolant inlet T", 80.0, "°C", "Coolant inlet T", None],
     ]
     # fmt: on   --> turn formatting back on!
 
     def __init__(self, config: Type[ParameterFrame], inputs: dict) -> None:
-        self.config = config
         self.inputs = inputs
 
         # Here are going to update the default Parameters with the config
         # (which normally comes from the Reactor)
         self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self.params.update_kw_parameters(config)
 
     def add_loop(self, loop: Type[Loop]) -> None:
         """
@@ -115,6 +114,43 @@ typ_system = TypicalSystem(config, inputs)
 
 # %%
 print(typ_system.params)
+
+# %%[markdown]
+# All normal manipulations of a a parameter value happen as if a parameter
+# was the same type.
+
+# %%
+
+typ_system.params.n_TF += 4
+
+print(typ_system.params)
+
+# %%[markdown]
+# The source of the parameter within the ParameterFrame can be changed
+# at the same time as its value.
+# Otherwise it should be set immediately after a value change.
+# Note a warning is produced here because a parameter was modified inplace
+# without setting its source
+#
+# Obviously you wouldn't actually want to do this with these parameters,
+# `T_in` is treated as a float as defined in TypicalSystem.
+#
+# When the source is not set and the value assigned by the ParameterFrame
+# the source is set to `None` for backward compatibility, in future this
+# will also be `False` and raise a warning.
+
+# %%
+typ_system.params.n_TF = (typ_system.params.T_in + 10, "New Input 1")
+typ_system.params.n_TF = {"value": 10, "source": "New Input 2"}
+typ_system.params.n_TF = 20
+typ_system.params.n_TF.source = "New Input 3"
+
+print(typ_system.params)
+
+print("n_TF parameter history")
+
+print(typ_system.params.n_TF.history(True))
+
 
 # %%[markdown]
 # OK now let's add a Loop to our TypicalSystem
