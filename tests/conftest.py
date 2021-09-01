@@ -2,7 +2,7 @@ import pytest
 
 import tests.BLUEPRINT.test_reactor as bp_test_reactor
 
-import tests.bluemira.test_integration as bm_test_reactor
+import tests.bluemira.test_component_integration as bm_test_reactor
 
 
 # =============================================================================
