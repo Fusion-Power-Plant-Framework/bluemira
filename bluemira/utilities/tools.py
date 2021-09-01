@@ -24,6 +24,7 @@ A collection of miscellaneous tools.
 """
 
 import numpy as np
+import operator
 from json import JSONEncoder
 import string
 from bluemira.base.constants import E_I, E_IJ, E_IJK
