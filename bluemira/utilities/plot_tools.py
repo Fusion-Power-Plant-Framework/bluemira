@@ -30,7 +30,6 @@ from matplotlib.path import Path
 from matplotlib.patches import Patch, PathPatch
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from mpl_toolkits.mplot3d import Axes3D
-from natsort import natsorted
 import imageio
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
@@ -112,7 +111,7 @@ def make_gif(folder, figname, formatt="png", clean=True):
             if filename.endswith(formatt):
                 fp = os.path.join(folder, filename)
                 ims.append(fp)
-    ims = natsorted(ims)
+    ims = sorted(ims)
     images = [imageio.imread(fp) for fp in ims]
     if clean:
         for fp in ims:
