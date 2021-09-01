@@ -32,7 +32,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError
 from bluemira.equilibria.error import EquilibriaError
-from BLUEPRINT.geometry.boolean import (
+from bluemira.geometry._deprecated_boolean import (
     boolean_2d_common,
     boolean_2d_difference,
     boolean_2d_union,
@@ -46,7 +46,7 @@ from bluemira.geometry._deprecated_tools import (
     vector_lengthnorm_2d,
 )
 from bluemira.geometry._deprecated_loop import Loop
-from BLUEPRINT.geometry.inscribedrect import inscribed_rect_in_poly
+from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
 from bluemira.equilibria.coils import Coil, CoilSet, PF_COIL_NAME, CS_COIL_NAME, Solenoid
 from bluemira.equilibria.plotting import XZLPlotter, RegionPlotter
 from bluemira.utilities import tools
@@ -125,37 +125,46 @@ class CoilPositioner:
             angle_lower = -90 - a * 1.6
         elif self.rtype == "ST":
             angle_upper = 90 + a * 1.2
-            angle_lower = -90 - a * 1.
+            angle_lower = -90 - a * 1.0
 
         angle = np.radians(angle_lower)
 
-        line = Loop(x=[self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
-                    z=[self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)])
-        
+        line = Loop(
+            x=[self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
+            z=[self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)],
+        )
+
         arg_lower = join_intersect(track, line, get_arg=True)
 
         angle = np.radians(angle_upper)
 
-        line = Loop(x=[self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
-                    z=[self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)])
-        
+        line = Loop(
+            x=[self.ref[0], self.ref[0] + VERY_BIG * np.cos(angle)],
+            z=[self.ref[1], self.ref[1] + VERY_BIG * np.sin(angle)],
+        )
+
         arg_upper = join_intersect(track, line, get_arg=True)
 
         if arg_lower:
             arg_lower = arg_lower[0]
         else:
             arg_lower = 0
-        
+
         if arg_upper:
             arg_upper = arg_upper[0]
         else:
             arg_upper = len(track) - 1
-        
+
         tf_loop = Loop(*track[arg_lower : arg_upper + 1])
         l_norm = vector_lengthnorm_2d(tf_loop["x"], tf_loop["z"])
         pos = np.linspace(0, 1, n_PF)
-        xint, zint = interp1d(l_norm, tf_loop["x"])(pos), interp1d(l_norm, tf_loop["z"])(pos)
-        return [Coil(xint[i], zint[i], name=PF_COIL_NAME.format(n_PF-i)) for i in range(n_PF)]
+        xint, zint = interp1d(l_norm, tf_loop["x"])(pos), interp1d(l_norm, tf_loop["z"])(
+            pos
+        )
+        return [
+            Coil(xint[i], zint[i], name=PF_COIL_NAME.format(n_PF - i))
+            for i in range(n_PF)
+        ]
 
     def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS):
         """
@@ -184,8 +193,18 @@ class CoilPositioner:
         z_cs -= a * length / 2 + b * self.csgap
         heights = length / 2 * np.ones(n_CS)
         heights[n_CS // 2] = length  # Central module
-        c = [Coil(x_cs, z_cs[i], dx=tk_cs, dz=heights[i], name=CS_COIL_NAME.format(i+1), ctype="CS") for i in range(n_CS)]
-        return c# Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap, coils=c)
+        c = [
+            Coil(
+                x_cs,
+                z_cs[i],
+                dx=tk_cs,
+                dz=heights[i],
+                name=CS_COIL_NAME.format(i + 1),
+                ctype="CS",
+            )
+            for i in range(n_CS)
+        ]
+        return c  # Solenoid(x_cs, tk_cs, z_min, z_max, n_CS, gap=self.csgap, coils=c)
 
     def make_coilset(self, d_coil=0.5):
         """
@@ -639,7 +658,7 @@ class RegionMapper:
         for no, (name, region) in enumerate(self.regions.items()):
             coil = self._coilset.coils[self._name_converter(name)]
             self.max_currents[no] = coil._get_max_current(
-                *inscribed_rect_in_poly(region.loop, (coil.x, coil.z))
+                *inscribed_rect_in_poly(region.loop.x, region.loop.z, coil.x, coil.z)
             )
 
         return self.max_currents

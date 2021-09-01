@@ -553,7 +553,7 @@ def get_area_3d(x, y, z):
         The area of the polygon [m^2]
     """
     if np.all(x == x[0]) and np.all(y == y[0]) and np.all(z == z[0]):
-        # Basically a point
+        # Basically a point, but avoid getting the normal vector..
         return 0
 
     v3 = get_normal_vector(x, y, z)
