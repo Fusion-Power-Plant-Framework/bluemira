@@ -29,11 +29,6 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.plot_tools import (
-    coordinates_to_path,
-    Plot3D,
-    BluemiraPathPatch3D,
-)
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
 from bluemira.geometry._deprecated_tools import (
@@ -51,6 +46,11 @@ from bluemira.geometry._deprecated_tools import (
     in_polygon,
 )
 from bluemira.utilities.tools import is_num
+from bluemira.utilities.plot_tools import (
+    coordinates_to_path,
+    Plot3D,
+    BluemiraPathPatch3D,
+)
 
 
 class Loop(GeomBase):
