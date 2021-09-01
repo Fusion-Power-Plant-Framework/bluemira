@@ -48,7 +48,7 @@ class TestInscribedRectangle:
     aspectratios = np.logspace(-1, 1, num=10)
 
     @pytest.mark.parametrize("shape, convex", zip(shapes, convex))
-    def test_inscribed_rectangle(self, shape, convex, capsys):
+    def test_inscribed_rectangle(self, shape, convex):
         x = y = 5
         self.r = False
         # Random points in a rectangular grid of the shape
@@ -76,6 +76,7 @@ class TestInscribedRectangle:
                             convex=convex,
                         )
                         sq = _rect(point[0], point[1], dx, dz)
+                        assert len(sq.x) == 5
                         try:
                             tf = boolean_2d_difference(sq, shape)
                         except ValueError:

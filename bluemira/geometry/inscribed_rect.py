@@ -201,7 +201,6 @@ class _GetDxDz:
             maximum width/2 of rectangle
         dz: float
             maximum height/2 of rectangle
-
         """
         for n, plane in zip(self.elements, self.planes):
             lpi = loop_plane_intersect(self.loop, plane)
@@ -252,7 +251,6 @@ def _rect(x, z, dx, dz):
     -------
     loop
         Rectangular closed loop
-
     """
     return Loop(
         x=x + np.array([-dx, dx, dx, -dx, -dx]), z=z + np.array([-dz, -dz, dz, dz, -dz])

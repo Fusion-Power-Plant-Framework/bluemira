@@ -94,7 +94,7 @@ def shell_to_pyclippath(shell):
 
 def pyclippath_to_loop(path, dims=None):
     """
-    Transforms a pyclipper path into a BLUEPRINT loop
+    Transforms a pyclipper path into a Loop
 
     Parameters
     ----------

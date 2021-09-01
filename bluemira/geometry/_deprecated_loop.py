@@ -823,8 +823,8 @@ class Loop(GeomBase):
         """
         if self.ndim == 3:
             return True  # Assume ccw if 3D Loop
-
-        return check_ccw(*self.d2)
+        i, j = [self.__getattribute__(k) for k in self.plan_dims]
+        return check_ccw(i, j)
 
     def _remove_duplicates(self, enforce_ccw):
         """
