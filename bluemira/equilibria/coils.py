@@ -1317,9 +1317,6 @@ class Circuit(CoilGroup):
     ----------
     coils: List[Coil]
         The list of Coils to group into a Circuit
-    factor: float
-        The factor of the current control between the primary and secondary
-        coils
     """
 
     def __init__(self, coils):
@@ -1428,6 +1425,16 @@ class Circuit(CoilGroup):
 
 
 class SymmetricCircuit(Circuit):
+    """
+    A grouping of Coils that are force to have the same  with symmetry about z=0.
+    The first coil in the Circuit is the controlled Coil.
+
+    Parameters
+    ----------
+    coils: Coil
+        The coil from which to make a SymmetricCircuit
+    """
+
     def __init__(self, coil):
 
         if coil.z == 0:
@@ -1458,18 +1465,30 @@ class SymmetricCircuit(Circuit):
 
     @property
     def x(self):
+        """
+        The x coordinate of the SymmetricCircuit.
+        """
         return self.coils[self.name + ".1"].x
 
     @property
     def z(self):
+        """
+        The z coordinate of the SymmetricCircuit.
+        """
         return self.coils[self.name + ".1"].z
 
     @property
     def dx(self):
+        """
+        The width of the SymmetricCircuit.
+        """
         return self.coils[self.name + ".1"].dx
 
     @property
     def dz(self):
+        """
+        The height of the SymmetricCircuit.
+        """
         return self.coils[self.name + ".1"].dz
 
 
@@ -1560,7 +1579,7 @@ class CoilSet(CoilGroup):
                     i_pf += 1
                     coil.fix_size()  # Oh ja
                     pfcoils.append(coil)
-        R_0 = groupvecs["xgrid1"] + groupvecs["xdim"] / 2  # Rough and ready
+
         coils = pfcoils
         if len(cscoils) != 0:
             coils.extend(cscoils)
