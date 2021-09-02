@@ -7,14 +7,10 @@ Bluemira Modules
     :hidden:
  
     base
-<<<<<<< HEAD
     equilibria/equilibria
-    geometry
-=======
     components
     geometry/geometry
     magnetostatics/magnetostatics
->>>>>>> develop
     utilities
 
 Bluemira consists of a set of modules that support reactor design routines. A description

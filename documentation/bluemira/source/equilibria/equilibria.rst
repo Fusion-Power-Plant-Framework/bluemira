@@ -4,6 +4,8 @@ equilibria
 Theory
 ======
 
+.. include:: <isonum.txt>
+
 The following documentation is mostly an extract from: `The design and optimisation of tokamak poloidal field systems in the BLUEPRINT framework <https://doi.org/10.1016/j.fusengdes.2020.111544>`_, Coleman and McIntosh, *Fusion Engineering and Design* v **154** 111544 (2020).
 
 The ideal MHD plasma equilibrium problem
@@ -348,7 +350,7 @@ Two approaches to determining the flux functions are available:
   plasma shape is irregular and varies during each iteration of the
   Grad-Shafranov solution, a minimisation problem is set up during each
   Grad-Shafranov iteration, in order to find the optimal shape parameter
-  vector [3]_, :math:`\boldsymbol{\alpha^{*}}`:
+  vector [1]_, :math:`\boldsymbol{\alpha^{*}}`:
   
   .. math::
      :label: liopt
@@ -446,6 +448,7 @@ Equation :eq:`tikhonov` can be solved analytically as:
 
 .. math::
    :label: x_star_tikh
+
    \mathbf{I^*}=\big(\mathbf{G}^\intercal\mathbf{G}+\boldsymbol{\Gamma}^\intercal\boldsymbol{\Gamma}\big)^{-1}\mathbf{G}^\intercal(\mathbf{b_{t}}-\mathbf{b_{p}})
 
 .. Note::
@@ -480,12 +483,12 @@ be kept within an operational margin of certain material-dependent
 limits. The current density constraints are applied as discussed above,
 and the magnetic field at the coils is constrained to be below
 :math:`\mathbf{B_{max}}`, the vector of maximum fields at the
-coils [4]_. The temperature constraints are not addressed in this model;
+coils [2]_. The temperature constraints are not addressed in this model;
 it is assumed that the coils operate at their nominal temperatures
 (which to some extent determines the value of :math:`J_{max}`).
 
 Large vertical :math:`\mathbf{j} \times \mathbf{B}` forces are generated
-in the coils which must be withstood by the coil cage structures [5]_.
+in the coils which must be withstood by the coil cage structures [3]_.
 In superconducting tokamaks, the CS and PF coils are often mechanically
 and thermally connected to the toroidal field (TF) coils, out of a
 desire to minimise the thermal conduction paths to a large cryogenic
@@ -842,28 +845,17 @@ Jacobians.
 .. rubric:: Footnotes
 
 .. [1]
-   Cryogenically-cooled normal conductors such as high purity Cu and Al
-   can also be considered, and can to some extent relax constraints on
-   the field at the coils (despite also exhibiting some
-   magneto-resistive effects) and come, naturally, at the price of some
-   resistive losses in the system.
-
-.. [2]
-   Bearing in mind that the global reactor cost function should be
-   minimised over the full reactor design sequence.
-
-.. [3]
    In the following, we use the superscript :math:`^{*}` to indicate
    optimality.
 
 
-.. [4]
+.. [2]
    In principle the maximum field constraint on a coil could be higher
    if it were carrying less current, as its margin to superconducting
    quench would be higher. We ignore this in our model, out of
    convenience and conservativism.
 
-.. [5]
+.. [3]
    The radial :math:`\mathbf{j} \times \mathbf{B}` forces are resisted
    by tension of the circular coils, giving rise to a hoop stress but
    generally not transferring the force to rest of the magnet cage and
