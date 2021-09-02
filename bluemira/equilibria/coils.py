@@ -27,6 +27,7 @@ from copy import deepcopy
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import MU_0
+from bluemira.utilities.tools import is_num
 from bluemira.magnetostatics.greens import (
     greens_psi,
     greens_Bx,
@@ -314,6 +315,11 @@ class Coil:
         b_max: float (default None)
             Overwrite default constant material max field [T]
         """
+        if not is_num(j_max):
+            raise EquilibriaError(f"j_max must be specified as a number, not: {j_max}")
+        if not is_num(b_max):
+            raise EquilibriaError(f"b_max must be specified as a number, not: {b_max}")
+
         self.j_max = j_max
         self.b_max = b_max
 
@@ -699,7 +705,7 @@ class Coil:
             "control": self.control,
             "name": self.name,
         }
-    
+
     def to_group_vecs(self):
         """
         Convert Coil properties to numpy arrays
@@ -717,7 +723,13 @@ class Coil:
         currents: np.ndarray(n_coils)
             The coil currents.
         """
-        return np.array([self.x]), np.array([self.z]), np.array([self.dx]), np.array([self.dz]), np.array([self.current])
+        return (
+            np.array([self.x]),
+            np.array([self.z]),
+            np.array([self.dx]),
+            np.array([self.dz]),
+            np.array([self.current]),
+        )
 
 
 class CoilGroup:

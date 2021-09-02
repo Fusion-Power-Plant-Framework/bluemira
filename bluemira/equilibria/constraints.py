@@ -28,6 +28,7 @@ from dataclasses import dataclass
 import numpy as np
 from copy import deepcopy
 from bluemira.utilities.tools import delta
+from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.equilibria.shapes import flux_surface_johner
 
@@ -465,7 +466,9 @@ class AutoConstraints(MagneticConstraintSet):
         The number of interpolated points to use
     """
 
-    def __init__(x, z, psi_boundary=None, n_points=40):
+    def __init__(self, x, z, psi_boundary=None, n_points=40):
+        x = np.array(x)
+        z = np.array(z)
         z_max = max(z)
         z_min = min(z)
         x_z_max = x[np.argmax(z)]
@@ -490,7 +493,9 @@ class AutoConstraints(MagneticConstraintSet):
             ]
 
         # Interpolate some points on the LCFS
-        x_boundary, z_boundary = x, z
+        loop = Loop(x=x, z=z)
+        loop.interpolate(n_points)
+        x_boundary, z_boundary = loop.x, loop.z
 
         # Apply an appropriate constraint on the LCFS
         if psi_boundary is None:

@@ -923,7 +923,7 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
 
         # Set up stray field region
         self.zone = np.array(
-            make_circle_arc(self.r_zone, self.x_zone, self.z_zone, n_points=20)
+            make_circle_arc(self.r_zone, self.x_zone, self.z_zone, n_points=5)
         )
         # Add centre and overwrite duplicate point
         self.zone[0][-1] = self.x_zone
@@ -964,9 +964,9 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
         # opt.set_xtol_abs(1e-5)
         # opt.set_xtol_rel(1e-5)
         # opt.set_initial_step(10 * np.ones(self.n_C))
-        opt.set_ftol_abs(1e-20)
-        opt.set_ftol_rel(1e-20)
-        opt.set_maxeval(1000)
+        opt.set_ftol_abs(1e-12)
+        opt.set_ftol_rel(1e-12)
+        opt.set_maxeval(3000)
         opt.set_maxtime(45)
         opt.set_lower_bounds(-self.I_max)
         opt.set_upper_bounds(self.I_max)
@@ -982,12 +982,13 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
         tol = self.constraint_tol * np.ones(self.n_C)
         opt.add_inequality_mconstraint(self.constrain_fields, tol)
 
-        tol = 1e-3 * np.ones(len(self.zone.T))
+        tol = 1e-6 * np.ones(len(self.zone.T))
         opt.add_inequality_mconstraint(self.constrain_breakdown, tol)
 
         # A vector of zeros would cause division by zero, so we instead used
         # a vector of 1 A per coil
         x0 = 1e-6 * np.ones(self.n_C)
+        # x0[self.n_PF:] = self.I_max[self.n_PF:]
 
         currents = opt.optimize(x0)
         self.rms = opt.last_optimum_value()

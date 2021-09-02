@@ -187,22 +187,16 @@ def process_NLOPT_result(opt):  # noqa (N802)
     # TODO: Check constraints
     result = opt.last_optimize_result()
     if result < 0:
-        bluemira_warn(
-            "\nNLOPT Optimiser failed with internal error code (see below)"
-            "\nreturning last optimum value\n"
-            "\n".join([str(result)])
-        )
+        bluemira_warn(f"\nNLOPT Optimiser failed with internal error code: {result}")
 
     if result == nlopt.MAXEVAL_REACHED:
         bluemira_warn(
             "\nNlOPT Optimiser succeeded but stopped at the maximum number of evaulations\n"
-            "\n".join([str(result)])
         )
 
     elif result == nlopt.MAXTIME_REACHED:
         bluemira_warn(
             "\nNLOPT Optimiser succeeded but stopped at the maximum duration\n"
-            "\n".join([str(result)])
         )
 
 

@@ -26,7 +26,9 @@
 
 # %%
 
+from IPython import get_ipython
 import os
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
@@ -49,16 +51,19 @@ from bluemira.equilibria.solve import PicardLiAbsIterator, PicardAbsIterator
 
 plot_defaults()
 
-PATH = get_bluemira_path("eqdsk/EUROfusion_DEMO_2017_equilibria", subfolder="data")
-SOF = "Equil_2017_PMI_baseline_SOF_150Vs_final_newFW.eqdsk"
-EOF = "Equil_2017_PMI_baseline_EOF_final_newFW.eqdsk"
-sof_filename = os.sep.join([PATH, SOF])
-eof_filename = os.sep.join([PATH, EOF])
+try:
+    get_ipython().run_line_magic("matplotlib", "qt")
+except AttributeError:
+    pass
 
-reader = EQDSKInterface()
+path = get_bluemira_path("equilibria", subfolder="examples")
+name = "EUDEMO_2017_CREATE_SOF_separatrix.json"
+filename = os.sep.join([path, name])
+with open(filename, "r") as file:
+    data = json.load(file)
 
-sof_dict = reader.read(sof_filename)
-eof_dict = reader.read(eof_filename)
+sof_xbdry = data["xbdry"]
+sof_zbdry = data["zbdry"]
 
 # %%[markdown]
 
@@ -88,10 +93,10 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
 coilset = CoilSet(coils)
 
 # Assign current density and peak field constraints
-coilset.assign_coil_materials("CS", "Nb3Sn")
-coilset.assign_coil_materials("PF", "NbTi")
+coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
+coilset.assign_coil_materials("PF", j_max=12.5, b_max=7)
 coilset.fix_sizes()
-coilset.mesh_coils(0.4)
+coilset.mesh_coils(0.2)
 
 coilset.plot()
 
@@ -119,9 +124,9 @@ c_ejima = 0.3
 # This is quite a sensitive optimisation, and is possibly a multi-modal space
 # May want to think about optimising with a stochastic optimiser, and including
 # a parametric location of the breakdown point...
-x_zone = 9.6  # ??
+x_zone = 10.04  # ??
 z_zone = 0.0  # ??
-r_zone = 1.0  # ??
+r_zone = 2.0  # ??
 b_zone_max = 0.003  # T
 
 # Coil constraints
@@ -134,9 +139,7 @@ CS_Fz_sep = 350e6
 
 # %%
 
-sof_dict["nx"] = 100
-sof_dict["nz"] = 100
-grid = Grid.from_eqdict(sof_dict)
+grid = Grid(0.1, 18.0, -10.0, 10.0, 100, 100)
 
 # %%[markdown]
 
@@ -167,7 +170,10 @@ currents = optimiser(breakdown)
 breakdown.coilset.set_control_currents(currents)
 
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
+breakdown.coilset.plot()
+breakdown.plot(plt.gca())
 
+raise ValueError
 # %%[markdown]
 
 # Calculate SOF and EOF plasma boundary fluxes
@@ -186,8 +192,8 @@ psi_eof -= 10
 # Set up a parameterised profile
 
 # %%
-shape = DoublePowerFunc([2, 3])
-profile = BetaIpProfile(beta_p * 1.2, I_p, R_0, B_0, shape=shape)
+shape = DoublePowerFunc([2, 2])
+profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 
 
 # %%[markdown]
@@ -219,10 +225,16 @@ eof = Equilibrium(
 #   * divertor legs are not treated, but could easily be added
 
 sof_constraints = AutoConstraints(
-    sof_dict["xbdry"], sof_dict["zbdry"], psi_sof / 2 / np.pi, n=100
+    sof_xbdry,
+    sof_zbdry,
+    psi_sof / 2 / np.pi,
+    n_points=100,
 )
 eof_constraints = AutoConstraints(
-    eof_dict["xbdry"], eof_dict["zbdry"], psi_eof / 2 / np.pi, n=100
+    sof_xbdry,
+    sof_zbdry,
+    psi_eof / 2 / np.pi,
+    n_points=100,
 )
 
 
@@ -276,7 +288,7 @@ bluemira_print("EOF:\n" f"beta_p: {eof.calc_beta_p():.2f}\n" f"l_i: {eof.calc_li
 from BLUEPRINT.equilibria.shapes import flux_surface_johner
 from BLUEPRINT.geometry.loop import Loop
 
-sep_loop = Loop(x=sof_dict["xbdry"], z=sof_dict["zbdry"])
+sep_loop = Loop(x=sof_xbdry, z=sof_zbdry)
 sep_loop.close()
 sep_loop.interpolate(150)
 sep_loop.sort_bottom()
@@ -320,5 +332,5 @@ result = differential_evolution(
 )
 new = flux_surface_johner(R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, *result.x)
 f, ax = plt.subplots()
-ax.plot(sof_dict["xbdry"], sof_dict["zbdry"], color="g")
+ax.plot(sof_xbdry, sof_zbdry, color="g")
 new.plot(fill=False, edgecolor="r")

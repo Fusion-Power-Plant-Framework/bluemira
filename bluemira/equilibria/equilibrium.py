@@ -43,8 +43,8 @@ from bluemira.equilibria.find import (
     in_plasma,
 )
 
-#from BLUEPRINT.equilibria.find import find_OX as find_OX_points
-#from BLUEPRINT.equilibria.find import find_LCFS_separatrix
+# from BLUEPRINT.equilibria.find import find_OX as find_OX_points
+# from BLUEPRINT.equilibria.find import find_LCFS_separatrix
 from bluemira.equilibria.physics import (
     calc_psi_norm,
     calc_q,
@@ -838,7 +838,7 @@ class Equilibrium(MHDState):
             return abs(self._li - li)
 
         try:  # Kein physischer Grund dafür, ist aber nützlich
-            bounds = [[-1, 2] for _ in range(len(profiles.shape.coeffs))]
+            bounds = [[-1, 3] for _ in range(len(profiles.shape.coeffs))]
             res = minimize(
                 minimise_dli,
                 profiles.shape.coeffs,
