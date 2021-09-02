@@ -611,22 +611,30 @@ also implemented in NLopt [Johnson_2018]_:
 Zonal positioning of coils
 **************************
 
-The above method functions very well when the positions of the coils can be reduced to a one dimensional problem. To be able to optimise a coil's position in two dimensions, the process works similarly to the above, with a few modifications.
+The above method functions very well when the positions of the coils can be reduced to a
+one dimensional problem. To be able to optimise a coil's position in two dimensions, the
+process works similarly to the above, with a few modifications.
 
-* Firstly instead of being fixed on a track, coils are fixed within a given region or zone.
-* Secondly the zone has edges that must be respected, leading to a maximum cross sectional size of a coil, based on its position within the zone.
+* Firstly instead of being fixed on a track, coils are fixed within a given region or
+  zone.
+* Secondly the zone has edges that must be respected, leading to a maximum cross
+  sectional size of a coil, based on its position within the zone.
 
 Normalisation
 ^^^^^^^^^^^^^
 
-To achieve this we first normalise positions in two dimensions using an x-z cut method. The only current limitation on the method is the zone must be its own convex hull. The x-z cut method works as follows:
+To achieve this we first normalise positions in two dimensions using an x-z cut method.
+The only current limitation on the method is the zone must be its own convex hull.
+The x-z cut method works as follows:
 
 #. The maximum and minimum points of the zone in a given axis (z) are captured and the initial z coordinate is normalised to these limits.
 #. The intersection points of the zone and a plane at 45\ |deg| to both axes, through the initial point [x,z], is calculated.
 #. If there are 1 or 2 intersection points the x coordinate is normalised to the intersection limits.
 #. If there are no intersection points then the intersection of the zone, and a plane through the second axis (x) at the x coordinate, is calculated. This last step is only required initially to capture points outside of the zone to move them to its edges.
 
-To reacquire the original coordinates the process is repeated with normalised coordinates using the initial maximum and minimum zone limits, and an initial plane through z in real space.
+To reacquire the original coordinates the process is repeated with normalised
+coordinates using the initial maximum and minimum zone limits, and an initial
+plane through z in real space.
 
 For simple shapes the conversion is shown below:
 
@@ -640,7 +648,12 @@ For simple shapes the conversion is shown below:
 
 Zone Boundaries
 ^^^^^^^^^^^^^^^
-The cross sectional area of a coil is modelled as linearly dependent on the current that the coil will carry. Therefore by limiting the size of the coil to stay within the bounds of the zone we must limit the current a coil can carry. The maximum size a coil can take within a zone is calculated by calculating the largest inscribed rectangle. From this inscribed rectangle the maximum current can be calculated and fed into the current optimiser.
+The cross sectional area of a coil is modelled as linearly dependent on the current that
+the coil will carry. Therefore by limiting the size of the coil to stay within the
+bounds of the zone we must limit the current a coil can carry. The maximum size a coil
+can take within a zone is calculated by calculating the largest inscribed rectangle.
+From this inscribed rectangle the maximum current can be calculated and fed into the
+current optimiser.
 
 Circuits
 ********
@@ -720,7 +733,13 @@ where:
 In practice the coils are discretised based on their size (:math:`dx`
 and :math:`dz`), to accommodate rectangular shaped coils.
 
-Note that the Green's functions in Equation :eq:`greens_funcs` diverge logarithmically as the evaluation point approaches the centre of the coil. For :math:`\psi` this is not so important, as :math:`\psi` is not required to be constrained inside a coil. However, this does cause issues when evaluating the field constraints on the coils, so a correction is required for :math:`B_{x}` and :math:`B_{z}`. This is done using a semi-analytic reduction of the 3-D Biot-Savart law for a circular coil with a rectangular cross-section developed in [Zhang_2012]_:
+Note that the Green's functions in Equation :eq:`greens_funcs` diverge logarithmically
+as the evaluation point approaches the centre of the coil. For :math:`\psi` this is not
+so important, as :math:`\psi` is not required to be constrained inside a coil. However,
+this does cause issues when evaluating the field constraints on the coils, so a
+correction is required for :math:`B_{x}` and :math:`B_{z}`. This is done using a
+semi-analytic reduction of the 3-D Biot-Savart law for a circular coil with a
+rectangular cross-section developed in [Zhang_2012a]_:
 
 .. math::
    :label: semianalytic
@@ -866,12 +885,11 @@ Jacobians.
 
 .. [Shafranov_1957] V.D. Shafranov, On magnetohydrodynamical equilibrium configurations, J. Exp. Theor. Phys. (U.S.S.R.) 33 (1957) 710–722
 
-
 .. [Grad_1958] H. Grad, H. Rubin, Hydromagnetic equilibria and force-free fields, J. Nucl. Energy (1954) 7 (September) (1958) 284–285
 
 .. [Luxon_1982] J.L. Luxon, B.B. Brown, Magnetic analysis of non-circular cross-section tokamaks, Nucl. Fusion 22 (June) (1982) 813–821
 
- .. [Lao_1985] L.H. Lao, S. John, R. Stambaugh, A. Kellman, W. Pfeiffer, Reconstruction of current profile parameters and plasma shapes in tokamaks, Nucl. Fusion 25 (November) (1985) 1611–1622
+.. [Lao_1985] L.H. Lao, S. John, R. Stambaugh, A. Kellman, W. Pfeiffer, Reconstruction of current profile parameters and plasma shapes in tokamaks, Nucl. Fusion 25 (November) (1985) 1611–1622
 
 .. [Jeon_2015] Y.M. Jeon, Development of a free-boundary tokamak equilibrium solver for advanced study of tokamak equilibria, J. Korean Phys. Soc. 67 (September) (2015) 843–853
 
@@ -903,4 +921,4 @@ Jacobians.
 
 .. [Powell_1994] M.J.D. Powell, A direct search optimization method that models the objective and constraint functions by linear interpolation, in: S. Gomez, J.-P. Hennart (Eds.), Advances in Optimization and Numerical Analysis, Mathematics and Its Applications, Springer Netherlands, Dordrecht, 1994, pp. 51–67
 
-.. [Zhang_2012] D. Zhang, C. S. Koh, An Efficient Semianalytic Computation Method of Magnetic Field for a Circular Coil With Rectangular Cross Section, IEEE Transactions on Magnetics, 2012, pp. 62-68
+.. [Zhang_2012a] D. Zhang, C. S. Koh, An Efficient Semianalytic Computation Method of Magnetic Field for a Circular Coil With Rectangular Cross Section, IEEE Transactions on Magnetics, 2012, pp. 62-68
