@@ -41,6 +41,7 @@ from pyclipper import (
 )
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import get_area_2d
 from bluemira.base.look_and_feel import bluemira_warn
 
 __all__ = [
@@ -183,7 +184,7 @@ class PyclipperMixin:
                     loops.append(loop)
 
         if loops[0].closed:
-            return sorted(loops, key=lambda x: -x.area)
+            return sorted(loops, key=lambda x: -get_area_2d(*x.d2))
         else:
             # Sort open loops by length
             return sorted(loops, key=lambda x: -x.length)

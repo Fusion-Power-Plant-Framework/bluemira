@@ -65,7 +65,7 @@ class TestInscribedRectangle:
         for i in range(x):
             for j in range(y):
                 point = points[:, i, j]
-                if shape.point_in_poly(point):
+                if shape.point_in_poly(point, include_edges=False):
                     for k in self.aspectratios:
                         dx, dz = inscribed_rect_in_poly(
                             shape.x,
@@ -87,12 +87,20 @@ class TestInscribedRectangle:
                             sq.plot(ax, linewidth=0.1)
 
                         if tf is not None:
-                            self.assertion_error_creator(
-                                "Overlap", [dx, dz, point, k, convex]
-                            )
-                            if tests.PLOTTING:
-                                for t in tf:
-                                    t.plot(ax, facecolor="r", linewidth=0.1)
+                            # Some overlaps are points or lines of 0 area
+                            if not all([t.area == 0.0 for t in tf]):
+                                self.assertion_error_creator(
+                                    "Overlap", [dx, dz, point, k, convex]
+                                )
+                                if tests.PLOTTING:
+                                    for t in tf:
+                                        t.plot(
+                                            ax,
+                                            facecolor="r",
+                                            edgecolor="r",
+                                            linewidth=1,
+                                            zorder=40,
+                                        )
                         if not np.allclose(dx / dz, k):
                             self.assertion_error_creator("Aspect", [dx, dz, dx / dz, k])
 

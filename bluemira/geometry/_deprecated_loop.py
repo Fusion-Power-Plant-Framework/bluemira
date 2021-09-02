@@ -261,7 +261,11 @@ class Loop(GeomBase):
         area: float
             The area of the polygon [m^2]
         """
-        return get_area(*self.xyz)
+        try:
+            return get_area(*self.xyz)
+        except GeometryError:
+            # Can't find a normal vector from a point cloud? It's probably 0 area
+            return 0.0
 
     @property
     def length(self) -> float:
