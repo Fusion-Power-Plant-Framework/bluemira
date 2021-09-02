@@ -1331,16 +1331,25 @@ class Circuit(CoilGroup):
         self.current = coils[0].current
 
     def adjust_current(self, d_current):
+        """
+        Adjust the current in the Circuit.
+        """
         for i, coil in enumerate(self.coils.values()):
             coil.adjust_current(d_current)
         self.current += d_current
 
     def set_current(self, current):
+        """
+        Set the current in the Circuit.
+        """
         for i, coil in enumerate(self.coils.values()):
             coil.set_current(current)
         self.current = current
 
     def get_control_current(self):
+        """
+        Get the control current from the Circuit.
+        """
         return self.current * np.ones(len(self.coils))
 
     def map_psi_greens(self, x, z):
@@ -1356,18 +1365,37 @@ class Circuit(CoilGroup):
         return self.current * pgreen
 
     def control_Bx(self, x, z):
+        """
+        Returns a list of control responses for Bx at the given (x, z)
+        location(s)
+        """
         return sum(super().control_Bx(x, z))
 
     def control_Bz(self, x, z):
+        """
+        Returns a list of control responses for Bz at the given (x, z)
+        location(s)
+        """
         return sum(super().control_Bz(x, z))
 
     def control_psi(self, x, z):
+        """
+        Returns a list of control responses for psi at the given (x, z)
+        location(s)
+        """
         return sum(super().control_psi(x, z))
 
     def control_F(self, coil):
+        """
+        Returns a list of control responses for F at the given (x, z)
+        location(s)
+        """
         return np.sum(super().control_F(coil), axis=0)
 
     def F(self, eqcoil):
+        """
+        Get the sum of the forces on a coil from the Circuit.
+        """
         return np.sum(super().F(eqcoil), axis=0)
 
     @property
@@ -1385,10 +1413,16 @@ class Circuit(CoilGroup):
         return len(self.coils)
 
     def make_size(self, current=None):
+        """
+        Set the size of the coils in the Circuit.
+        """
         for coil in self.coils.values():
             coil.make_size(current=current)
 
     def plot(self, ax=None, subcoil=True, **kwargs):
+        """
+        Plot the Circuit.
+        """
         for coil in self.coils:
             coil.plot(ax=ax, subcoil=subcoil, **kwargs)
 
