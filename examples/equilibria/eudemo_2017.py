@@ -19,6 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset.
+"""
 
 # %%[markdown]
 
@@ -33,15 +36,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, plot_defaults
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
 from bluemira.equilibria.constraints import AutoConstraints
-from bluemira.equilibria.profiles import CustomProfile, BetaIpProfile, DoublePowerFunc
+from bluemira.equilibria.profiles import BetaIpProfile, DoublePowerFunc
 from bluemira.equilibria.optimiser import FBIOptimiser, BreakdownOptimiser
 from bluemira.equilibria.physics import calc_psib
-from bluemira.equilibria.solve import PicardLiAbsIterator, PicardAbsIterator
+from bluemira.equilibria.solve import PicardLiAbsIterator
 
 # %%[markdown]
 
@@ -120,7 +122,8 @@ tau_flattop = 2 * 3600
 v_burn = 4.220e-2  # V
 c_ejima = 0.3
 
-# Breakdown constraints (I can't quite get it with 3mT.. this was the closest I get to 310)
+# Breakdown constraints (I can't quite get it with 3mT..) I've gotten close to 305 V.s,
+# but only using a smaller low-field region.
 # This is quite a sensitive optimisation, and is possibly a multi-modal space
 # May want to think about optimising with a stochastic optimiser, and including
 # a parametric location of the breakdown point...
@@ -170,10 +173,7 @@ currents = optimiser(breakdown)
 breakdown.coilset.set_control_currents(currents)
 
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
-breakdown.coilset.plot()
-breakdown.plot(plt.gca())
 
-raise ValueError
 # %%[markdown]
 
 # Calculate SOF and EOF plasma boundary fluxes
@@ -277,60 +277,3 @@ bluemira_print("SOF:\n" f"beta_p: {sof.calc_beta_p():.2f}\n" f"l_i: {sof.calc_li
 
 
 bluemira_print("EOF:\n" f"beta_p: {eof.calc_beta_p():.2f}\n" f"l_i: {eof.calc_li():.2f}")
-
-
-# %%[markdown]
-
-# Can also fit a Johner parameterisation to the CREATE separatrix..
-
-# %%
-
-from BLUEPRINT.equilibria.shapes import flux_surface_johner
-from BLUEPRINT.geometry.loop import Loop
-
-sep_loop = Loop(x=sof_xbdry, z=sof_zbdry)
-sep_loop.close()
-sep_loop.interpolate(150)
-sep_loop.sort_bottom()
-
-z_min = min(sep_loop.z)
-arg_min = np.argmin(sep_loop.z)
-z_max = max(sep_loop.z)
-arg_max = np.argmax(sep_loop.z)
-delta_z_bot = Z_0 - z_min
-delta_z_top = z_max - Z_0
-delta_x_bot = R_0 - sep_loop.x[arg_min]
-delta_x_top = R_0 - sep_loop.x[arg_max]
-a = R_0 / A
-kappa_l = delta_z_bot / a
-kappa_u = delta_z_top / a
-delta_l = delta_x_bot / a
-delta_u = delta_x_top / a
-
-
-def fitter(x):
-    a1, a2, a3, a4 = x
-    a2 = abs(a1 - 190)
-    a4 = 180 - a3
-    loop = flux_surface_johner(
-        R_0, Z_0, a, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4, n=150
-    )
-    loop.close()
-    loop.interpolate(150)
-    loop.sort_bottom()
-    return np.sum(np.sqrt((sep_loop.x - loop.x) ** 2 + (sep_loop.z - loop.z) ** 2))
-
-
-import matplotlib.pyplot as plt
-from scipy.optimize import minimize
-from scipy.optimize import differential_evolution
-
-result = differential_evolution(
-    fitter,  # x0=np.array([190, 10, -120, 30]),
-    bounds=[[160, 190], [5, 20], [-120, -120], [20, 33]],
-    #'method="SLSQP", options={"eps": .5}
-)
-new = flux_surface_johner(R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, *result.x)
-f, ax = plt.subplots()
-ax.plot(sof_xbdry, sof_zbdry, color="g")
-new.plot(fill=False, edgecolor="r")

@@ -26,8 +26,7 @@ from BLUEPRINT.equilibria.coils import PF_COIL_NAME
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import plot_defaults
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.equilibria.profiles import CustomProfile, LaoPolynomialFunc
+from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.constraints import (
     MagneticConstraintSet,
@@ -80,17 +79,76 @@ grid = Grid(r0, r1, z0, z1, nx, nz)
 
 
 # Set up a custom profile object
-pprime = np.array([-850951, -844143, -782311, -714610, -659676, -615987, -572963,
-       -540556, -509991, -484261, -466462, -445186, -433472, -425413,
-       -416325, -411020, -410672, -406795, -398001, -389309, -378528,
-       -364607, -346119, -330297, -312817, -293764, -267515, -261466,
-       -591725, -862663])
-ffprime = np.array([ 7.23,  5.89,  4.72,  3.78,  3.02,  2.39,  1.86,  1.43,  1.01,
-        0.62,  0.33,  0.06, -0.27, -0.61, -0.87, -1.07, -1.24, -1.18,
-       -0.83, -0.51, -0.2 ,  0.08,  0.24,  0.17,  0.13,  0.1 ,  0.07,
-        0.05,  0.15,  0.28])
-#pprime = LaoPolynomialFunc([3.65, -9.72, 13.2])
-#ffprime = LaoPolynomialFunc([0.96, -4.44, 5.05])
+pprime = np.array(
+    [
+        -850951,
+        -844143,
+        -782311,
+        -714610,
+        -659676,
+        -615987,
+        -572963,
+        -540556,
+        -509991,
+        -484261,
+        -466462,
+        -445186,
+        -433472,
+        -425413,
+        -416325,
+        -411020,
+        -410672,
+        -406795,
+        -398001,
+        -389309,
+        -378528,
+        -364607,
+        -346119,
+        -330297,
+        -312817,
+        -293764,
+        -267515,
+        -261466,
+        -591725,
+        -862663,
+    ]
+)
+ffprime = np.array(
+    [
+        7.23,
+        5.89,
+        4.72,
+        3.78,
+        3.02,
+        2.39,
+        1.86,
+        1.43,
+        1.01,
+        0.62,
+        0.33,
+        0.06,
+        -0.27,
+        -0.61,
+        -0.87,
+        -1.07,
+        -1.24,
+        -1.18,
+        -0.83,
+        -0.51,
+        -0.2,
+        0.08,
+        0.24,
+        0.17,
+        0.13,
+        0.1,
+        0.07,
+        0.05,
+        0.15,
+        0.28,
+    ]
+)
+# pprime = LaoPolynomialFunc([3.65, -9.72, 13.2])
+# ffprime = LaoPolynomialFunc([0.96, -4.44, 5.05])
 
 
 profile = CustomProfile(pprime, ffprime, R_0=R0, B_0=Bt, Ip=Ip)
@@ -133,7 +191,7 @@ for i in range(len(coil_x)):
         dz=coil_dz[i] / 2,
         current=currents[i],
         ctype="PF",
-        name=PF_COIL_NAME.format(i+1)
+        name=PF_COIL_NAME.format(i + 1),
     )
     circuit = SymmetricCircuit(coil)
     circuits.append(circuit)
