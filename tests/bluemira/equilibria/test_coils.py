@@ -20,12 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-import os
 import numpy as np
-import json
 from matplotlib import pyplot as plt
 import tests
-from unittest.mock import patch
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.coils import Coil, CoilGroup, CoilSet, SymmetricCircuit
@@ -259,16 +256,17 @@ class TestCoilGroup:
 
 
 class TestSymmetricCircuit:
-
     @classmethod
     def setup_class(cls):
         coil = Coil(x=1.5, z=6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST")
         circuit = SymmetricCircuit(coil)
-        mirror_coil = Coil(x=1.5, z=-6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST_MIRROR")
+        mirror_coil = Coil(
+            x=1.5, z=-6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="TEST_MIRROR"
+        )
 
         cls.circuit = circuit
         cls.coils = [coil, mirror_coil]
-    
+
     def test_fields(self):
         points = [
             [1, 1],
@@ -287,7 +285,7 @@ class TestSymmetricCircuit:
             assert np.isclose(coil_psi, circuit_psi)
             assert np.isclose(coil_Bx, circuit_Bx)
             assert np.isclose(coil_Bz, circuit_Bz)
-    
+
     def test_control(self):
         points = [
             [1, 1],
@@ -305,8 +303,8 @@ class TestSymmetricCircuit:
             circuit_Bz = self.circuit.control_Bz(*point)
             assert np.isclose(coil_psi, circuit_psi)
             assert np.isclose(coil_Bx, circuit_Bx)
-            assert np.isclose(coil_Bz, circuit_Bz)       
-        
+            assert np.isclose(coil_Bz, circuit_Bz)
+
     def test_current(self):
         self.circuit.set_current(2e6)
         for coil in self.coils:
@@ -315,7 +313,6 @@ class TestSymmetricCircuit:
 
 
 class TestCoilSet:
-
     @classmethod
     def setup_class(cls):
         coil = Coil(x=1.5, z=6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="PF_2")
@@ -338,12 +335,13 @@ class TestCoilSet:
         assert self.coilset.n_PF == 2
         assert self.coilset.n_CS == 0
         assert self.coilset.n_coils == 2
-    
+
     def test_currents(self):
         set_currents = np.array([3e6, 4e6])
         self.coilset.set_control_currents(set_currents)
         currents = self.coilset.get_control_currents()
         assert np.allclose(set_currents, currents)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

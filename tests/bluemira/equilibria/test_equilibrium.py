@@ -31,7 +31,6 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
 
 
-
 class TestFields:
     @classmethod
     def setup_class(cls):
