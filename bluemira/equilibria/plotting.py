@@ -193,7 +193,7 @@ def _plot_coil(ax, coil, fill=True, **kwargs):
     color = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
     linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
     alpha = kwargs.pop("alpha", PLOT_DEFAULTS["coil"]["alpha"])
-    
+
     x = np.append(coil.x_corner, coil.x_corner[0])
     z = np.append(coil.z_corner, coil.z_corner[0])
 
@@ -437,7 +437,7 @@ class EquilibriumPlotter(Plotter):
                 "No X-point found in plotted equilibrium. Cannot normalise psi."
             )
             self.xp_psi = np.amax(self.psi)
-        
+
         if self.o_points:
             self.op_psi = self.o_points[0][2]  # Psi at O-point
         else:

@@ -43,7 +43,6 @@ from bluemira.geometry._deprecated_tools import (
     vector_lengthnorm_2d,
     loop_plane_intersect,
     join_intersect,
-    vector_lengthnorm_2d,
 )
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly

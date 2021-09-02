@@ -22,7 +22,12 @@
 """
 Main interface for building and loading equilibria and coilset designs
 """
-from BLUEPRINT.equilibria.constants import NB3SN_B_MAX, NB3SN_J_MAX, NBTI_B_MAX, NBTI_J_MAX
+from BLUEPRINT.equilibria.constants import (
+    NB3SN_B_MAX,
+    NB3SN_J_MAX,
+    NBTI_B_MAX,
+    NBTI_J_MAX,
+)
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
