@@ -19,12 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from BLUEPRINT.geometry.loop import MultiLoop
 import numpy as np
 import pytest
 import tests
 
 from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.geometry.loop import MultiLoop
+from BLUEPRINT.geometry.shell import MultiShell
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
 
@@ -121,6 +122,7 @@ def test_xz_systems(
     bm_names = [comp.name for comp in bm_component.children]
 
     bp_system: ReactorSystem = getattr(reactor, bp_system_name)
+    bp_system._generate_xz_plot_loops()
 
     missing_systems = []
     for geom_name in bp_system.xz_plot_loop_names:
@@ -201,6 +203,12 @@ def test_xz_lengths(
                 bm_length = bm_geom.shape.length
                 if not np.isclose(bp_length, bm_length, atol=1e-6, rtol=0.01):
                     bad_length.append([geom_name, (bm_length, bp_length)])
+        elif isinstance(bp_geom, MultiShell):
+            for bp_shell, bm_geom in zip(bp_geom.shells, bm_child.children):
+                bp_length = bp_shell.length
+                bm_length = bm_geom.shape.length
+                if not np.isclose(bp_length, bm_length, atol=1e-6, rtol=0.01):
+                    bad_length.append([geom_name, (bm_length, bp_length)])
         else:
             bp_length = bp_geom.length
             bm_length = bm_child.shape.length
@@ -246,6 +254,12 @@ def test_xy_lengths(
         if isinstance(bp_geom, MultiLoop):
             for bp_loop, bm_geom in zip(bp_geom.loops, bm_child.children):
                 bp_length = bp_loop.length
+                bm_length = bm_geom.shape.length
+                if not np.isclose(bp_length, bm_length, atol=1e-6, rtol=0.01):
+                    bad_length.append([geom_name, (bm_length, bp_length)])
+        elif isinstance(bp_geom, MultiShell):
+            for bp_shell, bm_geom in zip(bp_geom.shells, bm_child.children):
+                bp_length = bp_shell.length
                 bm_length = bm_geom.shape.length
                 if not np.isclose(bp_length, bm_length, atol=1e-6, rtol=0.01):
                     bad_length.append([geom_name, (bm_length, bp_length)])
@@ -295,6 +309,12 @@ def test_xz_areas(
                 bm_area = bm_geom.shape.area
                 if not np.isclose(bp_area, bm_area, atol=1e-6, rtol=0.01):
                     bad_area.append([geom_name, (bm_area, bp_area)])
+        elif isinstance(bp_geom, MultiShell):
+            for bp_shell, bm_geom in zip(bp_geom.shells, bm_child.children):
+                bp_area = bp_shell.area
+                bm_area = bm_geom.shape.area
+                if not np.isclose(bp_area, bm_area, atol=1e-6, rtol=0.01):
+                    bad_area.append([geom_name, (bm_area, bp_area)])
         else:
             bp_area = bp_geom.area
             bm_area = bm_child.shape.area
@@ -337,6 +357,12 @@ def test_xy_areas(
         if isinstance(bp_geom, MultiLoop):
             for bp_loop, bm_geom in zip(bp_geom.loops, bm_child.children):
                 bp_area = bp_loop.area
+                bm_area = bm_geom.shape.area
+                if not np.isclose(bp_area, bm_area, atol=1e-6, rtol=0.01):
+                    bad_area.append([geom_name, (bm_area, bp_area)])
+        elif isinstance(bp_geom, MultiShell):
+            for bp_shell, bm_geom in zip(bp_geom.shells, bm_child.children):
+                bp_area = bp_shell.area
                 bm_area = bm_geom.shape.area
                 if not np.isclose(bp_area, bm_area, atol=1e-6, rtol=0.01):
                     bad_area.append([geom_name, (bm_area, bp_area)])
@@ -386,6 +412,12 @@ def test_xz_centroids(
                 bm_centroid = bm_geom.shape.center_of_mass[0:3:2]
                 if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
                     bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
+        elif isinstance(bp_geom, MultiShell):
+            for bp_shell, bm_geom in zip(bp_geom.shell, bm_child.children):
+                bp_centroid = bp_shell.centroid
+                bm_centroid = bm_geom.shape.center_of_mass[0:3:2]
+                if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
+                    bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
         else:
             bp_centroid = bp_geom.centroid
             bm_centroid = bm_child.shape.center_of_mass[0:3:2]
@@ -428,6 +460,12 @@ def test_xy_centroids(
         if isinstance(bp_geom, MultiLoop):
             for bp_loop, bm_geom in zip(bp_geom.loops, bm_child.children):
                 bp_centroid = bp_loop.centroid
+                bm_centroid = bm_geom.shape.center_of_mass[0:3:2]
+                if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
+                    bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
+        elif isinstance(bp_geom, MultiShell):
+            for bp_shell, bm_geom in zip(bp_geom.shells, bm_child.children):
+                bp_centroid = bp_shell.centroid
                 bm_centroid = bm_geom.shape.center_of_mass[0:3:2]
                 if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
                     bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
