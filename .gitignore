@@ -116,12 +116,6 @@ venv.bak/
 .spyproject
 .idea
 .vscode
-<<<<<<< HEAD
-
-# Pycharm project settings
-.idea
-=======
->>>>>>> develop
 
 # Rope project settings
 .ropeproject

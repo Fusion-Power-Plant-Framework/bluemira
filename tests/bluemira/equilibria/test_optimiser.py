@@ -267,7 +267,9 @@ class BreakdownOptimiserOLD:
         self.n_C = eq.coilset.n_coils
         self.eq = eq
         if not self.meshed:
-            self.zone = np.array(make_circle_arc(self.r_zone, self.R_zone, self.Z_zone, n_points=20))
+            self.zone = np.array(
+                make_circle_arc(self.r_zone, self.R_zone, self.Z_zone, n_points=20)
+            )
             self.meshed = True
 
         self.eq.set_forcefield()
@@ -415,7 +417,7 @@ class TestScipyNLoptOptimiser:
         scipy_psi_bd = scipy_bd.psi(scipy_optimiser.R_zone, scipy_optimiser.Z_zone)
         nlopt_psi_bd = nlopt_bd.psi(nlopt_optimiser.x_zone, nlopt_optimiser.z_zone)
 
-        assert np.isclose(scipy_psi_bd, nlopt_psi_bd)
+        assert np.isclose(scipy_psi_bd, nlopt_psi_bd, rtol=1e-3)
         d_currents = np.round(nlopt_currents / scipy_currents, 1)
         assert (d_currents == np.ones(len(d_currents))).all()
         if tests.PLOTTING:
