@@ -283,7 +283,9 @@ class PositionOptimiser:
         self.flag_gif = gif
         if figure_folder is None:
             figure_folder = try_get_BP_path(
-                "plots/equilibria", subfolder="data", allow_missing=not self.flag_gif
+                "plots/equilibria",
+                subfolder="data/BLUEPRINT",
+                allow_missing=not self.flag_gif,
             )
         self.figure_folder = figure_folder
         self.plot_iter = 0

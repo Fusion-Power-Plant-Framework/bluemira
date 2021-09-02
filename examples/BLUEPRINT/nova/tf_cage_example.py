@@ -63,7 +63,7 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "generated_data",
+    "generated_data_root": "generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "plasma_mode": "run",

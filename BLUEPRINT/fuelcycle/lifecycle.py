@@ -107,7 +107,7 @@ class LifeCycle(ReactorSystem):
         # Output preparation
         datadir = inputs.get("datadir", None)
         if datadir is None:
-            datadir = get_BP_path(subfolder="data")
+            datadir = get_BP_path(subfolder="data/BLUEPRINT")
         file = "DEMO_lifecycle"
         self.filename = datadir + "/" + file + ".json"
         # Build timeline

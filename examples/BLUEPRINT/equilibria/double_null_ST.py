@@ -113,7 +113,7 @@ grid = Grid(r0, r1, z0, z1, nx, nz)
 # Import example plasma profile from eqdsk
 
 # %%
-folder = get_BP_path("eqdsk", subfolder="data")
+folder = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
 name = "jetto.eqdsk_out"
 filename = os.sep.join([folder, name])
 profile = CustomProfile.from_eqdsk(filename)
