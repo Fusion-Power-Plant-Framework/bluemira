@@ -22,7 +22,7 @@
 """
 Objects and tools for calculating cross-sectional properties
 """
-import bluemira
+
 import numpy as np
 import numba as nb
 from copy import deepcopy
