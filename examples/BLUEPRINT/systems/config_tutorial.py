@@ -151,8 +151,8 @@ config_run4 = {"A": 2.7}
 
 # %%
 build_config = {
-    "reference_data_root": "data",
-    "generated_data_root": "generated_data",
+    "reference_data_root": "data/BLUEPRINT",
+    "generated_data_root": "generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "read",
     "plasmod_mode": "read",
@@ -218,10 +218,10 @@ verbose_json = core_c.to_json(verbose=True)
 
 # %%
 core_c.to_json(
-    output_path=f"{get_BP_root()}/examples/systems/config_data/core_c_concise_out.json"
+    output_path=f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/core_c_concise_out.json"
 )
 core_c.to_json(
-    output_path=f"{get_BP_root()}/examples/systems/config_data/core_c_verbose_out.json",
+    output_path=f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/core_c_verbose_out.json",
     verbose=True,
 )
 
@@ -249,7 +249,7 @@ class MyVerboseReactor(Reactor):
     build_config: dict
     build_tweaks: dict
     default_params = Configuration.from_json(
-        f"{get_BP_root()}/examples/systems/config_data/verbose_in.json"
+        f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/verbose_in.json"
     ).to_records()
 
 
@@ -283,7 +283,7 @@ class MyConciseReactor(Reactor):
 
 # Make a reactor that loads all the configuration values from a file
 r_concise = MyConciseReactor(
-    f"{get_BP_root()}/examples/systems/config_data/concise_in.json",
+    f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/concise_in.json",
     build_config,
     build_tweaks,
 )
@@ -297,7 +297,7 @@ r_concise = MyConciseReactor(
 
 # %%
 r_partial = MyConciseReactor(
-    f"{get_BP_root()}/examples/systems/config_data/partial_in.json",
+    f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/partial_in.json",
     build_config,
     build_tweaks,
 )
@@ -309,7 +309,7 @@ r_partial = MyConciseReactor(
 
 # %%
 r_partial.params.to_json(
-    f"{get_BP_root()}/examples/systems/config_data/partial_full_out.json"
+    f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/partial_full_out.json"
 )
 
 # %%[markdown]

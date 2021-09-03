@@ -35,7 +35,7 @@ from BLUEPRINT.fuelcycle.tfvutils import fit_sink_data, piecewise_sqrt_threshold
 
 plot_defaults()
 
-PATH = get_BP_path("fuelcycle/blanket_fw_T_retention", subfolder="data")
+PATH = get_BP_path("fuelcycle/blanket_fw_T_retention", subfolder="data/BLUEPRINT")
 
 # Get all the data files
 files = []

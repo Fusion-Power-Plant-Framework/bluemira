@@ -255,7 +255,7 @@ def savefig(f, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
     """
     if save is True:
         if folder is None:
-            folder = get_BP_path("plots", subfolder="data")
+            folder = get_BP_path("plots", subfolder="data/BLUEPRINT")
         name = os.sep.join([folder, name]) + "." + formatt
         if os.path.isfile(name):
             os.remove(name)  # f.savefig will otherwise not overwrite

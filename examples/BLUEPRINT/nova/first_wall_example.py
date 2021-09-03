@@ -48,7 +48,7 @@ plot_defaults()
 # Let's load some Equilibrium objects, so that we have something to work with
 
 # %%
-read_path = get_BP_path("equilibria", subfolder="data")
+read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
 eof_name = "EU-DEMO_EOF.json"
 sof_name = "EU-DEMO_SOF.json"
 
