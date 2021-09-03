@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -126,8 +126,10 @@ plane_helper.add_plane(top)
 reactor_name = config["Name"]
 file_manager = FileManager(
     reactor_name=reactor_name,
-    reference_data_root=build_config.get("reference_data_root", "data"),
-    generated_data_root=build_config.get("generated_data_root", "data"),
+    reference_data_root=build_config.get("reference_data_root", "data/BLUEPRINT"),
+    generated_data_root=build_config.get(
+        "generated_data_root", "generated_data/BLUEPRINT"
+    ),
 )
 file_manager.build_dirs()
 reactor_path = file_manager.reference_data_dirs["root"]
@@ -445,4 +447,4 @@ geometry.setRootUniverse(root_universe)
 
 end = datetime.now()
 
-bluemira_print(f"Geometry created in {end-start}")
+bluemira_print(f"Geometry created in {end - start}")

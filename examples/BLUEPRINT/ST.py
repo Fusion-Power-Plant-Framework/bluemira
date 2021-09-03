@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -21,17 +21,13 @@
 """
 A typical spherical tokamak fusion power reactor.
 """
-import matplotlib.pyplot as plt
 import os
 
 from BLUEPRINT.base.file import make_BP_path, get_BP_root
-from BLUEPRINT.base.lookandfeel import banner
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults, print_banner
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import Spherical
 
-plt.ion()
-plt.show()
 plot_defaults()
 KEY_TO_PLOT = False
 PLOTFOLDER = make_BP_path("Data/plots")
@@ -67,15 +63,15 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "!BP_ROOT!/generated_data",
+    "generated_data_root": "!BP_ROOT!/generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "process_indat": os.path.join(
-        get_BP_root(), "examples", "data", "syscodes", "ST_IN.DAT"
+        get_BP_root(), "examples", "BLUEPRINT", "data", "syscodes", "ST_IN.DAT"
     ),
     "plasma_mode": "read",
     "plasma_filepath": os.path.join(
-        get_BP_root(), "data", "eqdsk", "step_v7_format.geqdsk"
+        get_BP_root(), "data", "BLUEPRINT", "eqdsk", "step_v7_format.geqdsk"
     ),
     "reconstruct_jtor": True,
     "tf_mode": "run",
@@ -122,7 +118,7 @@ class SphericalTokamak(Reactor):
     def __init__(self, config, build_config, build_tweaks):
         super().__init__(config, build_config, build_tweaks)
 
-        banner()
+        print_banner()
 
         self.params.update_kw_parameters(self.config)
 

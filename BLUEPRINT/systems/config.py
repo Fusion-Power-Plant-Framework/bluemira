@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -103,6 +103,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['g_cd_ec', 'EC current drive efficiency', 0.15, 'MA/MW.m', 'Check units!', 'Input'],
         ['eta_ec', 'EC electrical efficiency', 0.35, 'N/A', 'Check units!', 'Input'],
         ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input'],
+        ['f_cd_aux', 'Auxiliary current drive fraction', 0.1, 'N/A', None, 'Input'],
+        ['f_cd_ohm', 'Ohmic current drive fraction', 0.1, 'N/A', None, 'Input'],
 
         # First wall and divertor profile
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],
@@ -242,6 +244,9 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         # Cryostat
         ['n_cr_lab', 'Number of cryostat labyrinth levels', 2, 'N/A', None, 'Input'],
         ['cr_l_d', 'Cryostat labyrinth total delta', 0.2, 'm', None, 'Input'],
+        ['tk_cryo_ts', 'Cryo TS thickness', 0.10, 'm', None, 'Input'],
+        ['r_cryo_ts', 'Radius of outboard cryo TS', 8, 'm', None, 'Input'],
+        ['z_cryo_ts', 'Half height of outboard cryo TS', 8, 'm', None, 'Input'],
 
         # Radiation shield
         ['n_rs_lab', 'Number of radiation shield labyrinth levels', 4, 'N/A', None, 'Input'],
@@ -263,11 +268,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['RMTFI', 'RM Technical Feasibility Index', 1, 'N/A', 'Default value. Should not really be 1', 'Input']
     ]
     # fmt: on
+    ParameterFrame.set_default_parameters(params)
 
-    def __init__(self, default_params=params, custom_params={}):
-        super().__init__(default_params)
-        if custom_params is not None:
-            self.add_parameters(custom_params)
+    def __init__(self, custom_params=None):
+        super().__init__(custom_params, with_defaults=True)
 
     def _ck_duplicates(self):
         """
@@ -294,7 +298,7 @@ class Spherical(Configuration):
     Spherical tokamak default configuration.
     """
 
-    new_params = {
+    new_values = {
         "A": 1.67,
         "R_0": 2.5,
         "kappa_95": 2.857,
@@ -305,8 +309,8 @@ class Spherical(Configuration):
         "n_TF": 12,
     }
 
-    def __init__(self, default_params=Configuration.params, custom_params=new_params):
-        super().__init__(default_params, custom_params)
+    def __init__(self, custom_params=new_values):
+        super().__init__(custom_params)
 
 
 class DoubleNull(Configuration):
@@ -314,10 +318,10 @@ class DoubleNull(Configuration):
     Double null tokamak default configuration.
     """
 
-    new_params = {"plasma_type": "DN"}
+    new_values = {"plasma_type": "DN"}
 
-    def __init__(self, default_params=Configuration.params, custom_params=new_params):
-        super().__init__(default_params, custom_params)
+    def __init__(self, custom_params=new_values):
+        super().__init__(custom_params)
 
 
 if __name__ == "__main__":

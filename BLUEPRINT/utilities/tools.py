@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -34,8 +34,13 @@ import re
 from json import JSONEncoder
 from collections import OrderedDict, Mapping, Iterable
 from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from BLUEPRINT.base.parameter import Parameter
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from BLUEPRINT.geometry.geomtools import lengthnorm
+
+from unittest.mock import patch
+from json.encoder import _make_iterencode
+from functools import partial
 
 
 CROSS_P_TOL = 1e-14  # Cross product tolerance
@@ -85,6 +90,50 @@ class NumpyJSONEncoder(JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
+
+    @staticmethod
+    def floatstr(_floatstr, obj, *args, **kwargs):
+        """
+        Awaiting python bugs:
+
+        https://github.com/python/cpython/pull/13233
+        https://bugs.python.org/issue36841
+        https://bugs.python.org/issue42434
+        https://bugs.python.org/issue31466
+        """
+        if isinstance(obj, Parameter):
+            obj = obj.value
+        return _floatstr(obj, *args, **kwargs)
+
+    def iterencode(self, o, _one_shot=False):
+        """
+        Patch iterencode type checking
+        """
+        with patch("json.encoder._make_iterencode", new=_patcher):
+            return super().iterencode(o, _one_shot=_one_shot)
+
+
+def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
+    """
+    Modify the json encoder to be less strict on
+    type checking.
+    Pythons built in types (float, int) have __repr__ written in c
+    and json encoder doesn't yet allow custom type checking
+
+    For example
+    p = Parameter(var='hi', value=1, source='here')
+    repr(p) == '1' # True
+    isinstance(p, int) # True
+    int.__repr__(p) # TypeError
+
+    Currently there is a comment in the _make_iterencode function that
+    calls itself a hack therefore this is ok...
+    """
+    _floatstr = partial(NumpyJSONEncoder.floatstr, _floatstr)
+    kwargs["_intstr"] = repr
+    return _make_iterencode(
+        markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
+    )
 
 
 class PowerLawScaling:

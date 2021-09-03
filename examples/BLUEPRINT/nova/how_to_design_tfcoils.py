@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -80,8 +80,8 @@ parameters = ParameterFrame(params)
 # ripple.
 
 # %%
-read_path = make_BP_path("Geometry", subfolder="data")
-write_path = make_BP_path("Geometry", subfolder="generated_data")
+read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
+write_path = make_BP_path("Geometry", subfolder="generated_data/BLUEPRINT")
 name = os.sep.join([read_path, "LCFS.json"])
 lcfs = Loop.from_file(name)
 

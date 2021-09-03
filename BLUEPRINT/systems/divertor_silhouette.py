@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Classes that provide divertor shapes built from tracking psi and grazing angle a
 leg length.
 """
 
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
+from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 import matplotlib.pyplot as plt
 import numpy as np
 import operator

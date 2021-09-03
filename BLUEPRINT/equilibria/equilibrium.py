@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -42,6 +42,7 @@ from BLUEPRINT.equilibria.find import (
     get_psi_norm,
     in_zone,
     in_plasma,
+    find_flux_loops,
 )
 from BLUEPRINT.equilibria.physics import (
     calc_q,
@@ -50,7 +51,7 @@ from BLUEPRINT.equilibria.physics import (
     calc_summary,
     calc_li3minargs,
 )
-from BLUEPRINT.equilibria.gradshafranov import GSoperator, DirectSolver
+from BLUEPRINT.equilibria.gradshafranov import GSSolver
 from BLUEPRINT.equilibria.plotting import (
     EquilibriumPlotter,
     CorePlotter,
@@ -117,13 +118,12 @@ class MHDState:
         self._set_init_psi(grid, psi)
 
     def _set_init_psi(self, grid, psi):
-        zm = 1 - grid.z_max / (grid.z_max - grid.z_min)
         if psi is None:  # Initial psi guess
             # Normed 0-1 grid
             x, z = self.x / grid.x_max, (self.z - grid.z_min) / (grid.z_max - grid.z_min)
             # Factor has an important effect sometimes... good starting
             # solutions matter
-            psi = 100 * np.exp(-((x - 0.5) ** 2 + (z - zm) ** 2) / 0.1)
+            psi = 100 * np.exp(-((x - 0.5) ** 2 + (z - 0.5) ** 2) / 0.1)
             apply_boundary(psi, 0)
 
         self._remap_greens()
@@ -194,6 +194,34 @@ class MHDState:
             Coil representation of the plasma
         """
         raise NotImplementedError
+
+    def to_eqdsk(
+        self, data, filename, header="BP_equilibria", directory=None, filetype="json"
+    ):
+        """
+        Writes the Equilibrium Object to an eqdsk file
+        """
+        data["name"] = "_".join([filename, header])
+
+        if not filename.endswith(f".{filetype}"):
+            filename += f".{filetype}"
+
+        if directory is None:
+            try:
+                filename = os.sep.join(
+                    [
+                        get_BP_path("eqdsk/equilibria", subfolder="data/BLUEPRINT"),
+                        filename,
+                    ]
+                )
+            except ValueError as error:
+                raise ValueError(f"Unable to find default data directory: {error}")
+        else:
+            filename = os.sep.join([directory, filename])
+
+        self.filename = filename  # Conveniente
+        eqdsk = EQDSKInterface()
+        eqdsk.write(filename, data, formatt=filetype)
 
 
 class Breakdown(MHDState):
@@ -281,24 +309,16 @@ class Breakdown(MHDState):
         }
         return d
 
-    def to_eqdsk(self, filename, header="BP_equilibria", directory=None):
+    def to_eqdsk(
+        self, filename, header="BP_equilibria", directory=None, filetype="json"
+    ):
         """
         Writes the Equilibrium Object to an eqdsk file
         """
         data = self.to_dict()
         data["xcentre"] = 0
         data["bcentre"] = 0
-        data["name"] = "_".join([filename, header])
-        if not filename.endswith(".json"):
-            filename += ".json"
-        self.filename = filename  # Conveniente
-        if directory is None:
-            filename = os.sep.join([get_BP_path("Data/eqdsk/equilibria"), filename])
-        else:
-            filename = os.sep.join([directory, filename])
-        self.filename = filename  # Conveniente
-        eqdsk = EQDSKInterface()
-        eqdsk.write(filename, data)
+        super().to_eqdsk(data, filename, header, directory, filetype)
 
     def set_breakdown_point(self, x_bd, z_bd):
         """
@@ -423,6 +443,9 @@ class Equilibrium(MHDState):
         The grid on which to calculate the Equilibrium
     boundary: str in ['free', 'fixed'] (optional) default = 'free'
         Type of boundary condition to apply to Equilibrium
+    force_symmetry: bool in (optional) default = False
+        Controls whether symmetry of the plasma contribution to psi across z=0
+        is strictly enforced in the linear system formed during solve step.
     vcontrol: str in ['virtual'] or None (optional)
         Type of virtual plasma control to enact
     limiter: LimiterObject
@@ -450,6 +473,7 @@ class Equilibrium(MHDState):
         coilset,
         grid,
         boundary="free",
+        force_symmetry=False,
         vcontrol=None,
         limiter=None,
         psi=None,
@@ -480,6 +504,7 @@ class Equilibrium(MHDState):
         self.plasma_Bz = None
         self.plasma_Bp = None
 
+        self.force_symmetry = force_symmetry
         self.boundary = None
         self.controller = None
         self.coilset = coilset
@@ -631,27 +656,13 @@ class Equilibrium(MHDState):
             result["zlim"] = self.limiter.z
         return result
 
-    def to_eqdsk(self, filename, header="BP_equilibria", directory=None):
+    def to_eqdsk(
+        self, filename, header="BP_equilibria", directory=None, filetype="json"
+    ):
         """
         Writes the Equilibrium Object to an eqdsk file
         """
-        data = self.to_dict()
-        data["name"] = "_".join([filename, header])
-        if not filename.endswith(".json"):
-            filename += ".json"
-        self.filename = filename  # Conveniente
-        if directory is None:
-            try:
-                filename = os.sep.join(
-                    [get_BP_path("eqdsk/equilibria", subfolder="data"), filename]
-                )
-            except ValueError as error:
-                raise ValueError(f"Unable to find default data directory: {error}")
-        else:
-            filename = os.sep.join([directory, filename])
-        self.filename = filename  # Conveniente
-        eqdsk = EQDSKInterface()
-        eqdsk.write(filename, data)
+        super().to_eqdsk(self.to_dict(), filename, header, directory, filetype)
 
     def __getstate__(self):
         """
@@ -680,10 +691,8 @@ class Equilibrium(MHDState):
             The grid upon which to solve the Equilibrium
         """
         super().set_grid(grid)
-        generator = GSoperator(
-            self.grid.x_min, self.grid.x_max, self.grid.z_min, self.grid.z_max
-        )
-        self._solver = DirectSolver(generator(self.grid.nx, self.grid.nz))
+
+        self._solver = GSSolver(grid, force_symmetry=self.force_symmetry)
 
     def reset_grid(self, grid, **kwargs):
         """
@@ -1200,7 +1209,8 @@ class Equilibrium(MHDState):
         """
         psi = self.psi(x, z)
         psi_n = get_psi_norm(psi, *self.get_OX_psis())
-        return self.get_flux_surface(psi_n)
+        loops = find_flux_loops(self.x, self.z, self.psi(), psi_n)
+        return [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
 
     def get_LCFS(self, psi=None):
         """

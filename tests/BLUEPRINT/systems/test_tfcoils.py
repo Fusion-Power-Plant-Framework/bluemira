@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,12 +28,23 @@ import pytest
 import matplotlib.pyplot as plt
 import tests
 import numpy as np
-from BLUEPRINT.base.file import make_BP_path
+import shutil
+import tempfile
+
+from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from BLUEPRINT.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.cadtools import get_properties
+
+
+# Make temporary sub-directory for tests.
+@pytest.fixture
+def tempdir():
+    tempdir = tempfile.mkdtemp()
+    yield tempdir
+    shutil.rmtree(tempdir)
 
 
 class TestTFCoil:
@@ -62,8 +73,7 @@ class TestTFCoil:
 
         cls.parameters = ParameterFrame(params)
 
-        read_path = make_BP_path("Geometry", subfolder="data")
-        write_path = make_BP_path("Geometry", subfolder="generated_data")
+        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         # Load a target plasma separatrix
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
@@ -82,7 +92,7 @@ class TestTFCoil:
             "nr": 1,  # This is the number of current filaments to use in x
             "nrip": 30,  # This is the number of points on the separatrix to calculate ripple for
             "read_folder": read_path,  # This is the path that the shape will be read from
-            "write_folder": write_path,  # This is the path that the shape will be written to
+            "write_folder": None,  # This is the path that the shape will be written to (replace in tests)
         }
 
     @pytest.mark.longrun
@@ -109,7 +119,8 @@ class TestTFCoil:
         # Check for optimisation run time
         assert tock < 200
 
-    def test_cad_components(self):
+    def test_cad_components(self, tempdir):
+        self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
 
         # Ensure we've got all the geometry that we need to generate CAD
@@ -146,8 +157,7 @@ class TestTaperedPictureFrameTF:
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
-        read_path = make_BP_path("Geometry", subfolder="data")
-        write_path = make_BP_path("Geometry", subfolder="generated_data")
+        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
         name = os.sep.join([read_path, "KOZ_PF_test1.json"])
@@ -162,12 +172,13 @@ class TestTaperedPictureFrameTF:
             "nr": 1,  # This is the number of current filaments to use in x
             "nrip": 10,  # This is the number of points on the separatrix to calculate ripple for
             "read_folder": read_path,  # This is the path that the shape will be read from
-            "write_folder": write_path,  # This is the path that the shape will be written to
+            "write_folder": None,  # This is the path that the shape will be written to (replace in tests)
         }
         cls.lcfs = lcfs
         cls.ko_zone = ko_zone
 
-    def test_tapered_TF(self):
+    def test_tapered_TF(self, tempdir):
+        self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
         tf1.optimise()
 
@@ -193,7 +204,8 @@ class TestTaperedPictureFrameTF:
             plt.show()
         assert tf1.cage.get_max_ripple() <= 1.002 * 1.1
 
-    def test_cad_components(self):
+    def test_cad_components(self, tempdir):
+        self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
 
         # Ensure we've got all the geometry that we need to generate CAD

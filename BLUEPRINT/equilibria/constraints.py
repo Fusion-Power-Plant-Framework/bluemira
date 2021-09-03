@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -76,12 +76,21 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
     """
     Abstract base class for absolute magnetic constraints, where the target
     value is prescribed in absolute terms.
+
+    Notes
+    -----
+    The optional weights parameter is used to scale the control matrix and
+    constraint vector passed to the constraint optimiser for a given
+    constraint. The weights are assumed to be uncorrelated, such that the
+    weight matrix W_ij used to define the least-squares objective function
+    to be minimised, (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+    weights[i] = w[i] = sqrt(W[i,i]).
     """
 
     x: Union[float, np.array]
     z: Union[float, np.array]
     target_value: float
-    weight = NotImplemented  # TODO: address weights in future MR
+    weights: Union[float, np.array] = 1.0
 
 
 @dataclass
@@ -89,6 +98,15 @@ class RelativeMagneticConstraint(MagneticConstraint):
     """
     Abstract base class for relative magnetic constraints, where the target
     value is prescribed with respect to a reference point.
+
+    Notes
+    -----
+    The optional weights parameter is used to scale the control matrix and
+    constraint vector passed to the constraint optimiser for a given
+    constraint. The weights are assumed to be uncorrelated, such that the
+    weight matrix W_ij used to define the least-squares objective function
+    to be minimised, (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+    weights[i] = w[i] = sqrt(W[i,i]).
     """
 
     x: Union[float, np.array]
@@ -96,7 +114,7 @@ class RelativeMagneticConstraint(MagneticConstraint):
     ref_x: float
     ref_z: float
     target_value: float = 0.0
-    weight = NotImplemented  # TODO: address weights in future MR
+    weights: Union[float, np.array] = 1.0
 
     @abstractmethod
     def update(self, eq):
@@ -319,10 +337,11 @@ class MagneticConstraintSet(ABC):
     constraints: List[MagneticConstraint]
     eq: object
     A: np.array
+    w: np.array
     target: np.array
     background: np.array
 
-    __slots__ = ["constraints", "eq", "coilset", "A", "target", "background"]
+    __slots__ = ["constraints", "eq", "coilset", "A", "w", "target", "background"]
 
     def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa (N803)
 
@@ -351,6 +370,7 @@ class MagneticConstraintSet(ABC):
             self.build_target()
 
         self.build_background()
+        self.build_weight_matrix()
 
     def __len__(self):
         """
@@ -370,6 +390,19 @@ class MagneticConstraintSet(ABC):
             self.A[i : i + n, :] = constraint.control_response(self.coilset)
             i += n
 
+    def build_weight_matrix(self):
+        """
+        Build the weight matrix used in optimisation.
+        Assumed to be diagonal.
+        """
+        self.w = np.zeros(len(self))
+
+        i = 0
+        for constraint in self.constraints:
+            n = len(constraint)
+            self.w[i : i + n] = constraint.weights
+            i += n
+
     def build_target(self):
         """
         Build the target value vector.
@@ -379,7 +412,7 @@ class MagneticConstraintSet(ABC):
         i = 0
         for constraint in self.constraints:
             n = len(constraint)
-            self.target[i : i + n] = constraint.target_value * np.ones(n)
+            self.target[i : i + n] = constraint.target_value
             i += n
 
     def build_background(self):

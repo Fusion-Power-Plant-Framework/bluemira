@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -34,9 +34,9 @@ from BLUEPRINT.equilibria.constants import (
 )
 from BLUEPRINT.utilities.plottools import savefig, makegif
 from bluemira.base.look_and_feel import (
-    bluemira_warn,
-    bluemira_print,
     bluemira_print_flush,
+    bluemira_print,
+    bluemira_warn,
 )
 from BLUEPRINT.base.file import try_get_BP_path
 
@@ -385,7 +385,7 @@ class CurrentOptimiser:
     Mixin class for performing optimisation of currents
     """
 
-    def _optimise_currents(self, psib=None, update_size=True, apply_weights=False):
+    def _optimise_currents(self, psib=None, update_size=True):
         """
         Finds optimal currents for the coilset
 
@@ -395,22 +395,16 @@ class CurrentOptimiser:
             The boundary psi values, by default None.
         update_size: bool, optional
             If True then update the coilset size, by default True.
-        apply_weights: bool, optional
-            If True then apply weights in the optimiser, by default False.
         """
         self.constraints(self.eq, I_not_dI=True)
         try:
-            currents = self.optimiser(
-                self.eq, self.constraints, psib, apply_weights=apply_weights
-            )
+            currents = self.optimiser(self.eq, self.constraints, psib)
             self.store.append(currents)
         except ExternalOptError:
             currents = self.store[-1]
         self.coilset.set_control_currents(currents, update_size)
 
-    def _initial_optimise_currents(
-        self, psib=None, update_size=True, apply_weights=False
-    ):
+    def _initial_optimise_currents(self, psib=None, update_size=True):
         """
         Finds optimal currents for the coilset for optimiser initialisation
 
@@ -420,10 +414,8 @@ class CurrentOptimiser:
             The boundary psi values, by default None.
         update_size: bool, optional
             If True then update the coilset size, by default True.
-        apply_weights: bool, optional
-            If True then apply weights in the optimiser, by default False.
         """
-        return self._optimise_currents(psib, update_size, apply_weights)
+        return self._optimise_currents(psib, update_size)
 
 
 class CurrentGradientOptimiser:
@@ -528,7 +520,9 @@ class PicardBaseIterator(ABC):
         self.gif_flag = gif
         if figure_folder is None:
             figure_folder = try_get_BP_path(
-                "plots/equilibria", subfolder="data", allow_missing=not self.gif_flag
+                "plots/equilibria",
+                subfolder="data/BLUEPRINT",
+                allow_missing=not self.gif_flag,
             )
         self.figure_folder = figure_folder
         self.store = []
@@ -774,7 +768,7 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"psib": None, "update_size": True, "apply_weights": False}
+        return {"psib": None, "update_size": True}
 
     def _solve(self):
         """
@@ -796,7 +790,7 @@ class PicardLiAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"psib": None, "update_size": True, "apply_weights": False}
+        return {"psib": None, "update_size": True}
 
     def _solve(self):
         """
@@ -821,7 +815,7 @@ class EquilibriumConverger(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"update_size": False, "apply_weights": True}
+        return {"update_size": False}
 
     def __call__(self, psib):
         """
@@ -841,7 +835,7 @@ class EquilibriumConverger(CurrentOptimiser, PicardBaseIterator):
         super()._optimise_currents(self.psib, **self.current_optimiser_kwargs)
 
     def _initial_optimise_currents(self, **kwargs):
-        super()._optimise_currents(self.psib, update_size=False, apply_weights=False)
+        super()._optimise_currents(self.psib, update_size=False)
 
 
 if __name__ == "__main__":

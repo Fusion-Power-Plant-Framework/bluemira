@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -45,7 +45,7 @@ class TestAbInitioEquilibriumProblem:
     @pytest.mark.longrun
     def test_EUDEMO(self):  # noqa (N802)
         t = time.time()
-        fp = get_BP_path("Geometry", subfolder="data")
+        fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(0.5)
         a = AbInitioEquilibriumProblem(
@@ -67,7 +67,7 @@ class TestAbInitioEquilibriumProblem:
             profile=None,
         )
 
-        fp = get_BP_path("eqdsk", subfolder="data")
+        fp = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
         fn = os.path.join(fp, "Equil_AR3d1_2015_04_v2_EOF_CSred_fine_final.eqdsk")
         b = AbExtraEquilibriumProblem(fn)
         b.solve()

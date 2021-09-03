@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ class TestFields:
     @classmethod
     def setup_class(cls):
         # Let's make a complete equilibrium..
-        fp = get_BP_path(os.sep.join(["Geometry"]), subfolder="data")
+        fp = get_BP_path(os.sep.join(["Geometry"]), subfolder="data/BLUEPRINT")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(2)
         tf = Loop(x=tf.x, z=tf.z)

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ import sys
 from BLUEPRINT.base.typebase import TypeBase
 from bluemira.base.file import _get_relpath
 
+KEYWORD = "!BP_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
 
 
@@ -214,7 +215,10 @@ class FileManager(TypeBase):
     generated_data_dirs: dict
 
     def __init__(
-        self, reactor_name, reference_data_root="data", generated_data_root="data"
+        self,
+        reactor_name,
+        reference_data_root="data/BLUEPRINT",
+        generated_data_root="data/BLUEPRINT",
     ):
         self._reactor_name = reactor_name
         self._reference_data_root = reference_data_root
@@ -242,7 +246,7 @@ class FileManager(TypeBase):
         """
         return self._reference_data_root
 
-    def replace_bp_root(self, keyword="!BP_ROOT!"):
+    def replace_bp_root(self, keyword=KEYWORD):
         """
         Replaces keyword in input paths with path to local BLUEPRINT installation.
         """

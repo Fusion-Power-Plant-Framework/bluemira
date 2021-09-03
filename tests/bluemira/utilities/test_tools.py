@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ import os
 import numpy as np
 import json
 from bluemira.base.file import get_bluemira_path
-from bluemira.utilities.tools import NumpyJSONEncoder, is_num
+from bluemira.utilities.tools import NumpyJSONEncoder, is_num, asciistr, dot, norm, cross
 
 
 class TestNumpyJSONEncoder:
@@ -53,6 +53,79 @@ def test_is_num():
     vals = [True, False, np.nan, object()]
     for v in vals:
         assert is_num(v) is False
+
+
+class TestAsciiStr:
+    def test_asciistr(self):
+        alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        for i in range(52):
+            assert asciistr(i + 1) == alphabet[: i + 1]
+
+        with pytest.raises(ValueError):
+            asciistr(53)
+
+
+class TestEinsumNorm:
+    def test_norm(self):
+        val = np.random.rand(999, 3)
+        np.testing.assert_allclose(norm(val, axis=1), np.linalg.norm(val, axis=1))
+        np.testing.assert_allclose(norm(val, axis=0), np.linalg.norm(val, axis=0))
+
+    def test_raise(self):
+        val = np.random.rand(999, 3)
+
+        with pytest.raises(ValueError):
+            norm(val, axis=3)
+
+
+class TestEinsumDot:
+    def test_dot(self):
+        val3 = np.random.rand(999, 3, 3)
+        val2 = np.random.rand(999, 3)
+        val = np.random.rand(3)
+
+        # ab, bc -> ac
+        np.testing.assert_allclose(dot(val2, val2.T), np.dot(val2, val2.T))
+
+        # abc, acd -> abd
+        dv = dot(val3, val3)
+        for no, i in enumerate(val3):
+            np.testing.assert_allclose(dv[no], np.dot(i, i))
+
+        # abc, c -> ab
+        np.testing.assert_allclose(dot(val3, val), np.dot(val3, val))
+
+        # a, abc -> ac | ab, abc -> ac | abc, bc -> ac -- undefined behaviour
+        for (a, b) in [(val, val3.T), (val2, val3), (val3, val3[1:])]:
+            with pytest.raises(ValueError):
+                dot(a, b)
+
+        # ab, b -> a
+        np.testing.assert_allclose(dot(val2, val), np.dot(val2, val))
+
+        # a, ab -> b
+        np.testing.assert_allclose(dot(val, val2.T), np.dot(val, val2.T))
+
+        # 'a, a -> ...'
+        np.testing.assert_allclose(dot(val, val), np.dot(val, val))
+
+
+class TestEinsumCross:
+    def test_cross(self):
+        val3 = np.random.rand(999, 3)
+        val2 = np.random.rand(999, 2)
+        val = np.random.rand(999)
+
+        for i, v in enumerate([val2, val3], start=2):
+            np.testing.assert_allclose(cross(v, v), np.cross(v, v))
+
+        np.testing.assert_allclose(cross(val, val), val ** 2)
+
+    def test_raises(self):
+        val = np.random.rand(5, 4)
+
+        with pytest.raises(ValueError):
+            cross(val, val)
 
 
 if __name__ == "__main__":

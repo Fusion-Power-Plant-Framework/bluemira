@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ class TestPositionOptimiser:
     def _track_setup(self):
         # Stripped from
         # BLUEPRINT.examples.equilibria.single_null
-        fp = get_BP_path("Geometry", subfolder="data")
+        fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         TF = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         TF = TF.offset(2.4)
         clip = np.where(TF.x >= 3.5)

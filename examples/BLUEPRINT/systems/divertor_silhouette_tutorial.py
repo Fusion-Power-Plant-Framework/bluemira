@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -50,9 +50,6 @@ from BLUEPRINT.systems.divertor_silhouette import (  # noqa(F401)
     DivertorSilhouetteFlatDomePsiBaffle,
 )
 
-plt.ion()
-plt.show()
-
 # %%[markdown]
 # ## Setting BLUEPRINT Parameters
 # When creating any `ReactorSystem` in BLUEPRINT, we need to set the relevant parameters.
@@ -94,7 +91,9 @@ params = ParameterFrame(params)
 # A `StreamFlow` contains utilities for the analysis of equilibrium information.
 
 # %%
-eq_filename = os.path.join(get_BP_root(), "data", "eqdsk", "step_v7_format.geqdsk")
+eq_filename = os.path.join(
+    get_BP_root(), "data", "BLUEPRINT", "eqdsk", "step_v7_format.geqdsk"
+)
 sf = StreamFlow(eq_filename)
 
 # %%[markdown]
@@ -129,6 +128,8 @@ z = np.append(z[istart:], z[: istart + 1])
 x, z = unique(x, z)[:2]
 fw_loop = Loop(x=x, z=z)
 fw_loop.plot()
+
+plt.show()
 
 # %%[markdown]
 # ## Targets Definitions
@@ -199,6 +200,8 @@ plt.plot(sol[0], sol[1], "--")
 sol = div.get_sol_leg("upper", "outer")
 plt.plot(sol[0], sol[1], "--")
 
+plt.show()
+
 # %%[markdown]
 # ## Make Some Domes
 # Next we'll make some dome sections, which connect the inner and outer targets.
@@ -214,6 +217,8 @@ domes["upper"] = div.make_dome(
 plt.plot(domes["lower"].T[0], domes["lower"].T[1])
 plt.plot(domes["upper"].T[0], domes["upper"].T[1])
 plt.gca().set_aspect("equal")
+
+plt.show()
 
 # %%[markdown]
 # ## Make Some Baffles
@@ -242,6 +247,8 @@ plt.plot(baffles["upper"]["inner"].T[0], baffles["upper"]["inner"].T[1])
 plt.plot(baffles["upper"]["outer"].T[0], baffles["upper"]["outer"].T[1])
 plt.gca().set_aspect("equal")
 
+plt.show()
+
 # %%[markdown]
 # ## The DivertorSilhouette Build
 # In reality we don't want to be building each section of the divertor by hand.
@@ -257,6 +264,10 @@ div.build(fw_loop)
 div.geom["divertors"]["upper"].plot()
 div.geom["divertors"]["lower"].plot()
 
+plt.show()
+
 # %%
 div_geom = div.make_divertor(fw_loop, "lower")
 div_geom["divertor"].plot()
+
+plt.show()

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -176,12 +176,12 @@ class Reactor(ReactorSystem):
     def __init__(self, config, build_config, build_tweaks):
 
         # Initialise Reactor object with inputs
-        self.config = config
+        self.config_keys = list(config.keys())
         self.build_config = build_config
         self.build_tweaks = build_tweaks
 
         self.params = ParameterFrame(self.default_params.to_records())
-        self.prepare_params()
+        self.prepare_params(config)
 
         self.nmodel = None
 
@@ -192,9 +192,13 @@ class Reactor(ReactorSystem):
         self.specify_palette(BLUE)
 
         # Create the file manager for this reactor
-        reactor_name = config.get("Name", "DEFAULT_REACTOR")
-        reference_data_root = build_config.get("reference_data_root", "!BP_ROOT!/data")
-        generated_data_root = build_config.get("generated_data_root", "!BP_ROOT!/data")
+        reactor_name = self.params.get("Name", "DEFAULT_REACTOR")
+        reference_data_root = build_config.get(
+            "reference_data_root", "!BP_ROOT!/data/BLUEPRINT"
+        )
+        generated_data_root = build_config.get(
+            "generated_data_root", "!BP_ROOT!/data/BLUEPRINT"
+        )
         self.file_manager = FileManager(
             reactor_name=reactor_name,
             reference_data_root=reference_data_root,
@@ -219,11 +223,11 @@ class Reactor(ReactorSystem):
         super().__init_subclass__()
         setattr(_registry, cls.__name__, cls)
 
-    def prepare_params(self):
+    def prepare_params(self, config):
         """
         Prepare the parameters so they are ready for building.
         """
-        self.params.update_kw_parameters(self.config)
+        self.params.update_kw_parameters(config)
         if self.build_config["process_mode"] == "mock":
             self.estimate_kappa_95()
             self.derive_inputs()
@@ -341,8 +345,8 @@ class Reactor(ReactorSystem):
         self.params.kappa = 1.12 * self.params["kappa_95"]
         self.params.delta = 1.5 * self.params["delta_95"]
 
-        self.params.get("kappa").source = "Derived Inputs"
-        self.params.get("delta").source = "Derived Inputs"
+        self.params.get_param("kappa").source = "Derived Inputs"
+        self.params.get_param("delta").source = "Derived Inputs"
 
     def __getstate__(self):
         """
@@ -429,7 +433,7 @@ class Reactor(ReactorSystem):
         if read_all:
             var = []
             for key in self.params.keys():
-                param = self.params.get(key)
+                param = self.params.get_param(key)
                 if param.mapping is not None and "PROCESS" in param.mapping:
                     var.append(key)
 
@@ -598,7 +602,7 @@ class Reactor(ReactorSystem):
         print("")  # stdout flusher
 
         directory = self.file_manager.generated_data_dirs["equilibria"]
-        a.eq.to_eqdsk(self.config["Name"] + "_eqref", directory=directory)
+        a.eq.to_eqdsk(self.params["Name"] + "_eqref", directory=directory)
         self.EQ = a
         self.eqref = a.eq.copy()
         self.process_equilibrium(self.eqref)
@@ -949,7 +953,7 @@ class Reactor(ReactorSystem):
         for name, snap in self.EQ.snapshots.items():
             if name != "Breakdown":
                 snap.eq.to_eqdsk(
-                    self.config["Name"] + f"_{name}",
+                    self.params["Name"] + f"_{name}",
                     directory=self.file_manager.generated_data_dirs["equilibria"],
                 )
 
@@ -1130,6 +1134,9 @@ class Reactor(ReactorSystem):
         to_bc = {
             "max_TBR": self.BB.params.maxTBR,
             "ideal_shell": self.RB.geom["initial_bb"],
+            "datadir": os.sep.join(
+                [self.file_manager.reference_data_root, "neutronics"]
+            ),
         }
         BlanketCoverageClass = self.get_subsystem_class("BC")
         self.BC = BlanketCoverageClass(self.params, to_bc)
@@ -1273,34 +1280,32 @@ class Reactor(ReactorSystem):
                 self.HCD.allocate("P_hcd_ss", f_NBI=1)
                 self.HCD.build()
                 hcd_current = self.HCD.NB.params.I
-                f_aux = hcd_current / self.params["I_p"]
-                f_ohm = 1 - self.params.f_bs - f_aux
-                self.config["f_aux"] = f_aux
-                self.config["f_ohm"] = f_ohm
+                self.params.f_cd_aux = hcd_current / self.params["I_p"]
+                self.params.f_cd_ohm = 1 - self.params.f_bs - self.params.f_cd_aux
             elif method == "fraction":
                 self.add_parameter(
-                    "f_aux",
+                    "f_cd_aux",
                     "Auxiliary current drive fraction",
                     1 - self.params.f_ni - self.params.f_bs,
                     None,
                     None,
                 )
-                self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_aux)
+                self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_cd_aux)
                 self.HCD.allocate("I_cd", f_NBI=1)
                 self.HCD.build()
             elif method == "free":
-                self.config["f_aux"] = 1 - self.params["f_bs"] - self.config["f_ohm"]
-                self.HCD.set_requirement("I_cd", self.params.I_p * self.config["f_aux"])
+                self.params.f_cd_aux = 1 - self.params["f_bs"] - self.params.f_cd_ohm
+                self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_cd_aux)
                 self.HCD.allocate("I_cd", f_NBI=1)
         elif self.params["op_mode"] == "Steady-state":
-            if "f_ohm" in self.config.keys() and self.config["f_ohm"] != 0:
+            if "f_cd_ohm" in self.config_keys and self.params.f_cd_ohm != 0:
                 bluemira_print(
                     "Steady-state operation cannot rely on an inductively"
-                    "driven current. Setting f_ohm=0."
+                    "driven current. Setting f_cd_ohm=0."
                 )
-                self.config["f_ohm"] = 0
-            self.config["f_aux"] = 1 - self.params["f_bs"]
-            self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_aux)
+                self.params.f_cd_ohm = 0
+            self.params.f_cd_aux = 1 - self.params.f_bs
+            self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_cd_aux)
             self.HCD.allocate("I_cd", f_NBI=1)
 
     def build_TFV_system(self, method="run", n=10, plot=False):
@@ -1392,7 +1397,12 @@ class Reactor(ReactorSystem):
         plot: bool
             Whether or not to plot the result
         """
-        lc_in = {"mode": mode, "read_only": False, "plot": plot}
+        lc_in = {
+            "mode": mode,
+            "read_only": False,
+            "plot": plot,
+            "datadir": self.file_manager.reference_data_root,
+        }
         life_cycle = LifeCycle(self.params, lc_in)
         return life_cycle
 
@@ -1505,7 +1515,7 @@ class Reactor(ReactorSystem):
         raise NotImplementedError
         # if self.nmodel is None or isinstance(self.nmodel, Contract):
         #     self.build_neutronics_model()
-        # bprint("Running 3-D 360° OpenMC neutronics model.")
+        # bluemira_print("Running 3-D 360° OpenMC neutronics model.")
         # self.nmodel.run()
 
     # =========================================================================
@@ -1636,7 +1646,7 @@ class Reactor(ReactorSystem):
         if generated_data_root is None:
             generated_data_root = reactor.file_manager.generated_data_root
         reactor.file_manager = FileManager(
-            reactor_name=reactor.params.Name,
+            reactor_name=reactor.params.Name.value,
             reference_data_root=reference_data_root,
             generated_data_root=generated_data_root,
         )

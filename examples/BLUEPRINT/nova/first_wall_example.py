@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ plot_defaults()
 # Let's load some Equilibrium objects, so that we have something to work with
 
 # %%
-read_path = get_BP_path("equilibria", subfolder="data")
+read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
 eof_name = "EU-DEMO_EOF.json"
 sof_name = "EU-DEMO_SOF.json"
 

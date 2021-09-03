@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -497,7 +497,9 @@ def save_as_STEP(
     del writer
 
 
-def save_as_STEP_assembly(*shapes, filename="test", scale=1):  # noqa (N802)
+def save_as_STEP_assembly(
+    *shapes, filename="test", partname=None, scale=1
+):  # noqa (N802)
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -513,7 +515,14 @@ def save_as_STEP_assembly(*shapes, filename="test", scale=1):  # noqa (N802)
     if not filename.endswith(".STP"):
         filename += ".STP"
     filename = file_name_maker(filename)
-    exporter = StepOcafExporter(filename)
+
+    try:
+        exporter = StepOcafExporter(filename, partname=partname)
+    except TypeError:
+        if partname is not None:
+            bluemira_warn("Partname not saved to STEP file header")
+        exporter = StepOcafExporter(filename)
+
     shapes = expand_nested_list(shapes)
     for shape in shapes:
         if scale != 1:
@@ -792,7 +801,7 @@ def _make_spline_wire(loop, **kwargs):
         closed = spline.IsClosed()
     if not closed:
         # It turns out this is common and not always an issue...
-        # bpwarn('CAD::make_spline_face: Open spline!')
+        # bluemira_warn('CAD::make_spline_face: Open spline!')
         pass
     else:
         # spline.GetObject().SetPeriodic()

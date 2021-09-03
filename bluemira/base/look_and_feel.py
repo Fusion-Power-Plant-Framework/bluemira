@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ import datetime
 import shutil
 import functools
 import seaborn as sns
-from PyQt5 import QtWidgets
+from PySide2 import QtWidgets
 from bluemira import __version__
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR, BLUEMIRA_PALETTE
 from bluemira.base.file import get_bluemira_root, get_bluemira_path
@@ -483,8 +483,8 @@ def get_primary_screen_size():
     app = QtWidgets.QApplication.instance()
     if app is None:
         # if IPython isn't open then a QApplication is created to get screen size
-        with QtWidgets.QApplication([]) as app:
-            rect = app.primaryScreen().availableGeometry()
+        app = QtWidgets.QApplication([])
+        rect = app.primaryScreen().availableGeometry()
     else:
         rect = app.primaryScreen().availableGeometry()
 

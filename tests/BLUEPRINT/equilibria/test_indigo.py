@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ class TestEUDEMO1:
 
     @classmethod
     def setup_class(cls):
-        cls.fp = get_BP_path("eqdsk", subfolder="data")
+        cls.fp = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
         cls.eof = os.path.join(cls.fp, "AR3d1_2015_04_v2_EOF_CSred_fine_final.eqdsk")
         cls.sof = os.path.join(cls.fp, "AR3d1_2015_04_v2_SOF_CSred_fine_final.eqdsk")
         cls.coilset = CoilSet.from_eqdsk(cls.eof)
@@ -195,7 +195,7 @@ class TestFreeBoundary:
 @pytest.mark.longrun
 class TestAbInitioBreakdown:
     def test_breakdown(self):
-        fp = get_BP_path("eqdsk", subfolder="data")
+        fp = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
         fn = os.path.join(fp, "AR3d1_2015_04_v2_EOF_CSred_fine_final.eqdsk")
         eq = Equilibrium.from_eqdsk(fn)
         coilset = eq.coilset.copy()
@@ -229,7 +229,7 @@ class TestAbInitioBreakdown:
 @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestFBI:
     def test_breakdown(self):
-        fp = get_BP_path("eqdsk", subfolder="data")
+        fp = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
         fn = os.path.join(fp, "AR3d1_2015_04_v2_EOF_CSred_fine_final.eqdsk")
         eq = Equilibrium.from_eqdsk(fn)
         coilset = eq.coilset.copy()
