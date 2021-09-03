@@ -44,7 +44,7 @@ class TestPositionOptimiser:
     def _track_setup(self):
         # Stripped from
         # BLUEPRINT.examples.equilibria.single_null
-        fp = get_bluemira_path("Geometry", subfolder="data")
+        fp = get_bluemira_path("geometry", subfolder="data")
         TF = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         TF = TF.offset(2.4)
         clip = np.where(TF.x >= 3.5)

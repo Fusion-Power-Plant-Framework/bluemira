@@ -32,13 +32,14 @@ from bluemira.equilibria.positioner import (
     CoilPositioner,
 )
 
+DATA_PATH = get_bluemira_path("geometry", subfolder="data")
+
 
 class TestXZLMapper:
     @classmethod
     def setup_class(cls):
         f, cls.ax = plt.subplots()
-        fp = get_bluemira_path("Geometry", subfolder="data")
-        tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
+        tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
         tf = Loop(tf.x[clip], z=tf.z[clip])
@@ -176,8 +177,7 @@ class TestZLMapper:
         """
         Sets up an XZLMapper that with a "normal" set of exclusion zones
         """
-        fp = get_bluemira_path("Geometry", subfolder="data")
-        tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
+        tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
         tf = Loop(tf.x[clip], z=tf.z[clip])
@@ -229,8 +229,7 @@ class TestZLMapperEdges:
         the start or end of a track
         """
 
-        fp = get_bluemira_path("Geometry", subfolder="data")
-        tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
+        tf = Loop.from_file(os.sep.join([DATA_PATH, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
         tf = Loop(tf.x[clip], z=tf.z[clip])

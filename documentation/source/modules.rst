@@ -6,13 +6,9 @@ Bluemira Modules
     :caption: Contents:
     :hidden:
  
-<<<<<<< HEAD:documentation/bluemira/source/modules.rst
-    base
-    equilibria/equilibria
-=======
     base/base
->>>>>>> develop:documentation/source/modules.rst
     components
+    equilibria/equilibria
     geometry/geometry
     magnetostatics/magnetostatics
     utilities/utilities

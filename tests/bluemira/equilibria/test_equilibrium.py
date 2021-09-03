@@ -35,7 +35,7 @@ class TestFields:
     @classmethod
     def setup_class(cls):
         # Let's make a complete equilibrium..
-        fp = get_bluemira_path(os.sep.join(["Geometry"]), subfolder="data")
+        fp = get_bluemira_path(os.sep.join(["geometry"]), subfolder="data")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(2)
         tf = Loop(x=tf.x, z=tf.z)
