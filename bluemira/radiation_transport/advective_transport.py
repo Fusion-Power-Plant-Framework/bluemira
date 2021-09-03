@@ -25,16 +25,16 @@ A simplified 2-D solver for calculating charged particle heat loads.
 
 import numpy as np
 from copy import deepcopy
-from bluemira.base.parameter import ParameterFrame
+from BLUEPRINT.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.base import Plane
-from bluemira.geometry.tools import (
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_tools import (
     loop_plane_intersect,
     join_intersect,
     get_angle_between_points,
     check_linesegment,
 )
-from bluemira.geometry.loop import Loop
+from bluemira.geometry._deprecated_loop import Loop
 from BLUEPRINT.equilibria.find import get_psi_norm
 
 
