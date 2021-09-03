@@ -28,7 +28,6 @@ import numpy as np
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.base.parameter import ParameterFrame
-from bluemira.base.baseclass import ReactorSystem
 from bluemira.fuel_cycle.tools import (
     _speed_recycle,
     find_max_load_factor,
@@ -44,7 +43,7 @@ from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 # FIXED: You hacked the plot
 
 
-class FuelCycle(ReactorSystem):
+class EUDEMOFuelCycleModel:
     """
     Tritium fuel cycle object.
 
@@ -82,9 +81,6 @@ class FuelCycle(ReactorSystem):
         [1=100%] T exhaust efficiency of in-vessel environment
     eta_bb: float
         [1=100%] T exhaust efficiency of blanket
-
-    .. image:: Information/T_fuel_cycle.JPG
-       :height: 800 px
     """
 
     # fmt: off
@@ -127,7 +123,7 @@ class FuelCycle(ReactorSystem):
 
     def __init__(self, config, inputs, timeline):
         # Handle parameters
-        self.params = ParameterFrame(self.default_params.to_records())
+        self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(config)
 
         # Handle calculation information

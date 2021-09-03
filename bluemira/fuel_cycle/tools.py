@@ -29,12 +29,14 @@ from scipy.optimize import curve_fit, brentq
 import matplotlib.pyplot as plt
 from bluemira.base.constants import (
     J_TO_EV,
+    EV_TO_J,
     T_LAMBDA,
     T_MOLAR_MASS,
     N_AVOGADRO,
     S_TO_YR,
     D_MOLAR_MASS,
     ELECTRON_MOLAR_MASS,
+    PROTON_MOLAR_MASS,
     NEUTRON_MOLAR_MASS,
     HE3_MOLAR_MASS,
     HE_MOLAR_MASS,
@@ -212,7 +214,7 @@ def E_DD_fusion():  # noqa (N802)
     return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
 
 
-def n_DT_reactions(p_fus: Union[int, float]) -> float:
+def n_DT_reactions(p_fus) -> float:
     """
     Calculates the number of D-T fusion reactions per s for a given D-T fusion
     power
@@ -233,7 +235,7 @@ def n_DT_reactions(p_fus: Union[int, float]) -> float:
     return float(p_fus * 1e6 / (e_dt * EV_TO_J))
 
 
-def n_DD_reactions(p_fus: Union[int, float]) -> float:  # noqa (N802)
+def n_DD_reactions(p_fus) -> float:  # noqa (N802)
     """
     Calculates the number of D-D fusion reactions per s for a given D-D fusion
     power

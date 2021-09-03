@@ -31,6 +31,8 @@ from bluemira.fuel_cycle.tools import (
     _dec_I_mdot,
     _find_t15,
     _fountain_linear_sink,
+    E_DD_fusion,
+    E_DT_fusion,
 )
 
 
@@ -262,6 +264,25 @@ class TestSinkTools:
 
         checker()
         plotter()
+
+
+class TestGCSEPhysics:
+    def _msg(self, e, v):
+        delta = e - v
+        relate = "higher" if delta > 0 else "lower"
+        return "E=mc^2 value {0:.2f} MeV {1} than Kikuchi " "reference.".format(
+            delta * 1e-6, relate
+        )
+
+    def test_DT(self):  # noqa (N802)
+        e_dt_kikuchi = (3.5 + 14.1) * 1e6
+        e, v = E_DT_fusion(), e_dt_kikuchi
+        assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
+
+    def test_DD(self):  # noqa (N802)
+        e_dd_kikuchi = np.array([1.01 + 3.02, 0.82 + 2.45]) * 1e6
+        e, v = E_DD_fusion(), np.average(e_dd_kikuchi)
+        assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
 
 
 if __name__ == "__main__":

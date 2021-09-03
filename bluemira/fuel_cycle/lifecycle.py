@@ -73,7 +73,7 @@ class LifeCycle:
         self.config = config
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
+        self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(self.config)
 
         # Constructors

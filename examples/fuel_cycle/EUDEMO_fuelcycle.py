@@ -27,10 +27,13 @@ import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.base.parameter import ParameterFrame
 from bluemira.utilities.tools import set_random_seed
-from bluemira.systems.physicstoolbox import n_DD_reactions, n_DT_reactions
 from bluemira.fuel_cycle.lifecycle import LifeCycle
-from bluemira.fuel_cycle.tools import convert_flux_to_flow
-from bluemira.systems.tfv import TFVSystem
+from bluemira.fuel_cycle.run import FuelCycleAnalysis
+from bluemira.fuel_cycle.tools import (
+    convert_flux_to_flow,
+    n_DD_reactions,
+    n_DT_reactions,
+)
 
 plot_defaults()
 
@@ -182,7 +185,7 @@ tfv_config = ParameterFrame([
 ])
 # fmt:on
 
-tfv_system = TFVSystem(tfv_config)
+tfv_system = FuelCycleAnalysis(tfv_config)
 
 # Now, let's run the fuel cycle model for the timelines we generated
 
