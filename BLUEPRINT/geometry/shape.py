@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@ Base shape object for optimisations with parameterised shapes
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.lookandfeel import bpwarn
-from BLUEPRINT.base.file import make_BP_path, try_get_BP_path
+from bluemira.base.look_and_feel import bluemira_warn
+from BLUEPRINT.base.file import make_BP_path, get_BP_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.geombase import JSONReaderWriter
 from BLUEPRINT.geometry.parameterisations import (
@@ -110,22 +110,24 @@ class Shape(JSONReaderWriter):
             raise GeometryError(f'Shape objective "{objective}" not defined.')
         self.objective = objective
 
-        if read_directory is None:
-            read_directory = try_get_BP_path(
-                "geometry_data", subfolder="data", allow_missing=True
-            )
-        if write_directory is None:
-            make_BP_path("generated_data", subfolder="")
-            write_directory = make_BP_path("geometry_data", subfolder="generated_data")
-
         if isinstance(self.n_TF, str):
             n_TF = self.n_TF
         else:
             n_TF = str(int(self.n_TF))
 
         name = "_".join([name, family, objective, n_TF])
-        self.read_filename = os.sep.join([read_directory, name + ".json"])
-        self.write_filename = os.sep.join([write_directory, name + ".json"])
+
+        if read_write:
+            if read_directory is None:
+                read_directory = get_BP_path("geometry_data", subfolder="data/BLUEPRINT")
+            if write_directory is None:
+                make_BP_path("generated_data/BLUEPRINT", subfolder="")
+                write_directory = make_BP_path(
+                    "geometry_data", subfolder="generated_data/BLUEPRINT"
+                )
+            self.read_filename = os.sep.join([read_directory, name + ".json"])
+            self.write_filename = os.sep.join([write_directory, name + ".json"])
+
         self.update(npoints=npoints, symmetric=symmetric, family=family)
         self.bound = {}  # initialise bounds
         self.bindex = {"internal": [0], "interior": [0], "external": [0]}
@@ -225,7 +227,7 @@ class Shape(JSONReaderWriter):
         Plots the geometric bounds of the shape optimisation problem
         """
         if self.bound == {}:
-            bpwarn("Geometry::Shape No bounds to plot...")
+            bluemira_warn("Geometry::Shape No bounds to plot...")
             return
 
         if ax is None:
@@ -405,7 +407,7 @@ class Shape(JSONReaderWriter):
             if os.path.isfile(self.read_filename):
                 self.loop_dict = super().load()
             else:
-                bpwarn(
+                bluemira_warn(
                     f"Geometry::Shape file {self.read_filename} not found\n"
                     "initializing new loop_dict"
                 )

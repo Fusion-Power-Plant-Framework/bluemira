@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Heating and current drive system
 """
 import numpy as np
 from typing import Type
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base import ReactorSystem
 from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
@@ -45,7 +45,10 @@ class HCDSystem(ReactorSystem):
         ['p_nb', 'NB launcher power', 1, 'MA', 'Maximum launcher current drive in a port', 'Input'],
         ['g_cd_ec', 'EC current drive efficiency', 0.15, 'MA/MW.m', 'Check units!', 'Input'],
         ['eta_ec', 'EC electrical efficiency', 0.35, 'N/A', 'Check units!', 'Input'],
-        ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input']
+        ['p_ec', 'EC launcher power', 10, 'MW', 'Maximum launcher power per sector', 'Input'],
+        ['f_cd_aux', 'Auxiliary current drive fraction', 0.1, 'N/A', None, 'Input'],
+        ['f_bs', 'UNKNOWN_2', 0.1, 'N/A', None, 'Input'],
+        ['op_mode', 'UNKNOWN_3', "str", 'N/A', None, 'Input'],
     ]
     # fmt: on
 
@@ -57,10 +60,10 @@ class HCDSystem(ReactorSystem):
         self.params = ParameterFrame(self.default_params.to_records())
         self.params.update_kw_parameters(self.config)
 
-        self.f_bs = self.config["f_bs"]
-        if self.config["op_mode"] == "Pulsed":
+        self.f_bs = self.params.f_bs
+        if self.params.op_mode == "Pulsed":
             self.pulsed = True
-        elif self.config["op_mode"] == "Steady-state":
+        elif self.params.op_mode == "Steady-state":
             self.pulsed = False
         self.NB = NeutralBeam(self.config, self.inputs, 0.5, 0.3, 1)
         self.EC = ElectronCyclotron(self.config, self.inputs, 0.15, 0.35, 10)
@@ -87,7 +90,7 @@ class HCDSystem(ReactorSystem):
         """
         if f_ICRH != 0:
             f_ICRH = 0  # noqa
-            bpwarn("Not on my watch.")
+            bluemira_warn("Not on my watch.")
         if f_ECD == 0:
             f_ECD = 1 - f_NBI  # noqa
         if f_NBI + f_ECD != 1:
@@ -99,15 +102,15 @@ class HCDSystem(ReactorSystem):
         """
         Set the HCD driven current.
         """
-        f_aux = 1 - self.f_ohm - self.f_bs
-        self.I_hcd = config["I_p"] * f_aux
+        f_cd_aux = 1 - self.f_cd_ohm - self.params.f_bs
+        self.I_hcd = config["I_p"] * f_cd_aux
 
     def pulsed_ops(self):
         """
         Check for current consistency.
         """
-        # self.f_ohm = 0.5  # Hook this up to CS and flux swing one day
-        if self.f_bs + self.f_ohm > 1:
+        # self.f_cd_ohm = 0.5  # Hook this up to CS and flux swing one day
+        if self.params.f_bs + self.f_cd_ohm > 1:
             raise ValueError("Current drive fraction greater than 1.")
 
     def get_heating_power(self):
@@ -137,7 +140,11 @@ class GenericHCD(ReactorSystem):
     config: Type[ParameterFrame]
     inputs: dict
 
-    default_params = []
+    default_params = [
+        ["R_0", "Major radius", 9, "m", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+        ["I", "Current drive", 0.1, "N/A", None, "Input"],
+    ]
 
     def __init__(self, config, inputs):
         self.config = config
@@ -146,8 +153,8 @@ class GenericHCD(ReactorSystem):
         self.params = ParameterFrame(self.default_params.to_records())
         self.params.update_kw_parameters(self.config)
 
-        self.R_0 = self.config["R_0"]
-        self.n_TF = self.config["n_TF"]
+        self.R_0 = self.params.R_0
+        self.n_TF = self.params.n_TF
 
     def set_requirement(self, req, value):
         """
@@ -258,7 +265,13 @@ class NeutralBeam(GenericHCD):
     # g_cd = FloatBetween(low=0.0, high=1.0)
     # eta_cd = FloatBetween(low=0.0, high=1.0)
     # plauncher = FloatOrInt()  # MA per NBI launcher in sector. Total guess
-    default_params = []
+    default_params = [
+        ["R_0", "Major radius", 9, "m", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+        ["I", "Current drive", 0.1, "N/A", None, "Input"],
+        ["P_h_ss", "Steady-state plasma heating power", 0.1, "N/A", None, "Input"],
+        ["P_el", "Electric power input", 0.1, "N/A", None, "Input"],
+    ]
 
     def __init__(self, config, inputs, g_cd, eta_cd, plauncher):
         super().__init__(config, inputs)
@@ -277,7 +290,13 @@ class ElectronCyclotron(GenericHCD):
     # g_cd = FloatBetween(low=0.0, high=1.0)
     # eta_cd = FloatBetween(low=0.0, high=1.0)
     # plauncher = FloatOrInt()  # MW per EC launcher in sector. Total guess
-    default_params = []
+    default_params = [
+        ["R_0", "Major radius", 9, "m", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+        ["I", "Current drive", 0.1, "N/A", None, "Input"],
+        ["P_h_ss", "Steady-state plasma heating power", 0.1, "N/A", None, "Input"],
+        ["P_el", "Electric power input", 0.1, "N/A", None, "Input"],
+    ]
 
     def __init__(self, config, inputs, g_cd, eta_cd, plauncher):
         super().__init__(config, inputs)

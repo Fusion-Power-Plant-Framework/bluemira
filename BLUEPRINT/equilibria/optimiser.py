@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 import tabulate
-from BLUEPRINT.base.lookandfeel import bpwarn, bprintflush
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
 from BLUEPRINT.base.error import EquilibriaError
 from BLUEPRINT.base.file import try_get_BP_path
 from BLUEPRINT.geometry.geomtools import circle_seg
@@ -58,7 +58,7 @@ class EquilibriumOptimiser:
         .rms_error
     """
 
-    def __call__(self, eq, constraints, psi_bndry=None, apply_weights=False):
+    def __call__(self, eq, constraints, psi_bndry=None):
         """
         Parameters
         ----------
@@ -75,8 +75,17 @@ class EquilibriumOptimiser:
             Response matrix
         b: np.array(N)
             Constraint vector
-
+        w: np.array(N)
+            Weight vector
         \t:math:`\\mathbf{A}\\mathbf{x}-\\mathbf{b}=\\mathbf{b_{plasma}}`
+
+        Notes
+        -----
+        The weight vector is used to scale the response matrix and
+        constraint vector. The weights are assumed to be uncorrelated, such that the
+        weight matrix W_ij used to define (for example) the least-squares objective
+        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+        weights[i] = w[i] = sqrt(W[i,i]).
         """
         self.eq = eq
         self.constraints = constraints
@@ -87,8 +96,11 @@ class EquilibriumOptimiser:
 
         self.A = constraints.A
         self.b = constraints.b
+        self.w = constraints.w
 
-        # TODO: Apply weightings to constraints (optionally)
+        # Scale the control matrix and constraint vector by weights
+        self.b *= self.w
+        self.A = self.w[:, np.newaxis] * self.A
 
         self.n_PF, self.n_CS = eq.coilset.n_PF, eq.coilset.n_CS
         self.n_C = eq.coilset.n_coils
@@ -271,7 +283,9 @@ class PositionOptimiser:
         self.flag_gif = gif
         if figure_folder is None:
             figure_folder = try_get_BP_path(
-                "plots/equilibria", subfolder="data", allow_missing=not self.flag_gif
+                "plots/equilibria",
+                subfolder="data/BLUEPRINT",
+                allow_missing=not self.flag_gif,
             )
         self.figure_folder = figure_folder
         self.plot_iter = 0
@@ -387,7 +401,7 @@ class PositionOptimiser:
             positions = opt.optimize(l_0)
         except nlopt.RoundoffLimited:  # Dodgy SLSQP. Normalerweise gut genug
             positions = self._store
-            bpwarn("NLopt RoundoffLimited!")
+            bluemira_warn("NLopt RoundoffLimited!")
 
         self.current_optimiser.sanity()
         self.rms = opt.last_optimum_value()
@@ -410,7 +424,7 @@ class PositionOptimiser:
         self.rms_error = self.update_positions(pos_vector)
         if grad.size > 0:
             grad[:] = approx_fprime(pos_vector, self.update_positions, 1e-3, self.bounds)
-        bprintflush(
+        bluemira_print_flush(
             f"EQUILIBRIA position optimisation iteration {self.iter}: "
             f"f_obj = {self.rms_error:.2f}"
         )
@@ -451,9 +465,7 @@ class PositionOptimiser:
     def _get_current_rms_error(self):
         error = []
         for psi in self.psi_vals:
-            i_star = self.current_optimiser(
-                self.eq, self.constraints, psi_bndry=psi, apply_weights=True
-            )
+            i_star = self.current_optimiser(self.eq, self.constraints, psi_bndry=psi)
             self.swing[psi] = i_star
             self.I_star = i_star
             self.eq.coilset.set_control_currents(i_star)
@@ -487,7 +499,7 @@ class PositionOptimiser:
         try:  # For shifting CS coils.. need to update I constraint vector
             self.current_optimiser.update_current_constraint(i_max)
         except AttributeError:
-            bpwarn("No update_current_constraint implemented in sub-optimiser")
+            bluemira_warn("No update_current_constraint implemented in sub-optimiser")
             pass
 
         return self._get_current_rms_error()
@@ -621,7 +633,7 @@ class SanityReporter:
         for con, val, name in zip(cons, vals, names):
             for c, v in zip(con, val):
                 if v > (1 + self.constraint_tol) * c:
-                    bpwarn(f"FBI {name} constraint violated: |{v:.2f}| > {c:.2f}")
+                    bluemira_warn(f"FBI {name} constraint violated: |{v:.2f}| > {c:.2f}")
 
     def report(self, verbose=True):
         """

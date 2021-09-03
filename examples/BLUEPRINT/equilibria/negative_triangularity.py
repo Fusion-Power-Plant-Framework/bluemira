@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ NT pulsed equilibrium example
 from IPython import get_ipython
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.parameterisations import PictureFrame
 from BLUEPRINT.equilibria.run import AbInitioEquilibriumProblem

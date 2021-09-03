@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ from time import time
 
 t = time()
 
-read_path = get_BP_path("equilibria", subfolder="data")
+read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
 eq_name = "EU-DEMO_EOF.json"
 eq_name = os.sep.join([read_path, eq_name])
 eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)
@@ -82,11 +82,6 @@ x, z, hf, hf_lfs, hf_hfs, th = fw.calculate_heat_flux_lfs_hfs(
 )
 
 # %%[markdown]
-# Plots
-plt.ion()
-plt.show()
-
-# %%[markdown]
 # First wall, separatrix and flux surfaces
 f, ax = plt.subplots()
 fw.lcfs.plot(ax, fill=False, facecolor="b", linewidth=0.1)
@@ -95,6 +90,8 @@ fw.profile.plot(ax, fill=False, facecolor="b", linewidth=0.1)
 for fs in fw.flux_surfaces:
     fs.loop.plot(ax, fill=False, facecolor="r", linewidth=0.1)
 
+plt.show()
+
 # %%[markdown]
 # First wall shape, hit points and heat flux values
 fig, ax = plt.subplots()
@@ -102,6 +99,8 @@ fw.profile.plot(ax=ax)
 cs = ax.scatter(x, z, c=hf, cmap="viridis", zorder=100)
 bar = fig.colorbar(cs, ax=ax)
 bar.set_label("Heat Flux [MW/m^2]")
+
+plt.show()
 
 # %%[markdown]
 # Heat flux values against poloidal location

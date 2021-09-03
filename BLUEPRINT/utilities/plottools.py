@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 
 
 class SuperSankey(Sankey):
@@ -255,7 +255,7 @@ def savefig(f, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
     """
     if save is True:
         if folder is None:
-            folder = get_BP_path("plots", subfolder="data")
+            folder = get_BP_path("plots", subfolder="data/BLUEPRINT")
         name = os.sep.join([folder, name]) + "." + formatt
         if os.path.isfile(name):
             os.remove(name)  # f.savefig will otherwise not overwrite

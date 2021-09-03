@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Load objects
 """
 import numpy as np
 from BLUEPRINT.base.error import BeamsError
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.beams.constants import LOAD_MAPPING, LOAD_TYPES
 
 
@@ -201,7 +201,7 @@ class LoadCase(list):
         _check_load_type(load_type)
         x_clip = np.clip(x, 0, 1)
         if x_clip != x:
-            bpwarn("x devrait etre entre 0 et 1.")
+            bluemira_warn("x devrait etre entre 0 et 1.")
         self.append(
             {
                 "type": "Element Load",

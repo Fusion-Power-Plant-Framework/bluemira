@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -30,9 +30,86 @@ from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
-from BLUEPRINT.base.lookandfeel import bpwarn, bprint
+from bluemira.base.constants import EPS
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.constants import CROSS_P_TOL, DOT_P_TOL
+
+
+def close_coordinates(x, y, z):
+    """
+    Close an ordered set of coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: np.array
+        The z coordinates
+
+    Returns
+    -------
+    x: np.array
+        The closed x coordinates
+    y: np.array
+        The closed y coordinates
+    z: np.array
+        The closed z coordinates
+    """
+    if distance_between_points([x[0], y[0], z[0]], [x[-1], y[-1], z[-1]]) > EPS:
+        x = np.append(x, x[0])
+        y = np.append(y, y[0])
+        z = np.append(z, z[0])
+    return x, y, z
+
+
+def get_normal_vector(x, y, z):
+    """
+    Calculate the normal vector from a series of planar points.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: np.array
+        The z coordinates
+
+    Returns
+    -------
+    n_hat: np.array(3)
+        The normalised normal vector
+    """
+    if len(x) < 3:
+        raise GeometryError(
+            "Cannot get a normal vector for a set of points with" "length less than 3."
+        )
+    if (len(x) != len(y)) or (len(x) != len(z)) or (len(y) != len(z)):
+        raise GeometryError("Point coordinate vectors must be of equal length.")
+
+    p1 = np.array([x[0], y[0], z[0]])
+    p2 = np.array([x[1], y[1], z[1]])
+    v1 = p2 - p1
+
+    # Force length 3 vectors to access index 2 without raising IndexErrors elsewhere
+    i_max = max(3, len(x) - 1)
+    for i in range(2, i_max):
+        p3 = np.array([x[i], y[i], z[i]])
+        v2 = p3 - p2
+        if np.allclose(v2, 0):
+            v2 = p3 - p1
+            if np.allclose(v2, 0):
+                continue
+        n_hat = np.cross(v1, v2)
+        if not np.allclose(n_hat, 0):
+            break
+    else:
+        raise GeometryError("Unable to find a normal vector from set of points.")
+
+    return n_hat / np.linalg.norm(n_hat)
 
 
 def project_point_axis(point, axis):
@@ -202,7 +279,7 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
         x = np.array([x1, x1])
         t2 = r ** 2 - (x1 - x_c) ** 2
         if t2 < 0:
-            bpwarn("No intersection between line and circle!")
+            bluemira_warn("No intersection between line and circle!")
             return None
         t = np.sqrt(t2)
         if t == 0:  # tangency
@@ -215,7 +292,7 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
         z = np.array([y1, y1])
         t2 = r ** 2 - (y1 - z_c) ** 2
         if t2 < 0:
-            bpwarn("No intersection between line and circle!")
+            bluemira_warn("No intersection between line and circle!")
             return None
         t = np.sqrt(t2)
         if t == 0:  # tangency
@@ -227,7 +304,7 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
     det = x1 * y2 - x2 * y1
     delta = r ** 2 * dr2 - det ** 2
     if delta < 0:
-        bpwarn("No intersection between line and circle!")
+        bluemira_warn("No intersection between line and circle!")
         return None
 
     t = np.sqrt(r ** 2 * dr2 - det ** 2)
@@ -427,7 +504,7 @@ def lineq(point_a, point_b, show=False):
         m = 0
     c = point_b[1] - m * point_b[0]
     if show is True:
-        bprint("Equation of line: y = {0}x + {1}".format(m, c))
+        bluemira_print("Equation of line: y = {0}x + {1}".format(m, c))
     return m, c
 
 

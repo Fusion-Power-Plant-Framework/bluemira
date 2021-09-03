@@ -1,15 +1,15 @@
 # flake8: noqa
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 import os
 import matplotlib
 
 if os.sys.platform != "linux":
-    bpwarn("Cannot run radiation transport codes on Windows or Mac..")
+    bluemira_warn("Cannot run radiation transport codes on Windows or Mac..")
 else:
     try:
         import openmc
     except ModuleNotFoundError:
-        bpwarn("OpenMC not installed.")
+        bluemira_warn("OpenMC not installed.")
 
     try:
         rcParamsDefault = matplotlib.rcParamsDefault.copy()
@@ -18,4 +18,4 @@ else:
         # OpenMOC overwrites rcParamsDefault via their plotter.py... bad news :(
         matplotlib.rcParamsDefault = rcParamsDefault
     except ModuleNotFoundError:
-        bpwarn("OpenMOC not installed.")
+        bluemira_warn("OpenMOC not installed.")

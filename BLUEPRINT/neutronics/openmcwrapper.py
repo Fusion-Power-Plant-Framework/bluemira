@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ import os
 from copy import deepcopy
 from itertools import cycle
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.base.file import get_files_by_ext
+from bluemira.base.file import get_files_by_ext
 from BLUEPRINT.cad.blanketCAD import BlanketCAD
 from BLUEPRINT.cad.divertorCAD import DivertorCAD
 from BLUEPRINT.cad.vesselCAD import VesselCAD

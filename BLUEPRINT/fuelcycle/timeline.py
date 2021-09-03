@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@ Partially randomised fusion reactor load signal object and tools
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import brentq
-from BLUEPRINT.base.lookandfeel import plot_defaults, bpwarn
-from BLUEPRINT.base.constants import S_TO_YR, YR_TO_S
+from bluemira.base.look_and_feel import plot_defaults, bluemira_warn
+from bluemira.base.constants import S_TO_YR, YR_TO_S
 
 plot_defaults()
 
@@ -222,7 +222,7 @@ class OperationPhase(Phase):
                 j = 0
                 mean_norm = m * 1.2  # Start again...
                 delta = 1
-                bpwarn("FuelCycle::OperationPhase has a headache...")
+                bluemira_warn("FuelCycle::OperationPhase has a headache...")
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
         t_dwell = np.random.permutation(dist)

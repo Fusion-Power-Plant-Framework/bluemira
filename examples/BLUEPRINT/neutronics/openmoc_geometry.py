@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ import openmoc
 
 # BLUEPRINT imports
 from BLUEPRINT.base.file import get_BP_root, FileManager
-from BLUEPRINT.base.lookandfeel import bprint
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.neutronics.openmoc_geometry_tools import (
     create_system_cells,
     PlaneHelper,
@@ -88,7 +88,7 @@ materials = openmoc.materialize.load_from_hdf5(
     f"{get_BP_root()}/examples/neutronics/example_materials.h5", ""
 )
 
-bprint("Creating surfaces...")
+bluemira_print("Creating surfaces...")
 
 # Initialise the PlaneHelper cache to avoid coplanar lines.
 plane_helper = PlaneHelper()
@@ -126,8 +126,10 @@ plane_helper.add_plane(top)
 reactor_name = config["Name"]
 file_manager = FileManager(
     reactor_name=reactor_name,
-    reference_data_root=build_config.get("reference_data_root", "data"),
-    generated_data_root=build_config.get("generated_data_root", "data"),
+    reference_data_root=build_config.get("reference_data_root", "data/BLUEPRINT"),
+    generated_data_root=build_config.get(
+        "generated_data_root", "generated_data/BLUEPRINT"
+    ),
 )
 file_manager.build_dirs()
 reactor_path = file_manager.reference_data_dirs["root"]
@@ -157,7 +159,7 @@ if include_vessel:
     vessel = VacuumVessel.load(f"{reactor_path}/{reactor_name}_VV.pkl")
 
 # Get the systems' cross sections, points, facets, control points, and holes
-bprint("Getting plasma sections")
+bluemira_print("Getting plasma sections")
 (
     plasma_sections,
     plasma_points,
@@ -169,7 +171,7 @@ bprint("Getting plasma sections")
 )
 
 if include_blanket:
-    bprint("Getting blanket sections")
+    bluemira_print("Getting blanket sections")
     (
         blanket_sections,
         blanket_points,
@@ -184,7 +186,7 @@ if include_blanket:
     )
 
 if include_cryostat:
-    bprint("Getting cryostat sections")
+    bluemira_print("Getting cryostat sections")
     (
         cryostat_sections,
         cryostat_points,
@@ -200,7 +202,7 @@ if include_cryostat:
     )
 
 if include_divertor:
-    bprint("Getting divertor sections")
+    bluemira_print("Getting divertor sections")
     (
         divertor_sections,
         divertor_points,
@@ -215,7 +217,7 @@ if include_divertor:
     )
 
 if include_pf_coils:
-    bprint("Getting poloidal field coils sections")
+    bluemira_print("Getting poloidal field coils sections")
     (
         pf_coils_sections,
         pf_coils_points,
@@ -225,7 +227,7 @@ if include_pf_coils:
     ) = pf_coils.generate_cross_sections(mesh_sizes=mesh_sizes, verbose=verbose)
 
 if include_rad_shield:
-    bprint("Getting radiation shield sections")
+    bluemira_print("Getting radiation shield sections")
     (
         rad_shield_sections,
         rad_shield_points,
@@ -241,7 +243,7 @@ if include_rad_shield:
     )
 
 if include_tf_coils:
-    bprint("Getting toroidal field coils sections")
+    bluemira_print("Getting toroidal field coils sections")
     (
         tf_coils_sections,
         tf_coils_points,
@@ -256,7 +258,7 @@ if include_tf_coils:
     )
 
 if include_vessel:
-    bprint("Getting vacuum vessel sections")
+    bluemira_print("Getting vacuum vessel sections")
     (
         vessel_sections,
         vessel_points,
@@ -273,7 +275,7 @@ if include_vessel:
 
 
 # Define the cross section for the void
-bprint("Generating void cross section")
+bluemira_print("Generating void cross section")
 void_points = boundary_points + plasma_points
 
 void_facets = boundary_facets
@@ -372,7 +374,7 @@ void_cross_section = CrossSection(void_section, void_mesh)
 ########################################
 
 
-bprint("Creating OpenMOC universe and cells...")
+bluemira_print("Creating OpenMOC universe and cells...")
 
 # Create the Universe
 root_universe = openmoc.Universe(name="root universe")
@@ -438,11 +440,11 @@ void_cells = create_system_cells(
 ##############################
 
 
-bprint("Creating OpenMOC geometry...")
+bluemira_print("Creating OpenMOC geometry...")
 
 geometry = openmoc.Geometry()
 geometry.setRootUniverse(root_universe)
 
 end = datetime.now()
 
-bprint(f"Geometry created in {end - start}")
+bluemira_print(f"Geometry created in {end - start}")

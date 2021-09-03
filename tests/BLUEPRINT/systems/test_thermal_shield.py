@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -43,6 +43,9 @@ class TestSegmentedThermalShield:
             ['g_ob_ts_tf', 'Outboard gap between TS and TF', 0.05, 'm', None, 'Input'],
             ['g_ts_pf', 'Clearances to PFs', 0.075, 'm', None, 'Input'],
             ['r_ts_joint', 'Radius of inboard/outboard TS joint', 2. , 'm', None, 'Input'],
+            ['tk_cryo_ts', 'Cryo TS thickness', 0.10, 'm', None, 'Input'],
+            ['r_cryo_ts', 'Radius of outboard cryo TS', 11.0, 'm', None, 'Input'],
+            ['z_cryo_ts', 'Half height of outboard cryo TS', 14.0, 'm', None, 'Input'],
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
@@ -151,6 +154,17 @@ class TestSegmentedThermalShield:
             SegmentedThermalShield.build_vvts_section(
                 None, "NotInboard", [], 0.005, 0.005
             )
+
+    def test_build_cts(self):
+        cryo_ts = SegmentedThermalShield(self.parameters, self.to_ts)
+        cryo_ts.build_cts(
+            self.parameters.r_cryo_ts,
+            self.parameters.z_cryo_ts,
+            self.parameters.tk_cryo_ts,
+        )
+        a_cryo_ts = cryo_ts.geom["Cryostat TS"].area
+        true_a_cryo_ts = 5.019999999999982
+        assert np.isclose(a_cryo_ts, true_a_cryo_ts, rtol=1.0e-3)
 
     def test_u_wrapping(self):
         to_ts_u = self.to_ts

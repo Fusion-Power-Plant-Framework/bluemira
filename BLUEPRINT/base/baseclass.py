@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,11 +24,12 @@ Home of the BLUEPRINT base class for reactor system objects
 """
 from copy import deepcopy
 import pickle  # noqa (S403)
-from typing import Union, Type
+from typing import Type, Union
 
 from BLUEPRINT.base.typebase import TypeBase
 from BLUEPRINT.base.parameter import ParameterFrame
-from BLUEPRINT.base.error import BLUEPRINTError, SystemsError
+from bluemira.base.error import BluemiraError
+from BLUEPRINT.base.error import SystemsError
 
 
 class ReactorSystem(TypeBase):
@@ -74,7 +75,7 @@ class ReactorSystem(TypeBase):
         if cls.__name__ not in cls.__available_classes:
             cls.__available_classes[cls.__name__] = cls
         else:
-            raise BLUEPRINTError(
+            raise BluemiraError(
                 f"A class with name {cls.__name__} is already defined in BLUEPRINT as a "
                 f"ReactorSystem : {cls.__available_classes[cls.__name__]} from "
                 f"{cls.__available_classes[cls.__name__].__module__}. You tried to "
@@ -126,7 +127,7 @@ class ReactorSystem(TypeBase):
             The class with the specified name.
         """
         if name not in cls.__available_classes:
-            raise BLUEPRINTError(
+            raise BluemiraError(
                 f"{name} is not known as a BLUEPRINT ReactorSystem. Either ensure that "
                 "the class inherits from a ReactorSystem or check that you have "
                 "imported the required module."
@@ -136,9 +137,7 @@ class ReactorSystem(TypeBase):
         if issubclass(the_class, cls):
             return the_class
         else:
-            raise BLUEPRINTError(
-                f"Unable to find {name} as a subclass of {cls.__name__}"
-            )
+            raise BluemiraError(f"Unable to find {name} as a subclass of {cls.__name__}")
 
     def _generate_subsystem_classes(self, config):
         """
@@ -172,44 +171,73 @@ class ReactorSystem(TypeBase):
     def add_parameter(
         self,
         var: str,
-        name: str,
-        value,  #: Union[str, int, float, np.float64],
-        unit: Union[str, None],
-        descr: Union[str, None],
-        source: Union[str, None],
+        name: str = None,
+        value=None,
+        unit: Union[str, None] = None,
+        description: Union[str, None] = None,
+        source: Union[str, None] = None,
         mapping=None,
+        value_history: Union[list, None] = None,
+        source_history: Union[list, None] = None,
     ):
         """
-        Add a parameter to the ReactorSystem ParameterFrame
+        Takes a list or Parameter object and adds it to the ParameterFrame
+        Handles updates if existing parameter (Var_name sorted).
 
         Parameters
         ----------
         var: str
             The short parameter name
-        name: str
-            The long parameter name
-        value: float
-            The value of the parameter
-        unit: str
-            The unit of the parameter
-        descr: str
-            The long description of the parameter
-        source: str
-            The source (reference and/or code) of the parameter
+        name: Union[str, None]
+            The long parameter name, by default None.
+        value: Union[str, float, int, None]
+            The value of the parameter, by default None.
+        unit: Union[str, None]
+            The unit of the parameter, by default None.
+        description: Union[str, None]
+            The long description of the parameter, by default None.
+        source: Union[str, None]
+            The source (reference and/or code) of the parameter, by default None.
         mapping: Union[Dict[str, ParameterMapping], None]
             The names used for this parameter in external software, and whether
-            that parameter should be written to and/or read from the external tool
+            that parameter should be written to and/or read from the external tool,
+            by default, None.
+        value_history: Union[list, None]
+            History of the value
+        source_history: Union[list, None]
+            History
         """
-        self.params.add_parameter(var, name, value, unit, descr, source, mapping)
+        self.params.add_parameter(
+            var,
+            name,
+            value,
+            unit,
+            description,
+            source,
+            mapping,
+            value_history,
+            source_history,
+        )
 
     def add_parameters(self, record_list, source=None):
         """
-        Handles lists for new Parameters or dicts for existing keywords only
+        Handles a record_list for ParameterFrames and updates accordingly.
+        Items in record_list may be Parameter objects or lists in the following format:
+
+        [var, name, value, unit, description, source]
+
+        If a record_list is a dict, it is passed to update_kw_parameters
+        with the specified source.
+
+        Parameters
+        ----------
+        record_list: Union[dict, list, Parameter]
+            Container of individual Parameters
+        source: str
+            Updates the source parameter for each item in record_list with the
+            specified value, by default None (i.e. the value is left unchanged).
         """
-        if isinstance(record_list, list):
-            self.params.add_parameters(record_list, source=source)
-        elif isinstance(record_list, dict):
-            self.params.update_kw_parameters(record_list, source=source)
+        self.params.add_parameters(record_list, source=source)
 
     def build_CAD(self):
         """

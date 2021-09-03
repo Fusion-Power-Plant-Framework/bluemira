@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ from BLUEPRINT.geometry.geomtools import (
     clean_loop_points,
 )
 from BLUEPRINT.geometry.constants import VERY_BIG
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.utilities.plottools import pathify, BPPathPatch3D, Plot3D
 from BLUEPRINT.utilities.tools import is_num, furthest_perp_point
@@ -201,7 +201,7 @@ class Loop(GeomBase):
         told otherwise
         Now preserves 3rd dimension
         """
-        bpwarn("Geometry::Loop: using trim")
+        bluemira_warn("Geometry::Loop: using trim")
         l1, l2 = [dict(zip(self.plan_dims, i.T)) for i in self.split_by_line(p1, p2)]
         c = self._get_3rd_dim()
         v = self[c][0]
@@ -353,7 +353,9 @@ class Loop(GeomBase):
         """
         inter = loop_plane_intersect(self, plane)
         if inter is None:
-            bpwarn("Geometry::Loop::section: No intersection with plane detected.")
+            bluemira_warn(
+                "Geometry::Loop::section: No intersection with plane detected."
+            )
         return inter
 
     def distance_to(self, point):
@@ -738,7 +740,7 @@ class Loop(GeomBase):
         """
         Splits into inner/outer sub-Loops. Smallest A is inner
         """
-        bpwarn("Geometry::Loop: using split")
+        bluemira_warn("Geometry::Loop: using split")
         l1, l2 = Loop.from_array(self[:pos]), Loop.from_array(self[pos:])
         a1, a2 = l1.area, l2.area
         self.inner = l1 if a1 < a2 else l2
@@ -786,7 +788,7 @@ class Loop(GeomBase):
         starting points. Will only work for closed polygons.
         """
         if not self.closed:
-            bpwarn("On ne peut pas faire cela avec des Loops qui sont ouverts")
+            bluemira_warn("On ne peut pas faire cela avec des Loops qui sont ouverts")
             return
 
         arg = np.argmin(self.z)
@@ -1173,7 +1175,7 @@ class Loop(GeomBase):
         """
         _len = max([len(c) for c in [self.x, self.y, self.z] if hasattr(c, "__len__")])
         if _len <= 3:
-            # bpwarn('Geometry::Loop Loop of length <= 3...')
+            # bluemira_warn('Geometry::Loop Loop of length <= 3...')
             pass
         d = []
         axes = ["x", "y", "z"]
@@ -1496,7 +1498,7 @@ class Loop(GeomBase):
         Centroid
         """
         if not self.closed:
-            bpwarn("Returning centroid of an open polygon.")
+            bluemira_warn("Returning centroid of an open polygon.")
         if self.ndim == 2:
             x, z = get_centroid(*self.d2)
             if np.abs(x) == np.inf or np.abs(z) == np.inf:
@@ -1642,7 +1644,7 @@ class MultiLoop(GeomBase):
         if len(new_loops) == 1:
             return Loop(*new_loops[0].xyz)
         elif len(new_loops) == 0:
-            bpwarn("No connections in MultiLoop detected.")
+            bluemira_warn("No connections in MultiLoop detected.")
         else:
             self.loops = new_loops
 
@@ -1882,7 +1884,7 @@ def point_loop_cast(point, loop, angle, d=20):
             inter = inter[np.argmin(lengths)]
             return inter.x, inter.y
     elif inter.is_empty:
-        bpwarn("No intersection found.")
+        bluemira_warn("No intersection found.")
         return
 
 

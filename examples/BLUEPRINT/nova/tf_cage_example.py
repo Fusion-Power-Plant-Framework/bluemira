@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ from IPython import get_ipython
 import matplotlib.pyplot as plt
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.nova.structuralsolver import StructuralSolver
 
 try:
@@ -63,7 +63,7 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "generated_data",
+    "generated_data_root": "generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "plasma_mode": "run",

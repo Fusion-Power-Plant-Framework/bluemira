@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -22,22 +22,10 @@
 """
 Errors for sub-modules
 """
-from textwrap import fill, dedent
+from bluemira.base.error import BluemiraError
 
 
-class BLUEPRINTError(Exception):
-    """
-    Base exception class
-    """
-
-    def __str__(self):
-        """
-        Prettier handling of the Exception strings
-        """
-        return fill(dedent(self.args[0]))
-
-
-class BeamsError(BLUEPRINTError):
+class BeamsError(BluemiraError):
     """
     Error class for use in the beams module
     """
@@ -45,7 +33,7 @@ class BeamsError(BLUEPRINTError):
     pass
 
 
-class NeutronicsError(BLUEPRINTError):
+class NeutronicsError(BluemiraError):
     """
     Error class for use in the neutronics module
     """
@@ -53,7 +41,7 @@ class NeutronicsError(BLUEPRINTError):
     pass
 
 
-class CADError(BLUEPRINTError):
+class CADError(BluemiraError):
     """
     Error class for use in the cad module
     """
@@ -61,7 +49,7 @@ class CADError(BLUEPRINTError):
     pass
 
 
-class SystemsError(BLUEPRINTError):
+class SystemsError(BluemiraError):
     """
     Error class for use in the systems module
     """
@@ -69,7 +57,7 @@ class SystemsError(BLUEPRINTError):
     pass
 
 
-class EquilibriaError(BLUEPRINTError):
+class EquilibriaError(BluemiraError):
     """
     Error class for use in the equilibria module
     """
@@ -77,7 +65,7 @@ class EquilibriaError(BLUEPRINTError):
     pass
 
 
-class UtilitiesError(BLUEPRINTError):
+class UtilitiesError(BluemiraError):
     """
     Error class for use in the utilities module
     """
@@ -85,7 +73,7 @@ class UtilitiesError(BLUEPRINTError):
     pass
 
 
-class MaterialsError(BLUEPRINTError):
+class MaterialsError(BluemiraError):
     """
     Error class for use in the materials module
     """
@@ -93,7 +81,15 @@ class MaterialsError(BLUEPRINTError):
     pass
 
 
-class SysCodesError(BLUEPRINTError):
+class MagnetostaticsError(BluemiraError):
+    """
+    Error class for use in the magnetostatics module
+    """
+
+    pass
+
+
+class SysCodesError(BluemiraError):
     """
     Error class for use in the syscodes module
     """
@@ -101,7 +97,7 @@ class SysCodesError(BLUEPRINTError):
     pass
 
 
-class GeometryError(BLUEPRINTError):
+class GeometryError(BluemiraError):
     """
     Error class for use in the geometry module
     """
@@ -109,7 +105,7 @@ class GeometryError(BLUEPRINTError):
     pass
 
 
-class NovaError(BLUEPRINTError):
+class NovaError(BluemiraError):
     """
     Error class for use in the nova module
     """
@@ -117,7 +113,7 @@ class NovaError(BLUEPRINTError):
     pass
 
 
-class BaseError(BLUEPRINTError):
+class BaseError(BluemiraError):
     """
     Error class for use in the base module
     """
@@ -125,7 +121,7 @@ class BaseError(BLUEPRINTError):
     pass
 
 
-class FuelCycleError(BLUEPRINTError):
+class FuelCycleError(BluemiraError):
     """
     Error class for use in the fuelcycle module
     """

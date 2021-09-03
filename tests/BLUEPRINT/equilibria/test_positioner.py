@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ class TestXZLMapper:
     @classmethod
     def setup_class(cls):
         f, cls.ax = plt.subplots()
-        fp = get_BP_path("Geometry", subfolder="data")
+        fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
@@ -191,7 +191,7 @@ class TestZLMapper:
         """
         Sets up an XZLMapper that with a "normal" set of exclusion zones
         """
-        fp = get_BP_path("Geometry", subfolder="data")
+        fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
@@ -244,7 +244,7 @@ class TestZLMapperEdges:
         the start or end of a track
         """
 
-        fp = get_BP_path("Geometry", subfolder="data")
+        fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         tf = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
         tf = tf.offset(2.5)
         clip = np.where(tf.x >= 3.5)
@@ -488,14 +488,14 @@ class TestRegionMapper:
             }
         )
 
-        with patch("BLUEPRINT.equilibria.positioner.bpwarn") as bpwarn:
+        with patch("BLUEPRINT.equilibria.positioner.bluemira_warn") as bluemira_warn:
             self.Rmap.get_Lmap(
                 CoilSet(
                     [Coil(3, 3, ctype="PF"), Coil(4, 4, ctype="CS")],
                     9.0,
                 )
             )
-            bpwarn.assert_called()
+            bluemira_warn.assert_called()
 
     def test_name_converter(self):
         rm = RegionMapper({})

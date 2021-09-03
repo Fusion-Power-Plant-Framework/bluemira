@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
 from BLUEPRINT.base.file import make_BP_path
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 
 
 plot_defaults()
@@ -79,7 +79,7 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "!BP_ROOT!/generated_data",
+    "generated_data_root": "!BP_ROOT!/generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "plasma_mode": "run",
@@ -123,16 +123,17 @@ if __name__ == "__main__":
 
     if LOAD:
         filename = (
-            make_BP_path(f"reactors/{REACTORNAME}", subfolder="data")
+            make_BP_path(f"reactors/{REACTORNAME}", subfolder="data/BLUEPRINT")
             + "/"
             + REACTORNAME
             + ".pkl"
         )
-        R = SingleNullReactor.load(filename, generated_data_root="generated_data")
+        R = SingleNullReactor.load(
+            filename, generated_data_root="generated_data/BLUEPRINT"
+        )
         R.TF.cross_section()
     else:
         R = SingleNullReactor(config, build_config, build_tweaks)
         R.build()
         # R.run_systems_code()
     plot_defaults()
-    plt.ion()

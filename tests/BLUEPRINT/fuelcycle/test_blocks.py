@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -70,7 +70,9 @@ class TestTCycleComponent:
 
 class TestSqrtFittedSinks:
     def test_fits(self):
-        path = get_BP_path("fuelcycle/blanket_fw_T_retention", subfolder="data")
+        path = get_BP_path(
+            "fuelcycle/blanket_fw_T_retention", subfolder="data/BLUEPRINT"
+        )
 
         # Get all the data files
         files = []

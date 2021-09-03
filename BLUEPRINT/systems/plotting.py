@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -27,9 +27,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.geometry.geomtools import qrotate
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.syscodes.postPROCESS import plot_PROCESS
 from BLUEPRINT.utilities.colortools import color_kwargs
 
@@ -248,7 +248,9 @@ class ReactorPlotter:
             eq = self.reactor.EQ.snapshots["SOF"]
         else:
             if not flag:
-                bpwarn("Systems::ReactorPlotter: No reference equilibrium to " "plot!")
+                bluemira_warn(
+                    "Systems::ReactorPlotter: No reference equilibrium to " "plot!"
+                )
             else:
                 pass
         if self.axxz is None:
@@ -305,7 +307,7 @@ class ReactorPlotter:
         """
         failed = ["\t" + n for n in failed]
         fstr = "\n".join(failed)
-        bpwarn(
+        bluemira_warn(
             f"Systems::ReactorPlotter: Failed to {dims} plot the follow"
             "ing:\n"
             f"{fstr}"

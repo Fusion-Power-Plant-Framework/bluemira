@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ import numpy as np
 from BLUEPRINT.base.error import BeamsError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.base.constants import GRAVITY
+from bluemira.base.constants import GRAVITY
 from BLUEPRINT.beams.constants import NU, SD_LIMIT, N_INTERP
 from BLUEPRINT.beams.node import get_midpoint
 from BLUEPRINT.beams.loads import point_load, distributed_load

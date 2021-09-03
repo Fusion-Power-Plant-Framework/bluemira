@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ First wall example
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.base.file import get_BP_path, make_BP_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.boolean import (
@@ -48,7 +48,7 @@ plot_defaults()
 # Let's load some Equilibrium objects, so that we have something to work with
 
 # %%
-read_path = get_BP_path("equilibria", subfolder="data")
+read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
 eof_name = "EU-DEMO_EOF.json"
 sof_name = "EU-DEMO_SOF.json"
 

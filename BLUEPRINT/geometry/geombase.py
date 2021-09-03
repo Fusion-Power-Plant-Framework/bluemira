@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import pickle  # noqa (S403)
 import json
 import os
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import NumpyJSONEncoder
 from BLUEPRINT.geometry.constants import TOLERANCE
 
@@ -294,7 +294,7 @@ class Plane(GeomBase):
         vector = np.cross(m, n)
 
         if np.all(vector == 0):
-            bpwarn("Co-incident or parallel Planes.")
+            bluemira_warn("Co-incident or parallel Planes.")
             return None, None
 
         # Pick the longest coordinate and set the point on the line to 0 in

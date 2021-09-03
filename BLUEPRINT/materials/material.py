@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ with warnings.catch_warnings():
     import neutronics_material_maker as nmm
 
 from BLUEPRINT.base.error import MaterialsError
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.materials.constants import T_DEFAULT, P_DEFAULT
 from BLUEPRINT.utilities.tools import (
     gcm3tokgm3,
@@ -1332,7 +1332,7 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
         except ImportError:
             self.is_enrichable = False
         if enrichment is not None:
-            bpwarn(
+            bluemira_warn(
                 f"Enrichment set for {self.name} but OpenMC is not available, so "
                 "enrichment properties will not be ignored."
             )

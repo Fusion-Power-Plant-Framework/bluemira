@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.lookandfeel import plot_defaults
+from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.equilibria.run import AbInitioEquilibriumProblem
 from BLUEPRINT.equilibria.profiles import DoublePowerFunc
@@ -52,7 +52,7 @@ plot_defaults()
 # Make a TF coil shape and use it as an exclusion zone object
 
 # %%
-fp = get_BP_path("Geometry", subfolder="data")
+fp = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
 TF = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
 TF = TF.offset(2.4)
 clip = np.where(TF.x >= 3.5)

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ The base component object for CAD modelling
 """
 from itertools import cycle
 from BLUEPRINT.base.error import CADError
-from BLUEPRINT.base.lookandfeel import bpwarn
+from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.cad.cadtools import (
     make_compound,
     save_as_STEP,
@@ -104,9 +104,9 @@ class ComponentCAD:
             pass
 
         if shape.IsNull():
-            bpwarn(f"Objeto {name} não existe!")
+            bluemira_warn(f"Objeto {name} não existe!")
         if shape.Infinite():
-            bpwarn(f"Objeto {name} é infinito!")
+            bluemira_warn(f"Objeto {name} é infinito!")
 
     def add_shape(self, shape, **kwargs):
         """
