@@ -24,12 +24,12 @@ A typical fuel cycle result for an EU-DEMO reference point
 """
 
 import matplotlib.pyplot as plt
-from bluemira.base.lookandfeel import plot_defaults
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.look_and_feel import plot_defaults
+from BLUEPRINT.base.parameter import ParameterFrame
 from bluemira.utilities.tools import set_random_seed
 from bluemira.systems.physicstoolbox import n_DD_reactions, n_DT_reactions
 from bluemira.fuel_cycle.lifecycle import LifeCycle
-from bluemira.fuel_cycle.tfvutils import convert_flux_to_flow
+from bluemira.fuel_cycle.tools import convert_flux_to_flow
 from bluemira.systems.tfv import TFVSystem
 
 plot_defaults()

@@ -72,7 +72,7 @@ class TestFuelCycleComponent:
 
 class TestSqrtFittedSinks:
     def test_fits(self):
-        path = get_bluemira_path("fuelcycle/blanket_fw_T_retention", subfolder="data")
+        path = get_bluemira_path("fuel_cycle/blanket_fw_T_retention", subfolder="data")
 
         # Get all the data files
         files = []

@@ -26,6 +26,7 @@ A collection of miscellaneous tools.
 import numpy as np
 from json import JSONEncoder
 import string
+import nlopt
 from bluemira.base.constants import E_I, E_IJ, E_IJK
 
 
@@ -260,3 +261,18 @@ wrap = EinsumWrapper()
 norm = wrap.norm
 dot = wrap.dot
 cross = wrap.cross
+
+
+def set_random_seed(seed_number: int):
+    """
+    Sets the random seed number in numpy and NLopt. Useful when repeatable
+    results are desired in Monte Carlo methods and stochastic optimisation
+    methods.
+
+    Parameters
+    ----------
+    seed_number: int
+        The random seed number, preferably a very large integer
+    """
+    np.random.seed(seed_number)
+    nlopt.srand(seed_number)

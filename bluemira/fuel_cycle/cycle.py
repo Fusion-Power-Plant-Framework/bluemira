@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter import ParameterFrame
+from BLUEPRINT.base.parameter import ParameterFrame
 from bluemira.base.baseclass import ReactorSystem
 from bluemira.fuel_cycle.tools import (
     _speed_recycle,
