@@ -71,7 +71,7 @@ from bluemira.utilities.tools import delta
 from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.geometry._deprecated_loop import Loop
 
-EQ_FOLDER = get_bluemira_path("equilibria/files", subfolder="data")
+EQ_FOLDER = get_bluemira_path("equilibria", subfolder="data")
 
 
 class MHDState:
