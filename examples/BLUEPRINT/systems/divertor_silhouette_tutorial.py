@@ -91,7 +91,9 @@ params = ParameterFrame(params)
 # A `StreamFlow` contains utilities for the analysis of equilibrium information.
 
 # %%
-eq_filename = os.path.join(get_BP_root(), "data", "eqdsk", "step_v7_format.geqdsk")
+eq_filename = os.path.join(
+    get_BP_root(), "data", "BLUEPRINT", "eqdsk", "step_v7_format.geqdsk"
+)
 sf = StreamFlow(eq_filename)
 
 # %%[markdown]

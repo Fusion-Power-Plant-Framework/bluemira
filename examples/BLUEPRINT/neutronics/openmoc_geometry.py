@@ -126,8 +126,10 @@ plane_helper.add_plane(top)
 reactor_name = config["Name"]
 file_manager = FileManager(
     reactor_name=reactor_name,
-    reference_data_root=build_config.get("reference_data_root", "data"),
-    generated_data_root=build_config.get("generated_data_root", "data"),
+    reference_data_root=build_config.get("reference_data_root", "data/BLUEPRINT"),
+    generated_data_root=build_config.get(
+        "generated_data_root", "generated_data/BLUEPRINT"
+    ),
 )
 file_manager.build_dirs()
 reactor_path = file_manager.reference_data_dirs["root"]

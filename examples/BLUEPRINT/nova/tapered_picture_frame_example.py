@@ -60,8 +60,8 @@ params = [
 
 parameters = ParameterFrame(params)
 
-read_path = make_BP_path("Geometry", subfolder="data")
-write_path = make_BP_path("Geometry", subfolder="generated_data")
+read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
+write_path = make_BP_path("Geometry", subfolder="generated_data/BLUEPRINT")
 
 lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
 lcfs.close()

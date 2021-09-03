@@ -215,7 +215,10 @@ class FileManager(TypeBase):
     generated_data_dirs: dict
 
     def __init__(
-        self, reactor_name, reference_data_root="data", generated_data_root="data"
+        self,
+        reactor_name,
+        reference_data_root="data/BLUEPRINT",
+        generated_data_root="data/BLUEPRINT",
     ):
         self._reactor_name = reactor_name
         self._reference_data_root = reference_data_root

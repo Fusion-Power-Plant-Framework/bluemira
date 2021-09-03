@@ -33,7 +33,7 @@ from .cache import MaterialCache
 
 materials_cache = MaterialCache()
 try:
-    material_dir = get_BP_path("materials", subfolder="data")
+    material_dir = get_BP_path("materials", subfolder="data/BLUEPRINT")
     material_file = os.sep.join([material_dir, "materials.json"])
     mixture_file = os.sep.join([material_dir, "mixtures.json"])
     materials_cache.load_from_file(material_file)

@@ -520,7 +520,9 @@ class PicardBaseIterator(ABC):
         self.gif_flag = gif
         if figure_folder is None:
             figure_folder = try_get_BP_path(
-                "plots/equilibria", subfolder="data", allow_missing=not self.gif_flag
+                "plots/equilibria",
+                subfolder="data/BLUEPRINT",
+                allow_missing=not self.gif_flag,
             )
         self.figure_folder = figure_folder
         self.store = []

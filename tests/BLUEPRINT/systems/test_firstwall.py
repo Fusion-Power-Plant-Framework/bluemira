@@ -29,7 +29,7 @@ from BLUEPRINT.equilibria.equilibrium import Equilibrium
 class TestFluxSurface:
     @classmethod
     def setup_class(cls):
-        read_path = get_BP_path("equilibria", subfolder="data")
+        read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
         eq_name = "EU-DEMO_EOF.json"
         eq_name = os.sep.join([read_path, eq_name])
         eq = Equilibrium.from_eqdsk(eq_name)
@@ -73,7 +73,7 @@ class TestFluxSurface:
 class TestFirstWallSN:
     @classmethod
     def setup_class(cls):
-        read_path = get_BP_path("equilibria", subfolder="data")
+        read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
         eq_name = "EU-DEMO_EOF.json"
         eq_name = os.sep.join([read_path, eq_name])
         eq = Equilibrium.from_eqdsk(eq_name)
