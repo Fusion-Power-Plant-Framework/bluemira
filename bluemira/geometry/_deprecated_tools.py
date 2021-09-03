@@ -28,6 +28,7 @@ from itertools import zip_longest
 import numpy as np
 import numba as nb
 from numba.np.extensions import cross2d
+from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
 from typing import Iterable
 
@@ -340,7 +341,7 @@ def get_angle_between_vectors(v1, v2, signed=False):
     Returns
     -------
     angle: float
-        The angle between the vector [degrees]
+        The angle between the vectors [radians]
     """
     if not all(isinstance(p, np.ndarray) for p in [v1, v2]):
         v1, v2 = np.array(v1), np.array(v2)
@@ -358,7 +359,7 @@ def get_angle_between_vectors(v1, v2, signed=False):
         else:
             sign = np.sign(det)
 
-    return sign * np.degrees(angle)
+    return sign * angle
 
 
 @nb.jit(cache=True, nopython=True)
@@ -729,6 +730,85 @@ def bounding_box(x, y, z):
     y_b = 0.5 * size * np.array([-1, -1, 1, 1, -1, -1, 1, 1]) + 0.5 * (ymax + ymin)
     z_b = 0.5 * size * np.array([-1, 1, -1, 1, -1, 1, -1, 1]) + 0.5 * (zmax + zmin)
     return x_b, y_b, z_b
+
+
+def vector_lengthnorm(x, y, z):
+    """
+    Get a normalised 1-D parameterisation of a set of x-y-z coordinates.
+
+    Parameters
+    ----------
+    x: np.array
+        The x coordinates
+    y: np.array
+        The y coordinates
+    z: np.array
+        The z coordinates
+
+    Returns
+    -------
+    length_: np.array(n)
+        The normalised length vector
+    """
+    length_ = np.append(
+        0,
+        np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)),
+    )
+    return length_ / length_[-1]
+
+
+def vector_lengthnorm_2d(x, z):
+    """
+    Get a normalised 1-D parameterisation of an x, z loop.
+
+    Parameters
+    ----------
+    x: array_like
+        x coordinates of the loop [m]
+    z: array_like
+        z coordinates of the loop [m]
+
+    Returns
+    -------
+    total_length: np.array(N)
+        The cumulative normalised length of each individual segment in the loop
+    """
+    total_length = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
+    return total_length / total_length[-1]
+
+
+def innocent_smoothie(x, z, n=500, s=0):
+    """
+    Get a smoothed interpolated set of coordinates.
+
+    Parameters
+    ----------
+    x: array_like
+        x coordinates of the loop [m]
+    z: array_like
+        z coordinates of the loop [m]
+    n: int
+        The number of interpolation points
+    s: Union[int, float]
+        The smoothing parameter to use. 0 results in no smoothing (default)
+
+    Returns
+    -------
+    x: array_like
+        Smoothed, interpolated x coordinates of the loop [m]
+    z: array_like
+        Smoothed, interpolated z coordinates of the loop [m]
+    """
+    length_norm = vector_lengthnorm_2d(x, z)
+    n = int(n)
+    l_interp = np.linspace(0, 1, n)
+    if s == 0:
+        x = interp1d(length_norm, x)(l_interp)
+        z = interp1d(length_norm, z)(l_interp)
+    else:
+        x = UnivariateSpline(length_norm, x, s=s)(l_interp)
+        z = UnivariateSpline(length_norm, z, s=s)(l_interp)
+    return x, z
 
 
 # =============================================================================
@@ -1841,6 +1921,7 @@ class MixedFaceMaker:
             )
             angles = np.append(angles, join_angle)
 
+        angles = np.rad2deg(angles)
         sharp_indices = np.where((angles <= self.a_acute) & (angles != 0))[0]
         # Convert angle numbering to segment numbering (both segments of angle)
         sharp_edge_indices = []

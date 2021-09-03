@@ -63,15 +63,15 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "!BP_ROOT!/generated_data",
+    "generated_data_root": "!BP_ROOT!/generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "process_indat": os.path.join(
-        get_BP_root(), "examples", "data", "syscodes", "ST_IN.DAT"
+        get_BP_root(), "examples", "BLUEPRINT", "data", "syscodes", "ST_IN.DAT"
     ),
     "plasma_mode": "read",
     "plasma_filepath": os.path.join(
-        get_BP_root(), "data", "eqdsk", "step_v7_format.geqdsk"
+        get_BP_root(), "data", "BLUEPRINT", "eqdsk", "step_v7_format.geqdsk"
     ),
     "reconstruct_jtor": True,
     "tf_mode": "run",

@@ -79,7 +79,7 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "!BP_ROOT!/generated_data",
+    "generated_data_root": "!BP_ROOT!/generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "plasma_mode": "run",
@@ -123,12 +123,14 @@ if __name__ == "__main__":
 
     if LOAD:
         filename = (
-            make_BP_path(f"reactors/{REACTORNAME}", subfolder="data")
+            make_BP_path(f"reactors/{REACTORNAME}", subfolder="data/BLUEPRINT")
             + "/"
             + REACTORNAME
             + ".pkl"
         )
-        R = SingleNullReactor.load(filename, generated_data_root="generated_data")
+        R = SingleNullReactor.load(
+            filename, generated_data_root="generated_data/BLUEPRINT"
+        )
         R.TF.cross_section()
     else:
         R = SingleNullReactor(config, build_config, build_tweaks)
