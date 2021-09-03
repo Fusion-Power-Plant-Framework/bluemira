@@ -21,8 +21,8 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-from BLUEPRINT.geometry.loop import Loop
-from bluemira.geometry.geomtools import circle_seg
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.structural.material import SS316
 from bluemira.structural.crosssection import IBeam
 from bluemira.structural.transformation import cyclic_pattern
@@ -43,7 +43,7 @@ class TestCyclicSymmetry:
         model.add_element(i1, i2, xsection, SS316)
         model.add_support(0, True, True, True, True, True, True)
 
-        x, y = circle_seg(9, (0, 0), 30, 15)
+        x, y = make_circle_arc(9, 0, 0, np.deg2rad(30), 15)
         loop = Loop(x=x, y=y, z=3)
 
         sym_nodes = []

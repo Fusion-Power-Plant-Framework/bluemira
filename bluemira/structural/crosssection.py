@@ -420,7 +420,7 @@ def loop_to_point_facet(loop):
 
     Parameters
     ----------
-    loop: BLUEPRINT::geometry:Loop
+    loop: Loop
         The Loop to convert
 
     Returns
@@ -457,7 +457,7 @@ class CustomCrossSection(CrossSection):
 
     Parameters
     ----------
-    loop: BLUEPRINT::geometry::Loop object
+    loop: Loop object
         The loop of the CrossSection
     """
 
@@ -867,7 +867,7 @@ class AnalyticalShellComposite(CompositeCrossSection):
     def __init__(self, shell, materials):
 
         if len(materials) != 2:
-            raise StructuralError("Need 2 materials for a DuploRectangleComposite.")
+            raise StructuralError("Need 2 materials for a AnalyticalShellComposite.")
 
         # Need to store this information to retrieve stresses in the various
         # parts of the CompositeCrossSection

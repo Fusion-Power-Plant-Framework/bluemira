@@ -23,7 +23,7 @@ from io import StringIO
 import numpy as np
 import pytest
 from unittest import mock
-from bluemira.base.error import BeamsError
+from bluemira.structural.error import StructuralError
 from bluemira.structural.model import FiniteElementModel, check_matrix_condition
 from bluemira.structural.crosssection import IBeam, RectangularBeam
 from bluemira.structural.material import SS316
@@ -87,7 +87,7 @@ class TestFEModel:
         load_case.add_node_load(1, p3, "Fy")
         load_case.add_node_load(1, m4, "Mz")
         load_case.add_node_load(2, m6, "Mz")
-        with pytest.raises(BeamsError):
+        with pytest.raises(StructuralError):
             model.solve(load_case)
 
         model = FiniteElementModel()
@@ -113,7 +113,7 @@ class TestFEModel:
         load_case.add_node_load(1, p3, "Fy")
         load_case.add_node_load(1, m4, "Mz")
         load_case.add_node_load(2, m6, "Mz")
-        with pytest.raises(BeamsError):
+        with pytest.raises(StructuralError):
             model.solve(load_case)
 
     def test_610(self):

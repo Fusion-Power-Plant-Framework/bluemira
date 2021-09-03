@@ -25,8 +25,8 @@ import numpy as np
 import pickle  # noqa (S403)
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.error import BeamsError
-from BLUEPRINT.geometry.loop import Loop
+from bluemira.structural.error import StructuralError
+from bluemira.geometry._deprecated_loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from bluemira.structural.material import SS316, Concrete
 from bluemira.structural.crosssection import (
@@ -71,7 +71,7 @@ class TestIbeam:
             [1, 1, 0.1, 1],
         ]
         for prop in props:
-            with pytest.raises(BeamsError):
+            with pytest.raises(StructuralError):
                 IBeam(*prop)
 
     def test_rectangle(self):
@@ -170,7 +170,7 @@ class TestComposite:
         rect = RectangularBeam(4 - 0.2, 5 - 0.2).geometry
         shell = make_hollow_rect(4, 5, 0.1)
 
-        with pytest.raises(BeamsError):
+        with pytest.raises(StructuralError):
             CompositeCrossSection([shell, rect], [SS316])
 
 

@@ -26,7 +26,7 @@ from bluemira.structural.loads import LoadCase
 from bluemira.structural.material import SS316
 from bluemira.structural.crosssection import RectangularBeam
 from bluemira.structural.plotting import GeometryPlotter
-from bluemira.geometry.loop import Loop
+from bluemira.geometry._deprecated_loop import Loop
 
 SS316 = SS316()
 
