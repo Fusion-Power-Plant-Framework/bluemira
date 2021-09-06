@@ -24,6 +24,7 @@ A simplified 2-D solver for calculating charged particle heat loads.
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 from copy import deepcopy
 from BLUEPRINT.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
@@ -42,6 +43,10 @@ __all__ = ["ChargedParticleSolver"]
 
 
 class FluxSurface:
+    """
+    Utility class for handling flux surface geometries.
+    """
+
     __slots__ = [
         "loop",
         "x_omp",
@@ -157,11 +162,19 @@ class FluxSurface:
             fw_arg = int(fw_arg)
 
         # Relying on the fact that first wall is ccw, get the intersection angle
-        alpha = np.deg2rad(
-            get_angle_between_points(loop[-2], loop[-1], first_wall[fw_arg])
-        )
+        alpha = get_angle_between_points(loop[-2], loop[-1], first_wall[fw_arg])
 
         return loop, x_inter, z_inter, alpha
+
+    def plot(self, ax=None, **kwargs):
+        if ax is None:
+            ax = plt.gca()
+
+        if "linewidth" not in kwargs:
+            kwargs["linewidth"] = 0.01
+
+        self.lfs_loop.plot(ax, color="b", **kwargs)
+        self.hfs_loop.plot(ax, color="r", **kwargs)
 
     def copy(self):
         return deepcopy(self)
