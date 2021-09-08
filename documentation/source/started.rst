@@ -55,7 +55,7 @@ Bluemira is able perform a PROCESS run as the initial step in the reactor design
         sudo apt-get update
         sudo apt-get install -y software-properties-common
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-        sudo apt-get update && apt-get install -y gfortran-9
+        sudo apt-get update && sudo apt-get install -y gfortran-9
         sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 30
 
 In order install PROCESS in your bluemira environment, run the following:
