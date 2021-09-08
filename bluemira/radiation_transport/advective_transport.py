@@ -99,8 +99,8 @@ class FluxSurface:
 
         # Split the flux surface geometry into LFS and HFS geometries
         loop = self.loop
-
-        radial_line = Loop(x=[o_point.x, self.x_omp + 1e-3], z=[self.z_omp, self.z_omp])
+        delta = 1e-3 if o_point.x < self.x_omp else -1e-3
+        radial_line = Loop(x=[o_point.x, self.x_omp + delta], z=[self.z_omp, self.z_omp])
         # Add the intersection point to the loop
         arg_inter = join_intersect(loop, radial_line, get_arg=True)[0]
 
@@ -398,7 +398,7 @@ class ChargedParticleSolver:
         o_points, x_points = self.eq.get_OX_points()
         o_point = o_points[0]
         x_point_down, x_point_up = sorted(x_points[:2], key=lambda point: point.z)
-        x_point_psi = 0.5 * (x_point_down.psi, x_point_up.psi)
+        x_point_psi = 0.5 * (x_point_down.psi + x_point_up.psi)
 
         # Find the middle and maximum outboard mid-plane psi norm values
         yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
@@ -420,7 +420,12 @@ class ChargedParticleSolver:
         psi_norm = 1.0
         while psi_norm < psi_norm_out:
             loops = find_flux_loops(
-                self.eq.x, self.eq.z, self.eq.psi(), o_points=o_points, x_points=x_points
+                self.eq.x,
+                self.eq.z,
+                self.eq.psi(),
+                psi_norm,
+                o_points=o_points,
+                x_points=x_points,
             )
             loops = [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
             if len(loops) > 2:
@@ -524,16 +529,28 @@ class ChargedParticleSolver:
 
         # Calculate perpendicular heat fluxes
         heat_flux_lfs_down = (
-            self.params.f_outer_target * q_par_lfs_down * np.sin(alpha_lfs_down)
+            self.params.f_outer_target
+            * self.params.f_lower_target
+            * q_par_lfs_down
+            * np.sin(alpha_lfs_down)
         )
         heat_flux_lfs_up = (
-            self.params.f_outer_target * q_par_lfs_up * np.sin(alpha_lfs_up)
+            self.params.f_outer_target
+            * self.params.f_upper_target
+            * q_par_lfs_up
+            * np.sin(alpha_lfs_up)
         )
         heat_flux_hfs_down = (
-            self.params.f_inner_target * q_par_hfs_down * np.sin(alpha_hfs_down)
+            self.params.f_inner_target
+            * self.params.f_lower_target
+            * q_par_hfs_down
+            * np.sin(alpha_hfs_down)
         )
         heat_flux_hfs_up = (
-            self.params.f_inner_target * q_par_hfs_up * np.sin(alpha_hfs_up)
+            self.params.f_inner_target
+            * self.params.f_upper_target
+            * q_par_hfs_up
+            * np.sin(alpha_hfs_up)
         )
 
         # Correct power (energy conservation)
@@ -549,9 +566,9 @@ class ChargedParticleSolver:
         q_imp_int = 2 * np.pi * np.sum(q_par_imp / (B_imp / Bp_imp) * fs_widths * x_imp)
 
         total_power = self.params.fw_p_sol_near + self.params.fw_p_sol_far
-        f_correct_power_ob = (total_power) / q_omp_int
+        f_correct_power_ob = self.params.f_outer_target * total_power / q_omp_int
 
-        f_correct_power_ib = (total_power) / q_imp_int
+        f_correct_power_ib = self.params.f_inner_target * total_power / q_imp_int
 
         return (
             np.append(
@@ -559,6 +576,12 @@ class ChargedParticleSolver:
             ),
             np.append(
                 z_lfs_down_inter, z_lfs_up_inter, z_hfs_down_inter, z_hfs_up_inter
+            ),
+            np.append(
+                f_correct_power_ib * heat_flux_lfs_down,
+                f_correct_power_ib * heat_flux_lfs_up,
+                f_correct_power_ob * heat_flux_hfs_down,
+                f_correct_power_ob * heat_flux_hfs_up,
             ),
         )
 
