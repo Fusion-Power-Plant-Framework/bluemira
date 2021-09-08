@@ -70,6 +70,7 @@ def logger_setup(logfilename="bluemira_logging.log"):
     recorded_handler = logging.FileHandler(logfilename)
     recorded_handler.setLevel(logging.DEBUG)
 
+    logger.setLevel(logging.DEBUG)
     logger.addHandler(on_screen_handler)
     logger.addHandler(recorded_handler)
     return logger
