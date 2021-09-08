@@ -20,8 +20,8 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-import io
-import sys
+import os
+
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
 from bluemira.base.look_and_feel import (
@@ -67,18 +67,19 @@ def test_version_banner():
     assert len(version_banner()) == 3
 
 
-def capture_output(func, input_str):
+def capture_output(caplog, func, *inputs):
     """
     Print testing utility function.
     """
-    capture = io.StringIO()
-    sys.stdout = capture
-    if input_str is None:
+    if len(inputs) == 0:
         func()
     else:
-        func(input_str)
-    sys.stdout = sys.__stdout__
-    return capture.getvalue().splitlines()
+        func(*inputs)
+
+    # Flatten in the case where we have multiple messages and split by line
+    result = [line for message in caplog.messages for line in message.split(os.linesep)]
+    caplog.clear()
+    return result
 
 
 @pytest.mark.parametrize(
@@ -91,8 +92,8 @@ def capture_output(func, input_str):
         (bluemira_debug, "check", "green", ""),
     ],
 )
-def test_bluemira_log(method, text, colour, default_text):
-    result = capture_output(method, text)
+def test_bluemira_log(caplog, method, text, colour, default_text):
+    result = capture_output(caplog, method, text)
 
     assert len(result) == 3
     assert ANSI_COLOR[colour] in result[0]
@@ -102,6 +103,7 @@ def test_bluemira_log(method, text, colour, default_text):
     assert EXIT_COLOR in result[-1]
 
     result = capture_output(
+        caplog,
         method,
         "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
     )
@@ -115,8 +117,8 @@ def test_bluemira_log(method, text, colour, default_text):
     assert EXIT_COLOR in result[-1]
 
 
-def test_print_banner():
-    result = capture_output(print_banner, None)
+def test_print_banner(caplog):
+    result = capture_output(caplog, print_banner)
 
     assert len(result) == 15
     assert ANSI_COLOR["blue"] in result[0]
