@@ -430,7 +430,7 @@ def print_banner():
     """
     Print the initial banner to the console upon running the bluemira code.
     """
-    print(_print_color(BLUEMIRA_ASCII, color="blue"))
+    LOGGER.info(_print_color(BLUEMIRA_ASCII, color="blue"))
     v = version_banner()
     v.extend(user_banner())
     bluemira_print("\n".join(v))
