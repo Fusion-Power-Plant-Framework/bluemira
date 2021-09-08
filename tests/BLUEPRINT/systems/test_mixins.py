@@ -51,24 +51,17 @@ class TestPort:
         ).all()
 
     @staticmethod
-    def _build_port(x, y, t):
-        loop = Loop(x=x, y=y)
+    def _build_port(x, y, z, t):
+        loop = Loop(x=x, y=y, z=z)
         shell = Shell.from_offset(loop, t)
         return UpperPort(shell, 6, 8, 5.8, 10, 0.1)
 
-    def test_good_port(self):
-        port = self._build_port([5.5, 10, 10, 5.5], [-0.5, -5, 5, 0.5], 0.2)
+    @pytest.mark.parametrize("z_val", [None, 9.5])
+    def test_port(self, z_val):
+        port = self._build_port([5.5, 10, 10, 5.5], [-0.5, -5, 5, 0.5], z_val, 0.2)
         assert self.check_pass(port)
-
-    def test_bad_port(self):
-        port = self._build_port([4, 10, 10, 4], [1, -5, 5, -1], 0.2)
-        assert self.check_pass(port)
-
-    def test_upper_port_z(self):
-        loop = Loop(x=[4, 10, 10, 4], y=[1, -5, 5, -1], z=9.5)
-        shell = Shell.from_offset(loop, 0.2)
-        port = UpperPort(shell, 6, 8, 5.8, 10, 0.1)
-        assert port.inner.z[0] == 9.5
+        if z_val is not None:
+            assert port.inner.z[0] == z_val
 
 
 if __name__ == "__main__":

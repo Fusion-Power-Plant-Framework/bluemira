@@ -159,7 +159,7 @@ class TestCREATEBenchmark:
         assert np.round(bd.breakdown_psi, 0) == np.round(create_bd.breakdown_psi, 0)
 
     def test_start_of_flattop(self):
-        path = get_BP_path("eqdsk", subfolder="data")
+        path = get_BP_path("eqdsk", subfolder="data/BLUEPRINT")
         filename = "AR3d1_2015_04_v2_SOF_CSred_fine_final.eqdsk"
         filename = os.sep.join([path, filename])
         create_sof = Equilibrium.from_eqdsk(filename, load_large_file=True)

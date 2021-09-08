@@ -39,6 +39,9 @@ from PySide2 import QtWidgets
 from bluemira import __version__
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR, BLUEMIRA_PALETTE
 from bluemira.base.file import get_bluemira_root, get_bluemira_path
+from bluemira.base.logs import logger_setup
+
+LOGGER = logger_setup()
 
 # Calculate the number of lines in this file
 try:
@@ -243,7 +246,7 @@ def _bm_print(string, width=73):
     return h + "\n" + "\n".join(lines) + "\n" + h
 
 
-def bluemira_print(string, width=73, color="blue", end=None, flush=False):
+def colourise(string, width=73, color="blue", end=None, flush=False):
     """
     Print coloured, boxed text to the console. Default template for bluemira
     information.
@@ -263,19 +266,42 @@ def bluemira_print(string, width=73, color="blue", end=None, flush=False):
     """
     text = _bm_print(string, width=width)
     color_text = _print_color(text, color)
-    print(color_text, end=end, flush=flush)
+    return color_text
+
+
+def bluemira_critical(string):
+    """
+    Standard template for BLUEPRINT critical errors.
+    """
+    return LOGGER.critical(colourise(f"CRITICAL: {string}", color="red"))
+
+
+def bluemira_error(string):
+    """
+    Standard template for bluemira errors.
+    """
+    return LOGGER.error(colourise(f"ERROR: {string}", color="red"))
 
 
 def bluemira_warn(string):
     """
     Standard template for bluemira warnings.
-
-    Parameters
-    ----------
-    string: str
-        The string of text to warn with
     """
-    return bluemira_print("WARNING: " + string, color="red")
+    return LOGGER.warning(colourise(f"WARNING: {string}", color="red"))
+
+
+def bluemira_print(string):
+    """
+    Standard template for bluemira information messages.
+    """
+    return LOGGER.info(colourise(string, color="blue"))
+
+
+def bluemira_debug(string):
+    """
+    Standard template for bluemira debugging.
+    """
+    return LOGGER.debug(colourise(string, color="green"))
 
 
 def _bm_print_singleflush(string, width=73, color="blue"):

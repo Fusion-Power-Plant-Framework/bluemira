@@ -1,5 +1,5 @@
 # flake8: noqa (F401)
-from .blanket import BreedingBlanket
+from .blanket import BreedingBlanket, STBreedingBlanket
 from .buildings import RadiationShield
 from .crosssection import ReactorCrossSection
 from .cryostat import Cryostat

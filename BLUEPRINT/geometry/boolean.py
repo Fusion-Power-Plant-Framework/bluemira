@@ -349,6 +349,30 @@ def boolean_2d_common(loop1, loop2):
     return BooleanCommon(loop1, loop2).result
 
 
+def boolean_2d_common_loop(loop1, loop2):
+    """
+    As for boolean_2d_common but returns a single loop or raises a GeometryError.
+
+    Parameters
+    ----------
+    loop1: Loop
+        The "subject" Loop .base.loop to be preserved)
+    loop2: Loop
+        The "clip" Loop (secondary loop used as a cutter)
+
+    Returns
+    -------
+    loop: Loop
+        A single Loop resulting from the Common operation
+    """
+    common_loops = boolean_2d_common(loop1, loop2)
+    if not common_loops:
+        raise GeometryError("No common loops found")
+    if len(common_loops) > 1:
+        raise GeometryError("Greater than one common loop")
+    return common_loops[0]
+
+
 def boolean_2d_difference(loop1, loop2):
     """
     Boolean differece operation on 2-D Loop objects
@@ -368,6 +392,30 @@ def boolean_2d_difference(loop1, loop2):
     return BooleanDifference(loop1, loop2).result
 
 
+def boolean_2d_difference_loop(loop1, loop2):
+    """
+    As for boolean_2d_difference but returns a single loop or raises a GeometryError.
+
+    Parameters
+    ----------
+    loop1: Loop
+        The "subject" Loop .base.loop to be preserved)
+    loop2: Loop
+        The "clip" Loop (secondary loop used as a cutter)
+
+    Returns
+    -------
+    loop: Loop
+        A single Loop resulting from the Difference operation
+    """
+    difference_loops = boolean_2d_difference(loop1, loop2)
+    if not difference_loops:
+        raise GeometryError("No difference loops found")
+    if len(difference_loops) > 1:
+        raise GeometryError("Greater than one difference loop")
+    return difference_loops[0]
+
+
 def boolean_2d_xor(loop1, loop2):
     """
     Boolean exclusive-or operation on 2-D Loop objects
@@ -385,6 +433,34 @@ def boolean_2d_xor(loop1, loop2):
         A list of Loops resulting from the XOR operation
     """
     return boolean_2d_difference(loop1, loop2) + boolean_2d_difference(loop2, loop1)
+
+
+def boolean_2d_difference_split(loop1, loop2):
+    """
+    Boolean differece operation on 2-D Loop objects with an additional
+    application of the split_loop operation.
+
+    Parameters
+    ----------
+    loop1: Loop
+        The "subject" Loop .base.loop to be preserved)
+    loop2: Loop
+        The "clip" Loop (secondary loop used as a cutter)
+
+    Returns
+    -------
+    loop: List(Loop)
+        A list of Loops resulting from the Difference operation
+    """
+    # Get the difference
+    loops_diff = boolean_2d_difference(loop1, loop2)
+
+    # Remove self-intersections
+    loops_diff_split = []
+    for loop in loops_diff:
+        simple_loops = split_loop(loop)
+        loops_diff_split.extend(simple_loops)
+    return loops_diff_split
 
 
 def convex_hull(loops):

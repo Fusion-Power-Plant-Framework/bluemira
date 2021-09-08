@@ -266,7 +266,7 @@ sof.plot(ax)
 # interfacing to legacy codes.
 
 data = eof.to_dict()
-path = make_BP_path("equilibria", subfolder="generated_data")
+path = make_BP_path("equilibria", subfolder="generated_data/BLUEPRINT")
 filename = os.sep.join([path, "eof_example.eqdsk"])
 
 eqdsk_writer = EQDSKInterface()

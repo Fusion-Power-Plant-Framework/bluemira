@@ -25,13 +25,16 @@ import sys
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
 from bluemira.base.look_and_feel import (
+    bluemira_critical,
+    bluemira_error,
+    bluemira_warn,
+    bluemira_print,
+    bluemira_debug,
     get_git_version,
     get_git_branch,
     count_slocs,
     user_banner,
     version_banner,
-    bluemira_warn,
-    bluemira_print,
     print_banner,
 )
 
@@ -78,43 +81,35 @@ def capture_output(func, input_str):
     return capture.getvalue().splitlines()
 
 
-def test_bluemira_warn():
-    result = capture_output(bluemira_warn, "bad")
+@pytest.mark.parametrize(
+    "method, text, colour, default_text",
+    [
+        (bluemira_critical, "boom", "red", "CRITICAL:"),
+        (bluemira_error, "oops", "red", "ERROR:"),
+        (bluemira_warn, "bad", "red", "WARNING:"),
+        (bluemira_print, "good", "blue", ""),
+        (bluemira_debug, "check", "green", ""),
+    ],
+)
+def test_bluemira_log(method, text, colour, default_text):
+    result = capture_output(method, text)
 
     assert len(result) == 3
-    assert ANSI_COLOR["red"] in result[0]
-    assert "WARNING:" in result[1]
-    assert "bad" in result[1]
+    assert ANSI_COLOR[colour] in result[0]
+    if len(default_text) > 0:
+        assert default_text in result[1]
+    assert text in result[1]
     assert EXIT_COLOR in result[-1]
 
     result = capture_output(
-        bluemira_warn,
+        method,
         "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
     )
 
     assert len(result) == 4
-    assert "WARNING:" in result[1]
-    assert "test" in result[1]
-    assert "WARNING:" not in result[2]
-    assert "boxed" in result[2]
-    assert EXIT_COLOR in result[-1]
-
-
-def test_bluemira_print():
-    result = capture_output(bluemira_print, "good")
-
-    assert len(result) == 3
-    assert ANSI_COLOR["blue"] in result[0]
-    assert "good" in result[1]
-    assert EXIT_COLOR in result[-1]
-
-    result = capture_output(
-        bluemira_print,
-        "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
-    )
-
-    assert len(result) == 4
-    assert ANSI_COLOR["blue"] in result[0]
+    if len(default_text) > 0:
+        assert default_text in result[1]
+        assert default_text not in result[2]
     assert "test" in result[1]
     assert "boxed" in result[2]
     assert EXIT_COLOR in result[-1]

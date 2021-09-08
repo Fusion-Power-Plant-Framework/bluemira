@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ the first wall and optimise the shape design.
 """
 
 # %%[markdown]
-# # Heat Flux Calculation and first wall shaping
+# Heat Flux Calculation and first wall shaping
 
 # %%
 import os
@@ -33,6 +33,7 @@ import matplotlib.pyplot as plt
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.equilibria.equilibrium import Equilibrium
 from BLUEPRINT.systems.firstwall import FirstWallDN
+from BLUEPRINT.geometry.loop import Loop
 from time import time
 
 t = time()
@@ -45,23 +46,28 @@ read_path = get_BP_path("equilibria/test_data", subfolder="tests")
 eq_name = "DN-DEMO_eqref.json"
 eq_name = os.sep.join([read_path, eq_name])
 eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)
+x_box = [4, 15, 15, 4, 4]
+z_box = [-11, -11, 11, 11, -11]
+vv_box = Loop(x=x_box, z=z_box)
 
 # %%[markdown]
 # Calling the First Wall Class the create a
 # preliminary first wall profile devoid of the divertor.
+# In input, besides the equilibrium, we need to provide a
+# a vacuum vessel profile.
 # Adding the divertor to the above mentioned first wall.
 
 # %%
-fw = FirstWallDN(FirstWallDN.default_params, {"equilibrium": eq})
-diverted = fw.make_divertor(fw.profile)
+fw = FirstWallDN(FirstWallDN.default_params, {"equilibrium": eq, "vv_inner": vv_box})
+divertor_loops = fw.make_divertor(fw.profile)
+fw_diverted = fw.attach_divertor(fw.profile, divertor_loops)
 
 # %%[markdown]
 # Plotting the initial first wall profile
 
 # %%
 f, ax = plt.subplots()
-diverted.plot(ax=ax, fill=False, facecolor="b", linewidth=0.5)
-
+fw_diverted.plot(ax=ax, fill=False, facecolor="b", linewidth=0.5)
 
 # %%[markdown]
 # Setting the while loop to iterate the first wall optimisation
@@ -74,7 +80,8 @@ hf_wall_max = 1
 
 while hf_wall_max > 0.5:
     fw_opt = FirstWallDN(
-        FirstWallDN.default_params, {"equilibrium": eq, "profile": profile}
+        FirstWallDN.default_params,
+        {"equilibrium": eq, "profile": profile, "vv_inner": vv_box},
     )
 
     # Calculate the parallel contribution of the heat flux
@@ -130,13 +137,12 @@ while hf_wall_max > 0.5:
     profile = optimised_profile
     print(hf_wall_max)
 
-
 # %%[markdown]
 # Close the profile by adding the divertor to the final fw
 
 # %%
-fw_diverted_loop = fw_opt.make_divertor(profile)
-
+divertor_loops = fw_opt.make_divertor(profile)
+fw_opt_diverted = fw_opt.attach_divertor(fw_opt.profile, divertor_loops)
 
 # %%[markdown]
 # Plotting First wall, separatrix and flux surfaces
@@ -156,7 +162,7 @@ for fs in lfs_hfs_first_int[2]:
 for fs in lfs_hfs_first_int[3]:
     if len(fs) != 0:
         fs[2].plot(ax, fill=False, facecolor="r", linewidth=0.1)
-fw_diverted_loop.plot(ax=ax, fill=False, facecolor="b", linewidth=0.5)
+fw_opt_diverted.plot(ax=ax, fill=False, facecolor="b", linewidth=0.5)
 
 # %%[markdown]
 # Plotting First wall shape, intersection points and heat flux values
@@ -164,7 +170,7 @@ fw_diverted_loop.plot(ax=ax, fill=False, facecolor="b", linewidth=0.5)
 
 # %%
 fig, ax = plt.subplots()
-fw_diverted_loop.plot(ax=ax, fill=False)
+fw_opt_diverted.plot(ax=ax, fill=False)
 cs = ax.scatter(x_wall, z_wall, s=25, c=hf_wall, cmap="viridis", zorder=100)
 bar = fig.colorbar(cs, ax=ax)
 bar.set_label("Heat Flux [MW/m^2]")

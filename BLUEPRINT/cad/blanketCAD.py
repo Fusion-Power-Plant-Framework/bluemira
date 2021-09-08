@@ -29,6 +29,7 @@ from BLUEPRINT.cad.cadtools import (
     revolve,
     make_face,
     make_mixed_face,
+    rotate_shape,
 )
 
 
@@ -99,6 +100,62 @@ class BlanketCAD(ComponentCAD):
         """
         self.build(**kwargs)
         self.component_pattern(self.n_TF)
+
+
+# This was copy-pasted from firstwall. TODO: inherit from common class
+class STBlanketCAD(ComponentCAD):
+    """
+    STBreedingBlanket CAD constructor class
+
+    Parameters
+    ----------
+    blanket: ReactorSystem
+        Exects that blanket.geom dictionary to be populated.
+
+    kwargs: dict
+        Keyword arguments as for :class:`BLUEPRINT.cad.component.ComponentCAD`
+
+    Attributes
+    ----------
+    plot_loops : list
+        List of Loops containing 2D profiles of components to be plotted
+    n_TF : int
+        number of TF coils
+    """
+
+    def __init__(self, blanket, **kwargs):
+
+        # Fetch the 2D profile from geom
+        plot_names = blanket.xz_plot_loop_names
+        self.plot_loops = []
+        for name in plot_names:
+            obj = blanket.geom[name]
+            self.plot_loops.append(obj)
+
+        self.n_TF = blanket.params.n_TF
+
+        ComponentCAD.__init__(self, "Breeding blanket", palette=BLUE["BB"], **kwargs)
+
+    def build(self, **kwargs):
+        """
+        Build the CAD for the first wall.
+        Invoked automatically during :code:`__init__`
+        """
+        # Make OCC faces
+        shapes = []
+        for loop in self.plot_loops:
+            face = make_mixed_face(loop)
+            shapes.append(face)
+
+        for shape in shapes:
+            # Rotate the 2-D shape
+            shape_rot = rotate_shape(shape, None, -180 / self.n_TF)
+
+            # Revolve about z-axis to get a segment
+            segment = revolve(shape_rot, None, 360 / self.n_TF)
+
+            # Save
+            self.add_shape(segment)
 
 
 if __name__ == "__main__":

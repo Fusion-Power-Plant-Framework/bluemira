@@ -6,6 +6,7 @@
   "plasma_mode": "run",
   "tf_mode": "run",
   "TF_type": "S",
+  "wp_shape": "N",
   "TF_objective": "L",
   "VV_parameterisation": "S",
   "FW_parameterisation": "S",

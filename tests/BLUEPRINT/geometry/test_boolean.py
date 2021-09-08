@@ -34,13 +34,16 @@ from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_common,
+    boolean_2d_common_loop,
     boolean_2d_difference,
+    boolean_2d_difference_loop,
     boolean_2d_union,
     boolean_2d_xor,
     entagram,
     simplify_loop,
     convex_hull,
 )
+from BLUEPRINT.geometry.geomtools import make_box_xz
 
 import tests
 
@@ -325,6 +328,52 @@ class TestConvexHull:
         )
         with pytest.raises(GeometryError):
             convex_hull([loop1, loop2])
+
+
+def test_single_common_loop():
+    box_1 = make_box_xz(0, 2, 0, 1)
+    box_2 = make_box_xz(1, 3, 0, 1)
+    box_3 = boolean_2d_common_loop(box_1, box_2)
+    assert isinstance(box_3, Loop)
+    assert box_3.area == 1.0
+
+    # Non-overlapping case
+    box_1 = make_box_xz(0, 1, 0, 1)
+    box_2 = make_box_xz(2, 3, 0, 1)
+    with pytest.raises(GeometryError):
+        box_3 = boolean_2d_common_loop(box_1, box_2)
+
+    # Multiple common case
+    x = [0, 0, 1, 1, 2, 2, 3, 3]
+    z = [0, 2, 2, 1, 1, 2, 2, 0]
+    u_shape = Loop(x=x, z=z)
+    u_shape.close()
+    box = make_box_xz(0, 3, 1, 2)
+    with pytest.raises(GeometryError):
+        common = boolean_2d_common_loop(u_shape, box)
+
+
+def test_single_difference_loop():
+
+    box_1 = make_box_xz(0, 2, 0, 1)
+    box_2 = make_box_xz(1, 2, 0, 1)
+    box_3 = boolean_2d_common_loop(box_1, box_2)
+    assert isinstance(box_3, Loop)
+    assert box_3.area == 1.0
+
+    # Multiple common case
+    x = [0, 0, 1, 1, 2, 2, 3, 3]
+    z = [0, 2, 2, 1, 1, 2, 2, 0]
+    u_shape = Loop(x=x, z=z)
+    u_shape.close()
+    box = make_box_xz(-1, 4, -1, 2)
+    with pytest.raises(GeometryError):
+        common = boolean_2d_difference_loop(u_shape, box)
+
+    # Fully-subtracted case
+    box = make_box_xz(0, 1, 0, 1)
+    with pytest.raises(GeometryError):
+        common = boolean_2d_difference_loop(box, box)
 
 
 if __name__ == "__main__":

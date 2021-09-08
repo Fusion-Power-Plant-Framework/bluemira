@@ -97,21 +97,63 @@ class ConfigurationSchema:
     f_cd_aux: Parameter
     f_cd_ohm: Parameter
 
-    # First wall and divertor profile
-    fw_psi_n: Parameter
+    # First wall profile
     fw_dx: Parameter
+    fw_psi_n: Parameter
+    fw_dL_min: Parameter  # noqa(N815) - mixed case to match PROCESS
+    fw_dL_max: Parameter  # noqa(N815) - mixed case to match PROCESS
+    fw_a_max: Parameter
+    fw_p_sol_near: Parameter
+    fw_p_sol_far: Parameter
+    hf_limit: Parameter
+    # ad hoc SN variables
+    fw_lambda_q_near: Parameter
+    fw_lambda_q_far: Parameter
+    f_outer_target: Parameter
+    f_inner_target: Parameter
+    # ad hoc DN variables
+    fw_dpsi_n_near: Parameter
+    fw_dpsi_n_far: Parameter
+    fw_dx_omp: Parameter
+    fw_dx_imp: Parameter
+    p_rate_omp: Parameter
+    p_rate_imp: Parameter
+    fw_lambda_q_near_omp: Parameter
+    fw_lambda_q_far_omp: Parameter
+    fw_lambda_q_near_imp: Parameter
+    fw_lambda_q_far_imp: Parameter
+    dr_near_omp: Parameter
+    dr_far_omp: Parameter
+    f_lfs_lower_target: Parameter
+    f_lfs_upper_target: Parameter
+    f_hfs_lower_target: Parameter
+    f_hfs_upper_target: Parameter
+
+    # Divertor profile
     div_L2D_ib: Parameter
     div_L2D_ob: Parameter
     div_graze_angle: Parameter
     div_psi_o: Parameter
     div_Ltarg: Parameter  # noqa(N815) - mixed case to match PROCESS
     div_open: Parameter
-    fw_dL_min: Parameter  # noqa(N815) - mixed case to match PROCESS
-    fw_dL_max: Parameter  # noqa(N815) - mixed case to match PROCESS
-    fw_a_max: Parameter
     g_vv_div_add: Parameter
     LPangle: Parameter
     n_div_cassettes: Parameter
+    psi_norm: Parameter
+    xpt_outer_gap: Parameter
+    xpt_inner_gap: Parameter
+    outer_target_sol: Parameter
+    outer_target_pfr: Parameter
+    inner_target_sol: Parameter
+    inner_target_pfr: Parameter
+    # ad hoc SN variables
+    outer_strike_h: Parameter
+    inner_strike_h: Parameter
+    # ad hoc DN variables
+    outer_strike_r: Parameter
+    inner_strike_r: Parameter
+    theta_outer_target: Parameter
+    xpt_height: Parameter
 
     # Blanket
     bb_e_mult: Parameter
@@ -122,6 +164,11 @@ class ConfigurationSchema:
     tk_r_ob_bz: Parameter
     tk_r_ob_manifold: Parameter
     tk_r_ob_bss: Parameter
+
+    # ST Breeding blanket
+    g_bb_fw: Parameter
+    tk_bb_bz: Parameter
+    tk_bb_man: Parameter
 
     # Component radial thicknesses (some vertical)
     tk_bb_ib: Parameter
@@ -144,6 +191,11 @@ class ConfigurationSchema:
     tk_ob_ts: Parameter
     tk_cr_vv: Parameter
     tk_rs: Parameter
+    tk_fw_in: Parameter
+    tk_fw_out: Parameter
+    tk_fw_div: Parameter
+    tk_div_cass: Parameter
+    tk_div_in: Parameter
 
     # TF coils
     tk_tf_outboard: Parameter
@@ -163,6 +215,8 @@ class ConfigurationSchema:
     B_tf_peak: Parameter
     tf_taper_frac: Parameter
     r_tf_outboard_corner: Parameter
+    r_tf_inboard_corner: Parameter
+    r_tf_curve: Parameter
 
     # Coil structures
     x_g_support: Parameter
@@ -250,3 +304,11 @@ class ConfigurationSchema:
     bmd: Parameter
     dmd: Parameter
     RMTFI: Parameter
+
+    # Central column shield
+    g_ccs_vv_inboard: Parameter
+    g_ccs_vv_add: Parameter
+    g_ccs_fw: Parameter
+    g_ccs_div: Parameter
+    tk_ccs_min: Parameter
+    r_ccs: Parameter
