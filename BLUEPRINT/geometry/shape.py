@@ -36,6 +36,7 @@ from BLUEPRINT.geometry.parameterisations import (
     BackwardPolySpline,
     PictureFrame,
     TaperedPictureFrame,
+    CurvedPictureFrame,
 )
 from BLUEPRINT.geometry.optimiser import ShapeOptimiser
 from BLUEPRINT.geometry.geomtools import length, loop_volume, normal
@@ -49,6 +50,7 @@ PARAMETERISATION_MAP = {
     "D": PrincetonD,           # Princeton D (3 parameter)
     "BS": BackwardPolySpline,  # Reversed Poly-Bezier spline (8-16 parameter)
     "TP": TaperedPictureFrame,  # Tapered Picture frame (7-8 parameter)
+    "CP": CurvedPictureFrame,  # Picture frame coil with a curved top/bottom, top/down symmetric
 }
 # fmt: on
 
@@ -61,7 +63,7 @@ class Shape(JSONReaderWriter):
     ----------
     name: str
         The name of the shape
-    family: str from ['S', 'A', 'P', 'D', 'BS', 'L', 'TP']
+    family: str from ['S', 'A', 'P', 'D', 'BS', 'L', 'TP', 'CP']
         The type of shape parameterisation to use
     objective: str from ['L', 'V']
         The optimisation objective to use (can be overidden)

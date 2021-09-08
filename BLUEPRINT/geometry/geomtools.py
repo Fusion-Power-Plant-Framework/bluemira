@@ -169,6 +169,29 @@ def bounding_box(x, y, z):
     return x_b, y_b, z_b
 
 
+def make_box_xz(x_min, x_max, z_min, z_max):
+    """
+    Create a box in the xz plane given the min and max x,z params
+
+    Returns
+    -------
+    box : Loop
+    """
+    # Import here to avoid circular import
+    from BLUEPRINT.geometry.loop import Loop
+
+    if x_max < x_min:
+        raise GeometryError("Require x_max > x_min")
+    if z_max < z_min:
+        raise GeometryError("Require z_max > z_min")
+
+    x_box = [x_min, x_max, x_max, x_min]
+    z_box = [z_max, z_max, z_min, z_min]
+    box = Loop(x=x_box, z=z_box)
+    box.close()
+    return box
+
+
 def grid_2d_contour(loop):
     """
     Grid a smooth contour and get the outline of the cells it encompasses.
@@ -412,6 +435,56 @@ def check_linesegment(point_a, point_b, point_c):
         return False
     else:
         return True
+
+
+def index_of_point_on_loop(loop, point_on_loop, before=True):
+    """
+    Return the index of the point on the given loop belonging to a
+    pair which form a linesegment that intersects the given point.
+    Raises a GeometryError if given point does not intersect the loop.
+
+    Parameters
+    ----------
+    loop : Loop
+        Loop on with which the point should intersect
+    point_on_loop: [ float, float]
+        List of x,z coords of point
+    before: bool
+        If :code:`True`, return the index of the first point in the intersecting
+        linesegment on the loop which intersects our point. If :code:`False`,
+        return the index of the second in the pair.
+
+    Returns
+    -------
+    index_of_point: int
+        Index of the nearest point on the loop to the given point.
+        Either before or after depending on the value of :code:`before` arg.
+    """
+    # Combine coords into single array, skipping the last if it's a closed loop
+    coords = np.array(loop.get_points())
+
+    # Get the number of points in the loop
+    n_points = coords.shape[0]
+
+    # By creating linesegments from pairs of points along the loop,
+    # check which intersect the outer strike point, and create an array of
+    # indices corresponding to those which do
+    index_of_point = None
+
+    for i in range(n_points):
+        i_start = i
+        i_end = (i + 1) % n_points
+        if check_linesegment(coords[i_start], coords[i_end], point_on_loop):
+            if before:
+                index_of_point = i_start
+            else:
+                index_of_point = i_end
+            break
+
+    if not index_of_point:
+        raise GeometryError("Point is not on loop")
+
+    return index_of_point
 
 
 def join_intersect(loop1, loop2, get_arg=False):

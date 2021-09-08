@@ -40,6 +40,8 @@ NAME_SHORT_TO_LONG = {
     "RS": "Radiation shield",
     "EC": "Electron cyclotron",
     "NBI": "Neutral beam injector",
+    "CCS": "Central column shield",
+    "FW": "First wall",
 }
 
 NAME_LONG_TO_SHORT = {v: k for k, v in NAME_SHORT_TO_LONG.items()}

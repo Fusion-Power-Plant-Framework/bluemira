@@ -32,12 +32,29 @@ from BLUEPRINT.geometry.geombase import Plane, point_dict_to_array
 
 
 def test_read_write_geombase(tmpdir):
-    # Make some geometry objects
-    x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1]
-    y = [-4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 1]
+    # Make a star loop
+    outer_len = 2.0
+    inner_len = 4.0 / 3.0
+    n_points = 5
+    x = []
+    y = []
+    angle_diff = 2.0 * np.pi / n_points
+    for i in range(0, n_points):
+        angle = angle_diff * i
+        x_tip = outer_len * np.sin(angle)
+        y_tip = outer_len * np.cos(angle)
+        x.append(x_tip)
+        y.append(y_tip)
+
+        angle_dip = angle + angle_diff / 2.0
+        x_dip = inner_len * np.sin(angle_dip)
+        y_dip = inner_len * np.cos(angle_dip)
+        x.append(x_dip)
+        y.append(y_dip)
     h = Loop(x, y)
+    h.close()
     g = h.offset(1)
-    j = g.offset(2)  # Note this breaks offset :'(
+    j = g.offset(2)
     shell = Shell.from_offset(h, 1)
     multi = MultiLoop([h, g, j], stitch=False)
 

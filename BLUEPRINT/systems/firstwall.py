@@ -23,45 +23,145 @@
 Flux surface attributes and first wall profile based on heat flux calculation
 """
 import numpy as np
+import matplotlib.pyplot as plt
 from typing import Type
 from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
+from BLUEPRINT.equilibria.find import find_flux_surfs
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
     convex_hull,
     boolean_2d_union,
+    boolean_2d_difference,
+    boolean_2d_difference_loop,
+    boolean_2d_difference_split,
+    boolean_2d_common_loop,
     simplify_loop,
 )
 from BLUEPRINT.geometry.geomtools import (
     get_intersect,
     check_linesegment,
     loop_plane_intersect,
+    index_of_point_on_loop,
+    make_box_xz,
 )
-from BLUEPRINT.geometry.geombase import Plane
+from BLUEPRINT.geometry.geombase import make_plane
 from BLUEPRINT.geometry.geomtools import lineq
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d
 from functools import partial
+from BLUEPRINT.systems.plotting import ReactorSystemPlotter
+
+
+def find_outer_point(point_list, x_compare):
+    """
+    Return the first point in the list which has an x coordinate
+    that excedes the comparison value
+    """
+    return next(filter(lambda p: p[0] > x_compare, point_list))
+
+
+def find_inner_point(point_list, x_compare):
+    """
+    Return the first point in the list which has an x coordinate
+    that is less than the comparison value
+    """
+    return next(filter(lambda p: p[0] < x_compare, point_list))
+
+
+def get_intersection_point(point, norm, loop, compare_x, inner=True):
+    """
+    Return the point of intersection between the given loop and
+    a plane with given norm and that axis at the given point
+
+    Parameters
+    ----------
+    point : float
+        Coord of plane in direction of given norm used to intersect loop
+    norm: int
+        Direction of plane normal (0 = x, 2 = z)
+    loop: Loop
+        Loop with which to intersect x-y plane
+    compare_x : float
+        x-coordinate used to compare intersection points and yield
+        inner or outer point
+    inner : bool
+        Flag to control whether inner or outer point is returned
+    """
+    # Create a plane with given normal and intersecting axis at point
+    cut_plane = make_plane(point, norm)
+
+    # Find intersection between the plane and separatrix
+    plane_ints = loop_plane_intersect(loop, cut_plane)
+
+    # Return the inner or outer intersection using the given x point
+    # to compare against
+    if inner:
+        return find_inner_point(plane_ints, compare_x)
+    else:
+        return find_outer_point(plane_ints, compare_x)
 
 
 class EqInputs:
     """
-    Load a equilibrium file
+    Class to extract equilibrium parameters relevant to the first wall
+
+    Parameters
+    ----------
+    lcfs_shift: float
+        Sometimes the separatrix is not well defined.
+        This parameter take an open flux surface, close to the lcfs
+        to replace the separatrix
+    x_point_shift:
+        A shift to slightly move away from the x-point and avoid singularities
+
+    Attributes
+    ----------
+    self.lcfs_shift: float
+        Save input parameter used to set separatrix
+    self.x_point_shift: float
+        Save input parameter used to set separatrix
+    self.lcfs: Loop
+        Contour corresponding to last closed flux surface
+    self.points: dict
+        Store the x,z coordinates of the O and X points in the flux field
+    self.mid_plane: Plane
+        A plane having z-normal and containing the O point
+    self.x_omp_lcfs: float
+        Outer x-coordinate of the intersection between the last closed flux
+        surface and the mid-plane
+    self.x_imp_lcfs: float
+        Inner x-coordinate of the intersection between the last closed flux
+        surface and the mid-plane
+    self.sep: separatrix: Union[Loop, MultiLoop]
+        The separatrix loop(s) (Loop for SN, MultiLoop for DN)
+
+    Notes
+    -----
+    According to the refinement of the eqdsk file, the separatrix
+    is extrapolated differently.
+    For the SN, there are apparently no issues and the separatrix always
+    comes as a closed loop that contains the main plasma and an
+    open loop for the two legs. The shared point is the x-point.
+    For the DN, if the separatrix is extrapolated correctly, it is a
+    Multiloop with two open loops that share two points: upper and lower
+    x-point. The two loops are the half separatrix at the lfs and
+    half separatrix at the hfs.
+    If the separatrix is not extrapolated correctly, this turns out to be
+    an upside down "SN like separatrix". Thus, only the upper legs exist.
     """
 
-    def load_equilibrium(self, lcfs_shift=0.001, x_point_shift=0.5):
-        """
-        Extract basic equilibrium information
+    def __init__(self, lcfs_shift=0.001, x_point_shift=0.5):
 
-        Parameters
-        ----------
-        lcfs_shift: Sometime the separatrix is not well defined.
-                    This parameter take an open flux surface, close to the lcfs
-                    to replace the separatrix
-        x_point_shift: A shift to slightly move away from the x-point
-                    and avoid singularities
-        """
+        # Save inputs
+        self.lcfs_shift = lcfs_shift
+        self.x_point_shift = x_point_shift
+
+        # First find the last closed flux surface
         self.lcfs = self.equilibrium.get_LCFS()
+
+        # Find the local maxima (O) and inflection (X) points in the flux field
         o_point, x_point = self.equilibrium.get_OX_points()
         self.points = {
             "x_point": {
@@ -74,54 +174,76 @@ class EqInputs:
         if self.points["x_point"]["z_low"] > self.points["x_point"]["z_up"]:
             self.points["x_point"]["z_low"] = x_point[1][1]
             self.points["x_point"]["z_up"] = x_point[0][1]
-        self.mid_plane = Plane(
-            [self.points["o_point"]["x"], 0, self.points["o_point"]["z"]],
-            [0, 1, self.points["o_point"]["z"]],
-            [0, 0, self.points["o_point"]["z"]],
-        )
+
+        # Define the mid-plane as having z-normal and containing O point.
+        self.mid_plane = make_plane(self.points["o_point"]["z"], 2)
+
+        # Find the intersection between the mid-plane and the last closed
+        # flux surface
         mp_ints = loop_plane_intersect(self.lcfs, self.mid_plane)
-        self.x_omp_lcfs = next(
-            filter(
-                lambda p: p[0] > self.points["o_point"]["x"],
-                mp_ints,
-            )
-        )[0]
-        self.x_imp_lcfs = next(
-            filter(
-                lambda p: p[0] < self.points["o_point"]["x"],
-                mp_ints,
-            )
-        )[0]
 
-        self.lcfs_shift = lcfs_shift
-        self.x_point_shift = x_point_shift
+        # Find the outer and inner mid-plane intersections
+        self.x_omp_lcfs = find_outer_point(mp_ints, self.points["o_point"]["x"])[0]
+        self.x_imp_lcfs = find_inner_point(mp_ints, self.points["o_point"]["x"])[0]
 
+        # Here we check if it is a DN. If it is a DN, we have two mirrored x-points.
         if round(self.points["x_point"]["z_low"], 3) == -round(
             self.points["x_point"]["z_up"], 3
         ):
+            # Here we pick the separatrix (right or wrong).
             self.sep = self.equilibrium.get_separatrix()
+
+            # We check the separatrix against the lower x-point and we move
+            # away from it to avoid a singularity.
             x_point_limit = self.points["x_point"]["z_low"] - self.x_point_shift
+
+            # Here we take the lowest point contained in the separatrix loop.
             sep_limit = min(self.sep[0].z)
 
+            # If we find a point, below the fixed limit, it means that the lower
+            # legs are present, and the extrapolated sepatrix is correct.
             if sep_limit < x_point_limit:
                 self.separatrix = self.sep
-            if sep_limit > x_point_limit:
+
+            # If we do not find a point below the fixed limit, it means that the
+            # lower legs are not present. The extrapolated separatrix is not correct.
+            else:
+
+                # We need to "make" a separatrix.
+                # As separatrix we take the first open flux surface (Ideally,
+                # the first flux surfaces outside the LCFS).
                 loops = self.equilibrium.get_flux_surface_through_point(
                     self.x_omp_lcfs + self.lcfs_shift, 0
                 )
+
+                # We re-order the loops as conventionally is done for the
+                # separatrix and we make it a MultiLoop, as conventionally is
+                # done for the separatrix.
                 loops.reverse()
                 self.separatrix = MultiLoop(loops[:2])
 
+        # Here we check if it is a SN. If it is a SN, we do have more than one
+        # x-points, but they are not mirrored.
         elif round(self.points["x_point"]["z_low"], 3) != -round(
             self.points["x_point"]["z_up"], 3
         ):
-            self.separatrix = self.equilibrium.get_separatrix()
+            # As the SN does not give concerns, we just have to pick
+            # the separatrix.
+            self.separatrix = [self.equilibrium.get_separatrix()]
 
 
 class FluxSurface(EqInputs):
     """
     Create a flux surface
     Evaluate all needed attributes which are useful for to the heat flux calculation
+
+    Parameters
+    ----------
+    equilibrium: eqdsk, geqdsk or json
+    x: float
+       x coordinate of the midplane point from which the fs has to pass
+    z: float
+       z coordinate of the midplane point from which the fs has to pass
 
     Attributes
     ----------
@@ -157,17 +279,8 @@ class FluxSurface(EqInputs):
     """
 
     def __init__(self, equilibrium, x, z):
-        """
-        Parameters
-        ----------
-        equilibrium: eqdsk, geqdsk or json
-        x: float
-            x coordinate of the midplane point from which the fs has to pass
-        z: float
-            z coordinate of the midplane point from which the fs has to pass
-        """
         self.equilibrium = equilibrium
-        super().load_equilibrium()
+        super().__init__(self)
 
         self.loops = self.equilibrium.get_flux_surface_through_point(x, z)
 
@@ -523,10 +636,10 @@ class FluxSurface(EqInputs):
             z coordinate of first intersection
         flux_surface_snip : Loop
             Portion of flux surface from the midplane to the intersection point
-        linear_coordinate : [float]
+        linear_coordinate : array(float)
             Distance between the starting point at the midplane and each point of the
             loop until the intersection point
-        poloidal_length : float
+        poloidal_length : array(float)
             Distance between the staring point at the midplane and the intersection point
         """
         linear_coordinates = []
@@ -756,64 +869,759 @@ class FluxSurface(EqInputs):
         return qpar * np.sin(incindent_angle)
 
 
-class FirstWallSN(EqInputs, ReactorSystem):
+class FirstWall(EqInputs, ReactorSystem):
+    """
+    Reactor First Wall (FW) system abstract base class
+    """
+
+    config: Type[ParameterFrame]
+    inputs: dict
+    CADConstructor = FirstWallCAD
+
+    # fmt: off
+    base_default_params = [
+        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+        ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
+        ["psi_norm", "Normalised flux value of strike-point contours",
+         1, "N/A", None, "Input"],
+        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
+        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],
+        ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
+        ['tk_div_cass', 'Minimum thickness between inner divertor profile and cassette', 0.3, 'm', None, 'Input'],
+        ['tk_div_cass_in', 'Additional radial thickness on inboard side relative to to inner strike point', 0.1, 'm', None, 'Input'],
+    ]
+    # fmt: on
+
+    def __init__(self, config, inputs):
+        self.config = config
+        self.inputs = inputs
+        self.init_params()
+        self.init_equilibrium()
+        self.build()
+        self.build_fs_to_plot()
+        self.hf_firstwall_params()
+        self._plotter = FirstWallPlotter()
+
+    def init_params(self):
+        """
+        Initialise First Wall parameters from config.
+        """
+        self.params = ParameterFrame(self.default_params.to_records())
+        self.params.update_kw_parameters(self.config)
+
+    def init_equilibrium(self):
+        """
+        Initialise equilibrium inputs.
+        """
+        self.equilibrium = self.inputs["equilibrium"]
+        EqInputs.__init__(self)
+
+    def build(self):
+        """
+        Build the 2D profile
+        """
+        if "profile" in self.inputs:
+            self.profile = self.inputs["profile"]
+        else:
+            self.profile = self.make_preliminary_profile()
+
+        self.make_flux_surfaces()
+
+        self.make_2d_profile()
+
+    def build_fs_to_plot(self):
+        """
+        Build flux surfaces to be plotted in the heat flux plot.
+        self.make_flux_surfaces() gives the set of flux surfaces as
+        they can be extrapolated by the equilibrium. This method cuts
+        the flux surfaces where they meet the fw and collect them to
+        be plotted
+        """
+        fs_loops = []
+        if isinstance(self, FirstWallSN):
+            fss = self.flux_surfaces
+            for fs in fss:
+                fs_loops.append(fs.loop_lfs)
+
+        elif isinstance(self, FirstWallDN):
+            all_int = self.find_intersections()
+            self.first_int = self.find_first_intersections(*all_int)
+            # Ideally I would like to use self.first_int[:,:,2] but
+            # for how is the return of self.find_first_intersections, I can't
+            for sector in self.first_int:
+                for fs in sector:
+                    fs_loops.append(fs[2])
+
+        else:
+            raise SystemsError(
+                "Either FirstWallSN or FirstWallDN. No other configurations are implemented"
+            )
+
+        self.fs = MultiLoop(fs_loops)
+        self.geom["fs"] = self.fs
+
+    def hf_firstwall_params(self):
+        """
+        Generate the parameters to calculate the heat flux
+        """
+        raise NotImplementedError
+
+    def make_preliminary_profile(self):
+        """
+        Generate a preliminary first wall profile in case it is not given as input
+        """
+        raise NotImplementedError
+
+    def make_flux_surfaces(self, step_size=0.005):
+        """
+        Generate a set of flux surfaces placed between lcfs and fw
+        """
+        raise NotImplementedError
+
+    def find_intersections(self):
+        """
+        Find the intersections between all the flux surfaces and the first wall
+        """
+        raise NotImplementedError
+
+    def find_first_intersections(self):
+        """
+        Find the first intersections between all the flux surfaces and the first wall
+        """
+        raise NotImplementedError
+
+    def make_divertor(self, fw_loop):
+        """
+        Make a the divertor loop(s)
+        """
+        raise NotImplementedError
+
+    def attach_divertor(self, fw_loop, divertor_loops):
+        """
+        Attaches a divertor to the first wall
+
+        Parameters
+        ----------
+        fw_loop: Loop
+            first wall profile
+
+        divertor_loops: list
+            list of divertor Loops
+
+        Returns
+        -------
+        fw_diverted_loop: Loop
+            Here the first wall also has a divertor geometry
+        """
+        fw_diverted_loop = fw_loop
+        # Attach each disjoint portion of the divertor
+        # (e.g. top / bottom)
+        for div in divertor_loops:
+            union = boolean_2d_union(fw_diverted_loop, div)
+            fw_diverted_loop = union[0]
+
+        # Simplify at end
+        fw_diverted_loop = simplify_loop(fw_diverted_loop)
+        return fw_diverted_loop
+
+    def make_2d_profile(self):
+        """
+        Create the 2D profile
+        """
+        # Ensure our starting profile is closed
+        self.profile.close()
+
+        # Make a divertor
+        inner_divertor_loops = self.make_divertor(self.profile)
+
+        # Attach the divertor to the initial profile
+        self.inner_profile = self.attach_divertor(self.profile, inner_divertor_loops)
+
+        # Offset the inner profile to make an outer profile
+        outer_profile, sections = self.make_outer_wall(
+            self.inner_profile,
+            inner_divertor_loops,
+            self.params.tk_fw_in,
+            self.params.tk_fw_out,
+            self.params.tk_fw_div,
+        )
+
+        # Extract the different sections of the outer wall
+        self.divertor_loops = sections[:-2]
+        inboard_wall = sections[-2]
+        outboard_wall = sections[-1]
+
+        # For now, make the divertor cassette here (to be refactored)
+        self.divertor_cassettes = self.make_divertor_cassette(self.divertor_loops)
+
+        # Make a shell from the inner and outer profile
+        fw_shell = Shell(inner=self.inner_profile, outer=outer_profile)
+
+        # Save geom objects
+        self.geom["2D profile"] = fw_shell
+        self.geom["Inboard wall"] = inboard_wall
+        self.geom["Outboard wall"] = outboard_wall
+
+        n_div = len(self.divertor_loops)
+        n_cass = len(self.divertor_cassettes)
+        if n_div != n_cass:
+            raise SystemsError("Inconsistent number of divertors and cassettes")
+
+        if n_div == 1:
+            self.geom["Divertor"] = self.divertor_loops[0]
+            self.geom["Divertor cassette"] = self.divertor_cassettes[0]
+        elif n_div == 2:
+            self.geom["Divertor lower"] = self.divertor_loops[0]
+            self.geom["Divertor upper"] = self.divertor_loops[1]
+            self.geom["Divertor cassette lower"] = self.divertor_cassettes[0]
+            self.geom["Divertor cassette upper"] = self.divertor_cassettes[1]
+        else:
+            raise SystemsError("Inappropriate number of divertors")
+
+    def make_flux_contour_loops(self, eq, psi_norm):
+        """
+        Return an ordered list of loops corresponding to flux contours having
+        the given (normalised) psi value.
+        The ordering is in decreasing value of min x coord in loop to be
+        consisent with convention used in self.separatrix.
+
+        Parameters
+        ----------
+        eq : Equilibirum
+            Equilibrium from which to take the flux field.
+        psi_norm : float
+            Value normalised flux field to use to define the contours.
+
+        Returns
+        -------
+        flux_loops : list of Loop
+            List of flux contours as Loops
+        """
+        # Flux field
+        psi = eq.psi()
+
+        # Get the contours
+        flux_surfs = find_flux_surfs(eq.x, eq.z, psi, psi_norm)
+
+        # Create a dictionary of loops indexed in min x
+        flux_dict = {}
+        for surf in flux_surfs:
+            flux_x = surf[:, 0]
+            flux_z = surf[:, 1]
+            min_x = np.min(flux_x)
+            flux_dict[min_x] = Loop(x=flux_x, y=None, z=flux_z)
+
+        # Sort the dictionary
+        sorted_dict = dict(sorted(flux_dict.items()))
+
+        # Get list of increasing values
+        sorted_flux_loops = list(sorted_dict.values())
+
+        # By convention, want decreasing list
+        sorted_flux_loops.reverse()
+        return sorted_flux_loops
+
+    def find_koz_flux_loop_ints(self, koz, flux_loops):
+        """
+        Find intersections between the keep-out-zone loop
+        and the given flux loops.  Only upper and lower most
+        intersections for each flux line are returned.
+
+        Parameters
+        ----------
+        koz : Loop
+            Loop representing the keep-out-zone
+        flux_loops: list of Loop
+            List of flux loops used to find intersections
+
+        Returns
+        -------
+        all_points : list
+             List of the [x,z] coordinates of the intersections
+        """
+        # For each flux loop find the intersections with the koz
+        all_points = []
+        for loop in flux_loops:
+            # Expectation is that flux loop is open
+            if loop.closed:
+                raise SystemsError(
+                    "Selected flux contour is closed, please check psi_norm"
+                )
+
+            # Get the intersections
+            int_x, int_z = get_intersect(koz, loop)
+
+            # Combine into [x,z] points
+            points = list(map(list, zip(int_x, int_z)))
+            all_points.extend(points)
+
+        return all_points
+
+    def find_strike_points_from_koz(self, flux_loops):
+        """
+        Find the lowermost points of intersection between the
+        keep-out-zone and the given flux loops.
+
+        Parameters
+        ----------
+        flux_loops: list of Loop
+            List of flux loops used to find intersections
+
+        Returns
+        -------
+        inner, outer : list, list
+            Inner and outer strike points as [x,z] list.
+
+        """
+        # Check we have a koz and psi_norm in inputs
+        koz = self.inputs["koz"]
+
+        # Shorthand
+        z_low = self.points["x_point"]["z_low"]
+
+        # Find all_intersection points between keep-out zone and flux
+        # surface having the given psi_norm
+        all_ints = self.find_koz_flux_loop_ints(koz, flux_loops)
+
+        # Sort into a dictionary indexed by x-coord and save extremal
+        x_min = np.max(koz.x)
+        x_max = np.min(koz.x)
+        sorted = {}
+        for pt in all_ints:
+            x_now = pt[0]
+            z_now = pt[1]
+
+            # Only accept points below lower X point
+            if z_now > z_low:
+                continue
+            if x_now not in sorted:
+                sorted[x_now] = []
+            sorted[x_now].append(z_now)
+
+            # save limits
+            if x_now > x_max:
+                x_max = x_now
+            if x_now < x_min:
+                x_min = x_now
+
+        if len(sorted) == 0:
+            raise SystemsError(
+                "No intersections with keep-out zone below lower X-point."
+            )
+
+        # Check we have distinct xmin, xmax
+        if x_min == x_max:
+            raise SystemsError("All keep-out-zone intersections have same x-coord")
+
+        # Sort extremal inner and outer z coords and select lowest
+        sorted[x_min].sort()
+        sorted[x_max].sort()
+        inner_z = sorted[x_min][0]
+        outer_z = sorted[x_max][0]
+
+        # Construct the inner and outer points and return
+        inner = [x_min, inner_z]
+        outer = [x_max, outer_z]
+        return inner, outer
+
+    def find_strike_points_from_params(self, flux_loops):
+        """
+        Find the inner and outer strike points from parameters,
+        taking intersections from the given inner / outer flux loops
+        """
+        raise NotImplementedError
+
+    def find_strike_points(self, flux_loops):
+        """
+        Find the inner and outer strike points, taking intersections
+        from the given inner / outer flux loops
+
+        Parameters
+        ----------
+        flux_loops: list of Loop
+            List of flux loops used to find intersections
+
+        Returns
+        -------
+        inner,outer : list,list
+            Lists of [x,z] coords corresponding to inner and outer
+            strike points
+        """
+        if "strike_pts_from_koz" in self.inputs and self.inputs["strike_pts_from_koz"]:
+            return self.find_strike_points_from_koz(flux_loops)
+        else:
+            return self.find_strike_points_from_params(flux_loops)
+
+    def pick_flux_loops(self):
+        """
+        Return a list of flux loops to be used to find strike points.
+
+        Returns
+        -------
+        flux_loops : list of Loop
+            List of flux loops used to find intersections
+        """
+        flux_loops = []
+        if (
+            "pick_flux_from_psinorm" in self.inputs
+            and self.inputs["pick_flux_from_psinorm"]
+            and "psi_norm" in self.inputs
+        ):
+            # If flag in inputs is true, use psi_norm value
+            psi_norm = self.params["psi_norm"]
+            flux_loops = self.make_flux_contour_loops(self.equilibrium, psi_norm)
+        else:
+            # Default: use separatrix
+            flux_loops = self.separatrix
+        return flux_loops
+
+    def plot_hf(self, ax=None, **kwargs):
+        """
+        Plots the first wall, the separatrix, the SOL discretised as set of
+        flux lines, intersections between fw and flux lines, relevant
+        local heat flux and, if given as input, the keep out zone
+
+        Parameters
+        ----------
+        ax: Axes, optional
+            The optional Axes to plot onto, by default None.
+        """
+        koz = self.inputs.get("koz", None)
+        separatrix = self.separatrix
+        self._plotter.plot_hf(
+            separatrix,
+            self.geom["fs"],
+            self.x_wall,
+            self.z_wall,
+            self.hf_wall,
+            self.inner_profile,
+            koz,
+            ax=ax,
+            **kwargs,
+        )
+
+    def make_outer_wall(
+        self, inner_wall, divertor_loops, tk_inboard, tk_outboard, tk_div
+    ):
+        """
+        Create the outer wall 2D profile given the inner wall and the divertor.
+        Allows for three different thicknesses, on the inboard / outboard side
+        and around the divertor.
+
+        Parameters
+        ----------
+        inner_wall: Loop
+            2D profile of the inner wall
+        divertor_loops: list
+            List of loops which constitute the divertor(s).
+        tk_inboard: float
+            Thickness of the wall on the inboard side.
+        tk_outboard: float
+            Thickness of the wall on the outboard side.
+        tk_div: float
+            Thickness of the wall around the divertor.
+
+        Returns
+        -------
+        outer_wall : Loop
+            2D profile of the outer wall
+        """
+        # Find the max thickness
+        max_tk = 2.0 * max(max(tk_inboard, tk_outboard), tk_div)
+
+        # Create bounding box cutters
+        cutters = self.make_cutters(inner_wall, divertor_loops, max_tk)
+
+        # Divide inner wall into inboard / outboard portions
+        cutter_in = cutters[0]
+        cutter_out = cutters[1]
+        inboard = boolean_2d_common_loop(inner_wall, cutter_in)
+        outboard = boolean_2d_common_loop(inner_wall, cutter_out)
+
+        # Now subtract divertor loops from inboard / outboard
+        for div in divertor_loops:
+            inboard = boolean_2d_difference_loop(inboard, div)
+            outboard = boolean_2d_difference_loop(outboard, div)
+
+        # Offset each loop with the appropriate thickness
+        inboard = inboard.offset_clipper(tk_inboard)
+        outboard = outboard.offset_clipper(tk_outboard)
+        offset_divertor_loops = []
+        for div in divertor_loops:
+            offset_divertor_loops.append(div.offset_clipper(tk_div))
+
+        # Remove the overlaps between the offset sections
+        sections = self.get_non_overlapping(
+            inboard, outboard, offset_divertor_loops, cutters
+        )
+
+        # Subtract the inner profile from each component
+        for i, sec in enumerate(sections):
+            sections[i] = boolean_2d_difference_loop(sec, inner_wall)
+
+        # Now find the union of our offset loops and the original profile
+        outer_wall = self.attach_divertor(inner_wall, sections)
+
+        # Return both the union and individual sections
+        return outer_wall, sections
+
+    def make_cutters(self, inner_wall, divertor_loops, thickness):
+        """
+        Intermediate step to make bounding-box cutters around
+        inboard / outboard / divertor sections of first wall.
+
+        Parameters
+        ----------
+        inner_wall: Loop
+            2D profile of the inner wall
+        divertor_loops: list
+            List of loops which constitute the divertor(s).
+        thickness: float
+            Thickness to add around the bounding boxes.
+
+        Returns
+        -------
+        cutters : tuple of Loop
+            Tuple of cutters: (inboard, outboard, [divertor_cutters])
+        """
+        # Draw boxes to separate inboard / outboard side using x point
+        # and  the limits of the inner profile loop
+        x_x_point = self.points["x_point"]["x"]
+        x_max = np.max(inner_wall.x) + thickness
+        x_min = np.min(inner_wall.x) - thickness
+        z_max = np.max(inner_wall.z) + thickness
+        z_min = np.min(inner_wall.z) - thickness
+        cutter_in = make_box_xz(x_min, x_x_point, z_min, z_max)
+        cutter_out = make_box_xz(x_x_point, x_max, z_min, z_max)
+
+        # Make a cutters for each divertor
+        div_cutters = []
+        for div in divertor_loops:
+            x_max = np.max(div.x) + thickness
+            x_min = np.min(div.x) - thickness
+
+            # Lower or upper divertor? We want to be flush with the
+            # original horizontal join
+            z_div_max = np.max(div.z)
+            z_div_min = np.min(div.z)
+            if z_div_min > 0.0:
+                # Upper divertor
+                z_min = z_div_min
+                z_max = z_div_max + thickness
+            else:
+                # Lower divertor
+                z_max = z_div_max
+                z_min = z_div_min - thickness
+
+            div_cutter = make_box_xz(x_min, x_max, z_min, z_max)
+            div_cutters.append(div_cutter)
+
+        return (cutter_in, cutter_out, div_cutters)
+
+    def get_non_overlapping(self, inboard, outboard, divertor_loops, cutters):
+        """
+        Remove overlaps between offset inboard, outboard, and divertor loops
+        by clipping vertically at x point and vertically at the horizontal
+        edge of the original divertor loops.
+
+        Parameters
+        ----------
+        inboard : Loop
+            Loop representing the inboard portion of first wall minus divertor.
+        outboard : Loop
+            Loop representing the outboard portion of first wall minus divertor.
+        divertor_loops : list
+            List of Loop objects representing the divertor(s).
+        cutters: tuple
+            Tuple of cutters used to remove overlaps.
+
+        Returns
+        -------
+        sections : list
+            List of Loop objects corresponding to the non-overlapping sections
+            of the first wall. Ordering is divertor_loops; inboard; outboard.
+        """
+        # Extract cutters
+        cutter_in = cutters[0]
+        cutter_out = cutters[1]
+        div_cutters = cutters[2]
+
+        # Cut vertically at the x point
+        inboard = boolean_2d_common_loop(inboard, cutter_in)
+        outboard = boolean_2d_common_loop(outboard, cutter_out)
+
+        # Cut horizontally where the inboard/outboard meets divertor
+        sections = []
+        for i_div, div_cutter in enumerate(div_cutters):
+            # Cut the divertor
+            div = divertor_loops[i_div]
+            div_clip = boolean_2d_common_loop(div, div_cutter)
+
+            # Cut the inboard/outboard
+            inboard = boolean_2d_difference_loop(inboard, div_cutter)
+            outboard = boolean_2d_difference_loop(outboard, div_cutter)
+
+            # Save clipped divertor
+            sections.append(div_clip)
+
+        # Save fully clipped inboard / outboard sections
+        sections.append(inboard)
+        sections.append(outboard)
+        return sections
+
+    def make_divertor_cassette(self, divertor_loops):
+        """
+        Given the divertor loops create the divertor cassette.
+
+        Parameters
+        ----------
+        divertor_loops : list
+            List of Loop objects representing the divertor
+
+        Returns
+        -------
+        divertor_cassette : list
+            List of Loop objects representing the divertor cassettes
+            (one for each divertor)
+        """
+        # Fetch the vacuum vessel
+        vv = self.inputs["vv_inner"]
+
+        # Find the limits of the vacuum vessel
+        z_max_vv = np.max(vv.z)
+        z_min_vv = np.min(vv.z)
+        x_max_vv = np.max(vv.x)
+        x_min_vv = np.min(vv.x)
+
+        # Make a cassette for each divertor
+        cassettes = []
+        for div in divertor_loops:
+
+            # Create an offset divertor with a given thickness
+            offset = self.params.tk_div_cass
+            div_offset = div.offset_clipper(offset)
+
+            # Take the outermost radial limit from offset div
+            x_max = np.max(div_offset.x)
+
+            # Take the innermost radial limit from offset div, plus extra thickness
+            x_min = np.min(div_offset.x) - self.params.tk_div_cass_in
+
+            # Check we're inside the vacuum vessel
+            if x_min < x_min_vv or x_max > x_max_vv:
+                raise GeometryError(
+                    "Divertor cassette radial limits overlap with vacuum vessel."
+                )
+
+            # z limits: want to be flush with flat edge of (non-offset) divertor
+            z_min_div = np.min(div.z)
+            z_max_div = np.max(div.z)
+
+            # Lower or upper divertor?
+            if z_min_div > 0.0:
+                # Upper divertor
+                z_min = z_min_div
+                z_max = z_max_vv
+            else:
+                # Lower divertor
+                z_max = z_max_div
+                z_min = z_min_vv
+
+            # Check z coords are inside acceptable bounds
+            if z_max > z_max_vv or z_min < z_min_vv:
+                raise GeometryError(
+                    "Divertor cassette z-limits overlap with vacuum vessel"
+                )
+
+            div_box = make_box_xz(x_min, x_max, z_min, z_max)
+
+            # Want to cut out space between outer leg and box
+            cutters = boolean_2d_difference_split(div_box, div_offset)
+
+            # Deduce the correct cutter by its limits
+            cutter_select = None
+            for cutter in cutters:
+                cutter_x_max = np.max(cutter.x)
+                cutter_x_min = np.min(cutter.x)
+                if z_min_div > 0.0:
+                    # Upper divertor
+                    cutter_z_lim = np.min(cutter.z)
+                    z_lim = z_min_div
+                else:
+                    # Lower divertor
+                    cutter_z_lim = np.max(cutter.z)
+                    z_lim = z_max_div
+
+                if (
+                    cutter_x_max == x_max
+                    and cutter_z_lim == z_lim
+                    and cutter_x_min > x_min
+                ):
+                    cutter_select = cutter
+                    break
+
+            # If outer leg is vertical, no space to cut: cutter may be None
+            if cutter_select:
+                # Apply our cutter
+                div_box = boolean_2d_difference_loop(div_box, cutter_select)
+
+            # Find the overlap between the vv and the box
+            cassette = boolean_2d_common_loop(div_box, vv)
+
+            # Subtract the divertor (get an inner and outer piece)
+            subtracted = boolean_2d_difference(cassette, div)
+            if not len(subtracted) == 2:
+                raise GeometryError("Unexpected number of loops")
+            # Select the outer one
+            if np.max(subtracted[0].x) > np.max(subtracted[1].x):
+                cassette = subtracted[0]
+            else:
+                cassette = subtracted[1]
+
+            # Finally, simplify
+            cassette = simplify_loop(cassette)
+            cassettes.append(cassette)
+
+        return cassettes
+
+
+class FirstWallSN(FirstWall):
     """
     Reactor First Wall (FW) system
 
     First Wall design for a SN configuration
     The user needs to change the default parameters according to the case
+
+    Attributes
+    ----------
+    self.flux_surfaces: [Loop]
+        Set of flux surfaces to discretise the SOL
+    self.flux_surface_width_omp: [float]
+        Thickness of flux sirfaces
     """
 
-    config: Type[ParameterFrame]
-    inputs: dict
-
-    default_params = [
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
-        ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
-        ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
-        ["fw_dx", "Initial offset from LCFS", 0.3, "m", None, "Input"],
-        ["fw_psi_n_prel", "psi preliminary profile", 1.01, "N/A", None, "Input"],
+    # fmt: off
+    default_params = FirstWall.base_default_params + [
+        # ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
+        ["fw_dx", "Minimum distance of FW to separatrix", 0.3, "m", None, "Input"],
+        ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "N/A", None, "Input"],
         ["fw_p_sol_near", "near Scrape off layer power", 50, "MW", None, "Input"],
         ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
         ["f_outer_target", "Power fraction", 0.75, "N/A", None, "Input"],
         ["f_inner_target", "Power fraction", 0.25, "N/A", None, "Input"],
-        ["tk_bb_fw", "First wall thickness", 0.052, "m", None, "Input"],
-        # To draw the divertor
+        # Parameters used in make_divertor_loop
         ["xpt_outer_gap", "Gap between x-point and outer wall", 2, "m", None, "Input"],
         ["xpt_inner_gap", "Gap between x-point and inner wall", 1, "m", None, "Input"],
         ["outer_strike_h", "Outer strike point height", 2, "m", None, "Input"],
         ["inner_strike_h", "Inner strike point height", 1, "m", None, "Input"],
-        ["outer_target_SOL", "Outer target length SOL side", 0.7, "m", None, "Input"],
-        ["outer_target_PFR", "Outer target length PFR side", 0.3, "m", None, "Input"],
-        ["inner_target_SOL", "Inner target length SOL side", 0.3, "m", None, "Input"],
-        ["inner_target_PFR", "Inner target length PFR side", 0.5, "m", None, "Input"],
+        ["outer_target_sol", "Outer target length SOL side", 0.7, "m", None, "Input"],
+        ["outer_target_pfr", "Outer target length PFR side", 0.3, "m", None, "Input"],
+        ["inner_target_sol", "Inner target length SOL side", 0.3, "m", None, "Input"],
+        ["inner_target_pfr", "Inner target length PFR side", 0.5, "m", None, "Input"],
     ]
-    CADConstructor = FirstWallCAD
-
-    def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
-
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
-
-        self.equilibrium = inputs["equilibrium"]
-        super().load_equilibrium()
-
-        if "profile" in inputs:
-            self.profile = inputs["profile"]
-        else:
-            self.profile = self.make_preliminary_profile()
-
-        self.make_flux_surfaces()
-
-        self.inner_profile = self.make_divertor(self.profile)
-        outer_profile = self.inner_profile[0].offset(self.params.tk_bb_fw)
-        outer_profile = simplify_loop(outer_profile)
-
-        self.geom["2D profile"] = Shell(inner=self.inner_profile[0], outer=outer_profile)
+    # fmt: on
 
     def make_preliminary_profile(self):
         """
@@ -826,7 +1634,7 @@ class FirstWallSN(EqInputs, ReactorSystem):
         """
         dx_loop = self.lcfs.offset(self.params.fw_dx)
         psi_n_loop = self.equilibrium.get_flux_surface(
-            self.params.fw_psi_n_prel,
+            self.params.fw_psi_n,
         )
 
         fw_limit = self.points["x_point"]["z_low"] - self.x_point_shift
@@ -850,109 +1658,100 @@ class FirstWallSN(EqInputs, ReactorSystem):
 
     def make_divertor(self, fw_loop):
         """
-        Make a divertor
+        Combine the current fw loop with the single null divertor geometry
 
         Parameters
         ----------
         fw_loop: Loop
-            first wall profile
+            first wall preliminary profile
 
         Returns
         -------
-        fw_diverted_loop: Loop
-            Here the first wall also has a divertor geometry
+        divertor_loop: list
+            List of Loops for the divertor geometry (single entry for SN)
         """
-        mid_plane_inner_leg_cut = Plane(
-            [
-                self.points["x_point"]["x"],
-                0,
-                self.points["x_point"]["z_low"] - self.params.inner_strike_h,
-            ],
-            [0, 1, self.points["x_point"]["z_low"] - self.params.inner_strike_h],
-            [0, 0, self.points["x_point"]["z_low"] - self.params.inner_strike_h],
+        # Some shorthands
+        z_low = self.points["x_point"]["z_low"]
+        x_x_point = self.points["x_point"]["x"]
+
+        # Pick some flux loops to use to locate strike points
+        flux_loops = self.pick_flux_loops()
+
+        # Find the strike points
+        inner, outer = self.find_strike_points(flux_loops)
+
+        # Find the intersection of the first wall loop and
+        # the x-y plane containing the lower X point
+        z_norm = 2
+        fw_int_point = get_intersection_point(
+            z_low, z_norm, fw_loop, x_x_point, inner=False
         )
 
-        mid_plane_outer_leg_cut = Plane(
-            [
-                self.points["x_point"]["x"],
-                0,
-                self.points["x_point"]["z_low"] - self.params.outer_strike_h,
-            ],
-            [0, 1, self.points["x_point"]["z_low"] - self.params.outer_strike_h],
-            [0, 0, self.points["x_point"]["z_low"] - self.params.outer_strike_h],
-        )
+        # Define the left and right limits of the divertor entrance
+        # relative to the separatrix x point given gap parameters
+        div_left = x_x_point - self.params.xpt_inner_gap
+        div_right = max(x_x_point + self.params.xpt_outer_gap, fw_int_point[0])
 
-        inner_strike = next(
-            filter(
-                lambda p: p[0] < self.points["x_point"]["x"],
-                loop_plane_intersect(self.separatrix, mid_plane_inner_leg_cut),
-            )
-        )
-
-        outer_strike = next(
-            filter(
-                lambda p: p[0] > self.points["x_point"]["x"],
-                loop_plane_intersect(self.separatrix, mid_plane_outer_leg_cut),
-            )
-        )
-
-        # Divertor entrance
-        div_left_limit = np.array(
-            [
-                self.points["x_point"]["x"] - self.params.xpt_inner_gap,
-                self.points["x_point"]["z_low"],
-            ],
-        )
-        div_right_limit = np.array(
-            [
-                self.points["x_point"]["x"] + self.params.xpt_outer_gap,
-                self.points["x_point"]["z_low"],
-            ],
-        )
-
-        x_point_plane = Plane(
-            [0, 0, self.points["x_point"]["z_low"]],
-            [0, 1, self.points["x_point"]["z_low"]],
-            [10, 0, self.points["x_point"]["z_low"]],
-        )
-
-        tmp_div_top_right_limit_x = next(
-            filter(
-                lambda p: p[0] > self.points["x_point"]["x"],
-                loop_plane_intersect(fw_loop, x_point_plane),
-            )
-        )[0]
-
-        if tmp_div_top_right_limit_x > div_right_limit[0]:
-            div_right_limit[0] = tmp_div_top_right_limit_x
-        else:
-            pass
-
+        # Define the x coordinates for the divertor
         x_div = [
-            div_left_limit[0],
-            inner_strike[0] - self.params.inner_target_SOL,
-            inner_strike[0] + self.params.inner_target_PFR,
-            outer_strike[0] - self.params.outer_target_PFR,
-            outer_strike[0] + self.params.outer_target_SOL,
-            div_right_limit[0],
-        ]
-        z_div = [
-            div_left_limit[1],
-            inner_strike[2],
-            inner_strike[2],
-            outer_strike[2],
-            outer_strike[2],
-            div_right_limit[1],
+            div_left,
+            inner[0] - self.params.inner_target_sol,
+            inner[0] + self.params.inner_target_pfr,
+            outer[0] - self.params.outer_target_pfr,
+            outer[0] + self.params.outer_target_sol,
+            div_right,
         ]
 
+        # Define the z coordinates for the divertor
+        z_div = [z_low, inner[1], inner[1], outer[1], outer[1], z_low]
+
+        # Create the loop and return as a list
         divertor_loop = Loop(x=x_div, z=z_div)
         divertor_loop.close()
 
-        fw_loop.close()
-        union = boolean_2d_union(fw_loop, divertor_loop)
-        fw_diverted_loop = union
+        return [divertor_loop]
 
-        return fw_diverted_loop
+    def find_strike_points_from_params(self, flux_loops):
+        """
+        Find the inner and outer strike points using the relative
+        height from the lower X point taken from self.params
+        and look for the intersection point with given flux loop(s).
+
+        Parameters
+        ----------
+        flux_loops : list of Loop
+            Loops with which the strike point should intersect.
+            For SN case this will be a list with one entry.
+
+        Returns
+        -------
+        inner,outer : list,list
+            Lists of [x,z] coords corresponding to inner and outer
+            strike points
+        """
+        # Some shorthands
+        z_low = self.points["x_point"]["z_low"]
+        x_x_point = self.points["x_point"]["x"]
+
+        # SN case: just one loop
+        flux_loop = flux_loops[0]
+
+        # Find the x coord of the inner and outer strike points  by
+        # intersecting xy plane at specified z coord with the separatrix
+        z_inner = z_low - self.params.inner_strike_h
+        z_outer = z_low - self.params.outer_strike_h
+        z_norm = 2
+        x_inner = get_intersection_point(
+            z_inner, z_norm, flux_loop, x_x_point, inner=True
+        )[0]
+        x_outer = get_intersection_point(
+            z_outer, z_norm, flux_loop, x_x_point, inner=False
+        )[0]
+
+        inner = [x_inner, z_inner]
+        outer = [x_outer, z_outer]
+
+        return inner, outer
 
     def make_flux_surfaces(self, step_size=0.005):
         """
@@ -963,23 +1762,16 @@ class FirstWallSN(EqInputs, ReactorSystem):
         step_size: float
             Defines the thickness of each flux surface at the midplane
 
-        Attributes
-        ----------
-        self.flux_surfaces: [Loop]
-            Set of flux surfaces to discretise the SOL
-        self.flux_surface_width_omp: [float]
-            Thickness of flux sirfaces
         """
         self.flux_surfaces = []
         x_omp = self.x_omp_lcfs + self.lcfs_shift
         double_step = 2 * step_size
 
-        profile_x_omp = next(
-            filter(
-                lambda p: p[0] > self.points["o_point"]["x"],
-                loop_plane_intersect(self.profile, self.mid_plane),
-            )
-        )[0]
+        # Find intersections between the profile and mid-plane
+        profile_ints = loop_plane_intersect(self.profile, self.mid_plane)
+
+        # Retrieve x of outer intersection
+        profile_x_omp = find_outer_point(profile_ints, self.points["o_point"]["x"])[0]
 
         while x_omp < profile_x_omp:
             flux_surface = FluxSurface(
@@ -1097,7 +1889,7 @@ class FirstWallSN(EqInputs, ReactorSystem):
         f_hfs_list = []  # target flux expansion at the hfs
 
         for fs, q in zip(self.flux_surfaces, qpar_omp):
-            x_int, z_int = fs.find_intersections(fs.loop_lfs, self.inner_profile[0])
+            x_int, z_int = fs.find_intersections(fs.loop_lfs, self.inner_profile)
             theta = fs.polar_coordinates(x_int, z_int)
 
             # assign to points to lfs/hfs
@@ -1125,7 +1917,7 @@ class FirstWallSN(EqInputs, ReactorSystem):
                 fs.loop_lfs,
                 first_int_lfs[0],
                 first_int_lfs[1],
-                self.inner_profile[0],
+                self.inner_profile,
             )
             incindent_angle_lfs.append(angle)
             # flux expansion
@@ -1154,7 +1946,7 @@ class FirstWallSN(EqInputs, ReactorSystem):
                     fs.loop_lfs,
                     first_int_hfs[0],
                     first_int_hfs[1],
-                    self.inner_profile[0],
+                    self.inner_profile,
                 )
                 incindent_angle_hfs.append(angle)
                 # flux expansion
@@ -1164,7 +1956,6 @@ class FirstWallSN(EqInputs, ReactorSystem):
         return (
             lfs_first_int,
             hfs_first_int,
-            qpar_omp,
             qpar_local_lfs,
             qpar_local_hfs,
             incindent_angle_lfs,
@@ -1231,7 +2022,7 @@ class FirstWallSN(EqInputs, ReactorSystem):
         heat_flux_hfs,
     ):
         """
-        Collect al the final parameters under single lists
+        Collect all the final parameters under single lists
 
         Parameters
         ----------
@@ -1274,28 +2065,93 @@ class FirstWallSN(EqInputs, ReactorSystem):
                 heat_flux.append(hf)
         return (x_int_hf, z_int_hf, th_int_hf, heat_flux)
 
+    @property
+    def xz_plot_loop_names(self):
+        """
+        The x-z loop names to plot.
+        """
+        names = ["Inboard wall", "Outboard wall", "Divertor", "Divertor cassette"]
+        return names
 
-class FirstWallDN(EqInputs, ReactorSystem):
+    def hf_firstwall_params(self):
+        """
+        Define params to plot the heat flux on the fw (no divertor).
+        """
+        qpar_omp = self.q_parallel_calculation()
+
+        (
+            lfs_first_int,
+            hfs_first_int,
+            qpar_local_lfs,
+            qpar_local_hfs,
+            glancing_angle_lfs,
+            glancing_angle_hfs,
+            f_lfs,
+            f_hfs,
+        ) = self.calculate_parameters_for_heat_flux(qpar_omp)
+
+        heat_flux_lfs, heat_flux_hfs = self.calculate_heat_flux_lfs_hfs(
+            qpar_local_lfs,
+            qpar_local_hfs,
+            glancing_angle_lfs,
+            glancing_angle_hfs,
+        )
+
+        (
+            x_all_int,
+            z_all_int,
+            theta_all_int,
+            hf_all_int,
+        ) = self.collect_intersection_coordinates_and_heat_flux(
+            lfs_first_int,
+            heat_flux_lfs,
+            hfs_first_int,
+            heat_flux_hfs,
+        )
+
+        self.x_wall = []
+        self.z_wall = []
+        self.hf_wall = []
+        for x, z, hf in zip(x_all_int, z_all_int, hf_all_int):
+            if z > self.points["x_point"]["z_low"]:
+                self.x_wall.append(x)
+                self.z_wall.append(z)
+                self.hf_wall.append(hf)
+
+
+class FirstWallDN(FirstWall):
     """
     Reactor First Wall (FW) system
 
     First Wall design for a DN configuration
     The user needs to change the default parameters according to the case
+
+
+    Attributes
+    ----------
+    self.flux_surfaces: [[Loop]]
+        Set of flux surfaces to discretise the SOL
+        Each flus surfaces can have either one or two loops (lfs and hfs)
+    self.flux_surface_lfs: [Loop]
+        All the fs parts at the lfs
+    self.flux_surface_hfs: [Loop]
+        All the fs parts at the hfs
+        Expected len(self.flux_surface_lfs) > len(self.flux_surface_hfs)
+    self.flux_surface_width_omp: [float]
+        Thickness of flux sirfaces on the lfs
+    self.flux_surface_width_imp: [float]
+        Thickness of flux sirfaces on the hfs
+
     """
 
-    config: Type[ParameterFrame]
-    inputs: dict
-
     # fmt: off
-    default_params = [
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
-        ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
+    default_params = FirstWall.base_default_params + [
         ["fw_psi_init", "Initial psi norm value", 1, "N/A", None, "Input"],
         ["fw_dpsi_n_near", "Step size of psi in near SOL", 0.1, "N/A", None, "Input"],
         ["fw_dpsi_n_far", "Step size of psi in far SOL", 0.1, "N/A", None, "Input"],
         ["fw_dx_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
         ["fw_dx_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
-        ["fw_psi_n_prel", "psi for preliminary profile", 1, "N/A", None, "Input"],
+        ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
         ["fw_p_sol_near", "near Scrape off layer power", 90, "MW", None, "Input"],
         ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
         ["p_rate_omp", "power sharing omp", 0.9, "%", None, "Input"],
@@ -1311,49 +2167,40 @@ class FirstWallDN(EqInputs, ReactorSystem):
         ["f_hfs_lower_target", "Power fraction hfs lower", 0.5, "N/A", None, "Input"],
         ["f_hfs_upper_target", "Power fraction hfs upper", 0.5, "N/A", None, "Input"],
         ["hf_limit", "heat flux material limit", 0.5, "MW/m^2", None, "Input"],
-        ["tk_bb_fw", "First wall thickness", 0.052, "m", None, "Input"],
         # External inputs to draw the divertor
         ["xpt_outer_gap", "Gap between x-point and outer wall", 0.5, "m", None, "Input"],
         ["xpt_inner_gap", "Gap between x-point and inner wall", 0.4, "m", None, "Input"],
         ["outer_strike_r", "Outer strike point major radius", 10.3, "m", None, "Input"],
         ["inner_strike_r", "Inner strike point major radius", 8, "m", None, "Input"],
-        ["outer_target_SOL", "Outer target length SOL side", 0.4, "m", None, "Input"],
-        ["outer_target_PFR", "Outer target length PFR side", 0.4, "m", None, "Input"],
-        ["theta_outer_target", "Target-Separatrix angle", 20, "deg", None, "Input"],
-        ["inner_target_SOL", "Inner target length SOL side", 0.2, "m", None, "Input"],
-        ["inner_target_PFR", "Inner target length PFR side", 0.2, "m", None, "Input"],
-        ["xpt_height", "x-point vertical_gap", 0.35, "m", None, "Input"],
+        ["outer_target_sol", "Outer target length between strike point and SOL side",
+         0.4, "m", None, "Input"],
+        ["outer_target_pfr", "Outer target length between strike point and PFR side",
+         0.4, "m", None, "Input"],
+        ["theta_outer_target",
+         "Angle between flux line tangent at outer strike point and SOL side of outer target",
+         20, "deg", None, "Input"],
+        ["inner_target_sol", "Inner target length SOL side", 0.2, "m", None, "Input"],
+        ["inner_target_pfr", "Inner target length PFR side", 0.2, "m", None, "Input"],
+        ["xpt_height", "x-point vertical_gap", 0.4, "m", None, "Input"],
     ]
     # fmt: on
-    CADConstructor = FirstWallCAD
 
-    def __init__(self, config, inputs):
-        self.config = config
-        self.inputs = inputs
-
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
-
+    def init_params(self):
+        """
+        Initialise First Wall DN parameters from config.
+        """
+        super().init_params()
         self.fw_p_sol_near_omp = self.params.fw_p_sol_near * self.params.p_rate_omp
         self.fw_p_sol_far_omp = self.params.fw_p_sol_far * self.params.p_rate_omp
         self.fw_p_sol_near_imp = self.params.fw_p_sol_near * self.params.p_rate_imp
         self.fw_p_sol_far_imp = self.params.fw_p_sol_far * self.params.p_rate_imp
 
-        self.equilibrium = inputs["equilibrium"]
-        super().load_equilibrium()
-
-        if "profile" in inputs:
-            self.profile = inputs["profile"]
-        else:
-            self.profile = self.make_preliminary_profile()
-
-        self.make_flux_surfaces()
-
-        self.inner_profile = self.make_divertor(self.profile)
-        outer_profile = self.inner_profile.offset(self.params.tk_bb_fw)
-        outer_profile = simplify_loop(outer_profile)
-
-        self.geom["2D profile"] = Shell(inner=self.inner_profile, outer=outer_profile)
+    def init_equilibrium(self):
+        """
+        Initialise double null equilibrium inputs.
+        """
+        self.equilibrium = self.inputs["equilibrium"]
+        EqInputs.__init__(self, x_point_shift=self.params.xpt_height)
 
     def make_preliminary_profile(self):
         """
@@ -1394,8 +2241,7 @@ class FirstWallDN(EqInputs, ReactorSystem):
         new_loop_lfs.insert([x_right, 0, self.points["x_point"]["z_up"]])
 
         dx_loop = convex_hull([new_loop_lfs, new_loop_hfs])
-        psi_n_loop = self.equilibrium.get_flux_surface(self.params.fw_psi_n_prel)
-
+        psi_n_loop = self.equilibrium.get_flux_surface(self.params.fw_psi_n)
         bottom_limit = self.points["x_point"]["z_low"] - self.x_point_shift
         top_limit = self.points["x_point"]["z_up"] + self.x_point_shift
 
@@ -1469,246 +2315,194 @@ class FirstWallDN(EqInputs, ReactorSystem):
         z = new_a_coeff * (func(x)) + new_b_coeff
         return (x, z)
 
-    def make_divertor_outer_target(self):
+    def make_divertor_outer_target(self, outer_strike, tangent):
         """
         Make a divertor outer target
+
+        Parameters
+        ----------
+        outer_strike: [float,float]
+            List of [x,z] coords corresponding to the strike point position
+
+        tangent: [float,float]
+            List of [x,z] coords corresponding to the tangent vector to the
+        appropriate flux loop at the outer strike point
 
         Returns
         -------
         outer_target_internal_point: [float, float]
-            x and z coordinates of the internal point.
-            Meaning private flux region side
+            x and z coordinates of the internal end point of outer target.
+            Meaning private flux region (PRF) side
         outer_target_external_point: [float, float]
-            x and z coordinates of the internal point.
-            Meaning SOL side
+            x and z coordinates of the external end point of outer target.
+            Meaning scrape-off layer (SOL) side
 
         The divertor target is a straight line
         """
-        # Get strike point
-        mid_plane_outer_leg_limit = Plane(
-            [self.params.outer_strike_r, 0, self.points["x_point"]["z_low"]],
-            [self.params.outer_strike_r, 1, self.points["x_point"]["z_low"]],
-            [
-                self.params.outer_strike_r,
-                0,
-                self.points["x_point"]["z_low"] - self.x_point_shift,
-            ],
+        # Rotate tangent vector to appropriate flux loop to obtain
+        # a vector parallel to the outer target
+        target_par = rotate_vector_2d(
+            tangent, np.radians(self.params.theta_outer_target)
         )
 
-        outer_strike = next(
-            filter(
-                lambda p: p[0] > self.points["x_point"]["x"],
-                loop_plane_intersect(self.separatrix[0], mid_plane_outer_leg_limit),
-            )
-        )
+        # Create relative vectors whose length will be the offset distance
+        # from the strike point
+        target_int = -target_par * self.params.outer_target_pfr
+        target_ext = target_par * self.params.outer_target_sol
 
-        sep_p_ind = np.roll(np.arange(self.separatrix[0].x.size), -1)
-        arr = np.array(
-            [
-                [self.separatrix[0].x, self.separatrix[0].z],
-                [self.separatrix[0].x[sep_p_ind], self.separatrix[0].z[sep_p_ind]],
-            ]
-        )
-        int_ind = np.where(
-            [
-                check_linesegment(
-                    arr[0, :, i], arr[1, :, i], [outer_strike[0], outer_strike[2]]
-                )
-                for i in range(self.separatrix[0].x.size)
-            ]
-        )
-        p_before_strike = (
-            self.separatrix[0].x[int_ind][0],
-            self.separatrix[0].z[int_ind][0],
-        )
+        # Swap if we got the wrong way round
+        if target_ext[0] < target_int[0]:
+            tmp = target_int
+            target_int = target_ext
+            target_ext = tmp
 
-        v1 = p_before_strike - np.array([outer_strike[0], outer_strike[2]])
-        v1_u = v1 / np.linalg.norm(v1)
-        v2_u = rotate_vector_2d(v1_u, np.radians(self.params.theta_outer_target))
+        # Add the outer strike point to diffs to get the absolute positions
+        # of the end points of the target
+        outer_target_internal_point = target_int + outer_strike
+        outer_target_external_point = target_ext + outer_strike
 
-        # Find endpoints
-        target_int = v2_u * self.params.outer_target_PFR
-        target_ext = v2_u * self.params.outer_target_SOL
-        target = np.array([-target_int, target_ext])
-        target = target + [outer_strike[0], outer_strike[2]]
-        if target[0, 0] < target[1, 0]:
-            outer_target_internal_point = np.array([target[0, 0], target[0, 1]])
-            outer_target_external_point = np.array([target[1, 0], target[1, 1]])
-        elif target[0, 0] > target[1, 0]:
-            outer_target_internal_point = np.array([target[1, 0], target[1, 1]])
-            outer_target_external_point = np.array([target[0, 0], target[0, 1]])
-
+        # Return end points
         return (outer_target_internal_point, outer_target_external_point)
 
-    def make_divertor_inner_target(self):
+    def get_tangent_vector(self, point_on_loop, loop):
+        """
+        Find the normalised tangent vector to the given loop at the given
+        point on the loop.
+
+        Parameters
+        ----------
+        point_on_loop: [float,float]
+            List of [x,z] coords corresponding to the strike point position
+        loop: Loop
+            The loop that was used to find the outer stike point, from which
+            another point will be taken
+
+        Returns
+        -------
+        tangent_norm: numpy.array
+            Vector in the x-z plane representing the tangent to the loop
+            at the given point
+        """
+        # Retrieve coordinates of the point just before where
+        # the loop intersects the given point
+        i_before = index_of_point_on_loop(loop, point_on_loop, before=True)
+        p_before = [loop.x[i_before], loop.z[i_before]]
+
+        # Create a tangent to the flux loop at the strike point
+        tangent = np.array(p_before) - np.array(point_on_loop)
+
+        # Return normalised tangent vector
+        tangent_norm = tangent / np.linalg.norm(tangent)
+        return tangent_norm
+
+    def make_divertor_inner_target(self, inner_strike):
         """
         Make a divertor inner target
 
         Returns
         -------
         inner_target_internal_point: [float, float]
-            x and z coordinates of the internal point.
-            Meaning SOL side
+            x and z coordinates of the internal point on the SOL side
         inner_target_external_point: [float, float]
-            x and z coordinates of the internal point.
-            Meaning private flux region side
+            x and z coordinates of the internal point on the
+            private flux region side
         """
-        mid_plane_inner_leg_limit = Plane(
-            [self.params.inner_strike_r, 0, self.points["x_point"]["z_low"]],
-            [self.params.inner_strike_r, 1, self.points["x_point"]["z_low"]],
-            [
-                self.params.inner_strike_r,
-                0,
-                self.points["x_point"]["z_low"] - self.x_point_shift,
-            ],
-        )
-
-        inner_strike = next(
-            filter(
-                lambda p: p[0] < self.points["x_point"]["x"],
-                loop_plane_intersect(self.separatrix[1], mid_plane_inner_leg_limit),
-            )
-        )
-
         inner_target_internal_point = [
             self.points["x_point"]["x"] - self.params.xpt_inner_gap,
             self.points["x_point"]["z_low"],
         ]
 
-        m = lineq(inner_target_internal_point, [inner_strike[0], inner_strike[2]])[0]
+        m = lineq(inner_target_internal_point, [inner_strike[0], inner_strike[1]])[0]
 
         x_target_external_point = (
-            inner_strike[0] - (self.params.inner_target_PFR ** 2) + (m * inner_strike[0])
+            inner_strike[0] - (self.params.inner_target_pfr ** 2) + (m * inner_strike[0])
         ) / (1 + m)
 
         z_target_external_point = (
-            m * (x_target_external_point - inner_strike[0]) + inner_strike[2]
+            m * (x_target_external_point - inner_strike[0]) + inner_strike[1]
         )
 
         inner_target_external_point = [x_target_external_point, z_target_external_point]
 
         return (inner_target_internal_point, inner_target_external_point)
 
-    def make_divertor(self, fw_loop):
+    def make_outer_leg(self, div_top_right, outer_strike, middle_point, flux_loop):
         """
-        Make a divertor: attaches a divertor to the first wall
+        Find the coordinates of the outer leg of the divertor.
 
         Parameters
         ----------
-        fw_loop: Loop
-            first wall profile
+        div_top_right: float
+            Top-right x-coordinate of the divertor
+        outer_strike: [float,float]
+            Coordinates of the outer strike point
+        middle_point: [float,float]
+            Coordinates of the middle point between the inner and outer legs
+        flux_loop: Loop
+            Outer flux loop used for shaping.
 
         Returns
         -------
-        fw_diverted_loop: Loop
-            Complete first wall profile (with divertor)
+        divertor_leg: (list, list)
+            x and z coordinates of outer leg
         """
+        # Find the tangent to the approriate flux loop at the outer strike point
+        tangent = self.get_tangent_vector(outer_strike, flux_loop)
+
+        # Get the outer target points
         (
             outer_target_internal_point,
             outer_target_external_point,
-        ) = self.make_divertor_outer_target()
-        (
-            inner_target_internal_point,
-            inner_target_external_point,
-        ) = self.make_divertor_inner_target()
+        ) = self.make_divertor_outer_target(outer_strike, tangent)
 
-        middle_point = [
-            self.points["x_point"]["x"],
-            self.points["x_point"]["z_low"] - self.params.xpt_height,
-        ]
-
-        outer_leg_central_guide_line = self.separatrix[0]
+        # Select those points along the given flux line below the X point
+        outer_leg_central_guide_line = flux_loop
+        z_x_point = self.points["x_point"]["z_low"]
         top_clip_outer_leg_central_guide_line = np.where(
-            outer_leg_central_guide_line.z < self.points["x_point"]["z_low"],
+            outer_leg_central_guide_line.z < z_x_point,
         )
 
+        # Create a new Loop from the points selected along the given flux line
         outer_leg_central_guide_line = Loop(
-            outer_leg_central_guide_line.x[top_clip_outer_leg_central_guide_line],
+            x=outer_leg_central_guide_line.x[top_clip_outer_leg_central_guide_line],
+            y=None,
             z=outer_leg_central_guide_line.z[top_clip_outer_leg_central_guide_line],
         )
+
+        # Select those points along the top-clipped flux line above the
+        # outer target internal point height
         bottom_clip_outer_leg_central_guide_line = np.where(
             outer_leg_central_guide_line.z > outer_target_internal_point[1],
         )
+
+        # Create a new Loop from the points selected along the flux line
         outer_leg_central_guide_line = Loop(
-            outer_leg_central_guide_line.x[bottom_clip_outer_leg_central_guide_line],
+            x=outer_leg_central_guide_line.x[bottom_clip_outer_leg_central_guide_line],
+            y=None,
             z=outer_leg_central_guide_line.z[bottom_clip_outer_leg_central_guide_line],
         )
 
-        outer_target = np.array(
-            [
-                [
-                    outer_target_internal_point[0],
-                    outer_target_external_point[0],
-                ],
-                [
-                    outer_target_internal_point[1],
-                    outer_target_external_point[1],
-                ],
-            ]
-        )
-
-        inner_target = np.array(
-            [
-                [
-                    inner_target_internal_point[0],
-                    inner_target_external_point[0],
-                ],
-                [
-                    inner_target_internal_point[1],
-                    inner_target_external_point[1],
-                ],
-            ]
-        )
-
-        # Divertor entrance
-        # div_top_left_limit = np.array(
-        #     [
-        #         self.points["x_point"]["x"] - self.params.xpt_inner_gap,
-        #         self.points["x_point"]["z_low"],
-        #     ],
-        # )
-        div_top_right_limit = np.array(
-            [
-                self.points["x_point"]["x"] + self.params.xpt_outer_gap,
-                self.points["x_point"]["z_low"],
-            ],
-        )
-
-        # To modify the inputs for the divertor entrance if needed to lower the hf
-        x_point_plane = Plane(
-            [0, 0, self.points["x_point"]["z_low"]],
-            [0, 1, self.points["x_point"]["z_low"]],
-            [10, 0, self.points["x_point"]["z_low"]],
-        )
-
-        tmp_div_top_right_limit_x = next(
-            filter(
-                lambda p: p[0] > self.points["x_point"]["x"],
-                loop_plane_intersect(fw_loop, x_point_plane),
-            )
-        )[0]
-
-        if tmp_div_top_right_limit_x > div_top_right_limit[0]:
-            div_top_right_limit[0] = tmp_div_top_right_limit_x
-        else:
-            pass
-
-        (outer_leg_external_line_x, outer_leg_external_line_z,) = self.reshape_curve(
-            outer_leg_central_guide_line.x,
-            outer_leg_central_guide_line.z,
-            [div_top_right_limit[0], div_top_right_limit[1]],
-            outer_target[:, 1],
-            2,
-        )
-
+        # Modify the clipped flux line curve to start at the middle and end
+        # at the internal point of the outer target
         (outer_leg_internal_line_x, outer_leg_internal_line_z,) = self.reshape_curve(
             outer_leg_central_guide_line.x,
             outer_leg_central_guide_line.z,
             [middle_point[0], middle_point[1]],
-            outer_target[:, 0],
+            outer_target_internal_point,
             3,
         )
 
+        # Modify the clipped flux line curve to start at the top point of the
+        # outer target and end at the external point
+        (outer_leg_external_line_x, outer_leg_external_line_z,) = self.reshape_curve(
+            outer_leg_central_guide_line.x,
+            outer_leg_central_guide_line.z,
+            [div_top_right, z_x_point],
+            outer_target_external_point,
+            2,
+        )
+
+        # Connect the inner and outer parts of the outer leg
         outer_leg_x = np.append(
             outer_leg_internal_line_x, outer_leg_external_line_x[::-1]
         )
@@ -1716,56 +2510,163 @@ class FirstWallDN(EqInputs, ReactorSystem):
             outer_leg_internal_line_z, outer_leg_external_line_z[::-1]
         )
 
-        inner_leg_x = np.append(inner_target[0], middle_point[0])
-        inner_leg_z = np.append(inner_target[1], middle_point[1])
+        # Return coordinate arrays
+        return (outer_leg_x, outer_leg_z)
 
-        x_div_bottom = np.append(inner_leg_x, outer_leg_x)
-        z_div_bottom = np.append(inner_leg_z, outer_leg_z)
-        x_div_bottom = [round(elem, 5) for elem in x_div_bottom]
-        z_div_bottom = [round(elem, 5) for elem in z_div_bottom]
+    def make_inner_leg(self, inner_strike, middle_point):
+        """
+        Find the coordinates of the inner leg of the divertor.
 
-        x_div_top = x_div_bottom
-        z_div_top = [z * -1 for z in z_div_bottom]
+        Parameters
+        ----------
+        middle_point: [float,float]
+            Coordinates of the middle point between the inner and outer legs
 
-        bottom_divertor_loop = Loop(x=x_div_bottom, z=z_div_bottom)
-        top_divertor_loop = Loop(x=x_div_top, z=z_div_top)
+        Returns
+        -------
+        divertor_leg: (list, list)
+            x and z coordinates of the inner leg
+        """
+        # Get the inner target points
+        (
+            inner_target_internal_point,
+            inner_target_external_point,
+        ) = self.make_divertor_inner_target(inner_strike)
 
-        bottom_divertor_loop.close()
-        top_divertor_loop.close()
+        inner_leg_x = [
+            inner_target_internal_point[0],
+            inner_target_external_point[0],
+            middle_point[0],
+        ]
+        inner_leg_z = [
+            inner_target_internal_point[1],
+            inner_target_external_point[1],
+            middle_point[1],
+        ]
+        return (inner_leg_x, inner_leg_z)
 
-        union = boolean_2d_union(fw_loop, bottom_divertor_loop)
-        union = boolean_2d_union(top_divertor_loop, union)
-        fw_diverted_loop = union[0]
-        return fw_diverted_loop
+    def find_strike_points_from_params(self, flux_loops):
+        """
+        Find the inner and outer strike points from their intersections
+        with the given flux loops, given their horizontal positions
+        taken from self.params.
+
+        Parameters
+        ----------
+        flux_loops : list of Loop
+            Loops with which the strike point should intersect
+
+        Returns
+        -------
+        inner,outer : list,list
+            Lists of [x,z] coords corresponding to inner and outer
+            strike points
+        """
+        x_x_point = self.points["x_point"]["x"]
+
+        outer_loop = flux_loops[0]
+        inner_loop = flux_loops[1]
+
+        # Get the inner intersection with the separatrix
+        inner_strike_x = self.params.inner_strike_r
+        x_norm = 0
+        # Does it make sense to compare x with x-norm??
+        inner_strike_z = get_intersection_point(
+            inner_strike_x, x_norm, inner_loop, x_x_point, inner=True
+        )[2]
+
+        # Get the outer intersection with the separatrix
+        outer_strike_x = self.params.outer_strike_r
+        # Does it make sense to compare x with x-norm??
+        outer_strike_z = get_intersection_point(
+            outer_strike_x, x_norm, outer_loop, x_x_point, inner=False
+        )[2]
+
+        inner_strike = [inner_strike_x, inner_strike_z]
+        outer_strike = [outer_strike_x, outer_strike_z]
+
+        return inner_strike, outer_strike
+
+    def make_divertor(self, fw_loop):
+        """
+        Create the bottom and top divertor loops for a double null divertor
+
+        Parameters
+        ----------
+        fw_loop : Loop
+            first wall preliminary profile
+
+        Returns
+        -------
+        divertor_loop: Loop
+            Loop for the bottom divertor geometry
+        """
+        # Some shorthands
+        z_x_point = self.points["x_point"]["z_low"]
+        x_x_point = self.points["x_point"]["x"]
+
+        # Define point where the legs should meet
+        # In line with X point but with vertical offset
+        middle_point = [x_x_point, z_x_point - self.params.xpt_height]
+
+        # Find the intersection of the first wall loop and
+        # the x-y plane containing the lower X point
+        z_norm = 2
+        fw_int_point = get_intersection_point(
+            z_x_point, z_norm, fw_loop, x_x_point, inner=False
+        )
+
+        # Determine outermost point for outer divertor leg
+        div_top_right = max(fw_int_point[0], x_x_point + self.params.xpt_outer_gap)
+
+        # Pick some flux loops to use to locate strike points and shape the
+        # divertor legs
+        flux_loops = self.pick_flux_loops()
+
+        # Find the strike points
+        inner_strike, outer_strike = self.find_strike_points(flux_loops)
+
+        # Make the outer leg
+        outer_leg_x, outer_leg_z = self.make_outer_leg(
+            div_top_right, outer_strike, middle_point, flux_loops[0]
+        )
+
+        # Make the inner leg
+        inner_leg_x, inner_leg_z = self.make_inner_leg(inner_strike, middle_point)
+
+        # Divertor x-coords
+        x_div = np.append(inner_leg_x, outer_leg_x)
+        x_div = [round(elem, 5) for elem in x_div]
+
+        # Divertor z-coords
+        z_div = np.append(inner_leg_z, outer_leg_z)
+        z_div = [round(elem, 5) for elem in z_div]
+
+        # Bottom divertor loop
+        bottom_divertor = Loop(x=x_div, z=z_div)
+        bottom_divertor.close()
+
+        # Flip z coords to get top divertor loop
+        x_div_top = bottom_divertor.x
+        z_div_top = [z * -1 for z in bottom_divertor.z]
+        top_divertor = Loop(x=x_div_top, z=z_div_top)
+
+        return [bottom_divertor, top_divertor]
 
     def make_flux_surfaces(self):
         """
         Generate a set of flux surfaces placed between lcfs and fw
 
-        Attributes
-        ----------
-        self.flux_surfaces: [[Loop]]
-            Set of flux surfaces to discretise the SOL
-            Each flus surfaces can have either one or two loops (lfs and hfs)
-        self.flux_surface_lfs: [Loop]
-            All the fs parts at the lfs
-        self.flux_surface_hfs: [Loop]
-            All the fs parts at the hfs
-            Expected len(self.flux_surface_lfs) > len(self.flux_surface_hfs)
-        self.flux_surface_width_omp: [float]
-            Thickness of flux sirfaces on the lfs
-        self.flux_surface_width_imp: [float]
-            Thickness of flux sirfaces on the hfs
         """
         self.flux_surfaces = []
         x_omp = self.x_omp_lcfs + self.params.dr_near_omp
 
-        profile_x_omp = next(
-            filter(
-                lambda p: p[0] > self.points["o_point"]["x"],
-                loop_plane_intersect(self.profile, self.mid_plane),
-            )
-        )[0]
+        # Find intersections between the profile and mid-plane
+        profile_ints = loop_plane_intersect(self.profile, self.mid_plane)
+
+        # Retrieve x of outer / innter  intersection
+        profile_x_omp = find_outer_point(profile_ints, self.points["o_point"]["x"])[0]
+        profile_x_imp = find_inner_point(profile_ints, self.points["o_point"]["x"])[0]
 
         while x_omp < profile_x_omp:
             flux_surface = FluxSurface(
@@ -1787,12 +2688,7 @@ class FirstWallDN(EqInputs, ReactorSystem):
             if (
                 hasattr(fs, "loop_hfs")
                 and loop_plane_intersect(fs.loop_hfs, self.mid_plane)[0][0]
-                > next(
-                    filter(
-                        lambda p: p[0] < self.points["o_point"]["x"],
-                        loop_plane_intersect(self.profile, self.mid_plane),
-                    ),
-                )[0]
+                > profile_x_imp
             ):
                 self.flux_surface_hfs.append(fs.loop_hfs)
 
@@ -1973,16 +2869,16 @@ class FirstWallDN(EqInputs, ReactorSystem):
             lfs_down = np.where(
                 len(lfs_bottom_intersections[0]) != 0,
                 fs.find_first_intersection_dn(lfs_bottom_intersections, clips_lfs_down),
-                None,
+                np.ones(5) * np.nan,
             )
-            lfs_down_first_intersections.append(lfs_down)
+            lfs_down_first_intersections.append(lfs_down.tolist())
 
             lfs_up = np.where(
                 len(lfs_top_intersections[0]) != 0,
                 fs.find_first_intersection_dn(lfs_top_intersections, clips_lfs_up),
-                None,
+                np.ones(5) * np.nan,
             )
-            lfs_up_first_intersections.append(lfs_up)
+            lfs_up_first_intersections.append(lfs_up.tolist())
 
         for x, z, loop, fs in zip(
             hfs_intersections_x,
@@ -1996,16 +2892,16 @@ class FirstWallDN(EqInputs, ReactorSystem):
             hfs_down = np.where(
                 len(hfs_bottom_intersections[0]) != 0,
                 fs.find_first_intersection_dn(hfs_bottom_intersections, clips_hfs_down),
-                None,
+                np.ones(5) * np.nan,
             )
-            hfs_down_first_intersections.append(hfs_down)
+            hfs_down_first_intersections.append(hfs_down.tolist())
 
             hfs_up = np.where(
                 len(hfs_top_intersections[0]) != 0,
                 fs.find_first_intersection_dn(hfs_top_intersections, clips_hfs_up),
-                None,
+                np.ones(5) * np.nan,
             )
-            hfs_up_first_intersections.append(hfs_up)
+            hfs_up_first_intersections.append(hfs_up.tolist())
 
         return (
             lfs_down_first_intersections,
@@ -2074,7 +2970,7 @@ class FirstWallDN(EqInputs, ReactorSystem):
                 test = np.where(
                     len(first_intersection) != 0,
                     function(),
-                    None,
+                    np.nan,
                 )
                 to_append.append(test)
 
@@ -2166,9 +3062,9 @@ class FirstWallDN(EqInputs, ReactorSystem):
             f_hfs_list.append(f)
 
         return (
-            np.array([qpar_local_lfs, qpar_local_hfs]),
-            np.array([incindent_angle_lfs, incindent_angle_hfs]),
-            np.array([f_lfs_list, f_hfs_list]),
+            [qpar_local_lfs, qpar_local_hfs],
+            [incindent_angle_lfs, incindent_angle_hfs],
+            [f_lfs_list, f_hfs_list],
         )
 
     def calculate_heat_fluxes(self, qpar_local, incident_angles, power_sharing_factor):
@@ -2197,7 +3093,7 @@ class FirstWallDN(EqInputs, ReactorSystem):
                 len(angle_rad) != 0,
                 fs.calculate_heat_flux_onto_fw_surface(q, angle_rad[1])
                 * power_sharing_factor,
-                None,
+                np.nan,
             )
             heat_fluxes.append(hf)
 
@@ -2236,7 +3132,7 @@ class FirstWallDN(EqInputs, ReactorSystem):
                 test = np.where(
                     len(list_xz) != 0,
                     attribute(),
-                    None,
+                    np.nan,
                 )
                 to_append.append(test)
 
@@ -2430,3 +3326,115 @@ class FirstWallDN(EqInputs, ReactorSystem):
             new_fw_profile.close()
 
         return new_fw_profile
+
+    @property
+    def xz_plot_loop_names(self):
+        """
+        The x-z loop names to plot.
+        """
+        names = [
+            "Inboard wall",
+            "Outboard wall",
+            "Divertor upper",
+            "Divertor cassette upper",
+            "Divertor lower",
+            "Divertor cassette lower",
+        ]
+        return names
+
+    def hf_firstwall_params(self):
+        """
+        Define params to plot the heat flux on the fw (no divertor).
+        """
+        qpar_omp, qpar_imp = self.q_parallel_calculation()
+
+        (
+            qpar_local_lfs_hfs,
+            incindent_angle_lfs_hfs,
+            f_list_lfs_hfs,
+        ) = self.define_flux_surfaces_parameters_to_calculate_heat_flux(
+            qpar_omp,
+            qpar_imp,
+            *self.first_int,
+        )
+
+        x, z, hf = self.calculate_heat_flux(
+            *self.first_int,
+            *qpar_local_lfs_hfs[0],
+            *qpar_local_lfs_hfs[1],
+            *incindent_angle_lfs_hfs[0],
+            *incindent_angle_lfs_hfs[1],
+        )
+
+        self.x_wall = []
+        self.z_wall = []
+        self.hf_wall = []
+        for list_x, list_z, list_hf in zip(x, z, hf):
+            for x, z, hf in zip(list_x, list_z, list_hf):
+                if (
+                    z < self.points["x_point"]["z_up"]
+                    and z > self.points["x_point"]["z_low"]
+                ):
+                    self.x_wall.append(x)
+                    self.z_wall.append(z)
+                    self.hf_wall.append(hf)
+
+
+class FirstWallPlotter(ReactorSystemPlotter):
+    """
+    The plotter for a First Wall and relevant Heat Flux distribution
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._palette_key = "FW"
+
+    def plot_xz(self, plot_objects, ax=None, **kwargs):
+        """
+        Plot the first wall in x-z.
+        """
+        super().plot_xz(plot_objects, ax=ax, **kwargs)
+
+    def plot_hf(
+        self,
+        separatrix,
+        loops,
+        x_int,
+        z_int,
+        hf_int,
+        fw_profile,
+        koz=None,
+        ax=None,
+        **kwargs,
+    ):
+        """
+        Plots the 2D heat flux distribution.
+
+        Parameters
+        ----------
+        separatrix: Union[Loop, MultiLoop]
+            The separatrix loop(s) (Loop for SN, MultiLoop for DN)
+        loops: [MultiLoop]
+            The flux surface loops
+        x_int: [float]
+            List of all the x coordinates at the intersections of concern
+        z_int: [float]
+            List of all the z coordinates at the intersections of concern
+        hf_int: [float]
+            List of all hf values at the intersections of concern
+        fw_profile: Loop
+            Inner profile of a First wall
+        koz: Loop
+            Loop representing the keep-out-zone
+        ax: Axes, optional
+            The optional Axes to plot onto, by default None.
+        """
+        fw_profile.plot(ax=ax, fill=False, edgecolor="k", linewidth=1)
+        loops.plot(ax=ax, fill=False, edgecolor="r", linewidth=0.2)
+        separatrix.plot(ax=ax, fill=False, edgecolor="r", linewidth=1)
+        if koz is not None:
+            koz.plot(ax=ax, fill=False, edgecolor="g", linewidth=1)
+        ax = plt.gca()
+        cs = ax.scatter(x_int, z_int, s=25, c=hf_int, cmap="viridis", zorder=100)
+        bar = plt.gcf().colorbar(cs, ax=ax)
+        bar.set_label("Heat Flux [MW/m^2]")

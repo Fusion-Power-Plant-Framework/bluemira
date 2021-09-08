@@ -82,6 +82,9 @@ x, z, hf, hf_lfs, hf_hfs, th = fw.calculate_heat_flux_lfs_hfs(
 )
 
 # %%[markdown]
+# Plots
+
+# %%[markdown]
 # First wall, separatrix and flux surfaces
 f, ax = plt.subplots()
 fw.lcfs.plot(ax, fill=False, facecolor="b", linewidth=0.1)
