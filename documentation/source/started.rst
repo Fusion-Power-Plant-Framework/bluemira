@@ -40,3 +40,30 @@ BLUEPRINT environment by running:
 
     source ~/.miniforge-init.sh
     conda activate bluemira
+
+PROCESS Installation
+^^^^^^^^^^^^^^^^^^^^
+
+Bluemira is able perform a PROCESS run as the initial step in the reactor design.
+
+.. note::
+    PROCESS requires gfortran-9, which is not the default version on Ubuntu 18.04. In
+    order to make this more recent gfortran version available, if you are using Ubuntu
+    18.04 you then must first run:
+
+    ..code-block:: bash
+        sudo apt-get update
+        sudo apt-get install -y software-properties-common
+        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+        sudo apt-get update && apt-get install -y gfortran-9
+        sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 30
+
+In order install PROCESS in your bluemira environment, run the following:
+
+.. code-block:: bash
+
+    bash install-process.sh
+
+.. note::
+    You will need to have first obtained permissions to be able to clone the PROCESS
+    source repository.
