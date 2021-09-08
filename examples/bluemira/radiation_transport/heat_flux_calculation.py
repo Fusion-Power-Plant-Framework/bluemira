@@ -44,7 +44,6 @@ fw_shape = Loop.from_file(fw_name)
 
 params = ParameterFrame(
     [
-        ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
         ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
