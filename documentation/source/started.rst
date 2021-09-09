@@ -29,7 +29,7 @@ following steps in a mac or Ubuntu command terminal:
     pre-commit install -f
 
     # To test the install
-    cd examples/cad
+    cd examples/BLUEPRINT/cad
     python make_some_cad.py
 
 When you want to activate your bluemira environment after closing your terminal (or
@@ -62,7 +62,7 @@ In order install PROCESS in your bluemira environment, run the following:
 
 .. code-block:: bash
 
-    bash install-process.sh
+    bash scripts/install-process.sh
 
 .. note::
     You will need to have first obtained permissions to be able to clone the PROCESS
