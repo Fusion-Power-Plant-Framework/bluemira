@@ -208,11 +208,6 @@ class ChargedParticleSolver:
 
         self.eq = equilibrium
 
-        if equilibrium.is_double_null:
-            self.make_flux_surfaces = self.make_flux_surfaces_DN
-        else:
-            self.make_flux_surfaces = self.make_flux_surfaces_SN
-
         # Constructors
         self.first_wall = None
         self.flux_surfaces = None
@@ -248,7 +243,7 @@ class ChargedParticleSolver:
         return first_wall
 
     @staticmethod
-    def _get_arrays(self, flux_surfaces):
+    def _get_arrays(flux_surfaces):
         x_omp = np.array([fs.x_omp for fs in flux_surfaces])
         z_omp = np.array([fs.z_omp for fs in flux_surfaces])
         x_lfs_inter = np.array([fs.x_lfs_inter for fs in flux_surfaces])
@@ -289,7 +284,7 @@ class ChargedParticleSolver:
         """
         self.first_wall = self._process_first_wall(first_wall)
 
-        self.make_flux_surfaces()
+        self.make_flux_surfaces_ob()
 
         # Find the intersections of the flux surfaces with the first wall
         for flux_surface in self.flux_surfaces:
@@ -357,10 +352,15 @@ class ChargedParticleSolver:
             f_correct_power * np.append(heat_flux_lfs, heat_flux_hfs),
         )
 
-    def make_flux_surfaces_SN(self):
+    @staticmethod
+    def _sort_flux_surfaces(loop, x_mp, z_mp):
+        argmin = loop.argmin([x_mp, z_mp])
+        return min(loop.distance_to(loop.d2.T[argmin]))
+
+    def make_flux_surfaces_ob(self):
         """
         Make the flux surfaces along which the charged particle power is to be
-        transported for a SN equilibrium.
+        transported from the outboard
         """
         o_points, x_points = self.eq.get_OX_points()
         o_point, x_point = o_points[0], x_points[0]
@@ -390,10 +390,10 @@ class ChargedParticleSolver:
             else:
                 psi_norm += self.dpsi_far
 
-    def make_flux_surfaces_DN(self):
+    def make_flux_surfaces_ib(self):
         """
         Make the flux surfaces along which the charged particle power is to be
-        transported for a DN equilibrium.
+        transported from the inboard
         """
         o_points, x_points = self.eq.get_OX_points()
         o_point = o_points[0]
@@ -404,21 +404,15 @@ class ChargedParticleSolver:
         yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
         sep_intersections = loop_plane_intersect(self.eq.get_LCFS(), yz_plane)
         out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
-        self.x_sep_omp = np.max(sep_intersections.T[0])
         self.x_sep_imp = np.min(sep_intersections.T[0])
-        x_out_omp = np.max(out_intersections.T[0])
         x_out_imp = np.min(out_intersections.T[0])
 
-        psi_out_omp = self.eq.psi(x_out_omp, 0)
         psi_out_imp = self.eq.psi(x_out_imp, 0)
-        psi_norm_out_omp = float(get_psi_norm(psi_out_omp, o_point.psi, x_point_psi))
         psi_norm_out_imp = float(get_psi_norm(psi_out_imp, o_point.psi, x_point_psi))
-        psi_norm_out = max(psi_norm_out_omp, psi_norm_out_imp)
 
         ib_flux_surfaces = []
-        ob_flux_surfaces = []
         psi_norm = 1.0
-        while psi_norm < psi_norm_out:
+        while psi_norm < psi_norm_out_imp:
             loops = find_flux_loops(
                 self.eq.x,
                 self.eq.z,
@@ -428,40 +422,33 @@ class ChargedParticleSolver:
                 x_points=x_points,
             )
             loops = [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
-            if len(loops) > 2:
-                # Only take the longest two flux loops
-                loops = sorted(loops, key=lambda x: -x.length)[:2]
 
-            flux_surfaces = []
-            for loop in loops:
-                f_s = FluxSurface(loop)
-                f_s.split_LFS_HFS(yz_plane, o_point)
-                flux_surfaces.append(f_s)
-            # Order inboard then outboard
-            flux_surfaces = sorted(flux_surfaces, key=lambda f_s: f_s.x_omp)
-            ib_flux_surfaces.append(flux_surfaces[0])
-            ob_flux_surfaces.append(flux_surfaces[1])
+            loop = sorted(
+                loops,
+                key=lambda loop: self._sort_flux_surfaces(
+                    loop, self.x_sep_imp, o_point.z
+                ),
+            )[0]
 
-            ib_lambda_near = (
-                abs(flux_surfaces[0].x_omp - self.x_sep_imp)
-                < self.params.fw_lambda_q_near
-            )
-            ob_lambda_near = (
-                flux_surfaces[0].x_omp - self.x_sep_omp < self.params.fw_lambda_q_near
-            )
-            if ib_lambda_near and ob_lambda_near:
+            f_s = FluxSurface(loop)
+            f_s.split_LFS_HFS(yz_plane, o_point)
+            ib_flux_surfaces.append(f_s)
+
+            if abs(f_s.x_omp - self.x_sep_imp) < self.params.fw_lambda_q_near:
                 psi_norm += self.dpsi_near
             else:
                 psi_norm += self.dpsi_far
 
-        self.flux_surfaces = [ib_flux_surfaces, ob_flux_surfaces]
+        # Separate flux surfaces
+        self.flux_surfaces = [self.flux_surfaces, ib_flux_surfaces]
 
     def analyse_DN(self, first_wall):
         self.first_wall = self._process_first_wall(first_wall)
 
-        self.make_flux_surfaces_DN()
+        self.make_flux_surfaces_ob()
+        self.make_flux_surfaces_ib()
 
-        ib_flux_surfaces, ob_flux_surfaces = self.flux_surfaces
+        ob_flux_surfaces, ib_flux_surfaces = self.flux_surfaces
 
         # Find the intersections of the flux surfaces with the first wall
         for flux_surface in ib_flux_surfaces:
@@ -497,7 +484,7 @@ class ChargedParticleSolver:
         B_omp = np.hypot(Bp_omp, Bt_omp)
 
         # Calculate values at IMP
-        dx_imp = abs(x_omp - self.x_sep_imp)
+        dx_imp = abs(x_imp - self.x_sep_imp)
         Bp_imp = self.eq.Bp(x_imp, z_imp)
         Bt_imp = self.eq.Bt(x_imp)
         B_imp = np.hypot(Bp_imp, Bt_imp)
@@ -560,9 +547,9 @@ class ChargedParticleSolver:
         q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * fs_widths * x_omp)
 
         # Correct power (energy conservation)
-        fs_widths = (x_imp - np.roll(x_imp, 1))[1:]
+        fs_widths = np.abs((x_imp - np.roll(x_imp, 1))[1:])
         # Add the first flux surface width (to the LCFS)
-        fs_widths = np.append(x_imp[0] - self.x_sep_imp, fs_widths)
+        fs_widths = np.append(abs(x_imp[0] - self.x_sep_imp), fs_widths)
         q_imp_int = 2 * np.pi * np.sum(q_par_imp / (B_imp / Bp_imp) * fs_widths * x_imp)
 
         total_power = self.params.fw_p_sol_near + self.params.fw_p_sol_far
@@ -571,17 +558,19 @@ class ChargedParticleSolver:
         f_correct_power_ib = self.params.f_inner_target * total_power / q_imp_int
 
         return (
-            np.append(
-                x_lfs_down_inter, x_lfs_up_inter, x_hfs_down_inter, x_hfs_up_inter
+            np.concatenate(
+                [x_lfs_down_inter, x_lfs_up_inter, x_hfs_down_inter, x_hfs_up_inter]
             ),
-            np.append(
-                z_lfs_down_inter, z_lfs_up_inter, z_hfs_down_inter, z_hfs_up_inter
+            np.concatenate(
+                [z_lfs_down_inter, z_lfs_up_inter, z_hfs_down_inter, z_hfs_up_inter]
             ),
-            np.append(
-                f_correct_power_ib * heat_flux_lfs_down,
-                f_correct_power_ib * heat_flux_lfs_up,
-                f_correct_power_ob * heat_flux_hfs_down,
-                f_correct_power_ob * heat_flux_hfs_up,
+            np.concatenate(
+                [
+                    f_correct_power_ob * heat_flux_lfs_down,
+                    f_correct_power_ob * heat_flux_lfs_up,
+                    f_correct_power_ib * heat_flux_hfs_down,
+                    f_correct_power_ib * heat_flux_hfs_up,
+                ]
             ),
         )
 

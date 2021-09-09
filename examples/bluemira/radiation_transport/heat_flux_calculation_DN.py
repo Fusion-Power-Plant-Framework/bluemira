@@ -41,22 +41,23 @@ eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)
 fw_shape = Loop(x=[6, 15, 15, 6, 6], z=[-7.5, -7.5, 7.5, 7.5, -7.5])
 
 
-f, ax = plt.subplots()
-
-eq.plot(ax)
-fw_shape.plot(ax)
-
-
 params = ParameterFrame(
     [
         ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
-        ["f_outer_target", "Power fraction", 0.75, "N/A", None, "Input"],
-        ["f_inner_target", "Power fraction", 0.25, "N/A", None, "Input"],
+        ["fw_lambda_q_near", "Lambda q near SOL", 0.08, "m", None, "Input"],
+        ["fw_lambda_q_far", "Lambda q far SOL", 0.12, "m", None, "Input"],
+        ["f_outer_target", "Power fraction", 0.9, "N/A", None, "Input"],
+        ["f_inner_target", "Power fraction", 0.1, "N/A", None, "Input"],
+        ["f_upper_target", "Power fraction", 0.6, "N/A", None, "Input"],
+        ["f_lower_target", "Power fraction", 0.4, "N/A", None, "Input"],
     ]
 )
 
 solver = ChargedParticleSolver(params, eq)
 xx, zz, hh = solver.analyse_DN(first_wall=fw_shape)
+
+f, ax = plt.subplots()
+eq.plot(ax)
+fw_shape.plot(ax, fill=False)
+ax.scatter(xx, zz, c=hh, zorder=40)
