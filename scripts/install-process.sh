@@ -27,6 +27,5 @@ fi
 
 # Do the PROCESS build
 # This will also put PROCESS into our (bluemira) environment
-cmake -H. -Bbuild
+cmake -S . -B build
 cmake --build build
-cmake --build build --target dicts
