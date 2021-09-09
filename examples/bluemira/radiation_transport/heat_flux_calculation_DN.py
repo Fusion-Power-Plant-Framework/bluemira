@@ -55,7 +55,7 @@ params = ParameterFrame(
 )
 
 solver = ChargedParticleSolver(params, eq)
-xx, zz, hh = solver.analyse_DN(first_wall=fw_shape)
+xx, zz, hh = solver.analyse(first_wall=fw_shape)
 
 f, ax = plt.subplots()
 eq.plot(ax)

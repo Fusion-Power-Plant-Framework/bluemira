@@ -212,6 +212,7 @@ class ChargedParticleSolver:
         self.first_wall = None
         self.flux_surfaces = None
         self.x_sep_omp = None
+        self.x_sep_imp = None
 
     def _check_params(self):
         if self.params.f_outer_target + self.params.f_inner_target != 1.0:
@@ -263,6 +264,104 @@ class ChargedParticleSolver:
             alpha_hfs,
         )
 
+    def _get_xpoint_psi(self, x_points):
+        if self.eq.is_double_null:
+            return 0.5 * (x_points[0].psi + x_points[1].psi)
+        else:
+            return x_points[0].psi
+
+    @staticmethod
+    def _sort_flux_surfaces(loop, x_mp, z_mp):
+        return min(loop.distance_to([x_mp, z_mp]))
+
+    def _get_flux_surface(self, psi_norm, x, z, o_points, x_points):
+        """
+        Get the flux surface at specified normalised psi, as close as possible to a point.
+        """
+        loops = find_flux_loops(
+            self.eq.x,
+            self.eq.z,
+            self.eq.psi(),
+            psi_norm,
+            o_points=o_points,
+            x_points=x_points,
+        )
+        loops = [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
+
+        loop = sorted(loops, key=lambda loop: self._sort_flux_surfaces(loop, x, z))[0]
+        return FluxSurface(loop)
+
+    def make_flux_surfaces_ob(self):
+        """
+        Make the flux surfaces along which the charged particle power is to be
+        transported from the outboard
+        """
+        o_points, x_points = self.eq.get_OX_points()
+        o_point = o_points[0]
+        x_point_psi = self._get_xpoint_psi(x_points)
+
+        # Find the middle and maximum outboard mid-plane psi norm values
+        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
+        sep_intersections = loop_plane_intersect(self.eq.get_LCFS(), yz_plane)
+        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
+        self.x_sep_omp = np.max(sep_intersections.T[0])
+        x_out_omp = np.max(out_intersections.T[0])
+
+        psi_out_omp = self.eq.psi(x_out_omp, 0)
+        psi_norm_out = float(get_psi_norm(psi_out_omp, o_point.psi, x_point_psi))
+
+        self.flux_surfaces = []
+        psi_norm = 1.0
+        while psi_norm < psi_norm_out:
+            f_s = self._get_flux_surface(
+                psi_norm, self.x_sep_omp, o_point.z, o_points, x_points
+            )
+
+            # Split the flux surface and set OMP values
+            f_s.split_LFS_HFS(yz_plane, o_point)
+            self.flux_surfaces.append(f_s)
+
+            if f_s.x_omp - self.x_sep_omp < self.params.fw_lambda_q_near:
+                psi_norm += self.dpsi_near
+            else:
+                psi_norm += self.dpsi_far
+
+    def make_flux_surfaces_ib(self):
+        """
+        Make the flux surfaces along which the charged particle power is to be
+        transported from the inboard
+        """
+        o_points, x_points = self.eq.get_OX_points()
+        o_point = o_points[0]
+        x_point_psi = self._get_xpoint_psi(x_points)
+
+        # Find the middle and maximum outboard mid-plane psi norm values
+        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
+        sep_intersections = loop_plane_intersect(self.eq.get_LCFS(), yz_plane)
+        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
+        self.x_sep_imp = np.min(sep_intersections.T[0])
+        x_out_imp = np.min(out_intersections.T[0])
+
+        psi_out_imp = self.eq.psi(x_out_imp, 0)
+        psi_norm_out_imp = float(get_psi_norm(psi_out_imp, o_point.psi, x_point_psi))
+
+        ib_flux_surfaces = []
+        psi_norm = 1.0
+        while psi_norm < psi_norm_out_imp:
+            f_s = self._get_flux_surface(
+                psi_norm, self.x_sep_imp, o_point.z, o_points, x_points
+            )
+            f_s.split_LFS_HFS(yz_plane, o_point)
+            ib_flux_surfaces.append(f_s)
+
+            if abs(f_s.x_omp - self.x_sep_imp) < self.params.fw_lambda_q_near:
+                psi_norm += self.dpsi_near
+            else:
+                psi_norm += self.dpsi_far
+
+        # Separate outboard and inboard flux surfaces
+        self.flux_surfaces = [self.flux_surfaces, ib_flux_surfaces]
+
     def analyse(self, first_wall):
         """
         Perform the calculation to obtain charged particle heat fluxes on the
@@ -283,6 +382,13 @@ class ChargedParticleSolver:
             The perpendicular heat fluxes at the intersection points [MW/m^2]
         """
         self.first_wall = self._process_first_wall(first_wall)
+
+        if self.eq.is_double_null:
+            return self._analyse_DN(first_wall)
+        else:
+            return self._analyse_SN(first_wall)
+
+    def _analyse_SN(self, first_wall):
 
         self.make_flux_surfaces_ob()
 
@@ -352,99 +458,7 @@ class ChargedParticleSolver:
             f_correct_power * np.append(heat_flux_lfs, heat_flux_hfs),
         )
 
-    @staticmethod
-    def _sort_flux_surfaces(loop, x_mp, z_mp):
-        argmin = loop.argmin([x_mp, z_mp])
-        return min(loop.distance_to(loop.d2.T[argmin]))
-
-    def make_flux_surfaces_ob(self):
-        """
-        Make the flux surfaces along which the charged particle power is to be
-        transported from the outboard
-        """
-        o_points, x_points = self.eq.get_OX_points()
-        o_point, x_point = o_points[0], x_points[0]
-
-        # Find the middle and maximum outboard mid-plane psi norm values
-        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
-        sep_intersections = loop_plane_intersect(self.eq.get_LCFS(), yz_plane)
-        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
-        self.x_sep_omp = np.max(sep_intersections.T[0])
-        x_out_omp = np.max(out_intersections.T[0])
-
-        psi_out_omp = self.eq.psi(x_out_omp, 0)
-        psi_norm_out = float(get_psi_norm(psi_out_omp, o_point.psi, x_point.psi))
-
-        self.flux_surfaces = []
-        psi_norm = 1.0
-        while psi_norm < psi_norm_out:
-            f_s = FluxSurface(
-                self.eq.get_flux_surface(psi_norm, o_points=o_points, x_points=x_points)
-            )
-            # Split the flux surface and set OMP values
-            f_s.split_LFS_HFS(yz_plane, o_point)
-            self.flux_surfaces.append(f_s)
-
-            if f_s.x_omp - self.x_sep_omp < self.params.fw_lambda_q_near:
-                psi_norm += self.dpsi_near
-            else:
-                psi_norm += self.dpsi_far
-
-    def make_flux_surfaces_ib(self):
-        """
-        Make the flux surfaces along which the charged particle power is to be
-        transported from the inboard
-        """
-        o_points, x_points = self.eq.get_OX_points()
-        o_point = o_points[0]
-        x_point_down, x_point_up = sorted(x_points[:2], key=lambda point: point.z)
-        x_point_psi = 0.5 * (x_point_down.psi + x_point_up.psi)
-
-        # Find the middle and maximum outboard mid-plane psi norm values
-        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
-        sep_intersections = loop_plane_intersect(self.eq.get_LCFS(), yz_plane)
-        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
-        self.x_sep_imp = np.min(sep_intersections.T[0])
-        x_out_imp = np.min(out_intersections.T[0])
-
-        psi_out_imp = self.eq.psi(x_out_imp, 0)
-        psi_norm_out_imp = float(get_psi_norm(psi_out_imp, o_point.psi, x_point_psi))
-
-        ib_flux_surfaces = []
-        psi_norm = 1.0
-        while psi_norm < psi_norm_out_imp:
-            loops = find_flux_loops(
-                self.eq.x,
-                self.eq.z,
-                self.eq.psi(),
-                psi_norm,
-                o_points=o_points,
-                x_points=x_points,
-            )
-            loops = [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
-
-            loop = sorted(
-                loops,
-                key=lambda loop: self._sort_flux_surfaces(
-                    loop, self.x_sep_imp, o_point.z
-                ),
-            )[0]
-
-            f_s = FluxSurface(loop)
-            f_s.split_LFS_HFS(yz_plane, o_point)
-            ib_flux_surfaces.append(f_s)
-
-            if abs(f_s.x_omp - self.x_sep_imp) < self.params.fw_lambda_q_near:
-                psi_norm += self.dpsi_near
-            else:
-                psi_norm += self.dpsi_far
-
-        # Separate flux surfaces
-        self.flux_surfaces = [self.flux_surfaces, ib_flux_surfaces]
-
-    def analyse_DN(self, first_wall):
-        self.first_wall = self._process_first_wall(first_wall)
-
+    def _analyse_DN(self, first_wall):
         self.make_flux_surfaces_ob()
         self.make_flux_surfaces_ib()
 
