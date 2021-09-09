@@ -213,6 +213,7 @@ class ChargedParticleSolver:
         self.flux_surfaces = None
         self.x_sep_omp = None
         self.x_sep_imp = None
+        self.result = None
 
     def _check_params(self):
         if self.params.f_outer_target + self.params.f_inner_target != 1.0:
@@ -384,9 +385,12 @@ class ChargedParticleSolver:
         self.first_wall = self._process_first_wall(first_wall)
 
         if self.eq.is_double_null:
-            return self._analyse_DN(first_wall)
+            x, z, hf = self._analyse_DN(first_wall)
         else:
-            return self._analyse_SN(first_wall)
+            x, z, hf = self._analyse_SN(first_wall)
+
+        self.result = x, z, hf
+        return x, z, hf
 
     def _analyse_SN(self, first_wall):
 
@@ -580,10 +584,10 @@ class ChargedParticleSolver:
             ),
             np.concatenate(
                 [
-                    f_correct_power_ob * heat_flux_lfs_down,
-                    f_correct_power_ob * heat_flux_lfs_up,
-                    f_correct_power_ib * heat_flux_hfs_down,
-                    f_correct_power_ib * heat_flux_hfs_up,
+                    f_correct_power_ob * self.params.f_lower_target * heat_flux_lfs_down,
+                    f_correct_power_ob * self.params.f_upper_target * heat_flux_lfs_up,
+                    f_correct_power_ib * self.params.f_lower_target * heat_flux_hfs_down,
+                    f_correct_power_ib * self.params.f_upper_target * heat_flux_hfs_up,
                 ]
             ),
         )
@@ -601,3 +605,23 @@ class ChargedParticleSolver:
             * B
             / (Bp * 2 * np.pi * x)
         )
+
+    def plot(self, ax=None):
+        if ax is None:
+            ax = plt.gca()
+
+        self.first_wall.plot(ax, linewidth=0.1, fill=False)
+        self.eq.get_separatrix().plot(ax, linewidth=0.1)
+
+        if isinstance(self.flux_surfaces[0], list):
+            flux_surfaces = self.flux_surfaces[0]
+            flux_surfaces.extend(self.flux_surfaces[1])
+        else:
+            flux_surfaces = self.flux_surfaces
+
+        for f_s in flux_surfaces:
+            f_s.plot(ax, linewidth=0.01)
+
+        cm = ax.scatter(self.result[0], self.result[1], c=self.result[2], s=3, zorder=40)
+        f = plt.gcf()
+        f.colorbar(cm, label="MW/m^2")
