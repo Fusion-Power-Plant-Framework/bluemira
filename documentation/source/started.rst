@@ -66,4 +66,4 @@ In order install PROCESS in your bluemira environment, run the following:
 
 .. note::
     You will need to have first obtained permissions to be able to clone the PROCESS
-    source repository.
+    source repository and have set up an ssh key within UKAEA's GitLab.
