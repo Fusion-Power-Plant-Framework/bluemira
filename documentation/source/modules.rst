@@ -10,6 +10,7 @@ Bluemira Modules
     components
     geometry/geometry
     magnetostatics/magnetostatics
+    radiation_transport/radiation_transport
     utilities/utilities
 
 Bluemira consists of a set of modules that support reactor design routines. A description
