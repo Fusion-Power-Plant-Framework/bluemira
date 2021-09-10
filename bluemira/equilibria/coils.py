@@ -26,6 +26,7 @@ Coil and coil grouping objects
 from copy import deepcopy
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
+
 from bluemira.base.constants import MU_0
 from bluemira.utilities.tools import is_num
 from bluemira.magnetostatics.greens import (

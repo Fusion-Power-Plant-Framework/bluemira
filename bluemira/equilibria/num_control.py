@@ -24,6 +24,7 @@ Numerical vertical stability control - still not quite there!
 """
 
 import numpy as np
+
 from bluemira.equilibria.coils import Coil, CoilGroup
 
 __all__ = ["DummyController", "VirtualController"]

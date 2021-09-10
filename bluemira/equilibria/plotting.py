@@ -29,6 +29,7 @@ from matplotlib.gridspec import GridSpec
 from itertools import cycle
 from scipy.interpolate import RectBivariateSpline
 import warnings
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.plot_tools import str_to_latex
 from bluemira.equilibria.constants import M_PER_MN, J_TOR_MIN

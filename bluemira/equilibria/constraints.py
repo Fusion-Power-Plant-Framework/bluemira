@@ -27,6 +27,7 @@ from typing import List, Union
 from dataclasses import dataclass
 import numpy as np
 from copy import deepcopy
+
 from bluemira.utilities.tools import delta
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.plotting import ConstraintPlotter

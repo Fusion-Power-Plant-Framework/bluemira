@@ -27,6 +27,7 @@ import json
 import time
 from itertools import count
 import numpy as np
+
 from BLUEPRINT.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num, NumpyJSONEncoder

@@ -29,6 +29,7 @@ from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
 from pandas import DataFrame
 import tabulate
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.base.constants import MU_0

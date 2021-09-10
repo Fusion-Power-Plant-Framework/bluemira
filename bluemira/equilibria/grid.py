@@ -24,6 +24,7 @@ Grid object and operations for equilibria.
 """
 import numpy as np
 import numba as nb
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import get_area_2d, get_centroid_2d
 from bluemira.equilibria.error import EquilibriaError

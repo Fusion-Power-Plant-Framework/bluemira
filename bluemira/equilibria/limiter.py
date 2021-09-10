@@ -26,6 +26,7 @@ Limiter object class
 import numpy as np
 from itertools import cycle
 from copy import deepcopy
+
 from bluemira.equilibria.plotting import LimiterPlotter
 
 __all__ = ["Limiter"]

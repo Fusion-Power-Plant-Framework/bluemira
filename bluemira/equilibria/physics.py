@@ -24,6 +24,7 @@ A collection of simple equilibrium physics calculations
 """
 
 import numpy as np
+
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.find import find_flux_surf, _parse_OXp, in_plasma

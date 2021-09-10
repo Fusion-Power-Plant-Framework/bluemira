@@ -29,6 +29,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from pandas import DataFrame
 import tabulate
+
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.equilibria.error import EquilibriaError

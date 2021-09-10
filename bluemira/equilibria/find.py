@@ -28,6 +28,7 @@ import numba as nb
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
 from matplotlib._contour import QuadContourGenerator
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry._deprecated_tools import in_polygon, get_area_2d

@@ -26,6 +26,7 @@ from numpy import ones, linspace, reshape
 import numpy as np
 from scipy.sparse.linalg import factorized
 from scipy.sparse import lil_matrix
+
 from bluemira.equilibria.error import EquilibriaError
 
 __all__ = ["GSSolver"]

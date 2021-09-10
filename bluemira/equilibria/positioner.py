@@ -28,6 +28,7 @@ import re
 from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
+
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError

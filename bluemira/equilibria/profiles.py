@@ -30,6 +30,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from copy import deepcopy
+
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import in_plasma, find_LCFS_separatrix

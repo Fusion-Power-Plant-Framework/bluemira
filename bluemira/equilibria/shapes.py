@@ -24,6 +24,7 @@ Useful parameterisations for plasma flux surface shapes.
 """
 
 import numpy as np
+
 from bluemira.geometry._deprecated_loop import Loop
 
 __all__ = ["flux_surface_cunningham", "flux_surface_johner", "flux_surface_manickam"]

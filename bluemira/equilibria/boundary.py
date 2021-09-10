@@ -24,6 +24,7 @@ Boundary conditions for equilibria.
 """
 
 import numpy as np
+
 from bluemira.utilities.tools import is_num
 from bluemira.magnetostatics.greens import greens_psi
 from bluemira.equilibria.grid import integrate_dx_dz
@@ -77,14 +78,15 @@ class FreeBoundary:
 
 def apply_boundary(rhs, lhs):
     """
-    Applies a boundary constraint to an array
+    Applies a boundary constraint to the boundaries of an array for use on finite
+    difference grids.
 
     Parameters
     ----------
     rhs: np.array(N, M)
-        The right-hand-side of the equation
+        The right-hand-side of the equality
     lhs: np.array(N, M) or 0
-        The left-hand-side of the equation
+        The left-hand-side of the equality
         If 0, will apply a fixed boundary condition of 0 to the rhs
 
     Note
