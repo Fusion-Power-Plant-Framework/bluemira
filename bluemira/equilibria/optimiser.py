@@ -213,7 +213,7 @@ class PositionOptimiser:
     figure_folder: str (default = None)
         The path where figures will be saved. If the input value is None (e.g. default)
         then this will be reinterpreted as the path data/plots/equilibria under the
-        BLUEPRINT root folder, if that path is available.
+        bluemira root folder, if that path is available.
 
     """
 

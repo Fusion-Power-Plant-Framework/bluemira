@@ -30,7 +30,8 @@ from IPython import get_ipython
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.file import get_BP_path
+
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import plot_defaults
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
@@ -52,7 +53,7 @@ plot_defaults()
 # Make a TF coil shape and use it as an exclusion zone object
 
 # %%
-fp = get_BP_path("Geometry", subfolder="data")
+fp = get_bluemira_path("BLUEPRINT/Geometry", subfolder="data")
 TF = Loop.from_file(os.sep.join([fp, "TFreference.json"]))
 TF = TF.offset(2.4)
 clip = np.where(TF.x >= 3.5)

@@ -21,10 +21,10 @@
 """
 ST equilibrium attempt
 """
-
-from BLUEPRINT.equilibria.coils import PF_COIL_NAME
 import numpy as np
 import matplotlib.pyplot as plt
+
+from bluemira.equilibria.coils import PF_COIL_NAME
 from bluemira.base.look_and_feel import plot_defaults
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.grid import Grid
