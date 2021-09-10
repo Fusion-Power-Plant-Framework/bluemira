@@ -254,7 +254,8 @@ def drop_space_duplicates(points, tol=X_TOLERANCE):
 
 def triage_OX_points(f_psi, points):
     """
-    Triage the local Bp minima into O- and X-points.
+    Triage the local Bp minima into O- and X-points: sort the field minima by second
+    derivative.
 
     Parameters
     ----------

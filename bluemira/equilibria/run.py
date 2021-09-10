@@ -34,12 +34,12 @@ from bluemira.equilibria.constants import (
     NB3SN_J_MAX,
     NBTI_B_MAX,
     NBTI_J_MAX,
+    B_BREAKDOWN,
 )
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.utilities.plot_tools import make_gif
 from bluemira.utilities.tools import delta
-from bluemira.equilibria.constants import B_BREAKDOWN
 from bluemira.equilibria.positioner import CoilPositioner
 from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
 from bluemira.equilibria.profiles import (
@@ -329,7 +329,7 @@ class EquilibriumProblem:
         x_zone=None,
         z_zone=None,
         r_zone=None,
-        b_zone_max=None,
+        b_zone_max=B_BREAKDOWN,
     ):
         """
         Initialises a plasma breakdown to determine peak magnetic flux prior
@@ -355,8 +355,7 @@ class EquilibriumProblem:
             z_zone = 0.0
         if r_zone is None:
             r_zone = 0.5 * self.R_0 / self.A  # Augenapfel
-        if b_zone_max is None:
-            b_zone_max = B_BREAKDOWN
+
         bluemira_print("EQUILIBRIA: Calculating plasma breakdown flux")
         max_currents = self.coilset.get_max_currents(self.Ip * 1.4)
         max_fields = self.coilset.get_max_fields()
