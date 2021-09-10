@@ -23,6 +23,7 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
+from os import sep
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
@@ -271,6 +272,37 @@ class ChargedParticleSolver:
         else:
             return x_points[0].psi
 
+    def _get_sep_out_intersection(self, o_point, outboard=True):
+        """
+        Find the middle and maximum outboard mid-plane psi norm values
+        """
+        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
+        separatrix = self.eq.get_separatrix()
+
+        if not isinstance(separatrix, Loop):
+            sep1_intersections = loop_plane_intersect(separatrix[0], yz_plane)
+            sep2_intersections = loop_plane_intersect(separatrix[1], yz_plane)
+            sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
+            sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
+            x_sep1_mp = sep1_intersections.T[0][sep1_arg]
+            x_sep2_mp = sep2_intersections.T[0][sep2_arg]
+            if outboard:
+                x_sep_mp = x_sep1_mp if x_sep1_mp > x_sep2_mp else x_sep2_mp
+            else:
+                x_sep_mp = x_sep1_mp if x_sep1_mp < x_sep2_mp else x_sep2_mp
+        else:
+            sep_intersections = loop_plane_intersect(separatrix, yz_plane)
+            sep_arg = np.argmin(np.abs(sep_intersections.T[0] - o_point.x))
+            x_sep_mp = sep_intersections.T[0][sep_arg]
+
+        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
+        if outboard:
+            x_out_mp = np.max(out_intersections.T[0])
+        else:
+            x_out_mp = np.min(out_intersections.T[0])
+
+        return x_sep_mp, x_out_mp
+
     @staticmethod
     def _sort_flux_surfaces(loop, x_mp, z_mp):
         return min(loop.distance_to([x_mp, z_mp]))
@@ -301,12 +333,11 @@ class ChargedParticleSolver:
         o_point = o_points[0]
         x_point_psi = self._get_xpoint_psi(x_points)
 
-        # Find the middle and maximum outboard mid-plane psi norm values
+        self.x_sep_omp, x_out_omp = self._get_sep_out_intersection(
+            o_point, outboard=True
+        )
+
         yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
-        sep_intersections = loop_plane_intersect(self.eq.get_LCFS(), yz_plane)
-        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
-        self.x_sep_omp = np.max(sep_intersections.T[0])
-        x_out_omp = np.max(out_intersections.T[0])
 
         psi_out_omp = self.eq.psi(x_out_omp, 0)
         psi_norm_out = float(get_psi_norm(psi_out_omp, o_point.psi, x_point_psi))
@@ -338,7 +369,7 @@ class ChargedParticleSolver:
 
         # Find the middle and maximum outboard mid-plane psi norm values
         yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
-        sep_intersections = loop_plane_intersect(self.eq.get_LCFS(), yz_plane)
+        sep_intersections = loop_plane_intersect(self.eq.get_separatrix(), yz_plane)
         out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
         self.x_sep_imp = np.min(sep_intersections.T[0])
         x_out_imp = np.min(out_intersections.T[0])
