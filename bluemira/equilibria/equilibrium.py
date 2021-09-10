@@ -43,9 +43,6 @@ from bluemira.equilibria.find import (
     in_zone,
     in_plasma,
 )
-
-# from BLUEPRINT.equilibria.find import find_OX as find_OX_points
-# from BLUEPRINT.equilibria.find import find_LCFS_separatrix
 from bluemira.equilibria.physics import (
     calc_psi_norm,
     calc_q,
@@ -108,7 +105,7 @@ class MHDState:
         self.x, self.z = self.grid.x, self.grid.z
         self.dx, self.dz = self.grid.dx, self.grid.dz
 
-    def reset_grid(self, grid, **kwargs):
+    def reset_grid(self, grid, psi=None):
         """
         Reset the grid for the MHDState.
 
@@ -116,8 +113,9 @@ class MHDState:
         ----------
         grid: Grid
             The grid to set the MHDState on
+        psi: Optional[np.ndarray]
+            Initial psi array to use
         """
-        psi = kwargs.get("psi", None)
         self.set_grid(grid)
         self._set_init_psi(grid, psi)
 
