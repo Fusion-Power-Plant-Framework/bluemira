@@ -22,14 +22,14 @@
 """
 Optimisation variable class.
 """
-from dataclasses import dataclass, field, InitVar
-from typing import Optional
+from dataclasses import dataclass, field
 import numpy as np
 import matplotlib.pyplot as plt
 
 from bluemira.base.error import BluemiraError
 
-# TODO: This should live in opt_tools.py, but there would be a clash incoming so I leave it here for now
+# TODO: This should live in opt_tools.py, but there would be a clash incoming so I leave
+# it here for now
 # TODO: Error class also probably exists in opt_tools or elsewhere
 
 
@@ -108,9 +108,12 @@ class BoundedVariable:
     lower_bound: float = 0
     upper_bound: float = 0
     fixed: bool = False
-    _initialised: bool = field(init=False, repr=False, default=False)
+    __initialised: bool = field(init=False, repr=False, default=False)
 
     def __post_init__(self):
+        """
+        Check the value w.r.t. bounds.
+        """
         if self.value < self.lower_bound:
             raise OptUtilitiesError(
                 "Cannot initialise variable: its value is out of its bounds."
@@ -123,7 +126,7 @@ class BoundedVariable:
         if self.lower_bound > self.upper_bound:
             raise OptUtilitiesError("Lower bound is higher than upper bound.")
 
-        self._initialised = True
+        self.__initialised = True
 
     def fix(self, value: float):
         """
@@ -150,7 +153,7 @@ class BoundedVariable:
         """
         Set the value of the variable, enforcing bounds.
         """
-        if self._initialised:
+        if self.__initialised:
             if value < self.lower_bound:
                 value = self.lower_bound
 
@@ -288,6 +291,9 @@ class OptVariables:
 
     @property
     def n_free_variables(self) -> int:
+        """
+        Number of free variables in the set.
+        """
         return len(self._opt_vars)
 
     @property
@@ -295,7 +301,7 @@ class OptVariables:
         return [v.name for v in self._var_dict.values() if not v.fixed]
 
     def _check_presence(self, name):
-        if not name in self._var_dict.keys():
+        if name not in self._var_dict.keys():
             raise OptUtilitiesError(f"Variable {name} not in OptVariables.")
 
     def plot(self):
