@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from bluemira.base.error import BluemiraError
+from bluemira.base.constants import BLUEMIRA_PALETTE, BLUEMIRA_PAL_MAP
 
 # TODO: This should live in opt_tools.py, but there would be a clash incoming so I leave
 # it here for now
@@ -308,7 +309,7 @@ class OptVariables:
         """
         Plot the OptVariables.
         """
-        f, ax = plt.subplots()
+        _, ax = plt.subplots()
         left_labels = [
             f"{v.name}: {v.lower_bound:.2f} " for v in self._var_dict.values()
         ]
@@ -318,18 +319,24 @@ class OptVariables:
         x_norm = [
             v.normalised_value if not v.fixed else 0.5 for v in self._var_dict.values()
         ]
-        colors = ["r" if v.fixed else "lightblue" for v in self._var_dict.values()]
+        colors = [
+            BLUEMIRA_PAL_MAP["red"] if v.fixed else BLUEMIRA_PAL_MAP["blue"]
+            for v in self._var_dict.values()
+        ]
 
         values = [f"{v:.2f}" for v in self.values]
         ax2 = ax.twinx()
-        ax.barh(y_pos, x_norm, color=colors)
+        ax.barh(y_pos, x_norm, color="w")
         ax2.barh(y_pos, x_norm, color=colors)
-        ax.text(x_norm, y_pos, values)
         ax.set_yticks(y_pos)
         ax.set_yticklabels(left_labels)
         ax.invert_yaxis()
 
         ax2.set_yticks(y_pos)
         ax2.set_yticklabels(right_labels)
+        ax2.invert_yaxis()
         ax.set_xlim([-0.1, 1.1])
         ax.set_xlabel("$x_{norm}$")
+
+        for xi, yi, vi in zip(x_norm, y_pos, values):
+            ax.text(xi, yi, vi)
