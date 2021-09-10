@@ -60,7 +60,7 @@ J_TOR_MIN = 1e-36
 LI_REL_TOL = 0.015
 
 # Breakdown field limit [T]
-#       Used when calculating plasma breakdowns and plotting
+#       Used when calculating plasma breakdowns
 B_BREAKDOWN = 3e-3
 
 # The number of MN per 1 m arrow (plot length) [m per N]
