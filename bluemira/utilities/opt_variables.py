@@ -27,7 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from bluemira.base.error import BluemiraError
-from bluemira.base.constants import BLUEMIRA_PALETTE, BLUEMIRA_PAL_MAP
+from bluemira.base.constants import BLUEMIRA_PAL_MAP
 
 # TODO: This should live in opt_tools.py, but there would be a clash incoming so I leave
 # it here for now
