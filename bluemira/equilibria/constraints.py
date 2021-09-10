@@ -82,10 +82,10 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
     value is prescribed in absolute terms.
     """
 
-    x: Union[float, np.array]
-    z: Union[float, np.array]
+    x: Union[float, np.ndarray]
+    z: Union[float, np.ndarray]
     target_value: float
-    weights: Union[float, np.array] = 1.0
+    weights: Union[float, np.ndarray] = 1.0
 
 
 @dataclass

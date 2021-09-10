@@ -49,7 +49,7 @@ from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoil
 
 PF_COIL_NAME = "PF_{}"
 CS_COIL_NAME = "CS_{}"
-NO_COIL_NAME = "Unnamed_{}"
+NO_COIL_NAME = "Unclassified_{}"
 _NONAME_INCREMENTER = 0
 
 
@@ -567,12 +567,6 @@ class Coil:
         \t:math:`\\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}`\n
         \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
         \t:math:`F_z = -IBx`
-
-        Note
-        ----
-        Los resultos serán una mierda pinchada en un palo si
-        el Grid no es sufficientemente grande! Solo usar si sabes lo que estas
-        haciendo.
         """  # noqa (W505)
         Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
@@ -766,7 +760,7 @@ class CoilGroup:
 
     def __getitem__(self, name):
         """
-        Dict-like behaviour for CoilSet object
+        Dict-like behaviour for CoilGroup object
         """
         try:
             return self.coils[name]
@@ -1124,7 +1118,7 @@ class Solenoid(CoilGroup):
 
         Parameters
         ----------
-        coils: list(Coil, Coil, ..)
+        coils: Iterable[Coil]
             The list of coils from which to make the Solenoid
         """
         if not coils:
@@ -1499,7 +1493,7 @@ class CoilSet(CoilGroup):
 
     Parameters
     ----------
-    coils: list(Coil, Coil, ..)
+    coils: Iterable[Coil]
         The list of poloidal field coils
     R_0: float
         Major radius [m] of machine (used to order coil numbers)
