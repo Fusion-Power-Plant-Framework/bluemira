@@ -104,9 +104,33 @@ def set_log_level(verbose=1, increase=False):
         _modify_handler(new_level, logger)
 
 
+def get_log_level(logger_name="", as_str=True):
+    """
+    Return the current logging level.
+
+    Parameters
+    ----------
+    logger_name: str (default = "")
+        The named logger to get the level for.
+    as_str: bool (default = True)
+        If True then return the logging level as a string, else as an int.
+    """
+    logger = logging.getLogger(logger_name)
+
+    max_level = 0
+    for handler in logger.handlers or logger.parent.handlers:
+        if not isinstance(handler, logging.FileHandler):
+            if handler.level > max_level:
+                max_level = handler.level
+    if as_str:
+        return LogLevel(max_level).name
+    else:
+        return max_level // 10
+
+
 def _convert_log_level(level, current_level=0):
     """
-    Convert the provided logging level to a python logging int level.
+    Convert the provided logging level to a LogLevel objects.
 
     Parameters
     ----------
@@ -114,6 +138,11 @@ def _convert_log_level(level, current_level=0):
         The bluemira logging level.
     current_level: int
         The current bluemira logging level to increment from.
+
+    Returns
+    -------
+    new_level: LogLevel
+        The LogLevel corresponding to the requested level.
     """
     try:
         if isinstance(level, str):
@@ -142,3 +171,30 @@ def _modify_handler(new_level, logger):
     for handler in logger.handlers or logger.parent.handlers:
         if not isinstance(handler, logging.FileHandler):
             handler.setLevel(new_level.value)
+
+
+class LoggingContext:
+    """
+    A context manager for temporarily adjusting the logging level
+
+    Parameters
+    ----------
+    level: str or int
+        The bluemira logging level to set within the context.
+    """
+
+    def __init__(self, level):
+        self.level = level
+        self.original_level = get_log_level()
+
+    def __enter__(self):
+        """
+        Set the logging level to the new level when we enter the context.
+        """
+        set_log_level(self.level)
+
+    def __exit__(self, type, value, traceback):
+        """
+        Set the logging level to the original level when we exit the context.
+        """
+        set_log_level(self.original_level)
