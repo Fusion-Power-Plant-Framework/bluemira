@@ -35,6 +35,7 @@ import datetime
 import shutil
 import functools
 import seaborn as sns
+import logging
 from PySide2 import QtWidgets
 from bluemira import __version__
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR, BLUEMIRA_PALETTE
@@ -338,8 +339,13 @@ def bluemira_print_flush(string):
     string: str
         The string to colour flush print
     """
-    sys.stdout.write("\r" + _bm_print_singleflush(string))
-    sys.stdout.flush()
+    original_terminator = logging.StreamHandler.terminator
+    logging.StreamHandler.terminator = ""
+    logging.FileHandler.terminator = original_terminator
+    try:
+        LOGGER.info("\r" + _bm_print_singleflush(string))
+    finally:
+        logging.StreamHandler.terminator = original_terminator
 
 
 class BluemiraClock:

@@ -27,6 +27,7 @@ from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
 from bluemira.base.look_and_feel import (
     bluemira_critical,
     bluemira_error,
+    bluemira_print_flush,
     bluemira_warn,
     bluemira_print,
     bluemira_debug,
@@ -115,6 +116,20 @@ def test_bluemira_log(caplog, method, text, colour, default_text):
     assert "test" in result[1]
     assert "boxed" in result[2]
     assert EXIT_COLOR in result[-1]
+
+
+def test_bluemira_print_flush(caplog):
+    text = "First pass"
+    result = capture_output(caplog, bluemira_print_flush, text)
+    assert text in result[0]
+    assert "\r" in result[0]
+    assert os.linesep not in result[0]
+
+    text = "Second pass"
+    result = capture_output(caplog, bluemira_print_flush, text)
+    assert text in result[0]
+    assert "\r" in result[0]
+    assert os.linesep not in result[0]
 
 
 def test_print_banner(caplog):
