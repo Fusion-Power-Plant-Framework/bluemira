@@ -770,7 +770,7 @@ class Loop(GeomBase):
         self.inner = l1 if a1 < a2 else l2
         self.outer = l2 if a2 > a1 else l1
 
-    def insert(self, point: [float, float, float], pos=0):
+    def insert(self, point, pos=0):
         """
         Inserts a point into the Loop
 

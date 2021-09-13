@@ -20,16 +20,29 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Methods and classes for geometry creation and manipulation.
+The bluemira equilibria module
 """
 
-from . import base
-from . import wire
-from . import face
-from . import shell
-from . import solid
-from . import _freecadapi
-from . import constants
-from . import error
-from . import tools
-from . import plotting
+from .coils import Coil, CoilSet, SymmetricCircuit
+from .limiter import Limiter
+from .grid import Grid
+from .constraints import (
+    MagneticConstraintSet,
+    FieldNullConstraint,
+    PsiBoundaryConstraint,
+    IsofluxConstraint,
+    PsiConstraint,
+    AutoConstraints,
+)
+from .profiles import BetaIpProfile, CustomProfile
+from .shapes import flux_surface_johner, flux_surface_cunningham, flux_surface_manickam
+from .optimiser import Norm2Tikhonov, LeastSquares, FBIOptimiser, PositionOptimiser
+from .find import find_flux_loops, find_LCFS_separatrix, find_OX_points
+from .equilibrium import Equilibrium, Breakdown
+from .solve import (
+    PicardAbsIterator,
+    PicardDeltaIterator,
+    PicardLiAbsIterator,
+    PicardLiDeltaIterator,
+)
+from .run import AbInitioEquilibriumProblem

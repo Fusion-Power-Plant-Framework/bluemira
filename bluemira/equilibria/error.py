@@ -20,16 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Methods and classes for geometry creation and manipulation.
+Error classes for the equilibria module.
 """
 
-from . import base
-from . import wire
-from . import face
-from . import shell
-from . import solid
-from . import _freecadapi
-from . import constants
-from . import error
-from . import tools
-from . import plotting
+from bluemira.base.error import BluemiraError
+
+
+class EquilibriaError(BluemiraError):
+    """
+    Base class for equilibria errors.
+    """
+
+    pass

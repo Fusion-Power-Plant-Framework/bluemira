@@ -153,4 +153,6 @@ ignore_names =
     *xz_to_L*,
     *to_L*,
     *L_to_zdz*,
-    get_Lmap
+    get_Lmap,
+    *_OX_*,
+    *_F,

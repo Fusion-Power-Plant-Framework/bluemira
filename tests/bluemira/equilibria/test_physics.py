@@ -18,18 +18,19 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import pytest
 
-"""
-Methods and classes for geometry creation and manipulation.
-"""
 
-from . import base
-from . import wire
-from . import face
-from . import shell
-from . import solid
-from . import _freecadapi
-from . import constants
-from . import error
-from . import tools
-from . import plotting
+from bluemira.equilibria.physics import calc_psib
+
+
+class TestPhysics:
+    def test_psi_bd(self):
+        psib = calc_psib(320, 9, 19.6e6, 0.8)
+
+        assert round(abs(psib - 143), 0) == 0  # 142.66 ~ 143 V.s
+        # CREATE DEMO 2015 test case
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])
