@@ -63,7 +63,7 @@ def logger_setup(logfilename="bluemira_logging.log"):
     # what will be shown on screen
 
     on_screen_handler = logging.StreamHandler(stream=sys.stderr)
-    on_screen_handler.setLevel(logging.DEBUG)
+    on_screen_handler.setLevel(logging.WARNING)
 
     # what will be written to a file
 

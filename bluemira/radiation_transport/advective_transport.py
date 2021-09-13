@@ -37,7 +37,8 @@ from bluemira.geometry._deprecated_tools import (
     check_linesegment,
 )
 from bluemira.geometry._deprecated_loop import Loop
-from BLUEPRINT.equilibria.find import get_psi_norm, find_flux_loops
+from bluemira.equilibria.find import find_flux_loops
+from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.radiation_transport.error import AdvectionTransportError
 
 
@@ -340,7 +341,7 @@ class ChargedParticleSolver:
         yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
 
         psi_out_omp = self.eq.psi(x_out_omp, 0)
-        psi_norm_out = float(get_psi_norm(psi_out_omp, o_point.psi, x_point_psi))
+        psi_norm_out = float(calc_psi_norm(psi_out_omp, o_point.psi, x_point_psi))
 
         self.flux_surfaces = []
         psi_norm = 1.0
@@ -375,7 +376,7 @@ class ChargedParticleSolver:
         x_out_imp = np.min(out_intersections.T[0])
 
         psi_out_imp = self.eq.psi(x_out_imp, 0)
-        psi_norm_out_imp = float(get_psi_norm(psi_out_imp, o_point.psi, x_point_psi))
+        psi_norm_out_imp = float(calc_psi_norm(psi_out_imp, o_point.psi, x_point_psi))
 
         ib_flux_surfaces = []
         psi_norm = 1.0

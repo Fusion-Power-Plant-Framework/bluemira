@@ -27,7 +27,7 @@ import os
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.parameter import ParameterFrame
-from BLUEPRINT.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
