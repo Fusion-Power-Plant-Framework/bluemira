@@ -45,7 +45,7 @@ from bluemira.radiation_transport.error import AdvectionTransportError
 __all__ = ["ChargedParticleSolver"]
 
 
-class FluxSurface:
+class OpenFluxSurface:
     """
     Utility class for handling flux surface geometries.
     """
@@ -66,6 +66,11 @@ class FluxSurface:
 
     def __init__(self, loop):
         self.loop = loop
+
+        if loop.closed:
+            raise AdvectionTransportError(
+                "OpenFluxSurface cannot be made from a closed geometry."
+            )
 
         # Constructors
         self.x_omp = None
@@ -101,7 +106,7 @@ class FluxSurface:
 
         # Split the flux surface geometry into LFS and HFS geometries
         loop = self.loop
-        delta = 1e-3 if o_point.x < self.x_omp else -1e-3
+        delta = 1e-1 if o_point.x < self.x_omp else -1e-1
         radial_line = Loop(x=[o_point.x, self.x_omp + delta], z=[self.z_omp, self.z_omp])
         # Add the intersection point to the loop
         arg_inter = join_intersect(loop, radial_line, get_arg=True)[0]
@@ -323,7 +328,7 @@ class ChargedParticleSolver:
         loops = [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
 
         loop = sorted(loops, key=lambda loop: self._sort_flux_surfaces(loop, x, z))[0]
-        return FluxSurface(loop)
+        return OpenFluxSurface(loop)
 
     def make_flux_surfaces_ob(self):
         """
@@ -340,11 +345,17 @@ class ChargedParticleSolver:
 
         yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
 
-        psi_out_omp = self.eq.psi(x_out_omp, 0)
+        psi_out_omp = self.eq.psi(x_out_omp, o_point.z)
         psi_norm_out = float(calc_psi_norm(psi_out_omp, o_point.psi, x_point_psi))
 
         self.flux_surfaces = []
-        psi_norm = 1.0
+
+        if self.eq.is_double_null:
+            psi_sep = self.eq.psi(self.x_sep_omp, o_point.z)
+            psi_norm = calc_psi_norm(psi_sep, o_point.psi, x_point_psi) + self.dpsi_near
+        else:
+            psi_norm = 1.0
+
         while psi_norm < psi_norm_out:
             f_s = self._get_flux_surface(
                 psi_norm, self.x_sep_omp, o_point.z, o_points, x_points
@@ -369,17 +380,19 @@ class ChargedParticleSolver:
         x_point_psi = self._get_xpoint_psi(x_points)
 
         # Find the middle and maximum outboard mid-plane psi norm values
-        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
-        sep_intersections = loop_plane_intersect(self.eq.get_separatrix(), yz_plane)
-        out_intersections = loop_plane_intersect(self.first_wall, yz_plane)
-        self.x_sep_imp = np.min(sep_intersections.T[0])
-        x_out_imp = np.min(out_intersections.T[0])
+        self.x_sep_imp, x_out_imp = self._get_sep_out_intersection(
+            o_point, outboard=False
+        )
 
-        psi_out_imp = self.eq.psi(x_out_imp, 0)
+        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
+
+        psi_out_imp = self.eq.psi(x_out_imp, o_point.z)
         psi_norm_out_imp = float(calc_psi_norm(psi_out_imp, o_point.psi, x_point_psi))
 
         ib_flux_surfaces = []
-        psi_norm = 1.0
+
+        psi_sep = self.eq.psi(self.x_sep_imp, o_point.z)
+        psi_norm = calc_psi_norm(psi_sep, o_point.psi, x_point_psi) + self.dpsi_near
         while psi_norm < psi_norm_out_imp:
             f_s = self._get_flux_surface(
                 psi_norm, self.x_sep_imp, o_point.z, o_points, x_points
@@ -485,9 +498,9 @@ class ChargedParticleSolver:
         # Add the first flux surface width (to the LCFS)
         fs_widths = np.append(x_omp[0] - self.x_sep_omp, fs_widths)
         q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * fs_widths * x_omp)
-        f_correct_power = (
+        f_correct_power = q_omp_int / (
             self.params.fw_p_sol_near + self.params.fw_p_sol_far
-        ) / q_omp_int
+        )
         return (
             np.append(x_lfs_inter, x_hfs_inter),
             np.append(z_lfs_inter, z_hfs_inter),
@@ -603,9 +616,9 @@ class ChargedParticleSolver:
         q_imp_int = 2 * np.pi * np.sum(q_par_imp / (B_imp / Bp_imp) * fs_widths * x_imp)
 
         total_power = self.params.fw_p_sol_near + self.params.fw_p_sol_far
-        f_correct_power_ob = self.params.f_outer_target * total_power / q_omp_int
+        f_correct_power_ob = (self.params.f_outer_target * total_power) / q_omp_int
 
-        f_correct_power_ib = self.params.f_inner_target * total_power / q_imp_int
+        f_correct_power_ib = (self.params.f_inner_target * total_power) / q_imp_int
 
         return (
             np.concatenate(
@@ -639,11 +652,21 @@ class ChargedParticleSolver:
         )
 
     def plot(self, ax=None):
+        """
+        Plot the ChargedParticleSolver results.
+        """
+
         if ax is None:
             ax = plt.gca()
 
         self.first_wall.plot(ax, linewidth=0.1, fill=False)
-        self.eq.get_separatrix().plot(ax, linewidth=0.1)
+        separatrix = self.eq.get_separatrix()
+
+        if isinstance(separatrix, Loop):
+            separatrix = [separatrix]
+
+        for sep in separatrix:
+            sep.plot(ax, linewidth=0.12)
 
         if isinstance(self.flux_surfaces[0], list):
             flux_surfaces = self.flux_surfaces[0]

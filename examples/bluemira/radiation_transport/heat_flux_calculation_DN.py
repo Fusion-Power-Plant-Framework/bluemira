@@ -43,9 +43,6 @@ fw_name = "DN_fw_shape.json"
 fw_name = os.sep.join([read_path, fw_name])
 fw_shape = Loop.from_file(fw_name)
 
-# fw_shape = Loop(x=[6, 15, 15, 6, 6], z=[-7.5, -7.5, 7.5, 7.5, -7.5])
-
-
 params = ParameterFrame(
     [
         ["fw_p_sol_near", "near scrape-off layer power", 90, "MW", None, "Input"],
@@ -60,7 +57,7 @@ params = ParameterFrame(
 )
 
 
-solver = ChargedParticleSolver(params, eq, dpsi_near=0.001, dpsi_far=0.001)
+solver = ChargedParticleSolver(params, eq, dpsi_near=0.0001, dpsi_far=0.0001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
 solver.plot()
