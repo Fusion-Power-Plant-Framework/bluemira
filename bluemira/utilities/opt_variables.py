@@ -22,7 +22,7 @@
 """
 Optimisation variable class.
 """
-from dataclasses import dataclass, field
+
 import numpy as np
 import matplotlib.pyplot as plt
 
