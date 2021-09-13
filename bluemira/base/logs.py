@@ -40,9 +40,7 @@ class LogLevel(Enum):
     NOTSET = 0
 
 
-def logger_setup(
-    logfilename="bluemira_logging.log", *, level="INFO"
-):
+def logger_setup(logfilename="bluemira_logging.log", *, level="INFO"):
     """
     Create logger with two handlers.
 
