@@ -84,7 +84,6 @@ def denormalise_value(v_norm, lower_bound, upper_bound):
     return lower_bound + v_norm * (upper_bound - lower_bound)
 
 
-@dataclass
 class BoundedVariable:
     """
     A bounded variable.
@@ -103,31 +102,41 @@ class BoundedVariable:
         Whether or not the variable is to be held constant
     """
 
-    _value: float = field(init=False, repr=False)
-    name: str
-    value: float
-    lower_bound: float = 0
-    upper_bound: float = 0
-    fixed: bool = False
-    __initialised: bool = field(init=False, repr=False, default=False)
+    __slots__ = ("name", "lower_bound", "upper_bound", "fixed", "_value")
 
-    def __post_init__(self):
-        """
-        Check the value w.r.t. bounds.
-        """
-        if self.value < self.lower_bound:
-            raise OptUtilitiesError(
-                "Cannot initialise variable: its value is out of its bounds."
-            )
-        if self.value > self.upper_bound:
-            raise OptUtilitiesError(
-                "Cannot initialise variable: its value is out of its bounds."
-            )
-
-        if self.lower_bound > self.upper_bound:
+    def __init__(self, name, value, lower_bound, upper_bound, fixed=False):
+        if lower_bound > upper_bound:
             raise OptUtilitiesError("Lower bound is higher than upper bound.")
+        if not lower_bound <= value <= upper_bound:
+            raise OptUtilitiesError(
+                "Cannot initialise variable: its value is out of its bounds."
+            )
 
-        self.__initialised = True
+        self.name = name
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+        self.fixed = fixed
+        self._value = None
+        self.value = value
+
+    @property
+    def value(self):
+        """
+        The value of the variable.
+        """
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        """
+        Set the value of the variable, enforcing bounds.
+        """
+        if value < self.lower_bound:
+            self._value = self.lower_bound
+        elif value > self.upper_bound:
+            self._value = self.upper_bound
+        else:
+            self._value = value
 
     def fix(self, value: float):
         """
@@ -141,27 +150,6 @@ class BoundedVariable:
         self.fixed = True
         if value is not None:
             self._value = value
-
-    @property
-    def value(self) -> float:
-        """
-        The value of the variable.
-        """
-        return self._value
-
-    @value.setter
-    def value(self, value: float):
-        """
-        Set the value of the variable, enforcing bounds.
-        """
-        if self.__initialised:
-            if value < self.lower_bound:
-                value = self.lower_bound
-
-            elif value > self.upper_bound:
-                value = self.upper_bound
-
-        self._value = value
 
     @property
     def normalised_value(self) -> float:
