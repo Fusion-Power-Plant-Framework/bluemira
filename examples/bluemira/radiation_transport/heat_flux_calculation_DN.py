@@ -57,7 +57,7 @@ params = ParameterFrame(
 )
 
 
-solver = ChargedParticleSolver(params, eq, dpsi_near=0.0001, dpsi_far=0.0001)
+solver = ChargedParticleSolver(params, eq, dpsi_near=0.001, dpsi_far=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
 solver.plot()

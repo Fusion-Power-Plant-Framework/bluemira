@@ -37,7 +37,7 @@ from bluemira.geometry._deprecated_tools import (
     check_linesegment,
 )
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.equilibria.find import find_flux_loops
+from bluemira.equilibria.find import find_flux_surfs
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.radiation_transport.error import AdvectionTransportError
 
@@ -317,7 +317,7 @@ class ChargedParticleSolver:
         """
         Get the flux surface at specified normalised psi, as close as possible to a point.
         """
-        loops = find_flux_loops(
+        loops = find_flux_surfs(
             self.eq.x,
             self.eq.z,
             self.eq.psi(),
@@ -498,9 +498,9 @@ class ChargedParticleSolver:
         # Add the first flux surface width (to the LCFS)
         fs_widths = np.append(x_omp[0] - self.x_sep_omp, fs_widths)
         q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * fs_widths * x_omp)
-        f_correct_power = q_omp_int / (
+        f_correct_power = (
             self.params.fw_p_sol_near + self.params.fw_p_sol_far
-        )
+        ) / q_omp_int
         return (
             np.append(x_lfs_inter, x_hfs_inter),
             np.append(z_lfs_inter, z_hfs_inter),
@@ -553,29 +553,21 @@ class ChargedParticleSolver:
         B_imp = np.hypot(Bp_imp, Bt_imp)
 
         # Parallel heat flux at the outboard and inboard midplane
-
         q_par_omp = self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
         q_par_imp = self._q_par(x_imp, dx_imp, B_imp, Bp_imp)
 
-        # Calculate values at intersections
+        # Calculate poloidal field at intersections
         Bp_lfs_down = self.eq.Bp(x_lfs_down_inter, z_lfs_down_inter)
         Bp_lfs_up = self.eq.Bp(x_lfs_up_inter, z_lfs_up_inter)
         Bp_hfs_down = self.eq.Bp(x_hfs_down_inter, z_hfs_down_inter)
         Bp_hfs_up = self.eq.Bp(x_hfs_up_inter, z_hfs_up_inter)
 
-        # Flux expansion
-        fx_lfs_down = x_omp * Bp_omp / (x_lfs_down_inter * Bp_lfs_down)
-        fx_lfs_up = x_omp * Bp_omp / (x_lfs_up_inter * Bp_lfs_up)
-        fx_hfs_down = x_imp * Bp_imp / (x_hfs_down_inter * Bp_hfs_down)
-        fx_hfs_up = x_imp * Bp_imp / (x_hfs_up_inter * Bp_hfs_up)
-
-        # Calculate parallel heat fluxes
-        lfs_factor = q_par_omp * x_omp * Bp_omp / B_omp
-        hfs_factor = q_par_imp * x_imp * Bp_imp / B_imp
-        q_par_lfs_down = lfs_factor / (x_lfs_down_inter * fx_lfs_down)
-        q_par_lfs_up = lfs_factor / (x_lfs_up_inter * fx_lfs_up)
-        q_par_hfs_down = hfs_factor / (x_hfs_down_inter * fx_hfs_down)
-        q_par_hfs_up = hfs_factor / (x_hfs_up_inter * fx_hfs_up)
+        # Calculate parallel heat fluxes at the intersections
+        # Note that flux expansion terms cancelate down to this
+        q_par_lfs_down = q_par_omp * Bp_lfs_down / B_omp
+        q_par_lfs_up = q_par_omp * Bp_lfs_up / B_omp
+        q_par_hfs_down = q_par_imp * Bp_hfs_down / B_imp
+        q_par_hfs_up = q_par_imp * Bp_hfs_up / B_imp
 
         # Calculate perpendicular heat fluxes
         heat_flux_lfs_down = (
@@ -619,6 +611,8 @@ class ChargedParticleSolver:
         f_correct_power_ob = (self.params.f_outer_target * total_power) / q_omp_int
 
         f_correct_power_ib = (self.params.f_inner_target * total_power) / q_imp_int
+        print(q_omp_int, total_power * self.params.f_outer_target)
+        print(q_imp_int, total_power * self.params.f_inner_target)
 
         return (
             np.concatenate(

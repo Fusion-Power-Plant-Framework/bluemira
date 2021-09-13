@@ -54,7 +54,7 @@ params = ParameterFrame(
 )
 
 solver = ChargedParticleSolver(params, eq)
-xx, zz, hh = solver.analyse(first_wall=fw_shape)
+x, z, hf = solver.analyse(first_wall=fw_shape)
 
 # Plot the analysis
 
@@ -65,6 +65,6 @@ eq.get_separatrix().plot(ax)
 for flux_surface in solver.flux_surfaces:
     flux_surface.plot(ax)
 
-cm = ax.scatter(xx, zz, c=hh, cmap="plasma", zorder=40)
+cm = ax.scatter(x, z, c=hf, cmap="plasma", zorder=40)
 f.colorbar(cm, label="MW/m^2")
 plt.show()
