@@ -53,6 +53,9 @@ pip install --upgrade --no-cache-dir -e ../bluemira/'[process]'
 # Install PROCESS into bluemira environment
 pip install .
 
+# Clean up our build environment
+conda env remove -n bluemira-process-build || true
+
 # The following suggests how to install PROCESS via a manylinux wheel, if you have docker
 # installed.
 
