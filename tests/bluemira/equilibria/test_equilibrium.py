@@ -19,10 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
+import pytest
+
 from matplotlib import pyplot as plt
 import numpy as np
-import pytest
+import os
+from unittest.mock import patch
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.grid import Grid
@@ -228,6 +231,24 @@ class TestEquilibrium:
         fn = os.sep.join([path, "eqref_OOB.json"])
         sn = Equilibrium.from_eqdsk(fn)
         assert not sn.is_double_null
+
+    def test_qpsi_calculation_modes(self):
+        path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+        fn = os.sep.join([path, "DN-DEMO_eqref.json"])
+        dn = Equilibrium.from_eqdsk(fn)
+        with patch.object(dn, "q") as eq_q:
+            res = dn.to_dict(qpsi_calcmode=0)
+            assert eq_q.call_count == 0
+            assert "qpsi" not in res
+
+            res = dn.to_dict(qpsi_calcmode=1)
+            assert eq_q.call_count == 1
+            assert "qpsi" in res
+
+            res = dn.to_dict(qpsi_calcmode=2)
+            assert eq_q.call_count == 1
+            assert "qpsi" in res
+            assert np.all(res["qpsi"] == 0)  # array is all zeros
 
 
 if __name__ == "__main__":
