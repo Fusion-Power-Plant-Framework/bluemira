@@ -34,10 +34,10 @@ import sys
 import tarfile
 from typing import Optional
 
-
 from BLUEPRINT.base.file import KEYWORD
 from BLUEPRINT.base.file import get_BP_root
 from BLUEPRINT.reactor import ConfigurableReactor
+from bluemira.base.logs import set_log_level
 
 try:
     from functools import cached_property
@@ -152,7 +152,7 @@ class InputManager:
         The root output path, excluding the reactor subdirectory for the run.
         """
         return self._try_get_path_from_config(
-            "generated_data_root", "generated_data", dir=self.outdir
+            "generated_data_root", "generated_data/BLUEPRINT", dir=self.outdir
         )
 
     @cached_property
@@ -168,7 +168,7 @@ class InputManager:
         """
         The root reference data path, excluding the reactor subdirectory for the run
         """
-        return self._try_get_path_from_config("reference_data_root", "data")
+        return self._try_get_path_from_config("reference_data_root", "data/BLUEPRINT")
 
     @cached_property
     def reference_path(self) -> str:
@@ -356,8 +356,8 @@ def _check_path(name, path: str, force: bool = False, make: bool = True):
 @click.option(
     "-v",
     "--verbose",
-    is_flag=True,
-    help="Enables verbose mode. When on, output data will include metadata.",
+    count=True,
+    help="Change logging severity level.",
 )
 @click.option(
     "-f",
@@ -422,6 +422,8 @@ def cli(
     4.  build_tweaks  [default = build_tweaks.json]
             file containing additional build parameters.
     """
+    set_log_level(verbose)
+
     inputs = InputManager(
         template=template,
         config=config,

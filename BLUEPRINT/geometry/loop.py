@@ -610,6 +610,30 @@ class Loop(GeomBase):
         new[c] = [self[c][0]]  # Third coordinate must be all equal (flat)
         return Loop(**new)
 
+    def offset_clipper(self, delta, method="square", miter_limit=2.0):
+        """
+        Loop offset using the pycliper methods
+
+        Parameters
+        ----------
+        delta: float
+            Value to be offset
+        method: str from ['square', 'round', 'miter'] (default = 'square')
+            The type of offset to perform
+        miter_limit: float (default = 2.0)
+            The ratio of delta to used when mitering acute corners. Only used if
+            method == 'miter'
+
+        Return
+        ------
+        Loop
+            loop with the indicated offest applied
+        """
+        # Setup here to avoid circular import
+        from BLUEPRINT.geometry.offset import offset_clipper
+
+        return offset_clipper(self, delta, method, miter_limit)
+
     def rotate(self, theta, update=True, enforce_ccw=True, **kwargs):
         """
         Rotates the Loop by an angle theta
@@ -746,7 +770,7 @@ class Loop(GeomBase):
         self.inner = l1 if a1 < a2 else l2
         self.outer = l2 if a2 > a1 else l1
 
-    def insert(self, point: [float, float, float], pos=0):
+    def insert(self, point, pos=0):
         """
         Inserts a point into the Loop
 

@@ -29,11 +29,6 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.plot_tools import (
-    coordinates_to_path,
-    Plot3D,
-    BluemiraPathPatch3D,
-)
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
 from bluemira.geometry._deprecated_tools import (
@@ -48,8 +43,14 @@ from bluemira.geometry._deprecated_tools import (
     get_normal_vector,
     offset,
     vector_lengthnorm,
+    in_polygon,
 )
 from bluemira.utilities.tools import is_num
+from bluemira.utilities.plot_tools import (
+    coordinates_to_path,
+    Plot3D,
+    BluemiraPathPatch3D,
+)
 
 
 class Loop(GeomBase):
@@ -260,7 +261,11 @@ class Loop(GeomBase):
         area: float
             The area of the polygon [m^2]
         """
-        return get_area(*self.xyz)
+        try:
+            return get_area(*self.xyz)
+        except GeometryError:
+            # Can't find a normal vector from a point cloud? It's probably 0 area
+            return 0.0
 
     @property
     def length(self) -> float:
@@ -562,6 +567,26 @@ class Loop(GeomBase):
     # Queries
     # =========================================================================
 
+    def point_in_poly(self, point, include_edges=False):
+        """
+        Determines whether or not a point is within in the Loop
+
+        Parameters
+        ----------
+        point: iterable(2-3)
+            The 2-D or 3-D coordinates of the point (coord conversion handled)
+        include_edges: bool
+            Whether or not to return True if a point is on the perimeter of the
+            Loop
+
+        Returns
+        -------
+        in_polygon: bool
+            Whether or not the point is within the Loop
+        """
+        point = self._point32d(point)
+        return in_polygon(*point, self.d2.T, include_edges=include_edges)
+
     def distance_to(self, point):
         """
         Calculates the distances from each point in the loop to the point
@@ -802,8 +827,8 @@ class Loop(GeomBase):
         """
         if self.ndim == 3:
             return True  # Assume ccw if 3D Loop
-
-        return check_ccw(*self.d2)
+        i, j = [self.__getattribute__(k) for k in self.plan_dims]
+        return check_ccw(i, j)
 
     def _remove_duplicates(self, enforce_ccw):
         """

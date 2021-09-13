@@ -86,6 +86,7 @@ build_config = {
     "tf_mode": "run",
     # TF coil config
     "TF_type": "S",
+    "wp_shape": "N",
     "TF_objective": "L",
     "GS_type": "ITER",
     # FW and VV config

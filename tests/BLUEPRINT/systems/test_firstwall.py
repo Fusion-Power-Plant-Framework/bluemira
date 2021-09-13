@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,15 +24,117 @@ import numpy as np
 from BLUEPRINT.systems.firstwall import FluxSurface, FirstWallSN, FirstWallDN
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.equilibria.equilibrium import Equilibrium
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.geometry.geomtools import get_intersect
+
+
+#  Helper function to load an equilibrium
+def load_equilibrium(eq_name, path="equilibria", subfolder="data/BLUEPRINT"):
+    read_path = get_BP_path(path, subfolder)
+    eq_name = os.sep.join([read_path, eq_name])
+    return Equilibrium.from_eqdsk(eq_name)
+
+
+# Helper function to make a dummy keep-out-zone from equilibrium
+def make_koz(x_x_point, x_low, x_high, z_inner, z_outer):
+    koz_x = [x_low, x_low, x_x_point, x_x_point, x_high, x_high, x_x_point, x_x_point]
+    koz_z = [z_inner, -z_inner, -z_inner, -z_outer, -z_outer, z_outer, z_outer, z_inner]
+    koz = Loop(x=koz_x, y=None, z=koz_z)
+    koz.close()
+    return koz
+
+
+def make_input_loops_sn(eq):
+    o_point, x_point = eq.get_OX_points()
+    z_x_point = x_point[0][1]
+    x_x_point = x_point[0][0]
+    z_inner = z_x_point - 1.25
+    z_outer = z_x_point - 2.25
+    x_low = x_x_point - 3
+    x_high = x_x_point + 4.5
+    koz = make_koz(x_x_point, x_low, x_high, z_inner, z_outer)
+    vessel = make_koz(x_x_point, x_low, x_high, z_inner - 1.3, z_outer - 1.3)
+    return koz, vessel
+
+
+def make_input_loops_dn(eq):
+    o_point, x_point = eq.get_OX_points()
+    z_x_point = x_point[1][1]
+    x_x_point = x_point[1][0]
+    z_inner = z_x_point - 1
+    z_outer = z_x_point - 3
+    x_low = x_x_point - 3
+    x_high = x_x_point + 5.5
+    koz = make_koz(x_x_point, x_low, x_high, z_inner, z_outer)
+    vessel = make_koz(x_x_point, x_low, x_high, z_inner - 1.5, z_outer - 1.5)
+    return koz, vessel
+
+
+def firstwall_sn_inputs():
+    eq = load_equilibrium("EU-DEMO_EOF.json")
+    koz, vessel = make_input_loops_sn(eq)
+    inputs = {
+        "equilibrium": eq,
+        "koz": koz,
+        "vv_inner": vessel,
+        "strike_pts_from_koz": False,
+        "pick_flux_from_psinorm": False,
+    }
+    return inputs
+
+
+def firstwall_dn_inputs():
+    eq = load_equilibrium(
+        "DN-DEMO_eqref.json", "equilibria/test_data", "tests/BLUEPRINT"
+    )
+    koz, vessel = make_input_loops_dn(eq)
+    inputs = {
+        "equilibrium": eq,
+        "koz": koz,
+        "vv_inner": vessel,
+        "strike_pts_from_koz": False,
+        "pick_flux_from_psinorm": False,
+    }
+    return inputs
+
+
+# Helper function to load a SN first wall
+def load_firstwall_sn():
+    inputs = firstwall_sn_inputs()
+    fw = FirstWallSN(FirstWallSN.default_params, inputs)
+    return fw
+
+
+# Helper function to load a DN first wall
+def load_firstwall_dn():
+    inputs = firstwall_dn_inputs()
+    fw = FirstWallDN(FirstWallDN.default_params, inputs)
+    return fw
+
+
+# Driver test class to call the methods in FirstWallSN without fully initialising
+class FirstWallSNDriver(FirstWallSN):
+    def __init__(self):
+        self.config = FirstWallSN.default_params
+        self.inputs = firstwall_sn_inputs()
+        self.init_params()
+        self.init_equilibrium()
+
+
+# Driver test class to call the methods in FirstWallDN without fully initialising
+class FirstWallDNDriver(FirstWallDN):
+    def __init__(self):
+        self.config = FirstWallDN.default_params
+        self.inputs = firstwall_dn_inputs()
+        self.init_params()
+        self.init_equilibrium()
 
 
 class TestFluxSurface:
     @classmethod
     def setup_class(cls):
-        read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
-        eq_name = "EU-DEMO_EOF.json"
-        eq_name = os.sep.join([read_path, eq_name])
-        eq = Equilibrium.from_eqdsk(eq_name)
+        eq = load_equilibrium("EU-DEMO_EOF.json")
         cls.fluxsurface = FluxSurface(eq, 12, 0)
 
     def test_polar_coordinates(self):
@@ -70,14 +172,42 @@ class TestFluxSurface:
         assert qpar == 0
 
 
+# Method to check attributes of a first wall
+def check_firstwall(firstwall):
+    # Check all the attributes are sensible
+    assert isinstance(firstwall.profile, Loop)
+    assert isinstance(firstwall.inner_profile, Loop)
+    assert isinstance(firstwall.geom, dict)
+    assert isinstance(firstwall.geom["2D profile"], Shell)
+    assert isinstance(firstwall.geom["Inboard wall"], Loop)
+    assert isinstance(firstwall.geom["Outboard wall"], Loop)
+    assert isinstance(firstwall.divertor_loops, list)
+    assert isinstance(firstwall.divertor_cassettes, list)
+
+    inboard = firstwall.geom["Inboard wall"]
+    outboard = firstwall.geom["Outboard wall"]
+
+    # Inboard / outboard intersect in SN case
+    if len(firstwall.divertor_loops) == 1:
+        int_x, int_z = get_intersect(inboard, outboard)
+        n_ints = len(int_x)
+        assert n_ints >= 1 and len(int_z) == n_ints
+
+    # Check intersections with the divertor
+    for div in firstwall.divertor_loops:
+        assert isinstance(div, Loop)
+        for sec_compare in [inboard, outboard]:
+            int_x, int_z = get_intersect(div, sec_compare)
+            n_ints = len(int_x)
+            assert n_ints >= 1 and len(int_z) == n_ints
+
+    return True
+
+
 class TestFirstWallSN:
-    @classmethod
-    def setup_class(cls):
-        read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
-        eq_name = "EU-DEMO_EOF.json"
-        eq_name = os.sep.join([read_path, eq_name])
-        eq = Equilibrium.from_eqdsk(eq_name)
-        cls.firstwall = FirstWallSN(FirstWallSN.default_params, {"equilibrium": eq})
+    # Setup for *every* test in class
+    def setup_method(self):
+        self.firstwall = FirstWallSNDriver()
 
     def test_make_preliminary_profile(self):
         prof = self.firstwall.make_preliminary_profile()
@@ -85,11 +215,60 @@ class TestFirstWallSN:
 
     def test_make_divertor(self):
         fw_loop = self.firstwall.make_preliminary_profile()
-        div = self.firstwall.make_divertor(fw_loop)
-        assert div[0].x[0] == div[0].x[-1]
-        assert div[0].z[0] == div[0].z[-1]
+        div = self.firstwall.make_divertor(fw_loop)[0]
+        assert div.x[0] == div.x[-1]
+        assert div.z[0] == div.z[-1]
+
+    @pytest.mark.parametrize("ints_from_psi", [True, False])
+    def test_make_divertor_from_koz(self, ints_from_psi):
+        self.firstwall.inputs["strike_pts_from_koz"] = True
+        self.firstwall.inputs["pick_flux_from_psinorm"] = ints_from_psi
+
+        # Make a fake firstwall loop
+        # (just needs to intersect yz plane containing x point)
+        x_x_point = self.firstwall.points["x_point"]["x"]
+        z_x_point = self.firstwall.points["x_point"]["z_low"]
+        fw_x_right = x_x_point + self.firstwall.params.xpt_outer_gap + 0.5
+        fw_x_left = x_x_point - self.firstwall.params.xpt_outer_gap - 0.5
+        fw_z_top = z_x_point + 1.0
+        fw_z_bot = z_x_point - 1.0
+        fw_x = [fw_x_right, fw_x_right, fw_x_left, fw_x_left]
+        fw_z = [fw_z_top, fw_z_bot, fw_z_bot, fw_z_top]
+        fw_loop = Loop(x=fw_x, y=None, z=fw_z)
+        fw_loop.close()
+
+        # Make the divertor
+        div = self.firstwall.make_divertor(fw_loop)[0]
+
+        # Check the loop is closed
+        assert div.closed
+
+        # Check the bounds
+        z_low = self.firstwall.points["x_point"]["z_low"]
+        koz_left_x = x_x_point - 3 - self.firstwall.params.inner_target_sol
+        koz_bot_z = z_low - 2.25
+        div_x_max = np.max(div.x)
+        div_x_min = np.min(div.x)
+        div_z_max = np.max(div.z)
+        div_z_min = np.min(div.z)
+        assert div_x_max == fw_x_right
+        assert div_x_min > koz_left_x
+        assert div_z_max == z_low
+        assert div_z_min == koz_bot_z
+
+    # Test build for different combinations of thicknesses
+    @pytest.mark.parametrize("tk_in", [0.1])
+    @pytest.mark.parametrize("tk_out_diff", [0.0, 0.05, -0.05])
+    @pytest.mark.parametrize("tk_div_diff", [0.0, 0.05, -0.05])
+    def test_build_firstwall(self, tk_in, tk_out_diff, tk_div_diff):
+        self.firstwall.params.tk_fw_in = tk_in
+        self.firstwall.params.tk_fw_out = tk_in + tk_out_diff
+        self.firstwall.params.tk_fw_div = tk_in + tk_div_diff
+        self.firstwall.build()
+        assert check_firstwall(self.firstwall)
 
     def test_q_parallel_calculation(self):
+        self.firstwall.build()
         qpar = self.firstwall.q_parallel_calculation()
         assert len(self.firstwall.flux_surfaces) == len(qpar)
         for i in range(len(qpar), -1):
@@ -97,13 +276,9 @@ class TestFirstWallSN:
 
 
 class TestFirstWallDN:
-    @classmethod
-    def setup_class(cls):
-        read_path = get_BP_path("BLUEPRINT/equilibria/test_data", subfolder="tests")
-        eq_name = "DN-DEMO_eqref.json"
-        eq_name = os.sep.join([read_path, eq_name])
-        eq = Equilibrium.from_eqdsk(eq_name)
-        cls.firstwall = FirstWallDN(FirstWallDN.default_params, {"equilibrium": eq})
+    # Setup for *every* test in class
+    def setup_method(self):
+        self.firstwall = FirstWallDNDriver()
 
     def test_make_preliminary_profile(self):
         prof = self.firstwall.make_preliminary_profile()
@@ -111,16 +286,80 @@ class TestFirstWallDN:
         assert prof.x[0] == prof.x[-1]
 
     def test_make_divertor_outer_target(self):
-        tar_out = self.firstwall.make_divertor_outer_target()
+        flux_loops = self.firstwall.pick_flux_loops()
+        inner_strike, outer_strike = self.firstwall.find_strike_points(flux_loops)
+        tangent = self.firstwall.get_tangent_vector(outer_strike, flux_loops[0])
+        tar_out = self.firstwall.make_divertor_outer_target(outer_strike, tangent)
         assert tar_out[0][0] > self.firstwall.points["x_point"]["x"]
         assert tar_out[0][0] < tar_out[1][0]
 
     def test_make_divertor_inner_target(self):
-        tar_in = self.firstwall.make_divertor_inner_target()
+        flux_loops = self.firstwall.pick_flux_loops()
+        inner_strike, outer_strike = self.firstwall.find_strike_points(flux_loops)
+        tar_in = self.firstwall.make_divertor_inner_target(inner_strike)
         assert tar_in[0][0] < self.firstwall.points["x_point"]["x"]
         assert tar_in[0][0] > tar_in[1][0]
 
+    @pytest.mark.parametrize("ints_from_psi", [True, False])
+    def test_make_divertor_from_koz(self, ints_from_psi):
+        self.firstwall.inputs["strike_pts_from_koz"] = True
+        self.firstwall.inputs["pick_flux_from_psinorm"] = ints_from_psi
+
+        # Make a fake firstwall loop
+        # (just needs to intersect yz plane containing x point)
+        x_x_point = self.firstwall.points["x_point"]["x"]
+        z_x_point = self.firstwall.points["x_point"]["z_low"]
+        fw_x_right = x_x_point + self.firstwall.params.xpt_outer_gap + 0.5
+        fw_x_left = x_x_point - self.firstwall.params.xpt_outer_gap - 0.5
+        fw_z_top = z_x_point + 1.0
+        fw_z_bot = z_x_point - 1.0
+        fw_x = [fw_x_right, fw_x_right, fw_x_left, fw_x_left]
+        fw_z = [fw_z_top, fw_z_bot, fw_z_bot, fw_z_top]
+        fw_loop = Loop(x=fw_x, y=None, z=fw_z)
+        fw_loop.close()
+
+        # Make the divertor
+        div = self.firstwall.make_divertor(fw_loop)[0]
+
+        # Check the loop is closed
+        assert div.closed
+
+        # Get the inner/outer target end points
+        flux_loops = self.firstwall.pick_flux_loops()
+        inner_strike, outer_strike = self.firstwall.find_strike_points(flux_loops)
+        tangent = self.firstwall.get_tangent_vector(outer_strike, flux_loops[0])
+        tar_in = self.firstwall.make_divertor_inner_target(inner_strike)
+        tar_out = self.firstwall.make_divertor_outer_target(outer_strike, tangent)
+        # Get the minimum and maximum x,z
+        max_x = round(tar_out[1][0], 5)
+        min_x = round(tar_in[1][0], 5)
+        max_z = round(self.firstwall.points["x_point"]["z_low"], 5)
+        min_z = round(tar_out[1][1], 5)
+        # min_z = round(max_z - 2.25,5)
+
+        # Check the bounds
+        div_x_max = np.max(div.x)
+        div_x_min = np.min(div.x)
+        div_z_max = np.max(div.z)
+        div_z_min = np.min(div.z)
+        assert div_x_max == max_x
+        assert div_x_min == min_x
+        assert div_z_max == max_z
+        assert div_z_min == min_z
+
+    # Test build for different combinations of thicknesses
+    @pytest.mark.parametrize("tk_in", [0.1])
+    @pytest.mark.parametrize("tk_out_diff", [0.0, 0.05, -0.05])
+    @pytest.mark.parametrize("tk_div_diff", [0.0, 0.05, -0.05])
+    def test_build_firstwall(self, tk_in, tk_out_diff, tk_div_diff):
+        self.firstwall.params.tk_fw_in = tk_in
+        self.firstwall.params.tk_fw_out = tk_in + tk_out_diff
+        self.firstwall.params.tk_fw_div = tk_in + tk_div_diff
+        self.firstwall.build()
+        assert check_firstwall(self.firstwall)
+
     def test_make_flux_surfaces(self):
+        self.firstwall.build()
         assert hasattr(self.firstwall, "flux_surface_hfs")
         assert hasattr(self.firstwall, "flux_surface_hfs")
         assert len(self.firstwall.flux_surface_hfs) < len(
@@ -128,11 +367,12 @@ class TestFirstWallDN:
         )
 
     def test_q_parallel_calculation(self):
+        self.firstwall.build()
         qpar = self.firstwall.q_parallel_calculation()
         assert len(qpar[0]) == len(self.firstwall.flux_surface_lfs)
 
     def test_modify_fw_profile(self):
-        profile = self.firstwall.profile
+        profile = self.firstwall.make_preliminary_profile()
         prof_up = self.firstwall.modify_fw_profile(profile, 11.5, -2.5, 0.3)
         assert prof_up.x[0] == profile.x[0]
         assert prof_up.x[-1] == profile.x[-1]

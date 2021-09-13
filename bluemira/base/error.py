@@ -44,3 +44,11 @@ class ComponentError(BluemiraError):
     """
 
     pass
+
+
+class LogsError(BluemiraError):
+    """
+    Exception class for Components.
+    """
+
+    pass

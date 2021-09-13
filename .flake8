@@ -155,4 +155,6 @@ ignore_names =
     *L_to_zdz*,
     get_Lmap,
     *LFS*,
-    *HFS*
+    *HFS*,
+    *_OX_*,
+    *_F

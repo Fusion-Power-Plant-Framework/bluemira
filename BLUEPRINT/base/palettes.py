@@ -47,6 +47,7 @@ BLUE["BB"] = [
     make_rgb_alpha(BLUE["BB"], 0.1),
 ]
 BLUE["FW"] = BLUE["BB"]
+BLUE["CCS"] = BLUE["BB"]
 BLUE["ATEC"] = [
     make_rgb_alpha(BLUE["PF"][0], 0.2),
     make_rgb_alpha(BLUE["PF"][0], 0.4),

@@ -55,6 +55,7 @@ from BLUEPRINT.utilities.colortools import force_rgb
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (
+    STBreedingBlanket,
     BreedingBlanket,
     Divertor,
     Plasma,
@@ -143,6 +144,7 @@ class Reactor(ReactorSystem):
     build_tweaks: dict
 
     # ReactorSystem declarations
+    STBB: Type[STBreedingBlanket]
     BB: Type[BreedingBlanket]
     BC: Type[BlanketCoverage]
     CR: Type[Cryostat]
@@ -193,6 +195,7 @@ class Reactor(ReactorSystem):
 
         # Create the file manager for this reactor
         reactor_name = self.params.get("Name", "DEFAULT_REACTOR")
+
         reference_data_root = build_config.get(
             "reference_data_root", "!BP_ROOT!/data/BLUEPRINT"
         )
@@ -559,7 +562,7 @@ class Reactor(ReactorSystem):
             "Derived",
         )
 
-    def create_equilibrium(self):
+    def create_equilibrium(self, qpsi_calcmode=0):
         """
         Creates a reference MHD equilibrium for the Reactor.
         """
@@ -602,12 +605,16 @@ class Reactor(ReactorSystem):
         print("")  # stdout flusher
 
         directory = self.file_manager.generated_data_dirs["equilibria"]
-        a.eq.to_eqdsk(self.params["Name"] + "_eqref", directory=directory)
+        a.eq.to_eqdsk(
+            self.params["Name"] + "_eqref",
+            directory=directory,
+            qpsi_calcmode=qpsi_calcmode,
+        )
         self.EQ = a
         self.eqref = a.eq.copy()
         self.process_equilibrium(self.eqref)
 
-    def load_equilibrium(self, filename=None, reconstruct_jtor=False):
+    def load_equilibrium(self, filename=None, reconstruct_jtor=False, qpsi_calcmode=0):
         """
         Load an equilibrium from a file.
         """
@@ -636,6 +643,7 @@ class Reactor(ReactorSystem):
             self.EQ.eq.to_eqdsk(
                 os.path.basename(filename),
                 directory=self.file_manager.reference_data_dirs["equilibria"],
+                qpsi_calcmode=qpsi_calcmode,
             )
 
     def process_equilibrium(self, eq):
@@ -835,7 +843,13 @@ class Reactor(ReactorSystem):
         self.VV.build_ports(to_vv_build)
 
     def build_TF_coils(
-        self, ny=None, nr=None, nrippoints=None, objective=None, shape_type=None
+        self,
+        ny=None,
+        nr=None,
+        nrippoints=None,
+        objective=None,
+        shape_type=None,
+        wp_shape=None,
     ):
         """
         Design and optimise the tokamak toroidal field coils.
@@ -862,6 +876,7 @@ class Reactor(ReactorSystem):
             - 'T': triple-arc coil shape
             - 'D': Princeton D coil shape
             - 'P': Picture frame coil shape
+            - 'TP': Tapered Pictureframe coil shape
         """
         if ny is None:
             ny = self.build_tweaks["ny"]
@@ -873,12 +888,15 @@ class Reactor(ReactorSystem):
             objective = self.build_config["TF_objective"]
         if shape_type is None:
             shape_type = self.build_config["TF_type"]
+        if wp_shape is None:
+            wp_shape = self.build_config["wp_shape"]
 
         to_tf = {
             "name": self.params.Name + "_TF",
             "plasma": self.PL.get_LCFS(),
             "koz_loop": self.TS.TF_koz,
             "shape_type": shape_type,
+            "wp_shape": wp_shape,
             "obj": objective,
             "ny": ny,
             "nr": nr,
@@ -912,7 +930,7 @@ class Reactor(ReactorSystem):
                 self.build_TF_coils(ny, nr, nrippoints, objective, shape_type)
         self.add_parameters(self.TF.params.to_records())
 
-    def build_PF_system(self):
+    def build_PF_system(self, qpsi_calcmode=0):
         """
         Design and optimise the reactor poloidal field system.
         """
@@ -955,6 +973,7 @@ class Reactor(ReactorSystem):
                 snap.eq.to_eqdsk(
                     self.params["Name"] + f"_{name}",
                     directory=self.file_manager.generated_data_dirs["equilibria"],
+                    qpsi_calcmode=qpsi_calcmode,
                 )
 
         PoloidalFieldCoilsClass = self.get_subsystem_class("PF")

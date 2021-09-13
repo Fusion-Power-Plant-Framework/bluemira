@@ -121,5 +121,6 @@
     "tension": "full",
     "family": "S",
     "objective": "L",
+    "wp_shape": "wp_shape",
     "n_TF": 16.0
 }

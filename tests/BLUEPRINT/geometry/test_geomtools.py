@@ -50,6 +50,8 @@ from BLUEPRINT.geometry.geomtools import (
     loop_surface,
     lineq,
     get_normal_vector,
+    make_box_xz,
+    index_of_point_on_loop,
 )
 import tests
 
@@ -689,6 +691,67 @@ class TestGetNormal:
         for fail in fails:
             with pytest.raises(GeometryError):
                 get_normal_vector(*fail)
+
+
+def test_make_box():
+    x_max = 4.0
+    x_min = 2.0
+    z_max = 5.0
+    z_min = 1.0
+
+    box = make_box_xz(x_min, x_max, z_min, z_max)
+    area_box = box.area
+    area_check = (z_max - z_min) * (x_max - x_min)
+    assert area_box == area_check
+
+    # Swap x
+    bad_x_max, bad_x_min = x_min, x_max
+    with pytest.raises(GeometryError):
+        bad_box = make_box_xz(bad_x_min, bad_x_max, z_min, z_max)
+
+    # Swap z
+    bad_z_max, bad_z_min = z_min, z_max
+    with pytest.raises(GeometryError):
+        bad_box = make_box_xz(x_min, x_max, bad_z_min, bad_z_max)
+
+
+cases = [
+    {"x": 0.5, "z": 0, "before": True, "idx": 0},
+    {"x": 0.5, "z": 0, "before": False, "idx": 1},
+    {"x": 0.5, "z": 1, "before": True, "idx": 2},
+    {"x": 0.5, "z": 1, "before": False, "idx": 3},
+    {"x": 0.0, "z": 0, "before": True, "idx": 0},
+    {"x": 0.0, "z": 0, "before": False, "idx": 1},
+    {"x": 1.5, "z": 0, "before": True, "idx": None},
+    {"x": 1.5, "z": 0, "before": False, "idx": None},
+]
+
+
+@pytest.mark.parametrize("inputs", cases)
+def test_idx_pt_on_loop(inputs):
+
+    # Create test loops
+    box_closed = make_box_xz(0, 1, 0, 1)
+    box_open = Loop(x=box_closed.x[:-1], z=box_closed.z[:-1])
+    assert box_closed.closed
+    assert not box_open.closed
+
+    # Create a point to test
+    point_check = [inputs["x"], inputs["z"]]
+
+    # Return index of point before or after
+    before = inputs["before"]
+
+    # Open and closed loop cases
+    for box in [box_closed, box_open]:
+        # Not on loop case: test error
+        index_expect = inputs["idx"]
+        if not index_expect:
+            with pytest.raises(GeometryError):
+                index = index_of_point_on_loop(box, point_check, before)
+        else:
+            index = index_of_point_on_loop(box, point_check, before)
+            assert index == index_expect
 
 
 if __name__ == "__main__":

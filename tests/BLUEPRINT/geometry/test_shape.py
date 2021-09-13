@@ -151,6 +151,7 @@ class TestShapeFitting:
         shp = Shape("test", "P")
 
         shp.adjust_xo("x1", value=5)
+        shp.adjust_xo("ri", value=0.0)
 
         reference = Loop(**shp.parameterisation.draw())
 

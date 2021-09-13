@@ -39,6 +39,7 @@ SHAPE_ALGO_MAP = {
     "PrincetonD": "SLSQP",
     "BackwardPolySpline": "SLSQP",
     "TaperedPictureFrame": "SLSQP",
+    "CurvedPictureFrame": "SLSQP",
 }
 # TODO: Confirm best algorithms on real problems...
 
@@ -79,7 +80,8 @@ SHAPE_KWARGS_MAP = {
     "PrincetonD": {"ftol": 2e-3, "eps": 1e-1},
     "PictureFrame": {"ftol": 2e-3, "eps": 2e-1},
     "TripleArc": {},
-    "TaperedPictureFrame": {},
+    "TaperedPictureFrame": {"ftol": 2e-3, "eps": 1e-3},
+    "CurvedPictureFrame": {"ftol": 2e-3, "eps": 1e-1},
 }
 
 GRADIENT_BASED = ["SLSQP", "COBYLA", "trust-constr", "Nelder-Mead", "BFGS"]
