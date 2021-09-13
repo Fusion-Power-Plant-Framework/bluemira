@@ -22,11 +22,11 @@
 """
 Input and output file interface. EQDSK and json. NOTE: jsons are better :)
 """
-import os
+import fortranformat as ff
 import json
-import time
-from itertools import count
 import numpy as np
+import os
+import time
 
 from BLUEPRINT.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
@@ -393,72 +393,131 @@ class EQDSKInterface:
                 yield obj
 
     def _write_eqdsk(self, file, data):
+        """
+        Writes data out to a text file in G-EQDSK format.
+
+        Parameters
+        ----------
+        file: str
+            The full path string of the file to be created
+        data: dict
+            The dictionary of EQDSK data specified in the ParameterFrame
+        """
         if isinstance(file, str):
             if not file.endswith(".eqdsk") or not file.endswith(".geqdsk"):
                 file = file.split(".")[0] + ".eqdsk"
             with open(file, "w") as f_handle:
                 return self._write_eqdsk(f_handle, data)
-        counter = count(0)
         self.load_dict(data)
 
-        def carriage_return(i):
-            if np.mod(i + 1, 5) == 0:
-                file.write("\n")
+        def write_header(fortran_format, id_string, var_list):
+            """
+            Writes G-EQDSK header out to file.
+
+            Parameters
+            ----------
+            fortran_format: ff.FortranRecordWriter
+                FortranRecordWriter object for Fortran format edit descriptor
+                to be used for header output.
+            id_string: str
+                String containing name of file to be used as identification
+                string. Will be trimmed if length exceeds 39 characters,
+                so it will fit within the permitted header length of the
+                GEQDSK specification when a timestamp is added.
+            var_list: list
+                List of names of keys in EQDSKInterface.data identifying
+                variables to add to the header following the id_string.
+                Empty strings will be recorded as 0.
+            """
+            line = [id_string]
+            line += [self.data[v] if v != "" else 0 for v in var_list]
+            file.write(fortran_format.write(line))
+            file.write("\n")
+
+        def write_line(fortran_format, var_list):
+            """
+            Writes a line of variable values out to a G-EQDSK file.
+
+            Parameters
+            ----------
+            fortran_format: ff.FortranRecordWriter
+                FortranRecordWriter object for Fortran format edit descriptor
+                to be used for the format of the line output.
+            var_list: list
+                List of names of keys in EQDSKInterface.data identifying
+                variables to added to the current line.
+                Empty strings will be recorded as 0.
+            """
+            line = [self.data[v] if v != "" else 0 for v in var_list]
+            file.write(fortran_format.write(line))
+            file.write("\n")
+
+        def write_array(fortran_format, array):
+            """
+            Writes a numpy array out to a G-EQDSK file.
+
+            Parameters
+            ----------
+            fortran_format: ff.FortranRecordWriter
+                FortranRecordWriter object for Fortran format edit descriptor
+                to be used for the format of the line output.
+            array: np.array
+                Numpy array of variables to be written to file.
+                Array will be flattened in column-major (Fortran)
+                order if is more than one-dimensional.
+            """
+            if array.ndim > 1:
+                flat_array = array.flatten(order="F")
+                file.write(fortran_format.write(flat_array))
             else:
-                file.write(" ")
+                file.write(fortran_format.write(array))
+            file.write("\n")
 
-        def write_line(var):
-            for i, value in enumerate(var):
-                fmat = "{:16.9f}" if value != "cplasma" else "{:16.9e}"
-                if not value:  # Empty
-                    num = 0
-                else:
-                    num = self.data[value]
-                file.write(fmat.format(num))
-                carriage_return(i)
+        # Create id string for file comprising of timestamp and trimmed filename
+        # that fits the 48 character limit of strings in EQDSK headers.
+        timestamp = time.strftime("%d%m%Y")
+        trimmed_name = self.data["name"][0 : 48 - len(timestamp) - 1]
+        file_id_string = "_".join([trimmed_name, timestamp])
 
-        def write_array(val, count_on):
-            if np.size(val) == 1:
-                file.write("{:16.9e}".format(val))
-                carriage_return(next(count_on))
-                return
-            for value in val:
-                file.write("{:16.9e}".format(value))
-                carriage_return(next(count_on))
-
-        def write_2d_array(val, count_on):
-            for value in val.T:
-                write_array(value, count_on)
-
-        header = "_".join([self.data["name"], time.strftime("%d%m%Y")])
-        file.write(f"{header:48s} ")
-        file.write(f'{0:4d} {self.data["nx"]:4d} {self.data["nz"]:4d}\n')
-        write_line(["xdim", "zdim", "xcentre", "xgrid1", "zmid"])
-        write_line(["xmag", "zmag", "psimag", "psibdry", "bcentre"])
-        write_line(["cplasma", "psimag", "", "xmag", ""])
-        write_line(["zmag", "", "psibdry", "", ""])
-
-        write_array(self.data["fpol"], counter)
-        write_array(self.data["pressure"], counter)
-        write_array(self.data["ffprime"], counter)
-        write_array(self.data["pprime"], counter)
-        write_2d_array(self.data["psi"], counter)
+        # Define dummy data for qpsi if it has not been previously defined.
         if self.data["qpsi"] is None:
             qpsi = np.zeros(self.data["nx"])
         else:
             qpsi = self.data["qpsi"]
-        write_array(qpsi, counter)
 
-        file.write(f'{self.data["nbdry"]:5d} {self.data["nlim"]:5d}\n')
-        bdry = np.zeros(2 * self.data["nbdry"])
-        bdry[::2], bdry[1::2] = self.data["xbdry"], self.data["zbdry"]
-        write_array(bdry, counter)
-        lim = np.zeros(2 * self.data["nlim"])
-        lim[::2], lim[1::2] = self.data["xlim"], self.data["zlim"]
-        write_array(lim, counter)
-
-        file.write(f'{self.data["ncoil"]:5d}\n')
+        # Create array containing coilset information.
         coil = np.zeros(5 * self.data["ncoil"])
         for i, value in enumerate(["xc", "zc", "dxc", "dzc", "Ic"]):
             coil[i::5] = self.data[value]
-        write_array(coil, counter)
+
+        # Create FortranRecordWriter objects with the Fortran format
+        # edit descriptors to be used in the G-EQDSK output.
+        f2000 = ff.FortranRecordWriter("a48,3i4")
+        f2020 = ff.FortranRecordWriter("5e16.9")
+        f2022 = ff.FortranRecordWriter("2i5")
+        fCSTM = ff.FortranRecordWriter("i5")
+
+        # Write header in f2000 (6a8,3i4) format.
+        write_header(f2000, file_id_string, ["", "nx", "nz"])
+        # Write out lines containing floats in f2020 (5e16.9) format.
+        write_line(f2020, ["xdim", "zdim", "xcentre", "xgrid1", "zmid"])
+        write_line(f2020, ["xmag", "zmag", "psimag", "psibdry", "bcentre"])
+        write_line(f2020, ["cplasma", "psimag", "", "xmag", ""])
+        write_line(f2020, ["zmag", "", "psibdry", "", ""])
+        # Write out arrays in in f2020 (5e16.9) format.
+        write_array(f2020, self.data["fpol"])
+        write_array(f2020, self.data["pressure"])
+        write_array(f2020, self.data["ffprime"])
+        write_array(f2020, self.data["pprime"])
+        write_array(f2020, self.data["psi"])
+        write_array(f2020, qpsi)
+        # Write out number of boundary points and limiters f2022 (2i5) format.
+        write_line(f2022, ["nbdry", "nlim"])
+        # Write out boundary point and limiter data as array of ordered pairs.
+        write_array(f2020, np.array([self.data["xbdry"], self.data["zbdry"]]))
+        write_array(f2020, np.array([self.data["xlim"], self.data["zlim"]]))
+
+        # Output of coilset information. This is an extension to the
+        # regular eqdsk format.
+        write_line(fCSTM, ["ncoil"])
+        write_array(f2020, coil)
