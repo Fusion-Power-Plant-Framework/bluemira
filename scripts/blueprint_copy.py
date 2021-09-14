@@ -94,6 +94,10 @@ from bluemira.base.error import BluemiraError""",
     "BLUEPRINTError": "BluemiraError",
     "BClock": "BluemiraClock",
     "from BLUEPRINT.base.file import get_files_by_ext": "from bluemira.base.file import get_files_by_ext",
+    ": [float, float, float], ": ", ",
+    """from natsort import natsorted
+""": "",
+    "natsorted": "sorted",
 }
 
 root = get_bluemira_root()
@@ -172,6 +176,11 @@ for path in old_tests_dir.rglob("*.json"):
     target_path = path.replace(str(old_tests_dir), str(new_tests_dir))
     shutil.copy(str(path), target_path)
 
+for path in old_tests_dir.rglob("*.csv"):
+    path = str(path)
+    target_path = path.replace(str(old_tests_dir), str(new_tests_dir))
+    shutil.copy(str(path), target_path)
+
 replacements = {
     old_header: new_header,
     "tests.test_reactor": "tests.BLUEPRINT.test_reactor",
@@ -225,6 +234,7 @@ from bluemira.base.file import get_files_by_ext""",
     'with patch("BLUEPRINT.equilibria.positioner.bpwarn") as bpwarn:': 'with patch("BLUEPRINT.equilibria.positioner.bluemira_warn") as bluemira_warn:',
     "bpwarn": "bluemira_warn",
     "bprint": "bluemira_print",
+    '"syscodes/test_data"': '"BLUEPRINT/syscodes/test_data"',
 }
 
 for path in new_tests_dir.rglob("*.py"):
@@ -244,6 +254,17 @@ for path in new_tests_dir.rglob("*.py"):
 
     if "base/test_logs.py" in str(path):
         path.unlink()
+
+replacements = {
+    "!BP_ROOT!/tests/test_data": "!BP_ROOT!/tests/BLUEPRINT/test_data",
+    "!BP_ROOT!/tests/test_generated_data": "!BP_ROOT!/tests/BLUEPRINT/test_generated_data",
+}
+
+for path in new_tests_dir.rglob("*.json"):
+    content = path.read_text()
+    for old, new in replacements.items():
+        content = content.replace(old, new)
+    path.write_text(content)
 
 # Use a subprocess call to run black. Note this doesn't seem to be (easily) doable via
 # the black API.

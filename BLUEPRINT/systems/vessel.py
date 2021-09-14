@@ -33,6 +33,7 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     boolean_2d_union,
     simplify_loop,
+    clean_loop,
 )
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
 from BLUEPRINT.geometry.shell import Shell
@@ -431,16 +432,15 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             )
 
         # Building the vacuum vessel loop
-        gap_loop = self.offset_segment(loop=ts_loop, offset=g_vv_ts, side=side)
-        vv_loop = self.offset_segment(loop=ts_loop, offset=tk_vv + g_vv_ts, side=side)
+        gap_loop = self.try_offset(loop=ts_loop, offset=g_vv_ts, side=side)
+        vv_loop = self.try_offset(loop=ts_loop, offset=tk_vv + g_vv_ts, side=side)
         vv_loop = boolean_2d_difference_loop(vv_loop, gap_loop)
         return vv_loop
 
-    def offset_segment(self, loop, offset, side):
+    def try_offset(self, loop, offset, side):
         """
-        Generate an in/outboard inner segment loop from a the corresponing
-        outer segment. This is used here to make the vaccum vessel sections
-        from the thermal shield ones.
+        Function that tries calling self.offset segment with offset_clipper
+        first and then retries it using offset if an geometry error is captured.
 
         Parameters
         ----------
@@ -459,11 +459,69 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             In/outboard loop defined inside and in contact with the input one
             of a thickness offset.
         """
+        # Try using the basic offset
+        offset_result = self.offset_segment(
+            loop=loop, offset=offset, side=side, clipper=False
+        )
+
+        # If the segmentation cut does not behave as expected, try offset_clipper
+        if len(offset_result) != 2:
+            offset_result = self.offset_segment(
+                loop=loop, offset=offset, side=side, clipper=True
+            )
+
+        # If the segmentation cut behaves as expected, extract it
+        if len(offset_result) == 2:
+            return offset_result[1]
+
+        # Otherwise, raise errors
+        elif len(offset_result) == 1:
+            raise GeometryError(
+                f"The cutted shell is made with intersecting loops on {side} side"
+                "Please check your initial thermal shield shape."
+            )
+        else:
+            raise GeometryError(
+                f"The {side} boolean cut is providing {len(offset_result)} solutions,"
+                " 2 are expected. Please check your initial thermal shield shape."
+            )
+
+    def offset_segment(self, loop, offset, side, clipper):
+        """
+        Generate an in/outboard inner segment loop from a the corresponing
+        outer segment. This is used here to make the vaccum vessel sections
+        from the thermal shield ones.
+
+        Parameters
+        ----------
+        loop: Loop
+            Loop used to defined the output loop (here the thermal shield loop)
+        offset: float
+            Thickness of the output loop, in contact with the input one.
+        side: str
+            String indicating if the inboard or the outboard TS is built:
+            "Inboard": inboard section
+            "Outboard": outboard section
+        clipper: bool
+            Option to use offset_clipper instead of offset
+
+        Returns
+        -------
+        offset_loop: [Loop]
+            List of loops from the offest boolean cut.
+        """
         # Building a shell around the input shell
-        offset_loop = loop.offset(offset)
+        if clipper:
+            offset_loop = loop.offset_clipper(offset)
+            offset_loop = clean_loop(offset_loop)  # Removing redundant points
+        else:
+            offset_loop = loop.offset(offset)
         offset_loop = simplify_loop(offset_loop)
 
-        offset_shell = Shell(loop, offset_loop)
+        try:
+            offset_shell = Shell(loop, offset_loop)
+        except GeometryError:
+            return []
 
         # Cutting the right part
         if side in ["Inboard"]:
@@ -485,13 +543,8 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
 
         # Loop cut sanity check
         diff_result = boolean_2d_difference(offset_shell, cutter_loop)
-        if len(diff_result) != 2:
-            raise GeometryError(
-                f"The {side} boolean cut is providing {len(diff_result)} solutions,"
-                " 2 are expected. Please check your initial thermal shield shape."
-            )
 
-        return diff_result[1]
+        return diff_result
 
     def merge_vv(self):
         """

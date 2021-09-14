@@ -432,7 +432,10 @@ class BPPathPatch3D(PathPatch3D):
         """
         Transfer the key getattr to underlying PathPatch object.
         """
-        return getattr(self._patch2d, key)
+        if key != "_patch2d":
+            return getattr(self._patch2d, key)
+        else:
+            return self.__dict__.get("_patch2d", None)
 
     @staticmethod
     def rotation_matrix(v1, v2):
