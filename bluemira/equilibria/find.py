@@ -614,7 +614,31 @@ def find_field_surf(x, z, Bp, field):
 
 
 def find_flux_surface_through_point(x, z, psi, point_x, point_z, point_psi):
-    """"""
+    """
+    Get a flux surface passing through a point.
+
+    Parameters
+    ----------
+    x: np.array(N, M)
+        The spatial x coordinates of the grid points [m]
+    z: np.array(N, M)
+        The spatial z coordinates of the grid points [m]
+    psi: np.array(N, M)
+        The poloidal magnetic flux map [V.s/rad]
+    point_x: float
+        The radial coordinate of the point [m]
+    point_z: float
+        The vertical coordinate of the point [m]
+    point_psi: float
+        The magnetic flux at the point [V.s/rad]
+
+    Returns
+    -------
+    x: 1-D np.array
+        The radial coordinates of the flux surface
+    z: 1-D np.array
+        The vertical coordinates of the flux surface
+    """
 
     def f_min(x_opt, z_opt):
         return np.min(np.hypot(x_opt - point_x, z_opt - point_z))

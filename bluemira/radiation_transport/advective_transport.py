@@ -37,7 +37,7 @@ from bluemira.geometry._deprecated_tools import (
     check_linesegment,
 )
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.equilibria.find import find_flux_surfs
+from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.radiation_transport.error import AdvectionTransportError
 
@@ -52,8 +52,8 @@ class OpenFluxSurface:
 
     __slots__ = [
         "loop",
-        "x_omp",
-        "z_omp",
+        "x_mp",
+        "z_mp",
         "x_lfs_inter",
         "z_lfs_inter",
         "x_hfs_inter",
@@ -73,8 +73,8 @@ class OpenFluxSurface:
             )
 
         # Constructors
-        self.x_omp = None
-        self.z_omp = None
+        self.x_mp = None
+        self.z_mp = None
         self.x_lfs_inter = None
         self.z_lfs_inter = None
         self.x_hfs_inter = None
@@ -86,7 +86,7 @@ class OpenFluxSurface:
 
     def split_LFS_HFS(self, plane, o_point):
         """
-        Split the FluxSurface into low-field side and high-field side surfaces.
+        Split the OpenFluxSurface into low-field side and high-field side surfaces.
 
         Parameters
         ----------
@@ -101,13 +101,13 @@ class OpenFluxSurface:
         # Pick the first intersection, travelling from the o_point outwards
         deltas = x_inter - o_point.x
         arg_inter = np.argmax(deltas > 0)
-        self.x_omp = x_inter[arg_inter]
-        self.z_omp = o_point.z
+        self.x_mp = x_inter[arg_inter]
+        self.z_mp = o_point.z
 
         # Split the flux surface geometry into LFS and HFS geometries
         loop = self.loop
-        delta = 1e-1 if o_point.x < self.x_omp else -1e-1
-        radial_line = Loop(x=[o_point.x, self.x_omp + delta], z=[self.z_omp, self.z_omp])
+        delta = 1e-1 if o_point.x < self.x_mp else -1e-1
+        radial_line = Loop(x=[o_point.x, self.x_mp + delta], z=[self.z_mp, self.z_mp])
         # Add the intersection point to the loop
         arg_inter = join_intersect(loop, radial_line, get_arg=True)[0]
 
@@ -119,7 +119,7 @@ class OpenFluxSurface:
         loop2 = self._reset_direction(loop2)
 
         # Sort the segments into LFS (outboard) and HFS (inboard) geometries
-        if loop1.z[1] > self.z_omp:
+        if loop1.z[1] > self.z_mp:
             self.lfs_loop = loop2
             self.hfs_loop = loop1
         else:
@@ -127,7 +127,7 @@ class OpenFluxSurface:
             self.hfs_loop = loop2
 
     def _reset_direction(self, loop):
-        if loop.argmin([self.x_omp, self.z_omp]) != 0:
+        if loop.argmin([self.x_mp, self.z_mp]) != 0:
             loop.reverse()
         return loop
 
@@ -181,8 +181,11 @@ class OpenFluxSurface:
         if "linewidth" not in kwargs:
             kwargs["linewidth"] = 0.01
 
-        self.lfs_loop.plot(ax, color="b", **kwargs)
-        self.hfs_loop.plot(ax, color="r", **kwargs)
+        if self.lfs_loop:
+            self.lfs_loop.plot(ax, color="b", **kwargs)
+            self.hfs_loop.plot(ax, color="r", **kwargs)
+        else:
+            self.loop.plot(ax, color="r", **kwargs)
 
     def copy(self):
         return deepcopy(self)
@@ -197,12 +200,14 @@ class ChargedParticleSolver:
     default_params = [
         ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
-        ["f_outer_target", "Power fraction", 0.75, "N/A", None, "Input"],
-        ["f_inner_target", "Power fraction", 0.25, "N/A", None, "Input"],
-        ["f_upper_target", "Power fraction", 0.5, "N/A", None, "Input"],
-        ["f_lower_target", "Power fraction", 0.5, "N/A", None, "Input"],
+        ["fw_lambda_q_near", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
+        ["fw_lambda_q_far", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
+        ["fw_lambda_q_near_ib", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
+        ["fw_lambda_q_far_ib", "Lambda q far SOL at the inboard", 0.05, "m", None, "Input"],
+        ["f_outer_target", "Fraction of SOL power deposited on the outer target(s)", 0.75, "N/A", None, "Input"],
+        ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.25, "N/A", None, "Input"],
+        ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
+        ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
     ]
     # fmt: on
 
@@ -210,8 +215,9 @@ class ChargedParticleSolver:
         self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(config)
         self._check_params()
-        self.dpsi_near = kwargs.get("dpsi_near", 0.001)
-        self.dpsi_far = kwargs.get("dpsi_far", 0.001)
+
+        # Midplane spatial resolution between flux surfaces
+        self.dx_mp = kwargs.get("dx_mp", 0.001)
 
         self.eq = equilibrium
 
@@ -221,6 +227,12 @@ class ChargedParticleSolver:
         self.x_sep_omp = None
         self.x_sep_imp = None
         self.result = None
+
+        # Pre-processing
+        o_points, _ = self.eq.get_OX_points()
+        self._o_point = o_points[0]
+        z = self._o_point.z
+        self._yz_plane = Plane([0, 0, z], [1, 0, z], [1, 1, z])
 
     def _check_params(self):
         if self.params.f_outer_target + self.params.f_inner_target != 1.0:
@@ -253,8 +265,8 @@ class ChargedParticleSolver:
 
     @staticmethod
     def _get_arrays(flux_surfaces):
-        x_omp = np.array([fs.x_omp for fs in flux_surfaces])
-        z_omp = np.array([fs.z_omp for fs in flux_surfaces])
+        x_mp = np.array([fs.x_mp for fs in flux_surfaces])
+        z_mp = np.array([fs.z_mp for fs in flux_surfaces])
         x_lfs_inter = np.array([fs.x_lfs_inter for fs in flux_surfaces])
         z_lfs_inter = np.array([fs.z_lfs_inter for fs in flux_surfaces])
         x_hfs_inter = np.array([fs.x_hfs_inter for fs in flux_surfaces])
@@ -262,8 +274,8 @@ class ChargedParticleSolver:
         alpha_lfs = np.array([fs.alpha_lfs for fs in flux_surfaces])
         alpha_hfs = np.array([fs.alpha_hfs for fs in flux_surfaces])
         return (
-            x_omp,
-            z_omp,
+            x_mp,
+            z_mp,
             x_lfs_inter,
             z_lfs_inter,
             x_hfs_inter,
@@ -272,17 +284,12 @@ class ChargedParticleSolver:
             alpha_hfs,
         )
 
-    def _get_xpoint_psi(self, x_points):
-        if self.eq.is_double_null:
-            return 0.5 * (x_points[0].psi + x_points[1].psi)
-        else:
-            return x_points[0].psi
-
-    def _get_sep_out_intersection(self, o_point, outboard=True):
+    def _get_sep_out_intersection(self, outboard=True):
         """
         Find the middle and maximum outboard mid-plane psi norm values
         """
-        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
+        yz_plane = self._yz_plane
+        o_point = self._o_point
         separatrix = self.eq.get_separatrix()
 
         if not isinstance(separatrix, Loop):
@@ -309,103 +316,47 @@ class ChargedParticleSolver:
 
         return x_sep_mp, x_out_mp
 
-    @staticmethod
-    def _sort_flux_surfaces(loop, x_mp, z_mp):
-        return min(loop.distance_to([x_mp, z_mp]))
-
-    def _get_flux_surface(self, psi_norm, x, z, o_points, x_points):
+    def _make_flux_surface(self, x, z):
         """
-        Get the flux surface at specified normalised psi, as close as possible to a point.
+        Make an individual flux surface through a point.
         """
-        loops = find_flux_surfs(
-            self.eq.x,
-            self.eq.z,
-            self.eq.psi(),
-            psi_norm,
-            o_points=o_points,
-            x_points=x_points,
+        loop = find_flux_surface_through_point(
+            self.eq.x, self.eq.z, self.eq.psi(), x, z, self.eq.psi(x, z)
         )
-        loops = [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
-
-        loop = sorted(loops, key=lambda loop: self._sort_flux_surfaces(loop, x, z))[0]
+        loop = Loop(x=loop[0], z=loop[1])
         return OpenFluxSurface(loop)
 
-    def make_flux_surfaces_ob(self):
+    def _make_flux_surfaces_ob(self):
         """
-        Make the flux surfaces along which the charged particle power is to be
-        transported from the outboard
+        Make the flux surfaces on the outboard.
         """
-        o_points, x_points = self.eq.get_OX_points()
-        o_point = o_points[0]
-        x_point_psi = self._get_xpoint_psi(x_points)
-
-        self.x_sep_omp, x_out_omp = self._get_sep_out_intersection(
-            o_point, outboard=True
-        )
-
-        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
-
-        psi_out_omp = self.eq.psi(x_out_omp, o_point.z)
-        psi_norm_out = float(calc_psi_norm(psi_out_omp, o_point.psi, x_point_psi))
+        self.x_sep_omp, x_out_omp = self._get_sep_out_intersection(outboard=True)
 
         self.flux_surfaces = []
+        x = self.x_sep_omp + self.dx_mp
+        while x < x_out_omp:
+            f_s = self._make_flux_surface(x, self._o_point.z)
 
-        if self.eq.is_double_null:
-            psi_sep = self.eq.psi(self.x_sep_omp, o_point.z)
-            psi_norm = calc_psi_norm(psi_sep, o_point.psi, x_point_psi) + self.dpsi_near
-        else:
-            psi_norm = 1.0
-
-        while psi_norm < psi_norm_out:
-            f_s = self._get_flux_surface(
-                psi_norm, self.x_sep_omp, o_point.z, o_points, x_points
-            )
-
-            # Split the flux surface and set OMP values
-            f_s.split_LFS_HFS(yz_plane, o_point)
+            f_s.split_LFS_HFS(self._yz_plane, self._o_point)
             self.flux_surfaces.append(f_s)
+            x += self.dx_mp
 
-            if f_s.x_omp - self.x_sep_omp < self.params.fw_lambda_q_near:
-                psi_norm += self.dpsi_near
-            else:
-                psi_norm += self.dpsi_far
-
-    def make_flux_surfaces_ib(self):
+    def _make_flux_surfaces_ib(self):
         """
-        Make the flux surfaces along which the charged particle power is to be
-        transported from the inboard
+        Make the flux surfaces on the inboard.
         """
-        o_points, x_points = self.eq.get_OX_points()
-        o_point = o_points[0]
-        x_point_psi = self._get_xpoint_psi(x_points)
-
-        # Find the middle and maximum outboard mid-plane psi norm values
-        self.x_sep_imp, x_out_imp = self._get_sep_out_intersection(
-            o_point, outboard=False
-        )
-
-        yz_plane = Plane([0, 0, o_point.z], [1, 0, o_point.z], [1, 1, o_point.z])
-
-        psi_out_imp = self.eq.psi(x_out_imp, o_point.z)
-        psi_norm_out_imp = float(calc_psi_norm(psi_out_imp, o_point.psi, x_point_psi))
+        self.x_sep_imp, x_out_imp = self._get_sep_out_intersection(outboard=False)
 
         ib_flux_surfaces = []
 
-        psi_sep = self.eq.psi(self.x_sep_imp, o_point.z)
-        psi_norm = calc_psi_norm(psi_sep, o_point.psi, x_point_psi) + self.dpsi_near
-        while psi_norm < psi_norm_out_imp:
-            f_s = self._get_flux_surface(
-                psi_norm, self.x_sep_imp, o_point.z, o_points, x_points
-            )
-            f_s.split_LFS_HFS(yz_plane, o_point)
+        x = self.x_sep_imp - self.dx_mp
+        while x > x_out_imp:
+            f_s = self._make_flux_surface(x, self._o_point.z)
+            f_s.split_LFS_HFS(self._yz_plane, self._o_point)
             ib_flux_surfaces.append(f_s)
 
-            if abs(f_s.x_omp - self.x_sep_imp) < self.params.fw_lambda_q_near:
-                psi_norm += self.dpsi_near
-            else:
-                psi_norm += self.dpsi_far
+            x -= self.dx_mp
 
-        # Separate outboard and inboard flux surfaces
         self.flux_surfaces = [self.flux_surfaces, ib_flux_surfaces]
 
     def analyse(self, first_wall):
@@ -439,7 +390,7 @@ class ChargedParticleSolver:
 
     def _analyse_SN(self, first_wall):
 
-        self.make_flux_surfaces_ob()
+        self._make_flux_surfaces_ob()
 
         # Find the intersections of the flux surfaces with the first wall
         for flux_surface in self.flux_surfaces:
@@ -463,41 +414,23 @@ class ChargedParticleSolver:
         B_omp = np.hypot(Bp_omp, Bt_omp)
 
         # Parallel heat flux at the outboard midplane
-        p_sol_near = self.params.fw_p_sol_near
-        p_sol_far = self.params.fw_p_sol_far
-        lq_near = self.params.fw_lambda_q_near
-        lq_far = self.params.fw_lambda_q_far
-        q_par_omp = (
-            (
-                p_sol_near * np.exp(-dx_omp / lq_near) / lq_near
-                + p_sol_far * np.exp(-dx_omp / lq_far) / lq_far
-            )
-            * B_omp
-            / (Bp_omp * 2 * np.pi * x_omp)
-        )
+        q_par_omp = self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
 
         # Calculate values at intersections
         Bp_lfs = self.eq.Bp(x_lfs_inter, z_lfs_inter)
         Bp_hfs = self.eq.Bp(x_hfs_inter, z_hfs_inter)
 
-        # Flux expansion
-        fx_lfs = x_omp * Bp_omp / (x_lfs_inter * Bp_lfs)
-        fx_hfs = x_omp * Bp_omp / (x_hfs_inter * Bp_hfs)
-
-        # Calculate parallel heat fluxes
-        factor = q_par_omp * x_omp * Bp_omp / B_omp
-        q_par_lfs = factor / (x_lfs_inter * fx_lfs)
-        q_par_hfs = factor / (x_hfs_inter * fx_hfs)
+        # Calculate parallel heat fluxes at the intersections
+        # Note that flux expansion terms cancelate down to this
+        q_par_lfs = q_par_omp * Bp_lfs / B_omp
+        q_par_hfs = q_par_omp * Bp_hfs / B_omp
 
         # Calculate perpendicular heat fluxes
         heat_flux_lfs = self.params.f_outer_target * q_par_lfs * np.sin(alpha_lfs)
         heat_flux_hfs = self.params.f_inner_target * q_par_hfs * np.sin(alpha_hfs)
 
         # Correct power (energy conservation)
-        fs_widths = (x_omp - np.roll(x_omp, 1))[1:]
-        # Add the first flux surface width (to the LCFS)
-        fs_widths = np.append(x_omp[0] - self.x_sep_omp, fs_widths)
-        q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * fs_widths * x_omp)
+        q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * self.dx_mp * x_omp)
         f_correct_power = (
             self.params.fw_p_sol_near + self.params.fw_p_sol_far
         ) / q_omp_int
@@ -508,8 +441,8 @@ class ChargedParticleSolver:
         )
 
     def _analyse_DN(self, first_wall):
-        self.make_flux_surfaces_ob()
-        self.make_flux_surfaces_ib()
+        self._make_flux_surfaces_ob()
+        self._make_flux_surfaces_ib()
 
         ob_flux_surfaces, ib_flux_surfaces = self.flux_surfaces
 
@@ -553,8 +486,12 @@ class ChargedParticleSolver:
         B_imp = np.hypot(Bp_imp, Bt_imp)
 
         # Parallel heat flux at the outboard and inboard midplane
-        q_par_omp = self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
-        q_par_imp = self._q_par(x_imp, dx_imp, B_imp, Bp_imp)
+        q_par_omp = self.params.f_outer_target * self._q_par(
+            x_omp, dx_omp, B_omp, Bp_omp
+        )
+        q_par_imp = self.params.f_inner_target * self._q_par(
+            x_imp, dx_imp, B_imp, Bp_imp, outboard=False
+        )
 
         # Calculate poloidal field at intersections
         Bp_lfs_down = self.eq.Bp(x_lfs_down_inter, z_lfs_down_inter)
@@ -571,41 +508,21 @@ class ChargedParticleSolver:
 
         # Calculate perpendicular heat fluxes
         heat_flux_lfs_down = (
-            self.params.f_outer_target
-            * self.params.f_lower_target
-            * q_par_lfs_down
-            * np.sin(alpha_lfs_down)
+            self.params.f_lower_target * q_par_lfs_down * np.sin(alpha_lfs_down)
         )
         heat_flux_lfs_up = (
-            self.params.f_outer_target
-            * self.params.f_upper_target
-            * q_par_lfs_up
-            * np.sin(alpha_lfs_up)
+            self.params.f_upper_target * q_par_lfs_up * np.sin(alpha_lfs_up)
         )
         heat_flux_hfs_down = (
-            self.params.f_inner_target
-            * self.params.f_lower_target
-            * q_par_hfs_down
-            * np.sin(alpha_hfs_down)
+            self.params.f_lower_target * q_par_hfs_down * np.sin(alpha_hfs_down)
         )
         heat_flux_hfs_up = (
-            self.params.f_inner_target
-            * self.params.f_upper_target
-            * q_par_hfs_up
-            * np.sin(alpha_hfs_up)
+            self.params.f_upper_target * q_par_hfs_up * np.sin(alpha_hfs_up)
         )
 
         # Correct power (energy conservation)
-        fs_widths = (x_omp - np.roll(x_omp, 1))[1:]
-        # Add the first flux surface width (to the LCFS)
-        fs_widths = np.append(x_omp[0] - self.x_sep_omp, fs_widths)
-        q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * fs_widths * x_omp)
-
-        # Correct power (energy conservation)
-        fs_widths = np.abs((x_imp - np.roll(x_imp, 1))[1:])
-        # Add the first flux surface width (to the LCFS)
-        fs_widths = np.append(abs(x_imp[0] - self.x_sep_imp), fs_widths)
-        q_imp_int = 2 * np.pi * np.sum(q_par_imp / (B_imp / Bp_imp) * fs_widths * x_imp)
+        q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * self.dx_mp * x_omp)
+        q_imp_int = 2 * np.pi * np.sum(q_par_imp / (B_imp / Bp_imp) * self.dx_mp * x_imp)
 
         total_power = self.params.fw_p_sol_near + self.params.fw_p_sol_far
         f_correct_power_ob = (self.params.f_outer_target * total_power) / q_omp_int
@@ -631,11 +548,18 @@ class ChargedParticleSolver:
             ),
         )
 
-    def _q_par(self, x, dx, B, Bp):
+    def _q_par(self, x, dx, B, Bp, outboard=True):
+        """
+        Calculate the parallel heat flux at the midplane.
+        """
         p_sol_near = self.params.fw_p_sol_near
         p_sol_far = self.params.fw_p_sol_far
-        lq_near = self.params.fw_lambda_q_near
-        lq_far = self.params.fw_lambda_q_far
+        if outboard:
+            lq_near = self.params.fw_lambda_q_near
+            lq_far = self.params.fw_lambda_q_far
+        else:
+            lq_near = self.params.fw_lambda_q_near_ib
+            lq_far = self.params.fw_lambda_q_far_ib
         return (
             (
                 p_sol_near * np.exp(-dx / lq_near) / lq_near
