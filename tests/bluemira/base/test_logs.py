@@ -24,7 +24,13 @@
 import pytest
 import logging
 
-from bluemira.base.logs import logger_setup, set_log_level, LogLevel
+from bluemira.base.logs import (
+    get_log_level,
+    logger_setup,
+    set_log_level,
+    LogLevel,
+    LoggingContext,
+)
 from bluemira.base.error import LogsError
 
 LOGGER = logger_setup()
@@ -89,3 +95,12 @@ class TestLoggingLevel:
         for handler in LOGGER.handlers or LOGGER.parent.handlers:
             if not isinstance(handler, logging.FileHandler):
                 assert handler.level == expected
+        assert get_log_level(as_str=isinstance(input_level, str)) == input_level
+
+
+class TestLoggingContext:
+    def test_logging_context(self):
+        original_log_level = get_log_level(as_str=False)
+        with LoggingContext(original_log_level + 1):
+            assert original_log_level != get_log_level(as_str=False)
+        assert get_log_level(as_str=False) == original_log_level
