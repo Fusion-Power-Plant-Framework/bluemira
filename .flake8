@@ -145,6 +145,8 @@ ignore_names =
     *m_T*,
     *DD*,
     *DT*,
+    *SN*,
+    *DN*,
     *CREATE*,
     Psol_near,
     Psol_far,

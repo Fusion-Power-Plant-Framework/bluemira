@@ -23,7 +23,6 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
-from os import sep
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
@@ -37,8 +36,7 @@ from bluemira.geometry._deprecated_tools import (
     check_linesegment,
 )
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
-from bluemira.equilibria.physics import calc_psi_norm
+from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.radiation_transport.error import AdvectionTransportError
 
 
@@ -250,7 +248,6 @@ class ChargedParticleSolver:
         """
         Check input fractions for validity.
         """
-
         if self.params.f_outer_target + self.params.f_inner_target != 1.0:
             raise AdvectionTransportError(
                 "Inner / outer fractions should sum to 1.0:\n"
