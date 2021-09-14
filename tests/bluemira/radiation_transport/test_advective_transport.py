@@ -72,8 +72,9 @@ class TestChargedParticleRecursionSN:
         fw_name = "first_wall.json"
         filename = os.sep.join([TEST_PATH, fw_name])
         fw = Loop.from_file(filename)
+        # fmt: off
         cls.params = ParameterFrame(
-            # fmt: off
+            
                             [
         ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
@@ -86,8 +87,9 @@ class TestChargedParticleRecursionSN:
         ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
         ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
     ]
-            # fmt: on
+            
         )
+        # fmt: on
 
         solver = ChargedParticleSolver(cls.params, eq, dx_mp=0.001)
         x, z, hf = solver.analyse(fw)
