@@ -134,6 +134,11 @@ class OpenFluxSurface:
     def clip(self, first_wall):
         """
         Clip the LFS and HFS geometries to a first wall.
+
+        Parameters
+        ----------
+        first_wall: Loop
+            The geometry of the first wall to clip the OpenFluxSurface to
         """
         first_wall = first_wall.copy()
         (
@@ -159,15 +164,16 @@ class OpenFluxSurface:
         x_inter = loop.x[-1]
         z_inter = loop.z[-1]
 
-        fw_arg = first_wall.argmin([x_inter, z_inter])
-        if check_linesegment(
+        fw_arg = int(first_wall.argmin([x_inter, z_inter]))
+
+        if fw_arg + 1 == len(first_wall):
+            pass
+        elif check_linesegment(
             first_wall.d2.T[fw_arg],
             first_wall.d2.T[fw_arg + 1],
             np.array([x_inter, z_inter]),
         ):
-            fw_arg = int(fw_arg + 1)
-        else:
-            fw_arg = int(fw_arg)
+            fw_arg = fw_arg + 1
 
         # Relying on the fact that first wall is ccw, get the intersection angle
         alpha = get_angle_between_points(loop[-2], loop[-1], first_wall[fw_arg])
@@ -175,6 +181,9 @@ class OpenFluxSurface:
         return loop, x_inter, z_inter, alpha
 
     def plot(self, ax=None, **kwargs):
+        """
+        Plot the OpenFluxSurface.
+        """
         if ax is None:
             ax = plt.gca()
 
@@ -188,6 +197,9 @@ class OpenFluxSurface:
             self.loop.plot(ax, color="r", **kwargs)
 
     def copy(self):
+        """
+        Make a deep copy of the OpenFluxSurface.
+        """
         return deepcopy(self)
 
 
@@ -235,6 +247,10 @@ class ChargedParticleSolver:
         self._yz_plane = Plane([0, 0, z], [1, 0, z], [1, 1, z])
 
     def _check_params(self):
+        """
+        Check input fractions for validity.
+        """
+
         if self.params.f_outer_target + self.params.f_inner_target != 1.0:
             raise AdvectionTransportError(
                 "Inner / outer fractions should sum to 1.0:\n"
@@ -252,19 +268,23 @@ class ChargedParticleSolver:
         Force working first wall geometry to be closed and counter-clockwise.
         """
         first_wall = first_wall.copy()
-        if not first_wall.closed:
-            bluemira_warn("First wall should be a closed geometry. Closing it.")
-            first_wall.close()
 
         if not first_wall.ccw:
             bluemira_warn(
                 "First wall should be oriented counter-clockwise. Reversing it."
             )
             first_wall.reverse()
+
+        if not first_wall.closed:
+            bluemira_warn("First wall should be a closed geometry. Closing it.")
+            first_wall.close()
         return first_wall
 
     @staticmethod
     def _get_arrays(flux_surfaces):
+        """
+        Get arrays of flux surface values.
+        """
         x_mp = np.array([fs.x_mp for fs in flux_surfaces])
         z_mp = np.array([fs.z_mp for fs in flux_surfaces])
         x_lfs_inter = np.array([fs.x_lfs_inter for fs in flux_surfaces])
@@ -389,7 +409,9 @@ class ChargedParticleSolver:
         return x, z, hf
 
     def _analyse_SN(self, first_wall):
-
+        """
+        Calculation for the case of single nulls.
+        """
         self._make_flux_surfaces_ob()
 
         # Find the intersections of the flux surfaces with the first wall
@@ -441,6 +463,9 @@ class ChargedParticleSolver:
         )
 
     def _analyse_DN(self, first_wall):
+        """
+        Calculation for the case of double nulls.
+        """
         self._make_flux_surfaces_ob()
         self._make_flux_surfaces_ib()
 
@@ -526,10 +551,7 @@ class ChargedParticleSolver:
 
         total_power = self.params.fw_p_sol_near + self.params.fw_p_sol_far
         f_correct_power_ob = (self.params.f_outer_target * total_power) / q_omp_int
-
         f_correct_power_ib = (self.params.f_inner_target * total_power) / q_imp_int
-        print(q_omp_int, total_power * self.params.f_outer_target)
-        print(q_imp_int, total_power * self.params.f_inner_target)
 
         return (
             np.concatenate(
@@ -595,6 +617,13 @@ class ChargedParticleSolver:
         for f_s in flux_surfaces:
             f_s.plot(ax, linewidth=0.01)
 
-        cm = ax.scatter(self.result[0], self.result[1], c=self.result[2], s=3, zorder=40)
+        cm = ax.scatter(
+            self.result[0],
+            self.result[1],
+            c=self.result[2],
+            s=2,
+            zorder=40,
+            cmap="plasma",
+        )
         f = plt.gcf()
         f.colorbar(cm, label="MW/m^2")

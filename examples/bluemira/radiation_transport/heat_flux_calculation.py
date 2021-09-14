@@ -59,14 +59,4 @@ solver = ChargedParticleSolver(params, eq, dpsi_near=0.001, dpsi_far=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
 # Plot the analysis
-
-f, ax = plt.subplots()
-fw_shape.plot(ax, fill=False)
-eq.get_separatrix().plot(ax)
-
-for flux_surface in solver.flux_surfaces:
-    flux_surface.plot(ax)
-
-cm = ax.scatter(x, z, c=hf, cmap="plasma", zorder=40)
-f.colorbar(cm, label="MW/m^2")
-plt.show()
+solver.plot()

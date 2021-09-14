@@ -37,7 +37,7 @@ TEST_PATH = get_bluemira_path(
 EQ_PATH = get_bluemira_path("equilibria", subfolder="data")
 
 
-class TestChargedParticleAPIinputs:
+class TestChargedParticleInputs:
     def test_bad_fractions(self):
         params = ParameterFrame(
             [
@@ -71,9 +71,6 @@ class TestChargedParticleAPIinputs:
         )
         with pytest.raises(AdvectionTransportError):
             ChargedParticleSolver(params, None)
-
-    def test_bad_inputs(self):
-        pass
 
 
 class TestChargedParticleRecursionSN:
@@ -138,6 +135,22 @@ class TestChargedParticleRecursionSN:
         q_hfs = sum(hf_hfs[:-1] * d_hfs * (x_hfs[:-1] + 0.5 * abs(dx_hfs)))
         true_total = self.params["fw_p_sol_near"] + self.params["fw_p_sol_far"]
         assert np.isclose(q_lfs + q_hfs, true_total, rtol=2e-2)
+
+    def test_geometry_handling(self):
+        """
+        Trying screwing up the geometry and get the same results.
+        """
+        solver = ChargedParticleSolver(self.params, self.solver.eq, dx_mp=0.001)
+        fw = self.solver.first_wall.copy()
+        fw.open()
+        fw.reverse()
+        x, z, hf = solver.analyse(fw)
+        assert solver.first_wall.closed
+        assert solver.first_wall.ccw
+
+        assert np.allclose(self.hf, hf)
+        assert np.allclose(self.x, x)
+        assert np.allclose(self.z, z)
 
 
 class TestChargedParticleRecursionDN:
