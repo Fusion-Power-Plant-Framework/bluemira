@@ -87,16 +87,16 @@ class TestChargedParticleRecursionSN:
         fw = Loop.from_file(filename)
         # fmt: off
         cls.params = ParameterFrame([
-        ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_lambda_q_near", "Lambda q near SOL at the outboard", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_far", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_near_ib", "Lambda q near SOL at the inboard", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_far_ib", "Lambda q far SOL at the inboard", 0.05, "m", None, "Input"],
-        ["f_outer_target", "Fraction of SOL power deposited on the outer target(s)", 0.75, "N/A", None, "Input"],
-        ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.25, "N/A", None, "Input"],
-        ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
-        ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
+            ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
+            ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
+            ["fw_lambda_q_near", "Lambda q near SOL at the outboard", 0.05, "m", None, "Input"],
+            ["fw_lambda_q_far", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
+            ["fw_lambda_q_near_ib", "Lambda q near SOL at the inboard", 0.05, "m", None, "Input"],
+            ["fw_lambda_q_far_ib", "Lambda q far SOL at the inboard", 0.05, "m", None, "Input"],
+            ["f_outer_target", "Fraction of SOL power deposited on the outer target(s)", 0.75, "N/A", None, "Input"],
+            ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.25, "N/A", None, "Input"],
+            ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
+            ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
     ])
         # fmt: on
 
@@ -151,16 +151,16 @@ class TestChargedParticleRecursionDN:
         fw = Loop.from_file(filename)
         # fmt: off
         cls.params = ParameterFrame([
-        ["fw_p_sol_near", "near scrape-off layer power", 90, "MW", None, "Input"],
-        ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_lambda_q_near", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far", "Lambda q far SOL at the outboard", 0.1, "m", None, "Input"],
-        ["fw_lambda_q_near_ib", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far_ib", "Lambda q far SOL at the inboard", 0.1, "m", None, "Input"],
-        ["f_outer_target", "Fraction of SOL power deposited on the outer target(s)", 0.9, "N/A", None, "Input"],
-        ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.1, "N/A", None, "Input"],
-        ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
-        ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
+            ["fw_p_sol_near", "near scrape-off layer power", 90, "MW", None, "Input"],
+            ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
+            ["fw_lambda_q_near", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
+            ["fw_lambda_q_far", "Lambda q far SOL at the outboard", 0.1, "m", None, "Input"],
+            ["fw_lambda_q_near_ib", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
+            ["fw_lambda_q_far_ib", "Lambda q far SOL at the inboard", 0.1, "m", None, "Input"],
+            ["f_outer_target", "Fraction of SOL power deposited on the outer target(s)", 0.9, "N/A", None, "Input"],
+            ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.1, "N/A", None, "Input"],
+            ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
+            ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
                             ])
         # fmt: on
 
