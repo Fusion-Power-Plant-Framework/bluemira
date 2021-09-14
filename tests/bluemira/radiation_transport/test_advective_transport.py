@@ -39,12 +39,26 @@ EQ_PATH = get_bluemira_path("equilibria", subfolder="data")
 
 class TestChargedParticleAPIinputs:
     def test_bad_fractions(self):
-        # fmt: off
-        params = ParameterFrame([
-        ["f_outer_target", "Fraction of SOL power deposited on the outer target(s)", 0.75, "N/A", None, "Input"],
-        ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.5, "N/A", None, "Input"],
-        ])
-        # fmt: on
+        params = ParameterFrame(
+            [
+                [
+                    "f_outer_target",
+                    "Fraction of SOL power deposited on the outer target(s)",
+                    0.75,
+                    "N/A",
+                    None,
+                    "Input",
+                ],
+                [
+                    "f_inner_target",
+                    "Fraction of SOL power deposited on the inner target(s)",
+                    0.5,
+                    "N/A",
+                    None,
+                    "Input",
+                ],
+            ]
+        )
 
         with pytest.raises(AdvectionTransportError):
             ChargedParticleSolver(params, None)
