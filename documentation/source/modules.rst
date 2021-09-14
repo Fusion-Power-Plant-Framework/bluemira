@@ -8,6 +8,7 @@ Bluemira Modules
  
     base/base
     components
+    equilibria/equilibria
     geometry/geometry
     magnetostatics/magnetostatics
     utilities/utilities

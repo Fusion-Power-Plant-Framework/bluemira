@@ -24,9 +24,11 @@ import os
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
+from bluemira.base.logs import LoggingContext
 from bluemira.base.look_and_feel import (
     bluemira_critical,
     bluemira_error,
+    bluemira_print_flush,
     bluemira_warn,
     bluemira_print,
     bluemira_debug,
@@ -93,7 +95,10 @@ def capture_output(caplog, func, *inputs):
     ],
 )
 def test_bluemira_log(caplog, method, text, colour, default_text):
-    result = capture_output(caplog, method, text)
+    # Make sure we capture in DEBUG regardless of default logging level
+    # Otherwise we may miss values being recorded.
+    with LoggingContext("DEBUG"):
+        result = capture_output(caplog, method, text)
 
     assert len(result) == 3
     assert ANSI_COLOR[colour] in result[0]
@@ -102,11 +107,12 @@ def test_bluemira_log(caplog, method, text, colour, default_text):
     assert text in result[1]
     assert EXIT_COLOR in result[-1]
 
-    result = capture_output(
-        caplog,
-        method,
-        "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
-    )
+    with LoggingContext("DEBUG"):
+        result = capture_output(
+            caplog,
+            method,
+            "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
+        )
 
     assert len(result) == 4
     if len(default_text) > 0:
@@ -115,6 +121,20 @@ def test_bluemira_log(caplog, method, text, colour, default_text):
     assert "test" in result[1]
     assert "boxed" in result[2]
     assert EXIT_COLOR in result[-1]
+
+
+def test_bluemira_print_flush(caplog):
+    text = "First pass"
+    result = capture_output(caplog, bluemira_print_flush, text)
+    assert text in result[0]
+    assert "\r" in result[0]
+    assert os.linesep not in result[0]
+
+    text = "Second pass"
+    result = capture_output(caplog, bluemira_print_flush, text)
+    assert text in result[0]
+    assert "\r" in result[0]
+    assert os.linesep not in result[0]
 
 
 def test_print_banner(caplog):

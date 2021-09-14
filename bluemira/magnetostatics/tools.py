@@ -229,7 +229,7 @@ def integrate(func, args, bound1, bound2):
     """
     warnings.filterwarnings("error", category=IntegrationWarning)
     try:
-        return quad(func, bound1, bound2, args=args)[0]
+        result = quad(func, bound1, bound2, args=args)[0]
     except IntegrationWarning:
         points = [
             0.25 * (bound2 - bound1),
@@ -237,8 +237,9 @@ def integrate(func, args, bound1, bound2):
             0.75 * (bound2 - bound1),
         ]
         result = quad(func, bound1, bound2, args=args, points=points, limit=200)[0]
-        warnings.filterwarnings("default", category=IntegrationWarning)
-        return result
+
+    warnings.filterwarnings("default", category=IntegrationWarning)
+    return result
 
 
 def n_integrate(func, args, bounds):
