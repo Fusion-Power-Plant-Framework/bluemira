@@ -1,32 +1,39 @@
 ---
-name: Bug report
+name: STEP bug report
 about: Create a report to help us improve
-title: ":bug: [Title]"
-labels: bug
+title: ''
+labels: bug, STEP
 assignees: ''
 
 ---
 
-**Describe the bug**
+## Describe the bug
+
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
+## Steps to reproduce
+
+Steps to reproduce the behaviour:
+
 1. Using script '...'
 2. Run command '...'
 3. Note output '...'
 4. See error '...'
 
-**Expected behavior**
+## Expected behaviour
+
 A clear and concise description of what you expected to happen.
 
-**Screenshots / Tracebacks**
+## Screenshots / Tracebacks
+
 If applicable, add screenshots / tracebacks to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. Ubuntu 18.04]
- - Version [e.g. 0.0.x]
- - Branch (if developing) [e.g. develop]
+## Environment (please complete the following information)
 
-**Additional context**
+- OS: [e.g. Ubuntu 18.04]
+- Version [e.g. 0.0.x]
+- Branch (if developing) [e.g. develop]
+
+## Additional context
+
 Add any other context about the problem here.
