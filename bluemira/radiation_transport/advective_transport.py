@@ -592,7 +592,6 @@ class ChargedParticleSolver:
         """
         Plot the ChargedParticleSolver results.
         """
-
         if ax is None:
             ax = plt.gca()
 
