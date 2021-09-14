@@ -39,14 +39,13 @@ EQ_PATH = get_bluemira_path("equilibria", subfolder="data")
 
 class TestChargedParticleAPIinputs:
     def test_bad_fractions(self):
-        params = ParameterFrame(
-            # fmt: off
-                           [
+        # fmt: off
+        params = ParameterFrame([
         ["f_outer_target", "Fraction of SOL power deposited on the outer target(s)", 0.75, "N/A", None, "Input"],
         ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.5, "N/A", None, "Input"],
-    ]
-            # fmt: on
-        )
+        ])
+        # fmt: on
+
         with pytest.raises(AdvectionTransportError):
             ChargedParticleSolver(params, None)
 
@@ -73,9 +72,7 @@ class TestChargedParticleRecursionSN:
         filename = os.sep.join([TEST_PATH, fw_name])
         fw = Loop.from_file(filename)
         # fmt: off
-        cls.params = ParameterFrame(
-            
-                            [
+        cls.params = ParameterFrame([
         ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL at the outboard", 0.05, "m", None, "Input"],
@@ -86,9 +83,7 @@ class TestChargedParticleRecursionSN:
         ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.25, "N/A", None, "Input"],
         ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
         ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
-    ]
-            
-        )
+    ])
         # fmt: on
 
         solver = ChargedParticleSolver(cls.params, eq, dx_mp=0.001)
@@ -140,9 +135,8 @@ class TestChargedParticleRecursionDN:
         fw_name = "DN_fw_shape.json"
         filename = os.sep.join([TEST_PATH, fw_name])
         fw = Loop.from_file(filename)
-        cls.params = ParameterFrame(
-            # fmt: off
-                            [
+        # fmt: off
+        cls.params = ParameterFrame([
         ["fw_p_sol_near", "near scrape-off layer power", 90, "MW", None, "Input"],
         ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
@@ -153,9 +147,8 @@ class TestChargedParticleRecursionDN:
         ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.1, "N/A", None, "Input"],
         ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
         ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
-    ]
-            # fmt: on
-        )
+                            ])
+        # fmt: on
 
         solver = ChargedParticleSolver(cls.params, eq, dx_mp=0.001)
         x, z, hf = solver.analyse(fw)
