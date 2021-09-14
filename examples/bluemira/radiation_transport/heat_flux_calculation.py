@@ -24,7 +24,6 @@ Example single null first wall particle heat flux
 """
 
 import os
-import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.parameter import ParameterFrame
 from bluemira.equilibria import Equilibrium
