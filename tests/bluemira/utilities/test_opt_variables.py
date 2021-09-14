@@ -66,6 +66,16 @@ class TestBoundedVariable:
         with pytest.raises(OptVariablesError):
             v1.adjust(value=-2, lower_bound=-4, upper_bound=-3)
 
+    def test_adjust_fixed(self):
+        v1 = BoundedVariable("a", 2, 0, 4, fixed=True)
+        assert v1.value == 2
+        with pytest.raises(OptVariablesError):
+            v1.adjust(value=3)
+        with pytest.raises(OptVariablesError):
+            v1.adjust(upper_bound=9)
+        with pytest.raises(OptVariablesError):
+            v1.value = 3
+
 
 class TestOptVariables:
     @classmethod

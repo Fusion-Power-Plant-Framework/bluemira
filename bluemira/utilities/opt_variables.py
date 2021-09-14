@@ -93,7 +93,8 @@ class BoundedVariable:
     __slots__ = ("name", "lower_bound", "upper_bound", "fixed", "_value")
 
     def __init__(self, name, value, lower_bound, upper_bound, fixed=False):
-        self._validate_bounds(value, lower_bound, upper_bound)
+        self._validate_bounds(lower_bound, upper_bound)
+        self._validate_value(value, lower_bound, upper_bound)
         self.name = name
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
@@ -117,7 +118,7 @@ class BoundedVariable:
         if self.fixed:
             raise OptVariablesError("Cannot set the value of a fixed variable.")
 
-        self._validate_bounds(value, self.lower_bound, self.upper_bound)
+        self._validate_value(value, self.lower_bound, self.upper_bound)
         self._value = value
 
     def fix(self, value: float):
@@ -148,11 +149,16 @@ class BoundedVariable:
         upper_bound: Optional[float]
             Value of the upper to set
         """
+        if self.fixed:
+            raise OptVariablesError("Cannot adjust a fixed variable.")
         if lower_bound is not None:
             self.lower_bound = lower_bound
         if upper_bound is not None:
             self.upper_bound = upper_bound
-        if value:
+
+        self._validate_bounds(self.lower_bound, self.upper_bound)
+
+        if value is not None:
             self.value = value
 
     @property
@@ -163,9 +169,12 @@ class BoundedVariable:
         return normalise_value(self.value, self.lower_bound, self.upper_bound)
 
     @staticmethod
-    def _validate_bounds(value, lower_bound, upper_bound):
+    def _validate_bounds(lower_bound, upper_bound):
         if lower_bound > upper_bound:
             raise OptVariablesError("Lower bound is higher than upper bound.")
+
+    @staticmethod
+    def _validate_value(value, lower_bound, upper_bound):
         if not lower_bound <= value <= upper_bound:
             raise OptVariablesError("Variable value is out of its bounds.")
 
