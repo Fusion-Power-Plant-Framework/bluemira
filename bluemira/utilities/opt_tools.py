@@ -25,6 +25,7 @@ Optimisation utilities
 
 import numpy as np
 import nlopt
+from bluemira.utilities.error import InternalOptError, ExternalOptError
 from bluemira.base.look_and_feel import bluemira_warn
 
 
