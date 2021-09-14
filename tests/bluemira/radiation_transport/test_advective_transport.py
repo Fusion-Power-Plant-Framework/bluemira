@@ -97,7 +97,7 @@ class TestChargedParticleRecursionSN:
             ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.25, "N/A", None, "Input"],
             ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
             ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
-    ])
+        ])
         # fmt: on
 
         solver = ChargedParticleSolver(cls.params, eq, dx_mp=0.001)
@@ -161,7 +161,7 @@ class TestChargedParticleRecursionDN:
             ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.1, "N/A", None, "Input"],
             ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
             ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
-                            ])
+        ])
         # fmt: on
 
         solver = ChargedParticleSolver(cls.params, eq, dx_mp=0.001)
