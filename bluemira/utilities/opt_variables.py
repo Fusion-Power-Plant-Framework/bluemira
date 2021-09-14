@@ -26,25 +26,13 @@ Optimisation variable class.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from bluemira.base.error import BluemiraError
+from bluemira.utilities.error import OptVariablesError
 from bluemira.base.constants import BLUEMIRA_PAL_MAP
-
-# TODO: This should live in opt_tools.py, but there would be a clash incoming so I leave
-# it here for now
-# TODO: Error class also probably exists in opt_tools or elsewhere
-
-
-class OptUtilitiesError(BluemiraError):
-    """
-    Error for optimisation utilities
-    """
-
-    pass
 
 
 def normalise_value(value, lower_bound, upper_bound):
     """
-    Normalise a value [0 -> 1].
+    Normalise a value uniformly [0 -> 1].
 
     Parameters
     ----------
@@ -65,7 +53,7 @@ def normalise_value(value, lower_bound, upper_bound):
 
 def denormalise_value(v_norm, lower_bound, upper_bound):
     """
-    Denormalise a value from [0 -> 1] w.r.t bounds.
+    Denormalise a value uniformly from [0 -> 1] w.r.t bounds.
 
     Parameters
     ----------
@@ -86,7 +74,7 @@ def denormalise_value(v_norm, lower_bound, upper_bound):
 
 class BoundedVariable:
     """
-    A bounded variable.
+    A bounded variable, uniformly normalised from 0 to 1 w.r.t. its bounds.
 
     Parameters
     ----------
@@ -105,19 +93,14 @@ class BoundedVariable:
     __slots__ = ("name", "lower_bound", "upper_bound", "fixed", "_value")
 
     def __init__(self, name, value, lower_bound, upper_bound, fixed=False):
-        if lower_bound > upper_bound:
-            raise OptUtilitiesError("Lower bound is higher than upper bound.")
-        if not lower_bound <= value <= upper_bound:
-            raise OptUtilitiesError(
-                "Cannot initialise variable: its value is out of its bounds."
-            )
-
+        self._validate_bounds(value, lower_bound, upper_bound)
         self.name = name
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
-        self.fixed = fixed
         self._value = None
+        self.fixed = False  # Required to set value initially
         self.value = value
+        self.fixed = fixed
 
     @property
     def value(self):
@@ -131,12 +114,11 @@ class BoundedVariable:
         """
         Set the value of the variable, enforcing bounds.
         """
-        if value < self.lower_bound:
-            self._value = self.lower_bound
-        elif value > self.upper_bound:
-            self._value = self.upper_bound
-        else:
-            self._value = value
+        if self.fixed:
+            raise OptVariablesError("Cannot set the value of a fixed variable.")
+
+        self._validate_bounds(value, self.lower_bound, self.upper_bound)
+        self._value = value
 
     def fix(self, value: float):
         """
@@ -151,12 +133,41 @@ class BoundedVariable:
         if value is not None:
             self._value = value
 
+    def adjust(self, value=None, lower_bound=None, upper_bound=None):
+        """
+        Adjust the BoundedVariable.
+
+        Parameters
+        ----------
+        name: str
+            Name of the variable to adjust
+        value: Optional[float]
+            Value of the variable to set
+        lower_bound: Optional[float]
+            Value of the lower bound to set
+        upper_bound: Optional[float]
+            Value of the upper to set
+        """
+        if lower_bound is not None:
+            self.lower_bound = lower_bound
+        if upper_bound is not None:
+            self.upper_bound = upper_bound
+        if value:
+            self.value = value
+
     @property
     def normalised_value(self) -> float:
         """
         The normalised value of the variable.
         """
         return normalise_value(self.value, self.lower_bound, self.upper_bound)
+
+    @staticmethod
+    def _validate_bounds(value, lower_bound, upper_bound):
+        if lower_bound > upper_bound:
+            raise OptVariablesError("Lower bound is higher than upper bound.")
+        if not lower_bound <= value <= upper_bound:
+            raise OptVariablesError("Variable value is out of its bounds.")
 
 
 class OptVariables:
@@ -182,7 +193,7 @@ class OptVariables:
             Variable to add to the set.
         """
         if variable.name in self._var_dict:
-            raise OptUtilitiesError(f"Variable {variable.name} already in OptVariables.")
+            raise OptVariablesError(f"Variable {variable.name} already in OptVariables.")
 
         self._var_dict[variable.name] = variable
 
@@ -207,21 +218,15 @@ class OptVariables:
         ----------
         name: str
             Name of the variable to adjust
-        value: float
+        value: Optional[float]
             Value of the variable to set
-        lower_bound: float
+        lower_bound: Optional[float]
             Value of the lower bound to set
-        upper_bound: float
+        upper_bound: Optional[float]
             Value of the upper to set
         """
         self._check_presence(name)
-
-        if lower_bound:
-            self._var_dict[name].lower_bound = lower_bound
-        if upper_bound:
-            self._var_dict[name].upper_bound = upper_bound
-        if value:
-            self._var_dict[name].value = value
+        self._var_dict[name].adjust(value, lower_bound, upper_bound)
 
     def fix_variable(self, name, value=None):
         """
@@ -262,7 +267,7 @@ class OptVariables:
             Array of normalised values
         """
         if len(x_norm) != self.n_free_variables:
-            raise OptUtilitiesError(
+            raise OptVariablesError(
                 f"Number of normalised variables {len(x_norm)} != {self.n_free_variables}."
             )
 
@@ -291,7 +296,7 @@ class OptVariables:
 
     def _check_presence(self, name):
         if name not in self._var_dict.keys():
-            raise OptUtilitiesError(f"Variable {name} not in OptVariables.")
+            raise OptVariablesError(f"Variable {name} not in OptVariables.")
 
     def plot(self):
         """

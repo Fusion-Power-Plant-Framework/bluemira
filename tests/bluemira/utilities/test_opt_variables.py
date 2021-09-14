@@ -24,7 +24,7 @@ import numpy as np
 
 from bluemira.utilities.opt_variables import (
     BoundedVariable,
-    OptUtilitiesError,
+    OptVariablesError,
     OptVariables,
 )
 
@@ -43,19 +43,28 @@ class TestBoundedVariable:
         assert v2.lower_bound == -1
         assert v2.upper_bound == 1
 
-        with pytest.raises(OptUtilitiesError):
+        with pytest.raises(OptVariablesError):
             v3 = BoundedVariable("a", 2, 2.5, 3)
-
-    def test_value_setting(self):
-        v1 = BoundedVariable("a", 2, 0, 3)
-        v1.value = 4
-        assert v1.value == v1.upper_bound
-        v1.value = -1
-        assert v1.value == v1.lower_bound
 
     def test_normalised_value(self):
         v1 = BoundedVariable("a", 2, 0, 4)
         assert v1.normalised_value == 0.5
+
+    def test_adjust(self):
+        v1 = BoundedVariable("a", 2, 0, 4)
+        v1.adjust(value=3, lower_bound=2, upper_bound=4)
+        assert v1.value == 3
+        assert v1.lower_bound == 2
+        assert v1.upper_bound == 4
+
+    def test_adjust_bad(self):
+        v1 = BoundedVariable("a", 2, 0, 4)
+        with pytest.raises(OptVariablesError):
+            v1.adjust(value=0, lower_bound=1, upper_bound=2)
+        with pytest.raises(OptVariablesError):
+            v1.adjust(lower_bound=2, upper_bound=-1)
+        with pytest.raises(OptVariablesError):
+            v1.adjust(value=-2, lower_bound=-4, upper_bound=-3)
 
 
 class TestOptVariables:
