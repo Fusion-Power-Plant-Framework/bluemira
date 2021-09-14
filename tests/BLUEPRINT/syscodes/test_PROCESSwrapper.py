@@ -91,7 +91,7 @@ class TestPROCESSInputWriter:
 
 
 class TestMFileReader:
-    fp = get_BP_path("syscodes/test_data", subfolder="tests")
+    fp = get_BP_path("BLUEPRINT/syscodes/test_data", subfolder="tests")
 
     @classmethod
     def setup_class(cls):

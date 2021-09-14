@@ -22,12 +22,13 @@
 """
 Plasma MHD equilibrium and state objects
 """
-import os
 from copy import deepcopy
+from enum import Enum
 import numpy as np
+import os
+from pandas import DataFrame
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
-from pandas import DataFrame
 import tabulate
 
 from bluemira.base.file import get_bluemira_path
@@ -198,6 +199,78 @@ class MHDState:
         """
         return deepcopy(self)
 
+    @classmethod
+    def _get_eqdsk(cls, filename):
+        """
+        Get eqdsk data from file for read in
+
+        Parameters
+        ----------
+        filename: str
+            Filename
+
+        Returns
+        -------
+        e: EQDSKInterface
+            Instance if EQDSKInterface with the EQDSK file read in
+        psi: array
+            psi array
+        coilset: Coilset
+            Coilset from eqdsk
+        grid: Grid
+            Grid from eqdsk
+        limiter: Union[Limiter, None]
+            Limiter instance if any limiters are in file
+        """
+        eqdsk = EQDSKInterface()
+        e = eqdsk.read(filename)
+        if "equilibria" in e["name"]:
+            psi = e["psi"]
+        elif "SCENE" in e["name"] and not isinstance(cls, Breakdown):
+            psi = e["psi"]
+            e["dxc"] = e["dxc"] / 2
+            e["dzc"] = e["dzc"] / 2
+        else:  # CREATE
+            psi = e["psi"] / (2 * np.pi)  # V.s as opposed to V.s/rad
+            e["dxc"] = e["dxc"] / 2
+            e["dzc"] = e["dzc"] / 2
+            e["cplasma"] = abs(e["cplasma"])  # Stupid current direction
+        coilset = CoilSet.from_group_vecs(e)
+        grid = Grid.from_eqdict(e)
+        if e["nlim"] == 0:
+            limiter = None
+        elif e["nlim"] < 5:
+            limiter = Limiter(e["xlim"], e["zlim"])
+        else:
+            limiter = None  # CREATE..
+
+        return e, psi, coilset, grid, limiter
+
+    def to_eqdsk(
+        self, data, filename, header="BP_equilibria", directory=None, filetype="json"
+    ):
+        """
+        Writes the Equilibrium Object to an eqdsk file
+        """
+        data["name"] = "_".join([filename, header])
+
+        if not filename.endswith(f".{filetype}"):
+            filename += f".{filetype}"
+
+        if directory is None:
+            try:
+                filename = os.sep.join(
+                    [get_bluemira_path("eqdsk/equilibria", subfolder="data"), filename]
+                )
+            except ValueError as error:
+                raise ValueError(f"Unable to find default data directory: {error}")
+        else:
+            filename = os.sep.join([directory, filename])
+
+        self.filename = filename  # Conveniente
+        eqdsk = EQDSKInterface()
+        eqdsk.write(filename, data, formatt=filetype)
+
 
 class Breakdown(MHDState):
     """
@@ -231,24 +304,7 @@ class Breakdown(MHDState):
         Initialises a Breakdown Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux.
         """
-        eqdsk = EQDSKInterface()
-        e = eqdsk.read(filename)
-        if "equilibria" in e["name"]:
-            psi = e["psi"]
-        else:  # CREATE
-            psi = e["psi"] / (2 * np.pi)  # V.s as opposed to V.s/rad
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
-            e["cplasma"] = abs(e["cplasma"])  # Stupid current direction
-        coilset = CoilSet.from_group_vecs(e)
-        grid = Grid.from_eqdict(e)
-        if e["nlim"] == 0:
-            limiter = None
-        elif e["nlim"] < 5:
-            limiter = Limiter(e["xlim"], e["zlim"])
-        else:
-            limiter = None  # CREATE..
-        cls._eqdsk = e
+        cls._eqdsk, psi, coilset, grid, limiter = super()._get_eqdsk(filename)
         return cls(coilset, grid, limiter=limiter, psi=psi, filename=filename)
 
     def to_dict(self):
@@ -284,24 +340,16 @@ class Breakdown(MHDState):
         }
         return d
 
-    def to_eqdsk(self, filename, header="bluemira_equilibria", directory=None):
+    def to_eqdsk(
+        self, filename, header="bluemira_equilibria", directory=None, filetype="json"
+    ):
         """
         Writes the Equilibrium Object to an eqdsk file
         """
         data = self.to_dict()
         data["xcentre"] = 0
         data["bcentre"] = 0
-        data["name"] = "_".join([filename, header])
-        if not filename.endswith(".json"):
-            filename += ".json"
-        self.filename = filename
-        if directory is None:
-            filename = os.sep.join([EQ_FOLDER, filename])
-        else:
-            filename = os.sep.join([directory, filename])
-        self.filename = filename
-        eqdsk = EQDSKInterface()
-        eqdsk.write(filename, data)
+        super().to_eqdsk(data, filename, header, directory, filetype)
 
     def set_breakdown_point(self, x_bd, z_bd):
         """
@@ -414,6 +462,25 @@ class Breakdown(MHDState):
         return BreakdownPlotter(self, ax, Bp=Bp)
 
 
+class QpsiCalcMode(Enum):
+    """
+    Modes for how to calculate qpsi
+
+    Parameters
+    ----------
+    0:
+        Don't Calculate qpsi
+    1:
+        Calculate qpsi
+    2:
+        Fill qpsi grid with Zeros
+    """
+
+    NO_CALC = 0
+    CALC = 1
+    ZEROS = 2
+
+
 class Equilibrium(MHDState):
     """
     Represents the equilibrium state, including plasma and coil currents
@@ -513,28 +580,10 @@ class Equilibrium(MHDState):
         NOTE: Need to solve again with some profiles in order to refind...
         TODO: Fix this funky API shit --> static eqobject (nova next)
         """
-        eqdsk = EQDSKInterface()
-        e = eqdsk.read(filename)
-        if "equilibria" in e["name"]:
-            psi = e["psi"]
-        elif "SCENE" in e["name"]:
-            psi = e["psi"]
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
-        else:  # CREATE
-            psi = e["psi"] / (2 * np.pi)  # V.s as opposed to V.s/rad
-            e["dxc"] = e["dxc"] / 2
-            e["dzc"] = e["dzc"] / 2
-            e["cplasma"] = abs(e["cplasma"])  # Stupid current direction
-        coilset = CoilSet.from_group_vecs(e)
-        grid = Grid.from_eqdict(e)
+        e, psi, coilset, grid, limiter = super()._get_eqdsk(filename)
+
         profiles = CustomProfile.from_eqdsk(filename)
-        if e["nlim"] == 0:
-            limiter = None
-        elif e["nlim"] < 5:
-            limiter = Limiter(e["xlim"], e["zlim"])
-        else:
-            limiter = None  # CREATE..
+
         cls._eqdsk = e
 
         if e["nx"] * e["nz"] > 10000 and not load_large_file:
@@ -566,16 +615,23 @@ class Equilibrium(MHDState):
             filename=filename,
         )
 
-    def to_dict(self):
+    def to_dict(self, qpsi_calcmode=0):
         """
         Creates dictionary for equilibrium object, in preparation for saving
         to a file format
+
+        Parameters
+        ----------
+        qpsi_calcmode: int
+          don't calculate: 0, calculate qpsi: 1, fill with zeros: 2
 
         Returns
         -------
         result: dict
             A dictionary of the Equilibrium object values, sufficient for EQDSK
         """
+        qpsi_calcmode = QpsiCalcMode(qpsi_calcmode)
+
         psi = self.psi()
         n_x, n_z = psi.shape
         opoints, xpoints = self.get_OX_points(psi)
@@ -586,8 +642,13 @@ class Equilibrium(MHDState):
         else:
             psi_bndry = np.amin(psi)
         psinorm = np.linspace(0, 1, n_x, endpoint=False)  # No separatrix
-        # This is too damn slow..
-        # q = self.q(psinorm, Op=opoints, Xp=xpoints)
+
+        if qpsi_calcmode is QpsiCalcMode.CALC:
+            # This is too damn slow..
+            q = self.q(psinorm, o_points=opoints, x_points=xpoints)
+        elif qpsi_calcmode is QpsiCalcMode.ZEROS:
+            q = np.zeros(n_x)
+
         lcfs = self.get_LCFS(psi)
         nbdry = lcfs.d2.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
@@ -612,7 +673,6 @@ class Equilibrium(MHDState):
             "ffprime": self.ffprime(psinorm),
             "pprime": self.pprime(psinorm),
             "pressure": self.pressure(psinorm),
-            # 'qpsi': q,  # slow..
             "pnorm": psinorm,
             "nbdry": nbdry,
             "xbdry": lcfs["x"],
@@ -624,6 +684,9 @@ class Equilibrium(MHDState):
             "dzc": dzc,
             "Ic": currents,
         }
+        if qpsi_calcmode is not QpsiCalcMode.NO_CALC:
+            result["qpsi"] = q
+
         if self.limiter is None:  # Needed for eqdsk file format
             result["nlim"] = 0
             result["xlim"] = 0
@@ -634,25 +697,23 @@ class Equilibrium(MHDState):
             result["zlim"] = self.limiter.z
         return result
 
-    def to_eqdsk(self, filename, header="BP_equilibria", directory=None):
+    def to_eqdsk(
+        self,
+        filename,
+        header="BP_equilibria",
+        directory=None,
+        filetype="json",
+        qpsi_calcmode=0,
+    ):
         """
         Writes the Equilibrium Object to an eqdsk file
         """
-        data = self.to_dict()
-        data["name"] = "_".join([filename, header])
-        if not filename.endswith(".json"):
-            filename += ".json"
-        self.filename = filename  # Conveniente
-        if directory is None:
-            try:
-                filename = os.sep.join([EQ_FOLDER, filename])
-            except ValueError as error:
-                raise ValueError(f"Unable to find default data directory: {error}")
-        else:
-            filename = os.sep.join([directory, filename])
-        self.filename = filename  # Conveniente
-        eqdsk = EQDSKInterface()
-        eqdsk.write(filename, data)
+        if "eqdsk" in filetype and qpsi_calcmode == 0:
+            qpsi_calcmode = 2
+
+        super().to_eqdsk(
+            self.to_dict(qpsi_calcmode), filename, header, directory, filetype
+        )
 
     def __getstate__(self):
         """

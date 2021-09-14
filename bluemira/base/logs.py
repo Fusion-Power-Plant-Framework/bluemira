@@ -40,7 +40,7 @@ class LogLevel(Enum):
     NOTSET = 0
 
 
-def logger_setup(logfilename="bluemira_logging.log"):
+def logger_setup(logfilename="bluemira_logging.log", *, level="INFO"):
     """
     Create logger with two handlers.
 
@@ -48,6 +48,8 @@ def logger_setup(logfilename="bluemira_logging.log"):
     ----------
     logfilename: str (default = bluemira_logging.log)
         Name of file to write logs to
+    level: str or int (default = INFO)
+        The initial logging level to be printed to the console.
 
     Returns
     -------
@@ -60,15 +62,21 @@ def logger_setup(logfilename="bluemira_logging.log"):
     """
     logger = logging.getLogger("")
 
+    py_level = _convert_log_level(level).value
+
     # what will be shown on screen
 
     on_screen_handler = logging.StreamHandler(stream=sys.stderr)
-    on_screen_handler.setLevel(logging.WARNING)
+    on_screen_handler.setLevel(py_level)
 
     # what will be written to a file
 
     recorded_handler = logging.FileHandler(logfilename)
+    recorded_formatter = logging.Formatter(
+        fmt="%(asctime)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
     recorded_handler.setLevel(logging.DEBUG)
+    recorded_handler.setFormatter(recorded_formatter)
 
     logger.setLevel(logging.DEBUG)
     logger.addHandler(on_screen_handler)
@@ -92,18 +100,61 @@ def set_log_level(verbose=1, increase=False):
         logger = logging.getLogger(logger_name)
 
         current_level = logger.getEffectiveLevel() if increase else 0
-        try:
-            if isinstance(verbose, str):
-                new_level = LogLevel[verbose]
-            else:
-                value = int(current_level + (verbose * 10))
-                new_level = LogLevel(value)
-        except ValueError:
-            raise LogsError(f"Unknown severity level - {value}")
-        except KeyError:
-            raise LogsError(f"Unknown severity level - {verbose}")
-
+        new_level = _convert_log_level(verbose, current_level)
         _modify_handler(new_level, logger)
+
+
+def get_log_level(logger_name="", as_str=True):
+    """
+    Return the current logging level.
+
+    Parameters
+    ----------
+    logger_name: str (default = "")
+        The named logger to get the level for.
+    as_str: bool (default = True)
+        If True then return the logging level as a string, else as an int.
+    """
+    logger = logging.getLogger(logger_name)
+
+    max_level = 0
+    for handler in logger.handlers or logger.parent.handlers:
+        if not isinstance(handler, logging.FileHandler):
+            if handler.level > max_level:
+                max_level = handler.level
+    if as_str:
+        return LogLevel(max_level).name
+    else:
+        return max_level // 10
+
+
+def _convert_log_level(level, current_level=0):
+    """
+    Convert the provided logging level to a LogLevel objects.
+
+    Parameters
+    ----------
+    level: str or int
+        The bluemira logging level.
+    current_level: int
+        The current bluemira logging level to increment from.
+
+    Returns
+    -------
+    new_level: LogLevel
+        The LogLevel corresponding to the requested level.
+    """
+    try:
+        if isinstance(level, str):
+            new_level = LogLevel[level]
+        else:
+            value = int(current_level + (level * 10))
+            new_level = LogLevel(value)
+    except ValueError:
+        raise LogsError(f"Unknown severity level - {value}")
+    except KeyError:
+        raise LogsError(f"Unknown severity level - {level}")
+    return new_level
 
 
 def _modify_handler(new_level, logger):
@@ -120,3 +171,30 @@ def _modify_handler(new_level, logger):
     for handler in logger.handlers or logger.parent.handlers:
         if not isinstance(handler, logging.FileHandler):
             handler.setLevel(new_level.value)
+
+
+class LoggingContext:
+    """
+    A context manager for temporarily adjusting the logging level
+
+    Parameters
+    ----------
+    level: str or int
+        The bluemira logging level to set within the context.
+    """
+
+    def __init__(self, level):
+        self.level = level
+        self.original_level = get_log_level()
+
+    def __enter__(self):
+        """
+        Set the logging level to the new level when we enter the context.
+        """
+        set_log_level(self.level)
+
+    def __exit__(self, type, value, traceback):
+        """
+        Set the logging level to the original level when we exit the context.
+        """
+        set_log_level(self.original_level)
