@@ -26,7 +26,6 @@ import tests
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.coils import (
-    CS_COIL_NAME,
     Coil,
     CoilGroup,
     CoilSet,
