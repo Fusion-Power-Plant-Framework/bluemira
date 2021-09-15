@@ -128,7 +128,7 @@ class GeometryParameterisation(abc.ABC):
         pass
 
 
-def princeton_D(x1, x2, dz, npoints=200):
+def princeton_d(x1, x2, dz, npoints=200):
     """
     Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
     File, Mills, and Sheffield, 1971)
@@ -229,7 +229,7 @@ class PrincetonD(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        x, z = princeton_D(
+        x, z = princeton_d(
             self.variables["x1"].value,
             self.variables["x2"].value,
             self.variables["dz"].value,

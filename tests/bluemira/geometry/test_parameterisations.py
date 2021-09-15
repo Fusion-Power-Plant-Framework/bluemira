@@ -26,7 +26,7 @@ from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
-    princeton_D,
+    princeton_d,
     PrincetonD,
     GeometryParameterisation,
 )
@@ -68,8 +68,8 @@ class TestPrincetonD:
     @pytest.mark.parametrize("x1", [1, 4, 5])
     @pytest.mark.parametrize("x2", [6, 10, 200])
     @pytest.mark.parametrize("dz", [0, 100])
-    def test_princeton_D(self, x1, x2, dz):
-        x, z = princeton_D(x1, x2, dz, 500)
+    def test_princeton_d(self, x1, x2, dz):
+        x, z = princeton_d(x1, x2, dz, 500)
         assert len(x) == 500
         assert len(z) == 500
         assert np.isclose(np.min(x), x1)
@@ -80,7 +80,7 @@ class TestPrincetonD:
 
     def test_error(self):
         with pytest.raises(GeometryParameterisationError):
-            princeton_D(10, 3, 0)
+            princeton_d(10, 3, 0)
 
     def test_parameterisation(self):
         p = PrincetonD()

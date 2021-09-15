@@ -320,6 +320,19 @@ class OptVariables:
             raise OptVariablesError(f"Variable {name} not in OptVariables.")
 
     def __getitem__(self, name):
+        """
+        Dictionary-like access to variables.
+
+        Parameters
+        ----------
+        name: str
+            Name of the variable to get
+
+        Returns
+        -------
+        variable: BoundedVariable
+            Variable with the name
+        """
         self._check_presence(name)
         return self._var_dict[name]
 

@@ -84,6 +84,7 @@ class TestOptVariables:
         v2 = BoundedVariable("b", 0, -1, 1)
         v3 = BoundedVariable("c", -1, -10, 10)
         cls.vars = OptVariables([v1, v2, v3])
+        cls.vars_frozen = OptVariables([v1, v2, v3], frozen=True)
 
     def test_init(self):
         assert self.vars.n_free_variables == 3
@@ -113,6 +114,12 @@ class TestOptVariables:
 
     def test_getitem(self):
         assert self.vars["a"] == self.vars._var_dict["a"]
+
+    def test_frozen(self):
+        with pytest.raises(OptVariablesError):
+            self.vars_frozen.add_variable(BoundedVariable("new", 0, 0, 0))
+        with pytest.raises(OptVariablesError):
+            self.vars_frozen.remove_variable("a")
 
 
 if __name__ == "__main__":
