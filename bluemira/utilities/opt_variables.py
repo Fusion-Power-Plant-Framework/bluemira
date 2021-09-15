@@ -187,10 +187,14 @@ class OptVariables:
     ----------
     variables: List[BoundedVariable]
         Set of variables to use
+    frozen: bool
+        Whether or not the OptVariables set is to be frozen upon instantiation. This
+        prevents any adding or removal or variables after instantiation.
     """
 
-    def __init__(self, variables):
+    def __init__(self, variables, frozen=False):
         self._var_dict = {v.name: v for v in variables}
+        self.frozen = frozen
 
     def add_variable(self, variable):
         """
@@ -201,6 +205,10 @@ class OptVariables:
         variable: BoundedVariable
             Variable to add to the set.
         """
+        if self.frozen:
+            raise OptVariablesError(
+                "This OptVariables instance is frozen, no variables can be added or removed."
+            )
         if variable.name in self._var_dict:
             raise OptVariablesError(f"Variable {variable.name} already in OptVariables.")
 
@@ -215,6 +223,10 @@ class OptVariables:
         name: str
             Name of the variable to remove
         """
+        if self.frozen:
+            raise OptVariablesError(
+                "This OptVariables instance is frozen, no variables can be added or removed."
+            )
         self._check_presence(name)
 
         del self._var_dict[name]
@@ -310,19 +322,6 @@ class OptVariables:
     def __getitem__(self, name):
         self._check_presence(name)
         return self._var_dict[name]
-
-    # def __setitem__(self, name, variable):
-    #     if not isinstance(variable, BoundedVariable):
-    #         raise OptVariablesError(f"Cannot add a variable of type {type(variable)}. Must be a BoundedVariable.")
-    #     if name in self._var_dict.keys():
-    #         self.adjust_variable(name, variable.value, variable.lower_bound, variable.upper_bound)
-    #         if variable.fixed:
-    #             self.fix_variable(name)
-    #     else:
-    #         self.add_variable(variable)
-
-    # def __delitem__(self, name):
-    #     self.remove_variable(name)
 
     def plot(self):
         """

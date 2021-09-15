@@ -58,7 +58,7 @@ class DisjointedSolid(BluemiraError):
     pass
 
 
-class ParametricShapeError(GeometryError):
+class GeometryParameterisationError(GeometryError):
     """
     Error class for parametric shapes.
     """

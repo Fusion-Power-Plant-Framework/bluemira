@@ -23,40 +23,114 @@
 Geometry parameterisations
 """
 
-from BLUEPRINT.geometry.geomtools import bounding_box
 import abc
 import numpy as np
 from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
-from bluemira.geometry.error import ParametricShapeError
+from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry._freecadapi import make_bspline, close_wire
 from bluemira.geometry.wire import BluemiraWire
 
 
-class ParametricShape(abc.ABC):
+__all__ = ["GeometryParameterisation", "PrincetonD"]
+
+
+class GeometryParameterisation(abc.ABC):
+    """
+    A geometry parameterisation class facilitating geometry optimisation.
+
+    Notes
+    -----
+    Subclass this base class when making a new GeometryParameterisation, adding a set of
+    variables with initial values, and override the create_shape method.
+    """
+
+    __slots__ = ("name", "variables")
+
     def __init__(self, name, variables):
+        """
+        Parameters
+        ----------
+        name: str
+            Name of the GeometryParameterisation
+        variables: OptVariables
+            Set of optimisation variables of the GeometryParameterisation
+        """
         self.name = name
         self.variables = variables
         super().__init__()
 
     def adjust_variable(self, name, value=None, lower_bound=None, upper_bound=None):
+        """
+        Adjust a variable in the GeometryParameterisation.
+
+        Parameters
+        ----------
+        name: str
+            Name of the variable to adjust
+        value: Optional[float]
+            Value of the variable to set
+        lower_bound: Optional[float]
+            Value of the lower bound to set
+        upper_bound: Optional[float]
+            Value of the upper to set
+        """
         self.variables.adjust_variable(name, value, lower_bound, upper_bound)
 
     def fix_variable(self, name, value=None):
+        """
+        Fix a variable in the GeometryParameterisation, removing it from optimisation
+        but preserving a constant value.
+
+        Parameters
+        ----------
+        name: str
+            Name of the variable to fix
+        value: Optional[float]
+            Value at which to fix the variable (will default to present value)
+        """
         self.variables.fix_variable(name, value)
 
-    def create_array(self):
-        return self.create_shape().discretize(byedges=True).T
+    def create_array(self, n_points=200, by_edges=True):
+        """
+        Make an array of the geometry.
+
+        Parameters
+        ----------
+        n_points: int
+            Number of points in the array
+        by_edges: bool
+            Whether or not to discretise by edges
+
+        Returns
+        -------
+        xyz: np.ndarray
+            (3, N) array of point coordinates
+
+        Notes
+        -----
+        Override this method if you require a faster implementation, but be careful to
+        retain a uniform discretisation
+        """
+        return self.create_shape().discretize(ndiscr=n_points, byedges=by_edges).T
 
     @abc.abstractmethod
-    def create_shape(self):
+    def create_shape(self, **kwargs):
+        """
+        Make a CAD representation of the geometry.
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
         pass
 
 
 def princeton_D(x1, x2, dz, npoints=200):
     """
-    Princeton D shape parameterisation (e.g. Gralnick and Tenney, 1976, or
+    Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
     File, Mills, and Sheffield, 1971)
 
     Parameters
@@ -96,7 +170,7 @@ def princeton_D(x1, x2, dz, npoints=200):
         :math:`x_{2}` is the outer radial position of the shape
     """  # noqa (W505)
     if x2 <= x1:
-        raise ParametricShapeError(
+        raise GeometryParameterisationError(
             "Princeton D parameterisation requires an x2 value"
             f"greater than x1: {x1} >= {x2}"
         )
@@ -124,18 +198,37 @@ def princeton_D(x1, x2, dz, npoints=200):
     return x, z
 
 
-class PrincetonD(ParametricShape):
+class PrincetonD(GeometryParameterisation):
+    """
+    Princeton D geometry parameterisation.
+    """
+
     def __init__(self):
         variables = OptVariables(
             [
                 BoundedVariable("x1", 4, lower_bound=2, upper_bound=6),
                 BoundedVariable("x2", 14, lower_bound=10, upper_bound=18),
                 BoundedVariable("dz", 0, lower_bound=-0.5, upper_bound=0.5),
-            ]
+            ],
+            frozen=True,
         )
         super().__init__("PrincetonD", variables)
 
     def create_shape(self, n_points=200):
+        """
+        Make a CAD representation of the Princeton D.
+
+        Parameters
+        ----------
+        n_points: int
+            The number of points to use when calculating the geometry of the Princeton
+            D.
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
         x, z = princeton_D(
             self.variables["x1"].value,
             self.variables["x2"].value,
@@ -146,18 +239,3 @@ class PrincetonD(ParametricShape):
         wire = make_bspline(xyz.T)
         wire = close_wire(wire)
         return BluemiraWire(wire)
-
-
-class PictureFrame(ParametricShape):
-    def __init__(self):
-        variables = OptVariables(
-            [
-                BoundedVariable("x1", 5, lower_bound=4, upper_bound=6),
-                BoundedVariable("x2", 14, lower_bound=10, upper_bound=18),
-                BoundedVariable("z1", 8, lower_bound=5, upper_bound=12),
-                BoundedVariable("z2", -8, lower_bound=-12, upper_bound=-5),
-                BoundedVariable("ri", 0, lower_bound=0, upper_bound=0.2),
-                BoundedVariable("ro", 0, lower_bound=0, upper_bound=0.2),
-            ]
-        )
-        super().__init__("PictureFrame", variables)
