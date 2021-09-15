@@ -6,7 +6,6 @@
 """Configuration file for the Sphinx documentation builder."""
 from docutils.parsers.rst import Directive
 from docutils import nodes, statemachine
-from io import StringIO
 import sys
 import os
 
@@ -109,40 +108,30 @@ autoapi_options = [
 
 class ParamsDirective(Directive):
     """
-    Generates the parameters table for the given reactor module.
+    Generates the default parameters table for the given analysis module and class.
     """
 
     has_content = True
 
     def run(self):
-        oldStdout, sys.stdout = sys.stdout, StringIO()
-
+        """
+        Run the directive.
+        """
         tab_width = self.options.get("tab-width", self.state.document.settings.tab_width)
         source = self.state_machine.input_lines.source(
             self.lineno - self.state_machine.input_offset - 1
         )
 
         try:
-            import tabulate
             import importlib
 
             analysis_module_name = self.content[0]
             analysis_class_name = self.content[1]
 
             analysis_module = importlib.import_module(analysis_module_name)
-            analysis = getattr(analysis_module, analysis_class_name)(
-                analysis_module.config,
-                analysis_module.build_config,
-                analysis_module.build_tweaks,
-            )
+            analysis_class = getattr(analysis_module, analysis_class_name)
 
-            params_db = analysis.default_params._get_db()
-
-            header = list(params_db.columns)
-
-            print(tabulate.tabulate(params_db, header, tablefmt="rst", showindex=False))
-
-            text = sys.stdout.getvalue()
+            text = analysis_class.default_params.tabulator(tablefmt="rst")
             lines = statemachine.string2lines(text, tab_width, convert_whitespace=True)
             self.state_machine.insert_input(lines, source)
             return []
@@ -157,5 +146,3 @@ class ParamsDirective(Directive):
                     nodes.paragraph(text=str(sys.exc_info()[1])),
                 )
             ]
-        finally:
-            sys.stdout = oldStdout
