@@ -22,6 +22,7 @@
 import pytest
 import numpy as np
 
+from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
@@ -91,3 +92,11 @@ class TestPrincetonD:
         array = p.create_array(n_points=200)
 
         assert np.isclose(wire.length, get_perimeter(*array), rtol=1e-3)
+
+    def test_bad_behaviour(self):
+        p = PrincetonD()
+        with pytest.raises(OptVariablesError):
+            p.variables.add_variable(BoundedVariable("new", 0, 0, 0))
+
+        with pytest.raises(OptVariablesError):
+            p.variables.remove_variable("x1")
