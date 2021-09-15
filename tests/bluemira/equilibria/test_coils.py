@@ -25,7 +25,16 @@ from matplotlib import pyplot as plt
 import tests
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.coils import Coil, CoilGroup, CoilSet, SymmetricCircuit
+from bluemira.equilibria.coils import (
+    CS_COIL_NAME,
+    Coil,
+    CoilGroup,
+    CoilSet,
+    SymmetricCircuit,
+    PF_COIL_NAME,
+    CS_COIL_NAME,
+    NO_COIL_NAME,
+)
 
 
 class TestCoil:
@@ -33,6 +42,19 @@ class TestCoil:
     def setup_class(cls):
         # make a default coil
         cls.coil = Coil(4, 4, 10e6)
+        cls.cs_coil = Coil(4, 4, 10e6, ctype="CS")
+        cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd")
+
+    def test_name(self):
+        assert self.coil.name == PF_COIL_NAME.format(1)
+        assert self.cs_coil.name == CS_COIL_NAME.format(1)
+        assert self.no_coil.name == NO_COIL_NAME.format(1)
+        coil = Coil(4, 4, 10e6)
+        cs_coil = Coil(4, 4, 10e6, ctype="CS")
+        no_coil = Coil(4, 4, 10e6, ctype="agd")
+        assert coil.name == PF_COIL_NAME.format(2)
+        assert cs_coil.name == CS_COIL_NAME.format(2)
+        assert no_coil.name == NO_COIL_NAME.format(2)
 
     def test_field(self):
         c = Coil(1, 0, current=1591550)  # Sollte 5 T am Achse erzeugen
