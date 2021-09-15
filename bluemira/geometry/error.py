@@ -56,3 +56,11 @@ class DisjointedSolid(BluemiraError):
     """
 
     pass
+
+
+class ParametricShapeError(GeometryError):
+    """
+    Error class for parametric shapes.
+    """
+
+    pass

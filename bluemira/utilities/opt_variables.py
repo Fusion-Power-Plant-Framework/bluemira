@@ -307,6 +307,23 @@ class OptVariables:
         if name not in self._var_dict.keys():
             raise OptVariablesError(f"Variable {name} not in OptVariables.")
 
+    def __getitem__(self, name):
+        self._check_presence(name)
+        return self._var_dict[name]
+
+    # def __setitem__(self, name, variable):
+    #     if not isinstance(variable, BoundedVariable):
+    #         raise OptVariablesError(f"Cannot add a variable of type {type(variable)}. Must be a BoundedVariable.")
+    #     if name in self._var_dict.keys():
+    #         self.adjust_variable(name, variable.value, variable.lower_bound, variable.upper_bound)
+    #         if variable.fixed:
+    #             self.fix_variable(name)
+    #     else:
+    #         self.add_variable(variable)
+
+    # def __delitem__(self, name):
+    #     self.remove_variable(name)
+
     def plot(self):
         """
         Plot the OptVariables.

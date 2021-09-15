@@ -111,6 +111,9 @@ class TestOptVariables:
         assert self.vars.n_free_variables == 2
         assert np.allclose(self.vars.values, np.array([100, 0, 4, 1]))
 
+    def test_getitem(self):
+        assert self.vars["a"] == self.vars._var_dict["a"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
