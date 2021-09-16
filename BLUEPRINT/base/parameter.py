@@ -915,7 +915,7 @@ class ParameterFrame:
         db = DataFrame.from_records(self.to_records(), columns=columns)
         return db
 
-    def tabulator(self, keys=None, db=None):
+    def tabulator(self, keys=None, db=None, tablefmt="fancy_grid"):
         """
         Tabulate the underlying DataFrame of the ParameterFrame
 
@@ -925,11 +925,14 @@ class ParameterFrame:
             database column keys
         db: DataFrame
             database to tabulate
+        tablefmt: str (default="fancy_grid")
+            The format of the table - see
+            https://github.com/astanin/python-tabulate#table-format
 
         Returns
         -------
-        tabulated DataFrame
-
+        tabulated: str
+            The tabulated DataFrame
         """
         db = self._get_db() if db is None else db
         if keys is None:
@@ -940,7 +943,7 @@ class ParameterFrame:
         return tabulate(
             db,
             headers=columns,
-            tablefmt="fancy_grid",
+            tablefmt=tablefmt,
             showindex=False,
             numalign="right",
         )

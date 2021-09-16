@@ -4,6 +4,8 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 """Configuration file for the Sphinx documentation builder."""
+from docutils.parsers.rst import Directive
+from docutils import nodes, statemachine
 import sys
 import os
 
@@ -16,6 +18,7 @@ def setup(app):
     """Setup function for sphinx"""
     # https://stackoverflow.com/questions/14110790/numbered-math-equations-in-restructuredtext
     app.add_css_file("css/custom.css")
+    app.add_directive("params", ParamsDirective)
 
 
 # To use markdown instead of rst see:
@@ -101,3 +104,45 @@ autoapi_options = [
     "show-module-summary",
     "special-members",
 ]
+
+
+class ParamsDirective(Directive):
+    """
+    Generates the default parameters table for the given analysis module and class.
+    """
+
+    has_content = True
+
+    def run(self):
+        """
+        Run the directive.
+        """
+        tab_width = self.options.get("tab-width", self.state.document.settings.tab_width)
+        source = self.state_machine.input_lines.source(
+            self.lineno - self.state_machine.input_offset - 1
+        )
+
+        try:
+            import importlib
+
+            analysis_module_name = self.content[0]
+            analysis_class_name = self.content[1]
+
+            analysis_module = importlib.import_module(analysis_module_name)
+            analysis_class = getattr(analysis_module, analysis_class_name)
+
+            text = analysis_class.default_params.tabulator(tablefmt="rst")
+            lines = statemachine.string2lines(text, tab_width, convert_whitespace=True)
+            self.state_machine.insert_input(lines, source)
+            return []
+        except Exception:
+            return [
+                nodes.error(
+                    None,
+                    nodes.paragraph(
+                        text="Unable to generate parameter documentation at %s:%d:"
+                        % (os.path.basename(source), self.lineno)
+                    ),
+                    nodes.paragraph(text=str(sys.exc_info()[1])),
+                )
+            ]
