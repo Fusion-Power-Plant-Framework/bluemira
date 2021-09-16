@@ -65,6 +65,7 @@ build_config = {
     "tf_mode": "run",
     # TF coil config
     "TF_type": "S",
+    "wp_shape": "N",
     "TF_objective": "L",
     # FW and VV config
     "VV_parameterisation": "S",
@@ -409,19 +410,19 @@ def test_xz_centroids(
         if isinstance(bp_geom, MultiLoop):
             for bp_loop, bm_geom in zip(bp_geom.loops, bm_child.children):
                 bp_centroid = bp_loop.centroid
-                bm_centroid = bm_geom.shape.center_of_mass[0:3:2]
-                if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
+                bm_centroid = bm_geom.shape.center_of_mass[:3:2]
+                if not np.allclose(bp_centroid, bm_centroid, atol=5e-2, rtol=0.001):
                     bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
         elif isinstance(bp_geom, MultiShell):
             for bp_shell, bm_geom in zip(bp_geom.shell, bm_child.children):
                 bp_centroid = bp_shell.centroid
-                bm_centroid = bm_geom.shape.center_of_mass[0:3:2]
-                if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
+                bm_centroid = bm_geom.shape.center_of_mass[:3:2]
+                if not np.allclose(bp_centroid, bm_centroid, atol=5e-2, rtol=0.001):
                     bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
         else:
             bp_centroid = bp_geom.centroid
-            bm_centroid = bm_child.shape.center_of_mass[0:3:2]
-            if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
+            bm_centroid = bm_child.shape.center_of_mass[:3:2]
+            if not np.allclose(bp_centroid, bm_centroid, atol=5e-2, rtol=0.001):
                 bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
 
     if len(bad_centroid) > 0:
@@ -460,18 +461,18 @@ def test_xy_centroids(
         if isinstance(bp_geom, MultiLoop):
             for bp_loop, bm_geom in zip(bp_geom.loops, bm_child.children):
                 bp_centroid = bp_loop.centroid
-                bm_centroid = bm_geom.shape.center_of_mass[0:3:2]
+                bm_centroid = bm_geom.shape.center_of_mass[:2]
                 if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
                     bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
         elif isinstance(bp_geom, MultiShell):
             for bp_shell, bm_geom in zip(bp_geom.shells, bm_child.children):
                 bp_centroid = bp_shell.centroid
-                bm_centroid = bm_geom.shape.center_of_mass[0:3:2]
+                bm_centroid = bm_geom.shape.center_of_mass[:2]
                 if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
                     bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
         else:
             bp_centroid = bp_geom.centroid
-            bm_centroid = bm_child.shape.center_of_mass[0:3:2]
+            bm_centroid = bm_child.shape.center_of_mass[:2]
             if not np.allclose(bp_centroid, bm_centroid, atol=1e-2, rtol=0.001):
                 bad_centroid.append([geom_name, (bm_centroid, bp_centroid)])
 
