@@ -2,14 +2,14 @@ equilibria
 ==========
 
 Theory
-======
+------
 
 .. include:: <isonum.txt>
 
 The following documentation is mostly an extract from: `The design and optimisation of tokamak poloidal field systems in the BLUEPRINT framework <https://doi.org/10.1016/j.fusengdes.2020.111544>`_, Coleman and McIntosh, *Fusion Engineering and Design* v **154** 111544 (2020).
 
 The ideal MHD plasma equilibrium problem
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The two-dimensional axisymmetric ideal magneto-hydrodynamic (MHD) plasma
 equilibrium in cylindrical coordinates (:math:`X, \phi, Z`) is described
@@ -105,7 +105,7 @@ where :math:`\boldsymbol{\alpha} = (\alpha_1, \alpha_2, .., \alpha_N)` is the ve
 function shaping parameters.
 
 Free boundary equilibrium solver
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Grad-Shafranov equation has :math:`\psi` terms on both sides, and is
 as such a non-linear problem.
@@ -117,7 +117,7 @@ the contributions from external coil currents, :math:`J_{\phi,coils}`,
 using Green’s functions to represent point current sources.
 
 Finite difference solution to the Grad-Shafranov equation
-#########################################################
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 It is standard practice in Poisson-type Grad-Shafranov solvers to treat
 the plasma in a discretised manner, as its position is not known *a
@@ -179,7 +179,7 @@ met fairly quickly and *generally* avoids the need for numerical
 vertical stabilisation.
 
 Domain boundary conditions
-##########################
+""""""""""""""""""""""""""
 
 The boundary condition at the edge of the finite difference domain is
 not constant, and changes at each iteration step.
@@ -198,7 +198,7 @@ plasma current distribution:
    \end{split}\end{aligned}
 
 External coils
-##############
+""""""""""""""
 
 The contributions of external coil currents are calculated using Green’s
 functions for a point source with a toroidal current in cylindrical
@@ -239,7 +239,7 @@ summing the contributions of the plasma (from solving Equation
 :eq:`psiXZ`).
 
 Plasma boundary identification
-##############################
+""""""""""""""""""""""""""""""
 
 The plasma boundary is identified by the relative positions and magnetic
 flux values of the various O-points, X-points, and limiter points.
@@ -301,7 +301,7 @@ Application to reactor design
 -----------------------------
 
 Plasma profiles
-###############
+^^^^^^^^^^^^^^^
 
 The 1-D plasma profiles for toroidal current density and pressure are determined by the
 flux functions :math:`FF'` and :math:`p'`. 
@@ -364,7 +364,7 @@ Two approaches to determining the flux functions are available:
   certain current and/or pressure profiles, and to improve convergence.
 
 Equilibrium constraints
-#######################
+^^^^^^^^^^^^^^^^^^^^^^^
 
 In order to find an optimal set of currents that produce a certain equilibrium, it is
 common to apply a set of magnetic constraints to the equilibrium problem. These can be
@@ -458,7 +458,7 @@ Equation :eq:`tikhonov` can be solved analytically as:
 .. _sec:eng_constraints:
 
 Coil current, force, and field constraints
-##########################################
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The CS and PF coils provide the external currents required to control
 the position and shape of the plasma. In order to design a tokamak’s
@@ -532,7 +532,7 @@ to constrain the poloidal field at the centre of the inside edge of each
 coil, where the field is generally the highest.
 
 Coil position optimisation and constraints
-##########################################
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A key decision when designing fusion reactors is where to place the PF
 coils. While the ability to generate and control the desired plasma
@@ -609,7 +609,7 @@ also implemented in NLopt [Johnson_2018]_:
    \end{aligned}
 
 Zonal positioning of coils
-**************************
+""""""""""""""""""""""""""
 
 The above method functions very well when the positions of the coils can be reduced to a
 one dimensional problem. To be able to optimise a coil's position in two dimensions, the
@@ -621,7 +621,7 @@ process works similarly to the above, with a few modifications.
   sectional size of a coil, based on its position within the zone.
 
 Normalisation
-^^^^^^^^^^^^^
+*************
 
 To achieve this we first normalise positions in two dimensions using an x-z cut method.
 The only current limitation on the method is the zone must be its own convex hull.
@@ -647,7 +647,7 @@ For simple shapes the conversion is shown below:
     * - .. figure:: dia.png
 
 Zone Boundaries
-^^^^^^^^^^^^^^^
+***************
 The cross sectional area of a coil is modelled as linearly dependent on the current that
 the coil will carry. Therefore by limiting the size of the coil to stay within the
 bounds of the zone we must limit the current a coil can carry. The maximum size a coil
@@ -689,7 +689,7 @@ of a perfectly symmetrical system of coils to aid in convergence.
     grids centred around ``z = 0``.
 
 Appendix 1: Green’s functions and discretised coils
-###################################################
+---------------------------------------------------
 
 The Green’s functions for poloidal magnetic flux, radial magnetic field,
 and vertical magnetic field at a location :math:`(X, Z)` due to a unit
@@ -784,7 +784,7 @@ singularities which are treated analytically and numerically as described in
 
 
 Appendix 2: optimisation Jacobians
-##################################
+----------------------------------
 
 The vertical forces acting on the coils are calculated as:
 
