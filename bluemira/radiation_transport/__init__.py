@@ -22,3 +22,5 @@
 """
 The bluemira radiation transport module.
 """
+
+from .advective_transport import ChargedParticleSolver

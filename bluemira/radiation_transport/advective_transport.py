@@ -63,12 +63,11 @@ class OpenFluxSurface:
     ]
 
     def __init__(self, loop):
-        self.loop = loop
-
         if loop.closed:
             raise AdvectionTransportError(
                 "OpenFluxSurface cannot be made from a closed geometry."
             )
+        self.loop = loop
 
         # Constructors
         self.x_mp = None

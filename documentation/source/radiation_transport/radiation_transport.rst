@@ -1,4 +1,4 @@
-Radiation transport
+radiation_transport
 ===================
 
 The ``bluemira`` ``radiation_transport`` module contains a number of different solvers.
@@ -6,6 +6,5 @@ The ``bluemira`` ``radiation_transport`` module contains a number of different s
 .. toctree::
     :maxdepth: 2
     :caption: Solvers:
-    :hidden:
 
     advection_transport

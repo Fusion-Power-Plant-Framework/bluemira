@@ -12,5 +12,6 @@ used to calculate the charged particle heat fluxes on the first wall.
 Several input parameters are required to perform the analysis:
 
 Two input objects are required to perform the analysis:
+
 * an Equilibrium object, representing the equilibrium state of the plasma and the associated coils
-* a Shape object, representing the first wall (i.e. all potentially flux-intercepting surfaces)
+* a geometry object, representing the first wall (i.e. all potentially flux-intercepting surfaces)
