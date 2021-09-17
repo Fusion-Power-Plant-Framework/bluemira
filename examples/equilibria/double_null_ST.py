@@ -36,7 +36,7 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.solve import PicardDeltaIterator
 
-# Clean up and make plots look goodgit c
+# Clean up and make plots look good
 plt.close("all")
 plot_defaults()
 
