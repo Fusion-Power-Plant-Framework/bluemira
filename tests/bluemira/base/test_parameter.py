@@ -191,6 +191,62 @@ class TestParameter:
     def test_to_str(self, param, expected):
         assert str(param) == expected
 
+    def test_source_warning(self, caplog):
+        warning_str = "The source of the value of p not consistently known"
+        p = Parameter("p", "param", 1.0)
+
+        # check we get a warning if source hasn't been defined
+        p.value = 5
+        assert len(caplog.messages) == 1
+        out = caplog.messages[0]
+        assert warning_str in out
+
+    def test_source_no_warning(self, caplog):
+        p = Parameter("p", "param", 1.0)
+        p.source = "Input"
+
+        # check we don't get a warning if source has been defined
+        p.value = 5
+        assert len(caplog.messages) == 0
+
+        p.source = "new"
+        p.value = 10
+
+        assert len(caplog.messages) == 0
+
+    def test_source_warning_Init_update(self, caplog):
+        warning_str = "The source of the value of p not consistently known"
+        p = Parameter("p", "param", 1.0, source="Input")
+
+        # check we don't get a warning if source has been defined
+        p.value = 5
+        assert len(caplog.messages) == 0
+
+        p.value = 10
+        assert len(caplog.messages) == 1
+        out = caplog.messages[0]
+        assert warning_str in out
+
+    def test_source_inplace_warning(self, caplog):
+        warning_str = "The source of the value of p not consistently known"
+        p = Parameter("p", "param", 1.0, source="Input")
+        p += 5
+
+        # source should now be reset to False, so check we get a warning if we update
+        p += 5
+        assert len(caplog.messages) == 1
+        out = caplog.messages[0]
+        assert warning_str in out
+
+    def test_source_inplace_no_warning(self, caplog):
+        p = Parameter("p", "param", 1.0, source="Input")
+        p += 5
+        p.source = "new"
+
+        # check we don't get a warning if source has been redefined after value update
+        p += 5
+        assert len(caplog.messages) == 0
+
 
 class TestParameterFrame:
     default_params = [

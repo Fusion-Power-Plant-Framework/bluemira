@@ -78,6 +78,7 @@ def inplace_wrapper(method):
     @wraps(method)
     def wrapped(*args, **kwargs):
         ret = method(*args, **kwargs)
+        args[0]._source = False
         args[0]._update_history()
         return ret
 
