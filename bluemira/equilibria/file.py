@@ -28,7 +28,7 @@ import numpy as np
 import os
 import time
 
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num, NumpyJSONEncoder
 

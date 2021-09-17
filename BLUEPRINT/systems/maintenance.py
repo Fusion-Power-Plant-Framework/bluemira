@@ -30,10 +30,13 @@ import itertools
 import sys
 import getpass
 from typing import Type
-from BLUEPRINT.base.file import get_BP_path
+
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.constants import GRAVITY
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base.file import get_BP_path
+from BLUEPRINT.base.baseclass import ReactorSystem
 
 
 if sys.platform != "darwin" and getpass.getuser() != "mcintos":  # !!!

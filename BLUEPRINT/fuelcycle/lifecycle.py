@@ -27,10 +27,13 @@ from matplotlib.lines import Line2D
 import json
 from typing import Type
 from scipy.optimize import brentq
+
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.constants import S_TO_YR, YR_TO_S
+
+from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.utilities.tools import delta, is_num
 from BLUEPRINT.neutronics.simpleneutrons import NeutronicsRulesOfThumb as nROT
 from BLUEPRINT.fuelcycle.timeline import f_gompertz, histify, Timeline

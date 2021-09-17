@@ -26,9 +26,10 @@ from copy import deepcopy
 import pickle  # noqa (S403)
 from typing import Type, Union
 
-from BLUEPRINT.base.typebase import TypeBase
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.error import BluemiraError
+
+from BLUEPRINT.base.typebase import TypeBase
 from BLUEPRINT.base.error import SystemsError
 
 

@@ -2137,8 +2137,8 @@ class SymmetricCircuit(Coil):
         Set the properties of the virtual coil on a copy of the
         current instance of the circuit.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         coil_number: int
             number of coil
         existing_copy: bool

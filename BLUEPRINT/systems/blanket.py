@@ -28,6 +28,9 @@ import numpy as np
 from itertools import cycle
 from typing import Type
 from shapely.geometry import Polygon
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.blanketCAD import BlanketCAD, STBlanketCAD
 from BLUEPRINT.geometry.geomtools import qrotate, rainbow_arc, make_box_xz
@@ -39,7 +42,7 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
 )
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, mirror
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 

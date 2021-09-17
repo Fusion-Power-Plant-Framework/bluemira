@@ -35,17 +35,18 @@ from types import ModuleType
 from typing import Type, Union
 
 # Framework imports
+from bluemira.base.file import get_files_by_ext
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
+from bluemira.base.error import BluemiraError
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base import (
     ReactorSystem,
     BLUE,
 )
-from bluemira.base.file import get_files_by_ext
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
-from bluemira.base.error import BluemiraError
 from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.base.file import FileManager
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.base.parameter import ParameterFrame
 
 # Utility imports
 from BLUEPRINT.geometry.loop import Loop, point_loop_cast

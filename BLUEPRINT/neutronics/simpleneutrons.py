@@ -27,8 +27,11 @@ import numpy as np
 import os
 import json
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_print, plot_defaults
+
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.file import get_BP_path, try_get_BP_path
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop

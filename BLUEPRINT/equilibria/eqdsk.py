@@ -26,7 +26,7 @@ import os
 import json
 import time
 import numpy as np
-from BLUEPRINT.base import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.utilities.tools import is_num, NumpyJSONEncoder
 import fortranformat as ff
 
