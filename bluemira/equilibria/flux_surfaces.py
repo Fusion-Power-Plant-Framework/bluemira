@@ -27,37 +27,22 @@ import numpy as np
 from scipy.integrate import odeint
 
 
-class FluxSurace:
+class FluxSurface:
     pass
 
     def connection_length(self, eq):
         pass
 
 
-class OpenFluxSurface(FluxSurace):
+class OpenFluxSurface(FluxSurface):
     pass
 
 
-class ClosedFluxSurface(FluxSurace):
+class ClosedFluxSurface(FluxSurface):
     pass
 
     def safety_factor(self, eq):
         return self.connection_length(eq) / self.geometry.length
-
-
-def connection_length(eq, x, z):
-    dx = x[:-1] - x[1:]
-    dz = z[:-1] - z[1:]
-    x_mp = x[:-1] + 0.5 * dx
-    z_mp = z[:-1] + 0.5 * dz
-    Bx = eq.Bx(x_mp, z_mp)
-    Bz = eq.Bz(x_mp, z_mp)
-    Bt = eq.Bt(x_mp)
-    dtheta = np.hypot(dx, dz)
-    field_ratio = Bt / np.hypot(Bx, Bz)
-    dphi = field_ratio * dtheta
-    dl = np.hypot(dtheta, dphi)
-    return np.sum(dl)
 
 
 def connection_length_sm(eq, x, z):
@@ -69,13 +54,19 @@ def connection_length_sm(eq, x, z):
     Bz = eq.Bz(x_mp, z_mp)
     Bt = eq.Bt(x_mp)
     dtheta = np.hypot(dx, dz)
-    field_ratio = Bt / np.hypot(Bx, Bz)
-    dphi = field_ratio * dtheta / x_mp
-    dl = dphi * np.sqrt((dx / dphi) ** 2 + (dz / dphi) ** 2 + x[:-1] ** 2)
+    dphi = Bt / np.hypot(Bx, Bz) * dtheta / x_mp
+    dl = dphi * np.sqrt((dx / dphi) ** 2 + (dz / dphi) ** 2 + (x[:-1] + 0.5 * dx) ** 2)
     return np.sum(dl)
 
 
-from scipy.integrate import odeint
+def connection_length(eq, x, z):
+    dx = np.diff(x)
+    dz = np.diff(z)
+    Bp = 0.5 * (eq.Bp(x[1:], z[1:]) + eq.Bp(x[:-1], z[:-1]))
+    Bt = 0.5 * (eq.Bt(x[1:]) + eq.Bt(x[:-1]))
+    B_ratio = Bt / Bp
+    dl = B_ratio * np.sqrt((dx / B_ratio) ** 2 + (dz / B_ratio) ** 2 + dx ** 2 + dz ** 2)
+    return np.sum(dl)
 
 
 class FLT:
