@@ -23,8 +23,6 @@
 Error classes for the equilibria module.
 """
 
-from bluemira import equilibria
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.base.error import BluemiraError
 
 
