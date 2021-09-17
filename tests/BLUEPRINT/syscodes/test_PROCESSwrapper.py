@@ -23,8 +23,9 @@ from unittest.mock import patch
 
 import pytest
 
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
+
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.parameter import ParameterFrame, ParameterMapping
 from BLUEPRINT.systems.config import Configuration
 
 pw = pytest.importorskip(
