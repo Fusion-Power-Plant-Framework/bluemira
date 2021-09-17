@@ -41,10 +41,10 @@ class TestEQDSKInterface:
     def read_strict_geqdsk(self, fname):
         """
         Reads an input EQDSK file in, assuming strict adherence to the
-        GEQDSK format. Used to check BLUEPRINT outputs can be read by
+        GEQDSK format. Used to check bluemira outputs can be read by
         external readers.
 
-        Note: The main BLUEPRINT GEQDSK reader is more forgiving to
+        Note: The main bluemira GEQDSK reader is more forgiving to
         format variations than this!
 
         Parameters
@@ -119,7 +119,7 @@ class TestEQDSKInterface:
         xlim_zlim = read_flat_array(f2020, 2 * nlim)
 
         # Read in coil information, as found in the GEQDSK extension
-        # used by BLUEPRINT.
+        # used by bluemira.
         (ncoil,) = fCSTM.read(file.readline())
         coil = read_flat_array(f2020, 5 * ncoil)
 
@@ -143,7 +143,7 @@ class TestEQDSKInterface:
 
             # Check eqdsk is readable by Fortran readers.
             # This demands stricter adherence to the G-EQDSK
-            # format than BLUEPRINT's main reader.
+            # format than bluemira's main reader.
             self.read_strict_geqdsk(fname)
 
             # Write data read in from test file into a new JSON

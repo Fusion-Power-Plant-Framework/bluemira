@@ -26,6 +26,7 @@ Coil and coil grouping objects
 from copy import deepcopy
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
+from typing import Any, Optional
 
 from bluemira.base.constants import MU_0
 from bluemira.utilities.tools import is_num
@@ -50,7 +51,6 @@ from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoil
 PF_COIL_NAME = "PF_{}"
 CS_COIL_NAME = "CS_{}"
 NO_COIL_NAME = "Unclassified_{}"
-_NONAME_INCREMENTER = 0
 
 
 def make_coil_corners(x_c, z_c, dx, dz):
@@ -63,22 +63,55 @@ def make_coil_corners(x_c, z_c, dx, dz):
     return x, z
 
 
-def name_coil(coil, i):
+class CoilNamer:
     """
-    Name a coil based on its type and type-number. The coil naming convention
-    is not directly enforced here.
+    Coil naming-numbering utility class. Coil naming convention is not enforced here.
     """
-    if i is None:
-        global _NONAME_INCREMENTER
-        i = _NONAME_INCREMENTER
-        _NONAME_INCREMENTER += 1
 
-    if coil.ctype == "CS":
-        return CS_COIL_NAME.format(i)
-    elif coil.ctype == "PF":
-        return PF_COIL_NAME.format(i)
-    else:
-        return NO_COIL_NAME.format(i)
+    __PF_counter: int = 1
+    __CS_counter: int = 1
+    __no_counter: int = 1
+
+    @staticmethod
+    def _get_prefix(coil: Any):
+        if not hasattr(coil, "ctype") or coil.ctype not in ["PF", "CS"]:
+            return NO_COIL_NAME
+        elif coil.ctype == "CS":
+            return CS_COIL_NAME
+        elif coil.ctype == "PF":
+            return PF_COIL_NAME
+
+    @staticmethod
+    def generate_name(coil: Any, idx: Optional[int] = None):
+        """
+        Generate a coil name based on its type and indexing if specified. If no index is
+        specified, an encapsulated global counter assigns an index.
+
+        Parameters
+        ----------
+        coil: Any
+            Object to name
+        idx: Optional[int]
+            Name index. If None, assigned automatically
+
+        Returns
+        -------
+        name: str
+            Coil name
+        """
+        prefix = CoilNamer._get_prefix(coil)
+        if idx is None:
+            if prefix == NO_COIL_NAME:
+                idx = CoilNamer.__no_counter
+                CoilNamer.__no_counter += 1
+            elif prefix == CS_COIL_NAME:
+                idx = CoilNamer.__CS_counter
+                CoilNamer.__CS_counter += 1
+            elif prefix == PF_COIL_NAME:
+                idx = CoilNamer.__PF_counter
+                CoilNamer.__PF_counter += 1
+
+        return prefix.format(idx)
 
 
 class Coil:
@@ -167,7 +200,7 @@ class Coil:
 
         if name is None:
             # We need to have a reasonable coil name
-            name = name_coil(self, None)
+            name = CoilNamer.generate_name(self, None)
         self.name = name
 
         self.sub_coils = None
@@ -1131,7 +1164,7 @@ class Solenoid(CoilGroup):
         z_max = max([c.z + c.dz for c in coils])
         coils = sorted(coils, key=lambda c_: -c_.z)  # Order from top to bottom
         for i, coil in enumerate(coils):
-            coil.name = name_coil(coil, i + 1)
+            coil.name = CoilNamer.generate_name(coil, i + 1)
 
         return cls(x, d_x, z_min, z_max, n_cs, coils=coils)
 
@@ -1557,7 +1590,6 @@ class CoilSet(CoilGroup):
                             dx=dx,
                             dz=dz,
                             ctype="CS",
-                            name=CS_COIL_NAME.format(i_cs),
                         )
                     )
                     i_cs += 1
@@ -1569,7 +1601,6 @@ class CoilSet(CoilGroup):
                         dx=dx,
                         dz=dz,
                         ctype="PF",
-                        name=PF_COIL_NAME.format(i_pf),
                     )
                     i_pf += 1
                     coil.fix_size()  # Oh ja
