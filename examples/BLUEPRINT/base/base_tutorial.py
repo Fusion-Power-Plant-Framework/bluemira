@@ -30,7 +30,11 @@ Feel free to change parameters!
 
 # %%
 from typing import Type
-from BLUEPRINT.base import ParameterFrame, ReactorSystem, TypeFrameworkError
+
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base import TypeFrameworkError
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import Loop
 
 

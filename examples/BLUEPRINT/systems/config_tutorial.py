@@ -30,9 +30,10 @@ Some examples on updating and extending Configurations
 # setup the BLUEPRINT run for a given reactor design.
 
 # %%
+from bluemira.base.parameter import Parameter, ParameterFrame
+
 from BLUEPRINT.base.config_schema import ConfigurationSchema
 from BLUEPRINT.base.file import get_BP_root
-from BLUEPRINT.base.parameter import Parameter, ParameterFrame
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import Configuration
 
