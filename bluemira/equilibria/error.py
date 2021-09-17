@@ -23,12 +23,22 @@
 Error classes for the equilibria module.
 """
 
+from bluemira import equilibria
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.base.error import BluemiraError
 
 
 class EquilibriaError(BluemiraError):
     """
     Base class for equilibria errors.
+    """
+
+    pass
+
+
+class FluxSurfaceError(EquilibriaError):
+    """
+    Error class for FluxSurfaces.
     """
 
     pass
