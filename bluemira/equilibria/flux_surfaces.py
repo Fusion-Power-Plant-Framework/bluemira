@@ -252,7 +252,7 @@ class ClosedFluxSurface(FluxSurface):
             Vertical Shafranov shift
         """
         o_point = eq.get_OX_points()[0][0]  # magnetic axis
-        return o_point.x - self.major_radius, o_point.z - self.centroid[1]
+        return o_point.x - self.major_radius, o_point.z - self.loop.centroid[1]
 
     def safety_factor(self, eq):
         """
@@ -423,6 +423,7 @@ def analyse_plasma_core(eq, n_points=50):
     psi_n = np.linspace(PSI_NORM_TOL, 1 - PSI_NORM_TOL, n_points, endpoint=False)
     loops = [eq.get_flux_surface(pn) for pn in psi_n]
     loops.append(eq.get_LCFS())
+    psi_n = np.append(psi_n, 1.0)
     flux_surfaces = [ClosedFluxSurface(loop) for loop in loops]
     return CoreResults(
         psi_n,
@@ -438,6 +439,7 @@ def analyse_plasma_core(eq, n_points=50):
         [fs.delta_upper for fs in flux_surfaces],
         [fs.delta_lower for fs in flux_surfaces],
         [fs.safety_factor(eq) for fs in flux_surfaces],
+        [fs.shafranov_shift(eq)[0] for fs in flux_surfaces],
     )
 
 
@@ -456,6 +458,7 @@ class CoreResults:
     delta_lower: Iterable
     delta_upper: Iterable
     q: Iterable
+    Delta_shaf: Iterable
 
 
 class FieldLineTracer:

@@ -1391,7 +1391,7 @@ class Equilibrium(MHDState):
         j_0 = jfunc(opoint.x, opoint.z, grid=False)
         return calc_q0(opoint.x, b_0, j_0, psi_xx, psi_zz)
 
-    def analyse_core(self, n_points=50, plot=True, ax=None):
+    def analyse_core(self, n_points=50, plot=True):
         """
         Analyse the shape and characteristics of the plasma core.
 
@@ -1407,7 +1407,7 @@ class Equilibrium(MHDState):
         """
         results = analyse_plasma_core(self, n_points=n_points)
         if plot:
-            CorePlotter(results, ax)
+            CorePlotter(results)
         return results
 
     def analyse_plasma(self):
