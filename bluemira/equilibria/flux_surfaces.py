@@ -189,7 +189,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Lower elongation of the ClosedFluxSurface.
         """
-        return abs(np.max(self.loop.z) - self.loop.centroid[1]) / self.minor_radius
+        return abs(np.min(self.loop.z) - self.loop.centroid[1]) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -237,7 +237,7 @@ class ClosedFluxSurface(FluxSurface):
 
     def shafranov_shift(self, eq):
         """
-        Calculate the Shafranov shift of the ClosedFluxSurface
+        Calculate the Shafranov shift of the ClosedFluxSurface.
 
         Parameters
         ----------
