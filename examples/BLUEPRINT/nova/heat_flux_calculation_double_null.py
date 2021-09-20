@@ -58,7 +58,9 @@ vv_box = Loop(x=x_box, z=z_box)
 # Adding the divertor to the above mentioned first wall.
 
 # %%
-fw = FirstWallDN(FirstWallDN.default_params, {"equilibrium": eq, "vv_inner": vv_box})
+fw = FirstWallDN(
+    FirstWallDN.default_params, {"equilibrium": eq, "vv_inner": vv_box, "DEMO_DN": True}
+)
 divertor_loops = fw.make_divertor(fw.profile)
 fw_diverted = fw.attach_divertor(fw.profile, divertor_loops)
 
@@ -81,7 +83,7 @@ hf_wall_max = 1
 while hf_wall_max > 0.5:
     fw_opt = FirstWallDN(
         FirstWallDN.default_params,
-        {"equilibrium": eq, "profile": profile, "vv_inner": vv_box},
+        {"equilibrium": eq, "profile": profile, "vv_inner": vv_box, "DEMO_DN": True},
     )
 
     # Calculate the parallel contribution of the heat flux
