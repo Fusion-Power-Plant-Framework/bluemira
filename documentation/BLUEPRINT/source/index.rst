@@ -27,6 +27,10 @@ BLUEPRINT is comprised of various modules (*azulejos*):
 * **base**: a collection of utilities which make up the software backbone of the BLUEPRINT framework
 * **beams**: a simple 3-D frame finite element model for structural analysis
 * **cad**: a CAD toolbox and generator, which builds CAD artefacts for a given reactor.
+* **codes**: an interface library to run external modules:
+
+	 * The 0/1-D power reactor optimisation code `PROCESS <https://www.sciencedirect.com/science/article/pii/S0920379614005961>`_
+	 * The 1.5-D transport and equilibrium code `PLASMOD <https://www.sciencedirect.com/science/article/pii/S0920379618302801>`_, by E. Fable.
 * **costs**: an ultra-crude proof-of-principle cost toolbox
 * **equilibria**: an ab initio equilibrium solver, used for generating reference equilibria for a given reactor, and optimising poloidal field systems.
 * **fuelcycle**: a simplified dynamic Monte Carlo tritium fuel cycle model, used to calculate tritium start-up inventories, tritium release rates, and reactor doubling times.
@@ -37,10 +41,6 @@ BLUEPRINT is comprised of various modules (*azulejos*):
    * `Serpent II <https://www.sciencedirect.com/science/article/pii/S0306454914004095>`_
    * `OpenMC <https://github.com/openmc-dev/openmc](https://github.com/openmc-dev/openmc>`_
 * **nova**: a collection of tools for equilibria and the optimisation of the toroidal field coil shape. A modest fork of the Nova module, written by S. McIntosh.
-* **syscodes**: an interface library to run external modules:
-
-	 * The 0/1-D power reactor optimisation code `PROCESS <https://www.sciencedirect.com/science/article/pii/S0920379614005961>`_
-	 * The 1.5-D transport and equilibrium code `PLASMOD <https://www.sciencedirect.com/science/article/pii/S0920379618302801>`_, by E. Fable.
 * **systems**: the home of reactor system objects and a number of simplified 0/2-D models for reactor cross-section design and analysis.
 * **utilities**: collection of utility toolboxes for file IO, plotting, databases, machine learning, and misc.
 

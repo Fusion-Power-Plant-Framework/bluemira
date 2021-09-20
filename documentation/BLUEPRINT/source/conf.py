@@ -7,9 +7,9 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath("../../../"))  # noqa (E402)
+sys.path.insert(0, os.path.abspath("../../../"))
 
-from BLUEPRINT._version import get_versions
+from BLUEPRINT._version import get_versions  # noqa (E402)
 
 
 def setup(app):
@@ -115,9 +115,7 @@ class SkipAlreadyDocumented:
 
     def __init__(self):
         lis = [
-            "BLUEPRINT.syscodes.PROCESSwrapper.PATH",
             "BLUEPRINT.systems.maintenance.RMMetrics.normalise",
-            "BLUEPRINT.reactor.PROCESS_ENABLED",
         ]
 
         self.dict = {i: 0 for i in lis}
