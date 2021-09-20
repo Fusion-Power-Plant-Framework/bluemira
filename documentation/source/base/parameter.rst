@@ -164,22 +164,123 @@ internally in python.
 The ParameterFrame class
 ------------------------
 
-The ParameterFrame class follows the 'borg' pattern where state is passed round (on request) but each instance is not the same (therefore not a singleton).
-The default state of the frame is stored in :py:attr:`__default_params` and populated with the :py:meth:`set_default_parameters` classmethod.
+ParameterFrames allow Parameters to be grouped together to describe the overall
+parameterisation of a particular analysis or other class within ``bluemira``. For this
+reason you will interact with Parameters via ParameterFrames in most cases.
 
-In turn the default state can then populate :py:attr:`__dict__` (as a copy, but this could be in future be changed to a per reactor class variable).
-To update the default Parameter values globally :py:meth:`_force_update_default` can be used which updates the Parameter in all ParameterFrame instances as well as the ParameterFrame class.
+A ParameterFrame can be constructed either from a list of records (with each matching
+the constructor argument order for Parameter), a dictionary, or a json file.
+ParameterFrames can be converted to json in either a verbose format, including all the
+attributes on the Parameter, or in a concise format, just mapping Parameters to their
+value and source. This allows template ParameterFrames to be created using the verbose
+form and then adjusted for a specific analysis via the concise form.
 
-The attributes of a ParameterFrame are Parameter objects but the value of the Parameter can be accessed directly as a dictionary or with the `value` attribute as with a singular Parameter.
+.. code-block:: pycon
 
-If a ParameterFrame.param is set to a 2 element tuple the second element is assumed to be its source if it is set to a Parameter (with the same name ONLY) the value and source are taken only.
+    >>> from bluemira.base import ParameterFrame, ParameterMapping
+    >>> record_list = [
+    ...     ['R_0', 'Major radius', 9, 'm', None, 'Input', {"PROCESS": ParameterMapping("rmajor", True, False)}],
+    ...     ['A', 'Plasma aspect ratio', 3.1, 'N/A', None, 'Input', {"PROCESS": ParameterMapping("aspect", True, True)}],
+    ... ]
+    >>> params = ParameterFrame(record_list)
+    >>> print(params)
+
+.. code-block:: pycon
+
+    >>> from bluemira.base import ParameterFrame, ParameterMapping
+    >>> param_dict = {
+    ...     'R_0': {
+    ...         'name': 'Major radius',
+    ...         'value': 9,
+    ...         'unit': 'm',
+    ...         'description': None,
+    ...         'source': 'Input',
+    ...         'mapping': {
+    ...             'PROCESS': ParameterMapping("rmajor", True, False)
+    ...         }
+    ...     },
+    ...     'A': {
+    ...         'name': 'Plasma aspect ratio',
+    ...         'value': 3.1,
+    ...         'unit': 'N/A',
+    ...         'description': None,
+    ...         'source': 'Input',
+    ...         'mapping': {
+    ...             'PROCESS': ParameterMapping("aspect", True, True)
+    ...         }
+    ...     },
+    ... }
+    >>> params = ParameterFrame.from_dict(param_dict)
+    >>> params.to_json("params_verbose.json", verbose=True)
+    >>> params_new = ParameterFrame.from_json("params_verbose.json")
+    >>> print(params)
+    >>> print(params_new)
+
+The attributes of a ParameterFrame are Parameter objects, and so the attributes on the
+Parameter can be accessed directly. It is also possible to access the values of
+Parameters can be as if the ParameterFrame were a dictionary.
+
+.. code-block:: pycon
+
+    >>> print(params_new["R_0"])
+    >>> print(params_new.R_0)
+    >>> print(params_new.R_0.source)
+    >>> params_new.R_0 = 8.6
+    >>> params_new.R_0.source = "Update"
+    >>> params_new.to_json("params_concise.json")
+
+If a ParameterFrame.param is set to a 2 element tuple the second element is assumed to be
+its source if it is set to a Parameter (with the same name ONLY) the value and source are
+taken only.
 A dictionary of :py:data:`{"value": .., "source":..}` can also be provided.:
 
-.. code-block:: python
+.. code-block:: pycon
 
-    pf = ParameterFrame(config)
-    pf.attr = (1., 'here')
-    pf.attr = Parameter(var='attr', name='attr', value=1.)
-    pf.attr = {"value":1., "source": 'here'}
+    >>> from bluemira.base import Parameter
+    >>> params_new.R_0 = (9.2, 'Here')
+    >>> params_new.A = Parameter(var='A', name='Plasma aspect ratio', value=3.2, source='There')
+    >>> params_new.A = {
+    >>>     "value": 3.1,
+    >>>     "source": 'Here',
+    >>> }
+    >>> print(params_new)
+    >>> print(params_new.R_0.history(), params_new.A.history())
+    >>> params_new.to_json("params_concise.json")
 
-The concise json representation returns :py:data:`{"value": .., "source":..}` of each Parameter and the verbose representation returns all the attributes of the Parameter.
+
+As an analysis progresses, various values within the ParameterFrame will be updated from
+different sources. This is handled in bulk by updating Parameters based on their keyword
+name, which can be done either directly or via an external json source.
+
+.. note:: 
+
+    Keywords must match the current Parameters contained within the ParameterFrame in
+    order to update to corresponding value.
+
+.. code-block:: pycon
+
+    >>> params.update_kw_parameters({"R_0": 9.3}, source="New Value")
+    >>> print(params)
+    >>> print(params.R_0.history())
+    >>> params.set_values_from_json("params_concise.json", source="Load Data")
+    >>> print(params)
+    >>> print(params.R_0.history(), params.A.history())
+
+Handling Default Parameters
+###########################
+
+As noted in the previous section, ParameterFrames require some knowledge of the available
+Parameters to be used, otherwise keyword names will deviate between different analysis
+stages. This is facilitated by storing a default set of available parameters on the
+ParameterFrame class for a particular analysis.
+
+The ParameterFrame class follows the 'borg' pattern where state is passed round (on
+request) but each instance is not the same (therefore not a singleton).
+The default state of the frame is stored in :py:attr:`__default_params` and populated
+with the :py:meth:`set_default_parameters` classmethod.
+
+In turn the default state can then populate :py:attr:`__dict__` (as a copy, but this
+could be in future be changed to a per analysis class variable).
+To update the default Parameter values globally :py:meth:`_force_update_default` can be
+used which updates the Parameter in all ParameterFrame instances as well as the
+ParameterFrame class.
