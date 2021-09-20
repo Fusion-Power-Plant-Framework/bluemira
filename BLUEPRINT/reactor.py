@@ -231,6 +231,9 @@ class Reactor(ReactorSystem):
         """
         Prepare the parameters so they are ready for building.
         """
+        for key, val in config.items():
+            if not isinstance(val, (tuple, dict)):
+                config[key] = (val, "Input")
         self.params.update_kw_parameters(config)
         if self.build_config["process_mode"] == "mock":
             self.estimate_kappa_95()
