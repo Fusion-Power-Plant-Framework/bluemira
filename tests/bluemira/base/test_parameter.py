@@ -588,6 +588,46 @@ class TestParameterFrame:
             == "Setting the values on a ParameterFrame using set_values_from_json requires a concise json format."
         )
 
+    def test_parameter_source_update(self):
+        params_copy = self.params.copy()
+
+        # Updating the value should create a new history record with a False source.
+        params_copy.R_0 = 6.5
+        assert len(params_copy.R_0.history()) == 2
+        assert params_copy.R_0 == 6.5
+        assert params_copy.R_0.source is False
+
+        # Updating the source shouldn't create a new history record.
+        params_copy.R_0.source = "Updated"
+        assert len(params_copy.R_0.history()) == 2
+        assert params_copy.R_0 == 6.5
+        assert params_copy.R_0.source == "Updated"
+
+        # Source can be set to None.
+        params_copy.R_0 = 6.8
+        params_copy.R_0.source = None
+        assert len(params_copy.R_0.history()) == 3
+        assert params_copy.R_0 == 6.8
+        assert params_copy.R_0.source is None
+
+    def test_parameter_source_tuple(self):
+        params_copy = self.params.copy()
+
+        # Set both value and source from a tuple
+        params_copy.R_0 = (6.8, "New Value")
+        assert len(params_copy.R_0.history()) == 2
+        assert params_copy.R_0 == 6.8
+        assert params_copy.R_0.source == "New Value"
+
+    def test_parameter_source_dict(self):
+        params_copy = self.params.copy()
+
+        # Set both value and source from a dict
+        params_copy.R_0 = {"value": 6.9, "source": None}
+        assert len(params_copy.R_0.history()) == 2
+        assert params_copy.R_0 == 6.9
+        assert params_copy.R_0.source is None
+
 
 class TestReactorSystem:
 

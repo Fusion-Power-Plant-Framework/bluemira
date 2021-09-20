@@ -1005,14 +1005,14 @@ class ParameterFrame:
             source = value["source"]
             value = value["value"]
         else:
-            source = None
+            source = False
 
         if isinstance(value, Parameter):
             if attr != value.var:
                 raise ValueError(
                     f"Mismatch between parameter var {value.var} and attribute to be set {attr}."
                 )
-            if source is not None:
+            if source is not False:
                 value.source = source
             if allow_new:
                 _dict[attr] = value
