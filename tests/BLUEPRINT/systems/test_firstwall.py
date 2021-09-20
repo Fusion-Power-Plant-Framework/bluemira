@@ -95,6 +95,7 @@ def firstwall_dn_inputs():
         "vv_inner": vessel,
         "strike_pts_from_koz": False,
         "pick_flux_from_psinorm": False,
+        "DEMO_DN": True,
     }
     return inputs
 
@@ -289,14 +290,17 @@ class TestFirstWallDN:
         flux_loops = self.firstwall.pick_flux_loops()
         inner_strike, outer_strike = self.firstwall.find_strike_points(flux_loops)
         tangent = self.firstwall.get_tangent_vector(outer_strike, flux_loops[0])
-        tar_out = self.firstwall.make_divertor_outer_target(outer_strike, tangent)
+        tar_out = self.firstwall.make_divertor_target(outer_strike, tangent)
         assert tar_out[0][0] > self.firstwall.points["x_point"]["x"]
         assert tar_out[0][0] < tar_out[1][0]
 
     def test_make_divertor_inner_target(self):
         flux_loops = self.firstwall.pick_flux_loops()
         inner_strike, outer_strike = self.firstwall.find_strike_points(flux_loops)
-        tar_in = self.firstwall.make_divertor_inner_target(inner_strike)
+        tangent = self.firstwall.get_tangent_vector(inner_strike, flux_loops[1])
+        tar_in = self.firstwall.make_divertor_target(
+            inner_strike, tangent, vertical_target=False, outer_target=False
+        )
         assert tar_in[0][0] < self.firstwall.points["x_point"]["x"]
         assert tar_in[0][0] > tar_in[1][0]
 
@@ -327,9 +331,14 @@ class TestFirstWallDN:
         # Get the inner/outer target end points
         flux_loops = self.firstwall.pick_flux_loops()
         inner_strike, outer_strike = self.firstwall.find_strike_points(flux_loops)
-        tangent = self.firstwall.get_tangent_vector(outer_strike, flux_loops[0])
-        tar_in = self.firstwall.make_divertor_inner_target(inner_strike)
-        tar_out = self.firstwall.make_divertor_outer_target(outer_strike, tangent)
+        tangent_out = self.firstwall.get_tangent_vector(outer_strike, flux_loops[0])
+        tar_out = self.firstwall.make_divertor_target(
+            outer_strike, tangent_out, vertical_target=False, outer_target=True
+        )
+        tangent_in = self.firstwall.get_tangent_vector(inner_strike, flux_loops[1])
+        tar_in = self.firstwall.make_divertor_target(
+            inner_strike, tangent_in, vertical_target=False, outer_target=False
+        )
         # Get the minimum and maximum x,z
         max_x = round(tar_out[1][0], 5)
         min_x = round(tar_in[1][0], 5)
