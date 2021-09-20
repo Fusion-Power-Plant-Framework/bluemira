@@ -2174,7 +2174,7 @@ class FirstWallDN(FirstWall):
         ["fw_lambda_q_near_imp", "Lambda_q near SOL imp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_imp", "Lambda_q far SOL imp", 0.1, "m", None, "Input"],
         ["dr_near_omp", "fs thickness near SOL", 0.001, "m", None, "Input"],
-        ["dr_far_omp", "fs thickness far SOL", 0.005, "m", None, "Input"],
+        ["dr_far_omp", "fs thickness far SOL", 0.003, "m", None, "Input"],
         ["f_lfs_lower_target", "Power fraction lfs lower", 0.5, "N/A", None, "Input"],
         ["f_lfs_upper_target", "Power fraction lfs upper", 0.5, "N/A", None, "Input"],
         ["f_hfs_lower_target", "Power fraction hfs lower", 0.5, "N/A", None, "Input"],
@@ -2195,8 +2195,8 @@ class FirstWallDN(FirstWall):
         ["theta_inner_target",
          "Angle between flux line tangent at inner strike point and SOL side of inner target",
          30, "deg", None, "Input"],
-        ["tk_inner_target_sol", "Inner target length SOL side", 0.2, "m", None, "Input"],
-        ["tk_inner_target_pfr", "Inner target length PFR side", 0.2, "m", None, "Input"],
+        ["inner_target_sol", "Inner target length SOL side", 0.2, "m", None, "Input"],
+        ["inner_target_pfr", "Inner target length PFR side", 0.2, "m", None, "Input"],
         ["xpt_height", "x-point vertical_gap", 0.4, "m", None, "Input"],
     ]
     # fmt: on
@@ -2358,54 +2358,49 @@ class FirstWallDN(FirstWall):
         The divertor target is a straight line
         """
         # If statement to set the function
-        # either for the outer target (if) or the inner target (else)
+        # either for the outer target or the inner target
         if outer_target:
             sign = 1
             theta_target = self.params.theta_outer_target
-            target_length_pfr = self.params.tk_outer_target_pfr
-            target_length_sol = self.params.tk_outer_target_sol
-        else:
+            target_length_pfr = self.params.outer_target_pfr
+            target_length_sol = self.params.outer_target_sol
+        elif outer_target is False:
             sign = -1
             theta_target = self.params.theta_inner_target
-            target_length_pfr = self.params.tk_inner_target_pfr
-            target_length_sol = self.params.tk_inner_target_sol
+            target_length_pfr = self.params.inner_target_pfr
+            target_length_sol = self.params.inner_target_sol
 
         # Rotate tangent vector to appropriate flux loop to obtain
         # a vector parallel to the outer target
-
-        # if horizontal target
-        if not vertical_target:
+        if vertical_target is False:
             target_par = rotate_vector_2d(tangent, np.radians(theta_target * sign))
-        # if vertical target
-        else:
+        elif vertical_target is True:
             target_par = rotate_vector_2d(tangent, np.radians(-theta_target * sign))
 
         # Create relative vectors whose length will be the offset distance
         # from the strike point
-        pfr_target_end = -target_par * target_length_pfr * sign
-        sol_target_end = target_par * target_length_sol * sign
+        target_int = -target_par * target_length_pfr * sign
+        target_ext = target_par * target_length_sol * sign
 
         # Swap if we got the wrong way round
         if outer_target:
-            swap_points = sol_target_end[0] < pfr_target_end[0]
-        # for the inner target
-        else:
-            swap_points = (
-                not vertical_target and sol_target_end[0] > pfr_target_end[0]
-            ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
-
-        if swap_points:
-            tmp = pfr_target_end
-            pfr_target_end = sol_target_end
-            sol_target_end = tmp
+            if target_ext[0] < target_int[0]:
+                tmp = target_int
+                target_int = target_ext
+                target_ext = tmp
+        elif outer_target is False:
+            if vertical_target is False and target_ext[0] > target_int[0]:
+                tmp = target_int
+                target_int = target_ext
+                target_ext = tmp
 
         # Add the strike point to diffs to get the absolute positions
         # of the end points of the target
-        pfr_target_end = pfr_target_end + strike_point
-        sol_target_end = sol_target_end + strike_point
+        target_internal_point = target_int + strike_point
+        target_external_point = target_ext + strike_point
 
         # Return end points
-        return (pfr_target_end, sol_target_end)
+        return (target_internal_point, target_external_point)
 
     def get_tangent_vector(self, point_on_loop, loop):
         """
@@ -2511,23 +2506,16 @@ class FirstWallDN(FirstWall):
             outer_target_internal_point,
             outer_target_external_point,
         ) = self.make_divertor_target(
-            outer_strike,
-            tangent,
-            vertical_target=self.inputs["div_vertical_outer_target"],
-            outer_target=True,
+            outer_strike, tangent, vertical_target=False, outer_target=True
         )
 
         # Select the degree of the fitting polynomial and
         # the flux lines that will guide the divertor leg shape
-        if self.inputs.get("DEMO_DN", False):
-            degree_in = degree_out = self.inputs.get(
-                "outer_leg_sol_polyfit_degree",
-                self.inputs.get("outer_leg_pfr_polyfit_degree", 1),
-            )
+        if "DEMO_DN" in self.inputs:
+            degree = 1
             outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
         else:
-            degree_out = self.inputs.get("outer_leg_sol_polyfit_degree", 3)
-            degree_in = self.inputs.get("outer_leg_pfr_polyfit_degree", 3)
+            degree = 3
             outer_leg_external_guide_line = self.flux_surface_lfs[-1]
             outer_leg_internal_guide_line = flux_loop
 
@@ -2559,7 +2547,7 @@ class FirstWallDN(FirstWall):
             internal_guide_line.z,
             [middle_point[0], middle_point[1]],
             outer_target_internal_point,
-            degree_in,
+            degree,
         )
 
         # Modify the clipped flux line curve to start at the top point of the
@@ -2569,7 +2557,7 @@ class FirstWallDN(FirstWall):
             external_guide_line.z,
             [div_top_right, z_x_point],
             outer_target_external_point,
-            degree_out,
+            degree,
         )
 
         # Connect the inner and outer parts of the outer leg
@@ -2606,20 +2594,12 @@ class FirstWallDN(FirstWall):
         # Find the tangent to the approriate flux loop at the outer strike point
         tangent = self.get_tangent_vector(inner_strike, flux_loop)
 
-        if self.inputs.get("DEMO_DN", False):
-            degree = self.inputs.get("inner_leg_polyfit_degree", 1)
-        else:
-            degree = self.inputs.get("inner_leg_polyfit_degree", 2)
-
         # Get the outer target points
         (
             inner_target_internal_point,
             inner_target_external_point,
         ) = self.make_divertor_target(
-            inner_strike,
-            tangent,
-            vertical_target=self.inputs["div_vertical_inner_target"],
-            outer_target=False,
+            inner_strike, tangent, vertical_target=False, outer_target=False
         )
 
         # Select those points along the given flux line below the X point
@@ -2656,7 +2636,7 @@ class FirstWallDN(FirstWall):
             inner_leg_central_guide_line.z,
             [middle_point[0], middle_point[1]],
             inner_target_internal_point,
-            degree,
+            2,
         )
 
         # Modify the clipped flux line curve to start at the top point of the
@@ -2666,7 +2646,7 @@ class FirstWallDN(FirstWall):
             inner_leg_central_guide_line.z,
             [div_top_left, z_x_point],
             inner_target_external_point,
-            degree,
+            2,
         )
 
         # Connect the inner and outer parts of the outer leg
