@@ -214,7 +214,7 @@ class TestParameter:
 
         assert len(caplog.messages) == 0
 
-    def test_source_warning_Init_update(self, caplog):
+    def test_source_warning_init_update(self, caplog):
         warning_str = "The source of the value of p not consistently known"
         p = Parameter("p", "param", 1.0, source="Input")
 
