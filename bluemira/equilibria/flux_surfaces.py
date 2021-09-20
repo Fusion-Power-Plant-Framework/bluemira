@@ -81,18 +81,30 @@ class FluxSurface:
 
     @property
     def x_start(self):
+        """
+        Start radial coordinate of the FluxSurface.
+        """
         return self.loop.x[0]
 
     @property
     def z_start(self):
+        """
+        Start vertical coordinate of the FluxSurface.
+        """
         return self.loop.z[0]
 
     @property
     def x_end(self):
+        """
+        End radial coordinate of the FluxSurface.
+        """
         return self.loop.x[-1]
 
     @property
     def z_end(self):
+        """
+        End vertical coordinate of the FluxSurface.
+        """
         return self.loop.z[-1]
 
     def connection_length(self, eq):
