@@ -174,8 +174,6 @@ class ClosedFluxSurface(FluxSurface):
     Utility class for closed flux surfaces.
     """
 
-    __slots__ = []
-
     def __init__(self, geometry):
         if not geometry.closed:
             raise FluxSurfaceError(
@@ -281,7 +279,9 @@ class ClosedFluxSurface(FluxSurface):
         """
         x, z = self.loop.x, self.loop.z
         dx, dz = np.diff(x), np.diff(z)
-        r, _ = cartesian_to_polar(x[:-1] + dx, z[:-1] + dz, np.average(x), np.average(z))
+        r, _ = cartesian_to_polar(
+            x[:-1] + dx, z[:-1] + dz, self.major_radius, self.loop.centroid[1]
+        )
         return np.sum(self._dl(eq) * r / (x[:-1] + dx)) / (2 * np.pi)
 
 
@@ -290,7 +290,7 @@ class OpenFluxSurface(FluxSurface):
     Utility class for handling open flux surface geometries.
     """
 
-    __slots__ = ["alpha"]
+    __slots__ = []
 
     def __init__(self, loop):
         if loop.closed:
@@ -299,18 +299,77 @@ class OpenFluxSurface(FluxSurface):
             )
         super().__init__(loop)
 
-        # Constructors
-        self.alpha = None
+    def split(self, plane, o_point):
+        """
+        Split an OpenFluxSurface into two separate PartialOpenFluxSurfaces about a
+        horizontal plane.
 
-    def flux_expansion(self):
-        pass
+        Parameters
+        ----------
+        flux_surface: OpenFluxSurface
+            The open flux surface to split into two
+        plane: Plane
+            The x-y cutting plane
+        o_point: O-point
+            The magnetic centre of the plasma
+
+        Returns
+        -------
+        down, up: Iterable[OpenFluxSurface]
+            The downwards and upwards open flux surfaces from the splitting point
+        """
+
+        def reset_direction(loop):
+            if loop.argmin([x_mp, z_mp]) != 0:
+                loop.reverse()
+            return loop
+
+        ref_loop = self.loop.copy()
+        intersections = loop_plane_intersect(ref_loop, plane)
+        x_inter = intersections.T[0]
+
+        # Pick the first intersection, travelling from the o_point outwards
+        deltas = x_inter - o_point.x
+        arg_inter = np.argmax(deltas > 0)
+        x_mp = x_inter[arg_inter]
+        z_mp = o_point.z
+
+        # Split the flux surface geometry into LFS and HFS geometries
+
+        delta = 1e-1 if o_point.x < x_mp else -1e-1
+        radial_line = Loop(x=[o_point.x, x_mp + delta], z=[z_mp, z_mp])
+        # Add the intersection point to the loop
+        arg_inter = join_intersect(ref_loop, radial_line, get_arg=True)[0]
+
+        # Split the flux surface geometry
+        loop1 = Loop.from_array(ref_loop[: arg_inter + 1])
+        loop2 = Loop.from_array(ref_loop[arg_inter:])
+
+        loop1 = reset_direction(loop1)
+        loop2 = reset_direction(loop2)
+
+        # Sort the segments into down / outboard and up / inboard geometries
+        if loop1.z[1] > z_mp:
+            lfs_loop = loop2
+            hfs_loop = loop1
+        else:
+            lfs_loop = loop1
+            hfs_loop = loop2
+        return PartialOpenFluxSurface(lfs_loop), PartialOpenFluxSurface(hfs_loop)
 
 
 class PartialOpenFluxSurface(OpenFluxSurface):
     """
     Utility class for a partial open flux surface, i.e. an open flux surface that has
-    been split at the midplane.
+    been split at the midplane and only has one intersection with the wall.
     """
+
+    __slots__ = ["alpha"]
+
+    def __init__(self, loop):
+        super().__init__(loop)
+
+        self.alpha = None
 
     def clip(self, first_wall):
         """
@@ -346,83 +405,55 @@ class PartialOpenFluxSurface(OpenFluxSurface):
             self.loop[-2], self.loop[-1], first_wall[fw_arg]
         )
 
+    def flux_expansion(self, eq):
+        """
+        Flux expansion of the PartialOpenFluxSurface.
 
-class FLT:
-    def __init__(self, eq):
+        Parameters
+        ----------
+        eq: Equilibrium
+            Equilibrium with which to calculate the flux expansion
+
+        Returns
+        -------
+        f_x: float
+            Target flux expansion
+        """
+        return (
+            self.x_start
+            * eq.Bp(self.x_start, self.z_start)
+            / (self.x_end * eq.Bp(self.x_end, self.z_end))
+        )
+
+
+class FieldLineTracer:
+    def __init__(self, eq, first_wall=None):
         self.eq = eq
+        if first_wall is None:
+            first_wall = self.eq.grid
+        self.first_wall = first_wall
 
-    def d_phi_dt(self, xz, angles):
-        Bx = self.eq.Bx(*xz[:2])
-        Bz = self.eq.Bz(*xz[:2])
-        Bt = self.eq.Bt(xz[0])
-        B = np.sqrt(Bx ** 2 + Bz ** 2 + Bt ** 2)
-        return xz[0] / Bt * np.array([Bx, Bz, B])
+    def _d_phi_dt(self, xz, phi, forward):
+        f = 1.0 if forward is True else -1.0
+        if self.first_wall.point_inside(*xz[:2]):  # point_in_poly
+            Bx = self.eq.Bx(*xz[:2])
+            Bz = self.eq.Bz(*xz[:2])
+            Bt = self.eq.Bt(xz[0])
+            B = np.sqrt(Bx ** 2 + Bz ** 2 + Bt ** 2)
+            dx, dz, dl = xz[0] / Bt * np.array([f * Bx, f * Bz, B])
+        else:
+            dx, dz, dl = np.zeros(3)
+        return dx, dz, dl
 
-    def trace_fl(self, x, z, n_points=100):
-        angles = np.linspace(0, 20 * 2 * np.pi, n_points)
-        result = odeint(self.d_phi_dt, np.array([x, z, 0]), angles)
+    def trace_field_line(self, x, z, n_points=100, forward=True):
+        phi = np.linspace(0, 2 * 2 * np.pi, n_points)
+        result = odeint(self._d_phi_dt, np.array([x, z, 0]), phi, args=(forward,))
         return result.T
 
 
-def flux_expansion(eq, x1, z1, x2, z2):
-    return x1 * eq.Bp(x1, z1) / (x2 * eq.Bp(x2, z2))
-
-
-def split_flux_surface(flux_surface, plane, o_point):
-    """
-    Split an OpenFluxSurface into two separate OpenFluxSurfaces.
-
-    Parameters
-    ----------
-    flux_surface: OpenFluxSurface
-        The open flux surface to split into two
-    plane: Plane
-        The x-y cutting plane
-    o_point: O-point
-        The magnetic centre of the plasma
-
-    Returns
-    -------
-    down, up: Iterable[OpenFluxSurface]
-        The downwards and upwards open flux surfaces from the splitting point
-    """
-    if not isinstance(flux_surface, OpenFluxSurface):
-        raise FluxSurfaceError("Can only split an OpenFluxSurface.")
-
-    def reset_direction(loop):
-        if loop.argmin([x_mp, z_mp]) != 0:
-            loop.reverse()
-        return loop
-
-    ref_loop = flux_surface.loop.copy()
-    intersections = loop_plane_intersect(ref_loop, plane)
-    x_inter = intersections.T[0]
-
-    # Pick the first intersection, travelling from the o_point outwards
-    deltas = x_inter - o_point.x
-    arg_inter = np.argmax(deltas > 0)
-    x_mp = x_inter[arg_inter]
-    z_mp = o_point.z
-
-    # Split the flux surface geometry into LFS and HFS geometries
-
-    delta = 1e-1 if o_point.x < x_mp else -1e-1
-    radial_line = Loop(x=[o_point.x, x_mp + delta], z=[z_mp, z_mp])
-    # Add the intersection point to the loop
-    arg_inter = join_intersect(ref_loop, radial_line, get_arg=True)[0]
-
-    # Split the flux surface geometry
-    loop1 = Loop.from_array(ref_loop[: arg_inter + 1])
-    loop2 = Loop.from_array(ref_loop[arg_inter:])
-
-    loop1 = reset_direction(loop1)
-    loop2 = reset_direction(loop2)
-
-    # Sort the segments into down / outboard and up / inboard geometries
-    if loop1.z[1] > z_mp:
-        lfs_loop = loop2
-        hfs_loop = loop1
-    else:
-        lfs_loop = loop1
-        hfs_loop = loop2
-    return PartialOpenFluxSurface(lfs_loop), PartialOpenFluxSurface(hfs_loop)
+def estimate_field(x1, z1, Bp1, Bt1, x2, z2, Bp2, x15, z15):
+    dl = np.hypot(x2 - x1, z2 - z1)
+    dl15 = np.hypot(x15 - x1, z15 - z1)
+    Bt15 = Bt1 * x1 / x15
+    Bp15 = Bp1 + dl15 / dl * (Bp2 - Bp1)
+    return Bp15, Bt15
