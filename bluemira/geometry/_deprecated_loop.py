@@ -146,7 +146,7 @@ class Loop(GeomBase):
         return cls(x=x, y=y, z=z)
 
     @classmethod
-    def from_array(cls, xyz_array):
+    def from_array(cls, xyz_array, enforce_ccw=True):
         """
         Initialise a Loop object from a numpy array.
 
@@ -157,7 +157,7 @@ class Loop(GeomBase):
         """
         if xyz_array.shape[0] != 3:
             raise GeometryError("Need a (3, n) shape coordinate array.")
-        return cls(*xyz_array)
+        return cls(*xyz_array, enforce_ccw=enforce_ccw)
 
     # =========================================================================
     # Conversions

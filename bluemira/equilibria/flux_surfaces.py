@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 from functools import cached_property
 from scipy.integrate import odeint
 
+from bluemira.utilities.tools import cartesian_to_polar
 from bluemira.geometry._deprecated_tools import (
     get_angle_between_points,
     loop_plane_intersect,
@@ -69,6 +70,20 @@ def connection_length(x, z, Bp, Bt):
     return np.sum(dl)
 
 
+def safety_factor(x, z, Bp, Bt):
+    """
+    s
+    """
+    dx = np.diff(x)
+    dz = np.diff(z)
+    Bp = 0.5 * (Bp[1:] + Bp[:-1])
+    Bt = 0.5 * (Bt[1:] + Bt[:-1])
+    B_ratio = Bt / Bp
+    r, _ = cartesian_to_polar(x[:-1] + dx, z[:-1] + dz, np.average(x), np.average(z))
+    dl = np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
+    return np.sum(dl * r / (x[:-1] + dx)) / (2 * np.pi)
+
+
 class FluxSurface:
     """
     Flux surface base class.
@@ -107,6 +122,17 @@ class FluxSurface:
         """
         return self.loop.z[-1]
 
+    def _dl(self, eq):
+        x, z = self.loop.x, self.loop.z
+        Bp = eq.Bp(x, z)
+        Bt = eq.Bt(x)
+        dx = np.diff(x)
+        dz = np.diff(z)
+        Bp = 0.5 * (Bp[1:] + Bp[:-1])
+        Bt = 0.5 * (Bt[1:] + Bt[:-1])
+        B_ratio = Bt / Bp
+        return np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
+
     def connection_length(self, eq):
         """
         Calculate the parallel connection length along a field line (i.e. flux surface).
@@ -122,9 +148,7 @@ class FluxSurface:
             Connection length from the start of the flux surface to the end of the flux
             surface
         """
-        Bp = eq.Bp(self.loop.x, self.loop.z)
-        Bt = eq.Bt(self.loop.x)
-        return connection_length(self.loop.x, self.loop.z, Bp, Bt)
+        return np.sum(self._dl(eq))
 
     def plot(self, ax=None, **kwargs):
         """
@@ -149,6 +173,8 @@ class ClosedFluxSurface(FluxSurface):
     """
     Utility class for closed flux surfaces.
     """
+
+    __slots__ = []
 
     def __init__(self, geometry):
         if not geometry.closed:
@@ -253,7 +279,10 @@ class ClosedFluxSurface(FluxSurface):
         q: float
             Cylindrical safety factor of the closed flux surface
         """
-        return self.connection_length(eq) / self.loop.length
+        x, z = self.loop.x, self.loop.z
+        dx, dz = np.diff(x), np.diff(z)
+        r, _ = cartesian_to_polar(x[:-1] + dx, z[:-1] + dz, np.average(x), np.average(z))
+        return np.sum(self._dl(eq) * r / (x[:-1] + dx)) / (2 * np.pi)
 
 
 class OpenFluxSurface(FluxSurface):
@@ -276,9 +305,16 @@ class OpenFluxSurface(FluxSurface):
     def flux_expansion(self):
         pass
 
+
+class PartialOpenFluxSurface(OpenFluxSurface):
+    """
+    Utility class for a partial open flux surface, i.e. an open flux surface that has
+    been split at the midplane.
+    """
+
     def clip(self, first_wall):
         """
-        Clip the LFS and HFS geometries to a first wall.
+        Clip the PartialOpenFluxSurface to a first wall.
 
         Parameters
         ----------
@@ -291,8 +327,8 @@ class OpenFluxSurface(FluxSurface):
 
         # Because we oriented the loop the "right" way, the first intersection
         # is at the smallest argument
-        loop = Loop.from_array(self.loop[: min(args) + 1])
-        self.loop = self._reset_direction(loop)
+        self.loop = Loop.from_array(self.loop[: min(args) + 1], enforce_ccw=False)
+        # self.loop = self._reset_direction(loop)
 
         fw_arg = int(first_wall.argmin([self.x_end, self.z_end]))
 
@@ -306,28 +342,16 @@ class OpenFluxSurface(FluxSurface):
             fw_arg = fw_arg + 1
 
         # Relying on the fact that first wall is ccw, get the intersection angle
-        self.alpha = get_angle_between_points(loop[-2], loop[-1], first_wall[fw_arg])
-
-
-def connection_length_sm(eq, x, z):
-    dx = x[:-1] - x[1:]
-    dz = z[:-1] - z[1:]
-    x_mp = x[:-1] + 0.5 * dx
-    z_mp = z[:-1] + 0.5 * dz
-    Bx = eq.Bx(x_mp, z_mp)
-    Bz = eq.Bz(x_mp, z_mp)
-    Bt = eq.Bt(x_mp)
-    dtheta = np.hypot(dx, dz)
-    dphi = Bt / np.hypot(Bx, Bz) * dtheta / x_mp
-    dl = dphi * np.sqrt((dx / dphi) ** 2 + (dz / dphi) ** 2 + (x[:-1] + 0.5 * dx) ** 2)
-    return np.sum(dl)
+        self.alpha = get_angle_between_points(
+            self.loop[-2], self.loop[-1], first_wall[fw_arg]
+        )
 
 
 class FLT:
     def __init__(self, eq):
         self.eq = eq
 
-    def dy_dt(self, xz, angles):
+    def d_phi_dt(self, xz, angles):
         Bx = self.eq.Bx(*xz[:2])
         Bz = self.eq.Bz(*xz[:2])
         Bt = self.eq.Bt(xz[0])
@@ -336,7 +360,7 @@ class FLT:
 
     def trace_fl(self, x, z, n_points=100):
         angles = np.linspace(0, 20 * 2 * np.pi, n_points)
-        result = odeint(self.dy_dt, np.array([x, z, 0]), angles)
+        result = odeint(self.d_phi_dt, np.array([x, z, 0]), angles)
         return result.T
 
 
@@ -365,8 +389,8 @@ def split_flux_surface(flux_surface, plane, o_point):
     if not isinstance(flux_surface, OpenFluxSurface):
         raise FluxSurfaceError("Can only split an OpenFluxSurface.")
 
-    def reset_direction(self, loop):
-        if loop.argmin([self.x_mp, self.z_mp]) != 0:
+    def reset_direction(loop):
+        if loop.argmin([x_mp, z_mp]) != 0:
             loop.reverse()
         return loop
 
@@ -401,4 +425,4 @@ def split_flux_surface(flux_surface, plane, o_point):
     else:
         lfs_loop = loop1
         hfs_loop = loop2
-    return OpenFluxSurface(lfs_loop), OpenFluxSurface(hfs_loop)
+    return PartialOpenFluxSurface(lfs_loop), PartialOpenFluxSurface(hfs_loop)
