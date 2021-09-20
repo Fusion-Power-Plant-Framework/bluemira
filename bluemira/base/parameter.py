@@ -567,7 +567,7 @@ class ParameterFrame:
         param
             Modified Parameter
         """
-        if source is not None:
+        if source is not False:
             if isinstance(param, list):
                 # + 1 because 'value' isn't in __slots__
                 param[Parameter.__slots__.index("_source") + 1] = source
@@ -579,7 +579,7 @@ class ParameterFrame:
                 param = (param, source)
         return param
 
-    def _force_update_default(self, attr, value, source=None):
+    def _force_update_default(self, attr, value, source=False):
         """
         Force update a default Parameter.
 
@@ -727,7 +727,7 @@ class ParameterFrame:
             defaults=self.__defaults_setting,
         )
 
-    def add_parameters(self, record_list, source=None):
+    def add_parameters(self, record_list, source=False):
         """
         Handles a record_list for ParameterFrames and updates accordingly.
         Items in record_list may be Parameter objects or lists in the following format:
@@ -754,7 +754,7 @@ class ParameterFrame:
                 else:
                     self.add_parameter(*self.modify_source(source, param))
 
-    def set_parameter(self, var, value, source=None):
+    def set_parameter(self, var, value, source=False):
         """
         Updates only the value of a parameter in the ParameterFrame
 
@@ -770,7 +770,7 @@ class ParameterFrame:
         """
         self.__setattr__(var, self.modify_source(source, value))
 
-    def update_kw_parameters(self, kwargs, source=None):
+    def update_kw_parameters(self, kwargs, source=False):
         """
         Handles dictionary keys like update
 
@@ -798,10 +798,10 @@ class ParameterFrame:
                 # Skip keys that aren't parameters, note this could mask typos!
                 continue
             if isinstance(var, dict):
-                src = var.get("source") if source is None else source
+                src = var.get("source") if source is False else source
                 var = var.get("value")
             elif isinstance(var, Parameter):
-                src = var.source if source is None else source
+                src = var.source if source is False else source
                 var = var.value
             else:
                 src = source
