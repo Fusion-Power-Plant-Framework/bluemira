@@ -34,7 +34,9 @@ from json.encoder import _make_iterencode
 import nlopt
 import re
 from json import JSONEncoder
-from collections import OrderedDict, Mapping, Iterable
+from collections import OrderedDict
+from collections.abc import Mapping, Iterable
+from typing import List, Union
 from unittest.mock import patch
 
 from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
@@ -748,7 +750,7 @@ def _split_rule(rule):
     return re.split("([<>=]+)", rule)
 
 
-def nested_dict_search(odict, rules: "['z>0', '5<x<7']"):  # noqa (F821)
+def nested_dict_search(odict, rules: Union[str, List[str]]):
     """
     Returns sub-set of nested dictionary which meet str rules for keys in each
     sub-dict.
