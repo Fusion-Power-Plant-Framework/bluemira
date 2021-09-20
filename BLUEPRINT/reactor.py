@@ -113,6 +113,8 @@ from BLUEPRINT.systems.physicstoolbox import (
 from BLUEPRINT.systems.plotting import ReactorPlotter
 from BLUEPRINT.utilities.colortools import force_rgb
 
+from BLUEPRINT.codes import run_transport_code
+
 
 class Reactor(ReactorSystem):
     """
@@ -278,6 +280,12 @@ class Reactor(ReactorSystem):
 
         self.specify_palette(BLUE)
         bluemira_print(f"Reactor designed in {time()-tic:.1f} seconds.")
+
+    def run_transport_code(self):
+        """
+        TODO docs
+        """
+        self.transport_run = run_transport_code(self)
 
     def run_systems_code(self):
         """

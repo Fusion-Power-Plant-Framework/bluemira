@@ -45,6 +45,14 @@ install_requires = [  # PYL = Version limited by python version
     "wrapt",  # 1.12.1
 ]
 
+jetto = [
+    "jetto-pythontools @git+https://github.com/jintrac/jetto-pythontools.git",
+]
+
+jetto_pr = [
+    "prominence",
+]
+
 openmoc = [
     "OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b",
 ]
@@ -83,6 +91,8 @@ dev_requires = [
 
 extras_require = {
     "dev": dev_requires,
+    "jetto_prominence": jetto_pr + jetto,
+    "jetto": jetto,
     "process": process,
     "openmoc": openmoc,
     "openmc": openmc,
