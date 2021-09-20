@@ -557,7 +557,14 @@ class TestParameterFrame:
         params_copy.R_0 = 60.0
         params_copy.B_0 = 0.0
         params_copy.set_values_from_json(j)
-        assert self.params == params_copy
+        assert params_copy == self.params
+
+        # Check we can set a new source from the json update
+        params_copy.set_values_from_json(j, source="New Values")
+        assert params_copy != self.params
+        assert params_copy.items() == self.params.items()
+        for key in self.params.keys():
+            assert params_copy.get_param(key).source == "New Values"
 
     def test_set_values_from_json_file(self, tmpdir):
         json_path = tmpdir.join("concise.json")
@@ -567,6 +574,13 @@ class TestParameterFrame:
         params_copy.B_0 = 0.0
         params_copy.set_values_from_json(json_path)
         assert self.params == params_copy
+
+        # Check we can set a new source from the json update
+        params_copy.set_values_from_json(json_path, source="New Values")
+        assert params_copy != self.params
+        assert params_copy.items() == self.params.items()
+        for key in self.params.keys():
+            assert params_copy.get_param(key).source == "New Values"
 
     def test_to_from_verbose_json_file_validation(self, tmpdir):
         json_path = tmpdir.join("concise_invalid.json")

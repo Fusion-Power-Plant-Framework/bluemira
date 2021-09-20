@@ -1203,7 +1203,7 @@ class ParameterFrame:
                 )
             return cls.from_dict(the_data)
 
-    def set_values_from_json(self, data: str):
+    def set_values_from_json(self, data: str, source="Input"):
         """
         Set the parameter values from the JSON data.
 
@@ -1217,7 +1217,7 @@ class ParameterFrame:
         """
         if os.path.isfile(data):
             with open(data, "r") as fh:
-                self.set_values_from_json(fh.read())
+                self.set_values_from_json(fh.read(), source=source)
                 return self
         else:
             the_data = json.loads(data)
@@ -1228,7 +1228,7 @@ class ParameterFrame:
                 raise ValueError(
                     f"Setting the values on a {self.__class__.__name__} using set_values_from_json requires a concise json format."
                 )
-            self.update_kw_parameters(the_data, source="Input")
+            self.update_kw_parameters(the_data, source=source)
 
     def diff_params(self, other: "ParameterFrame", include_new=False):
         """
