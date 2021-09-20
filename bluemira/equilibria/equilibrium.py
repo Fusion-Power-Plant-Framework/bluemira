@@ -44,6 +44,7 @@ from bluemira.equilibria.find import (
     in_zone,
     in_plasma,
 )
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface, analyse_plasma_core
 from bluemira.equilibria.physics import (
     calc_psi_norm,
     calc_q,
@@ -1367,28 +1368,6 @@ class Equilibrium(MHDState):
                 count += 1
         return np.min(d_x) - lfp[0]
 
-    def calc_shaf_shift(self, R_0=None, Z_0=None):
-        """
-        Calculate the Shafranov shift vector (from the geometric centre to the
-        magnetic axis).
-
-        Returns
-        -------
-        shaf: [float, float]
-            The Shafranov shift vector [dx, dz] [m]
-        """
-        opoint = self.get_OX_points()[0][0]  # magnetic axis
-        if R_0 is None and Z_0 is None:
-            lcfs = self.get_LCFS()
-            au = np.argmax(lcfs["z"])
-            al = np.argmin(lcfs["z"])
-            ai = np.argmin(lcfs["x"])
-            ao = np.argmax(lcfs["x"])
-            u, l, i, o = lcfs.d2.T[au], lcfs.d2.T[al], lcfs.d2.T[ai], lcfs.d2.T[ao]
-            R_0 = i[0] + (o[0] - i[0]) / 2
-            Z_0 = l[1] + (u[1] - l[1]) / 2
-        return [opoint.x - R_0, opoint.z - Z_0]
-
     def calc_li(self):
         """
         Calculate the normalised internal inductance of the plasma.
@@ -1412,173 +1391,51 @@ class Equilibrium(MHDState):
         j_0 = jfunc(opoint.x, opoint.z, grid=False)
         return calc_q0(opoint.x, b_0, j_0, psi_xx, psi_zz)
 
-    def _analyse_flux_surf(self, psi_n, psi=None):
-        """
-        Analyse shape parameters of plasma core at specified normalised flux.
-
-        Parameters
-        ----------
-        psi_n - Normalised psi value of flux surface 0<1
-
-        Returns
-        -------
-        R_0: float
-            Major radius [m]
-        A: float
-            Aspect ratio
-        a: float
-            Minor radius [m]
-        V: float
-            Volume [m^3]
-        kappa_u: float
-            Upper elongation
-        kappa_l: float
-            Lower elongation
-        delta_u: float
-            Upper triangularity
-        delta_l: float
-            Lower triangularity
-        """
-        if psi_n == 0:  # Handle linspace endpoint resolution here
-            psi_n += PSI_NORM_TOL
-        elif psi_n == 1:
-            psi_n -= PSI_NORM_TOL
-        elif psi_n < 0 or psi_n > 1:
-            raise ValueError(f"Specify a psi_n value between 0 and 1: {psi_n}" "is not.")
-        if psi is None:
-            psi = self.psi()
-        lcfs = self.get_flux_surface(psi_n, psi=psi)
-        op, _ = self.get_OX_points(psi=psi)
-        au = np.argmax(lcfs["z"])
-        al = np.argmin(lcfs["z"])
-        ai = np.argmin(lcfs["x"])
-        ao = np.argmax(lcfs["x"])
-        u, l, i, o = lcfs.d2.T[au], lcfs.d2.T[al], lcfs.d2.T[ai], lcfs.d2.T[ao]
-        R_0 = i[0] + (o[0] - i[0]) / 2
-        volume = lcfs.area * 2 * np.pi * R_0
-        c = op[0]
-        plasma_a = (o[0] - i[0]) / 2
-        A = R_0 / plasma_a
-        kappa_u = (u[1] - c[1]) / plasma_a
-        kappa_l = abs(l[1] - c[1]) / plasma_a
-        delta_u = (i[0] + plasma_a - u[0]) / plasma_a
-        delta_l = (i[0] + plasma_a - l[0]) / plasma_a
-        return R_0, A, plasma_a, volume, kappa_u, kappa_l, delta_u, delta_l
-
-    def analyse_flux_surface(self, psi_n, psi=None):
-        """
-        Dictionary output version of a single flux surface analysis
-        """
-        (
-            R_0,
-            A,
-            a,
-            volume,
-            kappa_u,
-            kappa_l,
-            delta_u,
-            delta_l,
-        ) = self._analyse_flux_surf(psi_n, psi)
-        q = self.q(psi_n)
-        return {
-            "R_0": R_0,
-            "A": A,
-            "a": a,
-            "V": volume,
-            "q": q,
-            "kappa_u": kappa_u,
-            "kappa_l": kappa_l,
-            "delta_u": delta_u,
-            "delta_l": delta_l,
-        }
-
-    def analyse_separatrix(self, psi=None):
-        """
-        Analyse shape parameters of plasma separatrix.
-        """
-        return self.analyse_flux_surface(1, psi=psi)
-
-    def analyse_core(self, psi=None, n=50, plot=True, ax=None):
+    def analyse_core(self, n_points=50, plot=True, ax=None):
         """
         Analyse the shape and characteristics of the plasma core.
 
         Parameters
         ----------
-        psi: 2-D np.array (optional)
-            Magnetic flux map
-        n: int (optional)
+        n_points: Optional[int]
             Number of points in normalised psi space to analyse
 
         Returns
         -------
-        dict: dict
-            R_0: major radius of flux surface
-            A: aspect ratio of flux surface
-            a: minor radius of flux surface
-            V: volume inside flux surface
-            kappa_u: upper elongation of flux surface
-            kappa_l: lower elongation of flux surface
-            delta_u: upper triangularity of flux surface
-            delta_l: lower triangularity of flux surface
-            psi_n: normalised psi of flux surface
+        results: CoreResults
+            Result dataclass
         """
-        if psi is None:
-            psi = self.psi()
-        p = np.linspace(0, 1, n)
-        R_0 = np.zeros(n)
-        A = np.zeros(n)
-        a = np.zeros(n)
-        volume = np.zeros(n)
-        kappa_u = np.zeros(n)
-        kappa_l = np.zeros(n)
-        delta_u = np.zeros(n)
-        delta_l = np.zeros(n)
-        for i, v in enumerate(p):
-            (
-                R_0[i],
-                A[i],
-                a[i],
-                volume[i],
-                kappa_u[i],
-                kappa_l[i],
-                delta_u[i],
-                delta_l[i],
-            ) = self._analyse_flux_surf(v, psi)
-        q = self.q(p)
-        dictionary = {
-            "R_0": R_0,
-            "A": A,
-            "a": a,
-            "V": volume,
-            "kappa_u": kappa_u,
-            "kappa_l": kappa_l,
-            "delta_u": delta_u,
-            "delta_l": delta_l,
-            "q": q,
-            "psi_n": p,
-        }
+        results = analyse_plasma_core(self, n_points=n_points)
         if plot:
-            CorePlotter(dictionary, ax)
-        return dictionary
+            CorePlotter(results, ax)
+        return results
 
     def analyse_plasma(self):
         """
         Analyse the energetic and magnetic characteristics of the plasma.
         """
         d = calc_summary(self)
-        f95 = self.analyse_flux_surface(0.95)
-        f100 = self.analyse_flux_surface(1)
-        d["q_95"] = f95["q"]
-        d["kappa_95"] = f95["kappa_u"]
-        d["delta_95"] = f95["delta_u"]
-        d["kappa"] = f100["kappa_u"]
-        d["delta"] = f100["delta_u"]
-        d["R_0"] = f100["R_0"]
-        d["A"] = f100["A"]
-        d["a"] = f100["a"]
+        f95 = ClosedFluxSurface(self.get_flux_surface(0.95))
+        f100 = ClosedFluxSurface(self.get_LCFS())
+        d["q_95"] = f95.safety_factor(self)
+        if self.is_double_null:
+            d["kappa_95"] = f95.kappa
+            d["delta_95"] = f95.delta
+            d["kappa"] = f100.kappa
+            d["delta"] = f100.delta
+
+        else:
+            d["kappa_95"] = f95.kappa_upper
+            d["delta_95"] = f95.delta_upper
+            d["kappa"] = f100.kappa_upper
+            d["delta"] = f100.delta_upper
+
+        d["R_0"] = f100.major_radius
+        d["A"] = f100.aspect_ratio
+        d["a"] = f100.area
         # d['dXsep'] = self.calc_dXsep()
         d["Ip"] = self._Ip
-        d["shaf_shift"] = self.calc_shaf_shift(R_0=f100["R_0"], Z_0=0)
+        d["dx_shaf"], d["dz_shaf"] = f100.shafranov_shift(self)
         return d
 
     def analyse_coils(self):

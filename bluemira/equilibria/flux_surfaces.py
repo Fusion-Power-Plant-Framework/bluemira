@@ -23,10 +23,12 @@
 Flux surface utility classes and calculations
 """
 
+from dataclasses import dataclass
+from typing import Iterable
 from copy import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
-from functools import cached_property
+from functools import lru_cache
 from scipy.integrate import odeint
 
 from bluemira.utilities.tools import cartesian_to_polar
@@ -38,50 +40,7 @@ from bluemira.geometry._deprecated_tools import (
 )
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.error import FluxSurfaceError
-
-
-def connection_length(x, z, Bp, Bt):
-    """
-    Calculate the parallel connection length along a field line (i.e. flux surface).
-
-    Parameters
-    ----------
-    x: np.ndarray
-        Radial coordinates of a flux surface
-    z: np.ndarray
-        Vertical coordinates of a flux surface
-    Bp: np.ndarray
-        Poloidal field values at (x, z)
-    Bt: np.ndarray
-        Toroidal field values at (x, z)
-
-    Returns
-    -------
-    l_par: float
-        Connection length from the start of the flux surface to the end of the flux
-        surface
-    """
-    dx = np.diff(x)
-    dz = np.diff(z)
-    Bp = 0.5 * (Bp[1:] + Bp[:-1])
-    Bt = 0.5 * (Bt[1:] + Bt[:-1])
-    B_ratio = Bt / Bp
-    dl = np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
-    return np.sum(dl)
-
-
-def safety_factor(x, z, Bp, Bt):
-    """
-    s
-    """
-    dx = np.diff(x)
-    dz = np.diff(z)
-    Bp = 0.5 * (Bp[1:] + Bp[:-1])
-    Bt = 0.5 * (Bt[1:] + Bt[:-1])
-    B_ratio = Bt / Bp
-    r, _ = cartesian_to_polar(x[:-1] + dx, z[:-1] + dz, np.average(x), np.average(z))
-    dl = np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
-    return np.sum(dl * r / (x[:-1] + dx)) / (2 * np.pi)
+from bluemira.equilibria.constants import PSI_NORM_TOL
 
 
 class FluxSurface:
@@ -174,6 +133,8 @@ class ClosedFluxSurface(FluxSurface):
     Utility class for closed flux surfaces.
     """
 
+    __slots__ = []
+
     def __init__(self, geometry):
         if not geometry.closed:
             raise FluxSurfaceError(
@@ -181,56 +142,65 @@ class ClosedFluxSurface(FluxSurface):
             )
         super().__init__(geometry)
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def major_radius(self):
         """
         Major radius of the ClosedFluxSurface.
         """
+        # debatable... could also be x_min + 0.5 * (x_max - x_min)
         return self.loop.centroid[0]
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def minor_radius(self):
         """
         Minor radius of the ClosedFluxSurface.
         """
         return 0.5 * (np.max(self.loop.x) - np.min(self.loop.x))
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def aspect_ratio(self):
         """
         Aspect ratio of the ClosedFluxSurface.
         """
         return self.major_radius / self.minor_radius
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def kappa(self):
         """
         Average elongation of the ClosedFluxSurface.
         """
         return 0.5 * (self.kappa_upper + self.kappa_lower)
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def kappa_upper(self):
         """
         Upper elongation of the ClosedFluxSurface.
         """
         return (np.max(self.loop.z) - self.loop.centroid[1]) / self.minor_radius
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def kappa_lower(self):
         """
         Lower elongation of the ClosedFluxSurface.
         """
         return abs(np.max(self.loop.z) - self.loop.centroid[1]) / self.minor_radius
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def delta(self):
         """
         Average triangularity of the ClosedFluxSurface.
         """
         return 0.5 * (self.delta_upper + self.delta_lower)
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def delta_upper(self):
         """
         Upper triangularity of the ClosedFluxSurface.
@@ -239,7 +209,8 @@ class ClosedFluxSurface(FluxSurface):
         x_z_max = self.loop.x[arg_z_max]
         return (self.major_radius - x_z_max) / self.minor_radius
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def delta_lower(self):
         """
         Lower triangularity of the ClosedFluxSurface.
@@ -248,23 +219,44 @@ class ClosedFluxSurface(FluxSurface):
         x_z_min = self.loop.x[arg_z_min]
         return (self.major_radius - x_z_min) / self.minor_radius
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def area(self):
         """
         Enclosed area of the ClosedFluxSurface.
         """
         return self.loop.area
 
-    @cached_property
+    @property
+    @lru_cache(1)
     def volume(self):
         """
         Volume of the ClosedFluxSurface.
         """
         return 2 * np.pi * self.loop.area * self.loop.centroid[0]
 
+    def shafranov_shift(self, eq):
+        """
+        Calculate the Shafranov shift of the ClosedFluxSurface
+
+        Parameters
+        ----------
+        eq: Equilibrium
+            Equilibrium with which to calculate the safety factor
+
+        Returns
+        -------
+        dx_shaf: float
+            Radial Shafranov shift
+        dz_shaf: float
+            Vertical Shafranov shift
+        """
+        o_point = eq.get_OX_points()[0][0]  # magnetic axis
+        return o_point.x - self.major_radius, o_point.z - self.centroid[1]
+
     def safety_factor(self, eq):
         """
-        Calculate the cylindrical safety factor of a closed flux surface. The ratio of
+        Calculate the cylindrical safety factor of the ClosedFluxSurface. The ratio of
         toroidal turns to a single full poloidal turn.
 
         Parameters
@@ -426,12 +418,94 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         )
 
 
+def analyse_plasma_core(eq, n_points=50):
+
+    psi_n = np.linspace(PSI_NORM_TOL, 1 - PSI_NORM_TOL, n_points, endpoint=False)
+    loops = [eq.get_flux_surface(pn) for pn in psi_n]
+    loops.append(eq.get_LCFS())
+    flux_surfaces = [ClosedFluxSurface(loop) for loop in loops]
+    return CoreResults(
+        psi_n,
+        [fs.major_radius for fs in flux_surfaces],
+        [fs.minor_radius for fs in flux_surfaces],
+        [fs.aspect_ratio for fs in flux_surfaces],
+        [fs.area for fs in flux_surfaces],
+        [fs.volume for fs in flux_surfaces],
+        [fs.kappa for fs in flux_surfaces],
+        [fs.kappa_upper for fs in flux_surfaces],
+        [fs.kappa_lower for fs in flux_surfaces],
+        [fs.delta for fs in flux_surfaces],
+        [fs.delta_upper for fs in flux_surfaces],
+        [fs.delta_lower for fs in flux_surfaces],
+        [fs.safety_factor(eq) for fs in flux_surfaces],
+    )
+
+
+@dataclass
+class CoreResults:
+    psi_n: Iterable
+    R_0: Iterable
+    a: Iterable
+    A: Iterable
+    area: Iterable
+    V: Iterable
+    kappa: Iterable
+    kappa_upper: Iterable
+    kappa_lower: Iterable
+    delta: Iterable
+    delta_lower: Iterable
+    delta_upper: Iterable
+    q: Iterable
+
+
 class FieldLineTracer:
+    """
+    Field line tracing tool.
+    """
+
     def __init__(self, eq, first_wall=None):
+        """
+        Parameters
+        ----------
+        eq: Equilibrium
+            Equilibrium in which to trace a field line
+        first_wall: Union[Grid, Loop]
+            Boundary at which to stop tracing the field line
+        """
         self.eq = eq
         if first_wall is None:
             first_wall = self.eq.grid
         self.first_wall = first_wall
+
+    def trace_field_line(self, x, z, n_points=100, forward=True, n_turns_max=10):
+        """
+        Trace a single field line starting at a point.
+
+        Parameters
+        ----------
+        x: float
+            Radial coordinate of the starting point
+        z: float
+            Vertical coordinate of the starting point
+        n_points: int
+            Number of points along the field line
+        forward: bool
+            Whether or not to step forward or backward (+B or -B)
+        n_turns_max: Union[int, float]
+            Maximum number of toroidal turns to trace the field line
+
+        Returns
+        -------
+        x_fl: np.ndarray
+            Radial coordinates of the field line
+        z_fl: np.ndarray
+            Vertical coordiantes of the field line
+        dl: np.ndarray
+            Distance travelled along the field line
+        """
+        phi = np.linspace(0, n_turns_max * 2 * np.pi, n_points)
+        result = odeint(self._d_phi_dt, np.array([x, z, 0]), phi, args=(forward,))
+        return result.T
 
     def _d_phi_dt(self, xz, phi, forward):
         f = 1.0 if forward is True else -1.0
@@ -445,11 +519,6 @@ class FieldLineTracer:
             dx, dz, dl = np.zeros(3)
         return dx, dz, dl
 
-    def trace_field_line(self, x, z, n_points=100, forward=True):
-        phi = np.linspace(0, 2 * 2 * np.pi, n_points)
-        result = odeint(self._d_phi_dt, np.array([x, z, 0]), phi, args=(forward,))
-        return result.T
-
 
 def estimate_field(x1, z1, Bp1, Bt1, x2, z2, Bp2, x15, z15):
     dl = np.hypot(x2 - x1, z2 - z1)
@@ -457,3 +526,47 @@ def estimate_field(x1, z1, Bp1, Bt1, x2, z2, Bp2, x15, z15):
     Bt15 = Bt1 * x1 / x15
     Bp15 = Bp1 + dl15 / dl * (Bp2 - Bp1)
     return Bp15, Bt15
+
+
+def connection_length(x, z, Bp, Bt):
+    """
+    Calculate the parallel connection length along a field line (i.e. flux surface).
+
+    Parameters
+    ----------
+    x: np.ndarray
+        Radial coordinates of a flux surface
+    z: np.ndarray
+        Vertical coordinates of a flux surface
+    Bp: np.ndarray
+        Poloidal field values at (x, z)
+    Bt: np.ndarray
+        Toroidal field values at (x, z)
+
+    Returns
+    -------
+    l_par: float
+        Connection length from the start of the flux surface to the end of the flux
+        surface
+    """
+    dx = np.diff(x)
+    dz = np.diff(z)
+    Bp = 0.5 * (Bp[1:] + Bp[:-1])
+    Bt = 0.5 * (Bt[1:] + Bt[:-1])
+    B_ratio = Bt / Bp
+    dl = np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
+    return np.sum(dl)
+
+
+def safety_factor(x, z, Bp, Bt):
+    """
+    Safety factor draft
+    """
+    dx = np.diff(x)
+    dz = np.diff(z)
+    Bp = 0.5 * (Bp[1:] + Bp[:-1])
+    Bt = 0.5 * (Bt[1:] + Bt[:-1])
+    B_ratio = Bt / Bp
+    r, _ = cartesian_to_polar(x[:-1] + dx, z[:-1] + dz, np.average(x), np.average(z))
+    dl = np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
+    return np.sum(dl * r / (x[:-1] + dx)) / (2 * np.pi)

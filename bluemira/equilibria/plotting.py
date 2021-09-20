@@ -668,15 +668,15 @@ class CorePlotter(Plotter):
     profiles.
     """
 
-    def __init__(self, dictionary, ax=None):
-        r, c = int((len(dictionary) - 1) / 2) + 1, 2
+    def __init__(self, results, ax=None):
+        r, c = int((len(results) - 1) / 2) + 1, 2
         gs = GridSpec(r, c)
         self.ax = [plt.subplot(gs[i]) for i in range(r * c)]
         ccycle = cycle(plt.rcParams["axes.prop_cycle"].by_key()["color"])
-        for i, (k, v) in enumerate(dictionary.items()):
+        for i, (k, v) in enumerate(results.__dict__.items()):
             color = next(ccycle)
             self.ax[i].plot(
-                dictionary["psi_n"], dictionary[k], label=str_to_latex(k), color=color
+                results["psi_n"], results[k], label=str_to_latex(k), color=color
             )
             self.ax[i].legend()
 
