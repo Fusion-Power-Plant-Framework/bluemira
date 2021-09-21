@@ -874,8 +874,8 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
 
     def get_rss(self, vector):
         """
-        Calculates the value and residual of the least-squares objective function with Tikhonov
-        regularisation term:
+        Calculates the value and residual of the least-squares objective
+        function with Tikhonov regularisation term:
 
         ||(Ax - b)||² + Γ||x||²
 
