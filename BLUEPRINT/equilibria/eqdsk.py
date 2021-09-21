@@ -187,7 +187,7 @@ class EQDSKInterface:
         eqdsk_dict: dict
             The dictionary of updated EQDSK information
         """
-        self.data.update_kw_parameters(eqdsk_dict)
+        self.data.update_kw_parameters(eqdsk_dict, f"Loaded from {self.filename}")
 
     def set_attr(self, name, value):
         """
