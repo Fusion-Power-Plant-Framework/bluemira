@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
-from matplotlib.pyplot import close
 import numpy as np
 import pytest
 
@@ -68,8 +67,8 @@ class TestOpenFluxSurfaceStuff:
         lfs_loop = lfs.loop.copy()
         lfs_loop.interpolate(3 * len(lfs_loop))
         lfs_interp = PartialOpenFluxSurface(lfs_loop)
-        L_lfs_interp = lfs_interp.connection_length(self.eq)
-        assert np.isclose(l_lfs, L_lfs_interp, rtol=5e-3)
+        l_lfs_interp = lfs_interp.connection_length(self.eq)
+        assert np.isclose(l_lfs, l_lfs_interp, rtol=5e-3)
 
         hfs_loop = hfs.loop.copy()
         hfs_loop.interpolate(3 * len(hfs_loop))
