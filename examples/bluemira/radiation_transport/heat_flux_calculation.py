@@ -25,7 +25,7 @@ Example single null first wall particle heat flux
 
 import os
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver

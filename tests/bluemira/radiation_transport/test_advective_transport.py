@@ -25,7 +25,7 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.radiation_transport.error import AdvectionTransportError
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
