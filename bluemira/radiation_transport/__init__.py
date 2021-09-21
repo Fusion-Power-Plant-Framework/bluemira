@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -20,29 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-The bluemira equilibria module
+The bluemira radiation transport module.
 """
 
-from .coils import Coil, CoilSet, SymmetricCircuit
-from .limiter import Limiter
-from .grid import Grid
-from .constraints import (
-    MagneticConstraintSet,
-    FieldNullConstraint,
-    PsiBoundaryConstraint,
-    IsofluxConstraint,
-    PsiConstraint,
-    AutoConstraints,
-)
-from .profiles import BetaIpProfile, CustomProfile
-from .shapes import flux_surface_johner, flux_surface_cunningham, flux_surface_manickam
-from .optimiser import Norm2Tikhonov, LeastSquares, FBIOptimiser, PositionOptimiser
-from .find import find_flux_surfs, find_LCFS_separatrix, find_OX_points
-from .equilibrium import Equilibrium, Breakdown
-from .solve import (
-    PicardAbsIterator,
-    PicardDeltaIterator,
-    PicardLiAbsIterator,
-    PicardLiDeltaIterator,
-)
-from .run import AbInitioEquilibriumProblem
+from .advective_transport import ChargedParticleSolver

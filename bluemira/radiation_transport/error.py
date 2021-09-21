@@ -20,29 +20,23 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-The bluemira equilibria module
+Error classes for use in the radiation_transport module.
 """
 
-from .coils import Coil, CoilSet, SymmetricCircuit
-from .limiter import Limiter
-from .grid import Grid
-from .constraints import (
-    MagneticConstraintSet,
-    FieldNullConstraint,
-    PsiBoundaryConstraint,
-    IsofluxConstraint,
-    PsiConstraint,
-    AutoConstraints,
-)
-from .profiles import BetaIpProfile, CustomProfile
-from .shapes import flux_surface_johner, flux_surface_cunningham, flux_surface_manickam
-from .optimiser import Norm2Tikhonov, LeastSquares, FBIOptimiser, PositionOptimiser
-from .find import find_flux_surfs, find_LCFS_separatrix, find_OX_points
-from .equilibrium import Equilibrium, Breakdown
-from .solve import (
-    PicardAbsIterator,
-    PicardDeltaIterator,
-    PicardLiAbsIterator,
-    PicardLiDeltaIterator,
-)
-from .run import AbInitioEquilibriumProblem
+from bluemira.base.error import BluemiraError
+
+
+class RadiationTransportError(BluemiraError):
+    """
+    Base error for the radiation_transport module.
+    """
+
+    pass
+
+
+class AdvectionTransportError(RadiationTransportError):
+    """
+    Error class for advective transport solver.
+    """
+
+    pass
