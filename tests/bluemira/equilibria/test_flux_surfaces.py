@@ -61,17 +61,33 @@ class TestOpenFluxSurfaceStuff:
         loop = self.eq.get_flux_surface_through_point(x_start, z_start)
         fs = OpenFluxSurface(loop)
         lfs, hfs = fs.split(self.eq.get_OX_points()[0][0])
+        l_lfs = lfs.connection_length(self.eq)
+        l_hfs = hfs.connection_length(self.eq)
+
+        # test discretisation sensitivity
+        lfs_loop = lfs.loop.copy()
+        lfs_loop.interpolate(3 * len(lfs_loop))
+        lfs_interp = PartialOpenFluxSurface(lfs_loop)
+        L_lfs_interp = lfs_interp.connection_length(self.eq)
+        assert np.isclose(l_lfs, L_lfs_interp, rtol=5e-3)
+
+        hfs_loop = hfs.loop.copy()
+        hfs_loop.interpolate(3 * len(hfs_loop))
+        hfs_interp = PartialOpenFluxSurface(hfs_loop)
+        l_hfs_interp = hfs_interp.connection_length(self.eq)
+        assert np.isclose(l_hfs, l_hfs_interp, rtol=5e-3)
+
+        # compare with field line tracer
         flt = FieldLineTracer(self.eq)
-        x, z, L_flt_lfs = flt.trace_field_line(x_start, z_start, forward=True)
-        x2, z2, L_flt_hfs = flt.trace_field_line(x_start, z_start, forward=False)
-        lfs_retro = PartialOpenFluxSurface(Loop(x, z))
-        hfs_retro = PartialOpenFluxSurface(Loop(x2, z2))
-        L_lfs_retro = lfs_retro.connection_length(self.eq)
-        L_hfs_retro = hfs_retro.connection_length(self.eq)
-        print(L_flt_lfs[-1], L_lfs_retro)
-        print(L_flt_hfs[-1], L_hfs_retro)
-        assert np.isclose(L_flt_lfs[-1], L_lfs_retro)
-        assert np.isclose(L_flt_hfs[-1], L_hfs_retro)
+        x, z, l_flt_lfs = flt.trace_field_line(
+            x_start, z_start, n_turns_max=20, forward=True
+        )
+        x2, z2, l_flt_hfs = flt.trace_field_line(
+            x_start, z_start, n_turns_max=20, forward=False
+        )
+
+        assert np.isclose(l_flt_lfs[-1], l_lfs, rtol=1e-2)
+        assert np.isclose(l_flt_hfs[-1], l_hfs, rtol=1e-2)
 
 
 class TestClosedFluxSurface:

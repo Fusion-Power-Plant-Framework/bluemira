@@ -89,7 +89,7 @@ class FluxSurface:
         dx = np.diff(x)
         dz = np.diff(z)
         Bp = 0.5 * (Bp[1:] + Bp[:-1])
-        Bt = 0.5 * (Bt[1:] + Bt[:-1])
+        Bt = Bt[:-1] * x[:-1] / (x[:-1] + 0.5 * dx)
         B_ratio = Bt / Bp
         return np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
 
@@ -538,7 +538,7 @@ class FieldLineTracer:
             B = np.sqrt(Bx ** 2 + Bz ** 2 + Bt ** 2)
             dx, dz, dl = xz[0] / Bt * np.array([f * Bx, f * Bz, B])
         else:
-            dx, dz, dl = np.zeros(3)
+            dx, dz, dl = np.zeros(3, dtype=np.int)
         return dx, dz, dl
 
 
