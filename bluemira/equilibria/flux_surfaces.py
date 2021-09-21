@@ -419,7 +419,14 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
 
 def analyse_plasma_core(eq, n_points=50):
+    """
+    Analyse plasma core parameters across the normalised 1-D flux coordinate.
 
+    Returns
+    -------
+    results: CoreResults
+        Results dataclass
+    """
     psi_n = np.linspace(PSI_NORM_TOL, 1 - PSI_NORM_TOL, n_points, endpoint=False)
     loops = [eq.get_flux_surface(pn) for pn in psi_n]
     loops.append(eq.get_LCFS())
@@ -445,6 +452,10 @@ def analyse_plasma_core(eq, n_points=50):
 
 @dataclass
 class CoreResults:
+    """
+    Dataclass for core results.
+    """
+
     psi_n: Iterable
     R_0: Iterable
     a: Iterable
