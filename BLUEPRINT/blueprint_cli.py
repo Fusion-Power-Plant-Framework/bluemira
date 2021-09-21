@@ -347,7 +347,7 @@ def get_reactor_class(reactor_string):
     """
     if "::" in reactor_string:
         module_string, reactor = reactor_string.split("::")
-    elif {"/", "."} & set(reactor_string):
+    elif "." in reactor_string:
         module_string, reactor = reactor_string.rsplit(".", 1)
     else:
         module_string = "BLUEPRINT.reactor"
@@ -540,9 +540,6 @@ def cli(
     click.echo("Running BLUEPRINT build.")
     reactor.build()
     click.echo("BLUEPRINT build complete.")
-
-    if no_extras:
-        return reactor
 
     # Return specified outputs.
     click.echo(f"Saving outputs to {inputs.output_path}")
