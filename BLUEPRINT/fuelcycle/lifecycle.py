@@ -96,8 +96,7 @@ class LifeCycle(ReactorSystem):
         self.config = config
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         # Derive/convert inputs
         self.maintenance_l = self.params.bmd * 24 * 3600  # [s]
@@ -432,8 +431,9 @@ class LifeCycle(ReactorSystem):
         if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
             bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
         # Re-assign A
-        self.params.update_kw_parameters({"A_global": actual_lf})
-        # self.A_global = actual_A
+        self.params.update_kw_parameters(
+            {"A_global": actual_lf}, "LifeCycle Calculation"
+        )
 
     def plot_pulse(self):
         """

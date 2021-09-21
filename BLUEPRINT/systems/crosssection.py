@@ -109,8 +109,7 @@ class ReactorCrossSection(ReactorSystem):
         self.inputs = inputs
         self._plotter = ReactorCrossSectionPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.configuration = self.params.Name + "_cross_section"
         self.sf = self.inputs["sf"]

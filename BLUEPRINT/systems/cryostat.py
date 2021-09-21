@@ -61,8 +61,7 @@ class Cryostat(Meshable, OnionRing, ReactorSystem):
         self.inputs = inputs
         self._plotter = CryostatPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.plugs = {}
         self.build_cyrostatvv()

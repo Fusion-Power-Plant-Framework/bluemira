@@ -73,8 +73,7 @@ class TypicalSystem(ReactorSystem):
 
         # Here are going to update the default Parameters with the config
         # (which normally comes from the Reactor)
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(config)
+        self._init_params(config)
 
     def add_loop(self, loop: Type[Loop]) -> None:
         """

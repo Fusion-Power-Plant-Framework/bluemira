@@ -100,8 +100,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         self.inputs = inputs
         self._plotter = ToroidalFieldCoilsPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         # Constructors
         self.flag_new = False
@@ -470,6 +469,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.rc = (self.params.tk_tf_wp + depth) / 4 / self.nr
 
             # Update cross-sectional parameters
+            source_name = "TF Cross Section"
             if self.wp_shape != "N":
                 # For coils with constant casing thicknesses
                 self.params.update_kw_parameters(
@@ -478,7 +478,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                         "tk_tf_case_out_out": self.params.tk_tf_nose,
                         "tf_wp_width": self.params.tk_tf_wp,
                         "tf_wp_depth": depth,
-                    }
+                    },
+                    source_name,
                 )
             else:
                 self.params.update_kw_parameters(
@@ -487,7 +488,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                         "tk_tf_case_out_out": iocasthk * 1.1,
                         "tf_wp_width": self.params.tk_tf_wp,
                         "tf_wp_depth": depth,
-                    }
+                    },
+                    source_name,
                 )
 
     def _get_loops(self, p_in):
@@ -592,10 +594,10 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         """
         z_0 = np.average(self.sep["z"])
         self.cage = CoilCage(
-            self.params.n_TF,
-            self.params.R_0,
+            self.params.n_TF.value,
+            self.params.R_0.value,
             z_0,
-            self.params.B_0,
+            self.params.B_0.value,
             self.sep,
             rc=None,
             ny=self.ny,

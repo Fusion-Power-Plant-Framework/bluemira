@@ -240,6 +240,18 @@ class ReactorSystem(TypeBase):
         """
         self.params.add_parameters(record_list, source=source)
 
+    def _init_params(self, config):
+        """
+        Updates the ReactorSystem parameters with the provided configuration.
+
+        Parameters
+        ----------
+        config: Union[ParameterFrame, Dict[str, Parameter]]
+            The configuration to be loaded.
+        """
+        self.params = ParameterFrame(self.default_params.to_records())
+        self.params.update_kw_parameters(config, f"{self.__class__.__name__} Config")
+
     def build_CAD(self):
         """
         Builds the CAD model for the ReactorSystem

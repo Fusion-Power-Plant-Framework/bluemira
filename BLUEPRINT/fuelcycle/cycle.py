@@ -34,7 +34,6 @@ from BLUEPRINT.fuelcycle.blocks import TCycleComponent, TCycleFlow
 from BLUEPRINT.utilities.tools import findnoisylocals, discretise_1d, tomols
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.baseclass import ReactorSystem
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
@@ -125,8 +124,7 @@ class FuelCycle(ReactorSystem):
 
     def __init__(self, config, inputs, timeline):
         # Handle parameters
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(config)
+        self._init_params(config)
 
         # Handle calculation information
         self.verbose = inputs.get("verbose", False)

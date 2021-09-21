@@ -50,8 +50,7 @@ class Dummy(ReactorSystem):
     def __init__(self, inputs):
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.inputs)
+        self._init_params(self.inputs)
 
 
 class DummyPF(ReactorSystem):
@@ -62,8 +61,7 @@ class DummyPF(ReactorSystem):
     ]
 
     def __init__(self):
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.inputs)
+        self._init_params(self.inputs)
 
 
 class TestParameter:
