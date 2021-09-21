@@ -19,9 +19,67 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import os
+from matplotlib.pyplot import close
+import numpy as np
+import pytest
 
+from bluemira.base.file import get_bluemira_path
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.equilibria import Equilibrium
+from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
     OpenFluxSurface,
     PartialOpenFluxSurface,
+    FieldLineTracer,
 )
+
+TEST_PATH = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+
+
+class TestOpenFluxSurfaceStuff:
+    @classmethod
+    def setup_class(cls):
+        eq_name = "eqref_OOB.json"
+        filename = os.sep.join([TEST_PATH, eq_name])
+        cls.eq = Equilibrium.from_eqdsk(filename)
+
+    def test_bad_geometry(self):
+        closed_loop = Loop(x=[0, 4, 5, 8, 0], z=[1, 2, 3, 4, 1])
+        with pytest.raises(FluxSurfaceError):
+            _ = OpenFluxSurface(closed_loop)
+        with pytest.raises(FluxSurfaceError):
+            _ = PartialOpenFluxSurface(closed_loop)
+
+    def test_connection_length(self):
+        """
+        Use both a flux surface and field line tracing approach to calculate connection
+        length and check they are the same or similar.
+        """
+        x_start, z_start = 12, 0
+        loop = self.eq.get_flux_surface_through_point(x_start, z_start)
+        fs = OpenFluxSurface(loop)
+        lfs, hfs = fs.split(self.eq.get_OX_points()[0][0])
+        flt = FieldLineTracer(self.eq)
+        x, z, L_flt_lfs = flt.trace_field_line(x_start, z_start, forward=True)
+        x2, z2, L_flt_hfs = flt.trace_field_line(x_start, z_start, forward=False)
+        lfs_retro = PartialOpenFluxSurface(Loop(x, z))
+        hfs_retro = PartialOpenFluxSurface(Loop(x2, z2))
+        L_lfs_retro = lfs_retro.connection_length(self.eq)
+        L_hfs_retro = hfs_retro.connection_length(self.eq)
+        print(L_flt_lfs[-1], L_lfs_retro)
+        print(L_flt_hfs[-1], L_hfs_retro)
+        assert np.isclose(L_flt_lfs[-1], L_lfs_retro)
+        assert np.isclose(L_flt_hfs[-1], L_hfs_retro)
+
+
+class TestClosedFluxSurface:
+    def test_bad_geometry(self):
+        open_loop = Loop(x=[0, 4, 5, 8], z=[1, 2, 3, 4])
+        with pytest.raises(FluxSurfaceError):
+            _ = ClosedFluxSurface(open_loop)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

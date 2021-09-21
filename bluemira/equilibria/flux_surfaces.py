@@ -39,6 +39,7 @@ from bluemira.geometry._deprecated_tools import (
     check_linesegment,
 )
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_base import Plane
 from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.constants import PSI_NORM_TOL
 
@@ -116,7 +117,7 @@ class FluxSurface:
         if ax is None:
             ax = plt.gca()
 
-        kwargs["linewidth"] = kwargs.get("linewidth", 0.01)
+        kwargs["linewidth"] = kwargs.get("linewidth", 0.05)
         kwargs["color"] = kwargs.get("color", "r")
 
         self.loop.plot(ax, **kwargs)
@@ -291,7 +292,7 @@ class OpenFluxSurface(FluxSurface):
             )
         super().__init__(loop)
 
-    def split(self, plane, o_point):
+    def split(self, o_point, plane=None):
         """
         Split an OpenFluxSurface into two separate PartialOpenFluxSurfaces about a
         horizontal plane.
@@ -300,10 +301,10 @@ class OpenFluxSurface(FluxSurface):
         ----------
         flux_surface: OpenFluxSurface
             The open flux surface to split into two
-        plane: Plane
-            The x-y cutting plane
         o_point: O-point
             The magnetic centre of the plasma
+        plane: Optional[Plane]
+            The x-y cutting plane. Will default to the O-point x-y plane
 
         Returns
         -------
@@ -315,6 +316,13 @@ class OpenFluxSurface(FluxSurface):
             if loop.argmin([x_mp, z_mp]) != 0:
                 loop.reverse()
             return loop
+
+        if plane is None:
+            plane = Plane(
+                [o_point.x, 0, o_point.z],
+                [o_point.x + 1, 0, o_point.z],
+                [o_point.x, 1, o_point.z],
+            )
 
         ref_loop = self.loop.copy()
         intersections = loop_plane_intersect(ref_loop, plane)
