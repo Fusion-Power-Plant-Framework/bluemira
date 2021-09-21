@@ -25,7 +25,10 @@ Flux surface attributes and first wall profile based on heat flux calculation
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
 from BLUEPRINT.equilibria.find import find_flux_surfs

@@ -24,7 +24,7 @@ Defines the master configuration schema, which controls the parameterisation of 
 analysis.
 """
 
-from BLUEPRINT.base.parameter import Parameter
+from bluemira.base.parameter import Parameter
 
 
 class ConfigurationSchema:

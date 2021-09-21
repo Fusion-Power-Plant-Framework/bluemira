@@ -28,10 +28,11 @@ from collections import namedtuple
 from typing import Dict
 import re
 
-from BLUEPRINT.base.file import get_PROCESS_root, get_BP_path
-from BLUEPRINT.base import ParameterFrame
-from BLUEPRINT.base.error import SysCodesError
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+
+from BLUEPRINT.base.file import get_PROCESS_root, get_BP_path
+from BLUEPRINT.base.error import SysCodesError
 
 from process.io.mfile import MFile
 from process.io.python_fortran_dicts import get_dicts

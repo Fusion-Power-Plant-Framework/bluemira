@@ -37,7 +37,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.file import get_BP_root
 from BLUEPRINT.geometry.geomtools import unique
 from BLUEPRINT.geometry.loop import Loop

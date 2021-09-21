@@ -26,8 +26,10 @@ object, optimized for the minimum length
 
 import os
 import matplotlib.pyplot as plt
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.file import make_BP_path
-from BLUEPRINT.base import ParameterFrame
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from BLUEPRINT.equilibria.shapes import flux_surface_manickam

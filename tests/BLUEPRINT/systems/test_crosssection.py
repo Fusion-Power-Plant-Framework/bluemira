@@ -22,8 +22,9 @@ import matplotlib.pyplot as plt
 import os
 import pytest
 
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.file import get_BP_root
-from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.nova.firstwall import FirstWallProfile
 from BLUEPRINT.nova.stream import StreamFlow
 from BLUEPRINT.systems.crosssection import ReactorCrossSection

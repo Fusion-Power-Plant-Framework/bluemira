@@ -25,12 +25,15 @@ Radiation shield system
 from itertools import cycle
 import numpy as np
 from typing import Type
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.cad.buildingCAD import RadiationCAD
 from BLUEPRINT.geometry.loop import Loop, make_ring
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.systems.mixins import Meshable, OnionRing
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 

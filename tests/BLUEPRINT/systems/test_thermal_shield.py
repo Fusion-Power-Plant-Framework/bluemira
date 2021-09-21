@@ -25,7 +25,8 @@ Testing routines for different thermal shield system
 import numpy as np
 import pytest
 
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.systems.thermalshield import SegmentedThermalShield
 from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
 from BLUEPRINT.geometry.loop import Loop

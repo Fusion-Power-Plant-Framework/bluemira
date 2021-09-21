@@ -33,8 +33,9 @@ import tempfile
 import OCC
 
 
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from BLUEPRINT.equilibria.shapes import flux_surface_manickam

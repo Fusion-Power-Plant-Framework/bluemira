@@ -24,8 +24,10 @@
 A typical fuel cycle result for an EU-DEMO reference point
 """
 import matplotlib.pyplot as plt
+
 from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.utilities.tools import set_random_seed
 from BLUEPRINT.systems.physicstoolbox import n_DD_reactions, n_DT_reactions
 from BLUEPRINT.fuelcycle.lifecycle import LifeCycle
