@@ -24,9 +24,11 @@ Heating and current drive system
 """
 import numpy as np
 from typing import Type
+
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base import ReactorSystem
-from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 

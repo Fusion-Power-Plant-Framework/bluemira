@@ -31,6 +31,7 @@ dependencies:
   - MeshPy=2018.2.1
   - pyside2=5.13.2
   - scipy=1.4.1
+  - wrapt=1.12.1
   - graphviz
   - pip
   - pip:

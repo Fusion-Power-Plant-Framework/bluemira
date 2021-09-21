@@ -22,8 +22,8 @@
 """
 Configuration classes
 """
-from BLUEPRINT.base.parameter import ParameterFrame
-from BLUEPRINT.base.parameter import ParameterMapping
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
+
 from BLUEPRINT.base.config_schema import ConfigurationSchema
 
 

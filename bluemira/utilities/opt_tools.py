@@ -25,38 +25,8 @@ Optimisation utilities
 
 import numpy as np
 import nlopt
-from bluemira.base.error import BluemiraError
+from bluemira.utilities.error import InternalOptError
 from bluemira.base.look_and_feel import bluemira_warn
-
-
-# =============================================================================
-# Optimisation error classes
-# =============================================================================
-
-
-class OptimisationError(BluemiraError):
-    """
-    The base class for optimisation errors.
-    """
-
-    pass
-
-
-class InternalOptError(OptimisationError):
-    """
-    Error class for errors inside the optimisation algorithms.
-    """
-
-    pass
-
-
-class ExternalOptError(OptimisationError):
-    """
-    Error class for errors relating to the optimisation, but not originating
-    inside the optimisers.
-    """
-
-    pass
 
 
 # =============================================================================

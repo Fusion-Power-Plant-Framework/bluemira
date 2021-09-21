@@ -31,8 +31,9 @@ import operator
 from scipy.optimize import minimize_scalar
 from typing import Type
 
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.base.parameter import ParameterFrame
 from BLUEPRINT.base.typebase import SelectFrom
 from BLUEPRINT.equilibria.find import find_OX
 from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union

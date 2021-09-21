@@ -87,7 +87,6 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
         dx=dxi,
         dz=dzi,
         ctype=ctype,
-        name=f"{ctype}_{i+1}",
         control=True,
     )
     coils.append(coil)

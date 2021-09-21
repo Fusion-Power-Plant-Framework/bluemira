@@ -25,7 +25,10 @@ Reactor vacuum vessel system
 from itertools import cycle
 import numpy as np
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.cad.vesselCAD import VesselCAD, SegmentedVesselCAD
 from BLUEPRINT.geometry.boolean import (
