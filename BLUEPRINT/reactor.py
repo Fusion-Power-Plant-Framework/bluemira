@@ -1751,6 +1751,24 @@ class ConfigurableReactor(Reactor):
 
     @staticmethod
     def load_config(name, path):
+        """
+        load config form JSON file
+
+        Parameters
+        ----------
+        name: str
+           User facing name for file
+
+        Returns
+        -------
+        dict
+            JSON file as dictionary
+
+        Raises
+        ------
+        FileNotFoundError
+
+        """
         if isinstance(path, str):
             path = Path(path)
 
