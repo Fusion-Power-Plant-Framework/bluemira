@@ -89,7 +89,7 @@ def inscribed_rect_in_poly(
     if not loop.closed:
         loop.close()
 
-    if not loop.point_in_poly([x_point, z_point]):
+    if not loop.point_inside([x_point, z_point]):
         return 0, 0
 
     x, z = x_point, z_point

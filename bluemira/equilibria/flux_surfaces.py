@@ -273,7 +273,10 @@ class ClosedFluxSurface(FluxSurface):
         x, z = self.loop.x, self.loop.z
         dx, dz = np.diff(x), np.diff(z)
         r, _ = cartesian_to_polar(
-            x[:-1] + dx, z[:-1] + dz, self.major_radius, self.loop.centroid[1]
+            x[:-1] + 0.5 * dx,
+            z[:-1] + 0.5 * dz,
+            self.major_radius,
+            self.loop.centroid[1],
         )
         return np.sum(self._dl(eq) * r / (x[:-1] + dx)) / (2 * np.pi)
 
@@ -387,7 +390,6 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         # Because we oriented the loop the "right" way, the first intersection
         # is at the smallest argument
         self.loop = Loop.from_array(self.loop[: min(args) + 1], enforce_ccw=False)
-        # self.loop = self._reset_direction(loop)
 
         fw_arg = int(first_wall.argmin([self.x_end, self.z_end]))
 
@@ -483,6 +485,20 @@ class CoreResults:
 class FieldLineTracer:
     """
     Field line tracing tool.
+
+    Notes
+    -----
+    Totally pinched some maths from Ben Dudson's FreeGS here... Perhaps one day I can
+    return the favours.
+
+    I needed it to compare the analytical connection length calculation with something,
+    so I nicked this.
+
+    You can use it if you want accurate connection length values, but if you want speed
+    you should stick to using PartialOpenFluxSurface.
+
+    Note that this will properly trace field lines through Coils as it doesn't rely on
+    the psi map (which is inaccurate inside Coils).
     """
 
     def __init__(self, eq, first_wall=None):
@@ -526,12 +542,12 @@ class FieldLineTracer:
             Distance travelled along the field line
         """
         phi = np.linspace(0, n_turns_max * 2 * np.pi, n_points)
-        result = odeint(self._d_phi_dt, np.array([x, z, 0]), phi, args=(forward,))
+        result = odeint(self._dxzl_dphi, np.array([x, z, 0]), phi, args=(forward,))
         return result.T
 
-    def _d_phi_dt(self, xz, phi, forward):
+    def _dxzl_dphi(self, xz, phi, forward):
         f = 1.0 if forward is True else -1.0
-        if self.first_wall.point_inside(*xz[:2]):  # point_in_poly
+        if self.first_wall.point_inside(*xz[:2]):
             Bx = self.eq.Bx(*xz[:2])
             Bz = self.eq.Bz(*xz[:2])
             Bt = self.eq.Bt(xz[0])
@@ -540,55 +556,3 @@ class FieldLineTracer:
         else:
             dx, dz, dl = np.zeros(3, dtype=np.int)
         return dx, dz, dl
-
-
-def estimate_field(x1, z1, Bp1, Bt1, x2, z2, Bp2, x15, z15):
-    dl = np.hypot(x2 - x1, z2 - z1)
-    dl15 = np.hypot(x15 - x1, z15 - z1)
-    Bt15 = Bt1 * x1 / x15
-    Bp15 = Bp1 + dl15 / dl * (Bp2 - Bp1)
-    return Bp15, Bt15
-
-
-def connection_length(x, z, Bp, Bt):
-    """
-    Calculate the parallel connection length along a field line (i.e. flux surface).
-
-    Parameters
-    ----------
-    x: np.ndarray
-        Radial coordinates of a flux surface
-    z: np.ndarray
-        Vertical coordinates of a flux surface
-    Bp: np.ndarray
-        Poloidal field values at (x, z)
-    Bt: np.ndarray
-        Toroidal field values at (x, z)
-
-    Returns
-    -------
-    l_par: float
-        Connection length from the start of the flux surface to the end of the flux
-        surface
-    """
-    dx = np.diff(x)
-    dz = np.diff(z)
-    Bp = 0.5 * (Bp[1:] + Bp[:-1])
-    Bt = 0.5 * (Bt[1:] + Bt[:-1])
-    B_ratio = Bt / Bp
-    dl = np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
-    return np.sum(dl)
-
-
-def safety_factor(x, z, Bp, Bt):
-    """
-    Safety factor draft
-    """
-    dx = np.diff(x)
-    dz = np.diff(z)
-    Bp = 0.5 * (Bp[1:] + Bp[:-1])
-    Bt = 0.5 * (Bt[1:] + Bt[:-1])
-    B_ratio = Bt / Bp
-    r, _ = cartesian_to_polar(x[:-1] + dx, z[:-1] + dz, np.average(x), np.average(z))
-    dl = np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
-    return np.sum(dl * r / (x[:-1] + dx)) / (2 * np.pi)
