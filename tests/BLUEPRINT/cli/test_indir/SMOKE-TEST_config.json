@@ -25,7 +25,7 @@
   },
   "kappa_95": {
     "value": 1.6627442659949148,
-    "source": false
+    "source": "Initial Estimation"
   },
   "reactor_type": {
     "value": "Normal",
