@@ -8,9 +8,6 @@ attached operation, and as such results for the divertor regions in particular s
 ignored if detached operation is expected. The model is predominantly intended to be
 used to calculate the charged particle heat fluxes on the first wall.
 
-
-Several input parameters are required to perform the analysis:
-
 Two input objects are required to perform the analysis:
 
 * an Equilibrium object, representing the equilibrium state of the plasma and the associated coils
