@@ -41,16 +41,16 @@ exponentially with the distance from the LCFS at the OMP, :math:`r_u`:
 
 .. math::
    
-   q_{||}(r_u) = q_{||,0}e^{-r_u/\lambda_q}
+   q_{\parallel}(r_u) = q_{\parallel,0}e^{-r_u/\lambda_q}
    
-Where :math:`q_{||,0}` is the flux at the separatrix, and :math:`\lambda_q` 
+Where :math:`q_{\parallel,0}` is the flux at the separatrix, and :math:`\lambda_q` 
 is the heatflux decay length in the SOL.
 
 To be more precise, the SOL exhibits two different regions [Nespoli_2017]_:
 
-- A “near” SOL, extending a few mm from the LCF, characterized by a steep profile of :math:`q_{||}`
+- A “near” SOL, extending a few mm from the LCFS, characterized by a steep profile of :math:`q_{\parallel}`
   and responsible for the peak heat loads in the divertor region;
-- A “far” SOL, typically some cm wide, with a flatter profile of :math:`q_{||}`
+- A “far” SOL, typically some cm wide, with a flatter profile of :math:`q_{\parallel}`
   and responsible for most of the heat deposited onto the first wall.
 
 .. figure:: ../images/nova/hf_radial_profile.png
@@ -58,12 +58,12 @@ To be more precise, the SOL exhibits two different regions [Nespoli_2017]_:
 
    Parallel heat flux radial profile in JET.
 
-The parallel heat flux radial profile :math:`q_{||}` is then better described by a sum of two 
+The parallel heat flux radial profile :math:`q_{\parallel}` is then better described by a sum of two 
 exponentials, associated with the two different regions:
 
 .. math::
    
-   q_{||}(r_u) = q_{n}e^{-r_u/\lambda_n} + q_{f}e^{-r_u/\lambda_f}
+   q_{\parallel}(r_u) = q_{n}e^{-r_u/\lambda_n} + q_{f}e^{-r_u/\lambda_f}
 
 Where :math:`\lambda_n` and :math:`\lambda_f` are the near and far SOL decay lengths and :math:`q_n` and :math:`q_f` 
 are the associated heat flux magnitudes.
@@ -76,8 +76,8 @@ between near and far scrape off layer:
    
    q_{p,u}(r_u) = \dfrac{P_{SOL,n}e^{-r_u/\lambda_n}}{2 \pi R(r_u)\lambda_n} + \dfrac{P_{SOL,f}e^{-r_u/\lambda_f}}{2 \pi R(r_u)\lambda_f}
 
-At the OMP, the heat flux parallel to the magnetic field :math:`q_{||,u}` and that parallel to 
-the poloidal component of the field :math:`q_{p,u}` are related by :math:`q_{||,u} = q_{p,u}(B_{tot,u}/B_{p,u)}`.
+At the OMP, the heat flux parallel to the magnetic field :math:`q_{\parallel,u}` and that parallel to 
+the poloidal component of the field :math:`q_{p,u}` are related by :math:`q_{\parallel,u} = q_{p,u}(B_{tot,u}/B_{p,u)}`.
 
 To compute the heat flux at the target location, one must consider that each poloidal 
 flux surface has a “width”, evaluated at the outboard mid-plane and labelled here as :math:`dr_u` [Maurizio_2020]_.
@@ -111,7 +111,7 @@ considering the angle between flux surface and target surface:
 
 .. math::
 
-   q_{⊥,𝑡} = q_{p,t}sin\beta_t
+   q_{\perp,𝑡} = q_{p,t}sin\beta_t
 
 .. rubric:: References
 
