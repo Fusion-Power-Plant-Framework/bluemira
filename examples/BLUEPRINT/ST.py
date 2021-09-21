@@ -120,7 +120,10 @@ class SphericalTokamak(Reactor):
 
         print_banner()
 
-        self.params.update_kw_parameters(self.config)
+        for key, val in config.items():
+            if not isinstance(val, (tuple, dict)):
+                config[key] = (val, "Input")
+        self.params.update_kw_parameters(config)
 
         self.derive_inputs()
 
