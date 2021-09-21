@@ -343,7 +343,7 @@ class Reactor(ReactorSystem):
         stability constraint on the elongation.
         """
         kappa_95 = estimate_kappa95(self.params.A, self.params.m_s_limit)
-        self.params.kappa_95 = kappa_95
+        self.params.kappa_95 = (kappa_95, "Initial Estimation")
 
     def derive_inputs(self):
         """
@@ -584,27 +584,27 @@ class Reactor(ReactorSystem):
         profile = None
         bluemira_print("Generating reference plasma MHD equilibrium.")
         a = AbInitioEquilibriumProblem(
-            self.params.R_0,
-            self.params.B_0,
-            self.params.A,
-            self.params.I_p * 1e6,  # MA to A
-            self.params.beta_p / 1.3,  # TODO: beta_N vs beta_p here?
-            self.params.l_i,
+            self.params.R_0.value,
+            self.params.B_0.value,
+            self.params.A.value,
+            self.params.I_p.value * 1e6,  # MA to A
+            self.params.beta_p.value / 1.3,  # TODO: beta_N vs beta_p here?
+            self.params.l_i.value,
             # TODO: 100/95 problem
-            self.params.kappa_95,
-            self.params.delta_95,
-            self.params.r_cs_in + self.params.tk_cs / 2,
-            self.params.tk_cs / 2,
+            self.params.kappa_95.value,
+            self.params.delta_95.value,
+            self.params.r_cs_in.value + self.params.tk_cs.value / 2,
+            self.params.tk_cs.value / 2,
             tfboundary,
-            self.params.n_PF,
-            self.params.n_CS,
-            c_ejima=self.params.C_Ejima,
-            eqtype=self.params.plasma_type,
-            rtype=self.params.reactor_type,
+            self.params.n_PF.value,
+            self.params.n_CS.value,
+            c_ejima=self.params.C_Ejima.value,
+            eqtype=self.params.plasma_type.value,
+            rtype=self.params.reactor_type.value,
             profile=profile,
         )
-        a.coilset.assign_coil_materials("PF", self.params.PF_material)
-        a.coilset.assign_coil_materials("CS", self.params.CS_material)
+        a.coilset.assign_coil_materials("PF", self.params.PF_material.value)
+        a.coilset.assign_coil_materials("CS", self.params.CS_material.value)
         a.solve(plot=self.plot_flag)
         print("")  # stdout flusher
 
