@@ -117,7 +117,7 @@ class RadiationShield(Meshable, OnionRing, ReactorSystem):
             else:
                 v = np.array([self.params.tk_rs / self.params.n_rs_lab, 0, 0])
             loops = [loop1]
-            for i in range(int(self.params.n_rs_lab) + 1)[1:-1]:
+            for i in range(int(self.params.n_rs_lab.value) + 1)[1:-1]:
                 new_loop = loops[-1].translate(v, update=False)
                 loops.append(new_loop)
                 new_loop = loops[-1].offset(delta)

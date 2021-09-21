@@ -160,7 +160,7 @@ class Cryostat(Meshable, OnionRing, ReactorSystem):
                 v = np.array([self.params.tk_cr_vv / self.params.n_cr_lab, 0, 0])
 
             loops = [loop0]
-            for _ in range(int(self.params.n_cr_lab))[1:]:
+            for _ in range(int(self.params.n_cr_lab.value))[1:]:
                 new_loop = loops[-1].translate(v, update=False)
                 loops.append(new_loop)
                 new_loop = loops[-1].offset(delta)
