@@ -78,15 +78,15 @@ class TestOpenFluxSurfaceStuff:
 
         # compare with field line tracer
         flt = FieldLineTracer(self.eq)
-        x, z, l_flt_lfs = flt.trace_field_line(
+        l_flt_lfs = flt.trace_field_line(
             x_start, z_start, n_turns_max=20, forward=True
-        )
-        x2, z2, l_flt_hfs = flt.trace_field_line(
+        ).connection_length
+        l_flt_hfs = flt.trace_field_line(
             x_start, z_start, n_turns_max=20, forward=False
-        )
+        ).connection_length
 
-        assert np.isclose(l_flt_lfs[-1], l_lfs, rtol=1e-2)
-        assert np.isclose(l_flt_hfs[-1], l_hfs, rtol=1e-2)
+        assert np.isclose(l_flt_lfs, l_lfs, rtol=2e-2)
+        assert np.isclose(l_flt_hfs, l_hfs, rtol=2e-2)
 
 
 class TestClosedFluxSurface:
@@ -94,6 +94,21 @@ class TestClosedFluxSurface:
         open_loop = Loop(x=[0, 4, 5, 8], z=[1, 2, 3, 4])
         with pytest.raises(FluxSurfaceError):
             _ = ClosedFluxSurface(open_loop)
+
+
+class TestFieldLine:
+    @classmethod
+    def setup_class(cls):
+        eq_name = "eqref_OOB.json"
+        filename = os.sep.join([TEST_PATH, eq_name])
+        cls.eq = Equilibrium.from_eqdsk(filename)
+
+    def test_connection_length(self):
+        flt = FieldLineTracer(self.eq)
+        field_line = flt.trace_field_line(13, 0, n_points=1000)
+        assert np.isclose(
+            field_line.connection_length, field_line.loop.length, rtol=5e-2
+        )
 
 
 if __name__ == "__main__":

@@ -382,9 +382,14 @@ def clip(val, val_min, val_max):
     return val
 
 
+# ======================================================================================
+# Coordinate system transformations
+# ======================================================================================
+
+
 def cartesian_to_polar(x, z, x_ref=0, z_ref=0):
     """
-    Convert from Cartesian coordinates to polar coordinates about a reference point.
+    Convert from 2-D Cartesian coordinates to polar coordinates about a reference point.
 
     Parameters
     ----------
@@ -412,7 +417,7 @@ def cartesian_to_polar(x, z, x_ref=0, z_ref=0):
 
 def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
     """
-    Convert from polar to Cartesian coordinates about a reference point.
+    Convert from 2-D polar to Cartesian coordinates about a reference point.
 
     Parameters
     ----------

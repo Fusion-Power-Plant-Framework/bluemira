@@ -23,6 +23,9 @@
 Flux surface utility classes and calculations
 """
 
+from scipy.integrate._ivp.ivp import solve_ivp
+from scipy.linalg.basic import solve
+from BLUEPRINT.geometry import loop
 from dataclasses import dataclass
 from typing import Iterable
 from copy import deepcopy
@@ -482,7 +485,145 @@ class CoreResults:
     Delta_shaf: Iterable
 
 
+class FieldLine:
+    """
+    Field line object.
+    """
+
+    def __init__(self, loop, connection_length):
+        """
+        Parameters
+        ----------
+        loop: Loop
+            Geometry of the FieldLine
+        connection_length: float
+            Connection length of the FieldLine
+        """
+        self.loop = loop
+        self.connection_length = connection_length
+
+    def plot(self, ax=None, **kwargs):
+        """
+        Plot the FieldLine.
+
+        Parameters
+        ----------
+        ax: Optional[Axes]
+            Matplotlib axes onto which to plot
+        """
+        self.loop.plot(ax=ax, **kwargs)
+
+    def pointcare_plot(self, ax=None):
+        """
+        Pointcaré plot of the field line intersections with the half-xz-plane.
+
+        Parameters
+        ----------
+        ax: Optional[Axes]
+            Matplotlib axes onto which to plot
+        """
+        if ax is None:
+            ax = plt.gca()
+
+        xz_plane = Plane([0, 0, 0], [1, 0, 0], [0, 0, 1])
+        xi, _, zi = loop_plane_intersect(self.loop, xz_plane).T
+        idx = np.where(xi >= 0)
+        xi = xi[idx]
+        zi = zi[idx]
+        ax.plot(xi, zi, linestyle="", marker="o", color="r", ms=5)
+        ax.set_aspect("equal")
+
+
+from scipy.integrate import solve_ivp
+
+
+class CollisionTerminator:
+    def __init__(self, boundary):
+        self.boundary = boundary
+        self.terminal = True
+
+    def __call__(self, phi, xz, *args):
+        if self.boundary.point_inside(xz[:2]):
+            return np.min(self.boundary.distance_to(xz[:2]))
+        else:
+            return -np.min(self.boundary.distance_to(xz[:2]))
+
+
 class FieldLineTracer:
+    def __init__(self, eq, first_wall=None):
+        """
+        Parameters
+        ----------
+        eq: Equilibrium
+            Equilibrium in which to trace a field line
+        first_wall: Union[Grid, Loop]
+            Boundary at which to stop tracing the field line
+        """
+        self.eq = eq
+        if first_wall is None:
+            g = self.eq.grid
+            first_wall = Loop(
+                x=[g.x_min, g.x_max, g.x_max, g.x_min, g.x_min],
+                z=[g.z_min, g.z_min, g.z_max, g.z_max, g.z_min],
+            )
+            first_wall.interpolate(2000)
+        self.first_wall = first_wall
+
+    def trace_field_line(self, x, z, n_points=200, forward=True, n_turns_max=20):
+        """
+        Trace a single field line starting at a point.
+
+        Parameters
+        ----------
+        x: float
+            Radial coordinate of the starting point
+        z: float
+            Vertical coordinate of the starting point
+        n_points: int
+            Number of points along the field line
+        forward: bool
+            Whether or not to step forward or backward (+B or -B)
+        n_turns_max: Union[int, float]
+            Maximum number of toroidal turns to trace the field line
+
+        Returns
+        -------
+        x_fl: np.ndarray
+            Radial coordinates of the field line
+        z_fl: np.ndarray
+            Vertical coordiantes of the field line
+        dl: np.ndarray
+            Distance travelled along the field line
+        """
+        phi = np.linspace(0, 2 * np.pi * n_turns_max, n_points)
+
+        result = solve_ivp(
+            self._dxzl_dphi,
+            t_span=(0, 2 * np.pi * n_turns_max),
+            y0=np.array([x, z, 0]),
+            events=CollisionTerminator(self.first_wall),
+            t_eval=phi,
+            method="RK45",
+            args=(forward,),
+        )
+        r, z, l = result["y"][0][:-1], result["y"][1][:-1], result["y"][2][:-1]
+        phi = result["t"][:-1]
+        x = r * np.cos(phi)
+        y = r * np.sin(phi)
+        loop = Loop(x=x, y=y, z=z, enforce_ccw=False)
+        return FieldLine(loop, l[-1])
+
+    def _dxzl_dphi(self, phi, xz, forward):
+        f = 1.0 if forward is True else -1.0
+        Bx = self.eq.Bx(*xz[:2])
+        Bz = self.eq.Bz(*xz[:2])
+        Bt = self.eq.Bt(xz[0])
+        B = np.sqrt(Bx ** 2 + Bz ** 2 + Bt ** 2)
+        dx, dz, dl = xz[0] / Bt * np.array([f * Bx, f * Bz, B])
+        return np.array([dx, dz, dl])
+
+
+class FieldLineTracer2:
     """
     Field line tracing tool.
 
@@ -515,7 +656,7 @@ class FieldLineTracer:
             first_wall = self.eq.grid
         self.first_wall = first_wall
 
-    def trace_field_line(self, x, z, n_points=100, forward=True, n_turns_max=10):
+    def trace_field_line(self, x, z, n_points=200, forward=True, n_turns_max=20):
         """
         Trace a single field line starting at a point.
 
@@ -543,9 +684,20 @@ class FieldLineTracer:
         """
         phi = np.linspace(0, n_turns_max * 2 * np.pi, n_points)
         result = odeint(self._dxzl_dphi, np.array([x, z, 0]), phi, args=(forward,))
-        return result.T
+        r, z, l = result.T
+        x = r * np.cos(phi)
+        y = r * np.sin(phi)
+        cut = int(np.min(np.where(np.isclose(np.diff(l), 0))[0]))
+        connection_length = l[cut]
+        x = x[:cut]
+        y = y[:cut]
+        z = z[:cut]
+        loop = Loop(x=x, y=y, z=z, enforce_ccw=False)
+        return FieldLine(loop, connection_length)
 
     def _dxzl_dphi(self, xz, phi, forward):
+        if np.allclose(xz, np.zeros(3)):
+            dx, dz, dl = np.zeros(3, dtype=np.int)
         f = 1.0 if forward is True else -1.0
         if self.first_wall.point_inside(*xz[:2]):
             Bx = self.eq.Bx(*xz[:2])
@@ -556,3 +708,12 @@ class FieldLineTracer:
         else:
             dx, dz, dl = np.zeros(3, dtype=np.int)
         return dx, dz, dl
+
+
+# flt = FieldLineTracer(eq)
+# flt2 = FieldLineTracer2(eq)
+# fl = flt.trace_field_line(12, 0, n_points=1000, n_turns_max=40)
+# fl2 = flt2.trace_field_line(12, 0, n_points=1000, n_turns_max=40)
+
+# flf = flt.trace_field_line(12, 0, n_points=1000, n_turns_max=40, forward=False)
+# fl2f = flt2.trace_field_line(12, 0, n_points=1000, n_turns_max=40, forward=False)
