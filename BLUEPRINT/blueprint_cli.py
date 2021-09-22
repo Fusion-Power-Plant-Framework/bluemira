@@ -283,15 +283,15 @@ class OutputManager:
             build_tweaks paths to copy the files from
         """
         variables = {
-            "template": self.template,
-            "config": self.config,
-            "build_config": self.build_config,
-            "build_tweaks": self.build_tweaks,
+            "template_path": self.template,
+            "config_path": self.config,
+            "build_config_path": self.build_config,
+            "build_tweaks_path": self.build_tweaks,
         }
         self.reactor_kwargs = {}
         for name, var in variables.items():
             try:
-                shutil.copy(getattr(inputs, f"{name}_path_in"), var)
+                shutil.copy(getattr(inputs, f"{name}_in"), var)
                 self.reactor_kwargs[name] = var
             except FileNotFoundError:
                 click.echo(f"No {name} file")
@@ -443,12 +443,10 @@ def get_reactor_class(reactor_string):
     default="ConfigurableReactor",
     help="specify reactor class (file or package path)",
 )
-@click.option(
-    "--interactive",
-    default=True,
-    help="specify reactor class (file or package path)",
-)
+@click.version_option(package_name="bluemira", prog_name="bluemira")
+@click.pass_context
 def cli(
+    ctx,
     template,
     config,
     build_config,
@@ -465,7 +463,6 @@ def cli(
     plots,
     cad,
     reactor_class,
-    **kwargs,
 ):
     """
     Run BLUEPRINT build for a configurable reactor.
@@ -547,7 +544,11 @@ def cli(
     reactor.build()
     click.echo("BLUEPRINT build complete.")
 
-    if kwargs.pop("interactive", False):
+    if (
+        isinstance(ctx.obj, dict)
+        and "standalone_mode" in ctx.obj
+        and not ctx.obj["standalone_mode"]
+    ):
         return reactor
 
     # Return specified outputs.
