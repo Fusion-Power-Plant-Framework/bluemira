@@ -39,11 +39,13 @@ from BLUEPRINT.utilities.optimisation import (
     tikhonov,
     process_NLOPT_result,
     approx_fprime,
+    NLOPTObjectiveFunction,
 )
 from BLUEPRINT.equilibria.positioner import XZLMapper, RegionMapper
 from BLUEPRINT.equilibria.coils import CS_COIL_NAME
 from BLUEPRINT.equilibria.constants import DPI_GIF, PLT_PAUSE
 from BLUEPRINT.equilibria.equilibrium import Equilibrium
+from BLUEPRINT.equilibria.eqmanip import EquilibriumManipulator
 
 
 class EquilibriumOptimiser:
@@ -1100,6 +1102,180 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
         Get a deep copy of the BreakdownOptimiser.
         """
         return deepcopy(self)
+
+
+class DivertorOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
+    """
+    Force Field and Current constrained McIntoshian optimiser class.
+    Freeze punk!
+
+    Parameters
+    ----------
+    max_fields: np.array(n_coils)
+        The array of maximum poloidal field [T]
+    PF_Fz_max: float
+        The maximum absolute vertical on a PF coil [N]
+    CS_Fz_sum: float
+        The maximum absolute vertical on all CS coils [N]
+    CS_Fz_sep: float
+        The maximum Central Solenoid vertical separation force [N]
+    """
+
+    def __init__(
+        self, max_fields, PF_Fz_max, CS_Fz_sum, CS_Fz_sep, **kwargs
+    ):  # noqa (N803)
+        # Used scale for optimiser RoundoffLimited Error prevention
+        self.scale = 1e6  # Scale for currents and forces (MA and MN)
+        self.gamma = kwargs.get("gamma", 1e-14)  # 1e-7  # 0
+        self.constraint_tol = kwargs.get("constraint_tol", 1e-3)
+        # self.gamma /= self.scale
+        self.B_max = max_fields
+        self.PF_Fz_max = PF_Fz_max / self.scale
+        self.CS_Fz_sum = CS_Fz_sum / self.scale
+        self.CS_Fz_sep = CS_Fz_sep / self.scale
+        self.flag_nonlinear = True
+        self.rms = None
+        self.rms_error = None
+        self.I_max = None
+        self.bounds = None
+
+    def update_current_constraint(self, max_current):
+        """
+        Update the current vector bounds. Must be called prior to optimise
+        """
+        self.I_max = max_current / self.scale
+
+    def f_min_rms(self, vector, grad):
+        """
+        Error optimisation minimisation objective
+        """
+        vector = vector * self.scale
+        rss, err = self.magnetic_objective(vector)
+        if grad.size > 0:
+            jac = 2 * self.A.T @ self.A @ vector
+            jac -= 2 * self.A.T @ self.b
+            jac += 2 * self.gamma * vector
+            grad[:] = self.scale * jac
+        print(self.eq.coilset.get_control_currents())
+        return rss
+
+    def magnetic_objective(self, vector):
+        """
+        Get the root-mean-squared error of [G][I]-[T]
+        """
+        err = self.A @ vector - self.b
+        rss = err.T @ err + self.gamma * vector.T @ vector
+        self.rms_error = rss
+        return rss, err
+
+    def divertor_objective(self, x):
+        """
+        Objective function to be minimised for the divertor.
+        """
+        penalty = -1e3
+        # eqanalysis = EquilibriumManipulator(self.eq)
+        # try:
+        print(self.eq.coilset.get_control_currents())
+        self.eq.coilset.set_control_currents(x * 1e6)
+        # self.eq._set_init_psi(self.eq.grid, self.eq.coilset.psi(self.eq.grid.x, self.eq.grid.z).copy())
+        # self.eq.psi = self.eq.coilset.psi(self.eq.grid.x, self.eq.grid.z).copy()
+        print(self.eq.coilset.get_control_currents())
+        try:
+            eqanalysis = EquilibriumManipulator(self.eq)
+            eqlegs = eqanalysis.get_legs(0.001)
+            leg = eqlegs[9]
+            # if SPR_008:
+            clip = np.where(leg.z < 8.909)
+            leg.x, leg.z, leg.y = leg.x[clip], leg.z[clip], leg.y[clip]
+            clip = np.where(leg.x < 7)
+            leg.x, leg.z, leg.y = leg.x[clip], leg.z[clip], leg.y[clip]
+        except:
+            con_length, flux_exp = penalty, penalty
+            print("err")
+        # elif SPR_010:
+        # clip = np.where(leg.z < 6.76)
+        # leg.x, leg.z, leg.y = leg.x[clip], leg.z[clip], leg.y[clip]
+        # clip = np.where(leg.x < 4.65)
+        # leg.x, leg.z, leg.y = leg.x[clip], leg.z[clip], leg.y[clip]
+        try:
+            con_length = eqanalysis.get_connection_length(leg)
+        except:
+            con_length = penalty
+            print("conerr")
+        try:
+            flux_exp = eqanalysis.get_flux_expansion(leg)[-1]
+        except:
+            flux_exp = penalty
+            print("flux_exp err")
+
+        return con_length, flux_exp
+
+    def objective(self, x):
+        """
+        Objective function to be minimised.
+        """
+        lambda1 = 10
+        lambda2 = 1
+        lambda3 = 0
+        con_length, flux_exp = self.divertor_objective(x)
+        lagrangian = (
+            lambda1 * self.magnetic_objective(x)[0]
+            - lambda2 * con_length
+            # - lambda3 * flux_exp
+        )
+        # self.x = tikhonov(self.A, self.b, self.gamma)
+        # self.calc_error()
+        print("con = %f" % con_length)
+        print("L = %f" % lagrangian)
+        return lagrangian
+
+    def set_bounds(self):
+        """
+        Returns the bounds imposed on the solution vector
+        """
+        lower_bounds = -self.I_max
+        upper_bounds = self.I_max
+        self.bounds = (lower_bounds, upper_bounds)
+        return self.bounds
+
+    def optimise(self):
+        """
+        Optimiser handle. Used in __call__
+        """
+        self.set_bounds()
+        opt = nlopt.opt(nlopt.LN_SBPLX, self.n_C)
+        nlopt_objective = NLOPTObjectiveFunction(self.objective, self.bounds)
+        opt.set_min_objective(nlopt_objective)
+        # opt.set_xtol_abs(1e-5)
+        # opt.set_xtol_rel(1e-5)
+        # opt.set_ftol_abs(1e-6)
+        opt.set_xtol_rel(1e-4)
+        opt.set_ftol_rel(1e-4)
+        # opt.set_maxtime(3)
+        opt.set_maxeval(1000)
+        opt.set_lower_bounds(self.bounds[0])
+        opt.set_upper_bounds(self.bounds[1])
+
+        if self.n_CS == 0:
+            n_f_constraints = 2 * self.n_PF
+        else:
+            n_f_constraints = 2 * self.n_PF + self.n_CS + 1
+        # tol = self.constraint_tol * np.ones(n_f_constraints)
+        # opt.add_inequality_mconstraint(self.constrain_forces, tol)
+        # tol = self.constraint_tol * np.ones(self.n_C)
+        # opt.add_inequality_mconstraint(self.constrain_fields, tol)
+
+        x0 = np.clip(tikhonov(self.A, self.b, self.gamma), -self.I_max, self.I_max)
+        x0 = self.eq.coilset.get_control_currents() / self.scale
+        # opt.set_initial_step(np.ones(np.shape(x0)))
+
+        currents = opt.optimize(x0)
+        self.rms = opt.last_optimum_value()
+        print(self.rms)
+        process_NLOPT_result(opt)
+        self._I_star = currents * self.scale
+        # self.sanity()
+        return currents * self.scale
 
 
 if __name__ == "__main__":

@@ -200,6 +200,8 @@ class EquilibriumManipulator:
 
         o_points, x_points = self.eq.get_OX_points()
         self.o_point = o_points[0]
+        self.x_point = x_points[0]
+
         x_points, xpsis = [], []
         l_points, lpsis = [], []
         for x in x_points:
@@ -216,8 +218,6 @@ class EquilibriumManipulator:
                 # in the mix (private flux under the divertor), this means nothing.
                 pass
                 # TODO: develop treatment for this case
-
-        self.x_point = x_points[0]
 
         self.n_x_points = get_n_xp(xpsis)
         if self.n_x_points == 1:
