@@ -30,7 +30,7 @@ from copy import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import lru_cache
-from scipy.integrate import odeint, solve_ivp
+from scipy.integrate import solve_ivp
 
 from bluemira.utilities.tools import cartesian_to_polar
 from bluemira.geometry._deprecated_tools import (
@@ -552,7 +552,17 @@ class FieldLineTracer:
     """
 
     class CollisionTerminator:
+        """
+        Private Event handling object for solve_ivp
+        """
+
         def __init__(self, boundary):
+            """
+            Parameters
+            ----------
+            boundary: Union[Grid, Loop]
+                Boundary at which to stop tracing the field line.
+            """
             self.boundary = boundary
             self.terminal = True
 
