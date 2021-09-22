@@ -25,7 +25,7 @@ CAD functions and operations
 # High level imports
 import os
 from itertools import zip_longest
-from collections import Iterable
+from collections.abc import Iterable
 import numpy as np
 import matplotlib.pyplot as plt
 

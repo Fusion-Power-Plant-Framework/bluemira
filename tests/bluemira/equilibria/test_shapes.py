@@ -170,7 +170,8 @@ class TestJohner:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Johner parameterisations")
-        plt.show()
+        if tests.PLOTTING:
+            plt.show()
 
 
 if __name__ == "__main__":
