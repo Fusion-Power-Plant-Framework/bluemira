@@ -654,5 +654,6 @@ class FieldLineTracer:
         else:
             # Field line tracing was not terminated by a collision
             r, z, length = result["y"][0], result["y"][1], result["y"][2]
+            phi = result["t"]
             connection_length = length[-1]
         return r, z, phi, connection_length
