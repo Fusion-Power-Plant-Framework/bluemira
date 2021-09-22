@@ -163,6 +163,10 @@ class CommentJSONDecoder(JSONDecoder):
         containing a JSON document).
         """
         s = self.comma.sub("}", self.comments.sub("", s))
+        s = self.comma.sub("}", self.comments.sub("", s)).strip()
+        if s.endswith(","):
+            s = s[:-1] + "}"
+
         return super().decode(s, *args, **kwargs)
 
 
