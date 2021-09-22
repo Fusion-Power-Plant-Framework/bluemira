@@ -567,6 +567,9 @@ class FieldLineTracer:
             self.terminal = True
 
         def __call__(self, phi, xz, *args):
+            """
+            Function handle for the CollisionTerminator.
+            """
             if self.boundary.point_inside(xz[:2]):
                 return np.min(self.boundary.distance_to(xz[:2]))
             else:
