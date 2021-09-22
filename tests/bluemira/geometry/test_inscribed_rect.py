@@ -65,7 +65,7 @@ class TestInscribedRectangle:
         for i in range(x):
             for j in range(y):
                 point = points[:, i, j]
-                if shape.point_in_poly(point, include_edges=False):
+                if shape.point_inside(point, include_edges=False):
                     for k in self.aspectratios:
                         dx, dz = inscribed_rect_in_poly(
                             shape.x,
