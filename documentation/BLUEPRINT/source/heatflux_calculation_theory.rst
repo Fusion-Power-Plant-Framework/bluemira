@@ -91,7 +91,8 @@ flux surface has a “width”, evaluated at the outboard mid-plane and indicate
    :name: fig:flux_expansion
    :align: center
 
-   Description of the SOL scalar coordinate :math:`dr_{u}` , defined at the outboard mid-plane, and its relation to the SOL scalar coordinate dx, defined at the divertor target.
+   Description of the SOL scalar coordinate :math:`dr_{u}` , defined at the outboard mid-plane, 
+   and its relation to the SOL scalar coordinate dx, defined at the divertor target.
 
 
 Such flux surface width varies when moving poloidally around the confined plasma or along 
