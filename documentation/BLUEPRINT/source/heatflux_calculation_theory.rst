@@ -55,10 +55,12 @@ To be more precise, the SOL exhibits two different regions [Nespoli_2017]_:
   and responsible for most of the heat deposited onto the first wall.
 
 .. figure:: ../images/nova/hf_radial_profile.png
+   :scale: 50 %
    :name: fig:hf_radial_profile
    :align: center
 
    Parallel heat flux radial profile in JET.
+
 
 The parallel heat flux radial profile :math:`q_{\parallel}` is then better described by a sum of two 
 exponentials, associated with the two different regions:
@@ -85,10 +87,12 @@ To compute the heat flux at the target location, one must consider that each pol
 flux surface has a “width”, evaluated at the outboard mid-plane and indicated here as :math:`dr_u` [Maurizio_2020]_.
 
 .. figure:: ../images/nova/flux_expansion.png
+   :scale: 50 %
    :name: fig:flux_expansion
    :align: center
 
    Description of the SOL scalar coordinate :math:`dr_{u}` , defined at the outboard mid-plane, and its relation to the SOL scalar coordinate dx, defined at the divertor target.
+
 
 Such flux surface width varies when moving poloidally around the confined plasma or along 
 the divertor leg. The ratio of the width at the target and at the OMP
