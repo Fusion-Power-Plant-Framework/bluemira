@@ -61,7 +61,6 @@ To be more precise, the SOL exhibits two different regions [Nespoli_2017]_:
 
    Parallel heat flux radial profile in JET.
 
-
 The parallel heat flux radial profile :math:`q_{\parallel}` is then better described by a sum of two 
 exponentials, associated with the two different regions:
 
