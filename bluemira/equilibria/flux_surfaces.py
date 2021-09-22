@@ -23,16 +23,14 @@
 Flux surface utility classes and calculations
 """
 
-from scipy.integrate._ivp.ivp import solve_ivp
-from scipy.linalg.basic import solve
-from BLUEPRINT.geometry import loop
+
 from dataclasses import dataclass
 from typing import Iterable
 from copy import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
 from functools import lru_cache
-from scipy.integrate import odeint
+from scipy.integrate import odeint, solve_ivp
 
 from bluemira.utilities.tools import cartesian_to_polar
 from bluemira.geometry._deprecated_tools import (
@@ -534,22 +532,36 @@ class FieldLine:
         ax.set_aspect("equal")
 
 
-from scipy.integrate import solve_ivp
-
-
-class CollisionTerminator:
-    def __init__(self, boundary):
-        self.boundary = boundary
-        self.terminal = True
-
-    def __call__(self, phi, xz, *args):
-        if self.boundary.point_inside(xz[:2]):
-            return np.min(self.boundary.distance_to(xz[:2]))
-        else:
-            return -np.min(self.boundary.distance_to(xz[:2]))
-
-
 class FieldLineTracer:
+    """
+    Field line tracing tool.
+
+    Notes
+    -----
+    Totally pinched some maths from Ben Dudson's FreeGS here... Perhaps one day I can
+    return the favours.
+
+    I needed it to compare the analytical connection length calculation with something,
+    so I nicked this.
+
+    You can use it if you want accurate connection length values, but if you want speed
+    you should stick to using PartialOpenFluxSurface.
+
+    Note that this will properly trace field lines through Coils as it doesn't rely on
+    the psi map (which is inaccurate inside Coils).
+    """
+
+    class CollisionTerminator:
+        def __init__(self, boundary):
+            self.boundary = boundary
+            self.terminal = True
+
+        def __call__(self, phi, xz, *args):
+            if self.boundary.point_inside(xz[:2]):
+                return np.min(self.boundary.distance_to(xz[:2]))
+            else:
+                return -np.min(self.boundary.distance_to(xz[:2]))
+
     def __init__(self, eq, first_wall=None):
         """
         Parameters
@@ -561,12 +573,7 @@ class FieldLineTracer:
         """
         self.eq = eq
         if first_wall is None:
-            g = self.eq.grid
-            first_wall = Loop(
-                x=[g.x_min, g.x_max, g.x_max, g.x_min, g.x_min],
-                z=[g.z_min, g.z_min, g.z_max, g.z_max, g.z_min],
-            )
-            first_wall.interpolate(2000)
+            first_wall = self.eq.grid
         self.first_wall = first_wall
 
     def trace_field_line(self, x, z, n_points=200, forward=True, n_turns_max=20):
@@ -599,19 +606,19 @@ class FieldLineTracer:
 
         result = solve_ivp(
             self._dxzl_dphi,
-            t_span=(0, 2 * np.pi * n_turns_max),
             y0=np.array([x, z, 0]),
-            events=CollisionTerminator(self.first_wall),
+            t_span=(0, 2 * np.pi * n_turns_max),
             t_eval=phi,
-            method="RK45",
+            events=self.CollisionTerminator(self.first_wall),
+            method="LSODA",
             args=(forward,),
         )
-        r, z, l = result["y"][0][:-1], result["y"][1][:-1], result["y"][2][:-1]
-        phi = result["t"][:-1]
+        r, z, phi, connection_length = self._process_result(result)
+
         x = r * np.cos(phi)
         y = r * np.sin(phi)
         loop = Loop(x=x, y=y, z=z, enforce_ccw=False)
-        return FieldLine(loop, l[-1])
+        return FieldLine(loop, connection_length)
 
     def _dxzl_dphi(self, phi, xz, forward):
         f = 1.0 if forward is True else -1.0
@@ -621,6 +628,24 @@ class FieldLineTracer:
         B = np.sqrt(Bx ** 2 + Bz ** 2 + Bt ** 2)
         dx, dz, dl = xz[0] / Bt * np.array([f * Bx, f * Bz, B])
         return np.array([dx, dz, dl])
+
+    def _process_result(result):
+        if len(result["y_events"][0]) != 0:
+            # Field line tracing was terminated by a collision
+            end = len(result["y"][0])
+            r, z = result["y"][0][:end], result["y"][1][:end]
+            phi = result["t"][:end]
+            termination = result["y_events"][0].flatten()
+            r = np.append(r, termination[0])
+            z = np.append(z, termination[1])
+            connection_length = termination[2]
+            phi = np.append(phi, result["t_events"][0][0])
+
+        else:
+            # Field line tracing was not terminated by a collision
+            r, z, length = result["y"][0], result["y"][1], result["y"][2]
+            connection_length = length[-1]
+        return r, z, phi, connection_length
 
 
 class FieldLineTracer2:

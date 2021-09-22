@@ -158,15 +158,15 @@ class Grid:
             e["nz"],
         )
 
-    def point_inside(self, x, z):
+    def point_inside(self, x, z=None):
         """
         Determine if a point is inside the rectangular grid (includes edges).
 
         Parameters
         ----------
-        x: float
-            The x coordinate of the point
-        z: float
+        x: Union[float, Iterable]
+            The x coordinate of the point. Or the 2-D point.
+        z: Optional[float]
             The z coordinate of the point
 
         Returns
@@ -174,11 +174,40 @@ class Grid:
         inside: bool
             Whether or not the point is inside the grid
         """
+        if z is None:
+            x, z = x
         return (
             (x >= self.x_min)
             and (x <= self.x_max)
             and (z >= self.z_min)
             and (z <= self.z_max)
+        )
+
+    def distance_to(self, x, z=None):
+        """
+        Get the distances of a point to the edges of the Grid.
+
+        Parameters
+        ----------
+        x: Union[float, Iterable]
+            The x coordinate of the point. Or the 2-D point.
+        z: Optional[float]
+            The z coordinate of the point
+
+        Returns
+        -------
+        distances: np.ndarray
+            Distances to the edges of the Grid.
+        """
+        if z is None:
+            x, z = x
+        return np.abs(
+            [
+                x - self.x_min,
+                x - self.x_max,
+                z - self.z_min,
+                z - self.z_max,
+            ]
         )
 
     def plot(self, ax=None, **kwargs):
