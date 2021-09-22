@@ -595,12 +595,8 @@ class FieldLineTracer:
 
         Returns
         -------
-        x_fl: np.ndarray
-            Radial coordinates of the field line
-        z_fl: np.ndarray
-            Vertical coordiantes of the field line
-        dl: np.ndarray
-            Distance travelled along the field line
+        field_line: FieldLine
+            Resulting field line
         """
         phi = np.linspace(0, 2 * np.pi * n_turns_max, n_points)
 
@@ -629,6 +625,7 @@ class FieldLineTracer:
         dx, dz, dl = xz[0] / Bt * np.array([f * Bx, f * Bz, B])
         return np.array([dx, dz, dl])
 
+    @staticmethod
     def _process_result(result):
         if len(result["y_events"][0]) != 0:
             # Field line tracing was terminated by a collision
@@ -646,99 +643,3 @@ class FieldLineTracer:
             r, z, length = result["y"][0], result["y"][1], result["y"][2]
             connection_length = length[-1]
         return r, z, phi, connection_length
-
-
-class FieldLineTracer2:
-    """
-    Field line tracing tool.
-
-    Notes
-    -----
-    Totally pinched some maths from Ben Dudson's FreeGS here... Perhaps one day I can
-    return the favours.
-
-    I needed it to compare the analytical connection length calculation with something,
-    so I nicked this.
-
-    You can use it if you want accurate connection length values, but if you want speed
-    you should stick to using PartialOpenFluxSurface.
-
-    Note that this will properly trace field lines through Coils as it doesn't rely on
-    the psi map (which is inaccurate inside Coils).
-    """
-
-    def __init__(self, eq, first_wall=None):
-        """
-        Parameters
-        ----------
-        eq: Equilibrium
-            Equilibrium in which to trace a field line
-        first_wall: Union[Grid, Loop]
-            Boundary at which to stop tracing the field line
-        """
-        self.eq = eq
-        if first_wall is None:
-            first_wall = self.eq.grid
-        self.first_wall = first_wall
-
-    def trace_field_line(self, x, z, n_points=200, forward=True, n_turns_max=20):
-        """
-        Trace a single field line starting at a point.
-
-        Parameters
-        ----------
-        x: float
-            Radial coordinate of the starting point
-        z: float
-            Vertical coordinate of the starting point
-        n_points: int
-            Number of points along the field line
-        forward: bool
-            Whether or not to step forward or backward (+B or -B)
-        n_turns_max: Union[int, float]
-            Maximum number of toroidal turns to trace the field line
-
-        Returns
-        -------
-        x_fl: np.ndarray
-            Radial coordinates of the field line
-        z_fl: np.ndarray
-            Vertical coordiantes of the field line
-        dl: np.ndarray
-            Distance travelled along the field line
-        """
-        phi = np.linspace(0, n_turns_max * 2 * np.pi, n_points)
-        result = odeint(self._dxzl_dphi, np.array([x, z, 0]), phi, args=(forward,))
-        r, z, l = result.T
-        x = r * np.cos(phi)
-        y = r * np.sin(phi)
-        cut = int(np.min(np.where(np.isclose(np.diff(l), 0))[0]))
-        connection_length = l[cut]
-        x = x[:cut]
-        y = y[:cut]
-        z = z[:cut]
-        loop = Loop(x=x, y=y, z=z, enforce_ccw=False)
-        return FieldLine(loop, connection_length)
-
-    def _dxzl_dphi(self, xz, phi, forward):
-        if np.allclose(xz, np.zeros(3)):
-            dx, dz, dl = np.zeros(3, dtype=np.int)
-        f = 1.0 if forward is True else -1.0
-        if self.first_wall.point_inside(*xz[:2]):
-            Bx = self.eq.Bx(*xz[:2])
-            Bz = self.eq.Bz(*xz[:2])
-            Bt = self.eq.Bt(xz[0])
-            B = np.sqrt(Bx ** 2 + Bz ** 2 + Bt ** 2)
-            dx, dz, dl = xz[0] / Bt * np.array([f * Bx, f * Bz, B])
-        else:
-            dx, dz, dl = np.zeros(3, dtype=np.int)
-        return dx, dz, dl
-
-
-# flt = FieldLineTracer(eq)
-# flt2 = FieldLineTracer2(eq)
-# fl = flt.trace_field_line(12, 0, n_points=1000, n_turns_max=40)
-# fl2 = flt2.trace_field_line(12, 0, n_points=1000, n_turns_max=40)
-
-# flf = flt.trace_field_line(12, 0, n_points=1000, n_turns_max=40, forward=False)
-# fl2f = flt2.trace_field_line(12, 0, n_points=1000, n_turns_max=40, forward=False)

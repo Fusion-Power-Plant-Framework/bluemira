@@ -78,14 +78,12 @@ class TestOpenFluxSurfaceStuff:
 
         # compare with field line tracer
         flt = FieldLineTracer(self.eq)
-        l_flt_lfs = flt.trace_field_line(
-            x_start, z_start, n_turns_max=20, forward=True
-        ).connection_length
+        l_flt_lfs = flt.trace_field_line(x_start, z_start, n_turns_max=20, forward=True)
         l_flt_hfs = flt.trace_field_line(
             x_start, z_start, n_turns_max=20, forward=False
         ).connection_length
-
-        assert np.isclose(l_flt_lfs, l_lfs, rtol=2e-2)
+        print(len(l_flt_lfs.loop))
+        assert np.isclose(l_flt_lfs.connection_length, l_lfs, rtol=2e-2)
         assert np.isclose(l_flt_hfs, l_hfs, rtol=2e-2)
 
 
