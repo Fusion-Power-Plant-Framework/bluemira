@@ -30,10 +30,10 @@ import matplotlib.pyplot as plt
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.base.file import make_BP_path
-from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from bluemira.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.model import CADModel
+from BLUEPRINT.geometry.geomtools import make_box_xz
 
 # BASED ON GV_SCR_03 from the PROCESS-STEP repository
 # fmt: off
@@ -71,10 +71,7 @@ write_path = make_BP_path("CP_Coil", subfolder="generated_data/BLUEPRINT")
 lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
 lcfs.close()
 
-# lcfs.translate([0.15, 0, 0])
-
-name = os.sep.join([read_path, "KOZ_PF_test1.json"])
-ko_zone = Loop.from_file(name)
+ko_zone = make_box_xz(1, 9, -9, 9)
 
 to_tf = {
     "name": "Example_PolySpline_TF",
@@ -82,6 +79,7 @@ to_tf = {
     "koz_loop": ko_zone,
     "shape_type": "CP",  # This is the overall coil shape parameterisation to use
     "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
+    "conductivity": "SC",  # Resistive (R) or Superconducting (SC)
     "npoints": 800,
     "obj": "L",  # This is the optimisation objective: minimise length
     "ny": 3,  # This is the number of current filaments to use in y

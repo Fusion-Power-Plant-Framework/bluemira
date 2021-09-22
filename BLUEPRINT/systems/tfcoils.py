@@ -173,6 +173,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.inputs["name"],
             family=self.inputs["shape_type"],
             wp_shape=self.inputs["wp_shape"],
+            conductivity=self.inputs["conductivity"],
             objective=self.inputs["obj"],
             npoints=self.npoints,
             n_TF=self.params.n_TF,
