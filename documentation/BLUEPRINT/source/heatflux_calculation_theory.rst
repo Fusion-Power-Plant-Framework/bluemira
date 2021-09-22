@@ -26,13 +26,14 @@ to diffuse and outflow into the SOL.
 Perpendicular and parallel transport in the SOL results in the exponential 
 decay of plasma density and temperature moving away from the LCFS in the 
 radial direction.
-The exhaust power (:math:`P_{SOL}`) is assumed to enter the SOL at the OMP 
-(the label “u” is used for this location, meaning “upstream”) and it 
-separates into two flows, one towards the inner divertor, another to the 
+The exhaust power (:math:`P_{SOL}`) is assumed to enter the SOL at the Outboard
+Mid-Plane (OMP - the subscript “u” is used for this location, meaning “upstream”) 
+and it separates into two flows, one towards the inner divertor, another to the 
 outer divertor.
 
 .. figure:: ../images/nova/SOL_power_sharing.png
    :name: fig:SOL_power_sharing
+   :align: center
 
    Schematic of the model for the SOL power sharing between inner and outer divertors. Illustrated, as an example, a LFS Snowflake Minus divertor.
 
@@ -55,6 +56,7 @@ To be more precise, the SOL exhibits two different regions [Nespoli_2017]_:
 
 .. figure:: ../images/nova/hf_radial_profile.png
    :name: fig:hf_radial_profile
+   :align: center
 
    Parallel heat flux radial profile in JET.
 
@@ -80,10 +82,11 @@ At the OMP, the heat flux parallel to the magnetic field :math:`q_{\parallel,u}`
 the poloidal component of the field :math:`q_{p,u}` are related by :math:`q_{\parallel,u} = q_{p,u}(B_{tot,u}/B_{p,u)}`.
 
 To compute the heat flux at the target location, one must consider that each poloidal 
-flux surface has a “width”, evaluated at the outboard mid-plane and labelled here as :math:`dr_u` [Maurizio_2020]_.
+flux surface has a “width”, evaluated at the outboard mid-plane and indicated here as :math:`dr_u` [Maurizio_2020]_.
 
 .. figure:: ../images/nova/flux_expansion.png
    :name: fig:flux_expansion
+   :align: center
 
    Description of the SOL scalar coordinate :math:`dr_{u}` , defined at the outboard mid-plane, and its relation to the SOL scalar coordinate dx, defined at the divertor target.
 
