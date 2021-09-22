@@ -443,6 +443,11 @@ def get_reactor_class(reactor_string):
     default="ConfigurableReactor",
     help="specify reactor class (file or package path)",
 )
+@click.option(
+    "--interactive",
+    default=True,
+    help="specify reactor class (file or package path)",
+)
 def cli(
     template,
     config,
@@ -460,6 +465,7 @@ def cli(
     plots,
     cad,
     reactor_class,
+    **kwargs,
 ):
     """
     Run BLUEPRINT build for a configurable reactor.
@@ -540,6 +546,9 @@ def cli(
     click.echo("Running BLUEPRINT build.")
     reactor.build()
     click.echo("BLUEPRINT build complete.")
+
+    if kwargs.pop("interactive", False):
+        return reactor
 
     # Return specified outputs.
     click.echo(f"Saving outputs to {inputs.output_path}")
