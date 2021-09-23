@@ -1001,7 +1001,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         case_in = Loop(**self.loops["in"])
         case_in = clean_loop(case_in)
         case_in.reorder(0, 2)
-
         if self.shape_type in ["P"] and self.params.r_tf_inboard_corner == 0:
             wp_out = self.correct_inboard_corners(wp_out, 4)
             case_out = self.correct_inboard_corners(case_out, 4)
@@ -1459,13 +1458,14 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             zmax_out = zmax_in + self.section["case"]["WP"]
 
             # Correct corners
-            wp_out = self.correct_inboard_corners(wp_out, 1, zmax=zmax_out)
+            correct_L = self.shp.parameterisation.xo["x_curve_start"]["value"] - 0.2
+            wp_out = self.correct_inboard_corners(wp_out, correct_L, zmax=zmax_out)
             wp_in = self.correct_inboard_corners(
                 wp_in, delta, xmin=r_cp - tk_case_ib, zmax=zmax_in
             )
             zmax_in = self.shp.parameterisation.xo["z_mid"]["value"]
             zmax_out = zmax_in + self.section["case"]["WP"] + tk_case_ob + tk_case_ib
-            case_out = self.correct_inboard_corners(case_out, 1, zmax=zmax_out)
+            case_out = self.correct_inboard_corners(case_out, correct_L, zmax=zmax_out)
             case_in = self.correct_inboard_corners(
                 case_in, delta, xmin=r_cp, zmax=zmax_in
             )

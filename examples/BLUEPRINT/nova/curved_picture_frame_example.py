@@ -109,4 +109,4 @@ n_tf = tf1.params.n_TF
 model = CADModel(n_tf)
 model.add_part(tf1.build_CAD())
 model.display(pattern="tq")
-model.save_as_STEP_assembly(write_path)
+# model.save_as_STEP_assembly(write_path)
