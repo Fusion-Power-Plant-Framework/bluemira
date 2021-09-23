@@ -25,6 +25,7 @@ Coil and coil grouping objects
 
 from copy import deepcopy
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.interpolate import RectBivariateSpline
 from typing import Any, Optional
 
