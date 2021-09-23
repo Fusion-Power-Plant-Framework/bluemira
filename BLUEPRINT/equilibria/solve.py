@@ -774,8 +774,8 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Solve for this iteration.
         """
-        self.coilset.mesh_coils(d_coil=0.4)
-        self.eq._remap_greens()
+        # self.coilset.mesh_coils(d_coil=0.4)
+        # self.eq._remap_greens()
         self.eq.solve(self.profiles, psi=self.psi)
 
 

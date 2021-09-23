@@ -1143,7 +1143,7 @@ class DivertorOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimi
         """
         Update the current vector bounds. Must be called prior to optimise
         """
-        self.I_max = max_current / self.scale
+        self.I_max = 1e5 / self.scale
 
     def f_min_rms(self, vector, grad):
         """
@@ -1176,7 +1176,7 @@ class DivertorOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimi
         # eqanalysis = EquilibriumManipulator(self.eq)
         # try:
         print(self.eq.coilset.get_control_currents())
-        self.eq.coilset.set_control_currents(x * 1e6)
+        self.eq.coilset.adjust_currents(x * 1e6)
         # self.eq._set_init_psi(self.eq.grid, self.eq.coilset.psi(self.eq.grid.x, self.eq.grid.z).copy())
         # self.eq.psi = self.eq.coilset.psi(self.eq.grid.x, self.eq.grid.z).copy()
         print(self.eq.coilset.get_control_currents())
@@ -1207,14 +1207,14 @@ class DivertorOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimi
         except:
             flux_exp = penalty
             print("flux_exp err")
-
+        self.eq.coilset.adjust_currents(-x * 1e6)
         return con_length, flux_exp
 
     def objective(self, x):
         """
         Objective function to be minimised.
         """
-        lambda1 = 10
+        lambda1 = 0
         lambda2 = 1
         lambda3 = 0
         con_length, flux_exp = self.divertor_objective(x)
@@ -1266,7 +1266,7 @@ class DivertorOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimi
         # opt.add_inequality_mconstraint(self.constrain_fields, tol)
 
         x0 = np.clip(tikhonov(self.A, self.b, self.gamma), -self.I_max, self.I_max)
-        x0 = self.eq.coilset.get_control_currents() / self.scale
+        # x0 = self.eq.coilset.get_control_currents() / self.scale
         # opt.set_initial_step(np.ones(np.shape(x0)))
 
         currents = opt.optimize(x0)
