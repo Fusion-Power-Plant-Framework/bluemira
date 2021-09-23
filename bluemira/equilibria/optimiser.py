@@ -129,7 +129,6 @@ class Norm2Tikhonov(EquilibriumOptimiser):
 
     def __init__(self, gamma=1e-12):
         self.gamma = gamma
-        self.inv_A_T_A = None
 
     def optimise(self):
         """

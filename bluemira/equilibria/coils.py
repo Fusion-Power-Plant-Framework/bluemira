@@ -1386,9 +1386,33 @@ class Circuit(CoilGroup):
 
     def psi_greens(self, pgreen):
         """
-        Calculate plasma psi from Greens functions and current
+        Calculate psi from Greens functions and current
         """
         return self.current * pgreen
+
+    def map_Bx_greens(self, x, z):
+        """
+        Mapping of the Bx Greens functions into a dict for each coil
+        """
+        return {self.name: self.control_Bx(x, z)}
+
+    def Bx_greens(self, bx_green):
+        """
+        Calculate Bx from Greens functions and current
+        """
+        return self.current * bx_green
+
+    def map_Bz_greens(self, x, z):
+        """
+        Mapping of the Bz Greens functions into a dict for each coil
+        """
+        return {self.name: self.control_Bz(x, z)}
+
+    def Bz_greens(self, bz_green):
+        """
+        Calculate Bz from Greens functions and current
+        """
+        return self.current * bz_green
 
     def control_Bx(self, x, z):
         """
