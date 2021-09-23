@@ -1448,7 +1448,7 @@ class Circuit(CoilGroup):
         """
         Plot the Circuit.
         """
-        for coil in self.coils:
+        for coil in self.coils.values():
             coil.plot(ax=ax, subcoil=subcoil, **kwargs)
 
 
