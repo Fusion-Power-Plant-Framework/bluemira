@@ -155,18 +155,15 @@ class CommentJSONDecoder(JSONDecoder):
     and removes extra commas from the end of dict like objects
     """
 
-    comments = re.compile(r'[/]{2}(\s*\w*[$-/:-?{-~!^_`\[\]]*)*(?!["]\s*[,]*[\}]*\n)')
-    comma = re.compile(r"[,]\n\s*[\}]")
+    comments = re.compile(r'[/]{2}(\s*\w*[#-/:-@{-~!^_`\[\]]*)*(?!["]\s*[,]*[\}]*\n)')
+    comma = re.compile(r"[,](\n*\s*)*[\}]")
+    eof = re.compile(r"[,](\n*\s*)*$")
 
     def decode(self, s, *args, **kwargs):
         """Return the Python representation of ``s`` (a ``str`` instance
         containing a JSON document).
         """
-        s = self.comma.sub("}", self.comments.sub("", s))
-        s = self.comma.sub("}", self.comments.sub("", s)).strip()
-        if s.endswith(","):
-            s = s[:-1] + "}"
-
+        s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
         return super().decode(s, *args, **kwargs)
 
 
