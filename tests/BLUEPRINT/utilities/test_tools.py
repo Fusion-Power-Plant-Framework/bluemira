@@ -43,6 +43,7 @@ from BLUEPRINT.utilities.tools import (
     norm,
     dot,
     cross,
+    get_module,
 )
 from BLUEPRINT.geometry.geomtools import polyarea
 
@@ -506,6 +507,16 @@ class TestCompareDicts:
             "c": "test",
         }
         assert compare_dicts(a, c, almost_equal=True, verbose=False)
+
+
+class TestGetModule:
+    def test_getmodule(self):
+        test_mod = "BLUEPRINT.reactor"
+        test_mod_loc = get_BP_path() + "/reactor.py"
+
+        for mod in [test_mod, test_mod_loc]:
+            module = get_module(mod)
+            assert module.__name__ == test_mod
 
 
 if __name__ == "__main__":
