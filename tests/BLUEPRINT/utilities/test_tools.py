@@ -511,12 +511,12 @@ class TestCompareDicts:
 
 class TestGetModule:
     def test_getmodule(self):
-        test_mod = "BLUEPRINT.reactor"
-        test_mod_loc = get_BP_path() + "/reactor.py"
+        test_mod = "BLUEPRINT.utilities.tools"
+        test_mod_loc = get_BP_path("utilities") + "/tools.py"
 
         for mod in [test_mod, test_mod_loc]:
             module = get_module(mod)
-            assert module.__name__ == test_mod
+            assert module.__name__.rsplit(".", 1)[-1] == test_mod.rsplit(".", 1)[-1]
 
 
 if __name__ == "__main__":
