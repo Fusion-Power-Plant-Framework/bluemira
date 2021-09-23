@@ -1448,6 +1448,8 @@ class Circuit(CoilGroup):
         """
         Plot the Circuit.
         """
+        if ax is None:
+            ax = plt.gca()
         for coil in self.coils.values():
             coil.plot(ax=ax, subcoil=subcoil, **kwargs)
 
