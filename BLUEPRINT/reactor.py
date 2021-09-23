@@ -1752,7 +1752,7 @@ class ConfigurableReactor(Reactor):
     @staticmethod
     def load_config(name, path):
         """
-        load config form JSON file
+        Load config form JSON file
 
         Parameters
         ----------
