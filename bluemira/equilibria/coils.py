@@ -1488,7 +1488,7 @@ class SymmetricCircuit(Circuit):
             ctype=coil.ctype,
             j_max=coil.j_max,
             b_max=coil.b_max,
-            name=coil.name + ".2",
+            name=self.name + ".2",
             flag_sizefix=coil.flag_sizefix,
         )
 

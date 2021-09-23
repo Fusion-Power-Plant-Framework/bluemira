@@ -501,7 +501,7 @@ class Equilibrium(MHDState):
     psi: None or 2-D numpy array (optional) default = None
         Magnetic flux [V.s] applied to X, Z grid
     Ip: float (optional) default = 0
-        Plasma current [MA]
+        Plasma current [A]
     li: None or float (default None)
         Normalised plasma internal inductance [N/A]
     RB0: float (optional) default = None
