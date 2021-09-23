@@ -1634,14 +1634,14 @@ class CoilSet(CoilGroup):
         """
         The length of the controls.
         """
-        return sum([coil.n_control for coil in self.coils])
+        return sum([coil.n_control for coil in self.coils.values()])
 
     @property
     def n_constraints(self):
         """
         The length of the constraints.
         """
-        return sum([coil.n_constraints for coil in self.coils])
+        return sum([coil.n_constraints for coil in self.coils.values()])
 
     def reassign_coils(self, coils):
         """
