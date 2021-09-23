@@ -1113,7 +1113,7 @@ def _loadfromspec(name):
             file for file in listdir(dirname) if file.startswith(full_dirname[1])
         ]
     except FileNotFoundError:
-        raise "Can't find module file '{}'".format(name)
+        raise FileNotFoundError("Can't find module file '{}'".format(name))
 
     requested = full_dirname[1] if full_dirname[1] in mod_files else mod_files[0]
 
@@ -1134,7 +1134,7 @@ def _loadfromspec(name):
         module = imp_u.module_from_spec(spec)
         spec.loader.exec_module(module)
     except (AttributeError, ImportError):
-        raise ("File '{}' is not a module".format(mod_files[0]))
+        raise ImportError("File '{}' is not a module".format(mod_files[0]))
 
     return module
 
