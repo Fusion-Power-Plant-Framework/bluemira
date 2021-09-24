@@ -28,7 +28,7 @@ from dataclasses import dataclass
 import numpy as np
 from copy import deepcopy
 
-from bluemira.utilities.tools import delta
+from bluemira.utilities.tools import abs_rel_difference
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.equilibria.shapes import flux_surface_johner
@@ -476,7 +476,7 @@ class AutoConstraints(MagneticConstraintSet):
         x_z_min = x[np.argmin(z)]
 
         # Determine if we are dealing with SN or DN
-        single_null = delta(abs(z_min), z_max) > 0.05
+        single_null = abs_rel_difference(abs(z_min), z_max) > 0.05
 
         if single_null:
             # Determine if it is an upper or lower SN

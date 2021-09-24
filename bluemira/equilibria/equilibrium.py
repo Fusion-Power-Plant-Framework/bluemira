@@ -66,7 +66,7 @@ from bluemira.equilibria.force_field import ForceField
 from bluemira.equilibria.constants import PSI_NORM_TOL, LI_REL_TOL
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.utilities.tools import delta
+from bluemira.utilities.tools import abs_rel_difference
 from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.geometry._deprecated_loop import Loop
 
@@ -889,7 +889,7 @@ class Equilibrium(MHDState):
             )
             self._li_temp = li
             self._jtor = jtor_opt
-            if delta(self._li_temp, self._li) <= LI_REL_TOL:
+            if abs_rel_difference(self._li_temp, self._li) <= LI_REL_TOL:
                 # Scipy's callback argument doesn't seem to work, so we do this
                 # instead...
                 raise StopIteration

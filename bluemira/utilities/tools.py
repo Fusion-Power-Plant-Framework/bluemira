@@ -368,26 +368,6 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True):
     return the_same
 
 
-def delta(v2, v1ref):
-    """
-    Calculates the absolute relative difference between a new value and an old
-    reference value.
-
-    Parameters
-    ----------
-    v2: float
-        The new value to compare to the old
-    v1ref: float
-        The old reference value
-
-    Returns
-    -------
-    delta: float
-        The absolute relative difference between v2 and v1ref
-    """
-    return abs((v2 - v1ref) / v1ref)
-
-
 def clip(val, val_min, val_max):
     """
     Clips (limits) val between val_min and val_max.
