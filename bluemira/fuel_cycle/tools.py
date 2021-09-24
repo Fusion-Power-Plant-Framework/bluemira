@@ -825,10 +825,6 @@ def _fountain_linear_sink(
         Accountancy parameter to calculate the total value lost to a sink
     decayed: float
         Accountancy parameter to calculate the total value of decayed T in a sink
-
-    Notes
-    -----
-    Can't raise Exceptions in numba, hence ERROR CODE printing
     """
     years = 365 * 24 * 3600
     dt = t_out - t_in
