@@ -51,13 +51,13 @@ params = [
     ["TF_ripple_limit", "Ripple limit constraint", 0.65, "%", None, "Input"],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
     ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
-    ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.8934, "m", None, "PROCESS"],
+    ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.75, "m", None, "PROCESS"],
     ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
     ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
     ["tf_wp_depth", "TF coil winding pack depth (in y)", 0.4625, "m", "Including insulation", "PROCESS"],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
     ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
-    ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
+    ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
     ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
 
 ]

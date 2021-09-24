@@ -91,6 +91,7 @@ class TestTFCoil:
             "plasma": lcfs,
             "koz_loop": ko_zone,
             "shape_type": "S",  # This is the shape parameterisation to use
+            "conductivity": "SC",  # # Resistive (R) or Superconducting (SC)
             "obj": "L",  # This is the optimisation objective: minimise length
             "wp_shape": "N",  # This is the winding pack shape choice for the inboard leg
             "ny": 1,  # This is the number of current filaments to use in y

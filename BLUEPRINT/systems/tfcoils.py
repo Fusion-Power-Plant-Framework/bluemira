@@ -84,7 +84,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
         ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
         ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
-        ["tk_tf_ob_casing", "TF outboard leg conductor casing thickness", 0.02, "m", None, "PROCESS"],
+        ["tk_tf_ob_casing", "TF outboard leg conductor casing thickness", 0.1, "m", None, "PROCESS"],
         ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 11.5, 'm', None, 'PROCESS'],
         ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'N/A', None, 'PROCESS'],
@@ -979,8 +979,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 "TF WP",
                 "TF Tapered CP",
                 "TF Leg Conductor",
-                "TF Leg case in",
-                "TF Leg case out",
+                "TF case in",
+                "TF case out",
                 "B Cyl",
             ]
         elif self.inputs["shape_type"] in ["CP"]:
@@ -1091,12 +1091,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                     b_cyl.reorder(0, 2)
                     self.geom["B Cyl"] = b_cyl
 
-                # Now write into relevant geom dicts
-                self.geom["TF WP"] = Shell(wp_in, wp_out)
-                self.geom["TF Tapered CP"] = centrepost
-                self.geom["TF Leg Conductor"] = leg_conductor
-                self.geom["TF Leg case out"] = case_out
-                self.geom["TF Leg case in"] = case_in
+                else:
+                    # Now write into relevant geom dicts
+                    self.geom["TF WP"] = Shell(wp_in, wp_out)
+                    self.geom["TF Tapered CP"] = centrepost
+                    self.geom["TF Leg Conductor"] = leg_conductor
+                    self.geom["TF case out"] = case_out
+                    self.geom["TF case in"] = case_in
 
             else:
                 # SC coils
@@ -1579,7 +1580,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             over leg_conductor for resistive coils)
         """
         # Define useful quantities
-        r_cp = self.params.r_tf_inboard_out
+        if self.conductivity in ["R"]:
+            # Resistive Coils
+            r_cp = self.params.r_cp_top + 1e-5
+        else:
+            # SC coils
+            r_cp = self.params.r_tf_inboard_out
+
         z_max = np.max(self.loops["out"]["z"])
         x_max = np.max(self.loops["out"]["x"])
         TF_depth_at_r_cp = self.section["winding_pack"]["depth"]
@@ -1604,14 +1611,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         leg_conductor.close()
 
         if self.conductivity in ["R"]:
-            # if coil is resistive or not/ has a b_cyl or not
-            r_cp = self.params.r_cp_top + 1e-5
+
+            # Resistive Coils
             tk_case_ob = self.params.tk_tf_ob_casing
-            plt.figure(10)
-            plt.plot(case_out.x, case_out.z)
-            plt.plot(wp_out.x, wp_out.z)
-            # plt.plot(inner_cut_loop.x, inner_cut_loop.z)
-            plt.show()
             case_out = Shell(wp_out, case_out)
             case_in = Shell(case_in, wp_in)
             # Make Resistive coil casing:
