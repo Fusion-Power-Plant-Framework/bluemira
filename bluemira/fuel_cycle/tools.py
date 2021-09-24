@@ -721,7 +721,7 @@ def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa (N802)
         np.exp(-T_LAMBDA * dt) * (np.exp(T_LAMBDA * (dt + 0)) - 1)
     ) / (np.exp(T_LAMBDA) - 1)
     if out_inventory < 0:
-        raise FuelCycleError("The out inventory should not be below 0...")
+        raise ValueError("The out inventory should not be below 0...")
     return out_inventory
 
 
@@ -883,7 +883,7 @@ def _fountain_linear_sink(
                 dt2 = t_out - t_in - t15
                 inventory = i_mdot2
                 if inventory < 0:
-                    raise FuelCycleError("Negative inventory in fountain_linear_sink.")
+                    raise ValueError("Negative inventory in fountain_linear_sink.")
                 m_out = (mass_in - m_in * t15 - (1 - fs) * m_in * dt2) / dts
     elif inventory <= max_inventory:
         # Uncanny valley, no man's land
@@ -932,11 +932,11 @@ def _fountain_linear_sink(
             m_out = (mass_in - (1 - fs) * m_in * dt) / dts
 
     if m_out > m_flow:
-        raise FuelCycleError(f"Out flow greater than in flow: {m_out} > {m_flow}")
+        raise ValueError(f"Out flow greater than in flow")
     if m_out < 0:
-        raise FuelCycleError(f"Negative out flow: {m_out}")
+        raise ValueError(f"Negative out flow")
     if inventory < 0:
-        raise FuelCycleError("Negative inventory.")
+        raise ValueError("Negative inventory.")
     return m_out, inventory, sum_in, decayed
 
 
