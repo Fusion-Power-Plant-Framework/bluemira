@@ -27,6 +27,9 @@ import matplotlib as mpl
 
 import tests
 
+from bluemira.base.file import try_get_bluemira_private_data_root
+from bluemira.base.look_and_feel import bluemira_warn
+
 
 def pytest_addoption(parser):
     """
@@ -53,6 +56,14 @@ def pytest_addoption(parser):
         help="enable reactor end-to-end test",
     )
 
+    parser.addoption(
+        "--private",
+        action="store_true",
+        dest="private",
+        default=False,
+        help="run tests that use private data",
+    )
+
 
 def pytest_configure(config):
     """
@@ -67,3 +78,10 @@ def pytest_configure(config):
         setattr(config.option, "markexpr", "not longrun and not reactor")
     elif not config.option.longrun:
         setattr(config.option, "markexpr", "not longrun")
+    if not config.option.private:
+        setattr(config.option, "markexpr", "not private")
+    else:
+        # Check that we have access to private data locally
+        if try_get_bluemira_private_data_root() is None:
+            bluemira_warn("You cannot run private tests. Disabling this test flag.")
+            setattr(config.option, "markexpr", "not private")
