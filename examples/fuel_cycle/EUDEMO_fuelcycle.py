@@ -28,6 +28,7 @@ from bluemira.base.look_and_feel import plot_defaults
 from bluemira.base.parameter import ParameterFrame
 from bluemira.utilities.tools import set_random_seed
 from bluemira.fuel_cycle.lifecycle import LifeCycle
+from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
 from bluemira.fuel_cycle.run import FuelCycleAnalysis
 from bluemira.fuel_cycle.tools import (
     convert_flux_to_flow,
@@ -98,7 +99,7 @@ set_random_seed(2358203947)
 
 # Let's do 200 runs Monte Carlo
 
-n = 200
+n = 5  # 200
 timelines = [lifecycle.timeline() for _ in range(n)]
 time_dicts = [timeline.to_dict() for timeline in timelines]
 
@@ -185,7 +186,7 @@ tfv_config = ParameterFrame([
 ])
 # fmt:on
 
-tfv_system = FuelCycleAnalysis(tfv_config)
+tfv_system = FuelCycleAnalysis(tfv_config, EUDEMOFuelCycleModel)
 
 # Now, let's run the fuel cycle model for the timelines we generated
 
@@ -194,12 +195,8 @@ tfv_system.run_model(time_dicts)
 
 # You can have a look at a typical timeline:
 
-tfv_system.plot()
-
 # And the distributions for the start-up inventory and doubling time:
-
-tfv_system.dist_plot()
-
+tfv_system.plot()
 
 # And finally, you can get the desired statistical results:
 

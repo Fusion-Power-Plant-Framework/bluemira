@@ -29,10 +29,10 @@ from itertools import cycle
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 from scipy.interpolate import griddata
-from bluemira.systems.tfv import TFVSystem
 from bluemira.fuel_cycle.lifecycle import LifeCycle
+from bluemira.fuel_cycle.run import FuelCycleAnalysis
 from bluemira.utilities.pypetdatabase import DataBase
-from bluemira.utilities.plottools import savefig, weather_front, mathify
+from bluemira.utilities.plot_tools import savefig, weather_front, mathify
 
 # flake8: noqa  This isn't really source code, more of a collection of procedures
 # used for building reduced models of the fuel cycle, and associated parameter

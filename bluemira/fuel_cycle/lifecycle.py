@@ -179,7 +179,7 @@ class LifeCycle:
                 f" years, or {vvlifeperc:.2f} % of neutron budget."
             )
             # TODO: treat output parameter
-        self.add_parameter(
+        self.params.add_parameter(
             "n_cycles",
             "Total number of D-T pulses",
             self.fpy * YR_TO_S / self.t_flattop,

@@ -240,20 +240,6 @@ class EUDEMOFuelCycleModel:
             m_T[i] = (m_T[i - 1]) * np.exp(-T_LAMBDA * dt) - t_burnt + t_bred + t_DD
         return m_T
 
-    def _plot(self, m_T, i):
-        """
-        Obsolete
-        """
-        n = len(self.DEMO_t)
-        self.ax.plot(
-            self.DEMO_t[:n],
-            m_T[:n],
-            label="$m_T$ TBR = {0}, "
-            "A = {1}".format(self.params.TBR[i], self.A_global),
-        )
-        self.ax.set_xlabel("Time [years]")
-        self.ax.set_ylabel("kg of T")
-
     def plasma(self, eta_iv, max_inventory, flows=None):
         """
         In-vessel environment
@@ -483,6 +469,14 @@ class EUDEMOFuelCycleModel:
             self.m_T_start -= min_tritium
             self.recycle()
 
+    def plot(self):
+        """
+        Plot the results of the fuel cycle model.
+        """
+        _, ax = plt.subplots(2, 1)
+        self.plot_m_T(ax=ax[0])
+        self.plot_inventory(ax=ax[1])
+
     def plot_m_T(self, **kwargs):
         """
         Plot the evolution of the tritium masses over time.
@@ -590,24 +584,6 @@ class EUDEMOFuelCycleModel:
         for i in idx:
             inventory[i + 1] = inventory[i]
         return inventory
-
-    def plot_perf(self):
-        """
-        Plot the proportions of bred, burnt, and escaped tritium.
-        """
-        f, ax = plt.subplots()
-        c = ["#0072bd", "#d95319", "#edb120"]
-        labels = ["$T_{bred}$", "$T_{burnt}$", "$T_{stack}$"]
-        sizes = [self.M_T_bred, self.M_T_burnt, self.M_T_stack]
-        plt.pie(
-            sizes,
-            labels=labels,
-            colors=c,
-            startangle=90,
-            autopct="%.2f",
-            counterclock=False,
-        )
-        plt.axis("equal")
 
     def calc_t_d(self):
         """
