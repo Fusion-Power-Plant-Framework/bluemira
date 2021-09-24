@@ -42,7 +42,7 @@ from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
 from bluemira.equilibria.constraints import AutoConstraints
 from bluemira.equilibria.profiles import BetaIpProfile, DoublePowerFunc
 from bluemira.equilibria.optimiser import FBIOptimiser, BreakdownOptimiser
-from bluemira.equilibria.physics import calc_psib
+from bluemira.equilibria.physics import calc_psib, calc_beta_p, calc_li
 from bluemira.equilibria.solve import PicardLiAbsIterator
 
 # %%[markdown]
@@ -87,7 +87,6 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
         dx=dxi,
         dz=dzi,
         ctype=ctype,
-        name=f"{ctype}_{i+1}",
         control=True,
     )
     coils.append(coil)
@@ -127,7 +126,7 @@ c_ejima = 0.3
 # This is quite a sensitive optimisation, and is possibly a multi-modal space
 # May want to think about optimising with a stochastic optimiser, and including
 # a parametric location of the breakdown point...
-x_zone = 10.04  # ??
+x_zone = 9.84  # ??
 z_zone = 0.0  # ??
 r_zone = 2.0  # ??
 b_zone_max = 0.003  # T
@@ -273,7 +272,7 @@ ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
 
-bluemira_print("SOF:\n" f"beta_p: {sof.calc_beta_p():.2f}\n" f"l_i: {sof.calc_li():.2f}")
+bluemira_print("SOF:\n" f"beta_p: {calc_beta_p(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
 
 
-bluemira_print("EOF:\n" f"beta_p: {eof.calc_beta_p():.2f}\n" f"l_i: {eof.calc_li():.2f}")
+bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")

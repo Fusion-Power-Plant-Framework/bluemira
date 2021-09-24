@@ -25,7 +25,7 @@ A collection of geometry utility functions
 import numba as nb
 import numpy as np
 from numpy.linalg import LinAlgError
-from collections import Iterable
+from collections.abc import Iterable
 from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon

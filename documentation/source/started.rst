@@ -47,11 +47,13 @@ PROCESS Installation
 Bluemira is able perform a PROCESS run as the initial step in the reactor design.
 
 .. note::
+
     PROCESS requires gfortran-9, which is not the default version on Ubuntu 18.04. In
     order to make this more recent gfortran version available, if you are using Ubuntu
     18.04 you then must first run:
 
-    ..code-block:: bash
+    .. code-block:: bash
+
         sudo apt-get update
         sudo apt-get install -y software-properties-common
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
@@ -65,5 +67,6 @@ In order install PROCESS in your bluemira environment, run the following:
     bash scripts/install-process.sh
 
 .. note::
+
     You will need to have first obtained permissions to be able to clone the PROCESS
     source repository and have set up an ssh key within UKAEA's GitLab.

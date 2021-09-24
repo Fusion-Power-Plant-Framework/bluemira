@@ -26,11 +26,13 @@ from itertools import cycle
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Type
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.cad.shieldCAD import ThermalShieldCAD, SegmentedThermalShieldCAD
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.base import ReactorSystem
-from BLUEPRINT.base import ParameterFrame
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     boolean_2d_union,

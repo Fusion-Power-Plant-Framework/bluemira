@@ -480,8 +480,27 @@ def get_contours(x, z, array, value):
 
 def find_flux_surfs(x, z, psi, psinorm, o_points=None, x_points=None):
     """
-    Finds all flux surfaces with a given normalised psi. Grid boundary issues
-    are handled with a pad, unifying discontinuous psinorms
+    Finds all flux surfaces with a given normalised psi. If a flux loop goes off
+    the grid, separate sets of coordinates will be produced.
+
+    Parameters
+    ----------
+    x: np.array(N, M)
+        The spatial x coordinates of the grid points [m]
+    z: np.array(N, M)
+        The spatial z coordinates of the grid points [m]
+    psi: np.array(N, M)
+        The poloidal magnetic flux map [V.s/rad]
+    psinorm: float
+        The normalised psi value of the desired flux surface [N/A]
+    o_points, x_points: list(Opoints, ..), list(Xpoint, ..) or None
+        The O- and X-points to use to calculate psinorm (saves time if you
+        have them)
+
+    Returns
+    -------
+    psi_loop: np.array(P, K)
+        The coordinates of the loops that was found
     """
     # NOTE: This may all fall over for multiple psi_norm islands with overlaps
     # on the grid edges...
@@ -545,38 +564,6 @@ def find_flux_surf(x, z, psi, psinorm, o_points=None, x_points=None):
     return psi_surfs[np.argmin(err)].T
 
 
-def find_flux_loops(x, z, psi, psinorm, o_points=None, x_points=None):
-    """
-    Finds all flux loops with a given normalised psi. If a flux loop goes off
-    the grid, separate sets of coordinates will be produced.
-    Used in EquilibriumManipulator
-
-    Parameters
-    ----------
-    x: np.array(N, M)
-        The spatial x coordinates of the grid points [m]
-    z: np.array(N, M)
-        The spatial z coordinates of the grid points [m]
-    psi: np.array(N, M)
-        The poloidal magnetic flux map [V.s/rad]
-    psinorm: float
-        The normalised psi value of the desired flux surface [N/A]
-    o_points, x_points: list(Opoints, ..), list(Xpoint, ..) or None
-        The O- and X-points to use to calculate psinorm (saves time if you
-        have them)
-
-    Returns
-    -------
-    psi_loop: np.array(P, K)
-        The coordinates of the loops that was found
-    """
-    o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
-    xo, zo, psio = o_points[0]
-    __, __, psix = x_points[0]
-    psinormed = psio - psinorm * (psio - psix)
-    return get_contours(x, z, psi, psinormed)
-
-
 def find_field_surf(x, z, Bp, field):
     """
     Picks a field surface most likely to be the desired breakdown region
@@ -624,6 +611,43 @@ def find_field_surf(x, z, Bp, field):
     else:
         bluemira_warn(f"No field surfaces at {field:.4f} T found.")
         return None
+
+
+def find_flux_surface_through_point(x, z, psi, point_x, point_z, point_psi):
+    """
+    Get a flux surface passing through a point.
+
+    Parameters
+    ----------
+    x: np.array(N, M)
+        The spatial x coordinates of the grid points [m]
+    z: np.array(N, M)
+        The spatial z coordinates of the grid points [m]
+    psi: np.array(N, M)
+        The poloidal magnetic flux map [V.s/rad]
+    point_x: float
+        The radial coordinate of the point [m]
+    point_z: float
+        The vertical coordinate of the point [m]
+    point_psi: float
+        The magnetic flux at the point [V.s/rad]
+
+    Returns
+    -------
+    x: 1-D np.array
+        The radial coordinates of the flux surface
+    z: 1-D np.array
+        The vertical coordinates of the flux surface
+    """
+
+    def f_min(x_opt, z_opt):
+        return np.min(np.hypot(x_opt - point_x, z_opt - point_z))
+
+    flux_contours = get_contours(x, z, psi, point_psi)
+
+    error = [f_min(*group.T) for group in flux_contours]
+
+    return flux_contours[np.argmin(error)].T
 
 
 def find_LCFS_separatrix(
@@ -727,7 +751,7 @@ def find_LCFS_separatrix(
 
             delta = high - low
 
-        coords = find_flux_loops(x, z, psi, high, o_points=o_points, x_points=x_points)
+        coords = find_flux_surfs(x, z, psi, high, o_points=o_points, x_points=x_points)
         loops = [Loop(x=c.T[0], z=c.T[1]) for c in coords]
         loops.sort(key=lambda loop: -loop.length)
         separatrix = loops[:2]

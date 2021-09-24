@@ -24,7 +24,6 @@ ST equilibrium attempt
 import numpy as np
 import matplotlib.pyplot as plt
 
-from bluemira.equilibria.coils import PF_COIL_NAME
 from bluemira.base.look_and_feel import plot_defaults
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.grid import Grid
@@ -191,7 +190,6 @@ for i in range(len(coil_x)):
         dz=coil_dz[i] / 2,
         current=currents[i],
         ctype="PF",
-        name=PF_COIL_NAME.format(i + 1),
     )
     circuit = SymmetricCircuit(coil)
     circuits.append(circuit)

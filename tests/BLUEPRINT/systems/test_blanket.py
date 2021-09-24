@@ -23,7 +23,9 @@ Testing routines for the central column shield system
 """
 import pytest
 import numpy as np
-from BLUEPRINT.base import ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.error import GeometryError, SystemsError
 from BLUEPRINT.systems.blanket import STBreedingBlanket
 from BLUEPRINT.geometry.geomtools import make_box_xz, get_intersect, circle_seg

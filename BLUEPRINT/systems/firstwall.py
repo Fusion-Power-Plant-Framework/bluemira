@@ -25,7 +25,10 @@ Flux surface attributes and first wall profile based on heat flux calculation
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
 from BLUEPRINT.equilibria.find import find_flux_surfs
@@ -52,6 +55,7 @@ from BLUEPRINT.geometry.geomtools import lineq
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d
 from functools import partial
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
+from BLUEPRINT.utilities.csv_writer import write_csv
 
 
 def find_outer_point(point_list, x_compare):
@@ -963,6 +967,13 @@ class FirstWall(EqInputs, ReactorSystem):
     def hf_firstwall_params(self):
         """
         Generate the parameters to calculate the heat flux
+        """
+        raise NotImplementedError
+
+    def hf_save_as_csv(self, filename, metadata):
+        """
+        Generate a .csv file with intersectin point coordinates and
+        corresponding local heat flux value
         """
         raise NotImplementedError
 
@@ -3115,7 +3126,7 @@ class FirstWallDN(FirstWall):
         Returns
         -------
         x_int_hf: [float]
-            List of all the x coordinates at the inetrsections
+            List of all the x coordinates at the intersections
         z_int_hf: [float]
             List of all the z coordinates at the intersections
         heat_flux: [float]
@@ -3124,17 +3135,16 @@ class FirstWallDN(FirstWall):
         x_int_hf = []
         z_int_hf = []
         heat_flux = []
+        heat_map = [x_int_hf, z_int_hf, heat_flux]
 
         for list_xz, hf in zip(list_first_intersections, list_heat_flux):
-            attributes = [lambda: list_xz[0], lambda: list_xz[1], lambda: hf]
-            lists = [x_int_hf, z_int_hf, heat_flux]
-            for attribute, to_append in zip(attributes, lists):
-                test = np.where(
-                    len(list_xz) != 0,
-                    attribute(),
-                    np.nan,
-                )
-                to_append.append(test)
+            if len(list_xz) != 0:
+                attrs = [list_xz[0], list_xz[1], hf]
+                for no, list_params in enumerate(heat_map):
+                    list_params.append(attrs[no])
+            else:
+                for list_params in heat_map:
+                    list_params.append(np.nan)
 
         return (x_int_hf, z_int_hf, heat_flux)
 
@@ -3358,7 +3368,7 @@ class FirstWallDN(FirstWall):
             *self.first_int,
         )
 
-        x, z, hf = self.calculate_heat_flux(
+        self.x_ints, self.z_ints, self.hf_ints = self.calculate_heat_flux(
             *self.first_int,
             *qpar_local_lfs_hfs[0],
             *qpar_local_lfs_hfs[1],
@@ -3369,7 +3379,7 @@ class FirstWallDN(FirstWall):
         self.x_wall = []
         self.z_wall = []
         self.hf_wall = []
-        for list_x, list_z, list_hf in zip(x, z, hf):
+        for list_x, list_z, list_hf in zip(self.x_ints, self.z_ints, self.hf_ints):
             for x, z, hf in zip(list_x, list_z, list_hf):
                 if (
                     z < self.points["x_point"]["z_up"]
@@ -3378,6 +3388,28 @@ class FirstWallDN(FirstWall):
                     self.x_wall.append(x)
                     self.z_wall.append(z)
                     self.hf_wall.append(hf)
+
+    def hf_save_as_csv(self, filename="hf_on_the_wall", metadata=""):
+        """
+        Generate a .csv file with the coordinates of flux line intersections
+        with the first wall  and corresponding local heat flux value
+        """
+        # Collecting in three different (1 level) lists the intersection
+        # point coordinates and heat flux values
+        input_x = [x for list_x in self.x_ints for x in list_x]
+        input_z = [z for list_z in self.z_ints for z in list_z]
+        input_hf = [hf for list_hf in self.hf_ints for hf in list_hf]
+
+        # The .csv file, besides the header, will have 3 columns and n rows
+        # n = number of intersections
+        data = np.array([input_x, input_z, input_hf]).T
+
+        header = "Intersection points and relevant hf"
+        if metadata != "" and not metadata.endswith("\n"):
+            metadata += "\n"
+        header = metadata + header
+        col_names = ["x", "z", "heat_flux"]
+        write_csv(data, filename, col_names, header)
 
 
 class FirstWallPlotter(ReactorSystemPlotter):

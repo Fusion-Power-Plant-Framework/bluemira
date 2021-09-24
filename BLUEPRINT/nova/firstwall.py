@@ -28,9 +28,12 @@ from typing import Type, List
 from scipy.interpolate import InterpolatedUnivariateSpline
 import nlopt
 from collections import OrderedDict
-from BLUEPRINT.nova.stream import StreamFlow
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
+
+from BLUEPRINT.nova.stream import StreamFlow
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
 from BLUEPRINT.geometry.stringgeom import String

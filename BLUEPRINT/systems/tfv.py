@@ -26,9 +26,12 @@ from typing import Type
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-from BLUEPRINT.base import ParameterFrame, ReactorSystem
-from BLUEPRINT.base.lookandfeel import KEY_TO_PLOT
+
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import plot_defaults
+
+from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.base.lookandfeel import KEY_TO_PLOT
 from BLUEPRINT.utilities.plottools import savefig
 from BLUEPRINT.utilities.powerlearn import PowerLaw
 from BLUEPRINT.utilities.pypetdatabase import DataBase

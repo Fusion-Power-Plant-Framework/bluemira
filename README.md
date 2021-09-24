@@ -66,7 +66,7 @@ See [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Installation
 
-See our [getting started guide](documentation/bluemira/source/started.rst).
+See our [getting started guide](documentation/source/started.rst).
   
 ## Developing
 

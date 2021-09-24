@@ -52,3 +52,11 @@ class LogsError(BluemiraError):
     """
 
     pass
+
+
+class ParameterError(BluemiraError):
+    """
+    Exception class for Parameters.
+    """
+
+    pass

@@ -23,7 +23,8 @@ Testing routines for different thermal shield system
 """
 import numpy as np
 
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.systems.vessel import SegmentedVaccumVessel
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import get_intersect

@@ -22,13 +22,16 @@
 Testing routines for the central column shield system
 """
 import pytest
-from BLUEPRINT.base import ParameterFrame
+
+from math import acos, sqrt, pi
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.systems.centralcolumnshield import CentralColumnShield
 from BLUEPRINT.geometry.geomtools import circle_seg
 from BLUEPRINT.geometry.loop import Loop
 from tests.BLUEPRINT.systems.test_firstwall import load_firstwall_sn, load_firstwall_dn
-from math import acos, sqrt, pi
 
 
 # Pretend that the fw profile is a circle
