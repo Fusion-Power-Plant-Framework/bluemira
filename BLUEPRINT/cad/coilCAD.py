@@ -286,7 +286,7 @@ class TFCoilCAD(ComponentCAD):
         # Lateral extent of the cut defining the end of the wedge
         # ---
         # Tapered coils
-        if tf.shape_type in ["TP"]:
+        if tf.conductivity in ["R"]:
             cut_half_depth = tf.params.r_cp_top * np.sin(0.5 * coil_toroidal_angle)
 
         # Other coils (SC like)
@@ -361,7 +361,7 @@ class TFCoilCAD(ComponentCAD):
         # Define the xz loop of the cutter objects
         # ---
         # Use r_cp_top for tapered coils
-        if tf.shape_type in ["TP"]:
+        if tf.conductivity in ["R"]:
             cutter_radius = tf.params.r_cp_top
 
         # SC coils
@@ -524,16 +524,17 @@ class TFCoilCAD(ComponentCAD):
             )
             leg_conductor = boolean_cut(winding_pack, tapered_cp)
 
-            if tf.shape_type in ["TP"]:
+            if tf.conductivity in ["R"]:
                 # Resistive tapered CP coils
-                # Make B Cyl
                 tk_case = tf.params.tk_tf_ob_casing
-                ri = np.min(tf.loops["b_cyl"]["x"])
-                ro = np.max(tf.loops["b_cyl"]["x"])
-                b_cyl_loop = make_box_xz(
-                    x_min=ri, x_max=ro, z_min=-zmax_wp, z_max=zmax_wp
-                )
-                b_cyl = TFCoilCAD.wedge_from_xz(tf, b_cyl_loop, coil_toroidal_angle)
+                if tf.shape_type in ["TP"]:
+                    # Make B Cyl
+                    ri = np.min(tf.loops["b_cyl"]["x"])
+                    ro = np.max(tf.loops["b_cyl"]["x"])
+                    b_cyl_loop = make_box_xz(
+                        x_min=ri, x_max=ro, z_min=-zmax_wp, z_max=zmax_wp
+                    )
+                    b_cyl = TFCoilCAD.wedge_from_xz(tf, b_cyl_loop, coil_toroidal_angle)
 
                 # Define casing loop
                 # Can't use Casing Loops since they aren't connected to each other
@@ -541,7 +542,7 @@ class TFCoilCAD(ComponentCAD):
                 # Take the leg conductor loop, offset it by the casing thickness
                 # then cut to match the casing loops
                 leg_conductor_loop = geom["TF Leg Conductor"]
-                leg_casing = offset_clipper(leg_conductor_loop, tk_case)
+                case = offset_clipper(leg_conductor_loop, tk_case)
                 xmax_cut = 1.03 * (
                     (0.5 * TF_depth_at_r_cp + tk_case)
                     / np.tan(0.5 * coil_toroidal_angle)
@@ -552,23 +553,21 @@ class TFCoilCAD(ComponentCAD):
                     z_min=-(zmax_wp + 5.0),
                     z_max=zmax_wp + 5.0,
                 )
-                leg_casing = boolean_2d_difference_loop(leg_casing, inner_cut_loop)
+                case = boolean_2d_difference_loop(case, inner_cut_loop)
 
                 # Shift the casing loop in the y direction prepare the extrusion
                 half_depth_casing = 0.5 * TF_depth_at_r_cp + tf.params.tk_tf_ob_casing
-                leg_casing = leg_casing.translate(
-                    [0, -half_depth_casing, 0], update=False
-                )
+                case = case.translate([0, -half_depth_casing, 0], update=False)
 
                 # Make the case CAD object (extrusion/WP subtraction)
-                leg_casing = TFCoilCAD.sanity_check(leg_casing)
-                leg_casing = extrude(leg_casing, axis="y", length=2 * half_depth_casing)
-                leg_casing = boolean_cut(leg_casing, leg_conductor)
+                case = TFCoilCAD.sanity_check(case)
+                case = extrude(case, axis="y", length=2 * half_depth_casing)
+                case = boolean_cut(case, leg_conductor)
                 rbox = cut_box(side="right", n_TF=tf.params.n_TF)
                 lbox = cut_box(side="left", n_TF=tf.params.n_TF)
 
             else:
-                # For SC tapered CP coils
+                # For SC SEGMENTED coils
                 case_front = tf.params.tk_tf_front_ib
                 case_nose = tf.params.tk_tf_nose
                 coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
@@ -648,7 +647,7 @@ class TFCoilCAD(ComponentCAD):
             comp_dict["b_cyl"] = b_cyl
             comp_dict["leg_conductor"] = leg_conductor
             comp_dict["cp_conductor"] = tapered_cp
-            comp_dict["case"] = leg_casing
+            comp_dict["case"] = case
         elif tf.shape_type in ["CP"]:
             comp_dict["leg_conductor"] = leg_conductor
             comp_dict["cp_conductor"] = tapered_cp

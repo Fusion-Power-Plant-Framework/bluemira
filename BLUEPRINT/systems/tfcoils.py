@@ -999,7 +999,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         """
         The x-y loop names to plot.
         """
-
         if self.conductivity in ["R"]:
 
             if self.inputs["shape_type"] in ["TP"]:
@@ -1091,13 +1090,12 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                     b_cyl.reorder(0, 2)
                     self.geom["B Cyl"] = b_cyl
 
-                else:
-                    # Now write into relevant geom dicts
-                    self.geom["TF WP"] = Shell(wp_in, wp_out)
-                    self.geom["TF Tapered CP"] = centrepost
-                    self.geom["TF Leg Conductor"] = leg_conductor
-                    self.geom["TF case out"] = case_out
-                    self.geom["TF case in"] = case_in
+                # Now write into relevant geom dicts
+                self.geom["TF WP"] = Shell(wp_in, wp_out)
+                self.geom["TF Tapered CP"] = centrepost
+                self.geom["TF Leg Conductor"] = leg_conductor
+                self.geom["TF case out"] = case_out
+                self.geom["TF case in"] = case_in
 
             else:
                 # SC coils
