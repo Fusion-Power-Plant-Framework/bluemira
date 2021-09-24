@@ -932,9 +932,9 @@ def _fountain_linear_sink(
             m_out = (mass_in - (1 - fs) * m_in * dt) / dts
 
     if m_out > m_flow:
-        raise ValueError(f"Out flow greater than in flow")
+        raise ValueError("Out flow greater than in flow")
     if m_out < 0:
-        raise ValueError(f"Negative out flow")
+        raise ValueError("Negative out flow")
     if inventory < 0:
         raise ValueError("Negative inventory.")
     return m_out, inventory, sum_in, decayed
