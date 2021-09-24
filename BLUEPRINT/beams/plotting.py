@@ -23,7 +23,8 @@
 FE plotting tools
 """
 import numpy as np
-from matplotlib.colors import DivergingNorm, Normalize
+from matplotlib.colors import TwoSlopeNorm, Normalize
+
 from BLUEPRINT.utilities.plottools import Plot3D
 from BLUEPRINT.beams.constants import (
     LOAD_STR_VECTORS,
@@ -523,7 +524,7 @@ class StressDeformedGeometryPlotter(BasePlotter):
         if not smin < 0 < smax:
             centre = (smin + smax) / 2
 
-        return DivergingNorm(centre, vmin=min(stress), vmax=max(stress))
+        return TwoSlopeNorm(centre, vmin=min(stress), vmax=max(stress))
 
 
 if __name__ == "__main__":

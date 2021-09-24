@@ -21,8 +21,10 @@
 
 import pytest
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, Parameter, ParameterFrame
-from BLUEPRINT.base.parameter import ParameterMapping
+
+from BLUEPRINT.base.baseclass import ReactorSystem
+
+from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping
 
 
 class Dummy(ReactorSystem):

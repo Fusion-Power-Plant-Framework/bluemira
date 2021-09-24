@@ -207,7 +207,19 @@ class ReactorPlotter:
         ReactorPlotter.set_defaults(force=force)
         failed = []
         _, self.axxz = plt.subplots(figsize=[14, 10])
-        for name in ["PL", "PF", "TF", "ATEC", "DIV", "BB", "VV", "TS", "CR", "RS"]:
+        for name in [
+            "PL",
+            "PF",
+            "TF",
+            "ATEC",
+            "DIV",
+            "BB",
+            "VV",
+            "TS",
+            "CR",
+            "RS",
+            "STBB",
+        ]:
             if hasattr(self.reactor, name):
                 obj = getattr(self.reactor, name)
 

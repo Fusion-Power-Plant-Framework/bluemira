@@ -30,6 +30,7 @@ from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.utilities.plottools import Plot3D
+from BLUEPRINT.geometry.geomtools import get_intersect
 
 import tests
 
@@ -43,19 +44,31 @@ class TestLoop:
     def setup_class(cls):
         # Ccw square A = 1
         cls.a = Loop(x=[0, 1, 1, 0, 0], y=None, z=np.array([0, 0, 1, 1, 0]))
+
         # Ccw triangle 3-4 corner
         cls.tt = Loop(x=[0, 2, 0], z=[0, 0, 1])
+
         # Ccw bucket
         cls.b = Loop(x=[0, 1, 2, 3], z=[0, -1, -1, -0.5])
+
         # Open Clockwise hexagon
         cls.h = Loop(x=[4, 2, 1.5, 3, 4.5], y=[1, 1, 3, 4.5, 3])
+
         # Clockwise triangle A = 8
         cls.t = Loop(x=[4, 3, 2, 0, 2, 4, 4], z=[0, 0, 0, 0, 2, 4, 0], y=np.pi)
+
         #  yz  ccw square A = 4
         cls.s = Loop(x=10, y=[0, 2, 2, 0, 0], z=np.array([0, 0, 2, 2, 0]))
         cls.aloop = Loop.from_array(
             np.array([[0, 1, -1, 1, -1], [1, 1, 1, 1, 1], [1, 2, 3, 4, 5]])
         )
+
+        # Star shaped loop
+        cls.star_shape = Loop(
+            x=np.array([6.5, 9.0, 14, 10.5, 12.0, 6.5, 2.0, 3.5, 0.0, 5.0]),
+            z=-np.array([0.0, 5.0, 5.5, 9.0, 14.0, 11.5, 14.0, 9.0, 5.5, 5]),
+        )
+        cls.star_shape.close()
 
     def test_arrayfail(self):
         with pytest.raises(GeometryError):
@@ -188,10 +201,23 @@ class TestLoop:
         assert np.array_equal(b.x, np.array([-1, 2, 2, -1, -1]))
         assert np.array_equal(b.z, np.array([-1, -1, 2, 2, -1]))
         loop1 = Loop.from_file(os.sep.join([TEST, "edge_case_offset.json"]))
+
         # Edge case malparido
-        offset_loop = loop1.offset(0.03)  # Esse fantasma foi finalmente capturado...
+        offset_loop = loop1.offset(0.03)
         assert offset_loop.closed
         assert offset_loop.ccw
+
+    def test_offset_clipper(self):
+        offset_star = self.star_shape.offset_clipper(1)
+
+        # Check if the base and the offested loop intersects
+        x_int, z_int = get_intersect(self.star_shape, offset_star)
+        assert len(x_int) == 0 and len(z_int) == 0
+
+        # Test the area of the intersected loop
+        ref_offset_area = 137.24360110736922
+        tested_offset_area = offset_star.area
+        assert np.isclose(ref_offset_area, tested_offset_area, rtol=1.0e-1)
 
     def test_checkalreadyin(self):
         a = Loop(x=[0, 4, 4, 0, 0], y=[0, 0, 2, 2, 0])

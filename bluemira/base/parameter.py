@@ -21,6 +21,9 @@
 
 """
 The home of Parameter and ParameterFrame objects
+
+These objects contain the definitions for the configuration of physical parameters in a
+bluemira analysis.
 """
 import copy
 from dataclasses import dataclass
@@ -35,22 +38,25 @@ import wrapt
 import numpy as np
 from functools import wraps
 
-from BLUEPRINT.base.error import BaseError
-from bluemira.base.look_and_feel import bluemira_warn
+from .error import ParameterError
+from .look_and_feel import bluemira_warn
+
+
+__all__ = ["Parameter", "ParameterFrame", "ParameterMapping"]
 
 
 @dataclass
 class ParameterMapping:
     """
-    Simple class containing information on mapping of a BLUEPRINT
-    parameter to one in external software.
+    Simple class containing information on mapping of a bluemira parameter to one in
+    external software.
     """
 
     name: str
     read: bool = True
     write: bool = True
 
-    def todict(self):
+    def to_dict(self):
         """
         Convert this object to a dictionary with attributes as values.
         """
@@ -58,49 +64,10 @@ class ParameterMapping:
 
     def __str__(self):
         """
-        Create a string representation of of this object which is more
-        compact than that provided by the default `__repr__` method.
+        Create a string representation of of this object which is more compact than that
+        provided by the default `__repr__` method.
         """
-        return repr(self.todict())
-
-
-# ====================================
-#
-# Hack for python 3.6 compatibility
-#
-# ====================================
-
-
-def _parameter_proxy(
-    var: str,
-    name: Union[str, None] = None,
-    value: Union[str, float, int, None] = None,
-    unit: Union[str, None] = None,
-    description: Union[str, None] = None,
-    source: Union[str, None] = None,
-    mapping: Union[Dict[str, ParameterMapping], None] = None,
-    value_history: Union[list, None] = None,
-    source_history: Union[list, None] = None,
-):
-    """
-    Remove me on update of python > 3.6.
-
-    A hack for pickling
-    """
-    return Parameter.from_json(
-        var,
-        name,
-        value,
-        unit,
-        description,
-        source,
-        mapping,
-        value_history,
-        source_history,
-    )
-
-
-# ====================================
+        return repr(self.to_dict())
 
 
 def inplace_wrapper(method):
@@ -109,8 +76,8 @@ def inplace_wrapper(method):
     """
 
     @wraps(method)
-    def wrapped(*args, **kwrds):
-        ret = method(*args, **kwrds)
+    def wrapped(*args, **kwargs):
+        ret = method(*args, **kwargs)
         args[0]._update_history()
         return ret
 
@@ -237,11 +204,7 @@ class Parameter(wrapt.ObjectProxy):
             pickle protocol version
 
         """
-        try:
-            # Remove on python uplift
-            ty = _parameter_proxy
-        except NameError:
-            ty = type(self).from_json
+        ty = type(self).from_json
         return ty, (
             self.var,
             self.name,
@@ -576,7 +539,7 @@ class ParameterFrame:
 
             cls.__defaults_setting = False
         else:
-            raise BaseError(
+            raise ParameterError(
                 "Default parameters already set please use"
                 "'_force_update_defaults' if you really want to do this."
             )
@@ -797,7 +760,7 @@ class ParameterFrame:
         Parameters
         ----------
         var: str
-            varialbe name
+            variable name
         value: Union[Parameter, int, float, str ...]
             new value of parameter
         source: str
@@ -915,7 +878,7 @@ class ParameterFrame:
         db = DataFrame.from_records(self.to_records(), columns=columns)
         return db
 
-    def tabulator(self, keys=None, db=None):
+    def tabulator(self, keys=None, db=None, tablefmt="fancy_grid"):
         """
         Tabulate the underlying DataFrame of the ParameterFrame
 
@@ -925,11 +888,14 @@ class ParameterFrame:
             database column keys
         db: DataFrame
             database to tabulate
+        tablefmt: str (default="fancy_grid")
+            The format of the table - see
+            https://github.com/astanin/python-tabulate#table-format
 
         Returns
         -------
-        tabulated DataFrame
-
+        tabulated: str
+            The tabulated DataFrame
         """
         db = self._get_db() if db is None else db
         if keys is None:
@@ -940,7 +906,7 @@ class ParameterFrame:
         return tabulate(
             db,
             headers=columns,
-            tablefmt="fancy_grid",
+            tablefmt=tablefmt,
             showindex=False,
             numalign="right",
         )
@@ -1160,7 +1126,7 @@ class ParameterFrame:
 
             """
             if isinstance(obj, ParameterMapping):
-                return obj.todict()
+                return obj.to_dict()
             return json.JSONEncoder.default(self, obj)
 
     def to_json(self, output_path=None, verbose=False, return_output=False) -> str:
@@ -1283,9 +1249,3 @@ class ParameterFrame:
                     diff.add_parameter(*self.get_param(key).to_list())
 
         return diff
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

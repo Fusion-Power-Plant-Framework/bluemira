@@ -1,27 +1,27 @@
 ---
-name: Pull Request
+name: EU-DEMO Pull Request
 about: Create a Pull Request to submit some changes
 title: ''
-labels: ''
+labels: EU-DEMO
 assignees: ''
 
 ---
 
-**Linked Issues**
+## Linked Issues
 
 Does this PR close or fix any Issues? Remember to create an Issue before starting work so that your fix / proposal can be addressed by the team.
 
 e.g. Closes #{ID}
 
-**Description**
+## Description
 
-What is your PR trying to acheive? How did you go about acheiving it?
+What is your PR trying to achieve? How did you go about achieving it?
 
-**Interface Changes**
+## Interface Changes
 
 If you've had to update an interface or introduce a new interface as part of your change then let us know here.
 
-**Checklist**
+## Checklist
 
 I confirm that I have completed the following checks:
 

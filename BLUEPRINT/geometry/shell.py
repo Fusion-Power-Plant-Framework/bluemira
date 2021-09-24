@@ -41,6 +41,7 @@ from BLUEPRINT.geometry.geomtools import (
     bounding_box,
     get_control_point,
     clean_loop_points,
+    get_intersect,
 )
 
 
@@ -58,9 +59,15 @@ class Shell(GeomBase):
     """
 
     def __init__(self, inner, outer):
-        i, o = [self._type_checks(p) for p in [inner, outer]]
-        self.inner = i
-        self.outer = o
+        inner_tmp, outer_tmp = [self._type_checks(p) for p in [inner, outer]]
+
+        # Check for intersections
+        x_int, z_int = get_intersect(inner_tmp, outer_tmp)
+        if len(x_int) > 0 or len(z_int) > 0:
+            raise GeometryError("Cannot create a shell from two insersecting loops")
+
+        self.inner = inner_tmp
+        self.outer = outer_tmp
 
     @classmethod
     def from_dict(cls, xyz_dict):

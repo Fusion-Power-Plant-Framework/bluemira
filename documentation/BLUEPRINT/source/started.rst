@@ -73,6 +73,10 @@ If you would like to install BLUEPRINT this way then run the following steps:
     envsubst '$HOME' < conda/miniforge-init.sh > ~/.miniforge-init.sh
     source ~/.miniforge-init.sh  # this will put you in a (base) conda environment
 
+    # Install system dependencies
+    sudo apt-get update
+    sudo apt-get install -y build-essential qt5-default
+
     # Install environment and BLUEPRINT
     conda env create --file conda/environment.yml
     conda activate blueprint  # run this whenever you want your (blueprint) environment

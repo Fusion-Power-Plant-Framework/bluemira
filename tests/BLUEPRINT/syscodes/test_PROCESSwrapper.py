@@ -23,8 +23,9 @@ from unittest.mock import patch
 
 import pytest
 
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
+
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.parameter import ParameterFrame, ParameterMapping
 from BLUEPRINT.systems.config import Configuration
 
 pw = pytest.importorskip(
@@ -91,7 +92,7 @@ class TestPROCESSInputWriter:
 
 
 class TestMFileReader:
-    fp = get_BP_path("syscodes/test_data", subfolder="tests")
+    fp = get_BP_path("BLUEPRINT/syscodes/test_data", subfolder="tests")
 
     @classmethod
     def setup_class(cls):

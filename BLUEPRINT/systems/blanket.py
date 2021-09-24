@@ -28,13 +28,21 @@ import numpy as np
 from itertools import cycle
 from typing import Type
 from shapely.geometry import Polygon
-from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.cad.blanketCAD import BlanketCAD
-from BLUEPRINT.geometry.geomtools import qrotate, rainbow_arc
+
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base.error import SystemsError, GeometryError
+from BLUEPRINT.cad.blanketCAD import BlanketCAD, STBlanketCAD
+from BLUEPRINT.geometry.geomtools import qrotate, rainbow_arc, make_box_xz
 from BLUEPRINT.geometry.geombase import Plane
-from BLUEPRINT.geometry.boolean import boolean_2d_common, boolean_2d_difference
+from BLUEPRINT.geometry.boolean import (
+    boolean_2d_common,
+    boolean_2d_difference,
+    boolean_2d_common_loop,
+    boolean_2d_difference_loop,
+)
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, mirror
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
@@ -718,6 +726,236 @@ class BreedingBlanketPlotter(ReactorSystemPlotter):
         self._apply_default_styling(kwargs)
         kwargs["facecolor"] = cycle(kwargs["facecolor"])
         super().plot_xy(plot_objects, ax=ax, **kwargs)
+
+
+# TODO: Inherit from Breeding Blanket
+class STBreedingBlanket(Meshable, ReactorSystem):
+    """
+    Breeding blanket reactor system.
+    """
+
+    config: Type[ParameterFrame]
+    inputs: dict
+
+    # fmt: off
+    default_params = [
+        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['blanket_type', 'Blanket type', 'banana', 'N/A', None, 'Input'],
+        ['g_bb_fw', 'Separation between the first wall and the breeding blanket', 0.05, 'm', None, 'Input'],
+        ['tk_bb_bz', 'Breeding zone thickness', 1.0, 'm', None, 'Input'],
+        ['tk_bb_man', 'Breeding blanket manifold thickness', 0.2, 'm', None, 'Input'],
+    ]
+    # fmt: on
+    CADConstructor = STBlanketCAD
+
+    def __init__(self, config, inputs):
+        self.config = config
+        self.inputs = inputs
+        self.params = ParameterFrame(self.default_params.to_records())
+        self.params.update_kw_parameters(self.config)
+        self.geom = self.inputs
+        self._plotter = BreedingBlanketPlotter()
+        self.build()
+
+    @property
+    def xz_plot_loop_names(self):
+        """
+        Selection of the loops to be plotted with plot_xz()
+
+        Returns
+        -------
+        List:
+            list of the selected loop names
+        """
+        part_list = ["OB 2D profile bz"]
+        if self.params.blanket_type == "banana":
+            part_list.append("OB 2D profile manifold")
+        elif self.params.blanket_type == "immersion":
+            part_list.append("OB 2D profile manifold upper")
+            part_list.append("OB 2D profile manifold lower")
+
+        return part_list
+
+    def __build_immersion_bz(self, add_sep=0.0):
+        """
+        Return a loop that fills the space between the space between the first wall
+        and the vacuum vessel.
+
+        The input loops are taken from input dictionary.
+        The return loop can be used as an immersion blanket breeding zone
+        or as a starting shape for the banana blanket.
+
+        Parameters
+        ----------
+        add_sep : float
+            Optional additional thickness, used to check horizontal bounds of
+            resulting loop will remain inside the vacuum vessel
+        """
+        # Fetch the vacuum vessel inner profile from inputs
+        vv_inner = self.inputs["vv_inner"]
+
+        # Fetch profile of outboard first wall wall from inputs
+        fw_outboard = self.inputs["fw_outboard"]
+
+        # Max x of vacuum vessel
+        x_max_vv = np.max(vv_inner.x)
+
+        # Limits of outboard first wall
+        x_max_fw = np.max(fw_outboard.x)
+        x_min_fw = np.min(fw_outboard.x)
+        z_min_fw = np.min(fw_outboard.z)
+        z_max_fw = np.max(fw_outboard.z)
+
+        # Fetch the gap to the first wall
+        fw_sep = self.params.g_bb_fw
+
+        # Check we won't go outside the vacuum vessel
+        x_sum = x_max_fw + fw_sep + add_sep
+        if x_sum > x_max_vv:
+            raise GeometryError("Breeding blanket params are too large.")
+
+        # Create outboard box filling horizonal space between fw and vv
+        ob_box = make_box_xz(x_min_fw, x_max_vv, z_min_fw, z_max_fw)
+
+        # Cut away the firstwall from the outboard box
+        ob_parts = boolean_2d_difference(ob_box, fw_outboard)
+
+        # Select outer cut
+        ob_cut = None
+        for part in ob_parts:
+            if np.min(part.x) > x_min_fw:
+                ob_cut = part
+                break
+
+        if not ob_cut:
+            raise SystemsError("Failed to subtract FW outboard profile")
+
+        # Subtract a separation to the first wall
+        ob_shift_sep = ob_cut.translate([fw_sep, 0, 0], update=False)
+        ob_cut = boolean_2d_common_loop(ob_cut, ob_shift_sep)
+
+        # Subtract the vacuum vessel
+        ob_cut = boolean_2d_common_loop(ob_cut, vv_inner)
+        return ob_cut
+
+    def __build_immersion_man(self, bz):
+        """
+        Build the manifold for the immersion blanket.
+        """
+        # Fetch the limits of the breeding zone
+        bz_x_max = np.max(bz.x)
+        bz_x_min = np.min(bz.x)
+        bz_z_max = np.max(bz.z)
+        bz_z_min = np.min(bz.z)
+        bz_box = make_box_xz(bz_x_min, bz_x_max, bz_z_min, bz_z_max)
+
+        # Fetch the vacuum vessel inner profile from inputs
+        vv_inner = self.inputs["vv_inner"]
+
+        # Chop away the middle section of the vacuum vessel
+        vv_parts = boolean_2d_difference(vv_inner, bz_box)
+
+        # Get outermost x coord of our chopped vessel
+        x_max = 0
+        for part in vv_parts:
+            x_max_part = np.max(part.x)
+            x_max = max(x_max, x_max_part)
+
+        # Fetch manifold thickness and use to define min x
+        man_thickness = self.params.tk_bb_man
+        x_min = x_max - man_thickness
+
+        # Find vertical limits of vessel
+        vv_z_max = np.max(vv_inner.z)
+        vv_z_min = np.min(vv_inner.z)
+
+        # Make a rectangle from bounds
+        man = make_box_xz(x_min, x_max, vv_z_min, vv_z_max)
+
+        # Cut away everything outside the vacuum vessel
+        man = boolean_2d_common_loop(man, vv_inner)
+
+        # Cut away the breeding zone
+        manifold_parts = boolean_2d_difference(man, bz)
+
+        # Identify upper and lower parts
+        z_min = vv_z_max
+        z_max = vv_z_min
+        man_upper = None
+        man_lower = None
+        for part in manifold_parts:
+            part_z_max = np.max(part.z)
+            part_z_min = np.min(part.z)
+            if part_z_max > z_max:
+                z_max = part_z_max
+                man_upper = part
+            if part_z_min < z_min:
+                z_min = part_z_min
+                man_lower = part
+
+        return man_upper, man_lower
+
+    def __build_immersion_blanket(self):
+        """
+        Build imersion blanket.
+
+        An Immersion blanket will naturally try to use as much space as
+        possible between the VV and the FW. There are many configurations
+        that can be thought of, it's just a big tank of FLiBe, so could be
+        segmented for easy removal, could be one big tank. Will need some
+        form of mechanical support
+        """
+        # Fill the outboard space between first wall and vacuum vessel
+        # to make the breeding zone
+        bz = self.__build_immersion_bz()
+        self.geom["OB 2D profile bz"] = bz
+
+        # Make a manifold from the vacuum vessel and breeding zone
+        man_upper, man_lower = self.__build_immersion_man(bz)
+        self.geom["OB 2D profile manifold upper"] = man_upper
+        self.geom["OB 2D profile manifold lower"] = man_lower
+
+    def __build_banana_blanket(self):
+        """A banana blanket, as the name suggests is somewhat banana-like
+        in shape. The weight or cross section of the blanket will likely be
+        the driving factors, either too heavy or can't fit through whatever
+        ports are needed. There will need to be piping for coolant there will
+        also be a need for some patterned support structure.
+        """
+        # Fetch thicknesses
+        bz_thickness = self.params.tk_bb_bz
+        man_thickness = self.params.tk_bb_man
+        add_sep = bz_thickness + man_thickness
+
+        # Fill the outboard space between first wall and vacuum vessel
+        ob_cut = self.__build_immersion_bz(add_sep)
+
+        # Define the outer edge of the breeding zone with a thickness
+        bz_end = ob_cut.translate([bz_thickness, 0, 0], update=False)
+        # Cut away outer side
+        bz = boolean_2d_difference_loop(ob_cut, bz_end)
+
+        # Define outer edge of the manifold with a thickness
+        man_end = bz_end.translate([man_thickness, 0, 0], update=False)
+        # Cut away inner side by cutting away breeding zone
+        man_start = boolean_2d_difference_loop(ob_cut, bz)
+        # Cut away outer side
+        man = boolean_2d_difference_loop(man_start, man_end)
+
+        # Save the breeding zone and manifold
+        self.geom["OB 2D profile bz"] = bz
+        self.geom["OB 2D profile manifold"] = man
+
+    def build(self):
+        """
+        Build the breeding blanket profile from the first wall profile.
+        """
+        if self.params.blanket_type == "banana":
+            self.__build_banana_blanket()
+        elif self.params.blanket_type == "immersion":
+            self.__build_immersion_blanket()
+        else:
+            raise SystemsError(f"Unknown blanket type '{self.params.blanket_type}'. ")
 
 
 if __name__ == "__main__":

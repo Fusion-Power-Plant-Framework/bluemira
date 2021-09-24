@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -19,49 +19,55 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
-import os
-from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
 from BLUEPRINT.cad.cadtools import get_properties
-from BLUEPRINT.equilibria.equilibrium import Equilibrium
-from BLUEPRINT.systems.firstwall import FirstWallSN, FirstWallDN
+from tests.BLUEPRINT.systems.test_firstwall import load_firstwall_sn, load_firstwall_dn
+
+
+def check_cad(system_cad, n_shapes, ref_volumes=None):
+    # Object created should have dict component
+    assert hasattr(system_cad, "component")
+    assert type(system_cad.component) == dict
+
+    if ref_volumes:
+        assert isinstance(ref_volumes, list)
+        assert len(ref_volumes) == n_shapes
+
+    # Check number of components
+    for vals in system_cad.component.values():
+        assert len(vals) == n_shapes
+
+    # Look for shapes key
+    assert "shapes" in system_cad.component.keys()
+
+    # Check number of shapes
+    assert len(system_cad.component["shapes"]) == n_shapes
+
+    # Check volume
+    for i_shape, cad_shape in enumerate(system_cad.component["shapes"]):
+        vol = get_properties(cad_shape)["Volume"]
+        # If we provided some reference values
+        if ref_volumes:
+            assert pytest.approx(vol, 1e-3) == ref_volumes[i_shape]
+        # Otherwise just check positivity
+    else:
+        assert vol > 0.0
+
+    return True
 
 
 class TestFirstWallCAD:
 
-    # Member variable with type hint
-    firstwall: FirstWallSN
-
     # Class-level initialisation
     @classmethod
     def setup_class(cls):
-        # Create a FirstWallSN object
-        read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
-        eq_name = "EU-DEMO_EOF.json"
-        eq_name = os.sep.join([read_path, eq_name])
-        eq = Equilibrium.from_eqdsk(eq_name)
-        cls.firstwall = FirstWallSN(FirstWallSN.default_params, {"equilibrium": eq})
+        cls.firstwall = load_firstwall_sn()
 
     # Test to call the default build method
     def test_default_build(self):
 
         firstwallcad = FirstWallCAD(self.firstwall)
-
-        # Object created should have dict component
-        assert hasattr(firstwallcad, "component")
-        assert type(firstwallcad.component) == dict
-
-        # We expect exactly one cad component to have been created
-        for key, list in firstwallcad.component.items():
-            assert len(list) == 1
-
-        # Look for shapes key
-        assert "shapes" in firstwallcad.component.keys()
-
-        # Retrieve volume and check positivity
-        # TODO: check an exact volume
-        vol = get_properties(firstwallcad.component["shapes"][0])["Volume"]
-        assert vol > 0.0
+        assert check_cad(firstwallcad, 4)
 
     # Test to call the neutronics build method: not implemented
     def test_neutronics_build(self):
@@ -73,30 +79,23 @@ class TestFirstWallCAD:
 
 class TestFirstWallCAD_DN:
 
-    # Member variable with type hint
-    firstwall: FirstWallDN
-
     # Class-level initialisation
     @classmethod
     def setup_class(cls):
-        # Create a FirstWallDN object
-        read_path = get_BP_path("BLUEPRINT/equilibria/test_data", subfolder="tests")
-        eq_name = "DN-DEMO_eqref.json"
-        eq_name = os.sep.join([read_path, eq_name])
-        eq = Equilibrium.from_eqdsk(eq_name)
-        cls.firstwall = FirstWallDN(FirstWallDN.default_params, {"equilibrium": eq})
+        cls.firstwall = load_firstwall_dn()
 
     # Test to verifiy the volume of the extruded fw shell
-    def test_volume_double_null(self):
+    def test_default_build_double_null(self):
 
         firstwallcad = FirstWallCAD(self.firstwall)
+        assert check_cad(firstwallcad, 6)
 
-        # Check the exact volume (with some tolerance)
-        # The value 142 m^3 was checked on SolidWorks (CAD software)
-        vol = (
-            get_properties(firstwallcad.component["shapes"][0])["Volume"]
-        ) * firstwallcad.n_TF
-        assert (142 - 3) < vol < (142 + 3)
+    # Test to call the neutronics build method: not implemented
+    def test_neutronics_build_double_null(self):
+
+        with pytest.raises(NotImplementedError):
+            # Currently throws NotYetImplemented
+            assert FirstWallCAD(self.firstwall, neutronics=True)
 
 
 if __name__ == "__main__":

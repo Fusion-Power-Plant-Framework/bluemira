@@ -23,7 +23,10 @@
 Poloidal field system
 """
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.coilCAD import PFSystemCAD
 from BLUEPRINT.geometry.geomtools import get_boundary

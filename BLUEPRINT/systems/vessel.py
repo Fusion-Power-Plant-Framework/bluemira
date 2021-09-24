@@ -25,17 +25,23 @@ Reactor vacuum vessel system
 from itertools import cycle
 import numpy as np
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.cad.vesselCAD import VesselCAD, SegmentedVesselCAD
 from BLUEPRINT.geometry.boolean import (
+    boolean_2d_difference_loop,
     boolean_2d_difference,
     boolean_2d_union,
     simplify_loop,
+    clean_loop,
 )
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geombase import Plane
-from BLUEPRINT.geometry.geomtools import loop_plane_intersect
+from BLUEPRINT.geometry.geomtools import loop_plane_intersect, make_box_xz
 from BLUEPRINT.systems.mixins import Meshable, UpperPort
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
@@ -428,13 +434,62 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
                 "Only 'Inboard' and 'Outboard' implemented"
             )
 
-        # Building a shell around the thermal shield of the gap thickness
-        gap_loop = self.offset_segment(loop=ts_loop, offset=g_vv_ts, side=side)
-        vv_loop = self.offset_segment(loop=gap_loop, offset=tk_vv, side=side)
-
+        # Building the vacuum vessel loop
+        gap_loop = self.try_offset(loop=ts_loop, offset=g_vv_ts, side=side)
+        vv_loop = self.try_offset(loop=ts_loop, offset=tk_vv + g_vv_ts, side=side)
+        vv_loop = boolean_2d_difference_loop(vv_loop, gap_loop)
         return vv_loop
 
-    def offset_segment(self, loop, offset, side):
+    def try_offset(self, loop, offset, side):
+        """
+        Function that tries calling self.offset segment with offset_clipper
+        first and then retries it using offset if an geometry error is captured.
+
+        Parameters
+        ----------
+        loop: Loop
+            Loop used to defined the output loop (here the thermal shield loop)
+        offset: float
+            Thickness of the output loop, in contact with the input one.
+        side: str
+            String indicating if the inboard or the outboard TS is built:
+            "Inboard": inboard section
+            "Outboard": outboard section
+
+        Returns
+        -------
+        offset_loop: Loop
+            In/outboard loop defined inside and in contact with the input one
+            of a thickness offset.
+        """
+        # Try using the basic offset
+        offset_result = self.offset_segment(
+            loop=loop, offset=offset, side=side, clipper=False
+        )
+
+        # If the segmentation cut does not behave as expected, try offset_clipper
+        if len(offset_result) != 2:
+            offset_result = self.offset_segment(
+                loop=loop, offset=offset, side=side, clipper=True
+            )
+
+        # If the segmentation cut behaves as expected, extract it
+        if len(offset_result) == 2:
+            return offset_result[1]
+
+        # Otherwise, raise errors
+        elif len(offset_result) == 1:
+            raise GeometryError(
+                f"The cutted shell is made with intersecting loops on {side} side"
+                "Please check your initial thermal shield shape."
+            )
+        else:
+            raise GeometryError(
+                f"The {side} boolean cut is providing {len(offset_result)} solutions,"
+                " 2 are expected. Please check your initial thermal shield shape."
+            )
+
+    def offset_segment(self, loop, offset, side, clipper):
         """
         Generate an in/outboard inner segment loop from a the corresponing
         outer segment. This is used here to make the vaccum vessel sections
@@ -450,49 +505,49 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             String indicating if the inboard or the outboard TS is built:
             "Inboard": inboard section
             "Outboard": outboard section
+        clipper: bool
+            Option to use offset_clipper instead of offset
 
         Returns
         -------
-        offsef_loop: Loop
-            In/outboard loop defined inside and in contact with the input one
-            of a thickness offset.
+        offset_loop: [Loop]
+            List of loops from the offest boolean cut.
         """
         # Building a shell around the input shell
-        offset_loop = loop.offset(offset)
+        if clipper:
+            offset_loop = loop.offset_clipper(offset)
+            offset_loop = clean_loop(offset_loop)  # Removing redundant points
+        else:
+            offset_loop = loop.offset(offset)
         offset_loop = simplify_loop(offset_loop)
-        offset_shell = Shell(loop, offset_loop)
+
+        try:
+            offset_shell = Shell(loop, offset_loop)
+        except GeometryError:
+            return []
 
         # Cutting the right part
         if side in ["Inboard"]:
-            return boolean_2d_difference(
-                offset_shell,
-                Loop(
-                    x=[
-                        self.params.r_vv_joint,
-                        np.amax(offset_loop.x),
-                        np.amax(offset_loop.x),
-                        self.params.r_vv_joint,
-                        self.params.r_vv_joint,
-                    ],
-                    z=np.amax(offset_loop.z) * np.array([-1, -1, 1, 1, -1]),
-                ),
-            )[1]
+            cutter_loop = make_box_xz(
+                x_min=self.params.r_vv_joint,
+                x_max=np.amax(offset_loop.x) + 0.1,
+                z_min=-np.amax(offset_loop.z) - 0.1,
+                z_max=np.amax(offset_loop.z) + 0.1,
+            )
 
         # Cutting the left part
         elif side in ["Outboard"]:
-            return boolean_2d_difference(
-                offset_shell,
-                Loop(
-                    x=[
-                        np.amin(offset_loop.x),
-                        self.params.r_vv_joint,
-                        self.params.r_vv_joint,
-                        np.amin(offset_loop.x),
-                        np.amin(offset_loop.x),
-                    ],
-                    z=np.amax(offset_loop.z) * np.array([-1, -1, 1, 1, -1]),
-                ),
-            )[1]
+            cutter_loop = make_box_xz(
+                x_min=np.amin(offset_loop.x) - 0.1,
+                x_max=self.params.r_vv_joint,
+                z_min=-np.amax(offset_loop.z) - 0.1,
+                z_max=np.amax(offset_loop.z) + 0.1,
+            )
+
+        # Loop cut sanity check
+        diff_result = boolean_2d_difference(offset_shell, cutter_loop)
+
+        return diff_result
 
     def merge_vv(self):
         """
@@ -588,6 +643,24 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             vv_outer_loop, vv_inner_loop = loop_union[:2]
         # The output
         self.geom["2D profile"] = Shell(vv_inner_loop, vv_outer_loop)
+
+    def make_offset_inner_profile(self, vv_inboard_offset):
+        """
+        Returns the Loop corresponding to the inner profile of the
+        vacuum vessel, with an offset on the inboard side taken from
+        params.vv_inboard_offset
+
+        Returns
+        -------
+        inner_cut : Loop
+        """
+        inner = self.geom["2D profile"].inner
+        inboard = self.geom["Inboard profile"]
+        inboard_offset = inboard.offset_clipper(vv_inboard_offset)
+        inboard_offset = simplify_loop(inboard_offset)
+        inner_cut_list = boolean_2d_difference(inner, inboard_offset)
+        inner_cut = inner_cut_list[0]
+        return inner_cut
 
     @property
     def xz_plot_loop_names(self) -> list:

@@ -25,7 +25,7 @@ CAD functions and operations
 # High level imports
 import os
 from itertools import zip_longest
-from collections import Iterable
+from collections.abc import Iterable
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -833,7 +833,7 @@ def make_mixed_face(loop, **kwargs):
     try:
         mfm.build()
 
-    except RuntimeError:
+    except CADError:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
         return make_face(loop, **kwargs)
 
@@ -862,7 +862,7 @@ def make_mixed_wire(loop, **kwargs):
     mfm = MixedFaceMaker(loop, **kwargs)
     try:
         mfm.build()
-    except RuntimeError:
+    except CADError:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
         return make_wire(loop)
 
@@ -1052,11 +1052,14 @@ class MixedFaceMaker:
         """
         sequences = []
         start = vertices[0]
+        # Loop over all vertices except last (which is same as first)
         for i, vertex in enumerate(vertices[:-1]):
 
             delta = vertices[i + 1] - vertex
 
-            if i == len(vertices) - 2:
+            # Add the last point in the loop but only if we've already
+            # added something to sequences
+            if i == len(vertices) - 2 and len(sequences) > 0:
                 # end of loop clean-up
                 end = vertices[i + 1]
                 sequences.append([start, end])

@@ -26,8 +26,10 @@ object, optimized for the minimum length
 
 import os
 import matplotlib.pyplot as plt
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.base.file import make_BP_path
-from BLUEPRINT.base import ParameterFrame
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from BLUEPRINT.equilibria.shapes import flux_surface_manickam
@@ -50,23 +52,20 @@ params = [
     ["npts", "Number of points", 200, "N/A", "Used for vessel and plasma", "Input"],
     ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
     ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
-    ["tf_wp_depth", "TF coil winding pack depth (in y)", 0.4625, "m", "Including insulation", "PROCESS"],
     ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
     ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
-
+    ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
 ]
 # fmt: on
 
 parameters = ParameterFrame(params)
 
 read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
-write_path = make_BP_path("Geometry", subfolder="generated_data/BLUEPRINT")
+write_path = make_BP_path("TP_Coil", subfolder="generated_data/BLUEPRINT")
 
 lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
 lcfs.close()
-
-# lcfs.translate([0.15, 0, 0])
 
 name = os.sep.join([read_path, "KOZ_PF_test1.json"])
 ko_zone = Loop.from_file(name)
@@ -75,7 +74,9 @@ to_tf = {
     "name": "Example_PolySpline_TF",
     "plasma": lcfs,
     "koz_loop": ko_zone,
-    "shape_type": "TP",  # This is the shape parameterisation to use
+    "shape_type": "TP",  # This is the overall coil shape parameterisation to use
+    "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
+    "npoints": 400,
     "obj": "L",  # This is the optimisation objective: minimise length
     "ny": 3,  # This is the number of current filaments to use in y
     "nr": 2,  # This is the number of current filaments to use in x
@@ -87,7 +88,6 @@ to_tf = {
 tf1 = ToroidalFieldCoils(parameters, to_tf)
 
 tf1.optimise()
-# print(tf1.geom["Centreline"].length)
 
 f1, ax1 = plt.subplots()
 ko_zone.plot(ax1, edgecolor="b", fill=False)
@@ -102,5 +102,5 @@ plt.show()
 n_tf = tf1.params.n_TF
 model = CADModel(n_tf)
 model.add_part(tf1.build_CAD())
-model.display("full")
+model.display(pattern="full")
 # model.save_as_STEP_assembly(write_path, scale=1e3)

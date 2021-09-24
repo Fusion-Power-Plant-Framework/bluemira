@@ -20,18 +20,23 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-import io
-import sys
+import os
+
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
+from bluemira.base.logs import LoggingContext
 from bluemira.base.look_and_feel import (
+    bluemira_critical,
+    bluemira_error,
+    bluemira_print_flush,
+    bluemira_warn,
+    bluemira_print,
+    bluemira_debug,
     get_git_version,
     get_git_branch,
     count_slocs,
     user_banner,
     version_banner,
-    bluemira_warn,
-    bluemira_print,
     print_banner,
 )
 
@@ -64,64 +69,76 @@ def test_version_banner():
     assert len(version_banner()) == 3
 
 
-def capture_output(func, input_str):
+def capture_output(caplog, func, *inputs):
     """
     Print testing utility function.
     """
-    capture = io.StringIO()
-    sys.stdout = capture
-    if input_str is None:
+    if len(inputs) == 0:
         func()
     else:
-        func(input_str)
-    sys.stdout = sys.__stdout__
-    return capture.getvalue().splitlines()
+        func(*inputs)
+
+    # Flatten in the case where we have multiple messages and split by line
+    result = [line for message in caplog.messages for line in message.split(os.linesep)]
+    caplog.clear()
+    return result
 
 
-def test_bluemira_warn():
-    result = capture_output(bluemira_warn, "bad")
+@pytest.mark.parametrize(
+    "method, text, colour, default_text",
+    [
+        (bluemira_critical, "boom", "red", "CRITICAL:"),
+        (bluemira_error, "oops", "red", "ERROR:"),
+        (bluemira_warn, "bad", "red", "WARNING:"),
+        (bluemira_print, "good", "blue", ""),
+        (bluemira_debug, "check", "green", ""),
+    ],
+)
+def test_bluemira_log(caplog, method, text, colour, default_text):
+    # Make sure we capture in DEBUG regardless of default logging level
+    # Otherwise we may miss values being recorded.
+    with LoggingContext("DEBUG"):
+        result = capture_output(caplog, method, text)
 
     assert len(result) == 3
-    assert ANSI_COLOR["red"] in result[0]
-    assert "WARNING:" in result[1]
-    assert "bad" in result[1]
+    assert ANSI_COLOR[colour] in result[0]
+    if len(default_text) > 0:
+        assert default_text in result[1]
+    assert text in result[1]
     assert EXIT_COLOR in result[-1]
 
-    result = capture_output(
-        bluemira_warn,
-        "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
-    )
+    with LoggingContext("DEBUG"):
+        result = capture_output(
+            caplog,
+            method,
+            "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
+        )
 
     assert len(result) == 4
-    assert "WARNING:" in result[1]
+    if len(default_text) > 0:
+        assert default_text in result[1]
+        assert default_text not in result[2]
     assert "test" in result[1]
-    assert "WARNING:" not in result[2]
     assert "boxed" in result[2]
     assert EXIT_COLOR in result[-1]
 
 
-def test_bluemira_print():
-    result = capture_output(bluemira_print, "good")
+def test_bluemira_print_flush(caplog):
+    text = "First pass"
+    result = capture_output(caplog, bluemira_print_flush, text)
+    assert text in result[0]
+    assert "\r" in result[0]
+    assert os.linesep not in result[0]
 
-    assert len(result) == 3
-    assert ANSI_COLOR["blue"] in result[0]
-    assert "good" in result[1]
-    assert EXIT_COLOR in result[-1]
-
-    result = capture_output(
-        bluemira_print,
-        "test a very long and verbacious warning message that is bound to be boxed in over two lines.",
-    )
-
-    assert len(result) == 4
-    assert ANSI_COLOR["blue"] in result[0]
-    assert "test" in result[1]
-    assert "boxed" in result[2]
-    assert EXIT_COLOR in result[-1]
+    text = "Second pass"
+    result = capture_output(caplog, bluemira_print_flush, text)
+    assert text in result[0]
+    assert "\r" in result[0]
+    assert os.linesep not in result[0]
 
 
-def test_print_banner():
-    result = capture_output(print_banner, None)
+def test_print_banner(caplog):
+    result = capture_output(caplog, print_banner)
 
     assert len(result) == 15
     assert ANSI_COLOR["blue"] in result[0]
