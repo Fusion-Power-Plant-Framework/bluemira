@@ -74,14 +74,21 @@ def pytest_configure(config):
     else:
         # We're not displaying plots so use a display-less backend
         mpl.use("Agg")
-    if not config.option.longrun and not config.option.reactor:
-        setattr(config.option, "markexpr", "not longrun and not reactor")
-    elif not config.option.longrun:
-        setattr(config.option, "markexpr", "not longrun")
-    if not config.option.private:
-        setattr(config.option, "markexpr", "not private")
-    else:
-        # Check that we have access to private data locally
-        if try_get_bluemira_private_data_root() is None:
-            bluemira_warn("You cannot run private tests. Disabling this test flag.")
-            setattr(config.option, "markexpr", "not private")
+
+    options = {
+        "longrun": config.option.longrun,
+        "reactor": config.option.reactor,
+        "private": config.option.private,
+    }
+    if try_get_bluemira_private_data_root() is None:
+        bluemira_warn("You cannot run private tests. Disabling this test flag.")
+        options["private"] = not options["private"]
+
+    strings = []
+    for name, value in options.items():
+        if not value:
+            strings.append(f"not {name}")
+
+    logic_string = " and ".join(strings)
+
+    setattr(config.option, "markexpr", logic_string)
