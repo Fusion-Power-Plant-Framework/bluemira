@@ -23,9 +23,9 @@
 BLUEPRINT -> bluemira ST equilibrium recursion test
 """
 
-import pytest
 import os
 import numpy as np
+import pytest
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria import (
     Equilibrium,
@@ -39,6 +39,8 @@ from bluemira.equilibria import (
     SymmetricCircuit,
     PicardDeltaIterator,
 )
+from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.solve import DudsonConvergence
 
 
 class TestSTEquilibrium:
@@ -52,8 +54,10 @@ class TestSTEquilibrium:
         filename = os.sep.join([private, eq_name])
         cls.eq_blueprint = Equilibrium.from_eqdsk(filename)
         jeq_name = "jetto.eqdsk_out"
-        filename = os.sep.join([path, jeq_name])
+        filename = os.sep.join([private, jeq_name])
         cls.profiles = CustomProfile.from_eqdsk(filename)
+        reader = EQDSKInterface()
+        cls.jeq_dict = reader.read(filename)
 
     def test_equilibrium(self):
         build_tweaks = {
@@ -90,7 +94,7 @@ class TestSTEquilibrium:
         grid = Grid(
             x_min=0.0,
             x_max=max(xc + dxc) + 0.5,
-            z_min=max(zc + dzc),
+            z_min=-max(zc + dzc),
             z_max=max(zc + dzc),
             nx=2 ** build_tweaks["nx_number_x"] + 1,
             nz=2 ** build_tweaks["nz_number_z"] + 1,
@@ -99,6 +103,8 @@ class TestSTEquilibrium:
         inboard_iso = [R_0 * (1.0 - 1 / A), 0.0]
         outboard_iso = [R_0 * (1.0 + 1 / A), 0.0]
 
+        x = self.jeq_dict["xbdry"]
+        z = self.jeq_dict["zbdry"]
         upper_iso = [x[np.argmax(z)], np.max(z)]
         lower_iso = [x[np.argmin(z)], np.min(z)]
 
@@ -153,6 +159,24 @@ class TestSTEquilibrium:
             build_tweaks["tikhonov_gamma"],
         )
 
+        eq = Equilibrium(coilset, grid, force_symmetry=True, psi=initial_psi, Ip=I_p)
+        optimiser = Norm2Tikhonov(build_tweaks["tikhonov_gamma"])
+
+        criterion = DudsonConvergence(build_tweaks["fbe_convergence_crit"])
+
+        fbe_iterator = PicardDeltaIterator(
+            eq,
+            self.profiles,
+            constraint_set,
+            optimiser,
+            plot=False,
+            gif=False,
+            relaxation=0.3,
+            maxiter=400,
+            convergence=criterion,
+        )
+        fbe_iterator()
+
     def _make_initial_psi(
         self, coilset, grid, constraint_set, x_current, z_current, I_p, tikhonov_gamma
     ):
@@ -180,3 +204,8 @@ class TestSTEquilibrium:
         # Really you could just avoid adding the dummy plasma coil in the first place..
         # Perhaps the current centre is poorly estimated by R_0 + 0.5
         return coilset_temp.psi(grid.x, grid.z).copy() - dummy.psi(grid.x, grid.z)
+
+
+if __name__ == "__main__":
+    # pytest.main([__file__])
+    a = 5
