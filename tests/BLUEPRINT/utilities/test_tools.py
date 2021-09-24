@@ -518,6 +518,20 @@ class TestGetModule:
             module = get_module(mod)
             assert module.__name__.rsplit(".", 1)[-1] == test_mod.rsplit(".", 1)[-1]
 
+    def test_getmodule_failures(self):
+
+        # Path doesn't exist
+        with pytest.raises(FileNotFoundError):
+            get_module("/This/file/doesnt/exist.py")
+
+        # Directory exists but not file
+        with pytest.raises(FileNotFoundError):
+            get_module(get_BP_path() + "/README.md")
+
+        # Not a python module
+        with pytest.raises(ImportError):
+            get_module(get_BP_path() + "../README.md")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

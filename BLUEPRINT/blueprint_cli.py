@@ -85,7 +85,7 @@ class InputManager:
         return os.path.join(self.indir, file_name)
 
     @property
-    def template_path_in(self) -> str:
+    def template_config_path_in(self) -> str:
         """
         The input template configuration file path.
         """
@@ -283,7 +283,7 @@ class OutputManager:
             build_tweaks paths to copy the files from
         """
         variables = {
-            "template_path": self.template,
+            "template_config_path": self.template,
             "config_path": self.config,
             "build_config_path": self.build_config,
             "build_tweaks_path": self.build_tweaks,

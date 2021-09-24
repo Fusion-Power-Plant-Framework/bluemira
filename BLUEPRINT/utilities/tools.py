@@ -1115,6 +1115,9 @@ def _loadfromspec(name):
     except FileNotFoundError:
         raise FileNotFoundError("Can't find module file '{}'".format(name))
 
+    if len(mod_files) == 0:
+        raise FileNotFoundError("Can't find module file '{}'".format(name))
+
     requested = full_dirname[1] if full_dirname[1] in mod_files else mod_files[0]
 
     if len(mod_files) > 1:
