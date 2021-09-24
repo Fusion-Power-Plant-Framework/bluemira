@@ -19,6 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+Fuel cycle analysis class for Monte Carlo statistics
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import bluemira_warn
