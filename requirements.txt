@@ -6,7 +6,7 @@ appnope==0.1.2
 asteval==0.9.23
 attrs==20.3.0
 backcall==0.2.0
-click==7.1.2
+click==8.0.1
 CoolProp==6.4.1
 cycler==0.10.0
 dataclasses==0.8; python_version == '3.6'
