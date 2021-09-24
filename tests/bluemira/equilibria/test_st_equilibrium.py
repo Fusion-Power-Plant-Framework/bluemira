@@ -25,6 +25,7 @@ BLUEPRINT -> bluemira ST equilibrium recursion test
 
 import pytest
 import os
+import numpy as np
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria import (
     Equilibrium,
@@ -43,7 +44,16 @@ from bluemira.equilibria import (
 class TestSTEquilibrium:
     @classmethod
     def setup_class(cls):
+        # Load reference and input data
         root = get_bluemira_root()
+        private = os.path.split(root)[0]
+        private = os.sep.join([private, "bluemira-private-data/equilibria/STEP_SPR_08"])
+        eq_name = "STEP_SPR08_BLUEPRINT.json"
+        filename = os.sep.join([private, eq_name])
+        cls.eq_blueprint = Equilibrium.from_eqdsk(filename)
+        jeq_name = "jetto.eqdsk_out"
+        filename = os.sep.join([path, jeq_name])
+        cls.profiles = CustomProfile.from_eqdsk(filename)
 
     def test_equilibrium(self):
         build_tweaks = {
@@ -62,10 +72,29 @@ class TestSTEquilibrium:
         A = 1.667
         I_p = 20975205.2  # (EQDSK)
 
-        xc = [1.5, 1.5, 8.259059936102478, 8.259059936102478, 10.635505223274231]
-        zc = [8.78, 11.3, 11.8, 6.8, 1.7]
-        dxc = [0.175, 0.25, 0.25, 0.25, 0.35]
-        dzc = [0.5, 0.4, 0.4, 0.4, 0.5]
+        xc = np.array(
+            [1.5, 1.5, 8.259059936102478, 8.259059936102478, 10.635505223274231]
+        )
+        zc = np.array([8.78, 11.3, 11.8, 6.8, 1.7])
+        dxc = np.array([0.175, 0.25, 0.25, 0.25, 0.35])
+        dzc = np.array([0.5, 0.4, 0.4, 0.4, 0.5])
+
+        coils = []
+        for i, (x, z, dx, dz) in enumerate(zip(xc, zc, dxc, dzc)):
+            coil = SymmetricCircuit(
+                Coil(x=x, z=z, dx=dx, dz=dz, name=f"PF_{i+1}", ctype="PF")
+            )
+            coils.append(coil)
+        coilset = CoilSet(coils)
+
+        grid = Grid(
+            x_min=0.0,
+            x_max=max(xc + dxc) + 0.5,
+            z_min=max(zc + dzc),
+            z_max=max(zc + dzc),
+            nx=2 ** build_tweaks["nx_number_x"] + 1,
+            nz=2 ** build_tweaks["nz_number_z"] + 1,
+        )
 
         inboard_iso = [R_0 * (1.0 - 1 / A), 0.0]
         outboard_iso = [R_0 * (1.0 + 1 / A), 0.0]
@@ -114,11 +143,40 @@ class TestSTEquilibrium:
             [IsofluxConstraint(xx, zz, ref_x=inboard_iso[0], ref_z=inboard_iso[1])]
         )
 
-        coils = []
-        for i, (x, z, dx, dz) in enumerate(zip(xc, zc, dxc, dzc)):
-            coil = SymmetricCircuit(
-                Coil(x=x, z=z, dx=dx, dz=dz, name=f"PF_{i+1}", ctype="PF")
-            )
-            coils.append(coil)
-        coilset = CoilSet(coils)
-        grid = Grid.from_eqdict(eq_dict)
+        initial_psi = self._make_initial_psi(
+            coilset,
+            grid,
+            constraint_set,
+            R_0 + 0.5,
+            0,
+            I_p,
+            build_tweaks["tikhonov_gamma"],
+        )
+
+    def _make_initial_psi(
+        self, coilset, grid, constraint_set, x_current, z_current, I_p, tikhonov_gamma
+    ):
+        coilset_temp = coilset.copy()
+        dummy = Coil(
+            x=x_current,
+            z=z_current,
+            dx=0,
+            dz=0,
+            current=I_p,
+            name="plasma_dummy",
+            control=False,
+        )
+        coilset_temp.add_coil(dummy)
+
+        eq = Equilibrium(coilset_temp, grid, force_symmetry=True, psi=None, Ip=0)
+        constraint_set(eq)
+        optimiser = Norm2Tikhonov(tikhonov_gamma)
+        currents = optimiser(eq, constraint_set)
+        # Note that this for some reason (incorrectly) only includes the psi from the
+        # controlled coils and the plasma dummy psi contribution is not included...
+        # which for some reason works better than with it.
+        # proper mindfuck this... no idea why it wasn't working properly before, and
+        # no idea why it works better with what is blatantly a worse starting solution.
+        # Really you could just avoid adding the dummy plasma coil in the first place..
+        # Perhaps the current centre is poorly estimated by R_0 + 0.5
+        return coilset_temp.psi(grid.x, grid.z).copy() - dummy.psi(grid.x, grid.z)
