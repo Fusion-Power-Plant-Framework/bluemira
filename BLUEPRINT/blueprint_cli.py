@@ -357,7 +357,13 @@ def _check_path(name, path: str, force: bool = False, make: bool = True):
     "-v",
     "--verbose",
     count=True,
-    help="Change logging severity level.",
+    help="Increase logging severity level.",
+)
+@click.option(
+    "-q",
+    "--quiet",
+    count=True,
+    help="Decrease logging severity level.",
 )
 @click.option(
     "-f",
@@ -402,6 +408,7 @@ def cli(
     outdir,
     reactornameout,
     verbose,
+    quiet,
     force_rerun,
     tarball,
     log,
@@ -422,7 +429,7 @@ def cli(
     4.  build_tweaks  [default = build_tweaks.json]
             file containing additional build parameters.
     """
-    set_log_level(verbose)
+    set_log_level(min(max(0, 2 + quiet - verbose)))
 
     inputs = InputManager(
         template=template,
