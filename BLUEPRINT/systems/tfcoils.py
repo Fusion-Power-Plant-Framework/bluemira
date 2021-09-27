@@ -81,13 +81,14 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ['TF_ripple_limit', 'TF coil ripple limit', 0.6, '%', None, 'Input'],
         ['h_cp_top', 'Height of the Tapered Section', 4.199, 'm', None, 'PROCESS'],
         ['r_cp_top', 'Radial Position of Top of taper', 1.31, 'm', None, 'PROCESS'],
-        ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
         ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
         ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
         ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
         ["tk_tf_ob_casing", "TF outboard leg conductor casing thickness", 0.002, "m", None, "PROCESS"],
         ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 11.5, 'm', None, 'PROCESS'],
+        ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'N/A', None, 'PROCESS'],
+        ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input'],
     ]
     # fmt: on
     CADConstructor = TFCoilCAD
@@ -187,10 +188,21 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             + self.params.tk_tf_wp
             + self.params.tk_tf_front_ib
         )
+        if self.wp_shape in ["W"]:
+            # Use the process-provided values
+            r_tf_in_out_mid = self.params.r_tf_in + self.params.tk_tf_inboard
+            if self.shape_type not in ["TP"]:
+                # Adjust for the radial build discrepancy between a WP curved face
+                # (BLUEPRINT) and flat face (PROCESS)
+                self.params.tk_tf_wp = (r_tf_in_out_mid - self.params.tk_tf_front_ib) - (
+                    self.params.r_tf_in + self.params.tk_tf_nose
+                )
 
         # The keep-out-zone at the mid-plane has to be scaled down from the keep-out-zone
         # at the maximum TF radius to avoid collisions on the inner leg.
         x_koz_min = np.min(self.inputs["koz_loop"].x) * np.cos(np.pi / self.params.n_TF)
+        if self.wp_shape not in ["N"]:
+            x_koz_min = np.min(self.inputs["koz_loop"].x)
         x_koz_max = np.max(self.inputs["koz_loop"].x)
 
         if x_koz_min < r_tf_in_out_mid:
@@ -271,9 +283,12 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self._minL, self._maxL = 0.2, 0.8
 
         elif self.inputs["shape_type"] == "TP":
-
             # Set the inner radius of the shape, and pseudo-remove from optimiser
             tk_case = self.params.tk_tf_ob_casing
+            # We add tk_case in x1 since the casing will be deleted later as the
+            # centrepost has no casing, however, for the initial Loop generation
+            # the casing loop circulates the entire coil, with extra bits chopped
+            # off later
             self.adjust_xo("x1", value=self.params.r_tf_inboard_out + tk_case)
             self.adjust_xo("z2", value=self.params.h_cp_top)
             self.adjust_xo("x2", value=self.params.r_cp_top + tk_case)
@@ -295,9 +310,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self._minL, self._maxL = 0.2, 0.8
 
         elif self.inputs["shape_type"] == "CP":
-
             # Inboard mid-plane radius (plasma side)
-            self.adjust_xo("x_in", value=self.params.r_tf_inboard_out)
+            self.adjust_xo("x_in", value=r_tf_in_out_mid)
             self.shp.remove_oppvar("x_in")
 
             # Taper end z corrdinate (curve top end)
@@ -403,7 +417,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.section["case"] = {
                 "side": self.params.tk_tf_side,
                 "nose": self.params.tk_tf_nose,
-                "WP": self.params.tk_tf_outboard,
+                "WP": self.params.tk_tf_wp,
                 "inboard": self.params.tk_tf_front_ib,
                 "outboard": self.params.tk_tf_front_ib,
                 "external": self.params.tk_tf_nose,
@@ -428,7 +442,11 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         if self.inputs["shape_type"] in ["CP"]:
             # For SC coils with a tapered centrepost
             x_shift = self.params.tk_tf_side / np.tan(np.pi / self.params.n_TF)
-            r_wp_in = self.params.r_cp_top - self.params.tk_tf_front_ib
+            r_wp_in = (
+                self.params.r_tf_in
+                + self.params.tk_tf_inboard
+                - self.params.tk_tf_front_ib
+            )
             depth = 2 * ((r_wp_in - x_shift) * np.sin(np.pi / self.params.n_TF))
 
         if self.inputs["shape_type"] in ["TP", "CP"]:
@@ -995,11 +1013,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         wp_out.reorder(0, 2)
 
         case_out = Loop(**self.loops["out"])
-        case_out = clean_loop(case_out)
         case_out.reorder(0, 2)
 
         case_in = Loop(**self.loops["in"])
-        case_in = clean_loop(case_in)
         case_in.reorder(0, 2)
         if self.shape_type in ["P"] and self.params.r_tf_inboard_corner == 0:
             wp_out = self.correct_inboard_corners(wp_out, 4)
@@ -1408,10 +1424,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         """
         #  First define some useful quantities
-        r_cp = self.params.r_cp_top
         z_max = np.max(self.loops["out"]["z"])
         # TEMPORARY -  values for correcting corner chamfering in offset
-        r_taper_out = self.params.r_tf_inboard_out
+        r_taper_out = np.min(self.loops["wp_in"]["x"])
         xmin = np.min(self.loops["wp_out"]["x"])
         delta = r_taper_out - xmin
 
@@ -1422,6 +1437,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         if self.inputs["shape_type"] in ["TP"]:
             # this could be changed to if coil is resistive or not/ has a
             # b_cyl or not
+            r_cp = self.params.r_cp_top
             tk_case_ob = self.params.tk_tf_ob_casing
             tk_case_ib = self.params.tk_tf_ob_casing
             r_wp_inb_in = self.params.r_tf_in + self.params.tk_tf_nose
@@ -1441,13 +1457,14 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         elif self.inputs["shape_type"] in ["CP"]:
             # Define wp_out and case cutters
+            r_cp = self.params.r_tf_in + self.params.tk_tf_inboard
             tk_case_ib = self.params.tk_tf_front_ib
             tk_case_ob = self.params.tk_tf_nose
             r_wp_inb_in = self.params.r_tf_in + self.params.tk_tf_nose
 
             wp_out_cutter = make_box_xz(-r_wp_inb_in * 5, r_wp_inb_in, -z_max, z_max)
             case_out_cutter = make_box_xz(
-                -r_wp_inb_in * 5, r_wp_inb_in - tk_case_ob, -z_max, z_max
+                -r_wp_inb_in * 5, self.params.r_tf_in, -z_max, z_max
             )
 
             # Cut wp_out and case_out loops
