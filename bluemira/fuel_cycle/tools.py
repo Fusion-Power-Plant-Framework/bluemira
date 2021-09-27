@@ -721,7 +721,7 @@ def legal_limit(
     {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
     """
     if p_fus is None and mb is None:
-        raise ValueError("You must specify either fusion power or burn rate.")
+        raise FuelCycleError("You must specify either fusion power or burn rate.")
 
     if p_fus is not None and mb is not None:
         bluemira_warn(
