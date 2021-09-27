@@ -765,7 +765,7 @@ def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa (N802)
 
 
 @nb.jit(nopython=True, cache=True)
-def _timestep_decay(inventory, dt):
+def _timestep_decay(flux, dt):
     """
     Analytical value of series expansion for an in-flux of tritium over a time-
     step. Accounts for decay during the timestep only.
@@ -774,7 +774,7 @@ def _timestep_decay(inventory, dt):
 
     Parameters
     ----------
-    inventory: float
+    flux: float
         The total inventory flowing through on a given time-step [kg]
     dt: float
         The time-step [years]
@@ -784,7 +784,7 @@ def _timestep_decay(inventory, dt):
     decay: float
         The value of the total inventory which decayed over the time-step.
     """  # noqa (W505)
-    return inventory * (
+    return flux * (
         1
         - (np.exp(-T_LAMBDA * dt) * (np.exp(T_LAMBDA * (dt + 0)) - 1))
         / (np.exp(T_LAMBDA) - 1)
