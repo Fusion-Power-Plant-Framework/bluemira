@@ -76,7 +76,7 @@ class TestSTEquilibrium:
 
         R_0 = 3.639
         A = 1.667
-        I_p = 20975205.2  # (EQDSK)
+        i_p = 20975205.2  # (EQDSK)
 
         xc = np.array(
             [1.5, 1.5, 8.259059936102478, 8.259059936102478, 10.635505223274231]
@@ -157,11 +157,11 @@ class TestSTEquilibrium:
             constraint_set,
             R_0 + 0.5,
             0,
-            I_p,
+            i_p,
             build_tweaks["tikhonov_gamma"],
         )
 
-        eq = Equilibrium(coilset, grid, force_symmetry=True, psi=initial_psi, Ip=I_p)
+        eq = Equilibrium(coilset, grid, force_symmetry=True, psi=initial_psi, Ip=i_p)
         optimiser = Norm2Tikhonov(build_tweaks["tikhonov_gamma"])
 
         criterion = DudsonConvergence(build_tweaks["fbe_convergence_crit"])
