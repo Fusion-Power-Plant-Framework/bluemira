@@ -42,6 +42,7 @@ from bluemira.base.constants import (
     HE_MOLAR_MASS,
     AMU_TO_KG,
     C_LIGHT,
+    YR_TO_S,
 )
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
@@ -254,6 +255,48 @@ def n_DD_reactions(p_fus) -> float:  # noqa (N802)
     """
     e_dd = E_DD_fusion()
     return float(p_fus * 1e6 / (e_dd * EV_TO_J))
+
+
+def r_T_burn(p_fus):  # noqa (N802)
+    """
+    Calculates the tritium burn rate for a given fusion power
+
+    :math:`\\dot{m_{b}} = \\frac{P_{fus}[MW]M_{T}[g/mol]}{17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
+
+    Parameters
+    ----------
+    p_fus: float
+        D-T fusion power [MW]
+
+    Returns
+    -------
+    r_burn: float
+        T burn rate in the plasma [g/s]
+    """  # noqa (W505)
+    return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
+
+
+def r_D_burn_DT(p_fus):  # noqa (N802)
+    """
+    Calculates the deuterium burn rate for a given fusion power in D-T
+
+    Parameters
+    ----------
+    p_fus: float
+        D-T fusion power [MW]
+
+    Returns
+    -------
+    r_burn: float
+        D burn rate in the plasma [g/s]
+
+    Notes
+    -----
+    .. math::
+        \\dot{m_{b}} = \\frac{P_{fus}[MW]M_{D}[g/mol]}
+        {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]
+    """
+    return n_DT_reactions(p_fus) * D_MOLAR_MASS / N_AVOGADRO
 
 
 # =============================================================================
@@ -574,7 +617,7 @@ def fountain(flow, t, min_inventory):
 
     for i, ti in zip(range(1, len(flow)), flow[1:]):
         dt = t[i] - t[i - 1]
-        dts = dt * 365 * 24 * 3600
+        dts = dt * YR_TO_S
         m_in = flow[i] * dts
         inventory[i] = inventory[i - 1] * np.exp(-T_LAMBDA * dt)
         overflow = inventory[i] + m_in
@@ -612,7 +655,7 @@ def _speed_recycle(m_start_up, t, m_in, m_fuel_injector):
     """
     m_tritium = np.zeros(len(t))
     m_tritium[0] = m_start_up
-    ts = t * 365 * 24 * 3600
+    ts = t * YR_TO_S
     for i in range(1, len(t)):
         dt = t[i] - t[i - 1]
         dts = ts[i] - ts[i - 1]
@@ -678,21 +721,17 @@ def legal_limit(
     {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
     """
     if p_fus is None and mb is None:
-        raise ValueError(
-            "Du musst entweder die fusion power oder die burn " "rate eingeben."
-        )
+        raise ValueError("You must specify either fusion power or burn rate.")
 
     if p_fus is not None and mb is not None:
         bluemira_warn(
-            "Demasiado información para la función legal_limit. " "Me quedo con Pfus."
+            "Fusion power and burn rate specified... sticking with fusion power."
         )
         mb = None
 
     if mb is None:
-        # To avoid a circular import
-        from BLUEPRINT.systems.physicstoolbox import r_T_burn  # noqa
-
         mb = r_T_burn(p_fus)
+
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
         * (1 - f_dir)
@@ -837,8 +876,8 @@ def _fountain_linear_sink(
     sum_in += mass_in
 
     j_inv0 = inventory
-    decayed += j_inv0 - inventory
-    if inventory < min_inventory:
+
+    if inventory <= min_inventory:
         # Case where fountain is not full
         i_mdot = _dec_I_mdot(inventory, 1, m_in, t_in, t_out)
         if i_mdot < min_inventory:
@@ -878,9 +917,8 @@ def _fountain_linear_sink(
                 # Case where successfully crosses up
                 dt2 = t_out - t_in - t15
                 inventory = i_mdot2
-                if inventory < 0:
-                    raise ValueError("Negative inventory in fountain_linear_sink.")
                 m_out = (mass_in - m_in * t15 - (1 - fs) * m_in * dt2) / dts
+
     elif inventory <= max_inventory:
         # Uncanny valley, no man's land
         i_mdot = _dec_I_mdot(inventory, 1 - fs, m_in, t_in, t_out)
@@ -926,13 +964,20 @@ def _fountain_linear_sink(
             # Case where we stay in uncanny valley
             inventory = i_mdot
             m_out = (mass_in - (1 - fs) * m_in * dt) / dts
+    else:
+        # inventory > max_inventory
+        raise ValueError("Undefined behaviour for inventory > max_inventory.")
+
+    decayed += j_inv0 - inventory
 
     if m_out > m_flow:
-        raise ValueError("Out flow greater than in flow")
+        raise ValueError(
+            "Out flow greater than in flow. Check that your timesteps are small enough."
+        )
     if m_out < 0:
-        raise ValueError("Negative out flow")
+        raise ValueError("Negative out flow in fountain_linear_sink.")
     if inventory < 0:
-        raise ValueError("Negative inventory.")
+        raise ValueError("Negative inventory in fountain_linear_sink.")
     return m_out, inventory, sum_in, decayed
 
 
@@ -1288,9 +1333,3 @@ def fountain_bathtub(flow, t, fs, max_inventory, min_inventory):
             inventory[i], m_out[i] = min_inventory, 0
 
     return m_out, inventory, sum_in, decayed
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()
