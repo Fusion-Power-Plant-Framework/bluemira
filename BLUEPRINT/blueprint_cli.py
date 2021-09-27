@@ -429,7 +429,7 @@ def cli(
     4.  build_tweaks  [default = build_tweaks.json]
             file containing additional build parameters.
     """
-    set_log_level(min(max(0, 2 + quiet - verbose)))
+    set_log_level(min(max(0, 2 + quiet - verbose), 5))
 
     inputs = InputManager(
         template=template,
