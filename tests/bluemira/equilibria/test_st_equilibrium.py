@@ -195,7 +195,14 @@ class TestSTEquilibrium:
         assert np.allclose(self.eq_blueprint.psi(), eq.psi(), rtol=1e-3)
 
     def _make_initial_psi(
-        self, coilset, grid, constraint_set, x_current, z_current, I_p, tikhonov_gamma
+        self,
+        coilset,
+        grid,
+        constraint_set,
+        x_current,
+        z_current,
+        plasma_current,
+        tikhonov_gamma,
     ):
         coilset_temp = coilset.copy()
         dummy = Coil(
@@ -203,7 +210,7 @@ class TestSTEquilibrium:
             z=z_current,
             dx=0,
             dz=0,
-            current=I_p,
+            current=plasma_current,
             name="plasma_dummy",
             control=False,
         )
