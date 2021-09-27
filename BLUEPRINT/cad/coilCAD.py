@@ -503,6 +503,8 @@ class TFCoilCAD(ComponentCAD):
             TF_depth_at_r_cp = 2 * (tf.params.r_cp_top * np.tan(np.pi / tf.params.n_TF))
             zmax_wp = np.max(tf.loops["wp_out"]["z"])  # Max z height of tfcoil
             if tf.shape_type in ["CP"]:
+                r_cp = tf.params.r_tf_in + tf.params.tk_tf_inboard
+                TF_depth_at_r_cp = 2 * (r_cp * np.tan(np.pi / tf.params.n_TF))
                 x_shift = side / np.tan(coil_toroidal_angle / 2)
             else:
                 x_shift = 0

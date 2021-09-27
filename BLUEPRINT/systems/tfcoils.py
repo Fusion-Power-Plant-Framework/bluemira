@@ -89,6 +89,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 11.5, 'm', None, 'PROCESS'],
         ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'N/A', None, 'PROCESS'],
         ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input'],
+        ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.8934, "m", None, "PROCESS"],
     ]
     # fmt: on
     CADConstructor = TFCoilCAD
@@ -406,7 +407,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.section["case"] = {
                 "side": self.params.tk_tf_ob_casing,
                 "nose": self.params.tk_tf_ob_casing,
-                "WP": self.params.tk_tf_outboard,
+                "WP": self.params.tk_tf_outboard - 2 * self.params.tk_tf_ob_casing,
                 "inboard": self.params.tk_tf_ob_casing,
                 "outboard": self.params.tk_tf_ob_casing,
                 "external": self.params.tk_tf_ob_casing,
