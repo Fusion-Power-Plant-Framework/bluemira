@@ -80,7 +80,7 @@ def pytest_configure(config):
         "reactor": config.option.reactor,
         "private": config.option.private,
     }
-    if try_get_bluemira_private_data_root() is None:
+    if options["private"] and try_get_bluemira_private_data_root() is None:
         bluemira_warn("You cannot run private tests. Disabling this test flag.")
         options["private"] = not options["private"]
 
