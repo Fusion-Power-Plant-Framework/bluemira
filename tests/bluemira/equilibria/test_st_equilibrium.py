@@ -39,10 +39,12 @@ from bluemira.equilibria import (
     SymmetricCircuit,
     PicardDeltaIterator,
 )
+from bluemira.equilibria.physics import calc_li
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.solve import DudsonConvergence
 
 
+@pytest.mark.private
 class TestSTEquilibrium:
     @classmethod
     def setup_class(cls):
@@ -176,6 +178,21 @@ class TestSTEquilibrium:
             convergence=criterion,
         )
         fbe_iterator()
+        self._test_equilibrium_good(eq)
+
+        # Verify by removing symmetry constraint and checking convergence
+        eq.force_symmetry = False
+        eq.set_grid(grid)
+        fbe_iterator()
+        self._test_equilibrium_good(eq)
+
+    def _test_equilibrium_good(self, eq):
+        lcfs_area = eq.get_LCFS().area
+        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area)
+
+        li_bp = calc_li(self.eq_blueprint)
+        assert np.isclose(li_bp, calc_li(eq), rtol=1e-4)
+        assert np.allclose(self.eq_blueprint.psi(), eq.psi(), rtol=1e-3)
 
     def _make_initial_psi(
         self, coilset, grid, constraint_set, x_current, z_current, I_p, tikhonov_gamma
@@ -196,6 +213,7 @@ class TestSTEquilibrium:
         constraint_set(eq)
         optimiser = Norm2Tikhonov(tikhonov_gamma)
         currents = optimiser(eq, constraint_set)
+        coilset_temp.set_control_currents(currents)
         # Note that this for some reason (incorrectly) only includes the psi from the
         # controlled coils and the plasma dummy psi contribution is not included...
         # which for some reason works better than with it.
@@ -207,5 +225,5 @@ class TestSTEquilibrium:
 
 
 if __name__ == "__main__":
-    # pytest.main([__file__])
+    pytest.main([__file__])
     a = 5
