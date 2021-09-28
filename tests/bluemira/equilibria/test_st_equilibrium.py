@@ -233,5 +233,4 @@ class TestSTEquilibrium:
 
 
 if __name__ == "__main__":
-    # pytest.main([__file__])
-    a = 5
+    pytest.main([__file__])
