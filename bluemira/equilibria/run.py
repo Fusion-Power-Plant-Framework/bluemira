@@ -241,49 +241,6 @@ class EquilibriumProblem:
         """
         self._refpsi = self.eq.psi()
 
-    def plot(self, ax=None, force=False):
-        """
-        Plots the solution of the ab initio equilibrium problem, including:
-            equilibrium
-            constraints
-            limiters
-            coilset
-            TF coil boundary
-
-        Parameters
-        ----------
-        ax: Axes object
-            The matplotlib axes object on which to plot
-        force: bool
-            Whether or not to plot force vectors
-        """
-        if ax is None:
-            ax = plt.gca()
-        self.eq.plot(ax)
-        if self.lim is not None:
-            self.lim.plot(ax)
-        if self.tfcoil is not None:
-            self.tfcoil.plot(ax, fill=False)
-        if force is True:
-            force = self.eq.get_forces()
-        elif force is False:
-            force = None
-        self.coilset.plot(ax, force=force)
-        if self.constraints:
-            self.constraints.plot(ax)
-
-    def plot_pulse(self, time=1):
-        """
-        Plots the pulse evolution over time
-        """
-        f, ax = plt.subplots()
-        n = len(self.snapshots["eq"])
-        for e in self.snapshots["eq"]:
-            ax.clear()
-            e.plot(ax=ax)
-            ax.figure.canvas.draw()
-            plt.pause(time / n)
-
     def plot_summary(self):
         """
         Plots a summary of the flux swing pulse, showing:

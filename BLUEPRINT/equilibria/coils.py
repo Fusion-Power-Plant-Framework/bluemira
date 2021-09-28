@@ -759,7 +759,7 @@ class CoilGroup:
         coils = {}
         extra_coils = {"PF": 0, "CS": 0}
         for coil in self.coils.values():
-            if hasattr(coil, "splittable"):
+            if hasattr(coil, "splittable") and coil.splittable is True:
                 for ii, circuit_coil in enumerate(coil.split()):
                     coils[circuit_coil.name] = circuit_coil
                     if ii > 0:

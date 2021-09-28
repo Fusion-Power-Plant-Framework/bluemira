@@ -796,13 +796,22 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
 
     def update_current_constraint(self, max_current):
         """
-        Update the current vector bounds. Must be called prior to optimise
+        Updates the current vector bounds. Must be called prior to optimise.
+
+        Parameters
+        ----------
+        max_current: float or np.array(self.n_C)
+            Maximum magnitude of currents in each coil [A] permitted during optimisation.
+            If max_current is supplied as a float, the float will be set as the
+            maximum allowed current magnitude for all coils.
         """
         self.I_max = max_current / self.scale
 
     def optimise(self):
         """
         Optimiser handle. Used in __call__
+
+        Returns np.array(self.n_C) of optimised currents in each coil [A].
         """
         opt = nlopt.opt(nlopt.LD_SLSQP, self.n_C)
         opt.set_min_objective(self.f_min_rms)
@@ -834,7 +843,21 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
 
     def f_min_rms(self, vector, grad):
         """
-        Error optimisation minimisation objective
+        Objective function for nlopt optimisation (minimisation),
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+        grad: np.array
+            Local gradient of objective function used by LD NLOPT algorithms.
+            Updated in-place.
+
+        Returns
+        -------
+        rss: Value of objective function (figure of merit).
         """
         vector = vector * self.scale
         rss, err = self.get_rss(vector)
@@ -844,12 +867,29 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
             jac += 2 * self.gamma * vector
             grad[:] = self.scale * jac
         if not rss > 0:
-            raise EquilibriaError("Was zum Teufel..")
+            raise EquilibriaError(
+                "FBIOptimiser least-squares objective function less than zero."
+            )
         return rss
 
     def get_rss(self, vector):
         """
-        Get the root-mean-squared error of [G][I]-[T]
+        Calculates the value and residual of the least-squares objective
+        function with Tikhonov regularisation term:
+
+        ||(Ax - b)||² + Γ||x||²
+
+        for the state vector x.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+
+        Returns
+        -------
+        rss: Value of objective function (figure of merit).
+        err: Residual (Ax - b) corresponding to the state vector x.
         """
         err = np.dot(self.A, vector) - self.b
         rss = err.T @ err + self.gamma * vector.T @ vector
