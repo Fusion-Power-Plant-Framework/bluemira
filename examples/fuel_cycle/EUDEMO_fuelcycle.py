@@ -99,7 +99,7 @@ set_random_seed(2358203947)
 
 # Let's do 200 runs Monte Carlo
 
-n = 10  # 200
+n = 50  # 200
 timelines = [lifecycle.timeline() for _ in range(n)]
 time_dicts = [timeline.to_dict() for timeline in timelines]
 

@@ -101,7 +101,6 @@ def generate_lognorm_distribution(n, integral, sigma):
         return np.sum(np.random.lognormal(x, sigma, n)) - integral
 
     mu = brentq(f_integral, -1e3, 1e3, maxiter=200)
-    print(mu)
     distribution = np.random.lognormal(mu, sigma, n)
     # Correct distribution integral
     error = np.sum(distribution) - integral
@@ -137,7 +136,6 @@ def generate_lognorm_distribution_old(n, integral, sigma):
             mean_norm = m * 1.2  # Start again...
             delta = 1
             bluemira_warn("FuelCycle::OperationPhase has a headache...")
-    print(mean_norm)
     return dist
 
 
