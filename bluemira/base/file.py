@@ -51,6 +51,29 @@ def get_bluemira_root():
     return root
 
 
+def try_get_bluemira_private_data_root():
+    """
+    Get the bluemira-private-data root install folder.
+
+    Returns
+    -------
+    private_root: Union[None, str]
+        The full path to the bluemira root folder, e.g.:
+            '/home/user/code/bluemira-private-data'
+
+    Notes
+    -----
+    Normal users will not have access to bluemira-private-data; it will be used
+    exclusively for tests which require private data and files.
+    """
+    root = get_bluemira_root()
+    code_root = os.path.split(root)[0]
+    try:
+        return _get_relpath(code_root, "bluemira-private-data")
+    except ValueError:
+        return None
+
+
 def get_bluemira_path(path="", subfolder="bluemira"):
     """
     Get a bluemira path of a module subfolder. Defaults to root folder.
