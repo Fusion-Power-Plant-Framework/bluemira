@@ -765,6 +765,26 @@ def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa (N802)
 
 
 @nb.jit(nopython=True, cache=True)
+def _inventory_decay(inventory, dt):
+    """
+    Calculate the decayed amount of an inventory over a timestep.
+
+    Parameters
+    ----------
+    inventory: float
+        Inventory to decay [kg]
+    dt: float
+        Time step [yr]
+
+    Returns
+    -------
+    decay: float
+        Decayed amount of tritium over the time period dt
+    """
+    return inventory * (1 - np.exp(-T_LAMBDA * dt))
+
+
+@nb.jit(nopython=True, cache=True)
 def _timestep_decay(flux, dt):
     """
     Analytical value of series expansion for an in-flux of tritium over a time-
@@ -825,6 +845,106 @@ def _find_t15(inventory, eta, m_flow, t_in, t_out, inventory_limit):
         return 0.0  # Approximate answer sometimes negative... :'(
 
 
+def _fountain_linear_sink2(
+    m_flow,
+    t_in,
+    t_out,
+    inventory,
+    r_release,
+    max_inventory,
+    min_inventory,
+    sum_in,
+    decayed,
+):
+    dt = t_out - t_in
+    r_absorb = 1 - r_release
+
+    if dt == 0:
+        return m_flow, inventory, sum_in, decayed
+
+    m_flow_kgyr = m_flow * YR_TO_S  # kg/yr
+    dts = dt * YR_TO_S
+    mass_in = m_flow * dts
+    sum_in += mass_in
+
+    j_inv0 = inventory
+    decay = _inventory_decay(inventory, dt)
+    inventory -= decay
+
+    if inventory <= min_inventory:
+        absorbed = mass_in
+        timestep_decay = _timestep_decay(m_flow_kgyr, dt)
+        inventory += absorbed - timestep_decay
+        if inventory <= min_inventory:
+            decayed += decay + timestep_decay
+            m_out = 0
+
+        elif inventory <= max_inventory:
+            # Crosses into uncanny valley
+            dt15 = _find_t15(inventory, 1.0, m_flow_kgyr, t_in, t_out, min_inventory)
+            t15 = t_in + dt15
+            absorbed15 = m_flow_kgyr * dt15
+            timestep_decay15 = _timestep_decay(m_flow_kgyr, dt15)
+            inventory = j_inv0 - decay + absorbed15 - timestep_decay15
+            absorbed152 = r_absorb * m_flow_kgyr * (t_out - t_15)
+            timestep_decay152 = _timestep_decay(m_flow_kgyr, t_out - t_15)
+            inventory += absorbed152 - r_absorb * timestep_decay152
+            if inventory > max_inventory:
+                raise ValueError("Your timesteps are not small enough.")
+            # Averaged over the transition
+            m_out = (
+                mass_in - absorbed15 - absorbed152 - r_release * timestep_decay152
+            ) / dts
+            decayed += decay + timestep_decay15 + r_absorb * timestep_decay152
+
+        else:
+            raise ValueError("Unsupported behaviour for fountain linear sink.")
+
+    elif inventory <= max_inventory:
+        absorbed = r_absorb * mass_in
+        timestep_decay = _timestep_decay(m_flow_kgyr, dt)
+        inventory += absorbed - r_absorb * timestep_decay
+        if inventory < min_inventory:
+            # Crossing down into total absorbtion
+            pass
+        elif inventory <= max_inventory:
+            # Staying in uncanny valley
+            m_out = (mass_in - absorbed - r_absorb * timestep_decay) / dts
+            decayed += decay + r_absorb * timestep_decay
+        elif inventory > max_inventory:
+            # Crossing up into 0 absorbtion
+            dt15 = _find_t15(
+                inventory, r_absorb, m_flow_kgyr, t_in, t_out, max_inventory
+            )
+            absorbed15 = r_absorb * m_flow_kgyr * dt15
+            released15 = r_release * m_flow_kgyr * dt15
+            timestep_decay15 = _timestep_decay(m_flow_kgyr, dt15)
+            inventory = j_inv0 + absorbed15 - r_absorb * timestep_decay15
+            if released15 < r_absorb * timestep_decay15:
+                # Only just crossed.. popping back down
+                inventory += released15 - r_release * timestep_decay15
+                decayed += (
+                    decay + timestep_decay15
+                )  # Note both absorb and topup release decay
+                m_out = (
+                    mass_in - absorbed15 + released15 - r_release * timestep_decay15
+                ) / dts
+            else:
+
+                released152 = m_flow_kgyr * (t_out - t_in - dt15)
+                timestep_decay152 = _timestep_decay(m_flow_kgyr, t_out - t_in - dt15)
+                released152 -= timestep_decay152
+                inventory += absorbed15 - r_absorb * timestep_decay15
+
+            m_out = 0
+            decayed += 0
+
+    else:
+        raise ValueError("Unsupported behaviour for fountain linear sink.")
+
+    return m_out, inventory, sum_in, decayed
+
+
 @nb.jit(nopython=True, cache=True)
 def _fountain_linear_sink(
     m_flow, t_in, t_out, inventory, fs, max_inventory, min_inventory, sum_in, decayed
@@ -865,13 +985,12 @@ def _fountain_linear_sink(
     decayed: float
         Accountancy parameter to calculate the total value of decayed T in a sink
     """
-    years = 365 * 24 * 3600
     dt = t_out - t_in
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = m_flow * years  # kg/yr
-    dts = dt * years
+    m_in = m_flow * YR_TO_S  # kg/yr
+    dts = dt * YR_TO_S
     mass_in = m_flow * dts
     sum_in += mass_in
 
@@ -931,7 +1050,7 @@ def _fountain_linear_sink(
                 dt2 = t_out - t_in - t15
                 inventory = i_mdot2
 
-                m_out = (mass_in - (1 - fs) * m_in * t15 - m_in * dt2) / years
+                m_out = (mass_in - (1 - fs) * m_in * t15 - m_in * dt2) / dts
             elif i_mdot2 >= min_inventory:
                 # Case where infinite unstable oscillations occur in model
                 # Treat reasonably here (you got unlucky) ==> stall
@@ -971,6 +1090,7 @@ def _fountain_linear_sink(
     decayed += j_inv0 - inventory
 
     if m_out > m_flow:
+        print(m_flow, m_out)
         raise ValueError(
             "Out flow greater than in flow. Check that your timesteps are small enough."
         )
