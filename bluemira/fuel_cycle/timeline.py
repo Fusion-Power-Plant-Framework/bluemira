@@ -27,8 +27,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import brentq
 from bluemira.base.look_and_feel import plot_defaults, bluemira_warn
 from bluemira.base.constants import S_TO_YR, YR_TO_S
-
-plot_defaults()
+from bluemira.fuel_cycle.tools import generate_lognorm_distribution
 
 
 class Phase:
@@ -121,6 +120,7 @@ class OperationPhase(Phase):
         self.t_rampdown = t_rampdown
         self.t_min_down = t_min_down
         self.sigma = sigma
+        self._dist = None
         outages = self.calculate_outages()
         t, inventory = np.zeros(6 * n_pulse), np.zeros(6 * n_pulse)
         DT_rate, DD_rate = np.zeros(6 * n_pulse), np.zeros(6 * n_pulse)
@@ -170,35 +170,8 @@ class OperationPhase(Phase):
             self.t_min_down + self.t_rampdown + self.t_rampup
         )
 
-        def f(x, n_pulse, sigma, t_d):
-            """
-            Optimisation objective for the integral of the distribution
-            """
-            return np.sum(np.random.lognormal(x, sigma, n_pulse)) - t_d
+        dist = generate_lognorm_distribution(self.n_pulse, t_unplanned, self.sigma)
 
-        # Optimise distribution integral to meet total downtime
-        mean_norm = brentq(
-            lambda x: f(x, self.n_pulse, self.sigma, t_down_tot), 0, 100000, maxiter=200
-        )
-        dist = np.random.lognormal(mean_norm, self.sigma, self.n_pulse)
-        # Adjust distribution to desired total required to handle random error
-        # in optimisation
-        delta = (np.sum(dist) - t_unplanned) / np.sum(dist)
-
-        i, j, m = 0, 0, mean_norm
-        while abs(delta) > 0.03:
-            i += 1  # Yeah cos brentq don't know how to optimise
-            j += 1
-            if i > 5:  # Cheeky bumps
-                mean_norm -= 0.01
-                i = 0
-            dist = np.random.lognormal(mean_norm, self.sigma, self.n_pulse)
-            delta = (np.sum(dist) - t_unplanned) / np.sum(dist)
-            if j > 1000:
-                j = 0
-                mean_norm = m * 1.2  # Start again...
-                delta = 1
-                bluemira_warn("FuelCycle::OperationPhase has a headache...")
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
         t_dwell = np.random.permutation(dist)

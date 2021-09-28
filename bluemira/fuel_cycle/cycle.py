@@ -448,7 +448,7 @@ class EUDEMOFuelCycleModel:
         m_T = _speed_recycle(self.m_T_start, t, m_in, m_store)
         self.m_T = m_T + self.params.I_tfv_min  # !!!!
 
-        min_tritium = min(m_T)
+        min_tritium = np.min(m_T)
         self.m_T_req = self.m_T_start - min_tritium
 
         while abs(self.m_T_req - self.m_T_start) / self.m_T_req > self.conv_thresh:

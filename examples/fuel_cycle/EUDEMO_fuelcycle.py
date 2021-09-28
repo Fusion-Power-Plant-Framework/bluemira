@@ -99,7 +99,7 @@ set_random_seed(2358203947)
 
 # Let's do 200 runs Monte Carlo
 
-n = 2  # 200
+n = 10  # 200
 timelines = [lifecycle.timeline() for _ in range(n)]
 time_dicts = [timeline.to_dict() for timeline in timelines]
 
@@ -186,28 +186,28 @@ tfv_config = ParameterFrame([
 ])
 # fmt:on
 
-tfv_system = FuelCycleAnalysis(tfv_config, EUDEMOFuelCycleModel)
+tfv_analysis = FuelCycleAnalysis(tfv_config, EUDEMOFuelCycleModel)
 
 # Now, let's run the fuel cycle model for the timelines we generated
 
-tfv_system.run_model(time_dicts)
+tfv_analysis.run_model(time_dicts)
 
 
-# You can have a look at a typical timeline:
+# You can have a look at a typical model:
 
 # And the distributions for the start-up inventory and doubling time:
-tfv_system.plot()
+tfv_analysis.plot()
 
 # And finally, you can get the desired statistical results:
 
-m_T_start_95 = tfv_system.get_startup_inventory("95th")
-t_d_95 = tfv_system.get_doubling_time("95th")
+m_T_start_95 = tfv_analysis.get_startup_inventory("95th")
+t_d_95 = tfv_analysis.get_doubling_time("95th")
 
-m_T_start_mean = tfv_system.get_startup_inventory("mean")
-t_d_mean = tfv_system.get_doubling_time("mean")
+m_T_start_mean = tfv_analysis.get_startup_inventory("mean")
+t_d_mean = tfv_analysis.get_doubling_time("mean")
 
-m_T_start_max = tfv_system.get_startup_inventory("max")
-t_d_max = tfv_system.get_doubling_time("max")
+m_T_start_max = tfv_analysis.get_startup_inventory("max")
+t_d_max = tfv_analysis.get_doubling_time("max")
 
 
 print(f"The mean start-up inventory is: {m_T_start_mean:.2f} kg.")

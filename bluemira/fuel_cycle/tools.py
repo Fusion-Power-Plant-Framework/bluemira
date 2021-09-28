@@ -101,11 +101,44 @@ def generate_lognorm_distribution(n, integral, sigma):
         return np.sum(np.random.lognormal(x, sigma, n)) - integral
 
     mu = brentq(f_integral, -1e3, 1e3, maxiter=200)
+    print(mu)
     distribution = np.random.lognormal(mu, sigma, n)
     # Correct distribution integral
     error = np.sum(distribution) - integral
     distribution -= error / n
     return distribution
+
+
+def generate_lognorm_distribution_old(n, integral, sigma):
+    def f(x):
+        """
+        Optimisation objective for the integral of the distribution
+        """
+        return np.sum(np.random.lognormal(x, sigma, n)) - integral
+
+    # Optimise distribution integral to meet total downtime
+    mean_norm = brentq(lambda x: f(x), 0, 100000, maxiter=200)
+    dist = np.random.lognormal(mean_norm, sigma, n)
+    # Adjust distribution to desired total required to handle random error
+    # in optimisation
+    delta = (np.sum(dist) - integral) / np.sum(dist)
+
+    i, j, m = 0, 0, mean_norm
+    while abs(delta) > 0.03:
+        i += 1  # Yeah cos brentq don't know how to optimise
+        j += 1
+        if i > 5:  # Cheeky bumps
+            mean_norm -= 0.01
+            i = 0
+        dist = np.random.lognormal(mean_norm, sigma, n)
+        delta = (np.sum(dist) - integral) / np.sum(dist)
+        if j > 1000:
+            j = 0
+            mean_norm = m * 1.2  # Start again...
+            delta = 1
+            bluemira_warn("FuelCycle::OperationPhase has a headache...")
+    print(mean_norm)
+    return dist
 
 
 def generate_truncnorm_distribution(n, integral, sigma):
@@ -559,6 +592,7 @@ def fit_sink_data(x, y, method="sqrt", plot=True):
 # =============================================================================
 
 
+@nb.jit(nopython=True, cache=True)
 def delay_decay(t, m_t_flow, t_delay):
     """
     Time-shift a tritium flow with a delay and account for radioactive decay.
@@ -582,6 +616,7 @@ def delay_decay(t, m_t_flow, t_delay):
     flow = np.zeros(shift)
     deldec = np.exp(-T_LAMBDA * t_delay)
     flow = np.append(flow, deldec * m_t_flow)
+    # TODO: Slight "loss" of tritium because of this?
     flow = flow[: len(t)]  # TODO: figure why you had to do this
     return flow
 

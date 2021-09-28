@@ -56,7 +56,7 @@ class FuelCycleFlow:
 
     def split(self, number, fractions):
         """
-        Divise un flux en N
+        Divides a flux into number of divisions
 
         Parameters
         ----------
@@ -66,15 +66,16 @@ class FuelCycleFlow:
             The fractional breakdown of the flows (must sum to 1)
         """
         if number <= 1 or not isinstance(number, int):
-            bluemira_warn("Nombre entier plus grand que un.")
+            bluemira_warn("Integer greater than 1.")
 
         if len(fractions) != number - 1:
             bluemira_warn("Need fractions for every flow but one.")
 
         fractions.append(1 - sum(fractions))
-        fractions = np.array(fractions).reshape(len(fractions), 1)
-        flows = fractions * self.out_flow.reshape(1, len(self.out_flow))
-        return flows
+        flows = []
+        for fraction in fractions:
+            flows.append(fraction * self.out_flow)
+        return np.array(flows)
 
 
 class FuelCycleComponent:
