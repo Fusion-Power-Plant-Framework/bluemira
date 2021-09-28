@@ -126,7 +126,7 @@ class OperationPhase(Phase):
         DT_rate, DD_rate = np.zeros(6 * n_pulse), np.zeros(6 * n_pulse)
         # Calculate unplanned downtime in phase (excludes CS recharge, ramp-up,
         # and ramp-down)
-        self.t_unplanned_down = sum(outages) - n_pulse * t_min_down
+        self.t_unplanned_down = np.sum(outages) - n_pulse * t_min_down
         for i, n in enumerate(range(1, 6 * (n_pulse - 1), 6)):
             t[n] = t[n - 1] + t_rampup
             t[n + 1] = t[n] + 1
@@ -174,7 +174,7 @@ class OperationPhase(Phase):
             """
             Optimisation objective for the integral of the distribution
             """
-            return sum(np.random.lognormal(x, sigma, n_pulse)) - t_d
+            return np.sum(np.random.lognormal(x, sigma, n_pulse)) - t_d
 
         # Optimise distribution integral to meet total downtime
         mean_norm = brentq(
@@ -183,7 +183,7 @@ class OperationPhase(Phase):
         dist = np.random.lognormal(mean_norm, self.sigma, self.n_pulse)
         # Adjust distribution to desired total required to handle random error
         # in optimisation
-        delta = (sum(dist) - t_unplanned) / sum(dist)
+        delta = (np.sum(dist) - t_unplanned) / np.sum(dist)
 
         i, j, m = 0, 0, mean_norm
         while abs(delta) > 0.03:
@@ -193,7 +193,7 @@ class OperationPhase(Phase):
                 mean_norm -= 0.01
                 i = 0
             dist = np.random.lognormal(mean_norm, self.sigma, self.n_pulse)
-            delta = (sum(dist) - t_unplanned) / sum(dist)
+            delta = (np.sum(dist) - t_unplanned) / np.sum(dist)
             if j > 1000:
                 j = 0
                 mean_norm = m * 1.2  # Start again...
@@ -209,7 +209,7 @@ class OperationPhase(Phase):
         Plots the distribution of the outages
         """
         dist = self._dist
-        t_down_check = sum(dist) / (60 * 60 * 24 * 365)  # [years] down-time
+        t_down_check = np.sum(dist) / (60 * 60 * 24 * 365)  # [years] down-time
         max_down = round(max(dist) / (60 * 60 * 24))  # days
         _, ax = plt.subplots()
         ax.hist(dist, bins=np.arange(0, 10000, 500))
@@ -439,25 +439,25 @@ class Timeline:
         tf_n = self.ft * self.tf_ins_nflux
         self.tf_nfrac = tf_n / self.tf_fluence
         # Blanket damage
-        blk_dmg_t = self.blk_dmg * self.ft  # [i*self.blk_dmg for i in self.ft]
-        bci = next(i for i, v in enumerate(blk_dmg_t) if v > self.blk_1_dpa)
+        blk_dmg_t = self.blk_dmg * self.ft
+        bci = np.argmax(blk_dmg_t >= self.blk_1_dpa)
         self.bci = bci
-        blk_dmg_t[bci:] = [-self.blk_1_dpa + i * self.blk_dmg for i in self.ft[bci:]]
+        blk_dmg_t[bci:] = -self.blk_1_dpa + self.ft[bci:] * self.blk_dmg
         self.blk_dmg_t = blk_dmg_t
-        blk_nfrac = []
-        blk_nfrac[:bci] = [i / self.blk_1_dpa for i in self.blk_dmg_t[:bci]]
-        blk_nfrac[bci:] = [i / self.blk_2_dpa for i in self.blk_dmg_t[bci:]]
+        blk_nfrac = np.zeros(len(self.blk_dmg_t))
+        blk_nfrac[:bci] = self.blk_dmg_t[:bci] / self.blk_1_dpa
+        blk_nfrac[bci:] = self.blk_dmg_t[bci:] / self.blk_2_dpa
         self.blk_nfrac = blk_nfrac
         # Divertor damage
-        div_dmg_t = self.div_dmg * self.ft  # [i*self.div_dmg for i in self.ft]
+        div_dmg_t = self.div_dmg * self.ft
         self.mci = [x + 2 for x in self.mci[::2]]
         divdpa = [div_dmg_t[x - 2] for x in self.mci[:-1]]
         for j, i in enumerate(self.mci[:-1]):
-            div_dmg_t[i:] = [-divdpa[j] + x * self.div_dmg for x in self.ft[i:]]
+            div_dmg_t[i:] = np.array([-divdpa[j] + self.ft[i:] * self.div_dmg])
         div_dmg_t = div_dmg_t
-        self.div_nfrac = div_dmg_t / self.div_dpa  # [i/self.div_dpa for i in div_dmg_t]
-        vv_dmg_t = self.vv_dmg * self.ft  # [i*self.vv_dmg for i in self.ft]
-        self.vv_nfrac = vv_dmg_t / self.vv_dpa  # [i/self.vv_dpa for i in vv_dmg_t]
+        self.div_nfrac = div_dmg_t / self.div_dpa
+        vv_dmg_t = self.vv_dmg * self.ft
+        self.vv_nfrac = vv_dmg_t / self.vv_dpa
 
     def plot_damage(self):
         """
