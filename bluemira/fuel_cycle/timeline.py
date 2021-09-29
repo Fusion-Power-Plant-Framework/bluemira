@@ -464,9 +464,3 @@ class Timeline:
         ax31.legend(loc="upper left")
         f.tight_layout(h_pad=0.2)
         return f
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()

@@ -692,9 +692,3 @@ class EUDEMOFuelCycleModel:
         ax.plot(self.DEMO_t, m_ideal, label="ideal")
         ax.plot(self.t[self.max_T[0]], self.max_T[1], label="max yellow")
         ax.legend()
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()
