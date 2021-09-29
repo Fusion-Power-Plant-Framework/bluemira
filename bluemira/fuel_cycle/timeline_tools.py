@@ -27,6 +27,7 @@ import numpy as np
 from scipy.optimize import brentq
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.fuel_cyle.error import FuelCycleError
 
 __all__ = [
     "GompertzLearningStrategy",
@@ -249,6 +250,10 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
 
 
 class GompertzLearningStrategy(LearningStrategy):
+    """
+    Gompertz learning strategy.
+    """
+
     def __init__(self, learn_rate, min_op_availability, max_op_availability):
         """
         Parameters
