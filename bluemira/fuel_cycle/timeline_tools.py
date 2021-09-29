@@ -27,7 +27,7 @@ import numpy as np
 from scipy.optimize import brentq
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.fuel_cyle.error import FuelCycleError
+from bluemira.fuel_cycle.error import FuelCycleError
 
 __all__ = [
     "GompertzLearningStrategy",
@@ -175,9 +175,6 @@ class LearningStrategy(abc.ABC):
         """
         pass
 
-    def plot(self):
-        pass
-
 
 class UniformLearningStrategy(LearningStrategy):
     """
@@ -216,7 +213,7 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
         operational_availabilities: Iterable[float]
             Operational availabilities to prescribe
         """
-        self.operational_availabilities
+        self.operational_availabilities = operational_availabilities
 
     def generate_phase_availabilities(self, lifetime_op_availability, op_durations):
         """
@@ -295,6 +292,11 @@ class GompertzLearningStrategy(LearningStrategy):
         op_availabities: Iterable[float]
             Operational availabilities at each operational phase
         """
+        if not self.min_op_a < lifetime_op_availability < self.max_op_a:
+            raise FuelCycleError(
+                "Input lifetime operational availability must be within the specified bounds on the phase operational availability."
+            )
+
         op_durations = np.append(0, op_durations)
         total_fpy = np.sum(op_durations)
         cum_fpy = np.cumsum(op_durations)
@@ -315,10 +317,7 @@ class GompertzLearningStrategy(LearningStrategy):
             return total_fpy / lifetime_op_availability - sum(op_durations[1:] / a_ops_i)
 
         x_opt = brentq(f_opt, 0, 10e10)
-        a_ops = self._f_op_availabilities(t, x_opt, arg_dates)
-        self._t_argdates = t[arg_dates]  # Plotting use
-        self._a = a_ops  # Plotting use
-        return a_ops
+        return self._f_op_availabilities(t, x_opt, arg_dates)
 
 
 class OperationalAvailabilityStrategy(abc.ABC):

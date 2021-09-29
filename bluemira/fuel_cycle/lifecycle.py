@@ -58,9 +58,6 @@ class LifeCycle:
         ["s_ramp_down", "Plasma current ramp-down rate", 0.1, "MA/s", None, "R. Wenninger"],
         ["n_DT_reactions", "D-T fusion reaction rate", 7.078779946428698e20, "1/s", "At full power", "Input"],
         ["n_DD_reactions", "D-D fusion reaction rate", 8.548069652616976e18, "1/s", "At full power", "Input"],
-        ["a_min", "Minimum operational load factor", 0.1, "N/A", "Otherwise nobody pays", "Input"],
-        ["a_max", "Maximum operational load factor", 0.5, "N/A", "Can be violated", "Input"],
-        ["r_learn", "Learning curve rate", 1, "1/fpy", "Looks good", "Input"],
         ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
@@ -108,9 +105,6 @@ class LifeCycle:
         self.vv_lifeend = None
         self.A_global = None
 
-        self._t_argdates = None
-        self._a = None
-
         # Derive/convert inputs
         self.maintenance_l = self.params.bmd * 24 * 3600  # [s]
         self.maintenance_s = self.params.dmd * 24 * 3600  # [s]
@@ -121,9 +115,7 @@ class LifeCycle:
 
         # Build timeline
         self.life_neutronics()
-        self.set_availabilities(self.params.A_global, mode="Global")
-        # self.make_timeline()
-        # self.sanity()
+        self.set_availabilities(self.params.A_global)
 
     def life_neutronics(self):
         """
@@ -200,36 +192,16 @@ class LifeCycle:
             "bluemira",
         )
 
-    def set_availabilities(self, load_factor, mode="Global"):
+    def set_availabilities(self, load_factor):
         """
-        Sets availability and distributes it between the two phases of\
-        planned operation. The planned maintenance windows are substracted\
-        from the availability which needs to be achieved during the phase of\
-        operation. The target overall plant lifetime availability as specified\
+        Sets availability and distributes it between the two phases of
+        planned operation. The planned maintenance windows are substracted
+        from the availability which needs to be achieved during the phase of
+        operation. The target overall plant lifetime availability as specified
         in input parameter A remains the same.
         \t:math:`A_{overall}=\\dfrac{t_{on}}{t_{on}+t_{off}}`\n
         \t:math:`A_{operations}=\\dfrac{t_{on}}{t_{on}+t_{ramp}+t_{CS_{recharge}}+t_{m_{unplanned}}}`
         """
-
-        def ff(x):
-            """
-            Optimisation objective for chunky fit to Gompertz
-
-            \t:math:`a_{min}+(a_{max}-a_{min})e^{\\dfrac{-\\text{ln}(2)}{e^{-ct_{infl}}}}`
-            """
-            # NOTE: Fancy analytical integral objective of Gompertz function
-            # was a resounding failure. Do not touch this again.
-            # The brute force is strong in this one.
-            a_ops_i = self.params.a_min + f_gompertz(
-                t, (self.params.a_max - self.params.a_min), x, self.params.r_learn
-            )
-            a_ops_i = np.array(
-                [np.mean(a_ops_i[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])]
-            )
-            return self.fpy / self.params.A_global - (
-                sum(p / a_ops_i) + S_TO_YR * self.total_planned_maintenance
-            )
-
         self.total_planned_maintenance = self.maintenance_l * self.n_blk_replace + (
             self.maintenance_s * self.n_div_replace
         )
@@ -244,59 +216,12 @@ class LifeCycle:
             + self.total_ramptime
             + self.t_on_total
         )
-        if mode == "Global":
-            # Sets lifetime load factor `A` (input) subtracts planned
-            # maintenance intervals, and sets phase load factors accordingly
-            # NOTE: a_max can be violated if A is high (not nec. > a_max)
-            # Handle funky inputs
-            if load_factor >= self.params.a_max:
-                # Fudge upwards - works for up to .7
-                self.params.a_max += 0.1 + 1.1 * (load_factor - self.params.a_max)
-            elif load_factor < self.params.a_min:
-                self.params.a_min = 0
-            t = np.linspace(0, self.fpy, 100)
-            dates = [0]
-            for p in self.get_op_phases():
-                dates.append(dates[-1] + p)
-            arg_dates = [np.argmin(abs(t - i)) for i in dates]
-            p = self.get_op_phases()
-            b = brentq(ff, 0, 10e10)
-            a_ops = self.params.a_min + f_gompertz(
-                t, self.params.a_max - self.params.a_min, b, self.params.r_learn
-            )
-            dates = [0]
-            for p in self.get_op_phases():
-                dates.append(dates[-1] + p)
-            arg_dates = np.array([np.argmin(abs(t - i)) for i in dates])
-            self._t_argdates = t[arg_dates]  # Plotting use
-            self._a = a_ops  # Plotting use
-            # Get phase operational load factors
-            self.a_ops = np.array(
-                [np.mean(a_ops[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])]
-            )
 
-        elif mode == "Operational":
-            # Here we set availabilities on operational phases only, and work
-            # out the global A.
-
-            self.a_ops = [0.1, 0.2, 0.2, 0.4, 0.4, 0.5]
-            ops_pulse_p = [n for n in self.n_pulse_p if n > 1]
-            p_unplanned = []
-
-            total = self.t_flattop + self.t_rampdown + self.t_rampup + self.t_min_down
-
-            for i, p in enumerate(self.a_ops):
-                p_unplanned.append(
-                    ops_pulse_p[i] * self.t_flattop / self.a_ops[i]
-                    - ops_pulse_p[i] * total
-                )
-            self.t_unplanned_m = sum(p_unplanned)
-            # Calculate global load factor
-            self.A_global = self.t_on_total / (
-                self.t_on_total + self.min_downtime + self.t_unplanned_m
-            )
-        else:
-            raise FuelCycleError(f"Unrecognised mode: {mode}.")
+        # TODO: Treat global load factor vs lifetime operational availability properly..!
+        op_durations = self.get_op_phases()
+        self.a_ops = self.learning_strategy.generate_phase_availabilities(
+            self.params.A_global, op_durations
+        )
 
     def calc_n_pulses(self, phases):
         """
@@ -413,29 +338,6 @@ class LifeCycle:
         f, ax = plt.subplots(1, 2)
         self.plot_learning(ax=ax[0])
         self.plot_load_factor(ax=ax[1])
-
-    def plot_learning(self, ax=None):
-        """
-        Plot the load factor learning curve and its discretisation into
-        operational load factors over phases
-        """
-        if ax is None:
-            ax = plt.gca()
-        a = self.a_ops
-        x, y = histify(self._t_argdates, a)
-        t = np.linspace(0, self.fpy, len(self._a))
-        g = ax.plot(t, self._a, linestyle="--")
-        ax.plot(
-            x,
-            y,
-            color=g[-1].get_color(),
-            label=f"{self.params.A_global.value:.1f}",
-            marker="o",
-        )
-        # Put a legend to the right of the current axis
-        ax.legend(loc="best", title="$A_{glob}$")
-        ax.set_xlabel("Full power years")
-        ax.set_ylabel("Operational load factor")
 
     def plot_life(self):
         """

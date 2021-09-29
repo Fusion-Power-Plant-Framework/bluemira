@@ -76,9 +76,6 @@ lifecycle_config = ParameterFrame([
     ["s_ramp_down", "Plasma current ramp-down rate", 0.1, "MA/s", None, "R. Wenninger"],
     ["n_DT_reactions", "D-T fusion reaction rate", n_DT_reactions(p_fus_DT), "1/s", "At full power", "Input"],
     ["n_DD_reactions", "D-D fusion reaction rate", n_DD_reactions(p_fus_DD), "1/s", "At full power", "Input"],
-    ["a_min", "Minimum operational load factor", 0.1, "N/A", "Otherwise nobody pays", "Input"],
-    ["a_max", "Maximum operational load factor", 0.5, "N/A", "Can be violated", "Input"],
-    ["r_learn", "Learning curve rate", 1, "1/fpy", "Looks good", "Input"],
     ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa",
      "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
     ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa",
@@ -95,11 +92,11 @@ lifecycle_inputs = {}
 
 # We need to define some stragies to define the pseudo-random timelines
 
-# Let's choose a LearningStrategy
+# Let's choose a LearningStrategy such that the operational availability grows over time
 learning_strategy = GompertzLearningStrategy(
     learn_rate=1.0, min_op_availability=0.1, max_op_availability=0.5
 )
-# Let's choose an OperationalAvailabilityStrategy
+# Let's choose an OperationalAvailabilityStrategy to determine how to distribute outages
 availability_strategy = LogNormalAvailabilityStrategy(sigma=2.0)
 
 lifecycle = LifeCycle(
@@ -112,7 +109,7 @@ set_random_seed(2358203947)
 
 # Let's do 100 runs Monte Carlo
 
-n = 10
+n = 100
 timelines = [lifecycle.make_timeline() for _ in range(n)]
 time_dicts = [timeline.to_dict() for timeline in timelines]
 
