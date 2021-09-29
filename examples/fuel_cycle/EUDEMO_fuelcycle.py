@@ -23,7 +23,6 @@
 A typical fuel cycle result for an EU-DEMO reference point
 """
 
-import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import plot_defaults
 from bluemira.base.parameter import ParameterFrame
 from bluemira.utilities.tools import set_random_seed
@@ -97,11 +96,15 @@ lifecycle_inputs = {}
 # We need to define some stragies to define the pseudo-random timelines
 
 # Let's choose a LearningStrategy
-learning_strategy = GompertzLearningStrategy()
+learning_strategy = GompertzLearningStrategy(
+    learn_rate=1.0, min_op_availability=0.1, max_op_availability=0.5
+)
 # Let's choose an OperationalAvailabilityStrategy
 availability_strategy = LogNormalAvailabilityStrategy(sigma=2.0)
 
-lifecycle = LifeCycle(lifecycle_config, availability_strategy, lifecycle_inputs)
+lifecycle = LifeCycle(
+    lifecycle_config, learning_strategy, availability_strategy, lifecycle_inputs
+)
 
 # We can use this LifeCycle to make pseudo-randomised timelines. Let's set a
 # random seed number first to get repeatable results
