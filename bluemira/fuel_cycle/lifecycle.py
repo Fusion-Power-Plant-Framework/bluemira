@@ -35,8 +35,6 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.utilities.tools import abs_rel_difference, is_num
-from bluemira.fuel_cycle.error import FuelCycleError
-from bluemira.fuel_cycle.timeline_tools import f_gompertz, histify
 from bluemira.fuel_cycle.timeline import Timeline
 
 

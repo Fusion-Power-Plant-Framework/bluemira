@@ -121,23 +121,18 @@ class EUDEMOFuelCycleModel:
     ]
     # fmt: on
 
-    def __init__(self, config, inputs, timeline):
+    def __init__(self, config, inputs):
         # Handle parameters
         self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(config)
 
         # Handle calculation information
         self.verbose = inputs.get("verbose", False)
-        self.learn = inputs.get("learn", False)
         self.timestep = inputs.get("timestep", 1200)
         self.conv_thresh = inputs.get("conv_thresh", 0.0002)
         self.n = inputs.get("n", None)
 
-        if self.n is None:
-            self.n = len(timeline["time"])
-
-        self.A_global = timeline["A_global"]
-
+    def _constructors(self):
         # Constructors (untangling the spaghetti)
         self.max_T = None
         self.min_T = None
@@ -167,11 +162,25 @@ class EUDEMOFuelCycleModel:
         self.t = None
         self.t_d = None
         self.t_infl = None
-        self.ax = None
 
+    def run(self, timeline):
+        """
+        Run the fuel cycle model.
+
+        Parameters
+        ----------
+        timeline: Timeline
+            Timeline with which to run the model
+        """
+        if self.n is None:
+            self.n = len(timeline["time"])
+
+        self.A_global = timeline["A_global"]
+
+        self._constructors()
         self.initialise_arrays(timeline, self.n)
         # Initialise model with a reasonable number for decay
-        self.seed_t(learn=self.learn)
+        self.seed_t()
         self.iterations = 0
         self.recycle()
         self.finalise()
@@ -212,18 +221,11 @@ class EUDEMOFuelCycleModel:
         # T production rate from D-D reaction channel [kgs of T per second]
         self.prate = (T_MOLAR_MASS / N_AVOGADRO / 1000) * self.DD_rate / 2  # Only 50%!
 
-    def seed_t(self, learn=True):
+    def seed_t(self):
         """
         Seed an initial value to the model.
-
-        Can be from a reduced model (deprecated) or an initial value is set.
         """
-        # AI estimate based on mk i model... no longer applicable.
-        if learn is True:
-            raise NotImplementedError("La c'est vieux mon vieux!")
-
-        else:
-            self.m_T_start = 5
+        self.m_T_start = 5.0
         self.m_T = [self.m_T_start]
 
     def tbreed(self, TBR, m_T_0):
