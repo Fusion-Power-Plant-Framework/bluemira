@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -23,11 +23,14 @@ import tests
 import pytest
 import numpy as np
 import matplotlib.pyplot as plt
+
 from bluemira.base.constants import T_LAMBDA
-from bluemira.fuel_cycle.tools import (
+from bluemira.fuel_cycle.timeline_tools import (
     generate_lognorm_distribution,
     generate_exponential_distribution,
     generate_truncnorm_distribution,
+)
+from bluemira.fuel_cycle.tools import (
     _dec_I_mdot,
     _find_t15,
     _fountain_linear_sink,
