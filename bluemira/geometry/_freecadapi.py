@@ -298,8 +298,8 @@ def discretize(w: Part.Wire, ndiscr: int):
 
     Returns
     -------
-    output : list(Base.Vector)
-        list of Base.Vector points.
+    output : list(numpy.ndarray)
+        list of points.
 
     """
     # discretization points array
@@ -308,30 +308,40 @@ def discretize(w: Part.Wire, ndiscr: int):
     return output
 
 
-def discretize_by_edges(w: Part.Wire, ndiscr: int):
+def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     """Discretize a wire taking into account the edges of which it consists of.
+    Notes: if dl is defined, ndiscr is not taken into account.
 
     Parameters
     ----------
     w : Part.Wire
         wire to be discretized.
     ndiscr : int
-        number of points for the whole wire discretization.
-
+        number of points for the whole wire discretization. Final number of points
+        can be slightly different due to edge discretization routine.
+    dl : float
+        target discretization length (default None). Segments near edges' nodes
+        could have a different discretization length due to edge discretization
+        routine.
     Returns
     -------
-    output : list(Base.Vector)
-        list of Base.Vector points.
+    output : list(numpy.ndarray)
+        list of points.
 
     """
     # discretization points array
     output = []
-    # a dl is calculated for the discretisation of the different edges
-    dl = w.Length / float(ndiscr)
-    # edges are discretised taking into account their orientation
-    # Note: this is a tricky part in Freecad. Reversed wires need a
-    # reverse operation for the generated points and the list of generated
-    # points for each edge.
+
+    if dl is None:
+        # a dl is calculated for the discretisation of the different edges
+        dl = w.Length / float(ndiscr)
+        # edges are discretised taking into account their orientation
+        # Note: this is a tricky part in Freecad. Reversed wires need a
+        # reverse operation for the generated points and the list of generated
+        # points for each edge.
+    elif dl <= 0.:
+        raise ValueError(f"dl must be > 0.")
+
     for e in w.OrderedEdges:
         pointse = e.discretize(Distance=dl)
         # if edge orientation is reversed, the generated list of points
