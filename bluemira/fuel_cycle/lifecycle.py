@@ -194,12 +194,14 @@ class LifeCycle:
 
     def set_availabilities(self, load_factor):
         """
-        Sets availability and distributes it between the two phases of
-        planned operation. The planned maintenance windows are substracted
-        from the availability which needs to be achieved during the phase of
-        operation. The target overall plant lifetime availability as specified
-        in input parameter A remains the same.
-        \t:math:`A_{overall}=\\dfrac{t_{on}}{t_{on}+t_{off}}`\n
+        Sets availability and distributes it between the two phases of planned operation.
+        The planned maintenance windows are substracted from the availability which
+        needs to be achieved during the phase of operation. The target overall plant
+        lifetime availability as specified in input parameter A remains the same.
+
+        Notes
+        -----
+        \t:math:`A_{overall}=\\dfrac{t_{on}}{t_{on}+t_{off}}`
         \t:math:`A_{operations}=\\dfrac{t_{on}}{t_{on}+t_{ramp}+t_{CS_{recharge}}+t_{m_{unplanned}}}`
         """
         self.total_planned_maintenance = self.maintenance_l * self.n_blk_replace + (
