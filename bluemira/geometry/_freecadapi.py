@@ -309,8 +309,8 @@ def discretize(w: Part.Wire, ndiscr: int):
 
 
 def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
-    """Discretize a wire taking into account the edges of which it consists of.
-    Notes: if dl is defined, ndiscr is not taken into account.
+    """
+    Discretize a wire taking into account the edges of which it consists of.
 
     Parameters
     ----------
@@ -323,11 +323,11 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
         target discretization length (default None). Segments near edges' nodes
         could have a different discretization length due to edge discretization
         routine.
+
     Returns
     -------
     output : list(numpy.ndarray)
         list of points.
-
     """
     # discretization points array
     output = []
@@ -339,8 +339,8 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
         # Note: this is a tricky part in Freecad. Reversed wires need a
         # reverse operation for the generated points and the list of generated
         # points for each edge.
-    elif dl <= 0.:
-        raise ValueError(f"dl must be > 0.")
+    elif dl <= 0.0:
+        raise ValueError("dl must be > 0.")
 
     for e in w.OrderedEdges:
         pointse = e.discretize(Distance=dl)
