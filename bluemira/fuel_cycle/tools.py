@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ Fuel cycle utility objects, including sink algorithms
 import numpy as np
 import numba as nb
 from scipy.interpolate import griddata
-from scipy.optimize import curve_fit, brentq
+from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from bluemira.base.constants import (
     J_TO_EV,
@@ -46,150 +46,6 @@ from bluemira.base.constants import (
 )
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
-
-# =============================================================================
-# Distribution and timeline utilities.
-# =============================================================================
-
-
-def f_gompertz(t, a, b, c):
-    """
-    Gompertz sigmoid function parameterisation.
-
-    \t:math:`a\\text{exp}(-b\\text{exp}(-ct))`
-    """
-    return a * np.exp(-b * np.exp(-c * t))
-
-
-def f_logistic(t, value, k, x_0):
-    """
-    Logistic function parameterisation.
-    """
-    return value / (1 + np.exp(-k * (t - x_0)))
-
-
-def histify(x, y):
-    """
-    Transform values into arrays usable to make histograms.
-    """
-    x, y = np.array(x), np.array(y)
-    return x.repeat(2)[1:-1], y.repeat(2)
-
-
-def generate_lognorm_distribution(n, integral, sigma):
-    """
-    Generate a log-norm distribution for a given standard deviation of the
-    underlying normal distribution. The mean value of the normal distribution
-    is optimised approximately.
-
-    Parameters
-    ----------
-    n: int
-        The size of the distribution
-    integral: float
-        The integral value of the distribution
-    sigma: float
-        The standard deviation of the underlying normal distribution
-
-    Returns
-    -------
-    distribution: np.array
-        The distribution of size n and of the correct integral value
-    """
-
-    def f_integral(x):
-        return np.sum(np.random.lognormal(x, sigma, n)) - integral
-
-    mu = brentq(f_integral, -1e3, 1e3, maxiter=200)
-    distribution = np.random.lognormal(mu, sigma, n)
-    # Correct distribution integral
-    error = np.sum(distribution) - integral
-    distribution -= error / n
-    return distribution
-
-
-def generate_lognorm_distribution_old(n, integral, sigma):
-    def f(x):
-        """
-        Optimisation objective for the integral of the distribution
-        """
-        return np.sum(np.random.lognormal(x, sigma, n)) - integral
-
-    # Optimise distribution integral to meet total downtime
-    mean_norm = brentq(lambda x: f(x), 0, 100000, maxiter=200)
-    dist = np.random.lognormal(mean_norm, sigma, n)
-    # Adjust distribution to desired total required to handle random error
-    # in optimisation
-    delta = (np.sum(dist) - integral) / np.sum(dist)
-
-    i, j, m = 0, 0, mean_norm
-    while abs(delta) > 0.03:
-        i += 1  # Yeah cos brentq don't know how to optimise
-        j += 1
-        if i > 5:  # Cheeky bumps
-            mean_norm -= 0.01
-            i = 0
-        dist = np.random.lognormal(mean_norm, sigma, n)
-        delta = (np.sum(dist) - integral) / np.sum(dist)
-        if j > 1000:
-            j = 0
-            mean_norm = m * 1.2  # Start again...
-            delta = 1
-            bluemira_warn("FuelCycle::OperationPhase has a headache...")
-    return dist
-
-
-def generate_truncnorm_distribution(n, integral, sigma):
-    """
-    Generate a truncated normal distribution for a given standard deviation.
-
-    Parameters
-    ----------
-    n: int
-        The size of the distribution
-    integral: float
-        The integral value of the distribution
-    sigma: float
-        The standard deviation of the underlying normal distribution
-
-    Returns
-    -------
-    distribution: np.array
-        The distribution of size n and of the correct integral value
-    """
-    distribution = np.random.normal(0, sigma, n)
-    # Truncate distribution by 0-folding
-    distribution = np.abs(distribution)
-    # Correct distribution integral
-    distribution /= np.sum(distribution)
-    distribution *= integral
-    return distribution
-
-
-def generate_exponential_distribution(n, integral, lambdda):
-    """
-    Generate an exponential distribution for a given rate parameter.
-
-    Parameters
-    ----------
-    n: int
-        The size of the distribution
-    integral: float
-        The integral value of the distribution
-    lambdda: float
-        The rate parameter of the ditribution
-
-    Returns
-    -------
-    distribution: np.array
-        The distribution of size n and of the correct integral value
-    """
-    distribution = np.random.exponential(lambdda, n)
-    # Correct distribution integral
-    distribution /= np.sum(distribution)
-    distribution *= integral
-    return distribution
-
 
 # =============================================================================
 # Physics tools

@@ -57,7 +57,6 @@ class FuelCycleAnalysis:
             else:
                 bluemira_warn(f"Unknown kwarg: {key} = {value}")
 
-        self.models = []
         self.m_T_req = []
         self.t_d = []
         self.m_dot_release = []
@@ -88,15 +87,11 @@ class FuelCycleAnalysis:
         if not type(timelines) is list:  # Single timeline
             timelines = [timelines]
 
-        i = 1
         for timeline in timelines:
-            print(i)
-            i += 1
             model = self.model_class(self.params, self.build_tweaks, timeline)
             self.m_T_req.append(model.m_T_req)
             self.t_d.append(model.t_d)
             self.m_dot_release.append(model.m_dot_release)
-            self.models.append(model)
 
     def get_startup_inventory(self, query="max"):
         """

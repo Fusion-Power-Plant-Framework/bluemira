@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -21,6 +21,10 @@
 """
 Fusion power reactor lifecycle object.
 """
+from bluemira.fuel_cycle.timeline_tools import (
+    LearningStrategy,
+    OperationalAvailabilityStrategy,
+)
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -32,7 +36,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.utilities.tools import abs_rel_difference, is_num
 from bluemira.fuel_cycle.error import FuelCycleError
-from bluemira.fuel_cycle.tools import f_gompertz, histify
+from bluemira.fuel_cycle.timeline_tools import f_gompertz, histify
 from bluemira.fuel_cycle.timeline import Timeline
 
 
@@ -69,8 +73,16 @@ class LifeCycle:
     ]
     # fmt: on
 
-    def __init__(self, config: Type[ParameterFrame], inputs: dict):
+    def __init__(
+        self,
+        config: Type[ParameterFrame],
+        learning_strategy: Type[LearningStrategy],
+        availability_strategy: Type[OperationalAvailabilityStrategy],
+        inputs: dict,
+    ):
         self.config = config
+        self.learning_strategy = learning_strategy
+        self.availability_strategy = availability_strategy
         self.inputs = inputs
 
         self.params = ParameterFrame(self.default_params)
@@ -110,8 +122,8 @@ class LifeCycle:
         # Build timeline
         self.life_neutronics()
         self.set_availabilities(self.params.A_global, mode="Global")
-        self.timeline()
-        self.sanity()
+        # self.make_timeline()
+        # self.sanity()
 
     def life_neutronics(self):
         """
@@ -185,7 +197,7 @@ class LifeCycle:
             self.fpy * YR_TO_S / self.t_flattop,
             "",
             None,
-            "BLUEPRINT",
+            "bluemira",
         )
 
     def set_availabilities(self, load_factor, mode="Global"):
@@ -307,7 +319,7 @@ class LifeCycle:
             d for n, d in zip(self.phase_names, self.phase_durations) if "Phase P" in n
         ]
 
-    def timeline(self):
+    def make_timeline(self):
         """
         Builds a Timeline instance
         """
@@ -344,6 +356,7 @@ class LifeCycle:
             self.params.tf_fluence,
             self.params.vv_dmg,
             self.params.vv_dpa,
+            self.availability_strategy,
         )
         self.T = timeline
         self.t_unplanned_m = self.T.t_unplanned_m
@@ -416,7 +429,7 @@ class LifeCycle:
             x,
             y,
             color=g[-1].get_color(),
-            label=f"{self.params.A_global:.1f}",
+            label=f"{self.params.A_global.value:.1f}",
             marker="o",
         )
         # Put a legend to the right of the current axis

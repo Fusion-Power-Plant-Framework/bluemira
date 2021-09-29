@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,10 +24,10 @@ Partially randomised fusion reactor load signal object and tools
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import brentq
-from bluemira.base.look_and_feel import plot_defaults, bluemira_warn
 from bluemira.base.constants import S_TO_YR, YR_TO_S
-from bluemira.fuel_cycle.tools import generate_lognorm_distribution
+from bluemira.fuel_cycle.timeline_tools import LogNormalAvailabilityStrategy
+
+__all__ = ["Timeline"]
 
 
 class Phase:
@@ -109,7 +109,7 @@ class OperationPhase(Phase):
         n_DD_reactions,
         plasma_current,
         t_start=0,
-        sigma=2.0,
+        availability_strategy=LogNormalAvailabilityStrategy(sigma=2.0),
     ):
         super().__init__()
         self.name = name
@@ -119,9 +119,9 @@ class OperationPhase(Phase):
         self.t_flattop = t_flattop
         self.t_rampdown = t_rampdown
         self.t_min_down = t_min_down
-        self.sigma = sigma
         self._dist = None
-        outages = self.calculate_outages()
+
+        outages = self.calculate_outages(availability_strategy)
         t, inventory = np.zeros(6 * n_pulse), np.zeros(6 * n_pulse)
         DT_rate, DD_rate = np.zeros(6 * n_pulse), np.zeros(6 * n_pulse)
         # Calculate unplanned downtime in phase (excludes CS recharge, ramp-up,
@@ -153,10 +153,16 @@ class OperationPhase(Phase):
         self.DT_rate = DT_rate
         self.DD_rate = DD_rate
 
-    def calculate_outages(self):
+    def calculate_outages(self, availability_strategy):
         """
         Calculates the randomised vector of outages according ot a Log-normal
         distribution
+
+        Parameters
+        ----------
+        availability_strategy: OperationAvailabilityStrategy
+            Operational availability strategy for the generation of distributions of
+            unplanned outages
 
         Returns
         -------
@@ -170,7 +176,7 @@ class OperationPhase(Phase):
             self.t_min_down + self.t_rampdown + self.t_rampup
         )
 
-        dist = generate_lognorm_distribution(self.n_pulse, t_unplanned, self.sigma)
+        dist = availability_strategy.generate_distribution(self.n_pulse, t_unplanned)
 
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
@@ -312,6 +318,7 @@ class Timeline:
         tf_fluence,
         vv_dmg,
         vv_dpa,
+        availability_strategy,
     ):
         # Input class attributes
         self.A_global = load_factor
@@ -351,6 +358,7 @@ class Timeline:
                     n_DDs[j],
                     plasma_currents[j],
                     t_start=t_start,
+                    availability_strategy=availability_strategy,
                 )
                 j += 1
             elif "Phase M" in name:

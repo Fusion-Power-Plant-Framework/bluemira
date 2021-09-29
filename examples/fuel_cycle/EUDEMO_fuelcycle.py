@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -34,6 +34,10 @@ from bluemira.fuel_cycle.tools import (
     convert_flux_to_flow,
     n_DD_reactions,
     n_DT_reactions,
+)
+from bluemira.fuel_cycle.timeline_tools import (
+    LogNormalAvailabilityStrategy,
+    GompertzLearningStrategy,
 )
 
 plot_defaults()
@@ -90,17 +94,23 @@ lifecycle_config = ParameterFrame([
 
 lifecycle_inputs = {}
 
+# We need to define some stragies to define the pseudo-random timelines
 
-lifecycle = LifeCycle(lifecycle_config, lifecycle_inputs)
+# Let's choose a LearningStrategy
+learning_strategy = GompertzLearningStrategy()
+# Let's choose an OperationalAvailabilityStrategy
+availability_strategy = LogNormalAvailabilityStrategy(sigma=2.0)
+
+lifecycle = LifeCycle(lifecycle_config, availability_strategy, lifecycle_inputs)
 
 # We can use this LifeCycle to make pseudo-randomised timelines. Let's set a
 # random seed number first to get repeatable results
 set_random_seed(2358203947)
 
-# Let's do 200 runs Monte Carlo
+# Let's do 100 runs Monte Carlo
 
-n = 50  # 200
-timelines = [lifecycle.timeline() for _ in range(n)]
+n = 10
+timelines = [lifecycle.make_timeline() for _ in range(n)]
 time_dicts = [timeline.to_dict() for timeline in timelines]
 
 # Now let's set up a TFVSystem
@@ -188,12 +198,12 @@ tfv_config = ParameterFrame([
 
 tfv_analysis = FuelCycleAnalysis(tfv_config, EUDEMOFuelCycleModel)
 
-# Now, let's run the fuel cycle model for the timelines we generated
+# We can run a single model and look at a typical result
+model = EUDEMOFuelCycleModel(tfv_config, {}, time_dicts[0])
+model.plot()
 
+# Now, let's run the fuel cycle model for all the timelines we generated
 tfv_analysis.run_model(time_dicts)
-
-
-# You can have a look at a typical model:
 
 # And the distributions for the start-up inventory and doubling time:
 tfv_analysis.plot()
@@ -216,5 +226,3 @@ print(f"The 95th percentile start-up inventory is: {m_T_start_95:.2f} kg.")
 print(f"The 95th percentile doubling time is: {t_d_95:.2f} years.")
 print(f"The maximum start-up inventory is: {m_T_start_max:.2f} kg.")
 print(f"The maximum doubling time is: {t_d_max:.2f} years.")
-
-plt.show()
