@@ -234,8 +234,6 @@ eq = Equilibrium(
 )
 eq.plot()
 plt.show()
-# raise ValueError
-# plt.close("all")
 
 
 # Simple unconstrained optimisation

@@ -61,7 +61,7 @@ class EquilibriumOptimiser:
         .rms_error
     """
 
-    def __call__(self, eq, constraints, psi_bndry=None, apply_weights=False):
+    def __call__(self, eq, constraints, psi_bndry=None):
         """
         Parameters
         ----------
@@ -80,6 +80,14 @@ class EquilibriumOptimiser:
             Constraint vector
 
         \t:math:`\\mathbf{A}\\mathbf{x}-\\mathbf{b}=\\mathbf{b_{plasma}}`
+
+        Notes
+        -----
+        The weight vector is used to scale the response matrix and
+        constraint vector. The weights are assumed to be uncorrelated, such that the
+        weight matrix W_ij used to define (for example) the least-squares objective
+        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+        weights[i] = w[i] = sqrt(W[i,i]).
         """
         self.eq = eq
         self.constraints = constraints
@@ -121,7 +129,6 @@ class Norm2Tikhonov(EquilibriumOptimiser):
 
     def __init__(self, gamma=1e-12):
         self.gamma = gamma
-        self.inv_A_T_A = None
 
     def optimise(self):
         """

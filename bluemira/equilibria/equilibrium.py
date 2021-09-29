@@ -247,7 +247,12 @@ class MHDState:
         return e, psi, coilset, grid, limiter
 
     def to_eqdsk(
-        self, data, filename, header="BP_equilibria", directory=None, filetype="json"
+        self,
+        data,
+        filename,
+        header="bluemira_equilibria",
+        directory=None,
+        filetype="json",
     ):
         """
         Writes the Equilibrium Object to an eqdsk file
@@ -501,7 +506,7 @@ class Equilibrium(MHDState):
     psi: None or 2-D numpy array (optional) default = None
         Magnetic flux [V.s] applied to X, Z grid
     Ip: float (optional) default = 0
-        Plasma current [MA]
+        Plasma current [A]
     li: None or float (default None)
         Normalised plasma internal inductance [N/A]
     RB0: float (optional) default = None

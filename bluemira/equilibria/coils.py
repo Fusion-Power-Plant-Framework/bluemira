@@ -25,6 +25,7 @@ Coil and coil grouping objects
 
 from copy import deepcopy
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.interpolate import RectBivariateSpline
 from typing import Any, Optional
 
@@ -1385,9 +1386,33 @@ class Circuit(CoilGroup):
 
     def psi_greens(self, pgreen):
         """
-        Calculate plasma psi from Greens functions and current
+        Calculate psi from Greens functions and current
         """
         return self.current * pgreen
+
+    def map_Bx_greens(self, x, z):
+        """
+        Mapping of the Bx Greens functions into a dict for each coil
+        """
+        return {self.name: self.control_Bx(x, z)}
+
+    def Bx_greens(self, bx_green):
+        """
+        Calculate Bx from Greens functions and current
+        """
+        return self.current * bx_green
+
+    def map_Bz_greens(self, x, z):
+        """
+        Mapping of the Bz Greens functions into a dict for each coil
+        """
+        return {self.name: self.control_Bz(x, z)}
+
+    def Bz_greens(self, bz_green):
+        """
+        Calculate Bz from Greens functions and current
+        """
+        return self.current * bz_green
 
     def control_Bx(self, x, z):
         """
@@ -1448,7 +1473,9 @@ class Circuit(CoilGroup):
         """
         Plot the Circuit.
         """
-        for coil in self.coils:
+        if ax is None:
+            ax = plt.gca()
+        for coil in self.coils.values():
             coil.plot(ax=ax, subcoil=subcoil, **kwargs)
 
 
@@ -1485,7 +1512,7 @@ class SymmetricCircuit(Circuit):
             ctype=coil.ctype,
             j_max=coil.j_max,
             b_max=coil.b_max,
-            name=coil.name + ".2",
+            name=self.name + ".2",
             flag_sizefix=coil.flag_sizefix,
         )
 
@@ -1631,14 +1658,14 @@ class CoilSet(CoilGroup):
         """
         The length of the controls.
         """
-        return sum([coil.n_control for coil in self.coils])
+        return sum([coil.n_control for coil in self.coils.values()])
 
     @property
     def n_constraints(self):
         """
         The length of the constraints.
         """
-        return sum([coil.n_constraints for coil in self.coils])
+        return sum([coil.n_constraints for coil in self.coils.values()])
 
     def reassign_coils(self, coils):
         """
