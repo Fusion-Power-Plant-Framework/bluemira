@@ -1,11 +1,18 @@
 Getting Started
 ===============
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
+   :hidden:
+
+   Configure SSH keys <ssh>
+
 Installation
 ------------
 
 Bluemira can be installed into a conda environment using miniforge by running the
-following steps in a mac or Ubuntu command terminal:
+following steps in a mac or Ubuntu command terminal (Make sure you have your :ref:`SSH keys configured <ssh-keys>`):
 
 
 .. code-block:: bash
