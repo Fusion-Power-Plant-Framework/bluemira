@@ -71,6 +71,7 @@ class TestTFCoil:
             ["tk_tf_insgap", "TF coil WP insertion gap", 0.1, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
             ["r_tf_in", "Inboard radius of the TF coil inboard leg", 3.2, "m", None, "PROCESS"],
             ["ripple_limit", "Ripple limit constraint", 0.6, "%", None, "Input"],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 1.14, 'm', None, 'Input', 'PROCESS'],
         ]
         # fmt: on
 
@@ -126,7 +127,10 @@ class TestTFCoil:
     def test_cad_components(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-
+        f1, ax1 = plt.subplots()
+        tf1.plot_ripple(ax=ax1)
+        plt.gca().set_aspect("equal")
+        plt.show()
         # Ensure we've got all the geometry that we need to generate CAD
         tf1._generate_xz_plot_loops()
 
@@ -158,6 +162,7 @@ class TestTaperedPictureFrameTF:
             ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 0.4505, 'm', None, 'Input', 'PROCESS'],
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
@@ -202,10 +207,10 @@ class TestTaperedPictureFrameTF:
         vol_cp_conductor = get_properties(CAD.component["shapes"][2])["Volume"]
         vol_leg_casing = get_properties(CAD.component["shapes"][3])["Volume"]
 
-        true_vol_b_cyl = 0.47855
-        true_vol_leg_conductor = 15.6116
-        true_vol_cp_conductor = 2.6499
-        true_vol_leg_casing = 11.6060
+        true_vol_b_cyl = 0.46925
+        true_vol_leg_conductor = 12.3735
+        true_vol_cp_conductor = 2.5788
+        true_vol_leg_casing = 10.0850
 
         assert np.isclose(vol_b_cyl, true_vol_b_cyl, rtol=1e-3)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)
@@ -256,6 +261,7 @@ class TestSCPictureFrameTF:
             ["ripple_limit", "Ripple limit constraint", 0.6, "%", None, "Input"],
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
 
         ]
         # fmt: on
@@ -347,6 +353,7 @@ class TestCurvedPictureframeTF:
             ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
             ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
             ['tk_tf_outboard', 'TF coil outboard thickness', 0.569, 'm', None, 'Input', 'PROCESS'],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
 
         ]
         # fmt: on
@@ -385,9 +392,9 @@ class TestCurvedPictureframeTF:
         vol_tapered_cp = get_properties(CAD.component["shapes"][1])["Volume"]
         vol_leg_conductor = get_properties(CAD.component["shapes"][0])["Volume"]
 
-        true_vol_tapered_cp = 3.0079
-        true_vol_leg_conductor = 9.1357
-        true_vol_casing = 2.8956
+        true_vol_tapered_cp = 2.3636
+        true_vol_leg_conductor = 7.8241
+        true_vol_casing = 2.7235
         assert np.isclose(vol_casing, true_vol_casing, rtol=1e-2)
         assert np.isclose(vol_tapered_cp, true_vol_tapered_cp, rtol=1e-2)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)
