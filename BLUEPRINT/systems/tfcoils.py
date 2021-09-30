@@ -1019,9 +1019,11 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         wp_out.reorder(0, 2)
 
         case_out = Loop(**self.loops["out"])
+        case_out = clean_loop(case_out)
         case_out.reorder(0, 2)
 
         case_in = Loop(**self.loops["in"])
+        case_in = clean_loop(case_in)
         case_in.reorder(0, 2)
         if self.shape_type in ["P"] and self.params.r_tf_inboard_corner == 0:
             wp_out = self.correct_inboard_corners(wp_out, 4)
