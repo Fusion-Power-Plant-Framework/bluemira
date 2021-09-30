@@ -189,7 +189,7 @@ class OptVariables:
         Set of variables to use
     frozen: bool
         Whether or not the OptVariables set is to be frozen upon instantiation. This
-        prevents any adding or removal or variables after instantiation.
+        prevents any adding or removal of variables after instantiation.
     """
 
     def __init__(self, variables, frozen=False):
