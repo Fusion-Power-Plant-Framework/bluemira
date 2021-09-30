@@ -109,8 +109,13 @@ set_random_seed(2358203947)
 
 # Let's do 100 runs Monte Carlo
 
-n = 20
-timelines = [lifecycle.make_timeline() for _ in range(n)]
+n = 200
+timelines = []
+for i in range(n):
+    print(i)
+    lifecycle.make_timeline()
+
+# timelines = [lifecycle.make_timeline() for _ in range(n)]
 time_dicts = [timeline.to_dict() for timeline in timelines]
 
 # Now let's set up a TFVSystem
@@ -199,7 +204,7 @@ tfv_config = ParameterFrame([
 
 # We can run a single model and look at a typical result
 model = EUDEMOFuelCycleModel(tfv_config, {})
-model.run(time_dicts[0])
+model.run(lifecycle.make_timeline().to_dict())
 model.plot()
 
 # Now, let's run the fuel cycle model for all the timelines we generated
