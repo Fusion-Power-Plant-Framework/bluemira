@@ -127,10 +127,6 @@ class TestTFCoil:
     def test_cad_components(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        f1, ax1 = plt.subplots()
-        tf1.plot_ripple(ax=ax1)
-        plt.gca().set_aspect("equal")
-        plt.show()
         # Ensure we've got all the geometry that we need to generate CAD
         tf1._generate_xz_plot_loops()
 

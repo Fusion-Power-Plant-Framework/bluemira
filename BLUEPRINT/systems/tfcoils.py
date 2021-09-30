@@ -183,7 +183,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         )
 
         # The outer point of the TF coil inboard in the mid-plane
-        r_tf_in_out_mid = (
+        r_tf_inboard_out = (
             self.params.r_tf_in
             + self.params.tk_tf_nose
             + self.params.tk_tf_wp
@@ -192,14 +192,14 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         if self.wp_shape in ["W"]:
             # Use the CORRECT process-provided values to define outboard edge of
             # centrepost/inboard leg in the midplane - replaces r_tf_inboard_out
-            r_tf_in_out_mid = self.params.r_tf_in + self.params.tk_tf_inboard
+            r_tf_inboard_out = self.params.r_tf_in + self.params.tk_tf_inboard
 
             if self.shape_type not in ["TP"]:
                 # Adjust for the radial build discrepancy in the wp thickness
                 # between a WP curved face (BLUEPRINT) and flat face (PROCESS)
-                self.params.tk_tf_wp = (r_tf_in_out_mid - self.params.tk_tf_front_ib) - (
-                    self.params.r_tf_in + self.params.tk_tf_nose
-                )
+                self.params.tk_tf_wp = (
+                    r_tf_inboard_out - self.params.tk_tf_front_ib
+                ) - (self.params.r_tf_in + self.params.tk_tf_nose)
 
         # The keep-out-zone at the mid-plane has to be scaled down from the keep-out-zone
         # at the maximum TF radius to avoid collisions on the inner leg.
@@ -211,12 +211,12 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         x_koz_max = np.max(self.inputs["koz_loop"].x)
 
-        if x_koz_min < r_tf_in_out_mid:
+        if x_koz_min < r_tf_inboard_out:
             bluemira_warn(
                 "TF coil radial build issue, resetting TF inboard outer edge in the "
-                f"mid-plane from {r_tf_in_out_mid:.6f} to {x_koz_min:.6f}."
+                f"mid-plane from {r_tf_inboard_out:.6f} to {x_koz_min:.6f}."
             )
-            r_tf_in_out_mid = x_koz_min
+            r_tf_inboard_out = x_koz_min
 
         R_0 = self.params.R_0
 
@@ -226,9 +226,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             # parameterisation...
             self.adjust_xo(
                 "x1",
-                lb=r_tf_in_out_mid - 0.001,
-                value=r_tf_in_out_mid,
-                ub=r_tf_in_out_mid + 0.001,
+                lb=r_tf_inboard_out - 0.001,
+                value=r_tf_inboard_out,
+                ub=r_tf_inboard_out + 0.001,
             )
 
             # tailor limits on loop parameters (l -> loop tension)
@@ -242,7 +242,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self._minL, self._maxL = 0.35, 0.75  # Ripple search range
         elif self.inputs["shape_type"] == "D":
             # inner radius
-            self.adjust_xo("x1", value=r_tf_in_out_mid)
+            self.adjust_xo("x1", value=r_tf_inboard_out)
             self.shp.remove_oppvar("x1")
 
             # outer radius
@@ -256,7 +256,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self._minL, self._maxL = 0.35, 0.75
 
         elif self.inputs["shape_type"] == "A":
-            self.adjust_xo("xo", value=r_tf_in_out_mid)
+            self.adjust_xo("xo", value=r_tf_inboard_out)
             self.shp.remove_oppvar("xo")
             self._minL, self._maxL = 0.2, 0.8
 
@@ -271,7 +271,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             # Set the inner radius of the shape, and pseudo-remove from optimiser
             self.adjust_xo(
                 "x1",
-                value=r_tf_in_out_mid,
+                value=r_tf_inboard_out,
             )
             self.shp.remove_oppvar("x1")
 
@@ -317,7 +317,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         elif self.inputs["shape_type"] == "CP":
             # Inboard mid-plane radius (plasma side)
-            self.adjust_xo("x_in", value=r_tf_in_out_mid)
+            self.adjust_xo("x_in", value=r_tf_inboard_out)
             self.shp.remove_oppvar("x_in")
 
             # Taper end z corrdinate (curve top end)
