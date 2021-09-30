@@ -503,14 +503,18 @@ class TFCoilCAD(ComponentCAD):
             TF_depth_at_r_cp = 2 * (tf.params.r_cp_top * np.tan(np.pi / tf.params.n_TF))
             zmax_wp = np.max(tf.loops["wp_out"]["z"])  # Max z height of tfcoil
             if tf.shape_type in ["CP"]:
+                # r_cp_top doesn't exist for SC coils, so need to define our
+                # own r_cp (i.e outboard edge of Centrepost)
+                r_cp = tf.params.r_tf_in + tf.params.tk_tf_inboard
+                TF_depth_at_r_cp = 2 * (r_cp * np.tan(np.pi / tf.params.n_TF))
                 x_shift = side / np.tan(coil_toroidal_angle / 2)
             else:
                 x_shift = 0
 
             # Edit WP
-            leg_conductor_loop = geom["TF WP"]
-            leg_conductor = TFCoilCAD.wedge_from_xz(
-                tf, leg_conductor_loop, coil_toroidal_angle, x_shift=x_shift
+            wp_loop = geom["TF WP"]
+            winding_pack = TFCoilCAD.wedge_from_xz(
+                tf, wp_loop, coil_toroidal_angle, x_shift=x_shift
             )
 
             # Central column
@@ -518,7 +522,7 @@ class TFCoilCAD(ComponentCAD):
             tapered_cp = TFCoilCAD.wedge_from_xz(
                 tf, tapered_cp, coil_toroidal_angle, x_shift=x_shift
             )
-            leg_conductor = boolean_cut(leg_conductor, tapered_cp)
+            leg_conductor = boolean_cut(winding_pack, tapered_cp)
 
             if tf.shape_type in ["TP"]:
                 # Resistive tapered CP coils
@@ -571,15 +575,15 @@ class TFCoilCAD(ComponentCAD):
 
                 # Make 2D x-z cross section:
                 # wp:
-                wp_initial_2D = geom["TF WP"]
+                leg_initial_2D = geom["TF Leg Conductor"]
 
                 # case:
                 case_initial_2D = Shell(
                     geom["TF case in"].inner, geom["TF case out"].outer
                 )
 
-                wp = TFCoilCAD.wedge_from_xz(
-                    tf, wp_initial_2D, coil_toroidal_angle, x_shift=x_shift
+                leg_conductor = TFCoilCAD.wedge_from_xz(
+                    tf, leg_initial_2D, coil_toroidal_angle, x_shift=x_shift
                 )
 
                 # Now make case
@@ -588,7 +592,8 @@ class TFCoilCAD(ComponentCAD):
                 )
 
                 # from case
-                case = boolean_cut(case, wp)
+                case = boolean_cut(case, leg_conductor)
+                case = boolean_cut(case, tapered_cp)
                 rbox = cut_box(side="right", n_TF=tf.params.n_TF)
                 lbox = cut_box(side="left", n_TF=tf.params.n_TF)
                 case = boolean_cut(case, rbox)

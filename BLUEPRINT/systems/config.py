@@ -209,6 +209,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
 
         # TF coils
+        ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfcth", False, False)}],
         ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfthko", False, False)}],
         ['tk_tf_nose', 'TF coil inboard nose thickness', 0.6, 'm', None, 'Input', {"PROCESS": ParameterMapping("thkcas", True, False)}],
         ['tk_tf_wp', 'TF coil winding pack thickness', 0.5, 'm', 'Excluding insulation', 'PROCESS', {"PROCESS": ParameterMapping("dr_tf_wp", True, False)}],
