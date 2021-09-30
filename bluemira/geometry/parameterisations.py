@@ -128,76 +128,6 @@ class GeometryParameterisation(abc.ABC):
         pass
 
 
-def princeton_d(x1, x2, dz, npoints=200):
-    """
-    Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
-    File, Mills, and Sheffield, 1971)
-
-    Parameters
-    ----------
-    x1: float
-        The inboard centreline radius of the Princeton D
-    x2: float
-        The outboard centrleine radius of the Princeton D
-    dz: float
-        The vertical offset (from z=0)
-    npoints: int (default = 200)
-        The size of the x, z coordinate sets to return
-
-    Returns
-    -------
-    x: np.array(npoints)
-        The x coordinates of the Princeton D shape
-    z: np.array(npoints)
-        The z coordinates of the Princeton D shape
-
-    Note
-    ----
-    Returns an open set of coordinates
-
-    :math:`x = X_{0}e^{ksin(\\theta)}`
-    :math:`z = X_{0}k\\Bigg[\\theta I_{1}(k)+\\sum_{n=1}^{\\infty}{\\frac{i}{n}
-    e^{\\frac{in\\pi}{2}}\\bigg(e^{-in\\theta}-1\\bigg)\\bigg(1+e^{in(\\theta+\\pi)}
-    \\bigg)\\frac{I_{n-1}(k)+I_{n+1}(k)}{2}}\\Bigg]`
-
-    Where:
-        :math:`X_{0} = \\sqrt{x_{1}x_{2}}`
-        :math:`k = \\frac{ln(x_{2}/x_{1})}{2}`
-
-    Where:
-        :math:`I_{n}` is the n-th order modified Bessel function
-        :math:`x_{1}` is the inner radial position of the shape
-        :math:`x_{2}` is the outer radial position of the shape
-    """  # noqa (W505)
-    if x2 <= x1:
-        raise GeometryParameterisationError(
-            "Princeton D parameterisation requires an x2 value"
-            f"greater than x1: {x1} >= {x2}"
-        )
-
-    xo = np.sqrt(x1 * x2)
-    k = 0.5 * np.log(x2 / x1)
-    theta = np.linspace(-0.5 * np.pi, 1.5 * np.pi, npoints)
-    s = np.zeros(npoints, dtype="complex128")
-    n = 0
-    while True:  # sum convergent series
-        n += 1
-
-        ds = 1j / n * (np.exp(-1j * n * theta) - 1)
-        ds *= 1 + np.exp(1j * n * (theta + np.pi))
-        ds *= np.exp(1j * n * np.pi / 2)
-        ds *= (bessel(n - 1, k) + bessel(n + 1, k)) / 2
-        s += ds
-        if np.max(abs(ds)) < 1e-14:
-            break
-
-    z = abs(xo * k * (bessel(1, k) * theta + s))
-    x = xo * np.exp(k * np.sin(theta))
-    z -= np.mean(z)
-    z += dz  # vertical shift
-    return x, z
-
-
 class PrincetonD(GeometryParameterisation):
     """
     Princeton D geometry parameterisation.
@@ -229,7 +159,7 @@ class PrincetonD(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        x, z = princeton_d(
+        x, z = self._princeton_d(
             self.variables["x1"].value,
             self.variables["x2"].value,
             self.variables["dz"].value,
@@ -239,3 +169,73 @@ class PrincetonD(GeometryParameterisation):
         wire = make_bspline(xyz.T)
         wire = close_wire(wire)
         return BluemiraWire(wire)
+
+    @staticmethod
+    def _princeton_d(x1, x2, dz, npoints=200):
+        """
+        Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
+        File, Mills, and Sheffield, 1971)
+
+        Parameters
+        ----------
+        x1: float
+            The inboard centreline radius of the Princeton D
+        x2: float
+            The outboard centrleine radius of the Princeton D
+        dz: float
+            The vertical offset (from z=0)
+        npoints: int (default = 200)
+            The size of the x, z coordinate sets to return
+
+        Returns
+        -------
+        x: np.array(npoints)
+            The x coordinates of the Princeton D shape
+        z: np.array(npoints)
+            The z coordinates of the Princeton D shape
+
+        Note
+        ----
+        Returns an open set of coordinates
+
+        :math:`x = X_{0}e^{ksin(\\theta)}`
+        :math:`z = X_{0}k\\Bigg[\\theta I_{1}(k)+\\sum_{n=1}^{\\infty}{\\frac{i}{n}
+        e^{\\frac{in\\pi}{2}}\\bigg(e^{-in\\theta}-1\\bigg)\\bigg(1+e^{in(\\theta+\\pi)}
+        \\bigg)\\frac{I_{n-1}(k)+I_{n+1}(k)}{2}}\\Bigg]`
+
+        Where:
+            :math:`X_{0} = \\sqrt{x_{1}x_{2}}`
+            :math:`k = \\frac{ln(x_{2}/x_{1})}{2}`
+
+        Where:
+            :math:`I_{n}` is the n-th order modified Bessel function
+            :math:`x_{1}` is the inner radial position of the shape
+            :math:`x_{2}` is the outer radial position of the shape
+        """  # noqa (W505)
+        if x2 <= x1:
+            raise GeometryParameterisationError(
+                "Princeton D parameterisation requires an x2 value"
+                f"greater than x1: {x1} >= {x2}"
+            )
+
+        xo = np.sqrt(x1 * x2)
+        k = 0.5 * np.log(x2 / x1)
+        theta = np.linspace(-0.5 * np.pi, 1.5 * np.pi, npoints)
+        s = np.zeros(npoints, dtype="complex128")
+        n = 0
+        while True:  # sum convergent series
+            n += 1
+
+            ds = 1j / n * (np.exp(-1j * n * theta) - 1)
+            ds *= 1 + np.exp(1j * n * (theta + np.pi))
+            ds *= np.exp(1j * n * np.pi / 2)
+            ds *= (bessel(n - 1, k) + bessel(n + 1, k)) / 2
+            s += ds
+            if np.max(abs(ds)) < 1e-14:
+                break
+
+        z = abs(xo * k * (bessel(1, k) * theta + s))
+        x = xo * np.exp(k * np.sin(theta))
+        z -= np.mean(z)
+        z += dz  # vertical shift
+        return x, z
