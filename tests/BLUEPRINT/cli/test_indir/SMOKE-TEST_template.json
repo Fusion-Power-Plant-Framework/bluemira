@@ -2149,6 +2149,20 @@
       }
     }
   },
+  "tk_tf_inboard": {
+    "name": "TF coil inboard thickness",
+    "value": 1,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tfcth",
+        "read": false,
+        "write": false
+      }
+    }
+  },
   "tk_tf_ins": {
     "name": "TF coil ground insulation thickness",
     "value": 0.08,
