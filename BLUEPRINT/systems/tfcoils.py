@@ -190,11 +190,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             + self.params.tk_tf_front_ib
         )
         if self.wp_shape in ["W"]:
-            # Use the process-provided values
+            # Use the CORRECT process-provided values to define outboard edge of
+            # centrepost/inboard leg in the midplane - replaces r_tf_inboard_out
             r_tf_in_out_mid = self.params.r_tf_in + self.params.tk_tf_inboard
+
             if self.shape_type not in ["TP"]:
-                # Adjust for the radial build discrepancy between a WP curved face
-                # (BLUEPRINT) and flat face (PROCESS)
+                # Adjust for the radial build discrepancy in the wp thickness
+                # between a WP curved face (BLUEPRINT) and flat face (PROCESS)
                 self.params.tk_tf_wp = (r_tf_in_out_mid - self.params.tk_tf_front_ib) - (
                     self.params.r_tf_in + self.params.tk_tf_nose
                 )
@@ -202,8 +204,11 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # The keep-out-zone at the mid-plane has to be scaled down from the keep-out-zone
         # at the maximum TF radius to avoid collisions on the inner leg.
         x_koz_min = np.min(self.inputs["koz_loop"].x) * np.cos(np.pi / self.params.n_TF)
+
         if self.wp_shape not in ["N"]:
+            # Don't need the cosine term for curved inboard plasma facing faces
             x_koz_min = np.min(self.inputs["koz_loop"].x)
+
         x_koz_max = np.max(self.inputs["koz_loop"].x)
 
         if x_koz_min < r_tf_in_out_mid:
@@ -1434,6 +1439,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Must Correct the wp_out and out loops to have straight edges
         # Do this by either redrawing loops (TP) or cutting inboard edges
         # of loops (CP)
+
+        # Remember - need to define outer radius of centrepost differently
+        # for Resistive and SC coils. r_cp_top only exists for Resistive
 
         if self.inputs["shape_type"] in ["TP"]:
             # this could be changed to if coil is resistive or not/ has a
