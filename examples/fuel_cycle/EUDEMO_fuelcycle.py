@@ -109,7 +109,7 @@ set_random_seed(2358203947)
 
 # Let's do 50 runs Monte Carlo
 # NOTE: Make sure you have enough memory..!
-n = 100
+n = 50
 time_dicts = [lifecycle.make_timeline().to_dict() for _ in range(n)]
 
 # Now let's set up a TFVSystem
