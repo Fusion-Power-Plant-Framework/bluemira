@@ -25,7 +25,6 @@ File I/O functions and some path operations
 import os
 from pathlib import Path
 import sys
-from BLUEPRINT.base.typebase import TypeBase
 from bluemira.base.file import _get_relpath
 
 KEYWORD = "!BP_ROOT!"
@@ -202,7 +201,7 @@ def get_PROCESS_path(path=""):
     return _get_relpath(process_path, path)
 
 
-class FileManager(TypeBase):
+class FileManager:
     """
     A class for managing file operations.
     """
