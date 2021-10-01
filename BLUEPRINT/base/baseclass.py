@@ -33,7 +33,7 @@ from BLUEPRINT.base.typebase import TypeBase
 from BLUEPRINT.base.error import SystemsError
 
 
-class ReactorSystem(TypeBase):
+class ReactorSystem:
     """
     The standard BLUEPRINT system class.
 
@@ -65,6 +65,10 @@ class ReactorSystem(TypeBase):
         Initialise a reactor sub-class
         """
         super().__init_subclass__()
+
+        if hasattr(cls, "__annotations__"):
+            for name, attribute in cls.__annotations__.items():
+                setattr(cls, name, None)
 
         # Get the default_params (or those of the parent if not overridden)
         default_params = getattr(cls, "default_params", [])
