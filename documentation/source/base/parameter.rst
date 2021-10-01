@@ -37,17 +37,13 @@ required).
 .. code-block:: pycon
 
     >>> from bluemira.base import Parameter
-    >>> p = Parameter(var='var', name='variable', value=5.0, source="Input")
-    >>> print(p)
-    var = 5.0 (variable)
-    >>> isinstance(p, float)
-    True
+    >>> p = Parameter(var="var", name="variable", value=5.0, source="Input")
+    >>> print(p)  # var = 5.0 (variable)
+    >>> isinstance(p, float)  # True
     >>> a = p + 5
-    >>> print(a)
-    10.0
+    >>> print(a)  # 10.0
     >>> p += 5
-    >>> print(p)
-    var = 10.0 (variable)
+    >>> print(p)  # var = 10.0 (variable)
 
 If the source is not provided for a Parameter, or provided after a value change, a
 warning will be produced.
@@ -55,7 +51,7 @@ warning will be produced.
 .. code-block:: pycon
 
     >>> from bluemira.base import Parameter
-    >>> p = Parameter(var='var', name='variable', value=5.0, source="Input")
+    >>> p = Parameter(var="var", name="variable", value=5.0, source="Input")
     >>> p += 5.0
     >>> p *= 2
     +-------------------------------------------------------------------------+
@@ -67,7 +63,7 @@ This is resolved by ensuring that the source is always reset after changing a va
 .. code-block:: pycon
 
     >>> from bluemira.base import Parameter
-    >>> p = Parameter(var='var', name='variable', value=5.0, source="Input")
+    >>> p = Parameter(var="var", name="variable", value=5.0, source="Input")
     >>> p += 5.0
     >>> p.source = "After addition"
     >>> p *= 2
@@ -79,7 +75,7 @@ analysis.
 .. code-block:: pycon
 
     >>> p.history()
-    [(5.0, 'Input'), (10.0, 'After addition'), (20.0, 'After multiplication')]
+    [(5.0, "Input"), (10.0, "After addition"), (20.0, "After multiplication")]
 
 If the value of a parameter is being reassigned then this needs to be performed directly
 on the value attribute.
@@ -87,11 +83,10 @@ on the value attribute.
 .. code-block:: pycon
 
     >>> from bluemira.base import Parameter
-    >>> p = Parameter(var='var', name='variable', value=5.0, source="Input")
+    >>> p = Parameter(var="var", name="variable", value=5.0, source="Input")
     >>> p.value = 6.0
     >>> p.source = "new val"
-    >>> print(p)
-    var = 6.0 (variable)
+    >>> print(p)  # var = 6.0 (variable)
 
 There are a few extra builtin methods to enable copying, array manipulation and pickling.
 
@@ -99,30 +94,27 @@ There are a few extra builtin methods to enable copying, array manipulation and 
 
     >>> import copy
     >>> from bluemira.base import Parameter
-    >>> p = Parameter(var='var', name='variable', value=5.0, source="Input")
+    >>> p = Parameter(var="var", name="variable", value=5.0, source="Input")
     >>> a = copy.deepcopy(p)
     >>> a.value = 2.0
     >>> a.source = "new val"
-    >>> print(a)
-    var = 2.0 (variable)
-    >>> print(p)
-    var = 5.0 (variable)
+    >>> print(a)  # var = 2.0 (variable)
+    >>> print(p)  # var = 5.0 (variable)
 
 .. code-block:: pycon
 
     >>> import numpy as np
     >>> from bluemira.base import Parameter
-    >>> p = Parameter(var='var', name='variable', value=np.array([1, 2, 3]), source="Input")
+    >>> p = Parameter(var="var", name="variable", value=np.array([1, 2, 3]), source="Input")
     >>> p *= 2
     >>> p.source = "multiplied"
-    >>> print(p)
-    var = [2 4 6] (variable)
+    >>> print(p)  # var = [2 4 6] (variable)
 
 .. code-block:: pycon
 
     >>> import pickle
     >>> from bluemira.base import Parameter
-    >>> p = Parameter(var='var', name='variable', value=5.0, source="Input")
+    >>> p = Parameter(var="var", name="variable", value=5.0, source="Input")
     >>> with open("param.pkl", "wb") as f:
     ...     pickle.dump(p, f)
     ...
@@ -134,25 +126,18 @@ There are a few extra builtin methods to enable copying, array manipulation and 
 Idioms of the Parameter class
 #############################
 
-For very low types (eg `str`) it is not possible to modify how an object is treated:
+For very low types (eg :py:class:`str`) it is not possible to modify how an object is treated:
 
 .. code-block:: pycon
 
-    >>> p = Parameter(var='var', name='var', value='hello')
-    >>> print(p)
-    hello
-    >>> isinstance(p, str)
-    True
-    >>> repr(p)
-    hello
-    >>> str.__repr__(p)
-    TypeError
-    >>> p.join('world')
-    helloworld
-    >> ''.join(p, 'world')
-    TypeError
-    >>> ''.join(p.value, 'world')
-    'helloworld'
+    >>> p = Parameter(var="var", name="var", value="hello")
+    >>> p  # 'hello'
+    >>> print(p)  # 'var = hello (var)'
+    >>> isinstance(p, str)  # True
+    >>> repr(p)  # "'hello'"
+    >>> str.__repr__(p)  # TypeError
+    >>> "".join([p, "world"])  # TypeError
+    >>> "".join([p.value, "world"])  # 'helloworld'
 
 
 This only affects some situations, the usual culprit is when leaving python for C. So far
@@ -179,8 +164,8 @@ form and then adjusted for a specific analysis via the concise form.
 
     >>> from bluemira.base import ParameterFrame, ParameterMapping
     >>> record_list = [
-    ...     ['R_0', 'Major radius', 9, 'm', None, 'Input', {"PROCESS": ParameterMapping("rmajor", True, False)}],
-    ...     ['A', 'Plasma aspect ratio', 3.1, 'N/A', None, 'Input', {"PROCESS": ParameterMapping("aspect", True, True)}],
+    ...     ["R_0", "Major radius", 9, "m", None, "Input", {"PROCESS": ParameterMapping("rmajor", True, False)}],
+    ...     ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input", {"PROCESS": ParameterMapping("aspect", True, True)}],
     ... ]
     >>> params = ParameterFrame(record_list)
     >>> print(params)
@@ -189,24 +174,24 @@ form and then adjusted for a specific analysis via the concise form.
 
     >>> from bluemira.base import ParameterFrame, ParameterMapping
     >>> param_dict = {
-    ...     'R_0': {
-    ...         'name': 'Major radius',
-    ...         'value': 9,
-    ...         'unit': 'm',
-    ...         'description': None,
-    ...         'source': 'Input',
-    ...         'mapping': {
-    ...             'PROCESS': ParameterMapping("rmajor", True, False)
+    ...     "R_0": {
+    ...         "name": "Major radius",
+    ...         "value": 9,
+    ...         "unit": "m",
+    ...         "description": None,
+    ...         "source": "Input",
+    ...         "mapping": {
+    ...             "PROCESS": ParameterMapping("rmajor", True, False)
     ...         }
     ...     },
-    ...     'A': {
-    ...         'name': 'Plasma aspect ratio',
-    ...         'value': 3.1,
-    ...         'unit': 'N/A',
-    ...         'description': None,
-    ...         'source': 'Input',
-    ...         'mapping': {
-    ...             'PROCESS': ParameterMapping("aspect", True, True)
+    ...     "A": {
+    ...         "name": "Plasma aspect ratio",
+    ...         "value": 3.1,
+    ...         "unit": "N/A",
+    ...         "description": None,
+    ...         "source": "Input",
+    ...         "mapping": {
+    ...             "PROCESS": ParameterMapping("aspect", True, True)
     ...         }
     ...     },
     ... }
@@ -237,11 +222,11 @@ A dictionary of :py:data:`{"value": .., "source":..}` can also be provided.:
 .. code-block:: pycon
 
     >>> from bluemira.base import Parameter
-    >>> params_new.R_0 = (9.2, 'Here')
-    >>> params_new.A = Parameter(var='A', name='Plasma aspect ratio', value=3.2, source='There')
+    >>> params_new.R_0 = (9.2, "Here")
+    >>> params_new.A = Parameter(var="A", name="Plasma aspect ratio", value=3.2, source="There")
     >>> params_new.A = {
     >>>     "value": 3.1,
-    >>>     "source": 'Here',
+    >>>     "source": "Here",
     >>> }
     >>> print(params_new)
     >>> print(params_new.R_0.history(), params_new.A.history())
@@ -255,7 +240,7 @@ name, which can be done either directly or via an external json source.
 .. note:: 
 
     Keywords must match the current Parameters contained within the ParameterFrame in
-    order to update to corresponding value.
+    order to update the corresponding value.
 
 .. code-block:: pycon
 
