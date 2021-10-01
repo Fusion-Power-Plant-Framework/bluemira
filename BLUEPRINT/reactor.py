@@ -1532,7 +1532,7 @@ class Reactor(ReactorSystem):
         Runs the global neutronics model for the Reactor
         """
         raise NotImplementedError
-        # if self.nmodel is None or isinstance(self.nmodel, Contract):
+        # if self.nmodel is None:
         #     self.build_neutronics_model()
         # bluemira_print("Running 3-D 360° OpenMC neutronics model.")
         # self.nmodel.run()
