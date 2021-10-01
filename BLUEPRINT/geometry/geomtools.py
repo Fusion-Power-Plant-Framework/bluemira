@@ -437,6 +437,32 @@ def check_linesegment(point_a, point_b, point_c):
         return True
 
 
+def get_points_of_loop(loop):
+    """
+    Get the [x, z] points corresponding to this loop
+
+    If the loop is closed then skips the last (closing) point.
+
+    Parameters
+    ----------
+    loop: Loop
+        Loop to get the points of
+
+    Returns
+    -------
+    points : List[float, float]
+        The [x, z] points corresponding to this loop.
+
+    Notes
+    -----
+    Deprecation / portover utility
+    """
+    if loop.closed:
+        return loop.d2.T[:-1].tolist()
+    else:
+        return loop.d2.T.tolist()
+
+
 def index_of_point_on_loop(loop, point_on_loop, before=True):
     """
     Return the index of the point on the given loop belonging to a
@@ -461,7 +487,7 @@ def index_of_point_on_loop(loop, point_on_loop, before=True):
         Either before or after depending on the value of :code:`before` arg.
     """
     # Combine coords into single array, skipping the last if it's a closed loop
-    coords = np.array(loop.get_points())
+    coords = np.array(get_points_of_loop(loop))
 
     # Get the number of points in the loop
     n_points = coords.shape[0]
