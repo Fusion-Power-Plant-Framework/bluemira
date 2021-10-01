@@ -13,7 +13,6 @@ Modules
    beams
    cad
    costs
-   equilibria
    fuelcycle
    geometry
    materials
