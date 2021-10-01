@@ -71,7 +71,7 @@ class TestParameter:
         9,
         "m",
         "marjogrgrbg",
-        None,
+        "Input",
         {"PROCESS": ParameterMapping("rmajor", False, True)},
     )
     p_str = "r_0 = 9 m (Major radius) : marjogrgrbg {'PROCESS': {'name': 'rmajor', 'read': False, 'write': True}}"
@@ -81,7 +81,7 @@ class TestParameter:
         5.7,
         "T",
         "Toroidal field at the centre of the plasma",
-        None,
+        "Input",
     )
     g_str = "B_0 = 5.7 T (Toroidal field at R_0) : Toroidal field at the centre of the plasma"
 
@@ -115,7 +115,7 @@ class TestParameter:
 
         # Assert source and value history
         assert _p.value_history == [9, 4, 9]
-        assert _p.source_history == [None, "here", False]
+        assert _p.source_history == ["Input", "here", None]
 
         # Maths
         _p += 1
@@ -607,7 +607,7 @@ class TestParameterFrame:
         params_copy.R_0 = 6.5
         assert len(params_copy.R_0.history()) == 2
         assert params_copy.R_0 == 6.5
-        assert params_copy.R_0.source is False
+        assert params_copy.R_0.source is None
 
         # Updating the source shouldn't create a new history record.
         params_copy.R_0.source = "Updated"

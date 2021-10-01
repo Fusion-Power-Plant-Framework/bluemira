@@ -308,14 +308,14 @@ class Parameter(wrapt.ObjectProxy):
         """
         self._source = val
 
-        if self.source_history[-1] is False:
+        if self.source_history[-1] is None:
             self._source_history[-1] = self._source
         else:
             self._update_history()
 
     def _update_history(self):
         if (
-            self.source_history[-1] is False
+            self.source_history[-1] is None
         ):  # Should I be more strict and error out here?
             bluemira_warn(
                 f"The source of the value of {self.var} not consistently known"
