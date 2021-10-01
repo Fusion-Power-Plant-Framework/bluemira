@@ -78,7 +78,7 @@ def inplace_wrapper(method):
     @wraps(method)
     def wrapped(*args, **kwargs):
         ret = method(*args, **kwargs)
-        args[0]._source = False
+        args[0]._source = None
         args[0]._update_history()
         return ret
 
@@ -138,7 +138,7 @@ class Parameter(wrapt.ObjectProxy):
         value: Union[str, float, int, None] = None,
         unit: Union[str, None] = None,
         description: Union[str, None] = None,
-        source: Union[str, bool] = False,
+        source: Union[str, bool] = None,
         mapping: Union[Dict[str, ParameterMapping], None] = None,
     ):
         """
@@ -274,7 +274,7 @@ class Parameter(wrapt.ObjectProxy):
 
         Useful for a single Parameter not part of a ParameterFrame.
 
-        This will make source==False as the source should be updated
+        This will make source==None as the source should be updated
         immediately after the value of value is updated.
 
         Parameters
@@ -284,7 +284,7 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         self.__wrapped__ = val
-        self._source = False
+        self._source = None
 
         self._update_history()
 
@@ -567,7 +567,7 @@ class ParameterFrame:
         param
             Modified Parameter
         """
-        if source is not False:
+        if source is not None:
             if isinstance(param, list):
                 # + 1 because 'value' isn't in __slots__
                 param[Parameter.__slots__.index("_source") + 1] = source
@@ -579,7 +579,7 @@ class ParameterFrame:
                 param = (param, source)
         return param
 
-    def _force_update_default(self, attr, value, source=False):
+    def _force_update_default(self, attr, value, source=None):
         """
         Force update a default Parameter.
 
@@ -727,7 +727,7 @@ class ParameterFrame:
             defaults=self.__defaults_setting,
         )
 
-    def add_parameters(self, record_list, source=False):
+    def add_parameters(self, record_list, source=None):
         """
         Handles a record_list for ParameterFrames and updates accordingly.
         Items in record_list may be Parameter objects or lists in the following format:
@@ -754,7 +754,7 @@ class ParameterFrame:
                 else:
                     self.add_parameter(*self.modify_source(source, param))
 
-    def set_parameter(self, var, value, source=False):
+    def set_parameter(self, var, value, source=None):
         """
         Updates only the value of a parameter in the ParameterFrame
 
@@ -770,7 +770,7 @@ class ParameterFrame:
         """
         self.__setattr__(var, self.modify_source(source, value))
 
-    def update_kw_parameters(self, kwargs, source=False):
+    def update_kw_parameters(self, kwargs, source=None):
         """
         Handles dictionary keys like update
 
@@ -798,10 +798,10 @@ class ParameterFrame:
                 # Skip keys that aren't parameters, note this could mask typos!
                 continue
             if isinstance(var, dict):
-                src = var.get("source") if source is False else source
+                src = var.get("source") if source is None else source
                 var = var.get("value")
             elif isinstance(var, Parameter):
-                src = var.source if source is False else source
+                src = var.source if source is None else source
                 var = var.value
             else:
                 src = source
@@ -1005,14 +1005,14 @@ class ParameterFrame:
             source = value["source"]
             value = value["value"]
         else:
-            source = False
+            source = None
 
         if isinstance(value, Parameter):
             if attr != value.var:
                 raise ValueError(
                     f"Mismatch between parameter var {value.var} and attribute to be set {attr}."
                 )
-            if source is not False:
+            if source is not None:
                 value.source = source
             if allow_new:
                 _dict[attr] = value
