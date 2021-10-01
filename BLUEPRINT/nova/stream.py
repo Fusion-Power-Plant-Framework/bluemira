@@ -32,8 +32,8 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from matplotlib._contour import QuadContourGenerator
-from BLUEPRINT.equilibria.eqdsk import EQDSKInterface
-from BLUEPRINT.equilibria.find import find_OX
+from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.find import find_OX_points
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.utilities.tools import innocent_smoothie
@@ -141,7 +141,7 @@ class StreamFlow:
         """
         Retrofitting better O/M, X search algorithms to SF object
         """
-        o_points, x_points = find_OX(self.x2d, self.z2d, self.psi)
+        o_points, x_points = find_OX_points(self.x2d, self.z2d, self.psi)
         self.o_point = o_points[0][:2]
         self.o_psi = o_points[0][-1]
         self.x_point = x_points[0][:2]

@@ -132,7 +132,7 @@ class ThermalShield(ReactorSystem):
         ----------
         TFprofile: BLUEPRINT Loop
             Outer edge of the toroidal field coil casing
-        PFcoilset: BLUEPRINT.equilibria CoilSet object
+        PFcoilset: bluemira.equilibria CoilSet object
             The set of poloidal field coils (including central solenoid)
 
 
@@ -209,7 +209,7 @@ class ThermalShield(ReactorSystem):
             Centre of gravity of the divertor 2-D cross-section
         TFprofile: BLUEPRINT Loop
             Outer edge of the toroidal field coil casing
-        PFcoilset: BLUEPRINT.equilibria CoilSet object
+        PFcoilset: bluemira.equilibria CoilSet object
             The set of poloidal field coils (including central solenoid)
         lp_height: float
             Height of the lower port

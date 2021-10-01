@@ -30,7 +30,7 @@ from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.systems.thermalshield import SegmentedThermalShield
 from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
 from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.equilibria.coils import Coil
+from bluemira.equilibria.coils import Coil
 
 
 class TestSegmentedThermalShield:
