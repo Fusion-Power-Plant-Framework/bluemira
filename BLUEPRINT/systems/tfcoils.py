@@ -35,7 +35,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
 from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.geometry.offset import offset_smc, offset
+from BLUEPRINT.geometry.offset import offset_clipper, offset_smc, offset
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
     boolean_2d_union,
@@ -190,17 +190,16 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             + self.params.tk_tf_wp
             + self.params.tk_tf_front_ib
         )
-        if self.wp_shape in ["W"]:
+
+        if self.conductivity in ["SC"] and self.wp_shape not in ["N"]:
             # Use the CORRECT process-provided values to define outboard edge of
             # centrepost/inboard leg in the midplane - replaces r_tf_inboard_out
             r_tf_inboard_out = self.params.r_tf_in + self.params.tk_tf_inboard
-
-            if self.shape_type not in ["TP"]:
-                # Adjust for the radial build discrepancy in the wp thickness
-                # between a WP curved face (BLUEPRINT) and flat face (PROCESS)
-                self.params.tk_tf_wp = (
-                    r_tf_inboard_out - self.params.tk_tf_front_ib
-                ) - (self.params.r_tf_in + self.params.tk_tf_nose)
+            # Adjust for the radial build discrepancy in the wp thickness
+            # between a WP curved face (BLUEPRINT) and flat face (PROCESS)
+            self.params.tk_tf_wp = (r_tf_inboard_out - self.params.tk_tf_front_ib) - (
+                self.params.r_tf_in + self.params.tk_tf_nose
+            )
 
         # The keep-out-zone at the mid-plane has to be scaled down from the keep-out-zone
         # at the maximum TF radius to avoid collisions on the inner leg.
@@ -332,7 +331,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             if self.conductivity in ["R"]:
                 self.adjust_xo("x_mid", value=self.params.r_cp_top)
             else:
-                self.adjust_xo("x_mid", value=self.params.r_tf_inboard_out)
+                self.adjust_xo("x_mid", value=r_tf_inboard_out)
             self.shp.remove_oppvar("x_mid")
 
             # Top/bot doming start x-coordinate
@@ -447,13 +446,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             # For 'nosed' wp shapes
             depth = self.params.tf_wp_depth
 
-        if self.conductivity in ["R"]:
-            # For resistive coils with a tapered Centrepost
+        elif self.conductivity in ["R"]:
+            # For resistive coils
             r_wp_in = self.params.r_cp_top
             depth = 2 * (r_wp_in * np.tan(np.pi / self.params.n_TF))
 
-        if self.inputs["shape_type"] in ["CP"]:
-            # For SC coils with a tapered centrepost
+        elif self.conductivity in ["SC"] and self.inputs["shape_type"] in ["CP"]:
+            # For Curved SC coils (maybe not needed?)
             x_shift = self.params.tk_tf_side / np.tan(np.pi / self.params.n_TF)
             r_wp_in = (
                 self.params.r_tf_in
@@ -538,7 +537,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         for loop, dt_in, dt_out in zip(loops, inboard_dt, outboard_dt):
             if self.inputs["shape_type"] in ["TP", "CP"]:
-                # Designs with a bucking cylinder or
+                # Designs that might have a tapered CP or
                 # if offset_clipper needs to be used
                 dt = dt_in
             else:
@@ -1431,9 +1430,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         corrected_loop = boolean_2d_union(loop, corrector)[0]
         if tapered:
-            zmax = -zmax
-            zmin = -zmin
-            corrector_2 = make_box_xz(xmin, xmax, zmin, zmax)
+            zmin2 = -zmax
+            zmax = -zmin
+            corrector_2 = make_box_xz(xmin, xmax, zmin2, zmax)
             corrected_loop = boolean_2d_union(corrected_loop, corrector_2)[0]
 
         return corrected_loop
@@ -1443,6 +1442,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         Generates tapered Centrepost. This involves correcting the wp and outer
         casing loops generating through offsetting to correctly
         reflect the tapered centrepost shape.
+
+        Also corrects lack of sharp inboad edge corners produced by offsetting
+        methods
 
         Returns
         -------
@@ -1461,7 +1463,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # TEMPORARY -  values for correcting corner chamfering in offset
         r_taper_out = np.min(self.loops["wp_in"]["x"])
         xmin = np.min(self.loops["wp_out"]["x"])
-        delta = r_taper_out - xmin
+        tk_tapered_wp = r_taper_out - xmin
 
         # Must Correct the wp_out and out loops to have straight edges
         # Do this by either redrawing loops (TP) or cutting inboard edges
@@ -1470,61 +1472,82 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Remember - need to define outer radius of centrepost differently
         # for Resistive and SC coils. r_cp_top only exists for Resistive
 
-        if self.inputs["shape_type"] in ["TP"]:
-            # this could be changed to if coil is resistive or not/ has a
-            # b_cyl or not
+        if self.conductivity in ["R"]:
+            # Define useful quantities
             r_cp = self.params.r_cp_top
             tk_case_ob = self.params.tk_tf_ob_casing
             tk_case_ib = self.params.tk_tf_ob_casing
-        else:
-            tk_case_ib = self.params.tk_tf_front_ib
-            tk_case_ob = self.params.tk_tf_nose
-        if self.shape_type in ["TP"]:
             r_wp_inb_in = self.params.r_tf_in + self.params.tk_tf_nose
-            wp_out_cutter = make_box_xz(-15, r_wp_inb_in, -z_max, z_max)
-            case_out_cutter = make_box_xz(-51, r_wp_inb_in - tk_case_ob, -z_max, z_max)
-
-            # Cut wp_out and case_out loops
-            wp_out = boolean_2d_difference_loop(wp_out, wp_out_cutter)
-            case_out = boolean_2d_difference_loop(case_out, case_out_cutter)
-
-            wp_out = self.correct_inboard_corners(wp_out, 3)
-            wp_in = self.correct_inboard_corners(wp_in, delta, xmin=r_cp)
-            case_out = self.correct_inboard_corners(case_out, 3)
-            case_in = self.correct_inboard_corners(
-                case_in, delta, xmin=r_cp + tk_case_ib
-            )
-
-        elif self.shape_type in ["CP"]:
-            # Define wp_out and case cutters
+            case_cutter_xmax = r_wp_inb_in - tk_case_ob
+            xmin_case_in_corrector = r_cp + tk_case_ib
+            xmin_wp_in_corrector = r_cp
+            tapered = True
+        else:
             r_cp = self.params.r_tf_in + self.params.tk_tf_inboard
             tk_case_ib = self.params.tk_tf_front_ib
             tk_case_ob = self.params.tk_tf_nose
             r_wp_inb_in = self.params.r_tf_in + self.params.tk_tf_nose
+            case_cutter_xmax = self.params.r_tf_in
+            xmin_case_in_corrector = r_cp
+            xmin_wp_in_corrector = r_cp - tk_case_ib
+            tapered = False
 
-            wp_out_cutter = make_box_xz(-r_wp_inb_in * 5, r_wp_inb_in, -z_max, z_max)
-            case_out_cutter = make_box_xz(
-                -r_wp_inb_in * 5, self.params.r_tf_in, -z_max, z_max
+        # Define wp cutters
+        wp_out_cutter = make_box_xz(-r_wp_inb_in * 5, r_wp_inb_in, -z_max, z_max)
+        # Define case cutters
+        case_out_cutter = make_box_xz(-r_wp_inb_in * 5, case_cutter_xmax, -z_max, z_max)
+
+        # Use centrepost and casing definitions to correctly address
+        # corner issues for casing
+        # Cut wp_out and case_out loops
+        wp_out = boolean_2d_difference_loop(wp_out, wp_out_cutter)
+        case_out = boolean_2d_difference_loop(case_out, case_out_cutter)
+
+        if self.shape_type in ["TP"]:
+
+            wp_out = self.correct_inboard_corners(wp_out, 3)
+            wp_in = self.correct_inboard_corners(
+                wp_in, tk_tapered_wp, tapered=tapered, xmin=r_cp
             )
+            case_out = self.correct_inboard_corners(case_out, 3)
+            case_in = self.correct_inboard_corners(
+                case_in, tk_tapered_wp, tapered=tapered, xmin=r_cp + tk_case_ib
+            )
+            plt.figure()
+            plt.plot(wp_in.x, wp_in.z)
+            plt.plot(wp_out.x, wp_out.x)
+            plt.gca().set_aspect("equal")
+            plt.show()
 
-            # Cut wp_out and case_out loops
-            wp_out = boolean_2d_difference_loop(wp_out, wp_out_cutter)
-            case_out = boolean_2d_difference_loop(case_out, case_out_cutter)
-
+        elif self.shape_type in ["CP"]:
+            # Need some special variables due to doming and x_curve
+            # Specifiy Zmax here is z_mid, not the max height of dome
             zmax_in = self.shp.parameterisation.xo["z_mid"]["value"] + tk_case_ib
             zmax_out = zmax_in + self.section["case"]["WP"]
-
-            # Correct corners
+            # correct_l avoids notching issue, and gives a nice straight line till
+            # x_curve start
+            # TODO: Replace correct_l with joint location when variable available
             correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"] - 0.2
             wp_out = self.correct_inboard_corners(wp_out, correct_l, zmax=zmax_out)
+
             wp_in = self.correct_inboard_corners(
-                wp_in, delta, xmin=r_cp - tk_case_ib, zmax=zmax_in
+                wp_in,
+                tk_tapered_wp,
+                tapered=tapered,
+                xmin=xmin_wp_in_corrector,
+                zmax=zmax_in,
             )
+            # TODO: Find a more general variable for zmax_in when available
             zmax_in = self.shp.parameterisation.xo["z_mid"]["value"]
             zmax_out = zmax_in + self.section["case"]["WP"] + tk_case_ob + tk_case_ib
+
             case_out = self.correct_inboard_corners(case_out, correct_l, zmax=zmax_out)
             case_in = self.correct_inboard_corners(
-                case_in, delta, xmin=r_cp, zmax=zmax_in
+                case_in,
+                tk_tapered_wp,
+                tapered=tapered,
+                xmin=xmin_case_in_corrector,
+                zmax=zmax_in,
             )
 
         wp_out = clean_loop(wp_out)
@@ -1583,7 +1606,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             r_cp = self.params.r_cp_top + 1e-5
         else:
             # SC coils
-            r_cp = self.params.r_tf_inboard_out
+            r_cp = self.params.r_tf_in + self.params.tk_tf_inboard
 
         z_max = np.max(self.loops["out"]["z"])
         x_max = np.max(self.loops["out"]["x"])

@@ -500,15 +500,19 @@ class TFCoilCAD(ComponentCAD):
             # Coils with a tapered centrepost segemented from tf leg conductors
             # Central collumn dimensions
             coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
-            TF_depth_at_r_cp = 2 * (tf.params.r_cp_top * np.tan(np.pi / tf.params.n_TF))
             zmax_wp = np.max(tf.loops["wp_out"]["z"])  # Max z height of tfcoil
-            if tf.shape_type in ["CP"]:
+
+            if tf.conductivity in ["SC"]:
                 # r_cp_top doesn't exist for SC coils, so need to define our
                 # own r_cp (i.e outboard edge of Centrepost)
                 r_cp = tf.params.r_tf_in + tf.params.tk_tf_inboard
                 TF_depth_at_r_cp = 2 * (r_cp * np.tan(np.pi / tf.params.n_TF))
                 x_shift = side / np.tan(coil_toroidal_angle / 2)
+
             else:
+                TF_depth_at_r_cp = 2 * (
+                    tf.params.r_cp_top * np.tan(np.pi / tf.params.n_TF)
+                )
                 x_shift = 0
 
             # Edit WP

@@ -58,6 +58,9 @@ params = [
     ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
     ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
     ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
+    ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
+    ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
+    ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
 
 ]
 # fmt: on
@@ -78,7 +81,7 @@ to_tf = {
     "koz_loop": ko_zone,
     "shape_type": "CP",  # This is the overall coil shape parameterisation to use
     "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
-    "conductivity": "R",  # Resistive (R) or Superconducting (SC)
+    "conductivity": "SC",  # Resistive (R) or Superconducting (SC)
     "npoints": 800,
     "obj": "L",  # This is the optimisation objective: minimise length
     "ny": 3,  # This is the number of current filaments to use in y

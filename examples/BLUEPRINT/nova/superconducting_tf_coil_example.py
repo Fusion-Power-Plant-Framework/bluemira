@@ -52,6 +52,7 @@ params = [
     ["ripple_limit", "Ripple limit constraint", 0.6, "%", None, "Input"],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
     ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
+    ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
 
 ]
 # fmt: on
@@ -73,6 +74,7 @@ to_tf = {
     "koz_loop": ko_zone,
     "shape_type": "P",  # This is the shape parameterisation to use
     "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
+    "conductivity": "SC",  # Resistive (R) or Superconducting (SC)
     "npoints": 200,
     "obj": "L",  # This is the optimisation objective: minimise length
     "ny": 3,  # This is the number of current filaments to use in y
