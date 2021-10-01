@@ -96,6 +96,8 @@ def firstwall_dn_inputs():
         "strike_pts_from_koz": False,
         "pick_flux_from_psinorm": False,
         "DEMO_DN": True,
+        "div_vertical_outer_target": True,
+        "div_vertical_inner_target": False,
     }
     return inputs
 
