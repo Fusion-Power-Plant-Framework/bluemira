@@ -1546,6 +1546,22 @@ class SymmetricCircuit(Circuit):
         """
         return self.coils[self.name + ".1"].dz
 
+    @dx.setter
+    def dx(self, _dx):
+        """
+        Set the width of the SymmetricCircuit.
+        """
+        for cl_n in [".1", ".2"]:
+            self.coils[self.name + cl_n].set_dx(_dx)
+
+    @dz.setter
+    def dz(self, _dz):
+        """
+        Set the height of the SymmetricCircuit.
+        """
+        for cl_n in [".1", ".2"]:
+            self.coils[self.name + cl_n].set_dz(_dz)
+
 
 class CoilSet(CoilGroup):
     """
