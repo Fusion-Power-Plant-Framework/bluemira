@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import Equilibrium
 
 from BLUEPRINT.systems.firstwall import FirstWall
 from time import time

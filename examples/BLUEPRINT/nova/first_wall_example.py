@@ -37,9 +37,9 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     convex_hull,
 )
-from BLUEPRINT.equilibria.equilibrium import Equilibrium
-from BLUEPRINT.equilibria.eqdsk import EQDSKInterface
-from BLUEPRINT.equilibria.limiter import Limiter
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.limiter import Limiter
 from BLUEPRINT.nova.firstwall import Paneller
 
 plot_defaults()

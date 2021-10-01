@@ -31,7 +31,7 @@ the first wall and optimise the shape design.
 import os
 import matplotlib.pyplot as plt
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import Equilibrium
 from BLUEPRINT.systems.firstwall import FirstWallDN
 from BLUEPRINT.geometry.loop import Loop
 from time import time
