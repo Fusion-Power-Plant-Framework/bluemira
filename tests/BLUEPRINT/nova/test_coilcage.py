@@ -31,52 +31,52 @@ from BLUEPRINT.utilities.tools import innocent_smoothie
 import tests
 
 
-def test_pattern():
-    path = get_BP_path("BLUEPRINT/nova/test_data", subfolder="tests")
-    filename = os.sep.join([path, "tf_centreline_reference.json"])
-    tf_centreline = Loop.from_file(filename)
-    filename = os.sep.join([path, "lcfs_reference.json"])
-    lcfs = Loop.from_file(filename)
-    R_0 = 9.06
-    Z_0 = 0.0
-    B_0 = 4.933
-    n_TF = 16
-    wp = {"width": 0.55344, "depth": 1.3040917789306743}
-    rc = 0.5
-    ny = 1
-    nr = 3
-    npts = 100
+# def test_pattern():
+#     path = get_BP_path("BLUEPRINT/nova/test_data", subfolder="tests")
+#     filename = os.sep.join([path, "tf_centreline_reference.json"])
+#     tf_centreline = Loop.from_file(filename)
+#     filename = os.sep.join([path, "lcfs_reference.json"])
+#     lcfs = Loop.from_file(filename)
+#     R_0 = 9.06
+#     Z_0 = 0.0
+#     B_0 = 4.933
+#     n_TF = 16
+#     wp = {"width": 0.55344, "depth": 1.3040917789306743}
+#     rc = 0.5
+#     ny = 1
+#     nr = 3
+#     npts = 100
 
-    # New HelmholtzCage
-    h_cage1 = HelmholtzCage(n_TF, R_0, Z_0, B_0, lcfs, wp, rc, ny, nr, npts)
-    h_cage1.set_coil(tf_centreline)
-    loops = h_cage1.pattern()
-    assert len(loops) == n_TF * nr * ny
+#     # New HelmholtzCage
+#     h_cage1 = HelmholtzCage(n_TF, R_0, Z_0, B_0, lcfs, wp, rc, ny, nr, npts)
+#     h_cage1.set_coil(tf_centreline)
+#     loops = h_cage1.pattern()
+#     assert len(loops) == n_TF * nr * ny
 
-    ny = 3
-    nr = 1
+#     ny = 3
+#     nr = 1
 
-    h_cage2 = HelmholtzCage(n_TF, R_0, Z_0, B_0, lcfs, wp, rc, ny, nr, npts)
-    h_cage2.set_coil(tf_centreline)
-    loops = h_cage2.pattern()
-    assert len(loops) == n_TF * nr * ny
+#     h_cage2 = HelmholtzCage(n_TF, R_0, Z_0, B_0, lcfs, wp, rc, ny, nr, npts)
+#     h_cage2.set_coil(tf_centreline)
+#     loops = h_cage2.pattern()
+#     assert len(loops) == n_TF * nr * ny
 
-    ny = 3
-    nr = 3
+#     ny = 3
+#     nr = 3
 
-    h_cage3 = HelmholtzCage(n_TF, R_0, Z_0, B_0, lcfs, wp, rc, ny, nr, npts)
-    h_cage3.set_coil(tf_centreline)
-    loops = h_cage3.pattern()
-    assert len(loops) == n_TF * nr * ny
+#     h_cage3 = HelmholtzCage(n_TF, R_0, Z_0, B_0, lcfs, wp, rc, ny, nr, npts)
+#     h_cage3.set_coil(tf_centreline)
+#     loops = h_cage3.pattern()
+#     assert len(loops) == n_TF * nr * ny
 
-    # Check that the toroidal field is more or less equal for all discretisations
-    point = [9, 0, 0]
-    bt1 = h_cage1.get_field(point)[1]
-    bt2 = h_cage2.get_field(point)[1]
-    bt3 = h_cage3.get_field(point)[1]
-    assert np.isclose(bt1, bt2)
-    assert np.isclose(bt2, bt3)
-    assert np.isclose(bt1, bt3)
+#     # Check that the toroidal field is more or less equal for all discretisations
+#     point = [9, 0, 0]
+#     bt1 = h_cage1.get_field(point)[1]
+#     bt2 = h_cage2.get_field(point)[1]
+#     bt3 = h_cage3.get_field(point)[1]
+#     assert np.isclose(bt1, bt2)
+#     assert np.isclose(bt2, bt3)
+#     assert np.isclose(bt1, bt3)
 
 
 class TestCariddiBenchmark:

@@ -27,7 +27,8 @@ from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 import matplotlib
-from BLUEPRINT.magnetostatics.biot_savart import BiotSavartFilament
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
+from bluemira.magnetostatics.circuits import HelmholtzCage as NewHelmholtzCage
 from bluemira.base.constants import MU_0
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.utilities.tools import innocent_smoothie
@@ -133,6 +134,7 @@ class HelmholtzCage:
         self.current = 1
         field = self.get_field([self.R_0, 0, self.z_0])
         self.current = -self.B_0 / field[1]  # single coil amp-turns
+        self.bsl.current = self.current
 
     def pattern(self):
         """
@@ -166,6 +168,9 @@ class HelmholtzCage:
                 filament_loop = loop.translate([0, dy, 0], update=False)
                 wp_loops.append(filament_loop)
 
+        bsl = BiotSavartFilament(wp_loops, self.rc)
+        self.bsl = NewHelmholtzCage(bsl, self.n_TF)
+
         # Pattern the single TF winding pack lacks for all TF coils (n_TF)
         all_loops = []
         # By convention, y = 0 is the plane between two TF coils
@@ -178,6 +183,7 @@ class HelmholtzCage:
                 )
                 all_loops.append(new_loop)
 
+        self.bsl = BiotSavartFilament(all_loops, self.rc)
         return all_loops
 
     def get_field(self, point):
@@ -194,7 +200,7 @@ class HelmholtzCage:
         field: np.array(3)
             The vector of the magnetic field at the point [T]
         """
-        return (self.current / (self.nx * self.ny)) * self.bsl.field(point)
+        return (self.current / (self.nx * self.ny)) * self.bsl.field(*point)
 
     def get_ripple(self, point):
         """
@@ -210,6 +216,7 @@ class HelmholtzCage:
         ripple: float
             The value of the TF ripple at the point [%]
         """
+        # return self.bsl.ripple(*point)
         ripple_field = np.zeros(2)
         n = np.array([0, 1, 0])
         planes = [np.pi / self.n_TF, 0]  # rotate (inline, ingap)
@@ -234,8 +241,8 @@ class HelmholtzCage:
         """
         self.coil_loop = Loop(x=coil_centreline["x"], z=coil_centreline["z"])
         self.npoints = len(self.coil_loop)
-        loops = self.pattern()
-        self.bsl = BiotSavartFilament(loops, self.rc)
+        self.pattern()
+        # self.bsl = BiotSavartFilament(loops, self.rc)
         self.amp_turns()
 
     def loop_ripple(self):
@@ -330,6 +337,7 @@ class HelmholtzCage:
 
         \t:math:`E_{stored}=\\sum^{N}_{m,n} L_{m,n}I_{m}I_{n}`
         """
+        # full_bsl = BiotSavartFilament(self.bsl.sources)
         total_inductance = self.bsl.inductance()  # total inductance
         # For one TF coil
         stored_energy = (
