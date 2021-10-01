@@ -2181,8 +2181,8 @@ class FirstWallDN(FirstWall):
         ["f_hfs_upper_target", "Power fraction hfs upper", 0.5, "N/A", None, "Input"],
         ["hf_limit", "heat flux material limit", 0.5, "MW/m^2", None, "Input"],
         # External inputs to draw the divertor
-        ["xpt_outer_gap", "Gap between x-point and outer wall", 0.5, "m", None, "Input"],
-        ["xpt_inner_gap", "Gap between x-point and inner wall", 0.4, "m", None, "Input"],
+        ["xpt_outer_gap", "Gap between x-point and outer wall", 0.7, "m", None, "Input"],
+        ["xpt_inner_gap", "Gap between x-point and inner wall", 0.7, "m", None, "Input"],
         ["outer_strike_r", "Outer strike point major radius", 10.3, "m", None, "Input"],
         ["inner_strike_r", "Inner strike point major radius", 8, "m", None, "Input"],
         ["tk_outer_target_sol", "Outer target length between strike point and SOL side",
