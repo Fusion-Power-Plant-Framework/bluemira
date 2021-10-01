@@ -155,7 +155,7 @@ class TestCoil:
         assert np.alltrue(coil._points_inside_coil(coil.x_corner, coil.z_corner))
 
     def test_array_handling(self):
-        data = get_BP_path("BLUEPRINT/magnetostatics/test_data", subfolder="tests")
+        data = get_BP_path("bluemira/magnetostatics/test_data", subfolder="tests")
         filename = os.sep.join([data, "new_B_along_z-z.json"])
 
         coil = Coil(4, 61, current=20e6, dx=0.5, dz=1.0)
