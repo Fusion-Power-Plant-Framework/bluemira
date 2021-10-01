@@ -248,7 +248,7 @@ class TestFirstWallSN:
 
         # Check the bounds
         z_low = self.firstwall.points["x_point"]["z_low"]
-        koz_left_x = x_x_point - 3 - self.firstwall.params.inner_target_sol
+        koz_left_x = x_x_point - 3 - self.firstwall.params.tk_inner_target_sol
         koz_bot_z = z_low - 2.25
         div_x_max = np.max(div.x)
         div_x_min = np.min(div.x)
