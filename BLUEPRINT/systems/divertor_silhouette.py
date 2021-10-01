@@ -30,11 +30,11 @@ import numpy as np
 import operator
 from scipy.optimize import minimize_scalar
 from typing import Type
+from enum import Enum
 
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.base.typebase import SelectFrom
 from BLUEPRINT.equilibria.find import find_OX
 from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d, unique, xz_interp
@@ -43,7 +43,7 @@ from BLUEPRINT.geometry.offset import offset_clipper
 from BLUEPRINT.nova.firstwall import DivertorProfile
 
 
-class Location(SelectFrom):
+class Location(Enum):
     """
     Type-checking struct for location values (lower/upper)
     """
@@ -51,10 +51,9 @@ class Location(SelectFrom):
     __name__ = "Location"
     lower = "lower"
     upper = "upper"
-    _args = [lower, upper]
 
 
-class Leg(SelectFrom):
+class Leg(Enum):
     """
     Type-checking struct for leg values (inner/outer)
     """
@@ -62,7 +61,6 @@ class Leg(SelectFrom):
     __name__ = "Leg"
     inner = "inner"
     outer = "outer"
-    _args = [inner, outer]
 
 
 class DivertorSilhouette(DivertorProfile):
