@@ -212,7 +212,6 @@ class HelmholtzCage:
         ripple: float
             The value of the TF ripple at the point [%]
         """
-        # return self.bsl.ripple(*point)
         ripple_field = np.zeros(2)
         n = np.array([0, 1, 0])
         planes = [np.pi / self.n_TF, 0]  # rotate (inline, ingap)
@@ -238,7 +237,6 @@ class HelmholtzCage:
         self.coil_loop = Loop(x=coil_centreline["x"], z=coil_centreline["z"])
         self.npoints = len(self.coil_loop)
         self.pattern()
-        # self.bsl = BiotSavartFilament(loops, self.rc)
         self.amp_turns()
 
     def loop_ripple(self):
@@ -333,7 +331,6 @@ class HelmholtzCage:
 
         \t:math:`E_{stored}=\\sum^{N}_{m,n} L_{m,n}I_{m}I_{n}`
         """
-        # full_bsl = BiotSavartFilament(self.bsl.sources)
         total_inductance = self.bsl.inductance()  # total inductance
         # For one TF coil
         stored_energy = (
