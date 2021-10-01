@@ -28,7 +28,6 @@ from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 import matplotlib
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-from bluemira.magnetostatics.circuits import HelmholtzCage as NewHelmholtzCage
 from bluemira.base.constants import MU_0
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.utilities.tools import innocent_smoothie
@@ -167,9 +166,6 @@ class HelmholtzCage:
             for dy in dy_wp:
                 filament_loop = loop.translate([0, dy, 0], update=False)
                 wp_loops.append(filament_loop)
-
-        bsl = BiotSavartFilament(wp_loops, self.rc)
-        self.bsl = NewHelmholtzCage(bsl, self.n_TF)
 
         # Pattern the single TF winding pack lacks for all TF coils (n_TF)
         all_loops = []
