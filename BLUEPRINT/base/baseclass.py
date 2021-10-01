@@ -29,7 +29,6 @@ from typing import Type, Union
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.error import BluemiraError
 
-from BLUEPRINT.base.typebase import TypeBase
 from BLUEPRINT.base.error import SystemsError
 
 
