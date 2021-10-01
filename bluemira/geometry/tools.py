@@ -811,22 +811,25 @@ def serialize_shape(shape):
     """Serialize a FreeCAD topological data object"""
     type_ = type(shape)
 
-    output = []
-    if isinstance(shape, BluemiraGeo):
-        for obj in shape.boundary:
-            output.append(serialize_shape(obj))
-            dict = {"label": shape.label, "boundary": output}
-            if isinstance(shape, geo.base.GeoMeshable):
-                if shape.mesh_options is not None:
-                    if shape.mesh_options.lcar is not None:
-                        dict['lcar'] = shape.mesh_options.lcar
-                    if shape.mesh_options.physical_group is not None:
-                        dict['physical_group'] = shape.mesh_options.physical_group
-        return {str(type(shape).__name__): dict}
-    elif isinstance(shape, _freecadapi.Wire):
-        return _freecadapi.serialize_shape(shape)
-    else:
-        raise NotImplementedError(f"Serialization non implemented for {type_}")
+    if type_ == BluemiraWire:
+        output = []
+        for wire in shape.boundary:
+            if type(wire) == BluemiraWire:
+                output.append(serialize_shape(wire))
+            else:
+                output.append(_freecadapi.serialize_shape(wire))
+        return {"BluemiraWire": {"label": shape.label, "boundary": output}}
+    if type_ == BluemiraFace:
+        output = []
+        for wire in shape.boundary:
+            output.append(serialize_shape(wire))
+        return {"BluemiraFace": {"label": shape.label, "boundary": output}}
+    if type_ == BluemiraShell:
+        output = []
+        for face in shape.boundary:
+            output.append(serialize_shape(face))
+        return {"BluemiraShell": {"label": shape.label, "boundary": output}}
+    raise NotImplementedError(f"Serialization non implemented for {type_}")
 
 
 def deserialize_shape(buffer):
@@ -841,6 +844,7 @@ def deserialize_shape(buffer):
     from bluemira.utilities.tools import get_module
 
     for type_, v in buffer.items():
+        # print(type_)
         if type_ == "BluemiraWire":
             label = v['label']
             boundary = v['boundary']
