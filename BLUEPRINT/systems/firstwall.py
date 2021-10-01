@@ -2174,15 +2174,15 @@ class FirstWallDN(FirstWall):
         ["fw_lambda_q_near_imp", "Lambda_q near SOL imp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_imp", "Lambda_q far SOL imp", 0.1, "m", None, "Input"],
         ["dr_near_omp", "fs thickness near SOL", 0.001, "m", None, "Input"],
-        ["dr_far_omp", "fs thickness far SOL", 0.003, "m", None, "Input"],
+        ["dr_far_omp", "fs thickness far SOL", 0.005, "m", None, "Input"],
         ["f_lfs_lower_target", "Power fraction lfs lower", 0.5, "N/A", None, "Input"],
         ["f_lfs_upper_target", "Power fraction lfs upper", 0.5, "N/A", None, "Input"],
         ["f_hfs_lower_target", "Power fraction hfs lower", 0.5, "N/A", None, "Input"],
         ["f_hfs_upper_target", "Power fraction hfs upper", 0.5, "N/A", None, "Input"],
         ["hf_limit", "heat flux material limit", 0.5, "MW/m^2", None, "Input"],
         # External inputs to draw the divertor
-        ["xpt_outer_gap", "Gap between x-point and outer wall", 0.7, "m", None, "Input"],
-        ["xpt_inner_gap", "Gap between x-point and inner wall", 0.7, "m", None, "Input"],
+        ["xpt_outer_gap", "Gap between x-point and outer wall", 0.5, "m", None, "Input"],
+        ["xpt_inner_gap", "Gap between x-point and inner wall", 0.4, "m", None, "Input"],
         ["outer_strike_r", "Outer strike point major radius", 10.3, "m", None, "Input"],
         ["inner_strike_r", "Inner strike point major radius", 8, "m", None, "Input"],
         ["tk_outer_target_sol", "Outer target length between strike point and SOL side",
@@ -2195,8 +2195,8 @@ class FirstWallDN(FirstWall):
         ["theta_inner_target",
          "Angle between flux line tangent at inner strike point and SOL side of inner target",
          30, "deg", None, "Input"],
-        ["inner_target_sol", "Inner target length SOL side", 0.2, "m", None, "Input"],
-        ["inner_target_pfr", "Inner target length PFR side", 0.2, "m", None, "Input"],
+        ["tk_inner_target_sol", "Inner target length SOL side", 0.2, "m", None, "Input"],
+        ["tk_inner_target_pfr", "Inner target length PFR side", 0.2, "m", None, "Input"],
         ["xpt_height", "x-point vertical_gap", 0.4, "m", None, "Input"],
     ]
     # fmt: on
@@ -2358,23 +2358,26 @@ class FirstWallDN(FirstWall):
         The divertor target is a straight line
         """
         # If statement to set the function
-        # either for the outer target or the inner target
+        # either for the outer target (if) or the inner target (else)
         if outer_target:
             sign = 1
             theta_target = self.params.theta_outer_target
-            target_length_pfr = self.params.outer_target_pfr
-            target_length_sol = self.params.outer_target_sol
-        elif outer_target is False:
+            target_length_pfr = self.params.tk_outer_target_pfr
+            target_length_sol = self.params.tk_outer_target_sol
+        else:
             sign = -1
             theta_target = self.params.theta_inner_target
-            target_length_pfr = self.params.inner_target_pfr
-            target_length_sol = self.params.inner_target_sol
+            target_length_pfr = self.params.tk_inner_target_pfr
+            target_length_sol = self.params.tk_inner_target_sol
 
         # Rotate tangent vector to appropriate flux loop to obtain
         # a vector parallel to the outer target
-        if vertical_target is False:
+
+        # if horizontal target
+        if not vertical_target:
             target_par = rotate_vector_2d(tangent, np.radians(theta_target * sign))
-        elif vertical_target is True:
+        # if vertical target
+        else:
             target_par = rotate_vector_2d(tangent, np.radians(-theta_target * sign))
 
         # Create relative vectors whose length will be the offset distance
@@ -2388,8 +2391,9 @@ class FirstWallDN(FirstWall):
                 tmp = target_int
                 target_int = target_ext
                 target_ext = tmp
-        elif outer_target is False:
-            if vertical_target is False and target_ext[0] > target_int[0]:
+        # for the inner target
+        else:
+            if not vertical_target and target_ext[0] > target_int[0]:
                 tmp = target_int
                 target_int = target_ext
                 target_ext = tmp
@@ -2506,7 +2510,10 @@ class FirstWallDN(FirstWall):
             outer_target_internal_point,
             outer_target_external_point,
         ) = self.make_divertor_target(
-            outer_strike, tangent, vertical_target=False, outer_target=True
+            outer_strike,
+            tangent,
+            vertical_target=self.inputs["div_vertical_outer_target"],
+            outer_target=True,
         )
 
         # Select the degree of the fitting polynomial and
@@ -2599,7 +2606,10 @@ class FirstWallDN(FirstWall):
             inner_target_internal_point,
             inner_target_external_point,
         ) = self.make_divertor_target(
-            inner_strike, tangent, vertical_target=False, outer_target=False
+            inner_strike,
+            tangent,
+            vertical_target=self.inputs["div_vertical_inner_target"],
+            outer_target=False,
         )
 
         # Select those points along the given flux line below the X point
