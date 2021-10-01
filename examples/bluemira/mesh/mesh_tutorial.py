@@ -35,21 +35,30 @@ from bluemira.mesh.meshing import Mesh
 # Defining my parameters
 import bluemira.geometry.tools
 
-r1 = 49.5
-r2 = 87
-rn = 13.5
-z1 = 23
-b2 = 18
-z2 = z1 + b2
+r1 = 0
+r2 = r1 + 1
+z1 = 0
+z2 = z1 + 1
+
+r3 = r2
+r4 = r3 + 1
+z3 = 0
+z4 = z3 + 0.25
 
 # Points of the Bezier curve
-p1 = FreeCAD.Vector(r1, 0, 0)
-p2 = FreeCAD.Vector(r1, 0, (-z1 - 1) / 2)
-p3 = FreeCAD.Vector(r1, 0, -z1)
-p4 = FreeCAD.Vector((r1 + r2) / 2, 0, -z1)
-p5 = FreeCAD.Vector(r2, 0, -z1)
+p1 = FreeCAD.Vector(r1, 0, z1)
+p2 = FreeCAD.Vector(r2, 0, z1)
+p3 = FreeCAD.Vector(r2, 0, z2)
+p4 = FreeCAD.Vector(r1, 0, z2)
 
-Points = [p1, p2, p3, p4, p5]
+Points = [p1, p2, p3, p4]
+
+p5 = FreeCAD.Vector(r3, 0, z3)
+p6 = FreeCAD.Vector(r4, 0, z3)
+p7 = FreeCAD.Vector(r4, 0, z4)
+p8 = FreeCAD.Vector(r3, 0, z4)
+
+Points2 = [p5, p6, p7, p8]
 
 # Creating the Bezier curve
 bez = Part.BezierCurve()
@@ -99,17 +108,33 @@ bmwire2 = geo.wire.BluemiraWire(
 )
 bmwire2.close()
 
+# m = Mesh()
+# buffer = m(bmwire2)
+# print(m.get_gmsh_dict(buffer))
+#
+# bmface = geo.face.BluemiraFace(bmwire2)
+# ser_bmface = geo.tools.serialize_shape(bmface)
+# print(ser_bmface)
+#
+# buffer2 = m(bmface)
+#
+# des_bmface = geo.tools.deserialize_shape(ser_bmface)
+# print(des_bmface)
+
+poly1 = geo.tools.make_polygon(Points, "poly1", True)
+face1 = geo.face.BluemiraFace(poly1, "face1")
+poly2 = geo.tools.make_polygon(Points2, "poly2", True)
+face2 = geo.face.BluemiraFace(poly2, "face2")
+shell1 = geo.shell.BluemiraShell([face1, face2], "shell1")
+print(f"shell1: {shell1}")
+
+ser_shell1 = geo.tools.serialize_shape(shell1)
+print(f"ser_shell1: {ser_shell1}")
+
+des_shell1 = geo.tools.deserialize_shape(ser_shell1)
+print(f"des_shell1: {des_shell1}")
+
 m = Mesh()
-buffer = m(bmwire2)
+buffer = m(des_shell1)
 
 print(m.get_gmsh_dict(buffer))
-
-bmface = geo.face.BluemiraFace(bmwire2)
-ser_bmface = geo.tools.serialize_shape(bmface)
-print(ser_bmface)
-
-buffer2 = m(bmface)
-
-# des_bmface = geo.tools.deserialize_shape(ser_bmface)
-
-# print(des_bmface)

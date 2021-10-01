@@ -28,6 +28,7 @@ import gmsh
 import bluemira.geometry as geo
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
 
 
 class Mesh:
@@ -60,16 +61,16 @@ class Mesh:
     def meshfile(self, meshfile):
         self._meshfile = self._check_meshfile(meshfile)
 
-    def __call__(self, obj, clean=True):
-        objlist = (BluemiraWire, BluemiraFace)
+    def __call__(self, obj):
+        objlist = (BluemiraWire, BluemiraFace, BluemiraShell)
         if isinstance(obj, objlist):
             _freecadGmsh._initialize_mesh(self.terminal, self.modelname)
             buffer = self.__mesh_obj(obj)
 
             #### Mesh size test - to be deleted
-            temp_dict = self.get_gmsh_dict(buffer)
-            dimTags = [(0, tag) for tag in temp_dict["points_tag"]]
-            _freecadGmsh.set_mesh_size(dimTags, 0.5)
+            # temp_dict = self.get_gmsh_dict(buffer)
+            # dimTags = [(0, tag) for tag in temp_dict["points_tag"]]
+            # _freecadGmsh.set_mesh_size(dimTags, 0.1)
             #####
 
             _freecadGmsh._generate_mesh()
@@ -88,16 +89,19 @@ class Mesh:
                     self.__convert_wire_to_gmsh(buffer)
                 if k == "BluemiraFace":
                     self.__convert_face_to_gmsh(buffer)
+                if k == "BluemiraShell":
+                    self.__convert_shell_to_gmsh(buffer)
             obj.ismeshed = True
         else:
             print("Obj already meshed")
         return buffer
 
     def __apply_fragment(self, buffer, dim=[0, 1, 2], all_ent=None, tools=[]):
-        print(f"prev_buffer: {buffer}")
         all_ent, oo, oov = _freecadGmsh._fragment(dim, all_ent, tools)
+        print(f"all_ent: {all_ent}")
+        print(f"oo: {oo}")
+        print(f"oov: {oov}")
         Mesh.__iterate_gmsh_dict(buffer, _freecadGmsh._map_mesh_dict, all_ent, oov)
-        print(f"post_buffer: {buffer}")
 
     @staticmethod
     def __iterate_gmsh_dict(buffer, function, *args):
@@ -110,8 +114,26 @@ class Mesh:
                     if k == "BluemiraWire":
                         Mesh.__iterate_gmsh_dict(item, function, *args)
 
+        if "BluemiraFace" in buffer:
+            boundary = buffer["BluemiraFace"]["boundary"]
+            if "gmsh" in buffer["BluemiraFace"]:
+                function(buffer["BluemiraFace"]["gmsh"], *args)
+            for item in boundary:
+                for k, v1 in item.items():
+                    if k == "BluemiraWire":
+                        Mesh.__iterate_gmsh_dict(item, function, *args)
+
+        if "BluemiraShell" in buffer:
+            boundary = buffer["BluemiraShell"]["boundary"]
+            if "gmsh" in buffer["BluemiraShell"]:
+                function(buffer["BluemiraShell"]["gmsh"], *args)
+            for item in boundary:
+                for k, v1 in item.items():
+                    if k == "BluemiraFace":
+                        Mesh.__iterate_gmsh_dict(item, function, *args)
+
     def __convert_wire_to_gmsh(self, buffer):
-        print(f"__convert_wire_to_gmsh: buffer = {buffer}")
+        # print(f"__convert_wire_to_gmsh: buffer = {buffer}")
         for type_, value in buffer.items():
             if type_ == "BluemiraWire":
                 label = value["label"]
@@ -123,10 +145,21 @@ class Mesh:
                             self.__convert_wire_to_gmsh(item)
                         else:
                             for curve in bvalue:
-                                value["gmsh"] = {
-                                    **value["gmsh"],
-                                    **_freecadGmsh.create_gmsh_curve(curve),
-                                }
+                                curve_gmsh_dict = _freecadGmsh.create_gmsh_curve(curve)
+                                print(curve_gmsh_dict)
+                                if "points_tag" in value["gmsh"]:
+                                    value["gmsh"]["points_tag"] += curve_gmsh_dict["points_tag"]
+                                else:
+                                    value["gmsh"]["points_tag"] = curve_gmsh_dict["points_tag"]
+                                if "cntrpoints_tag" in value["gmsh"]:
+                                    value["gmsh"]["cntrpoints_tag"] += curve_gmsh_dict["cntrpoints_tag"]
+                                else:
+                                    value["gmsh"]["cntrpoints_tag"] = curve_gmsh_dict["cntrpoints_tag"]
+                                if "curve_tag" in value["gmsh"]:
+                                    value["gmsh"]["curve_tag"] += curve_gmsh_dict["curve_tag"]
+                                else:
+                                    value["gmsh"]["curve_tag"] = curve_gmsh_dict["curve_tag"]
+
                 # get the dictionary of the BluemiraWire defined in buffer
                 # as default and gmsh format
                 dict_default = self.get_gmsh_dict(buffer)
@@ -146,7 +179,7 @@ class Mesh:
                 raise NotImplementedError(f"Serialization non implemented for {type_}")
 
     def __convert_face_to_gmsh(self, buffer):
-        print(f"__convert_face_to_gmsh: buffer = {buffer}")
+        # print(f"__convert_face_to_gmsh: buffer = {buffer}")
         for type_, value in buffer.items():
             if type_ == "BluemiraFace":
                 label = value["label"]
@@ -173,6 +206,7 @@ class Mesh:
                 self.__apply_fragment(buffer, all_ent=all_ent)
 
                 value["gmsh"]["curveloop_tag"] = []
+                print(f"buffer = {buffer}")
                 for item in boundary:
                     dict_curve = self.get_gmsh_dict(item)
                     value["gmsh"]["curveloop_tag"].append(
@@ -180,11 +214,45 @@ class Mesh:
                     )
                 value["gmsh"]["surface_tag"] = [gmsh.model.occ.addPlaneSurface(value["gmsh"]["curveloop_tag"])]
 
+    def __convert_shell_to_gmsh(self, buffer):
+        # print(f"__convert_shell_to_gmsh: buffer = {buffer}")
+        for type_, value in buffer.items():
+            if type_ == "BluemiraShell":
+                label = value["label"]
+                boundary = value["boundary"]
+                value["gmsh"] = {}
+                for item in boundary:
+                    print(f"item = {item}")
+                    self.__convert_face_to_gmsh(item)
+
+                # get the dictionary of the BluemiraShell defined in buffer
+                # as default and gmsh format
+                print("BluemiraShell mesh dict")
+                print(f"buffer: {buffer}")
+                dict_gmsh = self.get_gmsh_dict(buffer)
+                print(f"dict_gmsh: {dict_gmsh}")
+
+                # In order to avoid fragmentation of curves given by construction points
+                # the fragment function is applied in two steps:
+                # 1) fragment only points
+                all_ent = dict_gmsh["points_tag"] + dict_gmsh["cntrpoints_tag"]
+                all_ent = [(0, d) for d in all_ent]
+                print(f"all_ent (points_tag + cntrpoints_tag): {all_ent}")
+                self.__apply_fragment(buffer, all_ent=all_ent)
+                dict_gmsh = self.get_gmsh_dict(buffer)
+                print(f"buffer: {buffer}")
+
+                # 2) fragment surface
+                dict_surf = [(2, d) for d in dict_gmsh["surface_tag"]]
+                all_ent = dict_surf
+                self.__apply_fragment(buffer, all_ent=all_ent)
+                print(f"buffer: {buffer}")
+
     def get_gmsh_dict(self, buffer, format="default"):
         gmsh_dict = {}
         output = None
 
-        data = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1}
+        data = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1, "surface_tag": 2}
         for d in data:
             gmsh_dict[d] = []
 
@@ -207,6 +275,17 @@ class Mesh:
                 for d in data:
                     if d in buffer["BluemiraFace"]["gmsh"]:
                         gmsh_dict[d] += buffer["BluemiraFace"]["gmsh"][d]
+            for item in boundary:
+                temp_dict = self.get_gmsh_dict(item)
+                for d in data:
+                    gmsh_dict[d] += temp_dict[d]
+
+        if "BluemiraShell" in buffer:
+            boundary = buffer["BluemiraShell"]["boundary"]
+            if "gmsh" in buffer["BluemiraShell"]:
+                for d in data:
+                    if d in buffer["BluemiraShell"]["gmsh"]:
+                        gmsh_dict[d] += buffer["BluemiraShell"]["gmsh"][d]
             for item in boundary:
                 temp_dict = self.get_gmsh_dict(item)
                 for d in data:
@@ -332,20 +411,22 @@ class _freecadGmsh:
 
     @staticmethod
     def _map_mesh_dict(mesh_dict, all_ent, oov):
-        dim_dict = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1}
+        dim_dict = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1, "surface_tag": 2}
         new_gmsh_dict = {}
+
         for key in dim_dict:
             new_gmsh_dict[key] = []
 
         for type_, values in mesh_dict.items():
-            for v in values:
-                dim = dim_dict[type_]
-                if (dim, v) in all_ent:
-                    if len(oov) > 0:
-                        for o in oov[all_ent.index((dim, v))]:
-                            new_gmsh_dict[type_].append(o[1])
-                else:
-                    new_gmsh_dict[type_].append(v)
+            if type_ != 'curveloop_tag':
+                for v in values:
+                    dim = dim_dict[type_]
+                    if (dim, v) in all_ent:
+                        if len(oov) > 0:
+                            for o in oov[all_ent.index((dim, v))]:
+                                new_gmsh_dict[type_].append(o[1])
+                    else:
+                        new_gmsh_dict[type_].append(v)
 
         for key in dim_dict:
             mesh_dict[key] = list(dict.fromkeys(new_gmsh_dict[key]))

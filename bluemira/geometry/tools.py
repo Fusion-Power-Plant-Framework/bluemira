@@ -813,7 +813,7 @@ def serialize_shape(shape: BluemiraGeo):
     """
     type_ = type(shape)
 
-    bluemira_debug(f"Serializing {type_}")
+    bluemira_debug(f"Serializing shape '{shape.label}' as {type_}")
 
     if type_ == BluemiraWire:
         output = []
@@ -828,8 +828,12 @@ def serialize_shape(shape: BluemiraGeo):
         for wire in shape.boundary:
             output.append(serialize_shape(wire))
         return {"BluemiraFace": {"label": shape.label, "boundary": output}}
-
-    raise NotImplementedError(f"Serialization not implemented for {type_}")
+    if type_ == BluemiraShell:
+        output = []
+        for face in shape.boundary:
+            output.append(serialize_shape(face))
+        return {"BluemiraShell": {"label": shape.label, "boundary": output}}
+    raise NotImplementedError(f"Serialization non implemented for {type_}")
 
 
 def deserialize_shape(buffer):
@@ -846,7 +850,6 @@ def deserialize_shape(buffer):
         The deserialized BluemiraGeo object.
     """
     for type_, v in buffer.items():
-        print(type_)
         if type_ == "BluemiraWire":
             label = v['label']
             boundary = v['boundary']
@@ -864,7 +867,13 @@ def deserialize_shape(buffer):
             boundary = v['boundary']
             temp_list = []
             for item in boundary:
-                bluemira_debug(f"item = {item}")
                 temp_list.append(deserialize_shape(item))
             return BluemiraFace(label=label, boundary=temp_list)
-        raise NotImplementedError(f"Deserialization not implemented for {type_}")
+        if type_ == "BluemiraShell":
+            label = v['label']
+            boundary = v['boundary']
+            temp_list = []
+            for item in boundary:
+                temp_list.append(deserialize_shape(item))
+            return BluemiraShell(label=label, boundary=temp_list)
+        raise NotImplementedError(f"Deserialization non implemented for {type_}")
