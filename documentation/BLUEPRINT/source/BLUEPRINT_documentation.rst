@@ -16,7 +16,6 @@ Modules
    fuelcycle
    geometry
    materials
-   magnetostatics
    neutronics
    nova
    syscodes

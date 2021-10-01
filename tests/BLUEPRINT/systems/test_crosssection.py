@@ -52,7 +52,7 @@ class TestReactorCrossSection:
             ),
             (
                 "DN",
-                "tests/BLUEPRINT/equilibria/test_data/DN-DEMO_eqref.json",
+                "tests/bluemira/equilibria/test_data/DN-DEMO_eqref.json",
                 "S",
                 "S",
                 6.9,
@@ -62,7 +62,7 @@ class TestReactorCrossSection:
             ),
             (
                 "DN",
-                "tests/BLUEPRINT/equilibria/test_data/DN-DEMO_eqref.json",
+                "tests/bluemira/equilibria/test_data/DN-DEMO_eqref.json",
                 "P",
                 "P",
                 6.8,

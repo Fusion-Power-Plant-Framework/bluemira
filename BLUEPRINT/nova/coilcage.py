@@ -27,7 +27,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 import matplotlib
-from BLUEPRINT.magnetostatics.biot_savart import BiotSavartFilament
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.base.constants import MU_0
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.utilities.tools import innocent_smoothie
@@ -133,6 +133,7 @@ class HelmholtzCage:
         self.current = 1
         field = self.get_field([self.R_0, 0, self.z_0])
         self.current = -self.B_0 / field[1]  # single coil amp-turns
+        self.bsl.current = self.current
 
     def pattern(self):
         """
@@ -178,6 +179,7 @@ class HelmholtzCage:
                 )
                 all_loops.append(new_loop)
 
+        self.bsl = BiotSavartFilament(all_loops, self.rc)
         return all_loops
 
     def get_field(self, point):
@@ -194,7 +196,7 @@ class HelmholtzCage:
         field: np.array(3)
             The vector of the magnetic field at the point [T]
         """
-        return (self.current / (self.nx * self.ny)) * self.bsl.field(point)
+        return (self.current / (self.nx * self.ny)) * self.bsl.field(*point)
 
     def get_ripple(self, point):
         """
@@ -234,8 +236,7 @@ class HelmholtzCage:
         """
         self.coil_loop = Loop(x=coil_centreline["x"], z=coil_centreline["z"])
         self.npoints = len(self.coil_loop)
-        loops = self.pattern()
-        self.bsl = BiotSavartFilament(loops, self.rc)
+        self.pattern()
         self.amp_turns()
 
     def loop_ripple(self):
