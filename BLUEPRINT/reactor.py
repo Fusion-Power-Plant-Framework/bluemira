@@ -1521,7 +1521,7 @@ class Reactor(ReactorSystem):
         No patterning available, global_pattern set to single sector, to avoid
         patterning fully rotated parts
         """
-        if self.n_CAD is None or isinstance(self.n_CAD, Contract):
+        if self.n_CAD is None:
             self.n_CAD = ReactorCAD(self, slice_flag=True, neutronics=True)
             self.n_CAD.set_palette(BLUE)
         self.n_CAD.display(**kwargs)
