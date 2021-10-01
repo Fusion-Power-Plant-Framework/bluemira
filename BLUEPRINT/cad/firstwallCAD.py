@@ -25,7 +25,7 @@ First wall CAD routines
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.cadtools import (
-    make_mixed_face,
+    make_face,
     revolve,
     rotate_shape,
 )
@@ -88,7 +88,7 @@ class FirstWallCAD(ComponentCAD):
         # Make OCC faces
         shapes = []
         for loop in self.plot_loops:
-            face = make_mixed_face(loop)
+            face = make_face(loop)
             shapes.append(face)
 
         for shape in shapes:
