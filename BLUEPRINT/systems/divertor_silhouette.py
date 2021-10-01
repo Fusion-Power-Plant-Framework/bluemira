@@ -30,7 +30,6 @@ import numpy as np
 import operator
 from scipy.optimize import minimize_scalar
 from typing import Type
-from enum import Enum
 
 from bluemira.base.parameter import ParameterFrame
 
@@ -43,7 +42,7 @@ from BLUEPRINT.geometry.offset import offset_clipper
 from BLUEPRINT.nova.firstwall import DivertorProfile
 
 
-class Location(Enum):
+class Location:
     """
     Type-checking struct for location values (lower/upper)
     """
@@ -53,7 +52,7 @@ class Location(Enum):
     upper = "upper"
 
 
-class Leg(Enum):
+class Leg:
     """
     Type-checking struct for leg values (inner/outer)
     """
