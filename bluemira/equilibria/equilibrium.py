@@ -40,6 +40,7 @@ from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.find import (
     find_OX_points,
     find_flux_surf,
+    find_flux_surfs,
     find_LCFS_separatrix,
     in_zone,
     in_plasma,
@@ -1234,9 +1235,11 @@ class Equilibrium(MHDState):
         -------
         flux surface: Loop
         """
+        # NOTE: You should use find.py::find_flux_surface_through_point
         psi = self.psi(x, z)
         psi_n = calc_psi_norm(psi, *self.get_OX_psis())
-        return self.get_flux_surface(psi_n)
+        loops = find_flux_surfs(self.x, self.z, self.psi(), psi_n)
+        return [Loop(x=loop.T[0], z=loop.T[1]) for loop in loops]
 
     def get_LCFS(self, psi=None):
         """
