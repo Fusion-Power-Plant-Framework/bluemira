@@ -27,7 +27,7 @@ Heat flux calculation example
 import os
 import matplotlib.pyplot as plt
 
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from bluemira.equilibria.equilibrium import Equilibrium
 
@@ -39,7 +39,7 @@ from time import time
 
 t = time()
 
-read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
+read_path = get_bluemira_path("equilibria", subfolder="data/bluemira")
 eq_name = "EU-DEMO_EOF.json"
 eq_name = os.sep.join([read_path, eq_name])
 eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)

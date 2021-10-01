@@ -81,9 +81,9 @@ from BLUEPRINT.systems.physicstoolbox import (
     estimate_kappa95,
 )
 
-# BLUEPRINT.equilibria imports
-from BLUEPRINT.equilibria import AbInitioEquilibriumProblem, AbExtraEquilibriumProblem
-from BLUEPRINT.equilibria.constants import NBTI_J_MAX, NB3SN_J_MAX
+# Equilibria imports
+from bluemira.equilibria import AbInitioEquilibriumProblem
+from bluemira.equilibria.constants import NBTI_J_MAX, NB3SN_J_MAX
 
 # BLUPRINT.cad imports
 from BLUEPRINT.cad import ReactorCAD
@@ -163,7 +163,7 @@ class Reactor(ReactorSystem):
     ATEC: Type[CoilArchitect]
 
     # Construction and calculation class declarations
-    EQ: Union[Type[AbInitioEquilibriumProblem], Type[AbExtraEquilibriumProblem]]
+    EQ: Type[AbInitioEquilibriumProblem]
     RB: Type[ReactorCrossSection]
     SO: Type[StructuralOptimiser]
     CAD: Type[ReactorCAD]

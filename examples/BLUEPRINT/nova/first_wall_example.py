@@ -30,7 +30,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.base.file import get_BP_path, make_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_union,
@@ -48,7 +48,7 @@ plot_defaults()
 # Let's load some Equilibrium objects, so that we have something to work with
 
 # %%
-read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
+read_path = get_bluemira_path("equilibria", subfolder="data/bluemira")
 eof_name = "EU-DEMO_EOF.json"
 sof_name = "EU-DEMO_SOF.json"
 
@@ -260,14 +260,3 @@ f, ax = plt.subplots()
 
 eof.plot(ax)
 sof.plot(ax)
-
-# Export EOF equilibrium as an EQDSK.
-# NOTE: eqdsk is a shit file format and you should never use it unless you are
-# interfacing to legacy codes.
-
-data = eof.to_dict()
-path = make_BP_path("equilibria", subfolder="generated_data/BLUEPRINT")
-filename = os.sep.join([path, "eof_example.eqdsk"])
-
-eqdsk_writer = EQDSKInterface()
-eqdsk_writer.write(filename, data, formatt="eqdsk")
