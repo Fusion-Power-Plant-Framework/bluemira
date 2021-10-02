@@ -200,14 +200,14 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
     return bmsolid
 
 
-def distance_to(wire1: BluemiraWire, wire2: BluemiraWire):
+def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     """Calculate the distance between two BluemiraWires.
 
     Parameters
     ----------
-    shape1:
+    geo1:
         reference shape.
-    shape2:
+    geo2:
         target shape.
 
     Returns
@@ -215,11 +215,11 @@ def distance_to(wire1: BluemiraWire, wire2: BluemiraWire):
     output:
         a tuple of two -> (dist, vectors)
         dist is the minimum distance (float value)
-        vectors is a list of tuple of shape1's and shape2's points
+        vectors is a list of tuple of geo1's and geo2's points
             with the found minimum distance
     """
-    shape1 = wire1._shape
-    shape2 = wire2._shape
+    shape1 = geo1._shape
+    shape2 = geo2._shape
     return _freecadapi.dist_to_shape(shape1, shape2)
 
 
