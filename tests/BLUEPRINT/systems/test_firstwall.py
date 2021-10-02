@@ -296,7 +296,7 @@ class TestFirstWallDN:
         tar_out = self.firstwall.make_divertor_target(
             outer_strike,
             tangent,
-            vertical_target=self.inputs["div_vertical_outer_target"],
+            vertical_target=True,
             outer_target=True,
         )
         assert tar_out[0][0] > self.firstwall.points["x_point"]["x"]
@@ -309,7 +309,7 @@ class TestFirstWallDN:
         tar_in = self.firstwall.make_divertor_target(
             inner_strike,
             tangent,
-            vertical_target=self.inputs["div_vertical_inner_target"],
+            vertical_target=False,
             outer_target=False,
         )
         assert tar_in[0][0] < self.firstwall.points["x_point"]["x"]
@@ -344,7 +344,7 @@ class TestFirstWallDN:
         inner_strike, outer_strike = self.firstwall.find_strike_points(flux_loops)
         tangent_out = self.firstwall.get_tangent_vector(outer_strike, flux_loops[0])
         tar_out = self.firstwall.make_divertor_target(
-            outer_strike, tangent_out, vertical_target=False, outer_target=True
+            outer_strike, tangent_out, vertical_target=True, outer_target=True
         )
         tangent_in = self.firstwall.get_tangent_vector(inner_strike, flux_loops[1])
         tar_in = self.firstwall.make_divertor_target(
