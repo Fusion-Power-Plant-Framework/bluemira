@@ -39,7 +39,7 @@ from bluemira.equilibria.constants import (
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.utilities.plot_tools import make_gif
-from bluemira.utilities.tools import delta
+from bluemira.utilities.tools import abs_rel_difference
 from bluemira.equilibria.positioner import CoilPositioner
 from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
 from bluemira.equilibria.profiles import (
@@ -586,7 +586,7 @@ class EquilibriumProblem:
 
         psi_bd_new = bd.breakdown_psi * 2 * np.pi
 
-        if delta(psi_bd_new, self.psi_bd) > 0.01:
+        if abs_rel_difference(psi_bd_new, self.psi_bd) > 0.01:
             bluemira_warn(
                 "It appears there is a problem with pre-magnetisation. The new breakdown flux is "
                 "quite different from the old one:\n"

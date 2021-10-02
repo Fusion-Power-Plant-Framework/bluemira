@@ -27,6 +27,7 @@ import numpy as np
 import operator
 from json import JSONEncoder
 import string
+import nlopt
 from bluemira.base.constants import E_I, E_IJ, E_IJK
 
 
@@ -67,6 +68,26 @@ def is_num(thing):
         return True
     except (ValueError, TypeError):
         return False
+
+
+def abs_rel_difference(v2, v1_ref):
+    """
+    Calculate the absolute relative difference between a new value and an old
+    reference value.
+
+    Parameters
+    ----------
+    v2: float
+        The new value to compare to the old
+    v1_ref: float
+        The old reference value
+
+    Returns
+    -------
+    delta: float
+        The absolute relative difference between v2 and v1ref
+    """
+    return abs((v2 - v1_ref) / v1_ref)
 
 
 # =====================================================
@@ -243,6 +264,21 @@ dot = wrap.dot
 cross = wrap.cross
 
 
+def set_random_seed(seed_number: int):
+    """
+    Sets the random seed number in numpy and NLopt. Useful when repeatable
+    results are desired in Monte Carlo methods and stochastic optimisation
+    methods.
+
+    Parameters
+    ----------
+    seed_number: int
+        The random seed number, preferably a very large integer
+    """
+    np.random.seed(seed_number)
+    nlopt.srand(seed_number)
+
+
 def compare_dicts(d1, d2, almost_equal=False, verbose=True):
     """
     Compares two dictionaries. Will print information about the differences
@@ -330,26 +366,6 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True):
         if verbose:
             print(result)
     return the_same
-
-
-def delta(v2, v1ref):
-    """
-    Calculates the absolute relative difference between a new value and an old
-    reference value.
-
-    Parameters
-    ----------
-    v2: float
-        The new value to compare to the old
-    v1ref: float
-        The old reference value
-
-    Returns
-    -------
-    delta: float
-        The absolute relative difference between v2 and v1ref
-    """
-    return abs((v2 - v1ref) / v1ref)
 
 
 def clip(val, val_min, val_max):
