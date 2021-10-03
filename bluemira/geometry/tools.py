@@ -216,7 +216,7 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
         a tuple of two -> (dist, vectors)
         dist is the minimum distance (float value)
         vectors is a list of tuple of geo1's and geo2's points
-            with the found minimum distance
+        with the found minimum distance
     """
     shape1 = geo1._shape
     shape2 = geo2._shape

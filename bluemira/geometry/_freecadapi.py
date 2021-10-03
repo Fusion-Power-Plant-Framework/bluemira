@@ -364,7 +364,7 @@ def dist_to_shape(shape1, shape2):
         a tuple of two -> (dist, vectors)
         dist is the minimum distance (float value)
         vectors is a list of tuple of shape1's and shape2's points (numpy.ndarray)
-            with the found minimum distance
+        with the found minimum distance
     """
     dist, solution, info = shape1.distToShape(shape2)
     vectors = []
