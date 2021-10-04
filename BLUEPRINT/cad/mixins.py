@@ -78,7 +78,7 @@ class PlugChopper:
 class OnionCAD:
     """
     DRY class.
-    Oferece a capacidade de construir um anel de cebola para objetos VV/TS
+    Provides the ability to build an onion ring for VV/TS objects
     """
 
     def ring(self, geom, n_TF, full=False, ts=False):
