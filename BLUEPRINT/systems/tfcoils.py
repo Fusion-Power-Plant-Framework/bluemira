@@ -119,6 +119,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         self.sep = self.inputs["plasma"].copy()
         self.shape_type = self.inputs["shape_type"]
         self.wp_shape = self.inputs["wp_shape"]
+        if self.inputs["conductivity"] == None:
+            self.inputs["conductivity"] = "SC"
         self.conductivity = self.inputs["conductivity"]
         self.ripple_limit = self.params.TF_ripple_limit
 
@@ -329,7 +331,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
             # Taper end x-coordinate (curve top end)
             if self.conductivity in ["R"]:
-                self.adjust_xo("x_mid", value=self.params.r_cp_top)
+                self.adjust_xo(
+                    "x_mid", value=self.params.r_cp_top + self.params.tk_tf_ob_casing
+                )
             else:
                 self.adjust_xo("x_mid", value=r_tf_inboard_out)
             self.shp.remove_oppvar("x_mid")
@@ -1400,7 +1404,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         return funcs
 
     def correct_inboard_corners(
-        self, loop, tk_in_leg, tapered=False, xmin=None, zmax=None
+        self, loop, x_thick, tapered=False, xmin=None, zmax=None
     ):
         """
         Fix inboard corner to be 90 degrees
@@ -1409,8 +1413,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ----------
         loop: Loop
             Loop to be corrected
-        tk_in_leg: float
-            Thickness of inboard leg
+        x_thick: float
+            Radial thickness of correction
 
         Returns
         -------
@@ -1421,9 +1425,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             xmin = np.min(loop.x)
         if zmax is None:
             zmax = np.max(loop.z)
-        xmax = xmin + tk_in_leg
+        xmax = xmin + x_thick
         if tapered:
-            zmin = zmax - tk_in_leg
+            zmin = self.params.h_cp_top
             corrector = make_box_xz(xmin, xmax, zmin, zmax)
         else:
             corrector = make_box_xz(xmin, xmax, -zmax, zmax)
@@ -1506,18 +1510,11 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         if self.shape_type in ["TP"]:
 
             wp_out = self.correct_inboard_corners(wp_out, 3)
-            wp_in = self.correct_inboard_corners(
-                wp_in, tk_tapered_wp, tapered=tapered, xmin=r_cp
-            )
+            wp_in = self.correct_inboard_corners(wp_in, tk_tapered_wp, xmin=r_cp)
             case_out = self.correct_inboard_corners(case_out, 3)
             case_in = self.correct_inboard_corners(
-                case_in, tk_tapered_wp, tapered=tapered, xmin=r_cp + tk_case_ib
+                case_in, tk_tapered_wp, xmin=r_cp + tk_case_ib
             )
-            plt.figure()
-            plt.plot(wp_in.x, wp_in.z)
-            plt.plot(wp_out.x, wp_out.x)
-            plt.gca().set_aspect("equal")
-            plt.show()
 
         elif self.shape_type in ["CP"]:
             # Need some special variables due to doming and x_curve

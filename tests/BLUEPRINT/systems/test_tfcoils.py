@@ -351,8 +351,7 @@ class TestCurvedPictureframeTF:
             ["tf_wp_depth", "TF coil winding pack depth (in y)", 0.4625, "m", "Including insulation", "PROCESS"],
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
-            ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
-            ['tk_tf_outboard', 'TF coil outboard thickness', 0.569, 'm', None, 'Input', 'PROCESS'],
+            ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
             ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
 
         ]
@@ -393,9 +392,9 @@ class TestCurvedPictureframeTF:
         vol_tapered_cp = get_properties(CAD.component["shapes"][1])["Volume"]
         vol_leg_conductor = get_properties(CAD.component["shapes"][0])["Volume"]
 
-        true_vol_tapered_cp = 2.3636
-        true_vol_leg_conductor = 7.8241
-        true_vol_casing = 2.7235
+        true_vol_tapered_cp = 2.2678
+        true_vol_leg_conductor = 10.8514
+        true_vol_casing = 3.0716
         assert np.isclose(vol_casing, true_vol_casing, rtol=1e-2)
         assert np.isclose(vol_tapered_cp, true_vol_tapered_cp, rtol=1e-2)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)

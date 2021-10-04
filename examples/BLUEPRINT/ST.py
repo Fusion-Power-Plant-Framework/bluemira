@@ -86,6 +86,8 @@ build_config = {
     "HCD_method": "power",
     # TF coil config
     "TF_type": "P",
+    "wp_shape": "N",
+    "conductivity": "SC",
     # Equilibrium modes
     "rm_shuffle": False,
     "force": False,
