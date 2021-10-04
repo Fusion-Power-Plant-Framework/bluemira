@@ -562,7 +562,7 @@ def make_compound(topos):
 
 def scale_shape(shape, scale):
     """
-    Escala un objeto
+    Scale an object.
 
     Parameters
     ----------
@@ -1633,7 +1633,7 @@ def sweep(profile, path):
 
 def make_box(corner, v1, v2, v3):
     """
-    Faca uma caixa orientada
+    Make an oriented box.
 
     Parameters
     ----------
@@ -1670,7 +1670,7 @@ def make_box(corner, v1, v2, v3):
 
 def make_bezier_curve(points):
     """
-    Crée une courbe de Bézier à partir de quelques points
+    Create a Bézier curve from some points.
 
     Parameters
     ----------
