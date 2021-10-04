@@ -1889,3 +1889,26 @@ class CoilSet(CoilGroup):
             for name, coil in self.coils.items():
                 coil.current = self.Iswing[name][snap]
         return CoilSetPlotter(self, ax=ax, subcoil=subcoil, **kwargs)
+
+
+# def _get_symmetric_coils(coilset):
+#     x, z, dx, dz, currents = coilset.to_group_vecs()
+#     z = np.abs(z)
+
+
+#     coil_list = []
+#     for name, coil in coilset.coils.items():
+
+
+#     return coils
+
+
+# def check_coilset_symmetry(coilset):
+#     symmetric = False
+
+
+#     return symmetric
+
+# def symmetrise_coilset(coilset):
+
+#     return sym_coilset
