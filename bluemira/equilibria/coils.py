@@ -206,6 +206,13 @@ class Coil:
 
         self.sub_coils = None
 
+    @property
+    def n_coils(self):
+        """
+        Number of coils.
+        """
+        return 1
+
     def set_current(self, current):
         """
         Sets the current in a Coil object
@@ -1077,7 +1084,7 @@ class CoilGroup:
         """
         The number of coils.
         """
-        return len(self.coils)
+        return sum([c.n_coils for c in self.coils.values()])
 
     @property
     def area(self):
