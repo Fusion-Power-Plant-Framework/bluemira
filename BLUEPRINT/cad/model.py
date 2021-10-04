@@ -98,7 +98,7 @@ class CADModel:
                 while len(pattern) < self.n_parts:
                     pattern += "q"
                 return pattern
-        raise ValueError("Bitte nicht")
+        raise ValueError("Invalid pattern format.")
 
     def set_palette(self, palette):
         """
