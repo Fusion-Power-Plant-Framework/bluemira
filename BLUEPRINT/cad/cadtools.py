@@ -1929,7 +1929,7 @@ def _make_OCCsolid(*args):  # noqa (N802)
 
 def boolean_cut(shape, cutshape):
     """
-    Operación de corte booleano
+    Boolean cut operation.
 
     Parameters
     ----------
@@ -1959,7 +1959,7 @@ def boolean_cut(shape, cutshape):
 
 def boolean_fuse(shape1, shape2):
     """
-    Operación booleano
+    Boolean fuse operation.
 
     Parameters
     ----------
