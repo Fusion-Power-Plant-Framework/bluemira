@@ -30,6 +30,7 @@ from scipy.interpolate import RectBivariateSpline
 from typing import Any, Optional
 
 from bluemira.base.constants import MU_0
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num
 from bluemira.magnetostatics.greens import (
     greens_psi,
@@ -1891,37 +1892,87 @@ class CoilSet(CoilGroup):
         return CoilSetPlotter(self, ax=ax, subcoil=subcoil, **kwargs)
 
 
-# def _get_symmetric_coils(coilset):
-#     x, z, dx, dz, currents = coilset.to_group_vecs()
-#     z = np.abs(z)
-#     coil_matrix = np.array([x, z, dx, dz, currents])
-#     sym_stack = [[], []]
-#     for i in range(len(x)):
-#         coil = coil_matrix[i]
-#         for j, sym_coil in enumerate(sym_stack):
-#             if np.allclose(coil, sym_coil):
-#                 sym_stack[j][1] += 1
+def _get_symmetric_coils(coilset):
+    """
+    Coilset symmetry utility
+    """
+    x, z, dx, dz, currents = coilset.to_group_vecs()
+    coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
-#         else:
-#             sym_stack.append([coil, 1])
+    sym_stack = [[coil_matrix[0], 1]]
+    for i in range(1, len(x)):
+        coil = coil_matrix[i]
 
-#         if coil not in sym_stack:
-#             sym_stack.append(coil)
+        for j, sym_coil in enumerate(sym_stack):
+            if np.allclose(coil, sym_coil[0]):
+                sym_stack[j][1] += 1
+                break
 
+        else:
+            sym_stack.append([coil, 1])
 
-#     coil_list = []
-#     for name, coil in coilset.coils.items():
-
-
-#     return coils
+    return sym_stack
 
 
-# def check_coilset_symmetry(coilset):
-#     symmetric = False
+def check_coilset_symmetric(coilset):
+    """
+    Check whether or not a CoilSet is purely symmetric about z=0.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        CoilSet to check for symmetry
+
+    Returns
+    -------
+    symmetric: bool
+        Whether or not the CoilSet is symmetric about z=0
+    """
+    sym_stack = _get_symmetric_coils(coilset)
+    for coil, count in sym_stack:
+        if count != 2:
+            if not np.isclose(coil[1], 0.0):
+                # z = 0
+                return False
+    return True
 
 
-#     return symmetric
+def symmetrise_coilset(coilset):
+    """
+    Symmetrise a CoilSet by converting any coils that are up-down symmetric about
+    z=0 to SymmetricCircuits.
 
-# def symmetrise_coilset(coilset):
+    Parameters
+    ----------
+    coilset: CoilSet
+        CoilSet to symmetrise
 
-#     return sym_coilset
+    Returns
+    -------
+    symmetric_coilset: CoilSet
+        New CoilSet with SymmetricCircuits where appropriate
+    """
+    if not check_coilset_symmetric(coilset):
+        bluemira_warn(
+            "Symmetrising a CoilSet which is not purely symmetric about z=0. This can result in undesirable behaviour."
+        )
+    coilset = coilset.copy()
+
+    sym_stack = _get_symmetric_coils(coilset)
+    counts = np.array(sym_stack, dtype=object).T[1]
+
+    new_coils = []
+    for coil, count in zip(coilset.coils.values(), counts):
+        if count == 1:
+            new_coils.append(coil)
+        elif count == 2:
+            if isinstance(coil, SymmetricCircuit):
+                new_coils.append(coil)
+            elif isinstance(coil, Coil):
+                new_coils.append(SymmetricCircuit(coil))
+            else:
+                raise EquilibriaError(f"Unrecognised class {coil.__class__.__name__}")
+        else:
+            raise EquilibriaError("There are super-posed Coils in this CoilSet.")
+
+    return CoilSet(new_coils)

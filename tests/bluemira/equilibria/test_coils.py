@@ -30,6 +30,8 @@ from bluemira.equilibria.coils import (
     CoilGroup,
     CoilSet,
     SymmetricCircuit,
+    check_coilset_symmetric,
+    symmetrise_coilset,
     PF_COIL_NAME,
     CS_COIL_NAME,
     NO_COIL_NAME,
@@ -355,13 +357,53 @@ class TestCoilSet:
     def test_numbers(self):
         assert self.coilset.n_PF == 2
         assert self.coilset.n_CS == 0
-        assert self.coilset.n_coils == 2
+        assert self.coilset.n_coils == 3
+        assert len(self.coilset.coils) == 2
 
     def test_currents(self):
         set_currents = np.array([3e6, 4e6])
         self.coilset.set_control_currents(set_currents)
         currents = self.coilset.get_control_currents()
         assert np.allclose(set_currents, currents)
+
+
+class TestCoilSetSymmetry:
+    def test_symmetry_check(self):
+        coilset = CoilSet(
+            [Coil(5, 5, 0, dx=1.0, dz=1.0), Coil(5, -5, 0, dx=1.0, dz=1.0)]
+        )
+
+        assert check_coilset_symmetric(coilset)
+
+        coilset = CoilSet(
+            [
+                Coil(5, 5, 0, dx=1.0, dz=1.0),
+                Coil(5, 0, 0, dx=1.0, dz=1.0),
+                Coil(5, -5, 0, dx=1.0, dz=1.0),
+            ]
+        )
+        assert check_coilset_symmetric(coilset)
+
+        coilset = CoilSet(
+            [
+                Coil(5, 5, 0, dx=1.0, dz=1.0),
+                Coil(5, 1, 0, dx=1.0, dz=1.0),
+                Coil(5, -5, 0, dx=1.0, dz=1.0),
+            ]
+        )
+
+        assert not check_coilset_symmetric(coilset)
+
+        coilset = CoilSet(
+            [
+                Coil(5, 5, 0, dx=1.0, dz=1.0),
+                Coil(5, 0, 0, dx=1.0, dz=1.0),
+                Coil(5, 1, 0, dx=1.0, dz=1.0),
+                Coil(5, -5, 0, dx=1.0, dz=1.0),
+            ]
+        )
+
+        assert not check_coilset_symmetric(coilset)
 
 
 if __name__ == "__main__":
