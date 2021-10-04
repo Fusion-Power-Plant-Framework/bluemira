@@ -1416,7 +1416,10 @@ class Reactor(ReactorSystem):
 
         Parameters
         ----------
-
+        learning_strategy: Optional[LearningStrategy]
+            Strategy to use to progress operational availability
+        availability_strategy: Optional[AvailabilityStrategy]
+            Strategy to distribute unplanned downtimes during operation
         """
         if learning_strategy is None:
             learning_strategy = GompertzLearningStrategy(
