@@ -33,7 +33,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import imageio
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2, check_ccw
 
 
 __all__ = [
@@ -152,6 +151,8 @@ def coordinates_to_path(x, z):
     """
     Convert coordinates to path vertices.
     """
+    from bluemira.geometry._deprecated_tools import check_ccw
+
     if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
@@ -193,6 +194,8 @@ class BluemiraPathPatch3D(PathPatch3D):
     # Thank you StackOverflow
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
     def __init__(self, path, normal, translation=None, color="b", **kwargs):
+        from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2
+
         Patch.__init__(self, **kwargs)
 
         if translation is None:
