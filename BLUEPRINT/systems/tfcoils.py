@@ -35,7 +35,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
 from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.geometry.offset import offset_clipper, offset_smc, offset
+from BLUEPRINT.geometry.offset import offset_smc, offset
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
     boolean_2d_union,
@@ -119,8 +119,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         self.sep = self.inputs["plasma"].copy()
         self.shape_type = self.inputs["shape_type"]
         self.wp_shape = self.inputs["wp_shape"]
-        if self.inputs["conductivity"] == None:
-            self.inputs["conductivity"] = "SC"
+        self.inputs["conductivity"] == None
         self.conductivity = self.inputs["conductivity"]
         self.ripple_limit = self.params.TF_ripple_limit
 
