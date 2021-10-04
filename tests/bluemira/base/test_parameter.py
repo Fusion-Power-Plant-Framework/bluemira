@@ -50,8 +50,7 @@ class Dummy(ReactorSystem):
     def __init__(self, inputs):
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.inputs)
+        self._init_params(self.inputs)
 
 
 class DummyPF(ReactorSystem):
@@ -62,8 +61,7 @@ class DummyPF(ReactorSystem):
     ]
 
     def __init__(self):
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.inputs)
+        self._init_params(self.inputs)
 
 
 class TestParameter:
@@ -73,7 +71,7 @@ class TestParameter:
         9,
         "m",
         "marjogrgrbg",
-        None,
+        "Input",
         {"PROCESS": ParameterMapping("rmajor", False, True)},
     )
     p_str = "r_0 = 9 m (Major radius) : marjogrgrbg {'PROCESS': {'name': 'rmajor', 'read': False, 'write': True}}"
@@ -83,7 +81,7 @@ class TestParameter:
         5.7,
         "T",
         "Toroidal field at the centre of the plasma",
-        None,
+        "Input",
     )
     g_str = "B_0 = 5.7 T (Toroidal field at R_0) : Toroidal field at the centre of the plasma"
 
@@ -117,7 +115,7 @@ class TestParameter:
 
         # Assert source and value history
         assert _p.value_history == [9, 4, 9]
-        assert _p.source_history == [None, "here", False]
+        assert _p.source_history == ["Input", "here", None]
 
         # Maths
         _p += 1
@@ -190,6 +188,62 @@ class TestParameter:
     @pytest.mark.parametrize("param, expected", [(p, p_str), (g, g_str)])
     def test_to_str(self, param, expected):
         assert str(param) == expected
+
+    def test_source_warning(self, caplog):
+        warning_str = "The source of the value of p not consistently known"
+        p = Parameter("p", "param", 1.0)
+
+        # check we get a warning if source hasn't been defined
+        p.value = 5
+        assert len(caplog.messages) == 1
+        out = caplog.messages[0]
+        assert warning_str in out
+
+    def test_source_no_warning(self, caplog):
+        p = Parameter("p", "param", 1.0)
+        p.source = "Input"
+
+        # check we don't get a warning if source has been defined
+        p.value = 5
+        assert len(caplog.messages) == 0
+
+        p.source = "new"
+        p.value = 10
+
+        assert len(caplog.messages) == 0
+
+    def test_source_warning_init_update(self, caplog):
+        warning_str = "The source of the value of p not consistently known"
+        p = Parameter("p", "param", 1.0, source="Input")
+
+        # check we don't get a warning if source has been defined
+        p.value = 5
+        assert len(caplog.messages) == 0
+
+        p.value = 10
+        assert len(caplog.messages) == 1
+        out = caplog.messages[0]
+        assert warning_str in out
+
+    def test_source_inplace_warning(self, caplog):
+        warning_str = "The source of the value of p not consistently known"
+        p = Parameter("p", "param", 1.0, source="Input")
+        p += 5
+
+        # source should now be reset to False, so check we get a warning if we update
+        p += 5
+        assert len(caplog.messages) == 1
+        out = caplog.messages[0]
+        assert warning_str in out
+
+    def test_source_inplace_no_warning(self, caplog):
+        p = Parameter("p", "param", 1.0, source="Input")
+        p += 5
+        p.source = "new"
+
+        # check we don't get a warning if source has been redefined after value update
+        p += 5
+        assert len(caplog.messages) == 0
 
 
 class TestParameterFrame:
@@ -501,7 +555,14 @@ class TestParameterFrame:
         params_copy.R_0 = 60.0
         params_copy.B_0 = 0.0
         params_copy.set_values_from_json(j)
-        assert self.params == params_copy
+        assert params_copy == self.params
+
+        # Check we can set a new source from the json update
+        params_copy.set_values_from_json(j, source="New Values")
+        assert params_copy != self.params
+        assert params_copy.items() == self.params.items()
+        for key in self.params.keys():
+            assert params_copy.get_param(key).source == "New Values"
 
     def test_set_values_from_json_file(self, tmpdir):
         json_path = tmpdir.join("concise.json")
@@ -511,6 +572,13 @@ class TestParameterFrame:
         params_copy.B_0 = 0.0
         params_copy.set_values_from_json(json_path)
         assert self.params == params_copy
+
+        # Check we can set a new source from the json update
+        params_copy.set_values_from_json(json_path, source="New Values")
+        assert params_copy != self.params
+        assert params_copy.items() == self.params.items()
+        for key in self.params.keys():
+            assert params_copy.get_param(key).source == "New Values"
 
     def test_to_from_verbose_json_file_validation(self, tmpdir):
         json_path = tmpdir.join("concise_invalid.json")
@@ -531,6 +599,46 @@ class TestParameterFrame:
             str(ex_info.value)
             == "Setting the values on a ParameterFrame using set_values_from_json requires a concise json format."
         )
+
+    def test_parameter_source_update(self):
+        params_copy = self.params.copy()
+
+        # Updating the value should create a new history record with a False source.
+        params_copy.R_0 = 6.5
+        assert len(params_copy.R_0.history()) == 2
+        assert params_copy.R_0 == 6.5
+        assert params_copy.R_0.source is None
+
+        # Updating the source shouldn't create a new history record.
+        params_copy.R_0.source = "Updated"
+        assert len(params_copy.R_0.history()) == 2
+        assert params_copy.R_0 == 6.5
+        assert params_copy.R_0.source == "Updated"
+
+        # Source can be set to None.
+        params_copy.R_0 = 6.8
+        params_copy.R_0.source = None
+        assert len(params_copy.R_0.history()) == 3
+        assert params_copy.R_0 == 6.8
+        assert params_copy.R_0.source is None
+
+    def test_parameter_source_tuple(self):
+        params_copy = self.params.copy()
+
+        # Set both value and source from a tuple
+        params_copy.R_0 = (6.8, "New Value")
+        assert len(params_copy.R_0.history()) == 2
+        assert params_copy.R_0 == 6.8
+        assert params_copy.R_0.source == "New Value"
+
+    def test_parameter_source_dict(self):
+        params_copy = self.params.copy()
+
+        # Set both value and source from a dict
+        params_copy.R_0 = {"value": 6.9, "source": None}
+        assert len(params_copy.R_0.history()) == 2
+        assert params_copy.R_0 == 6.9
+        assert params_copy.R_0.source is None
 
 
 class TestReactorSystem:

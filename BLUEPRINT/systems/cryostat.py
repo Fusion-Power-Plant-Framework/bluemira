@@ -61,8 +61,7 @@ class Cryostat(Meshable, OnionRing, ReactorSystem):
         self.inputs = inputs
         self._plotter = CryostatPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.plugs = {}
         self.build_cyrostatvv()
@@ -161,7 +160,7 @@ class Cryostat(Meshable, OnionRing, ReactorSystem):
                 v = np.array([self.params.tk_cr_vv / self.params.n_cr_lab, 0, 0])
 
             loops = [loop0]
-            for _ in range(int(self.params.n_cr_lab))[1:]:
+            for _ in range(int(self.params.n_cr_lab.value))[1:]:
                 new_loop = loops[-1].translate(v, update=False)
                 loops.append(new_loop)
                 new_loop = loops[-1].offset(delta)

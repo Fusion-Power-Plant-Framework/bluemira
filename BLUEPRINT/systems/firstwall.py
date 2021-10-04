@@ -910,8 +910,7 @@ class FirstWall(EqInputs, ReactorSystem):
         """
         Initialise First Wall parameters from config.
         """
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
     def init_equilibrium(self):
         """

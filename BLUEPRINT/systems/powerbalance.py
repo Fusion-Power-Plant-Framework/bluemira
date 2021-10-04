@@ -205,8 +205,7 @@ class BalanceOfPlant(ReactorSystem):
         self.config = config
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self._plotter = BalanceOfPlantPlotter()
 

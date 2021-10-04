@@ -24,8 +24,6 @@ Central column neutron shield system
 """
 import numpy as np
 
-from bluemira.base.parameter import ParameterFrame
-
 from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
@@ -97,8 +95,8 @@ class CentralColumnShield(Meshable, ReactorSystem):
     def __init__(self, config, inputs):
         self.config = config
         self.inputs = inputs
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+
+        self._init_params(self.config)
 
         # Construct the 2D profile
         self.build_profile()
