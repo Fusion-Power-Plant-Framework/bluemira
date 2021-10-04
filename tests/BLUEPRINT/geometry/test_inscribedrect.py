@@ -65,12 +65,13 @@ class TestInscribedRectangle:
         for i in range(x):
             for j in range(y):
                 point = points[:, i, j]
-                if shape.point_in_poly(point):
+                if shape.point_in_poly(point, include_edges=False):
                     for k in self.aspectratios:
                         dx, dz = inscribed_rect_in_poly(
                             shape, point, aspectratio=k, convex=convex
                         )
                         sq = _rect(point[0], point[1], dx, dz)
+                        assert len(sq.x) == 5
                         try:
                             tf = boolean_2d_difference(sq, shape)
                         except ValueError:
@@ -81,12 +82,14 @@ class TestInscribedRectangle:
                             sq.plot(ax, linewidth=0.1)
 
                         if tf is not None:
-                            self.assertion_error_creator(
-                                "Overlap", [dx, dz, point, k, convex]
-                            )
-                            if tests.PLOTTING:
-                                for t in tf:
-                                    t.plot(ax, facecolor="r", linewidth=0.1)
+                            if not all([t.area == 0.0 for t in tf]):
+
+                                self.assertion_error_creator(
+                                    "Overlap", [dx, dz, point, k, convex]
+                                )
+                                if tests.PLOTTING:
+                                    for t in tf:
+                                        t.plot(ax, facecolor="r", linewidth=0.1)
                         if not np.allclose(dx / dz, k):
                             self.assertion_error_creator("Aspect", [dx, dz, dx / dz, k])
 
