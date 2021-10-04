@@ -81,12 +81,12 @@ class CADModel:
 
     def map_global_pattern(self, pattern):
         """
-        Legt das Muster für das CADModel fest.
+        Defines the pattern for the CAD model.
 
         Parameters
         ----------
         pattern: str
-            Globale Muster für Komponente in das CADModel
+            Global patterns for components in the CAD model.
                 ['full', 'half', 'threequarter', 'third', 'quarter', 'sector']
                 or alternatively:
                 ['f', 'h', 't, 'q', 's', 0-9]
@@ -102,7 +102,7 @@ class CADModel:
 
     def set_palette(self, palette):
         """
-        Legt die Farbpalette für das CADModel fest.
+        Defines the color palette for the CAD model.
 
         Parameters
         ----------
