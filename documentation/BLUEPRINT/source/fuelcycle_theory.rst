@@ -874,6 +874,10 @@ default case are shown in :numref:`distribution`, and the results summarised in
 
 .. rubric:: Footnotes
 
+.. [1]
+   Unless one lived through the 1972 miners’ strike in the United
+   Kingdom.
+
 .. [2]
    We use the term load factor here, whereas Kuan and Abdou and many in the community use
    availability. The two are closely related, and mathematically
