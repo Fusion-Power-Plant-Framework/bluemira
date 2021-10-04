@@ -43,8 +43,8 @@ from BLUEPRINT.utilities.colortools import force_rgb
 
 class CADModel:
     """
-    Isso aqui e o objeto genêrico para conter outros objetos CAD. E mais uma
-    agglomeração que outra coisa.
+    CADModel is a generic object to contain other CAD objects.
+    It's more of an agglomeration than anything else.
 
     Parameters
     ----------
