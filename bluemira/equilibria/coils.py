@@ -1574,9 +1574,16 @@ class CoilSet(CoilGroup):
         self._classify_control()
 
     @classmethod
-    def from_eqdsk(cls, filename):
+    def from_eqdsk(cls, filename, force_symmetry=False):
         """
         Initialises a CoilSet object from an eqdsk file.
+
+        Parameters
+        ----------
+        filename: str
+            Filename
+        force_symmetry: bool (default = False)
+            Whether or not to force symmetrisation in the CoilSet
         """
         eqdsk = EQDSKInterface()
         e = eqdsk.read(filename)
@@ -1584,7 +1591,11 @@ class CoilSet(CoilGroup):
             # SCENE or CREATE
             e["dxc"] = e["dxc"] / 2
             e["dzc"] = e["dzc"] / 2
-        return cls.from_group_vecs(e)
+
+        if force_symmetry:
+            return symmetrise_coilset(cls.from_group_vecs(e))
+        else:
+            return cls.from_group_vecs(e)
 
     @classmethod
     def from_group_vecs(cls, groupvecs):

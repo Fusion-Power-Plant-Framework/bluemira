@@ -376,6 +376,12 @@ class TestCoilSetSymmetry:
         assert check_coilset_symmetric(coilset)
 
         coilset = CoilSet(
+            [Coil(5, 5, 0, dx=1.0, dz=1.0), Coil(5, -5, dx=1.0, dz=1.0, current=1e6)]
+        )
+
+        assert not check_coilset_symmetric(coilset)
+
+        coilset = CoilSet(
             [
                 Coil(5, 5, 0, dx=1.0, dz=1.0),
                 Coil(5, 0, 0, dx=1.0, dz=1.0),
@@ -404,6 +410,30 @@ class TestCoilSetSymmetry:
         )
 
         assert not check_coilset_symmetric(coilset)
+
+    def test_symmetrise(self):
+        coilset = CoilSet(
+            [
+                Coil(5, 5, 1e6, dx=1, dz=1),
+                Coil(5, -5, 1e6, dx=1, dz=1),
+            ]
+        )
+        new = symmetrise_coilset(coilset)
+        assert len(new.coils) == 1
+        assert new.n_coils == 2
+        assert isinstance(list(new.coils.values())[0], SymmetricCircuit)
+
+        coilset = CoilSet(
+            [
+                SymmetricCircuit(Coil(5, 5, 1e6, dx=1, dz=1)),
+                SymmetricCircuit(Coil(12, 7, 1e6, dx=1, dz=1)),
+                SymmetricCircuit(Coil(4, 9, 1e6, dx=1, dz=1)),
+                Coil(5, 0, 1e6, dx=1, dz=1),
+            ]
+        )
+        new = symmetrise_coilset(coilset)
+        assert len(new.coils) == len(coilset.coils)
+        assert new.n_coils == coilset.n_coils
 
 
 if __name__ == "__main__":
