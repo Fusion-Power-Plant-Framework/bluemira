@@ -409,7 +409,7 @@ def save_as_STL(  # noqa (N802)
     scale=1,
 ):
     """
-    Speichert einen Shape in einem STL format
+    Saves a shape in an STL format.
 
     Parameters
     ----------
@@ -449,7 +449,7 @@ def save_as_STEP(
     shape, filename="test", partname=None, scale=1, standard="AP214"
 ):  # noqa (N802)
     """
-    Speichert einen Shape in einem STP format
+    Saves a shape in an STP format.
 
     Parameters
     ----------
