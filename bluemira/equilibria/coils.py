@@ -1894,6 +1894,19 @@ class CoilSet(CoilGroup):
 # def _get_symmetric_coils(coilset):
 #     x, z, dx, dz, currents = coilset.to_group_vecs()
 #     z = np.abs(z)
+#     coil_matrix = np.array([x, z, dx, dz, currents])
+#     sym_stack = [[], []]
+#     for i in range(len(x)):
+#         coil = coil_matrix[i]
+#         for j, sym_coil in enumerate(sym_stack):
+#             if np.allclose(coil, sym_coil):
+#                 sym_stack[j][1] += 1
+
+#         else:
+#             sym_stack.append([coil, 1])
+
+#         if coil not in sym_stack:
+#             sym_stack.append(coil)
 
 
 #     coil_list = []
