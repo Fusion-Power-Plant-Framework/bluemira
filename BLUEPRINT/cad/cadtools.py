@@ -773,12 +773,12 @@ def make_circle(centre, direction, radius):
 
 def make_spline_face(loop, **kwargs):
     """
-    Crée une courbe de Bézier à partir d'une boucle (Loop).
+    Creates a Bézier curve from a Loop.
 
     Parameters
     ----------
     loop: Loop
-        La boucle à transformer
+        The loop to transform.
 
     Returns
     -------
@@ -1777,12 +1777,12 @@ def _points_to_bspline(points, deg=3, continuity=GeomAbs_C2):
 
 def curve_to_wire(curve):
     """
-    Convertit une courbe Bézier à un object OCC Wire
+    Converts a Bézier curve to an OCC Wire object.
 
     Parameters
     ----------
     curve: OCC.Geom.BSplineCurve
-        La courbe Bézier à convertir
+        The Bézier curve to convert.
 
     Returns
     -------
