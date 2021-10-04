@@ -25,10 +25,43 @@ A collection of miscellaneous tools.
 
 import numpy as np
 import operator
-from json import JSONEncoder
+from json import JSONDecoder, JSONEncoder
+from json.encoder import _make_iterencode
 import string
 import nlopt
+import re
+from functools import partial
+from itertools import permutations
+from unittest.mock import patch
+
 from bluemira.base.constants import E_I, E_IJ, E_IJK
+from bluemira.base.parameter import Parameter
+
+
+class CommentJSONDecoder(JSONDecoder):
+    """
+    Decode JSON with comments
+
+    Notes
+    -----
+    Regex does the following for comments:
+
+        - starts with // followed by most chr (not ")
+        - if not followed by " and any of (whitespace , }) and \\n
+
+    and removes extra commas from the end of dict like objects
+    """
+
+    comments = re.compile(r'[/]{2}(\s*\w*[#-/:-@{-~!^_`\[\]]*)*(?!["]\s*[,]*[\}]*\n)')
+    comma = re.compile(r"[,](\n*\s*)*[\}]")
+    eof = re.compile(r"[,](\n*\s*)*$")
+
+    def decode(self, s, *args, **kwargs):
+        """Return the Python representation of ``s`` (a ``str`` instance
+        containing a JSON document).
+        """
+        s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
+        return super().decode(s, *args, **kwargs)
 
 
 class NumpyJSONEncoder(JSONEncoder):
@@ -43,6 +76,50 @@ class NumpyJSONEncoder(JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
+
+    @staticmethod
+    def floatstr(_floatstr, obj, *args, **kwargs):
+        """
+        Awaiting python bugs:
+
+        https://github.com/python/cpython/pull/13233
+        https://bugs.python.org/issue36841
+        https://bugs.python.org/issue42434
+        https://bugs.python.org/issue31466
+        """
+        if isinstance(obj, Parameter):
+            obj = obj.value
+        return _floatstr(obj, *args, **kwargs)
+
+    def iterencode(self, o, _one_shot=False):
+        """
+        Patch iterencode type checking
+        """
+        with patch("json.encoder._make_iterencode", new=_patcher):
+            return super().iterencode(o, _one_shot=_one_shot)
+
+
+def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
+    """
+    Modify the json encoder to be less strict on
+    type checking.
+    Pythons built in types (float, int) have __repr__ written in c
+    and json encoder doesn't yet allow custom type checking
+
+    For example
+    p = Parameter(var='hi', value=1, source='here')
+    repr(p) == '1' # True
+    isinstance(p, int) # True
+    int.__repr__(p) # TypeError
+
+    Currently there is a comment in the _make_iterencode function that
+    calls itself a hack therefore this is ok...
+    """
+    _floatstr = partial(NumpyJSONEncoder.floatstr, _floatstr)
+    kwargs["_intstr"] = repr
+    return _make_iterencode(
+        markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
+    )
 
 
 def is_num(thing):
@@ -113,6 +190,38 @@ def asciistr(length):
         raise ValueError("Unsupported string length")
 
     return string.ascii_letters[:length]
+
+
+def levi_civita_tensor(dim=3):
+    """
+    N dimensional Levi-Civita Tensor.
+
+    For dim=3 this looks like:
+
+    e_ijk = np.zeros((3, 3, 3))
+    e_ijk[0, 1, 2] = e_ijk[1, 2, 0] = e_ijk[2, 0, 1] = 1
+    e_ijk[0, 2, 1] = e_ijk[2, 1, 0] = e_ijk[1, 0, 2] = -1
+
+    Parameters
+    ----------
+    dim: int
+        The number of dimensions for the LCT
+
+    Returns
+    -------
+    np.array (n_0,n_1,...n_n)
+
+    """
+    perms = np.array(list(set(permutations(np.arange(dim)))))
+
+    e_ijk = np.zeros([dim for d in range(dim)])
+
+    idx = np.triu_indices(n=dim, k=1)
+
+    for perm in perms:
+        e_ijk[tuple(perm)] = np.prod(np.sign(perm[idx[1]] - perm[idx[0]]))
+
+    return e_ijk
 
 
 class EinsumWrapper:
