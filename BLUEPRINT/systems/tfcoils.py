@@ -119,7 +119,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         self.sep = self.inputs["plasma"].copy()
         self.shape_type = self.inputs["shape_type"]
         self.wp_shape = self.inputs["wp_shape"]
-        self.inputs["conductivity"] == None
         self.conductivity = self.inputs["conductivity"]
         self.ripple_limit = self.params.TF_ripple_limit
 
