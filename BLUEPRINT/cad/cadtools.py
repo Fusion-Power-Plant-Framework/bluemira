@@ -332,7 +332,7 @@ def get_properties(shape, lift_point=None):
 
 def check_watertight(stl_filename):
     """
-    Wasserdichtigkeit eines STLobjekts
+    Check watertightness of an STL file.
 
     Parameters
     ----------
