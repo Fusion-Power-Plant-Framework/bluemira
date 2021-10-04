@@ -32,7 +32,6 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 from BLUEPRINT.utilities.plottools import mathify
 from bluemira.base.look_and_feel import bluemira_print
-from BLUEPRINT.base.typebase import typechecked
 
 
 class Law:
@@ -389,7 +388,6 @@ class PowerLaw(LinearLaw):
         bluemira_print(eq)
 
 
-@typechecked
 def surface_fit(x, y, z, order: int = 2, n_grid: int = 30):
     """
     Fit a polynomial surface to a 3-D data set.

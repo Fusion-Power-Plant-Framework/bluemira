@@ -44,7 +44,6 @@ from BLUEPRINT.base import (
     ReactorSystem,
     BLUE,
 )
-from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.base.file import FileManager
 from BLUEPRINT.base.error import GeometryError
 
@@ -1462,7 +1461,7 @@ class Reactor(ReactorSystem):
             or alternatively
             'ffhhttqqss..' for varied patterning
         """
-        if self.CAD is None or isinstance(self.CAD, Contract):
+        if self.CAD is None:
             # Check if CAD is already built (for typechecking and no-typing)
             self.build_CAD()
         self.CAD.display(pattern)
@@ -1471,7 +1470,7 @@ class Reactor(ReactorSystem):
         """
         Save the Reactor CAD model as a STEP assembly.
         """
-        if self.CAD is None or isinstance(self.CAD, Contract):
+        if self.CAD is None:
             self.build_CAD()
         self.CAD.pattern(pattern)
         bluemira_print("Exporting the reactor CAD to a STEP assembly file.")
@@ -1525,7 +1524,7 @@ class Reactor(ReactorSystem):
         No patterning available, global_pattern set to single sector, to avoid
         patterning fully rotated parts
         """
-        if self.n_CAD is None or isinstance(self.n_CAD, Contract):
+        if self.n_CAD is None:
             self.n_CAD = ReactorCAD(self, slice_flag=True, neutronics=True)
             self.n_CAD.set_palette(BLUE)
         self.n_CAD.display(**kwargs)
@@ -1536,7 +1535,7 @@ class Reactor(ReactorSystem):
         Runs the global neutronics model for the Reactor
         """
         raise NotImplementedError
-        # if self.nmodel is None or isinstance(self.nmodel, Contract):
+        # if self.nmodel is None:
         #     self.build_neutronics_model()
         # bluemira_print("Running 3-D 360° OpenMC neutronics model.")
         # self.nmodel.run()

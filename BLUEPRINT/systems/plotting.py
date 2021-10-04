@@ -25,7 +25,6 @@ Plotting utilities for ReactorSystem objects
 from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.geometry.geomtools import qrotate
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
@@ -223,7 +222,7 @@ class ReactorPlotter:
             if hasattr(self.reactor, name):
                 obj = getattr(self.reactor, name)
 
-                if obj is None or isinstance(obj, Contract):
+                if obj is None:
                     # System has not been built: cannot plot
                     failed.append(name)
                     continue

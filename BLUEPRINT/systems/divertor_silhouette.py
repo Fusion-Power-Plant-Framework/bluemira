@@ -34,7 +34,6 @@ from typing import Type
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.base.typebase import SelectFrom
 from BLUEPRINT.equilibria.find import find_OX
 from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d, unique, xz_interp
@@ -43,7 +42,7 @@ from BLUEPRINT.geometry.offset import offset_clipper
 from BLUEPRINT.nova.firstwall import DivertorProfile
 
 
-class Location(SelectFrom):
+class Location:
     """
     Type-checking struct for location values (lower/upper)
     """
@@ -51,10 +50,9 @@ class Location(SelectFrom):
     __name__ = "Location"
     lower = "lower"
     upper = "upper"
-    _args = [lower, upper]
 
 
-class Leg(SelectFrom):
+class Leg:
     """
     Type-checking struct for leg values (inner/outer)
     """
@@ -62,7 +60,6 @@ class Leg(SelectFrom):
     __name__ = "Leg"
     inner = "inner"
     outer = "outer"
-    _args = [inner, outer]
 
 
 class DivertorSilhouette(DivertorProfile):
