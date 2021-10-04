@@ -52,6 +52,7 @@ from BLUEPRINT.geometry.loop import Loop, point_loop_cast
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 from BLUEPRINT.utilities.colortools import force_rgb
+from BLUEPRINT.utilities.tools import CommentJSONDecoder
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (
@@ -1750,6 +1751,35 @@ class ConfigurableReactor(Reactor):
         self.default_params = template_config
         super().__init__(config, build_config, build_tweaks)
 
+    @staticmethod
+    def load_config(name, path):
+        """
+        Load config form JSON file
+
+        Parameters
+        ----------
+        name: str
+           User facing name for file
+
+        Returns
+        -------
+        dict
+            JSON file as dictionary
+
+        Raises
+        ------
+        FileNotFoundError
+
+        """
+        if isinstance(path, str):
+            path = Path(path)
+
+        if path.exists():
+            with open(path, "r") as fh:
+                return json.load(fh, cls=CommentJSONDecoder)
+        else:
+            raise FileNotFoundError(f"Could not find {name} at {path}")
+
     @classmethod
     def from_json(
         cls,
@@ -1777,17 +1807,6 @@ class ConfigurableReactor(Reactor):
         Reactor
             The configured Reactor Object.
         """
-
-        def load_config(name, path):
-            if isinstance(path, str):
-                path = Path(path)
-
-            if path.exists():
-                with open(path, "r") as fh:
-                    return json.load(fh)
-            else:
-                raise FileNotFoundError(f"Could not find {name} at {path}")
-
         if isinstance(template_config_path, str):
             template_config_path = Path(template_config_path)
 
@@ -1798,9 +1817,9 @@ class ConfigurableReactor(Reactor):
                 f"Could not find template configuration at {template_config_path}"
             )
 
-        config = load_config("configuration", config_path)
-        build_config = load_config("build configuration", build_config_path)
-        build_tweaks = load_config("build tweaks", build_tweaks_path)
+        config = cls.load_config("configuration", config_path)
+        build_config = cls.load_config("build configuration", build_config_path)
+        build_tweaks = cls.load_config("build tweaks", build_tweaks_path)
 
         return cls(template_config, config, build_config, build_tweaks)
 
