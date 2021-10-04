@@ -894,8 +894,6 @@ default case are shown in :numref:`distribution`, and the results summarised in
 
 .. [Sawan_2006] M. E. Sawan and M. A. Abdou, Physics and technology conditions for attaining tritium self-sufficiency for the DT fuel cycle, Fusion Engineering and Design, vol. 81, pp. 1131–1144, Feb. 2006
 
-.. [Chen_2016] H. Chen, L. Pan, Z. Lv, W. Li, and Q. Zeng, Tritium fuel cycle modeling and tritium breeding analysis for CFETR, Fusion Engineering and Design, vol. 106, pp. 17–20, May 2016
-
 .. [Busigin_1998] A. Busigin and P. Gierszewski, CFTSIM-ITER dynamic fuel cycle model, Fusion Engineering and Design, vol. 39-40, pp. 909–914, Sept. 1998
 
 .. [Hörstensmeyer_2018] Y. N. Hörstensmeyer, B. Butler, C. Day, and F. Franza, Analysis of the EU-DEMO fuel cycle elements: Intrinsic impact of technology choices, Fusion Engineering and Design, 2018
