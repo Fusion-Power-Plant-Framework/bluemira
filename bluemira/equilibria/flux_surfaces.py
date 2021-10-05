@@ -695,7 +695,9 @@ def calculate_connection_length_flt(
     be intercepted beforehand!
     """
     flt = FieldLineTracer(eq, first_wall)
-    field_line = flt.trace_field_line(x, z, forward=forward)
+    field_line = flt.trace_field_line(
+        x, z, forward=forward, n_points=n_points, n_turns_max=n_turns_max
+    )
     connection_length = field_line.connection_length
     return connection_length
 
