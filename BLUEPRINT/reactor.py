@@ -284,7 +284,7 @@ class Reactor(ReactorSystem):
         self.build_containments()
         self.power_balance(plot=self.plot_flag)
         # self.analyse_maintenance()
-        self.life_cycle(mode=self.build_config["lifecycle_mode"])
+        self.life_cycle()
         self.add_parameter(
             "runtime", "Total BLUEPRINT runtime", time() - tic, "s", None, "BLUEPRINT"
         )
