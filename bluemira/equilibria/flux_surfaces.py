@@ -539,10 +539,7 @@ class FieldLineTracer:
     return the favours.
 
     I needed it to compare the analytical connection length calculation with something,
-    so I nicked this.
-
-    You can use it if you want accurate connection length values, but if you want speed
-    you should stick to using PartialOpenFluxSurface.
+    so I nicked this but changed the way the equation is solved.
 
     Note that this will properly trace field lines through Coils as it doesn't rely on
     the psi map (which is inaccurate inside Coils).
@@ -627,6 +624,9 @@ class FieldLineTracer:
         return FieldLine(loop, connection_length)
 
     def _dxzl_dphi(self, phi, xz, forward):
+        """
+        Credit: Dr. B. Dudson, FreeGS.
+        """
         f = 1.0 if forward is True else -1.0
         Bx = self.eq.Bx(*xz[:2])
         Bz = self.eq.Bz(*xz[:2])
