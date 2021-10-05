@@ -27,6 +27,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.error import FluxSurfaceError
+from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
     OpenFluxSurface,
@@ -57,8 +58,15 @@ class TestOpenFluxSurfaceStuff:
         length and check they are the same or similar.
         """
         x_start, z_start = 12, 0
-        loop = self.eq.get_flux_surface_through_point(x_start, z_start)
-        fs = OpenFluxSurface(loop)
+        x_loop, z_loop = find_flux_surface_through_point(
+            self.eq.x,
+            self.eq.z,
+            self.eq.psi(),
+            x_start,
+            z_start,
+            self.eq.psi(x_start, z_start),
+        )
+        fs = OpenFluxSurface(Loop(x=x_loop, z=z_loop))
         lfs, hfs = fs.split(self.eq.get_OX_points()[0][0])
         l_lfs = lfs.connection_length(self.eq)
         l_hfs = hfs.connection_length(self.eq)
