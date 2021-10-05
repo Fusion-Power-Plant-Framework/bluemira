@@ -679,6 +679,13 @@ def calculate_connection_length_flt(eq, x, z, forward=True, first_wall=None):
     connection_length: float
         Parallel connection length along the field line from the starting point to the
         intersection point [m]
+
+    Notes
+    -----
+    More mathematically accurate, but needs additional configuration. Will not likely
+    return a very accurate flux inteception point. Also works for closed flux surfaces,
+    but can't tell the difference. Will work correctly for flux surfaces passing through
+    Coils, but really they should be intercepted beforehand!
     """
     flt = FieldLineTracer(eq, first_wall)
     field_line = flt.trace_field_line(x, z, forward=forward)
@@ -714,6 +721,12 @@ def calculate_connection_length_fs(eq, x, z, forward=True, first_wall=None):
     ------
     FluxSurfaceError
         If the flux surface at the point in the equilibrium is not an open flux surface
+
+    Notes
+    -----
+    Less mathematically accurate. Will return exact intersection point. Sensitive to
+    equilibrium grid discretisation. Presently does not correctly work for flux surfaces
+    passing through Coils, but really they should be intercepted beforehand!
     """
     if first_wall is None:
         x1, x2 = eq.grid.x_min, eq.grid.x_max
