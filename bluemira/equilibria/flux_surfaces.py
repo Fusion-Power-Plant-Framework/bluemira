@@ -656,7 +656,9 @@ class FieldLineTracer:
         return r, z, phi, connection_length
 
 
-def calculate_connection_length_flt(eq, x, z, forward=True, first_wall=None):
+def calculate_connection_length_flt(
+    eq, x, z, forward=True, first_wall=None, n_points=200, n_turns_max=50
+):
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
     surface using a field line tracer.
@@ -670,9 +672,13 @@ def calculate_connection_length_flt(eq, x, z, forward=True, first_wall=None):
     z: float
         Vertical coordinate of the starting point
     forward: bool (default = True)
-        Whether or not to follow the field line forwards or backwards
+        Whether or not to follow the field line forwards or backwards (+B or -B)
     first_wall: Union[Loop, Grid]
         Flux-intercepting surface. Defaults to the grid of the equilibrium
+    n_points: int
+        Number of points along the field line
+    n_turns_max: Union[int, float]
+        Maximum number of toroidal turns to trace the field line
 
     Returns
     -------
@@ -684,8 +690,9 @@ def calculate_connection_length_flt(eq, x, z, forward=True, first_wall=None):
     -----
     More mathematically accurate, but needs additional configuration. Will not likely
     return a very accurate flux inteception point. Also works for closed flux surfaces,
-    but can't tell the difference. Will work correctly for flux surfaces passing through
-    Coils, but really they should be intercepted beforehand!
+    but can't tell the difference. Not sensitive to equilibrium grid discretisation.
+    Will work correctly for flux surfaces passing through Coils, but really they should
+    be intercepted beforehand!
     """
     flt = FieldLineTracer(eq, first_wall)
     field_line = flt.trace_field_line(x, z, forward=forward)
