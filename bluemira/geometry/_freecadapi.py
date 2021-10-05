@@ -348,6 +348,32 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int):
     return output
 
 
+def dist_to_shape(shape1, shape2):
+    """Find the minimum distance between two shapes
+
+    Parameters
+    ----------
+    shape1:
+        reference shape.
+    shape2:
+        target shape.
+
+    Returns
+    -------
+    output:
+        a tuple of two -> (dist, vectors)
+        dist is the minimum distance (float value)
+        vectors is a list of tuples corresponding to the nearest points (numpy.ndarray)
+        between shape1 and shape2. The distance between those points is the minimum
+        distance given by dist.
+    """
+    dist, solution, info = shape1.distToShape(shape2)
+    vectors = []
+    for v1, v2 in solution:
+        vectors.append((vector_to_numpy(v1), vector_to_numpy(v2)))
+    return dist, vectors
+
+
 # # =============================================================================
 # # Save functions
 # # =============================================================================
