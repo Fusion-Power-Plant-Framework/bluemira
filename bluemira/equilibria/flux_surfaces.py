@@ -58,6 +58,11 @@ def _flux_surface_dl(x, z, dx, dz, Bp, Bt):
 class FluxSurface:
     """
     Flux surface base class.
+
+    Parameters
+    ----------
+    geometry: Loop
+        Flux surface geometry object
     """
 
     __slots__ = ["loop"]
@@ -483,17 +488,16 @@ class CoreResults:
 class FieldLine:
     """
     Field line object.
+
+    Parameters
+    ----------
+    loop: Loop
+        Geometry of the FieldLine
+    connection_length: float
+        Connection length of the FieldLine
     """
 
     def __init__(self, loop, connection_length):
-        """
-        Parameters
-        ----------
-        loop: Loop
-            Geometry of the FieldLine
-        connection_length: float
-            Connection length of the FieldLine
-        """
         self.loop = loop
         self.connection_length = connection_length
 
@@ -533,6 +537,13 @@ class FieldLineTracer:
     """
     Field line tracing tool.
 
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium in which to trace a field line
+    first_wall: Union[Grid, Loop]
+        Boundary at which to stop tracing the field line
+
     Notes
     -----
     Totally pinched some maths from Ben Dudson's FreeGS here... Perhaps one day I can
@@ -548,15 +559,14 @@ class FieldLineTracer:
     class CollisionTerminator:
         """
         Private Event handling object for solve_ivp
+
+        Parameters
+        ----------
+        boundary: Union[Grid, Loop]
+            Boundary at which to stop tracing the field line.
         """
 
         def __init__(self, boundary):
-            """
-            Parameters
-            ----------
-            boundary: Union[Grid, Loop]
-                Boundary at which to stop tracing the field line.
-            """
             self.boundary = boundary
             self.terminal = True
 
@@ -570,14 +580,6 @@ class FieldLineTracer:
                 return -np.min(self.boundary.distance_to(xz[:2]))
 
     def __init__(self, eq, first_wall=None):
-        """
-        Parameters
-        ----------
-        eq: Equilibrium
-            Equilibrium in which to trace a field line
-        first_wall: Union[Grid, Loop]
-            Boundary at which to stop tracing the field line
-        """
         self.eq = eq
         if first_wall is None:
             first_wall = self.eq.grid
