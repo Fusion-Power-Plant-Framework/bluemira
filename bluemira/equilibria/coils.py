@@ -55,16 +55,6 @@ CS_COIL_NAME = "CS_{}"
 NO_COIL_NAME = "Unclassified_{}"
 
 
-def make_coil_corners(x_c, z_c, dx, dz):
-    """
-    Make coil x, z corner vectors (ANTI-CLOCKWISE).
-    """
-    xx, zz = np.ones(4) * x_c, np.ones(4) * z_c
-    x = xx + dx * np.array([-1, 1, 1, -1])
-    z = zz + dz * np.array([-1, -1, 1, 1])
-    return x, z
-
-
 class CoilNamer:
     """
     Coil naming-numbering utility class. Coil naming convention is not enforced here.
@@ -114,6 +104,47 @@ class CoilNamer:
                 CoilNamer.__PF_counter += 1
 
         return prefix.format(idx)
+
+
+def make_coil_corners(x_c, z_c, dx, dz):
+    """
+    Make coil x, z corner vectors (ANTI-CLOCKWISE).
+    """
+    xx, zz = np.ones(4) * x_c, np.ones(4) * z_c
+    x = xx + dx * np.array([-1, 1, 1, -1])
+    z = zz + dz * np.array([-1, -1, 1, 1])
+    return x, z
+
+
+class CoilSizer:
+    """
+    Coil sizing utility class (observer pattern)
+    """
+
+    def __init__(self, coil):
+        self.update(coil)
+
+    def update(self, coil):
+        self.dx = coil.dx
+        self.dz = coil.dz
+        self.current = coil.current
+        self.j_max = coil.j_max
+        self.flag_sizefix = coil.flag_sizefix
+
+    def make_size(self, current=None):
+        """
+        Size the coil based on a current and a current density.
+        """
+        if self.flag_sizefix is False:
+            if current is None:
+                current = self.current
+
+            half_width = 0.5 * np.sqrt((abs(current) / (1e6 * self.j_max)))
+            self.dx, self.dz = half_width, half_width
+            self._make_corners()
+            self.sub_coils = None  # Need to re-mesh if this is what you want
+        else:
+            pass
 
 
 class Coil:
