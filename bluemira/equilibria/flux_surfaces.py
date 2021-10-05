@@ -657,7 +657,7 @@ class FieldLineTracer:
 
 
 def calculate_connection_length_flt(
-    eq, x, z, forward=True, first_wall=None, n_points=200, n_turns_max=50
+    eq, x, z, forward=True, first_wall=None, n_turns_max=50
 ):
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -675,8 +675,6 @@ def calculate_connection_length_flt(
         Whether or not to follow the field line forwards or backwards (+B or -B)
     first_wall: Union[Loop, Grid]
         Flux-intercepting surface. Defaults to the grid of the equilibrium
-    n_points: int
-        Number of points along the field line
     n_turns_max: Union[int, float]
         Maximum number of toroidal turns to trace the field line
 
@@ -696,7 +694,7 @@ def calculate_connection_length_flt(
     """
     flt = FieldLineTracer(eq, first_wall)
     field_line = flt.trace_field_line(
-        x, z, forward=forward, n_points=n_points, n_turns_max=n_turns_max
+        x, z, forward=forward, n_points=2, n_turns_max=n_turns_max
     )
     return field_line.connection_length
 
