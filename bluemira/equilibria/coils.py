@@ -30,6 +30,7 @@ from scipy.interpolate import RectBivariateSpline
 from typing import Any, Optional
 
 from bluemira.base.constants import MU_0
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num
 from bluemira.magnetostatics.greens import (
     greens_psi,
@@ -205,6 +206,13 @@ class Coil:
         self.name = name
 
         self.sub_coils = None
+
+    @property
+    def n_coils(self):
+        """
+        Number of coils.
+        """
+        return 1
 
     def set_current(self, current):
         """
@@ -1077,7 +1085,7 @@ class CoilGroup:
         """
         The number of coils.
         """
-        return len(self.coils)
+        return sum([c.n_coils for c in self.coils.values()])
 
     @property
     def area(self):
@@ -1582,9 +1590,16 @@ class CoilSet(CoilGroup):
         self._classify_control()
 
     @classmethod
-    def from_eqdsk(cls, filename):
+    def from_eqdsk(cls, filename, force_symmetry=False):
         """
         Initialises a CoilSet object from an eqdsk file.
+
+        Parameters
+        ----------
+        filename: str
+            Filename
+        force_symmetry: bool (default = False)
+            Whether or not to force symmetrisation in the CoilSet
         """
         eqdsk = EQDSKInterface()
         e = eqdsk.read(filename)
@@ -1592,7 +1607,11 @@ class CoilSet(CoilGroup):
             # SCENE or CREATE
             e["dxc"] = e["dxc"] / 2
             e["dzc"] = e["dzc"] / 2
-        return cls.from_group_vecs(e)
+
+        if force_symmetry:
+            return symmetrise_coilset(cls.from_group_vecs(e))
+        else:
+            return cls.from_group_vecs(e)
 
     @classmethod
     def from_group_vecs(cls, groupvecs):
@@ -1898,3 +1917,89 @@ class CoilSet(CoilGroup):
             for name, coil in self.coils.items():
                 coil.current = self.Iswing[name][snap]
         return CoilSetPlotter(self, ax=ax, subcoil=subcoil, **kwargs)
+
+
+def _get_symmetric_coils(coilset):
+    """
+    Coilset symmetry utility
+    """
+    x, z, dx, dz, currents = coilset.to_group_vecs()
+    coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
+
+    sym_stack = [[coil_matrix[0], 1]]
+    for i in range(1, len(x)):
+        coil = coil_matrix[i]
+
+        for j, sym_coil in enumerate(sym_stack):
+            if np.allclose(coil, sym_coil[0]):
+                sym_stack[j][1] += 1
+                break
+
+        else:
+            sym_stack.append([coil, 1])
+
+    return sym_stack
+
+
+def check_coilset_symmetric(coilset):
+    """
+    Check whether or not a CoilSet is purely symmetric about z=0.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        CoilSet to check for symmetry
+
+    Returns
+    -------
+    symmetric: bool
+        Whether or not the CoilSet is symmetric about z=0
+    """
+    sym_stack = _get_symmetric_coils(coilset)
+    for coil, count in sym_stack:
+        if count != 2:
+            if not np.isclose(coil[1], 0.0):
+                # z = 0
+                return False
+    return True
+
+
+def symmetrise_coilset(coilset):
+    """
+    Symmetrise a CoilSet by converting any coils that are up-down symmetric about
+    z=0 to SymmetricCircuits.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        CoilSet to symmetrise
+
+    Returns
+    -------
+    symmetric_coilset: CoilSet
+        New CoilSet with SymmetricCircuits where appropriate
+    """
+    if not check_coilset_symmetric(coilset):
+        bluemira_warn(
+            "Symmetrising a CoilSet which is not purely symmetric about z=0. This can result in undesirable behaviour."
+        )
+    coilset = coilset.copy()
+
+    sym_stack = _get_symmetric_coils(coilset)
+    counts = np.array(sym_stack, dtype=object).T[1]
+
+    new_coils = []
+    for coil, count in zip(coilset.coils.values(), counts):
+        if count == 1:
+            new_coils.append(coil)
+        elif count == 2:
+            if isinstance(coil, SymmetricCircuit):
+                new_coils.append(coil)
+            elif isinstance(coil, Coil):
+                new_coils.append(SymmetricCircuit(coil))
+            else:
+                raise EquilibriaError(f"Unrecognised class {coil.__class__.__name__}")
+        else:
+            raise EquilibriaError("There are super-posed Coils in this CoilSet.")
+
+    return CoilSet(new_coils)

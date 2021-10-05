@@ -44,7 +44,6 @@ from BLUEPRINT.base import (
     ReactorSystem,
     BLUE,
 )
-from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.base.file import FileManager
 from BLUEPRINT.base.error import GeometryError
 
@@ -53,6 +52,7 @@ from BLUEPRINT.geometry.loop import Loop, point_loop_cast
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 from BLUEPRINT.utilities.colortools import force_rgb
+from BLUEPRINT.utilities.tools import CommentJSONDecoder
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (
@@ -1472,7 +1472,7 @@ class Reactor(ReactorSystem):
             or alternatively
             'ffhhttqqss..' for varied patterning
         """
-        if self.CAD is None or isinstance(self.CAD, Contract):
+        if self.CAD is None:
             # Check if CAD is already built (for typechecking and no-typing)
             self.build_CAD()
         self.CAD.display(pattern)
@@ -1481,7 +1481,7 @@ class Reactor(ReactorSystem):
         """
         Save the Reactor CAD model as a STEP assembly.
         """
-        if self.CAD is None or isinstance(self.CAD, Contract):
+        if self.CAD is None:
             self.build_CAD()
         self.CAD.pattern(pattern)
         bluemira_print("Exporting the reactor CAD to a STEP assembly file.")
@@ -1535,7 +1535,7 @@ class Reactor(ReactorSystem):
         No patterning available, global_pattern set to single sector, to avoid
         patterning fully rotated parts
         """
-        if self.n_CAD is None or isinstance(self.n_CAD, Contract):
+        if self.n_CAD is None:
             self.n_CAD = ReactorCAD(self, slice_flag=True, neutronics=True)
             self.n_CAD.set_palette(BLUE)
         self.n_CAD.display(**kwargs)
@@ -1546,7 +1546,7 @@ class Reactor(ReactorSystem):
         Runs the global neutronics model for the Reactor
         """
         raise NotImplementedError
-        # if self.nmodel is None or isinstance(self.nmodel, Contract):
+        # if self.nmodel is None:
         #     self.build_neutronics_model()
         # bluemira_print("Running 3-D 360° OpenMC neutronics model.")
         # self.nmodel.run()
@@ -1761,6 +1761,35 @@ class ConfigurableReactor(Reactor):
         self.default_params = template_config
         super().__init__(config, build_config, build_tweaks)
 
+    @staticmethod
+    def load_config(name, path):
+        """
+        Load config form JSON file
+
+        Parameters
+        ----------
+        name: str
+           User facing name for file
+
+        Returns
+        -------
+        dict
+            JSON file as dictionary
+
+        Raises
+        ------
+        FileNotFoundError
+
+        """
+        if isinstance(path, str):
+            path = Path(path)
+
+        if path.exists():
+            with open(path, "r") as fh:
+                return json.load(fh, cls=CommentJSONDecoder)
+        else:
+            raise FileNotFoundError(f"Could not find {name} at {path}")
+
     @classmethod
     def from_json(
         cls,
@@ -1788,17 +1817,6 @@ class ConfigurableReactor(Reactor):
         Reactor
             The configured Reactor Object.
         """
-
-        def load_config(name, path):
-            if isinstance(path, str):
-                path = Path(path)
-
-            if path.exists():
-                with open(path, "r") as fh:
-                    return json.load(fh)
-            else:
-                raise FileNotFoundError(f"Could not find {name} at {path}")
-
         if isinstance(template_config_path, str):
             template_config_path = Path(template_config_path)
 
@@ -1809,9 +1827,9 @@ class ConfigurableReactor(Reactor):
                 f"Could not find template configuration at {template_config_path}"
             )
 
-        config = load_config("configuration", config_path)
-        build_config = load_config("build configuration", build_config_path)
-        build_tweaks = load_config("build tweaks", build_tweaks_path)
+        config = cls.load_config("configuration", config_path)
+        build_config = cls.load_config("build configuration", build_config_path)
+        build_tweaks = cls.load_config("build tweaks", build_tweaks_path)
 
         return cls(template_config, config, build_config, build_tweaks)
 

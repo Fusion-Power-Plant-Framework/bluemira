@@ -60,7 +60,7 @@ from bluemira.equilibria.plotting import (
     BreakdownPlotter,
     CorePlotter2,
 )
-from bluemira.equilibria.coils import Coil, CoilSet, PlasmaCoil
+from bluemira.equilibria.coils import Coil, CoilSet, PlasmaCoil, symmetrise_coilset
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import VirtualController, DummyController
 from bluemira.equilibria.force_field import ForceField
@@ -201,7 +201,7 @@ class MHDState:
         return deepcopy(self)
 
     @classmethod
-    def _get_eqdsk(cls, filename):
+    def _get_eqdsk(cls, filename, force_symmetry=False):
         """
         Get eqdsk data from file for read in
 
@@ -209,6 +209,8 @@ class MHDState:
         ----------
         filename: str
             Filename
+        force_symmetry: bool (default = False)
+            Whether or not to force symmetrisation in the CoilSet
 
         Returns
         -------
@@ -236,7 +238,11 @@ class MHDState:
             e["dxc"] = e["dxc"] / 2
             e["dzc"] = e["dzc"] / 2
             e["cplasma"] = abs(e["cplasma"])  # Stupid current direction
+
         coilset = CoilSet.from_group_vecs(e)
+        if force_symmetry:
+            coilset = symmetrise_coilset(coilset)
+
         grid = Grid.from_eqdict(e)
         if e["nlim"] == 0:
             limiter = None
@@ -305,12 +311,21 @@ class Breakdown(MHDState):
         self.filename = filename
 
     @classmethod
-    def from_eqdsk(cls, filename):
+    def from_eqdsk(cls, filename, force_symmetry):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux.
+
+        Parameters
+        ----------
+        filename: str
+            Filename
+        force_symmetry: bool (default = False)
+            Whether or not to force symmetrisation in the CoilSet
         """
-        cls._eqdsk, psi, coilset, grid, limiter = super()._get_eqdsk(filename)
+        cls._eqdsk, psi, coilset, grid, limiter = super()._get_eqdsk(
+            filename, force_symmetry=force_symmetry
+        )
         return cls(coilset, grid, limiter=limiter, psi=psi, filename=filename)
 
     def to_dict(self):
@@ -576,7 +591,7 @@ class Equilibrium(MHDState):
         self._kwargs = {"vcontrol": vcontrol}
 
     @classmethod
-    def from_eqdsk(cls, filename, load_large_file=False):
+    def from_eqdsk(cls, filename, load_large_file=False, force_symmetry=False):
         """
         Initialises an Equilibrium Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux. Because of the nature
@@ -584,9 +599,19 @@ class Equilibrium(MHDState):
         from those stored in eqdsk.
 
         NOTE: Need to solve again with some profiles in order to refind...
-        TODO: Fix this funky API shit --> static eqobject (nova next)
+
+        Parameters
+        ----------
+        filename: str
+            Filename
+        load_large_file: bool (default = False)
+            Whether or not to reconstruct the plasma psi with coil a representation
+        force_symmetry: bool (default = False)
+            Whether or not to force symmetrisation in the CoilSet
         """
-        e, psi, coilset, grid, limiter = super()._get_eqdsk(filename)
+        e, psi, coilset, grid, limiter = super()._get_eqdsk(
+            filename, force_symmetry=force_symmetry
+        )
 
         profiles = CustomProfile.from_eqdsk(filename)
 

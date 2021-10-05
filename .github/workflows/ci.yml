@@ -12,6 +12,15 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # FreeCAD and click do not play nicely together, so make sure we're using the
+    # environment variables that are set in the conda env (this is needed because
+    # GitHub Actions run in their own shell so conda environment variables don't appear
+    # to be picked up.
+    env:
+      LANG: 'C'
+      LC_ALL: 'C'
+      PYTHONIOENCODING: 'utf-8'
+
     steps:
     - name: Checkout
       uses: actions/checkout@v2

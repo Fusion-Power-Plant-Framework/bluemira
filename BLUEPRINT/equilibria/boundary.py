@@ -24,7 +24,7 @@ Domain boundary conditions - Dirichlet
 """
 import numpy as np
 from BLUEPRINT.utilities.tools import is_num
-from BLUEPRINT.magnetostatics.greens import greens_psi
+from bluemira.magnetostatics.greens import greens_psi
 from BLUEPRINT.equilibria.gridops import integrate_dx_dz
 
 

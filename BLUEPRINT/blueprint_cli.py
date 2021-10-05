@@ -37,7 +37,7 @@ from typing import Optional
 from BLUEPRINT.base.file import KEYWORD
 from BLUEPRINT.base.file import get_BP_root
 from bluemira.base.logs import set_log_level
-from BLUEPRINT.utilities.tools import get_module
+from BLUEPRINT.utilities.tools import get_module, CommentJSONDecoder
 
 try:
     from functools import cached_property
@@ -127,10 +127,10 @@ class InputManager:
             return self.reactornameout
         elif self.reactornamein is not None:
             return self.reactornamein
+        elif isinstance(self.config_dict["Name"], dict):
+            return self.config_dict["Name"]["value"]
         else:
-            with open(self.config_path_in, "r") as fh:
-                config_dict = json.load(fh)
-            return config_dict["Name"]
+            return self.config_dict["Name"]
 
     @cached_property
     def build_config_dict(self) -> str:
@@ -203,7 +203,7 @@ class InputManager:
         Reads a json file and returns a dict object of its contents.
         """
         with open(file, "r") as fh:
-            file_dict = json.load(fh)
+            file_dict = json.load(fh, cls=CommentJSONDecoder)
         return file_dict
 
 

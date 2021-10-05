@@ -9,6 +9,7 @@ Bluemira Modules
     base/base
     components
     equilibria/equilibria
+    fuel_cycle/fuel_cycle
     geometry/geometry
     magnetostatics/magnetostatics
     radiation_transport/radiation_transport

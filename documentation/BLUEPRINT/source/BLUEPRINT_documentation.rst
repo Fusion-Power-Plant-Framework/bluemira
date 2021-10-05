@@ -16,7 +16,6 @@ Modules
    equilibria
    geometry
    materials
-   magnetostatics
    neutronics
    nova
    syscodes

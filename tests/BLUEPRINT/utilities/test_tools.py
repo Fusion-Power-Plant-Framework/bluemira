@@ -23,6 +23,7 @@ import pytest
 import numpy as np
 import os
 import json
+from io import StringIO
 from collections import OrderedDict
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.utilities.tools import (
@@ -34,6 +35,7 @@ from BLUEPRINT.utilities.tools import (
     _apply_rule,  # noqa
     _apply_rules,  # noqa
     NumpyJSONEncoder,
+    CommentJSONDecoder,
     clip,
     maximum,
     ellipse,
@@ -93,6 +95,36 @@ class TestNumpyJSONEncoder:
                         assert v.tolist() == vv
                     else:
                         assert v == vv
+
+
+class TestCommentJSONDecoder:
+    def test_decoder(self):
+        loaded = json.load(
+            StringIO(
+                """{
+                "reference_data_root": "",
+                "generated_data_root": "",
+                "plot_flag": {"abgc": false},
+                "process_mode": "run input",
+                "process_indat": "IN.DAT",
+                "plasma_mode": "mock",  //Thisis a comment @#$%^&*()_+|'
+                // hellloo
+                }
+            """
+            ),
+            cls=CommentJSONDecoder,
+        )
+
+        result = {
+            "reference_data_root": "",
+            "generated_data_root": "",
+            "plot_flag": {"abgc": False},
+            "process_mode": "run input",
+            "process_indat": "IN.DAT",
+            "plasma_mode": "mock",
+        }
+
+        assert loaded == result
 
 
 class TestPowerLaw:

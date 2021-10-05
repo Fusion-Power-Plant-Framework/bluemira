@@ -27,12 +27,12 @@ from copy import deepcopy
 import numpy as np
 import types
 from scipy.interpolate import RectBivariateSpline
-from BLUEPRINT.magnetostatics.greens import (
+from bluemira.magnetostatics.greens import (
     greens_psi,
     greens_Bx,
     greens_Bz,
 )
-from BLUEPRINT.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
+from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from BLUEPRINT.equilibria.plotting import (
     CoilSetPlotter,
     PulsePlotter,
