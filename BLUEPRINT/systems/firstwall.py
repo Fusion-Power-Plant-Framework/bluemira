@@ -2378,29 +2378,34 @@ class FirstWallDN(FirstWall):
 
         # Create relative vectors whose length will be the offset distance
         # from the strike point
-        target_int = -target_par * target_length_pfr * sign
-        target_ext = target_par * target_length_sol * sign
+        pfr_target_end = -target_par * target_length_pfr * sign
+        sol_target_end = target_par * target_length_sol * sign
 
         # Swap if we got the wrong way round
+        swap_points = False
+
         if outer_target:
-            if target_ext[0] < target_int[0]:
-                tmp = target_int
-                target_int = target_ext
-                target_ext = tmp
+            if sol_target_end[0] < pfr_target_end[0]:
+                swap_points = True
         # for the inner target
         else:
-            if not vertical_target and target_ext[0] > target_int[0]:
-                tmp = target_int
-                target_int = target_ext
-                target_ext = tmp
+            if not vertical_target and sol_target_end[0] > pfr_target_end[0]:
+                swap_points = True
+            elif vertical_target and sol_target_end[0] < pfr_target_end[0]:
+                swap_points = True
+
+        if swap_points:
+            tmp = pfr_target_end
+            pfr_target_end = sol_target_end
+            sol_target_end = tmp
 
         # Add the strike point to diffs to get the absolute positions
         # of the end points of the target
-        target_internal_point = target_int + strike_point
-        target_external_point = target_ext + strike_point
+        pfr_target_end = pfr_target_end + strike_point
+        sol_target_end = sol_target_end + strike_point
 
         # Return end points
-        return (target_internal_point, target_external_point)
+        return (pfr_target_end, sol_target_end)
 
     def get_tangent_vector(self, point_on_loop, loop):
         """
@@ -2514,11 +2519,11 @@ class FirstWallDN(FirstWall):
 
         # Select the degree of the fitting polynomial and
         # the flux lines that will guide the divertor leg shape
-        if "DEMO_DN" in self.inputs:
+        if self.inputs.get("DEMO_DN", False):
             degree = 1
             outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
         else:
-            degree = 3
+            degree = 2
             outer_leg_external_guide_line = self.flux_surface_lfs[-1]
             outer_leg_internal_guide_line = flux_loop
 
