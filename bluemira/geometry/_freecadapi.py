@@ -220,7 +220,6 @@ def make_circle(
     -------
         Part.Wire: a FreeCAD wire that contains the arc or circle
     """
-
     output = Part.Circle()
     output.Radius = radius
     output.Center = Base.Vector(center)
@@ -232,7 +231,7 @@ def make_circle(
     return Part.Wire(Part.Edge(output))
 
 
-def make_circle_arc_3P(p1, p2, p3):
+def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
     """make_circle_arc_3P(p1, p2, p3)
 
     Creates an arc of circle object given three points.

@@ -141,12 +141,11 @@ def make_circle(
     -------
         BluemiraWire: a bluemira wire that contains the arc or circle
     """
-
     output = _freecadapi.make_circle(radius, center, startangle, endangle, axis)
     return BluemiraWire(output, label=label)
 
 
-def make_circle_arc_3P(p1, p2, p3, label: str = ""):
+def make_circle_arc_3P(p1, p2, p3, label: str = ""):  # noqa: N802
     """make_circle_arc_3P(p1, p2, p3, label)
 
     Creates an arc of circle object given three points.
