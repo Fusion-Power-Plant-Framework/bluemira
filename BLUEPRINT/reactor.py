@@ -1358,7 +1358,7 @@ class Reactor(ReactorSystem):
         model = EUDEMOFuelCycleModel(self.params, {})
         self.TFV = FuelCycleAnalysis(model)
         life_cycle = self.life_cycle()
-        time_dicts = [life_cycle.timeline().to_dict() for _ in range(n)]
+        time_dicts = [life_cycle.make_timeline().to_dict() for _ in range(n)]
         self.TFV.run_model(time_dicts)
 
         m = self.TFV.get_startup_inventory("max")
