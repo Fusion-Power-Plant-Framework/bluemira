@@ -93,7 +93,6 @@ build_config = {
     "VV_parameterisation": "S",
     "FW_parameterisation": "S",
     "BB_segmentation": "radial",
-    "lifecycle_mode": "life",
     "HCD_method": "power",
 }
 

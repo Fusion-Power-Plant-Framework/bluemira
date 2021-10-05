@@ -61,7 +61,6 @@ from BLUEPRINT.systems import (
     Divertor,
     Plasma,
     HCDSystem,
-    TFVSystem,
     Cryostat,
     VacuumVessel,
     RadiationShield,
@@ -99,7 +98,14 @@ from BLUEPRINT.nova.optimiser import StructuralOptimiser
 from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
 
 # Lifetime / fuel cycle imports
-from BLUEPRINT.fuelcycle.lifecycle import LifeCycle
+from bluemira.fuel_cycle.timeline_tools import (
+    GompertzLearningStrategy,
+    LogNormalAvailabilityStrategy,
+)
+from bluemira.fuel_cycle.lifecycle import LifeCycle
+
+from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
+from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
 
 # Cost imports
 from BLUEPRINT.costs.calculator import CostCalculator
@@ -159,7 +165,7 @@ class Reactor(ReactorSystem):
     BOP: Type[BalanceOfPlant]
     DIV: Type[Divertor]
     HCD: Type[HCDSystem]
-    TFV: Type[TFVSystem]
+    TFV: Type[FuelCycleAnalysis]
     ATEC: Type[CoilArchitect]
 
     # Construction and calculation class declarations
@@ -278,7 +284,7 @@ class Reactor(ReactorSystem):
         self.build_containments()
         self.power_balance(plot=self.plot_flag)
         # self.analyse_maintenance()
-        self.life_cycle(mode=self.build_config["lifecycle_mode"])
+        self.life_cycle()
         self.add_parameter(
             "runtime", "Total BLUEPRINT runtime", time() - tic, "s", None, "BLUEPRINT"
         )
@@ -1331,7 +1337,7 @@ class Reactor(ReactorSystem):
             self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_cd_aux)
             self.HCD.allocate("I_cd", f_NBI=1)
 
-    def build_TFV_system(self, method="run", n=10, plot=False):
+    def build_TFV_system(self, n=10):
         """
         Build the tritium fuelling and vacuum (TFV) system. Calculates tritium
         start-up inventory and the so-called doubling time for the reactor.
@@ -1349,21 +1355,19 @@ class Reactor(ReactorSystem):
             f"Running dynamic tritium fuel cycle model.\n" f"Monte Carlo (n={n})"
         )
 
-        self.TFV = TFVSystem(self.params)
+        model = EUDEMOFuelCycleModel(self.params, {})
+        self.TFV = FuelCycleAnalysis(model)
         life_cycle = self.life_cycle()
-        if method == "run":
-            timelines = [life_cycle.timeline() for _ in range(n)]
-            time_dicts = [timeline.to_dict() for timeline in timelines]
-            self.TFV.run_model(time_dicts)
-        m = self.TFV.get_startup_inventory(method=method)
-        t = self.TFV.get_doubling_time(method=method)
+        time_dicts = [life_cycle.make_timeline().to_dict() for _ in range(n)]
+        self.TFV.run_model(time_dicts)
+
+        m = self.TFV.get_startup_inventory("max")
+        t = self.TFV.get_doubling_time("max")
         params = [
             ["m_T_start", "Tritium start-up inventory", m, "kg", None, "BLUEPRINT"],
             ["t_d", "Tritium doubling time", t, "years", None, "BLUEPRINT"],
         ]
         self.add_parameters(params)
-        if plot:
-            self.TFV.dist_plot()
 
     def power_balance(self, plot=True):
         """
@@ -1405,28 +1409,34 @@ class Reactor(ReactorSystem):
         if plot:
             self.BOP.plot()
 
-    def life_cycle(self, mode="life", plot=False):
+    def life_cycle(self, learning_strategy=None, availability_strategy=None):
         """
         Define a DEMO timeline and lifecycle, with random dwell durations
         to match target availability.
 
         Parameters
         ----------
-        mode: str from ["life", "operational"]
-            [life] Takes A value and applies over the plant life, with a
-            simple spreading
-            [operational] Ignores target availability and specifies
-            operational availabilities progressively increasing
-        plot: bool
-            Whether or not to plot the result
+        learning_strategy: Optional[LearningStrategy]
+            Strategy to use to progress operational availability
+        availability_strategy: Optional[AvailabilityStrategy]
+            Strategy to distribute unplanned downtimes during operation
         """
+        if learning_strategy is None:
+            learning_strategy = GompertzLearningStrategy(
+                learn_rate=1.0,
+                min_op_availability=self.params.a_min,
+                max_op_availability=self.params.a_max,
+            )
+        if availability_strategy is None:
+            availability_strategy = LogNormalAvailabilityStrategy(sigma=2.0)
+
         lc_in = {
-            "mode": mode,
             "read_only": False,
-            "plot": plot,
             "datadir": self.file_manager.reference_data_root,
         }
-        life_cycle = LifeCycle(self.params, lc_in)
+        life_cycle = LifeCycle(
+            self.params, learning_strategy, availability_strategy, lc_in
+        )
         return life_cycle
 
     def cost_estimate(self):
