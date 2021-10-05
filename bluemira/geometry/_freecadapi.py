@@ -26,6 +26,8 @@ Supporting functions for the bluemira geometry module.
 from __future__ import annotations
 
 # import from freecad
+import math
+
 import freecad  # noqa: F401
 import Part
 from FreeCAD import Base
@@ -190,28 +192,44 @@ def make_bspline(
     return wire
 
 
-def make_circle(radius, center=None, startangle=None, endangle=None, normal=None):
-    """make_circle(radius, [center, startangle, endangle, normal])
+def make_circle(
+    radius=1.0,
+    center=[0.0, 0.0, 0.0],
+    startangle=0.0,
+    endangle=360.0,
+    axis=[0.0, 0.0, 1.0],
+):
+    """make_circle([radius, center, startangle, endangle, axis])
 
     Creates a circle or arc of circle object with given parameters.
 
+    TODO: check the creation of the arc when startangle < endangle
+
     Parameters
     ----------
-    radius : the radius of the circle (float).
+        radius: the radius of the circle (float). Default to 1.
+        center: the center of the circle (list or numpy.array). Default [0., 0., 0.].
+        startangle: start angle of the arc (in degrees). Default to 0.
+        endangle: end angle of the arc (in degrees). Default to 360.
+            if startangle and endangle are equal, a circle is created,
+            if they are different an arc is created
+        axis: normal vector to the circle plane (list or numpy.array).
+            Default [0., 0., 1.])
 
-    cemter : the center of the circle (default [0., 0., 0.])
-
-    startangle : start angle of the arc (in degrees)
-
-    endangle : end angle of the arc (in degrees)
-        if startangle and endangle are equal, a circle is created,
-        if they are different an arc is created
-
-    normal : normal vector to the circle plane (default [0., 0., 1.])
+    Returns
+    -------
+        Part.Wire: a FreeCAD wire that contains the arc or circle
     """
 
-    circle = Part.Circle()
-
+    output = Part.Circle()
+    output.Radius = radius
+    output.Center = Base.Vector(center)
+    output.Axis = Base.Vector(axis)
+    if startangle != endangle:
+        output = Part.ArcOfCircle(
+            output, math.radians(startangle), math.radians(endangle)
+        )
+    return Part.Wire(Part.Edge(output))
 
 
 # # =============================================================================
