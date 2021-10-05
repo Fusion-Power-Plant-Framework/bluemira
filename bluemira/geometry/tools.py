@@ -111,6 +111,61 @@ def make_bezier(
     return BluemiraWire(_freecadapi.make_bezier(points, closed), label=label)
 
 
+def make_circle(
+    radius=1.0,
+    center=[0.0, 0.0, 0.0],
+    startangle=0.0,
+    endangle=360.0,
+    axis=[0.0, 0.0, 1.0],
+    label: str = "",
+) -> BluemiraWire:
+    """make_circle([radius, center, startangle, endangle, axis, label])
+
+    Creates a circle or arc of circle object with given parameters.
+
+    TODO: check the creation of the arc when startangle < endangle
+
+    Parameters
+    ----------
+        radius: the radius of the circle (float). Default to 1.
+        center: the center of the circle (list or numpy.array). Default [0., 0., 0.].
+        startangle: start angle of the arc (in degrees). Default to 0.
+        endangle: end angle of the arc (in degrees). Default to 360.
+            if startangle and endangle are equal, a circle is created,
+            if they are different an arc is created
+        axis: normal vector to the circle plane (list or numpy.array).
+            Default [0., 0., 1.])
+        label: object label
+
+    Returns
+    -------
+        BluemiraWire: a bluemira wire that contains the arc or circle
+    """
+
+    output = _freecadapi.make_circle(radius, center, startangle, endangle, axis)
+    return BluemiraWire(output, label=label)
+
+
+def make_circle_arc_3P(p1, p2, p3, label: str = ""):
+    """make_circle_arc_3P(p1, p2, p3, label)
+
+    Creates an arc of circle object given three points.
+
+    TODO: check what happens when the 3 points are in a line
+
+    Parameters
+    ----------
+        p1, p2, p3: starting, midlle, and end point of the arc of circle
+        label: object label
+
+    Returns
+    -------
+        BluemiraWire: a bluemira wire that contains the arc of circle
+    """
+    output = _freecadapi.make_circle_arc_3P(p1, p2, p3)
+    return BluemiraWire(output, label=label)
+
+
 def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     """Close this wire with a line segment
 
