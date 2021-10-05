@@ -190,6 +190,30 @@ def make_bspline(
     return wire
 
 
+def make_circle(radius, center=None, startangle=None, endangle=None, normal=None):
+    """make_circle(radius, [center, startangle, endangle, normal])
+
+    Creates a circle or arc of circle object with given parameters.
+
+    Parameters
+    ----------
+    radius : the radius of the circle (float).
+
+    cemter : the center of the circle (default [0., 0., 0.])
+
+    startangle : start angle of the arc (in degrees)
+
+    endangle : end angle of the arc (in degrees)
+        if startangle and endangle are equal, a circle is created,
+        if they are different an arc is created
+
+    normal : normal vector to the circle plane (default [0., 0., 1.])
+    """
+
+    circle = Part.Circle()
+
+
+
 # # =============================================================================
 # # Object's properties
 # # =============================================================================
