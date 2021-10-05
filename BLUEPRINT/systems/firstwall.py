@@ -2523,7 +2523,7 @@ class FirstWallDN(FirstWall):
             degree = 1
             outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
         else:
-            degree = 2
+            degree = 3
             outer_leg_external_guide_line = self.flux_surface_lfs[-1]
             outer_leg_internal_guide_line = flux_loop
 
