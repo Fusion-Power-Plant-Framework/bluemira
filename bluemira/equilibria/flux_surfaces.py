@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import Iterable
 from copy import deepcopy
 import numpy as np
+import numba as nb
 import matplotlib.pyplot as plt
 from functools import lru_cache
 from scipy.integrate import solve_ivp
@@ -43,6 +44,15 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_base import Plane
 from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.constants import PSI_NORM_TOL
+from bluemira.equilibria.find import find_flux_surface_through_point
+
+
+@nb.jit(nopython=True, cache=True)
+def _flux_surface_dl(x, z, dx, dz, Bp, Bt):
+    Bp = 0.5 * (Bp[1:] + Bp[:-1])
+    Bt = Bt[:-1] * x[:-1] / (x[:-1] + 0.5 * dx)
+    B_ratio = Bt / Bp
+    return np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
 
 
 class FluxSurface:
@@ -87,12 +97,7 @@ class FluxSurface:
         x, z = self.loop.x, self.loop.z
         Bp = eq.Bp(x, z)
         Bt = eq.Bt(x)
-        dx = np.diff(x)
-        dz = np.diff(z)
-        Bp = 0.5 * (Bp[1:] + Bp[:-1])
-        Bt = Bt[:-1] * x[:-1] / (x[:-1] + 0.5 * dx)
-        B_ratio = Bt / Bp
-        return np.sqrt(1 + B_ratio ** 2) * np.hypot(dx, dz)
+        return _flux_surface_dl(x, z, np.diff(x), np.diff(z), Bp, Bt)
 
     def connection_length(self, eq):
         """
@@ -443,19 +448,11 @@ def analyse_plasma_core(eq, n_points=50):
     loops.append(eq.get_LCFS())
     psi_n = np.append(psi_n, 1.0)
     flux_surfaces = [ClosedFluxSurface(loop) for loop in loops]
+    vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
+    vars += [f"{v}{end}" for end in ["", "_upper", "_lower"] for v in ["kappa", "delta"]]
     return CoreResults(
         psi_n,
-        [fs.major_radius for fs in flux_surfaces],
-        [fs.minor_radius for fs in flux_surfaces],
-        [fs.aspect_ratio for fs in flux_surfaces],
-        [fs.area for fs in flux_surfaces],
-        [fs.volume for fs in flux_surfaces],
-        [fs.kappa for fs in flux_surfaces],
-        [fs.kappa_upper for fs in flux_surfaces],
-        [fs.kappa_lower for fs in flux_surfaces],
-        [fs.delta for fs in flux_surfaces],
-        [fs.delta_upper for fs in flux_surfaces],
-        [fs.delta_lower for fs in flux_surfaces],
+        *[getattr(fs, var) for fs in flux_surfaces for var in vars],
         [fs.safety_factor(eq) for fs in flux_surfaces],
         [fs.shafranov_shift(eq)[0] for fs in flux_surfaces],
     )
@@ -657,3 +654,85 @@ class FieldLineTracer:
             phi = result["t"]
             connection_length = length[-1]
         return r, z, phi, connection_length
+
+
+def calculate_connection_length_flt(eq, x, z, forward=True, first_wall=None):
+    """
+    Calculate the parallel connection length from a starting point to a flux-intercepting
+    surface using a field line tracer.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium in which to calculate the connection length
+    x: float
+        Radial coordinate of the starting point
+    z: float
+        Vertical coordinate of the starting point
+    forward: bool (default = True)
+        Whether or not to follow the field line forwards or backwards
+    first_wall: Union[Loop, Grid]
+        Flux-intercepting surface. Defaults to the grid of the equilibrium
+
+    Returns
+    -------
+    connection_length: float
+        Parallel connection length along the field line from the starting point to the
+        intersection point [m]
+    """
+    flt = FieldLineTracer(eq, first_wall)
+    field_line = flt.trace_field_line(x, z, forward=forward)
+    connection_length = field_line.connection_length
+    return connection_length
+
+
+def calculate_connection_length_fs(eq, x, z, forward=True, first_wall=None):
+    """
+    Calculate the parallel connection length from a starting point to a flux-intercepting
+    surface using flux surface geometry.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium in which to calculate the connection length
+    x: float
+        Radial coordinate of the starting point
+    z: float
+        Vertical coordinate of the starting point
+    forward: bool (default = True)
+        Whether or not to follow the field line forwards or backwards
+    first_wall: Union[Loop, Grid]
+        Flux-intercepting surface. Defaults to the grid of the equilibrium
+
+    Returns
+    -------
+    connection_length: float
+        Parallel connection length along the field line from the starting point to the
+        intersection point [m]
+
+    Raises
+    ------
+    FluxSurfaceError
+        If the flux surface at the point in the equilibrium is not an open flux surface
+    """
+    if first_wall is None:
+        x1, x2 = eq.grid.x_min, eq.grid.x_max
+        z1, z2 = eq.grid.z_min, eq.grid.z_max
+        first_wall = Loop(x=[x1, x2, x2, x1, x1], z=[z1, z1, z2, z2, z1])
+
+    xfs, zfs = find_flux_surface_through_point(eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z))
+    f_s = OpenFluxSurface(Loop(x=xfs, z=zfs))
+
+    class Point:
+        def __init__(self, x, z):
+            self.x = x
+            self.z = z
+
+    lfs, hfs = f_s.split(Point(x=x, z=z))
+    if forward:
+        fs = lfs
+    else:
+        fs = hfs
+
+    fs.clip(first_wall)
+    return fs.connection_length(eq)
