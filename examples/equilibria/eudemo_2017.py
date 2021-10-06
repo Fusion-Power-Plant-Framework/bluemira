@@ -78,7 +78,10 @@ dx = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 0.4, 0.4, 0.4, 0.4, 0.4]
 dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99 / 2]
 
 coils = []
+j = 1
 for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
+    if j > 6:
+        j = 1
     ctype = "PF" if i < 6 else "CS"
     coil = Coil(
         xi,
@@ -88,8 +91,10 @@ for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
         dz=dzi,
         ctype=ctype,
         control=True,
+        name=f"{ctype}_{j}",
     )
     coils.append(coil)
+    j += 1
 
 coilset = CoilSet(coils)
 

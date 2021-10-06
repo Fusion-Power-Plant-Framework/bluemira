@@ -106,45 +106,136 @@ class CoilNamer:
         return prefix.format(idx)
 
 
-def make_coil_corners(x_c, z_c, dx, dz):
+def get_max_current(dx, dz, j_max):
     """
-    Make coil x, z corner vectors (ANTI-CLOCKWISE).
+    Get the maximum current in a coil cross-sectional area
+
+    Parameters
+    ----------
+    dx: float
+        Coil half-width [m]
+    dz: float
+        Coil half-height [m]
+    j_max: float
+        Coil current density [MA/m^2]
+
+    Returns
+    -------
+    max_current: float
+        Maximum current [A]
     """
-    xx, zz = np.ones(4) * x_c, np.ones(4) * z_c
-    x = xx + dx * np.array([-1, 1, 1, -1])
-    z = zz + dz * np.array([-1, -1, 1, 1])
-    return x, z
+    return abs(j_max * 1e6 * (4 * dx * dz))
 
 
 class CoilSizer:
     """
     Coil sizing utility class (observer pattern)
+
+    Parameters
+    ----------
+    coil: Coil
+        Coil to size
     """
 
     def __init__(self, coil):
         self.update(coil)
 
+        dxdz_specified = is_num(self.dx) and is_num(self.dz)
+
+        if not dxdz_specified and not (self.dx is None and self.dz is None):
+            # Check that we don't have dx = None and dz = float or vice versa
+            raise EquilibriaError("Must specify either dx and dz or neither.")
+
+        if dxdz_specified and not self.flag_sizefix:
+            # If dx and dz are specified, we presume the coil size should remain fixed
+            self.flag_sizefix = True
+
+        if dxdz_specified:
+            self._set_coil_attributes(coil)
+
+        if not dxdz_specified and not self.j_max:
+            # Check there is a viable way to size the coil
+            raise EquilibriaError("Must specify either dx and dz or j_max.")
+
+        if not dxdz_specified and self.flag_sizefix:
+            # If dx and dz are not specified, we cannot fix the size of the coil
+            self.flag_sizefix = False
+
+        coil.flag_sizefix = self.flag_sizefix
+
+    def __call__(self, coil, current=None):
+        self.update(coil)
+
+        if self.flag_sizefix:
+            if self.j_max:
+                # Check that the current is within the bounds (but don't enforce.. just warn)
+                max_current = get_max_current(self.dx, self.dz, self.j_max)
+                if abs(self.current) > max_current:
+                    bluemira_warn(
+                        f"Coil with a fixed sized has a current greater than its maximum: {abs(self.current)} > {max_current}"
+                    )
+        else:
+            # Adjust the size of the coil
+            coil.dx, coil.dz = self._make_size(current)
+            self._set_coil_attributes(coil)
+
+    def _set_coil_attributes(self, coil):
+        coil.rc = 0.5 * np.hypot(coil.dx, coil.dz)
+        coil.x_corner, coil.z_corner = self._make_corners(
+            coil.x, coil.z, coil.dx, coil.dz
+        )
+
     def update(self, coil):
+        """
+        Update the CoilSizer
+
+        Parameters
+        ----------
+        coil: Coil
+            Coil to size
+        """
         self.dx = coil.dx
         self.dz = coil.dz
         self.current = coil.current
         self.j_max = coil.j_max
         self.flag_sizefix = coil.flag_sizefix
 
-    def make_size(self, current=None):
+    def get_max_current(self, coil):
+        """
+        Get the maximum current of a coil size.
+        """
+        self.update(coil)
+        if not self.flag_sizefix:
+            raise EquilibriaError(
+                "Cannot get the maximum current of a coil of an unspecified size."
+            )
+
+        if self.j_max is None:
+            raise EquilibriaError(
+                "Cannot get the maximum current of a coil of unspecified current density."
+            )
+
+        return get_max_current(self.dx, self.dz, self.j_max)
+
+    def _make_size(self, current=None):
         """
         Size the coil based on a current and a current density.
         """
-        if self.flag_sizefix is False:
-            if current is None:
-                current = self.current
+        if current is None:
+            current = self.current
 
-            half_width = 0.5 * np.sqrt((abs(current) / (1e6 * self.j_max)))
-            self.dx, self.dz = half_width, half_width
-            self._make_corners()
-            self.sub_coils = None  # Need to re-mesh if this is what you want
-        else:
-            pass
+        half_width = 0.5 * np.sqrt((abs(current) / (1e6 * self.j_max)))
+        return half_width, half_width
+
+    @staticmethod
+    def _make_corners(x_c, z_c, dx, dz):
+        """
+        Makes the coil corner vectors
+        """
+        xx, zz = np.ones(4) * x_c, np.ones(4) * z_c
+        x_corner = xx + dx * np.array([-1, 1, 1, -1])
+        z_corner = zz + dz * np.array([-1, -1, 1, 1])
+        return x_corner, z_corner
 
 
 class Coil:
@@ -202,39 +293,38 @@ class Coil:
         x,
         z,
         current=0,
+        dx=None,
+        dz=None,
         n_turns=1,
         control=True,
         ctype="PF",
-        j_max=NBTI_J_MAX,
-        b_max=NBTI_B_MAX,
+        j_max=None,
+        b_max=None,
         name=None,
-        **kwargs,
+        n_filaments=1,
+        flag_sizefix=False,
     ):
 
         self.x = x
         self.z = z
+        self.dx = dx
+        self.dz = dz
         self.current = current
         self.j_max = j_max
         self.b_max = b_max
-
-        # Default: free sizes for PF coils
-        self.flag_sizefix = kwargs.get("flag_sizefix", False)
-
-        if "dx" and "dz" not in kwargs:
-            self.make_size()
-        else:
-            self.dx, self.dz = kwargs["dx"], kwargs["dz"]
-            self._make_corners()
-
-        self.n_filaments = kwargs.get("n_filaments", 1)  # Number of filaments
         self.n_turns = n_turns
+        self.n_filaments = n_filaments
         self.control = control
         self.ctype = ctype
+        self.flag_sizefix = flag_sizefix
 
         if name is None:
             # We need to have a reasonable coil name
             name = CoilNamer.generate_name(self, None)
         self.name = name
+
+        self.__sizer = CoilSizer(self)
+        self.__sizer(self)
 
         self.sub_coils = None
 
@@ -289,10 +379,7 @@ class Coil:
         self.x = x
         self.z = z
         if dz is None:
-            if self.ctype == "PF":
-                self.make_size()
-            if self.ctype == "CS":
-                self._make_corners()
+            self.__sizer(self)
         else:
             self.set_dz(dz)
         self.sub_coils = None  # Need to re-mesh if this is what you want
@@ -315,44 +402,29 @@ class Coil:
         Adjusts the radial thickness of the Coil object (meshing not handled)
         """
         self.dx = dx
-        self._make_corners()
+        self.__sizer(self)
 
     def set_dz(self, dz):
         """
         Adjusts the vertical thickness of the Coil object (meshing not handled)
         """
         self.dz = dz
-        self._make_corners()
+        self.__sizer(self)
 
     def make_size(self, current=None):
         """
         Size the coil based on a current and a current density.
         """
+        self.__sizer(self, current)
         if self.flag_sizefix is False:
-            if current is None:
-                current = self.current
-
-            half_width = 0.5 * np.sqrt((abs(current) / (1e6 * self.j_max)))
-            self.dx, self.dz = half_width, half_width
-            self._make_corners()
             self.sub_coils = None  # Need to re-mesh if this is what you want
-        else:
-            pass
-
-    def _make_corners(self):
-        """
-        Makes the coil corner vectors
-        """
-        self.rc = 0.5 * np.hypot(self.dx, self.dz)
-        self.x_corner, self.z_corner = make_coil_corners(
-            self.x, self.z, self.dx, self.dz
-        )
 
     def fix_size(self):
         """
         Fixes the size of the coil
         """
         self.flag_sizefix = True
+        self.__sizer.update(self)
 
     def _points_inside_coil(self, x, z):
         """
@@ -396,6 +468,7 @@ class Coil:
 
         self.j_max = j_max
         self.b_max = b_max
+        self.__sizer.update(self)
 
     def get_max_current(self):
         """
@@ -406,25 +479,7 @@ class Coil:
         Imax: float
             The maximum current that can be produced by the coil [A]
         """
-        if self.ctype == "CS" or (self.ctype == "PF" and self.flag_sizefix is True):
-            return self._get_max_current(self.dx, self.dz)  # JIC
-
-        raise EquilibriaError(
-            "Only CS coils have a max current and the size of"
-            " this coil has not been fixed."
-        )
-
-    def _get_max_current(self, dx, dz):
-        """
-        get_max_current without the safety net.
-
-        Returns
-        -------
-        Imax: float
-            The maximum current that can be produced by the coil [A]
-
-        """
-        return abs(self.j_max * 1e6 * (4 * dx * dz))
+        return self.__sizer.get_max_current(self)
 
     def mesh_coil(self, d_coil):
         """
@@ -470,7 +525,7 @@ class Coil:
                     xc,
                     zc,
                     current,
-                    Nf=1,
+                    n_filaments=1,
                     dx=dx,
                     dz=dz,
                     ctype=self.ctype,

@@ -200,7 +200,7 @@ coilset_temp = CoilSet(circuits)
 
 # Temporarily add a simple plasma coil to get a good starting guess for psi
 coilset_temp.add_coil(
-    Coil(R0 + 0.5, Z0, dx=0, dz=0, current=Ip, name="plasma_dummy", control=False)
+    Coil(R0 + 0.5, Z0, dx=0.5, dz=0.5, current=Ip, name="plasma_dummy", control=False)
 )
 
 eq = Equilibrium(
