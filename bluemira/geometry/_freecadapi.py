@@ -163,6 +163,8 @@ def make_circle(
     -------
         Part.Wire: a FreeCAD wire that contains the arc or circle
     """
+    import math
+
     # TODO: Remove once ivan's branch is merged
     # deliberate flake8 mess so I don't forget or break anything
     ABNDASFOJI = None
