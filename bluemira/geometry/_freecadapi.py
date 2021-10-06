@@ -327,13 +327,13 @@ def close_wire(wire: Part.Wire):
     return wire
 
 
-def concatenate_wires(wires: List[BluemiraWire]):
+def concatenate_wires(wires: List[Part.Wire]):
     """
     Concatenate a list of wires together to form a single wire.
 
     Parameters
     ----------
-    wires: List[BluemiraWire]
+    wires: List[Part.Wire]
         List of Wires to concatenate
 
     Returns

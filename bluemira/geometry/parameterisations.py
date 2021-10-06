@@ -25,6 +25,7 @@ Geometry parameterisations
 
 import abc
 import numpy as np
+from numpy.core.numeric import outer
 from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
@@ -345,9 +346,9 @@ class PictureFrame(GeometryParameterisation):
                 # Lower limb height
                 BoundedVariable("z2", -6, lower_bound=-15, upper_bound=-5),
                 # Inboard corner radius
-                BoundedVariable("ri", 0, lower_bound=0, upper_bound=0.2),
+                BoundedVariable("ri", 0.1, lower_bound=0, upper_bound=0.2),
                 # Outbord corner radius
-                BoundedVariable("ro", 8, lower_bound=5, upper_bound=15),
+                BoundedVariable("ro", 2, lower_bound=1, upper_bound=5),
             ],
             frozen=True,
         )
@@ -364,41 +365,44 @@ class PictureFrame(GeometryParameterisation):
         """
         x1, x2, z1, z2, ri, ro = self.variables.values
         p1 = [x1, 0, z1 - ri]
-        p2 = [x1, 0, z2 - ri]
-        c1 = [x1 + ri, 0, z2 - ri]
+        p2 = [x1, 0, z2 + ri]
+        c1 = [x1 + ri, 0, z2 + ri]
         p3 = [x1 + ri, 0, z2]
         p4 = [x2 - ro, 0, z2]
-        c2 = [x2 - ro, 0, z2 - ro]
-        p5 = [x2, 0, z2 - ro]
+        c2 = [x2 - ro, 0, z2 + ro]
+        p5 = [x2, 0, z2 + ro]
         p6 = [x2, 0, z1 - ro]
         c3 = [x2 - ro, 0, z1 - ro]
         p7 = [x2 - ro, 0, z1]
         p8 = [x1 + ri, 0, z1]
         c4 = [x1 + ri, 0, z1 - ri]
-        axis = [0, 1, 0]
-        inner_limb = make_polygon([p1, p2])
-        in_low_corner = make_circle(ri, c1, startangle=180, endangle=270, axis=axis)
-        lower_limb = make_polygon([p3, p4])
-        out_low_corner = make_circle(ro, c2, startangle=270, endangle=360, axis=axis)
-        outer_limb = make_polygon([p5, p6])
-        out_up_corner = make_circle(ro, c3, startangle=0, endangle=90, axis=axis)
-        upper_limb = make_polygon([p7, p8])
-        in_up_corner = make_circle(ri, c4, startangle=90, endangle=180, axis=axis)
+        axis = [0, -1, 0]
 
-        return BluemiraWire(
-            concatenate_wires(
-                [
-                    inner_limb,
-                    in_low_corner,
-                    lower_limb,
-                    out_low_corner,
-                    outer_limb,
-                    out_up_corner,
-                    upper_limb,
-                    in_up_corner,
-                ]
-            )
-        )
+        wires = [make_polygon([p1, p2])]  # Inner limb
+
+        if ri != 0.0:
+            # Inner lower corner
+            wires.append(make_circle(ri, c1, startangle=180, endangle=270, axis=axis))
+
+        wires.append(make_polygon([p3, p4]))  # Lower limb
+
+        if ro != 0.0:
+            # Outer lower corner
+            wires.append(make_circle(ro, c2, startangle=270, endangle=360, axis=axis))
+
+        wires.append(make_polygon([p5, p6]))  # Outer limb
+
+        if ro != 0.0:
+            # Outer upper corner
+            wires.append(make_circle(ro, c3, startangle=0, endangle=90, axis=axis))
+
+        wires.append(make_polygon([p7, p8]))  # Upper limb
+
+        if ri != 0.0:
+            # Inner upper corner
+            wires.append(make_circle(ri, c4, startangle=90, endangle=180, axis=axis))
+
+        return BluemiraWire(concatenate_wires(wires))
 
 
 class TaperedPictureFrame(GeometryParameterisation):
