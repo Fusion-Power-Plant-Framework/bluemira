@@ -135,7 +135,7 @@ def make_circle(
             if they are different an arc is created
         axis: normal vector to the circle plane (list or numpy.array).
             Default [0., 0., 1.])
-        label: object label
+        label: object's label
 
     Returns
     -------
@@ -155,13 +155,61 @@ def make_circle_arc_3P(p1, p2, p3, label: str = ""):  # noqa: N802
     Parameters
     ----------
         p1, p2, p3: starting, midlle, and end point of the arc of circle
-        label: object label
+        label: object's label
 
     Returns
     -------
         BluemiraWire: a bluemira wire that contains the arc of circle
     """
     output = _freecadapi.make_circle_arc_3P(p1, p2, p3)
+    return BluemiraWire(output, label=label)
+
+
+def make_ellipse(
+    center=[0.0, 0.0, 0.0],
+    major_radius=2.0,
+    minor_radius=1.0,
+    major_axis=[1, 0, 0],
+    minor_axis=[0, 1, 0],
+    start_angle=0.0,
+    end_angle=360.0,
+    label: str = "",
+):
+    """make_ellipse([center, major_radius, minor_radius, major_axis, minor_axis,
+    start_angle, end_angle])
+
+    Creates an ellipse or arc of ellipse object with given parameters.
+
+    TODO: check the creation of the arc when startangle < endangle
+
+    Parameters
+    ----------
+        center: the center of the ellipse (list or numpy.array). Default [0., 0., 0.].
+        major_radius: the major radius of the ellipse (float). Default to 2.
+        minor_radius: the minor radius of the ellipse (float). Default to 2.
+        major_axis: major axis direction (list or numpy.array). Default [1, 0,
+        0])
+        minor_axis: minor axis direction (list or numpy.array). Default [0, 1,
+        0])
+        start_angle: start angle of the arc (in degrees). Default to 0.
+        end_angle: end angle of the arc (in degrees). Default to 360.
+            if start_angle and end_angle are equal, an ellipse is created,
+            if they are different an arc is created
+        label: object's label
+
+    Returns
+    -------
+        BluemiraWire: a bluemira wire that contains the arc or ellipse
+    """
+    output = _freecadapi.make_ellipse(
+        center,
+        major_radius,
+        minor_radius,
+        major_axis,
+        minor_axis,
+        start_angle,
+        end_angle,
+    )
     return BluemiraWire(output, label=label)
 
 

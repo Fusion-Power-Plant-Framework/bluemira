@@ -250,6 +250,58 @@ def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
     return Part.Wire(Part.Edge(arc))
 
 
+def make_ellipse(
+    center=[0.0, 0.0, 0.0],
+    major_radius=2.0,
+    minor_radius=1.0,
+    major_axis=[1, 0, 0],
+    minor_axis=[0, 1, 0],
+    start_angle=0.0,
+    end_angle=360.0,
+):
+    """make_ellipse([center, major_radius, minor_radius, major_axis, minor_axis,
+    start_angle, end_angle])
+
+    Creates an ellipse or arc of ellipse object with given parameters.
+
+    TODO: check the creation of the arc when start_angle < end_angle
+
+    Parameters
+    ----------
+        center: the center of the ellipse (list or numpy.array). Default [0., 0., 0.].
+        major_radius: the major radius of the ellipse (float). Default to 2.
+        minor_radius: the minor radius of the ellipse (float). Default to 2.
+        major_axis: major axis direction (list or numpy.array). Default [1, 0,
+        0])
+        minor_axis: minor axis direction (list or numpy.array). Default [0, 1,
+        0])
+        start_angle: start angle of the arc (in degrees). Default to 0.
+        end_angle: end angle of the arc (in degrees). Default to 360.
+            if start_angle and end_angle are equal, an ellipse is created,
+            if they are different an arc is created
+
+    Returns
+    -------
+        Part.Wire: a FreeCAD wire that contains the arc or ellipse
+    """
+    s1 = Base.Vector(major_axis).normalize().multiply(major_radius)
+    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius)
+    center = Base.Vector(center)
+    output = Part.Ellipse(s1, s2, center)
+
+    start_angle = start_angle % 360.0
+    end_angle = end_angle % 360.0
+
+    if start_angle != end_angle:
+        print("ArcOfEllipse")
+        output = Part.ArcOfEllipse(
+            output, math.radians(start_angle), math.radians(end_angle)
+        )
+    else:
+        print("Ellipse")
+    return Part.Wire(Part.Edge(output))
+
+
 # # =============================================================================
 # # Object's properties
 # # =============================================================================

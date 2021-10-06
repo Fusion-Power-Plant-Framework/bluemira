@@ -19,7 +19,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import (
+    make_polygon,
+    make_ellipse,
+    make_circle,
+    make_circle_arc_3P,
+)
+from scipy.special import ellipe
+import math
+import pytest
 
 
 class TestGeometry:
@@ -58,3 +66,40 @@ class TestGeometry:
         assert wire3.length == 3.0
         wire1 += wire2
         assert wire1.length == 3.0
+
+    def test_make_circle(self):
+        radius = 2.0
+        center = [1, 0, 3]
+        axis = [0, 1, 0]
+        bm_circle = make_circle(radius=radius, center=center, axis=axis)
+        assert bm_circle.length == 2 * math.pi * radius
+
+    def test_make_circle_arc_3P(self):  # noqa N802
+        p1 = [0, 0, 0]
+        p2 = [1, 1, 0]
+        p3 = [2, 0, 0]
+        bm_circle = make_circle_arc_3P(p1, p2, p3)
+        assert bm_circle.length == math.pi
+
+    def test_make_ellipse(self):
+        major_radius = 5.0
+        minor_radius = 2.0
+
+        bm_ellipse = make_ellipse(
+            major_radius=major_radius,
+            minor_radius=minor_radius,
+        )
+        edge = bm_ellipse.boundary[0].Edges[0]
+
+        # ellispe eccentricity
+        eccentricity = math.sqrt(1 - (minor_radius / major_radius) ** 2)
+        assert eccentricity == edge.Curve.Eccentricity
+
+        # theoretical length
+        expected_length = 4 * major_radius * ellipe(eccentricity ** 2)
+        assert pytest.approx(edge.Length) == expected_length
+
+        # WARNING: it seems that FreeCAD implement in a different way
+        # Wire.Length and Edge.length giving a result sligtly different
+        # but enough to make the following assert fail. To be investigated.
+        # assert pytest.approx(bm_ellipse.length) == expected_length
