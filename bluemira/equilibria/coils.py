@@ -169,6 +169,17 @@ class CoilSizer:
         coil.flag_sizefix = self.flag_sizefix
 
     def __call__(self, coil, current=None):
+        """
+        Apply the CoilSizer to a Coil.
+
+        Parameters
+        ----------
+        coil: Coil
+            Coil to size
+        current: Optional[float]
+            The current to use when sizing the coil. Defaults to the present coil
+            current.
+        """
         self.update(coil)
 
         if not self.flag_sizefix:
@@ -200,6 +211,21 @@ class CoilSizer:
     def get_max_current(self, coil):
         """
         Get the maximum current of a coil size.
+
+        Parameters
+        ----------
+        coil: Coil
+            Coil to get the maximum current for
+
+        Returns
+        -------
+        max_current: float
+            Maximum current for the coil
+
+        Raises
+        ------
+        EquilibriaError:
+            If the coil size is not fixed or no current density is specified
         """
         self.update(coil)
         if not self.flag_sizefix:
