@@ -133,8 +133,9 @@ def make_circle(
         endangle: end angle of the arc (in degrees). Default to 360.
             if startangle and endangle are equal, a circle is created,
             if they are different an arc is created
-        axis: normal vector to the circle plane (list or numpy.array).
-            Default [0., 0., 1.])
+        axis: Iterable
+            Normal vector to the circle plane. It defines the clockwise/anticlockwise
+            circle orientation according to the right hand rule. Default [0., 0., 1.].
         label: object's label
 
     Returns
