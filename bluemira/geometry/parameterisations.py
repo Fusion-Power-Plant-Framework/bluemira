@@ -25,7 +25,6 @@ Geometry parameterisations
 
 import abc
 import numpy as np
-from numpy.core.numeric import outer
 from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
@@ -470,43 +469,3 @@ class TaperedPictureFrame(GeometryParameterisation):
             wires.append(make_circle(r, c2, startangle=0, endangle=90, axis=axis))
 
         return BluemiraWire(concatenate_wires(wires))
-
-
-class CurvedPictureFrame(GeometryParameterisation):
-    """
-    Curved picture-frame geometry parameterisation.
-    """
-
-    def __init__(self):
-        variables = OptVariables(
-            [
-                # Inner limb radius
-                BoundedVariable("x1", 0.4, lower_bound=0.3, upper_bound=0.5),
-                # Radius of the taper top
-                BoundedVariable("x2", 1.1, lower_bound=1, upper_bound=1.3),
-                # Outer limb radius
-                BoundedVariable("x3", 6.5, lower_bound=6, upper_bound=10),
-                # Height at the tapered coil section
-                BoundedVariable("z1", 8, lower_bound=5, upper_bound=15),
-                # Height of the straight upper limbs
-                BoundedVariable("z2", -6, lower_bound=-15, upper_bound=-5),
-                # Maximum height of the upper and lower limbs
-                BoundedVariable("z3", -6, lower_bound=-15, upper_bound=-5),
-                # Corner radius
-                BoundedVariable("r", 0, lower_bound=0, upper_bound=1),
-            ],
-            frozen=True,
-        )
-        super().__init__(self.__class__.__name__, variables)
-
-    def create_shape(self):
-        """
-        Make a CAD representation of the curved picture frame.
-
-        Returns
-        -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
-        """
-        wire = None
-        return BluemiraWire(wire)
