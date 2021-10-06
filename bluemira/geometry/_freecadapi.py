@@ -26,6 +26,8 @@ Supporting functions for the bluemira geometry module.
 from __future__ import annotations
 
 import freecad  # noqa: F401
+import FreeCAD
+import FreeCADGui
 import Part
 from FreeCAD import Base
 
@@ -34,10 +36,16 @@ import numpy as np
 import math
 
 # import typing
-from typing import Union
+from typing import List, Optional, Union
 
 # import errors
 from bluemira.geometry.error import GeometryError
+
+# import visualisation
+from pivy import coin, quarter
+from PySide2.QtWidgets import QApplication
+
+from bluemira.geometry.display import DisplayOptions
 
 
 # # =============================================================================
@@ -698,3 +706,67 @@ def make_compound(shapes):
     """
     compound = Part.makeCompound(shapes)
     return compound
+
+
+# =======================================================================================
+# Visualisation
+# =======================================================================================
+
+
+def _colourise(
+    node: coin.SoNode,
+    options: DisplayOptions,
+):
+    if isinstance(node, coin.SoMaterial):
+        node.ambientColor.setValue(coin.SbColor(*options.rgb))
+        node.diffuseColor.setValue(coin.SbColor(*options.rgb))
+        node.transparency.setValue(options.transparency)
+    for child in node.getChildren() or []:
+        _colourise(child, options)
+
+
+def display(
+    parts: Union[Part.Shape, List[Part.Shape]],
+    options: Optional[Union[DisplayOptions, List[DisplayOptions]]] = None,
+):
+    if not isinstance(parts, list):
+        parts = [parts]
+
+    if options is None:
+        options = [DisplayOptions()] * len(parts)
+    elif not isinstance(options, list):
+        options = [options] * len(parts)
+
+    if len(options) != len(parts):
+        raise GeometryError(
+            "If options for display are provided then there must be as many options as "
+            "there are parts to display."
+        )
+
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+
+    if not hasattr(FreeCADGui, "subgraphFromObject"):
+        FreeCADGui.setupWithoutGUI()
+
+    doc = FreeCAD.newDocument()
+
+    root = coin.SoSeparator()
+
+    for part, option in zip(parts, options):
+        obj = doc.addObject("Part::Feature")
+        obj.Shape = part
+        doc.recompute()
+        subgraph = FreeCADGui.subgraphFromObject(obj)
+        _colourise(subgraph, option)
+        root.addChild(subgraph)
+
+    viewer = quarter.QuarterWidget()
+    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
+    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
+    viewer.setSceneGraph(root)
+
+    viewer.setWindowTitle("Bluemira Display")
+    viewer.show()
+    app.exec_()
