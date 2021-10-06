@@ -1,10 +1,10 @@
-import os
-import sys
+from dataclasses import dataclass
+from typing import List, Optional, Tuple, Union
 
-from PySide2 import QtCore, QtGui
-from PySide2.QtWidgets import QMainWindow, QAction, QApplication, QMdiArea
+from PySide2.QtWidgets import QApplication
 
-from pivy.quarter import QuarterWidget
+from pivy import coin
+from pivy import quarter
 
 import freecad  # noqa: F401
 import FreeCAD
@@ -12,110 +12,90 @@ import FreeCADGui
 import Part
 
 import bluemira.geometry._freecadapi as freecadapi
+from bluemira.geometry.error import GeometryError
 
 
-class MdiQuarterWidget(QuarterWidget):
-    def __init__(self, parent, sharewidget):
-        QuarterWidget.__init__(self, parent=parent, sharewidget=sharewidget)
+@dataclass(frozen=True)
+class DisplayOptions:
+    rgb: Tuple[float, float, float] = (0.5, 0.5, 0.5)
+    shininess: float = 0.2
+    transparency: float = 0.0
 
-    def minimumSizeHint(self):
-        return QtCore.QSize(640, 480)
+
+def _colourise(
+    node: coin.SoNode,
+    options: DisplayOptions,
+):
+    if isinstance(node, coin.SoMaterial):
+        node.ambientColor.setValue(coin.SbColor(*options.rgb))
+        node.diffuseColor.setValue(coin.SbColor(*options.rgb))
+        node.specularColor.setValue(coin.SbColor(*options.rgb))
+        node.shininess.setValue(options.shininess)
+        node.transparency.setValue(options.transparency)
+    for child in node.getChildren() or []:
+        _colourise(child, options)
 
 
-class MdiMainWindow(QMainWindow):
-    def __init__(self, qApp):
-        QMainWindow.__init__(self)
-        self._firstwidget = None
-        self._workspace = QMdiArea()
-        self.setCentralWidget(self._workspace)
-        self.setAcceptDrops(True)
-        self.setWindowTitle("Pivy Quarter MDI example")
+def display(
+    parts: Union[Part.Shape, List[Part.Shape]],
+    options: Optional[Union[DisplayOptions, List[DisplayOptions]]] = None,
+):
+    if not isinstance(parts, list):
+        parts = [parts]
 
-        filemenu = self.menuBar().addMenu("&File")
-        windowmenu = self.menuBar().addMenu("&Windows")
+    if options is None:
+        options = [DisplayOptions()] * len(parts)
+    elif not isinstance(options, list):
+        options = [options] * len(parts)
 
-        fileopenaction = QAction("&Create Box", self)
-        createfaceaction = QAction("Create &Face", self)
-        fileexitaction = QAction("E&xit", self)
-        tileaction = QAction("Tile", self)
-        cascadeaction = QAction("Cascade", self)
-
-        filemenu.addAction(fileopenaction)
-        filemenu.addAction(createfaceaction)
-        filemenu.addAction(fileexitaction)
-        windowmenu.addAction(tileaction)
-        windowmenu.addAction(cascadeaction)
-
-        self.connect(
-            fileopenaction, QtCore.SIGNAL("triggered()"), self.createBoxInFreeCAD
-        )
-        self.connect(createfaceaction, QtCore.SIGNAL("triggered()"), self.createFace)
-        self.connect(
-            fileexitaction, QtCore.SIGNAL("triggered()"), QtGui.qApp.closeAllWindows
-        )
-        self.connect(
-            tileaction, QtCore.SIGNAL("triggered()"), self._workspace.tileSubWindows
-        )
-        self.connect(
-            cascadeaction,
-            QtCore.SIGNAL("triggered()"),
-            self._workspace.cascadeSubWindows,
+    if len(options) != len(parts):
+        raise GeometryError(
+            "If options for display are provided then there must be as many options as "
+            "there are parts to display."
         )
 
-        windowmapper = QtCore.QSignalMapper(self)
-        self.connect(
-            windowmapper,
-            QtCore.SIGNAL("mapped(QWidget *)"),
-            self._workspace.setActiveSubWindow,
-        )
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
 
-        self.dirname = os.curdir
+    if not hasattr(FreeCADGui, "subgraphFromObject"):
+        FreeCADGui.setupWithoutGUI()
 
-    def closeEvent(self, event):
-        self._workspace.closeAllSubWindows()
+    doc = FreeCAD.newDocument()
 
-    def createBoxInFreeCAD(self):
-        d = FreeCAD.newDocument()
-        o = d.addObject("Part::Box")
-        d.recompute()
-        s = FreeCADGui.subgraphFromObject(o)
-        child = self.createMdiChild()
-        child.show()
-        child.setSceneGraph(s)
+    root = coin.SoSeparator()
 
-    def createFace(self):
-        square_points = [
-            (0.0, 0.0, 0.0),
-            (1.0, 0.0, 0.0),
-            (1.0, 1.0, 0.0),
-            (0.0, 1.0, 0.0),
-        ]
-        d = FreeCAD.newDocument()
-        open_wire: Part.Wire = freecadapi.make_polygon(square_points)
-        face = Part.Face([open_wire])
-        o = d.addObject("Part::Feature")
-        o.Shape = face
-        d.recompute()
-        s = FreeCADGui.subgraphFromObject(o)
-        child = self.createMdiChild()
-        child.show()
-        child.setSceneGraph(s)
+    for part, option in zip(parts, options):
+        obj = doc.addObject("Part::Feature")
+        obj.Shape = part
+        doc.recompute()
+        subgraph = FreeCADGui.subgraphFromObject(obj)
+        _colourise(subgraph, option)
+        root.addChild(subgraph)
 
-    def createMdiChild(self):
-        widget = MdiQuarterWidget(None, self._firstwidget)
-        self._workspace.addSubWindow(widget)
-        if not self._firstwidget:
-            self._firstwidget = widget
-        return widget
+    viewer = quarter.QuarterWidget()
+    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
+    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
+    viewer.setSceneGraph(root)
 
-
-def main():
-    app = QApplication(sys.argv)
-    FreeCADGui.setupWithoutGUI()
-    mdi = MdiMainWindow(app)
-    mdi.show()
+    viewer.setWindowTitle("Bluemira Display")
+    viewer.show()
     app.exec_()
 
 
 if __name__ == "__main__":
-    main()
+    box = Part.makeBox(1.0, 1.0, 1.0)
+    box_options = DisplayOptions(rgb=(1.0, 0.0, 0.0))
+    sphere = Part.makeSphere(1.0)
+    sphere_options = DisplayOptions(rgb=(0.0, 1.0, 0.0), transparency=0.5)
+    display([box, sphere], [box_options, sphere_options])
+    square_points = [
+        (0.0, 0.0, 0.0),
+        (2.0, 0.0, 0.0),
+        (2.0, 2.0, 0.0),
+        (0.0, 2.0, 0.0),
+    ]
+    open_wire: Part.Wire = freecadapi.make_polygon(square_points)
+    face = Part.Face([open_wire])
+    face_options = DisplayOptions(rgb=(0.0, 0.0, 1.0), transparency=0.2)
+    display(face, face_options)
