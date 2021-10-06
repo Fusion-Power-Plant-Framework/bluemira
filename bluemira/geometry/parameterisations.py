@@ -420,13 +420,13 @@ class TaperedPictureFrame(GeometryParameterisation):
                 # Outer limb radius
                 BoundedVariable("x3", 6.5, lower_bound=6, upper_bound=10),
                 # Fraction of height at which to start taper angle
-                BoundedVariable("z1_frac", 8, lower_bound=5, upper_bound=15),
+                BoundedVariable("z1_frac", 0.5, lower_bound=0.4, upper_bound=0.8),
                 # Height at which to stop the taper angle
-                BoundedVariable("z2", -6, lower_bound=-15, upper_bound=-5),
-                # Upper limb height
-                BoundedVariable("z3", -6, lower_bound=-15, upper_bound=-5),
+                BoundedVariable("z2", 6.5, lower_bound=6, upper_bound=8),
+                # Upper/lower limb height
+                BoundedVariable("z3", 7, lower_bound=6, upper_bound=9),
                 # Corner radius
-                BoundedVariable("r", 0, lower_bound=0, upper_bound=1),
+                BoundedVariable("r", 0.5, lower_bound=0, upper_bound=1),
             ],
             frozen=True,
         )
@@ -441,8 +441,35 @@ class TaperedPictureFrame(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        wire = None
-        return BluemiraWire(wire)
+        x1, x2, x3, z1_frac, z2, z3, r = self.variables.values
+        z1 = z1_frac * z2
+        p1 = [x3 - r, 0, z3]
+        p2 = [x2, 0, z3]
+        p3 = [x2, 0, z2]
+        p4 = [x1, 0, z1]
+        p5 = [x1, 0, -z1]
+        p6 = [x2, 0, -z2]
+        p7 = [x2, 0, -z3]
+        p8 = [x3 - r, 0, -z3]
+        c1 = [x3 - r, 0, -z3 + r]
+        p9 = [x3, 0, -z3 + r]
+        p10 = [x3, 0, z3 - r]
+        c2 = [x3 - r, 0, z3 - r]
+        axis = [0, -1, 0]
+
+        wires = [make_polygon([p1, p2, p3, p4, p5, p6, p7, p8])]  # Inner limb
+
+        if r != 0.0:
+            # Lower corner
+            wires.append(make_circle(r, c1, startangle=270, endangle=360, axis=axis))
+
+        wires.append(make_polygon([p9, p10]))  # Outer corner
+
+        if r != 0.0:
+            # Upper corner
+            wires.append(make_circle(r, c2, startangle=0, endangle=90, axis=axis))
+
+        return BluemiraWire(concatenate_wires(wires))
 
 
 class CurvedPictureFrame(GeometryParameterisation):
