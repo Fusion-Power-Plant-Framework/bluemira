@@ -136,13 +136,16 @@ class PrincetonD(GeometryParameterisation):
     def __init__(self):
         variables = OptVariables(
             [
+                # Inboard limb radius
                 BoundedVariable("x1", 4, lower_bound=2, upper_bound=6),
+                # Outboard limb radius
                 BoundedVariable("x2", 14, lower_bound=10, upper_bound=18),
+                # Vertical offset from z=0
                 BoundedVariable("dz", 0, lower_bound=-0.5, upper_bound=0.5),
             ],
             frozen=True,
         )
-        super().__init__("PrincetonD", variables)
+        super().__init__(self.__class__.__name__, variables)
 
     def create_shape(self, n_points=200):
         """
@@ -239,3 +242,201 @@ class PrincetonD(GeometryParameterisation):
         z -= np.mean(z)
         z += dz  # vertical shift
         return x, z
+
+
+class TripleArc(GeometryParameterisation):
+    """
+    Triple-arc geometry parameterisation.
+    """
+
+    def __init__(self):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x1", 4.5, lower_bound=4, upper_bound=5),
+                # Inboard limb height
+                BoundedVariable("z1", 0, lower_bound=-1, upper_bound=-1),
+                # Straight length
+                BoundedVariable("sl", 6.5, lower_bound=5, upper_bound=10),
+                # rs == f1*z small
+                BoundedVariable("f1", 3, lower_bound=2, upper_bound=12),
+                # rm == f2*rs mid
+                BoundedVariable("f2", 4, lower_bound=2, upper_bound=12),
+                # Small arc angle [degrees]
+                BoundedVariable("a1", 8, lower_bound=5, upper_bound=15),
+                # Middle arc angle [degrees]
+                BoundedVariable("a1", 8, lower_bound=5, upper_bound=15),
+            ],
+            frozen=True,
+        )
+        super().__init__(self.__class__.__name__, variables)
+
+    def create_shape(self):
+        """
+        Make a CAD representation of the triple arc.
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        wire = None
+        return BluemiraWire(wire)
+
+
+class PolySpline(GeometryParameterisation):
+    """
+    Poly-Bezier-spline geometry parameterisation.
+    """
+
+    def __init__(self):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x1", 4.5, lower_bound=4, upper_bound=5),
+                # Inboard limb height
+                BoundedVariable("z1", 0, lower_bound=-1, upper_bound=-1),
+                # Straight length
+                BoundedVariable("sl", 6.5, lower_bound=5, upper_bound=10),
+                # rs == f1*z small
+                BoundedVariable("f1", 3, lower_bound=2, upper_bound=12),
+                # rm == f2*rs mid
+                BoundedVariable("f2", 4, lower_bound=2, upper_bound=12),
+                # Small arc angle [degrees]
+                BoundedVariable("a1", 8, lower_bound=5, upper_bound=15),
+                # Middle arc angle [degrees]
+                BoundedVariable("a1", 8, lower_bound=5, upper_bound=15),
+            ],
+            frozen=True,
+        )
+        super().__init__(self.__class__.__name__, variables)
+
+    def create_shape(self):
+        """
+        Make a CAD representation of the poly spline.
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        wire = None
+        return BluemiraWire(wire)
+
+
+class PictureFrame(GeometryParameterisation):
+    """
+    Picture-frame geometry parameterisation.
+    """
+
+    def __init__(self):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x1", 4.5, lower_bound=4, upper_bound=5),
+                # Outer limb radius
+                BoundedVariable("x2", 16, lower_bound=14, upper_bound=18),
+                # Upper limb height
+                BoundedVariable("z1", 8, lower_bound=5, upper_bound=15),
+                # Lower limb height
+                BoundedVariable("z2", -6, lower_bound=-15, upper_bound=-5),
+                # Inboard corner radius
+                BoundedVariable("ri", 0, lower_bound=0, upper_bound=0.2),
+                # Outbord corner radius
+                BoundedVariable("ro", 8, lower_bound=5, upper_bound=15),
+            ],
+            frozen=True,
+        )
+        super().__init__(self.__class__.__name__, variables)
+
+    def create_shape(self):
+        """
+        Make a CAD representation of the picture frame.
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        wire = None
+        return BluemiraWire(wire)
+
+
+class TaperedPictureFrame(GeometryParameterisation):
+    """
+    Tapered picture-frame geometry parameterisation.
+    """
+
+    def __init__(self):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x1", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Middle limb radius
+                BoundedVariable("x2", 1.1, lower_bound=1, upper_bound=1.3),
+                # Outer limb radius
+                BoundedVariable("x3", 6.5, lower_bound=6, upper_bound=10),
+                # Fraction of height at which to start taper angle
+                BoundedVariable("z1_frac", 8, lower_bound=5, upper_bound=15),
+                # Height at which to stop the taper angle
+                BoundedVariable("z2", -6, lower_bound=-15, upper_bound=-5),
+                # Upper limb height
+                BoundedVariable("z3", -6, lower_bound=-15, upper_bound=-5),
+                # Corner radius
+                BoundedVariable("r", 0, lower_bound=0, upper_bound=1),
+            ],
+            frozen=True,
+        )
+        super().__init__(self.__class__.__name__, variables)
+
+    def create_shape(self):
+        """
+        Make a CAD representation of the tapered picture frame.
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        wire = None
+        return BluemiraWire(wire)
+
+
+class CurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved picture-frame geometry parameterisation.
+    """
+
+    def __init__(self):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x1", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Radius of the taper top
+                BoundedVariable("x2", 1.1, lower_bound=1, upper_bound=1.3),
+                # Outer limb radius
+                BoundedVariable("x3", 6.5, lower_bound=6, upper_bound=10),
+                # Height at the tapered coil section
+                BoundedVariable("z1", 8, lower_bound=5, upper_bound=15),
+                # Height of the straight upper limbs
+                BoundedVariable("z2", -6, lower_bound=-15, upper_bound=-5),
+                # Maximum height of the upper and lower limbs
+                BoundedVariable("z3", -6, lower_bound=-15, upper_bound=-5),
+                # Corner radius
+                BoundedVariable("r", 0, lower_bound=0, upper_bound=1),
+            ],
+            frozen=True,
+        )
+        super().__init__(self.__class__.__name__, variables)
+
+    def create_shape(self):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        wire = None
+        return BluemiraWire(wire)
