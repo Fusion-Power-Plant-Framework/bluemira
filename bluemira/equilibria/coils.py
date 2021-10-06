@@ -144,7 +144,6 @@ class Coil:
         Maximum magnetic field at the coil [T]
     name: str or None
         The name of the coil
-
     """
 
     __slots___ = [
