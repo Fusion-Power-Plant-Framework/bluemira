@@ -322,8 +322,25 @@ def close_wire(wire: Part.Wire):
         vertexes = wire.OrderedVertexes
         points = [v.Point for v in vertexes]
         wline = make_polygon([points[-1], points[0]])
-        wire = Part.Wire([wire, wline])
+        wire = concatenate_wires([wire, wline])
     return wire
+
+
+def concatenate_wires(wires: List[Part.Wire]):
+    """
+    Concatenate a list of wires together to form a single wire.
+
+    Parameters
+    ----------
+    wires: List[Part.Wire]
+        List of Wires to concatenate
+
+    Returns
+    -------
+    concatenated_wire: Part.Wire
+        Single concatenated wire
+    """
+    return Part.Wire(wires)
 
 
 def discretize(w: Part.Wire, ndiscr: int):

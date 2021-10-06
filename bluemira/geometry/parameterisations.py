@@ -29,7 +29,13 @@ from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry.error import GeometryParameterisationError
-from bluemira.geometry._freecadapi import make_bspline, close_wire
+from bluemira.geometry._freecadapi import (
+    make_bspline,
+    close_wire,
+    make_polygon,
+    make_circle,
+    concatenate_wires,
+)
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -163,9 +169,7 @@ class PrincetonD(GeometryParameterisation):
             CAD Wire of the geometry
         """
         x, z = self._princeton_d(
-            self.variables["x1"].value,
-            self.variables["x2"].value,
-            self.variables["dz"].value,
+            *self.variables.values,
             n_points,
         )
         xyz = np.array([x, np.zeros(n_points), z])
@@ -358,6 +362,28 @@ class PictureFrame(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
+        x1, x2, z1, z2, ri, ro = self.variables.values
+        p1 = [x1, 0, z1 - ri]
+        p2 = [x1, 0, z2 - ri]
+        c1 = [x1 + ri, 0, z2 - ri]
+        p3 = [x1 + ri, 0, z2]
+        p4 = [x2 - ro, 0, z2]
+        c2 = [x2 - ro, 0, z2 - ro]
+        p5 = [x2, 0, z2 - ro]
+        p6 = [x2, 0, z1 - ro]
+        c3 = [x2 - ro, 0, z1 - ro]
+        p7 = [x2 - ro, 0, z1]
+        p8 = [x1 + ri, 0, z1]
+        c4 = [x1 + ri, 0, z1 - ri]
+        inner_limb = make_polygon([p1, p2])
+        in_low_corner = make_circle(ri, c1, startangle=180, endangle=270)
+        lower_limb = make_polygon([p3, p4])
+        out_low_corner = make_circle(ro, c2, startangle=270, endangle=360)
+        outer_limb = make_polygon([p5, p6])
+        out_up_corner = make_circle(ro, c3, startangle=0, endangle=90)
+        upper_limb = make_polygon([p7, p8])
+        in_up_corner = make_circle(ri, c4, startangle=90, endangle=180)
+
         wire = None
         return BluemiraWire(wire)
 
