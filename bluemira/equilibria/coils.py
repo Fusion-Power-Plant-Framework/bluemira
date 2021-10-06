@@ -129,12 +129,17 @@ def get_max_current(dx, dz, j_max):
 
 class CoilSizer:
     """
-    Coil sizing utility class (observer pattern)
+    Coil sizing utility class (observer pattern).
 
     Parameters
     ----------
     coil: Coil
         Coil to size
+
+    Notes
+    -----
+    Maximum currents are not enforced anywhere in Coils. If you want constrain currents,
+    you should use constrained optimisation techniques (with current bounds).
     """
 
     def __init__(self, coil):
@@ -166,15 +171,7 @@ class CoilSizer:
     def __call__(self, coil, current=None):
         self.update(coil)
 
-        if self.flag_sizefix:
-            if self.j_max:
-                # Check that the current is within the bounds (but don't enforce.. just warn)
-                max_current = get_max_current(self.dx, self.dz, self.j_max)
-                if abs(self.current) > max_current:
-                    bluemira_warn(
-                        f"Coil with a fixed sized has a current greater than its maximum: {abs(self.current)} > {max_current}"
-                    )
-        else:
+        if not self.flag_sizefix:
             # Adjust the size of the coil
             coil.dx, coil.dz = self._make_size(current)
             self._set_coil_attributes(coil)
