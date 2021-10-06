@@ -375,17 +375,30 @@ class PictureFrame(GeometryParameterisation):
         p7 = [x2 - ro, 0, z1]
         p8 = [x1 + ri, 0, z1]
         c4 = [x1 + ri, 0, z1 - ri]
+        axis = [0, 1, 0]
         inner_limb = make_polygon([p1, p2])
-        in_low_corner = make_circle(ri, c1, startangle=180, endangle=270)
+        in_low_corner = make_circle(ri, c1, startangle=180, endangle=270, axis=axis)
         lower_limb = make_polygon([p3, p4])
-        out_low_corner = make_circle(ro, c2, startangle=270, endangle=360)
+        out_low_corner = make_circle(ro, c2, startangle=270, endangle=360, axis=axis)
         outer_limb = make_polygon([p5, p6])
-        out_up_corner = make_circle(ro, c3, startangle=0, endangle=90)
+        out_up_corner = make_circle(ro, c3, startangle=0, endangle=90, axis=axis)
         upper_limb = make_polygon([p7, p8])
-        in_up_corner = make_circle(ri, c4, startangle=90, endangle=180)
+        in_up_corner = make_circle(ri, c4, startangle=90, endangle=180, axis=axis)
 
-        wire = None
-        return BluemiraWire(wire)
+        return BluemiraWire(
+            concatenate_wires(
+                [
+                    inner_limb,
+                    in_low_corner,
+                    lower_limb,
+                    out_low_corner,
+                    outer_limb,
+                    out_up_corner,
+                    upper_limb,
+                    in_up_corner,
+                ]
+            )
+        )
 
 
 class TaperedPictureFrame(GeometryParameterisation):

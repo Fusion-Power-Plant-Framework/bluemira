@@ -139,6 +139,9 @@ def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.
     return wire
 
 
+import math
+
+
 def make_circle(
     radius=1.0,
     center=[0.0, 0.0, 0.0],
@@ -163,8 +166,6 @@ def make_circle(
     -------
         Part.Wire: a FreeCAD wire that contains the arc or circle
     """
-    import math
-
     # TODO: Remove once ivan's branch is merged
     # deliberate flake8 mess so I don't forget or break anything
     ABNDASFOJI = None
@@ -326,13 +327,13 @@ def close_wire(wire: Part.Wire):
     return wire
 
 
-def concatenate_wires(wires: List[Part.Wire]):
+def concatenate_wires(wires: List[BluemiraWire]):
     """
     Concatenate a list of wires together to form a single wire.
 
     Parameters
     ----------
-    wires: List[Part.Wire]
+    wires: List[BluemiraWire]
         List of Wires to concatenate
 
     Returns
