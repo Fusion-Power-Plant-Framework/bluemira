@@ -257,9 +257,9 @@ class ComponentDisplayer(Displayer):
 
         def _append_shape_and_options(comp: Component):
             if hasattr(comp, "shape") and comp.shape is not None:
-                shapes.append(comp.shape)
+                shapes.append(comp.shape._shape)
                 if not override_options:
-                    options.append(comp._display_options)
+                    options.append(comp.display_options)
 
         _append_shape_and_options(component)
 
