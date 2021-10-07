@@ -71,7 +71,7 @@ class Displayable:
 
 
 class BasicDisplayer(Displayer):
-    def display(self, obj, options: Optional[DisplayOptions]) -> None:
+    def display(self, obj, options: Optional[DisplayOptions] = None) -> None:
         if options is None:
             options = self.options
 
