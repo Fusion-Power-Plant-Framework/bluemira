@@ -259,6 +259,20 @@ def make_ellipse_arc_2P_tangents(p_1, alpha_1, p_2, alpha_2):
     return Part.ArcOfEllipse(curve, curve.parameter(p_1), curve.parameter(p_2))
 
 
+def make_bezier_2P_tangents(p_1, alpha_1, p_2, alpha_2):
+    """"""
+    from bluemira.geometry._deprecated_tools import vector_intersect
+
+    alpha_1, alpha_2 = np.deg2rad(alpha_1), np.deg2rad(alpha_2)
+
+    p_15 = [p_1[0] + np.cos(alpha_1), p_1[2] + np.sin(alpha_1)]
+    p_25 = [p_2[0] + np.cos(alpha_2), p_2[2] + np.sin(alpha_2)]
+    p_int = vector_intersect(p_1, p_15, p_2, p_25)
+    curve = Part.BezierCurve()
+    curve.setPoles([p_1, p_int, p_2])
+    return curve
+
+
 def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
     """Make a bezier curve from a set of points.
 
