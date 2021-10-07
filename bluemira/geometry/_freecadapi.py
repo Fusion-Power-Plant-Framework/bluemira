@@ -34,7 +34,7 @@ from FreeCAD import Base
 import numpy as np
 
 # import typing
-from typing import Union
+from typing import Union, List
 
 # import errors
 from bluemira.geometry.error import GeometryError
@@ -178,6 +178,21 @@ def make_circle(
             output, math.radians(startangle), math.radians(endangle)
         )
     return Part.Wire(Part.Edge(output))
+
+
+def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
+    """make_circle_arc_3P(p1, p2, p3)
+    Creates an arc of circle object given three points.
+    TODO: check what happens when the 3 points are in a line
+    Parameters
+    ----------
+        p1, p2, p3: starting, midlle, and end point of the arc of circle
+    Returns
+    -------
+        Part.Wire: a FreeCAD wire that contains the arc of circle
+    """
+    arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+    return Part.Wire(Part.Edge(arc))
 
 
 def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:

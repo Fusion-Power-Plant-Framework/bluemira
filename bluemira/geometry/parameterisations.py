@@ -34,6 +34,7 @@ from bluemira.geometry._freecadapi import (
     close_wire,
     make_polygon,
     make_circle,
+    make_circle_arc_3P,
     concatenate_wires,
 )
 from bluemira.geometry.wire import BluemiraWire
@@ -250,26 +251,26 @@ class PrincetonD(GeometryParameterisation):
 
 class TripleArc(GeometryParameterisation):
     """
-    Triple-arc geometry parameterisation.
+    Triple-arc up-down symmetric geometry parameterisation.
     """
 
     def __init__(self):
         variables = OptVariables(
             [
                 # Inner limb radius
-                BoundedVariable("x1", 4.5, lower_bound=4, upper_bound=5),
+                BoundedVariable("x1", 4.486, lower_bound=4, upper_bound=5),
                 # Inboard limb height
-                BoundedVariable("z1", 0, lower_bound=-1, upper_bound=-1),
+                BoundedVariable("z1", 0, lower_bound=-1, upper_bound=1),
                 # Straight length
-                BoundedVariable("sl", 6.5, lower_bound=5, upper_bound=10),
+                BoundedVariable("sl", 6.428, lower_bound=5, upper_bound=10),
                 # rs == f1*z small
                 BoundedVariable("f1", 3, lower_bound=2, upper_bound=12),
                 # rm == f2*rs mid
                 BoundedVariable("f2", 4, lower_bound=2, upper_bound=12),
                 # Small arc angle [degrees]
-                BoundedVariable("a1", 8, lower_bound=5, upper_bound=15),
+                BoundedVariable("a1", 20, lower_bound=5, upper_bound=120),
                 # Middle arc angle [degrees]
-                BoundedVariable("a1", 8, lower_bound=5, upper_bound=15),
+                BoundedVariable("a2", 40, lower_bound=10, upper_bound=120),
             ],
             frozen=True,
         )
@@ -286,29 +287,63 @@ class TripleArc(GeometryParameterisation):
         """
         x1, z1, sl, f1, f2, a1, a2 = self.variables.values
         a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
-
+        z0 = z1
+        z1 = z1 + sl
+        # Upper half
         p1 = [x1, 0, z1]
-        p15 = [x1 + f1 * (1 - np.cos(a1 / 2)), 0, z1 + f1 * np.sin(a1 / 2)]
+        atot = a1 + a2
+        a15 = 0.5 * a1
+        p15 = [x1 + f1 * (1 - np.cos(a15)), 0, z1 + f1 * np.sin(a15)]
         p2 = [x1 + f1 * (1 - np.cos(a1)), 0, z1 + f1 * np.sin(a1)]
+
+        a25 = a1 + 0.5 * (atot - a1)
         p25 = [
-            p2[0] + f2 * (np.cos(a1 / 2) - np.cos((a1 + a2) / 2)),
+            p2[0] + f2 * (np.cos(a1) - np.cos(a25)),
             0,
-            p2[2] + 0.5 * f2 * (np.sin((a1 + a2) / 2) - np.sin(a1 / 2)),
+            p2[2] + f2 * (np.sin(a25) - np.sin(a1)),
         ]
         p3 = [
-            p2[0] + f2 * (np.cos(a1) - np.cos(a1 + a2)),
+            p2[0] + f2 * (np.cos(a1) - np.cos(atot)),
             0,
-            p2[2] + f2 * (np.sin(a1 + a2) - np.sin(a1)),
+            p2[2] + f2 * (np.sin(atot) - np.sin(a1)),
         ]
-        rl = (p3[2] - z1) / np.sin(np.pi - a1 - a2)
-        p4 = [
-            p3[0] + rl * (1 - np.cos(np.pi - a1 - a2)),
-            0,
-            p3[2] - rl * np.sin(a1 + a2),
-        ]
-        p5 = [x1, 0, z1 - sl]
+        rl = (p3[2] - z0) / np.sin(np.pi - atot)
 
-        wires = [make_polygon([p5, p1])]
+        a35 = 0.5 * atot
+        p35 = [
+            p3[0] + rl * (np.cos(a35) - np.cos(np.pi - atot)),
+            0,
+            p3[2] - rl * (np.sin(atot) - np.sin(a35)),
+        ]
+        p4 = [
+            p3[0] + rl * (1 - np.cos(np.pi - atot)),
+            0,
+            p3[2] - rl * np.sin(atot),
+        ]
+
+        # Symmetric lower half
+        p45 = [p35[0], 0, -p35[2]]
+        p5 = [p3[0], 0, -p3[2]]
+        p55 = [p25[0], 0, -p25[2]]
+        p6 = [p2[0], 0, -p2[2]]
+        p65 = [p15[0], 0, -p15[2]]
+        p7 = [p1[0], 0, -p1[2]]
+        wires = [
+            make_circle_arc_3P(p1, p15, p2),
+            make_circle_arc_3P(p2, p25, p3),
+            make_circle_arc_3P(p3, p35, p4),
+            make_circle_arc_3P(p4, p45, p5),
+            make_circle_arc_3P(p5, p55, p6),
+            make_circle_arc_3P(p6, p65, p7),
+        ]
+        wire = concatenate_wires(wires)
+        wire = close_wire(wire)
+        return BluemiraWire(wire)
+
+        wires = []
+        wires.append(make_circle_arc_3P(p1, p15, p2))
+        wires.append(make_circle_arc_3P(p2, p25, p3))
+        wires.append(make_circle_arc_3P(p3, p35, p4))
 
         return BluemiraWire(concatenate_wires(wires))
 
