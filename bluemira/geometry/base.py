@@ -27,12 +27,16 @@ from __future__ import annotations
 
 # import for abstract class
 from abc import ABC, abstractmethod
+from typing import Optional
 
 # import freecad api
 from . import _freecadapi
 
+# import bluemira base functionality
+from bluemira.base.display import Displayable, DisplayOptions, Displayer
 
-class BluemiraGeo(ABC):
+
+class BluemiraGeo(ABC, Displayable):
     """Base abstract class for geometry
 
     Parameters
@@ -68,6 +72,7 @@ class BluemiraGeo(ABC):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
+        self._displayer = GeometryDisplayer(DisplayOptions())
 
     @staticmethod
     def _converter(func):
@@ -198,3 +203,10 @@ class BluemiraGeo(ABC):
         new.append(f" volume: {self.volume}")
         new.append(")")
         return ", ".join(new)
+
+
+class GeometryDisplayer(Displayer):
+    def display(
+        self, geo: BluemiraGeo, options: Optional[DisplayOptions] = None
+    ) -> None:
+        super().display(geo._shape, options)
