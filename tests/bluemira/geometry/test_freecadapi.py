@@ -147,3 +147,28 @@ class TestFreecadapi:
         scaled_face = freecadapi.scale_shape(face_from_wire.copy(), factor)
         assert freecadapi.length(scaled_face) == freecadapi.length(face)
         assert freecadapi.area(scaled_face) == freecadapi.area(face)
+
+    def test_discretize(self):
+        wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
+        ndiscr = 10
+        points = freecadapi.discretize(wire, ndiscr)
+        print(f"Points = {points}")
+        assert len(points) == ndiscr
+        length_w = wire.Length
+        dl = length_w / float(ndiscr)
+        points = freecadapi.discretize(wire, dl=dl)
+        print(f"Points = {points}")
+        assert len(points) == ndiscr
+
+    def test_discretize_by_edges(self):
+        wire: Part.Wire = freecadapi.make_polygon(self.square_points, True)
+        ndiscr = 10
+        points = freecadapi.discretize_by_edges(wire, ndiscr)
+
+        dl = 0.4
+        points = freecadapi.discretize_by_edges(wire, dl=dl)
+        print(f"Points = {points}")
+
+        dl = 0.4
+        points = freecadapi.discretize_by_edges(wire, ndiscr=100, dl=dl)
+        print(f"Points = {points}")
