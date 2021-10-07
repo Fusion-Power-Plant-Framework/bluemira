@@ -86,7 +86,7 @@ class Component(NodeMixin):
         return str(RenderTree(self))
 
     def get_component(
-        self, name: str, first: bool = True, full_tree: bool = False
+        self, name: str, first: bool = True, full_tree: bool = True
     ) -> Union["Component", List["Component"]]:
         """
         Find the components with the specified name.
@@ -99,7 +99,7 @@ class Component(NodeMixin):
             If True, only the first element is returned, by default True.
         full_tree: bool
             If True, searches the tree from the root, else searches from this node, by
-            default False.
+            default True.
 
         Returns
         -------
