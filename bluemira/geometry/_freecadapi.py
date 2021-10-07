@@ -195,6 +195,70 @@ def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
     return Part.Wire(Part.Edge(arc))
 
 
+def fit_ellipse_2P_tangents(x_1, y_1, alpha_1, x_2, y_2, alpha_2):
+    def is_close_to_mod_pi2(value: float) -> bool:
+        ratio = 2 * value / np.pi
+        integer = np.round(ratio, 0)
+        return np.isclose(ratio, integer) and integer % 2 != 0
+
+    alpha_1, alpha_2 = np.deg2rad(alpha_1), np.deg2rad(alpha_2)
+    angle_res = []
+    for a, x, y in zip([alpha_1, alpha_2], [x_1, x_2], [y_1, y_2]):
+        if is_close_to_mod_pi2(a):
+            angle_res.append([0.0, 2.0 * y, 0.0, 1.0])
+        else:
+            tan = np.tan(a)
+            angle_res.append([2.0 * x, 2.0 * tan * y, 1.0, tan])
+
+    A = np.array(
+        [
+            [x_1 ** 2, y_1 ** 2, x_1, y_1],
+            angle_res[0],
+            [x_2 ** 2, y_2 ** 2, x_2, y_2],
+            angle_res[1],
+        ]
+    )
+
+    b = np.array([-1.0, 0.0, -1.0, 0.0])
+
+    try:
+        x = np.linalg.solve(A, b)
+    except np.linalg.LinAlgError:
+        raise ValueError("Cannot fit an ellipse to these points and tangents.")
+
+    if np.any(x[:2], 0):
+        raise ValueError("Cannot fit an ellipse to these points and tangents.")
+
+    x_c = -0.5 * x[2] / x[0]
+    y_c = -0.5 * x[3] / x[1]
+    major = np.sqrt(x_c ** 2 + x[1] / x[0] * y_c ** 2 - 1 / x[0])
+    minor = np.sqrt(major ** 2 * x[0] / x[1])
+
+    return x_c, y_c, major, minor
+
+
+def make_ellipse_arc_2P_tangents(p_1, alpha_1, p_2, alpha_2):
+    """"""
+    x_c, y_c, major, minor = fit_ellipse_2P_tangents(
+        p_1[0], p_1[2], alpha_1, p_2[0], p_2[2], alpha_2
+    )
+
+    centre = Base.Vector([x_c, 0, y_c])
+    if major > minor:
+        major_chord = Base.Vector([major, 0, 0])
+        minor_chord = Base.Vector([0, 0, minor])
+    else:
+        major_chord = Base.Vector([0, 0, minor])
+        minor_chord = Base.Vector([-major, 0, 0])
+
+    vertex_1 = centre + major_chord
+    vertex_2 = centre + minor_chord
+
+    curve = Part.Ellipse(vertex_1, vertex_2, centre)
+
+    return Part.ArcOfEllipse(curve, curve.parameter(p_1), curve.parameter(p_2))
+
+
 def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
     """Make a bezier curve from a set of points.
 
