@@ -177,3 +177,4 @@ tests/BLUEPRINT/test_generated_data
 tests/BLUEPRINT/geometry/test_data/testG-Shell
 tests/BLUEPRINT/geometry/test_data/testh-Loop
 tests/BLUEPRINT/geometry/test_data/testJ-MultiLoop
+tests/bluemira/test_generated_data
