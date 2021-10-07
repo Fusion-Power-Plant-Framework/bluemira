@@ -45,7 +45,7 @@ from bluemira.geometry.error import GeometryError
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
-from bluemira.geometry.display import DisplayOptions
+from bluemira.base.display import DisplayOptions
 
 
 # # =============================================================================
