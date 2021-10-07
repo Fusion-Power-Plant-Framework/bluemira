@@ -37,7 +37,7 @@ from itertools import permutations
 from unittest.mock import patch
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.base.parameter import Parameter
 
 
@@ -529,7 +529,7 @@ def get_module(name):
         module = imp(name)
     except ImportError:
         module = _loadfromspec(name)
-    bluemira_print(f"Loaded {module.__name__}")
+    bluemira_debug(f"Loaded {module.__name__}")
     return module
 
 
