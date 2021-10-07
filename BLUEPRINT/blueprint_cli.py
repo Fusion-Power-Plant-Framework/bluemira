@@ -37,7 +37,8 @@ from typing import Optional
 from BLUEPRINT.base.file import KEYWORD
 from BLUEPRINT.base.file import get_BP_root
 from bluemira.base.logs import set_log_level
-from BLUEPRINT.utilities.tools import get_module, CommentJSONDecoder
+from bluemira.utilities.tools import get_module
+from BLUEPRINT.utilities.tools import CommentJSONDecoder
 
 try:
     from functools import cached_property

@@ -45,7 +45,6 @@ from BLUEPRINT.utilities.tools import (
     norm,
     dot,
     cross,
-    get_module,
 )
 from BLUEPRINT.geometry.geomtools import polyarea
 
@@ -539,30 +538,6 @@ class TestCompareDicts:
             "c": "test",
         }
         assert compare_dicts(a, c, almost_equal=True, verbose=False)
-
-
-class TestGetModule:
-    def test_getmodule(self):
-        test_mod = "BLUEPRINT.utilities.tools"
-        test_mod_loc = get_BP_path("utilities") + "/tools.py"
-
-        for mod in [test_mod, test_mod_loc]:
-            module = get_module(mod)
-            assert module.__name__.rsplit(".", 1)[-1] == test_mod.rsplit(".", 1)[-1]
-
-    def test_getmodule_failures(self):
-
-        # Path doesn't exist
-        with pytest.raises(FileNotFoundError):
-            get_module("/This/file/doesnt/exist.py")
-
-        # Directory exists but not file
-        with pytest.raises(FileNotFoundError):
-            get_module(get_BP_path() + "/README.md")
-
-        # Not a python module
-        with pytest.raises(ImportError):
-            get_module(get_BP_path() + "../README.md")
 
 
 if __name__ == "__main__":
