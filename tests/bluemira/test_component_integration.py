@@ -99,6 +99,7 @@ class SingleNullBluemiraReactor(BluemiraReactor):
 
 
 @pytest.mark.reactor
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "bp_system_name,bm_system_name",
     [
@@ -135,6 +136,7 @@ def test_xz_systems(
 
 
 @pytest.mark.reactor
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "bp_system_name,bm_system_name",
     [
@@ -169,6 +171,7 @@ def test_xy_systems(
 
 
 @pytest.mark.reactor
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "bp_system_name,bm_system_name",
     [
@@ -221,6 +224,7 @@ def test_xz_lengths(
 
 
 @pytest.mark.reactor
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "bp_system_name,bm_system_name",
     [
@@ -275,6 +279,7 @@ def test_xy_lengths(
 
 
 @pytest.mark.reactor
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "bp_system_name,bm_system_name",
     [
@@ -327,6 +332,7 @@ def test_xz_areas(
 
 
 @pytest.mark.reactor
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "bp_system_name,bm_system_name",
     [
@@ -378,6 +384,7 @@ def test_xy_areas(
 
 
 @pytest.mark.reactor
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "bp_system_name,bm_system_name",
     [
@@ -430,6 +437,7 @@ def test_xz_centroids(
 
 
 @pytest.mark.reactor
+@pytest.mark.integration
 @pytest.mark.parametrize(
     "bp_system_name,bm_system_name",
     [
