@@ -755,8 +755,10 @@ def display(
     root = coin.SoSeparator()
 
     for part, option in zip(parts, options):
+        new_part = part.copy()
+        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
         obj = doc.addObject("Part::Feature")
-        obj.Shape = part
+        obj.Shape = new_part
         doc.recompute()
         subgraph = FreeCADGui.subgraphFromObject(obj)
         _colourise(subgraph, option)
