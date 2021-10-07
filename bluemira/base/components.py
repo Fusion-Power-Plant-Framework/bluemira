@@ -28,10 +28,12 @@ from anytree import NodeMixin, RenderTree
 import copy
 from typing import Any, List, Optional, Type, Union
 
+from bluemira.base.display import DisplayOptions, Displayable, Displayer
+
 from .error import ComponentError
 
 
-class Component(NodeMixin):
+class Component(NodeMixin, Displayable):
     """
     The Component is the fundamental building block for a bluemira reactor design. It
     encodes the way that the corresponding part of the reactor will be built, along with
@@ -62,6 +64,7 @@ class Component(NodeMixin):
         self.parent = parent
         if children:
             self.children = children
+        self._displayer = ComponentDisplayer(DisplayOptions())
 
     def __new__(cls, *args, **kwargs) -> Type["Component"]:
         """
@@ -242,3 +245,25 @@ class MagneticComponent(PhysicalComponent):
     @conductor.setter
     def conductor(self, value):
         self._conductor = value
+
+
+class ComponentDisplayer(Displayer):
+    def display(
+        self, component: "Component", options: Optional[DisplayOptions] = None
+    ) -> None:
+        shapes = []
+        override_options = options is not None
+        options = options if override_options else []
+
+        def _append_shape_and_options(comp: Component):
+            if hasattr(comp, "shape") and comp.shape is not None:
+                shapes.append(comp.shape)
+                if not override_options:
+                    options.append(comp._display_options)
+
+        _append_shape_and_options(component)
+
+        for decendant in component.descendants or []:
+            _append_shape_and_options(decendant)
+
+        super().display(shapes, options)
