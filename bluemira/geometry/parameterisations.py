@@ -284,8 +284,33 @@ class TripleArc(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        wire = None
-        return BluemiraWire(wire)
+        x1, z1, sl, f1, f2, a1, a2 = self.variables.values
+        a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
+
+        p1 = [x1, 0, z1]
+        p15 = [x1 + f1 * (1 - np.cos(a1 / 2)), 0, z1 + f1 * np.sin(a1 / 2)]
+        p2 = [x1 + f1 * (1 - np.cos(a1)), 0, z1 + f1 * np.sin(a1)]
+        p25 = [
+            p2[0] + f2 * (np.cos(a1 / 2) - np.cos((a1 + a2) / 2)),
+            0,
+            p2[2] + 0.5 * f2 * (np.sin((a1 + a2) / 2) - np.sin(a1 / 2)),
+        ]
+        p3 = [
+            p2[0] + f2 * (np.cos(a1) - np.cos(a1 + a2)),
+            0,
+            p2[2] + f2 * (np.sin(a1 + a2) - np.sin(a1)),
+        ]
+        rl = (p3[2] - z1) / np.sin(np.pi - a1 - a2)
+        p4 = [
+            p3[0] + rl * (1 - np.cos(np.pi - a1 - a2)),
+            0,
+            p3[2] - rl * np.sin(a1 + a2),
+        ]
+        p5 = [x1, 0, z1 - sl]
+
+        wires = [make_polygon([p5, p1])]
+
+        return BluemiraWire(concatenate_wires(wires))
 
 
 class PolySpline(GeometryParameterisation):
