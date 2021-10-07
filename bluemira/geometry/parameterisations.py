@@ -55,16 +55,14 @@ class GeometryParameterisation(abc.ABC):
 
     __slots__ = ("name", "variables")
 
-    def __init__(self, name, variables):
+    def __init__(self, variables):
         """
         Parameters
         ----------
-        name: str
-            Name of the GeometryParameterisation
         variables: OptVariables
             Set of optimisation variables of the GeometryParameterisation
         """
-        self.name = name
+        self.name = self.__class__.__name__
         self.variables = variables
         super().__init__()
 
@@ -140,6 +138,8 @@ class PrincetonD(GeometryParameterisation):
     Princeton D geometry parameterisation.
     """
 
+    __slots__ = ()
+
     def __init__(self):
         variables = OptVariables(
             [
@@ -152,7 +152,7 @@ class PrincetonD(GeometryParameterisation):
             ],
             frozen=True,
         )
-        super().__init__(self.__class__.__name__, variables)
+        super().__init__(variables)
 
     def create_shape(self, n_points=200):
         """
@@ -254,6 +254,8 @@ class TripleArc(GeometryParameterisation):
     Triple-arc up-down symmetric geometry parameterisation.
     """
 
+    __slots__ = ()
+
     def __init__(self):
         variables = OptVariables(
             [
@@ -274,7 +276,7 @@ class TripleArc(GeometryParameterisation):
             ],
             frozen=True,
         )
-        super().__init__(self.__class__.__name__, variables)
+        super().__init__(variables)
 
     def create_shape(self):
         """
@@ -328,30 +330,28 @@ class TripleArc(GeometryParameterisation):
         p6 = [p2[0], 0, -p2[2]]
         p65 = [p15[0], 0, -p15[2]]
         p7 = [p1[0], 0, -p1[2]]
-        wires = [
-            make_circle_arc_3P(p1, p15, p2),
-            make_circle_arc_3P(p2, p25, p3),
-            make_circle_arc_3P(p3, p35, p4),
-            make_circle_arc_3P(p4, p45, p5),
-            make_circle_arc_3P(p5, p55, p6),
-            make_circle_arc_3P(p6, p65, p7),
-        ]
-        wire = concatenate_wires(wires)
+
+        wire = concatenate_wires(
+            [
+                make_circle_arc_3P(p1, p15, p2),
+                make_circle_arc_3P(p2, p25, p3),
+                make_circle_arc_3P(p3, p35, p4),
+                make_circle_arc_3P(p4, p45, p5),
+                make_circle_arc_3P(p5, p55, p6),
+                make_circle_arc_3P(p6, p65, p7),
+            ]
+        )
+        # Add straight segment on the inboard
         wire = close_wire(wire)
         return BluemiraWire(wire)
-
-        wires = []
-        wires.append(make_circle_arc_3P(p1, p15, p2))
-        wires.append(make_circle_arc_3P(p2, p25, p3))
-        wires.append(make_circle_arc_3P(p3, p35, p4))
-
-        return BluemiraWire(concatenate_wires(wires))
 
 
 class PolySpline(GeometryParameterisation):
     """
     Poly-Bezier-spline geometry parameterisation.
     """
+
+    __slots__ = ()
 
     def __init__(self):
         variables = OptVariables(
@@ -373,7 +373,7 @@ class PolySpline(GeometryParameterisation):
             ],
             frozen=True,
         )
-        super().__init__(self.__class__.__name__, variables)
+        super().__init__(variables)
 
     def create_shape(self):
         """
@@ -393,6 +393,8 @@ class PictureFrame(GeometryParameterisation):
     Picture-frame geometry parameterisation.
     """
 
+    __slots__ = ()
+
     def __init__(self):
         variables = OptVariables(
             [
@@ -411,7 +413,7 @@ class PictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
-        super().__init__(self.__class__.__name__, variables)
+        super().__init__(variables)
 
     def create_shape(self):
         """
@@ -469,6 +471,8 @@ class TaperedPictureFrame(GeometryParameterisation):
     Tapered picture-frame geometry parameterisation.
     """
 
+    __slots__ = ()
+
     def __init__(self):
         variables = OptVariables(
             [
@@ -489,7 +493,7 @@ class TaperedPictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
-        super().__init__(self.__class__.__name__, variables)
+        super().__init__(variables)
 
     def create_shape(self):
         """
