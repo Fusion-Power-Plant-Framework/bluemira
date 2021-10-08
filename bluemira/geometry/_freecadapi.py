@@ -238,7 +238,7 @@ def fit_ellipse_2P_tangents(x_1, y_1, alpha_1, x_2, y_2, alpha_2):
 
 
 def make_ellipse_arc_2P_tangents(p_1, alpha_1, p_2, alpha_2):
-    """"""
+
     x_c, y_c, major, minor = fit_ellipse_2P_tangents(
         p_1[0], p_1[2], alpha_1, p_2[0], p_2[2], alpha_2
     )
@@ -260,7 +260,7 @@ def make_ellipse_arc_2P_tangents(p_1, alpha_1, p_2, alpha_2):
 
 
 def make_bezier_2P_tangents(p_1, alpha_1, p_2, alpha_2):
-    """"""
+
     from bluemira.geometry._deprecated_tools import vector_intersect
 
     alpha_1, alpha_2 = np.deg2rad(alpha_1), np.deg2rad(alpha_2)
