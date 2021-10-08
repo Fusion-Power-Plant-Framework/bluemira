@@ -2382,17 +2382,13 @@ class FirstWallDN(FirstWall):
         sol_target_end = target_par * target_length_sol * sign
 
         # Swap if we got the wrong way round
-        swap_points = False
-
         if outer_target:
-            if sol_target_end[0] < pfr_target_end[0]:
-                swap_points = True
+            swap_points = sol_target_end[0] < pfr_target_end[0]
         # for the inner target
         else:
-            if not vertical_target and sol_target_end[0] > pfr_target_end[0]:
-                swap_points = True
-            elif vertical_target and sol_target_end[0] < pfr_target_end[0]:
-                swap_points = True
+            swap_points = (
+                not vertical_target and sol_target_end[0] > pfr_target_end[0]
+            ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
 
         if swap_points:
             tmp = pfr_target_end
@@ -2520,10 +2516,14 @@ class FirstWallDN(FirstWall):
         # Select the degree of the fitting polynomial and
         # the flux lines that will guide the divertor leg shape
         if self.inputs.get("DEMO_DN", False):
-            degree = 1
+            degree_in = degree_out = self.inputs.get(
+                "outer_leg_sol_polyfit_degree",
+                self.inputs.get("outer_leg_pfr_polyfit_degree", 1),
+            )
             outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
         else:
-            degree = 2
+            degree_out = self.inputs.get("outer_leg_sol_polyfit_degree", 3)
+            degree_in = self.inputs.get("outer_leg_pfr_polyfit_degree", 3)
             outer_leg_external_guide_line = self.flux_surface_lfs[-1]
             outer_leg_internal_guide_line = flux_loop
 
@@ -2555,7 +2555,7 @@ class FirstWallDN(FirstWall):
             internal_guide_line.z,
             [middle_point[0], middle_point[1]],
             outer_target_internal_point,
-            degree,
+            degree_in,
         )
 
         # Modify the clipped flux line curve to start at the top point of the
@@ -2565,7 +2565,7 @@ class FirstWallDN(FirstWall):
             external_guide_line.z,
             [div_top_right, z_x_point],
             outer_target_external_point,
-            degree,
+            degree_out,
         )
 
         # Connect the inner and outer parts of the outer leg
@@ -2601,6 +2601,11 @@ class FirstWallDN(FirstWall):
         """
         # Find the tangent to the approriate flux loop at the outer strike point
         tangent = self.get_tangent_vector(inner_strike, flux_loop)
+
+        if self.inputs.get("DEMO_DN", False):
+            degree = self.inputs.get("inner_leg_polyfit_degree", 1)
+        else:
+            degree = self.inputs.get("inner_leg_polyfit_degree", 2)
 
         # Get the outer target points
         (
@@ -2647,7 +2652,7 @@ class FirstWallDN(FirstWall):
             inner_leg_central_guide_line.z,
             [middle_point[0], middle_point[1]],
             inner_target_internal_point,
-            2,
+            degree,
         )
 
         # Modify the clipped flux line curve to start at the top point of the
@@ -2657,7 +2662,7 @@ class FirstWallDN(FirstWall):
             inner_leg_central_guide_line.z,
             [div_top_left, z_x_point],
             inner_target_external_point,
-            2,
+            degree,
         )
 
         # Connect the inner and outer parts of the outer leg
