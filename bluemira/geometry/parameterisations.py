@@ -44,7 +44,14 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.equilibria.shapes import flux_surface_johner_quadrants
 
 
-__all__ = ["GeometryParameterisation", "PrincetonD"]
+__all__ = [
+    "GeometryParameterisation",
+    "PrincetonD",
+    "TripleArc",
+    "JohnerLCFS",
+    "PictureFrame",
+    "TaperedPictureFrame",
+]
 
 
 class GeometryParameterisation(abc.ABC):
