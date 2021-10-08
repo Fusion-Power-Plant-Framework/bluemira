@@ -29,9 +29,9 @@ from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry.error import GeometryParameterisationError
-from bluemira.geometry._freecadapi import (
+from bluemira.geometry.tools import (
     make_bspline,
-    close_wire,
+    wire_closure,
     make_polygon,
     make_circle,
     make_circle_arc_3P,
@@ -132,9 +132,14 @@ class GeometryParameterisation(abc.ABC):
         return self.create_shape().discretize(ndiscr=n_points, byedges=by_edges).T
 
     @abc.abstractmethod
-    def create_shape(self, **kwargs):
+    def create_shape(self, label="", **kwargs):
         """
         Make a CAD representation of the geometry.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
 
         Returns
         -------
@@ -165,12 +170,14 @@ class PrincetonD(GeometryParameterisation):
         )
         super().__init__(variables)
 
-    def create_shape(self, n_points=200):
+    def create_shape(self, label="", n_points=200):
         """
         Make a CAD representation of the Princeton D.
 
         Parameters
         ----------
+        label: str, default = ""
+            Label to give the wire
         n_points: int
             The number of points to use when calculating the geometry of the Princeton
             D.
@@ -185,9 +192,9 @@ class PrincetonD(GeometryParameterisation):
             n_points,
         )
         xyz = np.array([x, np.zeros(n_points), z])
-        wire = make_bspline(xyz.T)
-        wire = close_wire(wire)
-        return BluemiraWire(wire)
+        outer_arc = make_bspline(xyz.T, label="outer_arc")
+        straight_segment = wire_closure(outer_arc, label="straight_segment")
+        return BluemiraWire([outer_arc, straight_segment], label=label)
 
     @staticmethod
     def _princeton_d(x1, x2, dz, npoints=200):
@@ -289,9 +296,14 @@ class TripleArc(GeometryParameterisation):
         )
         super().__init__(variables)
 
-    def create_shape(self):
+    def create_shape(self, label=""):
         """
         Make a CAD representation of the triple arc.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
 
         Returns
         -------
@@ -342,19 +354,19 @@ class TripleArc(GeometryParameterisation):
         p65 = [p15[0], 0, -p15[2]]
         p7 = [p1[0], 0, -p1[2]]
 
-        wire = concatenate_wires(
+        wire = BluemiraWire(
             [
-                make_circle_arc_3P(p1, p15, p2),
-                make_circle_arc_3P(p2, p25, p3),
-                make_circle_arc_3P(p3, p35, p4),
-                make_circle_arc_3P(p4, p45, p5),
-                make_circle_arc_3P(p5, p55, p6),
-                make_circle_arc_3P(p6, p65, p7),
+                make_circle_arc_3P(p1, p15, p2, label="upper_inner_arc"),
+                make_circle_arc_3P(p2, p25, p3, label="upper_mid_arc"),
+                make_circle_arc_3P(p3, p35, p4, label="upper_outer_arc"),
+                make_circle_arc_3P(p4, p45, p5, label="lower_outer_arc"),
+                make_circle_arc_3P(p5, p55, p6, label="lower_mid_arc"),
+                make_circle_arc_3P(p6, p65, p7, label="lower_inner_arc"),
             ]
         )
-        # Add straight segment on the inboard
-        wire = close_wire(wire)
-        return BluemiraWire(wire)
+        straight_segment = wire_closure(wire, label="straight_segment")
+
+        return BluemiraWire([wire, straight_segment], label=label)
 
 
 class PolySpline(GeometryParameterisation):
@@ -386,9 +398,14 @@ class PolySpline(GeometryParameterisation):
         )
         super().__init__(variables)
 
-    def create_shape(self):
+    def create_shape(self, label=""):
         """
         Make a CAD representation of the poly spline.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
 
         Returns
         -------
@@ -426,9 +443,14 @@ class PictureFrame(GeometryParameterisation):
         )
         super().__init__(variables)
 
-    def create_shape(self):
+    def create_shape(self, label=""):
         """
         Make a CAD representation of the picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
 
         Returns
         -------
@@ -450,31 +472,63 @@ class PictureFrame(GeometryParameterisation):
         c4 = [x1 + ri, 0, z1 - ri]
         axis = [0, -1, 0]
 
-        wires = [make_polygon([p1, p2])]  # Inner limb
+        wires = [make_polygon([p1, p2], label="inner_limb")]
 
         if ri != 0.0:
-            # Inner lower corner
-            wires.append(make_circle(ri, c1, startangle=180, endangle=270, axis=axis))
+            wires.append(
+                make_circle(
+                    ri,
+                    c1,
+                    startangle=180,
+                    endangle=270,
+                    axis=axis,
+                    label="inner_lower_corner",
+                )
+            )
 
-        wires.append(make_polygon([p3, p4]))  # Lower limb
+        wires.append(make_polygon([p3, p4], label="lower_limb"))
 
         if ro != 0.0:
-            # Outer lower corner
-            wires.append(make_circle(ro, c2, startangle=270, endangle=360, axis=axis))
+            wires.append(
+                make_circle(
+                    ro,
+                    c2,
+                    startangle=270,
+                    endangle=360,
+                    axis=axis,
+                    label="outer_lower_corner",
+                )
+            )
 
-        wires.append(make_polygon([p5, p6]))  # Outer limb
+        wires.append(make_polygon([p5, p6], label="outer_limb"))
 
         if ro != 0.0:
-            # Outer upper corner
-            wires.append(make_circle(ro, c3, startangle=0, endangle=90, axis=axis))
+            wires.append(
+                make_circle(
+                    ro,
+                    c3,
+                    startangle=0,
+                    endangle=90,
+                    axis=axis,
+                    label="outer_upper_corner",
+                )
+            )
 
-        wires.append(make_polygon([p7, p8]))  # Upper limb
+        wires.append(make_polygon([p7, p8], label="upper_limb"))
 
         if ri != 0.0:
-            # Inner upper corner
-            wires.append(make_circle(ri, c4, startangle=90, endangle=180, axis=axis))
+            wires.append(
+                make_circle(
+                    ri,
+                    c4,
+                    startangle=90,
+                    endangle=180,
+                    axis=axis,
+                    label="inner_upper_corner",
+                )
+            )
 
-        return BluemiraWire(concatenate_wires(wires))
+        return BluemiraWire(wires, label=label)
 
 
 class TaperedPictureFrame(GeometryParameterisation):
@@ -506,9 +560,14 @@ class TaperedPictureFrame(GeometryParameterisation):
         )
         super().__init__(variables)
 
-    def create_shape(self):
+    def create_shape(self, label=""):
         """
         Make a CAD representation of the tapered picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
 
         Returns
         -------
@@ -531,19 +590,25 @@ class TaperedPictureFrame(GeometryParameterisation):
         c2 = [x3 - r, 0, z3 - r]
         axis = [0, -1, 0]
 
-        wires = [make_polygon([p1, p2, p3, p4, p5, p6, p7, p8])]  # Inner limb
+        wires = [make_polygon([p1, p2, p3, p4, p5, p6, p7, p8], label="inner_limb")]
 
         if r != 0.0:
-            # Lower corner
-            wires.append(make_circle(r, c1, startangle=270, endangle=360, axis=axis))
+            wires.append(
+                make_circle(
+                    r, c1, startangle=270, endangle=360, axis=axis, label="lower_corner"
+                )
+            )
 
-        wires.append(make_polygon([p9, p10]))  # Outer corner
+        wires.append(make_polygon([p9, p10], label="outer_limb"))
 
         if r != 0.0:
-            # Upper corner
-            wires.append(make_circle(r, c2, startangle=0, endangle=90, axis=axis))
+            wires.append(
+                make_circle(
+                    r, c2, startangle=0, endangle=90, axis=axis, label="upper_corner"
+                )
+            )
 
-        return BluemiraWire(concatenate_wires(wires))
+        return BluemiraWire(wires, label=label)
 
 
 class JohnerLCFS(GeometryParameterisation):
@@ -585,14 +650,30 @@ class JohnerLCFS(GeometryParameterisation):
 
         super().__init__(variables)
 
-    def create_shape(self):
+    def create_shape(self, label="LCFS"):
+        """
+        Make a CAD representation of the Johner LCFS.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
         n = 1000
         x_quadrants, z_quadrants = flux_surface_johner_quadrants(
             *self.variables.values, n=n
         )
 
         wires = []
-        for x_q, z_q in zip(x_quadrants, z_quadrants):
-            wires.append(make_bspline(np.array([x_q, np.zeros(len(x_q)), z_q]).T))
+        labels = ["upper_inner", "upper_outer", "lower_outer", "lower_inner"]
+        for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels):
+            wires.append(
+                make_bspline(np.array([x_q, np.zeros(len(x_q)), z_q]).T), label=lab
+            )
 
-        return BluemiraWire(concatenate_wires(wires))
+        return BluemiraWire(wires, label=label)

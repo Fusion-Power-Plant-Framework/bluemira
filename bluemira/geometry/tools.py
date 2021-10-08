@@ -36,7 +36,7 @@ from .solid import BluemiraSolid
 import numpy as np
 
 # import typing
-from typing import Union
+from typing import Union, List
 
 
 # # =============================================================================
