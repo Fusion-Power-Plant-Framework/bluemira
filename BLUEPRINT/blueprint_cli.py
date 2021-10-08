@@ -507,7 +507,11 @@ def cli(
     outputs.copy_files(inputs)
 
     # Update generated_data_root to value given in CLI options.
-    inputs.build_config_dict["generated_data_root"] = inputs.output_root_path
+    inputs.build_config_dict["generated_data_root"] = str(inputs.output_root_path)
+
+    # Update generated_data_root to value given in CLI options.
+    inputs.build_config_dict["reference_data_root"] = str(inputs.indir)
+
     dump_json(inputs.build_config_dict, outputs.build_config)
 
     # Update reactor name and make a copy of reference data to a subdirectory using the
