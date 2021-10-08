@@ -53,6 +53,7 @@ from BLUEPRINT.cad.cadtools import (
     make_axis,
     make_face,
     make_mixed_shell,
+    make_mixed_face,
     translate_shape,
     make_compound,
     sew_shapes,
@@ -225,7 +226,7 @@ class TFCoilCAD(ComponentCAD):
             geom = make_mixed_shell(face)
 
         elif isinstance(face, Loop):
-            geom = make_face(face)
+            geom = make_mixed_face(face)
 
         else:
             raise TypeError("The face argument must be either a Shell or a Loop")
