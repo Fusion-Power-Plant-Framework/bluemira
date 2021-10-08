@@ -276,15 +276,15 @@ def flux_surface_johner_quadrants(
         x_lo = alpha_0_pos + alpha_pos * np.cos(theta)
         z_lo = beta_pos * np.sin(theta)
     elif t_pos == 0.5:
-        z_lo = np.linspace(-kappa_u, 0, n_pts)
-        x_lo = -1 - z_lo ** 2 * (1 + delta_u) / kappa_u ** 2
+        z_lo = np.linspace(-kappa_l, 0, n_pts)
+        x_lo = -1 - z_lo ** 2 * (1 + delta_l) / kappa_l ** 2
     elif t_pos == 1:
-        z_lo = np.linspace(-kappa_u, 0, n_pts)
-        x_lo = 1 - z_lo * (1 + delta_u) / kappa_u
+        z_lo = np.linspace(-kappa_l, 0, n_pts)
+        x_lo = 1 - z_lo * (1 + delta_l) / kappa_l
     elif t_pos > 0.5:
         phi_l_pos = np.arcsinh(np.sqrt(2 * t_pos - 1) / (1 - t_pos))
         alpha_0_pos, alpha_pos, beta_pos = calc_angles_pos_above(delta_l, kappa_l, t_pos)
-        phi = np.linspace(0, phi_l_pos, n_pts)
+        phi = np.linspace(-phi_l_pos, 0, n_pts)
         x_lo = alpha_0_pos + alpha_pos * np.cosh(phi)
         z_lo = beta_pos * np.sinh(phi)
     else:
