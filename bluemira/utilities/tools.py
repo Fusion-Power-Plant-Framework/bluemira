@@ -510,6 +510,66 @@ def clip(val, val_min, val_max):
     return val
 
 
+# ======================================================================================
+# Coordinate system transformations
+# ======================================================================================
+
+
+def cartesian_to_polar(x, z, x_ref=0, z_ref=0):
+    """
+    Convert from 2-D Cartesian coordinates to polar coordinates about a reference point.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        Radial coordinates
+    z: np.ndarray
+        Vertical coordinates
+    x_ref: float
+        Reference radial coordinate
+    z_ref: float
+        Reference vertical coordinate
+
+    Returns
+    -------
+    r: np.ndarray
+        Polar radial coordinates
+    phi: np.ndarray
+        Polar angle coordinates
+    """
+    xi, zi = x - x_ref, z - z_ref
+    r = np.hypot(xi, zi)
+    phi = np.arctan2(zi, xi)
+    return r, phi
+
+
+def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
+    """
+    Convert from 2-D polar to Cartesian coordinates about a reference point.
+
+    Parameters
+    ----------
+    r: np.ndarray
+        Polar radial coordinates
+    phi: np.ndarray
+        Polar angle coordinates
+    x_ref: float
+        Reference radial coordinate
+    z_ref: float
+        Reference vertical coordinate
+
+    Returns
+    -------
+    x: np.ndarray
+        Radial coordinates
+    z: np.ndarray
+        Vertical coordinate
+    """
+    x = x_ref + r * np.cos(phi)
+    z = z_ref + r * np.sin(phi)
+    return x, z
+
+
 def get_module(name):
     """
     Load module dynamically.

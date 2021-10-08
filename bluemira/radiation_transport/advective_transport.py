@@ -25,179 +25,20 @@ A simplified 2-D solver for calculating charged particle heat loads.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from copy import deepcopy
+
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_tools import (
     loop_plane_intersect,
-    join_intersect,
-    get_angle_between_points,
-    check_linesegment,
 )
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.radiation_transport.error import AdvectionTransportError
 
 
 __all__ = ["ChargedParticleSolver"]
-
-
-class OpenFluxSurface:
-    """
-    Utility class for handling flux surface geometries.
-    """
-
-    __slots__ = [
-        "loop",
-        "x_mp",
-        "z_mp",
-        "x_lfs_inter",
-        "z_lfs_inter",
-        "x_hfs_inter",
-        "z_hfs_inter",
-        "alpha_lfs",
-        "alpha_hfs",
-        "lfs_loop",
-        "hfs_loop",
-    ]
-
-    def __init__(self, loop):
-        if loop.closed:
-            raise AdvectionTransportError(
-                "OpenFluxSurface cannot be made from a closed geometry."
-            )
-        self.loop = loop
-
-        # Constructors
-        self.x_mp = None
-        self.z_mp = None
-        self.x_lfs_inter = None
-        self.z_lfs_inter = None
-        self.x_hfs_inter = None
-        self.z_hfs_inter = None
-        self.alpha_lfs = None
-        self.alpha_hfs = None
-        self.lfs_loop = None
-        self.hfs_loop = None
-
-    def split_LFS_HFS(self, plane, o_point):
-        """
-        Split the OpenFluxSurface into low-field side and high-field side surfaces.
-
-        Parameters
-        ----------
-        plane: Plane
-            The x-y cutting plane
-        o_point: O-point
-            The magnetic centre of the plasma
-        """
-        intersections = loop_plane_intersect(self.loop, plane)
-        x_inter = intersections.T[0]
-
-        # Pick the first intersection, travelling from the o_point outwards
-        deltas = x_inter - o_point.x
-        arg_inter = np.argmax(deltas > 0)
-        self.x_mp = x_inter[arg_inter]
-        self.z_mp = o_point.z
-
-        # Split the flux surface geometry into LFS and HFS geometries
-        loop = self.loop
-        delta = 1e-1 if o_point.x < self.x_mp else -1e-1
-        radial_line = Loop(x=[o_point.x, self.x_mp + delta], z=[self.z_mp, self.z_mp])
-        # Add the intersection point to the loop
-        arg_inter = join_intersect(loop, radial_line, get_arg=True)[0]
-
-        # Split the flux surface geometry
-        loop1 = Loop.from_array(loop[: arg_inter + 1])
-        loop2 = Loop.from_array(loop[arg_inter:])
-
-        loop1 = self._reset_direction(loop1)
-        loop2 = self._reset_direction(loop2)
-
-        # Sort the segments into LFS (outboard) and HFS (inboard) geometries
-        if loop1.z[1] > self.z_mp:
-            self.lfs_loop = loop2
-            self.hfs_loop = loop1
-        else:
-            self.lfs_loop = loop1
-            self.hfs_loop = loop2
-
-    def _reset_direction(self, loop):
-        if loop.argmin([self.x_mp, self.z_mp]) != 0:
-            loop.reverse()
-        return loop
-
-    def clip(self, first_wall):
-        """
-        Clip the LFS and HFS geometries to a first wall.
-
-        Parameters
-        ----------
-        first_wall: Loop
-            The geometry of the first wall to clip the OpenFluxSurface to
-        """
-        first_wall = first_wall.copy()
-        (
-            self.lfs_loop,
-            self.x_lfs_inter,
-            self.z_lfs_inter,
-            self.alpha_lfs,
-        ) = self._clipper(self.lfs_loop, first_wall)
-        (
-            self.hfs_loop,
-            self.x_hfs_inter,
-            self.z_hfs_inter,
-            self.alpha_hfs,
-        ) = self._clipper(self.hfs_loop, first_wall)
-
-    def _clipper(self, loop, first_wall):
-        args = join_intersect(loop, first_wall, get_arg=True)
-
-        # Because we oriented the loop the "right" way, the first intersection
-        # is at the smallest argument
-        loop = Loop.from_array(loop[: min(args) + 1])
-        loop = self._reset_direction(loop)
-        x_inter = loop.x[-1]
-        z_inter = loop.z[-1]
-
-        fw_arg = int(first_wall.argmin([x_inter, z_inter]))
-
-        if fw_arg + 1 == len(first_wall):
-            pass
-        elif check_linesegment(
-            first_wall.d2.T[fw_arg],
-            first_wall.d2.T[fw_arg + 1],
-            np.array([x_inter, z_inter]),
-        ):
-            fw_arg = fw_arg + 1
-
-        # Relying on the fact that first wall is ccw, get the intersection angle
-        alpha = get_angle_between_points(loop[-2], loop[-1], first_wall[fw_arg])
-
-        return loop, x_inter, z_inter, alpha
-
-    def plot(self, ax=None, **kwargs):
-        """
-        Plot the OpenFluxSurface.
-        """
-        if ax is None:
-            ax = plt.gca()
-
-        if "linewidth" not in kwargs:
-            kwargs["linewidth"] = 0.01
-
-        if self.lfs_loop:
-            self.lfs_loop.plot(ax, color="b", **kwargs)
-            self.hfs_loop.plot(ax, color="r", **kwargs)
-        else:
-            self.loop.plot(ax, color="r", **kwargs)
-
-    def copy(self):
-        """
-        Make a deep copy of the OpenFluxSurface.
-        """
-        return deepcopy(self)
 
 
 class ChargedParticleSolver:
@@ -232,7 +73,10 @@ class ChargedParticleSolver:
 
         # Constructors
         self.first_wall = None
-        self.flux_surfaces = None
+        self.flux_surfaces_ob_lfs = None
+        self.flux_surfaces_ob_hfs = None
+        self.flux_surfaces_ib_lfs = None
+        self.flux_surfaces_ib_hfs = None
         self.x_sep_omp = None
         self.x_sep_imp = None
         self.result = None
@@ -242,6 +86,26 @@ class ChargedParticleSolver:
         self._o_point = o_points[0]
         z = self._o_point.z
         self._yz_plane = Plane([0, 0, z], [1, 0, z], [1, 1, z])
+
+    @property
+    def flux_surfaces(self):
+        """
+        All flux surfaces in the ChargedParticleSolver.
+
+        Returns
+        -------
+        flux_surfaces: List[PartialOpenFluxSurface]
+        """
+        flux_surfaces = []
+        for group in [
+            self.flux_surfaces_ob_lfs,
+            self.flux_surfaces_ob_hfs,
+            self.flux_surfaces_ib_lfs,
+            self.flux_surfaces_ib_hfs,
+        ]:
+            if group:
+                flux_surfaces.extend(group)
+        return flux_surfaces
 
     def _check_params(self):
         """
@@ -281,24 +145,12 @@ class ChargedParticleSolver:
         """
         Get arrays of flux surface values.
         """
-        x_mp = np.array([fs.x_mp for fs in flux_surfaces])
-        z_mp = np.array([fs.z_mp for fs in flux_surfaces])
-        x_lfs_inter = np.array([fs.x_lfs_inter for fs in flux_surfaces])
-        z_lfs_inter = np.array([fs.z_lfs_inter for fs in flux_surfaces])
-        x_hfs_inter = np.array([fs.x_hfs_inter for fs in flux_surfaces])
-        z_hfs_inter = np.array([fs.z_hfs_inter for fs in flux_surfaces])
-        alpha_lfs = np.array([fs.alpha_lfs for fs in flux_surfaces])
-        alpha_hfs = np.array([fs.alpha_hfs for fs in flux_surfaces])
-        return (
-            x_mp,
-            z_mp,
-            x_lfs_inter,
-            z_lfs_inter,
-            x_hfs_inter,
-            z_hfs_inter,
-            alpha_lfs,
-            alpha_hfs,
-        )
+        x_mp = np.array([fs.x_start for fs in flux_surfaces])
+        z_mp = np.array([fs.z_start for fs in flux_surfaces])
+        x_fw = np.array([fs.x_end for fs in flux_surfaces])
+        z_fw = np.array([fs.z_end for fs in flux_surfaces])
+        alpha = np.array([fs.alpha for fs in flux_surfaces])
+        return x_mp, z_mp, x_fw, z_fw, alpha
 
     def _get_sep_out_intersection(self, outboard=True):
         """
@@ -332,15 +184,17 @@ class ChargedParticleSolver:
 
         return x_sep_mp, x_out_mp
 
-    def _make_flux_surface(self, x, z):
+    def _make_flux_surfaces(self, x, z):
         """
-        Make an individual flux surface through a point.
+        Make individual PartialOpenFluxSurfaces through a point.
         """
         loop = find_flux_surface_through_point(
             self.eq.x, self.eq.z, self.eq.psi(), x, z, self.eq.psi(x, z)
         )
-        loop = Loop(x=loop[0], z=loop[1])
-        return OpenFluxSurface(loop)
+        loop = Loop(loop[0], z=loop[1])
+        f_s = OpenFluxSurface(loop)
+        lfs, hfs = f_s.split(self._o_point, plane=self._yz_plane)
+        return lfs, hfs
 
     def _make_flux_surfaces_ob(self):
         """
@@ -348,13 +202,14 @@ class ChargedParticleSolver:
         """
         self.x_sep_omp, x_out_omp = self._get_sep_out_intersection(outboard=True)
 
-        self.flux_surfaces = []
+        self.flux_surfaces_ob_lfs = []
+        self.flux_surfaces_ob_hfs = []
+
         x = self.x_sep_omp + self.dx_mp
         while x < x_out_omp:
-            f_s = self._make_flux_surface(x, self._o_point.z)
-
-            f_s.split_LFS_HFS(self._yz_plane, self._o_point)
-            self.flux_surfaces.append(f_s)
+            lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
+            self.flux_surfaces_ob_lfs.append(lfs)
+            self.flux_surfaces_ob_hfs.append(hfs)
             x += self.dx_mp
 
     def _make_flux_surfaces_ib(self):
@@ -363,17 +218,14 @@ class ChargedParticleSolver:
         """
         self.x_sep_imp, x_out_imp = self._get_sep_out_intersection(outboard=False)
 
-        ib_flux_surfaces = []
-
+        self.flux_surfaces_ib_lfs = []
+        self.flux_surfaces_ib_hfs = []
         x = self.x_sep_imp - self.dx_mp
         while x > x_out_imp:
-            f_s = self._make_flux_surface(x, self._o_point.z)
-            f_s.split_LFS_HFS(self._yz_plane, self._o_point)
-            ib_flux_surfaces.append(f_s)
-
+            lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
+            self.flux_surfaces_ib_lfs.append(lfs)
+            self.flux_surfaces_ib_hfs.append(hfs)
             x -= self.dx_mp
-
-        self.flux_surfaces = [self.flux_surfaces, ib_flux_surfaces]
 
     def analyse(self, first_wall):
         """
@@ -414,16 +266,12 @@ class ChargedParticleSolver:
         for flux_surface in self.flux_surfaces:
             flux_surface.clip(first_wall)
 
-        (
-            x_omp,
-            z_omp,
-            x_lfs_inter,
-            z_lfs_inter,
-            x_hfs_inter,
-            z_hfs_inter,
-            alpha_lfs,
-            alpha_hfs,
-        ) = self._get_arrays(self.flux_surfaces)
+        x_omp, z_omp, x_lfs_inter, z_lfs_inter, alpha_lfs = self._get_arrays(
+            self.flux_surfaces_ob_lfs
+        )
+        _, _, x_hfs_inter, z_hfs_inter, alpha_hfs = self._get_arrays(
+            self.flux_surfaces_ob_hfs
+        )
 
         # Calculate values at OMP
         dx_omp = x_omp - self.x_sep_omp
@@ -465,34 +313,30 @@ class ChargedParticleSolver:
         self._make_flux_surfaces_ob()
         self._make_flux_surfaces_ib()
 
-        ob_flux_surfaces, ib_flux_surfaces = self.flux_surfaces
-
         # Find the intersections of the flux surfaces with the first wall
-        for flux_surface in ib_flux_surfaces:
-            flux_surface.clip(first_wall)
-        for flux_surface in ob_flux_surfaces:
+        for flux_surface in self.flux_surfaces:
             flux_surface.clip(first_wall)
 
-        (
-            x_imp,
-            z_imp,
-            x_hfs_down_inter,
-            z_hfs_down_inter,
-            x_hfs_up_inter,
-            z_hfs_up_inter,
-            alpha_hfs_up,
-            alpha_hfs_down,
-        ) = self._get_arrays(ib_flux_surfaces)
         (
             x_omp,
             z_omp,
             x_lfs_down_inter,
             z_lfs_down_inter,
-            x_lfs_up_inter,
-            z_lfs_up_inter,
-            alpha_lfs_up,
             alpha_lfs_down,
-        ) = self._get_arrays(ob_flux_surfaces)
+        ) = self._get_arrays(self.flux_surfaces_ob_lfs)
+        _, _, x_lfs_up_inter, z_lfs_up_inter, alpha_lfs_up = self._get_arrays(
+            self.flux_surfaces_ob_hfs
+        )
+        (
+            x_imp,
+            z_imp,
+            x_hfs_down_inter,
+            z_hfs_down_inter,
+            alpha_hfs_down,
+        ) = self._get_arrays(self.flux_surfaces_ib_lfs)
+        _, _, x_hfs_up_inter, z_hfs_up_inter, alpha_hfs_up = self._get_arrays(
+            self.flux_surfaces_ib_hfs
+        )
 
         # Calculate values at OMP
         dx_omp = x_omp - self.x_sep_omp
@@ -603,13 +447,7 @@ class ChargedParticleSolver:
         for sep in separatrix:
             sep.plot(ax, linewidth=0.12)
 
-        if isinstance(self.flux_surfaces[0], list):
-            flux_surfaces = self.flux_surfaces[0]
-            flux_surfaces.extend(self.flux_surfaces[1])
-        else:
-            flux_surfaces = self.flux_surfaces
-
-        for f_s in flux_surfaces:
+        for f_s in self.flux_surfaces:
             f_s.plot(ax, linewidth=0.01)
 
         cm = ax.scatter(
