@@ -1354,11 +1354,11 @@ class FirstWall(EqInputs, ReactorSystem):
             outboard = boolean_2d_difference_loop(outboard, div)
 
         # Offset each loop with the appropriate thickness
-        inboard = inboard.offset_clipper(tk_inboard)
-        outboard = outboard.offset_clipper(tk_outboard)
+        inboard = inboard.offset_clipper(tk_inboard, method="miter")
+        outboard = outboard.offset_clipper(tk_outboard, method="miter")
         offset_divertor_loops = []
         for div in divertor_loops:
-            offset_divertor_loops.append(div.offset_clipper(tk_div))
+            offset_divertor_loops.append(div.offset_clipper(tk_div, method="miter"))
 
         # Remove the overlaps between the offset sections
         sections = self.get_non_overlapping(
@@ -1509,7 +1509,7 @@ class FirstWall(EqInputs, ReactorSystem):
 
             # Create an offset divertor with a given thickness
             offset = self.params.tk_div_cass
-            div_offset = div.offset_clipper(offset)
+            div_offset = div.offset_clipper(offset, method="miter")
 
             # Take the outermost radial limit from offset div
             x_max = np.max(div_offset.x)

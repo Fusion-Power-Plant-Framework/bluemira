@@ -24,7 +24,7 @@ Central column shield CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import make_mixed_face, revolve, rotate_shape
+from BLUEPRINT.cad.cadtools import make_face, revolve, rotate_shape
 from BLUEPRINT.geometry.loop import Loop
 
 
@@ -81,7 +81,7 @@ class CentralColumnShieldCAD(ComponentCAD):
         """
         # Make OCC face BLUEPRINT for loop
         # (mixed method is compromise between spliny and non-spliny)
-        face = make_mixed_face(self.profile)
+        face = make_face(self.profile)
 
         # Rotate the 2-D shape
         segment = rotate_shape(face, None, -180 / self.n_TF)
