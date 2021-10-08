@@ -100,6 +100,6 @@ class TestGeometry:
         assert pytest.approx(edge.Length) == expected_length
 
         # WARNING: it seems that FreeCAD implements in a different way
-        # Wire.Length and Edge.length giving a result sligtly different
+        # Wire.Length and Edge.length giving a result slightly different
         # but enough to make the following assert fail. To be investigated.
         # assert pytest.approx(bm_ellipse.length) == expected_length

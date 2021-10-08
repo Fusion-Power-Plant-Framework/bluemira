@@ -125,14 +125,17 @@ def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.
 
     Parameters
     ----------
-        points (Union[list, np.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed shape. Defaults to False.
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed shape.
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the polygon
+    wire: Part.Wire
+        a FreeCAD wire that contains the polygon
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -147,14 +150,17 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
 
     Parameters
     ----------
-        points (Union[list, np.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed shape. Defaults to False.
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed shape.
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the bezier curve
+    wire: Part.Wire
+        a FreeCAD wire that contains the bezier curve
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -173,15 +179,19 @@ def make_bspline(
 
     Parameters
     ----------
-        points (Union[list, np.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed shape. Defaults to False.
-        Parameters: (optional) knot sequence
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed shape.
+    Parameters: (optional)
+        knot sequence
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the bezier curve
+    wire: Part.Wire
+        a FreeCAD wire that contains the bezier curve
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
@@ -195,58 +205,64 @@ def make_bspline(
 def make_circle(
     radius=1.0,
     center=[0.0, 0.0, 0.0],
-    startangle=0.0,
-    endangle=360.0,
+    start_angle=0.0,
+    end_angle=360.0,
     axis=[0.0, 0.0, 1.0],
 ):
-    """make_circle([radius, center, startangle, endangle, axis])
-
-    Creates a circle or arc of circle object with given parameters.
-
-    TODO: check the creation of the arc when startangle < endangle
+    """
+    Create a circle or arc of circle object with given parameters.
 
     Parameters
     ----------
-        radius: the radius of the circle (float). Default to 1.
-        center: the center of the circle (list or numpy.array). Default [0., 0., 0.].
-        startangle: start angle of the arc (in degrees). Default to 0.
-        endangle: end angle of the arc (in degrees). Default to 360.
-            if startangle and endangle are equal, a circle is created,
-            if they are different an arc is created
-        axis: Iterable
-            Normal vector to the circle plane. It defines the clockwise/anticlockwise
-            circle orientation according to the right hand rule. Default [0., 0., 1.].
+    radius: float, default =1.0
+        Radius of the circle
+    center: Iterable, default = [0, 0, 0]
+        Center of the circle
+    start_angle: float, default = 0.0
+        Start angle of the arc [degrees]
+    end_angle: float, default = 360.0
+        End angle of the arc [degrees]. If start_angle == end_angle, a circle is created,
+        otherwise a circle arc is created
+    axis: Iterable, default = [0, 0, 1]
+        Normal vector to the circle plane. It defines the clockwise/anticlockwise
+        circle orientation according to the right hand rule. Default [0., 0., 1.].
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the arc or circle
+    wire: Part.Wire
+        FreeCAD wire that contains the arc or circle
     """
+    # TODO: check the creation of the arc when start_angle < end_angle
     output = Part.Circle()
     output.Radius = radius
     output.Center = Base.Vector(center)
     output.Axis = Base.Vector(axis)
-    if startangle != endangle:
+    if start_angle != end_angle:
         output = Part.ArcOfCircle(
-            output, math.radians(startangle), math.radians(endangle)
+            output, math.radians(start_angle), math.radians(end_angle)
         )
     return Part.Wire(Part.Edge(output))
 
 
 def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
-    """make_circle_arc_3P(p1, p2, p3)
-
-    Creates an arc of circle object given three points.
-
-    TODO: check what happens when the 3 points are in a line
+    """
+    Create an arc of circle object given three points.
 
     Parameters
     ----------
-        p1, p2, p3: starting, midlle, and end point of the arc of circle
+    p1: Iterable
+        Starting point of the circle arc
+    p2: Iterable
+        Middle point of the circle arc
+    p3: Iterable
+        End point of the circle arc
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the arc of circle
+    wire: Part.Wire
+        FreeCAD wire that contains the arc of circle
     """
+    # TODO: check what happens when the 3 points are in a line
     arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
     return Part.Wire(Part.Edge(arc))
 
@@ -260,31 +276,33 @@ def make_ellipse(
     start_angle=0.0,
     end_angle=360.0,
 ):
-    """make_ellipse([center, major_radius, minor_radius, major_axis, minor_axis,
-    start_angle, end_angle])
-
+    """
     Creates an ellipse or arc of ellipse object with given parameters.
-
-    TODO: check the creation of the arc when start_angle < end_angle
 
     Parameters
     ----------
-        center: the center of the ellipse (list or numpy.array). Default [0., 0., 0.].
-        major_radius: the major radius of the ellipse (float). Default to 2.
-        minor_radius: the minor radius of the ellipse (float). Default to 2.
-        major_axis: major axis direction (list or numpy.array). Default [1, 0,
-        0])
-        minor_axis: minor axis direction (list or numpy.array). Default [0, 1,
-        0])
-        start_angle: start angle of the arc (in degrees). Default to 0.
-        end_angle: end angle of the arc (in degrees). Default to 360.
-            if start_angle and end_angle are equal, an ellipse is created,
-            if they are different an arc is created
+    center: Iterable, default = [0, 0, 0]
+        Center of the ellipse
+    major_radius: float, default = 2
+        the major radius of the ellipse
+    minor_radius: float, default = 1
+        the minor radius of the ellipse
+    major_axis: Iterable, default = [1, 0, 0,]
+        major axis direction
+    minor_axis: Iterable, default = [0, 1, 0,]
+        minor axis direction
+    start_angle: float, default = 0.0
+        Start angle of the arc [degrees]
+    end_angle: float, default = 360.0
+        End angle of the arc [degrees]. If start_angle == end_angle, an ellipse is
+        created, otherwise an arc of ellipse is created
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the arc or ellipse
+    wire: Part.Wire
+        FreeCAD wire that contains the ellipse or arc of ellipse
     """
+    # TODO: check the creation of the arc when start_angle < end_angle
     s1 = Base.Vector(major_axis).normalize().multiply(major_radius)
     s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius)
     center = Base.Vector(center)
@@ -294,12 +312,10 @@ def make_ellipse(
     end_angle = end_angle % 360.0
 
     if start_angle != end_angle:
-        print("ArcOfEllipse")
         output = Part.ArcOfEllipse(
             output, math.radians(start_angle), math.radians(end_angle)
         )
-    else:
-        print("Ellipse")
+
     return Part.Wire(Part.Edge(output))
 
 

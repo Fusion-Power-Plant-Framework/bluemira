@@ -49,18 +49,19 @@ def make_polygon(
 
     Parameters
     ----------
-        points: Union[list, np.ndarray]
-            list of points. It can be given as a list of 3D tuples, a 3D numpy array,
-            or similar.
-        label: str
-            a label string.
-        closed: bool (optional)
-            if True, the first and last points will be connected in order to form a
-            closed polygon. Defaults to False.
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    label: str, default = ""
+        Object's label
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed polygon. Defaults to False.
 
     Returns
     -------
-        BluemiraWire: a bluemira wire that contains the polygon
+    wire: BluemiraWire
+        a bluemira wire that contains the polygon
     """
     return BluemiraWire(_freecadapi.make_polygon(points, closed), label=label)
 
@@ -72,18 +73,19 @@ def make_bspline(
 
     Parameters
     ----------
-        points: Union[list, np.ndarray]
-            list of points. It can be given as a list of 3D tuples, a 3D numpy array,
-            or similar.
-        label: str
-            a label string.
-        closed: bool (optional)
-            if True, the first and last points will be connected in order to form a
-            closed bspline. Defaults to False.
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    label: str, default = ""
+        Object's label
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed bspline. Defaults to False.
 
     Returns
     -------
-        BluemiraWire: a bluemira wire that contains the bspline
+    wire: BluemiraWire
+        a bluemira wire that contains the bspline
     """
     return BluemiraWire(_freecadapi.make_bspline(points, closed), label=label)
 
@@ -95,18 +97,19 @@ def make_bezier(
 
     Parameters
     ----------
-        points: Union[list, np.ndarray]
-            list of points. It can be given as a list of 3D tuples, a 3D numpy array,
-            or similar.
-        label: str
-            a label string.
-        closed: bool (optional)
-            if True, the first and last points will be connected in order to form a
-            closed bspline. Defaults to False.
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    label: str, default = ""
+        Object's label
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed bspline. Defaults to False.
 
     Returns
     -------
-        BluemiraWire: a bluemira wire that contains the bspline
+    wire: BluemiraWire
+        a bluemira wire that contains the bspline
     """
     return BluemiraWire(_freecadapi.make_bezier(points, closed), label=label)
 
@@ -114,54 +117,59 @@ def make_bezier(
 def make_circle(
     radius=1.0,
     center=[0.0, 0.0, 0.0],
-    startangle=0.0,
-    endangle=360.0,
+    start_angle=0.0,
+    end_angle=360.0,
     axis=[0.0, 0.0, 1.0],
     label: str = "",
 ) -> BluemiraWire:
-    """make_circle([radius, center, startangle, endangle, axis, label])
-
-    Creates a circle or arc of circle object with given parameters.
-
-    TODO: check the creation of the arc when startangle < endangle
+    """
+    Create a circle or arc of circle object with given parameters.
 
     Parameters
     ----------
-        radius: the radius of the circle (float). Default to 1.
-        center: the center of the circle (list or numpy.array). Default [0., 0., 0.].
-        startangle: start angle of the arc (in degrees). Default to 0.
-        endangle: end angle of the arc (in degrees). Default to 360.
-            if startangle and endangle are equal, a circle is created,
-            if they are different an arc is created
-        axis: Iterable
-            Normal vector to the circle plane. It defines the clockwise/anticlockwise
-            circle orientation according to the right hand rule. Default [0., 0., 1.].
-        label: object's label
+    radius: float, default =1.0
+        Radius of the circle
+    center: Iterable, default = [0, 0, 0]
+        Center of the circle
+    start_angle: float, default = 0.0
+        Start angle of the arc [degrees]
+    end_angle: float, default = 360.0
+        End angle of the arc [degrees]. If start_angle == end_angle, a circle is created,
+        otherwise a circle arc is created
+    axis: Iterable, default = [0, 0, 1]
+        Normal vector to the circle plane. It defines the clockwise/anticlockwise
+        circle orientation according to the right hand rule.
+    label: str
+        object's label
 
     Returns
     -------
-        BluemiraWire: a bluemira wire that contains the arc or circle
+    wire: BluemiraWire
+        bluemira wire that contains the arc or circle
     """
-    output = _freecadapi.make_circle(radius, center, startangle, endangle, axis)
+    output = _freecadapi.make_circle(radius, center, start_angle, end_angle, axis)
     return BluemiraWire(output, label=label)
 
 
 def make_circle_arc_3P(p1, p2, p3, label: str = ""):  # noqa: N802
-    """make_circle_arc_3P(p1, p2, p3, label)
-
-    Creates an arc of circle object given three points.
-
-    TODO: check what happens when the 3 points are in a line
+    """
+    Create an arc of circle object given three points.
 
     Parameters
     ----------
-        p1, p2, p3: starting, midlle, and end point of the arc of circle
-        label: object's label
+    p1: Iterable
+        Starting point of the circle arc
+    p2: Iterable
+        Middle point of the circle arc
+    p3: Iterable
+        End point of the circle arc
 
     Returns
     -------
-        BluemiraWire: a bluemira wire that contains the arc of circle
+    wire: BluemiraWire
+        bluemira wire that contains the arc or circle
     """
+    # TODO: check what happens when the 3 points are in a line
     output = _freecadapi.make_circle_arc_3P(p1, p2, p3)
     return BluemiraWire(output, label=label)
 
@@ -176,31 +184,33 @@ def make_ellipse(
     end_angle=360.0,
     label: str = "",
 ):
-    """make_ellipse([center, major_radius, minor_radius, major_axis, minor_axis,
-    start_angle, end_angle])
-
-    Creates an ellipse or arc of ellipse object with given parameters.
-
-    TODO: check the creation of the arc when startangle < endangle
+    """
+    Create an ellipse or arc of ellipse object with given parameters.
 
     Parameters
     ----------
-        center: the center of the ellipse (list or numpy.array). Default [0., 0., 0.].
-        major_radius: the major radius of the ellipse (float). Default to 2.
-        minor_radius: the minor radius of the ellipse (float). Default to 2.
-        major_axis: major axis direction (list or numpy.array). Default [1, 0,
-        0])
-        minor_axis: minor axis direction (list or numpy.array). Default [0, 1,
-        0])
-        start_angle: start angle of the arc (in degrees). Default to 0.
-        end_angle: end angle of the arc (in degrees). Default to 360.
-            if start_angle and end_angle are equal, an ellipse is created,
-            if they are different an arc is created
-        label: object's label
+    center: Iterable, default = [0, 0, 0]
+        Center of the ellipse
+    major_radius: float, default = 2
+        Major radius of the ellipse
+    minor_radius: float, default = 2
+        Minor radius of the ellipse (float). Default to 2.
+    major_axis: Iterable, default = [1, 0, 0]
+        Major axis direction
+    minor_axis: Iterable, default = [0, 1, 0]
+        Minor axis direction
+    start_angle:  float, default = 0
+        Start angle of the arc [degrees]
+    end_angle: float, default = 360
+        End angle of the arc [degrees].  if start_angle == end_angle, an ellipse is
+        created, otherwise a ellipse arc is created
+    label: str, default = ""
+        Object's label
 
     Returns
     -------
-        BluemiraWire: a bluemira wire that contains the arc or ellipse
+    wire: BluemiraWire:
+         Bluemira wire that contains the arc or ellipse
     """
     output = _freecadapi.make_ellipse(
         center,
@@ -219,14 +229,15 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
 
     Parameters
     ----------
-        bmwire: BluemiraWire
-            supporting wire for the closure
-        label: str
-            label of the closure wire.
+    bmwire: BluemiraWire
+        supporting wire for the closure
+    label: str, default = ""
+        Object's label
 
     Returns
     -------
-        BluemiraWire: closure wire
+        closure: BluemiraWire
+            Closure wire
     """
     wire = bmwire._shape
     closure = BluemiraWire(_freecadapi.wire_closure(wire), label=label)
@@ -249,18 +260,17 @@ def revolve_shape(
     ----------
     shape: BluemiraGeo
         The shape to be revolved
-    base: tuple (x,y,z)
+    base: tuple (x,y,z), default = (0.0, 0.0, 0.0)
         Origin location of the revolution
-    direction: tuple (x,y,z)
+    direction: tuple (x,y,z), default = (0.0, 0.0, 1.0)
         The direction vector
-    degree: double
+    degree: double, default = 180
         revolution angle
 
     Returns
     -------
-    shape:
+    shape: BluemiraSolid
         the revolved shape.
-
     """
     solid = _freecadapi.revolve_shape(shape._shape, base, direction, degree)
     faces = solid.Faces
@@ -282,7 +292,7 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
         The shape to be extruded
     vec: tuple (x,y,z)
         The vector along which to extrude
-    label: str
+    label: str, default = None
         label of the output shape
 
     Returns
@@ -308,15 +318,14 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
 
     Parameters
     ----------
-    geo1:
+    geo1: BluemiraGeo
         reference shape.
-    geo2:
+    geo2: BluemiraGeo
         target shape.
 
     Returns
     -------
-    output:
-        a tuple of two -> (dist, vectors)
+    output: a tuple of two -> (dist, vectors)
         dist is the minimum distance (float value)
         vectors is a list of tuples corresponding to the nearest points
         between geo1 and geo2. The distance between those points
@@ -336,11 +345,11 @@ def save_as_STEP(shapes, filename="test", scale=1):
 
     Parameters
     ----------
-    shapes: (Shape, ..)
-        Iterable of shape objects to be saved
-    filename: str
+    shapes: Iterable (BluemiraGeo, ...)
+        List of shape objects to be saved
+    filename: str, default = "test"
         Full path filename of the STP assembly
-    scale: float (default 1)
+    scale: float, default = 1.0
         The scale in which to save the Shape objects
     """
     if not filename.endswith(".STP"):
