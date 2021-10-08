@@ -77,6 +77,7 @@ class InputManager:
     build_tweaks: str
     indir: str
     reactornamein: str
+    datadir: str
     outdir: str
     reactornameout: str
 
@@ -169,7 +170,9 @@ class InputManager:
         """
         The root reference data path, excluding the reactor subdirectory for the run
         """
-        return self._try_get_path_from_config("reference_data_root", "data/BLUEPRINT")
+        return self._try_get_path_from_config(
+            "reference_data_root", "data/BLUEPRINT", dir=self.datadir
+        )
 
     @cached_property
     def reference_path(self) -> str:
@@ -383,6 +386,15 @@ def get_reactor_class(reactor_string):
     help="Specifies a reactor name used as a prefix to each input filename.",
 )
 @click.option(
+    "-d",
+    "--datadir",
+    type=click.Path(writable=True),
+    default=None,
+    help="Specifies the directory in which any input reference data is stored. Note \
+    that these inputs must be stored in a subdirectory within the directory provided, \
+    corresponding to the specified reactor name at reactors/{reactor name}.",
+)
+@click.option(
     "-o",
     "--outdir",
     type=click.Path(writable=True),
@@ -460,6 +472,7 @@ def cli(
     build_tweaks,
     indir,
     reactornamein,
+    datadir,
     outdir,
     reactornameout,
     verbose,
@@ -494,6 +507,7 @@ def cli(
         build_tweaks=build_tweaks,
         indir=indir,
         reactornamein=reactornamein,
+        datadir=datadir,
         outdir=outdir,
         reactornameout=reactornameout,
     )
@@ -510,7 +524,7 @@ def cli(
     inputs.build_config_dict["generated_data_root"] = str(inputs.output_root_path)
 
     # Update generated_data_root to value given in CLI options.
-    inputs.build_config_dict["reference_data_root"] = str(inputs.indir)
+    inputs.build_config_dict["reference_data_root"] = str(inputs.reference_root_path)
 
     dump_json(inputs.build_config_dict, outputs.build_config)
 
