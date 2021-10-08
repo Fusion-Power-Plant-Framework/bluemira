@@ -595,7 +595,7 @@ class FluxSurface(EqInputs):
         clips_up = []
         clips_down = []
 
-        if loop.point_in_poly([self.x_omp, self.z_omp], True) or loop.point_in_poly(
+        if loop.point_inside([self.x_omp, self.z_omp], True) or loop.point_inside(
             [self.x_imp, self.z_imp], True
         ):
             clip_up = np.where(loop.z > self.z_omp)
