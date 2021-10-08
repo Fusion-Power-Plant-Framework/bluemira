@@ -39,8 +39,8 @@ from bluemira.geometry._freecadapi import (
 )
 from bluemira.geometry.wire import BluemiraWire
 
-# TODO: This import is a little "backwards".. will move this functionality from equilibria
-# into geometry once we are happy with the actual contents of the PR.
+# TODO: This import is a little "backwards".. will move this functionality from
+# equilibria into geometry once we are happy with the actual contents of the PR.
 from bluemira.equilibria.shapes import flux_surface_johner_quadrants
 
 
