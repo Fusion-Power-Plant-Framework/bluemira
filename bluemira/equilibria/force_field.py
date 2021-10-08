@@ -45,7 +45,7 @@ class ForceField:
 
     def __init__(self, coilset, plasma_coil):
         self.flag_pcoil = False  # Only build pcoil once
-        self.n_coils = coilset.n_coils
+        self.n_coils = coilset.n_control
 
         # Constructors
         self.coils = None

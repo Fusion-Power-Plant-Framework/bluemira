@@ -1718,7 +1718,6 @@ class SymmetricCircuit(Circuit):
         """
         self.apply_coil_method("mesh_coil", d_coil)
 
-
 class CoilSet(CoilGroup):
     """
     Poloidal field coil set
