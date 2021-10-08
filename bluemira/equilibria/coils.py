@@ -1616,6 +1616,7 @@ class SymmetricCircuit(Circuit):
         self.ctype = coil.ctype
         self.name = coil.name
         coil.name += ".1"
+        self.flag_sizefix = (coil.flag_sizefix,)
 
         mirror = Coil(
             x=coil.x,
@@ -1662,6 +1663,20 @@ class SymmetricCircuit(Circuit):
         """
         return self.coils[self.name + ".1"].dz
 
+    @property
+    def j_max(self):
+        """
+        The maximum tolerable current density of the SymmetricCircuit.
+        """
+        return self.coils[self.name + ".1"].j_max
+
+    @property
+    def b_max(self):
+        """
+        The maximum tolerable magnetic field of the SymmetricCircuit.
+        """
+        return self.coils[self.name + ".1"].b_max
+
     @dx.setter
     def dx(self, _dx):
         """
@@ -1677,6 +1692,17 @@ class SymmetricCircuit(Circuit):
         """
         for cl_n in [".1", ".2"]:
             self.coils[self.name + cl_n].set_dz(_dz)
+
+    def mesh_coil(self, d_coil):
+        """
+        Set the width of the SymmetricCircuit.
+        """
+        for cl_n in [".1", ".2"]:
+            self.coils[self.name + cl_n].mesh_coil(d_coil)
+
+    def get_max_current(self):
+        for cl_n in [".1", ".2"]:
+            self.coils[self.name + cl_n].get_max_current()
 
 
 class CoilSet(CoilGroup):

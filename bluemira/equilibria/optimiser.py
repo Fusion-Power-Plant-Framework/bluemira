@@ -807,7 +807,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
 
         Returns np.array(self.n_C) of optimised currents in each coil [A].
         """
-        opt = nlopt.opt(nlopt.LD_SLSQP, self.n_C)
+        opt = nlopt.opt(nlopt.LD_SLSQP, self.n)
         opt.set_min_objective(self.f_min_rms)
         opt.set_xtol_abs(1e-5)
         opt.set_xtol_rel(1e-5)
@@ -818,13 +818,13 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         opt.set_lower_bounds(-self.I_max)
         opt.set_upper_bounds(self.I_max)
 
-        if self.n_CS == 0:
-            n_f_constraints = 2 * self.n_PF
-        else:
-            n_f_constraints = 2 * self.n_PF + self.n_CS + 1
-        tol = self.constraint_tol * np.ones(n_f_constraints)
+        # if self.n_CS == 0:
+        #     n_f_constraints = 2 * self.n_PF
+        # else:
+        #     n_f_constraints = 2 * self.n_PF + self.n_CS + 1
+        tol = self.constraint_tol * np.ones(self.n)
         opt.add_inequality_mconstraint(self.constrain_forces, tol)
-        tol = self.constraint_tol * np.ones(self.n_C)
+        tol = self.constraint_tol * np.ones(self.n)
         opt.add_inequality_mconstraint(self.constrain_fields, tol)
 
         x0 = np.clip(tikhonov(self.A, self.b, self.gamma), -self.I_max, self.I_max)
@@ -833,6 +833,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         process_NLOPT_result(opt)
         self._I_star = currents * self.scale
         # self.sanity()
+        # currents need to be vector of 5
         return currents * self.scale
 
     def f_min_rms(self, vector, grad):
