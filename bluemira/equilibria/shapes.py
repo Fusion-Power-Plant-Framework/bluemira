@@ -134,7 +134,7 @@ def calc_angles_pos_above(delta, kappa, t_pos):
     return alpha_0_pos, alpha_pos, beta_pos
 
 
-def flux_surface_johner(
+def flux_surface_johner_quadrants(
     r_0,
     z_0,
     a,
@@ -289,11 +289,85 @@ def flux_surface_johner(
         z_lo = beta_pos * np.sinh(phi)
     else:
         raise ValueError("Something is wrong with the Johner parameterisation.")
-    x = a * np.concatenate((x_ui, x_uo[::-1], x_lo[::-1], x_li)) + r_0
-    z = a * np.concatenate((z_ui, z_uo[::-1], z_lo[::-1], z_li))
-    if negative:
-        x -= 2 * r_0
-        x = -x
 
-    z += z_0
-    return Loop(x=x, z=z)
+    x_quadrants = [x_ui, x_uo[::-1], x_lo[::-1], x_li]
+    z_quadrants = [z_ui, z_uo[::-1], z_lo[::-1], z_li]
+    x_quadrants = [a * xq + r_0 for xq in x_quadrants]
+    z_quadrants = [a * zq for zq in z_quadrants]
+    if negative:
+        x_quadrants = [-(xq - 2 * r_0) for xq in x_quadrants]
+
+    z_quadrants = [zq + z_0 for zq in z_quadrants]
+    return x_quadrants, z_quadrants
+
+
+def flux_surface_johner(
+    r_0,
+    z_0,
+    a,
+    kappa_u,
+    kappa_l,
+    delta_u,
+    delta_l,
+    psi_u_neg,
+    psi_u_pos,
+    psi_l_neg,
+    psi_l_pos,
+    n=100,
+):
+    """
+    Initial plasma shape parametrerisation from HELIOS author
+    J. Johner (CEA). Sets initial separatrix shape for the plasma core
+    (does not handle divertor target points or legs).
+    Can handle:
+    - DN (positive, negative delta) [TESTED]
+    - SN (positive, negative delta) (upper, lower) [TESTED]
+
+    Parameters
+    ----------
+    r_0: float
+        Major radius [m]
+    z_0: float
+        Vertical position of major radius [m]
+    a: float
+        Minor radius [m]
+    kappa_u: float
+        Upper elongation at the plasma edge (psi_n=1)
+    kappa_l: float
+        Lower elongation at the plasma edge (psi_n=1)
+    delta_u: float
+        Upper triangularity at the plasma edge (psi_n=1)
+    delta_l: float
+        Lower triangularity at the plasma edge (psi_n=1)
+    psi_u_neg: float
+        Upper inner angle [°]
+    psi_u_pos: float
+        Upper outer angle [°]
+    psi_l_neg: float
+        Lower inner angle [°]
+    psi_l_pos: float
+        Lower outer angle [°]
+    n: int (defeault = 100)
+        Number of point to generate on the flux surface Loop
+
+    Returns
+    -------
+    flux_surface: Loop(x, z)
+        Plasma flux surface shape
+    """
+    x_quadrants, z_quadrants = flux_surface_johner_quadrants(
+        r_0,
+        z_0,
+        a,
+        kappa_u,
+        kappa_l,
+        delta_u,
+        delta_l,
+        psi_u_neg,
+        psi_u_pos,
+        psi_l_neg,
+        psi_l_pos,
+        n=n,
+    )
+
+    return Loop(x=np.concatenate(x_quadrants), z=np.concatenate(z_quadrants))

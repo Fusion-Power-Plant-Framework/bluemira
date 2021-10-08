@@ -577,3 +577,7 @@ class JohnerLCFS(GeometryParameterisation):
     def create_shape(self):
         wires = []
         return BluemiraWire(concatenate_wires(wires))
+
+    def create_array(self):
+
+        return
