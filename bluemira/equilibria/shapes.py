@@ -197,7 +197,7 @@ def flux_surface_johner_quadrants(
     else:
         negative = False
     psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos = [
-        np.radians(i) for i in [psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos]
+        np.deg2rad(i) for i in [psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos]
     ]
 
     n_pts = int(n / 4)

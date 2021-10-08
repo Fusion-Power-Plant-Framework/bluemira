@@ -39,6 +39,10 @@ from bluemira.geometry._freecadapi import (
 )
 from bluemira.geometry.wire import BluemiraWire
 
+# TODO: This import is a little "backwards".. will move this functionality from equilibria
+# into geometry once we are happy with the actual contents of the PR.
+from bluemira.equilibria.shapes import flux_surface_johner_quadrants
+
 
 __all__ = ["GeometryParameterisation", "PrincetonD"]
 
@@ -566,7 +570,7 @@ class JohnerLCFS(GeometryParameterisation):
                 # Upper outer angle [°]
                 BoundedVariable("phi_u_pos", 10, lower_bound=5, upper_bound=20),
                 # Lower inner angle [°]
-                BoundedVariable("phi_l_neg", -120, lower_bound=-110, upper_bound=-130),
+                BoundedVariable("phi_l_neg", -120, lower_bound=-130, upper_bound=-110),
                 # Lower outer angle [°]
                 BoundedVariable("phi_l_pos", 30, lower_bound=20, upper_bound=35),
             ]
@@ -575,9 +579,13 @@ class JohnerLCFS(GeometryParameterisation):
         super().__init__(variables)
 
     def create_shape(self):
+        n = 1000
+        x_quadrants, z_quadrants = flux_surface_johner_quadrants(
+            *self.variables.values, n=n
+        )
+
         wires = []
+        for x_q, z_q in zip(x_quadrants, z_quadrants):
+            wires.append(make_bspline(np.array([x_q, np.zeros(len(x_q)), z_q]).T))
+
         return BluemiraWire(concatenate_wires(wires))
-
-    def create_array(self):
-
-        return
