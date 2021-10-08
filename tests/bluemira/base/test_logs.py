@@ -39,7 +39,7 @@ LOGGER = logger_setup()
 class TestLoggingLevel:
     def setup_method(self):
         self.original_level = LogLevel(
-            max([handler.level for handler in LOGGER.handlers])
+            max([handler.level for handler in LOGGER.handlers or LOGGER.parent.handlers])
         )
 
     def teardown_method(self):

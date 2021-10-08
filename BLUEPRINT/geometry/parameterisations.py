@@ -1056,12 +1056,12 @@ class CurvedPictureFrame(Parameterisation):
         # Do special stuff, like defining optimization variables
 
         self.xo["x_in"] = {"value": 0.4, "lb": 0.3, "ub": 0.5}  # inner leg
-        self.xo["x_mid"] = {"value": 1.1, "lb": 1, "ub": 1.3}  # middle leg
-        self.xo["x_curve_start"] = {"value": 1.5, "lb": 1.4, "ub": 1.7}  # middle leg
-        self.xo["x_out"] = {"value": 6.5, "lb": 6, "ub": 9}  # outer leg
+        self.xo["x_mid"] = {"value": 1.55, "lb": 1.5, "ub": 1.6}  # middle leg
+        self.xo["x_curve_start"] = {"value": 2.5, "lb": 2.4, "ub": 2.6}  # middle leg
+        self.xo["x_out"] = {"value": 9.5, "lb": 9.4, "ub": 9.8}  # outer leg
         self.xo["z_in"] = {"value": 0.5, "lb": 0.45, "ub": 0.8}  # Vertical height
         self.xo["z_mid"] = {"value": 7.5, "lb": 6, "ub": 8}  # vertical
-        self.xo["z_top"] = {"value": 10, "lb": 8.5, "ub": 11}  # vertical
+        self.xo["z_top"] = {"value": 14.5, "lb": 14.0, "ub": 15}  # vertical
         self.xo["r_c"] = {"value": 0.3, "lb": 0.00, "ub": 0.8}  # Corner radius
 
         self.oppvar = list(self.xo.keys())

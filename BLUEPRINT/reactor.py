@@ -44,7 +44,6 @@ from BLUEPRINT.base import (
     ReactorSystem,
     BLUE,
 )
-from BLUEPRINT.base.typebase import Contract
 from BLUEPRINT.base.file import FileManager
 from BLUEPRINT.base.error import GeometryError
 
@@ -53,6 +52,7 @@ from BLUEPRINT.geometry.loop import Loop, point_loop_cast
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 from BLUEPRINT.utilities.colortools import force_rgb
+from BLUEPRINT.utilities.tools import CommentJSONDecoder
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (
@@ -61,7 +61,6 @@ from BLUEPRINT.systems import (
     Divertor,
     Plasma,
     HCDSystem,
-    TFVSystem,
     Cryostat,
     VacuumVessel,
     RadiationShield,
@@ -99,7 +98,14 @@ from BLUEPRINT.nova.optimiser import StructuralOptimiser
 from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
 
 # Lifetime / fuel cycle imports
-from BLUEPRINT.fuelcycle.lifecycle import LifeCycle
+from bluemira.fuel_cycle.timeline_tools import (
+    GompertzLearningStrategy,
+    LogNormalAvailabilityStrategy,
+)
+from bluemira.fuel_cycle.lifecycle import LifeCycle
+
+from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
+from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
 
 # Cost imports
 from BLUEPRINT.costs.calculator import CostCalculator
@@ -159,7 +165,7 @@ class Reactor(ReactorSystem):
     BOP: Type[BalanceOfPlant]
     DIV: Type[Divertor]
     HCD: Type[HCDSystem]
-    TFV: Type[TFVSystem]
+    TFV: Type[FuelCycleAnalysis]
     ATEC: Type[CoilArchitect]
 
     # Construction and calculation class declarations
@@ -231,6 +237,9 @@ class Reactor(ReactorSystem):
         """
         Prepare the parameters so they are ready for building.
         """
+        for key, val in config.items():
+            if not isinstance(val, (tuple, dict)):
+                config[key] = (val, "Input")
         self.params.update_kw_parameters(config)
         if self.build_config["process_mode"] == "mock":
             self.estimate_kappa_95()
@@ -275,7 +284,7 @@ class Reactor(ReactorSystem):
         self.build_containments()
         self.power_balance(plot=self.plot_flag)
         # self.analyse_maintenance()
-        self.life_cycle(mode=self.build_config["lifecycle_mode"])
+        self.life_cycle()
         self.add_parameter(
             "runtime", "Total BLUEPRINT runtime", time() - tic, "s", None, "BLUEPRINT"
         )
@@ -340,7 +349,7 @@ class Reactor(ReactorSystem):
         stability constraint on the elongation.
         """
         kappa_95 = estimate_kappa95(self.params.A, self.params.m_s_limit)
-        self.params.kappa_95 = kappa_95
+        self.params.kappa_95 = (kappa_95, "Initial Estimation")
 
     def derive_inputs(self):
         """
@@ -581,27 +590,27 @@ class Reactor(ReactorSystem):
         profile = None
         bluemira_print("Generating reference plasma MHD equilibrium.")
         a = AbInitioEquilibriumProblem(
-            self.params.R_0,
-            self.params.B_0,
-            self.params.A,
-            self.params.I_p * 1e6,  # MA to A
-            self.params.beta_p / 1.3,  # TODO: beta_N vs beta_p here?
-            self.params.l_i,
+            self.params.R_0.value,
+            self.params.B_0.value,
+            self.params.A.value,
+            self.params.I_p.value * 1e6,  # MA to A
+            self.params.beta_p.value / 1.3,  # TODO: beta_N vs beta_p here?
+            self.params.l_i.value,
             # TODO: 100/95 problem
-            self.params.kappa_95,
-            self.params.delta_95,
-            self.params.r_cs_in + self.params.tk_cs / 2,
-            self.params.tk_cs / 2,
+            self.params.kappa_95.value,
+            self.params.delta_95.value,
+            self.params.r_cs_in.value + self.params.tk_cs.value / 2,
+            self.params.tk_cs.value / 2,
             tfboundary,
-            self.params.n_PF,
-            self.params.n_CS,
-            c_ejima=self.params.C_Ejima,
-            eqtype=self.params.plasma_type,
-            rtype=self.params.reactor_type,
+            self.params.n_PF.value,
+            self.params.n_CS.value,
+            c_ejima=self.params.C_Ejima.value,
+            eqtype=self.params.plasma_type.value,
+            rtype=self.params.reactor_type.value,
             profile=profile,
         )
-        a.coilset.assign_coil_materials("PF", self.params.PF_material)
-        a.coilset.assign_coil_materials("CS", self.params.CS_material)
+        a.coilset.assign_coil_materials("PF", self.params.PF_material.value)
+        a.coilset.assign_coil_materials("CS", self.params.CS_material.value)
         a.solve(plot=self.plot_flag)
         print("")  # stdout flusher
 
@@ -1328,7 +1337,7 @@ class Reactor(ReactorSystem):
             self.HCD.set_requirement("I_cd", self.params.I_p * self.params.f_cd_aux)
             self.HCD.allocate("I_cd", f_NBI=1)
 
-    def build_TFV_system(self, method="run", n=10, plot=False):
+    def build_TFV_system(self, n=10):
         """
         Build the tritium fuelling and vacuum (TFV) system. Calculates tritium
         start-up inventory and the so-called doubling time for the reactor.
@@ -1346,21 +1355,19 @@ class Reactor(ReactorSystem):
             f"Running dynamic tritium fuel cycle model.\n" f"Monte Carlo (n={n})"
         )
 
-        self.TFV = TFVSystem(self.params)
+        model = EUDEMOFuelCycleModel(self.params, {})
+        self.TFV = FuelCycleAnalysis(model)
         life_cycle = self.life_cycle()
-        if method == "run":
-            timelines = [life_cycle.timeline() for _ in range(n)]
-            time_dicts = [timeline.to_dict() for timeline in timelines]
-            self.TFV.run_model(time_dicts)
-        m = self.TFV.get_startup_inventory(method=method)
-        t = self.TFV.get_doubling_time(method=method)
+        time_dicts = [life_cycle.make_timeline().to_dict() for _ in range(n)]
+        self.TFV.run_model(time_dicts)
+
+        m = self.TFV.get_startup_inventory("max")
+        t = self.TFV.get_doubling_time("max")
         params = [
             ["m_T_start", "Tritium start-up inventory", m, "kg", None, "BLUEPRINT"],
             ["t_d", "Tritium doubling time", t, "years", None, "BLUEPRINT"],
         ]
         self.add_parameters(params)
-        if plot:
-            self.TFV.dist_plot()
 
     def power_balance(self, plot=True):
         """
@@ -1402,28 +1409,34 @@ class Reactor(ReactorSystem):
         if plot:
             self.BOP.plot()
 
-    def life_cycle(self, mode="life", plot=False):
+    def life_cycle(self, learning_strategy=None, availability_strategy=None):
         """
         Define a DEMO timeline and lifecycle, with random dwell durations
         to match target availability.
 
         Parameters
         ----------
-        mode: str from ["life", "operational"]
-            [life] Takes A value and applies over the plant life, with a
-            simple spreading
-            [operational] Ignores target availability and specifies
-            operational availabilities progressively increasing
-        plot: bool
-            Whether or not to plot the result
+        learning_strategy: Optional[LearningStrategy]
+            Strategy to use to progress operational availability
+        availability_strategy: Optional[AvailabilityStrategy]
+            Strategy to distribute unplanned downtimes during operation
         """
+        if learning_strategy is None:
+            learning_strategy = GompertzLearningStrategy(
+                learn_rate=1.0,
+                min_op_availability=self.params.a_min,
+                max_op_availability=self.params.a_max,
+            )
+        if availability_strategy is None:
+            availability_strategy = LogNormalAvailabilityStrategy(sigma=2.0)
+
         lc_in = {
-            "mode": mode,
             "read_only": False,
-            "plot": plot,
             "datadir": self.file_manager.reference_data_root,
         }
-        life_cycle = LifeCycle(self.params, lc_in)
+        life_cycle = LifeCycle(
+            self.params, learning_strategy, availability_strategy, lc_in
+        )
         return life_cycle
 
     def cost_estimate(self):
@@ -1459,7 +1472,7 @@ class Reactor(ReactorSystem):
             or alternatively
             'ffhhttqqss..' for varied patterning
         """
-        if self.CAD is None or isinstance(self.CAD, Contract):
+        if self.CAD is None:
             # Check if CAD is already built (for typechecking and no-typing)
             self.build_CAD()
         self.CAD.display(pattern)
@@ -1468,7 +1481,7 @@ class Reactor(ReactorSystem):
         """
         Save the Reactor CAD model as a STEP assembly.
         """
-        if self.CAD is None or isinstance(self.CAD, Contract):
+        if self.CAD is None:
             self.build_CAD()
         self.CAD.pattern(pattern)
         bluemira_print("Exporting the reactor CAD to a STEP assembly file.")
@@ -1522,7 +1535,7 @@ class Reactor(ReactorSystem):
         No patterning available, global_pattern set to single sector, to avoid
         patterning fully rotated parts
         """
-        if self.n_CAD is None or isinstance(self.n_CAD, Contract):
+        if self.n_CAD is None:
             self.n_CAD = ReactorCAD(self, slice_flag=True, neutronics=True)
             self.n_CAD.set_palette(BLUE)
         self.n_CAD.display(**kwargs)
@@ -1533,7 +1546,7 @@ class Reactor(ReactorSystem):
         Runs the global neutronics model for the Reactor
         """
         raise NotImplementedError
-        # if self.nmodel is None or isinstance(self.nmodel, Contract):
+        # if self.nmodel is None:
         #     self.build_neutronics_model()
         # bluemira_print("Running 3-D 360° OpenMC neutronics model.")
         # self.nmodel.run()
@@ -1748,6 +1761,35 @@ class ConfigurableReactor(Reactor):
         self.default_params = template_config
         super().__init__(config, build_config, build_tweaks)
 
+    @staticmethod
+    def load_config(name, path):
+        """
+        Load config form JSON file
+
+        Parameters
+        ----------
+        name: str
+           User facing name for file
+
+        Returns
+        -------
+        dict
+            JSON file as dictionary
+
+        Raises
+        ------
+        FileNotFoundError
+
+        """
+        if isinstance(path, str):
+            path = Path(path)
+
+        if path.exists():
+            with open(path, "r") as fh:
+                return json.load(fh, cls=CommentJSONDecoder)
+        else:
+            raise FileNotFoundError(f"Could not find {name} at {path}")
+
     @classmethod
     def from_json(
         cls,
@@ -1775,17 +1817,6 @@ class ConfigurableReactor(Reactor):
         Reactor
             The configured Reactor Object.
         """
-
-        def load_config(name, path):
-            if isinstance(path, str):
-                path = Path(path)
-
-            if path.exists():
-                with open(path, "r") as fh:
-                    return json.load(fh)
-            else:
-                raise FileNotFoundError(f"Could not find {name} at {path}")
-
         if isinstance(template_config_path, str):
             template_config_path = Path(template_config_path)
 
@@ -1796,9 +1827,9 @@ class ConfigurableReactor(Reactor):
                 f"Could not find template configuration at {template_config_path}"
             )
 
-        config = load_config("configuration", config_path)
-        build_config = load_config("build configuration", build_config_path)
-        build_tweaks = load_config("build tweaks", build_tweaks_path)
+        config = cls.load_config("configuration", config_path)
+        build_config = cls.load_config("build configuration", build_config_path)
+        build_tweaks = cls.load_config("build tweaks", build_tweaks_path)
 
         return cls(template_config, config, build_config, build_tweaks)
 

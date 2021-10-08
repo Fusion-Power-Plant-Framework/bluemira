@@ -31,9 +31,10 @@ from matplotlib.patches import Patch, PathPatch
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from mpl_toolkits.mplot3d import Axes3D
 import imageio
+
+from bluemira.base.components import Component, GroupingComponent
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2, check_ccw
 
 
 __all__ = [
@@ -152,6 +153,8 @@ def coordinates_to_path(x, z):
     """
     Convert coordinates to path vertices.
     """
+    from bluemira.geometry._deprecated_tools import check_ccw
+
     if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
@@ -193,6 +196,8 @@ class BluemiraPathPatch3D(PathPatch3D):
     # Thank you StackOverflow
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
     def __init__(self, path, normal, translation=None, color="b", **kwargs):
+        from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2
+
         Patch.__init__(self, **kwargs)
 
         if translation is None:
@@ -217,3 +222,26 @@ class BluemiraPathPatch3D(PathPatch3D):
         Transfer the key getattr to underlying PathPatch object.
         """
         return getattr(self._patch2d, key)
+
+
+def plot_component(component: Component, axis=None):
+    """
+    Plot the Component on the provided axis.
+
+    If the Component is a GroupingComponent then all child components with shapes will be
+    plotted.
+    """
+    from bluemira.geometry.plotting import plot_face
+
+    if axis is None:
+        axis = Plot3D()
+
+    if isinstance(component, GroupingComponent):
+        for child in component.children:
+            plot_component(child, axis=axis)
+        return
+
+    if hasattr(component, "shape"):
+        plot_face(component.shape, axis=axis)
+    else:
+        raise ValueError(f"Could not plot component {component}")

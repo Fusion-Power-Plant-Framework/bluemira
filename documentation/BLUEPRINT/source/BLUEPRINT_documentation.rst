@@ -14,10 +14,8 @@ Modules
    cad
    costs
    equilibria
-   fuelcycle
    geometry
    materials
-   magnetostatics
    neutronics
    nova
    syscodes

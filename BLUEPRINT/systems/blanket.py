@@ -89,8 +89,7 @@ class BreedingBlanket(Meshable, ReactorSystem):
         self.inputs = inputs
         self._plotter = BreedingBlanketPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         # Constructors
         self.n_segments = 5 * self.params.n_TF
@@ -752,7 +751,7 @@ class STBreedingBlanket(Meshable, ReactorSystem):
         self.config = config
         self.inputs = inputs
         self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
         self.geom = self.inputs
         self._plotter = BreedingBlanketPlotter()
         self.build()

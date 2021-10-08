@@ -78,6 +78,7 @@ def inplace_wrapper(method):
     @wraps(method)
     def wrapped(*args, **kwargs):
         ret = method(*args, **kwargs)
+        args[0]._source = None
         args[0]._update_history()
         return ret
 
@@ -137,7 +138,7 @@ class Parameter(wrapt.ObjectProxy):
         value: Union[str, float, int, None] = None,
         unit: Union[str, None] = None,
         description: Union[str, None] = None,
-        source: Union[str, bool] = False,
+        source: Union[str, bool] = None,
         mapping: Union[Dict[str, ParameterMapping], None] = None,
     ):
         """
@@ -273,7 +274,7 @@ class Parameter(wrapt.ObjectProxy):
 
         Useful for a single Parameter not part of a ParameterFrame.
 
-        This will make source==False as the source should be updated
+        This will make source==None as the source should be updated
         immediately after the value of value is updated.
 
         Parameters
@@ -283,7 +284,7 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         self.__wrapped__ = val
-        self._source = False
+        self._source = None
 
         self._update_history()
 
@@ -307,14 +308,14 @@ class Parameter(wrapt.ObjectProxy):
         """
         self._source = val
 
-        if self.source_history[-1] is False:
+        if self.source_history[-1] is None:
             self._source_history[-1] = self._source
         else:
             self._update_history()
 
     def _update_history(self):
         if (
-            self.source_history[-1] is False
+            self.source_history[-1] is None
         ):  # Should I be more strict and error out here?
             bluemira_warn(
                 f"The source of the value of {self.var} not consistently known"
@@ -1202,7 +1203,7 @@ class ParameterFrame:
                 )
             return cls.from_dict(the_data)
 
-    def set_values_from_json(self, data: str):
+    def set_values_from_json(self, data: str, source="Input"):
         """
         Set the parameter values from the JSON data.
 
@@ -1216,7 +1217,7 @@ class ParameterFrame:
         """
         if os.path.isfile(data):
             with open(data, "r") as fh:
-                self.set_values_from_json(fh.read())
+                self.set_values_from_json(fh.read(), source=source)
                 return self
         else:
             the_data = json.loads(data)
@@ -1227,7 +1228,7 @@ class ParameterFrame:
                 raise ValueError(
                     f"Setting the values on a {self.__class__.__name__} using set_values_from_json requires a concise json format."
                 )
-            self.update_kw_parameters(the_data, source="Input")
+            self.update_kw_parameters(the_data, source=source)
 
     def diff_params(self, other: "ParameterFrame", include_new=False):
         """

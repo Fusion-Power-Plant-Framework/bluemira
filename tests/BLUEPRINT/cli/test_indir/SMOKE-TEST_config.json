@@ -1,15 +1,15 @@
 {
   "LPangle": {
     "value": -15,
-    "source": null
+    "source": "Input"
   },
   "Name": {
     "value": "SMOKE-TEST",
-    "source": null
+    "source": "Input"
   },
   "P_el_net": {
     "value": 580,
-    "source": null
+    "source": "Input"
   },
   "delta": {
     "value": 0.49950000000000006,
@@ -17,7 +17,7 @@
   },
   "fw_psi_n": {
     "value": 1.06,
-    "source": null
+    "source": "Input"
   },
   "kappa": {
     "value": 1.8622735779143047,
@@ -25,18 +25,18 @@
   },
   "kappa_95": {
     "value": 1.6627442659949148,
-    "source": null
+    "source": "Initial Estimation"
   },
   "reactor_type": {
     "value": "Normal",
-    "source": null
+    "source": "Input"
   },
   "tau_flattop": {
     "value": 3600,
-    "source": null
+    "source": "Input"
   },
   "tk_bb_ib": {
     "value": 0.7,
-    "source": null
+    "source": "Input"
   }
 }

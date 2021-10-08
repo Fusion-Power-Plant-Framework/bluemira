@@ -39,7 +39,7 @@ from bluemira.equilibria.constants import (
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.utilities.plot_tools import make_gif
-from bluemira.utilities.tools import delta
+from bluemira.utilities.tools import abs_rel_difference
 from bluemira.equilibria.positioner import CoilPositioner
 from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
 from bluemira.equilibria.profiles import (
@@ -240,49 +240,6 @@ class EquilibriumProblem:
         Ronseal function
         """
         self._refpsi = self.eq.psi()
-
-    def plot(self, ax=None, force=False):
-        """
-        Plots the solution of the ab initio equilibrium problem, including:
-            equilibrium
-            constraints
-            limiters
-            coilset
-            TF coil boundary
-
-        Parameters
-        ----------
-        ax: Axes object
-            The matplotlib axes object on which to plot
-        force: bool
-            Whether or not to plot force vectors
-        """
-        if ax is None:
-            ax = plt.gca()
-        self.eq.plot(ax)
-        if self.lim is not None:
-            self.lim.plot(ax)
-        if self.tfcoil is not None:
-            self.tfcoil.plot(ax, fill=False)
-        if force is True:
-            force = self.eq.get_forces()
-        elif force is False:
-            force = None
-        self.coilset.plot(ax, force=force)
-        if self.constraints:
-            self.constraints.plot(ax)
-
-    def plot_pulse(self, time=1):
-        """
-        Plots the pulse evolution over time
-        """
-        f, ax = plt.subplots()
-        n = len(self.snapshots["eq"])
-        for e in self.snapshots["eq"]:
-            ax.clear()
-            e.plot(ax=ax)
-            ax.figure.canvas.draw()
-            plt.pause(time / n)
 
     def plot_summary(self):
         """
@@ -629,7 +586,7 @@ class EquilibriumProblem:
 
         psi_bd_new = bd.breakdown_psi * 2 * np.pi
 
-        if delta(psi_bd_new, self.psi_bd) > 0.01:
+        if abs_rel_difference(psi_bd_new, self.psi_bd) > 0.01:
             bluemira_warn(
                 "It appears there is a problem with pre-magnetisation. The new breakdown flux is "
                 "quite different from the old one:\n"

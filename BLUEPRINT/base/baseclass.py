@@ -29,11 +29,10 @@ from typing import Type, Union
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.error import BluemiraError
 
-from BLUEPRINT.base.typebase import TypeBase
 from BLUEPRINT.base.error import SystemsError
 
 
-class ReactorSystem(TypeBase):
+class ReactorSystem:
     """
     The standard BLUEPRINT system class.
 
@@ -65,6 +64,10 @@ class ReactorSystem(TypeBase):
         Initialise a reactor sub-class
         """
         super().__init_subclass__()
+
+        if hasattr(cls, "__annotations__"):
+            for name, attribute in cls.__annotations__.items():
+                setattr(cls, name, None)
 
         # Get the default_params (or those of the parent if not overridden)
         default_params = getattr(cls, "default_params", [])
@@ -239,6 +242,18 @@ class ReactorSystem(TypeBase):
             specified value, by default None (i.e. the value is left unchanged).
         """
         self.params.add_parameters(record_list, source=source)
+
+    def _init_params(self, config):
+        """
+        Updates the ReactorSystem parameters with the provided configuration.
+
+        Parameters
+        ----------
+        config: Union[ParameterFrame, Dict[str, Parameter]]
+            The configuration to be loaded.
+        """
+        self.params = ParameterFrame(self.default_params.to_records())
+        self.params.update_kw_parameters(config, f"{self.__class__.__name__} Config")
 
     def build_CAD(self):
         """

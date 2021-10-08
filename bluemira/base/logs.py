@@ -60,7 +60,8 @@ def logger_setup(logfilename="bluemira_logging.log", *, level="INFO"):
     -----
     set to debug initially
     """
-    logger = logging.getLogger("")
+    root_logger = logging.getLogger("")
+    bm_logger = logging.getLogger("bluemira")
 
     py_level = _convert_log_level(level).value
 
@@ -78,13 +79,15 @@ def logger_setup(logfilename="bluemira_logging.log", *, level="INFO"):
     recorded_handler.setLevel(logging.DEBUG)
     recorded_handler.setFormatter(recorded_formatter)
 
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(on_screen_handler)
-    logger.addHandler(recorded_handler)
-    return logger
+    bm_logger.setLevel(logging.DEBUG)
+
+    root_logger.addHandler(on_screen_handler)
+    root_logger.addHandler(recorded_handler)
+
+    return bm_logger
 
 
-def set_log_level(verbose=1, increase=False):
+def set_log_level(verbose=1, increase=False, logger_names=["bluemira"]):
     """
     Get new log level and check if it is possible.
 
@@ -94,9 +97,11 @@ def set_log_level(verbose=1, increase=False):
         Amount the severity level of the logger should be changed by or to
     increase: bool (default = False)
         Whether level should be increased by specified amount or changed to it
+    logger_names: List[str] (default = ["bluemira"])
+        The loggers for which to set the level
     """
     # change loggers level
-    for logger_name in [""]:
+    for logger_name in logger_names:
         logger = logging.getLogger(logger_name)
 
         current_level = logger.getEffectiveLevel() if increase else 0
@@ -104,7 +109,7 @@ def set_log_level(verbose=1, increase=False):
         _modify_handler(new_level, logger)
 
 
-def get_log_level(logger_name="", as_str=True):
+def get_log_level(logger_name="bluemira", as_str=True):
     """
     Return the current logging level.
 

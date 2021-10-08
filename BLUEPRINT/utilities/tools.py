@@ -33,7 +33,7 @@ from itertools import permutations
 from json.encoder import _make_iterencode
 import nlopt
 import re
-from json import JSONEncoder
+from json import JSONEncoder, JSONDecoder
 from collections import OrderedDict
 from collections.abc import Mapping, Iterable
 from typing import List, Union
@@ -137,6 +137,32 @@ def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
     return _make_iterencode(
         markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
     )
+
+
+class CommentJSONDecoder(JSONDecoder):
+    """
+    Decode JSON with comments
+
+    Notes
+    -----
+    Regex does the following for comments:
+
+        - starts with // followed by most chr (not ")
+        - if not followed by " and any of (whitespace , }) and \\n
+
+    and removes extra commas from the end of dict like objects
+    """
+
+    comments = re.compile(r'[/]{2}(\s*\w*[#-/:-@{-~!^_`\[\]]*)*(?!["]\s*[,]*[\}]*\n)')
+    comma = re.compile(r"[,](\n*\s*)*[\}]")
+    eof = re.compile(r"[,](\n*\s*)*$")
+
+    def decode(self, s, *args, **kwargs):
+        """Return the Python representation of ``s`` (a ``str`` instance
+        containing a JSON document).
+        """
+        s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
+        return super().decode(s, *args, **kwargs)
 
 
 class PowerLawScaling:

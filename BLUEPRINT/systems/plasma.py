@@ -90,8 +90,7 @@ class Plasma(Meshable, ReactorSystem):
         self.method = method
         self._plotter = PlasmaPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         if len(self.profiles) != 0:
             self.profiles = self.profiles.copy()

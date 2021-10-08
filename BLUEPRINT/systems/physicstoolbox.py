@@ -24,7 +24,7 @@ A collection of useful 0-D physics calculations
 """
 import numpy as np
 from typing import Union
-from BLUEPRINT.base.typebase import typechecked
+
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import PowerLawScaling
 from bluemira.base.constants import (
@@ -386,7 +386,6 @@ def E_DD_fusion():  # noqa (N802)
     return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
 
 
-@typechecked
 def n_DT_reactions(p_fus: Union[int, float]) -> float:
     """
     Calculates the number of D-T fusion reactions per s for a given D-T fusion
@@ -408,7 +407,6 @@ def n_DT_reactions(p_fus: Union[int, float]) -> float:
     return float(p_fus * 1e6 / (e_dt * EV_TO_J))
 
 
-@typechecked
 def n_DD_reactions(p_fus: Union[int, float]) -> float:  # noqa (N802)
     """
     Calculates the number of D-D fusion reactions per s for a given D-D fusion

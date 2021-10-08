@@ -59,8 +59,7 @@ class HCDSystem(ReactorSystem):
         self.inputs = inputs
         self._plotter = HCDSystemPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.f_bs = self.params.f_bs
         if self.params.op_mode == "Pulsed":
@@ -153,7 +152,7 @@ class GenericHCD(ReactorSystem):
         self.inputs = inputs
 
         self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.R_0 = self.params.R_0
         self.n_TF = self.params.n_TF

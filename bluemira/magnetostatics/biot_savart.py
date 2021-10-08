@@ -177,7 +177,7 @@ class BiotSavartFilament(CurrentSource):
 
     def inductance(self):
         """
-        Calculate the total inductance of the BiotSavartLoop.
+        Calculate the total inductance of the BiotSavartFilament.
 
         Returns
         -------

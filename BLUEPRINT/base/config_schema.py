@@ -198,6 +198,7 @@ class ConfigurationSchema:
     tk_div_in: Parameter
 
     # TF coils
+    tk_tf_inboard: Parameter
     tk_tf_outboard: Parameter
     tk_tf_nose: Parameter
     tk_tf_wp: Parameter

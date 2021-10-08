@@ -53,8 +53,7 @@ class PoloidalFieldCoils(Meshable, ReactorSystem):
     def __init__(self, config):
         self.config = config
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
         self._plotter = PoloidalFieldCoilsPlotter()
 
     def update_coilset(self, coilset):

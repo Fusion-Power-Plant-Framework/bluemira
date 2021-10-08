@@ -72,8 +72,7 @@ class VacuumVessel(Meshable, ReactorSystem):
         self.inputs = inputs
         self._plotter = VacuumVesselPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
         self.geom["2D profile"] = self.inputs["vessel_shell"]
 
         self.up_shift = False
@@ -378,8 +377,7 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
         self.inputs = inputs
         self._plotter = VacuumVesselPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.ts_inboard_loop = self.inputs["TS inboard loop"]
         self.ts_outboard_loop = self.inputs["TS outboard loop"]
