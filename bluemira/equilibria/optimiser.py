@@ -809,25 +809,27 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         """
         opt = nlopt.opt(nlopt.LD_SLSQP, self.n)
         opt.set_min_objective(self.f_min_rms)
-        opt.set_xtol_abs(1e-5)
-        opt.set_xtol_rel(1e-5)
-        opt.set_ftol_abs(1e-12)
-        opt.set_ftol_rel(1e-10)
+        opt.set_xtol_abs(1e-4)
+        opt.set_xtol_rel(1e-4)
+        opt.set_ftol_abs(1e-4)
+        opt.set_ftol_rel(1e-4)
         # opt.set_maxtime(3)
         opt.set_maxeval(1000)
         opt.set_lower_bounds(-self.I_max)
         opt.set_upper_bounds(self.I_max)
 
-        # if self.n_CS == 0:
-        #     n_f_constraints = 2 * self.n_PF
-        # else:
-        #     n_f_constraints = 2 * self.n_PF + self.n_CS + 1
-        tol = self.constraint_tol * np.ones(self.n)
-        opt.add_inequality_mconstraint(self.constrain_forces, tol)
-        tol = self.constraint_tol * np.ones(self.n)
-        opt.add_inequality_mconstraint(self.constrain_fields, tol)
-
-        x0 = np.clip(tikhonov(self.A, self.b, self.gamma), -self.I_max, self.I_max)
+        if self.n_CS == 0:
+            n_f_constraints = 2 * self.n_PF
+        else:
+            n_f_constraints = 2 * self.n_PF + self.n_CS + 1
+        # tol = self.constraint_tol * np.ones(n_f_constraints)
+        # opt.add_inequality_mconstraint(self.constrain_forces, tol)
+        # tol = self.constraint_tol * np.ones(self.n)
+        # opt.add_inequality_mconstraint(self.constrain_fields, tol)
+        # x0 = np.ones(self.n)
+        x0 = np.clip(
+            tikhonov(self.A, self.b, self.gamma) / self.scale, -self.I_max, self.I_max
+        )
         currents = opt.optimize(x0)
         self.rms = opt.last_optimum_value()
         process_NLOPT_result(opt)
