@@ -25,9 +25,6 @@ Supporting functions for the bluemira geometry module.
 
 from __future__ import annotations
 
-# import from freecad
-import math
-
 import freecad  # noqa: F401
 import Part
 from FreeCAD import Base
