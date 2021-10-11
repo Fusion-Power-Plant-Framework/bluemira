@@ -144,7 +144,7 @@ class STBlanketCAD(ComponentCAD):
         # Make OCC faces
         shapes = []
         for loop in self.plot_loops:
-            face = make_mixed_face(loop)
+            face = make_face(loop)
             shapes.append(face)
 
         for shape in shapes:

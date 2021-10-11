@@ -652,6 +652,8 @@ class CustomProfile(Profile):
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
         psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points)
+        self.psisep = psisep
+        self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0, 1)
         jtor = x * self.pprime(psi_norm) + self.ffprime(psi_norm) / (x * MU_0)
         if mask is not None:

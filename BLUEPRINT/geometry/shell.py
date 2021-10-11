@@ -579,6 +579,13 @@ class Shell(GeomBase):
         return self.inner.area
 
     @property
+    def length(self):
+        """
+        Perimeter
+        """
+        return self.inner.length + self.outer.length
+
+    @property
     def plane(self):
         """
         The Shell Plane.

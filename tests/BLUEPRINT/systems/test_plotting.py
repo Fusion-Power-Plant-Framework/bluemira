@@ -41,6 +41,7 @@ from BLUEPRINT.systems.vessel import VacuumVessel
 REACTORNAME = "SMOKE-TEST"
 
 
+@pytest.mark.xfail
 class TestSystemsPlotting:
     """A class to setup and run systems plotting tests."""
 

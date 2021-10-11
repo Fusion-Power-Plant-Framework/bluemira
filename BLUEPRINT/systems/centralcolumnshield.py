@@ -136,7 +136,7 @@ class CentralColumnShield(Meshable, ReactorSystem):
             div_cassettes = self.inputs["Div_cassettes"]
             for cassette in div_cassettes:
                 # Apply an offset
-                cassette_offset = cassette.offset_clipper(div_offset)
+                cassette_offset = cassette.offset_clipper(div_offset, method="miter")
                 ccs_loop = boolean_2d_difference_loop(ccs_loop, cassette_offset)
 
         # Check the thickness at the midplane (z=0)

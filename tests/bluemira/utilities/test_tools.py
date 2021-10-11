@@ -36,6 +36,9 @@ from bluemira.utilities.tools import (
     norm,
     cross,
     clip,
+    cartesian_to_polar,
+    polar_to_cartesian,
+    get_module,
 )
 
 
@@ -223,6 +226,41 @@ class TestClip:
         test_float = clip(test_float, 1e-8, 1 - 1e-8)
         expected_float = 1 - 1e-8
         assert np.allclose(test_float, expected_float)
+
+
+def test_polar_cartesian():
+    x = np.random.rand(100)
+    z = np.random.rand(100)
+    x_ref = np.random.rand()
+    z_ref = np.random.rand()
+    r, phi = cartesian_to_polar(x, z, x_ref, z_ref)
+    xx, zz = polar_to_cartesian(r, phi, x_ref, z_ref)
+    assert np.allclose(x, xx)
+    assert np.allclose(z, zz)
+
+
+class TestGetModule:
+    def test_getmodule(self):
+        test_mod = "bluemira.utilities.tools"
+        test_mod_loc = get_bluemira_path("utilities") + "/tools.py"
+
+        for mod in [test_mod, test_mod_loc]:
+            module = get_module(mod)
+            assert module.__name__.rsplit(".", 1)[-1] == test_mod.rsplit(".", 1)[-1]
+
+    def test_getmodule_failures(self):
+
+        # Path doesn't exist
+        with pytest.raises(FileNotFoundError):
+            get_module("/This/file/doesnt/exist.py")
+
+        # Directory exists but not file
+        with pytest.raises(FileNotFoundError):
+            get_module(get_bluemira_path() + "/README.md")
+
+        # Not a python module
+        with pytest.raises(ImportError):
+            get_module(get_bluemira_path() + "../README.md")
 
 
 if __name__ == "__main__":

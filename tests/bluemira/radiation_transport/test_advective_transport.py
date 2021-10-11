@@ -113,7 +113,12 @@ class TestChargedParticleRecursionSN:
         Because it is a single null, we expect the same number of flux surfaces LFS and
         HFS.
         """
-        assert 2 * len(self.solver.flux_surfaces) == len(self.x)
+        len_ob_lfs = len(self.solver.flux_surfaces_ob_lfs)
+        len_ob_hfs = len(self.solver.flux_surfaces_ob_hfs)
+
+        assert len_ob_hfs == len_ob_lfs
+        assert len_ob_lfs + len_ob_hfs == len(self.x)
+        assert len(self.solver.flux_surfaces) == len(self.x)
 
     def test_integrals(self):
         n_fs = len(self.solver.flux_surfaces)

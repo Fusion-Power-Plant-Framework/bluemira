@@ -52,24 +52,47 @@ class TestComponentClass:
         root: GroupingComponent = grandchild.root
         assert root.tree() == target_tree
 
-    def test_get_component(self):
+    def test_get_component_full_tree(self):
         parent = GroupingComponent("Parent")
         child1 = GroupingComponent("Child1", parent=parent)
         child2 = GroupingComponent("Child2", parent=parent)
         grandchild = GroupingComponent("Grandchild", parent=child1)
 
-        assert grandchild.get_component("Child2") is child2
+        assert grandchild.get_component("Child2", full_tree=True) is child2
 
-    def test_get_component_multiple(self):
+    def test_get_component_from_node(self):
+        parent = GroupingComponent("Parent")
+        child1 = GroupingComponent("Child1", parent=parent)
+        child2 = GroupingComponent("Child2", parent=parent)
+        grandchild = GroupingComponent("Grandchild", parent=child1)
+
+        assert grandchild.get_component("Child2") is None
+
+    def test_get_component_multiple_full_tree(self):
         parent = GroupingComponent("Parent")
         child1 = GroupingComponent("Child", parent=parent)
         child2 = GroupingComponent("Child", parent=parent)
         grandchild = GroupingComponent("Grandchild", parent=child1)
 
-        components = grandchild.get_component("Child", first=False)
+        components = grandchild.get_component("Child", first=False, full_tree=True)
         assert len(components) == 2
         assert components[0] is not components[1]
         assert components[0].parent == components[1].parent
+
+    def test_get_component_multiple_from_node(self):
+        parent = GroupingComponent("Parent")
+        child1 = GroupingComponent("Child", parent=parent)
+        child2 = GroupingComponent("Child", parent=parent)
+        grandchild1 = GroupingComponent("Grandchild", parent=child1)
+        grandchild2 = GroupingComponent("Grandchild", parent=child2)
+
+        components = child1.get_component("Grandchild", first=False)
+        assert len(components) == 1
+        assert components[0] is grandchild1
+
+        components = child2.get_component("Grandchild", first=False)
+        assert len(components) == 1
+        assert components[0] is grandchild2
 
     def test_get_component_missing(self):
         parent = GroupingComponent("Parent")

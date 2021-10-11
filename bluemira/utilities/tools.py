@@ -25,16 +25,19 @@ A collection of miscellaneous tools.
 
 import numpy as np
 import operator
+from importlib import util as imp_u, import_module as imp
 from json import JSONDecoder, JSONEncoder
 from json.encoder import _make_iterencode
 import string
 import nlopt
+from os import listdir
 import re
 from functools import partial
 from itertools import permutations
 from unittest.mock import patch
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.base.parameter import Parameter
 
 
@@ -505,3 +508,138 @@ def clip(val, val_min, val_max):
     else:
         val = val_min if val < val_min else val_max if val > val_max else val
     return val
+
+
+# ======================================================================================
+# Coordinate system transformations
+# ======================================================================================
+
+
+def cartesian_to_polar(x, z, x_ref=0, z_ref=0):
+    """
+    Convert from 2-D Cartesian coordinates to polar coordinates about a reference point.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        Radial coordinates
+    z: np.ndarray
+        Vertical coordinates
+    x_ref: float
+        Reference radial coordinate
+    z_ref: float
+        Reference vertical coordinate
+
+    Returns
+    -------
+    r: np.ndarray
+        Polar radial coordinates
+    phi: np.ndarray
+        Polar angle coordinates
+    """
+    xi, zi = x - x_ref, z - z_ref
+    r = np.hypot(xi, zi)
+    phi = np.arctan2(zi, xi)
+    return r, phi
+
+
+def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
+    """
+    Convert from 2-D polar to Cartesian coordinates about a reference point.
+
+    Parameters
+    ----------
+    r: np.ndarray
+        Polar radial coordinates
+    phi: np.ndarray
+        Polar angle coordinates
+    x_ref: float
+        Reference radial coordinate
+    z_ref: float
+        Reference vertical coordinate
+
+    Returns
+    -------
+    x: np.ndarray
+        Radial coordinates
+    z: np.ndarray
+        Vertical coordinate
+    """
+    x = x_ref + r * np.cos(phi)
+    z = z_ref + r * np.sin(phi)
+    return x, z
+
+
+def get_module(name):
+    """
+    Load module dynamically.
+
+    Parameters
+    ----------
+    name: string
+        Filename or python path (a.b.c) of module to import
+
+    Returns
+    -------
+    output: module
+        Loaded module
+
+    """
+    try:
+        module = imp(name)
+    except ImportError:
+        module = _loadfromspec(name)
+    bluemira_debug(f"Loaded {module.__name__}")
+    return module
+
+
+def _loadfromspec(name):
+    """
+    Load module from filename.
+
+    Parameters
+    ----------
+    name: string
+        Filename of module to import
+
+    Returns
+    -------
+    output: module
+        Loaded module
+
+    """
+    full_dirname = name.rsplit("/", 1)
+    dirname = "." if len(full_dirname[0]) == 0 else full_dirname[0]
+
+    try:
+        mod_files = [
+            file for file in listdir(dirname) if file.startswith(full_dirname[1])
+        ]
+    except FileNotFoundError:
+        raise FileNotFoundError("Can't find module file '{}'".format(name))
+
+    if len(mod_files) == 0:
+        raise FileNotFoundError("Can't find module file '{}'".format(name))
+
+    requested = full_dirname[1] if full_dirname[1] in mod_files else mod_files[0]
+
+    if len(mod_files) > 1:
+        bluemira_warn(
+            "{}{}".format(
+                "Multiple files start with '{}'\n".format(full_dirname[1]),
+                "Assuming module is '{}'".format(requested),
+            )
+        )
+
+    mod_file = f"{dirname}/{requested}"
+
+    try:
+        spec = imp_u.spec_from_file_location(
+            mod_file.rsplit("/")[-1].split(".")[0], mod_file
+        )
+        module = imp_u.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    except (AttributeError, ImportError):
+        raise ImportError("File '{}' is not a module".format(mod_files[0]))
+
+    return module

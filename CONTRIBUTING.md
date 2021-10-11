@@ -8,8 +8,7 @@ change.
 
 This project and everyone participating in it is governed by the  Contributor Covenant 
 Code of Conduct. By participating, you are expected to uphold this code. Please report 
-unacceptable behavior to [matti.coleman@ukaea.uk](mailto:matti.coleman@ukaea.uk) and/or
-[fabrizio.franza@kit.edu](mailto:fabrizio.franza@kit.edu).
+unacceptable behavior to [matti.coleman@ukaea.uk](mailto:matti.coleman@ukaea.uk) and/or [ivan.maione@kit.edu](mailto:ivan.maione@kit.edu).
 
 ## Submitting an issue
 
