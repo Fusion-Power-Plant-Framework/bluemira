@@ -784,7 +784,8 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Solve for this iteration.
         """
-        self.coilset.mesh_coils(d_coil=0.4)
+        # mesh_coils breaks FBE, even after initial convergence
+        # self.coilset.mesh_coils(d_coil=0.4)
         self.eq._remap_greens()
         self.eq.solve(self.profiles, psi=self.psi)
 
