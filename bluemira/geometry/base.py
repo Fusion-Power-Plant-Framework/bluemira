@@ -207,8 +207,24 @@ class BluemiraGeo(ABC, Displayable):
 
 
 class GeometryDisplayer(Displayer):
+    """
+    A Displayer class for displaying BluemiraGeo objects in 3D.
+    """
+
     def display(
         self, geo: BluemiraGeo, options: Optional[DisplayOptions] = None
     ) -> None:
+        """
+        Display a BluemiraGeo object using the underlying shape.
+
+        Parameters
+        ----------
+        geo: BluemiraGeo
+            The geometry to be displayed.
+        options: Optional[DisplayOptions]
+            The options to use to display the geometry.
+            By default None, in which case the display_options assigned to the
+            BluemiraGeo object will be used.
+        """
         options = geo.display_options if options is None else options
         super().display(geo._shape, options)
