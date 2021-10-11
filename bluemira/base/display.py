@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.utilities.tools import get_module  # TODO: PR to move to bluemira
+from bluemira.utilities.tools import get_module
 
 
 @dataclass(frozen=True)
@@ -40,15 +40,19 @@ class DisplayOptions:
 class Displayer(abc.ABC):
     def __init__(
         self,
-        options: DisplayOptions = DisplayOptions(),
+        options: Optional[DisplayOptions] = None,
         api: str = "bluemira.geometry._freecadapi",
     ):
-        self._options = options
+        self._options = DisplayOptions() if options is None else options
         self._display_func = get_module(api).display
 
     @property
     def options(self) -> DisplayOptions:
         return self._options
+
+    @options.setter
+    def options(self, val: DisplayOptions) -> None:
+        self._options = val
 
     @abc.abstractmethod
     def display(self, obj, options: Optional[DisplayOptions] = None) -> None:

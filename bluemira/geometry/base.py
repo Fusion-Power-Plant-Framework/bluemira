@@ -68,11 +68,12 @@ class BluemiraGeo(ABC, Displayable):
         boundary,
         label: str = "",
         boundary_classes=None,
+        display_options: Optional[DisplayOptions] = None,
     ):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
-        self._displayer = GeometryDisplayer(DisplayOptions())
+        self._displayer = GeometryDisplayer(display_options)
 
     @staticmethod
     def _converter(func):
@@ -209,4 +210,5 @@ class GeometryDisplayer(Displayer):
     def display(
         self, geo: BluemiraGeo, options: Optional[DisplayOptions] = None
     ) -> None:
+        options = geo.display_options if options is None else options
         super().display(geo._shape, options)
