@@ -459,18 +459,19 @@ class PolySpline(GeometryParameterisation):
             l3e,
         ) = self.variables.values
         tilt = np.deg2rad(tilt)
-        ds_z = flat * 0.5 * height * np.cos(tilt)
-        ds_x = flat * 0.5 * height * np.sin(tilt)
+        height = 0.5 * height
+        ds_z = flat * height * np.cos(tilt)
+        ds_x = flat * height * np.sin(tilt)
 
         # Vertices
         x = [x1, x1 + top * (x2 - x1), x2 + ds_x, x2 - ds_x, x1 + bottom * (x2 - x1), x1]
         z = [
-            upper * 0.5 * height + dz,
-            0.5 * height + dz,
-            z2 * 0.5 * height + ds_z + dz,
-            z2 * 0.5 * height - ds_z + dz,
-            -0.5 * height + dz,
-            -lower * 0.5 * height + dz,
+            upper * height + dz,
+            height + dz,
+            z2 * height + ds_z + dz,
+            z2 * height - ds_z + dz,
+            -height + dz,
+            -lower * height + dz,
         ]
         theta = [
             0.5 * np.pi,
