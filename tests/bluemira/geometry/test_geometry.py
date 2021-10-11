@@ -19,15 +19,25 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import pytest
+from unittest.mock import patch
+
+from scipy.special import ellipe
+import math
+
+import contextlib
+
 from bluemira.geometry.tools import (
     make_polygon,
     make_ellipse,
     make_circle,
     make_circle_arc_3P,
+    extrude_shape,
 )
-from scipy.special import ellipe
-import math
-import pytest
+
+from bluemira.base.display import DisplayOptions
+
+import tests
 
 
 class TestGeometry:
@@ -103,3 +113,17 @@ class TestGeometry:
         # Wire.Length and Edge.length giving a result slightly different
         # but enough to make the following assert fail. To be investigated.
         # assert pytest.approx(bm_ellipse.length) == expected_length
+
+    def test_display(self):
+        wire1 = make_polygon(self.square_points, label="wire1", closed=False)
+        wire1.display_options = DisplayOptions((0.0, 1.0, 0.0), transparency=0.5)
+        box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
+
+        with contextlib.nullcontext() if tests.PLOTTING else patch(
+            "bluemira.geometry._freecadapi.QApplication.exec_"
+        ):
+            with contextlib.nullcontext() if tests.PLOTTING else patch(
+                "bluemira.geometry._freecadapi.quarter.QuarterWidget.show"
+            ):
+                wire1.display()
+                box1.display()

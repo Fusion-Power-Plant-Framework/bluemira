@@ -20,6 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+from unittest.mock import patch
+
+import contextlib
+import numpy as np
 
 from bluemira.base.components import (
     Component,
@@ -27,7 +31,11 @@ from bluemira.base.components import (
     PhysicalComponent,
     MagneticComponent,
 )
+from bluemira.base.display import DisplayOptions
 from bluemira.base.error import ComponentError
+from bluemira.geometry.tools import make_polygon
+
+import tests
 
 
 class TestComponentClass:
@@ -161,6 +169,40 @@ class TestPhysicalComponent:
     def test_material(self):
         component = PhysicalComponent("Dummy", shape="A shape", material="A material")
         assert component.material == "A material"
+
+    def test_display(self):
+        square_points = np.array(
+            [
+                (0.0, 0.0, 0.0),
+                (1.0, 0.0, 0.0),
+                (1.0, 1.0, 0.0),
+                (0.0, 1.0, 0.0),
+            ]
+        )
+
+        wire1 = make_polygon(square_points, True)
+        wire2 = make_polygon(square_points + 1.0, True)
+
+        group = GroupingComponent("Parent")
+        child1 = PhysicalComponent(
+            "Child1",
+            shape=wire1,
+            parent=group,
+            display_options=DisplayOptions((0.0, 1.0, 0.0)),
+        )
+        child2 = PhysicalComponent("Child2", shape=wire2, parent=group)
+
+        with contextlib.nullcontext() if tests.PLOTTING else patch(
+            "bluemira.geometry._freecadapi.QApplication.exec_"
+        ):
+            with contextlib.nullcontext() if tests.PLOTTING else patch(
+                "bluemira.geometry._freecadapi.quarter.QuarterWidget.show"
+            ):
+                child1.display()
+                group.display()
+                child2.display_options = DisplayOptions((1.0, 0.0, 0.0))
+                group.display()
+                group.display(DisplayOptions((0.0, 0.0, 1.0)))
 
 
 class TestMagneticComponent:

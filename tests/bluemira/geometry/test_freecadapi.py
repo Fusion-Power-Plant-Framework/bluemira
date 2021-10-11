@@ -19,15 +19,22 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import contextlib
 import pytest
+from unittest.mock import patch
 import numpy
 
 import freecad  # noqa: F401
 import Part
 from FreeCAD import Base
 
+from bluemira.base.display import DisplayOptions
+
 import bluemira.geometry._freecadapi as freecadapi
 from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.error import GeometryError
+
+import tests
 
 
 class TestFreecadapi:
@@ -179,3 +186,47 @@ class TestFreecadapi:
 
         # assert that points1 and points2 are the same
         assert numpy.allclose(points1 - points2, 0, atol=D_TOLERANCE)
+
+    def test_display(self):
+        wire1: Part.Wire = freecadapi.make_polygon(self.square_points, True)
+        wire2: Part.Wire = freecadapi.make_polygon(
+            numpy.array(self.square_points) + 1.0, True
+        )
+
+        with contextlib.nullcontext() if tests.PLOTTING else patch(
+            "bluemira.geometry._freecadapi.QApplication.exec_"
+        ):
+            with contextlib.nullcontext() if tests.PLOTTING else patch(
+                "bluemira.geometry._freecadapi.quarter.QuarterWidget.show"
+            ):
+                # Default single object
+                freecadapi.display(wire1)
+
+                # Single object with option
+                freecadapi.display(
+                    wire1, DisplayOptions(rgb=(0.0, 1.0, 0.0), transparency=0.5)
+                )
+
+                # Two objects, one shared option
+                freecadapi.display(
+                    [wire1, wire2], DisplayOptions(rgb=(0.0, 1.0, 0.0), transparency=0.5)
+                )
+
+                # Two objects, two options
+                freecadapi.display(
+                    [wire1, wire2],
+                    [
+                        DisplayOptions(rgb=(0.0, 1.0, 0.0), transparency=0.5),
+                        DisplayOptions(rgb=(0.0, 0.0, 1.0)),
+                    ],
+                )
+
+                # One object, two options (fails)
+                with pytest.raises(GeometryError):
+                    freecadapi.display(
+                        wire1,
+                        [
+                            DisplayOptions(rgb=(0.0, 1.0, 0.0), transparency=0.5),
+                            DisplayOptions(rgb=(0.0, 0.0, 1.0)),
+                        ],
+                    )
