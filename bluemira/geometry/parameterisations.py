@@ -767,7 +767,7 @@ class JohnerLCFS(GeometryParameterisation):
 
         Parameters
         ----------
-        label: str, default = ""
+        label: str, default = "LCFS"
             Label to give the wire
         n_points: int
             Number of points to use when creating the Bspline representation
