@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
 # import from freecad
 import freecad  # noqa: F401
@@ -48,6 +48,9 @@ import numpy
 # import from error
 from bluemira.geometry.error import NotClosedWire
 
+# visualisation
+from bluemira.base.display import DisplayOptions
+
 
 class BluemiraWire(BluemiraGeo):
     """Bluemira Wire class."""
@@ -55,9 +58,11 @@ class BluemiraWire(BluemiraGeo):
     # # Necessary only if there are changes to the base attrs dictionary
     # attrs = {**BluemiraGeo.attrs}
 
-    def __init__(self, boundary, label: str = ""):
+    def __init__(
+        self, boundary, label: str = "", display_options: Optional[DisplayOptions] = None
+    ):
         boundary_classes = [self.__class__, Part.Wire]
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes, display_options)
 
         # connection variable with BLUEPRINT Loop
         self._bp_loop = None

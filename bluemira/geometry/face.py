@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 
 # import from freecad
 import freecad  # noqa: F401
@@ -38,6 +38,9 @@ from bluemira.geometry.wire import BluemiraWire
 # import from error
 from bluemira.geometry.error import NotClosedWire, DisjointedFace
 
+# visualisation
+from bluemira.base.display import DisplayOptions
+
 
 class BluemiraFace(BluemiraGeo):
     """Bluemira Face class."""
@@ -45,9 +48,11 @@ class BluemiraFace(BluemiraGeo):
     #    metds = {'is_closed': 'isClosed', 'scale': 'scale'}
     #    attrs = {**BluemiraGeo.attrs, **metds}
 
-    def __init__(self, boundary, label: str = ""):
+    def __init__(
+        self, boundary, label: str = "", display_options: Optional[DisplayOptions] = None
+    ):
         boundary_classes = [BluemiraWire]
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes, display_options)
 
     @staticmethod
     def _converter(func):
