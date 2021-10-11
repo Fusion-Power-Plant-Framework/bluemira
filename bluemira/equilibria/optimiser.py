@@ -827,9 +827,12 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         # tol = self.constraint_tol * np.ones(self.n)
         # opt.add_inequality_mconstraint(self.constrain_fields, tol)
         # x0 = np.ones(self.n)
-        x0 = np.clip(
-            tikhonov(self.A, self.b, self.gamma) / self.scale, -self.I_max, self.I_max
-        )
+
+        u = self.eq.coilset.get_control_currents()
+        x0 = np.clip(u / self.scale, -self.I_max, self.I_max)
+        # x0 = np.clip(
+        #     tikhonov(self.A, self.b, self.gamma) / self.scale, -self.I_max, self.I_max
+        # )
         currents = opt.optimize(x0)
         self.rms = opt.last_optimum_value()
         process_NLOPT_result(opt)

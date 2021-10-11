@@ -1568,7 +1568,7 @@ class Reactor(ReactorSystem):
         """
         Provides a ReactorPlotter object as a property of the Reactor
         """
-        return ReactorPlotter(self, palette=self.palette)
+        return ReactorPlotter(self)
 
     def plot_radial_build(self, width=1.0):
         """
