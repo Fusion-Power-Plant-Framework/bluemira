@@ -38,7 +38,6 @@ from BLUEPRINT.geometry.boolean import (
     convex_hull,
 )
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.limiter import Limiter
 from BLUEPRINT.nova.firstwall import Paneller
 

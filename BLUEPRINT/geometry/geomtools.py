@@ -439,27 +439,22 @@ def check_linesegment(point_a, point_b, point_c):
 
 def get_points_of_loop(loop):
     """
-    <<<<<<< HEAD
-        Deprecation / port-over utility
-    =======
-        Get the [x, z] points corresponding to this loop
+    Get the [x, z] points corresponding to this loop. If the loop is closed then skips
+    the last (closing) point.
 
-        If the loop is closed then skips the last (closing) point.
+    Parameters
+    ----------
+    loop: Loop
+        Loop to get the points of
 
-        Parameters
-        ----------
-        loop: Loop
-            Loop to get the points of
+    Returns
+    -------
+    points : List[float, float]
+        The [x, z] points corresponding to this loop.
 
-        Returns
-        -------
-        points : List[float, float]
-            The [x, z] points corresponding to this loop.
-
-        Notes
-        -----
+    Notes
+    -----
         Deprecation / portover utility
-    >>>>>>> develop
     """
     if loop.closed:
         return loop.d2.T[:-1].tolist()

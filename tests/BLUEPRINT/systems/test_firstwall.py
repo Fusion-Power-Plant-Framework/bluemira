@@ -31,6 +31,7 @@ from BLUEPRINT.geometry.geomtools import get_intersect
 
 DATA_PATH = get_bluemira_path("equilibria", subfolder="data")
 
+
 #  Helper function to load an equilibrium
 def load_equilibrium(eq_name):
     return Equilibrium.from_eqdsk(os.sep.join([DATA_PATH, eq_name]))

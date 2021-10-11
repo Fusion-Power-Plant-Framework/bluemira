@@ -32,9 +32,8 @@ from scipy.optimize import minimize_scalar
 from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
-
+from bluemira.equilibria.find import find_OX_points
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.equilibria.find import find_OX
 from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d, unique, xz_interp
 from BLUEPRINT.geometry.loop import Loop
