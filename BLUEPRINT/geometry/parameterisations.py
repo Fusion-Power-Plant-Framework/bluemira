@@ -842,7 +842,7 @@ class TaperedPictureFrame(Parameterisation):
 
 
 def curved_picture_frame(
-    x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c, npoints=200
+    x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, z_bottom, r_c, npoints=200
 ):
     """
     Curved PictureFrame shape parameterisation
@@ -963,14 +963,14 @@ def curved_picture_frame(
     r_leg = 0.5 * (x_out - x_curve_start2) / np.sin(theta_leg_basic / 2)
     leg_centre = (x_out - 0.5 * (x_out - x_curve_start2), z_top - r_leg)
 
-    # Transitioning Curve
-    r_c = 0
+    # --------------- Transitioning Curve - NOT USED IF r_c = 0 ---------
+    r_c = 0  # currently giving optimiser trouble, could increase if/when needed
     sin_a = np.sin(theta_leg_basic / 2)
     cos_a = np.cos(theta_leg_basic / 2)
     alpha_leg = (
         np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
     )
-
+    # ------END TRANSITIONING CURVE----------------------
     # Joint Curve
     theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
     joint_curve_centre = (leg_centre[0] - (r_leg + r_j) * np.sin(theta_j), z_mid + r_j)
@@ -984,8 +984,6 @@ def curved_picture_frame(
         start=-90,
         npoints=int(npoints * 0.1),
     )
-    x = np.append(x, x_c_j)
-    z = np.append(z, z_c_j)
 
     x_c_l, z_c_l = circle_seg(
         r_leg,
@@ -994,8 +992,6 @@ def curved_picture_frame(
         start=90 + np.rad2deg(theta_j),
         npoints=int(npoints * 0.2),
     )
-    x = np.append(x, x_c_l)
-    z = np.append(z, z_c_l)
 
     theta_trans = np.pi / 2 + theta_leg_basic / 2 - alpha_leg
     trans_curve_centre = (
@@ -1010,23 +1006,49 @@ def curved_picture_frame(
         start=np.rad2deg(theta_trans),
         npoints=int(npoints * 0.1),
     )
-    x = np.append(x, x_c_trans)
-    z = np.append(z, z_c_trans)
 
-    # Outer leg
-    npts = 2
-    x = np.append(x, x_out * np.ones(npts))
-    z = np.append(z, np.linspace(z_mid, -z_mid, npts))
+    if z_top > (z_mid + 0.001):
+        # If top leg is domed
+        x = np.append(x, x_c_j)
+        z = np.append(z, z_c_j)
 
-    # Bottom Curve
-    x = np.append(x, np.flip(x_c_trans))
-    z = np.append(z, -np.flip(z_c_trans))
-    x = np.append(x, np.flip(x_c_l))
-    z = np.append(z, -np.flip(z_c_l))
+        x = np.append(x, x_c_l)
+        z = np.append(z, z_c_l)
 
-    # Bottom leg, joint
-    x = np.append(x, np.flip(x_c_j))
-    z = np.append(z, -np.flip(z_c_j))
+        x = np.append(x, x_c_trans)
+        z = np.append(z, z_c_trans)
+
+        # Outer leg
+        npts = 2
+        x = np.append(x, x_out * np.ones(npts))
+        z = np.append(z, np.linspace(z_mid, -z_mid, npts))
+
+    else:
+        # If top leg is flat
+        r_c = min(x_curve_start - x_mid, 0.8)
+        x = np.append(x, x_out - r_c)
+        z = np.append(z, z_mid)
+
+        # Outer leg
+        npts = 2
+        x = np.append(x, x_out * np.ones(npts))
+        z = np.append(z, np.linspace(z_mid, -z_mid, npts))
+
+    if z_bottom < -(z_mid + 0.001):
+        # Domed bottom leg
+        # Bottom Curve
+        x = np.append(x, np.flip(x_c_trans))
+        z = np.append(z, -np.flip(z_c_trans))
+        x = np.append(x, np.flip(x_c_l))
+        z = np.append(z, -np.flip(z_c_l))
+
+        # Bottom leg, joint
+        x = np.append(x, np.flip(x_c_j))
+        z = np.append(z, -np.flip(z_c_j))
+    else:
+        # flat bottom leg
+        x = np.append(x, x_out - r_c)
+        z = np.append(z, -z_mid)
 
     # Inner leg, negative z
     npts = 2
