@@ -35,7 +35,7 @@ import numpy as np
 import math
 
 # import typing
-from typing import Union, List
+from typing import Union
 
 # import errors
 from bluemira.geometry.error import GeometryError
