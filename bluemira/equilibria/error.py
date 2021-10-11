@@ -32,3 +32,11 @@ class EquilibriaError(BluemiraError):
     """
 
     pass
+
+
+class FluxSurfaceError(EquilibriaError):
+    """
+    Error class for FluxSurfaces.
+    """
+
+    pass

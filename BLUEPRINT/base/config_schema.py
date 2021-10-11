@@ -142,10 +142,10 @@ class ConfigurationSchema:
     psi_norm: Parameter
     xpt_outer_gap: Parameter
     xpt_inner_gap: Parameter
-    outer_target_sol: Parameter
-    outer_target_pfr: Parameter
-    inner_target_sol: Parameter
-    inner_target_pfr: Parameter
+    tk_outer_target_sol: Parameter
+    tk_outer_target_pfr: Parameter
+    tk_inner_target_sol: Parameter
+    tk_inner_target_pfr: Parameter
     # ad hoc SN variables
     outer_strike_h: Parameter
     inner_strike_h: Parameter
@@ -153,6 +153,7 @@ class ConfigurationSchema:
     outer_strike_r: Parameter
     inner_strike_r: Parameter
     theta_outer_target: Parameter
+    theta_inner_target: Parameter
     xpt_height: Parameter
 
     # Blanket

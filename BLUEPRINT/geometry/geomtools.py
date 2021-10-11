@@ -439,7 +439,27 @@ def check_linesegment(point_a, point_b, point_c):
 
 def get_points_of_loop(loop):
     """
-    Deprecation / port-over utility
+    <<<<<<< HEAD
+        Deprecation / port-over utility
+    =======
+        Get the [x, z] points corresponding to this loop
+
+        If the loop is closed then skips the last (closing) point.
+
+        Parameters
+        ----------
+        loop: Loop
+            Loop to get the points of
+
+        Returns
+        -------
+        points : List[float, float]
+            The [x, z] points corresponding to this loop.
+
+        Notes
+        -----
+        Deprecation / portover utility
+    >>>>>>> develop
     """
     if loop.closed:
         return loop.d2.T[:-1].tolist()
@@ -1623,7 +1643,7 @@ def get_control_point(loop):
     """
     if loop.__class__.__name__ == "Loop":
         cp = [loop.centroid[0], loop.centroid[1]]
-        if loop.point_in_poly(cp):
+        if loop.point_inside(cp):
             return cp
         else:
             return _montecarloloopcontrol(loop)
@@ -1659,7 +1679,7 @@ def _montecarloloopcontrol(loop):
         n, m = np.random.rand(2)
         x = xmin + n * dx
         y = ymin + m * dy
-        if loop.point_in_poly([x, y]):
+        if loop.point_inside([x, y]):
             return [x, y]
     raise ValueError("Da musst du was Besseres scheiben...")
 
@@ -1691,7 +1711,7 @@ def _montecarloshellcontrol(shell):
         n, m = np.random.rand(2)
         x = xmin + n * dx
         y = ymin + m * dy
-        if shell.point_in_poly([x, y]):
+        if shell.point_inside([x, y]):
             return [x, y]
     raise ValueError("Da musst du was Besseres schreiben...")
 

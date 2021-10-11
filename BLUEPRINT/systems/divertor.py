@@ -68,8 +68,7 @@ class Divertor(Meshable, ReactorSystem):
         self.inputs = inputs
         self._plotter = DivertorPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.n_div = self.params.n_TF * self.params.n_div_cassettes
         if self.params.plasma_type == "DN":

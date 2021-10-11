@@ -24,8 +24,6 @@ Central column neutron shield system
 """
 import numpy as np
 
-from bluemira.base.parameter import ParameterFrame
-
 from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
@@ -97,8 +95,8 @@ class CentralColumnShield(Meshable, ReactorSystem):
     def __init__(self, config, inputs):
         self.config = config
         self.inputs = inputs
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+
+        self._init_params(self.config)
 
         # Construct the 2D profile
         self.build_profile()
@@ -138,7 +136,7 @@ class CentralColumnShield(Meshable, ReactorSystem):
             div_cassettes = self.inputs["Div_cassettes"]
             for cassette in div_cassettes:
                 # Apply an offset
-                cassette_offset = cassette.offset_clipper(div_offset)
+                cassette_offset = cassette.offset_clipper(div_offset, method="miter")
                 ccs_loop = boolean_2d_difference_loop(ccs_loop, cassette_offset)
 
         # Check the thickness at the midplane (z=0)

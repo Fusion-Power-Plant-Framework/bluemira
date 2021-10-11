@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,17 +24,17 @@ Fuel cycle model fundamental building blocks
 """
 import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.constants import T_LAMBDA, S_TO_YR
-from BLUEPRINT.base.error import FuelCycleError
-from BLUEPRINT.fuelcycle.tfvutils import (
+from bluemira.fuel_cycle.error import FuelCycleError
+from bluemira.fuel_cycle.tools import (
     linear_bathtub,
     fountain,
     fountain_bathtub,
     sqrt_bathtub,
+    delay_decay,
 )
 
 
-class TCycleFlow:
+class FuelCycleFlow:
     """
     Generic T fuel cycle flow object. Accounts for delay and decay
 
@@ -49,27 +49,14 @@ class TCycleFlow:
     """
 
     def __init__(self, t, in_flow, t_duration):
-        def _deldec(m_t_flow, t_delay):
-            """
-            Diese Funktion ändert ein T flow mit einem Verzug [s] und rechnet\n
-            dem radioaktiven Zerfall ab [y].
-            """
-            t_delay = t_delay * S_TO_YR
-            shift = np.argmin(np.abs(t - t_delay))
-            flow = np.zeros(shift)
-            deldec = np.exp(-T_LAMBDA * t_delay)
-            flow = np.append(flow, deldec * m_t_flow)
-            flow = flow[: len(t)]  # TODO: figure why you had to do this
-            return flow
-
         if t_duration == 0:
             self.out_flow = in_flow
         else:
-            self.out_flow = _deldec(in_flow, t_duration)
+            self.out_flow = delay_decay(t, in_flow, t_duration)
 
     def split(self, number, fractions):
         """
-        Divise un flux en N
+        Divides a flux into number of divisions
 
         Parameters
         ----------
@@ -79,18 +66,19 @@ class TCycleFlow:
             The fractional breakdown of the flows (must sum to 1)
         """
         if number <= 1 or not isinstance(number, int):
-            bluemira_warn("Nombre entier plus grand que un.")
+            bluemira_warn("Integer greater than 1.")
 
         if len(fractions) != number - 1:
             bluemira_warn("Need fractions for every flow but one.")
 
         fractions.append(1 - sum(fractions))
-        fractions = np.array(fractions).reshape(len(fractions), 1)
-        flows = fractions * self.out_flow.reshape(1, len(self.out_flow))
-        return flows
+        flows = []
+        for fraction in fractions:
+            flows.append(fraction * self.out_flow)
+        return np.array(flows)
 
 
-class TCycleComponent:
+class FuelCycleComponent:
     """
     Generic T fuel cycle system block. Residence time in block is 0.
     Decay is only accounted for in the sequestered T, in between two
@@ -207,6 +195,6 @@ class TCycleComponent:
 
 
 if __name__ == "__main__":
-    from BLUEPRINT import test
+    from bluemira import test
 
     test(plotting=True)

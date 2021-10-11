@@ -26,16 +26,16 @@ import matplotlib.pyplot as plt
 import pytest
 from scipy.interpolate import interp1d
 import tests
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.fuelcycle.tfvutils import (
+from bluemira.base.file import get_bluemira_path
+from bluemira.fuel_cycle.tools import (
     convert_flux_to_flow,
     fit_sink_data,
     piecewise_sqrt_threshold,
 )
-from BLUEPRINT.fuelcycle.blocks import TCycleComponent
+from bluemira.fuel_cycle.blocks import FuelCycleComponent
 
 
-class TestTCycleComponent:
+class TestFuelCycleComponent:
     @classmethod
     def setup_class(cls):
         if tests.PLOTTING:
@@ -45,7 +45,7 @@ class TestTCycleComponent:
         t = np.linspace(0, 30, 1900)
         m = 5e-7 * np.ones(1900)
 
-        component = TCycleComponent("test", t, 0.995, 1.11, retention_model="bathtub")
+        component = FuelCycleComponent("test", t, 0.995, 1.11, retention_model="bathtub")
         component.add_in_flow(m)
         component.run()
 
@@ -58,7 +58,9 @@ class TestTCycleComponent:
         m_flow = convert_flux_to_flow(1e20, 1400)
         m = m_flow * np.ones(1900)
 
-        component = TCycleComponent("test", t, 0.33, 1.3, retention_model="sqrt_bathtub")
+        component = FuelCycleComponent(
+            "test", t, 0.33, 1.3, retention_model="sqrt_bathtub"
+        )
         component.add_in_flow(m)
         component.run()
 
@@ -70,9 +72,7 @@ class TestTCycleComponent:
 
 class TestSqrtFittedSinks:
     def test_fits(self):
-        path = get_BP_path(
-            "fuelcycle/blanket_fw_T_retention", subfolder="data/BLUEPRINT"
-        )
+        path = get_bluemira_path("fuel_cycle/blanket_fw_T_retention", subfolder="data")
 
         # Get all the data files
         files = []
@@ -132,7 +132,7 @@ class TestSqrtFittedSinks:
 
             # We have to switch off decay in the model in order to check it
             # matches with the data (which don't include decay effects).
-            component = TCycleComponent(
+            component = FuelCycleComponent(
                 label,
                 t,
                 v["p_opt"][0],
@@ -170,4 +170,4 @@ class TestSqrtFittedSinks:
 
 
 if __name__ == "__main__":
-    pytest([__file__])
+    pytest.main([__file__])

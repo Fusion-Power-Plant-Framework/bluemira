@@ -100,13 +100,13 @@ class ComponentCAD:
     @staticmethod
     def _check_shape(name, shape):
         if not shape.Closed():
-            # Es scheint als ob alles Geoeffnet ist... :(
+            # The loop is open
             pass
 
         if shape.IsNull():
-            bluemira_warn(f"Objeto {name} não existe!")
+            bluemira_warn(f"Object {name} does not exist!")
         if shape.Infinite():
-            bluemira_warn(f"Objeto {name} é infinito!")
+            bluemira_warn(f"Object {name} is infinite!")
 
     def add_shape(self, shape, **kwargs):
         """
@@ -149,7 +149,7 @@ class ComponentCAD:
             The name of the shape to remove
         """
         if name not in self.component["names"]:
-            raise CADError(f'No hay un componente "{name}" en este modelo.')
+            raise CADError(f'There is no "{name}" component in this model.')
         index = self.component["names"].index(name)
         for value in self.component.values():
             value.pop(index)

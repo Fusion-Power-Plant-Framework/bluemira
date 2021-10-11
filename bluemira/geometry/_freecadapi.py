@@ -30,8 +30,9 @@ import freecad  # noqa: F401
 import Part
 from FreeCAD import Base
 
-# import numpy lib
+# import math lib
 import numpy as np
+import math
 
 # import typing
 from typing import Union
@@ -286,7 +287,7 @@ def close_wire(wire: Part.Wire):
     return wire
 
 
-def discretize(w: Part.Wire, ndiscr: int):
+def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     """Discretize a wire.
 
     Parameters
@@ -295,45 +296,68 @@ def discretize(w: Part.Wire, ndiscr: int):
         wire to be discretized.
     ndiscr : int
         number of points for the whole wire discretization.
+    dl : float
+        target discretization length (default None). If dl is defined,
+        ndiscr is not considered.
 
     Returns
     -------
-    output : list(Base.Vector)
-        list of Base.Vector points.
+    output : list(numpy.ndarray)
+        list of points.
 
     """
+    # discretization points array
+    output = []
+
+    if dl is None:
+        pass
+    elif dl <= 0.0:
+        raise ValueError("dl must be > 0.")
+    else:
+        # a dl is calculated for the discretisation of the different edges
+        ndiscr = math.ceil(w.Length / dl)
+
     # discretization points array
     output = w.discretize(ndiscr)
     output = vector_to_numpy(output)
     return output
 
 
-def discretize_by_edges(w: Part.Wire, ndiscr: int):
-    """Discretize a wire taking into account the edges of which it consists of.
+def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
+    """
+    Discretize a wire taking into account the edges of which it consists of.
 
     Parameters
     ----------
     w : Part.Wire
         wire to be discretized.
     ndiscr : int
-        number of points for the whole wire discretization.
+        number of points for the whole wire discretization. Final number of points
+        can be slightly different due to edge discretization routine.
+    dl : float
+        target discretization length (default None). If dl is defined,
+        ndiscr is not considered.
 
     Returns
     -------
-    output : list(Base.Vector)
-        list of Base.Vector points.
-
+    output : list(numpy.ndarray)
+        list of points.
     """
     # discretization points array
     output = []
-    # a dl is calculated for the discretisation of the different edges
-    dl = w.Length / float(ndiscr)
+
+    if dl is None:
+        # dl is calculated for the discretisation of the different edges
+        dl = w.Length / float(ndiscr)
+    elif dl <= 0.0:
+        raise ValueError("dl must be > 0.")
+
     # edges are discretised taking into account their orientation
     # Note: this is a tricky part in Freecad. Reversed wires need a
     # reverse operation for the generated points and the list of generated
     # points for each edge.
     for e in w.OrderedEdges:
-        pointse = e.discretize(Distance=dl)
+        pointse = list(discretize(Part.Wire(e), dl=dl))
         # if edge orientation is reversed, the generated list of points
         # must be reversed
         if e.Orientation == "Reversed":
@@ -344,8 +368,34 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int):
     # if wire orientation is reversed, output must be reversed
     if w.Orientation == "Reversed":
         output.reverse()
-    output = vector_to_numpy(output)
+    output = np.array(output)
     return output
+
+
+def dist_to_shape(shape1, shape2):
+    """Find the minimum distance between two shapes
+
+    Parameters
+    ----------
+    shape1:
+        reference shape.
+    shape2:
+        target shape.
+
+    Returns
+    -------
+    output:
+        a tuple of two -> (dist, vectors)
+        dist is the minimum distance (float value)
+        vectors is a list of tuples corresponding to the nearest points (numpy.ndarray)
+        between shape1 and shape2. The distance between those points is the minimum
+        distance given by dist.
+    """
+    dist, solution, info = shape1.distToShape(shape2)
+    vectors = []
+    for v1, v2 in solution:
+        vectors.append((vector_to_numpy(v1), vector_to_numpy(v2)))
+    return dist, vectors
 
 
 # # =============================================================================

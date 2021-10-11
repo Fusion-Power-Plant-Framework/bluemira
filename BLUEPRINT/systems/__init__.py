@@ -15,6 +15,5 @@ from .plasma import Plasma
 from .powerbalance import BalanceOfPlant
 from .tfcoils import ToroidalFieldCoils
 from .pfcoils import PoloidalFieldCoils
-from .tfv import TFVSystem
 from .thermalshield import ThermalShield
 from .vessel import VacuumVessel

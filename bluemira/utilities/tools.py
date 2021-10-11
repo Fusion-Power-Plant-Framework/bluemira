@@ -25,9 +25,46 @@ A collection of miscellaneous tools.
 
 import numpy as np
 import operator
-from json import JSONEncoder
+from importlib import util as imp_u, import_module as imp
+from json import JSONDecoder, JSONEncoder
+from json.encoder import _make_iterencode
 import string
+import nlopt
+from os import listdir
+import re
+from functools import partial
+from itertools import permutations
+from unittest.mock import patch
+
 from bluemira.base.constants import E_I, E_IJ, E_IJK
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.base.parameter import Parameter
+
+
+class CommentJSONDecoder(JSONDecoder):
+    """
+    Decode JSON with comments
+
+    Notes
+    -----
+    Regex does the following for comments:
+
+        - starts with // followed by most chr (not ")
+        - if not followed by " and any of (whitespace , }) and \\n
+
+    and removes extra commas from the end of dict like objects
+    """
+
+    comments = re.compile(r'[/]{2}(\s*\w*[#-/:-@{-~!^_`\[\]]*)*(?!["]\s*[,]*[\}]*\n)')
+    comma = re.compile(r"[,](\n*\s*)*[\}]")
+    eof = re.compile(r"[,](\n*\s*)*$")
+
+    def decode(self, s, *args, **kwargs):
+        """Return the Python representation of ``s`` (a ``str`` instance
+        containing a JSON document).
+        """
+        s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
+        return super().decode(s, *args, **kwargs)
 
 
 class NumpyJSONEncoder(JSONEncoder):
@@ -42,6 +79,50 @@ class NumpyJSONEncoder(JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
+
+    @staticmethod
+    def floatstr(_floatstr, obj, *args, **kwargs):
+        """
+        Awaiting python bugs:
+
+        https://github.com/python/cpython/pull/13233
+        https://bugs.python.org/issue36841
+        https://bugs.python.org/issue42434
+        https://bugs.python.org/issue31466
+        """
+        if isinstance(obj, Parameter):
+            obj = obj.value
+        return _floatstr(obj, *args, **kwargs)
+
+    def iterencode(self, o, _one_shot=False):
+        """
+        Patch iterencode type checking
+        """
+        with patch("json.encoder._make_iterencode", new=_patcher):
+            return super().iterencode(o, _one_shot=_one_shot)
+
+
+def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
+    """
+    Modify the json encoder to be less strict on
+    type checking.
+    Pythons built in types (float, int) have __repr__ written in c
+    and json encoder doesn't yet allow custom type checking
+
+    For example
+    p = Parameter(var='hi', value=1, source='here')
+    repr(p) == '1' # True
+    isinstance(p, int) # True
+    int.__repr__(p) # TypeError
+
+    Currently there is a comment in the _make_iterencode function that
+    calls itself a hack therefore this is ok...
+    """
+    _floatstr = partial(NumpyJSONEncoder.floatstr, _floatstr)
+    kwargs["_intstr"] = repr
+    return _make_iterencode(
+        markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
+    )
 
 
 def is_num(thing):
@@ -69,6 +150,26 @@ def is_num(thing):
         return False
 
 
+def abs_rel_difference(v2, v1_ref):
+    """
+    Calculate the absolute relative difference between a new value and an old
+    reference value.
+
+    Parameters
+    ----------
+    v2: float
+        The new value to compare to the old
+    v1_ref: float
+        The old reference value
+
+    Returns
+    -------
+    delta: float
+        The absolute relative difference between v2 and v1ref
+    """
+    return abs((v2 - v1_ref) / v1_ref)
+
+
 # =====================================================
 # Einsum utilities
 # =====================================================
@@ -92,6 +193,38 @@ def asciistr(length):
         raise ValueError("Unsupported string length")
 
     return string.ascii_letters[:length]
+
+
+def levi_civita_tensor(dim=3):
+    """
+    N dimensional Levi-Civita Tensor.
+
+    For dim=3 this looks like:
+
+    e_ijk = np.zeros((3, 3, 3))
+    e_ijk[0, 1, 2] = e_ijk[1, 2, 0] = e_ijk[2, 0, 1] = 1
+    e_ijk[0, 2, 1] = e_ijk[2, 1, 0] = e_ijk[1, 0, 2] = -1
+
+    Parameters
+    ----------
+    dim: int
+        The number of dimensions for the LCT
+
+    Returns
+    -------
+    np.array (n_0,n_1,...n_n)
+
+    """
+    perms = np.array(list(set(permutations(np.arange(dim)))))
+
+    e_ijk = np.zeros([dim for d in range(dim)])
+
+    idx = np.triu_indices(n=dim, k=1)
+
+    for perm in perms:
+        e_ijk[tuple(perm)] = np.prod(np.sign(perm[idx[1]] - perm[idx[0]]))
+
+    return e_ijk
 
 
 class EinsumWrapper:
@@ -243,6 +376,21 @@ dot = wrap.dot
 cross = wrap.cross
 
 
+def set_random_seed(seed_number: int):
+    """
+    Sets the random seed number in numpy and NLopt. Useful when repeatable
+    results are desired in Monte Carlo methods and stochastic optimisation
+    methods.
+
+    Parameters
+    ----------
+    seed_number: int
+        The random seed number, preferably a very large integer
+    """
+    np.random.seed(seed_number)
+    nlopt.srand(seed_number)
+
+
 def compare_dicts(d1, d2, almost_equal=False, verbose=True):
     """
     Compares two dictionaries. Will print information about the differences
@@ -332,26 +480,6 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True):
     return the_same
 
 
-def delta(v2, v1ref):
-    """
-    Calculates the absolute relative difference between a new value and an old
-    reference value.
-
-    Parameters
-    ----------
-    v2: float
-        The new value to compare to the old
-    v1ref: float
-        The old reference value
-
-    Returns
-    -------
-    delta: float
-        The absolute relative difference between v2 and v1ref
-    """
-    return abs((v2 - v1ref) / v1ref)
-
-
 def clip(val, val_min, val_max):
     """
     Clips (limits) val between val_min and val_max.
@@ -380,3 +508,138 @@ def clip(val, val_min, val_max):
     else:
         val = val_min if val < val_min else val_max if val > val_max else val
     return val
+
+
+# ======================================================================================
+# Coordinate system transformations
+# ======================================================================================
+
+
+def cartesian_to_polar(x, z, x_ref=0, z_ref=0):
+    """
+    Convert from 2-D Cartesian coordinates to polar coordinates about a reference point.
+
+    Parameters
+    ----------
+    x: np.ndarray
+        Radial coordinates
+    z: np.ndarray
+        Vertical coordinates
+    x_ref: float
+        Reference radial coordinate
+    z_ref: float
+        Reference vertical coordinate
+
+    Returns
+    -------
+    r: np.ndarray
+        Polar radial coordinates
+    phi: np.ndarray
+        Polar angle coordinates
+    """
+    xi, zi = x - x_ref, z - z_ref
+    r = np.hypot(xi, zi)
+    phi = np.arctan2(zi, xi)
+    return r, phi
+
+
+def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
+    """
+    Convert from 2-D polar to Cartesian coordinates about a reference point.
+
+    Parameters
+    ----------
+    r: np.ndarray
+        Polar radial coordinates
+    phi: np.ndarray
+        Polar angle coordinates
+    x_ref: float
+        Reference radial coordinate
+    z_ref: float
+        Reference vertical coordinate
+
+    Returns
+    -------
+    x: np.ndarray
+        Radial coordinates
+    z: np.ndarray
+        Vertical coordinate
+    """
+    x = x_ref + r * np.cos(phi)
+    z = z_ref + r * np.sin(phi)
+    return x, z
+
+
+def get_module(name):
+    """
+    Load module dynamically.
+
+    Parameters
+    ----------
+    name: string
+        Filename or python path (a.b.c) of module to import
+
+    Returns
+    -------
+    output: module
+        Loaded module
+
+    """
+    try:
+        module = imp(name)
+    except ImportError:
+        module = _loadfromspec(name)
+    bluemira_debug(f"Loaded {module.__name__}")
+    return module
+
+
+def _loadfromspec(name):
+    """
+    Load module from filename.
+
+    Parameters
+    ----------
+    name: string
+        Filename of module to import
+
+    Returns
+    -------
+    output: module
+        Loaded module
+
+    """
+    full_dirname = name.rsplit("/", 1)
+    dirname = "." if len(full_dirname[0]) == 0 else full_dirname[0]
+
+    try:
+        mod_files = [
+            file for file in listdir(dirname) if file.startswith(full_dirname[1])
+        ]
+    except FileNotFoundError:
+        raise FileNotFoundError("Can't find module file '{}'".format(name))
+
+    if len(mod_files) == 0:
+        raise FileNotFoundError("Can't find module file '{}'".format(name))
+
+    requested = full_dirname[1] if full_dirname[1] in mod_files else mod_files[0]
+
+    if len(mod_files) > 1:
+        bluemira_warn(
+            "{}{}".format(
+                "Multiple files start with '{}'\n".format(full_dirname[1]),
+                "Assuming module is '{}'".format(requested),
+            )
+        )
+
+    mod_file = f"{dirname}/{requested}"
+
+    try:
+        spec = imp_u.spec_from_file_location(
+            mod_file.rsplit("/")[-1].split(".")[0], mod_file
+        )
+        module = imp_u.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    except (AttributeError, ImportError):
+        raise ImportError("File '{}' is not a module".format(mod_files[0]))
+
+    return module

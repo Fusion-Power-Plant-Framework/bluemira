@@ -1,5 +1,5 @@
-Theory
-======
+fuel_cycle
+==========
 
 The following documentation is mostly an extract from: `DEMO tritium fuel cycle: performance, parameter explorations, and design space constraints <https://www.sciencedirect.com/science/article/pii/S092037961930167X>`_, Coleman, Hörstensmeyer and Cismondi, *Fusion Engineering and Design* v **141** pp79-90 (2019)
 
@@ -97,16 +97,8 @@ investigated what tritium breeding ratio (TBR), :math:`\Lambda_r`, would
 be required to achieve this overarching requirement, with values
 typically in the range :math:`\Lambda_r` = 1.05-1.15. However, in the
 recent EU-DEMO studies a “target” value for the TBR has been set at
-:math:`\Lambda_t` = 1.10 [Fischer_2015]_.
-These authors discuss and analyse a range of uncertainties and margins
-surrounding the EU-DEMO TBR, before allocating two “loss budgets” for
-the TBR. The authors assign a 5% loss budget to the fuel cycle (which we
-will refer to here as :math:`\Delta_{FC}`), followed by another 5% loss
-budget for ports and penetrations. No rationale or supporting analysis
-is given for the 5% allocated to the fuel cycle, other than it accounts
-for approximately 1 year of tritium decay. The 5% allocated to the ports implies that the TBR being assessed appears to be, in fact, a virtual number based on maintaining
-an artificial axisymmetry in neutronics models and then assigning a
-budget to volumes later lost to non-breeding components/voids.
+:math:`\Lambda_t` = 1.10 [Fischer_2015]_, which accounts for additional
+uncertainties in data and design.
 
 This work will attempt to provide supporting analysis for a reasonable
 design requirement for the required TBR, :math:`\Lambda_r`, which will,
@@ -133,7 +125,7 @@ design margins (e.g. a loss budget for non-breeding volumes),
 for in the definition of the target TBR, where
 :math:`\Lambda_t=\Lambda_r+\Delta_M+\Delta_U`.
 
-More detail on the exact (and recent) definition of the target TBR can be found in [Fischer_2020]_.
+More detail on the exact definition of the target TBR can be found in [Fischer_2020]_.
 
 Load factor: :math:`A_{glob}`
 #############################
@@ -177,14 +169,6 @@ unique challenge for the DEMO tritium fuel cycle, as it must cope with
 the pressures of rapid delivery during sequential pulses with no
 failures, while producing enough tritium to account for decay losses
 over long periods of time when none is being produced.
-
-In this work, we assume that no reactor downtime is ever incurred due to
-a lack of tritium in the fuelling systems. This ambitious goal is
-inherent to the principle of tritium self-sufficiency and general power
-plant relevance; one can scarcely imagine a coal power station not
-producing electricity because of a lack of coal [1]_. We suggest that
-this objective should be enshrined in a high-level requirement for DEMO
-and its tritium fuel cycle.
 
 Planned operations for the EU-DEMO
 ##################################
@@ -270,7 +254,7 @@ and :math:`t_{d}`.
 Secondly, although Kuan and Abdou’s analytical model
 [Kuan_1999]_ includes terms for the overall reactor
 load factor, most calculations are done assuming high availability
-factors [2]_. Though these authors show results for far lower load
+factors [1]_. Though these authors show results for far lower load
 factors, the terms are applied as averages to make the model
 time-independent. This approximation is justifiable for the ranges of
 availability they considered as realistic at the time (50% to 100%), and
@@ -278,13 +262,7 @@ the authors themselves note that the range of insensitivity is between
 65% to 100% [Kuan_1999]_. However, Kuan and Abdou’s
 results for reactor availabilities around and below 30% are cause for
 concern: high TBRs (:math:`\geq`\ 1.3) are required to maintain the same
-performance. Yet in the EU, with present knowledge, we consider load
-factors similar to these values — and modern blanket studies do not
-indicate such high TBRs to be achievable.
-
-Work on the Chinese Fusion Engineering Test Reactor tritium fuel cycle is
-also underway [Chen_2016]_, in which a load
-factor of 100% is considered.
+performance.
 
 Given the substantially lower load factors considered in the EU-DEMO
 studies (typically :math:`\sim20-30\%`) we were motivated to consider a
@@ -382,7 +360,7 @@ factors, :math:`\bar{a}`, per phase, where
 shows the operational load factors over the life of the plant for a
 given overall load factor.
 
-.. figure:: ../images/fuelcycle/A_tot_figure.png
+.. figure:: A_tot_figure.png
    :name: Atot_a
 
    Operational load factors in DEMO periods for specified global load
@@ -394,7 +372,7 @@ Mapping these operational load factors to each period of DEMO operation,
 we can observe the progression in load factor throughout the life,
 assuming perfectly regular operation, see :numref:`linear`.
 
-.. figure:: ../images/fuelcycle/linear_life.png
+.. figure:: linear_life.png
    :name: linear
 
    Operation periods in a typical DEMO timeline. The blue curve shows
@@ -405,16 +383,13 @@ Timeline generation
 ###################
 
 In reality, however, the operation of DEMO is unlikely to be purely
-regular. A tokamak is a complicated machine, and DEMO will operate with
-dozens of systems functioning for the first time at their technological
-limits in a complex and hostile environment. We believe it is likely
+regular. We believe it is likely
 enough that the inter-pulse durations vary in a range of ways such that
 they may differ substantially from the ideal inter-pulse down-time,
 :math:`t_{interpulse}`, of :math:`t_{interpulse}` = :math:`t_{CS}`.
 
 To compensate for our fundamental lack of knowledge regarding RAMI
-issues for DEMO (see e.g. [Maisonnier_2018]_ for
-a frank summary of as much as we know), we have combined the known
+issues for DEMO, we have combined the known
 planned maintenance operations (those dictated by the levels of neutron
 damage in the in-vessel components) and inter-pulse/ramp durations with
 a series of random outages selected from a log-normal distribution. This
@@ -436,7 +411,7 @@ months, depending upon the prescribed operational load factor. Figure
 `1`_ shows an indicative distribution of randomly generated inter-pulse
 durations for an operation period.
 
-.. figure:: ../images/fuelcycle/Adist.png
+.. figure:: Adist.png
    :name: periodA
 
    A randomly generated log-normal distribution of inter-pulse
@@ -465,7 +440,7 @@ components, and are shown for information only, assuming typical EU-DEMO
 neutron fluxes and maximum fluences (3.25 dpa for the vacuum vessel, 10
 MGy for the TF coil insulation).
 
-.. figure:: ../images/fuelcycle/damage.png
+.. figure:: damage.png
    :name: damage
 
    Upper: reactor fpy as a function of calendar years; lower: component
@@ -534,7 +509,7 @@ through the plasma, the in-vessel environment, the metal foil pumps, and
 the linear diffusion pumps (in either branch of the DIR loop) is one
 parameter: :math:`t_{pump}`.
 
-.. figure:: ../images/fuelcycle/tfvmodel4.JPG
+.. figure:: tfvmodel4.JPG
    :name: tfvblock
 
    Block diagram of the simplified T fuel cycle model, showing the
@@ -831,7 +806,7 @@ in-vessel components (plasma-facing surfaces and blankets), where the
 sequestered tritium in the in-vessel components is not considered to be
 recovered in any way (a conservative assumption).
 
-.. figure:: ../images/fuelcycle/default_mtI_new.png
+.. figure:: default_mtI_new.png
    :name: default
 
    Indicative time-series of the tritium fuel cycle model for the
@@ -852,7 +827,7 @@ The distributions of :math:`m_{T_{start}}` and :math:`t_{d}` for the
 default case are shown in :numref:`distribution`, and the results summarised in
 :numref:`defaultresults`.
 
-.. figure:: ../images/fuelcycle/mt_distribution.png
+.. figure:: mt_distribution.png
    :name: distribution
 
    Distributions of :math:`m_{T_{start}}` and :math:`t_{d}` for 200
@@ -875,10 +850,6 @@ default case are shown in :numref:`distribution`, and the results summarised in
 .. rubric:: Footnotes
 
 .. [1]
-   Unless one lived through the 1972 miners’ strike in the United
-   Kingdom.
-
-.. [2]
    We use the term load factor here, whereas Kuan and Abdou and many in the community use
    availability. The two are closely related, and mathematically
    identical if the reactor is operated at nameplate capacity exactly
@@ -923,12 +894,7 @@ default case are shown in :numref:`distribution`, and the results summarised in
 
 .. [Sawan_2006] M. E. Sawan and M. A. Abdou, Physics and technology conditions for attaining tritium self-sufficiency for the DT fuel cycle, Fusion Engineering and Design, vol. 81, pp. 1131–1144, Feb. 2006
 
-.. [Chen_2016] H. Chen, L. Pan, Z. Lv, W. Li, and Q. Zeng, Tritium fuel cycle modeling and tritium breeding analysis for CFETR, Fusion Engineering and Design, vol. 106, pp. 17–20, May 2016
-
 .. [Busigin_1998] A. Busigin and P. Gierszewski, CFTSIM-ITER dynamic fuel cycle model, Fusion Engineering and Design, vol. 39-40, pp. 909–914, Sept. 1998
-
-
-.. [Maisonnier_2018] D. Maisonnier, RAMI: The main challenge of fusion nuclear technologies, Fusion Engineering and Design, May 2018
 
 .. [Hörstensmeyer_2018] Y. N. Hörstensmeyer, B. Butler, C. Day, and F. Franza, Analysis of the EU-DEMO fuel cycle elements: Intrinsic impact of technology choices, Fusion Engineering and Design, 2018
 

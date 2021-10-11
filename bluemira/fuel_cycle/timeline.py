@@ -24,35 +24,10 @@ Partially randomised fusion reactor load signal object and tools
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import brentq
-from bluemira.base.look_and_feel import plot_defaults, bluemira_warn
 from bluemira.base.constants import S_TO_YR, YR_TO_S
+from bluemira.fuel_cycle.timeline_tools import LogNormalAvailabilityStrategy
 
-plot_defaults()
-
-
-def f_gompertz(t, a, b, c):
-    """
-    Gompertz sigmoid function parameterisation.
-
-    \t:math:`a\\text{exp}(-b\\text{exp}(-ct))`
-    """
-    return a * np.exp(-b * np.exp(-c * t))
-
-
-def f_logistic(t, value, k, x_0):
-    """
-    Logistic function parameterisation.
-    """
-    return value / (1 + np.exp(-k * (t - x_0)))
-
-
-def histify(x, y):
-    """
-    Transform values into arrays usable to make histograms.
-    """
-    x, y = np.array(x), np.array(y)
-    return x.repeat(2)[1:-1], y.repeat(2)
+__all__ = ["Timeline"]
 
 
 class Phase:
@@ -134,7 +109,7 @@ class OperationPhase(Phase):
         n_DD_reactions,
         plasma_current,
         t_start=0,
-        sigma=2.0,
+        availability_strategy=LogNormalAvailabilityStrategy(sigma=2.0),
     ):
         super().__init__()
         self.name = name
@@ -144,13 +119,14 @@ class OperationPhase(Phase):
         self.t_flattop = t_flattop
         self.t_rampdown = t_rampdown
         self.t_min_down = t_min_down
-        self.sigma = sigma
-        outages = self.calculate_outages()
+        self._dist = None
+
+        outages = self.calculate_outages(availability_strategy)
         t, inventory = np.zeros(6 * n_pulse), np.zeros(6 * n_pulse)
         DT_rate, DD_rate = np.zeros(6 * n_pulse), np.zeros(6 * n_pulse)
         # Calculate unplanned downtime in phase (excludes CS recharge, ramp-up,
         # and ramp-down)
-        self.t_unplanned_down = sum(outages) - n_pulse * t_min_down
+        self.t_unplanned_down = np.sum(outages) - n_pulse * t_min_down
         for i, n in enumerate(range(1, 6 * (n_pulse - 1), 6)):
             t[n] = t[n - 1] + t_rampup
             t[n + 1] = t[n] + 1
@@ -177,10 +153,16 @@ class OperationPhase(Phase):
         self.DT_rate = DT_rate
         self.DD_rate = DD_rate
 
-    def calculate_outages(self):
+    def calculate_outages(self, availability_strategy):
         """
         Calculates the randomised vector of outages according ot a Log-normal
         distribution
+
+        Parameters
+        ----------
+        availability_strategy: OperationAvailabilityStrategy
+            Operational availability strategy for the generation of distributions of
+            unplanned outages
 
         Returns
         -------
@@ -194,35 +176,8 @@ class OperationPhase(Phase):
             self.t_min_down + self.t_rampdown + self.t_rampup
         )
 
-        def f(x, n_pulse, sigma, t_d):
-            """
-            Optimisation objective for the integral of the distribution
-            """
-            return sum(np.random.lognormal(x, sigma, n_pulse)) - t_d
+        dist = availability_strategy.generate_distribution(self.n_pulse, t_unplanned)
 
-        # Optimise distribution integral to meet total downtime
-        mean_norm = brentq(
-            lambda x: f(x, self.n_pulse, self.sigma, t_down_tot), 0, 100000, maxiter=200
-        )
-        dist = np.random.lognormal(mean_norm, self.sigma, self.n_pulse)
-        # Adjust distribution to desired total required to handle random error
-        # in optimisation
-        delta = (sum(dist) - t_unplanned) / sum(dist)
-
-        i, j, m = 0, 0, mean_norm
-        while abs(delta) > 0.03:
-            i += 1  # Yeah cos brentq don't know how to optimise
-            j += 1
-            if i > 5:  # Cheeky bumps
-                mean_norm -= 0.01
-                i = 0
-            dist = np.random.lognormal(mean_norm, self.sigma, self.n_pulse)
-            delta = (sum(dist) - t_unplanned) / sum(dist)
-            if j > 1000:
-                j = 0
-                mean_norm = m * 1.2  # Start again...
-                delta = 1
-                bluemira_warn("FuelCycle::OperationPhase has a headache...")
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
         t_dwell = np.random.permutation(dist)
@@ -233,7 +188,7 @@ class OperationPhase(Phase):
         Plots the distribution of the outages
         """
         dist = self._dist
-        t_down_check = sum(dist) / (60 * 60 * 24 * 365)  # [years] down-time
+        t_down_check = np.sum(dist) / (60 * 60 * 24 * 365)  # [years] down-time
         max_down = round(max(dist) / (60 * 60 * 24))  # days
         _, ax = plt.subplots()
         ax.hist(dist, bins=np.arange(0, 10000, 500))
@@ -363,6 +318,7 @@ class Timeline:
         tf_fluence,
         vv_dmg,
         vv_dpa,
+        availability_strategy,
     ):
         # Input class attributes
         self.A_global = load_factor
@@ -402,6 +358,7 @@ class Timeline:
                     n_DDs[j],
                     plasma_currents[j],
                     t_start=t_start,
+                    availability_strategy=availability_strategy,
                 )
                 j += 1
             elif "Phase M" in name:
@@ -463,25 +420,25 @@ class Timeline:
         tf_n = self.ft * self.tf_ins_nflux
         self.tf_nfrac = tf_n / self.tf_fluence
         # Blanket damage
-        blk_dmg_t = self.blk_dmg * self.ft  # [i*self.blk_dmg for i in self.ft]
-        bci = next(i for i, v in enumerate(blk_dmg_t) if v > self.blk_1_dpa)
+        blk_dmg_t = self.blk_dmg * self.ft
+        bci = np.argmax(blk_dmg_t >= self.blk_1_dpa)
         self.bci = bci
-        blk_dmg_t[bci:] = [-self.blk_1_dpa + i * self.blk_dmg for i in self.ft[bci:]]
+        blk_dmg_t[bci:] = -self.blk_1_dpa + self.ft[bci:] * self.blk_dmg
         self.blk_dmg_t = blk_dmg_t
-        blk_nfrac = []
-        blk_nfrac[:bci] = [i / self.blk_1_dpa for i in self.blk_dmg_t[:bci]]
-        blk_nfrac[bci:] = [i / self.blk_2_dpa for i in self.blk_dmg_t[bci:]]
+        blk_nfrac = np.zeros(len(self.blk_dmg_t))
+        blk_nfrac[:bci] = self.blk_dmg_t[:bci] / self.blk_1_dpa
+        blk_nfrac[bci:] = self.blk_dmg_t[bci:] / self.blk_2_dpa
         self.blk_nfrac = blk_nfrac
         # Divertor damage
-        div_dmg_t = self.div_dmg * self.ft  # [i*self.div_dmg for i in self.ft]
+        div_dmg_t = self.div_dmg * self.ft
         self.mci = [x + 2 for x in self.mci[::2]]
         divdpa = [div_dmg_t[x - 2] for x in self.mci[:-1]]
         for j, i in enumerate(self.mci[:-1]):
-            div_dmg_t[i:] = [-divdpa[j] + x * self.div_dmg for x in self.ft[i:]]
+            div_dmg_t[i:] = np.array([-divdpa[j] + self.ft[i:] * self.div_dmg])
         div_dmg_t = div_dmg_t
-        self.div_nfrac = div_dmg_t / self.div_dpa  # [i/self.div_dpa for i in div_dmg_t]
-        vv_dmg_t = self.vv_dmg * self.ft  # [i*self.vv_dmg for i in self.ft]
-        self.vv_nfrac = vv_dmg_t / self.vv_dpa  # [i/self.vv_dpa for i in vv_dmg_t]
+        self.div_nfrac = div_dmg_t / self.div_dpa
+        vv_dmg_t = self.vv_dmg * self.ft
+        self.vv_nfrac = vv_dmg_t / self.vv_dpa
 
     def plot_damage(self):
         """
@@ -507,9 +464,3 @@ class Timeline:
         ax31.legend(loc="upper left")
         f.tight_layout(h_pad=0.2)
         return f
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

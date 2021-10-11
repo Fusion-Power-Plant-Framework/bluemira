@@ -24,12 +24,283 @@ Fuel cycle utility objects, including sink algorithms
 """
 import numpy as np
 import numba as nb
+from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO
+from bluemira.base.constants import (
+    J_TO_EV,
+    EV_TO_J,
+    T_LAMBDA,
+    T_MOLAR_MASS,
+    N_AVOGADRO,
+    S_TO_YR,
+    D_MOLAR_MASS,
+    ELECTRON_MOLAR_MASS,
+    PROTON_MOLAR_MASS,
+    NEUTRON_MOLAR_MASS,
+    HE3_MOLAR_MASS,
+    HE_MOLAR_MASS,
+    AMU_TO_KG,
+    C_LIGHT,
+    YR_TO_S,
+)
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.error import FuelCycleError
-from BLUEPRINT.utilities.tools import discretise_1d
+from bluemira.fuel_cycle.error import FuelCycleError
+
+# =============================================================================
+# Physics tools
+# =============================================================================
+
+
+def E_DT_fusion():  # noqa (N802)
+    """
+    Calculates the total energy released from the D-T fusion reaction
+
+    Returns
+    -------
+    delta_E: float
+        The energy released from the D-T fusion reaction [eV]
+
+    Notes
+    -----
+    .. math::
+        {^{2}_{1}H}+{^{3}_{1}H}~\\rightarrow~{^{4}_{2}He}~
+        (3.5~\\text{MeV})+\\text{n}^{0} (14.1 ~\\text{MeV})\n
+        \\Delta E = \\Delta m c^2
+    """
+    delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
+    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+
+
+def E_DD_fusion():  # noqa (N802)
+    """
+    Calculates the total energy released from the D-D fusion reaction
+
+    Returns
+    -------
+    delta_E: float
+        The energy released from the D-D fusion reaction [eV]
+
+    Notes
+    -----
+    .. math::
+        {^{2}_{1}H}+{^{2}_{1}H}~\\rightarrow~{^{3}_{1}H}
+        (1.01 ~\\text{MeV})+\\text{p} (3.02~\\text{MeV})~~[50 \\textrm{\\%}]
+        ~~~~~~~~~~\\rightarrow~{^{3}_{2}He} (0.82~\\text{MeV})+\\text{n}^{0} (2.45~\\text{MeV})~~[50 \\text{\\%}]\n
+        \\Delta E = \\Delta m c^2
+    """  # noqa (W505)
+    # NOTE: Electron mass must be included with proton mass
+    delta_m = np.array(
+        [
+            D_MOLAR_MASS
+            + D_MOLAR_MASS
+            - (T_MOLAR_MASS + PROTON_MOLAR_MASS + ELECTRON_MOLAR_MASS),
+            (D_MOLAR_MASS + D_MOLAR_MASS) - (HE3_MOLAR_MASS + NEUTRON_MOLAR_MASS),
+        ]
+    )
+    delta_m = np.average(delta_m)
+    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+
+
+def n_DT_reactions(p_fus) -> float:
+    """
+    Calculates the number of D-T fusion reactions per s for a given D-T fusion
+    power
+
+    :math:`n_{reactions} = \\frac{P_{fus}[MW]}{17.58 [MeV]eV[J]} [1/s]`
+
+    Parameters
+    ----------
+    p_fus: float
+        D-T fusion power [MW]
+
+    Returns
+    -------
+    n_reactions: float
+        Number of D-T reactions per second [1/s]
+    """
+    e_dt = E_DT_fusion()
+    return float(p_fus * 1e6 / (e_dt * EV_TO_J))
+
+
+def n_DD_reactions(p_fus) -> float:  # noqa (N802)
+    """
+    Calculates the number of D-D fusion reactions per s for a given D-D fusion
+    power
+
+    :math:`n_{reactions} = \\frac{P_{fus}[MW]}{E_{DD} [MeV] eV[J]} [1/s]`
+
+    Parameters
+    ----------
+    p_fus: float
+        D-D fusion power [MW]
+
+    Returns
+    -------
+    n_reactions: float
+        Number of D-D reactions per second [1/s]
+    """
+    e_dd = E_DD_fusion()
+    return float(p_fus * 1e6 / (e_dd * EV_TO_J))
+
+
+def r_T_burn(p_fus):  # noqa (N802)
+    """
+    Calculates the tritium burn rate for a given fusion power
+
+    :math:`\\dot{m_{b}} = \\frac{P_{fus}[MW]M_{T}[g/mol]}{17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
+
+    Parameters
+    ----------
+    p_fus: float
+        D-T fusion power [MW]
+
+    Returns
+    -------
+    r_burn: float
+        T burn rate in the plasma [g/s]
+    """  # noqa (W505)
+    return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
+
+
+def r_D_burn_DT(p_fus):  # noqa (N802)
+    """
+    Calculates the deuterium burn rate for a given fusion power in D-T
+
+    Parameters
+    ----------
+    p_fus: float
+        D-T fusion power [MW]
+
+    Returns
+    -------
+    r_burn: float
+        D burn rate in the plasma [g/s]
+
+    Notes
+    -----
+    .. math::
+        \\dot{m_{b}} = \\frac{P_{fus}[MW]M_{D}[g/mol]}
+        {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]
+    """
+    return n_DT_reactions(p_fus) * D_MOLAR_MASS / N_AVOGADRO
+
+
+# =============================================================================
+# Miscellaneous utility functions.
+# =============================================================================
+
+
+def pam3s_to_mols(flow_in_pam3_s):
+    """
+    Convert a flow in Pa.m^3/s to a flow in mols.
+
+    Parameters
+    ----------
+    flow_in_pam3_s: Union[float, np.array]
+        The flow in Pa.m^3/s to convert
+
+    Returns
+    -------
+    flow_in_mols: Union[float, np.array]
+        The flow in mol/s
+
+    Notes
+    -----
+    At 273.15 K for a diatomic gas
+    """
+    return flow_in_pam3_s / 2270
+
+
+def mols_to_pam3s(flow_in_mols):  # noqa (N802)
+    """
+    Convert a flow in Pa.m^3/s to a flow in mols.
+
+    Parameters
+    ----------
+    flow_in_mols: Union[float, np.array]
+        The flow in mol/s to convert
+
+    Returns
+    -------
+    flow_in_pam3_s: Union[float, np.array]
+        The flow in Pa.m^3/s
+
+    Notes
+    -----
+    At 273.15 K for a diatomic gas
+    """
+    return flow_in_mols * 2270
+
+
+def find_noisy_locals(x, x_bins=50, mode="min"):
+    """
+    Find local minima or maxima in a noisy signal.
+
+    Parameters
+    ----------
+    x: np.array
+        The noise data to search
+    x_bins: int
+        The number of bins to search with
+    mode: str from ["min", "max"]
+        The search mode
+
+    Returns
+    -------
+    local_mid_x: list
+        The argmuments of the local minima or maxima
+    local_m: list
+        The local minima or maxima
+    """
+    if mode == "max":
+        peak = np.max
+        arg_peak = np.argmax
+    elif mode == "min":
+        peak = np.min
+        arg_peak = np.argmin
+    else:
+        raise FuelCycleError(f"Unrecognised mode: {mode}.")
+
+    n = len(x)
+    bin_size = round(n / x_bins)
+    y_bins = [x[i : i + bin_size] for i in range(0, n, bin_size)]
+
+    local_m = np.zeros(len(y_bins))
+    local_mid_x = np.zeros(len(y_bins), dtype=np.int)
+    for i, y_bin in enumerate(y_bins):
+        local_m[i] = peak(y_bin)
+        local_mid_x[i] = arg_peak(y_bin) + i * bin_size
+    return local_mid_x, local_m
+
+
+def discretise_1d(x, y, n, method="linear"):
+    """
+    Discretise x and y for a given number of points.
+
+    Parameters
+    ----------
+    x: np.array
+        The x data
+    y: np.array
+        The y data
+    n: int
+        The number of discretisation points
+    method: str
+        The interpolation method
+
+    Returns
+    -------
+    x_1d: np.array
+        The discretised x data
+    y_1d: np.array
+        The discretised y data
+    """
+    x = np.array(x)
+    y = np.array(y)
+    x_1d = np.linspace(x[0], x[-1], n)
+    y_1d = griddata(x, y, xi=x_1d, method=method)
+    return [x_1d, y_1d]
 
 
 def convert_flux_to_flow(flux, area):
@@ -176,6 +447,35 @@ def fit_sink_data(x, y, method="sqrt", plot=True):
 
 
 @nb.jit(nopython=True, cache=True)
+def delay_decay(t, m_t_flow, t_delay):
+    """
+    Time-shift a tritium flow with a delay and account for radioactive decay.
+
+    Parameters
+    ----------
+    t: np.array
+        The time vector
+    m_t_flow: np.array
+        The mass flow vector
+    t_delay: float
+        The delay duration [s]
+
+    Returns
+    -------
+    flow: np.array
+        The delayed flow
+    """
+    t_delay = t_delay * S_TO_YR
+    shift = np.argmin(np.abs(t - t_delay))
+    flow = np.zeros(shift)
+    deldec = np.exp(-T_LAMBDA * t_delay)
+    flow = np.append(flow, deldec * m_t_flow)
+    # TODO: Slight "loss" of tritium because of this?
+    flow = flow[: len(t)]  # TODO: figure why you had to do this
+    return flow
+
+
+@nb.jit(nopython=True, cache=True)
 def fountain(flow, t, min_inventory):
     """
     Fountain tritium block. Needs a minimum T inventory to operate.
@@ -206,7 +506,7 @@ def fountain(flow, t, min_inventory):
 
     for i, ti in zip(range(1, len(flow)), flow[1:]):
         dt = t[i] - t[i - 1]
-        dts = dt * 365 * 24 * 3600
+        dts = dt * YR_TO_S
         m_in = flow[i] * dts
         inventory[i] = inventory[i - 1] * np.exp(-T_LAMBDA * dt)
         overflow = inventory[i] + m_in
@@ -244,7 +544,7 @@ def _speed_recycle(m_start_up, t, m_in, m_fuel_injector):
     """
     m_tritium = np.zeros(len(t))
     m_tritium[0] = m_start_up
-    ts = t * 365 * 24 * 3600
+    ts = t * YR_TO_S
     for i in range(1, len(t)):
         dt = t[i] - t[i - 1]
         dts = ts[i] - ts[i - 1]
@@ -279,7 +579,7 @@ def find_max_load_factor(time_years, time_fpy):
         # Shortened time overflow error (only happens when debugging)
         a = 1
     if a > 1 or a < 0:
-        bluemira_warn("Amax bullshit answer.")
+        bluemira_warn(f"Maximum load factor result is non-sensical: {a}.")
     else:
         return a
 
@@ -310,21 +610,17 @@ def legal_limit(
     {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
     """
     if p_fus is None and mb is None:
-        raise ValueError(
-            "Du musst entweder die fusion power oder die burn " "rate eingeben."
-        )
+        raise FuelCycleError("You must specify either fusion power or burn rate.")
 
     if p_fus is not None and mb is not None:
         bluemira_warn(
-            "Demasiado información para la función legal_limit. " "Me quedo con Pfus."
+            "Fusion power and burn rate specified... sticking with fusion power."
         )
         mb = None
 
     if mb is None:
-        # To avoid a circular import
-        from BLUEPRINT.systems.physicstoolbox import r_T_burn  # noqa
-
         mb = r_T_burn(p_fus)
+
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
         * (1 - f_dir)
@@ -353,12 +649,12 @@ def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa (N802)
         np.exp(-T_LAMBDA * dt) * (np.exp(T_LAMBDA * (dt + 0)) - 1)
     ) / (np.exp(T_LAMBDA) - 1)
     if out_inventory < 0:
-        raise FuelCycleError("The out inventory should not be below 0...")
-    return out_inventory  # +1-np.exp(-T_LAMBDA*dt)  # (np.exp(T_LAMBDA*dt)-1)) +1 - np.exp(-T_LAMBDA*dt)
+        raise ValueError("The out inventory should not be below 0...")
+    return out_inventory
 
 
 @nb.jit(nopython=True, cache=True)
-def _timestep_decay(inventory, dt):
+def _timestep_decay(flux, dt):
     """
     Analytical value of series expansion for an in-flux of tritium over a time-
     step. Accounts for decay during the timestep only.
@@ -367,7 +663,7 @@ def _timestep_decay(inventory, dt):
 
     Parameters
     ----------
-    inventory: float
+    flux: float
         The total inventory flowing through on a given time-step [kg]
     dt: float
         The time-step [years]
@@ -377,7 +673,7 @@ def _timestep_decay(inventory, dt):
     decay: float
         The value of the total inventory which decayed over the time-step.
     """  # noqa (W505)
-    return inventory * (
+    return flux * (
         1
         - (np.exp(-T_LAMBDA * dt) * (np.exp(T_LAMBDA * (dt + 0)) - 1))
         / (np.exp(T_LAMBDA) - 1)
@@ -457,24 +753,19 @@ def _fountain_linear_sink(
         Accountancy parameter to calculate the total value lost to a sink
     decayed: float
         Accountancy parameter to calculate the total value of decayed T in a sink
-
-    Notes
-    -----
-    Can't raise Exceptions in numba, hence ERROR CODE printing
     """
-    years = 365 * 24 * 3600
     dt = t_out - t_in
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = m_flow * years  # kg/yr
-    dts = dt * years
+    m_in = m_flow * YR_TO_S  # kg/yr
+    dts = dt * YR_TO_S
     mass_in = m_flow * dts
     sum_in += mass_in
 
     j_inv0 = inventory
-    decayed += j_inv0 - inventory
-    if inventory < min_inventory:
+
+    if inventory <= min_inventory:
         # Case where fountain is not full
         i_mdot = _dec_I_mdot(inventory, 1, m_in, t_in, t_out)
         if i_mdot < min_inventory:
@@ -514,9 +805,8 @@ def _fountain_linear_sink(
                 # Case where successfully crosses up
                 dt2 = t_out - t_in - t15
                 inventory = i_mdot2
-                if inventory < 0:
-                    print(" FuelCycleError('ERROR CODE 2') ")
                 m_out = (mass_in - m_in * t15 - (1 - fs) * m_in * dt2) / dts
+
     elif inventory <= max_inventory:
         # Uncanny valley, no man's land
         i_mdot = _dec_I_mdot(inventory, 1 - fs, m_in, t_in, t_out)
@@ -529,7 +819,7 @@ def _fountain_linear_sink(
                 dt2 = t_out - t_in - t15
                 inventory = i_mdot2
 
-                m_out = (mass_in - (1 - fs) * m_in * t15 - m_in * dt2) / years
+                m_out = (mass_in - (1 - fs) * m_in * t15 - m_in * dt2) / dts
             elif i_mdot2 >= min_inventory:
                 # Case where infinite unstable oscillations occur in model
                 # Treat reasonably here (you got unlucky) ==> stall
@@ -562,13 +852,21 @@ def _fountain_linear_sink(
             # Case where we stay in uncanny valley
             inventory = i_mdot
             m_out = (mass_in - (1 - fs) * m_in * dt) / dts
+    else:
+        # inventory > max_inventory
+        raise ValueError("Undefined behaviour for inventory > max_inventory.")
+
+    decayed += j_inv0 - inventory
 
     if m_out > m_flow:
-        print(" FuelCycleError('ERROR CODE 5 ', m_out > m_flow) ")
+        print(m_flow, m_out)
+        raise ValueError(
+            "Out flow greater than in flow. Check that your timesteps are small enough."
+        )
     if m_out < 0:
-        print(" FuelCycleError('ERROR CODE 6 ', m_out) ")
+        raise ValueError("Negative out flow in fountain_linear_sink.")
     if inventory < 0:
-        print(" FuelCycleError('ERROR CODE 7') ")
+        raise ValueError("Negative inventory in fountain_linear_sink.")
     return m_out, inventory, sum_in, decayed
 
 
@@ -694,7 +992,7 @@ def _sqrt_thresh_sink(
     \t:math:`I_{sequestered} = factor \\times \\sqrt{ t_{fpy}}`
 
     The time in the equation is sub-planted for the inventory, to make the
-    retention model indenpent of time.
+    retention model independent of time.
 
     The values for the threshold and factor must be obtained from detailed T
     retention modelling.
@@ -924,9 +1222,3 @@ def fountain_bathtub(flow, t, fs, max_inventory, min_inventory):
             inventory[i], m_out[i] = min_inventory, 0
 
     return m_out, inventory, sum_in, decayed
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

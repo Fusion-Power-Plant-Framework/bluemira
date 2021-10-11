@@ -297,7 +297,7 @@ class TestLoop:
         assert np.allclose(inter[0], np.array([0, 0, 0])), inter[0]
         assert np.allclose(inter[1], np.array([2, 0, 0])), inter[1]
 
-    def test_point_in_poly(self):
+    def test_point_inside(self):
         loop = Loop(x=[-2, 2, 2, -2, -2], z=[-2, -2, 2, 2, -2])
         in_points = [
             [-1, -1],
@@ -311,7 +311,7 @@ class TestLoop:
             [1, 1],
         ]
         for p in in_points:
-            assert loop.point_in_poly(p), p
+            assert loop.point_inside(p), p
         out_points = [
             [-3, -3],
             [-3, 0],
@@ -323,7 +323,7 @@ class TestLoop:
             [-2.0000000001, -1.999999999999],
         ]
         for p in out_points:
-            assert not loop.point_in_poly(p), p
+            assert not loop.point_inside(p), p
         on_points = [
             [-2, -2],
             [2, -2],
@@ -335,7 +335,7 @@ class TestLoop:
             [-2, 2],
         ]
         for p in on_points:
-            assert not loop.point_in_poly(p), p
+            assert not loop.point_inside(p), p
 
     def test_cross_section(self):
         """

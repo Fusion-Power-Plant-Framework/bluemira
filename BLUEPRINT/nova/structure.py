@@ -91,8 +91,7 @@ class CoilArchitect(ReactorSystem):
         self.inputs = inputs
         self._plotter = CoilArchitectPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.tf = self.inputs["tf"]
         self.pf = self.inputs["pf"]

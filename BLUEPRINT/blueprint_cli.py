@@ -36,8 +36,9 @@ from typing import Optional
 
 from BLUEPRINT.base.file import KEYWORD
 from BLUEPRINT.base.file import get_BP_root
-from BLUEPRINT.reactor import ConfigurableReactor
 from bluemira.base.logs import set_log_level
+from bluemira.utilities.tools import get_module
+from BLUEPRINT.utilities.tools import CommentJSONDecoder
 
 try:
     from functools import cached_property
@@ -85,7 +86,7 @@ class InputManager:
         return os.path.join(self.indir, file_name)
 
     @property
-    def template_path_in(self) -> str:
+    def template_config_path_in(self) -> str:
         """
         The input template configuration file path.
         """
@@ -127,10 +128,10 @@ class InputManager:
             return self.reactornameout
         elif self.reactornamein is not None:
             return self.reactornamein
+        elif isinstance(self.config_dict["Name"], dict):
+            return self.config_dict["Name"]["value"]
         else:
-            with open(self.config_path_in, "r") as fh:
-                config_dict = json.load(fh)
-            return config_dict["Name"]
+            return self.config_dict["Name"]
 
     @cached_property
     def build_config_dict(self) -> str:
@@ -203,7 +204,7 @@ class InputManager:
         Reads a json file and returns a dict object of its contents.
         """
         with open(file, "r") as fh:
-            file_dict = json.load(fh)
+            file_dict = json.load(fh, cls=CommentJSONDecoder)
         return file_dict
 
 
@@ -282,10 +283,19 @@ class OutputManager:
             The Input instance containing the template, config, build_config, and
             build_tweaks paths to copy the files from
         """
-        shutil.copy(inputs.template_path_in, self.template)
-        shutil.copy(inputs.config_path_in, self.config)
-        shutil.copy(inputs.build_config_path_in, self.build_config)
-        shutil.copy(inputs.build_tweaks_path_in, self.build_tweaks)
+        variables = {
+            "template_config_path": self.template,
+            "config_path": self.config,
+            "build_config_path": self.build_config,
+            "build_tweaks_path": self.build_tweaks,
+        }
+        self.reactor_kwargs = {}
+        for name, var in variables.items():
+            try:
+                shutil.copy(getattr(inputs, f"{name}_in"), var)
+                self.reactor_kwargs[name] = var
+            except FileNotFoundError:
+                click.echo(f"No {name} file")
 
 
 def dump_json(dict_object: dict, output_path: str):
@@ -312,6 +322,42 @@ def _check_path(name, path: str, force: bool = False, make: bool = True):
             )
     if make:
         Path(path).mkdir(parents=True)
+
+
+def get_reactor_class(reactor_string):
+    """
+    Dynamically import reactor class
+
+    Parameters
+    ----------
+    reactor_string: str
+        string to import reactor from
+
+    Returns
+    -------
+    reactor class
+
+    Notes
+    -----
+    reactor string examples:
+
+    "Reactor" - default reactor from BLUEPRINT
+    "path/to/file.py::Reactor" - import reactor from file
+    "path.to.module.Reactor" - import reactor from known module
+
+    """
+    if "::" in reactor_string:
+        module_string, reactor = reactor_string.split("::")
+    elif "." in reactor_string:
+        module_string, reactor = reactor_string.rsplit(".", 1)
+    else:
+        module_string = "BLUEPRINT.reactor"
+        reactor = reactor_string
+
+    try:
+        return getattr(get_module(module_string), reactor)
+    except AttributeError:
+        raise ImportError(f"Class '{reactor_string}' not found")
 
 
 @click.command()
@@ -398,7 +444,16 @@ def _check_path(name, path: str, force: bool = False, make: bool = True):
     default=False,
     help="Enables/disables output of the 3D cad model.",
 )
+@click.option(
+    "-r",
+    "--reactor_class",
+    default="ConfigurableReactor",
+    help="specify reactor class (file or package path)",
+)
+@click.version_option(package_name="bluemira", prog_name="bluemira")
+@click.pass_context
 def cli(
+    ctx,
     template,
     config,
     build_config,
@@ -415,6 +470,7 @@ def cli(
     data,
     plots,
     cad,
+    reactor_class,
 ):
     """
     Run BLUEPRINT build for a configurable reactor.
@@ -474,12 +530,7 @@ def cli(
         dump_json(inputs.config_dict, outputs.config)
 
     # Instantiate BLUEPRINT reactor class.
-    reactor = ConfigurableReactor.from_json(
-        outputs.template,
-        outputs.config,
-        outputs.build_config,
-        outputs.build_tweaks,
-    )
+    reactor = get_reactor_class(reactor_class).from_json(**outputs.reactor_kwargs)
 
     # Return output log.
     if log:
@@ -500,6 +551,13 @@ def cli(
     click.echo("Running BLUEPRINT build.")
     reactor.build()
     click.echo("BLUEPRINT build complete.")
+
+    if (
+        isinstance(ctx.obj, dict)
+        and "standalone_mode" in ctx.obj
+        and not ctx.obj["standalone_mode"]
+    ):
+        return reactor
 
     # Return specified outputs.
     click.echo(f"Saving outputs to {inputs.output_path}")

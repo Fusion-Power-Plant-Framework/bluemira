@@ -76,8 +76,7 @@ class ThermalShield(ReactorSystem):
         self.inputs = inputs
         self._plotter = ThermalShieldPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
         self.tf_min_surf()
 
         self.build_vvts(inboardoff=self.params.g_vv_ts, topbotoff=self.params.g_vv_ts)
@@ -622,7 +621,7 @@ class SegmentedThermalShield(ReactorSystem):
         # Rem: config does not seems to be a config file but rather containing
         #      the genuine class inputs.
         self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         # Loading the inputs loops into class attributes
         self.tf_inner_loop = self.inputs["TF inner loop"]

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -18,22 +18,3 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
-import pytest
-from tests.BLUEPRINT.test_reactor import (
-    SmokeTestSingleNullReactor,
-    config,
-    build_config,
-    build_tweaks,
-)
-
-# =============================================================================
-# Smoke test reactor fixture
-# =============================================================================
-
-
-@pytest.fixture(scope="session")
-def reactor():
-    reactor = SmokeTestSingleNullReactor(config, build_config, build_tweaks)
-    reactor.build()
-    return reactor

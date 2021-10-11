@@ -33,7 +33,8 @@ import traceback
 
 from BLUEPRINT.base.file import KEYWORD
 from BLUEPRINT.base.file import get_BP_root
-from BLUEPRINT.blueprint_cli import cli
+from BLUEPRINT.blueprint_cli import cli, get_reactor_class
+from BLUEPRINT.reactor import ConfigurableReactor
 
 from tests.BLUEPRINT.test_reactor import REACTORNAME
 from tests.BLUEPRINT.test_reactor import SmokeTestSingleNullReactor
@@ -50,6 +51,22 @@ Path(INDIR).mkdir(parents=True, exist_ok=True)
 Path(OUTDIR).mkdir(parents=True, exist_ok=True)
 R = SmokeTestSingleNullReactor(config, build_config, build_tweaks)
 R.config_to_json(INDIR)
+
+
+class DummyObjForReactor:
+    Reactor = "test"
+
+
+class TestGetReactor:
+    def test_get_reactor(self):
+        with patch(
+            "BLUEPRINT.blueprint_cli.get_module", return_value=DummyObjForReactor
+        ):
+            assert get_reactor_class("/abc/def.py::Reactor") == "test"
+            assert get_reactor_class("abc.def.Reactor") == "test"
+            assert get_reactor_class("Reactor") == "test"
+            with pytest.raises(ImportError):
+                get_reactor_class("MyReactor")
 
 
 # Make temporary sub-directory for tests.
@@ -76,10 +93,11 @@ def temp_path_to_file(tempdir, reactorname, filename, subdir=None, use_prefix=Tr
 
 # Patch in mock objects for reactor build and related functions.
 def mock_mode(func):
-    @patch("BLUEPRINT.reactor.ConfigurableReactor.save_CAD_model")
-    @patch("BLUEPRINT.reactor.ConfigurableReactor.plot_xy")
-    @patch("BLUEPRINT.reactor.ConfigurableReactor.plot_xz")
-    @patch("BLUEPRINT.reactor.ConfigurableReactor.build")
+    @patch.object(ConfigurableReactor, "save_CAD_model")
+    @patch.object(ConfigurableReactor, "plot_xy")
+    @patch.object(ConfigurableReactor, "plot_xz")
+    @patch.object(ConfigurableReactor, "build")
+    @patch("BLUEPRINT.blueprint_cli.get_reactor_class", return_value=ConfigurableReactor)
     @functools.wraps(func)
     def wrapper_grouped_decorator(*args, **kwargs):
         return func(*args, **kwargs)
@@ -88,7 +106,9 @@ def mock_mode(func):
 
 
 @mock_mode
-def test_cli_build(mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir):
+def test_cli_build(
+    mock_rclass, mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
+):
     """
     Test that the CLI calls the reactor build function.
     """
@@ -104,7 +124,7 @@ def test_cli_build(mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, 
 
 @mock_mode
 def test_cli_copy_input_files(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
+    mock_rclass, mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
 ):
     """
     Test that the CLI correctly makes copies of the input files to the output directory.
@@ -139,7 +159,13 @@ output_switches = on_switches + off_switches
 @pytest.mark.parametrize("switch_flag", output_switches)
 @mock_mode
 def test_cli_output_switches(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, switch_flag, tempdir
+    mock_rclass,
+    mock_build,
+    mock_plot_xz,
+    mock_plot_xy,
+    mock_save_CAD_model,
+    switch_flag,
+    tempdir,
 ):
     """
     Test that the CLI returns the desired outputs and does not return others.
@@ -197,7 +223,13 @@ def test_cli_output_switches(
 @pytest.mark.parametrize("tarball_flag", [["-t"], ["--tarball"]])
 @mock_mode
 def test_cli_tarball(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tarball_flag, tempdir
+    mock_rclass,
+    mock_build,
+    mock_plot_xz,
+    mock_plot_xy,
+    mock_save_CAD_model,
+    tarball_flag,
+    tempdir,
 ):
     """
     Test that the tarball CLI option works correctly.
@@ -220,7 +252,13 @@ def test_cli_tarball(
 @pytest.mark.parametrize("verbose_flag", [["-v"], ["--verbose"]])
 @mock_mode
 def test_cli_verbose(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, verbose_flag, tempdir
+    mock_rclass,
+    mock_build,
+    mock_plot_xz,
+    mock_plot_xy,
+    mock_save_CAD_model,
+    verbose_flag,
+    tempdir,
 ):
     """
     Test that the verbose CLI option works correctly.
@@ -248,7 +286,13 @@ def test_cli_verbose(
 )
 @mock_mode
 def test_cli_reactornameout(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, name_flags, tempdir
+    mock_rclass,
+    mock_build,
+    mock_plot_xz,
+    mock_plot_xy,
+    mock_save_CAD_model,
+    name_flags,
+    tempdir,
 ):
     """
     Test that the reactornameout CLI option works correctly.
@@ -333,7 +377,9 @@ def test_cli_reactornameout(
 
 
 @mock_mode
-def test_cli_bproot_keyword(mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model):
+def test_cli_bproot_keyword(
+    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, mock_rclass
+):
     """
     Test that the CLI can handle keyword replacement for the BLUEPRINT root directory.
     """
@@ -357,7 +403,7 @@ def test_cli_bproot_keyword(mock_build, mock_plot_xz, mock_plot_xy, mock_save_CA
 
 @mock_mode
 def test_cli_read_outdir_from_file(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
+    mock_rclass, mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
 ):
     """
     Test that the output directory can be read from input files.
@@ -382,7 +428,13 @@ def test_cli_read_outdir_from_file(
 @pytest.mark.parametrize("rerun_flag", [["-f"], ["--force_rerun"]])
 @mock_mode
 def test_cli_force_rerun(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, rerun_flag, tempdir
+    mock_rclass,
+    mock_build,
+    mock_plot_xz,
+    mock_plot_xy,
+    mock_save_CAD_model,
+    rerun_flag,
+    tempdir,
 ):
     """
     Test that BLUEPRINT can be rerun from the CLI when the force flag is on.
@@ -399,7 +451,7 @@ def test_cli_force_rerun(
 
 @mock_mode
 def test_cli_avoid_rerun(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
+    mock_rclass, mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
 ):
     """
     Test that BLUEPRINT can not be rerun from the CLI when the force flag is off.
@@ -415,7 +467,7 @@ def test_cli_avoid_rerun(
 
 @mock_mode
 def test_cli_invalid_flag(
-    mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
+    mock_rclass, mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
 ):
     """
     Test that the BLUEPRINT CLI fails correctly when an invalid flag is passed.

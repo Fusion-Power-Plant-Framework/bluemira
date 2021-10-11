@@ -26,47 +26,24 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import json
 from typing import Type
-from scipy.optimize import brentq
 
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.constants import S_TO_YR, YR_TO_S
+from bluemira.utilities.tools import abs_rel_difference, is_num
+from bluemira.fuel_cycle.timeline import Timeline
+from bluemira.fuel_cycle.timeline_tools import (
+    LearningStrategy,
+    OperationalAvailabilityStrategy,
+)
 
-from BLUEPRINT.base.baseclass import ReactorSystem
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.utilities.tools import delta, is_num
-from BLUEPRINT.neutronics.simpleneutrons import NeutronicsRulesOfThumb as nROT
-from BLUEPRINT.fuelcycle.timeline import f_gompertz, histify, Timeline
+__all__ = ["LifeCycle"]
 
 
-class LifeCycle(ReactorSystem):
+class LifeCycle:
     """
-    Builds a lifecycle for DEMO
-
-    Parameters
-    ----------
-    A_global: float
-        Target load factor (not always used)
-    I_p: float
-        Plasma current [MA]
-    bmd: float
-        Blanket maintenance duration [days]
-    dmd: float
-        Divertor maintenance duration [days]
-    t_pulse: float
-        Pulse length duration [s]
-    t_cs_recharge: float
-        CS recharge duration [s] (NOTE: Should be seen as minimum dwell t)
-    s_ramp_down: float
-        Plasma current ramp-down rate [MA/s]
-    s_ramp_up: float
-        Plasma current ramp-up rate [MA/s]
-    n_reactions: float
-        Number of D-T reactions per second
+    A life cycle object for a fusion reactor.
     """
-
-    config: Type[ParameterFrame]
-    inputs: dict
 
     # fmt: off
     default_params = [
@@ -81,23 +58,52 @@ class LifeCycle(ReactorSystem):
         ["s_ramp_down", "Plasma current ramp-down rate", 0.1, "MA/s", None, "R. Wenninger"],
         ["n_DT_reactions", "D-T fusion reaction rate", 7.078779946428698e20, "1/s", "At full power", "Input"],
         ["n_DD_reactions", "D-D fusion reaction rate", 8.548069652616976e18, "1/s", "At full power", "Input"],
-        ["a_min", "Minimum operational load factor", 0.1, "N/A", "Otherwise nobody pays", "Input"],
-        ["a_max", "Maximum operational load factor", 0.5, "N/A", "Can be violated", "Input"],
-        ["r_learn", "Learning curve rate", 1, "1/fpy", "Looks good", "Input"],
         ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
         ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "n/m^2", "http://ieeexplore.ieee.org/document/6374236/", "Input"],
+        ["tf_ins_nflux", "TF insulation peak neutron flux", 1.4e13, "n/m^2/s", "Pavel Pereslavtsev sent me an email 20/02/2017", "Input"],
+        ["blk_dmg", "Blanket neutron daamge rate", 10.2, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 20", "Input"],
+        ["div_dmg", "Divertor neutron damange rate", 3, "dpa/fpy", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+        ["vv_dmg", "Vacuum vessel neutron damage rate", 0.3, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 18", "Input"],
     ]
     # fmt: on
 
-    def __init__(self, config, inputs):
+    def __init__(
+        self,
+        config: Type[ParameterFrame],
+        learning_strategy: Type[LearningStrategy],
+        availability_strategy: Type[OperationalAvailabilityStrategy],
+        inputs: dict,
+    ):
         self.config = config
+        self.learning_strategy = learning_strategy
+        self.availability_strategy = availability_strategy
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
+        self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(self.config)
+
+        # Constructors
+        self.total_planned_maintenance = None
+        self.total_ramptime = None
+        self.t_unplanned_m = None
+        self.t_on_total = None
+        self.t_interdown = None
+        self.cs_down = None
+        self.unplanned = None
+        self.min_downtime = None
+        self.T = None
+        self.a_ops = None
+        self.phase_names = None
+        self.phase_durations = None
+        self.n_blk_replace = None
+        self.n_div_replace = None
+        self.fpy = None
+        self.tf_lifeend = None
+        self.vv_lifeend = None
+        self.A_global = None
 
         # Derive/convert inputs
         self.maintenance_l = self.params.bmd * 24 * 3600  # [s]
@@ -106,165 +112,26 @@ class LifeCycle(ReactorSystem):
         self.t_rampdown = self.params.I_p / self.params.s_ramp_down  # [s]
         self.t_flattop = self.params.t_pulse - self.t_rampup - self.t_rampdown  # [s]
         self.t_min_down = max(self.params.t_cs_recharge, self.params.t_pumpdown)
-        # TODO: Neutronics and design requirements still from outdated methods
-        # Output preparation
-        datadir = inputs.get("datadir", None)
-        if datadir is None:
-            datadir = get_BP_path(subfolder="data/BLUEPRINT")
-        file = "DEMO_lifecycle"
-        self.filename = datadir + "/" + file + ".json"
+
         # Build timeline
         self.life_neutronics()
-        self.set_availabilities(self.params.A_global, mode="Global")
-        self.timeline()
-        self.sanity()
-
-    def set_availabilities(self, load_factor, mode="Global"):
-        """
-        Sets availability and distributes it between the two phases of\
-        planned operation. The planned maintenance windows are substracted\
-        from the availability which needs to be achieved during the phase of\
-        operation. The target overall plant lifetime availability as specified\
-        in input parameter A remains the same.
-        \t:math:`A_{overall}=\\dfrac{t_{on}}{t_{on}+t_{off}}`\n
-        \t:math:`A_{operations}=\\dfrac{t_{on}}{t_{on}+t_{ramp}+t_{CS_{recharge}}+t_{m_{unplanned}}}`
-        """
-
-        def ff(x):
-            """
-            Optimisation objective for chunky fit to Gompertz
-
-            \t:math:`a_{min}+(a_{max}-a_{min})e^{\\dfrac{-\\text{ln}(2)}{e^{-ct_{infl}}}}`
-            """
-            # NOTE: Fancy analytical integral objective of Gompertz function
-            # was a resounding failure. Do not touch this again.
-            # The brute force is strong in this one.
-            a_ops_i = self.params.a_min + f_gompertz(
-                t, (self.params.a_max - self.params.a_min), x, self.params.r_learn
-            )
-            a_ops_i = np.array(
-                [np.mean(a_ops_i[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])]
-            )
-            return self.fpy / self.params.A_global - (
-                sum(p / a_ops_i) + S_TO_YR * self.m
-            )
-
-        self.m = self.maintenance_l * self.n_blk_replace + (
-            self.maintenance_s * self.n_div_replace
-        )
-        self.t_interdown = sum(self.n_pulse_p) * self.t_min_down
-        self.total_ramptime = sum(self.n_pulse_p) * (self.t_rampup + self.t_rampdown)
-        self.min_downtime = self.m + self.t_interdown + self.total_ramptime
-        self.unplanned = self.t_on_total / load_factor - (
-            self.m + self.t_interdown + self.total_ramptime + self.t_on_total
-        )
-        if mode == "Global":
-            # Sets lifetime load factor `A` (input) subtracts planned
-            # maintenance intervals, and sets phase load factors accordingly
-            # NOTE: a_max can be violated if A is high (not nec. > a_max)
-            # Handle funky inputs
-            if load_factor >= self.params.a_max:
-                # Fudge upwards - works for up to .7
-                self.params.a_max += 0.1 + 1.1 * (load_factor - self.params.a_max)
-            elif load_factor < self.params.a_min:
-                self.params.a_min = 0
-            t = np.linspace(0, self.fpy, 100)
-            dates = [0]
-            for p in self.get_op_phases():
-                dates.append(dates[-1] + p)
-            arg_dates = [np.argmin(abs(t - i)) for i in dates]
-            p = self.get_op_phases()
-            b = brentq(ff, 0, 10e10)
-            a_ops = self.params.a_min + f_gompertz(
-                t, self.params.a_max - self.params.a_min, b, self.params.r_learn
-            )
-            dates = [0]
-            for p in self.get_op_phases():
-                dates.append(dates[-1] + p)
-            arg_dates = np.array([np.argmin(abs(t - i)) for i in dates])
-            self._t_argdates = t[arg_dates]  # Plotting use
-            self._a = a_ops  # Plotting use
-            # Get phase operational load factors
-            self.a_ops = np.array(
-                [np.mean(a_ops[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])]
-            )
-        elif mode == "Life":
-            spreadf = 0.8
-            self.unplanned = self.t_on_total / load_factor - (
-                self.min_downtime - self.t_on_total
-            )
-            a_ops = self.t_on_total / (
-                self.t_on_total + self.total_ramptime + self.cs_down + self.unplanned
-            )
-            if a_ops > 1:
-                bluemira_warn(
-                    "Plant availability target cannot be met "
-                    "with input maintenance durations."
-                )
-                a_ops = self.t_on_total / (self.t_on_total + self.min_downtime)
-                bluemira_print(
-                    "Recalculated plant availability based on input"
-                    " CS recharge time and maintenance durations as "
-                    "{0}".format(round(a_ops, 2))
-                )
-
-            def spread(a_ops, spreadf):
-                """Distribute availabilities between two phases"""
-                # Ratio of phase lengths
-                r_t = self.blk_2_dpa / self.blk_1_dpa
-                a_p1 = spreadf * a_ops
-                a_p2 = r_t / ((r_t + 1) / a_ops - 1 / a_p1)
-                return a_p1, a_p2
-
-            a_ops = spread(a_ops, spreadf)
-            op_phases = [p for p in self.phases if "Phase P" in p[1]]
-            a_p1 = [phase[0] for phase in op_phases if "P1" in phase[1]]
-            a_p2 = [phase[0] for phase in op_phases if "P2" in phase[1]]
-            self.a_ops = a_p1 + a_p2
-        elif mode == "Operational":
-            # Here we set availabilities on operational phases only, and work
-            # out the global A.
-
-            self.a_ops = [0.1, 0.2, 0.2, 0.4, 0.4, 0.5]
-            ops_pulse_p = [n for n in self.n_pulse_p if n > 1]
-            p_unplanned = []
-
-            total = self.t_flattop + self.t_rampdown + self.t_rampup + self.t_min_down
-
-            for i, p in enumerate(self.a_ops):
-                p_unplanned.append(
-                    ops_pulse_p[i] * self.t_flattop / self.a_ops[i]
-                    - ops_pulse_p[i] * total
-                )
-            self.t_unplanned_m = sum(p_unplanned)
-            # Calculate global load factor
-            self.A_global = self.t_on_total / (
-                self.t_on_total + self.min_downtime + self.t_unplanned_m
-            )
+        self.set_availabilities(self.params.A_global)
 
     def life_neutronics(self):
         """
         Calculate the lifetime of various components based on their damage limits
         and fluences.
         """
-        # Neutron flux in TF coil insulation [MC: based on PP email 20/02/17 -
-        # difficult to read figure] 2:actual 1.4:make it look good
-        neutrons = nROT()
-        self.tf_ins_nflux = neutrons.tf_ins_nflux  # [n/m^2/s]
-        # Blanket outboard midplane EUROFER dmg rate [PP: 2M7HN3 fig. 20]
-        self.blk_dmg = neutrons.blk_dmg  # [dpa/FPY]
-        # Divertor region CuCrZr dmg rate [MC: CB assumption]
-        self.div_dmg = neutrons.div_dmg  # [dpa/MW.annum/m^2]
-        # VV peak SS316LN-IG dmg rate [MC: PP 2M7HN3 fig. 18]
-        self.vv_dmg = neutrons.vv_dmg  # [dpa/MW.annum/m^2]
-        divl = self.params.div_dpa / self.div_dmg  # [fpy] Divertor life
-        blk1l = self.params.blk_1_dpa / self.blk_dmg  # [fpy] 1st Blanket life
-        blk2l = self.params.blk_2_dpa / self.blk_dmg  # [fpy] 2nd Blanket life
-        # vvl = self.params.vv_dpa / self.vv_dmg  # [fpy] VV life
+        tf_ins_nflux = self.params.tf_ins_nflux
+        divl = self.params.div_dpa / self.params.div_dmg  # [fpy] Divertor life
+        blk1l = self.params.blk_1_dpa / self.params.blk_dmg  # [fpy] 1st Blanket life
+        blk2l = self.params.blk_2_dpa / self.params.blk_dmg  # [fpy] 2nd Blanket life
+
         # Number of divertor changes in 1st blanket life
         ndivch_in1blk = int(blk1l / divl)
         # Number of divertor changes in 2nd blanket life (1 for div reset)
         ndivch_in2blk = int(blk2l / divl)
+
         self.n_blk_replace = 1  # HLR
         self.n_div_replace = ndivch_in1blk + ndivch_in2blk
         m_short = self.maintenance_s * S_TO_YR
@@ -299,33 +166,63 @@ class LifeCycle(ReactorSystem):
         self.fpy = fpy
         # Irreplaceable components life checks
         self.t_on_total = self.fpy * YR_TO_S  # [s] total fusion time
-        tf_ins_life_dose = self.tf_ins_nflux * self.t_on_total / self.params.tf_fluence
+        tf_ins_life_dose = tf_ins_nflux * self.t_on_total / self.params.tf_fluence
         if tf_ins_life_dose > 1:
-            self.tf_lifeend = round(
-                self.params.tf_fluence / (self.tf_ins_nflux) / (3600 * 24 * 365), 2
-            )
+            self.tf_lifeend = round(self.params.tf_fluence / tf_ins_nflux / YR_TO_S, 2)
             tflifeperc = round(100 * self.tf_lifeend / self.fpy, 1)
             bluemira_warn(
-                "TF coil insulation fried after {0} full-power years"
-                ", or {1} % of neutron budget"
-                ".".format(self.tf_lifeend, tflifeperc)
+                f"TF coil insulation fried after {self.tf_lifeend:.2f} full-power years"
+                f", or {tflifeperc:.2f} % of neutron budget."
             )
-        vv_life_dmg = self.vv_dmg * self.fpy / self.params.vv_dpa
+        vv_life_dmg = self.params.vv_dmg * self.fpy / self.params.vv_dpa
         if vv_life_dmg > 1:
-            self.vv_lifeend = round(self.params.vv_dpa / self.vv_dmg, 2)
+            self.vv_lifeend = round(self.params.vv_dpa / self.params.vv_dmg, 2)
             vvlifeperc = round(100 * self.vv_lifeend / self.fpy, 1)
             bluemira_warn(
-                "VV fried after {0} full-power"
-                " years, or {1} % of neutron budget"
-                ".".format(self.vv_lifeend, vvlifeperc)
+                f"VV fried after {self.vv_lifeend:.2f} full-power"
+                f" years, or {vvlifeperc:.2f} % of neutron budget."
             )
-        self.add_parameter(
+            # TODO: treat output parameter
+        self.params.add_parameter(
             "n_cycles",
             "Total number of D-T pulses",
             self.fpy * YR_TO_S / self.t_flattop,
             "",
             None,
-            "BLUEPRINT",
+            "bluemira",
+        )
+
+    def set_availabilities(self, load_factor):
+        """
+        Sets availability and distributes it between the two phases of planned operation.
+        The planned maintenance windows are substracted from the availability which
+        needs to be achieved during the phase of operation. The target overall plant
+        lifetime availability as specified in input parameter A remains the same.
+
+        Notes
+        -----
+        \t:math:`A_{overall}=\\dfrac{t_{on}}{t_{on}+t_{off}}`
+        \t:math:`A_{operations}=\\dfrac{t_{on}}{t_{on}+t_{ramp}+t_{CS_{recharge}}+t_{m_{unplanned}}}`
+        """
+        self.total_planned_maintenance = self.maintenance_l * self.n_blk_replace + (
+            self.maintenance_s * self.n_div_replace
+        )
+        self.t_interdown = sum(self.n_pulse_p) * self.t_min_down
+        self.total_ramptime = sum(self.n_pulse_p) * (self.t_rampup + self.t_rampdown)
+        self.min_downtime = (
+            self.total_planned_maintenance + self.t_interdown + self.total_ramptime
+        )
+        self.unplanned = self.t_on_total / load_factor - (
+            self.total_planned_maintenance
+            + self.t_interdown
+            + self.total_ramptime
+            + self.t_on_total
+        )
+
+        # TODO: Treat global load factor vs lifetime operational availability properly..!
+        op_durations = self.get_op_phases()
+        self.a_ops = self.learning_strategy.generate_phase_availabilities(
+            self.params.A_global, op_durations
         )
 
     def calc_n_pulses(self, phases):
@@ -349,7 +246,7 @@ class LifeCycle(ReactorSystem):
             d for n, d in zip(self.phase_names, self.phase_durations) if "Phase P" in n
         ]
 
-    def timeline(self):
+    def make_timeline(self):
         """
         Builds a Timeline instance
         """
@@ -377,15 +274,16 @@ class LifeCycle(ReactorSystem):
             n_DD_reactions,
             Ip,
             self.params.A_global,
-            self.blk_dmg,
+            self.params.blk_dmg,
             self.params.blk_1_dpa,
             self.params.blk_2_dpa,
-            self.div_dmg,
+            self.params.div_dmg,
             self.params.div_dpa,
-            self.tf_ins_nflux,
+            self.params.tf_ins_nflux,
             self.params.tf_fluence,
-            self.vv_dmg,
+            self.params.vv_dmg,
             self.params.vv_dpa,
+            self.availability_strategy,
         )
         self.T = timeline
         self.t_unplanned_m = self.T.t_unplanned_m
@@ -401,12 +299,12 @@ class LifeCycle(ReactorSystem):
             self.t_on_total
             + self.total_ramptime
             + self.t_interdown
-            + self.m
+            + self.total_planned_maintenance
             + self.t_unplanned_m
         )
         actual_lf = self.fpy / actual_life
-        delt = delta(actual_life, life)
-        delta2 = delta(actual_lf, self.params.A_global)
+        delt = abs_rel_difference(actual_life, life)
+        delta2 = abs_rel_difference(actual_lf, self.params.A_global)
         if delt > 0.015:
             bluemira_warn(
                 "FuelCycle::Lifecyle: discrepancy between actual and planned\n"
@@ -420,7 +318,7 @@ class LifeCycle(ReactorSystem):
 
         if delta2 > 0.015:
             bluemira_warn(
-                "FuelCycle::Lifecyle: availability discrepancy greated that\n"
+                "FuelCycle::Lifecyle: availability discrepancy greated than\n"
                 "specified tolerance\n"
                 f"Actual: {actual_lf:.4f}\n"
                 f"Planned: {self.params.A_global:.4f}\n"
@@ -435,40 +333,6 @@ class LifeCycle(ReactorSystem):
         self.params.update_kw_parameters({"A_global": actual_lf})
         # self.A_global = actual_A
 
-    def plot_pulse(self):
-        """
-        Plot a typical pulse in the LifeCycle.
-        """
-        t_dwell = self.t_min_down
-        self.t.extend(self.t + np.sum(t_dwell + self.t_pulse))
-        self.I.extend(self.I)
-        self.frate.extend(self.frate)
-        f, ax = plt.subplots(2, 1, sharex=True)
-        ax = np.ravel(ax)
-        ax[0].plot(self.t, self.I)
-        ax[0].set_ylim([-0.1, 25])
-        ax[0].set_xlim([-200, self.t_pulse + t_dwell + 1000])
-        ax[0].set_ylabel("$I_P$ [MA]")
-        ax[0].annotate("$t_{rampup} = %s s$" % self.t_rampup, xy=[200, 10])
-        ax[0].annotate("$t_{rampdown} = %s s$" % self.t_rampdown, xy=[5500, 10])
-        ax[0].annotate("$t_{flattop} = %s s$" % (self.t_flattop), xy=[3000, 17.5])
-        ax[0].annotate(
-            "$t_{pulse} = %s s$" % (self.t_pulse), xy=[3000, 20.5], color="red"
-        )
-        ax[0].annotate("$t_{dwell}=%s s$" % (t_dwell), xy=[7000, 20.5], color="blue")
-        ax[0].axvspan(0, self.t_pulse, color="red", alpha=0.1)
-        ax[0].axvspan(self.t_pulse, self.t_pulse + t_dwell, color="blue", alpha=0.1)
-        ax[0].axvspan(-200, 0, color="blue", alpha=0.1)
-        ax[0].axvspan(
-            self.t_pulse + t_dwell,
-            self.t_pulse + t_dwell + 1000,
-            color="red",
-            alpha=0.1,
-        )
-        ax[1].plot(self.t, self.frate)
-        ax[1].set_xlabel("$t$ [s]")
-        ax[1].set_ylabel("Number of reactions")
-
     def summary(self):
         """
         Plot the load factor breakdown and learning curve
@@ -476,29 +340,6 @@ class LifeCycle(ReactorSystem):
         f, ax = plt.subplots(1, 2)
         self.plot_learning(ax=ax[0])
         self.plot_load_factor(ax=ax[1])
-
-    def plot_learning(self, ax=None):
-        """
-        Plot the load factor learning curve and its discretisation into
-        operational load factors over phases
-        """
-        if ax is None:
-            ax = plt.gca()
-        a = self.a_ops
-        x, y = histify(self._t_argdates, a)
-        t = np.linspace(0, self.fpy, len(self._a))
-        g = ax.plot(t, self._a, linestyle="--")
-        ax.plot(
-            x,
-            y,
-            color=g[-1].get_color(),
-            label=f"{self.params.A_global:.1f}",
-            marker="o",
-        )
-        # Put a legend to the right of the current axis
-        ax.legend(loc="best", title="$A_{glob}$")
-        ax.set_xlabel("Full power years")
-        ax.set_ylabel("Operational load factor")
 
     def plot_life(self):
         """
@@ -582,7 +423,7 @@ class LifeCycle(ReactorSystem):
             self.t_on_total,
             self.total_ramptime,
             self.t_interdown,
-            self.m,
+            self.total_planned_maintenance,
             self.t_unplanned_m,
         ]
         if typ == "pie":
@@ -610,26 +451,20 @@ class LifeCycle(ReactorSystem):
             )
         )
 
-    def write(self):
+    def write(self, filename):
         """
         Save a Timeline to a JSON file.
         """
-        bluemira_print("Writing {0}".format(self.filename))
+        bluemira_print(f"Writing {filename}")
         data = self.T.to_dict()
-        with open(self.filename, "w") as f_h:
+        with open(filename, "w") as f_h:
             json.dump(data, f_h, indent=4)
 
-    def read(self):
+    def read(self, filename):
         """
         Load a Timeline from a JSON file.
         """
-        bluemira_print("Reading {0}".format(self.filename))
-        with open(self.filename) as f_h:
+        bluemira_print(f"Reading {filename}")
+        with open(filename) as f_h:
             data = json.load(f_h)
         return data
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

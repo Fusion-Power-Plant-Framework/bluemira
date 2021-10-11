@@ -70,7 +70,7 @@ def inscribed_rect_in_poly(
     Setting either value to a very small value could cause the function to hang.
 
     """
-    if not loop.point_in_poly(point):
+    if not loop.point_inside(point):
         return 0, 0
 
     x, z = point

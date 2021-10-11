@@ -17,7 +17,7 @@ with open("README.md", "r") as f:
 install_requires = [  # PYL = Version limited by python version
     "aocxchange;python_version<='3.6'",  # 0.3.0
     "asteval",  # 0.9.23
-    "click",  # 7.1.2
+    "click",  # 8.0.1
     "CoolProp",  # 6.4.1
     "dataclasses;python_version<='3.6'",  # 0.8
     "fortranformat",  # 1.0.1

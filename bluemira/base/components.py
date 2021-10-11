@@ -86,7 +86,7 @@ class Component(NodeMixin):
         return str(RenderTree(self))
 
     def get_component(
-        self, name: str, first: bool = True
+        self, name: str, first: bool = True, full_tree: bool = False
     ) -> Union["Component", List["Component"]]:
         """
         Find the components with the specified name.
@@ -97,6 +97,9 @@ class Component(NodeMixin):
             The name of the component to search for.
         first: bool
             If True, only the first element is returned, by default True.
+        full_tree: bool
+            If True, searches the tree from the root, else searches from this node, by
+            default False.
 
         Returns
         -------
@@ -109,11 +112,17 @@ class Component(NodeMixin):
             This function is just a wrapper of the anytree.search.findall_by_attr
             function.
         """
-        found_components = anytree.search.findall_by_attr(self.root, name)
+        if full_tree:
+            found_components = anytree.search.findall_by_attr(self.root, name)
+        else:
+            found_components = anytree.search.findall_by_attr(self, name)
+
         if len(found_components) == 0:
             return None
+
         if first:
             return found_components[0]
+
         return found_components
 
     def copy(self):

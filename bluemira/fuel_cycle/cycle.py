@@ -25,24 +25,25 @@ Full fuel cycle model object
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import numpy as np
-from BLUEPRINT.fuelcycle.tfvutils import (
-    _speed_recycle,
-    find_max_load_factor,
-    legal_limit,
-)
-from BLUEPRINT.fuelcycle.blocks import TCycleComponent, TCycleFlow
-from BLUEPRINT.utilities.tools import findnoisylocals, discretise_1d, tomols
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
-from BLUEPRINT.base.baseclass import ReactorSystem
+from bluemira.fuel_cycle.tools import (
+    _speed_recycle,
+    find_max_load_factor,
+    legal_limit,
+    discretise_1d,
+    find_noisy_locals,
+    pam3s_to_mols,
+)
+from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
 # It will be slower... and it will probably be less accurate! But the plots..
 # FIXED: You hacked the plot
 
 
-class FuelCycle(ReactorSystem):
+class EUDEMOFuelCycleModel:
     """
     Tritium fuel cycle object.
 
@@ -80,9 +81,6 @@ class FuelCycle(ReactorSystem):
         [1=100%] T exhaust efficiency of in-vessel environment
     eta_bb: float
         [1=100%] T exhaust efficiency of blanket
-
-    .. image:: Information/T_fuel_cycle.JPG
-       :height: 800 px
     """
 
     # fmt: off
@@ -123,23 +121,18 @@ class FuelCycle(ReactorSystem):
     ]
     # fmt: on
 
-    def __init__(self, config, inputs, timeline):
+    def __init__(self, config, inputs):
         # Handle parameters
-        self.params = ParameterFrame(self.default_params.to_records())
+        self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(config)
 
         # Handle calculation information
         self.verbose = inputs.get("verbose", False)
-        self.learn = inputs.get("learn", False)
         self.timestep = inputs.get("timestep", 1200)
         self.conv_thresh = inputs.get("conv_thresh", 0.0002)
         self.n = inputs.get("n", None)
 
-        if self.n is None:
-            self.n = len(timeline["time"])
-
-        self.A_global = timeline["A_global"]
-
+    def _constructors(self):
         # Constructors (untangling the spaghetti)
         self.max_T = None
         self.min_T = None
@@ -169,11 +162,25 @@ class FuelCycle(ReactorSystem):
         self.t = None
         self.t_d = None
         self.t_infl = None
-        self.ax = None
 
+    def run(self, timeline):
+        """
+        Run the fuel cycle model.
+
+        Parameters
+        ----------
+        timeline: Timeline
+            Timeline with which to run the model
+        """
+        if self.n is None:
+            self.n = len(timeline["time"])
+
+        self.A_global = timeline["A_global"]
+
+        self._constructors()
         self.initialise_arrays(timeline, self.n)
         # Initialise model with a reasonable number for decay
-        self.seed_t(learn=self.learn)
+        self.seed_t()
         self.iterations = 0
         self.recycle()
         self.finalise()
@@ -187,8 +194,8 @@ class FuelCycle(ReactorSystem):
         """
         n_bins = max(int(len(self.m_T) / 4500), 400)
         # Hand tweak to get findnoisylocals looking good
-        self.max_T = findnoisylocals(self.m_T, x_bins=n_bins, mode="max")
-        self.min_T = findnoisylocals(self.m_T, x_bins=n_bins)
+        self.max_T = find_noisy_locals(self.m_T, x_bins=n_bins, mode="max")
+        self.min_T = find_noisy_locals(self.m_T, x_bins=n_bins)
         # self.max_T[1][-1] = self.max_T[1][-2]   #plothack
         self.m_T[-1] = self.max_T[1][-1]
         self.arg_t_d, self.t_d = self.calc_t_d()
@@ -206,7 +213,7 @@ class FuelCycle(ReactorSystem):
         self.DEMO_rt = np.array(timeline["fusion_time"][:n])
         self.DT_rate = timeline["DT_rate"][:n]
         self.DD_rate = timeline["DD_rate"][:n]
-        m_gas = T_MOLAR_MASS * tomols(self.params.m_gas) / 1000
+        m_gas = T_MOLAR_MASS * pam3s_to_mols(self.params.m_gas) / 1000
         self.grate = m_gas * self.DT_rate / max(self.DT_rate)
         self.bci = timeline["blanket_change_index"]
         # Burn rate of T [kgs of T per second]
@@ -214,18 +221,11 @@ class FuelCycle(ReactorSystem):
         # T production rate from D-D reaction channel [kgs of T per second]
         self.prate = (T_MOLAR_MASS / N_AVOGADRO / 1000) * self.DD_rate / 2  # Only 50%!
 
-    def seed_t(self, learn=True):
+    def seed_t(self):
         """
         Seed an initial value to the model.
-
-        Can be from a reduced model (deprecated) or an initial value is set.
         """
-        # AI estimate based on mk i model... no longer applicable.
-        if learn is True:
-            raise NotImplementedError("La c'est vieux mon vieux!")
-
-        else:
-            self.m_T_start = 5
+        self.m_T_start = 5.0
         self.m_T = [self.m_T_start]
 
     def tbreed(self, TBR, m_T_0):
@@ -242,23 +242,9 @@ class FuelCycle(ReactorSystem):
             m_T[i] = (m_T[i - 1]) * np.exp(-T_LAMBDA * dt) - t_burnt + t_bred + t_DD
         return m_T
 
-    def _plot(self, m_T, i):
-        """
-        Obsolete
-        """
-        n = len(self.DEMO_t)
-        self.ax.plot(
-            self.DEMO_t[:n],
-            m_T[:n],
-            label="$m_T$ TBR = {0}, "
-            "A = {1}".format(self.params.TBR[i], self.A_global),
-        )
-        self.ax.set_xlabel("Time [years]")
-        self.ax.set_ylabel("kg of T")
-
     def plasma(self, eta_iv, max_inventory, flows=None):
         """
-        Plasmasystem // in-vessel environment
+        In-vessel environment
 
         Parameters
         ----------
@@ -274,7 +260,7 @@ class FuelCycle(ReactorSystem):
         m_out: np.array(N)
             Flow-rate out of the system [kg/s]
         """
-        plasma = TCycleComponent(
+        plasma = FuelCycleComponent(
             "Plasma",
             self.DEMO_t,
             eta_iv,
@@ -306,7 +292,7 @@ class FuelCycle(ReactorSystem):
             Flow-rate out of the system [kg/s]
         """
         m_T_bred = self.params.TBR * self.brate
-        blanket = TCycleComponent(
+        blanket = FuelCycleComponent(
             "Blanket", self.DEMO_t, eta_b, max_inventory, bci=self.bci, summing=True
         )
         blanket.add_in_flow(m_T_bred)
@@ -317,8 +303,7 @@ class FuelCycle(ReactorSystem):
 
     def tfv(self, eta_tfv, flows):
         """
-        Ceci est le système TFV, où les debits de tritium du BB et du plasma
-        sont cumulés.
+        The TFV system where the tritium flows from the BB and plasma are combined.
 
         Parameters
         ----------
@@ -333,7 +318,7 @@ class FuelCycle(ReactorSystem):
             Flow-rate out of the system [kg/s]
         """
         # Runs in compressed time
-        tfv = TCycleComponent(
+        tfv = FuelCycleComponent(
             "TFV systems",
             self.t,
             eta_tfv,
@@ -344,7 +329,7 @@ class FuelCycle(ReactorSystem):
         for flow in flows:
             tfv.add_in_flow(flow)
         tfv.run()
-        m_tfv_out = TCycleFlow(self.t, tfv.m_out, 0)
+        m_tfv_out = FuelCycleFlow(self.t, tfv.m_out, 0)
         self.I_tfv = tfv.inventory
         # Exhaust processing
         m_in_isotope_re, m_in_exhaust_det = m_tfv_out.split(2, [self.params.f_exh_split])
@@ -353,7 +338,7 @@ class FuelCycle(ReactorSystem):
         # Fließt direkt zum Injektor
         # Exhaust detritiation
         # Combines Water Detritiation and Isotope Separation
-        m_in_exhaust_det = TCycleFlow(self.t, m_in_exhaust_det, self.params.t_detrit)
+        m_in_exhaust_det = FuelCycleFlow(self.t, m_in_exhaust_det, self.params.t_detrit)
         m_exh_stor, m_ex_stack = m_in_exhaust_det.split(2, [self.params.f_detrit_split])
         return m_in_isotope_re + m_exh_stor, m_ex_stack
 
@@ -361,7 +346,7 @@ class FuelCycle(ReactorSystem):
         """
         Exhaust to environment
         """
-        stack = TCycleComponent(
+        stack = FuelCycleComponent(
             "Stack", self.t, 0, float("inf"), retention_model="bathtub", summing=True
         )
         for flow in flows:
@@ -375,7 +360,7 @@ class FuelCycle(ReactorSystem):
         """
         Pellet injection system assumed
         """
-        injector = TCycleComponent("Injector", self.t, 1, 0)
+        injector = FuelCycleComponent("Injector", self.t, 1, 0)
         for flow in flows:
             if flow is not None:
                 injector.add_in_flow(flow)
@@ -416,27 +401,27 @@ class FuelCycle(ReactorSystem):
         # Flow out of the vacuum vessel
         t, m_T_out = discretise_1d(self.DEMO_t, m_T_out, n_ts)
         # Direct Internal Recycling
-        m_plasma_out = TCycleFlow(t, m_T_out, 0)  # Initialise flow 0 t
+        m_plasma_out = FuelCycleFlow(t, m_T_out, 0)  # Initialise flow 0 t
 
         m_direct, m_indirect = m_plasma_out.split(2, [self.params.f_dir])
         # DIR separation
         # Flow 9
-        direct = TCycleFlow(t, m_direct, self.params.t_pump)
+        direct = FuelCycleFlow(t, m_direct, self.params.t_pump)
         # Flow 10 with (time delay t_10+t_11/12)
-        indirect = TCycleFlow(t, m_indirect, self.params.t_pump + self.params.t_exh)
+        indirect = FuelCycleFlow(t, m_indirect, self.params.t_pump + self.params.t_exh)
         # Blanket
         m_T_bred = self.blanket(self.params.eta_bb, self.params.I_mbb)
         t, m_bred = discretise_1d(self.DEMO_t, m_T_bred, n_ts)
-        m_T_bred = TCycleFlow(t, m_bred, self.params.t_ters)
+        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters)
         # Tritium extraction and recovery system + coolant water purification
         m_T_bred_totfv, m_T_bred_tostack = m_T_bred.split(2, [self.params.f_terscwps])
         # TFV systems - runs in t
         m_tfv_out, m_tfv_stack = self.tfv(self.params.eta_tfv, flows=[indirect.out_flow])
         # Release to environment
         self.stack([m_T_bred_tostack, m_tfv_stack])
-        m_tfv_out = TCycleFlow(t, m_tfv_out, 0)
+        m_tfv_out = FuelCycleFlow(t, m_tfv_out, 0)
         # Store
-        store = TCycleComponent("Store", t, 1, np.inf)
+        store = FuelCycleComponent("Store", t, 1, np.inf)
         # Flow 11+13
         store.add_in_flow(m_tfv_out.out_flow)
         # Flow 16
@@ -453,7 +438,7 @@ class FuelCycle(ReactorSystem):
         store.run()
         # This is conservative... need to find a way to make gas available
         # instantaneously. At present this means gas puffs get "frozen" first
-        m_store = TCycleFlow(t, store.m_out, self.params.t_freeze).out_flow
+        m_store = FuelCycleFlow(t, store.m_out, self.params.t_freeze).out_flow
         # Add a correction flow for instantaneous gas puffing
 
         # m_store += gpuff_corr
@@ -465,7 +450,7 @@ class FuelCycle(ReactorSystem):
         m_T = _speed_recycle(self.m_T_start, t, m_in, m_store)
         self.m_T = m_T + self.params.I_tfv_min  # !!!!
 
-        min_tritium = min(m_T)
+        min_tritium = np.min(m_T)
         self.m_T_req = self.m_T_start - min_tritium
 
         while abs(self.m_T_req - self.m_T_start) / self.m_T_req > self.conv_thresh:
@@ -485,6 +470,14 @@ class FuelCycle(ReactorSystem):
                 )
             self.m_T_start -= min_tritium
             self.recycle()
+
+    def plot(self):
+        """
+        Plot the results of the fuel cycle model.
+        """
+        _, ax = plt.subplots(2, 1)
+        self.plot_m_T(ax=ax[0])
+        self.plot_inventory(ax=ax[1])
 
     def plot_m_T(self, **kwargs):
         """
@@ -594,31 +587,10 @@ class FuelCycle(ReactorSystem):
             inventory[i + 1] = inventory[i]
         return inventory
 
-    def plot_perf(self):
-        """
-        Plot the proportions of bred, burnt, and escaped tritium.
-        """
-        f, ax = plt.subplots()
-        c = ["#0072bd", "#d95319", "#edb120"]
-        labels = ["$T_{bred}$", "$T_{burnt}$", "$T_{stack}$"]
-        sizes = [self.M_T_bred, self.M_T_burnt, self.M_T_stack]
-        plt.pie(
-            sizes,
-            labels=labels,
-            colors=c,
-            startangle=90,
-            autopct="%.2f",
-            counterclock=False,
-        )
-        plt.axis("equal")
-
     def calc_t_d(self):
         """
-        Calcula el doubling time de una machina, asumiendo (por el momento)
-        que un tokamak futuro necesita la misma cantidad de tritio que DEMO.
-        Claro que el momento exacto en que se da el tritio o en que DEMO
-        estaria listo para dar el tritio no es la misma cosa: es imposible de
-        predicer el futuro, amigo!
+        Calculate the doubling time of a fuel cycle timeline, assuming that a future
+        tokamak requires the same start-up inventory as the present one.
 
         Returns
         -------
@@ -674,8 +646,12 @@ class FuelCycle(ReactorSystem):
 
     def calc_m_release(self):
         """
-        Rechnet die Tritiumfreisetzungsrate von alle TFV systeme zur Umgebung
-        [g/yr]
+        Calculate the tritium release rate from the entire system to the environment.
+
+        Returns
+        -------
+        release_rate: float
+            Tritium release rate [g/yr]
         """
         max_load_factor = find_max_load_factor(self.DEMO_t, self.DEMO_rt)
         mb = 1000 * max(self.brate)
@@ -696,9 +672,7 @@ class FuelCycle(ReactorSystem):
 
     def sanity(self):
         """
-        Hier wolltest du nur sicher sein dass die ideale Welt entspricht
-        deinem Universum... Der einziger Unterschied ist wenn man Tritium von
-        System rausnimmt (wie bei einem BlanketWechsel)
+        Check that no tritium is lost (graphically).
         """
         f, ax = plt.subplots()
         m_ideal = self.tbreed(self.params.TBR, self.m_T_req)
@@ -718,9 +692,3 @@ class FuelCycle(ReactorSystem):
         ax.plot(self.DEMO_t, m_ideal, label="ideal")
         ax.plot(self.t[self.max_T[0]], self.max_T[1], label="max yellow")
         ax.legend()
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

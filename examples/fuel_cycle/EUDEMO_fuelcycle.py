@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -20,19 +18,26 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
 """
 A typical fuel cycle result for an EU-DEMO reference point
 """
-import matplotlib.pyplot as plt
 
 from bluemira.base.look_and_feel import plot_defaults
 from bluemira.base.parameter import ParameterFrame
-
-from BLUEPRINT.utilities.tools import set_random_seed
-from BLUEPRINT.systems.physicstoolbox import n_DD_reactions, n_DT_reactions
-from BLUEPRINT.fuelcycle.lifecycle import LifeCycle
-from BLUEPRINT.fuelcycle.tfvutils import convert_flux_to_flow
-from BLUEPRINT.systems.tfv import TFVSystem
+from bluemira.utilities.tools import set_random_seed
+from bluemira.fuel_cycle.lifecycle import LifeCycle
+from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
+from bluemira.fuel_cycle.tools import (
+    convert_flux_to_flow,
+    n_DD_reactions,
+    n_DT_reactions,
+)
+from bluemira.fuel_cycle.timeline_tools import (
+    LogNormalAvailabilityStrategy,
+    GompertzLearningStrategy,
+)
 
 plot_defaults()
 
@@ -71,9 +76,6 @@ lifecycle_config = ParameterFrame([
     ["s_ramp_down", "Plasma current ramp-down rate", 0.1, "MA/s", None, "R. Wenninger"],
     ["n_DT_reactions", "D-T fusion reaction rate", n_DT_reactions(p_fus_DT), "1/s", "At full power", "Input"],
     ["n_DD_reactions", "D-D fusion reaction rate", n_DD_reactions(p_fus_DD), "1/s", "At full power", "Input"],
-    ["a_min", "Minimum operational load factor", 0.1, "N/A", "Otherwise nobody pays", "Input"],
-    ["a_max", "Maximum operational load factor", 0.5, "N/A", "Can be violated", "Input"],
-    ["r_learn", "Learning curve rate", 1, "1/fpy", "Looks good", "Input"],
     ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa",
      "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
     ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa",
@@ -88,18 +90,27 @@ lifecycle_config = ParameterFrame([
 
 lifecycle_inputs = {}
 
+# We need to define some stragies to define the pseudo-random timelines
 
-lifecycle = LifeCycle(lifecycle_config, lifecycle_inputs)
+# Let's choose a LearningStrategy such that the operational availability grows over time
+learning_strategy = GompertzLearningStrategy(
+    learn_rate=1.0, min_op_availability=0.1, max_op_availability=0.5
+)
+# Let's choose an OperationalAvailabilityStrategy to determine how to distribute outages
+availability_strategy = LogNormalAvailabilityStrategy(sigma=2.0)
+
+lifecycle = LifeCycle(
+    lifecycle_config, learning_strategy, availability_strategy, lifecycle_inputs
+)
 
 # We can use this LifeCycle to make pseudo-randomised timelines. Let's set a
 # random seed number first to get repeatable results
 set_random_seed(2358203947)
 
-# Let's do 200 runs Monte Carlo
-
-n = 200
-timelines = [lifecycle.timeline() for _ in range(n)]
-time_dicts = [timeline.to_dict() for timeline in timelines]
+# Let's do 50 runs Monte Carlo
+# NOTE: Make sure you have enough memory..!
+n = 50
+time_dicts = [lifecycle.make_timeline().to_dict() for _ in range(n)]
 
 # Now let's set up a TFVSystem
 
@@ -184,32 +195,29 @@ tfv_config = ParameterFrame([
 ])
 # fmt:on
 
-tfv_system = TFVSystem(tfv_config)
 
-# Now, let's run the fuel cycle model for the timelines we generated
+# We can run a single model and look at a typical result
+model = EUDEMOFuelCycleModel(tfv_config, {})
+model.run(time_dicts[0])
+model.plot()
 
-tfv_system.run_model(time_dicts)
-
-
-# You can have a look at a typical timeline:
-
-tfv_system.plot()
+# Now, let's run the fuel cycle model for all the timelines we generated
+tfv_analysis = FuelCycleAnalysis(model)
+tfv_analysis.run_model(time_dicts)
 
 # And the distributions for the start-up inventory and doubling time:
-
-tfv_system.dist_plot()
-
+tfv_analysis.plot()
 
 # And finally, you can get the desired statistical results:
 
-m_T_start_95 = tfv_system.get_startup_inventory("95th")
-t_d_95 = tfv_system.get_doubling_time("95th")
+m_T_start_95 = tfv_analysis.get_startup_inventory("95th")
+t_d_95 = tfv_analysis.get_doubling_time("95th")
 
-m_T_start_mean = tfv_system.get_startup_inventory("mean")
-t_d_mean = tfv_system.get_doubling_time("mean")
+m_T_start_mean = tfv_analysis.get_startup_inventory("mean")
+t_d_mean = tfv_analysis.get_doubling_time("mean")
 
-m_T_start_max = tfv_system.get_startup_inventory("max")
-t_d_max = tfv_system.get_doubling_time("max")
+m_T_start_max = tfv_analysis.get_startup_inventory("max")
+t_d_max = tfv_analysis.get_doubling_time("max")
 
 
 print(f"The mean start-up inventory is: {m_T_start_mean:.2f} kg.")
@@ -218,5 +226,3 @@ print(f"The 95th percentile start-up inventory is: {m_T_start_95:.2f} kg.")
 print(f"The 95th percentile doubling time is: {t_d_95:.2f} years.")
 print(f"The maximum start-up inventory is: {m_T_start_max:.2f} kg.")
 print(f"The maximum doubling time is: {t_d_max:.2f} years.")
-
-plt.show()

@@ -33,7 +33,6 @@ from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base import TypeFrameworkError
 from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import Loop
 
@@ -73,8 +72,7 @@ class TypicalSystem(ReactorSystem):
 
         # Here are going to update the default Parameters with the config
         # (which normally comes from the Reactor)
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(config)
+        self._init_params(config)
 
     def add_loop(self, loop: Type[Loop]) -> None:
         """
@@ -163,30 +161,3 @@ print(typ_system.params.n_TF.history(True))
 loop = Loop(x=[1, 2, 3, 4, 5, 1], y=[0, 1, 2, 3, 0, 0])
 
 typ_system.add_loop(loop)
-
-# %%[markdown]
-# So far, so good. But what about all these type annotations?
-# Python is dynamically typed, and sometimes this can cause problems, in
-# particular when doing a lot of very different things...
-# Using some magic in the base module, our type annotations are now strictly
-# enforced by default.
-
-# So let's try and break things...
-
-# %%
-try:
-    typ_system.name = 42
-except TypeFrameworkError as e:
-    print(e)
-
-# %%
-try:
-    typ_system.add_loop(34.6)
-except TypeFrameworkError as e:
-    print(e)
-
-# %%
-try:
-    typ_system.something = "nothing"
-except TypeFrameworkError as e:
-    print(e)
