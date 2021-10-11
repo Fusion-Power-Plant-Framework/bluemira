@@ -780,7 +780,7 @@ class JohnerLCFS(GeometryParameterisation):
         labels = ["upper_inner", "upper_outer", "lower_outer", "lower_inner"]
         for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels):
             wires.append(
-                make_bspline(np.array([x_q, np.zeros(len(x_q)), z_q]).T), label=lab
+                make_bspline(np.array([x_q, np.zeros(len(x_q)), z_q]).T, label=lab)
             )
 
         return BluemiraWire(wires, label=label)

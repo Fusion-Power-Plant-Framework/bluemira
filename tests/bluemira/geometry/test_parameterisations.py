@@ -26,8 +26,13 @@ from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
-    PrincetonD,
     GeometryParameterisation,
+    PrincetonD,
+    TripleArc,
+    PictureFrame,
+    PolySpline,
+    TaperedPictureFrame,
+    JohnerLCFS,
 )
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry._deprecated_tools import get_perimeter
@@ -101,5 +106,86 @@ class TestPrincetonD:
             p.variables.remove_variable("x1")
 
 
+class TestPictureFrame:
+    def test_length(self):
+        p = PictureFrame()
+        p.adjust_variable("x1", value=4)
+        p.adjust_variable("x2", value=16)
+        p.adjust_variable("z1", value=8)
+        p.adjust_variable("z2", value=-8)
+        p.adjust_variable("ri", value=1, upper_bound=1)
+        p.adjust_variable("ro", value=1)
+        wire = p.create_shape()
+        length = 2 * (np.pi + 10 + 8)
+        assert np.isclose(wire.length, length)
+
+    def test_no_corners(self):
+        p = PictureFrame()
+        p.adjust_variable("x1", value=4)
+        p.adjust_variable("x2", value=16)
+        p.adjust_variable("z1", value=8)
+        p.adjust_variable("z2", value=-8)
+        p.adjust_variable("ri", value=0, lower_bound=0)
+        p.adjust_variable("ro", value=0, lower_bound=0)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
+        length = 2 * (12 + 16)
+        assert np.isclose(wire.length, length)
+
+
 class TestTripleArc:
-    pass
+    def test_circle(self):
+        p = TripleArc()
+        p.adjust_variable("x1", value=4)
+        p.adjust_variable("z1", value=0)
+        p.adjust_variable("sl", value=0, lower_bound=0)
+        p.adjust_variable("f1", value=3)
+        p.adjust_variable("f2", value=3)
+        p.adjust_variable("a1", value=45)
+        p.adjust_variable("a2", value=45)
+        wire = p.create_shape()
+        length = 2 * np.pi * 3
+        assert np.isclose(wire.length, length)
+
+
+class TestPolySpline:
+    def test_segments(self):
+        p = PolySpline()
+        p.adjust_variable("flat", value=0)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 5
+
+        p.adjust_variable("flat", value=1)
+
+        wire = p.create_shape()
+        assert len(wire._boundary) == 6
+
+
+class TestTaperedPictureFrame:
+    def test_segments(self):
+        p = TaperedPictureFrame()
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
+        p.adjust_variable("r", value=0)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 2
+
+
+class TestJohner:
+    def test_segments(self):
+        p = JohnerLCFS()
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
+
+    def test_symmetry(self):
+        p_pos = JohnerLCFS()
+        p_neg = JohnerLCFS()
+
+        p_pos.adjust_variable("delta_u", 0.4)
+        p_pos.adjust_variable("delta_l", 0.4)
+        p_neg.adjust_variable("delta_u", -0.4, lower_bound=-0.5)
+        p_neg.adjust_variable("delta_l", -0.4, lower_bound=-0.5)
+        wire_pos = p_pos.create_shape()
+        wire_neg = p_neg.create_shape()
+
+        assert np.isclose(wire_pos.length, wire_neg.length)
