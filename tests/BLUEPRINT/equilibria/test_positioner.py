@@ -412,7 +412,7 @@ class TestRegionMapper:
         # Plane only works for single values
         for (x, z), lim in self._region_L_to_xz_conversion():
 
-            assert shape.point_in_poly([x, z], include_edges=True)
+            assert shape.point_inside([x, z], include_edges=True)
 
             self._region_xz_to_L_conversion(x, z, lim)
 
@@ -539,7 +539,7 @@ class TestRegionMapper:
                 new_x[i, j] = xn
                 new_z[i, j] = zn
                 # Only makes sense to compare mapping for points inside the Loop
-                if zm.regions["R_1"].loop.point_in_poly(
+                if zm.regions["R_1"].loop.point_inside(
                     [grid.x[i, j], grid.z[i, j]], include_edges=True
                 ):
                     assert np.isclose(grid.x[i, j], xn)

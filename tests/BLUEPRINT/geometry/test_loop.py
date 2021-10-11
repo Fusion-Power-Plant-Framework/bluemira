@@ -297,7 +297,7 @@ class TestLoop:
         assert np.allclose(inter[0], np.array([0, 0, 0])), inter[0]
         assert np.allclose(inter[1], np.array([2, 0, 0])), inter[1]
 
-    def test_point_in_poly(self):
+    def test_point_inside(self):
         loop = Loop(x=[-2, 2, 2, -2, -2], z=[-2, -2, 2, 2, -2])
         in_points = [
             [-1, -1],

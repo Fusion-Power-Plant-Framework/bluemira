@@ -220,8 +220,8 @@ def segmented_vessel_test(vaccum_vessel, true_a_ib_vv, true_a_ob_vv):
     # Test if the merge shell is properly obtained
     vv_out = vaccum_vessel.geom["2D profile"].outer
     vv_in = vaccum_vessel.geom["2D profile"].inner
-    assert vv_out.point_in_poly([2.0, 0.0])
-    assert vv_in.point_in_poly([2.0, 0.0])
+    assert vv_out.point_inside([2.0, 0.0])
+    assert vv_in.point_inside([2.0, 0.0])
 
     # Test inner profile maker method
     inboard_offset = 0.05
@@ -244,7 +244,7 @@ def segmented_vessel_test(vaccum_vessel, true_a_ib_vv, true_a_ob_vv):
 
     # Our outboard cut should lie on top of original 2D profile
     for point in zip(ob_cut.x, ob_cut.z):
-        assert vv_in.point_in_poly(point, include_edges=True)
+        assert vv_in.point_inside(point, include_edges=True)
 
     return True
 
