@@ -251,9 +251,28 @@ class MagneticComponent(PhysicalComponent):
 
 
 class ComponentDisplayer(Displayer):
+    """
+    A Displayer class for displaying Components in 3D.
+    """
+
     def display(
         self, component: "Component", options: Optional[DisplayOptions] = None
     ) -> None:
+        """
+        Display a component by searching through the component's tree and finding any
+        components that have a shape. Then uses the child component's display_options
+        configure the display if the provided options are None, otherwise overrides the
+        display options for all shapes with those provided.
+
+        Parameters
+        ----------
+        component: Component
+            The component to be displayed.
+        options: Optional[DisplayOptions]
+            The options to use to display the component and its children.
+            By default None, in which case the display_options assigned to the component
+            and any children that can be displayed will be used.
+        """
         shapes = []
         override_options = options is not None
         options = options if override_options else []

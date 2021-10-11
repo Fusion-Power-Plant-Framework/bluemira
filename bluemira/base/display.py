@@ -33,11 +33,36 @@ from bluemira.utilities.tools import get_module
 
 @dataclass(frozen=True)
 class DisplayOptions:
+    """
+    The options that are available for displaying objects in 3D
+
+    Parameters
+    ----------
+    rgb: Tuple[float, float, float]
+        The RBG colour to display the object, by default (0.5, 0.5, 0.5).
+    transparency: float
+        The transparency to display the object, by default 0.0.
+    """
+
     rgb: Tuple[float, float, float] = (0.5, 0.5, 0.5)
     transparency: float = 0.0
 
 
 class Displayer(abc.ABC):
+    """
+    Abstract base class to handle displaying objects
+
+    Parameters
+    ----------
+    options: Optional[DisplayOptions]
+        The options to use to display the object, by default None in which case the
+        default values for the DisplayOptions class are used.
+    api: str
+        The API to use for displaying. This must implement a display method with
+        signature (objs, options), where objs are the primitive 3D object to display. By
+        default uses the FreeCAD api at bluemira.geometry._freecadapi.
+    """
+
     def __init__(
         self,
         options: Optional[DisplayOptions] = None,
@@ -48,6 +73,9 @@ class Displayer(abc.ABC):
 
     @property
     def options(self) -> DisplayOptions:
+        """
+        The options that will be used to display the object.
+        """
         return self._options
 
     @options.setter
@@ -56,14 +84,35 @@ class Displayer(abc.ABC):
 
     @abc.abstractmethod
     def display(self, obj, options: Optional[DisplayOptions] = None) -> None:
+        """
+        Display the object by calling the display function within the API.
+
+        Parameters
+        ----------
+        obj
+            The object to display
+        options: Optional[DisplayOptions]
+            The options to use to display the object, by default None in which case the
+        default values for the DisplayOptions class are used.
+        """
         self._display_func(obj, options)
 
 
 class Displayable:
+    """
+    Mixin class to make a class displayable by imparting a display method and options.
+
+    The implementing class must set the _displayer attribute to an instance of the
+    appropriate Displayer class.
+    """
+
     _displayer: Displayer
 
     @property
     def display_options(self) -> DisplayOptions:
+        """
+        The options that will be used to display the object.
+        """
         return self._displayer.options
 
     @display_options.setter
@@ -71,11 +120,36 @@ class Displayable:
         self._displayer.options = value
 
     def display(self, options: Optional[DisplayOptions] = None) -> None:
+        """
+        Default method to call display the object by calling into the Displayer's display
+        method.
+
+        Parameters
+        ----------
+        options: Optional[DisplayOptions]
+            If not None then override the object's display_options with the provided
+            options. By default None.
+        """
         self._displayer.display(self, options)
 
 
 class BasicDisplayer(Displayer):
+    """
+    A basic implementation of a Displayer that can display provided primitive objects
+    with the provided options.
+    """
+
     def display(self, obj, options: Optional[DisplayOptions] = None) -> None:
+        """
+        Display the primitive objects with the provided options.
+
+        Parameters
+        ----------
+        obj
+            The CAD primitive objects to be displayed.
+        options: Optional[DisplayOptions]
+            The options to use to display the primitives.
+        """
         if options is None:
             options = self.options
 

@@ -729,6 +729,16 @@ def display(
     parts: Union[Part.Shape, List[Part.Shape]],
     options: Optional[Union[DisplayOptions, List[DisplayOptions]]] = None,
 ):
+    """
+    The implementation of the display API for FreeCAD parts.
+
+    Parameters
+    ----------
+    parts: Union[Part.Shape, List[Part.Shape]]
+        The parts to display.
+    options: Optional[Union[DisplayOptions, List[DisplayOptions]]]
+        The options to use to display the parts.
+    """
     if not isinstance(parts, list):
         parts = [parts]
 
