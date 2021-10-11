@@ -99,3 +99,7 @@ class TestPrincetonD:
 
         with pytest.raises(OptVariablesError):
             p.variables.remove_variable("x1")
+
+
+class TestTripleArc:
+    pass

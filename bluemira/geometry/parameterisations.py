@@ -52,6 +52,7 @@ __all__ = [
     "JohnerLCFS",
     "PictureFrame",
     "TaperedPictureFrame",
+    "PolySpline",
 ]
 
 
@@ -408,18 +409,18 @@ class PolySpline(GeometryParameterisation):
                 BoundedVariable("lower", 0.67, lower_bound=0.2, upper_bound=1),
                 # Tension variable first segment start
                 BoundedVariable("l0s", 0.8, lower_bound=0.1, upper_bound=1.9),
-                # Tension variable first segment end
-                BoundedVariable("l0e", 0.8, lower_bound=0.1, upper_bound=1.9),
                 # Tension variable second segment start
                 BoundedVariable("l1s", 0.8, lower_bound=0.1, upper_bound=1.9),
-                # Tension variable second segment end
-                BoundedVariable("l1e", 0.8, lower_bound=0.1, upper_bound=1.9),
                 # Tension variable third segment start
                 BoundedVariable("l2s", 0.8, lower_bound=0.1, upper_bound=1.9),
-                # Tension variable third segment end
-                BoundedVariable("l2e", 0.8, lower_bound=0.1, upper_bound=1.9),
                 # Tension variable fourth segment start
                 BoundedVariable("l3s", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable first segment end
+                BoundedVariable("l0e", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable second segment end
+                BoundedVariable("l1e", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable third segment end
+                BoundedVariable("l2e", 0.8, lower_bound=0.1, upper_bound=1.9),
                 # Tension variable fourth segment end
                 BoundedVariable("l3e", 0.8, lower_bound=0.1, upper_bound=1.9),
             ],
@@ -441,6 +442,7 @@ class PolySpline(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
+        variables = self.variables.values
         (
             x1,
             x2,
@@ -453,15 +455,10 @@ class PolySpline(GeometryParameterisation):
             tilt,
             bottom,
             lower,
-            l0s,
-            l0e,
-            l1s,
-            l1e,
-            l2s,
-            l2e,
-            l3s,
-            l3e,
-        ) = self.variables.values
+        ) = variables[:11]
+        l_start = variables[11:15]
+        l_end = variables[15:]
+
         tilt = np.deg2rad(tilt)
         height = 0.5 * height
         ds_z = flat * height * np.cos(tilt)
@@ -485,8 +482,6 @@ class PolySpline(GeometryParameterisation):
             -np.pi,
             0.5 * np.pi,
         ]
-        l_start = [l0s, l1s, l2s, l3s]
-        l_end = [l0e, l1e, l2e, l3e]
 
         wires = []
         for i, j in zip([0, 1, 2, 3], [0, 1, 3, 4]):
