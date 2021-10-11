@@ -175,7 +175,7 @@ class Loop(GeomBase):
     #     User methods
     # =========================================================================
 
-    def point_in_poly(self, point, include_edges=False):
+    def point_inside(self, point, include_edges=False):
         """
         Determines whether or not a point is within in the Loop
 

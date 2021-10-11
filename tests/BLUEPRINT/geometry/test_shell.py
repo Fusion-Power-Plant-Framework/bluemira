@@ -291,7 +291,7 @@ class TestShell:
 
         # Note that control points are generated stochastically for Shells.
         # So just check that the control point is in the polygon.
-        assert test_shell.point_in_poly(clean_shell.get_control_point())
+        assert test_shell.point_inside(clean_shell.get_control_point())
 
 
 def test_fail_if_intersect():
