@@ -311,7 +311,7 @@ class TestLoop:
             [1, 1],
         ]
         for p in in_points:
-            assert loop.point_in_poly(p), p
+            assert loop.point_inside(p), p
         out_points = [
             [-3, -3],
             [-3, 0],
@@ -323,7 +323,7 @@ class TestLoop:
             [-2.0000000001, -1.999999999999],
         ]
         for p in out_points:
-            assert not loop.point_in_poly(p), p
+            assert not loop.point_inside(p), p
         on_points = [
             [-2, -2],
             [2, -2],
@@ -335,7 +335,7 @@ class TestLoop:
             [-2, 2],
         ]
         for p in on_points:
-            assert not loop.point_in_poly(p), p
+            assert not loop.point_inside(p), p
 
     def test_cross_section(self):
         """
