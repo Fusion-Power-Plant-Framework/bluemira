@@ -109,7 +109,7 @@ class GeometryParameterisation(abc.ABC):
         """
         self.variables.fix_variable(name, value)
 
-    def create_array(self, n_points=200, by_edges=True):
+    def create_array(self, n_points=200, by_edges=True, d_l=None):
         """
         Make an array of the geometry.
 
@@ -119,6 +119,8 @@ class GeometryParameterisation(abc.ABC):
             Number of points in the array
         by_edges: bool
             Whether or not to discretise by edges
+        d_l: Optional[float]
+            Discretisation length (overrides n_points)
 
         Returns
         -------
@@ -130,7 +132,9 @@ class GeometryParameterisation(abc.ABC):
         Override this method if you require a faster implementation, but be careful to
         retain a uniform discretisation
         """
-        return self.create_shape().discretize(ndiscr=n_points, byedges=by_edges).T
+        return (
+            self.create_shape().discretize(ndiscr=n_points, byedges=by_edges, dl=d_l).T
+        )
 
     @abc.abstractmethod
     def create_shape(self, label="", **kwargs):
