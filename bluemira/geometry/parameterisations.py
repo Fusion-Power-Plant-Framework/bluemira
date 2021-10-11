@@ -28,14 +28,15 @@ import numpy as np
 from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
+from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
+    make_bezier,
     make_bspline,
     wire_closure,
     make_polygon,
     make_circle,
     make_circle_arc_3P,
-    concatenate_wires,
 )
 from bluemira.geometry.wire import BluemiraWire
 
@@ -371,7 +372,7 @@ class TripleArc(GeometryParameterisation):
 
 class PolySpline(GeometryParameterisation):
     """
-    Poly-Bezier-spline geometry parameterisation.
+    Simon McIntosh's Poly-Bézier-spline geometry parameterisation (19 variables).
     """
 
     __slots__ = ()
@@ -380,19 +381,43 @@ class PolySpline(GeometryParameterisation):
         variables = OptVariables(
             [
                 # Inner limb radius
-                BoundedVariable("x1", 4.5, lower_bound=4, upper_bound=5),
-                # Inboard limb height
-                BoundedVariable("z1", 0, lower_bound=-1, upper_bound=-1),
-                # Straight length
-                BoundedVariable("sl", 6.5, lower_bound=5, upper_bound=10),
-                # rs == f1*z small
-                BoundedVariable("f1", 3, lower_bound=2, upper_bound=12),
-                # rm == f2*rs mid
-                BoundedVariable("f2", 4, lower_bound=2, upper_bound=12),
-                # Small arc angle [degrees]
-                BoundedVariable("a1", 8, lower_bound=5, upper_bound=15),
-                # Middle arc angle [degrees]
-                BoundedVariable("a1", 8, lower_bound=5, upper_bound=15),
+                BoundedVariable("x1", 4.3, lower_bound=4, upper_bound=5),
+                # Outer limb radius
+                BoundedVariable("x2", 16.56, lower_bound=5, upper_bound=25),
+                # Outer note vertical shift
+                BoundedVariable("z2", 0.03, lower_bound=-2, upper_bound=2),
+                # Full height
+                BoundedVariable("height", 15.5, lower_bound=10, upper_bound=50),
+                # Horizontal shift
+                BoundedVariable("top", 0.52, lower_bound=0.2, upper_bound=1),
+                # Vertical shift
+                BoundedVariable("upper", 0.67, lower_bound=0.2, upper_bound=1),
+                # Vertical offset
+                BoundedVariable("dz", -0.6, lower_bound=-5, upper_bound=5),
+                # Fraction of straight outboard leg
+                BoundedVariable("flat", 0, lower_bound=0, upper_bound=1),
+                # Outboard angle [degrees]
+                BoundedVariable("tilt", 4, lower_bound=-45, upper_bound=45),
+                # Lower horizontal shift
+                BoundedVariable("bottom", 0.4, lower_bound=0, upper_bound=1),
+                # Lower vertical shift
+                BoundedVariable("lower", 0.67, lower_bound=0.2, upper_bound=1),
+                # Tension variable first segment start
+                BoundedVariable("l0s", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable first segment end
+                BoundedVariable("l0e", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable second segment start
+                BoundedVariable("l1s", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable second segment end
+                BoundedVariable("l1e", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable third segment start
+                BoundedVariable("l2s", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable third segment end
+                BoundedVariable("l2e", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable fourth segment start
+                BoundedVariable("l3s", 0.8, lower_bound=0.1, upper_bound=1.9),
+                # Tension variable fourth segment end
+                BoundedVariable("l3e", 0.8, lower_bound=0.1, upper_bound=1.9),
             ],
             frozen=True,
         )
@@ -412,8 +437,89 @@ class PolySpline(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        wire = None
-        return BluemiraWire(wire)
+        (
+            x1,
+            x2,
+            z2,
+            height,
+            top,
+            upper,
+            dz,
+            flat,
+            tilt,
+            bottom,
+            lower,
+            l0s,
+            l0e,
+            l1s,
+            l1e,
+            l2s,
+            l2e,
+            l3s,
+            l3e,
+        ) = self.variables.values
+        tilt = np.deg2rad(tilt)
+        ds_z = flat * 0.5 * height * np.cos(tilt)
+        ds_x = flat * 0.5 * height * np.sin(tilt)
+
+        # Vertices
+        x = [x1, x1 + top * (x2 - x1), x2 + ds_x, x2 - ds_x, x1 + bottom * (x2 - x1), x1]
+        z = [
+            upper * 0.5 * height + dz,
+            0.5 * height + dz,
+            z2 * 0.5 * height + ds_z + dz,
+            z2 * 0.5 * height - ds_z + dz,
+            -0.5 * height + dz,
+            -lower * 0.5 * height + dz,
+        ]
+        theta = [
+            0.5 * np.pi,
+            0,
+            -0.5 * np.pi - tilt,
+            -0.5 * np.pi - tilt,
+            -np.pi,
+            0.5 * np.pi,
+        ]
+        l_start = [l0s, l1s, l2s, l3s]
+        l_end = [l0e, l1e, l2e, l3e]
+
+        wires = []
+        for i, j in zip([0, 1, 2, 3], [0, 1, 3, 4]):
+            k = j + 1
+            p0 = [x[j], 0, z[j]]
+            p3 = [x[k], 0, z[k]]
+            p1, p2 = self._make_control_points(
+                p0, p3, theta[j], theta[k] - np.pi, l_start[i], l_end[i]
+            )
+            wires.append(make_bezier([p0, p1, p2, p3], label=f"segment_{i}"))
+
+        if flat != 0:
+            outer_straight = make_polygon(
+                [[x[2], 0, z[2]], [x[3], 0, z[3]]], label="outer_straight"
+            )
+            wires.insert(2, outer_straight)
+
+        straight_segment = wire_closure(BluemiraWire(wires), label="inner_straight")
+        wires.append(straight_segment)
+
+        return BluemiraWire(wires, label=label)
+
+    @staticmethod
+    def _make_control_points(p0, p3, theta0, theta3, l_start, l_end):
+        """
+        Make 2 Bézier spline control points between two vertices.
+        """
+        dl = distance_between_points(p0, p3)
+
+        p1, p2 = np.zeros(3), np.zeros(3)
+        for point, control_point, angle, tension in zip(
+            [p0, p3], [p1, p2], [theta0, theta3], [l_start, l_end]
+        ):
+            d_tension = 0.5 * dl * tension
+            control_point[0] = point[0] + d_tension * np.cos(angle)
+            control_point[2] = point[2] + d_tension * np.sin(angle)
+
+        return p1, p2
 
 
 class PictureFrame(GeometryParameterisation):
@@ -650,7 +756,7 @@ class JohnerLCFS(GeometryParameterisation):
 
         super().__init__(variables)
 
-    def create_shape(self, label="LCFS"):
+    def create_shape(self, label="LCFS", n_points=1000):
         """
         Make a CAD representation of the Johner LCFS.
 
@@ -658,15 +764,16 @@ class JohnerLCFS(GeometryParameterisation):
         ----------
         label: str, default = ""
             Label to give the wire
+        n_points: int
+            Number of points to use when creating the Bspline representation
 
         Returns
         -------
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        n = 1000
         x_quadrants, z_quadrants = flux_surface_johner_quadrants(
-            *self.variables.values, n=n
+            *self.variables.values, n=n_points
         )
 
         wires = []
