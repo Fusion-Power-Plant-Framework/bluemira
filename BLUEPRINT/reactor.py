@@ -628,33 +628,7 @@ class Reactor(ReactorSystem):
         """
         Load an equilibrium from a file.
         """
-        if filename is None:
-            files = get_files_by_ext(
-                self.file_manager.reference_data_dirs["equilibria"], "json"
-            )
-            if len(files) > 1:
-                bluemira_warn("More than one eqdsk file present, loading first.")
-            file = files[0]
-            filename = os.path.join(
-                self.file_manager.reference_data_dirs["equilibria"], file
-            )
-
-        bluemira_print(f"Loading reference plasma MHD equilibrium {filename}")
-
-        if filename.endswith("eqdsk"):
-            bluemira_warn("Consider converting your eqdsk file to json.")
-        self.EQ = AbExtraEquilibriumProblem(filename, load_large_file=reconstruct_jtor)
-        self.eqref = self.EQ.eq
-        self.process_equilibrium(self.eqref)
-
-        # Ensure the equilibria reference data are available if loaded from elsewhere.
-        file_dir = os.path.dirname(filename)
-        if file_dir != self.file_manager.reference_data_dirs["equilibria"]:
-            self.EQ.eq.to_eqdsk(
-                os.path.basename(filename),
-                directory=self.file_manager.reference_data_dirs["equilibria"],
-                qpsi_calcmode=qpsi_calcmode,
-            )
+        raise NotImplementedError("This method is being redesigned...")
 
     def process_equilibrium(self, eq):
         """
