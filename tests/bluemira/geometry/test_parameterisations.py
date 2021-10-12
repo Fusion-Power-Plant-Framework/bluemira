@@ -51,7 +51,7 @@ class TestGeometryParameterisation:
                     ],
                     frozen=True,
                 )
-                super().__init__("test", variables)
+                super().__init__(variables)
 
             def create_shape(self, **kwargs):
                 return BluemiraWire(
@@ -66,6 +66,7 @@ class TestGeometryParameterisation:
                 )
 
         t = TestPara()
+        assert t.name == "TestPara"
 
 
 class TestPrincetonD:
@@ -116,7 +117,7 @@ class TestPictureFrame:
         p.adjust_variable("ri", value=1, upper_bound=1)
         p.adjust_variable("ro", value=1)
         wire = p.create_shape()
-        length = 2 * (np.pi + 10 + 8)
+        length = 2 * (np.pi + 10 + 14)
         assert np.isclose(wire.length, length)
 
     def test_no_corners(self):

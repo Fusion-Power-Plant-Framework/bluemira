@@ -360,19 +360,22 @@ class TripleArc(GeometryParameterisation):
         p65 = [p15[0], 0, -p15[2]]
         p7 = [p1[0], 0, -p1[2]]
 
-        wire = BluemiraWire(
-            [
-                make_circle_arc_3P(p1, p15, p2, label="upper_inner_arc"),
-                make_circle_arc_3P(p2, p25, p3, label="upper_mid_arc"),
-                make_circle_arc_3P(p3, p35, p4, label="upper_outer_arc"),
-                make_circle_arc_3P(p4, p45, p5, label="lower_outer_arc"),
-                make_circle_arc_3P(p5, p55, p6, label="lower_mid_arc"),
-                make_circle_arc_3P(p6, p65, p7, label="lower_inner_arc"),
-            ]
-        )
-        straight_segment = wire_closure(wire, label="straight_segment")
+        wires = [
+            make_circle_arc_3P(p1, p15, p2, label="upper_inner_arc"),
+            make_circle_arc_3P(p2, p25, p3, label="upper_mid_arc"),
+            make_circle_arc_3P(p3, p35, p4, label="upper_outer_arc"),
+            make_circle_arc_3P(p4, p45, p5, label="lower_outer_arc"),
+            make_circle_arc_3P(p5, p55, p6, label="lower_mid_arc"),
+            make_circle_arc_3P(p6, p65, p7, label="lower_inner_arc"),
+        ]
 
-        return BluemiraWire([wire, straight_segment], label=label)
+        if sl != 0.0:
+            straight_segment = wire_closure(
+                BluemiraWire(wires), label="straight_segment"
+            )
+            wires.append(straight_segment)
+
+        return BluemiraWire(wires, label=label)
 
 
 class PolySpline(GeometryParameterisation):
@@ -585,8 +588,8 @@ class PictureFrame(GeometryParameterisation):
                 make_circle(
                     ri,
                     c1,
-                    startangle=180,
-                    endangle=270,
+                    start_angle=180,
+                    end_angle=270,
                     axis=axis,
                     label="inner_lower_corner",
                 )
@@ -599,8 +602,8 @@ class PictureFrame(GeometryParameterisation):
                 make_circle(
                     ro,
                     c2,
-                    startangle=270,
-                    endangle=360,
+                    start_angle=270,
+                    end_angle=360,
                     axis=axis,
                     label="outer_lower_corner",
                 )
@@ -613,8 +616,8 @@ class PictureFrame(GeometryParameterisation):
                 make_circle(
                     ro,
                     c3,
-                    startangle=0,
-                    endangle=90,
+                    start_angle=0,
+                    end_angle=90,
                     axis=axis,
                     label="outer_upper_corner",
                 )
@@ -627,8 +630,8 @@ class PictureFrame(GeometryParameterisation):
                 make_circle(
                     ri,
                     c4,
-                    startangle=90,
-                    endangle=180,
+                    start_angle=90,
+                    end_angle=180,
                     axis=axis,
                     label="inner_upper_corner",
                 )
@@ -701,7 +704,12 @@ class TaperedPictureFrame(GeometryParameterisation):
         if r != 0.0:
             wires.append(
                 make_circle(
-                    r, c1, startangle=270, endangle=360, axis=axis, label="lower_corner"
+                    r,
+                    c1,
+                    start_angle=270,
+                    end_angle=360,
+                    axis=axis,
+                    label="lower_corner",
                 )
             )
 
@@ -710,7 +718,7 @@ class TaperedPictureFrame(GeometryParameterisation):
         if r != 0.0:
             wires.append(
                 make_circle(
-                    r, c2, startangle=0, endangle=90, axis=axis, label="upper_corner"
+                    r, c2, start_angle=0, end_angle=90, axis=axis, label="upper_corner"
                 )
             )
 
