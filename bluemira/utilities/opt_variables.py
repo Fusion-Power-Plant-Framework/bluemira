@@ -261,7 +261,10 @@ class OptVariables:
         """
         for k, v in var_dict.items():
             try:
-                self.adjust_variable(k, v["value"], v["lower_bound"], v["upper_bound"])
+                value = v.get("value", None)
+                lower = v.get("lower_bound", None)
+                upper = v.get("upper_bound", None)
+                self.adjust_variable(k, value, lower, upper)
             except KeyError:
                 raise OptVariablesError(
                     "When adjusting variables in a OptVariables instance, the dictionary"

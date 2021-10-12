@@ -109,13 +109,16 @@ class TestPrincetonD:
 
 class TestPictureFrame:
     def test_length(self):
-        p = PictureFrame()
-        p.adjust_variable("x1", value=4)
-        p.adjust_variable("x2", value=16)
-        p.adjust_variable("z1", value=8)
-        p.adjust_variable("z2", value=-8)
-        p.adjust_variable("ri", value=1, upper_bound=1)
-        p.adjust_variable("ro", value=1)
+        p = PictureFrame(
+            {
+                "x1": {"value": 4},
+                "x2": {"value": 16},
+                "z1": {"value": 8},
+                "z2": {"value": -8},
+                "ri": {"value": 1, "upper_bound": 1},
+                "ro": {"value": 1},
+            }
+        )
         wire = p.create_shape()
         length = 2 * (np.pi + 10 + 14)
         assert np.isclose(wire.length, length)
