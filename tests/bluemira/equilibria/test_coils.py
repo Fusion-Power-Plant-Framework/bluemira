@@ -51,9 +51,9 @@ class TestCoil:
         cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd", j_max=NBTI_J_MAX)
 
     def test_name(self):
-        assert self.coil.name == PF_COIL_NAME.format(CoilNamer.__PF_counter)
-        assert self.cs_coil.name == CS_COIL_NAME.format(CoilNamer.__CS_counter)
-        assert self.no_coil.name == NO_COIL_NAME.format(CoilNamer.__no_counter)
+        assert self.coil.name == PF_COIL_NAME.format(CoilNamer.__PF_counter - 1)
+        assert self.cs_coil.name == CS_COIL_NAME.format(CoilNamer.__CS_counter - 1)
+        assert self.no_coil.name == NO_COIL_NAME.format(CoilNamer.__no_counter - 1)
         coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
         cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
         no_coil = Coil(4, 4, 10e6, ctype="agd", j_max=NBTI_J_MAX)
