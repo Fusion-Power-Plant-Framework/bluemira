@@ -162,7 +162,7 @@ class PrincetonD(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self):
+    def __init__(self, var_dict={}):
         variables = OptVariables(
             [
                 # Inboard limb radius
@@ -174,6 +174,8 @@ class PrincetonD(GeometryParameterisation):
             ],
             frozen=True,
         )
+        variables.adjust_variables(var_dict)
+
         super().__init__(variables)
 
     def create_shape(self, label="", n_points=200):
@@ -280,7 +282,7 @@ class TripleArc(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self):
+    def __init__(self, var_dict={}):
         variables = OptVariables(
             [
                 # Inner limb radius
@@ -300,6 +302,7 @@ class TripleArc(GeometryParameterisation):
             ],
             frozen=True,
         )
+        variables.adjust_variables(var_dict)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -385,7 +388,7 @@ class PolySpline(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self):
+    def __init__(self, var_dict={}):
         variables = OptVariables(
             [
                 # Inner limb radius
@@ -429,6 +432,7 @@ class PolySpline(GeometryParameterisation):
             ],
             frozen=True,
         )
+        variables.adjust_variables(var_dict)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -532,7 +536,7 @@ class PictureFrame(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self):
+    def __init__(self, var_dict={}):
         variables = OptVariables(
             [
                 # Inner limb radius
@@ -550,6 +554,7 @@ class PictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
+        variables.adjust_variables(var_dict)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -647,7 +652,7 @@ class TaperedPictureFrame(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self):
+    def __init__(self, var_dict={}):
         variables = OptVariables(
             [
                 # Inner limb radius
@@ -667,6 +672,7 @@ class TaperedPictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
+        variables.adjust_variables(var_dict)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -732,7 +738,7 @@ class JohnerLCFS(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self):
+    def __init__(self, var_dict={}):
         variables = OptVariables(
             [
                 # Major radius
@@ -761,7 +767,7 @@ class JohnerLCFS(GeometryParameterisation):
                 BoundedVariable("phi_l_pos", 30, lower_bound=20, upper_bound=35),
             ]
         )
-
+        variables.adjust_variables(var_dict)
         super().__init__(variables)
 
     def create_shape(self, label="LCFS", n_points=1000):
