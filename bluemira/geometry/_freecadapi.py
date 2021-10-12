@@ -692,7 +692,7 @@ def make_compound(shapes):
 
     Parameters
     ----------
-    *shapes: list of FreeCAD shape objects
+    shapes: list of FreeCAD shape objects
         A set of objects to be compounded
 
     Returns
@@ -702,3 +702,39 @@ def make_compound(shapes):
     """
     compound = Part.makeCompound(shapes)
     return compound
+
+
+# # =============================================================================
+# # Plane manipulations
+# # =============================================================================
+def make_plane(base, axis, angle):
+    """
+    Make a FreeCAD Placement
+
+    Parameters
+    ----------
+    base: Iterable
+        a vector representing the Plane's position
+    axis: Iterable
+        normal vector to the Plane
+    angle:
+        rotation angle in degree
+    """
+    base = Base.Vector(base)
+    axis = Base.Vector(axis)
+
+    return Base.Placement(base, axis, angle)
+
+def move_plane(plane, vector):
+    """Moves the FreeCAD Plane along the given vector
+    Parameters
+    ----------
+    plane: FreeCAD plane
+    vector: Iterable
+
+    Returns
+    -------
+    nothing. The plane is modified.
+    """
+
+    plane.move(Base.Vector(vector))

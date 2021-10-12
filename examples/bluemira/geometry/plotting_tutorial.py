@@ -22,6 +22,7 @@
 from bluemira.plotting.plotter import PointsPlotter, WirePlotter, FacePlotter
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
 
 p = PrincetonD()
 p.adjust_variable("x1", 4, lower_bound=3, upper_bound=5)
@@ -42,6 +43,13 @@ wplotter.plot(wire, show=True, block=True)
 wplotter.options["poptions"] = {}
 wplotter.plot(wire, show=True, block=True)
 
-# Todo: FacePlotter need adjustments. It doesn't work.
+# Todo: FacePlotter need adjustments. In 3D only the wires are showed. Not sure if it
+#  is possible to "simply" show a 3D face in matplotlib
 fplotter = FacePlotter()
 fplotter.plot(face, show=True, block=True)
+
+# make a plane
+plane = BluemiraPlane([0,0,1], [0,1,0], 90)
+print(plane.to_matrix())
+print(plane.base)
+print(plane.rotation)
