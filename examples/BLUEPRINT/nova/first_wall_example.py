@@ -210,7 +210,7 @@ div_box = Loop(x=[0, 20, 20, 0, 0], z=[-10, -10, z_min + 0.1, z_min + 0.1, -10])
 
 count = 0
 for i, point in enumerate(hull.d2.T):
-    if div_box.point_in_poly(point):
+    if div_box.point_inside(point):
         if count > 2:
             hull.reorder(i, 0)
             hull.open_()

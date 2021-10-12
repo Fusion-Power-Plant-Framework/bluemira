@@ -51,7 +51,6 @@ from BLUEPRINT.geometry.geomtools import (
     make_box_xz,
 )
 from BLUEPRINT.geometry.geombase import make_plane
-from BLUEPRINT.geometry.geomtools import lineq
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d
 from functools import partial
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
@@ -173,7 +172,7 @@ class EqInputs:
                 "z_low": x_point[0][1],
                 "z_up": x_point[1][1],
             },
-            "o_point": {"x": o_point[0][0], "z": o_point[0][1]},
+            "o_point": {"x": o_point[0][0], "z": round(o_point[0][1], 5)},
         }
         if self.points["x_point"]["z_low"] > self.points["x_point"]["z_up"]:
             self.points["x_point"]["z_low"] = x_point[1][1]
@@ -596,7 +595,7 @@ class FluxSurface(EqInputs):
         clips_up = []
         clips_down = []
 
-        if loop.point_in_poly([self.x_omp, self.z_omp], True) or loop.point_in_poly(
+        if loop.point_inside([self.x_omp, self.z_omp], True) or loop.point_inside(
             [self.x_imp, self.z_imp], True
         ):
             clip_up = np.where(loop.z > self.z_omp)
@@ -1626,10 +1625,10 @@ class FirstWallSN(FirstWall):
         ["xpt_inner_gap", "Gap between x-point and inner wall", 1, "m", None, "Input"],
         ["outer_strike_h", "Outer strike point height", 2, "m", None, "Input"],
         ["inner_strike_h", "Inner strike point height", 1, "m", None, "Input"],
-        ["outer_target_sol", "Outer target length SOL side", 0.7, "m", None, "Input"],
-        ["outer_target_pfr", "Outer target length PFR side", 0.3, "m", None, "Input"],
-        ["inner_target_sol", "Inner target length SOL side", 0.3, "m", None, "Input"],
-        ["inner_target_pfr", "Inner target length PFR side", 0.5, "m", None, "Input"],
+        ["tk_outer_target_sol", "Outer target length SOL side", 0.7, "m", None, "Input"],
+        ["tk_outer_target_pfr", "Outer target length PFR side", 0.3, "m", None, "Input"],
+        ["tk_inner_target_sol", "Inner target length SOL side", 0.3, "m", None, "Input"],
+        ["tk_inner_target_pfr", "Inner target length PFR side", 0.5, "m", None, "Input"],
     ]
     # fmt: on
 
@@ -1705,10 +1704,10 @@ class FirstWallSN(FirstWall):
         # Define the x coordinates for the divertor
         x_div = [
             div_left,
-            inner[0] - self.params.inner_target_sol,
-            inner[0] + self.params.inner_target_pfr,
-            outer[0] - self.params.outer_target_pfr,
-            outer[0] + self.params.outer_target_sol,
+            inner[0] - self.params.tk_inner_target_sol,
+            inner[0] + self.params.tk_inner_target_pfr,
+            outer[0] - self.params.tk_outer_target_pfr,
+            outer[0] + self.params.tk_outer_target_sol,
             div_right,
         ]
 
@@ -2178,19 +2177,22 @@ class FirstWallDN(FirstWall):
         ["f_hfs_upper_target", "Power fraction hfs upper", 0.5, "N/A", None, "Input"],
         ["hf_limit", "heat flux material limit", 0.5, "MW/m^2", None, "Input"],
         # External inputs to draw the divertor
-        ["xpt_outer_gap", "Gap between x-point and outer wall", 0.5, "m", None, "Input"],
-        ["xpt_inner_gap", "Gap between x-point and inner wall", 0.4, "m", None, "Input"],
+        ["xpt_outer_gap", "Gap between x-point and outer wall", 0.7, "m", None, "Input"],
+        ["xpt_inner_gap", "Gap between x-point and inner wall", 0.7, "m", None, "Input"],
         ["outer_strike_r", "Outer strike point major radius", 10.3, "m", None, "Input"],
         ["inner_strike_r", "Inner strike point major radius", 8, "m", None, "Input"],
-        ["outer_target_sol", "Outer target length between strike point and SOL side",
+        ["tk_outer_target_sol", "Outer target length between strike point and SOL side",
          0.4, "m", None, "Input"],
-        ["outer_target_pfr", "Outer target length between strike point and PFR side",
+        ["tk_outer_target_pfr", "Outer target length between strike point and PFR side",
          0.4, "m", None, "Input"],
         ["theta_outer_target",
          "Angle between flux line tangent at outer strike point and SOL side of outer target",
          20, "deg", None, "Input"],
-        ["inner_target_sol", "Inner target length SOL side", 0.2, "m", None, "Input"],
-        ["inner_target_pfr", "Inner target length PFR side", 0.2, "m", None, "Input"],
+        ["theta_inner_target",
+         "Angle between flux line tangent at inner strike point and SOL side of inner target",
+         30, "deg", None, "Input"],
+        ["tk_inner_target_sol", "Inner target length SOL side", 0.2, "m", None, "Input"],
+        ["tk_inner_target_pfr", "Inner target length PFR side", 0.2, "m", None, "Input"],
         ["xpt_height", "x-point vertical_gap", 0.4, "m", None, "Input"],
     ]
     # fmt: on
@@ -2325,54 +2327,81 @@ class FirstWallDN(FirstWall):
         z = new_a_coeff * (func(x)) + new_b_coeff
         return (x, z)
 
-    def make_divertor_outer_target(self, outer_strike, tangent):
+    def make_divertor_target(
+        self, strike_point, tangent, vertical_target=True, outer_target=True
+    ):
         """
-        Make a divertor outer target
+        Make a divertor target
 
         Parameters
         ----------
-        outer_strike: [float,float]
+        strike_point: [float,float]
             List of [x,z] coords corresponding to the strike point position
 
         tangent: [float,float]
             List of [x,z] coords corresponding to the tangent vector to the
-        appropriate flux loop at the outer strike point
+        appropriate flux loop at the strike point
 
         Returns
         -------
-        outer_target_internal_point: [float, float]
-            x and z coordinates of the internal end point of outer target.
+        target_internal_point: [float, float]
+            x and z coordinates of the internal end point of target.
             Meaning private flux region (PRF) side
-        outer_target_external_point: [float, float]
-            x and z coordinates of the external end point of outer target.
+        target_external_point: [float, float]
+            x and z coordinates of the external end point of target.
             Meaning scrape-off layer (SOL) side
 
         The divertor target is a straight line
         """
+        # If statement to set the function
+        # either for the outer target (if) or the inner target (else)
+        if outer_target:
+            sign = 1
+            theta_target = self.params.theta_outer_target
+            target_length_pfr = self.params.tk_outer_target_pfr
+            target_length_sol = self.params.tk_outer_target_sol
+        else:
+            sign = -1
+            theta_target = self.params.theta_inner_target
+            target_length_pfr = self.params.tk_inner_target_pfr
+            target_length_sol = self.params.tk_inner_target_sol
+
         # Rotate tangent vector to appropriate flux loop to obtain
         # a vector parallel to the outer target
-        target_par = rotate_vector_2d(
-            tangent, np.radians(self.params.theta_outer_target)
-        )
+
+        # if horizontal target
+        if not vertical_target:
+            target_par = rotate_vector_2d(tangent, np.radians(theta_target * sign))
+        # if vertical target
+        else:
+            target_par = rotate_vector_2d(tangent, np.radians(-theta_target * sign))
 
         # Create relative vectors whose length will be the offset distance
         # from the strike point
-        target_int = -target_par * self.params.outer_target_pfr
-        target_ext = target_par * self.params.outer_target_sol
+        pfr_target_end = -target_par * target_length_pfr * sign
+        sol_target_end = target_par * target_length_sol * sign
 
         # Swap if we got the wrong way round
-        if target_ext[0] < target_int[0]:
-            tmp = target_int
-            target_int = target_ext
-            target_ext = tmp
+        if outer_target:
+            swap_points = sol_target_end[0] < pfr_target_end[0]
+        # for the inner target
+        else:
+            swap_points = (
+                not vertical_target and sol_target_end[0] > pfr_target_end[0]
+            ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
 
-        # Add the outer strike point to diffs to get the absolute positions
+        if swap_points:
+            tmp = pfr_target_end
+            pfr_target_end = sol_target_end
+            sol_target_end = tmp
+
+        # Add the strike point to diffs to get the absolute positions
         # of the end points of the target
-        outer_target_internal_point = target_int + outer_strike
-        outer_target_external_point = target_ext + outer_strike
+        pfr_target_end = pfr_target_end + strike_point
+        sol_target_end = sol_target_end + strike_point
 
         # Return end points
-        return (outer_target_internal_point, outer_target_external_point)
+        return (pfr_target_end, sol_target_end)
 
     def get_tangent_vector(self, point_on_loop, loop):
         """
@@ -2405,36 +2434,50 @@ class FirstWallDN(FirstWall):
         tangent_norm = tangent / np.linalg.norm(tangent)
         return tangent_norm
 
-    def make_divertor_inner_target(self, inner_strike):
+    def make_guide_line(self, initial_loop, top_limit, bottom_limit):
         """
-        Make a divertor inner target
+        Cuts a portion of an initial loop that will work as guide line
+        for a more complex shape (e.g. divertor leg).
+
+        Parameters
+        ----------
+        initial_loop: loop
+            Initial loop to cut
+        top_limit: [float,float]
+            Coordinates of the top limit where the loop will be cut
+        bottom_limit: [float,float]
+            Coordinates of the bottom limit where the loop will be cut
 
         Returns
         -------
-        inner_target_internal_point: [float, float]
-            x and z coordinates of the internal point on the SOL side
-        inner_target_external_point: [float, float]
-            x and z coordinates of the internal point on the
-            private flux region side
+        guide_line: loop
+            portion of the initial loop that will work as guide line
         """
-        inner_target_internal_point = [
-            self.points["x_point"]["x"] - self.params.xpt_inner_gap,
-            self.points["x_point"]["z_low"],
-        ]
-
-        m = lineq(inner_target_internal_point, [inner_strike[0], inner_strike[1]])[0]
-
-        x_target_external_point = (
-            inner_strike[0] - (self.params.inner_target_pfr ** 2) + (m * inner_strike[0])
-        ) / (1 + m)
-
-        z_target_external_point = (
-            m * (x_target_external_point - inner_strike[0]) + inner_strike[1]
+        # Select those points along the initial loop below
+        # the top limit
+        top_clip_guide_line = np.where(
+            initial_loop.z < top_limit[1],
         )
-
-        inner_target_external_point = [x_target_external_point, z_target_external_point]
-
-        return (inner_target_internal_point, inner_target_external_point)
+        # Create a new Loop from the points selected along the
+        # initial loop
+        cut_loop = Loop(
+            x=initial_loop.x[top_clip_guide_line],
+            y=None,
+            z=initial_loop.z[top_clip_guide_line],
+        )
+        # Select those points along the top-clipped loop above
+        # the bottom limit
+        bottom_clip_guide_line = np.where(
+            cut_loop.z > bottom_limit[1],
+        )
+        # Create a new Loop from the points selected along the
+        # previously top-clipped loop
+        guide_line = Loop(
+            x=cut_loop.x[bottom_clip_guide_line],
+            y=None,
+            z=cut_loop.z[bottom_clip_guide_line],
+        )
+        return guide_line
 
     def make_outer_leg(self, div_top_right, outer_strike, middle_point, flux_loop):
         """
@@ -2463,53 +2506,66 @@ class FirstWallDN(FirstWall):
         (
             outer_target_internal_point,
             outer_target_external_point,
-        ) = self.make_divertor_outer_target(outer_strike, tangent)
+        ) = self.make_divertor_target(
+            outer_strike,
+            tangent,
+            vertical_target=self.inputs["div_vertical_outer_target"],
+            outer_target=True,
+        )
 
-        # Select those points along the given flux line below the X point
-        outer_leg_central_guide_line = flux_loop
+        # Select the degree of the fitting polynomial and
+        # the flux lines that will guide the divertor leg shape
+        if self.inputs.get("DEMO_DN", False):
+            degree_in = degree_out = self.inputs.get(
+                "outer_leg_sol_polyfit_degree",
+                self.inputs.get("outer_leg_pfr_polyfit_degree", 1),
+            )
+            outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
+        else:
+            degree_out = self.inputs.get("outer_leg_sol_polyfit_degree", 3)
+            degree_in = self.inputs.get("outer_leg_pfr_polyfit_degree", 3)
+            outer_leg_external_guide_line = self.flux_surface_lfs[-1]
+            outer_leg_internal_guide_line = flux_loop
+
+        # Select the top and bottom limits for the guide lines
         z_x_point = self.points["x_point"]["z_low"]
-        top_clip_outer_leg_central_guide_line = np.where(
-            outer_leg_central_guide_line.z < z_x_point,
+        outer_leg_external_top_limit = [div_top_right, z_x_point]
+        outer_leg_external_bottom_limit = outer_target_external_point
+
+        outer_leg_internal_top_limit = middle_point
+        outer_leg_internal_bottom_limit = outer_target_internal_point
+
+        # Make the guide lines
+        external_guide_line = self.make_guide_line(
+            outer_leg_external_guide_line,
+            outer_leg_external_top_limit,
+            outer_leg_external_bottom_limit,
         )
 
-        # Create a new Loop from the points selected along the given flux line
-        outer_leg_central_guide_line = Loop(
-            x=outer_leg_central_guide_line.x[top_clip_outer_leg_central_guide_line],
-            y=None,
-            z=outer_leg_central_guide_line.z[top_clip_outer_leg_central_guide_line],
+        internal_guide_line = self.make_guide_line(
+            outer_leg_internal_guide_line,
+            outer_leg_internal_top_limit,
+            outer_leg_internal_bottom_limit,
         )
 
-        # Select those points along the top-clipped flux line above the
-        # outer target internal point height
-        bottom_clip_outer_leg_central_guide_line = np.where(
-            outer_leg_central_guide_line.z > outer_target_internal_point[1],
-        )
-
-        # Create a new Loop from the points selected along the flux line
-        outer_leg_central_guide_line = Loop(
-            x=outer_leg_central_guide_line.x[bottom_clip_outer_leg_central_guide_line],
-            y=None,
-            z=outer_leg_central_guide_line.z[bottom_clip_outer_leg_central_guide_line],
-        )
-
-        # Modify the clipped flux line curve to start at the middle and end
-        # at the internal point of the outer target
+        # Modify the clipped flux line curve (guide line) to start
+        # at the middle and end at the internal point of the outer target
         (outer_leg_internal_line_x, outer_leg_internal_line_z,) = self.reshape_curve(
-            outer_leg_central_guide_line.x,
-            outer_leg_central_guide_line.z,
+            internal_guide_line.x,
+            internal_guide_line.z,
             [middle_point[0], middle_point[1]],
             outer_target_internal_point,
-            3,
+            degree_in,
         )
 
         # Modify the clipped flux line curve to start at the top point of the
         # outer target and end at the external point
         (outer_leg_external_line_x, outer_leg_external_line_z,) = self.reshape_curve(
-            outer_leg_central_guide_line.x,
-            outer_leg_central_guide_line.z,
+            external_guide_line.x,
+            external_guide_line.z,
             [div_top_right, z_x_point],
             outer_target_external_point,
-            2,
+            degree_out,
         )
 
         # Connect the inner and outer parts of the outer leg
@@ -2523,36 +2579,101 @@ class FirstWallDN(FirstWall):
         # Return coordinate arrays
         return (outer_leg_x, outer_leg_z)
 
-    def make_inner_leg(self, inner_strike, middle_point):
+    def make_inner_leg(self, div_top_left, inner_strike, middle_point, flux_loop):
         """
-        Find the coordinates of the inner leg of the divertor.
+        Find the coordinates of the outer leg of the divertor.
 
         Parameters
         ----------
+        div_top_left: float
+            Top-left x-coordinate of the divertor
+        inner_strike: [float,float]
+            Coordinates of the inner strike point
         middle_point: [float,float]
             Coordinates of the middle point between the inner and outer legs
+        flux_loop: Loop
+            Outer flux loop used for shaping.
 
         Returns
         -------
         divertor_leg: (list, list)
-            x and z coordinates of the inner leg
+            x and z coordinates of outer leg
         """
-        # Get the inner target points
+        # Find the tangent to the approriate flux loop at the outer strike point
+        tangent = self.get_tangent_vector(inner_strike, flux_loop)
+
+        if self.inputs.get("DEMO_DN", False):
+            degree = self.inputs.get("inner_leg_polyfit_degree", 1)
+        else:
+            degree = self.inputs.get("inner_leg_polyfit_degree", 2)
+
+        # Get the outer target points
         (
             inner_target_internal_point,
             inner_target_external_point,
-        ) = self.make_divertor_inner_target(inner_strike)
+        ) = self.make_divertor_target(
+            inner_strike,
+            tangent,
+            vertical_target=self.inputs["div_vertical_inner_target"],
+            outer_target=False,
+        )
 
-        inner_leg_x = [
-            inner_target_internal_point[0],
-            inner_target_external_point[0],
-            middle_point[0],
-        ]
-        inner_leg_z = [
-            inner_target_internal_point[1],
-            inner_target_external_point[1],
-            middle_point[1],
-        ]
+        # Select those points along the given flux line below the X point
+        inner_leg_central_guide_line = flux_loop
+        z_x_point = self.points["x_point"]["z_low"]
+        top_clip_inner_leg_central_guide_line = np.where(
+            inner_leg_central_guide_line.z < z_x_point,
+        )
+
+        # Create a new Loop from the points selected along the given flux line
+        inner_leg_central_guide_line = Loop(
+            x=inner_leg_central_guide_line.x[top_clip_inner_leg_central_guide_line],
+            y=None,
+            z=inner_leg_central_guide_line.z[top_clip_inner_leg_central_guide_line],
+        )
+
+        # Select those points along the top-clipped flux line above the
+        # inner target internal point height
+        bottom_clip_inner_leg_central_guide_line = np.where(
+            inner_leg_central_guide_line.z > inner_target_internal_point[1],
+        )
+
+        # Create a new Loop from the points selected along the flux line
+        inner_leg_central_guide_line = Loop(
+            x=inner_leg_central_guide_line.x[bottom_clip_inner_leg_central_guide_line],
+            y=None,
+            z=inner_leg_central_guide_line.z[bottom_clip_inner_leg_central_guide_line],
+        )
+
+        # Modify the clipped flux line curve to start at the middle and end
+        # at the internal point of the outer target
+        (inner_leg_internal_line_x, inner_leg_internal_line_z,) = self.reshape_curve(
+            inner_leg_central_guide_line.x,
+            inner_leg_central_guide_line.z,
+            [middle_point[0], middle_point[1]],
+            inner_target_internal_point,
+            degree,
+        )
+
+        # Modify the clipped flux line curve to start at the top point of the
+        # outer target and end at the external point
+        (inner_leg_external_line_x, inner_leg_external_line_z,) = self.reshape_curve(
+            inner_leg_central_guide_line.x,
+            inner_leg_central_guide_line.z,
+            [div_top_left, z_x_point],
+            inner_target_external_point,
+            degree,
+        )
+
+        # Connect the inner and outer parts of the outer leg
+        inner_leg_x = np.append(
+            inner_leg_external_line_x, inner_leg_internal_line_x[::-1]
+        )
+        inner_leg_z = np.append(
+            inner_leg_external_line_z, inner_leg_internal_line_z[::-1]
+        )
+
+        # Return coordinate arrays
         return (inner_leg_x, inner_leg_z)
 
     def find_strike_points_from_params(self, flux_loops):
@@ -2629,6 +2750,9 @@ class FirstWallDN(FirstWall):
         # Determine outermost point for outer divertor leg
         div_top_right = max(fw_int_point[0], x_x_point + self.params.xpt_outer_gap)
 
+        # Determine outermost point for inner divertor leg
+        div_top_left = min(fw_int_point[0], x_x_point - self.params.xpt_inner_gap)
+
         # Pick some flux loops to use to locate strike points and shape the
         # divertor legs
         flux_loops = self.pick_flux_loops()
@@ -2642,7 +2766,9 @@ class FirstWallDN(FirstWall):
         )
 
         # Make the inner leg
-        inner_leg_x, inner_leg_z = self.make_inner_leg(inner_strike, middle_point)
+        inner_leg_x, inner_leg_z = self.make_inner_leg(
+            div_top_left, inner_strike, middle_point, flux_loops[1]
+        )
 
         # Divertor x-coords
         x_div = np.append(inner_leg_x, outer_leg_x)

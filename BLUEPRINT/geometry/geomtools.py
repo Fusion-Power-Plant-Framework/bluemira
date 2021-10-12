@@ -1639,7 +1639,7 @@ def get_control_point(loop):
     """
     if loop.__class__.__name__ == "Loop":
         cp = [loop.centroid[0], loop.centroid[1]]
-        if loop.point_in_poly(cp):
+        if loop.point_inside(cp):
             return cp
         else:
             return _montecarloloopcontrol(loop)
@@ -1675,7 +1675,7 @@ def _montecarloloopcontrol(loop):
         n, m = np.random.rand(2)
         x = xmin + n * dx
         y = ymin + m * dy
-        if loop.point_in_poly([x, y]):
+        if loop.point_inside([x, y]):
             return [x, y]
     raise ValueError("Da musst du was Besseres scheiben...")
 
@@ -1707,7 +1707,7 @@ def _montecarloshellcontrol(shell):
         n, m = np.random.rand(2)
         x = xmin + n * dx
         y = ymin + m * dy
-        if shell.point_in_poly([x, y]):
+        if shell.point_inside([x, y]):
             return [x, y]
     raise ValueError("Da musst du was Besseres schreiben...")
 

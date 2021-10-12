@@ -516,7 +516,7 @@ class HelmholtzCage:
                 ri, yi, zi = np.dot([r_, 0, z_], rotation)
 
                 if variable == "ripple":
-                    if clip_loop.point_in_poly([r_, z_]):
+                    if clip_loop.point_inside([r_, z_]):
                         values[i, j] = func((ri, yi, zi))
                     else:
                         values[i, j] = np.NaN

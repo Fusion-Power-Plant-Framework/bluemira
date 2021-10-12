@@ -677,7 +677,7 @@ class DivertorProfile(ReactorSystem):
 
         count = 0
         for i, point in enumerate(inner):
-            if div_koz.point_in_poly(point):
+            if div_koz.point_inside(point):
                 # Now we re-order the loop and open it, such that it is open
                 # inside the KOZ
                 if count > 1:

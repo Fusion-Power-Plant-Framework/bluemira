@@ -151,10 +151,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['psi_norm', 'Normalised flux value of strike-point contours', 1, 'N/A', None, 'Input'],
         ['xpt_outer_gap', 'Gap between x-point and outer wall', 2, 'm', None, 'Input'],
         ['xpt_inner_gap', 'Gap between x-point and inner wall', 0.4, 'm', None, 'Input'],
-        ['outer_target_sol', 'Outer target length SOL side', 0.7, 'm', None, 'Input'],
-        ['outer_target_pfr', 'Outer target length PFR side', 0.3, 'm', None, 'Input'],
-        ['inner_target_sol', 'Inner target length SOL side', 0.3, 'm', None, 'Input'],
-        ['inner_target_pfr', 'Inner target length PFR side', 0.5, 'm', None, 'Input'],
+        ['tk_outer_target_sol', 'Outer target length SOL side', 0.7, 'm', None, 'Input'],
+        ['tk_outer_target_pfr', 'Outer target length PFR side', 0.3, 'm', None, 'Input'],
+        ['tk_inner_target_sol', 'Inner target length SOL side', 0.3, 'm', None, 'Input'],
+        ['tk_inner_target_pfr', 'Inner target length PFR side', 0.5, 'm', None, 'Input'],
         # ad hoc SN variables
         ['outer_strike_h', 'Outer strike point height', 2, 'm', None, 'Input'],
         ['inner_strike_h', 'Inner strike point height', 1, 'm', None, 'Input'],
@@ -162,6 +162,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['outer_strike_r', 'Outer strike point major radius', 10.3, 'm', None, 'Input'],
         ['inner_strike_r', 'Inner strike point major radius', 8, 'm', None, 'Input'],
         ['theta_outer_target', 'Angle between flux line tangent at outer strike point and SOL side of outer target', 20, 'deg', None, 'Input'],
+        ['theta_inner_target', 'Angle between flux line tangent at inner strike point and SOL side of inner target', 20, 'deg', None, 'Input'],
         ['xpt_height', 'x-point vertical_gap', 0.35, 'm', None, 'Input'],
         # Divertor cassette
         ['tk_div_cass', 'Minimum thickness between inner divertor profile and cassette', 0.3, 'm', None, 'Input'],
