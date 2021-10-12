@@ -460,7 +460,9 @@ class PositionOptimiser:
         error = []
         for psi in self.psi_vals:
             i_star = self.current_optimiser(
-                self.eq, self.constraints, psi_bndry=psi, apply_weights=True
+                self.eq,
+                self.constraints,
+                psi_bndry=psi,
             )
             self.swing[psi] = i_star
             self.I_star = i_star
