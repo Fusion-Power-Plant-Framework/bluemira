@@ -27,10 +27,13 @@ from __future__ import annotations
 
 import bluemira.geometry._freecadapi as _freecadapi
 
-class BluemiraPlane():
+
+class BluemiraPlane:
     """Bluemira Plane class."""
 
-    def __init__(self, base=[0.,0.,0.], axis=[0.,0.,1.], angle=0., label: str = ""):
+    def __init__(
+        self, base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0], angle=0.0, label: str = ""
+    ):
         self._shape = _freecadapi.make_plane(base, axis, angle)
         self.label = label
 
@@ -48,7 +51,7 @@ class BluemiraPlane():
         ----------
         value: Iterable
         """
-        self._shape.Base = Base.Vector(value)
+        self._shape.Base = _freecadapi.Base.Vector(value)
 
     @property
     def axis(self):
@@ -64,7 +67,7 @@ class BluemiraPlane():
         ----------
         value: Iterable
         """
-        self._shape.Axis = Base.Vector(value)
+        self._shape.Axis = _freecadapi.Base.Vector(value)
 
     @property
     def angle(self):
@@ -84,7 +87,7 @@ class BluemiraPlane():
         self._shape.Angle = value
 
     def to_matrix(self):
-        """Returns a matrix (quaternion) representing the Plane's transformation """
+        """Returns a matrix (quaternion) representing the Plane's transformation"""
         return self._shape.toMatrix()
 
     def move(self, vector):

@@ -725,16 +725,21 @@ def make_plane(base, axis, angle):
 
     return Base.Placement(base, axis, angle)
 
+
 def move_plane(plane, vector):
-    """Moves the FreeCAD Plane along the given vector
+    """
+    Moves the FreeCAD Plane along the given vector
+
     Parameters
     ----------
     plane: FreeCAD plane
+        the FreeCAD plane to be modified
     vector: Iterable
+        direction along which the plane is moved
 
     Returns
     -------
-    nothing. The plane is modified.
+    nothing:
+        The plane is directly modified.
     """
-
     plane.move(Base.Vector(vector))

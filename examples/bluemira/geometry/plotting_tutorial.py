@@ -18,6 +18,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""
+Plotting module examples
+"""
+
 
 from bluemira.plotting.plotter import PointsPlotter, WirePlotter, FacePlotter
 from bluemira.geometry.parameterisations import PrincetonD
@@ -49,7 +53,7 @@ fplotter = FacePlotter()
 fplotter.plot(face, show=True, block=True)
 
 # make a plane
-plane = BluemiraPlane([0,0,1], [0,1,0], 90)
+plane = BluemiraPlane([0, 0, 1], [0, 1, 0], 90)
 print(plane.to_matrix())
 print(plane.base)
 print(plane.rotation)
