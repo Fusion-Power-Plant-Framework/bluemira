@@ -260,16 +260,19 @@ class OptVariables:
             {"var_name": {"value": v, "lower_bound": lb, "upper_bound": ub}, ...}
         """
         for k, v in var_dict.items():
-            try:
-                value = v.get("value", None)
-                lower = v.get("lower_bound", None)
-                upper = v.get("upper_bound", None)
-                self.adjust_variable(k, value, lower, upper)
-            except KeyError:
+
+            args = [
+                v.get("value", None),
+                v.get("lower_bound", None),
+                v.get("upper_bound", None),
+            ]
+            if all([i is None for i in args]):
                 raise OptVariablesError(
                     "When adjusting variables in a OptVariables instance, the dictionary"
                     " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
                 )
+
+            self.adjust_variable(k, *args)
 
     def fix_variable(self, name, value=None):
         """
