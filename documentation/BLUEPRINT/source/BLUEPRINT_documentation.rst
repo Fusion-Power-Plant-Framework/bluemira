@@ -13,7 +13,6 @@ Modules
    beams
    cad
    costs
-   fuelcycle
    geometry
    materials
    neutronics
