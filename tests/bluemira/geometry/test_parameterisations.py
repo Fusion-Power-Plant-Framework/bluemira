@@ -145,6 +145,7 @@ class TestTripleArc:
         p.adjust_variable("a1", value=45)
         p.adjust_variable("a2", value=45)
         wire = p.create_shape()
+        assert len(wire._boundary) == 6
         length = 2 * np.pi * 3
         assert np.isclose(wire.length, length)
 
