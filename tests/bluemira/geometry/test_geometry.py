@@ -38,6 +38,7 @@ from bluemira.geometry.tools import (
 from bluemira.base.display import DisplayOptions
 
 import tests
+from tests.bluemira.display_helpers import PatchQApp, PatchQuarterWidget
 
 
 class TestGeometry:
@@ -120,10 +121,10 @@ class TestGeometry:
         box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.geometry._freecadapi.QApplication.exec_"
+            "bluemira.geometry._freecadapi.QApplication", PatchQApp
         ):
             with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.geometry._freecadapi.quarter.QuarterWidget.show"
+                "bluemira.geometry._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
             ):
                 wire1.display()
                 box1.display()

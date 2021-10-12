@@ -35,6 +35,7 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
 
 import tests
+from tests.bluemira.display_helpers import PatchQApp, PatchQuarterWidget
 
 
 class TestFreecadapi:
@@ -194,10 +195,10 @@ class TestFreecadapi:
         )
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.geometry._freecadapi.QApplication.exec_"
+            "bluemira.geometry._freecadapi.QApplication", PatchQApp
         ):
             with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.geometry._freecadapi.quarter.QuarterWidget.show"
+                "bluemira.geometry._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
             ):
                 # Default single object
                 freecadapi.display(wire1)

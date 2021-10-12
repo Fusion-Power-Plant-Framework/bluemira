@@ -36,6 +36,7 @@ from bluemira.base.error import ComponentError
 from bluemira.geometry.tools import make_polygon
 
 import tests
+from tests.bluemira.display_helpers import PatchQApp, PatchQuarterWidget
 
 
 class TestComponentClass:
@@ -193,10 +194,10 @@ class TestPhysicalComponent:
         child2 = PhysicalComponent("Child2", shape=wire2, parent=group)
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.geometry._freecadapi.QApplication.exec_"
+            "bluemira.geometry._freecadapi.QApplication", PatchQApp
         ):
             with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.geometry._freecadapi.quarter.QuarterWidget.show"
+                "bluemira.geometry._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
             ):
                 child1.display()
                 group.display()
