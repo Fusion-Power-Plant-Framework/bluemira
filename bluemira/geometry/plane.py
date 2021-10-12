@@ -20,11 +20,12 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Wrapper for FreeCAD Plane objects
+Wrapper for FreeCAD Plane (Placement) objects
 """
 
 from __future__ import annotations
 
+import math
 import bluemira.geometry._freecadapi as _freecadapi
 
 
@@ -72,7 +73,7 @@ class BluemiraPlane:
     @property
     def angle(self):
         """Plane's rotation matrix"""
-        return self._shape.Rotation.Angle
+        return math.degrees(self._shape.Rotation.Angle)
 
     @angle.setter
     def angle(self, value):
@@ -93,3 +94,12 @@ class BluemiraPlane:
     def move(self, vector):
         """Moves the Plane along the given vector"""
         _freecadapi.move_plane(self._shape, vector)
+
+    def __repr__(self):  # noqa D105
+        new = []
+        new.append(f"([{type(self).__name__}] = Label: {self.label}")
+        new.append(f" base: {self.base}")
+        new.append(f" axis: {self.axis}")
+        new.append(f" angle: {self.angle}")
+        new.append(")")
+        return ", ".join(new)

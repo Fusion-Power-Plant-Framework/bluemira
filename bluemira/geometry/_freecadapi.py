@@ -484,7 +484,7 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     # correct sequence and orientation. No need for tricks after the discretization.
     for e in w.OrderedEdges:
         pointse = list(discretize(Part.Wire(e), dl=dl))
-        output += pointse[0:-1]
+        output += pointse[:-1]
 
     if w.isClosed():
         output += [output[0]]
@@ -739,3 +739,22 @@ def move_plane(plane, vector):
         The plane is directly modified.
     """
     plane.move(Base.Vector(vector))
+
+
+def change_plane(geo, plane):
+    """
+    Change the placement of a FreeCAD object
+
+    Parameters
+    ----------
+    geo: FreeCAD object
+        the object to be modified
+    plane: FreeCAD plane
+        the FreeCAD plane to be modified
+
+    Returns
+    -------
+    nothing:
+        The object is directly modified.
+    """
+    geo.Placement = geo.Placement.multiply(plane)

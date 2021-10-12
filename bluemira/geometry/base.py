@@ -192,6 +192,11 @@ class BluemiraGeo(ABC):
         for o in self.boundary:
             o.translate(vector)
 
+    def change_plane(self, plane) -> None:
+        """Apply a plane transformation to the wire"""
+        for o in self.boundary:
+            o.change_plane(plane)
+
     def __repr__(self):  # noqa D105
         new = []
         new.append(f"([{type(self).__name__}] = Label: {self.label}")

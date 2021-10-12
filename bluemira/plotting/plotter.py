@@ -18,20 +18,29 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""Plotter module"""
 
 from abc import ABC, abstractmethod
+
+from typing import Union
+
+# matplotlib import
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
+# bluemira geometry import
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
 
+from .error import PlottingError
 
 DEFAULT = {}
 DEFAULT["plot_flag"] = {"poptions": True, "woptions": True, "foptions": True}
-DEFAULT["poptions"] = {"s": 30, "facecolors": "blue", "edgecolors": "black"}
-DEFAULT["woptions"] = {"color": "black", "linewidth": "2"}
+DEFAULT["poptions"] = {"s": 10, "facecolors": "blue", "edgecolors": "black"}
+DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5"}
 DEFAULT["foptions"] = {"color": "red"}
+DEFAULT["plane"] = "xz"
 
 
 class Plot3D(Axes3D):
@@ -49,11 +58,14 @@ class Plot3D(Axes3D):
 
 
 class Plottable:
+    """Plottable class"""
+
     def __init__(self, plotter=None, object=None):
         self._plotter = plotter
         self._plottable_object = object
 
     def plot(self, **kwargs):
+        """Plotting method"""
         self._plotter.plot(self._plottable_object, **kwargs)
 
 
@@ -67,10 +79,59 @@ class BasePlotter(ABC):
         if kwargs:
             for k in kwargs:
                 if k in self.options:
-                    self.options[k] = kwargs[k]
+                    if k == 'plane':
+                        self.set_plane(kwargs[k])
+                    else:
+                        self.options[k] = kwargs[k]
+
+    @property
+    def plot_points(self):
+        return self.options['plot_flag']['poptions']
+
+    @plot_points.setter
+    def plot_points(self, value):
+        self.options['plot_flag']['poptions'] = value
+
+    @property
+    def plot_wires(self):
+        return self.options['plot_flag']['woptions']
+
+    @plot_points.setter
+    def plot_wires(self, value):
+        self.options['plot_flag']['woptions'] = value
+
+    @property
+    def plot_faces(self):
+        return self.options['plot_flag']['foptions']
+
+    @plot_points.setter
+    def plot_faces(self, value):
+        self.options['plot_flag']['foptions'] = value
+
+    def set_plane(self, plane):
+        """Set the plotting plane"""
+        if plane == "xy":
+            # Base.Placement(origin, axis, angle)
+            self.options['plane'] = BluemiraPlane()
+        elif plane == "xz":
+            # Base.Placement(origin, axis, angle)
+            self.options['plane'] = BluemiraPlane(
+                axis=(1.0, 0.0, 0.0), angle=-90.0
+            )
+        elif plane == "yz":
+            # Base.Placement(origin, axis, angle)
+            self.options['plane'] = BluemiraPlane(
+                axis=(0.0, 1.0, 0.0), angle=90.0
+            )
+        elif isinstance(plane, BluemiraPlane):
+            self.options['plane'] = plane
+            pass
+        else:
+            PlottingError(f"{plane} is not a valid plane")
 
     @abstractmethod
     def plot(self, data, ax=None, *argv, **kwargs):
+        """Plotting method"""
         pass
 
 
@@ -81,9 +142,29 @@ class PointsPlotter(BasePlotter):
 
     def __init__(self, ax=None, **kwargs):
         self.options = DEFAULT
-        super().__init__(**kwargs)
+        super().__init__(**{**self.options, **kwargs})
 
-    def plot(self, points, ax=None, show: bool = False, block: bool = False):
+    def plot(
+        self,
+        points,
+        ax=None,
+        show: bool = False,
+        block: bool = False,
+    ):
+        """
+        Main plot function
+
+        Parameters
+        ----------
+        points: Iterable
+            List of 3D points
+        ax:
+            matplotlib axes
+        show: bool
+            flag for plotting
+        block: bool
+            matplot flag in show function
+        """
         if not self.options["plot_flag"]["poptions"]:
             return ax
 
@@ -91,9 +172,12 @@ class PointsPlotter(BasePlotter):
             self.ax = ax
         else:
             if ax is None:
-                self.ax = Plot3D()
+                fig = plt.figure()
+                self.ax = fig.add_subplot()
             else:
                 self.ax = ax
+
+            points = points[0:2]
 
             self.ax.scatter(*points, **self.options["poptions"])
             self.data = points.tolist()
@@ -111,7 +195,7 @@ class WirePlotter(BasePlotter):
 
     def __init__(self, **kwargs):
         self.options = DEFAULT
-        super().__init__(**kwargs)
+        super().__init__(**{**self.options, **kwargs})
 
     def plot(
         self,
@@ -122,6 +206,9 @@ class WirePlotter(BasePlotter):
         ndiscr=100,
         byedges=True,
     ):
+        """WirePlotter plotting method"""
+        if not isinstance(wire, BluemiraWire):
+            raise ValueError("wire must be a BluemiraWire")
 
         if (
             not self.options["plot_flag"]["poptions"]
@@ -133,25 +220,33 @@ class WirePlotter(BasePlotter):
             return ax
         else:
             if ax is None:
-                self.ax = Plot3D()
+                fig = plt.figure()
+                self.ax = fig.add_subplot()
             else:
                 self.ax = ax
 
             if not isinstance(wire, BluemiraWire):
                 raise ValueError("wire must be a BluemiraWire")
 
-            pointsw = wire.discretize(ndiscr=ndiscr, byedges=byedges).T
+            new_wire = wire.deepcopy()
+            new_wire.change_plane(self.options["plane"])
+
+            pointsw = new_wire.discretize(ndiscr=ndiscr, byedges=byedges).T
             self.data = pointsw.tolist()
 
+            # since the object have been moved in the new plane
+            # only the first two coordinates have to be plotted
+            data_to_plot = pointsw[0:2]
+
             if self.options["plot_flag"]["woptions"]:
-                self.ax.plot(*pointsw, **self.options["woptions"])
+                self.ax.plot(*data_to_plot, **self.options["woptions"])
 
             if self.options["plot_flag"]["poptions"]:
                 pplotter = PointsPlotter(**self.options)
-                self.ax = pplotter.plot(pointsw, self.ax, show=False)
+                self.ax = pplotter.plot(data_to_plot, self.ax, show=False)
 
             if show:
-                plt.gca().set_aspect("auto")
+                plt.gca().set_aspect("equal")
                 plt.show(block=block)
 
         return self.ax
@@ -164,7 +259,7 @@ class FacePlotter(BasePlotter):
 
     def __init__(self, **kwargs):
         self.options = DEFAULT
-        super().__init__(**kwargs)
+        super().__init__(**{**self.options, **kwargs})
 
     def plot(
         self,
@@ -175,6 +270,9 @@ class FacePlotter(BasePlotter):
         ndiscr=100,
         byedges=True,
     ):
+        """FacePlotter plotting method"""
+        if not isinstance(face, BluemiraFace):
+            raise ValueError("wire must be a BluemiraFace")
 
         if (
             not self.options["plot_flag"]["poptions"]
@@ -191,38 +289,42 @@ class FacePlotter(BasePlotter):
             return ax
         else:
             if ax is None:
-                self.ax = Plot3D()
+                fig = plt.figure()
+                ax = fig.add_subplot()
             else:
-                self.ax = ax
+                ax = ax
 
-            if not isinstance(face, BluemiraFace):
-                raise ValueError("wire must be a BluemiraFace")
+            self.data = [[], [], []]
 
-            for boundary in face.boundary:
-                    wplotter = WirePlotter(**self.options)
-                    wplotter.plot(boundary, show=False)
-                    # TODO: self.data should add a None line every time a new
-                    #  boundary is found.
-                    self.data += wplotter.data
-                    for o in self.data:
-                        o = o + [None]
+            j = 0
+            for w in face._shape.Wires:
+                j = j+1
+                boundary = BluemiraWire(w)
+                wplotter = WirePlotter(**self.options)
+                wplotter.plot(boundary, ax=ax, show=False, ndiscr=ndiscr)
+                # Todo: it seems that discretize and discretize_by_edges produce a
+                #  different output in case all the Edges of a Wire are reversed. To
+                #  be checked.
+                # The behaviour above would not allow the plot of a filled face
+                # since the internal holes would be considered in the same direction
+                # of the external one. Solved a trick, but to be adjusted.
+                if j==1:
+                    self.data[0] += wplotter.data[0][::-1] + [None]
+                    self.data[1] += wplotter.data[1][::-1] + [None]
+                    self.data[2] += wplotter.data[2][::-1] + [None]
+                else:
+                    self.data[0] += wplotter.data[0] + [None]
+                    self.data[1] += wplotter.data[1] + [None]
+                    self.data[2] += wplotter.data[2] + [None]
 
-            for o in self.data:
-                o = o[:-1]
-
-            from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
-            x = self.data[0]
-            y = self.data[1]
-            z = self.data[2]
-
-            verts = [list(zip(x, y, z))]
-            self.ax.add_collection3d(Poly3DCollection(verts))
-
-            # plt.fill(*self.data, **self.options['foptions'])
+            if self.options["plot_flag"]["foptions"] and self.options["foptions"]:
+                # since the object have been moved in the new plane
+                # only the first two coordinates have to be plotted
+                data_to_plot = self.data[0:2]
+                plt.fill(*data_to_plot, **self.options["foptions"])
 
             if show:
-                plt.gca().set_aspect("auto")
+                plt.gca().set_aspect("equal")
                 plt.show(block=block)
 
-        return self.ax
+        return ax
