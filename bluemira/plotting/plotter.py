@@ -96,7 +96,7 @@ class PointsPlotter(BasePlotter):
                 self.ax = ax
 
             self.ax.scatter(*points, **self.options["poptions"])
-            self.data = points
+            self.data = points.tolist()
 
             if show:
                 plt.gca().set_aspect("auto")
@@ -141,7 +141,7 @@ class WirePlotter(BasePlotter):
                 raise ValueError("wire must be a BluemiraWire")
 
             pointsw = wire.discretize(ndiscr=ndiscr, byedges=byedges).T
-            self.data = pointsw
+            self.data = pointsw.tolist()
 
             if self.options["plot_flag"]["woptions"]:
                 self.ax.plot(*pointsw, **self.options["woptions"])
@@ -203,9 +203,23 @@ class FacePlotter(BasePlotter):
                     wplotter.plot(boundary, show=False)
                     # TODO: self.data should add a None line every time a new
                     #  boundary is found.
-                    self.data = wplotter.data
+                    self.data += wplotter.data
+                    for o in self.data:
+                        o = o + [None]
 
-            # TODO: implement face filling
+            for o in self.data:
+                o = o[:-1]
+
+            from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+            x = self.data[0]
+            y = self.data[1]
+            z = self.data[2]
+
+            verts = [list(zip(x, y, z))]
+            self.ax.add_collection3d(Poly3DCollection(verts))
+
+            # plt.fill(*self.data, **self.options['foptions'])
 
             if show:
                 plt.gca().set_aspect("auto")
