@@ -34,6 +34,8 @@ import Part
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 
+import bluemira.geometry._freecadapi as _freecadapi
+
 from bluemira.geometry._freecadapi import (
     discretize_by_edges,
     discretize,
@@ -61,6 +63,17 @@ class BluemiraWire(BluemiraGeo):
 
         # connection variable with BLUEPRINT Loop
         self._bp_loop = None
+
+    def copy(self):
+        """Make a copy of the BluemiraWire"""
+        return BluemiraWire(self.boundary, self.label)
+
+    def deepcopy(self):
+        """Make a copy of the BluemiraWire"""
+        boundary = []
+        for o in self.boundary:
+            boundary += [o.copy()]
+        return BluemiraWire(boundary, self.label)
 
     @staticmethod
     def _converter(func):
@@ -168,3 +181,12 @@ class BluemiraWire(BluemiraGeo):
                 translate_shape(o, vector)
             else:
                 o.translate(vector)
+
+    def change_plane(self, plane):
+        """Apply a plane transformation to the wire
+        """
+        for o in self.boundary:
+            if isinstance(o, Part.Wire):
+                _freecadapi.change_plane(o, plane._shape)
+            else:
+                o.change_plane(plane)

@@ -48,6 +48,7 @@ class BluemiraFace(BluemiraGeo):
     def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
+        self._create_face()
 
     @staticmethod
     def _converter(func):
@@ -60,6 +61,17 @@ class BluemiraFace(BluemiraGeo):
             return output
 
         return wrapper
+
+    def copy(self):
+        """Make a copy of the BluemiraFace"""
+        return BluemiraFace(self.boundary, self.label)
+
+    def deepcopy(self):
+        """Make a copy of the BluemiraFace"""
+        boundary = []
+        for o in self.boundary:
+            boundary += [o.copy()]
+        return BluemiraFace(boundary, self.label)
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""

@@ -488,7 +488,7 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
         # if edge orientation is reversed, the generated list of points
         # must be reversed
         if e.Orientation == "Reversed":
-            pointse.reverse()
+           pointse.reverse()
         output += pointse[:-1]
     if w.isClosed():
         output += pointse[-1:]
@@ -743,3 +743,22 @@ def move_plane(plane, vector):
         The plane is directly modified.
     """
     plane.move(Base.Vector(vector))
+
+
+def change_plane(geo, plane):
+    """
+    Change the placement of a FreeCAD object
+
+    Parameters
+    ----------
+    geo: FreeCAD object
+        the object to be modified
+    plane: FreeCAD plane
+        the FreeCAD plane to be modified
+
+    Returns
+    -------
+    nothing:
+        The object is directly modified.
+    """
+    geo.Placement = geo.Placement.multiply(plane)
