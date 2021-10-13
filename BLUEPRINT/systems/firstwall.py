@@ -31,7 +31,6 @@ from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
-from BLUEPRINT.equilibria.find import find_flux_surfs
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
@@ -55,6 +54,8 @@ from BLUEPRINT.geometry.geomtools import rotate_vector_2d
 from functools import partial
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.utilities.csv_writer import write_csv
+
+from bluemira.equilibria.find import find_flux_surfs
 
 
 def find_outer_point(point_list, x_compare):
