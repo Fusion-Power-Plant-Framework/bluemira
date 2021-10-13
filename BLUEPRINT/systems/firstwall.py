@@ -1511,15 +1511,17 @@ class FirstWall(EqInputs, ReactorSystem):
             div_offset = div.offset_clipper(offset, method="miter")
 
             # Take the outermost radial limit from offset div
-            x_max = np.max(div_offset.x)
+            x_max = np.max(div.x) + offset
 
             # Take the innermost radial limit from offset div, plus extra thickness
-            x_min = np.min(div_offset.x) - self.params.tk_div_cass_in
+            x_min = np.min(div.x) - offset - self.params.tk_div_cass_in
 
             # Check we're inside the vacuum vessel
             if x_min < x_min_vv or x_max > x_max_vv:
                 raise GeometryError(
-                    "Divertor cassette radial limits overlap with vacuum vessel."
+                    "Divertor cassette radial limits overlap with vacuum vessel.\n"
+                    f"Minimal VV radius {x_min_vv} > smallest casette radius {x_min}\n"
+                    f"Maximum VV radius {x_max_vv} < largest casette radius {x_max}\n"
                 )
 
             # z limits: want to be flush with flat edge of (non-offset) divertor
@@ -1539,7 +1541,9 @@ class FirstWall(EqInputs, ReactorSystem):
             # Check z coords are inside acceptable bounds
             if z_max > z_max_vv or z_min < z_min_vv:
                 raise GeometryError(
-                    "Divertor cassette z-limits overlap with vacuum vessel"
+                    "Divertor cassette z-limits overlap with vacuum vessel\n"
+                    f"Minimal VV half-height {z_min_vv} > smallest casette half-height {z_min}"
+                    f"Maximum VV half-height {z_max_vv} < largest casette half-height {z_max}"
                 )
 
             div_box = make_box_xz(x_min, x_max, z_min, z_max)
@@ -1562,8 +1566,8 @@ class FirstWall(EqInputs, ReactorSystem):
                     z_lim = z_max_div
 
                 if (
-                    cutter_x_max == x_max
-                    and cutter_z_lim == z_lim
+                    np.isclose(cutter_x_max, x_max)
+                    and np.isclose(cutter_z_lim, z_lim)
                     and cutter_x_min > x_min
                 ):
                     cutter_select = cutter
