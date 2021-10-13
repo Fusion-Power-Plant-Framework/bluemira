@@ -870,6 +870,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
             raise EquilibriaError(
                 "FBIOptimiser least-squares objective function less than zero."
             )
+        vector = vector / self.scale
         return rss
 
     def get_rss(self, vector):
