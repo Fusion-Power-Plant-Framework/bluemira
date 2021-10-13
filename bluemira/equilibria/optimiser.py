@@ -108,6 +108,8 @@ class EquilibriumOptimiser:
 
         self.n_PF, self.n_CS = eq.coilset.n_PF, eq.coilset.n_CS
         self.n_C = eq.coilset.n_coils
+
+        # TODO add check that B_max is not nan
         if hasattr(self, "flag_nonlinear"):
             self.B_max = eq.coilset.get_max_fields()
             self._I_max = eq.coilset.get_max_currents(self.I_max)
@@ -822,17 +824,15 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
             n_f_constraints = 2 * self.n_PF
         else:
             n_f_constraints = 2 * self.n_PF + self.n_CS + 1
-        # tol = self.constraint_tol * np.ones(n_f_constraints)
-        # opt.add_inequality_mconstraint(self.constrain_forces, tol)
-        # tol = self.constraint_tol * np.ones(self.n)
-        # opt.add_inequality_mconstraint(self.constrain_fields, tol)
+        tol = self.constraint_tol * np.ones(n_f_constraints)
+        opt.add_inequality_mconstraint(self.constrain_forces, tol)
+        tol = self.constraint_tol * np.ones(self.n)
+        opt.add_inequality_mconstraint(self.constrain_fields, tol)
         # x0 = np.ones(self.n)
 
         u = self.eq.coilset.get_control_currents()
         x0 = np.clip(u / self.scale, -self.I_max, self.I_max)
-        # x0 = np.clip(
-        #     tikhonov(self.A, self.b, self.gamma) / self.scale, -self.I_max, self.I_max
-        # )
+
         currents = opt.optimize(x0)
         self.rms = opt.last_optimum_value()
         process_NLOPT_result(opt)
@@ -866,7 +866,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
             jac -= 2 * self.A.T @ self.b
             jac += 2 * self.gamma * vector
             grad[:] = self.scale * jac
-        if not rss > 0:
+        if not rss > -1e-5:
             raise EquilibriaError(
                 "FBIOptimiser least-squares objective function less than zero."
             )
