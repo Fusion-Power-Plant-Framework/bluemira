@@ -1566,8 +1566,8 @@ class FirstWall(EqInputs, ReactorSystem):
                     z_lim = z_max_div
 
                 if (
-                    cutter_x_max == x_max
-                    and cutter_z_lim == z_lim
+                    np.isclose(cutter_x_max, x_max)
+                    and np.isclose(cutter_z_lim, z_lim)
                     and cutter_x_min > x_min
                 ):
                     cutter_select = cutter
