@@ -457,7 +457,7 @@ def analyse_plasma_core(eq, n_points=50):
     vars += [f"{v}{end}" for end in ["", "_upper", "_lower"] for v in ["kappa", "delta"]]
     return CoreResults(
         psi_n,
-        *[getattr(fs, var) for fs in flux_surfaces for var in vars],
+        *[[getattr(fs, var) for fs in flux_surfaces] for var in vars],
         [fs.safety_factor(eq) for fs in flux_surfaces],
         [fs.shafranov_shift(eq)[0] for fs in flux_surfaces],
     )
