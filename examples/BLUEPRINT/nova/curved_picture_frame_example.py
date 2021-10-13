@@ -55,12 +55,11 @@ params = [
     ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
     ["tf_wp_depth", "TF coil winding pack depth (in y)", 0.4625, "m", "Including insulation", "PROCESS"],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
-    ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
-    ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
-    ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
+    ['h_tf_max_in', 'Plasma side TF coil maximum height', 0, 'm', None, 'PROCESS'],
+    ['h_tf_min_in', 'Plasma side TF coil min height', -11, 'm', None, 'PROCESS'],
+    ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
+    ['tk_tf_outboard', 'TF coil outboard thickness', 0.569, 'm', None, 'Input', 'PROCESS'],
     ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
-    ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
-    ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
 
 ]
 # fmt: on

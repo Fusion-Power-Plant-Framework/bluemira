@@ -90,6 +90,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'N/A', None, 'PROCESS'],
         ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input'],
         ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.8934, "m", None, "PROCESS"],
+        ['h_tf_min_in', 'Plasma side TF coil min height', -6.5, 'm', None, 'PROCESS'],
     ]
     # fmt: on
     CADConstructor = TFCoilCAD
@@ -351,9 +352,20 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.shp.remove_oppvar("z_mid")
 
             # Adjust bounds to fit problem
-            z_top = self.params.h_tf_max_in
-            self.adjust_xo("z_top", value=z_top + 1.0e-3)
+            if self.params.h_tf_max_in == 0:
+                z_top = z_mid_max
+            else:
+                z_top = self.params.h_tf_max_in
+            self.adjust_xo("z_top", value=z_top)
             self.shp.remove_oppvar("z_top")
+
+            if self.params.h_tf_min_in == 0:
+                z_bottom = -z_mid_max
+            else:
+                z_bottom = self.params.h_tf_min_in
+
+            self.adjust_xo("z_bottom", value=z_bottom)
+            self.shp.remove_oppvar("z_bottom")
 
             # Outboard leg position (ripple optimization variable)
             xmax = np.max(self.inputs["koz_loop"]["x"])

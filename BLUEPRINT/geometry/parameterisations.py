@@ -915,11 +915,6 @@ def curved_picture_frame(
             "Curved tapered_picture_frame parameterisation requires an z_mid"
             f"value greater than or equal to z_in: {z_mid} < {z_in}"
         )
-    if z_top < z_mid:
-        raise GeometryError(
-            "Curved tapered_picture_frame parameterisation requires an z_top "
-            f"value greater than or equal to z_mid: {z_top} < {z_mid}"
-        )
 
     if npoints < 10:
         raise ValueError("N. of Points must be > 10, npoints inputted " f"= {npoints}")
@@ -971,7 +966,8 @@ def curved_picture_frame(
         np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
     )
     # ------END TRANSITIONING CURVE----------------------
-    # Joint Curve
+
+    # Joint Curve - Define points even if one end is flat
     theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
     joint_curve_centre = (leg_centre[0] - (r_leg + r_j) * np.sin(theta_j), z_mid + r_j)
 
@@ -1007,7 +1003,7 @@ def curved_picture_frame(
         npoints=int(npoints * 0.1),
     )
 
-    if z_top > (z_mid + 0.001):
+    if z_top > (z_mid + 0.01):
         # If top leg is domed
         x = np.append(x, x_c_j)
         z = np.append(z, z_c_j)
@@ -1028,13 +1024,19 @@ def curved_picture_frame(
         r_c = min(x_curve_start - x_mid, 0.8)
         x = np.append(x, x_out - r_c)
         z = np.append(z, z_mid)
+        npts = int(npoints * 0.1)
+        x_c, z_c = circle_seg(
+            r_c, h=(x_out - r_c, z_mid - r_c), angle=-90, npoints=npts, start=90
+        )
+        x = np.append(x, x_c)
+        z = np.append(z, z_c)
 
         # Outer leg
         npts = 2
         x = np.append(x, x_out * np.ones(npts))
         z = np.append(z, np.linspace(z_mid, -z_mid, npts))
 
-    if z_bottom < -(z_mid + 0.001):
+    if z_bottom < -(z_mid + 0.01):
         # Domed bottom leg
         # Bottom Curve
         x = np.append(x, np.flip(x_c_trans))
@@ -1049,6 +1051,12 @@ def curved_picture_frame(
         # flat bottom leg
         x = np.append(x, x_out - r_c)
         z = np.append(z, -z_mid)
+        npts = int(npoints * 0.1)
+        x_c, z_c = circle_seg(
+            r_c, h=(x_out - r_c, -z_mid + r_c), angle=-90, npoints=npts, start=0
+        )
+        x = np.append(x, x_c)
+        z = np.append(z, z_c)
 
     # Inner leg, negative z
     npts = 2
@@ -1084,6 +1092,7 @@ class CurvedPictureFrame(Parameterisation):
         self.xo["z_in"] = {"value": 0.5, "lb": 0.45, "ub": 0.8}  # Vertical height
         self.xo["z_mid"] = {"value": 7.5, "lb": 6, "ub": 8}  # vertical
         self.xo["z_top"] = {"value": 14.5, "lb": 14.0, "ub": 15}  # vertical
+        self.xo["z_bottom"] = {"value": -14.5, "lb": -15.0, "ub": -14}  # vertical
         self.xo["r_c"] = {"value": 0.3, "lb": 0.00, "ub": 0.8}  # Corner radius
 
         self.oppvar = list(self.xo.keys())
@@ -1102,9 +1111,28 @@ class CurvedPictureFrame(Parameterisation):
         """
         self.set_input(**kwargs)
 
-        x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c = self.xo.get_value()
+        (
+            x_in,
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_in,
+            z_mid,
+            z_top,
+            z_bottom,
+            r_c,
+        ) = self.xo.get_value()
         x, z = curved_picture_frame(
-            x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c, npoints=200
+            x_in,
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_in,
+            z_mid,
+            z_top,
+            z_bottom,
+            r_c,
+            npoints=200,
         )
         self.segments = {"x": x, "z": z}
         p = self.segments
