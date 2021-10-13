@@ -441,7 +441,8 @@ def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
         raise ValueError("dl must be > 0.")
     else:
         # a dl is calculated for the discretisation of the different edges
-        ndiscr = math.ceil(w.Length / dl)
+        # NOTE: must discretise to at least two points.
+        ndiscr = max(math.ceil(w.Length / dl), 2)
 
     # discretization points array
     output = w.discretize(ndiscr)
