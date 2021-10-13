@@ -59,8 +59,9 @@ wire2 = p2.create_shape()
 face2 = BluemiraFace(wire2)
 
 fplotter2 = FacePlotter(plane='xz')
-fplotter2.options["plot_flag"]["poptions"] = True
+fplotter2.plot_points = True
 fplotter2.options["foptions"] = {"color": "blue"}
+fplotter2(face, show=True, block=True, ndiscr=100, byedges=True)
 # ax = fplotter2.plot(face, show=True, block=True)
 
 fplotter3 = FacePlotter(plane='xz')

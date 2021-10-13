@@ -33,7 +33,7 @@ from bluemira.geometry.plane import BluemiraPlane
 from .error import PlottingError
 
 DEFAULT = {}
-DEFAULT["plot_flag"] = {"poptions": True, "woptions": True, "foptions": True}
+DEFAULT["flags"] = {"points": True, "wires": True, "faces": True}
 DEFAULT["poptions"] = {"s": 10, "facecolors": "blue", "edgecolors": "black"}
 DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5"}
 DEFAULT["foptions"] = {"color": "red"}
@@ -58,8 +58,8 @@ class BasePlotter(ABC):
     """
 
     def __init__(self, **kwargs):
-        self.data = []  # data passed to the BasePlotter
-        self.plot_data = []  # real data that is plotted
+        self._data = []  # data passed to the BasePlotter
+        self._data_to_plot = []  # real data that is plotted
         if kwargs:
             for k in kwargs:
                 if k in self.options:
@@ -70,27 +70,27 @@ class BasePlotter(ABC):
 
     @property
     def plot_points(self):
-        return self.options["plot_flag"]["poptions"]
+        return self.options["flags"]["points"]
 
     @plot_points.setter
     def plot_points(self, value):
-        self.options["plot_flag"]["poptions"] = value
+        self.options["flags"]["points"] = value
 
     @property
     def plot_wires(self):
-        return self.options["plot_flag"]["woptions"]
+        return self.options["flags"]["wires"]
 
     @plot_wires.setter
     def plot_wires(self, value):
-        self.options["plot_flag"]["woptions"] = value
+        self.options["flags"]["wires"] = value
 
     @property
     def plot_faces(self):
-        return self.options["plot_flag"]["foptions"]
+        return self.options["flags"]["faces"]
 
     @plot_faces.setter
     def plot_faces(self, value):
-        self.options["plot_flag"]["foptions"] = value
+        self.options["flags"]["faces"] = value
 
     @property
     def poptions(self):
@@ -133,7 +133,7 @@ class BasePlotter(ABC):
 
     @abstractmethod
     def _make_data(self, obj, *args, **kwargs):
-        """Internal function that initialize self.data and self.plot_data"""
+        """Internal function that initialize self._data and self._data_to_plot"""
         pass
 
     @abstractmethod
@@ -188,11 +188,11 @@ class PointsPlotter(BasePlotter):
         return True
 
     def _make_data(self, points, *args, **kwargs):
-        self.data = points.tolist()
-        self.plot_data = points[0:2]
+        self._data = points.tolist()
+        self._data_to_plot = points[0:2]
 
     def _make_plot(self):
-        self.ax.scatter(*self.plot_data, **self.options["poptions"])
+        self.ax.scatter(*self._data_to_plot, **self.options["poptions"])
 
 
 class WirePlotter(BasePlotter):
@@ -224,16 +224,16 @@ class WirePlotter(BasePlotter):
         new_wire = wire.deepcopy()
         new_wire.change_plane(self.options["plane"])
         pointsw = new_wire.discretize(ndiscr=ndiscr, byedges=byedges).T
-        self.data = pointsw.tolist()
-        self.plot_data = pointsw[0:2]
+        self._data = pointsw.tolist()
+        self._data_to_plot = pointsw[0:2]
 
     def _make_plot(self):
         if self.plot_wires:
-            self.ax.plot(*self.plot_data, **self.options["woptions"])
+            self.ax.plot(*self._data_to_plot, **self.options["woptions"])
 
         if self.plot_points:
             pplotter = PointsPlotter(**self.options)
-            self.ax = pplotter(self.plot_data, self.ax, show=False)
+            self.ax = pplotter(self._data_to_plot, self.ax, show=False)
 
 
 class FacePlotter(BasePlotter):
@@ -266,7 +266,7 @@ class FacePlotter(BasePlotter):
         return True
 
     def _make_data(self, face, ndiscr, byedges):
-        self.data = [[], [], []]
+        self._data = [[], [], []]
         j = 0
         for w in face._shape.Wires:
             j = j + 1
@@ -286,16 +286,16 @@ class FacePlotter(BasePlotter):
             # since the internal holes would be considered in the same direction
             # of the external one. Solved a trick, but to be adjusted.
             if j == 1:
-                self.data[0] += wplotter.data[0][::-1] + [None]
-                self.data[1] += wplotter.data[1][::-1] + [None]
-                self.data[2] += wplotter.data[2][::-1] + [None]
+                self._data[0] += wplotter._data[0][::-1] + [None]
+                self._data[1] += wplotter._data[1][::-1] + [None]
+                self._data[2] += wplotter._data[2][::-1] + [None]
             else:
-                self.data[0] += wplotter.data[0] + [None]
-                self.data[1] += wplotter.data[1] + [None]
-                self.data[2] += wplotter.data[2] + [None]
+                self._data[0] += wplotter._data[0] + [None]
+                self._data[1] += wplotter._data[1] + [None]
+                self._data[2] += wplotter._data[2] + [None]
 
-        self.plot_data = self.data[0:2]
+        self._data_to_plot = self._data[0:2]
 
     def _make_plot(self):
         if self.plot_faces and self.options["foptions"]:
-            plt.fill(*self.plot_data, **self.options["foptions"])
+            plt.fill(*self._data_to_plot, **self.options["foptions"])
