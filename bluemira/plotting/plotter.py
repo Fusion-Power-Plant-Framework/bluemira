@@ -22,11 +22,8 @@
 
 from abc import ABC, abstractmethod
 
-from typing import Union
-
 # matplotlib import
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 # bluemira geometry import
 from bluemira.geometry.wire import BluemiraWire
@@ -43,26 +40,12 @@ DEFAULT["foptions"] = {"color": "red"}
 DEFAULT["plane"] = "xz"
 
 
-class Plot3D(Axes3D):
-    """
-    Cheap and cheerful
-    """
-
-    def __init__(self):
-        fig = plt.figure(figsize=[14, 14])
-        super().__init__(fig)
-        # \n to offset labels from axes
-        self.set_xlabel("\n\nx [m]")
-        self.set_ylabel("\n\ny [m]")
-        self.set_zlabel("\n\nz [m]")
-
-
 class Plottable:
     """Plottable class"""
 
-    def __init__(self, plotter=None, object=None):
+    def __init__(self, plotter=None, obj=None):
         self._plotter = plotter
-        self._plottable_object = object
+        self._plottable_object = obj
 
     def plot(self, **kwargs):
         """Plotting method"""
@@ -75,64 +58,111 @@ class BasePlotter(ABC):
     """
 
     def __init__(self, **kwargs):
-        self.data = []
+        self.data = []  # data passed to the BasePlotter
+        self.plot_data = []  # real data that is plotted
         if kwargs:
             for k in kwargs:
                 if k in self.options:
-                    if k == 'plane':
+                    if k == "plane":
                         self.set_plane(kwargs[k])
                     else:
                         self.options[k] = kwargs[k]
 
     @property
     def plot_points(self):
-        return self.options['plot_flag']['poptions']
+        return self.options["plot_flag"]["poptions"]
 
     @plot_points.setter
     def plot_points(self, value):
-        self.options['plot_flag']['poptions'] = value
+        self.options["plot_flag"]["poptions"] = value
 
     @property
     def plot_wires(self):
-        return self.options['plot_flag']['woptions']
+        return self.options["plot_flag"]["woptions"]
 
-    @plot_points.setter
+    @plot_wires.setter
     def plot_wires(self, value):
-        self.options['plot_flag']['woptions'] = value
+        self.options["plot_flag"]["woptions"] = value
 
     @property
     def plot_faces(self):
-        return self.options['plot_flag']['foptions']
+        return self.options["plot_flag"]["foptions"]
 
-    @plot_points.setter
+    @plot_faces.setter
     def plot_faces(self, value):
-        self.options['plot_flag']['foptions'] = value
+        self.options["plot_flag"]["foptions"] = value
+
+    @property
+    def poptions(self):
+        return self.options["poptions"]
+
+    def change_poptions(self, value):
+        if isinstance(value, dict):
+            self.options["poptions"] = value
+        elif isinstance(value, tuple):
+            self.options["poptions"][value[0]] = value[1]
+        else:
+            raise ValueError(f"{value} is not a valid dict or tuple(key, value)")
 
     def set_plane(self, plane):
         """Set the plotting plane"""
         if plane == "xy":
             # Base.Placement(origin, axis, angle)
-            self.options['plane'] = BluemiraPlane()
+            self.options["plane"] = BluemiraPlane()
         elif plane == "xz":
             # Base.Placement(origin, axis, angle)
-            self.options['plane'] = BluemiraPlane(
-                axis=(1.0, 0.0, 0.0), angle=-90.0
-            )
+            self.options["plane"] = BluemiraPlane(axis=(1.0, 0.0, 0.0), angle=-90.0)
         elif plane == "yz":
             # Base.Placement(origin, axis, angle)
-            self.options['plane'] = BluemiraPlane(
-                axis=(0.0, 1.0, 0.0), angle=90.0
-            )
+            self.options["plane"] = BluemiraPlane(axis=(0.0, 1.0, 0.0), angle=90.0)
         elif isinstance(plane, BluemiraPlane):
-            self.options['plane'] = plane
+            self.options["plane"] = plane
             pass
         else:
             PlottingError(f"{plane} is not a valid plane")
 
     @abstractmethod
-    def plot(self, data, ax=None, *argv, **kwargs):
-        """Plotting method"""
+    def _check_obj(self, obj):
+        """Internal function that check if obj is an instance of the correct class"""
         pass
+
+    @abstractmethod
+    def _check_options(self):
+        """Internal function that check if it is needed to plot something"""
+        pass
+
+    @abstractmethod
+    def _make_data(self, obj, *args, **kwargs):
+        """Internal function that initialize self.data and self.plot_data"""
+        pass
+
+    @abstractmethod
+    def _make_plot(self):
+        """Internal function that makes the plot"""
+        pass
+
+    def __call__(
+        self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
+    ):
+        """2D plotting method"""
+        self._check_obj(obj)
+
+        if not self._check_options():
+            self.ax = ax
+        else:
+            if ax is None:
+                fig = plt.figure()
+                self.ax = fig.add_subplot()
+            else:
+                self.ax = ax
+
+            self._make_data(obj, *args, **kwargs)
+            self._make_plot()
+
+            if show:
+                plt.gca().set_aspect("equal")
+                plt.show(block=block)
+        return self.ax
 
 
 class PointsPlotter(BasePlotter):
@@ -144,48 +174,25 @@ class PointsPlotter(BasePlotter):
         self.options = DEFAULT
         super().__init__(**{**self.options, **kwargs})
 
-    def plot(
-        self,
-        points,
-        ax=None,
-        show: bool = False,
-        block: bool = False,
-    ):
-        """
-        Main plot function
+    def _check_obj(self, obj):
+        # Todo: create a function that ckeck if the obj is a cloud of 3D or 2D points
+        return True
 
-        Parameters
-        ----------
-        points: Iterable
-            List of 3D points
-        ax:
-            matplotlib axes
-        show: bool
-            flag for plotting
-        block: bool
-            matplot flag in show function
-        """
-        if not self.options["plot_flag"]["poptions"]:
-            return ax
-
+    def _check_options(self):
+        # Check if nothing has to be plotted
+        if not self.plot_points:
+            return False
+        # check if no options have been specified
         if not self.options["poptions"]:
-            self.ax = ax
-        else:
-            if ax is None:
-                fig = plt.figure()
-                self.ax = fig.add_subplot()
-            else:
-                self.ax = ax
+            return False
+        return True
 
-            points = points[0:2]
+    def _make_data(self, points, *args, **kwargs):
+        self.data = points.tolist()
+        self.plot_data = points[0:2]
 
-            self.ax.scatter(*points, **self.options["poptions"])
-            self.data = points.tolist()
-
-            if show:
-                plt.gca().set_aspect("auto")
-                plt.show(block=block)
-        return self.ax
+    def _make_plot(self):
+        self.ax.scatter(*self.plot_data, **self.options["poptions"])
 
 
 class WirePlotter(BasePlotter):
@@ -197,59 +204,36 @@ class WirePlotter(BasePlotter):
         self.options = DEFAULT
         super().__init__(**{**self.options, **kwargs})
 
-    def plot(
-        self,
-        wire,
-        ax=None,
-        show: bool = False,
-        block: bool = False,
-        ndiscr=100,
-        byedges=True,
-    ):
-        """WirePlotter plotting method"""
-        if not isinstance(wire, BluemiraWire):
-            raise ValueError("wire must be a BluemiraWire")
+    def _check_obj(self, obj):
+        if not isinstance(obj, BluemiraWire):
+            raise ValueError(f"{obj} must be a BluemiraWire")
+        return True
 
-        if (
-            not self.options["plot_flag"]["poptions"]
-            and not self.options["plot_flag"]["woptions"]
-        ):
-            return ax
+    def _check_options(self):
+        # Check if nothing has to be plotted
+        if not self.plot_points and not self.plot_wires:
+            return False
 
+        # check if no options have been specified
         if not self.options["poptions"] and not self.options["woptions"]:
-            return ax
-        else:
-            if ax is None:
-                fig = plt.figure()
-                self.ax = fig.add_subplot()
-            else:
-                self.ax = ax
+            return False
 
-            if not isinstance(wire, BluemiraWire):
-                raise ValueError("wire must be a BluemiraWire")
+        return True
 
-            new_wire = wire.deepcopy()
-            new_wire.change_plane(self.options["plane"])
+    def _make_data(self, wire, ndiscr, byedges):
+        new_wire = wire.deepcopy()
+        new_wire.change_plane(self.options["plane"])
+        pointsw = new_wire.discretize(ndiscr=ndiscr, byedges=byedges).T
+        self.data = pointsw.tolist()
+        self.plot_data = pointsw[0:2]
 
-            pointsw = new_wire.discretize(ndiscr=ndiscr, byedges=byedges).T
-            self.data = pointsw.tolist()
+    def _make_plot(self):
+        if self.plot_wires:
+            self.ax.plot(*self.plot_data, **self.options["woptions"])
 
-            # since the object have been moved in the new plane
-            # only the first two coordinates have to be plotted
-            data_to_plot = pointsw[0:2]
-
-            if self.options["plot_flag"]["woptions"]:
-                self.ax.plot(*data_to_plot, **self.options["woptions"])
-
-            if self.options["plot_flag"]["poptions"]:
-                pplotter = PointsPlotter(**self.options)
-                self.ax = pplotter.plot(data_to_plot, self.ax, show=False)
-
-            if show:
-                plt.gca().set_aspect("equal")
-                plt.show(block=block)
-
-        return self.ax
+        if self.plot_points:
+            pplotter = PointsPlotter(**self.options)
+            self.ax = pplotter(self.plot_data, self.ax, show=False)
 
 
 class FacePlotter(BasePlotter):
@@ -261,70 +245,57 @@ class FacePlotter(BasePlotter):
         self.options = DEFAULT
         super().__init__(**{**self.options, **kwargs})
 
-    def plot(
-        self,
-        face,
-        ax=None,
-        show: bool = False,
-        block: bool = False,
-        ndiscr=100,
-        byedges=True,
-    ):
-        """FacePlotter plotting method"""
-        if not isinstance(face, BluemiraFace):
-            raise ValueError("wire must be a BluemiraFace")
+    def _check_obj(self, obj):
+        if not isinstance(obj, BluemiraFace):
+            raise ValueError(f"{obj} must be a BluemiraFace")
+        return True
 
-        if (
-            not self.options["plot_flag"]["poptions"]
-            and not self.options["plot_flag"]["woptions"]
-            and not self.options["plot_flag"]["foptions"]
-        ):
-            return ax
+    def _check_options(self):
+        # Check if nothing has to be plotted
+        if not self.plot_points and not self.plot_wires and not self.plot_faces:
+            return False
 
+        # check if no options have been specified
         if (
             not self.options["poptions"]
             and not self.options["woptions"]
             and not self.options["foptions"]
         ):
-            return ax
-        else:
-            if ax is None:
-                fig = plt.figure()
-                ax = fig.add_subplot()
+            return False
+
+        return True
+
+    def _make_data(self, face, ndiscr, byedges):
+        self.data = [[], [], []]
+        j = 0
+        for w in face._shape.Wires:
+            j = j + 1
+            boundary = BluemiraWire(w)
+            wplotter = WirePlotter(**self.options)
+            if not self.plot_wires and not self.plot_points:
+                wplotter._make_data(boundary, ndiscr, byedges)
             else:
-                ax = ax
+                wplotter(
+                    boundary, ax=self.ax, show=False, ndiscr=ndiscr, byedges=byedges
+                )
 
-            self.data = [[], [], []]
+            # Todo: it seems that discretize and discretize_by_edges produce a
+            #  different output in case all the Edges of a Wire are reversed. To
+            #  be checked.
+            # The behaviour above would not allow the plot of a filled face
+            # since the internal holes would be considered in the same direction
+            # of the external one. Solved a trick, but to be adjusted.
+            if j == 1:
+                self.data[0] += wplotter.data[0][::-1] + [None]
+                self.data[1] += wplotter.data[1][::-1] + [None]
+                self.data[2] += wplotter.data[2][::-1] + [None]
+            else:
+                self.data[0] += wplotter.data[0] + [None]
+                self.data[1] += wplotter.data[1] + [None]
+                self.data[2] += wplotter.data[2] + [None]
 
-            j = 0
-            for w in face._shape.Wires:
-                j = j+1
-                boundary = BluemiraWire(w)
-                wplotter = WirePlotter(**self.options)
-                wplotter.plot(boundary, ax=ax, show=False, ndiscr=ndiscr)
-                # Todo: it seems that discretize and discretize_by_edges produce a
-                #  different output in case all the Edges of a Wire are reversed. To
-                #  be checked.
-                # The behaviour above would not allow the plot of a filled face
-                # since the internal holes would be considered in the same direction
-                # of the external one. Solved a trick, but to be adjusted.
-                if j==1:
-                    self.data[0] += wplotter.data[0][::-1] + [None]
-                    self.data[1] += wplotter.data[1][::-1] + [None]
-                    self.data[2] += wplotter.data[2][::-1] + [None]
-                else:
-                    self.data[0] += wplotter.data[0] + [None]
-                    self.data[1] += wplotter.data[1] + [None]
-                    self.data[2] += wplotter.data[2] + [None]
+        self.plot_data = self.data[0:2]
 
-            if self.options["plot_flag"]["foptions"] and self.options["foptions"]:
-                # since the object have been moved in the new plane
-                # only the first two coordinates have to be plotted
-                data_to_plot = self.data[0:2]
-                plt.fill(*data_to_plot, **self.options["foptions"])
-
-            if show:
-                plt.gca().set_aspect("equal")
-                plt.show(block=block)
-
-        return ax
+    def _make_plot(self):
+        if self.plot_faces and self.options["foptions"]:
+            plt.fill(*self.plot_data, **self.options["foptions"])

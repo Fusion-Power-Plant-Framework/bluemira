@@ -36,14 +36,15 @@ face = BluemiraFace(wire)
 
 array = p.create_array(n_points=10)
 
-# pplotter = PointsPlotter(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
-# pplotter.plot(array, show=True, block=True)
-#
-# wplotter = WirePlotter()
-# wplotter.plot(wire, show=True, block=True)
-#
-# wplotter.options["poptions"] = {}
-# wplotter.plot(wire, show=True, block=True)
+pplotter = PointsPlotter(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
+pplotter(array, show=True, block=True)
+
+wplotter = WirePlotter()
+wplotter.change_poptions(('s', 10))
+wplotter(wire, show=True, block=True, ndiscr=10, byedges=True)
+
+wplotter.change_poptions({})
+wplotter(wire, show=True, block=True, ndiscr=10, byedges=True)
 
 # fplotter = FacePlotter(plane='xz')
 # fplotter.options["plot_flag"]["poptions"] = False
@@ -62,8 +63,15 @@ fplotter2.options["plot_flag"]["poptions"] = True
 fplotter2.options["foptions"] = {"color": "blue"}
 # ax = fplotter2.plot(face, show=True, block=True)
 
-
 fplotter3 = FacePlotter(plane='xz')
 fplotter3.plot_points = False
 face3 = BluemiraFace([wire2, wire])
-fplotter3.plot(face3, show=True, block=True, ndiscr=100)
+fplotter3(face3, show=True, block=True, ndiscr=100, byedges=True)
+
+faceout = BluemiraFace([wire2])
+facein = BluemiraFace([wire])
+ax = fplotter3(face3, ndiscr=100, byedges=True)
+fplotter2.options["foptions"] = {"color": "red"}
+fplotter2(facein, ax, True, True, 100, True)
+
+
