@@ -38,9 +38,11 @@ DEFAULT["poptions"] = {"s": 10, "facecolors": "blue", "edgecolors": "black"}
 DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5"}
 DEFAULT["foptions"] = {"color": "red"}
 DEFAULT["plane"] = "xy"
+DEFAULT["palette"] = None
 
 # Note: when plotting points, it can happen that markers are not centered properly as
 # described in https://github.com/matplotlib/matplotlib/issues/11836
+
 
 class Plottable:
     """Plottable class"""
@@ -62,6 +64,7 @@ class BasePlotter(ABC):
     def __init__(self, **kwargs):
         self._data = []  # data passed to the BasePlotter
         self._data_to_plot = []  # real data that is plotted
+        self.ax = None
         if kwargs:
             for k in kwargs:
                 if k in self.options:
@@ -190,11 +193,6 @@ class BasePlotter(ABC):
         """Internal function that check if it is needed to plot something"""
         pass
 
-    @abstractmethod
-    def _make_data(self, obj, *args, **kwargs):
-        """Internal function that initialize self._data and self._data_to_plot"""
-        pass
-
     def initialize_plot(self, ax=None):
         """Initialize the plot environment"""
         if ax is None:
@@ -209,8 +207,10 @@ class BasePlotter(ABC):
         plt.show(block=block)
 
     @abstractmethod
-    def _make_plot(self):
-        """Internal function that makes the plot"""
+    def _make_plot(self, obj, *args, **kwargs):
+        """Internal function that makes the plot. It fills self._data and
+        self._data_to_plot
+        """
         pass
 
     def __call__(
@@ -224,8 +224,7 @@ class BasePlotter(ABC):
         else:
             self.initialize_plot(ax)
 
-            self._make_data(obj, *args, **kwargs)
-            self._make_plot()
+            self._make_plot(obj, *args, **kwargs)
 
             if show:
                 self.show_plot(block=block)
@@ -256,11 +255,9 @@ class PointsPlotter(BasePlotter):
             return False
         return True
 
-    def _make_data(self, points, *args, **kwargs):
+    def _make_plot(self, points, *args, **kwargs):
         self._data = points.tolist()
         self._data_to_plot = points[0:2]
-
-    def _make_plot(self):
         self.ax.scatter(*self._data_to_plot, **self.options["poptions"])
 
 
@@ -291,14 +288,13 @@ class WirePlotter(BasePlotter):
 
         return True
 
-    def _make_data(self, wire, ndiscr, byedges):
+    def _make_plot(self, wire, ndiscr, byedges):
         new_wire = wire.deepcopy()
         new_wire.change_plane(self.options["plane"])
         pointsw = new_wire.discretize(ndiscr=ndiscr, byedges=byedges).T
         self._data = pointsw.tolist()
         self._data_to_plot = pointsw[0:2]
 
-    def _make_plot(self):
         if self.plot_wires:
             self.ax.plot(*self._data_to_plot, **self.options["woptions"])
 
@@ -338,7 +334,7 @@ class FacePlotter(BasePlotter):
 
         return True
 
-    def _make_data(self, face, ndiscr, byedges):
+    def _make_plot(self, face, ndiscr, byedges):
         self._data = [[], [], []]
         j = 0
         for w in face._shape.Wires:
@@ -352,12 +348,8 @@ class FacePlotter(BasePlotter):
                     boundary, ax=self.ax, show=False, ndiscr=ndiscr, byedges=byedges
                 )
 
-            # Todo: it seems that discretize and discretize_by_edges produce a
-            #  different output in case all the Edges of a Wire are reversed. To
-            #  be checked.
-            # The behaviour above would not allow the plot of a filled face
-            # since the internal holes would be considered in the same direction
-            # of the external one. Solved a trick, but to be adjusted.
+            # Todo: check if, for different combination of wires, the trick of
+            #  inverting the first set of data works.
             if j == 1:
                 self._data[0] += wplotter._data[0][::-1] + [None]
                 self._data[1] += wplotter._data[1][::-1] + [None]
@@ -367,8 +359,56 @@ class FacePlotter(BasePlotter):
                 self._data[1] += wplotter._data[1] + [None]
                 self._data[2] += wplotter._data[2] + [None]
 
+        self._data[0] = self._data[0][:-1]
+        self._data[1] = self._data[1][:-1]
+        self._data[2] = self._data[2][:-1]
+
         self._data_to_plot = self._data[0:2]
 
-    def _make_plot(self):
         if self.plot_faces and self.options["foptions"]:
             plt.fill(*self._data_to_plot, **self.options["foptions"])
+
+
+class FaceCompoundPlotter(FacePlotter):
+    """
+    Base utility plotting class for shape compounds
+    """
+
+    def __init__(self, **kwargs):
+        # set the plot options to DEFAULT. A copy is made in order to be able to
+        # change options without modifying the DEFAULT dictionary
+        self._acceptable_classes = [BluemiraFace]
+        self.options = DEFAULT.copy()
+        super().__init__(**{**self.options, **kwargs})
+
+    def _check_obj(self, objs):
+        """Check if objects in objs are of the correct type for this class"""
+        if not hasattr(objs, "__len__"):
+            objs = [objs]
+        check = False
+        for c in self._acceptable_classes:
+            check = check or (all(isinstance(o, c) for o in objs))
+            if check:
+                return objs
+        raise TypeError(
+            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
+        )
+
+    def _make_plot(self, objs, ndiscr, byedges):
+        if "palette" in self.options:
+            import seaborn as sns
+
+            palette = sns.color_palette(self.options["palette"], len(objs))
+            print(f"palette: {palette}")
+        else:
+            palette = self.foptions["color"]
+
+        for id, obj in enumerate(objs):
+            temp_fplotter = FacePlotter(**self.options)
+            temp_fplotter.change_foptions(("color", palette[id]))
+            print(temp_fplotter.foptions)
+            self.ax = temp_fplotter(
+                obj, ax=self.ax, show=False, ndiscr=ndiscr, byedges=byedges
+            )
+            self._data += [temp_fplotter._data]
+            self._data_to_plot += [temp_fplotter._data_to_plot]
