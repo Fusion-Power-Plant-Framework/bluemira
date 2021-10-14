@@ -81,7 +81,7 @@ def firstwall_sn_inputs():
         "vv_inner": vessel,
         "strike_pts_from_koz": False,
         "pick_flux_from_psinorm": False,
-        "DEMO_DN": True,
+        "SN": True,
         "div_vertical_outer_target": False,
         "div_vertical_inner_target": False,
     }
