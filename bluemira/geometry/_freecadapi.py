@@ -442,7 +442,7 @@ def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     else:
         # a dl is calculated for the discretisation of the different edges
         # NOTE: must discretise to at least two points.
-        ndiscr = max(math.ceil(w.Length / dl), 2)
+        ndiscr = max(math.ceil(w.Length / dl + 1), 2)
 
     # discretization points array
     output = w.discretize(ndiscr)
@@ -483,17 +483,22 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     # Note: this is a tricky part in Freecad. Reversed wires need a
     # reverse operation for the generated points and the list of generated
     # points for each edge.
+    all_reversed = True
     for e in w.OrderedEdges:
         pointse = list(discretize(Part.Wire(e), dl=dl))
         # if edge orientation is reversed, the generated list of points
         # must be reversed
         if e.Orientation == "Reversed":
-           pointse.reverse()
-        output += pointse[:-1]
+            pointse.reverse()
+        else:
+            all_reversed = False
+        output += pointse[1:]
     if w.isClosed():
-        output += pointse[-1:]
+        output += [output[0]]
+    else:
+        output += [pointse[-1]]
     # if wire orientation is reversed, output must be reversed
-    if w.Orientation == "Reversed":
+    if w.Orientation == "Reversed" and not all_reversed:
         output.reverse()
     output = np.array(output)
     return output

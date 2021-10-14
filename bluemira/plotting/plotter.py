@@ -37,8 +37,10 @@ DEFAULT["flags"] = {"points": True, "wires": True, "faces": True}
 DEFAULT["poptions"] = {"s": 10, "facecolors": "blue", "edgecolors": "black"}
 DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5"}
 DEFAULT["foptions"] = {"color": "red"}
-DEFAULT["plane"] = "xz"
+DEFAULT["plane"] = "xy"
 
+# Note: when plotting points, it can happen that markers are not centered properly as
+# described in https://github.com/matplotlib/matplotlib/issues/11836
 
 class Plottable:
     """Plottable class"""
@@ -70,6 +72,7 @@ class BasePlotter(ABC):
 
     @property
     def plot_points(self):
+        """Set the flag to plot points"""
         return self.options["flags"]["points"]
 
     @plot_points.setter
@@ -78,6 +81,7 @@ class BasePlotter(ABC):
 
     @property
     def plot_wires(self):
+        """Set the flag to plot wires"""
         return self.options["flags"]["wires"]
 
     @plot_wires.setter
@@ -86,6 +90,7 @@ class BasePlotter(ABC):
 
     @property
     def plot_faces(self):
+        """Set the flag to plot faces"""
         return self.options["flags"]["faces"]
 
     @plot_faces.setter
@@ -94,13 +99,67 @@ class BasePlotter(ABC):
 
     @property
     def poptions(self):
+        """Plot options for points"""
         return self.options["poptions"]
 
+    @property
+    def woptions(self):
+        """Plot options for wires"""
+        return self.options["woptions"]
+
+    @property
+    def foptions(self):
+        """Plot options for faces"""
+        return self.options["foptions"]
+
     def change_poptions(self, value):
+        """Function to change the plot options for points
+
+        Parameters
+        ----------
+        value: dict or tuple
+            If dict, all the points plot options are replaced by the new dict
+            if tuple:(plot_key, value), the specified plot_key is added/replaced
+            into the plot options dictionary with the specified value.
+        """
         if isinstance(value, dict):
             self.options["poptions"] = value
         elif isinstance(value, tuple):
             self.options["poptions"][value[0]] = value[1]
+        else:
+            raise ValueError(f"{value} is not a valid dict or tuple(key, value)")
+
+    def change_woptions(self, value: [dict, tuple]):
+        """Function to change the plot options for wires
+
+        Parameters
+        ----------
+        value: dict or tuple
+            If dict, all the wires plot options are replaced by the new dict
+            if tuple:(plot_key, value), the specified plot_key is added/replaced
+            into the plot options dictionary with the specified value.
+        """
+        if isinstance(value, dict):
+            self.options["woptions"] = value
+        elif isinstance(value, tuple):
+            self.options["woptions"][value[0]] = value[1]
+        else:
+            raise ValueError(f"{value} is not a valid dict or tuple(key, value)")
+
+    def change_foptions(self, value: [dict, tuple]):
+        """Function to change the plot options for faces
+
+        Parameters
+        ----------
+        value: dict or tuple
+            If dict, all the faces plot options are replaced by the new dict
+            if tuple:(plot_key, value), the specified plot_key is added/replaced
+            into the plot options dictionary with the specified value.
+        """
+        if isinstance(value, dict):
+            self.options["foptions"] = value
+        elif isinstance(value, tuple):
+            self.options["foptions"][value[0]] = value[1]
         else:
             raise ValueError(f"{value} is not a valid dict or tuple(key, value)")
 
@@ -136,6 +195,19 @@ class BasePlotter(ABC):
         """Internal function that initialize self._data and self._data_to_plot"""
         pass
 
+    def initialize_plot(self, ax=None):
+        """Initialize the plot environment"""
+        if ax is None:
+            fig = plt.figure()
+            self.ax = fig.add_subplot()
+        else:
+            self.ax = ax
+
+    def show_plot(self, aspect: str = "equal", block=True):
+        """Function to show a plot"""
+        plt.gca().set_aspect(aspect)
+        plt.show(block=block)
+
     @abstractmethod
     def _make_plot(self):
         """Internal function that makes the plot"""
@@ -150,18 +222,13 @@ class BasePlotter(ABC):
         if not self._check_options():
             self.ax = ax
         else:
-            if ax is None:
-                fig = plt.figure()
-                self.ax = fig.add_subplot()
-            else:
-                self.ax = ax
+            self.initialize_plot(ax)
 
             self._make_data(obj, *args, **kwargs)
             self._make_plot()
 
             if show:
-                plt.gca().set_aspect("equal")
-                plt.show(block=block)
+                self.show_plot(block=block)
         return self.ax
 
 
@@ -171,7 +238,9 @@ class PointsPlotter(BasePlotter):
     """
 
     def __init__(self, ax=None, **kwargs):
-        self.options = DEFAULT
+        # set the plot options to DEFAULT. A copy is made in order to be able to
+        # change options without modifying the DEFAULT dictionary
+        self.options = DEFAULT.copy()
         super().__init__(**{**self.options, **kwargs})
 
     def _check_obj(self, obj):
@@ -201,7 +270,9 @@ class WirePlotter(BasePlotter):
     """
 
     def __init__(self, **kwargs):
-        self.options = DEFAULT
+        # set the plot options to DEFAULT. A copy is made in order to be able to
+        # change options without modifying the DEFAULT dictionary
+        self.options = DEFAULT.copy()
         super().__init__(**{**self.options, **kwargs})
 
     def _check_obj(self, obj):
@@ -242,7 +313,9 @@ class FacePlotter(BasePlotter):
     """
 
     def __init__(self, **kwargs):
-        self.options = DEFAULT
+        # set the plot options to DEFAULT. A copy is made in order to be able to
+        # change options without modifying the DEFAULT dictionary
+        self.options = DEFAULT.copy()
         super().__init__(**{**self.options, **kwargs})
 
     def _check_obj(self, obj):
