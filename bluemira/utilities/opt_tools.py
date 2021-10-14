@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -216,10 +216,12 @@ def approx_fprime(xk, func, epsilon, bounds, *args, f0=None):
         # Get the clipped length of the perturbation
         delta = xk_d[i] - xk[i]
 
-        if delta == 0:
-            df = 0
-        else:
-            df = (func(*((xk_d,) + args)) - f0) / delta
+        if np.isclose(delta, 0.0):
+            # Re-bound the bound in the other direction
+            xk_d[i] = xk[i] - d[i]
+            delta = xk[i] - xk_d[i]
+
+        df = (func(*((xk_d,) + args)) - f0) / delta
 
         if not np.isscalar(df):
             try:
@@ -282,14 +284,107 @@ def approx_jacobian(x, func, epsilon, bounds, *args, f0=None):
         # Get the clipped length of the perturbation
         delta = x_dx[i] - x[i]
 
-        if delta == 0:
-            jac[i] = 0
+        if np.isclose(delta, 0.0):
+            jac[i] = 0.0
         else:
             jac[i] = (func(*((x_dx,) + args)) - f0) / delta
 
         dx[i] = 0.0
 
     return jac.transpose()
+
+
+class _NLOPTFunction:
+    """
+    Base class for an optimisation function where numerical estimations of the
+    gradient or jacobian are required.
+
+    Parameters
+    ----------
+    func: callable
+        The function to calculate the objective or constraints
+    bounds: np.array(n, 2)
+        The array of lower and upper bounds
+    """
+
+    def __init__(self, func, bounds, epsilon=1e-6):
+        self.func = func
+        self.bounds = bounds
+        self.epsilon = epsilon
+
+
+class NLOPTObjectiveFunction(_NLOPTFunction):
+    """
+    An objective function with numerical calculation of the gradient.
+    """
+
+    def __call__(self, x, grad, *args):
+        """
+        Calculate the objective functions and its gradient (numerically).
+
+        Parameters
+        ----------
+        x: np.array
+            The optimisation variable vector
+        grad: np.array
+            The array of the gradient in NLopt
+        args: tuple
+            The additional arguments used in the function evaluation
+
+        Returns
+        -------
+        result: float
+            The value of the objective function
+
+        Notes
+        -----
+        Modifies `grad` in-place as per NLopt usage.
+        """
+        result = self.func(x, *args)
+
+        if grad.size > 0:
+            grad[:] = approx_fprime(
+                x, self.func, self.epsilon, self.bounds, *args, f0=result
+            )
+
+        return result
+
+
+class NLOPTConstraintFunction(_NLOPTFunction):
+    """
+    A constraint function with numerical calculation of the Jacobian.
+    """
+
+    def __call__(self, constraint, x, grad, *args):
+        """
+        Calculate the objective functions and its gradient (numerically).
+
+        Parameters
+        ----------
+        constraint: np.array
+            The array of the constraint equations
+        x: np.array
+            The optimisation variable vector
+        grad: np.array
+            The array of the gradient in NLopt
+        args: tuple
+            The additional arguments used in the function evaluation
+
+        Returns
+        -------
+        constraint: np.array
+            The array of the constraint equations
+
+        Notes
+        -----
+        Modifies `grad` and `constraint` in-place as per NLopt usage.
+        """
+        constraint[:] = self.func(x, *args)
+
+        if grad.size > 0:
+            grad[:] = approx_jacobian(
+                x, self.func, self.epsilon, self.bounds, *args, f0=constraint
+            )
 
 
 # =============================================================================
@@ -309,12 +404,16 @@ class Optimiser(abc.ABC):
         Size of the variable vector
     """
 
-    def __init__(self, algorithm, n_variables):
+    def __init__(self, algorithm, n_variables, opt_parameters={}, opt_conditions={}):
         self.n_variables = n_variables
         self.set_algorithm(algorithm)
         self.x0 = np.zeros(n_variables)
+        self.lower_bounds = np.zeros(n_variables)
+        self.upper_bounds = np.ones(n_variables)
         self.constraints = []
         self.constraint_tols = []
+        self.set_algorithm_parameters(opt_parameters)
+        self.set_termination_conditions(opt_conditions)
 
     def set_initial_value(self, x0):
         """
@@ -350,7 +449,7 @@ class Optimiser(abc.ABC):
 
         Parameters
         ----------
-        opt_parameters: Any
+        opt_parameters: dict
             Optimisation algorithm parameters to use
         """
         pass
@@ -362,7 +461,7 @@ class Optimiser(abc.ABC):
 
         Parameters
         ----------
-        opt_conditions: Any
+        opt_conditions: dict
             Termination conditions for the optimisation algorithm
         """
         pass
@@ -457,34 +556,79 @@ class Optimiser(abc.ABC):
         """
         pass
 
-    def append_constraint_tols(self, constraint, tolerance):
+    def _append_constraint_tols(self, constraint, tolerance):
+        """
+        Append constraint function and tolerances.
+        """
         self.constraints.append(constraint)
         self.constraint_tols.append(tolerance)
 
     @abc.abstractmethod
     def process_result(self):
+        """
+        Process the optimisation result.
+        """
         pass
 
     @abc.abstractmethod
     def check_constraints(self):
+        """
+        Check that the constraints have been met.
+        """
         pass
 
     def copy(self):
+        """
+        Get a deepcopy of the Optimiser.
+        """
         return deepcopy(self)
 
 
 class NLOptOptimiser(Optimiser):
-    def __init__(self, algorithm, n_variables):
-        super().__init__(self, algorithm, n_variables)
+    """
+    NLOpt optimiser class.
+
+    Parameters
+    ----------
+    algorithm: nlopt algorithm
+        Optimisation algorithm to use
+    n_variables: int
+        Size of the variable vector
+    """
+
+    def __init__(self, algorithm, n_variables, opt_parameters={}, opt_conditions={}):
+        super().__init__(algorithm, n_variables, opt_parameters, opt_conditions)
 
     def set_algorithm(self, algorithm):
+        """
+        Parameters
+        ----------
+        algorithm: nlopt algorithm
+        Optimisation algorithm to use
+        """
         self._opt = nlopt.opt(algorithm, self.n_variables)
 
     def set_algorithm_parameters(self, opt_parameters):
-        for k, v in opt_parameters:
+        """
+        Set the optimisation algorithm parameters to use.
+
+        Parameters
+        ----------
+        opt_parameters: dict
+            Optimisation algorithm parameters to use
+        """
+        for k, v in opt_parameters.items():
             self._opt.set_param(k, v)
 
     def set_termination_conditions(self, opt_conditions):
+        """
+        Set the optimisation algorithm termination condition(s) to use.
+
+        Parameters
+        ----------
+        opt_conditions: dict
+            Termination conditions for the optimisation algorithm
+        """
         if "ftol_abs" in opt_conditions:
             self._opt.set_ftol_abs(opt_conditions["ftol_abs"])
         if "ftol_rel" in opt_conditions:
@@ -501,41 +645,132 @@ class NLOptOptimiser(Optimiser):
             self._opt.set_stopval(opt_conditions["stop_val"])
 
     def set_objective_function(self, f_objective):
+        """
+        Set the objective function (minimisation).
+
+        Parameters
+        ----------
+        f_objective: callable
+            Objective function to minimise
+        """
+        if f_objective is None:
+            return
+        f_objective = NLOPTObjectiveFunction(
+            f_objective, [self.lower_bounds, self.upper_bounds]
+        )
         self._opt.set_min_objective(f_objective)
 
     def set_lower_bounds(self, lower_bounds):
+        """
+        Set the lower bounds.
+
+        Parameters
+        ----------
+        lower_bounds: np.ndarray
+            Lower bound vector
+        """
+        self.lower_bounds = lower_bounds
         self._opt.set_lower_bounds(lower_bounds)
 
     def set_upper_bounds(self, upper_bounds):
+        """
+        Set the upper bounds.
+
+        Parameters
+        ----------
+        upper_bounds: np.ndarray
+            Upper bound vector
+        """
+        self.upper_bounds = upper_bounds
         self._opt.set_upper_bounds(upper_bounds)
 
     def add_eq_constraint(self, f_constraint, tolerance):
+        """
+        Add a single-valued equality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: float
+            Tolerance with which to enforce the constraint
+        """
+        if f_constraint is None:
+            return
         self._opt.add_equality_constraint(f_constraint, tolerance)
-        self.append_constraint_tols(f_constraint, tolerance)
+        self._append_constraint_tols(f_constraint, tolerance)
 
     def add_ineq_constraint(self, f_constraint, tolerance):
+        """
+        Add a single-valued inequality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: float
+            Tolerance with which to enforce the constraint
+        """
+        if f_constraint is None:
+            return
+        f_constraint = NLOPTConstraintFunction(
+            f_constraint, [self.lower_bounds, self.upper_bounds]
+        )
         self._opt.add_inequality_constraint(f_constraint, tolerance)
-        self.append_constraint_tols(f_constraint, tolerance)
+        self._append_constraint_tols(f_constraint, tolerance)
 
     def add_ineq_constraints(self, f_constraint, tolerance):
+        """
+        Add a vector-valued inequality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: np.ndarray
+            Tolerance array with which to enforce the constraint
+        """
+        if f_constraint is None:
+            return
+        f_constraint = NLOPTConstraintFunction(
+            f_constraint, [self.lower_bounds, self.upper_bounds]
+        )
         self._opt.add_inequality_mconstraint(f_constraint, tolerance)
-        self.append_constraint_tols(f_constraint, tolerance)
+        self._append_constraint_tols(f_constraint, tolerance)
 
     def optimise(self):
-        x_star = self._opt.optimize(self.x0)
+        """
+        Run the optimisation problem.
+
+        Returns
+        -------
+        x_star: np.ndarray
+            Optimal solution vector
+        """
+        try:
+            x_star = self._opt.optimize(self.x0)
+        except nlopt.RoundoffLimited:
+            self.rms = self._opt.last_optimum_value()
+
         self.rms = self._opt.last_optimum_value()
         self.process_result()
         self.check_constraints(x_star)
         return x_star
 
     def process_result(self):
+        """
+        Process the optimisation result.
+        """
         process_NLOPT_result(self._opt)
 
     def check_constraints(self, x):
+        """
+        Check that the constraints have been met.
+        """
         c_values = []
         tolerances = []
         for constraint, tolerance in zip(self.constraints, self.constraint_tols):
-            c_values.extend(constraint(x))
+            c_values.extend(constraint.func(x))
             tolerances.extend(tolerance)
 
         c_values = np.array(c_values)
