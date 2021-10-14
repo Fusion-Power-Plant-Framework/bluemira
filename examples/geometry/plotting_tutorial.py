@@ -26,53 +26,95 @@ from bluemira.plotting.plotter import PointsPlotter, WirePlotter, FacePlotter
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.face import BluemiraFace
 
+# creation of a closed wire and respective face
+# PrincetonD parametrization is used as example.
+# Note: the curve is generated into the xz plane
 p = PrincetonD()
 p.adjust_variable("x1", 4, lower_bound=3, upper_bound=5)
 p.adjust_variable("x2", 16, lower_bound=10, upper_bound=20)
 p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
-
 wire = p.create_shape()
 face = BluemiraFace(wire)
 
-array = p.create_array(n_points=10)
+# discretize the wire
+points = p.create_array(n_points=10)
 
+# simple plot of the obtained points
+# a PointsPlotter is created specifying size, edge and face colors.
+# Note: 2D plot of points is always made on the first 2 coordinates. For this reason
+# the plot is shown as a points cloud on a line
 pplotter = PointsPlotter(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
-pplotter(array, show=True, block=True)
+pplotter(points, show=True, block=True)
 
-wplotter = WirePlotter()
+# plot the wire
+# a WirePlotter is used with the default setup with:
+# - plane = xz (this is the projection plane, not a section plane)
+# - point size = 10
+# - ndiscr = 10
+# - plot title
+wplotter = WirePlotter(plane='xz')
 wplotter.change_poptions(('s', 10))
-wplotter(wire, show=True, block=True, ndiscr=10, byedges=True)
+ndiscr = 10
+wplotter(wire, show=False, block=True, ndiscr=ndiscr, byedges=True)
+wplotter.ax.set_title(f"Wire plot, ndiscr: {ndiscr}")
+wplotter.show_plot()
 
+# in this exaple points plot is disabled.
 wplotter.change_poptions({})
 wplotter(wire, show=True, block=True, ndiscr=10, byedges=True)
+# The plot is immediately shown, so it is not possible to act on the plot setup
+# e.g. following commands would not work
+# wplotter.ax.set_title(f"Wire plot, ndiscr: {ndiscr}")
+# wplotter.show_plot()
 
-# fplotter = FacePlotter(plane='xz')
-# fplotter.options["plot_flag"]["poptions"] = False
-# fplotter.plot(face, show=True, block=True)
+# face plot
+fplotter = FacePlotter(plane='xz')
+fplotter.plot_points = False
+fplotter(face, show=False, block=True, ndiscr=10, byedges=True)
+fplotter.ax.set_title("Face plot")
+fplotter.show_plot()
 
+# a second geometry is created (it contains the first face)
 p2 = PrincetonD()
 p2.adjust_variable("x1", 3.5, lower_bound=3, upper_bound=5)
 p2.adjust_variable("x2", 17, lower_bound=10, upper_bound=20)
 p2.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
-
 wire2 = p2.create_shape()
 face2 = BluemiraFace(wire2)
 
+# face and face2 are plotted using the same FacePlotter. Since no plot options have
+# been changed, the two faces will be plotted in the same way (e.g. same color).
 fplotter2 = FacePlotter(plane='xz')
 fplotter2.plot_points = True
 fplotter2.options["foptions"] = {"color": "blue"}
-fplotter2(face, show=True, block=True, ndiscr=100, byedges=True)
-# ax = fplotter2.plot(face, show=True, block=True)
+fplotter2(face, show=False, block=True, ndiscr=100, byedges=True)
+fplotter2(face2, ax=fplotter2.ax, show=False, block=True, ndiscr=100, byedges=True)
+fplotter2.ax.set_title("Both faces in blue")
+fplotter2.show_plot()
 
-fplotter3 = FacePlotter(plane='xz')
-fplotter3.plot_points = False
+# plot both face with different color.
+# Note: if face is plotte before face2, face2 will be "covered" by face.
+fplotter2.options["foptions"] = {"color": "blue"}
+fplotter2(face2, show=False, block=True, ndiscr=100, byedges=True)
+fplotter2.options["foptions"] = {"color": "green"}
+fplotter2(face, ax=fplotter2.ax, show=False, block=True, ndiscr=100, byedges=True)
+fplotter2.ax.set_title("Both faces with different colors")
+fplotter2.show_plot()
+
+# a third face is create as difference between face and face2 (a BluemiraFace object
+# has been created using wire2 as outer boundary and wire as inner boundary
+# Note: when plotting points, it can happen that markers are not centered properly as
+# described in https://github.com/matplotlib/matplotlib/issues/11836
+
 face3 = BluemiraFace([wire2, wire])
-fplotter3(face3, show=True, block=True, ndiscr=100, byedges=True)
+fplotter3 = FacePlotter(plane='xz')
+fplotter3.plot_points = True
+fplotter3(face3, ndiscr=100, byedges=True)
+fplotter3.ax.set_title("Face with hole - points enabled")
+fplotter3.show_plot()
 
-faceout = BluemiraFace([wire2])
-facein = BluemiraFace([wire])
-ax = fplotter3(face3, ndiscr=100, byedges=True)
-fplotter2.options["foptions"] = {"color": "red"}
-fplotter2(facein, ax, True, True, 100, True)
-
-
+fplotter3.plot_points = False
+fplotter3.change_foptions(('color', 'blue'))
+fplotter3(face3, ax = None, ndiscr=100, byedges=True)
+fplotter3.ax.set_title("Face with hole - points disabled - blue")
+fplotter3.show_plot()
