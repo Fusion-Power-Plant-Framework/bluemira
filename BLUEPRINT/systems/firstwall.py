@@ -1706,10 +1706,51 @@ class FirstWall(EqInputs, ReactorSystem):
 
     def find_strike_points_from_params(self, flux_loops):
         """
-        Find the inner and outer strike points from parameters,
-        taking intersections from the given inner / outer flux loops
+        Find the inner and outer strike points using the relative
+        height from the lower X point taken from self.params
+        and look for the intersection point with given flux loop(s).
+
+        Parameters
+        ----------
+        flux_loops : list of Loop
+            Loops with which the strike point should intersect.
+            For SN case this will be a list with one entry.
+
+        Returns
+        -------
+        inner,outer : list,list
+            Lists of [x,z] coords corresponding to inner and outer
+            strike points
         """
-        raise NotImplementedError
+        # Some shorthands
+        x_x_point = self.points["x_point"]["x"]
+
+        # SN case: just one loop
+        if self.inputs.get("SN", False):
+            outer_loop = inner_loop = flux_loops[0]
+        else:
+            outer_loop = flux_loops[0]
+            inner_loop = flux_loops[1]
+
+        # Get the inner intersection with the separatrix
+        inner_strike_x = self.params.inner_strike_r
+        x_norm = 0
+        # Does it make sense to compare x with x-norm??
+        inner_strike_z = get_intersection_point(
+            inner_strike_x, x_norm, inner_loop, x_x_point, inner=True
+        )[2]
+
+        # Get the outer intersection with the separatrix
+        outer_strike_x = self.params.outer_strike_r
+        # Does it make sense to compare x with x-norm??
+        outer_strike_z = get_intersection_point(
+            outer_strike_x, x_norm, outer_loop, x_x_point, inner=False
+        )[2]
+
+        inner_strike = [inner_strike_x, inner_strike_z]
+        outer_strike = [outer_strike_x, outer_strike_z]
+
+        return inner_strike, outer_strike
 
     def find_strike_points(self, flux_loops):
         """
@@ -2178,15 +2219,15 @@ class FirstWallSN(FirstWall):
         # Parameters used in make_divertor_loop
         ["xpt_outer_gap", "Gap between x-point and outer wall", 1, "m", None, "Input"],
         ["xpt_inner_gap", "Gap between x-point and inner wall", 1, "m", None, "Input"],
-        ["outer_strike_h", "Outer strike point height", 2, "m", None, "Input"],
-        ["inner_strike_h", "Inner strike point height", 1, "m", None, "Input"],
+        ["outer_strike_r", "Outer strike point major radius", 9, "m", None, "Input"],
+        ["inner_strike_r", "Inner strike point major radius", 6.5, "m", None, "Input"],
         ["tk_outer_target_sol", "Outer target length between strike point and SOL side",
          0.7, "m", None, "Input"],
         ["tk_outer_target_pfr", "Outer target length between strike point and PFR side",
          0.3, "m", None, "Input"],
         ["theta_outer_target",
          "Angle between flux line tangent at outer strike point and SOL side of outer target",
-         20, "deg", None, "Input"],
+         50, "deg", None, "Input"],
         ["theta_inner_target",
          "Angle between flux line tangent at inner strike point and SOL side of inner target",
          30, "deg", None, "Input"],
@@ -2229,48 +2270,6 @@ class FirstWallSN(FirstWall):
         self.preliminary_profile = fw_loop
 
         return fw_loop
-
-    def find_strike_points_from_params(self, flux_loops):
-        """
-        Find the inner and outer strike points using the relative
-        height from the lower X point taken from self.params
-        and look for the intersection point with given flux loop(s).
-
-        Parameters
-        ----------
-        flux_loops : list of Loop
-            Loops with which the strike point should intersect.
-            For SN case this will be a list with one entry.
-
-        Returns
-        -------
-        inner,outer : list,list
-            Lists of [x,z] coords corresponding to inner and outer
-            strike points
-        """
-        # Some shorthands
-        z_low = self.points["x_point"]["z_low"]
-        x_x_point = self.points["x_point"]["x"]
-
-        # SN case: just one loop
-        flux_loop = flux_loops[0]
-
-        # Find the x coord of the inner and outer strike points  by
-        # intersecting xy plane at specified z coord with the separatrix
-        z_inner = z_low - self.params.inner_strike_h
-        z_outer = z_low - self.params.outer_strike_h
-        z_norm = 2
-        x_inner = get_intersection_point(
-            z_inner, z_norm, flux_loop, x_x_point, inner=True
-        )[0]
-        x_outer = get_intersection_point(
-            z_outer, z_norm, flux_loop, x_x_point, inner=False
-        )[0]
-
-        inner = [x_inner, z_inner]
-        outer = [x_outer, z_outer]
-
-        return inner, outer
 
     def make_flux_surfaces(self, step_size=0.02, profile=None):
         """
@@ -2931,48 +2930,6 @@ class FirstWallDN(FirstWall):
 
         fw_loop = Loop(x=hull.x, z=hull.z)
         return fw_loop
-
-    def find_strike_points_from_params(self, flux_loops):
-        """
-        Find the inner and outer strike points from their intersections
-        with the given flux loops, given their horizontal positions
-        taken from self.params.
-
-        Parameters
-        ----------
-        flux_loops : list of Loop
-            Loops with which the strike point should intersect
-
-        Returns
-        -------
-        inner,outer : list,list
-            Lists of [x,z] coords corresponding to inner and outer
-            strike points
-        """
-        x_x_point = self.points["x_point"]["x"]
-
-        outer_loop = flux_loops[0]
-        inner_loop = flux_loops[1]
-
-        # Get the inner intersection with the separatrix
-        inner_strike_x = self.params.inner_strike_r
-        x_norm = 0
-        # Does it make sense to compare x with x-norm??
-        inner_strike_z = get_intersection_point(
-            inner_strike_x, x_norm, inner_loop, x_x_point, inner=True
-        )[2]
-
-        # Get the outer intersection with the separatrix
-        outer_strike_x = self.params.outer_strike_r
-        # Does it make sense to compare x with x-norm??
-        outer_strike_z = get_intersection_point(
-            outer_strike_x, x_norm, outer_loop, x_x_point, inner=False
-        )[2]
-
-        inner_strike = [inner_strike_x, inner_strike_z]
-        outer_strike = [outer_strike_x, outer_strike_z]
-
-        return inner_strike, outer_strike
 
     def make_flux_surfaces(self, profile=None):
         """
