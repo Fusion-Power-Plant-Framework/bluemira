@@ -1635,74 +1635,48 @@ class SymmetricCircuit(Circuit):
 
         super().__init__([coil, mirror])
 
-    @property
-    def x(self):
+    def __getattr__(self, attr):
         """
-        The x coordinate of the SymmetricCircuit.
+        Custom __getattr__ to default to returning the attribute of
+        the primary coil if not found in SymmetricCircuit.
         """
-        return self.coils[self.name + ".1"].x
+        # TODO - make Coil inherit from CoilGroup as a group of size 1
+        try:
+            name = self.__getattribute__("name")
+            coil = self.__getattribute__("coils")[name + ".1"]
+            return coil.__getattribute__(attr)
+        except:
+            pass
+        return self.__getattribute__(attr)
 
-    @property
-    def z(self):
+    def apply_coil_method(method_name, *args, **kwargs):
         """
-        The z coordinate of the SymmetricCircuit.
+        Apply a coil method on both coils
         """
-        return self.coils[self.name + ".1"].z
+        results = []
+        for cl_n in [".1", ".2"]:
+            coil = self.coils[self.name + cl_n]
+            result = coil.__getattribute__(method_name)(*args, **kwargs)
+            results.append(result)
+        return results
 
-    @property
-    def dx(self):
-        """
-        The width of the SymmetricCircuit.
-        """
-        return self.coils[self.name + ".1"].dx
-
-    @property
-    def dz(self):
-        """
-        The height of the SymmetricCircuit.
-        """
-        return self.coils[self.name + ".1"].dz
-
-    @property
-    def j_max(self):
-        """
-        The maximum tolerable current density of the SymmetricCircuit [MA/m^2].
-        """
-        return self.coils[self.name + ".1"].j_max
-
-    @property
-    def b_max(self):
-        """
-        The maximum tolerable magnetic field of the SymmetricCircuit [T].
-        """
-        return self.coils[self.name + ".1"].b_max
-
-    @dx.setter
-    def dx(self, _dx):
+    def set_dx(self, _dx):
         """
         Set the width of the SymmetricCircuit.
         """
-        for cl_n in [".1", ".2"]:
-            self.coils[self.name + cl_n].set_dx(_dx)
+        self.apply_coil_method("set_dx", _dx)
 
-    @dz.setter
-    def dz(self, _dz):
+    def set_dz(self, _dz):
         """
         Set the height of the SymmetricCircuit.
         """
-        for cl_n in [".1", ".2"]:
-            self.coils[self.name + cl_n].set_dz(_dz)
+        self.apply_coil_method("set_dz", _dz)
 
     def mesh_coil(self, d_coil):
         """
         Mesh the coils in the SymmetricCircuit.
         """
-        for cl_n in [".1", ".2"]:
-            self.coils[self.name + cl_n].mesh_coil(d_coil)
-
-    def get_max_current(self):
-        for cl_n in [".1", ".2"]:
-            self.coils[self.name + cl_n].get_max_current()
+        self.apply_coil_method("mesh_coil", d_coil)
 
 
 class CoilSet(CoilGroup):
