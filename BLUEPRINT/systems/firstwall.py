@@ -893,7 +893,7 @@ class FirstWall(EqInputs, ReactorSystem):
             self.profile = self.inputs["profile"]
             self.make_flux_surfaces()
         else:
-            self.profile = self.optimise_fw_profile(n_iteration=2)
+            self.profile = self.optimise_fw_profile()
 
         self.make_2d_profile()
 
@@ -958,7 +958,7 @@ class FirstWall(EqInputs, ReactorSystem):
         """
         raise NotImplementedError
 
-    def optimise_fw_profile(self, n_iteration=None, hf_limit=0.2):
+    def optimise_fw_profile(self, hf_limit=0.2):
         """
         Optimises the initial preliminary profile in terms of heat flux.
         The divertor will be attached to this profile.
@@ -982,9 +982,7 @@ class FirstWall(EqInputs, ReactorSystem):
 
         profile = preliminary_profile
         heat_flux_max = 1
-        n = 0
-        while heat_flux_max > hf_limit and n < (n_iteration or False):
-            n = n + 1
+        while heat_flux_max > hf_limit:
 
             x_wall, z_wall, hf_wall = self.hf_firstwall_params(profile)
 
