@@ -22,7 +22,12 @@
 Plotting module examples
 """
 
-from bluemira.plotting.plotter import PointsPlotter, WirePlotter, FacePlotter
+from bluemira.plotting.plotter import (
+    PointsPlotter,
+    WirePlotter,
+    FacePlotter,
+    FaceCompoundPlotter,
+)
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.face import BluemiraFace
 
@@ -103,10 +108,12 @@ fplotter2.show_plot()
 
 # a third face is create as difference between face and face2 (a BluemiraFace object
 # has been created using wire2 as outer boundary and wire as inner boundary
-# Note: when plotting points, it can happen that markers are not centered properly as
-# described in https://github.com/matplotlib/matplotlib/issues/11836
-
-face3 = BluemiraFace([wire2, wire])
+# Note:
+# - when plotting points, it can happen that markers are not centered properly as
+#       described in https://github.com/matplotlib/matplotlib/issues/11836
+# - face3 is created with a wire deepcopy in order to be able to modify face and face2
+# (and thus wire and wire2) without modifying face3
+face3 = BluemiraFace([wire2.deepcopy(), wire.deepcopy()])
 fplotter3 = FacePlotter(plane="xz")
 fplotter3.plot_points = True
 fplotter3(face3, ndiscr=100, byedges=True)
@@ -118,3 +125,25 @@ fplotter3.change_foptions(("color", "blue"))
 fplotter3(face3, ax=None, ndiscr=100, byedges=True)
 fplotter3.ax.set_title("Face with hole - points disabled - blue")
 fplotter3.show_plot()
+
+# some operations on face
+bari = face.center_of_mass
+face.scale(0.5)
+new_bari = face.center_of_mass
+diff = bari - new_bari
+v = (diff[0], diff[1], diff[2])
+face.translate(v)
+
+# creation of a face compound plotter
+# color test with palettes
+cplotter = FaceCompoundPlotter(plane="xz", palette="Blues_r")
+cplotter.plot_points = False
+cplotter([face3, face], ndiscr=100, byedges=True)
+cplotter.ax.set_title("Compound plot - test in Blue_r")
+cplotter.show_plot()
+
+cplotter = FaceCompoundPlotter(plane="xz", palette="light:#105ba4")
+cplotter.plot_points = False
+cplotter([face3, face], ndiscr=100, byedges=True)
+cplotter.ax.set_title("Compound plot - test with single color light:#105ba4")
+cplotter.show_plot()
