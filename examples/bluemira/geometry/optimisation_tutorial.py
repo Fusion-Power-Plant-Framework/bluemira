@@ -43,8 +43,6 @@ class MyProblem(GeometryOptimisationProblem):
 problem = MyProblem(parameterisation, optimiser)
 problem.solve()
 
-square = make_polygon([[4, 0, -2], [8, 0, -2], [8, 0, 2], [4, 0, 2]], closed=True)
-
 
 class MyProblem(GeometryOptimisationProblem):
     def f_objective(self, x):
@@ -57,6 +55,9 @@ class MyProblem(GeometryOptimisationProblem):
         length = self.parameterisation.create_shape().length
         return np.array([40 - length, 40 - length])
 
+
+parameterisation = PrincetonD()
+square = make_polygon([[5, 0, -2], [8, 0, -2], [8, 0, 2], [5, 0, 2]], closed=True)
 
 problem = MyProblem(parameterisation, optimiser)
 problem.optimiser.add_ineq_constraints(problem.f_ineq_constraints, 1e-3 * np.ones(2))
