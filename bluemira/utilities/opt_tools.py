@@ -23,6 +23,8 @@
 Optimisation utilities
 """
 
+import abc
+from copy import deepcopy
 import numpy as np
 import nlopt
 from bluemira.utilities.error import InternalOptError
@@ -288,3 +290,258 @@ def approx_jacobian(x, func, epsilon, bounds, *args, f0=None):
         dx[i] = 0.0
 
     return jac.transpose()
+
+
+# =============================================================================
+# Generic optimisation interface
+# =============================================================================
+
+
+class Optimiser(abc.ABC):
+    """
+    Optimiser ABC for interfacing with different optimisation library APIs.
+
+    Parameters
+    ----------
+    algorithm: Any
+        Optimisation algorithm to use
+    n_variables: int
+        Size of the variable vector
+    """
+
+    def __init__(self, algorithm, n_variables):
+        self.n_variables = n_variables
+        self.set_algorithm(algorithm)
+        self.x0 = np.zeros(n_variables)
+        self.constraints = []
+        self.constraint_tols = []
+
+    def set_initial_value(self, x0):
+        """
+        Set the optimiser initial solution.
+
+        Parameters
+        ----------
+        x0: np.ndarray
+            Initial solution vector
+        """
+        if len(x0) != self.n_variables:
+            raise InternalOptError(
+                "Initial solution must have the same dimension as the optimiser."
+            )
+        self.x0 = x0
+
+    @abc.abstractmethod
+    def set_algorithm(self, algorithm):
+        """
+        Set the optimisation algorithm to use.
+
+        Parameters
+        ----------
+        algorithm: Any
+            Optimisation algorithm to use
+        """
+        pass
+
+    @abc.abstractmethod
+    def set_algorithm_parameters(self, opt_parameters):
+        """
+        Set the optimisation algorithm parameters to use.
+
+        Parameters
+        ----------
+        opt_parameters: Any
+            Optimisation algorithm parameters to use
+        """
+        pass
+
+    @abc.abstractmethod
+    def set_termination_conditions(self, opt_conditions):
+        """
+        Set the optimisation algorithm termination condition(s) to use.
+
+        Parameters
+        ----------
+        opt_conditions: Any
+            Termination conditions for the optimisation algorithm
+        """
+        pass
+
+    @abc.abstractmethod
+    def set_objective_function(self, f_objective):
+        """
+        Set the objective function (minimisation).
+
+        Parameters
+        ----------
+        f_objective: callable
+            Objective function to minimise
+        """
+        pass
+
+    @abc.abstractmethod
+    def add_ineq_constraint(self, f_constraint, tolerance):
+        """
+        Add a single-valued inequality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: float
+            Tolerance with which to enforce the constraint
+        """
+        pass
+
+    @abc.abstractmethod
+    def add_ineq_constraints(self, f_constraint, tolerance):
+        """
+        Add a vector-valued inequality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: np.ndarray
+            Tolerance array with which to enforce the constraint
+        """
+        pass
+
+    @abc.abstractmethod
+    def add_eq_constraint(self, f_constraint, tolerance):
+        """
+        Add a single-valued equality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: float
+            Tolerance with which to enforce the constraint
+        """
+        pass
+
+    @abc.abstractmethod
+    def set_lower_bounds(self, lower_bounds):
+        """
+        Set the lower bounds.
+
+        Parameters
+        ----------
+        lower_bounds: np.ndarray
+            Lower bound vector
+        """
+        pass
+
+    @abc.abstractmethod
+    def set_upper_bounds(self, upper_bounds):
+        """
+        Set the upper bounds.
+
+        Parameters
+        ----------
+        upper_bounds: np.ndarray
+            Upper bound vector
+        """
+        pass
+
+    @abc.abstractmethod
+    def optimise(self):
+        """
+        Run the optimisation problem.
+
+        Returns
+        -------
+        x_star: np.ndarray
+            Optimal solution vector
+        """
+        pass
+
+    def append_constraint_tols(self, constraint, tolerance):
+        self.constraints.append(constraint)
+        self.constraint_tols.append(tolerance)
+
+    @abc.abstractmethod
+    def process_result(self):
+        pass
+
+    @abc.abstractmethod
+    def check_constraints(self):
+        pass
+
+    def copy(self):
+        return deepcopy(self)
+
+
+class NLOptOptimiser(Optimiser):
+    def __init__(self, algorithm, n_variables):
+        super().__init__(self, algorithm, n_variables)
+
+    def set_algorithm(self, algorithm):
+        self._opt = nlopt.opt(algorithm, self.n_variables)
+
+    def set_algorithm_parameters(self, opt_parameters):
+        for k, v in opt_parameters:
+            self._opt.set_param(k, v)
+
+    def set_termination_conditions(self, opt_conditions):
+        if "ftol_abs" in opt_conditions:
+            self._opt.set_ftol_abs(opt_conditions["ftol_abs"])
+        if "ftol_rel" in opt_conditions:
+            self._opt.set_ftol_rel(opt_conditions["ftol_rel"])
+        if "xtol_abs" in opt_conditions:
+            self._opt.set_xtol_abs(opt_conditions["xtol_abs"])
+        if "xtol_rel" in opt_conditions:
+            self._opt.set_xtol_rel(opt_conditions["xtol_rel"])
+        if "max_time" in opt_conditions:
+            self._opt.set_maxtime(opt_conditions["max_time"])
+        if "max_eval" in opt_conditions:
+            self._opt.set_maxeval(opt_conditions["max_eval"])
+        if "stop_val" in opt_conditions:
+            self._opt.set_stopval(opt_conditions["stop_val"])
+
+    def set_objective_function(self, f_objective):
+        self._opt.set_min_objective(f_objective)
+
+    def set_lower_bounds(self, lower_bounds):
+        self._opt.set_lower_bounds(lower_bounds)
+
+    def set_upper_bounds(self, upper_bounds):
+        self._opt.set_upper_bounds(upper_bounds)
+
+    def add_eq_constraint(self, f_constraint, tolerance):
+        self._opt.add_equality_constraint(f_constraint, tolerance)
+        self.append_constraint_tols(f_constraint, tolerance)
+
+    def add_ineq_constraint(self, f_constraint, tolerance):
+        self._opt.add_inequality_constraint(f_constraint, tolerance)
+        self.append_constraint_tols(f_constraint, tolerance)
+
+    def add_ineq_constraints(self, f_constraint, tolerance):
+        self._opt.add_inequality_mconstraint(f_constraint, tolerance)
+        self.append_constraint_tols(f_constraint, tolerance)
+
+    def optimise(self):
+        x_star = self._opt.optimize(self.x0)
+        self.rms = self._opt.last_optimum_value()
+        self.process_result()
+        self.check_constraints(x_star)
+        return x_star
+
+    def process_result(self):
+        process_NLOPT_result(self._opt)
+
+    def check_constraints(self, x):
+        c_values = []
+        tolerances = []
+        for constraint, tolerance in zip(self.constraints, self.constraint_tols):
+            c_values.extend(constraint(x))
+            tolerances.extend(tolerance)
+
+        c_values = np.array(c_values)
+        tolerances = np.array(tolerances)
+
+        if not np.all(c_values < tolerances):
+            raise InternalOptError(
+                "Some constraints have not been adequately satisfied."
+            )
