@@ -34,7 +34,6 @@ from OCC.Core.TDF import TDF_LabelSequence
 from OCC.Core.TDocStd import TDocStd_Document
 from OCC.Core.XCAFDoc import XCAFDoc_ColorGen, XCAFDoc_DocumentTool
 from OCC.Core.XSControl import XSControl_WorkSession
-from OCC.Core.TopoDS import TopoDS_Shape
 
 from BLUEPRINT.base.error import CADError
 
@@ -55,7 +54,6 @@ class StepWriter(object):
         self.doc = TDocStd_Document(TCollection_ExtendedString("MDTV-CAF"))
 
         self.shape_tool = XCAFDoc_DocumentTool().ShapeTool(self.doc.Main())
-        #        self.shape_tool.SetAutoNaming(False)
         self.colours = XCAFDoc_DocumentTool().ColorTool(self.doc.Main())
         self.layers = XCAFDoc_DocumentTool().LayerTool(self.doc.Main())
         _ = TDF_LabelSequence()
@@ -103,7 +101,7 @@ class StepWriter(object):
             )
             self.layer_names[layer_name] = self.current_layer
 
-    def add_shape(self, shape, colour=None, layer=None):
+    def add_shape(self, shape, colour=None, layer=None, name=None):
         """
         Add a shape to export.
 
@@ -122,55 +120,20 @@ class StepWriter(object):
         -----
         The set colours and layers will be used for any further objects that are added.
         """
-
+        # False argument means we add this shape as a component, not an assembly
+        # This is important as metadata is treated differently for the latter.
         shp_label = self.shape_tool.AddShape(shape, False)
 
-        print("Is top level label? = ", self.shape_tool.IsTopLevel(shp_label))
-        print("Is assembly = ", self.shape_tool.IsAssembly(shp_label))
-
-        labels = TDF_LabelSequence()
-        hasShapes = self.shape_tool.GetShapes(labels)
-        if hasShapes:
-            print(labels.Size())
-        else:
-            print("Didn't find shapes")
-
-        test_shape = TopoDS_Shape()
-        success = self.shape_tool.GetShape(shp_label, test_shape)
-        print(type(test_shape))
-        is_same = test_shape.IsSame(shape)
-        print("test same = ", is_same)
-
-        # shape_named_data = self.shape_tool.GetNamedProperties(shp_label,True)
-        # print(type(shape_named_data))
-        # print(dir(shape_named_data))
-        # occ_name = TDataStd_Name()
-        # occ_string = TCollection_ExtendedString("GenericName")
-        # occ_name.Set(occ_string)
-        # shape_named_data.ForgetAttribute(occ_name.GetID())
-        # shape_named_data.AddAttribute(occ_name)
-
-        occ_name = TDataStd_Name()
-        occ_string = TCollection_ExtendedString("HelensSolid")
-        occ_name_handle = occ_name.Set(occ_string)
-        shp_label.ForgetAttribute(occ_name.GetID())
-        shp_label.AddAttribute(occ_name, True)
-
-        print("Shape label dump: ", shp_label.DumpToString())
-        print("Label name: ", shp_label.GetLabelName())
-
-        ## As far as I can tell findattribute is useless
-        # occ_named_shape = TNaming_NamedShape()
-        # if(shp_label.FindAttribute(occ_named_shape.GetID(),occ_named_shape)):
-        #    print("label has named shape")
-        #    print("shape is valid = ",occ_named_shape.IsValid())
-        #    print("shape is empty = ",occ_named_shape.IsEmpty())
-
-        # occ_query_name = TDataStd_Name()
-        # if(shp_label.FindAttribute(occ_query_name.GetID(),occ_query_name)):
-        #    print("label has name")
-        #    print("name is valid = ",occ_named_shape.IsValid())
-        #    print("name is empty = ",occ_named_shape.IsEmpty())
+        # If a valid name was was provided  convert to OCC string time and add
+        # to our shape's attribute, clearing pre-existing data from autonaming
+        if name is not None:
+            if not isinstance(name, str):
+                raise TypeError("CAD component shape has name of non string type")
+            occ_name = TDataStd_Name()
+            occ_string = TCollection_ExtendedString(name)
+            occ_name.Set(occ_string)
+            shp_label.ForgetAttribute(occ_name.GetID())
+            shp_label.AddAttribute(occ_name, True)
 
         if colour is None:
             self.colours.SetColor(shp_label, self.current_colour, XCAFDoc_ColorGen)

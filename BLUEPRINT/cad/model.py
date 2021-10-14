@@ -193,13 +193,30 @@ class CADModel:
         scale: float (default=1)
             The factor with which to scale the geometry
         """
-        shapes = []
+        # Populate the silo dict with all CAD components and their data
+        # applying a toroidally repeating pattern as requested
         if self.silo is None:
             self.pattern("sector")
+
+        # Extract values for OCCS shapes and names of all from silo dict
+        # and store in a list
+        all_component_names = []
+        shapes = []
+        # Loop over all components
         for component in self.silo.values():
+            all_component_names.extend(component["names"])
+            # Loop over all sub components
             for compounds in component["compounds"]:
                 shapes.append(compounds)
-        save_as_STEP_assembly(shapes, filename=filename, partname=partname, scale=scale)
+
+        # Write to file
+        save_as_STEP_assembly(
+            shapes,
+            filename=filename,
+            partname=partname,
+            scale=scale,
+            component_names=all_component_names,
+        )
 
     def save_as_STEP(self, filepath, scale=1):  # noqa :N802
         """

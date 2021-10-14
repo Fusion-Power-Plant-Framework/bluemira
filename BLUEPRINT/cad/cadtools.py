@@ -475,7 +475,7 @@ def save_as_STEP(
 
 
 def save_as_STEP_assembly(
-    *shapes, filename="test", partname=None, scale=1
+    *shapes, filename="test", partname=None, scale=1, component_names=None
 ):  # noqa :N802
     """
     Saves a series of Shape objects as a STEP assembly
@@ -500,11 +500,26 @@ def save_as_STEP_assembly(
             bluemira_warn("Partname not saved to STEP file header")
         exporter = StepOcafExporter(filename)
 
+    # Flatten the shapes list
     shapes = expand_nested_list(shapes)
-    for shape in shapes:
+
+    # Check if component names were provided
+    has_names = False
+    if component_names is not None:
+        if len(component_names) != len(shapes):
+            raise CADError("Inconsistent number of CAD component names were provided")
+        has_names = True
+
+    # Add all shapes to be written to file by the STP exporter
+    for index, shape in enumerate(shapes):
         if scale != 1:
             shape = scale_shape(shape, scale)
-        exporter.add_shape(shape)
+        shape_name = None
+        if has_names:
+            shape_name = component_names[index]
+        exporter.add_shape(shape, name=shape_name)
+
+    # Write to file
     exporter.write_file()
     if not os.path.isfile(filename):
         raise IOError("File not written to disk.")
