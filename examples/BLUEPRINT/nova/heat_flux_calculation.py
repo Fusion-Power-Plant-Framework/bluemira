@@ -31,7 +31,7 @@ from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from bluemira.equilibria.equilibrium import Equilibrium
 
-from BLUEPRINT.systems.firstwall import FirstWallSN, FluxSurface
+from BLUEPRINT.systems.firstwall import FirstWallSN
 from time import time
 
 # %%[markdown]
