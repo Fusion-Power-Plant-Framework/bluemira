@@ -52,8 +52,8 @@ pplotter(points, show=True, block=True)
 # - point size = 10
 # - ndiscr = 10
 # - plot title
-wplotter = WirePlotter(plane='xz')
-wplotter.change_poptions(('s', 10))
+wplotter = WirePlotter(plane="xz")
+wplotter.change_poptions(("s", 10))
 ndiscr = 10
 wplotter(wire, show=False, block=True, ndiscr=ndiscr, byedges=True)
 wplotter.ax.set_title(f"Wire plot, ndiscr: {ndiscr}")
@@ -68,7 +68,7 @@ wplotter(wire, show=True, block=True, ndiscr=10, byedges=True)
 # wplotter.show_plot()
 
 # face plot
-fplotter = FacePlotter(plane='xz')
+fplotter = FacePlotter(plane="xz")
 fplotter.plot_points = False
 fplotter(face, show=False, block=True, ndiscr=10, byedges=True)
 fplotter.ax.set_title("Face plot")
@@ -84,7 +84,7 @@ face2 = BluemiraFace(wire2)
 
 # face and face2 are plotted using the same FacePlotter. Since no plot options have
 # been changed, the two faces will be plotted in the same way (e.g. same color).
-fplotter2 = FacePlotter(plane='xz')
+fplotter2 = FacePlotter(plane="xz")
 fplotter2.plot_points = True
 fplotter2.options["foptions"] = {"color": "blue"}
 fplotter2(face, show=False, block=True, ndiscr=100, byedges=True)
@@ -107,14 +107,14 @@ fplotter2.show_plot()
 # described in https://github.com/matplotlib/matplotlib/issues/11836
 
 face3 = BluemiraFace([wire2, wire])
-fplotter3 = FacePlotter(plane='xz')
+fplotter3 = FacePlotter(plane="xz")
 fplotter3.plot_points = True
 fplotter3(face3, ndiscr=100, byedges=True)
 fplotter3.ax.set_title("Face with hole - points enabled")
 fplotter3.show_plot()
 
 fplotter3.plot_points = False
-fplotter3.change_foptions(('color', 'blue'))
-fplotter3(face3, ax = None, ndiscr=100, byedges=True)
+fplotter3.change_foptions(("color", "blue"))
+fplotter3(face3, ax=None, ndiscr=100, byedges=True)
 fplotter3.ax.set_title("Face with hole - points disabled - blue")
 fplotter3.show_plot()
