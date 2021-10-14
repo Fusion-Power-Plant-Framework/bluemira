@@ -51,7 +51,6 @@ from BLUEPRINT.geometry.geomtools import (
     make_box_xz,
 )
 from BLUEPRINT.geometry.geombase import make_plane
-from BLUEPRINT.geometry.geomtools import lineq
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d
 from functools import partial
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
@@ -473,7 +472,23 @@ class FluxSurface(EqInputs):
         )
 
     def cut_flux_line_portion(self, loop, point_1, point_2):
+        """
+        Cuts a flux line (loop) between two end points
 
+        Parameters
+        ----------
+        loop : Loop
+            loop object
+        point_1 : [float, float]
+            Initial point in [x, z] coordinates
+        point_2 : [float, float]
+            Final point in [x, z] coordinates
+
+        Returns
+        -------
+        new_loop: Loop
+            Portion of the initial loop
+        """
         d_ref = self.distance_between_two_points_on_a_loop(loop, point_1, point_2)
         d_loop = []
         for x, z in zip(loop.x, loop.z):
@@ -1221,6 +1236,12 @@ class FirstWall(EqInputs, ReactorSystem):
             degree_in = degree_out = self.inputs.get(
                 "outer_leg_sol_polyfit_degree",
                 self.inputs.get("outer_leg_pfr_polyfit_degree", 1),
+            )
+            outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
+        elif self.inputs.get("SN", False):
+            degree_in = degree_out = self.inputs.get(
+                "outer_leg_sol_polyfit_degree",
+                self.inputs.get("outer_leg_pfr_polyfit_degree", 2),
             )
             outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
         else:
@@ -2054,11 +2075,11 @@ class FirstWall(EqInputs, ReactorSystem):
     def horizontal_clipper(self, loop, vertical_reference=None, top_limit=None):
         """
         Loop clipper.
-        Removes bottom and top part of a loop. The bottom limit for the cut is the
-        lower x point, while the top limit can be specified. If it is not, the upper
-        x point is assigned.
-        A vertical plane can be assigned to keep either the part part of the loop on the right
-        or on the left of such additional geometrical limit.
+        Removes bottom and top part of a loop. The bottom limit for the cut
+        is the lower x point, while the top limit can be specified. If it is
+        not, the upper x point is assigned.
+        A vertical plane can be assigned to keep either the part part of the
+        loop on the right or on the left of such additional geometrical limit.
 
         Parameters
         ----------
@@ -2346,7 +2367,8 @@ class FirstWallSN(FirstWall):
 
     def find_intersections(self, profile):
         """
-        Find intersections between all the flux surfaces and a given first wall profile
+        Find intersections between all the flux
+        surfaces and a given first wall profile
 
         Parameters
         ----------
@@ -2379,7 +2401,8 @@ class FirstWallSN(FirstWall):
         intersections_z,
     ):
         """
-        Find first intersections between all the flux surfaces and a given first wall profile
+        Find first intersections between all the flux
+        surfaces and a given first wall profile
 
         Parameters
         ----------
@@ -2476,7 +2499,6 @@ class FirstWallSN(FirstWall):
         f_hfs_list: [float]
             flux exapnsion for each fs at the intersection point at the hfs
         """
-
         qpar_local_lfs = []
         qpar_local_hfs = []
 
@@ -2733,7 +2755,6 @@ class FirstWallSN(FirstWall):
         new_fw_profile: Loop
             Optimised profile
         """
-
         clipped_loops = []
         self.loops = self.equilibrium.get_flux_surface_through_point(x_int_hf, z_int_hf)
 
@@ -3133,7 +3154,8 @@ class FirstWallDN(FirstWall):
         hfs_intersections_z,
     ):
         """
-        Find first intersections between all the flux surfaces and a given first wall profile
+        Find first intersections between all the flux
+        surfaces and a given first wall profile
 
         Parameters
         ----------
@@ -3157,7 +3179,6 @@ class FirstWallDN(FirstWall):
         hfs_up_first_intersections: [float, float] (n intersections)
             x, z coordinates of first intersections at hfs
         """
-
         lfs_down_first_intersections = []
         lfs_up_first_intersections = []
         hfs_down_first_intersections = []

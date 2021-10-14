@@ -48,29 +48,35 @@ z_box = [-11, -11, 11, 11, -11]
 vv_box = Loop(x=x_box, z=z_box)
 
 # %%[markdown]
-# Calling the First Wall Class
-# First Wall Class will create a set of flux surfaces between the LCFS and the FW
-# In this case we are going to calculate the heat fluxes onto the provided profile
-# Alternatively we can also call the class only providing an equilibrium
-# In this case a "preliminary first wall" profile will be designed
+# Calling the First Wall Class which will run
+# the whole first wall optimisation being everything
+# defined in the relevant __init__ function.
+# Some basic inputs need to be specified.
+# Particularly, if the user is dealing with a configuration
+# different than STEP DN, this needs to be specified.
+# At the moment, options alternative to STEP DN are
+# "DEMO_DN" and "SN".
 
+# %%
 fw = FirstWallSN(
     FirstWallSN.default_params,
     {
         "equilibrium": eq,
         "vv_inner": vv_box,
-        "DEMO_DN": True,
-        "div_vertical_outer_target": False,
+        "SN": True,
+        "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
     },
 )
 
-fig, ax = plt.subplots()
-fw.inner_profile.plot(ax, fill=False, facecolor="b", linewidth=1)
-cs = ax.scatter(fw.x_wall, fw.z_wall, c=fw.hf_wall, cmap="viridis", zorder=100)
-bar = fig.colorbar(cs, ax=ax)
-bar.set_label("Heat Flux [MW/m^2]")
+# %%[markdown]
+# The funtion "plot_hf" gives a summary plot of
+# optimised wall, heat flux and flux surfaces.
 
+# %%
+
+fig, ax = plt.subplots()
+fw.plot_hf()
 plt.show()
 
 

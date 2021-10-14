@@ -51,11 +51,14 @@ z_box = [-11, -11, 11, 11, -11]
 vv_box = Loop(x=x_box, z=z_box)
 
 # %%[markdown]
-# Calling the First Wall Class the create a
-# preliminary first wall profile devoid of the divertor.
-# In input, besides the equilibrium, we need to provide a
-# a vacuum vessel profile.
-# Adding the divertor to the above mentioned first wall.
+# Calling the First Wall Class which will run
+# the whole first wall optimisation being everything
+# defined in the relevant __init__ function.
+# Some basic inputs need to be specified.
+# Particularly, if the user is dealing with a configuration
+# different than STEP DN, this needs to be specified.
+# At the moment, options alternative to STEP DN are
+# "DEMO_DN" and "SN".
 
 # %%
 fw = FirstWallDN(
@@ -68,10 +71,14 @@ fw = FirstWallDN(
         "div_vertical_inner_target": False,
     },
 )
+
+# %%[markdown]
+# The funtion "plot_hf" gives a summary plot of
+# optimised wall, heat flux and flux surfaces.
+
+# %%
+
 fig, ax = plt.subplots()
-fw.inner_profile.plot(ax, fill=False, facecolor="b", linewidth=1)
-cs = ax.scatter(fw.x_wall, fw.z_wall, c=fw.hf_wall, cmap="viridis", zorder=100)
-bar = fig.colorbar(cs, ax=ax)
-bar.set_label("Heat Flux [MW/m^2]")
+fw.plot_hf()
 
 print(f"{time()-t:.2f} seconds")
