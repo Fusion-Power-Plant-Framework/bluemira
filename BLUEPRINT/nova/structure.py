@@ -45,7 +45,7 @@ from BLUEPRINT.geometry.geomtools import (
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import boolean_2d_difference
-from BLUEPRINT.equilibria.positioner import XZLMapper
+from bluemira.equilibria.positioner import XZLMapper
 from BLUEPRINT.cad.coilCAD import CoilStructureCAD
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 

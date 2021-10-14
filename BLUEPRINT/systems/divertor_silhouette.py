@@ -32,9 +32,8 @@ from scipy.optimize import minimize_scalar
 from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
-
+from bluemira.equilibria.find import find_OX_points
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.equilibria.find import find_OX
 from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d, unique, xz_interp
 from BLUEPRINT.geometry.loop import Loop
@@ -105,7 +104,7 @@ class DivertorSilhouette(DivertorProfile):
         self.debug = self.inputs.get("debug", False)
         self.baffle_max_iter = self.inputs.get("baffle_max_iter", 500)
 
-        o_points, x_points = find_OX(self.sf.x2d, self.sf.z2d, self.sf.psi)
+        o_points, x_points = find_OX_points(self.sf.x2d, self.sf.z2d, self.sf.psi)
         self.o_points = np.array([[point[0], point[1]] for point in o_points])
         self.x_points = np.array([[point[0], point[1]] for point in x_points])
 

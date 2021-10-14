@@ -50,15 +50,22 @@ class TestCoil:
         cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd", j_max=NBTI_J_MAX)
 
     def test_name(self):
-        assert self.coil.name == PF_COIL_NAME.format(1)
-        assert self.cs_coil.name == CS_COIL_NAME.format(1)
-        assert self.no_coil.name == NO_COIL_NAME.format(1)
+        def extract_int(coil):
+            return int(coil.name.split("_")[-1])
+
+        def extract_prefix(coil):
+            return coil.name.split("_")[0]
+
+        assert extract_prefix(self.coil) == PF_COIL_NAME.split("_")[0]
+        assert extract_prefix(self.cs_coil) == CS_COIL_NAME.split("_")[0]
+        assert extract_prefix(self.no_coil) == NO_COIL_NAME.split("_")[0]
         coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
         cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
         no_coil = Coil(4, 4, 10e6, ctype="agd", j_max=NBTI_J_MAX)
-        assert coil.name == PF_COIL_NAME.format(2)
-        assert cs_coil.name == CS_COIL_NAME.format(2)
-        assert no_coil.name == NO_COIL_NAME.format(2)
+
+        assert extract_int(coil) == extract_int(self.coil) + 1
+        assert extract_int(cs_coil) == extract_int(self.cs_coil) + 1
+        assert extract_int(no_coil) == extract_int(self.no_coil) + 1
 
     def test_field(self):
         c = Coil(1, 0, current=1591550, dx=0, dz=0)  # Sollte 5 T am Achse erzeugen

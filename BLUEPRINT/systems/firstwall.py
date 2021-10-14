@@ -31,7 +31,7 @@ from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
-from BLUEPRINT.equilibria.find import find_flux_surfs
+from bluemira.equilibria.find import find_flux_surfs
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (

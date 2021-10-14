@@ -30,8 +30,8 @@ the first wall and optimise the shape design.
 # %%
 import os
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.equilibria.equilibrium import Equilibrium
+from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.equilibrium import Equilibrium
 from BLUEPRINT.systems.firstwall import FirstWallDN
 from BLUEPRINT.geometry.loop import Loop
 from time import time
@@ -42,7 +42,7 @@ t = time()
 # Loading an equilibrium file
 
 # %%
-read_path = get_BP_path("BLUEPRINT/equilibria/test_data", subfolder="tests")
+read_path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
 eq_name = "DN-DEMO_eqref.json"
 eq_name = os.sep.join([read_path, eq_name])
 eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)

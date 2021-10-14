@@ -13,7 +13,6 @@ Modules
    beams
    cad
    costs
-   equilibria
    geometry
    materials
    neutronics
