@@ -360,3 +360,104 @@ def save_as_STEP(shapes, filename="test", scale=1):
 
     freecad_shapes = [s._shape for s in shapes]
     _freecadapi.save_as_STEP(freecad_shapes, filename, scale)
+
+
+# =============================================================================
+# Signed distance functions
+# =============================================================================
+
+import numba as nb
+
+
+def signed_distance(shape1, shape2):
+    in_or_out = 1.0
+    min_distance, vectors = distance_to(shape1, shape2)
+    return in_or_out * min_distance
+
+
+@nb.jit(nopython=True, cache=True)
+def numba_dot_2D(v_1, v_2):
+    return v_1[0] * v_2[0] + v_1[1] * v_2[1]
+
+
+@nb.jit(nopython=True, cache=True)
+def numba_clip(val, a_min, a_max):
+    return a_min if val < a_min else a_max if val > a_max else val
+
+
+@nb.jit(nopython=True, cache=True)
+def _signed_distance_2D(point, polygon):
+    """
+    2-D function for the signed distance from a point to a polygon. The return value is
+    negative if the point is outside the polygon, and positive if the point is inside the
+    polygon.
+
+    Parameters
+    ----------
+    point: np.ndarray(2)
+        2-D point
+    polygon: np.ndarray(n, 2)
+        2-D set of point coordinates
+
+    Returns
+    -------
+    signed_distance: float
+        Signed distance value of the point to the polygon
+
+    Notes
+    -----
+    Credit: Inigo Quilez (https://www.iquilezles.org/)
+    """
+    sign = -1.0
+    point = np.asfarray(point)
+    polygon = np.asfarray(polygon)
+    n = len(polygon)
+
+    d = numba_dot_2D(point - polygon[0], point - polygon[0])
+
+    for i in range(n - 1):
+        j = i + 1
+        e = polygon[j] - polygon[i]
+        w = point - polygon[i]
+        b = w - e * numba_clip(numba_dot_2D(w, e) / numba_dot_2D(e, e), 0.0, 1.0)
+        d_new = numba_dot_2D(b, b)
+        if d_new < d:
+            d = d_new
+
+        cond = np.array(
+            [
+                point[1] >= polygon[i][1],
+                point[1] < polygon[j][1],
+                e[0] * w[1] > e[1] * w[0],
+            ]
+        )
+        if np.all(cond) or np.all(~cond):
+            sign = -sign
+
+    return sign * np.sqrt(d)
+
+
+@nb.jit(nopython=True, cache=True)
+def signed_distance_2D_polygon(subject_poly, target_poly):
+    """
+    2-D vector-valued signed distance function
+
+    Parameters
+    ----------
+    subject_poly: np.ndarray(n, 2)
+        Subject polygon
+    target_poly: np.ndarray(m, 2)
+        Target polygon
+
+    Returns
+    -------
+    signed_distance: np.ndarray(n)
+        Signed distances from the subject polygon to the target polygon
+    """
+    m = len(subject_poly)
+    d = np.zeros(m)
+
+    for i in range(len(m)):
+        d[i] = _signed_distance_2D(subject_poly[i], target_poly)
+
+    return d
