@@ -12,7 +12,6 @@ Modules
    base
    beams
    cad
-   codes
    costs
    geometry
    materials
