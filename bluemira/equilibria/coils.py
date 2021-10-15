@@ -1641,15 +1641,14 @@ class SymmetricCircuit(Circuit):
         the primary coil if not found in SymmetricCircuit.
         """
         # TODO - make Coil inherit from CoilGroup as a group of size 1
-        try:
-            name = self.__getattribute__("name")
-            coil = self.__getattribute__("coils")[name + ".1"]
+        name = self.__getattribute__("name")
+        coil = self.__getattribute__("coils")[name + ".1"]
+        if hasattr(coil, attr):
             return coil.__getattribute__(attr)
-        except:
-            pass
-        return self.__getattribute__(attr)
+        else:
+            return self.__getattribute__(attr)
 
-    def apply_coil_method(method_name, *args, **kwargs):
+    def apply_coil_method(self, method_name, *args, **kwargs):
         """
         Apply a coil method on both coils
         """
