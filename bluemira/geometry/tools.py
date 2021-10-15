@@ -371,7 +371,7 @@ def save_as_STEP(shapes, filename="test", scale=1):
 @nb.jit(nopython=True, cache=True)
 def _nb_dot_2D(v_1, v_2):
     """
-    numba 2-D dot product
+    Numba 2-D dot product
     """
     return v_1[0] * v_2[0] + v_1[1] * v_2[1]
 
@@ -379,7 +379,7 @@ def _nb_dot_2D(v_1, v_2):
 @nb.jit(nopython=True, cache=True)
 def _nb_clip(val, a_min, a_max):
     """
-    numba 1-D clip
+    Numba 1-D clip
     """
     return a_min if val < a_min else a_max if val > a_max else val
 
@@ -439,9 +439,9 @@ def _signed_distance_2D(point, polygon):
 @nb.jit(nopython=True, cache=True)
 def signed_distance_2D_polygon(subject_poly, target_poly):
     """
-    2-D vector-valued signed distance function from a subject polygon to a target polygon.
-    The return values are negative for points outside the subject polygon, and positive for
-    points inside the subject polygon.
+    2-D vector-valued signed distance function from a subject polygon to a target
+    polygon. The return values are negative for points outside the subject polygon, and
+    positive for points inside the subject polygon.
 
     Parameters
     ----------
@@ -466,9 +466,9 @@ def signed_distance_2D_polygon(subject_poly, target_poly):
 
 def signed_distance(wire_1, wire_2):
     """
-    Single-valued signed "distance" function between two wires. Will return negative values
-    if wire_1 does not touch or intersect wire_2, 0 if there is one intersection, and a
-    positive estimate of the intersection length if there are overlaps.
+    Single-valued signed "distance" function between two wires. Will return negative
+    values if wire_1 does not touch or intersect wire_2, 0 if there is one intersection,
+    and a positive estimate of the intersection length if there are overlaps.
 
     Parameters
     ----------
@@ -481,6 +481,12 @@ def signed_distance(wire_1, wire_2):
     -------
     signed_distance: float
         Signed distance from wire_1 to wire_2
+
+    Notes
+    -----
+    This is not a pure implementation of a distance function, as for overlapping wires a
+    metric of the quantity of overlap is returned (a positive value). This nevertheless
+    enables the use of such a function as a constraint in gradient-based optimisers.
     """
     d, vectors = distance_to(wire_1, wire_2)
 
