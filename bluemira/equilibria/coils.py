@@ -1673,7 +1673,7 @@ class SymmetricCircuit(Circuit):
             Keyword arguments to pass to Coil method function call.
 
         Returns
-        ----------
+        -------
         results: list
             List containing outputs of coil method applied
             to each member of the SymmetricCircuit
