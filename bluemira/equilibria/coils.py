@@ -293,6 +293,8 @@ class Coil:
         The name of the coil
     """
 
+    # TODO - make Coil inherit from CoilGroup as a group of size 1
+
     __slots___ = [
         "x",
         "z",
@@ -1639,8 +1641,13 @@ class SymmetricCircuit(Circuit):
         """
         Custom __getattr__ to default to returning the attribute of
         the primary coil if not found in SymmetricCircuit.
+
+        Parameters
+        ----------
+        attr: str
+              Name of attribute to fetch.
+
         """
-        # TODO - make Coil inherit from CoilGroup as a group of size 1
         name = self.__getattribute__("name")
         coil = self.__getattribute__("coils")[name + ".1"]
         if hasattr(coil, attr):
@@ -1650,7 +1657,26 @@ class SymmetricCircuit(Circuit):
 
     def apply_coil_method(self, method_name, *args, **kwargs):
         """
-        Apply a coil method on both coils
+        Calls the coil method method_name on both coils in the
+        SymmetricCircuit, and returns any results in a list.
+
+        Parameters
+        ----------
+        method_name: str
+            Name of method in Coil to call for each member of
+            the SymmetricCircuit.
+
+        args: tuple
+            Arguments to pass to into Coil method function call.
+
+        kwargs: dict
+            Keyword arguments to pass to Coil method function call.
+
+        Returns
+        ----------
+        results: list
+            List containing outputs of coil method applied
+            to each member of the SymmetricCircuit
         """
         results = []
         for cl_n in [".1", ".2"]:
@@ -1661,19 +1687,34 @@ class SymmetricCircuit(Circuit):
 
     def set_dx(self, _dx):
         """
-        Set the width of the SymmetricCircuit.
+        Adjusts the radial thickness of all Coils in the SymmetricCircuit.
+
+        Parameters
+        ----------
+        _dx: float
+            The change in radial position to apply to the coils
         """
         self.apply_coil_method("set_dx", _dx)
 
     def set_dz(self, _dz):
         """
-        Set the height of the SymmetricCircuit.
+        Adjusts the vertical thickness of all Coils in the SymmetricCircuit.
+
+        Parameters
+        ----------
+        _dz: float
+            The change in vertical position to apply to the coils
         """
         self.apply_coil_method("set_dz", _dz)
 
     def mesh_coil(self, d_coil):
         """
-        Mesh the coils in the SymmetricCircuit.
+        Mesh an coils in the SymmetricCircuit into smaller subcoils.
+
+        Parameters
+        ----------
+        d_coil: float > 0
+            The coil sub-division size
         """
         self.apply_coil_method("mesh_coil", d_coil)
 
