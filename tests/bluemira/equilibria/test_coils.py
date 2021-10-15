@@ -344,6 +344,17 @@ class TestSymmetricCircuit:
             coil.set_current(2e6)
         self.test_fields()
 
+    def test_attributes(self):
+        self.circuit.x = 4
+        assert self.circuit.x == 4
+        assert self.circuit["TEST.1"].x == 4
+        assert self.circuit["TEST.2"].x == 4
+
+        self.circuit.z = 6
+        assert self.circuit.z == 6
+        assert self.circuit["TEST.1"].z == 6
+        assert self.circuit["TEST.2"].z == -6
+
 
 class TestCoilSet:
     @classmethod

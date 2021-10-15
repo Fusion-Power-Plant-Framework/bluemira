@@ -1615,10 +1615,8 @@ class SymmetricCircuit(Circuit):
                 "SymmetricCircuit must be initialised with a Coil with z != 0."
             )
 
-        self.ctype = coil.ctype
         self.name = coil.name
         coil.name += ".1"
-        self.flag_sizefix = (coil.flag_sizefix,)
 
         mirror = Coil(
             x=coil.x,
@@ -1636,6 +1634,34 @@ class SymmetricCircuit(Circuit):
         )
 
         super().__init__([coil, mirror])
+
+    def __setattr__(self, attr, value):
+        """
+        Custom __setattr__ to default to setting the attributes of
+        the member coils if not found in SymmetricCircuit.
+
+        Parameters
+        ----------
+        attr: str
+              Name of attribute to fetch.
+        value:
+            Object to assign attribute to.
+        """
+        super().__setattr__(attr, value)
+        if hasattr(self, "name") and hasattr(self, "coils"):
+            name = self.name
+            coil = self.coils[name + ".1"]
+            if hasattr(coil, attr):
+                if attr == "z":
+                    coil1 = self.coils[name + ".1"]
+                    coil1.__setattr__(attr, value)
+                    coil2 = self.coils[name + ".2"]
+                    coil2.__setattr__(attr, -value)
+                else:
+                    for cl_n in [".1", ".2"]:
+                        coil = self.coils[name + cl_n]
+                        coil.__setattr__(attr, value)
+        return
 
     def __getattr__(self, attr):
         """
