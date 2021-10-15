@@ -25,21 +25,16 @@ Geometry optimisation classes and tools
 
 import abc
 import numpy as np
+import numba as nb
 
 from bluemira.geometry.tools import distance_to
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.utilities.opt_tools import Optimiser
 
 
-def signed_distance_function(shape1, shape2):
-    in_or_out = 1.0
-    min_distance = distance_to(shape1, shape2)
-    return in_or_out * min_distance
-
-
 class GeometryOptimisationProblem(abc.ABC):
     """
-    Geometry optimisation class.
+    Geometry optimisation problem class.
 
     Parameters
     ----------
