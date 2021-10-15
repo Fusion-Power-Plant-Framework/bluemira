@@ -809,36 +809,45 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
 
         Returns np.array(self.n_C) of optimised currents in each coil [A].
         """
+        # Initialise NLOpt optimiser, with optimisation strategy and length
+        # of state vector
         opt = nlopt.opt(nlopt.LD_SLSQP, self.n)
+        # Set up objective function for optimiser
         opt.set_min_objective(self.f_min_rms)
+
+        # Set tolerances for convergence of state vector and objective function
         opt.set_xtol_abs(1e-4)
         opt.set_xtol_rel(1e-4)
         opt.set_ftol_abs(1e-4)
         opt.set_ftol_rel(1e-4)
-        # opt.set_maxtime(3)
-        opt.set_maxeval(1000)
+
+        # Set state vector bounds (current limits)
         opt.set_lower_bounds(-self.I_max)
         opt.set_upper_bounds(self.I_max)
 
+        # Set up constraints to be applied during the optimisation
+        # Set up force constraints
         if self.n_CS == 0:
             n_f_constraints = 2 * self.n_PF
         else:
             n_f_constraints = 2 * self.n_PF + self.n_CS + 1
         tol = self.constraint_tol * np.ones(n_f_constraints)
         opt.add_inequality_mconstraint(self.constrain_forces, tol)
+        # Set up magnetic field constraints
         tol = self.constraint_tol * np.ones(self.n)
         opt.add_inequality_mconstraint(self.constrain_fields, tol)
-        # x0 = np.ones(self.n)
 
-        u = self.eq.coilset.get_control_currents()
-        x0 = np.clip(u / self.scale, -self.I_max, self.I_max)
+        # Get initial currents, and trim to within current bounds.
+        initial_currents = self.eq.coilset.get_control_currents() / self.scale
+        initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
 
-        currents = opt.optimize(x0)
+        # Optimise
+        currents = opt.optimize(initial_currents)
+
+        # Store found optimum of objective function and currents at optimum
         self.rms = opt.last_optimum_value()
-        process_NLOPT_result(opt)
         self._I_star = currents * self.scale
-        # self.sanity()
-        # currents need to be vector of 5
+        process_NLOPT_result(opt)
         return currents * self.scale
 
     def f_min_rms(self, vector, grad):
@@ -866,7 +875,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
             jac -= 2 * self.A.T @ self.b
             jac += 2 * self.gamma * vector
             grad[:] = self.scale * jac
-        if not rss > -1e-5:
+        if not rss > 0:
             raise EquilibriaError(
                 "FBIOptimiser least-squares objective function less than zero."
             )
@@ -878,7 +887,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         Calculates the value and residual of the least-squares objective
         function with Tikhonov regularisation term:
 
-        ||(Ax - b)||² + Γ||x||²
+        ||(Ax - b)||² + ||Γx||²
 
         for the state vector x.
 
@@ -893,7 +902,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         err: Residual (Ax - b) corresponding to the state vector x.
         """
         err = np.dot(self.A, vector) - self.b
-        rss = err.T @ err + self.gamma * vector.T @ vector
+        rss = err.T @ err + self.gamma * self.gamma * vector.T @ vector
         self.rms_error = rss
         return rss, err
 
