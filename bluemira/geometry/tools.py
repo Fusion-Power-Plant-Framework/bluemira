@@ -496,7 +496,8 @@ def signed_distance(wire_1, wire_2):
             return 0.0
         else:
             # There are multiple intersections: the wires are overlapping
-            # For now, without boolean operations, get an estimate of the intersection length
+            # For now, without boolean operations, get an estimate of the intersection
+            # length
             length = 0
             for i in range(1, len(vectors)):
                 p1 = vectors[i - 1][0]
@@ -506,8 +507,8 @@ def signed_distance(wire_1, wire_2):
                     (p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2
                 )
 
-            # TODO: Use a boolean difference operation to get the lengths of the overlapping
-            # wire segment(s)
+            # TODO: Use a boolean difference operation to get the lengths of the
+            # overlapping wire segment(s)
             return length
     else:
         # There are no intersections, return minimum distance
