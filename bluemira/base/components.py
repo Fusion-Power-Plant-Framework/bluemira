@@ -31,7 +31,7 @@ from typing import Any, List, Optional, Type, Union
 from .error import ComponentError
 
 
-class Component(NodeMixin, Plottable):
+class Component(NodeMixin):
     """
     The Component is the fundamental building block for a bluemira reactor design. It
     encodes the way that the corresponding part of the reactor will be built, along with
