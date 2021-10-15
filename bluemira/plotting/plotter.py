@@ -44,18 +44,6 @@ DEFAULT["palette"] = None
 # described in https://github.com/matplotlib/matplotlib/issues/11836
 
 
-class Plottable:
-    """Plottable class"""
-
-    def __init__(self, plotter=None, obj=None):
-        self._plotter = plotter
-        self._plottable_object = obj
-
-    def plot(self, **kwargs):
-        """Plotting method"""
-        self._plotter.plot(self._plottable_object, **kwargs)
-
-
 class BasePlotter(ABC):
     """
     Base utility plotting class
