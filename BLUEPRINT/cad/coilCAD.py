@@ -198,6 +198,10 @@ class TFCoilCAD(ComponentCAD):
         super().__init__(
             "Toroidal field coils", tf, palette=BLUE["TF"], n_colors=12, **kwargs
         )
+        if tf.conductivity in ["SC"] and tf.shape_type in ["TP"]:
+            raise NotImplementedError(
+                "Superconducting Tapered Pictureframe coils not supported"
+            )
         self.n_TF = None
 
     def build(self, **kwargs):
