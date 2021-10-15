@@ -892,8 +892,13 @@ class FirstWall(EqInputs, ReactorSystem):
         if "profile" in self.inputs:
             self.profile = self.inputs["profile"]
             self.make_flux_surfaces()
-        else:
+
+        elif self.inputs.get("FW_optimisation", False):
             self.profile = self.optimise_fw_profile()
+
+        else:
+            self.profile = self.make_preliminary_profile()
+            self.make_flux_surfaces()
 
         self.make_2d_profile()
 
@@ -2284,6 +2289,8 @@ class FirstWallSN(FirstWall):
         self.flux_surfaces = []
         x_omp = self.x_omp_lcfs + self.lcfs_shift
         double_step = 2 * step_size
+        if profile is None:
+            profile = self.profile
 
         # Find intersections between the profile and mid-plane
         profile_ints = loop_plane_intersect(profile, self.mid_plane)
@@ -2938,6 +2945,8 @@ class FirstWallDN(FirstWall):
         """
         self.flux_surfaces = []
         x_omp = self.x_omp_lcfs + self.params.dr_near_omp
+        if profile is None:
+            profile = self.profile
 
         # Find intersections between the profile and mid-plane
         profile_ints = loop_plane_intersect(profile, self.mid_plane)
