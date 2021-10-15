@@ -497,3 +497,33 @@ def test_cli_invalid_inputs(tempdir):
     ]
     result = runner.invoke(cli, run_flags)
     assert result.exit_code == 1, traceback.print_exception(*result.exc_info)
+
+
+@mock_mode
+def test_datadir(
+    mock_rclass, mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
+):
+    runner = CliRunner()
+
+    temp_datadir = tempfile.mkdtemp(dir=OUTDIR)
+    shutil.copytree(
+        os.sep.join([get_BP_root(), "data", "BLUEPRINT"]),
+        temp_datadir,
+        dirs_exist_ok=True,
+    )
+
+    try:
+        flags = [
+            "-i",
+            os.sep.join([get_BP_root(), "examples", "BLUEPRINT", "cli", "indir"]),
+            "-ri",
+            "EU-DEMO",
+            "-d",
+            temp_datadir,
+            "-o",
+            tempdir,
+        ]
+        result = runner.invoke(cli, flags)
+    finally:
+        shutil.rmtree(temp_datadir)
+    assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
