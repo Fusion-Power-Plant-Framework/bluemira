@@ -1404,7 +1404,8 @@ class FirstWall(EqInputs, ReactorSystem):
 
     def make_divertor(self, fw_loop):
         """
-        Create the bottom and top divertor loops for a double null divertor
+        Create a long legs divertor loop(s)
+        usable both for SN and DN divertor
 
         Parameters
         ----------
@@ -1481,6 +1482,61 @@ class FirstWall(EqInputs, ReactorSystem):
             top_divertor = Loop(x=x_div_top, z=z_div_top)
             return [bottom_divertor, top_divertor]
 
+    def make_divertor_demo_like(self, fw_loop):
+        """
+        Create a DEMO like divertor loop for the single null configuration.
+
+        Parameters
+        ----------
+        fw_loop: Loop
+            first wall preliminary profile
+
+        Returns
+        -------
+        divertor_loop: list
+            List of Loops for the divertor geometry (single entry for SN)
+        """
+        # Some shorthands
+        z_low = self.points["x_point"]["z_low"]
+        x_x_point = self.points["x_point"]["x"]
+
+        # Pick some flux loops to use to locate strike points
+        flux_loops = self.pick_flux_loops()
+
+        # Find the strike points
+        inner, outer = self.find_strike_points(flux_loops)
+
+        # Find the intersection of the first wall loop and
+        # the x-y plane containing the lower X point
+        z_norm = 2
+        fw_int_point = get_intersection_point(
+            z_low, z_norm, fw_loop, x_x_point, inner=False
+        )
+
+        # Define the left and right limits of the divertor entrance
+        # relative to the separatrix x point given gap parameters
+        div_left = x_x_point - self.params.xpt_inner_gap
+        div_right = max(x_x_point + self.params.xpt_outer_gap, fw_int_point[0])
+
+        # Define the x coordinates for the divertor
+        x_div = [
+            div_left,
+            inner[0] - self.params.tk_inner_target_sol,
+            inner[0] + self.params.tk_inner_target_pfr,
+            outer[0] - self.params.tk_outer_target_pfr,
+            outer[0] + self.params.tk_outer_target_sol,
+            div_right,
+        ]
+
+        # Define the z coordinates for the divertor
+        z_div = [z_low, inner[1], inner[1], outer[1], outer[1], z_low]
+
+        # Create the loop and return as a list
+        divertor_loop = Loop(x=x_div, z=z_div)
+        divertor_loop.close()
+
+        return [divertor_loop]
+
     def attach_divertor(self, fw_loop, divertor_loops):
         """
         Attaches a divertor to the first wall
@@ -1517,7 +1573,11 @@ class FirstWall(EqInputs, ReactorSystem):
         self.profile.close()
 
         # Make a divertor
-        inner_divertor_loops = self.make_divertor(self.profile)
+        if self.inputs.get("DEMO_like_divertor", False):
+            inner_divertor_loops = self.make_divertor_demo_like(self.profile)
+        # It makes a long legs dievertor
+        else:
+            inner_divertor_loops = self.make_divertor(self.profile)
 
         # Attach the divertor to the initial profile
         self.inner_profile = self.attach_divertor(self.profile, inner_divertor_loops)
