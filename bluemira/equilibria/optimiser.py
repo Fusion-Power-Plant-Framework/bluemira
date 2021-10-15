@@ -778,7 +778,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
     ):  # noqa (N803)
         # Used scale for optimiser RoundoffLimited Error prevention
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
-        self.gamma = kwargs.get("gamma", 1e-14)  # 1e-7  # 0
+        self.gamma = kwargs.get("gamma", 1e-7)
         self.constraint_tol = kwargs.get("constraint_tol", 1e-3)
         # self.gamma /= self.scale
         self.B_max = max_fields
@@ -873,7 +873,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         if grad.size > 0:
             jac = 2 * self.A.T @ self.A @ vector
             jac -= 2 * self.A.T @ self.b
-            jac += 2 * self.gamma * vector
+            jac += 2 * self.gamma * self.gamma * vector
             grad[:] = self.scale * jac
         if not rss > 0:
             raise EquilibriaError(
