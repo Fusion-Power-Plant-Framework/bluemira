@@ -450,7 +450,6 @@ def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     return output
 
 
-
 def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     """
     Discretize a wire taking into account the edges of which it consists of.
