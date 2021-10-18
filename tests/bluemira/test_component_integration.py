@@ -29,7 +29,7 @@ from BLUEPRINT.geometry.shell import MultiShell
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
 
-from examples.bluemira.BLUEPRINT_integration import BluemiraReactor
+from examples.BLUEPRINT_integration import BluemiraReactor
 
 
 REACTORNAME = "BLUEPRINT-INTEGRATION-TEST"
