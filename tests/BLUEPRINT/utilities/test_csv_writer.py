@@ -27,19 +27,30 @@ from BLUEPRINT.base.file import get_BP_path
 
 
 def test_csv_writer():
+    # Some dummy data to write to file
     x_vals = [0, 1, 2]
     z_vals = [-1, 0, 1]
     flux_vals = [10, 15, 20]
-    my_data = np.array([x_vals, z_vals, flux_vals]).T
-    my_header = "This is a test"
+    data = np.array([x_vals, z_vals, flux_vals]).T
+    header = "This is a test"
     col_names = ["x", "z", "heat_flux"]
-    read_path = get_BP_path("BLUEPRINT/utilities/test_data", subfolder="tests")
 
-    write_csv(my_data, os.sep.join([read_path, "lets_test"]), col_names, my_header)
+    # Write the data to csv
+    test_file_base = "csv_write_dummy_data"
+    write_csv(data, test_file_base, col_names, header)
 
-    tester = os.sep.join([read_path, "test_csv_writer.csv"])
-    tested = os.sep.join([read_path, "lets_test.csv"])
-    assert filecmp.cmp(tester, tested)
+    # Retrieve data file to compare
+    data_file = "test_csv_writer.csv"
+    data_dir = "BLUEPRINT/utilities/test_data"
+    data_path = get_BP_path(data_dir, subfolder="tests")
+    compare_file = os.sep.join([data_path, data_file])
+
+    # Compare
+    test_file = test_file_base + ".csv"
+    assert filecmp.cmp(test_file, compare_file)
+
+    # Clean up
+    os.remove(test_file)
 
 
 if __name__ == "__main__":
