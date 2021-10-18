@@ -110,13 +110,9 @@ class TestFreecadapi:
         test_points = freecadapi.vector_to_list([curve.value(par) for par in params])
         # assert that the points on the curve are equal (within a tolerance) to the
         # points used to generate the bspline
-        comparison = True
-        for index in range(len(pntslist)):
-            for i in range(3):
-                comparison = comparison & (
-                    test_points[index][i] - pntslist[index][i] < D_TOLERANCE
-                )
-        assert comparison
+        assert numpy.allclose(
+            numpy.array(test_points) - numpy.array(pntslist), 0, atol=D_TOLERANCE
+        )
 
     def test_length(self):
         open_wire: Part.Wire = freecadapi.make_polygon(self.square_points)
@@ -164,12 +160,11 @@ class TestFreecadapi:
         points = freecadapi.discretize_by_edges(wire, ndiscr)
 
         dl = 0.4
-        points = freecadapi.discretize_by_edges(wire, dl=dl)
-        print(f"Points = {points}")
+        points1 = freecadapi.discretize_by_edges(wire, dl=dl)
 
         dl = 0.4
-        points = freecadapi.discretize_by_edges(wire, ndiscr=100, dl=dl)
-        print(f"Points = {points}")
+        points2 = freecadapi.discretize_by_edges(wire, ndiscr=100, dl=dl)
+        assert numpy.allclose(points1 - points2, 0, atol=D_TOLERANCE)
 
     def test_discretize_vs_discretize_by_edges(self):
         wire1 = freecadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
@@ -183,10 +178,4 @@ class TestFreecadapi:
         points2 = freecadapi.discretize_by_edges(wire, ndiscr=4)
 
         # assert that points1 and points2 are the same
-        comparison = True
-        for index in range(len(points1)):
-            for i in range(3):
-                comparison = comparison & (
-                    points1[index][i] - points2[index][i] < D_TOLERANCE
-                )
-        assert comparison
+        assert numpy.allclose(points1 - points2, 0, atol=D_TOLERANCE)
