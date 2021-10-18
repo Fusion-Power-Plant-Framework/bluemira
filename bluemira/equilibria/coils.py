@@ -2002,7 +2002,7 @@ class CoilSet(CoilGroup):
         -------
         max_currents: np.array(n_C)
         """
-        max_currents = max_pf_current * np.ones(self.n_coils)
+        max_currents = max_pf_current * np.ones(self.n_control)
         pf_names = self.get_PF_names()
         for i, name in enumerate(pf_names):
             if self.coils[name].flag_sizefix:

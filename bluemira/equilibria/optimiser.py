@@ -788,7 +788,9 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         self.flag_nonlinear = True
         self.rms = None
         self.rms_error = None
-        self.I_max = None
+        self.I_max = kwargs.get("I_max", None)
+        if self.I_max is not None:
+            self.I_max /= self.scale
 
     def update_current_constraint(self, max_current):
         """
