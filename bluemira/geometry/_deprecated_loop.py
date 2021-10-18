@@ -563,6 +563,17 @@ class Loop(GeomBase):
         self.y = interp1d(ll, self.y)(linterp)
         self.z = interp1d(ll, self.z)(linterp)
 
+    def interpolate_midpoints(self):
+        """
+        Interpolate the Loop adding the midpoint of each segment to the Loop
+        """
+        xyz_new = self.xyz[:, :-1] + np.diff(self.xyz) / 2
+        xyz_new = np.insert(xyz_new, np.arange(len(self) - 1), self.xyz[:, :-1], axis=1)
+        xyz_new = np.append(xyz_new, self.xyz[:, -1].reshape(3, 1), axis=1)
+        self.x = xyz_new[0]
+        self.y = xyz_new[1]
+        self.z = xyz_new[2]
+
     # =========================================================================
     # Queries
     # =========================================================================
