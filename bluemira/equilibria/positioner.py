@@ -257,6 +257,8 @@ class XZLMapper:
     """
 
     def __init__(self, pftrack, cs_x=1, cs_zmin=1, cs_zmax=1, cs_gap=0.1, CS=False):
+        while len(pftrack) < 4:
+            pftrack.interpolate_midpoints()
 
         self.pfloop = pftrack.copy()  # Stored as loop too
 
