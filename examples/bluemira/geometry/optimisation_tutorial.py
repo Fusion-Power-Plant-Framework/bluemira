@@ -21,44 +21,61 @@
 
 
 import numpy as np
-import nlopt
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_polygon
-from bluemira.utilities.opt_tools import NLOptOptimiser
-
-
-parameterisation = PrincetonD()
-optimiser = NLOptOptimiser(nlopt.LD_SLSQP, 3, {}, {"ftol_rel": 1e-3, "max_eval": 1000})
+from bluemira.utilities.optimiser import Optimiser, numerical_gradient
 
 
 class MyProblem(GeometryOptimisationProblem):
-    def f_objective(self, x):
+    """
+    Minimise the length of a geometry parameterisation
+    """
+
+    def f_objective(self, x, grad=None):
+        """
+        This is the signature for an objective function. If grad=None and a gradient-
+        based optimiser is used, the gradient of the objective function is calculated
+        under the hood.
+        """
         self.update_parameterisation(x)
-        length = self.parameterisation.create_shape().length
-        return length
+        return self.parameterisation.create_shape().length
 
 
-problem = MyProblem(parameterisation, optimiser)
+# Here we solve the problem with a gradient-based optimisation algorithm (SLSQP)
+# The gradients are automatically calculated under the hood
+parameterisation_1 = PrincetonD()
+slsqp_optimiser = Optimiser("SLSQP", 3, {}, {"ftol_rel": 1e-3, "max_eval": 1000})
+problem = MyProblem(parameterisation_1, slsqp_optimiser)
+problem.solve()
+
+# Now let's do the same with an optimisation algorithm that doesn't require gradients
+parameterisation_2 = PrincetonD()
+cobyla_optimiser = Optimiser("COBYLA", 3, {}, {"ftol_rel": 1e-3, "max_eval": 1000})
+problem = MyProblem(parameterisation_2, cobyla_optimiser)
 problem.solve()
 
 
 class MyProblem(GeometryOptimisationProblem):
-    def f_objective(self, x):
+    def __init__(self, parameterisation, optimiser, ineq_con_tolerances):
+        super().__init__(parameterisation, optimiser)
+        self.optimiser.add_ineq_constraints(self.f_ineq_constraints, ineq_con_tolerances)
+
+    def f_objective(self, x, grad=None):
         self.update_parameterisation(x)
         length = self.parameterisation.create_shape().length
         return length
 
-    def f_ineq_constraints(self, x):
+    def f_ineq_constraints(self, constraint, x, grad=None):
         self.update_parameterisation(x)
         length = self.parameterisation.create_shape().length
-        return np.array([40 - length, 40 - length])
+        constraint[:] = np.array([40 - length, 40 - length])
 
 
-parameterisation = PrincetonD()
-square = make_polygon([[5, 0, -2], [8, 0, -2], [8, 0, 2], [5, 0, 2]], closed=True)
-
-problem = MyProblem(parameterisation, optimiser)
-problem.optimiser.add_ineq_constraints(problem.f_ineq_constraints, 1e-3 * np.ones(2))
+# square = make_polygon([[5, 0, -2], [8, 0, -2], [8, 0, 2], [5, 0, 2]], closed=True)
+parameterisation_3 = PrincetonD()
+slsqp_optimiser = Optimiser("DIRECT-L", 3, {}, {"ftol_rel": 1e-3, "max_eval": 1000})
+problem = MyProblem(parameterisation_3, slsqp_optimiser, 1e-3 * np.ones(2))
+# problem.optimiser.add_ineq_constraints(problem.f_ineq_constraints, 1e-3 * np.ones(2))
 problem.solve()

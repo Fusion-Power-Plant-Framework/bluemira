@@ -25,11 +25,9 @@ Geometry optimisation classes and tools
 
 import abc
 import numpy as np
-import numba as nb
 
-from bluemira.geometry.tools import distance_to
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.utilities.opt_tools import Optimiser
+from bluemira.utilities.optimiser import Optimiser
 
 
 class GeometryOptimisationProblem(abc.ABC):
@@ -47,9 +45,6 @@ class GeometryOptimisationProblem(abc.ABC):
     def __init__(self, parameterisation: GeometryParameterisation, optimiser: Optimiser):
         self.parameterisation = parameterisation
         self.optimiser = optimiser
-        self.optimiser.set_initial_value(
-            self.parameterisation.variables.get_normalised_values()
-        )
         self.optimiser.set_lower_bounds(np.zeros(optimiser.n_variables))
         self.optimiser.set_upper_bounds(np.ones(optimiser.n_variables))
         self.optimiser.set_objective_function(self.f_objective)
@@ -61,8 +56,10 @@ class GeometryOptimisationProblem(abc.ABC):
     f_eq_constraints = None
     f_ineq_constraints = None
 
-    def solve(self):
-        x_star = self.optimiser.optimise()
+    def solve(self, x0=None):
+        if x0 is None:
+            x0 = self.parameterisation.variables.get_normalised_values()
+        x_star = self.optimiser.optimise(x0)
         self.update_parameterisation(x_star)
 
     # @abc.abstractmethod
