@@ -33,17 +33,25 @@ from bluemira.base.logs import (
 )
 from bluemira.base.error import LogsError
 
-LOGGER = logger_setup()
-
 
 class TestLoggingLevel:
-    def setup_method(self):
-        self.original_level = LogLevel(
-            max([handler.level for handler in LOGGER.handlers or LOGGER.parent.handlers])
+    @classmethod
+    def setup_class(cls):
+        cls.orig_log = logging.getLogger("")
+        cls.original_handlers = [
+            handler for handler in cls.orig_log.handlers or cls.orig_log.parent.handlers
+        ]
+        cls.original_level = LogLevel(
+            max([handler.level for handler in cls.original_handlers])
         )
 
-    def teardown_method(self):
-        set_log_level(self.original_level.name)
+    @classmethod
+    def teardown_class(cls):
+        cls.orig_log.handlers = cls.original_handlers
+        set_log_level(cls.original_level.name)
+
+    def setup_method(self):
+        self.LOGGER = logger_setup()
 
     @pytest.mark.parametrize("input_level", [(6), ("INF")])
     def test_raise_error(self, input_level):
@@ -92,7 +100,7 @@ class TestLoggingLevel:
     def test_level_change(self, input_level, expected):
         """Testing if the handlers level is actually changed."""
         set_log_level(input_level)
-        for handler in LOGGER.handlers or LOGGER.parent.handlers:
+        for handler in self.LOGGER.handlers or self.LOGGER.parent.handlers:
             if not isinstance(handler, logging.FileHandler):
                 assert handler.level == expected
         assert get_log_level(as_str=isinstance(input_level, str)) == input_level
