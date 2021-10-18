@@ -92,10 +92,11 @@ class CSVWriterReactorSystem(ReactorSystem):
 
     def __init__(self):
         self.geom["Dummy Loop"] = make_box_xz(0.0, 1.0, 0.0, 1.0)
+        self.geom["dUmmy looP 2"] = make_box_xz(0.0, 1.0, 0.0, 1.0)
 
     @property
     def csv_write_loop_names(self):
-        return ["Dummy Loop"]
+        return ["Dummy Loop", "dUmmy looP 2"]
 
 
 def test_reactor_system_write_to_csv():
@@ -113,7 +114,7 @@ def test_reactor_system_write_to_csv():
     compare_file = os.sep.join([compare_path, data_file])
 
     # Compare against test file
-    test_keys = ["dummy_loop"]
+    test_keys = ["dummy_loop", "dummy_loop_2"]
     for key in test_keys:
         test_file = test_file_base + "_" + key + ".csv"
         assert filecmp.cmp(test_file, compare_file)
