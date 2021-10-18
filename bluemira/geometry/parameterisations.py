@@ -40,16 +40,10 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 
-# TODO: This import is a little "backwards".. will move this functionality from
-# equilibria into geometry once we are happy with the actual contents of the PR.
-from bluemira.equilibria.shapes import flux_surface_johner_quadrants
-
-
 __all__ = [
     "GeometryParameterisation",
     "PrincetonD",
     "TripleArc",
-    "JohnerLCFS",
     "PictureFrame",
     "TaperedPictureFrame",
     "PolySpline",
@@ -726,75 +720,6 @@ class TaperedPictureFrame(GeometryParameterisation):
                 make_circle(
                     r, c2, start_angle=0, end_angle=90, axis=axis, label="upper_corner"
                 )
-            )
-
-        return BluemiraWire(wires, label=label)
-
-
-class JohnerLCFS(GeometryParameterisation):
-    """
-    Johner last closed flux surface geometry parameterisation.
-    """
-
-    __slots__ = ()
-
-    def __init__(self, var_dict={}):
-        variables = OptVariables(
-            [
-                # Major radius
-                BoundedVariable("r_0", 9, lower_bound=6, upper_bound=12),
-                # Vertical coordinate at geometry centroid
-                BoundedVariable("z_0", 0, lower_bound=-1, upper_bound=1),
-                # Minor radius
-                BoundedVariable("a", 6, lower_bound=1, upper_bound=6),
-                # Upper elongation
-                BoundedVariable("kappa_u", 1.6, lower_bound=1.3, upper_bound=1.9),
-                # Lower elongation
-                BoundedVariable("kappa_l", 1.8, lower_bound=1.3, upper_bound=1.9),
-                # Upper triangularity
-                BoundedVariable("delta_u", 0.4, lower_bound=0.2, upper_bound=0.6),
-                # Lower triangularity
-                BoundedVariable("delta_l", 0.4, lower_bound=0.2, upper_bound=0.6),
-                # Upper triangularity
-                BoundedVariable("delta_u", 0.4, lower_bound=0.2, upper_bound=0.6),
-                # Upper inner angle [°]
-                BoundedVariable("phi_u_neg", 180, lower_bound=160, upper_bound=190),
-                # Upper outer angle [°]
-                BoundedVariable("phi_u_pos", 10, lower_bound=5, upper_bound=20),
-                # Lower inner angle [°]
-                BoundedVariable("phi_l_neg", -120, lower_bound=-130, upper_bound=-110),
-                # Lower outer angle [°]
-                BoundedVariable("phi_l_pos", 30, lower_bound=20, upper_bound=35),
-            ]
-        )
-        variables.adjust_variables(var_dict)
-        super().__init__(variables)
-
-    def create_shape(self, label="LCFS", n_points=1000):
-        """
-        Make a CAD representation of the Johner LCFS.
-
-        Parameters
-        ----------
-        label: str, default = "LCFS"
-            Label to give the wire
-        n_points: int
-            Number of points to use when creating the Bspline representation
-
-        Returns
-        -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
-        """
-        x_quadrants, z_quadrants = flux_surface_johner_quadrants(
-            *self.variables.values, n=n_points
-        )
-
-        wires = []
-        labels = ["upper_inner", "upper_outer", "lower_outer", "lower_inner"]
-        for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels):
-            wires.append(
-                make_bspline(np.array([x_q, np.zeros(len(x_q)), z_q]).T, label=lab)
             )
 
         return BluemiraWire(wires, label=label)

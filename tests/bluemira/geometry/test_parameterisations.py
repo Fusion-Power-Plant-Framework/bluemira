@@ -32,7 +32,6 @@ from bluemira.geometry.parameterisations import (
     PictureFrame,
     PolySpline,
     TaperedPictureFrame,
-    JohnerLCFS,
 )
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry._deprecated_tools import get_perimeter
@@ -174,23 +173,3 @@ class TestTaperedPictureFrame:
         p.adjust_variable("r", value=0)
         wire = p.create_shape()
         assert len(wire._boundary) == 2
-
-
-class TestJohner:
-    def test_segments(self):
-        p = JohnerLCFS()
-        wire = p.create_shape()
-        assert len(wire._boundary) == 4
-
-    def test_symmetry(self):
-        p_pos = JohnerLCFS()
-        p_neg = JohnerLCFS()
-
-        p_pos.adjust_variable("delta_u", 0.4)
-        p_pos.adjust_variable("delta_l", 0.4)
-        p_neg.adjust_variable("delta_u", -0.4, lower_bound=-0.5)
-        p_neg.adjust_variable("delta_l", -0.4, lower_bound=-0.5)
-        wire_pos = p_pos.create_shape()
-        wire_neg = p_neg.create_shape()
-
-        assert np.isclose(wire_pos.length, wire_neg.length)

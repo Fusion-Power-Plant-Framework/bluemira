@@ -19,12 +19,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
 from matplotlib import pyplot as plt
 import pytest
+
 from bluemira.equilibria.shapes import (
     flux_surface_johner,
     flux_surface_manickam,
     flux_surface_cunningham,
+    JohnerLCFS,
 )
 
 import tests
@@ -172,6 +175,26 @@ class TestJohner:
         cls.f.suptitle("Johner parameterisations")
         if tests.PLOTTING:
             plt.show()
+
+
+class TestJohner:
+    def test_segments(self):
+        p = JohnerLCFS()
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
+
+    def test_symmetry(self):
+        p_pos = JohnerLCFS()
+        p_neg = JohnerLCFS()
+
+        p_pos.adjust_variable("delta_u", 0.4)
+        p_pos.adjust_variable("delta_l", 0.4)
+        p_neg.adjust_variable("delta_u", -0.4, lower_bound=-0.5)
+        p_neg.adjust_variable("delta_l", -0.4, lower_bound=-0.5)
+        wire_pos = p_pos.create_shape()
+        wire_neg = p_neg.create_shape()
+
+        assert np.isclose(wire_pos.length, wire_neg.length)
 
 
 if __name__ == "__main__":
