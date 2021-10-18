@@ -229,6 +229,8 @@ class EQDSKInterface:
         if isinstance(file, str):
             with open(file, "w") as f_handle:
                 return self._write_json(f_handle, data)
+        if "indent" not in kwargs:
+            kwargs["indent"] = 4
         json.dump(data, file, cls=NumpyJSONEncoder, **kwargs)
 
     def _read_eqdsk(self, file):
