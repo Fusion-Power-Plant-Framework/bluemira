@@ -425,7 +425,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 "outboard": self.params.tk_tf_ob_casing,
                 "external": self.params.tk_tf_ob_casing,
             }
-        if self.inputs["shape_type"] == "CP":
+        elif self.inputs["shape_type"] == "CP":
             # For CURVED SC coils
             iocasthk = 0
             self.section["case"] = {
