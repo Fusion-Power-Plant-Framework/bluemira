@@ -22,6 +22,7 @@
 import pytest
 import numpy as np
 import os
+import filecmp
 from random import uniform
 from itertools import cycle
 from matplotlib import pyplot as plt
@@ -460,6 +461,25 @@ class TestLoop:
         assert np.allclose(clean_loop.get_closed_facets(), expected_facets)
         assert np.allclose(clean_loop.get_control_point(), expected_control_point)
         assert np.allclose(clean_loop.get_hole(), expected_hole)
+
+    def test_write_to_csv(self):
+        # Write out the loop
+        metadata = "# Metadata string"
+        test_file_base = "star_loop_test_write"
+        self.star_shape.write_to_csv(test_file_base, metadata)
+
+        # Fetch comparison data file
+        data_file = "star_loop_test_data.csv"
+        data_dir = "BLUEPRINT/geometry/test_data"
+        compare_path = get_BP_path(data_dir, subfolder="tests")
+        compare_file = os.sep.join([compare_path, data_file])
+
+        # Compare generated data to data file
+        test_file = test_file_base + ".csv"
+        assert filecmp.cmp(test_file, compare_file)
+
+        # Clean up
+        os.remove(test_file)
 
 
 @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
