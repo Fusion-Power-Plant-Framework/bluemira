@@ -392,12 +392,18 @@ class ReactorSystem:
         if len(loop_names) == 0:
             raise RuntimeError("No loops were specified to be written as csv")
         for name in loop_names:
+            # Get the loop
+            loop = self.geom[name]
+
+            # Remove spaces and capitals
+            name = name.replace(" ", "_")
+            name = name.lower()
+
             # Generate output file name
             file_name = file_base + "_" + name
             full_path = os.sep.join([path, file_name])
 
-            # Get the loop and write to file
-            loop = self.geom[name]
+            # Write to file
             loop.write_to_csv(full_path, metadata)
 
     @classmethod
