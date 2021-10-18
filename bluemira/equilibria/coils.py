@@ -1661,7 +1661,6 @@ class SymmetricCircuit(Circuit):
                     for cl_n in [".1", ".2"]:
                         coil = self.coils[name + cl_n]
                         coil.__setattr__(attr, value)
-        return
 
     def __getattr__(self, attr):
         """
