@@ -55,7 +55,12 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv"):
     if not len(col_names) == n_cols:
         raise RuntimeError("Column names must be provided for all data fields")
 
-    metadata += "\n" + ",".join(col_names)
+    # Add a newline to existing metadata
+    if metadata != "":
+        metadata += "\n"
+
+    # Add column headings
+    metadata += ",".join(col_names)
 
     np.savetxt(
         filename,
