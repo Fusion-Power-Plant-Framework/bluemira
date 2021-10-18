@@ -108,11 +108,6 @@ class EquilibriumOptimiser:
 
         self.n_PF, self.n_CS = eq.coilset.n_PF, eq.coilset.n_CS
         self.n_C = eq.coilset.n_coils
-
-        # TODO add check that B_max is not nan
-        if hasattr(self, "flag_nonlinear"):
-            self.B_max = eq.coilset.get_max_fields()
-            self._I_max = eq.coilset.get_max_currents(self.I_max)
         return self.optimise()
 
     def copy(self):
@@ -780,7 +775,6 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
         self.gamma = kwargs.get("gamma", 1e-7)
         self.constraint_tol = kwargs.get("constraint_tol", 1e-3)
-        # self.gamma /= self.scale
         self.B_max = max_fields
         self.PF_Fz_max = PF_Fz_max / self.scale
         self.CS_Fz_sum = CS_Fz_sum / self.scale
@@ -788,11 +782,12 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         self.flag_nonlinear = True
         self.rms = None
         self.rms_error = None
-        self.I_max = kwargs.get("I_max", None)
-        if self.I_max is not None:
-            self.I_max /= self.scale
 
-    def update_current_constraint(self, max_current):
+        self.I_max = kwargs.get("max_currents", None)
+        if self.I_max is not None:
+            self.I_max = self.update_current_constraint(self.I_max)
+
+    def update_current_constraint(self, max_currents):
         """
         Updates the current vector bounds. Must be called prior to optimise.
 
@@ -803,7 +798,8 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
             If max_current is supplied as a float, the float will be set as the
             maximum allowed current magnitude for all coils.
         """
-        self.I_max = max_current / self.scale
+        I_max = max_currents / self.scale
+        return I_max
 
     def optimise(self):
         """
