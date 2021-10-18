@@ -50,6 +50,7 @@ class GeometryOptimisationProblem(abc.ABC):
         self.optimiser.set_objective_function(self.f_objective)
 
     def update_parameterisation(self, x):
+        # x = np.clip(x, 1e-18, 1.0-1e-18)
         self.parameterisation.variables.set_values_from_norm(x)
 
     f_objective = None

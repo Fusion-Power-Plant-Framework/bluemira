@@ -61,18 +61,30 @@ def process_NLOPT_result(opt):  # noqa (N802)
     """
     # TODO: Check constraints
     result = opt.last_optimize_result()
-    if result < 0:
-        bluemira_warn(f"\nNLOPT Optimiser failed with internal error code: {result}")
 
     if result == nlopt.MAXEVAL_REACHED:
         bluemira_warn(
-            "\nNlOPT Optimiser succeeded but stopped at the maximum number of evaulations\n"
+            "\nNlOPT Optimiser succeeded but stopped at the maximum number of evaulations.\n"
         )
 
     elif result == nlopt.MAXTIME_REACHED:
         bluemira_warn(
-            "\nNLOPT Optimiser succeeded but stopped at the maximum duration\n"
+            "\nNLOPT Optimiser succeeded but stopped at the maximum duration.\n"
         )
+    elif result == nlopt.ROUNDOFF_LIMITED:
+        bluemira_warn(
+            "\nNLOPT Optimiser was halted due to round-off errors. A useful result was probably found...\n"
+        )
+    elif result == nlopt.FAILURE:
+        bluemira_warn(
+            f"\nNLOPT Optimiser failed real hard.. internal error code: {nlopt.FAILURE}.\n"
+        )
+    elif result == nlopt.INVALID_ARGS:
+        bluemira_warn(f"\nNLOPT Optimiser failed because of invalid arguments.\n")
+    elif result == nlopt.OUT_OF_MEMORY:
+        bluemira_warn(f"\nNLOPT Optimiser failed because it ran out of memory.\n")
+    elif result == nlopt.FORCED_STOP:
+        bluemira_warn(f"\nNLOPT Optimiser failed because of a forced stop.\n")
 
 
 class _NLOPTFunction:
@@ -94,7 +106,17 @@ class _NLOPTFunction:
         self.epsilon = epsilon
 
 
-class NLOPTObjectiveFunction(_NLOPTFunction):
+class NLOPTObjectiveFunction:
+    def __init__(self, func):
+        self.func = func
+        self.last_x = None
+
+    def __call__(self, x, grad, *args):
+        self.last_x = x
+        return self.func(x, grad, *args)
+
+
+class NLOPTNumGradObjectiveFunction(_NLOPTFunction):
     """
     An objective function with numerical calculation of the gradient.
     """
@@ -122,6 +144,7 @@ class NLOPTObjectiveFunction(_NLOPTFunction):
         Modifies `grad` in-place as per NLopt usage.
         """
         result = self.func(x, *args)
+        self.last_x = x
 
         if grad.size > 0:
             grad[:] = approx_fprime(
@@ -266,9 +289,12 @@ class NLOPTOptimiser:
         """
         if self._grad_alg_and_no_grad(f_objective):
             # Gradient-based algorithm but grad is set to None: numerically calculate
-            f_objective = NLOPTObjectiveFunction(
+            f_objective = NLOPTNumGradObjectiveFunction(
                 f_objective, [self.lower_bounds, self.upper_bounds]
             )
+        else:
+            f_objective = NLOPTObjectiveFunction(f_objective)
+        self._f_objective = f_objective
         self._opt.set_min_objective(f_objective)
 
     def set_lower_bounds(self, lower_bounds):
@@ -348,6 +374,11 @@ class NLOPTOptimiser:
         tolerance: np.ndarray
             Tolerance array with which to enforce the constraint
         """
+        if self.algorithm_name not in INEQ_CON_ALGS:
+            raise OptUtilitiesError(
+                f"{self.algorithm_name} does not support inequality constraints."
+            )
+
         if self._grad_alg_and_no_grad(f_constraint):
             f_constraint = NLOPTConstraintFunction(
                 f_constraint, [self.lower_bounds, self.upper_bounds]
@@ -368,8 +399,9 @@ class NLOPTOptimiser:
         try:
             x_star = self._opt.optimize(x0)
         except nlopt.RoundoffLimited:
+            # It's likely that the last call was still a reasonably good solution.
             self.rms = self._opt.last_optimum_value()
-
+            x_star = self._f_objective.last_x
         self.rms = self._opt.last_optimum_value()
         process_NLOPT_result(self._opt)
         return x_star

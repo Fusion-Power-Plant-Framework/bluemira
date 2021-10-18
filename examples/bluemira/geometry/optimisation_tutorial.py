@@ -25,7 +25,11 @@ import numpy as np
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_polygon
-from bluemira.utilities.optimiser import Optimiser, numerical_gradient
+from bluemira.utilities.optimiser import Optimiser
+
+import nlopt
+
+nlopt.srand(13436547564)
 
 
 class MyProblem(GeometryOptimisationProblem):
@@ -46,7 +50,7 @@ class MyProblem(GeometryOptimisationProblem):
 # Here we solve the problem with a gradient-based optimisation algorithm (SLSQP)
 # The gradients are automatically calculated under the hood
 parameterisation_1 = PrincetonD()
-slsqp_optimiser = Optimiser("SLSQP", 3, {}, {"ftol_rel": 1e-3, "max_eval": 1000})
+slsqp_optimiser = Optimiser("SLSQP", 3, {}, {"ftol_rel": 1e18})
 problem = MyProblem(parameterisation_1, slsqp_optimiser)
 problem.solve()
 
@@ -57,7 +61,7 @@ problem = MyProblem(parameterisation_2, cobyla_optimiser)
 problem.solve()
 
 
-class MyProblem(GeometryOptimisationProblem):
+class MyConstrainedProblem(GeometryOptimisationProblem):
     def __init__(self, parameterisation, optimiser, ineq_con_tolerances):
         super().__init__(parameterisation, optimiser)
         self.optimiser.add_ineq_constraints(self.f_ineq_constraints, ineq_con_tolerances)
@@ -68,14 +72,19 @@ class MyProblem(GeometryOptimisationProblem):
         return length
 
     def f_ineq_constraints(self, constraint, x, grad=None):
+        """
+        This is the signature for an inequality constraint. If grad=None and a gradient-
+        based optimiser is used, the jacobian of the constraint function is calculated
+        under the hood.
+        """
         self.update_parameterisation(x)
         length = self.parameterisation.create_shape().length
         constraint[:] = np.array([40 - length, 40 - length])
+        return constraint
 
 
 # square = make_polygon([[5, 0, -2], [8, 0, -2], [8, 0, 2], [5, 0, 2]], closed=True)
 parameterisation_3 = PrincetonD()
-slsqp_optimiser = Optimiser("DIRECT-L", 3, {}, {"ftol_rel": 1e-3, "max_eval": 1000})
-problem = MyProblem(parameterisation_3, slsqp_optimiser, 1e-3 * np.ones(2))
-# problem.optimiser.add_ineq_constraints(problem.f_ineq_constraints, 1e-3 * np.ones(2))
+slsqp_optimiser = Optimiser("SLSQP", 3, {}, {"ftol_rel": 1e-3, "max_eval": 1000})
+problem = MyConstrainedProblem(parameterisation_3, slsqp_optimiser, 1e-3 * np.ones(2))
 problem.solve()
