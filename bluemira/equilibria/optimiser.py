@@ -801,11 +801,15 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         i_max = max_currents / self.scale
         return i_max
 
-    def optimise(self):
+    def set_up_optimiser(self):
         """
-        Optimiser handle. Used in __call__
+        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
+        constraint & objective functions.
 
-        Returns np.array(self.n_C) of optimised currents in each coil [A].
+        Returns
+        -------
+        opt: nlopt.opt
+            NLOpt optimiser to be used for optimisation.
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
@@ -835,17 +839,30 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         tol = self.constraint_tol * np.ones(self.n)
         opt.add_inequality_mconstraint(self.constrain_fields, tol)
 
+        return opt
+
+    def optimise(self):
+        """
+        Optimiser handle. Used in __call__
+
+        Returns np.array(self.n_C) of optimised currents in each coil [A].
+        """
+        # Set up optimiser.
+        # TODO Move into __init__ to improve performance (requires coilset
+        # TODO sizes at initialisation for constraint tolerance sizes).
+        self.opt = self.set_up_optimiser()
+
         # Get initial currents, and trim to within current bounds.
         initial_currents = self.eq.coilset.get_control_currents() / self.scale
         initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
 
         # Optimise
-        currents = opt.optimize(initial_currents)
+        currents = self.opt.optimize(initial_currents)
 
         # Store found optimum of objective function and currents at optimum
-        self.rms = opt.last_optimum_value()
+        self.rms = self.opt.last_optimum_value()
         self._I_star = currents * self.scale
-        process_NLOPT_result(opt)
+        process_NLOPT_result(self.opt)
         return currents * self.scale
 
     def f_min_rms(self, vector, grad):
