@@ -798,8 +798,8 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
             If max_current is supplied as a float, the float will be set as the
             maximum allowed current magnitude for all coils.
         """
-        I_max = max_currents / self.scale
-        return I_max
+        i_max = max_currents / self.scale
+        return i_max
 
     def optimise(self):
         """
