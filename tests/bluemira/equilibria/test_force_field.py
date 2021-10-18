@@ -23,8 +23,10 @@ import pytest
 
 import numpy as np
 from scipy.special import ellipe, ellipk
-from bluemira.equilibria.force_field import ForceField
+
 from bluemira.base.constants import MU_0
+
+from bluemira.equilibria.force_field import ForceField
 from bluemira.equilibria.coils import Coil, CoilSet
 
 
@@ -36,11 +38,11 @@ class TestForceField:
         x = [5, 5]
         z = [5, -5]
         for i, (xi, zi) in enumerate(zip(x, z)):
-            c = Coil(xi, zi, current=0, ctype="PF", name=f"PF_{i+1}")
+            c = Coil(xi, zi, current=0, ctype="PF", name=f"PF_{i+1}", dx=0, dz=0)
 
             coils.append(c)
         cls.coilset = CoilSet(coils)
-        dummy = Coil(5, 0, current=0, ctype="Plasma")
+        dummy = Coil(5, 0, current=0, ctype="Plasma", dx=0, dz=0)
         cls.ff = ForceField(cls.coilset, dummy)
 
     def test_Fz(self):  # noqa (N802)

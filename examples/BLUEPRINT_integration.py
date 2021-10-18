@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from BLUEPRINT.base.baseclass import ReactorSystem
-from BLUEPRINT.equilibria.coils import Coil
+from bluemira.equilibria.coils import Coil
 from BLUEPRINT.geometry.geombase import GeomBase
 from BLUEPRINT.geometry.shell import Shell, MultiShell
 from BLUEPRINT.geometry.loop import Loop, MultiLoop

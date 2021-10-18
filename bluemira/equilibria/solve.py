@@ -397,7 +397,7 @@ class CurrentOptimiser:
     Mixin class for performing optimisation of currents
     """
 
-    def _optimise_currents(self, psib=None, update_size=True, apply_weights=False):
+    def _optimise_currents(self, psib=None, update_size=True):
         """
         Finds optimal currents for the coilset
 
@@ -407,22 +407,16 @@ class CurrentOptimiser:
             The boundary psi values, by default None.
         update_size: bool, optional
             If True then update the coilset size, by default True.
-        apply_weights: bool, optional
-            If True then apply weights in the optimiser, by default False.
         """
         self.constraints(self.eq, I_not_dI=True)
         try:
-            currents = self.optimiser(
-                self.eq, self.constraints, psib, apply_weights=apply_weights
-            )
+            currents = self.optimiser(self.eq, self.constraints, psib)
             self.store.append(currents)
         except ExternalOptError:
             currents = self.store[-1]
         self.coilset.set_control_currents(currents, update_size)
 
-    def _initial_optimise_currents(
-        self, psib=None, update_size=True, apply_weights=False
-    ):
+    def _initial_optimise_currents(self, psib=None, update_size=True):
         """
         Finds optimal currents for the coilset for optimiser initialisation
 
@@ -432,10 +426,8 @@ class CurrentOptimiser:
             The boundary psi values, by default None.
         update_size: bool, optional
             If True then update the coilset size, by default True.
-        apply_weights: bool, optional
-            If True then apply weights in the optimiser, by default False.
         """
-        return self._optimise_currents(psib, update_size, apply_weights)
+        return self._optimise_currents(psib, update_size)
 
 
 class CurrentGradientOptimiser:
@@ -786,7 +778,7 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"psib": None, "update_size": True, "apply_weights": False}
+        return {"psib": None, "update_size": True}
 
     def _solve(self):
         """
@@ -808,7 +800,7 @@ class PicardLiAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"psib": None, "update_size": True, "apply_weights": False}
+        return {"psib": None, "update_size": True}
 
     def _solve(self):
         """
@@ -833,7 +825,7 @@ class EquilibriumConverger(CurrentOptimiser, PicardBaseIterator):
         """
         Get the kwargs for the current optimiser.
         """
-        return {"update_size": False, "apply_weights": True}
+        return {"update_size": False}
 
     def __call__(self, psib):
         """
@@ -853,4 +845,4 @@ class EquilibriumConverger(CurrentOptimiser, PicardBaseIterator):
         super()._optimise_currents(self.psib, **self.current_optimiser_kwargs)
 
     def _initial_optimise_currents(self, **kwargs):
-        super()._optimise_currents(self.psib, update_size=False, apply_weights=False)
+        super()._optimise_currents(self.psib, update_size=False)

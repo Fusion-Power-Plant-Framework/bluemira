@@ -47,7 +47,15 @@ from bluemira.geometry._deprecated_tools import (
 )
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
-from bluemira.equilibria.coils import Coil, CoilSet, PF_COIL_NAME, CS_COIL_NAME, Solenoid
+from bluemira.equilibria.constants import NBTI_J_MAX
+from bluemira.equilibria.coils import (
+    Coil,
+    CoilSet,
+    PF_COIL_NAME,
+    CS_COIL_NAME,
+    Solenoid,
+    get_max_current,
+)
 from bluemira.equilibria.plotting import XZLPlotter, RegionPlotter
 from bluemira.utilities import tools
 
@@ -162,7 +170,7 @@ class CoilPositioner:
             pos
         )
         return [
-            Coil(xint[i], zint[i], name=PF_COIL_NAME.format(n_PF - i))
+            Coil(xint[i], zint[i], name=PF_COIL_NAME.format(n_PF - i), j_max=NBTI_J_MAX)
             for i in range(n_PF)
         ]
 
@@ -201,6 +209,7 @@ class CoilPositioner:
                 dz=heights[i],
                 name=CS_COIL_NAME.format(i + 1),
                 ctype="CS",
+                j_max=NBTI_J_MAX,
             )
             for i in range(n_CS)
         ]
@@ -657,8 +666,9 @@ class RegionMapper:
         """
         for no, (name, region) in enumerate(self.regions.items()):
             coil = self._coilset.coils[self._name_converter(name)]
-            self.max_currents[no] = coil._get_max_current(
-                *inscribed_rect_in_poly(region.loop.x, region.loop.z, coil.x, coil.z)
+            self.max_currents[no] = get_max_current(
+                *inscribed_rect_in_poly(region.loop.x, region.loop.z, coil.x, coil.z),
+                coil.j_max,
             )
 
         return self.max_currents

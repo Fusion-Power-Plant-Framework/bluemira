@@ -1179,22 +1179,6 @@
     "source": "Input",
     "mapping": null
   },
-  "inner_target_pfr": {
-    "name": "Inner target length PFR side",
-    "value": 0.5,
-    "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "inner_target_sol": {
-    "name": "Inner target length SOL side",
-    "value": 0.3,
-    "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
   "kappa": {
     "name": "Last closed surface plasma elongation",
     "value": 1.792,
@@ -1366,22 +1350,6 @@
   "outer_strike_r": {
     "name": "Outer strike point major radius",
     "value": 10.3,
-    "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "outer_target_pfr": {
-    "name": "Outer target length PFR side",
-    "value": 0.3,
-    "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "outer_target_sol": {
-    "name": "Outer target length SOL side",
-    "value": 0.7,
     "unit": "m",
     "description": null,
     "source": "Input",
@@ -1787,6 +1755,14 @@
     "source": "PROCESS",
     "mapping": null
   },
+  "theta_inner_target": {
+    "name": "Angle between flux line tangent at inner strike point and SOL side of inner target",
+    "value": 20,
+    "unit": "deg",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "theta_outer_target": {
     "name": "Angle between flux line tangent at outer strike point and SOL side of outer target",
     "value": 20,
@@ -1955,6 +1931,22 @@
     "source": "Input",
     "mapping": null
   },
+  "tk_inner_target_pfr": {
+    "name": "Inner target length PFR side",
+    "value": 0.5,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_inner_target_sol": {
+    "name": "Inner target length SOL side",
+    "value": 0.3,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "tk_ob_ts": {
     "name": "Outboard TS thickness",
     "value": 0.05,
@@ -1966,6 +1958,22 @@
   "tk_oic": {
     "name": "Outer inter-coil structure thickness",
     "value": 0.3,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_outer_target_pfr": {
+    "name": "Outer target length PFR side",
+    "value": 0.3,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_outer_target_sol": {
+    "name": "Outer target length SOL side",
+    "value": 0.7,
     "unit": "m",
     "description": null,
     "source": "Input",

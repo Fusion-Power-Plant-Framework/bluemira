@@ -22,18 +22,19 @@ import pytest
 import os
 import numpy as np
 from BLUEPRINT.systems.firstwall import FluxSurface, FirstWallSN, FirstWallDN
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.equilibria.equilibrium import Equilibrium
+from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.equilibrium import Equilibrium
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geomtools import get_intersect
 
 
+DATA_PATH = get_bluemira_path("equilibria", subfolder="data")
+
+
 #  Helper function to load an equilibrium
-def load_equilibrium(eq_name, path="equilibria", subfolder="data/BLUEPRINT"):
-    read_path = get_BP_path(path, subfolder)
-    eq_name = os.sep.join([read_path, eq_name])
-    return Equilibrium.from_eqdsk(eq_name)
+def load_equilibrium(eq_name):
+    return Equilibrium.from_eqdsk(os.sep.join([DATA_PATH, eq_name]))
 
 
 # Helper function to make a dummy keep-out-zone from equilibrium
@@ -86,7 +87,7 @@ def firstwall_sn_inputs():
 
 def firstwall_dn_inputs():
     eq = load_equilibrium(
-        "DN-DEMO_eqref.json", "equilibria/test_data", "tests/BLUEPRINT"
+        "DN-DEMO_eqref.json",
     )
     koz, vessel = make_input_loops_dn(eq)
     inputs = {

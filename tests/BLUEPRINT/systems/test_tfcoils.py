@@ -38,7 +38,7 @@ from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
-from BLUEPRINT.equilibria.shapes import flux_surface_manickam
+from bluemira.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.cadtools import get_properties
 
 

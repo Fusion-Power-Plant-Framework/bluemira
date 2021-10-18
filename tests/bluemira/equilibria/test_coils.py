@@ -22,8 +22,11 @@
 import pytest
 import numpy as np
 from matplotlib import pyplot as plt
+
 import tests
 from bluemira.base.constants import MU_0
+from bluemira.equilibria.constants import NBTI_J_MAX
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.coils import (
     Coil,
@@ -42,23 +45,30 @@ class TestCoil:
     @classmethod
     def setup_class(cls):
         # make a default coil
-        cls.coil = Coil(4, 4, 10e6)
-        cls.cs_coil = Coil(4, 4, 10e6, ctype="CS")
-        cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd")
+        cls.coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
+        cls.cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
+        cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd", j_max=NBTI_J_MAX)
 
     def test_name(self):
-        assert self.coil.name == PF_COIL_NAME.format(1)
-        assert self.cs_coil.name == CS_COIL_NAME.format(1)
-        assert self.no_coil.name == NO_COIL_NAME.format(1)
-        coil = Coil(4, 4, 10e6)
-        cs_coil = Coil(4, 4, 10e6, ctype="CS")
-        no_coil = Coil(4, 4, 10e6, ctype="agd")
-        assert coil.name == PF_COIL_NAME.format(2)
-        assert cs_coil.name == CS_COIL_NAME.format(2)
-        assert no_coil.name == NO_COIL_NAME.format(2)
+        def extract_int(coil):
+            return int(coil.name.split("_")[-1])
+
+        def extract_prefix(coil):
+            return coil.name.split("_")[0]
+
+        assert extract_prefix(self.coil) == PF_COIL_NAME.split("_")[0]
+        assert extract_prefix(self.cs_coil) == CS_COIL_NAME.split("_")[0]
+        assert extract_prefix(self.no_coil) == NO_COIL_NAME.split("_")[0]
+        coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
+        cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
+        no_coil = Coil(4, 4, 10e6, ctype="agd", j_max=NBTI_J_MAX)
+
+        assert extract_int(coil) == extract_int(self.coil) + 1
+        assert extract_int(cs_coil) == extract_int(self.cs_coil) + 1
+        assert extract_int(no_coil) == extract_int(self.no_coil) + 1
 
     def test_field(self):
-        c = Coil(1, 0, current=1591550)  # Sollte 5 T am Achse erzeugen
+        c = Coil(1, 0, current=1591550, dx=0, dz=0)  # Sollte 5 T am Achse erzeugen
         Bx, Bz = 0, MU_0 * c.current / (2 * c.x)
 
         assert c.Bx(0.001, 0) == Bx
@@ -229,11 +239,11 @@ class TestCoilGroup:
     @staticmethod
     def make_coilgroup():
         coils = [
-            Coil(6, 6, ctype="CS", name="CS_8"),
-            Coil(7, 7, ctype="CS", name="CS_0"),
-            Coil(8, 8, ctype="plasma", name="plasma_1"),
-            Coil(4, 4, ctype="PF", name="PF_1"),
-            Coil(4, 5, ctype="PF", name="PF_0"),
+            Coil(6, 6, ctype="CS", name="CS_8", j_max=NBTI_J_MAX),
+            Coil(7, 7, ctype="CS", name="CS_0", j_max=NBTI_J_MAX),
+            Coil(8, 8, ctype="plasma", name="plasma_1", j_max=NBTI_J_MAX),
+            Coil(4, 4, ctype="PF", name="PF_1", j_max=NBTI_J_MAX),
+            Coil(4, 5, ctype="PF", name="PF_0", j_max=NBTI_J_MAX),
         ]
 
         return CoilGroup(coils)
@@ -250,9 +260,9 @@ class TestCoilGroup:
 
     def test_add(self):
         group = self.make_coilgroup()
-        group.add_coil(Coil(3, 3, ctype="PF", name="PF_3"))
-        group.add_coil(Coil(9, 9, ctype="CS", name="CS_9"))
-        group.add_coil(Coil(10, 10, ctype="plasma", name="plasma_10"))
+        group.add_coil(Coil(3, 3, ctype="PF", name="PF_3", j_max=NBTI_J_MAX))
+        group.add_coil(Coil(9, 9, ctype="CS", name="CS_9", j_max=NBTI_J_MAX))
+        group.add_coil(Coil(10, 10, ctype="plasma", name="plasma_10", j_max=NBTI_J_MAX))
 
         coil_list = list(group.coils.values())
         assert len(coil_list) == 8
@@ -434,6 +444,40 @@ class TestCoilSetSymmetry:
         new = symmetrise_coilset(coilset)
         assert len(new.coils) == len(coilset.coils)
         assert new.n_coils == coilset.n_coils
+
+
+class TestCoilSizing:
+    def test_initialisation(self):
+        c = Coil(4, 4, current=0, j_max=None, dx=1, dz=1)
+        assert c.dx == 1
+        assert c.dz == 1
+
+        c = Coil(4, 4, current=0, j_max=None, dx=1, dz=2)
+        assert c.dx == 1
+        assert c.dz == 2
+
+        c = Coil(4, 4, current=0, j_max=None, dx=2, dz=1)
+        assert c.dx == 2
+        assert c.dz == 1
+
+        c = Coil(4, 4, current=0, j_max=None, dx=1, dz=1, flag_sizefix=False)
+        assert c.dx == 1
+        assert c.dz == 1
+        assert c.flag_sizefix
+
+        c = Coil(4, 4, current=0, j_max=10)
+        assert c.dx == 0
+        assert c.dz == 0
+        assert not c.flag_sizefix
+
+    def test_bad_initialisation(self):
+        with pytest.raises(EquilibriaError):
+            Coil(4, 4, current=1)
+
+        with pytest.raises(EquilibriaError):
+            Coil(4, 4, dx=1)
+        with pytest.raises(EquilibriaError):
+            Coil(4, 4, dz=1)
 
 
 if __name__ == "__main__":

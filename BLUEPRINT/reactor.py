@@ -80,9 +80,14 @@ from BLUEPRINT.systems.physicstoolbox import (
     estimate_kappa95,
 )
 
-# BLUEPRINT.equilibria imports
-from BLUEPRINT.equilibria import AbInitioEquilibriumProblem, AbExtraEquilibriumProblem
-from BLUEPRINT.equilibria.constants import NBTI_J_MAX, NB3SN_J_MAX
+# Equilibria imports
+from bluemira.equilibria import AbInitioEquilibriumProblem
+from bluemira.equilibria.constants import (
+    NB3SN_B_MAX,
+    NBTI_B_MAX,
+    NBTI_J_MAX,
+    NB3SN_J_MAX,
+)
 
 # BLUPRINT.cad imports
 from BLUEPRINT.cad import ReactorCAD
@@ -169,7 +174,7 @@ class Reactor(ReactorSystem):
     ATEC: Type[CoilArchitect]
 
     # Construction and calculation class declarations
-    EQ: Union[Type[AbInitioEquilibriumProblem], Type[AbExtraEquilibriumProblem]]
+    EQ: Type[AbInitioEquilibriumProblem]
     RB: Type[ReactorCrossSection]
     SO: Type[StructuralOptimiser]
     CAD: Type[ReactorCAD]
@@ -588,6 +593,7 @@ class Reactor(ReactorSystem):
         tfboundary = tfboundary.offset(-0.5)
 
         profile = None
+
         bluemira_print("Generating reference plasma MHD equilibrium.")
         a = AbInitioEquilibriumProblem(
             self.params.R_0.value,
@@ -597,8 +603,17 @@ class Reactor(ReactorSystem):
             self.params.beta_p.value / 1.3,  # TODO: beta_N vs beta_p here?
             self.params.l_i.value,
             # TODO: 100/95 problem
-            self.params.kappa_95.value,
-            self.params.delta_95.value,
+            # TODO: This is a parameter patch... switch to strategy pattern
+            self.params.kappa_95,
+            1.2 * self.params.kappa_95,
+            self.params.delta_95,
+            1.2 * self.params.delta_95,
+            -20,
+            5,
+            60,
+            30,
+            self.params.div_L2D_ib,
+            self.params.div_L2D_ob,
             self.params.r_cs_in.value + self.params.tk_cs.value / 2,
             self.params.tk_cs.value / 2,
             tfboundary,
@@ -609,8 +624,25 @@ class Reactor(ReactorSystem):
             rtype=self.params.reactor_type.value,
             profile=profile,
         )
-        a.coilset.assign_coil_materials("PF", self.params.PF_material.value)
-        a.coilset.assign_coil_materials("CS", self.params.CS_material.value)
+
+        if self.params.PF_material.value == "NbTi":
+            j_pf = NBTI_J_MAX
+            b_pf = NBTI_B_MAX
+        elif self.params.PF_material.value == "Nb3Sn":
+            j_pf = NB3SN_J_MAX
+            b_pf = NB3SN_B_MAX
+        else:
+            raise ValueError("Unrecognised material string")
+
+        if self.params.CS_material.value == "NbTi":
+            j_cs = NBTI_J_MAX
+            b_pf = NBTI_B_MAX
+        elif self.params.CS_material.value == "Nb3Sn":
+            j_cs = NB3SN_J_MAX
+            b_cs = NB3SN_B_MAX
+
+        a.coilset.assign_coil_materials("PF", j_max=j_pf, b_max=b_pf)
+        a.coilset.assign_coil_materials("CS", j_max=j_cs, b_max=b_cs)
         a.solve(plot=self.plot_flag)
         print("")  # stdout flusher
 
@@ -628,33 +660,7 @@ class Reactor(ReactorSystem):
         """
         Load an equilibrium from a file.
         """
-        if filename is None:
-            files = get_files_by_ext(
-                self.file_manager.reference_data_dirs["equilibria"], "json"
-            )
-            if len(files) > 1:
-                bluemira_warn("More than one eqdsk file present, loading first.")
-            file = files[0]
-            filename = os.path.join(
-                self.file_manager.reference_data_dirs["equilibria"], file
-            )
-
-        bluemira_print(f"Loading reference plasma MHD equilibrium {filename}")
-
-        if filename.endswith("eqdsk"):
-            bluemira_warn("Consider converting your eqdsk file to json.")
-        self.EQ = AbExtraEquilibriumProblem(filename, load_large_file=reconstruct_jtor)
-        self.eqref = self.EQ.eq
-        self.process_equilibrium(self.eqref)
-
-        # Ensure the equilibria reference data are available if loaded from elsewhere.
-        file_dir = os.path.dirname(filename)
-        if file_dir != self.file_manager.reference_data_dirs["equilibria"]:
-            self.EQ.eq.to_eqdsk(
-                os.path.basename(filename),
-                directory=self.file_manager.reference_data_dirs["equilibria"],
-                qpsi_calcmode=qpsi_calcmode,
-            )
+        raise NotImplementedError("This method is being redesigned...")
 
     def process_equilibrium(self, eq):
         """
@@ -662,8 +668,10 @@ class Reactor(ReactorSystem):
         """
         d = eq.analyse_plasma()
         lq = lambda_q(self.params.B_0, d["q_95"], self.params.P_sep, d["R_0"])
-        shaf = d["shaf_shift"]
-        shaf = np.sqrt(shaf[0] ** 2 + shaf[1] ** 2)  # absolute shaf shift
+        dx_shaf = d["dx_shaf"]
+        dz_shaf = d["dz_shaf"]
+        shaf = np.hypot(dx_shaf, dz_shaf)
+
         # fmt: off
         params = [['I_p', 'Plasma current', d['Ip'] / 1e6, 'MA', None, 'equilibria'],
                   ['q_95', 'Plasma safety factor', d['q_95'], 'N/A', None, 'equilibria'],
