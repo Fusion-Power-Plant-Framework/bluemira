@@ -25,6 +25,7 @@ Generic optimiser class
 import numpy as np
 import types
 from functools import wraps
+from scipy.optimize._numdiff import approx_derivative
 
 from bluemira.utilities._nlopt_api import NLOPTOptimiser
 from bluemira.utilities.opt_tools import approx_jacobian, approx_fprime
@@ -88,11 +89,16 @@ class Optimiser(NLOPTOptimiser):
             Optimal solution vector
         """
         if x0 is None:
-            x0 = np.zeros(self.n_variables)
+            x0 = 0.5 * np.ones(self.n_variables)
 
         x_star = super().optimise(x0)
         self.check_constraints(x_star)
         return x_star
+
+    def approx_derivative(self, function, x, f0):
+        return approx_derivative(
+            function, x, bounds=[self.lower_bounds, self.upper_bounds], f0=f0
+        )
 
     def set_objective_function(self, f_objective):
         if f_objective is None:
@@ -119,17 +125,17 @@ class Optimiser(NLOPTOptimiser):
         """
         Check that the constraints have been met.
         """
-        pass
-        # c_values = []
-        # tolerances = []
-        # for constraint, tolerance in zip(self.constraints, self.constraint_tols):
-        #     c_values.extend(constraint.func(x))
-        #     tolerances.extend(tolerance)
 
-        # c_values = np.array(c_values)
-        # tolerances = np.array(tolerances)
+        c_values = []
+        tolerances = []
+        for constraint, tolerance in zip(self.constraints, self.constraint_tols):
+            c_values.extend(constraint(np.zeros(len(tolerance)), x, np.empty(0)))
+            tolerances.extend(tolerance)
 
-        # if not np.all(c_values < tolerances):
-        #     raise InternalOptError(
-        #         "Some constraints have not been adequately satisfied."
-        #     )
+        c_values = np.array(c_values)
+        tolerances = np.array(tolerances)
+
+        if not np.all(c_values < tolerances):
+            raise InternalOptError(
+                "Some constraints have not been adequately satisfied."
+            )

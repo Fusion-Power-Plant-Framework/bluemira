@@ -45,12 +45,12 @@ class GeometryOptimisationProblem(abc.ABC):
     def __init__(self, parameterisation: GeometryParameterisation, optimiser: Optimiser):
         self.parameterisation = parameterisation
         self.optimiser = optimiser
+        self.optimiser.n_variables = parameterisation.variables.n_free_variables
         self.optimiser.set_lower_bounds(np.zeros(optimiser.n_variables))
         self.optimiser.set_upper_bounds(np.ones(optimiser.n_variables))
         self.optimiser.set_objective_function(self.f_objective)
 
     def update_parameterisation(self, x):
-        # x = np.clip(x, 1e-18, 1.0-1e-18)
         self.parameterisation.variables.set_values_from_norm(x)
 
     f_objective = None

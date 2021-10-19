@@ -140,6 +140,9 @@ def process_scipy_result(res):
         raise InternalOptError("\n".join([res.message, res.__str__()]))
 
 
+from scipy.optimize._numdiff import approx_derivative
+
+
 def approx_fprime(xk, func, epsilon, bounds, *args, f0=None, cls=None):
     """
     An altered version of a scipy function, but with the added feature
@@ -169,6 +172,7 @@ def approx_fprime(xk, func, epsilon, bounds, *args, f0=None, cls=None):
     -----
     The approximation is done using forward differences.
     """
+    return approx_derivative(func, xk, bounds=bounds, f0=f0)
     if f0 is None:
         if cls is None:
             f0 = func(*((xk,) + args))
@@ -188,12 +192,14 @@ def approx_fprime(xk, func, epsilon, bounds, *args, f0=None, cls=None):
         delta = xk_d[i] - xk[i]
 
         if np.isclose(delta, 0.0):
-            df = 0
+            # Re-bound the bound in the other direction
+            xk_d[i] = xk[i] - d[i]
+            delta = xk[i] - xk_d[i]
+
+        if cls is None:
+            df = (func(*((xk_d,) + args)) - f0) / delta
         else:
-            if cls is None:
-                df = (func(*((xk_d,) + args)) - f0) / delta
-            else:
-                df = (func(cls, *((xk_d,) + args)) - f0) / delta
+            df = (func(cls, *((xk_d,) + args)) - f0) / delta
 
         if not np.isscalar(df):
             try:
@@ -205,6 +211,9 @@ def approx_fprime(xk, func, epsilon, bounds, *args, f0=None, cls=None):
         grad[i] = df
         ei[i] = 0.0
     return grad
+
+
+from scipy.optimize import approx_fprime
 
 
 def approx_jacobian(x, func, epsilon, bounds, *args, f0=None):
@@ -239,6 +248,7 @@ def approx_jacobian(x, func, epsilon, bounds, *args, f0=None):
     -----
     The approximation is done using forward differences.
     """
+    return approx_derivative(func, x, bounds=bounds, f0=f0)
     x0 = np.asfarray(x)
 
     if f0 is None:
@@ -257,9 +267,11 @@ def approx_jacobian(x, func, epsilon, bounds, *args, f0=None):
         delta = x_dx[i] - x[i]
 
         if np.isclose(delta, 0.0):
-            jac[i] = 0
-        else:
-            jac[i] = (func(*((x_dx,) + args)) - f0) / delta
+            # Re-bound the bound in the other direction
+            x_dx[i] = x[i] - d[i]
+            delta = x[i] - x_dx[i]
+
+        jac[i] = (func(*((x_dx,) + args)) - f0) / delta
 
         dx[i] = 0.0
 

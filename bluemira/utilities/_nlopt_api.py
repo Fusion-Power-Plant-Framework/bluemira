@@ -23,15 +23,23 @@
 Thin wrapper API interface to optimisation library (NLOpt)
 """
 
+from nlopt.nlopt import algorithm_name
 import numpy as np
 import inspect
 import nlopt
-from BLUEPRINT.utilities.optimisation import ExternalOptError, InternalOptError
+from scipy.optimize._numdiff import approx_derivative
+from bluemira.base.constants import N_AVOGADRO
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.error import OptUtilitiesError
+from bluemira.utilities.error import (
+    OptUtilitiesError,
+    ExternalOptError,
+    InternalOptError,
+    OptVariablesError,
+)
 from bluemira.utilities.opt_tools import approx_fprime, approx_jacobian
 
+EPS = np.finfo(np.longdouble).eps ** (1 / 3)
 
 NLOPT_ALG_MAPPING = {
     "SLSQP": nlopt.LD_SLSQP,
@@ -100,10 +108,15 @@ class _NLOPTFunction:
         The array of lower and upper bounds
     """
 
-    def __init__(self, func, bounds, epsilon=1e-12):
+    def __init__(self, func, bounds, epsilon=1e-6):
         self.func = func
         self.bounds = bounds
         self.epsilon = epsilon
+        self.last_x = None
+
+    def store_x(self, x):
+        if not np.isnan(np.sum(x)):
+            self.last_x = x
 
 
 class NLOPTObjectiveFunction:
@@ -144,13 +157,26 @@ class NLOPTNumGradObjectiveFunction(_NLOPTFunction):
         Modifies `grad` in-place as per NLopt usage.
         """
         result = self.func(x, *args)
-        self.last_x = x
+        self.store_x(x)
 
         if grad.size > 0:
-            grad[:] = approx_fprime(
-                x, self.func, self.epsilon, self.bounds, *args, f0=result
+            grad[:] = approx_derivative(
+                self.func,
+                x,
+                bounds=self.bounds,
+                args=args,
+                f0=result,
+                rel_step=EPS,
             )
-
+            grad[:] = approx_fprime(
+                x,
+                self.func,
+                EPS,
+                bounds=self.bounds,
+                args=args,
+                f0=result,
+            )
+            print(grad)
         return result
 
 
@@ -187,8 +213,16 @@ class NLOPTConstraintFunction(_NLOPTFunction):
 
         if grad.size > 0:
             grad[:] = approx_jacobian(
-                x, self.func, self.epsilon, self.bounds, *args, f0=constraint
+                x,
+                constraint,
+                bounds=self.bounds,
+                args=args,
+                f0=constraint,
+                rel_step=EPS,
             )
+
+
+import functools
 
 
 class NLOPTOptimiser:
@@ -204,22 +238,54 @@ class NLOPTOptimiser:
     """
 
     def __init__(
-        self, algorithm_name, n_variables, opt_parameters={}, opt_conditions={}
+        self,
+        algorithm_name,
+        n_variables=None,
+        opt_conditions={},
+        opt_parameters={},
     ):
+        self.opt_conditions = opt_conditions
+        self.opt_parameters = opt_parameters
+        self.algorithm_name = algorithm_name
         self.n_variables = n_variables
-        self.set_algorithm(algorithm_name)
-        self.lower_bounds = np.zeros(n_variables)
-        self.upper_bounds = np.ones(n_variables)
         self.constraints = []
         self.constraint_tols = []
-        self.set_algorithm_parameters(opt_parameters)
-        self.set_termination_conditions(opt_conditions)
 
-    def _grad_alg_and_no_grad(self, func):
-        return (
-            self.algorithm_name in GRAD_ALGS
-            and inspect.signature(func).parameters["grad"] is None
-        )
+    def _opt_inputs_ready(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if not isinstance(self._n_variables, int):
+                raise OptUtilitiesError(
+                    "You must specify the dimensionality of the optimisation problem before using ."
+                )
+            func(self, *args, **kwargs)
+
+        return wrapper
+
+    @property
+    def algorithm_name(self):
+        return self._algorithm_name
+
+    @algorithm_name.setter
+    def algorithm_name(self, name):
+        if name not in NLOPT_ALG_MAPPING:
+            raise OptUtilitiesError(f"Unknown or unmapped algorithm: {algorithm_name}")
+        self._algorithm_name = name
+
+    @property
+    def n_variables(self):
+        return self._n_variables
+
+    @n_variables.setter
+    def n_variables(self, value):
+        self._n_variables = value
+
+        if value is not None:
+            self.set_algorithm()
+            self.set_termination_conditions(self.opt_conditions)
+            self.set_algorithm_parameters(self.opt_parameters)
+            self.lower_bounds = np.zeros(value)
+            self.upper_bounds = np.ones(value)
 
     def _append_constraint_tols(self, constraint, tolerance):
         """
@@ -228,20 +294,12 @@ class NLOPTOptimiser:
         self.constraints.append(constraint)
         self.constraint_tols.append(tolerance)
 
-    def set_algorithm(self, algorithm_name):
-        """
-        Parameters
-        ----------
-        algorithm: nlopt algorithm
-        Optimisation algorithm to use
-        """
-        algorithm = NLOPT_ALG_MAPPING.get(algorithm_name, None)
-        if algorithm is None:
-            raise OptUtilitiesError(f"Unknown or unmapped algorithm: {algorithm_name}")
+    def set_algorithm(self):
+        """"""
+        algorithm = NLOPT_ALG_MAPPING[self.algorithm_name]
+        self._opt = nlopt.opt(algorithm, int(self._n_variables))
 
-        self.algorithm_name = algorithm_name
-        self._opt = nlopt.opt(algorithm, self.n_variables)
-
+    @_opt_inputs_ready
     def set_algorithm_parameters(self, opt_parameters):
         """
         Set the optimisation algorithm parameters to use.
@@ -252,8 +310,10 @@ class NLOPTOptimiser:
             Optimisation algorithm parameters to use
         """
         for k, v in opt_parameters.items():
-            self._opt.set_param(k, v)
+            if self._opt.has_param(k):
+                self._opt.set_param(k, v)
 
+    @_opt_inputs_ready
     def set_termination_conditions(self, opt_conditions):
         """
         Set the optimisation algorithm termination condition(s) to use.
@@ -278,6 +338,7 @@ class NLOPTOptimiser:
         if "stop_val" in opt_conditions:
             self._opt.set_stopval(opt_conditions["stop_val"])
 
+    @_opt_inputs_ready
     def set_objective_function(self, f_objective):
         """
         Set the objective function (minimisation).
@@ -287,16 +348,11 @@ class NLOPTOptimiser:
         f_objective: callable
             Objective function to minimise
         """
-        if self._grad_alg_and_no_grad(f_objective):
-            # Gradient-based algorithm but grad is set to None: numerically calculate
-            f_objective = NLOPTNumGradObjectiveFunction(
-                f_objective, [self.lower_bounds, self.upper_bounds]
-            )
-        else:
-            f_objective = NLOPTObjectiveFunction(f_objective)
+        f_objective = NLOPTObjectiveFunction(f_objective)
         self._f_objective = f_objective
         self._opt.set_min_objective(f_objective)
 
+    @_opt_inputs_ready
     def set_lower_bounds(self, lower_bounds):
         """
         Set the lower bounds.
@@ -309,6 +365,7 @@ class NLOPTOptimiser:
         self.lower_bounds = lower_bounds
         self._opt.set_lower_bounds(lower_bounds)
 
+    @_opt_inputs_ready
     def set_upper_bounds(self, upper_bounds):
         """
         Set the upper bounds.
@@ -321,6 +378,7 @@ class NLOPTOptimiser:
         self.upper_bounds = upper_bounds
         self._opt.set_upper_bounds(upper_bounds)
 
+    @_opt_inputs_ready
     def add_eq_constraint(self, f_constraint, tolerance):
         """
         Add a single-valued equality constraint.
@@ -340,6 +398,7 @@ class NLOPTOptimiser:
         self._opt.add_equality_constraint(f_constraint, tolerance)
         self._append_constraint_tols(f_constraint, tolerance)
 
+    @_opt_inputs_ready
     def add_ineq_constraint(self, f_constraint, tolerance):
         """
         Add a single-valued inequality constraint.
@@ -355,14 +414,11 @@ class NLOPTOptimiser:
             raise OptUtilitiesError(
                 f"{self.algorithm_name} does not support inequality constraints."
             )
-        if self._grad_alg_and_no_grad(f_constraint):
-            f_constraint = NLOPTConstraintFunction(
-                f_constraint, [self.lower_bounds, self.upper_bounds]
-            )
 
         self._opt.add_inequality_constraint(f_constraint, tolerance)
         self._append_constraint_tols(f_constraint, tolerance)
 
+    @_opt_inputs_ready
     def add_ineq_constraints(self, f_constraint, tolerance):
         """
         Add a vector-valued inequality constraint.
@@ -377,11 +433,6 @@ class NLOPTOptimiser:
         if self.algorithm_name not in INEQ_CON_ALGS:
             raise OptUtilitiesError(
                 f"{self.algorithm_name} does not support inequality constraints."
-            )
-
-        if self._grad_alg_and_no_grad(f_constraint):
-            f_constraint = NLOPTConstraintFunction(
-                f_constraint, [self.lower_bounds, self.upper_bounds]
             )
 
         self._opt.add_inequality_mconstraint(f_constraint, tolerance)
@@ -402,10 +453,19 @@ class NLOPTOptimiser:
             # It's likely that the last call was still a reasonably good solution.
             self.rms = self._opt.last_optimum_value()
             x_star = self._f_objective.last_x
-        except RuntimeError as e:
+        except OptVariablesError:
+            # Probably still some rounding errors due to numerical gradients
+            # It's likely that the last call was still a reasonably good solution.
+            bluemira_warn("Badly behaved numerical gradients are causing trouble...")
+            self.rms = self._opt.last_optimum_value()
+            x_star = np.round(self._f_objective.last_x, 6)
+        except RuntimeError:
             # Usually "more than iter SQP iterations"
-            raise ExternalOptError(e)
+            raise ExternalOptError("Usually more than iter SQP iterations")
 
         self.rms = self._opt.last_optimum_value()
+        self.n_evals = self._opt.get_numevals()
         process_NLOPT_result(self._opt)
         return x_star
+
+    _opt_inputs_ready = staticmethod(_opt_inputs_ready)
