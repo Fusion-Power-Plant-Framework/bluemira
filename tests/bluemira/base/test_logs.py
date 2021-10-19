@@ -37,6 +37,9 @@ from bluemira.base.error import LogsError
 class TestLoggingLevel:
     @classmethod
     def setup_class(cls):
+        # The logger needs to be reset after testing otherwise
+        # extra handlers are added to the logger leading to double printing
+        # if pytest is run with capturing switched off
         cls.orig_log = logging.getLogger("")
         cls.original_handlers = [
             handler for handler in cls.orig_log.handlers or cls.orig_log.parent.handlers
