@@ -26,10 +26,10 @@ from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.tools import set_random_seed
 
-import nlopt
 
-nlopt.srand(13436547564)
+set_random_seed(134365475)
 
 
 class MyProblem(GeometryOptimisationProblem):
@@ -54,6 +54,7 @@ class MyProblem(GeometryOptimisationProblem):
         length = self.calculate_length(x)
 
         if grad.size > 0:
+            # Only called if a gradient-based optimiser is used
             grad[:] = self.optimiser.approx_derivative(
                 self.calculate_length, x, f0=length
             )
@@ -62,8 +63,13 @@ class MyProblem(GeometryOptimisationProblem):
 
 
 # Here we solve the problem with a gradient-based optimisation algorithm (SLSQP)
-# The gradients are automatically calculated under the hood
-parameterisation_1 = PrincetonD()
+
+parameterisation_1 = PrincetonD(
+    {
+        "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
+        "x2": {"lower_bound": 10, "value": 14, "upper_bound": 16},
+    }
+)
 # Here we're minimising the length, and we can work out that the dz variable will not
 # affect the optimisation, so let's just fix at some value and remove it from the problem
 parameterisation_1.fix_variable("dz", value=0)
@@ -142,6 +148,7 @@ class MyConstrainedProblem(MyProblem):
         constraint[:] = self.my_constraint(x)
 
         if grad.size > 0:
+            # Only called if a gradient-based optimiser is used
             grad[:] = self.optimiser.approx_derivative(self.my_constraint, x, constraint)
 
         return constraint
@@ -168,6 +175,7 @@ problem.solve()
 
 print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
 print(f"Length: {parameterisation_3.create_shape().length}")
+print(f"n_evals: {problem.optimiser.n_evals}")
 
 # This is because we're using numerical gradients and jacobians for our objective and
 # inequality constraint functions. This can be faster than other approaches, but is less
@@ -193,6 +201,7 @@ problem.solve()
 
 print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
 print(f"Length with COBYLA: {parameterisation_4.create_shape().length}")
+print(f"n_evals: {problem.optimiser.n_evals}")
 
 parameterisation_5 = PrincetonD()
 irses_optimiser = Optimiser(
@@ -209,3 +218,11 @@ problem.solve()
 
 print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
 print(f"Length with ISRES: {parameterisation_5.create_shape().length}")
+print(f"n_evals: {problem.optimiser.n_evals}")
+
+
+# Horses for courses folks... YMMV. Best thing you can do is specify your optimisation
+# problem intelligently, using well-behaved objective and constraint functions, and smart
+# bounds. Trying out different optimisers doesn't hurt. There's a trade-off between speed
+# and accuracy. If you can't work out the analytical gradients, numerical gradients are a
+# questionable approach, but do work well (fast) on some problems.

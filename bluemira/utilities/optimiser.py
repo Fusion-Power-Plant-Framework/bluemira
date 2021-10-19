@@ -20,57 +20,16 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Generic optimiser class
+Static API to optimisation library
 """
 import numpy as np
-import types
-from functools import wraps
 from scipy.optimize._numdiff import approx_derivative
 
 from bluemira.utilities._nlopt_api import NLOPTOptimiser
-from bluemira.utilities.opt_tools import approx_jacobian, approx_fprime
 from bluemira.utilities.error import InternalOptError
 
 
-class _numerical_gradient:
-    def __init__(self, func=None, epsilon=1e-6):
-        self.epsilon = epsilon
-        wraps(func)(self)
-
-    def __call__(self, cls, x, grad, *args):
-        func = self.__wrapped__
-
-        result = func(cls, x, *args)
-
-        if grad.size > 0:
-            grad[:] = approx_fprime(
-                x,
-                func,
-                self.epsilon,
-                [cls.optimiser.lower_bounds, cls.optimiser.upper_bounds],
-                *args,
-                f0=result,
-                cls=cls
-            )
-
-        return result
-
-    def __get__(self, instance, cls):
-        if instance is None:
-            return self
-        else:
-            return types.MethodType(self, instance)
-
-
-def numerical_gradient(function=None, epsilon=1e-6):
-    if function:
-        return _numerical_gradient(function)
-    else:
-
-        def wrapper(function):
-            return _numerical_gradient(function, epsilon)
-
-        return wrapper
+__all__ = ["approx_derivative", "Optimiser"]
 
 
 class Optimiser(NLOPTOptimiser):

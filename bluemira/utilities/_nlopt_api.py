@@ -23,12 +23,9 @@
 Thin wrapper API interface to optimisation library (NLOpt)
 """
 
-from nlopt.nlopt import algorithm_name
 import numpy as np
-import inspect
 import nlopt
-from scipy.optimize._numdiff import approx_derivative
-from bluemira.base.constants import N_AVOGADRO
+import functools
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import (
@@ -37,7 +34,7 @@ from bluemira.utilities.error import (
     InternalOptError,
     OptVariablesError,
 )
-from bluemira.utilities.opt_tools import approx_fprime, approx_jacobian
+
 
 EPS = np.finfo(np.longdouble).eps ** (1 / 3)
 
@@ -95,134 +92,18 @@ def process_NLOPT_result(opt):  # noqa (N802)
         bluemira_warn(f"\nNLOPT Optimiser failed because of a forced stop.\n")
 
 
-class _NLOPTFunction:
-    """
-    Base class for an optimisation function where numerical estimations of the
-    gradient or jacobian are required.
-
-    Parameters
-    ----------
-    func: callable
-        The function to calculate the objective or constraints
-    bounds: np.array(n, 2)
-        The array of lower and upper bounds
-    """
-
-    def __init__(self, func, bounds, epsilon=1e-6):
-        self.func = func
-        self.bounds = bounds
-        self.epsilon = epsilon
-        self.last_x = None
-
-    def store_x(self, x):
-        if not np.isnan(np.sum(x)):
-            self.last_x = x
-
-
 class NLOPTObjectiveFunction:
     def __init__(self, func):
         self.func = func
         self.last_x = None
 
     def __call__(self, x, grad, *args):
-        self.last_x = x
+        self.store_x(x)
         return self.func(x, grad, *args)
 
-
-class NLOPTNumGradObjectiveFunction(_NLOPTFunction):
-    """
-    An objective function with numerical calculation of the gradient.
-    """
-
-    def __call__(self, x, grad, *args):
-        """
-        Calculate the objective functions and its gradient (numerically).
-
-        Parameters
-        ----------
-        x: np.array
-            The optimisation variable vector
-        grad: np.array
-            The array of the gradient in NLopt
-        args: tuple
-            The additional arguments used in the function evaluation
-
-        Returns
-        -------
-        result: float
-            The value of the objective function
-
-        Notes
-        -----
-        Modifies `grad` in-place as per NLopt usage.
-        """
-        result = self.func(x, *args)
-        self.store_x(x)
-
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                self.func,
-                x,
-                bounds=self.bounds,
-                args=args,
-                f0=result,
-                rel_step=EPS,
-            )
-            grad[:] = approx_fprime(
-                x,
-                self.func,
-                EPS,
-                bounds=self.bounds,
-                args=args,
-                f0=result,
-            )
-            print(grad)
-        return result
-
-
-class NLOPTConstraintFunction(_NLOPTFunction):
-    """
-    A constraint function with numerical calculation of the Jacobian.
-    """
-
-    def __call__(self, constraint, x, grad, *args):
-        """
-        Calculate the objective functions and its gradient (numerically).
-
-        Parameters
-        ----------
-        constraint: np.array
-            The array of the constraint equations
-        x: np.array
-            The optimisation variable vector
-        grad: np.array
-            The array of the gradient in NLopt
-        args: tuple
-            The additional arguments used in the function evaluation
-
-        Returns
-        -------
-        constraint: np.array
-            The array of the constraint equations
-
-        Notes
-        -----
-        Modifies `grad` and `constraint` in-place as per NLopt usage.
-        """
-        constraint[:] = self.func(x, *args)
-
-        if grad.size > 0:
-            grad[:] = approx_jacobian(
-                x,
-                constraint,
-                bounds=self.bounds,
-                args=args,
-                f0=constraint,
-                rel_step=EPS,
-            )
-
-
-import functools
+    def store_x(self, x):
+        if not np.isnan(np.sum(x)):
+            self.last_x = x
 
 
 class NLOPTOptimiser:

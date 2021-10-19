@@ -54,23 +54,9 @@ class GeometryOptimisationProblem(abc.ABC):
         self.parameterisation.variables.set_values_from_norm(x)
 
     f_objective = None
-    f_eq_constraints = None
-    f_ineq_constraints = None
 
     def solve(self, x0=None):
         if x0 is None:
             x0 = self.parameterisation.variables.get_normalised_values()
         x_star = self.optimiser.optimise(x0)
         self.update_parameterisation(x_star)
-
-    # @abc.abstractmethod
-    # def f_objective(self, x):
-    #     pass
-
-    # @abc.abstractmethod
-    # def f_eq_constraints(self, x):
-    #     pass
-
-    # @abc.abstractmethod
-    # def f_ineq_constraints(self, x):
-    #     pass
