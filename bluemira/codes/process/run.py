@@ -291,42 +291,8 @@ class Run:
         """
         self.reactor.__PROCESS__ = bm_file
 
-        # Load all PROCESS vars mapped with a BLUEPRINT inputs
-        if read_all:
-            var = []
-            for key in self.reactor.params.keys():
-                param = self.reactor.params.get_param(key)
-                if param.mapping is not None and "PROCESS" in param.mapping:
-                    var.append(key)
-
-        # Load a reduced set of inputs
-        else:
-            var = [
-                "R_0",
-                "I_p",
-                "B_0",
-                "tk_tf_nose",
-                "tk_tf_wp",
-                "r_cs_in",
-                "tk_cs",
-                "r_tf_in",
-                "r_ts_ib_in",
-                "r_vv_ib_in",
-                "r_fw_ib_in",
-                "r_fw_ob_in",
-                "r_vv_ob_in",
-                "beta_p",
-                "beta",
-                "r_tf_in_centre",
-                "r_tf_out_centre",
-                "tk_ts",
-                "g_vv_ts",
-                "A",
-                "P_el_net_process",
-                "P_fus",
-                "P_fus_DT",
-                "P_fus_DD",
-            ]
+        # Load all PROCESS vars mapped with a BLUEPRINT input
+        var = self.parameter_mapping.values() if read_all else self.read_mapping.values()
         param = self.reactor.__PROCESS__.extract_outputs(var)
         self.reactor.add_parameters(dict(zip(var, param)), source="PROCESS")
 
