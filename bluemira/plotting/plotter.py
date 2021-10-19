@@ -324,9 +324,8 @@ class FacePlotter(BasePlotter):
 
     def _make_plot(self, face, ndiscr, byedges):
         self._data = [[], [], []]
-        j = 0
+
         for w in face._shape.Wires:
-            j = j + 1
             boundary = BluemiraWire(w)
             wplotter = WirePlotter(**self.options)
             if not self.plot_wires and not self.plot_points:
@@ -336,16 +335,9 @@ class FacePlotter(BasePlotter):
                     boundary, ax=self.ax, show=False, ndiscr=ndiscr, byedges=byedges
                 )
 
-            # Todo: check if, for different combination of wires, the trick of
-            #  inverting the first set of data works.
-            if j == 1:
                 self._data[0] += wplotter._data[0][::-1] + [None]
                 self._data[1] += wplotter._data[1][::-1] + [None]
                 self._data[2] += wplotter._data[2][::-1] + [None]
-            else:
-                self._data[0] += wplotter._data[0] + [None]
-                self._data[1] += wplotter._data[1] + [None]
-                self._data[2] += wplotter._data[2] + [None]
 
         self._data[0] = self._data[0][:-1]
         self._data[1] = self._data[1][:-1]
