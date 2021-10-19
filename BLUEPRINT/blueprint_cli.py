@@ -35,7 +35,7 @@ import tarfile
 from typing import Optional
 
 from BLUEPRINT.base.file import KEYWORD
-from BLUEPRINT.base.file import get_bluemira_root
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.utilities.tools import get_module
 from BLUEPRINT.utilities.tools import CommentJSONDecoder

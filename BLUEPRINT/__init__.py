@@ -28,7 +28,7 @@ __version__ = get_versions()["version"]
 import pathlib  # noqa
 import subprocess  # noqa (S404)
 import sys  # noqa
-from BLUEPRINT.base.file import get_bluemira_root  # noqa
+from bluemira.base.file import get_bluemira_root  # noqa
 
 __all__ = ["test", "__version__"]
 del get_versions
