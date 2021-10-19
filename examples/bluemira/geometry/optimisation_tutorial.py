@@ -18,19 +18,17 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
+"""
+A quick tutorial on the optimisation of geometry in bluemira
+"""
 
 import numpy as np
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import set_random_seed
 
-"""
-A quick tutorial on the optimisation of geometry in bluemira
-"""
 
 set_random_seed(134365475)
 
@@ -49,7 +47,7 @@ class MyProblem(GeometryOptimisationProblem):
 
     def f_objective(self, x, grad):
         """
-        This is the signature for an objective function.
+        Signature for an objective function.
 
         If we use a gradient-based optimisation algorithm and we don't how to calculate
         the gradient, we can approximate it numerically.
@@ -148,7 +146,7 @@ class MyConstrainedProblem(MyProblem):
 
     def f_ineq_constraints(self, constraint, x, grad):
         """
-        This is the signature for an inequality constraint.
+        Signature for an inequality constraint.
 
         If we use a gradient-based optimisation algorithm and we don't how to calculate
         the gradient, we can approximate it numerically.
@@ -165,7 +163,6 @@ class MyConstrainedProblem(MyProblem):
         return constraint
 
 
-# square = make_polygon([[5, 0, -2], [8, 0, -2], [8, 0, 2], [5, 0, 2]], closed=True)
 parameterisation_3 = PrincetonD()
 slsqp_optimiser2 = Optimiser(
     "SLSQP",
