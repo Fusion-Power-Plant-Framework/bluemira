@@ -26,7 +26,7 @@ PROCESS setup functions
 import os
 
 # PROCESS imports
-from BLUEPRINT.codes.process.api import DEFAULT_INDAT, InDat
+from bluemira.codes.process.api import DEFAULT_INDAT, InDat
 
 
 class PROCESSInputWriter(InDat):

@@ -32,14 +32,14 @@ import string
 from BLUEPRINT.base.error import CodesError
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from BLUEPRINT.systems.physicstoolbox import normalise_beta
-from BLUEPRINT.codes.process.api import (
+from bluemira.codes.process.api import (
     DEFAULT_INDAT,
     get_PROCESS_read_mapping,
     get_PROCESS_write_mapping,
     update_obsolete_vars,
 )
-from BLUEPRINT.codes.process.setup import PROCESSInputWriter
-from BLUEPRINT.codes.process.teardown import BMFile
+from bluemira.codes.process.setup import PROCESSInputWriter
+from bluemira.codes.process.teardown import BMFile
 
 
 class RunMode(Enum):

@@ -34,7 +34,7 @@ from BLUEPRINT.base.error import CodesError
 from BLUEPRINT.geometry.geomtools import rainbow_seg
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.utilities.tools import is_num
-from BLUEPRINT.codes.process.api import (
+from bluemira.codes.process.api import (
     PROCESS_DICT,
     update_obsolete_vars,
     convert_unit_p_to_b,

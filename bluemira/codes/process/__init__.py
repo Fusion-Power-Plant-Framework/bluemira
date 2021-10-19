@@ -23,9 +23,9 @@
 Importer for PROCESS runner constants and functions
 """
 
-from BLUEPRINT.codes.process.api import PROCESS_ENABLED
-from BLUEPRINT.codes.process.run import Run
-from BLUEPRINT.codes.process.teardown import plot_PROCESS
+from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process.run import Run
+from bluemira.codes.process.teardown import plot_PROCESS
 
 __all__ = [
     "PROCESS_ENABLED",
