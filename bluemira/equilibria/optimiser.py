@@ -46,7 +46,13 @@ from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 
-__all__ = ["FBIOptimiser", "BreakdownOptimiser", "PositionOptimiser", "Norm2Tikhonov"]
+__all__ = [
+    "FBIOptimiser",
+    "BoundedCurrentOptimiser",
+    "BreakdownOptimiser",
+    "PositionOptimiser",
+    "Norm2Tikhonov",
+]
 
 
 class EquilibriumOptimiser:
@@ -108,9 +114,6 @@ class EquilibriumOptimiser:
 
         self.n_PF, self.n_CS = eq.coilset.n_PF, eq.coilset.n_CS
         self.n_C = eq.coilset.n_coils
-        if hasattr(self, "flag_nonlinear"):
-            self.B_max = eq.coilset.get_max_fields()
-            self._I_max = eq.coilset.get_max_currents(self.I_max)
         return self.optimise()
 
     def copy(self):
@@ -1099,3 +1102,156 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
         Get a deep copy of the BreakdownOptimiser.
         """
         return deepcopy(self)
+
+
+class BoundedCurrentOptimiser(EquilibriumOptimiser):
+    """
+    Force Field and Current constrained McIntoshian optimiser class.
+    Freeze punk!
+
+    Parameters
+    ----------
+    max_fields: np.array(n_coils)
+        The array of maximum poloidal field [T]
+    PF_Fz_max: float
+        The maximum absolute vertical on a PF coil [N]
+    CS_Fz_sum: float
+        The maximum absolute vertical on all CS coils [N]
+    CS_Fz_sep: float
+        The maximum Central Solenoid vertical separation force [N]
+    """
+
+    def __init__(self, **kwargs):  # noqa (N803)
+        # Used scale for optimiser RoundoffLimited Error prevention
+        self.scale = 1e6  # Scale for currents and forces (MA and MN)
+        self.gamma = kwargs.get("gamma", 1e-7)
+        self.constraint_tol = kwargs.get("constraint_tol", 1e-3)
+        self.flag_nonlinear = True
+        self.rms = None
+        self.rms_error = None
+
+        self.I_max = kwargs.get("max_currents", None)
+        if self.I_max is not None:
+            self.I_max = self.update_current_constraint(self.I_max)
+
+    def update_current_constraint(self, max_currents):
+        """
+        Updates the current vector bounds. Must be called prior to optimise.
+
+        Parameters
+        ----------
+        max_current: float or np.array(self.n_C)
+            Maximum magnitude of currents in each coil [A] permitted during optimisation.
+            If max_current is supplied as a float, the float will be set as the
+            maximum allowed current magnitude for all coils.
+        """
+        i_max = max_currents / self.scale
+        return i_max
+
+    def set_up_optimiser(self):
+        """
+        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
+        constraint & objective functions.
+
+        Returns
+        -------
+        opt: nlopt.opt
+            NLOpt optimiser to be used for optimisation.
+        """
+        # Initialise NLOpt optimiser, with optimisation strategy and length
+        # of state vector
+        opt = nlopt.opt(nlopt.LD_SLSQP, self.n)
+        # Set up objective function for optimiser
+        opt.set_min_objective(self.f_min_objective)
+
+        # Set tolerances for convergence of state vector and objective function
+        opt.set_xtol_abs(1e-4)
+        opt.set_xtol_rel(1e-4)
+        opt.set_ftol_abs(1e-4)
+        opt.set_ftol_rel(1e-4)
+
+        # Set state vector bounds (current limits)
+        opt.set_lower_bounds(-self.I_max)
+        opt.set_upper_bounds(self.I_max)
+
+        return opt
+
+    def optimise(self):
+        """
+        Optimiser handle. Used in __call__
+
+        Returns np.array(self.n_C) of optimised currents in each coil [A].
+        """
+        # Set up optimiser.
+        # TODO Move into __init__ to improve performance (requires coilset
+        # TODO sizes at initialisation for constraint tolerance sizes).
+        self.opt = self.set_up_optimiser()
+
+        # Get initial currents, and trim to within current bounds.
+        initial_currents = self.eq.coilset.get_control_currents() / self.scale
+        initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
+
+        # Optimise
+        currents = self.opt.optimize(initial_currents)
+
+        # Store found optimum of objective function and currents at optimum
+        self.rms = self.opt.last_optimum_value()
+        self._I_star = currents * self.scale
+        process_NLOPT_result(self.opt)
+        return currents * self.scale
+
+    def f_min_objective(self, vector, grad):
+        """
+        Objective function for nlopt optimisation (minimisation),
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+        grad: np.array
+            Local gradient of objective function used by LD NLOPT algorithms.
+            Updated in-place.
+
+        Returns
+        -------
+        rss: Value of objective function (figure of merit).
+        """
+        vector = vector * self.scale
+        rss, err = self.get_rss(vector)
+        if grad.size > 0:
+            jac = 2 * self.A.T @ self.A @ vector
+            jac -= 2 * self.A.T @ self.b
+            jac += 2 * self.gamma * self.gamma * vector
+            grad[:] = self.scale * jac
+        if not rss > 0:
+            raise EquilibriaError(
+                "Optimiser least-squares objective function less than zero or nan."
+            )
+        vector = vector / self.scale
+        return rss
+
+    def get_rss(self, vector):
+        """
+        Calculates the value and residual of the least-squares objective
+        function with Tikhonov regularisation term:
+
+        ||(Ax - b)||² + ||Γx||²
+
+        for the state vector x.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+
+        Returns
+        -------
+        rss: Value of objective function (figure of merit).
+        err: Residual (Ax - b) corresponding to the state vector x.
+        """
+        err = np.dot(self.A, vector) - self.b
+        rss = err.T @ err + self.gamma * self.gamma * vector.T @ vector
+        self.rms_error = rss
+        return rss, err
