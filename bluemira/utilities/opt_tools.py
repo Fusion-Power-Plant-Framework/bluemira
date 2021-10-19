@@ -187,7 +187,7 @@ def approx_fprime(xk, func, epsilon, bounds, *args, f0=None, cls=None):
         # Get the clipped length of the perturbation
         delta = xk_d[i] - xk[i]
 
-        if delta == 0:
+        if np.isclose(delta, 0.0):
             df = 0
         else:
             if cls is None:
@@ -256,7 +256,7 @@ def approx_jacobian(x, func, epsilon, bounds, *args, f0=None):
         # Get the clipped length of the perturbation
         delta = x_dx[i] - x[i]
 
-        if delta == 0:
+        if np.isclose(delta, 0.0):
             jac[i] = 0
         else:
             jac[i] = (func(*((x_dx,) + args)) - f0) / delta

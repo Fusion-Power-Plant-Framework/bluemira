@@ -43,6 +43,8 @@ class MyProblem(GeometryOptimisationProblem):
         based optimiser is used, the gradient of the objective function is calculated
         under the hood.
         """
+        if np.isnan(np.sum(x)):
+            print(x)
         self.update_parameterisation(x)
         return self.parameterisation.create_shape().length
 
@@ -50,7 +52,7 @@ class MyProblem(GeometryOptimisationProblem):
 # Here we solve the problem with a gradient-based optimisation algorithm (SLSQP)
 # The gradients are automatically calculated under the hood
 parameterisation_1 = PrincetonD()
-slsqp_optimiser = Optimiser("SLSQP", 3, {}, {"ftol_rel": 1e18})
+slsqp_optimiser = Optimiser("SLSQP", 3, {}, {"ftol_rel": 1e-12})
 problem = MyProblem(parameterisation_1, slsqp_optimiser)
 problem.solve()
 
@@ -67,6 +69,8 @@ class MyConstrainedProblem(GeometryOptimisationProblem):
         self.optimiser.add_ineq_constraints(self.f_ineq_constraints, ineq_con_tolerances)
 
     def f_objective(self, x, grad=None):
+        if np.isnan(np.sum(x)):
+            print(x)
         self.update_parameterisation(x)
         length = self.parameterisation.create_shape().length
         return length
@@ -85,6 +89,8 @@ class MyConstrainedProblem(GeometryOptimisationProblem):
 
 # square = make_polygon([[5, 0, -2], [8, 0, -2], [8, 0, 2], [5, 0, 2]], closed=True)
 parameterisation_3 = PrincetonD()
-slsqp_optimiser = Optimiser("SLSQP", 3, {}, {"ftol_rel": 1e-3, "max_eval": 1000})
+slsqp_optimiser = Optimiser(
+    "SLSQP", 3, {}, {"ftol_rel": 1e-3, "xtol_rel": 1e-12, "max_eval": 1000}
+)
 problem = MyConstrainedProblem(parameterisation_3, slsqp_optimiser, 1e-3 * np.ones(2))
 problem.solve()

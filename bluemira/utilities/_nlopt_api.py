@@ -26,6 +26,7 @@ Thin wrapper API interface to optimisation library (NLOpt)
 import numpy as np
 import inspect
 import nlopt
+from BLUEPRINT.utilities.optimisation import ExternalOptError, InternalOptError
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import OptUtilitiesError
@@ -59,7 +60,6 @@ def process_NLOPT_result(opt):  # noqa (N802)
     opt: NLOPT Optimize object
         The optimiser to check
     """
-    # TODO: Check constraints
     result = opt.last_optimize_result()
 
     if result == nlopt.MAXEVAL_REACHED:
@@ -100,7 +100,7 @@ class _NLOPTFunction:
         The array of lower and upper bounds
     """
 
-    def __init__(self, func, bounds, epsilon=1e-6):
+    def __init__(self, func, bounds, epsilon=1e-12):
         self.func = func
         self.bounds = bounds
         self.epsilon = epsilon
@@ -402,6 +402,10 @@ class NLOPTOptimiser:
             # It's likely that the last call was still a reasonably good solution.
             self.rms = self._opt.last_optimum_value()
             x_star = self._f_objective.last_x
+        except RuntimeError as e:
+            # Usually "more than iter SQP iterations"
+            raise ExternalOptError(e)
+
         self.rms = self._opt.last_optimum_value()
         process_NLOPT_result(self._opt)
         return x_star
