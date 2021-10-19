@@ -144,7 +144,7 @@ class EQDSKInterface:
         formatt = file.split(".")[-1]
         raise ValueError(f"Unrecognised file format {formatt}")
 
-    def write(self, file, data, formatt="json"):
+    def write(self, file, data, formatt="json", **kwargs):
         """
         Writes an output EQDSK file
 
@@ -156,15 +156,17 @@ class EQDSKInterface:
             The dictionary of EQDSK data specified in the ParameterFrame
         formatt: str
             The format to save the file in
+        kwargs: dict
+            passed onto the writer
         """
         self.filename = self._get_filename(file)
         if formatt == "json":
-            self._write_json(file, data)
+            self._write_json(file, data, **kwargs)
         elif formatt in ["eqdsk", "geqdsk"]:
             bluemira_warn(
                 "You are in the 21st century. Are you sure you want to be making an EDQSK in this day and age?"
             )
-            self._write_eqdsk(file, data)
+            self._write_eqdsk(file, data, **kwargs)
         else:
             raise ValueError(f"Unrecognised file format {formatt}")
 
@@ -223,11 +225,13 @@ class EQDSKInterface:
         self.load_dict(data)
         return self.to_dict()
 
-    def _write_json(self, file, data):
+    def _write_json(self, file, data, **kwargs):
         if isinstance(file, str):
             with open(file, "w") as f_handle:
                 return self._write_json(f_handle, data)
-        json.dump(data, file, cls=NumpyJSONEncoder)
+        if "indent" not in kwargs:
+            kwargs["indent"] = 4
+        json.dump(data, file, cls=NumpyJSONEncoder, **kwargs)
 
     def _read_eqdsk(self, file):
         if isinstance(file, str):
@@ -392,7 +396,7 @@ class EQDSKInterface:
             for obj in generator_list:
                 yield obj
 
-    def _write_eqdsk(self, file, data):
+    def _write_eqdsk(self, file, data, **kwargs):
         """
         Writes data out to a text file in G-EQDSK format.
 
@@ -402,6 +406,8 @@ class EQDSKInterface:
             The full path string of the file to be created
         data: dict
             The dictionary of EQDSK data specified in the ParameterFrame
+        kwargs: dict
+            The kwargs do not provide any options here
         """
         if isinstance(file, str):
             if not file.endswith(".eqdsk") or not file.endswith(".geqdsk"):
