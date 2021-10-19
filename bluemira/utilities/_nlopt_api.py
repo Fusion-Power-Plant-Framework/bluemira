@@ -31,7 +31,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import (
     OptUtilitiesError,
     ExternalOptError,
-    InternalOptError,
     OptVariablesError,
 )
 
@@ -92,7 +91,11 @@ def process_NLOPT_result(opt):  # noqa (N802)
         bluemira_warn(f"\nNLOPT Optimiser failed because of a forced stop.\n")
 
 
-class NLOPTObjectiveFunction:
+class _NLOPTObjectiveFunction:
+    """
+    Wrapper to store x-vector in case of RoundOffLimited errors.
+    """
+
     def __init__(self, func):
         self.func = func
         self.last_x = None
@@ -114,8 +117,12 @@ class NLOPTOptimiser:
     ----------
     algorithm_name: str
         Optimisation algorithm to use
-    n_variables: int
+    n_variables: Optional[int]
         Size of the variable vector
+    opt_conditions: dict
+        Dictionary of algorithm termination criteria
+    opt_parameters: dict
+        Dictionary of algorithm parameters
     """
 
     def __init__(
@@ -145,20 +152,42 @@ class NLOPTOptimiser:
 
     @property
     def algorithm_name(self):
+        """
+        Name of the optimisation algorithm.
+        """
         return self._algorithm_name
 
     @algorithm_name.setter
     def algorithm_name(self, name):
+        """
+        Setter for the name of the optimisation algorithm.
+
+        Parameters
+        ----------
+        name: str
+            Name of the optimisation algorithm
+
+        Raises
+        ------
+        OptUtilitiesError:
+            If the algorithm is not recognised
+        """
         if name not in NLOPT_ALG_MAPPING:
-            raise OptUtilitiesError(f"Unknown or unmapped algorithm: {algorithm_name}")
+            raise OptUtilitiesError(f"Unknown or unmapped algorithm: {name}")
         self._algorithm_name = name
 
     @property
     def n_variables(self):
+        """
+        Dimension of the optimisater.
+        """
         return self._n_variables
 
     @n_variables.setter
     def n_variables(self, value):
+        """
+        Setter for the dimenstion of the optimiser.
+        """
         self._n_variables = value
 
         if value is not None:
@@ -176,7 +205,9 @@ class NLOPTOptimiser:
         self.constraint_tols.append(tolerance)
 
     def set_algorithm(self):
-        """"""
+        """
+        Initialise the underlying NLOPT algorithm.
+        """
         algorithm = NLOPT_ALG_MAPPING[self.algorithm_name]
         self._opt = nlopt.opt(algorithm, int(self._n_variables))
 
@@ -193,6 +224,8 @@ class NLOPTOptimiser:
         for k, v in opt_parameters.items():
             if self._opt.has_param(k):
                 self._opt.set_param(k, v)
+            else:
+                bluemira_warn(f"Unrecognised algorithm parameter: {k}")
 
     @_opt_inputs_ready
     def set_termination_conditions(self, opt_conditions):
@@ -204,6 +237,11 @@ class NLOPTOptimiser:
         opt_conditions: dict
             Termination conditions for the optimisation algorithm
         """
+        if not opt_conditions:
+            raise OptUtilitiesError(
+                "You must specify at least one termination criterion for the optimisation algorithm."
+            )
+
         if "ftol_abs" in opt_conditions:
             self._opt.set_ftol_abs(opt_conditions["ftol_abs"])
         if "ftol_rel" in opt_conditions:
@@ -229,7 +267,7 @@ class NLOPTOptimiser:
         f_objective: callable
             Objective function to minimise
         """
-        f_objective = NLOPTObjectiveFunction(f_objective)
+        f_objective = _NLOPTObjectiveFunction(f_objective)
         self._f_objective = f_objective
         self._opt.set_min_objective(f_objective)
 
@@ -322,6 +360,11 @@ class NLOPTOptimiser:
     def optimise(self, x0):
         """
         Run the optimiser.
+
+        Parameters
+        ----------
+        x0: np.ndarray
+            Starting solution vector
 
         Returns
         -------

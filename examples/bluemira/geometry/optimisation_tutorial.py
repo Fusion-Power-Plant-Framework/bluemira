@@ -68,6 +68,7 @@ parameterisation_1 = PrincetonD(
     {
         "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
         "x2": {"lower_bound": 10, "value": 14, "upper_bound": 16},
+        "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5},
     }
 )
 # Here we're minimising the length, and we can work out that the dz variable will not

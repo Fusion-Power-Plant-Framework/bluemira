@@ -23,7 +23,7 @@
 Static API to optimisation library
 """
 import numpy as np
-from scipy.optimize._numdiff import approx_derivative
+from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # noqa
 
 from bluemira.utilities._nlopt_api import NLOPTOptimiser
 from bluemira.utilities.error import InternalOptError
@@ -32,7 +32,63 @@ from bluemira.utilities.error import InternalOptError
 __all__ = ["approx_derivative", "Optimiser"]
 
 
+def approx_derivative(
+    func, x0, method="3-point", rel_step=None, f0=None, bounds=None, args=()
+):
+    """
+    Approximate the gradient of a function about a point.
+
+    Parameters
+    ----------
+    func: callable
+        Function for which to calculate the gradient
+    x0: np.ndarray
+        Point about which to calculate the gradient
+    method: str
+        Finite difference method to use
+    rel_step: Optional[float, np.ndarray]
+        Relative step size to use
+    f0: Optional[float, np.ndarray]
+        Result of func(x0). If None, this is recomputed
+    bounds: Optional[Iterable]
+        Lower and upper bounds on individual variables
+    args: tuple
+        Additional arguments to func
+    """
+    if bounds is None:
+        bounds = (-np.inf, np.inf)
+    return _approx_derivative(
+        func, x0, method=method, rel_step=rel_step, f0=f0, bounds=bounds, args=args
+    )
+
+
 class Optimiser(NLOPTOptimiser):
+    """
+    Optimiser interface class.
+
+
+    Objective functions must be of the form:
+
+    .. code-block:: python
+
+        def f_objective(x, grad, args):
+            if grad.size > 0:
+                grad[:] = my_gradient_calc(x)
+            return my_objective_calc(x)
+
+    Constraint functions must be of the form:
+
+    .. code-block:: python
+
+        def f_constraint(constraint, x, grad, args):
+            constraint[:] = my_constraint_calc(x)
+            if grad.size > 0:
+                grad[:] = my_gradient_calc(x)
+            return constraint
+
+    The grad and constraint matrices must be assigned in place
+    """
+
     def optimise(self, x0=None):
         """
         Run the optimisation problem.
@@ -54,28 +110,83 @@ class Optimiser(NLOPTOptimiser):
         self.check_constraints(x_star)
         return x_star
 
-    def approx_derivative(self, function, x, f0):
+    def approx_derivative(self, function, x, f0=None):
+        """
+        Utility function to numerical approximate the derivative of a function.
+
+        Parameters
+        ----------
+        function: callable
+            Function to get a numerical derivative for
+        x: np.ndarray
+            Point about which to calculate the derivative
+        f0: Optional[float]
+            Objective function value at x (speed optimisation)
+
+        Notes
+        -----
+        Use with caution... numerical approximations of gradients can often lead to
+        headaches.
+        """
         return approx_derivative(
             function, x, bounds=[self.lower_bounds, self.upper_bounds], f0=f0
         )
 
     def set_objective_function(self, f_objective):
+        """
+        Set the objective function (minimisation).
+
+        Parameters
+        ----------
+        f_objective: callable
+            Objective function to minimise
+        """
         if f_objective is None:
             return
 
         super().set_objective_function(f_objective)
 
     def add_eq_constraint(self, f_constraint, tolerance):
+        """
+        Add a single-valued equality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: float
+            Tolerance with which to enforce the constraint
+        """
         if f_constraint is None:
             return
         super().add_eq_constraint(f_constraint, tolerance)
 
     def add_ineq_constraint(self, f_constraint, tolerance):
+        """
+        Add a single-valued inequality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: float
+            Tolerance with which to enforce the constraint
+        """
         if f_constraint is None:
             return
         super().add_ineq_constraint(f_constraint, tolerance)
 
     def add_ineq_constraints(self, f_constraint, tolerance):
+        """
+        Add a vector-valued inequality constraint.
+
+        Parameters
+        ----------
+        f_constraint: callable
+            Constraint function
+        tolerance: np.ndarray
+            Tolerance array with which to enforce the constraint
+        """
         if f_constraint is None:
             return
         super().add_ineq_constraints(f_constraint, tolerance)

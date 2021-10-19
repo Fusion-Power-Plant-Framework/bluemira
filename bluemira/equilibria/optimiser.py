@@ -38,9 +38,9 @@ from bluemira.utilities.plot_tools import save_figure
 from bluemira.utilities.opt_tools import (
     least_squares,
     tikhonov,
-    process_NLOPT_result,
-    approx_fprime,
 )
+from bluemira.utilities.optimiser import approx_derivative
+from bluemira.utilities._nlopt_api import process_NLOPT_result
 from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
@@ -417,7 +417,13 @@ class PositionOptimiser:
         self.iter += 1
         self.rms_error = self.update_positions(pos_vector)
         if grad.size > 0:
-            grad[:] = approx_fprime(pos_vector, self.update_positions, 1e-3, self.bounds)
+            grad[:] = approx_derivative(
+                self.update_positions,
+                pos_vector,
+                bounds=self.bounds,
+                f0=self.rms_error,
+                rel_step=1e-3,
+            )
         bluemira_print_flush(
             f"EQUILIBRIA position optimisation iteration {self.iter}: "
             f"f_obj = {self.rms_error:.2f}"
