@@ -183,8 +183,7 @@ class BluemiraWire(BluemiraGeo):
                 o.translate(vector)
 
     def change_plane(self, plane):
-        """Apply a plane transformation to the wire
-        """
+        """Apply a plane transformation to the wire"""
         for o in self.boundary:
             if isinstance(o, Part.Wire):
                 _freecadapi.change_plane(o, plane._shape)
