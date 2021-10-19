@@ -24,7 +24,6 @@ PROCESS api
 """
 
 import os
-from typing import Dict
 
 from BLUEPRINT.base.file import get_BP_root, get_PROCESS_root
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
