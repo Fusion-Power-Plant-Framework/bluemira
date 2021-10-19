@@ -54,7 +54,7 @@ def _get_mapping(
         names (value).
     """
     if read_write not in ["read", "write"]:
-        raise code_err.CodesError
+        raise code_err.CodesError("Mapping must be obtained for either read or write.")
 
     mapping = {}
     for key in params.keys():
