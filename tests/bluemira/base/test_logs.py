@@ -50,7 +50,9 @@ class TestLoggingLevel:
 
     @classmethod
     def teardown_class(cls):
-        cls.orig_log.handlers = cls.original_handlers
+        for handler in cls.orig_log.handlers or cls.orig_log.parent.handlers:
+            if handler not in cls.original_handlers:
+                cls.orig_log.removeHandler(handler)
         set_log_level(cls.original_level.name)
 
     def setup_method(self):
