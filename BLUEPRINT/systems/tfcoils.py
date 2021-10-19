@@ -84,7 +84,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
         ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
         ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
-        ["tk_tf_ob_casing", "TF outboard leg conductor casing thickness", 0.002, "m", None, "PROCESS"],
+        ["tk_tf_ob_casing", "TF outboard leg conductor casing thickness", 0.1, "m", None, "PROCESS"],
         ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 11.5, 'm', None, 'PROCESS'],
         ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'N/A', None, 'PROCESS'],
@@ -119,6 +119,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         self.sep = self.inputs["plasma"].copy()
         self.shape_type = self.inputs["shape_type"]
         self.wp_shape = self.inputs["wp_shape"]
+        self.conductivity = self.inputs["conductivity"]
         self.ripple_limit = self.params.TF_ripple_limit
 
         # Number of points on the LCFS to evaluate ripple on
@@ -173,6 +174,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.inputs["name"],
             family=self.inputs["shape_type"],
             wp_shape=self.inputs["wp_shape"],
+            conductivity=self.inputs["conductivity"],
             objective=self.inputs["obj"],
             npoints=self.npoints,
             n_TF=self.params.n_TF,
@@ -188,17 +190,16 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             + self.params.tk_tf_wp
             + self.params.tk_tf_front_ib
         )
-        if self.wp_shape in ["W"]:
+
+        if self.conductivity in ["SC"] and self.wp_shape not in ["N"]:
             # Use the CORRECT process-provided values to define outboard edge of
             # centrepost/inboard leg in the midplane - replaces r_tf_inboard_out
             r_tf_inboard_out = self.params.r_tf_in + self.params.tk_tf_inboard
-
-            if self.shape_type not in ["TP"]:
-                # Adjust for the radial build discrepancy in the wp thickness
-                # between a WP curved face (BLUEPRINT) and flat face (PROCESS)
-                self.params.tk_tf_wp = (
-                    r_tf_inboard_out - self.params.tk_tf_front_ib
-                ) - (self.params.r_tf_in + self.params.tk_tf_nose)
+            # Adjust for the radial build discrepancy in the wp thickness
+            # between a WP curved face (BLUEPRINT) and flat face (PROCESS)
+            self.params.tk_tf_wp = (r_tf_inboard_out - self.params.tk_tf_front_ib) - (
+                self.params.r_tf_in + self.params.tk_tf_nose
+            )
 
         # The keep-out-zone at the mid-plane has to be scaled down from the keep-out-zone
         # at the maximum TF radius to avoid collisions on the inner leg.
@@ -316,15 +317,24 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         elif self.inputs["shape_type"] == "CP":
             # Inboard mid-plane radius (plasma side)
-            self.adjust_xo("x_in", value=r_tf_inboard_out)
-            self.shp.remove_oppvar("x_in")
-
             # Taper end z corrdinate (curve top end)
-            self.adjust_xo("z_in", value=self.params.h_cp_top)
+
+            if self.conductivity in ["R"]:
+                self.adjust_xo("x_in", value=self.params.r_tf_inboard_out)
+                self.adjust_xo("z_in", value=self.params.h_cp_top)
+            else:
+                self.adjust_xo("x_in", value=r_tf_inboard_out)
+                self.adjust_xo("z_in", value=0)
+            self.shp.remove_oppvar("x_in")
             self.shp.remove_oppvar("z_in")
 
             # Taper end x-coordinate (curve top end)
-            self.adjust_xo("x_mid", value=self.params.r_cp_top)
+            if self.conductivity in ["R"]:
+                self.adjust_xo(
+                    "x_mid", value=self.params.r_cp_top + self.params.tk_tf_ob_casing
+                )
+            else:
+                self.adjust_xo("x_mid", value=r_tf_inboard_out)
             self.shp.remove_oppvar("x_mid")
 
             # Top/bot doming start x-coordinate
@@ -405,8 +415,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 "external": iocasthk * 0.9,
             }
 
-        if self.inputs["shape_type"] == "TP":
-            # Resistive coils?
+        if self.conductivity in ["R"]:
+            # Resistive coils
             iocasthk = 0
             self.section["case"] = {
                 "side": self.params.tk_tf_ob_casing,
@@ -416,7 +426,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 "outboard": self.params.tk_tf_ob_casing,
                 "external": self.params.tk_tf_ob_casing,
             }
-        if self.inputs["shape_type"] == "CP":
+        elif self.inputs["shape_type"] == "CP":
             # For CURVED SC coils
             iocasthk = 0
             self.section["case"] = {
@@ -435,17 +445,17 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Rem : Not the same definition of WP depth is used between shapes !
         depth = 2 * (r_wp_in * np.tan(np.pi / self.params.n_TF) - self.params.tk_tf_side)
 
-        if self.shape_type not in ["TP", "CP"] and self.wp_shape != "N":
+        if self.conductivity in ["SC"] and self.wp_shape != "N":
             # For 'nosed' wp shapes
             depth = self.params.tf_wp_depth
 
-        if self.inputs["shape_type"] in ["TP"]:
-            # For resistive coils with a tapered Centrepost
+        elif self.conductivity in ["R"]:
+            # For resistive coils
             r_wp_in = self.params.r_cp_top
             depth = 2 * (r_wp_in * np.tan(np.pi / self.params.n_TF))
 
-        if self.inputs["shape_type"] in ["CP"]:
-            # For SC coils with a tapered centrepost
+        elif self.conductivity in ["SC"] and self.inputs["shape_type"] in ["CP"]:
+            # For Curved SC coils (maybe not needed?)
             x_shift = self.params.tk_tf_side / np.tan(np.pi / self.params.n_TF)
             r_wp_in = (
                 self.params.r_tf_in
@@ -509,7 +519,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ]
         loops = ["wp_in", "cl", "wp_out", "out"]
 
-        if self.inputs["shape_type"] in ["TP"]:
+        if self.conductivity in ["R"]:
             loops = ["wp_in", "cl", "wp_out", "out", "b_cyl"]
             inboard_dt = [
                 self.params.tk_tf_ob_casing,
@@ -530,7 +540,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         for loop, dt_in, dt_out in zip(loops, inboard_dt, outboard_dt):
             if self.inputs["shape_type"] in ["TP", "CP"]:
-                # Designs with a bucking cylinder or
+                # Designs that might have a tapered CP or
                 # if offset_clipper needs to be used
                 dt = dt_in
             else:
@@ -548,7 +558,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             # self.p[loop] = unwind({'x': x, 'z': z})
             self.loops[loop]["x"], self.loops[loop]["z"] = x, z
 
-            if self.inputs["shape_type"] in ["TP"]:
+            if self.conductivity in ["R"]:
 
                 if loop == "b_cyl":
 
@@ -678,7 +688,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         self.geom["Centreline"] = simplify_loop(Loop(**self.loops["cl"]))
         self.geom["WP outer"] = simplify_loop(Loop(**self.loops["wp_out"]))
         self.geom["WP inner"] = simplify_loop(Loop(**self.loops["wp_in"]))
-        if self.inputs["shape_type"] in ["TP"]:
+        if self.conductivity in ["R"]:
             self.geom["B Cyl"] = simplify_loop(Loop(**self.loops["b_cyl"]))
         self.add_parameter(
             "E_sto",
@@ -966,13 +976,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         """
         The x-z loop names to plot.
         """
-        if self.inputs["shape_type"] in ["TP"]:
+        if self.conductivity in ["R"]:
             return [
                 "TF WP",
                 "TF Tapered CP",
                 "TF Leg Conductor",
-                "TF Leg case in",
-                "TF Leg case out",
+                "TF case in",
+                "TF case out",
                 "B Cyl",
             ]
         elif self.inputs["shape_type"] in ["CP"]:
@@ -991,7 +1001,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         """
         The x-y loop names to plot.
         """
-        if self.inputs["shape_type"] in ["TP"]:
+        if self.conductivity in ["R"]:
 
             return [
                 "WP inboard X-Y",
@@ -1000,12 +1010,14 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 "Leg Conductor Casing X-Y",
             ]
 
-        return [
-            "Case inboard X-Y",
-            "Case outboard X-Y",
-            "WP inboard X-Y",
-            "WP outboard X-Y",
-        ]
+        else:
+            # SC Coils
+            return [
+                "Case inboard X-Y",
+                "Case outboard X-Y",
+                "WP inboard X-Y",
+                "WP outboard X-Y",
+            ]
 
     def _generate_xz_plot_loops(self):
         """
@@ -1061,20 +1073,21 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 case_out,
             ) = self.split_centrepost_from_coil(wp_in, wp_out, case_in, case_out)
 
-            if self.shape_type in ["TP"]:
+            if self.conductivity in ["R"]:
 
                 # Also define Bucking Cylinder Loop
                 b_cyl = Loop(**self.loops["b_cyl"])
                 b_cyl = clean_loop(b_cyl)
                 b_cyl = simplify_loop(b_cyl)
                 b_cyl.reorder(0, 2)
+                self.geom["B Cyl"] = b_cyl
+
                 # Now write into relevant geom dicts
                 self.geom["TF WP"] = Shell(wp_in, wp_out)
                 self.geom["TF Tapered CP"] = centrepost
                 self.geom["TF Leg Conductor"] = leg_conductor
-                self.geom["TF Leg case out"] = case_out
-                self.geom["TF Leg case in"] = case_in
-                self.geom["B Cyl"] = b_cyl
+                self.geom["TF case out"] = case_out
+                self.geom["TF case in"] = case_in
 
             else:
                 # SC coils
@@ -1086,7 +1099,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 self.geom["TF case in"] = Shell(case_in, wp_in)
 
         else:
-
             self.geom["TF case out"] = Shell(wp_out, case_out)
             self.geom["TF case in"] = Shell(case_in, wp_in)
 
@@ -1099,7 +1111,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         a = 2 * np.pi / self.params.n_TF  # [rad] port wall angles
         beta = a / 2  # [rad] port wall half angle
 
-        if self.inputs["shape_type"] != "TP":
+        if self.conductivity in ["SC"]:
             # Non tapered CPs
             # ---------------------------------
             # TF Coil Winding Pack (wp):
@@ -1255,7 +1267,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             ]
             self.geom["Case sidewalls X-Y"] = Loop(x=tf_sidex, y=tf_sidey)
 
-        elif self.inputs["shape_type"] == "TP":
+        elif self.conductivity in ["R"]:
             # TF geometry numbers
             tf_width = self.section["winding_pack"]["depth"]
             tk_case = self.params.tk_tf_ob_casing
@@ -1294,13 +1306,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             b_cyl_ri = self.params.r_tf_in
             b_cyl_ro = b_cyl_ri + self.params.tk_tf_nose
             b_cyl = make_ring(b_cyl_ri, b_cyl_ro, angle=360, centre=(0, 0), npoints=200)
+            self.geom["B Cyl X-Y"] = b_cyl
 
             # Leg Conductor Casing
             leg_casing = offset(x_wp_o, y_wp_i_rect, -tk_case)
             leg_casing = Loop(x=leg_casing[0], y=leg_casing[1])
             self.geom["WP inboard X-Y"] = Loop(x=x_wp_i, y=y_wp_i)
             self.geom["WP outboard X-Y"] = Loop(x=x_wp_o, y=y_wp_i_rect)
-            self.geom["B Cyl X-Y"] = b_cyl
             self.geom["Leg Conductor Casing X-Y"] = Shell(
                 self.geom["WP outboard X-Y"], leg_casing
             )
@@ -1322,7 +1334,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             else:
                 raise TypeError("wtf")
 
-        if self.inputs["shape_type"] in ["TP"]:
+        if self.conductivity in ["R"]:
             for key in [
                 "WP inboard X-Y",
                 "WP outboard X-Y",
@@ -1378,7 +1390,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         return funcs
 
     def correct_inboard_corners(
-        self, loop, tk_in_leg, tapered=False, xmin=None, zmax=None
+        self, loop, x_thick, tapered=False, xmin=None, zmax=None
     ):
         """
         Fix inboard corner to be 90 degrees
@@ -1387,8 +1399,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ----------
         loop: Loop
             Loop to be corrected
-        tk_in_leg: float
-            Thickness of inboard leg
+        x_thick: float
+            Radial thickness of correction
 
         Returns
         -------
@@ -1399,18 +1411,18 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             xmin = np.min(loop.x)
         if zmax is None:
             zmax = np.max(loop.z)
-        xmax = xmin + tk_in_leg
+        xmax = xmin + x_thick
         if tapered:
-            zmin = zmax - tk_in_leg
+            zmin = self.params.h_cp_top
             corrector = make_box_xz(xmin, xmax, zmin, zmax)
         else:
             corrector = make_box_xz(xmin, xmax, -zmax, zmax)
 
         corrected_loop = boolean_2d_union(loop, corrector)[0]
         if tapered:
-            zmax = -zmax
-            zmin = -zmin
-            corrector_2 = make_box_xz(xmin, xmax, zmin, zmax)
+            zmin2 = -zmax
+            zmax = -zmin
+            corrector_2 = make_box_xz(xmin, xmax, zmin2, zmax)
             corrected_loop = boolean_2d_union(corrected_loop, corrector_2)[0]
 
         return corrected_loop
@@ -1420,6 +1432,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         Generates tapered Centrepost. This involves correcting the wp and outer
         casing loops generating through offsetting to correctly
         reflect the tapered centrepost shape.
+
+        Also corrects lack of sharp inboad edge corners produced by offsetting
+        methods
 
         Returns
         -------
@@ -1438,7 +1453,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # TEMPORARY -  values for correcting corner chamfering in offset
         r_taper_out = np.min(self.loops["wp_in"]["x"])
         xmin = np.min(self.loops["wp_out"]["x"])
-        delta = r_taper_out - xmin
+        tk_tapered_wp = r_taper_out - xmin
 
         # Must Correct the wp_out and out loops to have straight edges
         # Do this by either redrawing loops (TP) or cutting inboard edges
@@ -1447,57 +1462,75 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Remember - need to define outer radius of centrepost differently
         # for Resistive and SC coils. r_cp_top only exists for Resistive
 
-        if self.inputs["shape_type"] in ["TP"]:
-            # this could be changed to if coil is resistive or not/ has a
-            # b_cyl or not
+        if self.conductivity in ["R"]:
+            # Define useful quantities
             r_cp = self.params.r_cp_top
             tk_case_ob = self.params.tk_tf_ob_casing
             tk_case_ib = self.params.tk_tf_ob_casing
             r_wp_inb_in = self.params.r_tf_in + self.params.tk_tf_nose
-            wp_out_cutter = make_box_xz(-15, r_wp_inb_in, -z_max, z_max)
-            case_out_cutter = make_box_xz(-51, r_wp_inb_in - tk_case_ob, -z_max, z_max)
-
-            # Cut wp_out and case_out loops
-            wp_out = boolean_2d_difference_loop(wp_out, wp_out_cutter)
-            case_out = boolean_2d_difference_loop(case_out, case_out_cutter)
-
-            wp_out = self.correct_inboard_corners(wp_out, 3)
-            wp_in = self.correct_inboard_corners(wp_in, delta, xmin=r_cp)
-            case_out = self.correct_inboard_corners(case_out, 3)
-            case_in = self.correct_inboard_corners(
-                case_in, delta, xmin=r_cp + tk_case_ib
-            )
-
-        elif self.inputs["shape_type"] in ["CP"]:
-            # Define wp_out and case cutters
+            case_cutter_xmax = r_wp_inb_in - tk_case_ob
+            xmin_case_in_corrector = r_cp + tk_case_ib
+            xmin_wp_in_corrector = r_cp
+            tapered = True
+        else:
             r_cp = self.params.r_tf_in + self.params.tk_tf_inboard
             tk_case_ib = self.params.tk_tf_front_ib
             tk_case_ob = self.params.tk_tf_nose
             r_wp_inb_in = self.params.r_tf_in + self.params.tk_tf_nose
+            case_cutter_xmax = self.params.r_tf_in
+            xmin_case_in_corrector = r_cp
+            xmin_wp_in_corrector = r_cp - tk_case_ib
+            tapered = False
 
-            wp_out_cutter = make_box_xz(-r_wp_inb_in * 5, r_wp_inb_in, -z_max, z_max)
-            case_out_cutter = make_box_xz(
-                -r_wp_inb_in * 5, self.params.r_tf_in, -z_max, z_max
+        # Define wp cutters
+        wp_out_cutter = make_box_xz(-r_wp_inb_in * 5, r_wp_inb_in, -z_max, z_max)
+        # Define case cutters
+        case_out_cutter = make_box_xz(-r_wp_inb_in * 5, case_cutter_xmax, -z_max, z_max)
+
+        # Use centrepost and casing definitions to correctly address
+        # corner issues for casing
+        # Cut wp_out and case_out loops
+        wp_out = boolean_2d_difference_loop(wp_out, wp_out_cutter)
+        case_out = boolean_2d_difference_loop(case_out, case_out_cutter)
+
+        if self.shape_type in ["TP"]:
+
+            wp_out = self.correct_inboard_corners(wp_out, 3)
+            wp_in = self.correct_inboard_corners(wp_in, tk_tapered_wp, xmin=r_cp)
+            case_out = self.correct_inboard_corners(case_out, 3)
+            case_in = self.correct_inboard_corners(
+                case_in, tk_tapered_wp, xmin=r_cp + tk_case_ib
             )
 
-            # Cut wp_out and case_out loops
-            wp_out = boolean_2d_difference_loop(wp_out, wp_out_cutter)
-            case_out = boolean_2d_difference_loop(case_out, case_out_cutter)
-
+        elif self.shape_type in ["CP"]:
+            # Need some special variables due to doming and x_curve
+            # Specifiy Zmax here is z_mid, not the max height of dome
             zmax_in = self.shp.parameterisation.xo["z_mid"]["value"] + tk_case_ib
             zmax_out = zmax_in + self.section["case"]["WP"]
-
-            # Correct corners
+            # correct_l avoids notching issue, and gives a nice straight line till
+            # x_curve start
+            # TODO: Replace correct_l with joint location when variable available
             correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"] - 0.2
             wp_out = self.correct_inboard_corners(wp_out, correct_l, zmax=zmax_out)
+
             wp_in = self.correct_inboard_corners(
-                wp_in, delta, xmin=r_cp - tk_case_ib, zmax=zmax_in
+                wp_in,
+                tk_tapered_wp,
+                tapered=tapered,
+                xmin=xmin_wp_in_corrector,
+                zmax=zmax_in,
             )
+            # TODO: Find a more general variable for zmax_in when available
             zmax_in = self.shp.parameterisation.xo["z_mid"]["value"]
             zmax_out = zmax_in + self.section["case"]["WP"] + tk_case_ob + tk_case_ib
+
             case_out = self.correct_inboard_corners(case_out, correct_l, zmax=zmax_out)
             case_in = self.correct_inboard_corners(
-                case_in, delta, xmin=r_cp, zmax=zmax_in
+                case_in,
+                tk_tapered_wp,
+                tapered=tapered,
+                xmin=xmin_case_in_corrector,
+                zmax=zmax_in,
             )
 
         wp_out = clean_loop(wp_out)
@@ -1551,7 +1584,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             over leg_conductor for resistive coils)
         """
         # Define useful quantities
-        r_cp = self.params.r_cp_top + 1e-5
+        if self.conductivity in ["R"]:
+            # Resistive Coils
+            r_cp = self.params.r_cp_top + 1e-5
+        else:
+            # SC coils
+            r_cp = self.params.r_tf_in + self.params.tk_tf_inboard
+
         z_max = np.max(self.loops["out"]["z"])
         x_max = np.max(self.loops["out"]["x"])
         TF_depth_at_r_cp = self.section["winding_pack"]["depth"]
@@ -1575,8 +1614,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         leg_conductor = simplify_loop(leg_conductor)
         leg_conductor.close()
 
-        if self.inputs["shape_type"] in ["TP"]:
-            # if coil is resistive or not/ has a b_cyl or not
+        if self.conductivity in ["R"]:
+
+            # Resistive Coils
             tk_case_ob = self.params.tk_tf_ob_casing
             case_out = Shell(wp_out, case_out)
             case_in = Shell(case_in, wp_in)
@@ -1611,6 +1651,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         xmin = self.params.r_tf_in
         xmax = xmin + self.params.tk_tf_nose
         zmax = np.max(p_in["z"])
+        if self.shape_type in ["CP"]:
+            # CP is weird because max height of coil is the dome, not the b_cyl height
+            zmax = (
+                self.shp.parameterisation.xo["z_mid"]["value"]
+                + self.section["case"]["WP"]
+                + self.section["case"]["inboard"]
+            )
         x = np.array([xmin, xmax, xmax, xmin, xmin])
         z = zmax * np.array([1, 1, -1, -1, 1])
 

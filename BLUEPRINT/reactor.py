@@ -868,6 +868,7 @@ class Reactor(ReactorSystem):
         objective=None,
         shape_type=None,
         wp_shape=None,
+        conductivity=None,
     ):
         """
         Design and optimise the tokamak toroidal field coils.
@@ -908,6 +909,8 @@ class Reactor(ReactorSystem):
             shape_type = self.build_config["TF_type"]
         if wp_shape is None:
             wp_shape = self.build_config["wp_shape"]
+        if conductivity is None:
+            conductivity = self.build_config["conductivity"]
 
         to_tf = {
             "name": self.params.Name + "_TF",
@@ -915,6 +918,7 @@ class Reactor(ReactorSystem):
             "koz_loop": self.TS.TF_koz,
             "shape_type": shape_type,
             "wp_shape": wp_shape,
+            "conductivity": conductivity,
             "obj": objective,
             "ny": ny,
             "nr": nr,

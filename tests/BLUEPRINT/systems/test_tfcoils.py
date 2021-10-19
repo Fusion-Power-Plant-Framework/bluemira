@@ -24,6 +24,7 @@ Testing routines for different TF coil optimisations
 """
 import os
 import time
+from BLUEPRINT.geometry.geomtools import make_box_xz
 import pytest
 import matplotlib.pyplot as plt
 import tests
@@ -91,6 +92,7 @@ class TestTFCoil:
             "plasma": lcfs,
             "koz_loop": ko_zone,
             "shape_type": "S",  # This is the shape parameterisation to use
+            "conductivity": "SC",  # Resistive (R) or Superconducting (SC)
             "obj": "L",  # This is the optimisation objective: minimise length
             "wp_shape": "N",  # This is the winding pack shape choice for the inboard leg
             "ny": 1,  # This is the number of current filaments to use in y
@@ -173,6 +175,7 @@ class TestTaperedPictureFrameTF:
             "koz_loop": ko_zone,
             "shape_type": "TP",  # This is the shape parameterisation to use
             "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
+            "conductivity": "R",  # Resistive (R) or Superconducting (SC)
             "npoints": 400,
             "obj": "L",  # This is the optimisation objective: minimise length
             "ny": 1,  # This is the number of current filaments to use in y
@@ -273,6 +276,7 @@ class TestSCPictureFrameTF:
             "koz_loop": ko_zone,
             "shape_type": "P",  # This is the shape parameterisation to use
             "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
+            "conductivity": "SC",  # Resistive (R) or Superconducting (SC)
             "npoints": 200,
             "obj": "L",  # This is the optimisation objective: minimise length
             "ny": 3,  # This is the number of current filaments to use in y
@@ -338,17 +342,16 @@ class TestCurvedPictureframeTF:
             ["tk_tf_ins", "TF coil ground insulation thickness", 0.008, "m", None, "Input"],
             ["tk_tf_insgap", "TF coil WP insertion gap", 1.0E-7, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
             ["r_tf_in", "Inboard radius of the TF coil inboard leg", 0.148, "m", None, "PROCESS"],
-            ["TF_ripple_limit", "Ripple limit constraint", 0.8, "%", None, "Input"],
+            ["TF_ripple_limit", "Ripple limit constraint", 0.65, "%", None, "Input"],
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
-            ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.8934, "m", None, "PROCESS"],
+            ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.75, "m", None, "PROCESS"],
             ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
             ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
             ["tf_wp_depth", "TF coil winding pack depth (in y)", 0.4625, "m", "Including insulation", "PROCESS"],
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
-            ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
-            ['tk_tf_outboard', 'TF coil outboard thickness', 0.569, 'm', None, 'Input', 'PROCESS'],
+            ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
             ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
 
         ]
@@ -358,13 +361,14 @@ class TestCurvedPictureframeTF:
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
         name = os.sep.join([read_path, "KOZ_PF_test1.json"])
-        ko_zone = Loop.from_file(name)
+        ko_zone = make_box_xz(1, 9, -9, 9)
         cls.to_tf = {
             "name": "Example_PolySpline_TF",
             "plasma": lcfs,
             "koz_loop": ko_zone,
             "shape_type": "CP",  # This is the shape parameterisation to use
             "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
+            "conductivity": "SC",  # Resistive (R) or Superconducting (SC)
             "npoints": 800,
             "obj": "L",  # This is the optimisation objective: minimise length
             "ny": 3,  # This is the number of current filaments to use in y
@@ -388,9 +392,9 @@ class TestCurvedPictureframeTF:
         vol_tapered_cp = get_properties(CAD.component["shapes"][1])["Volume"]
         vol_leg_conductor = get_properties(CAD.component["shapes"][0])["Volume"]
 
-        true_vol_tapered_cp = 2.3636
-        true_vol_leg_conductor = 7.8241
-        true_vol_casing = 2.7235
+        true_vol_tapered_cp = 2.2678
+        true_vol_leg_conductor = 10.8514
+        true_vol_casing = 3.0716
         assert np.isclose(vol_casing, true_vol_casing, rtol=1e-2)
         assert np.isclose(vol_tapered_cp, true_vol_tapered_cp, rtol=1e-2)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)
