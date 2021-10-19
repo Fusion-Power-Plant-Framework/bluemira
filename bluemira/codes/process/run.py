@@ -32,14 +32,14 @@ import string
 from BLUEPRINT.base.error import CodesError
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from BLUEPRINT.systems.physicstoolbox import normalise_beta
+from bluemira.codes.utilities import get_read_mapping, get_write_mapping
 from bluemira.codes.process.api import (
     DEFAULT_INDAT,
-    get_PROCESS_read_mapping,
-    get_PROCESS_write_mapping,
     update_obsolete_vars,
 )
 from bluemira.codes.process.setup import PROCESSInputWriter
 from bluemira.codes.process.teardown import BMFile
+from bluemira.codes.process import NAME as PROCESS
 
 
 class RunMode(Enum):
@@ -125,27 +125,31 @@ class Run:
     ):
         self.reactor = reactor
         self.param_list = self.reactor.params.get_parameter_list()
+
         if params_to_update is not None:
             self.params_to_update = params_to_update
         else:
             self.params_to_update = self.reactor.build_config.get(
                 "params_to_update", None
             )
+
         if run_dir is not None:
             self.run_dir = run_dir
         else:
             self.run_dir = self.reactor.file_manager.generated_data_dirs["systems_code"]
+
         if template_indat is not None:
             self.template_indat = template_indat
         else:
             self.template_indat = self.reactor.build_config.get(
                 "process_indat", DEFAULT_INDAT
             )
-        self.parameter_mapping = get_PROCESS_read_mapping(
-            self.reactor.params, read_all=True
+
+        self.parameter_mapping = get_read_mapping(
+            self.reactor.params, PROCESS, read_all=True
         )
-        self.read_mapping = get_PROCESS_read_mapping(self.reactor.params)
-        self.write_mapping = get_PROCESS_write_mapping(self.reactor.params)
+        self.read_mapping = get_read_mapping(self.reactor.params, PROCESS)
+        self.write_mapping = get_write_mapping(self.reactor.params, PROCESS)
         self.set_runmode()
         self.output_files = [
             "OUT.DAT",

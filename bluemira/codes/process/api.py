@@ -171,64 +171,6 @@ def convert_unit_b_to_p(s):
     return _convert(BTOPUNITS, s)
 
 
-def get_PROCESS_read_mapping(inputs, read_all=False) -> Dict[str, str]:
-    """
-    Get the read mapping for PROCESS variables from the input ParameterFrame
-
-    Parameters
-    ----------
-    inputs: ParameterFrame
-        The parameter frame containing the BLUEPRINT parameters and their mapping to
-        PROCESS variables.
-    read_all: bool, optional
-        If True then read all variables with a mapping defined, even if read=False. By
-        default, False.
-
-    Returns
-    -------
-    read_mapping: Dict[str, str]
-        The mapping between PROCESS names (key) and BLUEPRINT names (value) for
-        Parameters that are to be read from PROCESS.
-    """
-    read_mapping = {}
-    for key in inputs.keys():
-        param = inputs.get_param(key)
-        if param.mapping is not None and "PROCESS" in param.mapping:
-            mapping = param.mapping["PROCESS"]
-            if read_all or mapping.read:
-                read_mapping[mapping.name] = key
-    return read_mapping
-
-
-def get_PROCESS_write_mapping(inputs, read_all=False) -> Dict[str, str]:
-    """
-    Get the write mapping for PROCESS variables from the input ParameterFrame
-
-    Parameters
-    ----------
-    inputs: ParameterFrame
-        The parameter frame containing the BLUEPRINT parameters and their mapping to
-        PROCESS variables.
-    read_all: bool, optional
-        If True then read all variables with a mapping defined, even if write=False. By
-        default, False.
-
-    Returns
-    -------
-    read_mapping: Dict[str, str]
-        The mapping between PROCESS names (key) and BLUEPRINT names (value) for
-        Parameters that are to be written from BLUEPRINT.
-    """
-    write_mapping = {}
-    for key in inputs.keys():
-        param = inputs.get_param(key)
-        if param.mapping is not None and "PROCESS" in param.mapping:
-            mapping = param.mapping["PROCESS"]
-            if read_all or mapping.write:
-                write_mapping[mapping.name] = key
-    return write_mapping
-
-
 if __name__ == "__main__":
     from BLUEPRINT import test
 
