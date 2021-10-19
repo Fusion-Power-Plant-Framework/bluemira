@@ -21,8 +21,8 @@
 
 import pytest
 
-from BLUEPRINT.codes.process.api import PROCESS_ENABLED
-from BLUEPRINT.codes.process import setup
+from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process import setup
 
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")

@@ -24,8 +24,8 @@ import pytest
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.systems.config import Configuration
 
-from BLUEPRINT.codes.process.api import PROCESS_ENABLED
-from BLUEPRINT.codes.process import teardown
+from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process import teardown
 
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")

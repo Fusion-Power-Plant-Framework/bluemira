@@ -25,8 +25,8 @@ import pytest
 
 from BLUEPRINT.base.parameter import ParameterFrame, ParameterMapping
 
-from BLUEPRINT.codes.process.api import PROCESS_ENABLED
-from BLUEPRINT.codes.process import api
+from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process import api
 
 PROCESS_OBS_VAR = {
     "ni": "ni wang",
@@ -48,7 +48,7 @@ FRAME = ParameterFrame(FRAME_LIST)
 
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
-@patch("BLUEPRINT.codes.process.api.OBS_VARS", PROCESS_OBS_VAR)
+@patch("bluemira.codes.process.api.OBS_VARS", PROCESS_OBS_VAR)
 def test_update_obsolete_vars():
     str1 = api.update_obsolete_vars("ni")
     str2 = api.update_obsolete_vars("garden")

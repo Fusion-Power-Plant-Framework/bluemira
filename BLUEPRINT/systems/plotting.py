@@ -29,7 +29,7 @@ from BLUEPRINT.geometry.geomtools import qrotate
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
 from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.codes import plot_PROCESS
+from bluemira.codes import plot_PROCESS
 from BLUEPRINT.utilities.colortools import color_kwargs
 
 DEFAULTS = {"linewidth": 0.3, "edgecolor": "k", "alpha": 1}
