@@ -64,7 +64,7 @@ def _get_mapping(
             override or getattr(param.mapping[code_name], read_write)
         )
         if map_param:
-            mapping[param.mapping.name] = key
+            mapping[param.mapping[code_name].name] = key
     return mapping
 
 
