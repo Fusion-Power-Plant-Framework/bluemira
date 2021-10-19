@@ -26,8 +26,17 @@ Useful parameterisations for plasma flux surface shapes.
 import numpy as np
 
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.tools import make_bspline
+from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 
-__all__ = ["flux_surface_cunningham", "flux_surface_johner", "flux_surface_manickam"]
+__all__ = [
+    "flux_surface_cunningham",
+    "flux_surface_johner",
+    "flux_surface_manickam",
+    "JohnerLCFS",
+]
 
 
 def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=None, n=20):
@@ -134,7 +143,7 @@ def calc_angles_pos_above(delta, kappa, t_pos):
     return alpha_0_pos, alpha_pos, beta_pos
 
 
-def flux_surface_johner(
+def flux_surface_johner_quadrants(
     r_0,
     z_0,
     a,
@@ -197,7 +206,7 @@ def flux_surface_johner(
     else:
         negative = False
     psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos = [
-        np.radians(i) for i in [psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos]
+        np.deg2rad(i) for i in [psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos]
     ]
 
     n_pts = int(n / 4)
@@ -276,24 +285,167 @@ def flux_surface_johner(
         x_lo = alpha_0_pos + alpha_pos * np.cos(theta)
         z_lo = beta_pos * np.sin(theta)
     elif t_pos == 0.5:
-        z_lo = np.linspace(-kappa_u, 0, n_pts)
-        x_lo = -1 - z_lo ** 2 * (1 + delta_u) / kappa_u ** 2
+        z_lo = np.linspace(-kappa_l, 0, n_pts)
+        x_lo = -1 - z_lo ** 2 * (1 + delta_l) / kappa_l ** 2
     elif t_pos == 1:
-        z_lo = np.linspace(-kappa_u, 0, n_pts)
-        x_lo = 1 - z_lo * (1 + delta_u) / kappa_u
+        z_lo = np.linspace(-kappa_l, 0, n_pts)
+        x_lo = 1 - z_lo * (1 + delta_l) / kappa_l
     elif t_pos > 0.5:
         phi_l_pos = np.arcsinh(np.sqrt(2 * t_pos - 1) / (1 - t_pos))
         alpha_0_pos, alpha_pos, beta_pos = calc_angles_pos_above(delta_l, kappa_l, t_pos)
-        phi = np.linspace(0, phi_l_pos, n_pts)
+        phi = np.linspace(-phi_l_pos, 0, n_pts)
         x_lo = alpha_0_pos + alpha_pos * np.cosh(phi)
         z_lo = beta_pos * np.sinh(phi)
     else:
         raise ValueError("Something is wrong with the Johner parameterisation.")
-    x = a * np.concatenate((x_ui, x_uo[::-1], x_lo[::-1], x_li)) + r_0
-    z = a * np.concatenate((z_ui, z_uo[::-1], z_lo[::-1], z_li))
-    if negative:
-        x -= 2 * r_0
-        x = -x
 
-    z += z_0
-    return Loop(x=x, z=z)
+    x_quadrants = [x_ui, x_uo[::-1], x_lo[::-1], x_li]
+    z_quadrants = [z_ui, z_uo[::-1], z_lo[::-1], z_li]
+    x_quadrants = [a * xq + r_0 for xq in x_quadrants]
+    z_quadrants = [a * zq for zq in z_quadrants]
+    if negative:
+        x_quadrants = [-(xq - 2 * r_0) for xq in x_quadrants]
+
+    z_quadrants = [zq + z_0 for zq in z_quadrants]
+    return x_quadrants, z_quadrants
+
+
+def flux_surface_johner(
+    r_0,
+    z_0,
+    a,
+    kappa_u,
+    kappa_l,
+    delta_u,
+    delta_l,
+    psi_u_neg,
+    psi_u_pos,
+    psi_l_neg,
+    psi_l_pos,
+    n=100,
+):
+    """
+    Initial plasma shape parametrerisation from HELIOS author
+    J. Johner (CEA). Sets initial separatrix shape for the plasma core
+    (does not handle divertor target points or legs).
+    Can handle:
+    - DN (positive, negative delta) [TESTED]
+    - SN (positive, negative delta) (upper, lower) [TESTED]
+
+    Parameters
+    ----------
+    r_0: float
+        Major radius [m]
+    z_0: float
+        Vertical position of major radius [m]
+    a: float
+        Minor radius [m]
+    kappa_u: float
+        Upper elongation at the plasma edge (psi_n=1)
+    kappa_l: float
+        Lower elongation at the plasma edge (psi_n=1)
+    delta_u: float
+        Upper triangularity at the plasma edge (psi_n=1)
+    delta_l: float
+        Lower triangularity at the plasma edge (psi_n=1)
+    psi_u_neg: float
+        Upper inner angle [°]
+    psi_u_pos: float
+        Upper outer angle [°]
+    psi_l_neg: float
+        Lower inner angle [°]
+    psi_l_pos: float
+        Lower outer angle [°]
+    n: int (defeault = 100)
+        Number of point to generate on the flux surface Loop
+
+    Returns
+    -------
+    flux_surface: Loop(x, z)
+        Plasma flux surface shape
+    """
+    x_quadrants, z_quadrants = flux_surface_johner_quadrants(
+        r_0,
+        z_0,
+        a,
+        kappa_u,
+        kappa_l,
+        delta_u,
+        delta_l,
+        psi_u_neg,
+        psi_u_pos,
+        psi_l_neg,
+        psi_l_pos,
+        n=n,
+    )
+
+    return Loop(x=np.concatenate(x_quadrants), z=np.concatenate(z_quadrants))
+
+
+class JohnerLCFS(GeometryParameterisation):
+    """
+    Johner last closed flux surface geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict={}):
+        variables = OptVariables(
+            [
+                # Major radius
+                BoundedVariable("r_0", 9, lower_bound=6, upper_bound=12),
+                # Vertical coordinate at geometry centroid
+                BoundedVariable("z_0", 0, lower_bound=-1, upper_bound=1),
+                # Minor radius
+                BoundedVariable("a", 6, lower_bound=1, upper_bound=6),
+                # Upper elongation
+                BoundedVariable("kappa_u", 1.6, lower_bound=1.3, upper_bound=1.9),
+                # Lower elongation
+                BoundedVariable("kappa_l", 1.8, lower_bound=1.3, upper_bound=1.9),
+                # Upper triangularity
+                BoundedVariable("delta_u", 0.4, lower_bound=0.2, upper_bound=0.6),
+                # Lower triangularity
+                BoundedVariable("delta_l", 0.4, lower_bound=0.2, upper_bound=0.6),
+                # Upper triangularity
+                BoundedVariable("delta_u", 0.4, lower_bound=0.2, upper_bound=0.6),
+                # Upper inner angle [°]
+                BoundedVariable("phi_u_neg", 180, lower_bound=160, upper_bound=190),
+                # Upper outer angle [°]
+                BoundedVariable("phi_u_pos", 10, lower_bound=5, upper_bound=20),
+                # Lower inner angle [°]
+                BoundedVariable("phi_l_neg", -120, lower_bound=-130, upper_bound=-110),
+                # Lower outer angle [°]
+                BoundedVariable("phi_l_pos", 30, lower_bound=20, upper_bound=35),
+            ]
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label="LCFS", n_points=1000):
+        """
+        Make a CAD representation of the Johner LCFS.
+
+        Parameters
+        ----------
+        label: str, default = "LCFS"
+            Label to give the wire
+        n_points: int
+            Number of points to use when creating the Bspline representation
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        x_quadrants, z_quadrants = flux_surface_johner_quadrants(
+            *self.variables.values, n=n_points
+        )
+
+        wires = []
+        labels = ["upper_inner", "upper_outer", "lower_outer", "lower_inner"]
+        for x_q, z_q, lab in zip(x_quadrants, z_quadrants, labels):
+            wires.append(
+                make_bspline(np.array([x_q, np.zeros(len(x_q)), z_q]).T, label=lab)
+            )
+
+        return BluemiraWire(wires, label=label)

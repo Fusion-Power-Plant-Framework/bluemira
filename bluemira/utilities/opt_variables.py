@@ -249,6 +249,31 @@ class OptVariables:
         self._check_presence(name)
         self._var_dict[name].adjust(value, lower_bound, upper_bound)
 
+    def adjust_variables(self, var_dict={}):
+        """
+        Adjust multiple variables in the set.
+
+        Parameters
+        ----------
+        var_dict: dict
+            Dictionary with which to update the set, of the form
+            {"var_name": {"value": v, "lower_bound": lb, "upper_bound": ub}, ...}
+        """
+        for k, v in var_dict.items():
+
+            args = [
+                v.get("value", None),
+                v.get("lower_bound", None),
+                v.get("upper_bound", None),
+            ]
+            if all([i is None for i in args]):
+                raise OptVariablesError(
+                    "When adjusting variables in a OptVariables instance, the dictionary"
+                    " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
+                )
+
+            self.adjust_variable(k, *args)
+
     def fix_variable(self, name, value=None):
         """
         Fix a variable in the set, removing it from optimisation but preserving a
@@ -298,6 +323,13 @@ class OptVariables:
             variable.value = value
 
     @property
+    def names(self):
+        """
+        All variable names of the variable set.
+        """
+        return [v for v in self._var_dict.keys()]
+
+    @property
     def values(self):
         """
         All un-normalised values of the variable set (including fixed variable values).
@@ -317,7 +349,7 @@ class OptVariables:
 
     def _check_presence(self, name):
         if name not in self._var_dict.keys():
-            raise OptVariablesError(f"Variable {name} not in OptVariables.")
+            raise OptVariablesError(f"Variable {name} not in OptVariables instance.")
 
     def __getitem__(self, name):
         """
