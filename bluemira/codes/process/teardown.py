@@ -28,9 +28,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from collections import namedtuple
 
-from BLUEPRINT.base import ParameterFrame
+from bluemira.base import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.error import CodesError
+from bluemira.codes.error import CodesError
 from BLUEPRINT.geometry.geomtools import rainbow_seg
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.utilities.tools import is_num

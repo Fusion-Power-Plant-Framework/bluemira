@@ -24,7 +24,7 @@ import pytest
 from unittest.mock import patch
 
 from BLUEPRINT.base.file import get_BP_root
-from tests.BLUEPRINT.codes.process.test_api import FRAME_LIST
+from tests.bluemira.codes.process.test_api import FRAME_LIST
 from tests.BLUEPRINT.test_reactor import (
     config,
     build_config,
@@ -32,8 +32,8 @@ from tests.BLUEPRINT.test_reactor import (
     SmokeTestSingleNullReactor,
 )
 
-from BLUEPRINT.codes.process.api import PROCESS_ENABLED
-from BLUEPRINT.codes.process import run
+from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process import run
 
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
@@ -65,11 +65,11 @@ class TestRun:
         ]
         # fmt: on
     )
-    @patch("BLUEPRINT.codes.process.run.Run._run")
-    @patch("BLUEPRINT.codes.process.run.Run._rerun")
-    @patch("BLUEPRINT.codes.process.run.Run._read")
-    @patch("BLUEPRINT.codes.process.run.Run._readall")
-    @patch("BLUEPRINT.codes.process.run.Run._mock")
+    @patch("bluemira.codes.process.run.Run._run")
+    @patch("bluemira.codes.process.run.Run._rerun")
+    @patch("bluemira.codes.process.run.Run._read")
+    @patch("bluemira.codes.process.run.Run._readall")
+    @patch("bluemira.codes.process.run.Run._mock")
     def test_runmode(
         self, mock_mock, mock_readall, mock_read, mock_rerun, mock_run, runmode
     ):
@@ -102,7 +102,7 @@ class TestRun:
         """
         Test that parameters with a PROCESS mapping are read correctly.
         """
-        with patch("BLUEPRINT.codes.process.run.Run._mock"):
+        with patch("bluemira.codes.process.run.Run._mock"):
             runner = self.run_PROCESS("MOCK")
 
         # Test that PROCESS params with read = False are not read.
@@ -118,11 +118,11 @@ class TestRun:
         assert "PROCESS" not in param.mapping and param.mapping["FAKE_CODE"].read is True
         assert "gp" not in runner.read_mapping
 
-    @patch("BLUEPRINT.codes.process.run.Run._load_PROCESS")
-    @patch("BLUEPRINT.codes.process.run.Run._check_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.run.Run._run_subprocess")
-    @patch("BLUEPRINT.codes.process.run.Run._clear_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @patch("bluemira.codes.process.run.Run._load_PROCESS")
+    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.Run._run_subprocess")
+    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     def test_run(self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load):
         """
         Test in Run mode, that the correct functions are called during the run and that
@@ -140,11 +140,11 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("BLUEPRINT.codes.process.run.Run._load_PROCESS")
-    @patch("BLUEPRINT.codes.process.run.Run._check_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.run.Run._run_subprocess")
-    @patch("BLUEPRINT.codes.process.run.Run._clear_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @patch("bluemira.codes.process.run.Run._load_PROCESS")
+    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.Run._run_subprocess")
+    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     def test_rerun_with_params_to_update(
         self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
     ):
@@ -168,11 +168,11 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("BLUEPRINT.codes.process.run.Run._load_PROCESS")
-    @patch("BLUEPRINT.codes.process.run.Run._check_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.run.Run._run_subprocess")
-    @patch("BLUEPRINT.codes.process.run.Run._clear_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @patch("bluemira.codes.process.run.Run._load_PROCESS")
+    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.Run._run_subprocess")
+    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     def test_rerun_without_params_to_update(
         self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
     ):
@@ -202,11 +202,11 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("BLUEPRINT.codes.process.run.Run._load_PROCESS")
-    @patch("BLUEPRINT.codes.process.run.Run._check_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.run.Run._run_subprocess")
-    @patch("BLUEPRINT.codes.process.run.Run._clear_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @patch("bluemira.codes.process.run.Run._load_PROCESS")
+    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.Run._run_subprocess")
+    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     def test_read(self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load):
         """
         Test in Read mode, that the correct calls are made and in particular that
@@ -221,11 +221,11 @@ class TestRun:
         assert mock_load.call_count == 1
         assert mock_add_parameter.call_count == 0
 
-    @patch("BLUEPRINT.codes.process.run.Run._load_PROCESS")
-    @patch("BLUEPRINT.codes.process.run.Run._check_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.run.Run._run_subprocess")
-    @patch("BLUEPRINT.codes.process.run.Run._clear_PROCESS_output")
-    @patch("BLUEPRINT.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @patch("bluemira.codes.process.run.Run._load_PROCESS")
+    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.Run._run_subprocess")
+    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     def test_readall(
         self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
     ):

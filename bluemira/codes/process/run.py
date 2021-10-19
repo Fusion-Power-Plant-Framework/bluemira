@@ -29,7 +29,7 @@ import os
 import subprocess  # noqa (S404)
 import string
 
-from BLUEPRINT.base.error import CodesError
+from bluemira.codes.error import CodesError
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from BLUEPRINT.systems.physicstoolbox import normalise_beta
 from bluemira.codes.utilities import get_read_mapping, get_write_mapping
