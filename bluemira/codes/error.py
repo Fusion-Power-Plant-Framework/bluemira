@@ -19,21 +19,16 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-Importer for external code API and related functions
-"""
 
-# External codes wrapper imports
-from bluemira.codes.wrapper import (
-    run_systems_code,
-)
+import bluemira.base.error as base_err
 
-# PROCESS systems code imports
-from bluemira.codes.process.teardown import (
-    plot_PROCESS,
-)
 
-__all__ = [
-    "run_systems_code",
-    "plot_PROCESS",
-]
+__all__ = ["CodesError"]
+
+
+class CodesError(base_err.BluemiraError):
+    """
+    Error class for use in the codes module
+    """
+
+    pass

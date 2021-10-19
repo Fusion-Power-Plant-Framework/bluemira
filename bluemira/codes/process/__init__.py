@@ -27,7 +27,10 @@ from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process.run import Run
 from bluemira.codes.process.teardown import plot_PROCESS
 
+NAME = "PROCESS"
+
 __all__ = [
+    "NAME",
     "PROCESS_ENABLED",
     "Run",
     "plot_PROCESS",

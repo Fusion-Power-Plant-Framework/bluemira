@@ -119,7 +119,7 @@ from BLUEPRINT.costs.calculator import CostCalculator
 from BLUEPRINT.systems.config import SingleNull
 
 # PROCESS imports
-from BLUEPRINT.codes import run_systems_code
+from bluemira.codes import run_systems_code
 
 
 class Reactor(ReactorSystem):
