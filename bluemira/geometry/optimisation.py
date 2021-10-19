@@ -51,11 +51,17 @@ class GeometryOptimisationProblem(abc.ABC):
         self.optimiser.set_objective_function(self.f_objective)
 
     def update_parameterisation(self, x):
+        """
+        Update the GeometryParameterisation.
+        """
         self.parameterisation.variables.set_values_from_norm(x)
 
     f_objective = None
 
     def solve(self, x0=None):
+        """
+        Solve the GeometryOptimisationProblem.
+        """
         if x0 is None:
             x0 = self.parameterisation.variables.get_normalised_values()
         x_star = self.optimiser.optimise(x0)
