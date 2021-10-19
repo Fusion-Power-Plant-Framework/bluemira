@@ -155,7 +155,7 @@ class TestFreecadapi:
         print(f"Points = {points}")
         assert len(points) == ndiscr
         length_w = wire.Length
-        dl = length_w / float(ndiscr)
+        dl = length_w / float(ndiscr - 1)
         points = freecadapi.discretize(wire, dl=dl)
         print(f"Points = {points}")
         assert len(points) == ndiscr
