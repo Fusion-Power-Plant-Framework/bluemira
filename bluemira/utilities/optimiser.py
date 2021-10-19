@@ -195,7 +195,6 @@ class Optimiser(NLOPTOptimiser):
         """
         Check that the constraints have been met.
         """
-
         c_values = []
         tolerances = []
         for constraint, tolerance in zip(self.constraints, self.constraint_tols):

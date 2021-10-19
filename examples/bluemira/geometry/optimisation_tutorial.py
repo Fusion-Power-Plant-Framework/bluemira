@@ -28,16 +28,22 @@ from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import set_random_seed
 
+"""
+A quick tutorial on the optimisation of geometry in bluemira
+"""
 
 set_random_seed(134365475)
 
 
 class MyProblem(GeometryOptimisationProblem):
     """
-    Minimise the length of a geometry parameterisation
+    A simple geometry optimisation problem
     """
 
     def calculate_length(self, x):
+        """
+        Calculate the length of the GeometryParameterisation
+        """
         self.update_parameterisation(x)
         return self.parameterisation.create_shape().length
 
@@ -123,6 +129,10 @@ print(
 
 
 class MyConstrainedProblem(MyProblem):
+    """
+    Now, a constraint is added in
+    """
+
     def __init__(self, parameterisation, optimiser, ineq_con_tolerances):
         super().__init__(parameterisation, optimiser)
         self.optimiser.add_ineq_constraints(self.f_ineq_constraints, ineq_con_tolerances)

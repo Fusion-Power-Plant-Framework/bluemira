@@ -80,15 +80,13 @@ def process_NLOPT_result(opt):  # noqa (N802)
             "\nNLOPT Optimiser was halted due to round-off errors. A useful result was probably found...\n"
         )
     elif result == nlopt.FAILURE:
-        bluemira_warn(
-            f"\nNLOPT Optimiser failed real hard.. internal error code: {nlopt.FAILURE}.\n"
-        )
+        bluemira_warn("\nNLOPT Optimiser failed real hard...\n")
     elif result == nlopt.INVALID_ARGS:
-        bluemira_warn(f"\nNLOPT Optimiser failed because of invalid arguments.\n")
+        bluemira_warn("\nNLOPT Optimiser failed because of invalid arguments.\n")
     elif result == nlopt.OUT_OF_MEMORY:
-        bluemira_warn(f"\nNLOPT Optimiser failed because it ran out of memory.\n")
+        bluemira_warn("\nNLOPT Optimiser failed because it ran out of memory.\n")
     elif result == nlopt.FORCED_STOP:
-        bluemira_warn(f"\nNLOPT Optimiser failed because of a forced stop.\n")
+        bluemira_warn("\nNLOPT Optimiser failed because of a forced stop.\n")
 
 
 class _NLOPTObjectiveFunction:
