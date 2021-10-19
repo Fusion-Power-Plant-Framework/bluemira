@@ -23,8 +23,7 @@
 Configuration classes
 """
 from bluemira.base.parameter import ParameterFrame, ParameterMapping
-
-from BLUEPRINT.base.config_schema import ConfigurationSchema
+from bluemira.base.config_schema import ConfigurationSchema
 
 
 class Configuration(ConfigurationSchema, ParameterFrame):

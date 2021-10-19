@@ -28,10 +28,7 @@ import os
 import pytest
 from BLUEPRINT.utilities.colortools import map_palette
 from BLUEPRINT.base.palettes import LONDON
-from BLUEPRINT.base.file import get_BP_path, get_BP_root, get_PROCESS_root
-from BLUEPRINT.base.lookandfeel import (
-    bpinfo,
-)
+from BLUEPRINT.base.file import get_BP_path, get_bluemira_root, get_PROCESS_root
 from bluemira.base.look_and_feel import (
     bluemira_warn,
     bluemira_print,
@@ -94,10 +91,6 @@ class TestColors:
         print("\n")
         bluemira_warn("test warning")
 
-    def test_into(self):
-        print("\n")
-        bpinfo("test info")
-
     def test_bluemira_print(self):
         print("\n")
         bluemira_print("test normal blue")
@@ -105,7 +98,7 @@ class TestColors:
 
 class TestMisc:
     def test_BP_root(self):  # noqa (N802)
-        assert os.path.isdir(get_BP_root())
+        assert os.path.isdir(get_bluemira_root())
 
     def test_BP_path(self):  # noqa (N802)
         folders = ["systems", "materials", "geometry", "nova"]

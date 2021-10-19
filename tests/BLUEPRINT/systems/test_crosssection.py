@@ -24,7 +24,7 @@ import pytest
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.file import get_BP_root
+from bluemira.base.file import get_bluemira_root
 from BLUEPRINT.nova.firstwall import FirstWallProfile
 from BLUEPRINT.nova.stream import StreamFlow
 from BLUEPRINT.systems.crosssection import ReactorCrossSection
@@ -95,7 +95,7 @@ class TestReactorCrossSection:
         params.r_vv_ib_in = r_vv_ib_in
         params.r_vv_ob_in = r_vv_ob_in
 
-        eq_fullpath = os.path.join(get_BP_root(), eq_file)
+        eq_fullpath = os.path.join(get_bluemira_root(), eq_file)
         first_wall = FirstWallProfile(
             params, {"name": params.Name, "parameterisation": fw_param}
         )
