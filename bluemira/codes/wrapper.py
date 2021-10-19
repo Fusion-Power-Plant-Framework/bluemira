@@ -23,8 +23,8 @@
 BLUEPRINT External Codes Wrapper
 """
 
-from BLUEPRINT.base.error import CodesError
-from BLUEPRINT.codes import process
+from bluemira.codes.error import CodesError
+from bluemira.codes import process
 
 
 def run_systems_code(reactor, params_to_update=None):
@@ -56,7 +56,7 @@ def run_systems_code(reactor, params_to_update=None):
 
     Raises
     ------
-    BluemiraError
+    CodesError
         If PROCESS is being "run" but is not installed
     """
     process_mode = reactor.build_config["process_mode"]
