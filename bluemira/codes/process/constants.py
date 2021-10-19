@@ -20,18 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Importer for PROCESS runner constants and functions
+Constants for the PROCESS integration.
 """
 
-from bluemira.codes.process.api import PROCESS_ENABLED
-from bluemira.codes.process.constants import NAME
-from bluemira.codes.process.run import Run
-from bluemira.codes.process.teardown import plot_PROCESS
-
-
-__all__ = [
-    "PROCESS_ENABLED",
-    "NAME",
-    "Run",
-    "plot_PROCESS",
-]
+NAME = "PROCESS"
