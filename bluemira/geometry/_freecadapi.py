@@ -480,21 +480,17 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
         raise ValueError("dl must be > 0.")
 
     # edges are discretised taking into account their orientation
-    # Note: this is a tricky part in Freecad. Reversed wires need a
-    # reverse operation for the generated points and the list of generated
-    # points for each edge.
+    # Note: OrderedEdges already return a list of edges that considers the edge in the
+    # correct sequence and orientation. No need for tricks after the discretization.
     for e in w.OrderedEdges:
         pointse = list(discretize(Part.Wire(e), dl=dl))
-        # if edge orientation is reversed, the generated list of points
-        # must be reversed
-        if e.Orientation == "Reversed":
-            pointse.reverse()
-        output += pointse[:-1]
+        output += pointse[0:-1]
+
     if w.isClosed():
-        output += pointse[-1:]
-    # if wire orientation is reversed, output must be reversed
-    if w.Orientation == "Reversed":
-        output.reverse()
+        output += [output[0]]
+    else:
+        output += [pointse[-1]]
+
     output = np.array(output)
     return output
 
