@@ -293,6 +293,8 @@ class Coil:
         The name of the coil
     """
 
+    # TODO - make Coil inherit from CoilGroup as a group of size 1
+
     __slots___ = [
         "x",
         "z",
@@ -1613,7 +1615,6 @@ class SymmetricCircuit(Circuit):
                 "SymmetricCircuit must be initialised with a Coil with z != 0."
             )
 
-        self.ctype = coil.ctype
         self.name = coil.name
         coil.name += ".1"
 
@@ -1634,49 +1635,113 @@ class SymmetricCircuit(Circuit):
 
         super().__init__([coil, mirror])
 
-    @property
-    def x(self):
+    def __setattr__(self, attr, value):
         """
-        The x coordinate of the SymmetricCircuit.
-        """
-        return self.coils[self.name + ".1"].x
+        Custom __setattr__ to default to setting the attributes of
+        the member coils if not found in SymmetricCircuit.
 
-    @property
-    def z(self):
+        Parameters
+        ----------
+        attr: str
+              Name of attribute to fetch.
+        value:
+            Object to assign attribute to.
         """
-        The z coordinate of the SymmetricCircuit.
-        """
-        return self.coils[self.name + ".1"].z
+        super().__setattr__(attr, value)
+        if hasattr(self, "name") and hasattr(self, "coils"):
+            name = self.name
+            coil = self.coils[name + ".1"]
+            if hasattr(coil, attr):
+                if attr == "z":
+                    coil1 = self.coils[name + ".1"]
+                    coil1.__setattr__(attr, value)
+                    coil2 = self.coils[name + ".2"]
+                    coil2.__setattr__(attr, -value)
+                else:
+                    for cl_n in [".1", ".2"]:
+                        coil = self.coils[name + cl_n]
+                        coil.__setattr__(attr, value)
 
-    @property
-    def dx(self):
+    def __getattr__(self, attr):
         """
-        The width of the SymmetricCircuit.
-        """
-        return self.coils[self.name + ".1"].dx
+        Custom __getattr__ to default to returning the attribute of
+        the primary coil if not found in SymmetricCircuit.
 
-    @property
-    def dz(self):
-        """
-        The height of the SymmetricCircuit.
-        """
-        return self.coils[self.name + ".1"].dz
+        Parameters
+        ----------
+        attr: str
+              Name of attribute to fetch.
 
-    @dx.setter
-    def dx(self, _dx):
         """
-        Set the width of the SymmetricCircuit.
+        name = self.__getattribute__("name")
+        coil = self.__getattribute__("coils")[name + ".1"]
+        if hasattr(coil, attr):
+            return coil.__getattribute__(attr)
+        else:
+            return self.__getattribute__(attr)
+
+    def apply_coil_method(self, method_name, *args, **kwargs):
         """
+        Calls the coil method method_name on both coils in the
+        SymmetricCircuit, and returns any results in a list.
+
+        Parameters
+        ----------
+        method_name: str
+            Name of method in Coil to call for each member of
+            the SymmetricCircuit.
+
+        args: tuple
+            Arguments to pass to into Coil method function call.
+
+        kwargs: dict
+            Keyword arguments to pass to Coil method function call.
+
+        Returns
+        -------
+        results: list
+            List containing outputs of coil method applied
+            to each member of the SymmetricCircuit
+        """
+        results = []
         for cl_n in [".1", ".2"]:
-            self.coils[self.name + cl_n].set_dx(_dx)
+            coil = self.coils[self.name + cl_n]
+            result = coil.__getattribute__(method_name)(*args, **kwargs)
+            results.append(result)
+        return results
 
-    @dz.setter
-    def dz(self, _dz):
+    def set_dx(self, _dx):
         """
-        Set the height of the SymmetricCircuit.
+        Adjusts the radial thickness of all Coils in the SymmetricCircuit.
+
+        Parameters
+        ----------
+        _dx: float
+            The change in radial position to apply to the coils
         """
-        for cl_n in [".1", ".2"]:
-            self.coils[self.name + cl_n].set_dz(_dz)
+        self.apply_coil_method("set_dx", _dx)
+
+    def set_dz(self, _dz):
+        """
+        Adjusts the vertical thickness of all Coils in the SymmetricCircuit.
+
+        Parameters
+        ----------
+        _dz: float
+            The change in vertical position to apply to the coils
+        """
+        self.apply_coil_method("set_dz", _dz)
+
+    def mesh_coil(self, d_coil):
+        """
+        Mesh an coils in the SymmetricCircuit into smaller subcoils.
+
+        Parameters
+        ----------
+        d_coil: float > 0
+            The coil sub-division size
+        """
+        self.apply_coil_method("mesh_coil", d_coil)
 
 
 class CoilSet(CoilGroup):
@@ -1943,7 +2008,7 @@ class CoilSet(CoilGroup):
         b_max: np.array(self.n_C)
             An array of maximum field values [T]
         """
-        b_max = np.zeros(self.n_coils)
+        b_max = np.zeros(len(self.coils.values()))
         for i, coil in enumerate(self.coils.values()):
             b_max[i] = coil.b_max
         return b_max

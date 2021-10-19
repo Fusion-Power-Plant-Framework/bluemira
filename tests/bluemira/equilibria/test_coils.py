@@ -344,14 +344,37 @@ class TestSymmetricCircuit:
             coil.set_current(2e6)
         self.test_fields()
 
+    def test_attributes(self):
+        self.circuit.x = 4
+        assert self.circuit.x == 4
+        assert self.circuit["TEST.1"].x == 4
+        assert self.circuit["TEST.2"].x == 4
+
+        self.circuit.z = 6
+        assert self.circuit.z == 6
+        assert self.circuit["TEST.1"].z == 6
+        assert self.circuit["TEST.2"].z == -6
+
 
 class TestCoilSet:
     @classmethod
     def setup_class(cls):
-        coil = Coil(x=1.5, z=6, current=1e6, dx=0.25, dz=0.5, ctype="PF", name="PF_2")
+        coil = Coil(
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=1e7,
+            b_max=100,
+            ctype="PF",
+            name="PF_2",
+        )
         circuit = SymmetricCircuit(coil)
 
-        coil2 = Coil(x=4, z=10, current=2e6, dx=1, dz=0.5, name="PF_1")
+        coil2 = Coil(
+            x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5e6, b_max=50, name="PF_1"
+        )
 
         cls.coilset = CoilSet([coil2, circuit])
 
@@ -363,6 +386,36 @@ class TestCoilSet:
         assert np.allclose(dx, np.array([1, 0.25, 0.25]))
         assert np.allclose(dz, np.array([0.5, 0.5, 0.5]))
         assert np.allclose(currents, np.array([2e6, 1e6, 1e6]))
+
+    def test_member_attributes(self):
+        assert np.isclose(self.coilset["PF_1"].x, 4)
+        assert np.isclose(self.coilset["PF_2"].x, 1.5)
+
+        assert np.isclose(self.coilset["PF_1"].z, 10)
+        assert np.isclose(self.coilset["PF_2"].z, 6)
+
+        assert np.isclose(self.coilset["PF_1"].dx, 1)
+        assert np.isclose(self.coilset["PF_2"].dx, 0.25)
+
+        assert np.isclose(self.coilset["PF_1"].dz, 0.5)
+        assert np.isclose(self.coilset["PF_2"].dz, 0.5)
+
+        assert np.isclose(self.coilset["PF_1"].j_max, 5e6)
+        assert np.isclose(self.coilset["PF_2"].j_max, 1e7)
+
+        assert np.isclose(self.coilset["PF_1"].b_max, 50)
+        assert np.isclose(self.coilset["PF_2"].b_max, 100)
+
+        assert np.isclose(self.coilset["PF_1"].current, 2e6)
+        assert np.isclose(self.coilset["PF_2"].current, 1e6)
+
+        coil2 = self.coilset["PF_1"]
+        coil2.set_dz(0.77)
+        symm_circuit = self.coilset["PF_2"]
+        symm_circuit.set_dz(0.6)
+        assert np.isclose(coil2.dz, 0.77)
+        assert np.isclose(symm_circuit["PF_2.1"].dz, 0.6)
+        assert np.isclose(symm_circuit["PF_2.2"].dz, 0.6)
 
     def test_numbers(self):
         assert self.coilset.n_PF == 2
