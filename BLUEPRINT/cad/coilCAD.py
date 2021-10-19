@@ -506,6 +506,15 @@ class TFCoilCAD(ComponentCAD):
             coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
             zmax_wp = np.max(tf.loops["wp_out"]["z"])  # Max z height of tfcoil
 
+            if tf.shape_type in ["CP"]:
+                zmax_b_cyl = (
+                    tf.shp.parameterisation.xo["z_mid"]["value"]
+                    + tf.section["case"]["WP"]
+                    + tf.section["case"]["inboard"]
+                )
+            else:
+                zmax_b_cyl = zmax_wp
+
             if tf.conductivity in ["SC"]:
                 # r_cp_top doesn't exist for SC coils, so need to define our
                 # own r_cp (i.e outboard edge of Centrepost)
@@ -535,14 +544,14 @@ class TFCoilCAD(ComponentCAD):
             if tf.conductivity in ["R"]:
                 # Resistive tapered CP coils
                 tk_case = tf.params.tk_tf_ob_casing
-                if tf.shape_type in ["TP"]:
-                    # Make B Cyl
-                    ri = np.min(tf.loops["b_cyl"]["x"])
-                    ro = np.max(tf.loops["b_cyl"]["x"])
-                    b_cyl_loop = make_box_xz(
-                        x_min=ri, x_max=ro, z_min=-zmax_wp, z_max=zmax_wp
-                    )
-                    b_cyl = TFCoilCAD.wedge_from_xz(tf, b_cyl_loop, coil_toroidal_angle)
+
+                # Make B Cyl
+                ri = np.min(tf.loops["b_cyl"]["x"])
+                ro = np.max(tf.loops["b_cyl"]["x"])
+                b_cyl_loop = make_box_xz(
+                    x_min=ri, x_max=ro, z_min=-zmax_b_cyl, z_max=zmax_b_cyl
+                )
+                b_cyl = TFCoilCAD.wedge_from_xz(tf, b_cyl_loop, coil_toroidal_angle)
 
                 # Define casing loop
                 # Can't use Casing Loops since they aren't connected to each other
@@ -651,7 +660,7 @@ class TFCoilCAD(ComponentCAD):
 
         comp_dict = OrderedDict()
 
-        if tf.shape_type in ["TP"]:
+        if tf.conductivity in ["R"]:
             comp_dict["b_cyl"] = b_cyl
             comp_dict["leg_conductor"] = leg_conductor
             comp_dict["cp_conductor"] = tapered_cp
