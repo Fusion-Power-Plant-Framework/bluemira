@@ -45,6 +45,7 @@ __all__ = [
     "GeometryParameterisation",
     "PrincetonD",
     "TripleArc",
+    "SextupleArc",
     "PictureFrame",
     "TaperedPictureFrame",
     "PolySpline",
@@ -476,7 +477,6 @@ class SextupleArc(GeometryParameterisation):
 
         # Retrieve last arc (could be bad...)
         r6 = (xi - x1) / (1 + vec[0])
-        print(r6)
         xc6 = xi - r6 * vec[0]
         z7 = zc6 = zi - r6 * vec[1]
 
@@ -498,22 +498,6 @@ class SextupleArc(GeometryParameterisation):
             wires.append(straight_segment)
 
         return BluemiraWire(wires, label=label)
-
-
-import matplotlib.pyplot as plt
-
-from bluemira.geometry.plotting import plot_wire
-
-p = SextupleArc()
-wire = p.create_shape()
-plot_wire(wire)
-try:
-    array = p.create_array()
-    f, ax = plt.subplots()
-    ax.plot(array[0], array[2])
-    ax.set_aspect("equal")
-except:
-    pass  # plot_wire(wire)
 
 
 class PolySpline(GeometryParameterisation):
