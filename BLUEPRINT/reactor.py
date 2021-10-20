@@ -37,7 +37,6 @@ from typing import Type, Union
 # Framework imports
 from bluemira.base.file import get_files_by_ext
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
-from bluemira.base.error import BluemiraError
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.base import (
