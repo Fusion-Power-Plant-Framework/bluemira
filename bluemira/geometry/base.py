@@ -27,16 +27,17 @@ from __future__ import annotations
 
 # import for abstract class
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional, Union
 
 # import freecad api
 from . import _freecadapi
 
 # import bluemira base functionality
-from bluemira.base.display import Displayable, DisplayOptions, Displayer
+from bluemira.base.display import DisplayOptions, Displayer
+from bluemira.base.error import DisplayError
 
 
-class BluemiraGeo(ABC, Displayable):
+class BluemiraGeo(ABC):
     """Base abstract class for geometry
 
     Parameters
@@ -68,12 +69,10 @@ class BluemiraGeo(ABC, Displayable):
         boundary,
         label: str = "",
         boundary_classes=None,
-        display_options: Optional[DisplayOptions] = None,
     ):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
-        self._displayer = GeometryDisplayer(display_options)
 
     @staticmethod
     def _converter(func):
@@ -212,19 +211,40 @@ class GeometryDisplayer(Displayer):
     """
 
     def display(
-        self, geo: BluemiraGeo, options: Optional[DisplayOptions] = None
+        self,
+        geos: Union[BluemiraGeo, List[BluemiraGeo]],
+        options: Optional[Union[DisplayOptions, List[DisplayOptions]]] = None,
     ) -> None:
         """
         Display a BluemiraGeo object using the underlying shape.
 
         Parameters
         ----------
-        geo: BluemiraGeo
+        geo: Union[BluemiraGeo, List[BluemiraGeo]]
             The geometry to be displayed.
-        options: Optional[DisplayOptions]
+        options: Optional[Union[DisplayOptions, List[DisplayOptions]]]
             The options to use to display the geometry.
             By default None, in which case the display_options assigned to the
             BluemiraGeo object will be used.
         """
-        options = geo.display_options if options is None else options
-        super().display(geo._shape, options)
+        if options is None:
+            options = DisplayOptions()
+
+        if not isinstance(geos, list):
+            geos = [geos]
+        if not isinstance(options, list):
+            options = [options]
+
+        if len(options) == 1 and len(geos) > 1:
+            options *= len(geos)
+
+        if len(options) != len(geos):
+            raise DisplayError(
+                "Either a single display option or the same number of display options "
+                "geometries must be provided."
+            )
+
+        shapes = []
+        for geo in geos:
+            shapes += [geo._shape]
+        super().display(shapes, options)

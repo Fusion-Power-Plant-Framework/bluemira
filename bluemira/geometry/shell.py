@@ -25,8 +25,6 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import Optional
-
 # import from freecad
 import freecad  # noqa: F401
 import Part
@@ -35,18 +33,13 @@ import Part
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.face import BluemiraFace
 
-# visualisation
-from bluemira.base.display import DisplayOptions
-
 
 class BluemiraShell(BluemiraGeo):
     """Bluemira Shell class."""
 
-    def __init__(
-        self, boundary, label: str = "", display_options: Optional[DisplayOptions] = None
-    ):
+    def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraFace]
-        super().__init__(boundary, label, boundary_classes, display_options)
+        super().__init__(boundary, label, boundary_classes)
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""

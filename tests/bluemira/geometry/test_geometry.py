@@ -36,6 +36,8 @@ from bluemira.geometry.tools import (
 )
 
 from bluemira.base.display import DisplayOptions
+from bluemira.base.error import DisplayError
+from bluemira.geometry.base import GeometryDisplayer
 
 import tests
 from tests.bluemira.display_helpers import PatchQApp, PatchQuarterWidget
@@ -117,7 +119,6 @@ class TestGeometry:
 
     def test_display(self):
         wire1 = make_polygon(self.square_points, label="wire1", closed=False)
-        wire1.display_options = DisplayOptions((0.0, 1.0, 0.0), transparency=0.5)
         box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
@@ -126,5 +127,22 @@ class TestGeometry:
             with contextlib.nullcontext() if tests.PLOTTING else patch(
                 "bluemira.geometry._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
             ):
-                wire1.display()
-                box1.display()
+                GeometryDisplayer().display(wire1)
+                GeometryDisplayer().display(box1, DisplayOptions((1.0, 0.0, 1.0)))
+                GeometryDisplayer().display([wire1, box1])
+                GeometryDisplayer().display(
+                    [wire1, box1], DisplayOptions((1.0, 0.0, 1.0))
+                )
+                GeometryDisplayer().display(
+                    [wire1, box1],
+                    [DisplayOptions((1.0, 0.0, 0.0)), DisplayOptions((0.0, 1.0, 0.0))],
+                )
+
+                with pytest.raises(DisplayError):
+                    GeometryDisplayer().display(
+                        wire1,
+                        [
+                            DisplayOptions((1.0, 0.0, 0.0)),
+                            DisplayOptions((0.0, 1.0, 0.0)),
+                        ],
+                    )
