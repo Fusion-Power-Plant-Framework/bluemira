@@ -25,7 +25,7 @@ PROCESS api
 
 import os
 
-from BLUEPRINT.base.file import get_BP_root, get_PROCESS_root
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 
 PROCESS_ENABLED = True
@@ -59,7 +59,6 @@ def get_dicts():
 
 OBS_VARS = dict()
 PROCESS_DICT = dict()
-PATH = None
 
 # Import PROCESS objects, override the above dummy objects if PROCESS installed.
 # Note: noqa used to ignore "redefinition of unused variable" errors.
@@ -83,13 +82,8 @@ if PROCESS_ENABLED:
     # Load dicts from dicts JSON file
     PROCESS_DICT = get_dicts()
 
-try:
-    PATH = get_PROCESS_root()
-except FileNotFoundError:
-    PATH = None
-
 DEFAULT_INDAT = os.path.join(
-    get_BP_root(), "bluemira", "codes", "process", "PROCESS_DEFAULT_IN.DAT"
+    get_bluemira_root(), "bluemira", "codes", "process", "PROCESS_DEFAULT_IN.DAT"
 )
 
 PTOBUNITS = {
