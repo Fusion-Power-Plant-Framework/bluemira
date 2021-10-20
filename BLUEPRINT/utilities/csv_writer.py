@@ -26,7 +26,7 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_print
 
 
-def write_csv(data, base_name, col_names, metadata="", ext=".csv"):
+def write_csv(data, base_name, col_names, metadata="", ext=".csv", comment_char="#"):
     """
     Write data in comma-separated value format.
 
@@ -41,8 +41,12 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv"):
         List of strings for column headings for each data field provided.
     metadata: str
         Optional argument for metadata to be written as a header.
-    ext : string
+    ext : str
         Optional argument for file extension, defaults to ".csv".
+    comment_char : str
+        Optional argument to specify character(s) to prepend to metadata lines
+        as a comment character (defaults to "#").
+
     """
     # Fetch number of cols
     shape = data.shape
@@ -55,7 +59,10 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv"):
     if not len(col_names) == n_cols:
         raise RuntimeError("Column names must be provided for all data fields")
 
-    # Add a newline to existing metadata
+    # Add comment characters to existing metadata lines
+    metadata = "\n".join([comment_char + " " + line for line in metadata.split("\n")])
+
+    # Add a newline character to existing metadata
     if metadata != "":
         metadata += "\n"
 

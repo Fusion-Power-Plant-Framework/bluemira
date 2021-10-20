@@ -32,7 +32,7 @@ def test_csv_writer():
     z_vals = [-1, 0, 1]
     flux_vals = [10, 15, 20]
     data = np.array([x_vals, z_vals, flux_vals]).T
-    header = "This is a test"
+    header = "This is a test\nThis is a second line"
     col_names = ["x", "z", "heat_flux"]
 
     # Write the data to csv
