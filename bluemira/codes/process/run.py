@@ -335,6 +335,11 @@ class Run:
         """
         # Load defaults in BLUEPRINT folder
         writer = PROCESSInputWriter(template_indat=self.template_indat)
+        if writer.data == {}:
+            raise CodesError(
+                f"Unable to read template IN.DAT file at {self.template_indat}"
+            )
+
         if use_bp_inputs is True:
             for param in self.param_list:  # Overwrite variables
                 if param.mapping is not None and "PROCESS" in param.mapping:
