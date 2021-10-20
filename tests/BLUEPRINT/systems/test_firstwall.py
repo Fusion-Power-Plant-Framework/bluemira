@@ -81,6 +81,9 @@ def firstwall_sn_inputs():
         "vv_inner": vessel,
         "strike_pts_from_koz": False,
         "pick_flux_from_psinorm": False,
+        "SN": True,
+        "div_vertical_outer_target": False,
+        "div_vertical_inner_target": False,
     }
     return inputs
 
@@ -141,18 +144,10 @@ class TestFluxSurface:
         eq = load_equilibrium("EU-DEMO_EOF.json")
         cls.fluxsurface = FluxSurface(eq, 12, 0)
 
-    def test_polar_coordinates(self):
-        x = [15, 5]
-        z = [1, 1]
-        theta = self.fluxsurface.polar_coordinates(x, z)
-        assert theta[0] > 7 and theta[0] < 8
-        assert theta[1] > 161 and theta[1] < 163
-
     def test_assign_lfs_hfs_sn(self):
         x = np.array([8, 10, 5, 9])
         z = np.array([-1, -5, 2, 2])
-        th = np.array([280, 290, 260, 250])
-        p_side = self.fluxsurface.assign_lfs_hfs_sn(x, z, th)
+        p_side = self.fluxsurface.assign_lfs_hfs_sn(x, z)
         assert len(p_side[0]) != 0
         assert len(p_side[1][0]) == 2
 
@@ -162,14 +157,6 @@ class TestFluxSurface:
         p_loc = self.fluxsurface.assign_top_bottom(x, z)
         assert len(p_loc[0]) != 0
         assert len(p_loc[1]) == 2
-
-    def test_find_first_intersection_lfs_sn(self):
-        x = np.array([8, 10, 12, 9])
-        z = np.array([-1, -5, -2, -5])
-        th = np.array([280, 5, 100, 279])
-        first = self.fluxsurface.find_first_intersection_lfs_sn(x, z, th)
-        assert first[0] == 8
-        assert first[1] == -1
 
     def test_calculate_q_par_omp(self):
         qpar = self.fluxsurface.calculate_q_par_omp(0, 0, 100, 100)
@@ -216,49 +203,6 @@ class TestFirstWallSN:
     def test_make_preliminary_profile(self):
         prof = self.firstwall.make_preliminary_profile()
         assert hasattr(prof, "x")
-
-    def test_make_divertor(self):
-        fw_loop = self.firstwall.make_preliminary_profile()
-        div = self.firstwall.make_divertor(fw_loop)[0]
-        assert div.x[0] == div.x[-1]
-        assert div.z[0] == div.z[-1]
-
-    @pytest.mark.parametrize("ints_from_psi", [True, False])
-    def test_make_divertor_from_koz(self, ints_from_psi):
-        self.firstwall.inputs["strike_pts_from_koz"] = True
-        self.firstwall.inputs["pick_flux_from_psinorm"] = ints_from_psi
-
-        # Make a fake firstwall loop
-        # (just needs to intersect yz plane containing x point)
-        x_x_point = self.firstwall.points["x_point"]["x"]
-        z_x_point = self.firstwall.points["x_point"]["z_low"]
-        fw_x_right = x_x_point + self.firstwall.params.xpt_outer_gap + 0.5
-        fw_x_left = x_x_point - self.firstwall.params.xpt_outer_gap - 0.5
-        fw_z_top = z_x_point + 1.0
-        fw_z_bot = z_x_point - 1.0
-        fw_x = [fw_x_right, fw_x_right, fw_x_left, fw_x_left]
-        fw_z = [fw_z_top, fw_z_bot, fw_z_bot, fw_z_top]
-        fw_loop = Loop(x=fw_x, y=None, z=fw_z)
-        fw_loop.close()
-
-        # Make the divertor
-        div = self.firstwall.make_divertor(fw_loop)[0]
-
-        # Check the loop is closed
-        assert div.closed
-
-        # Check the bounds
-        z_low = self.firstwall.points["x_point"]["z_low"]
-        koz_left_x = x_x_point - 3 - self.firstwall.params.tk_inner_target_sol
-        koz_bot_z = z_low - 2.25
-        div_x_max = np.max(div.x)
-        div_x_min = np.min(div.x)
-        div_z_max = np.max(div.z)
-        div_z_min = np.min(div.z)
-        assert div_x_max == fw_x_right
-        assert div_x_min > koz_left_x
-        assert div_z_max == z_low
-        assert div_z_min == koz_bot_z
 
     # Test build for different combinations of thicknesses
     @pytest.mark.parametrize("tk_in", [0.1])
@@ -393,7 +337,7 @@ class TestFirstWallDN:
 
     def test_modify_fw_profile(self):
         profile = self.firstwall.make_preliminary_profile()
-        prof_up = self.firstwall.modify_fw_profile(profile, 11.5, -2.5, 0.3)
+        prof_up = self.firstwall.modify_fw_profile(profile, 11.5, -2.5)
         assert prof_up.x[0] == profile.x[0]
         assert prof_up.x[-1] == profile.x[-1]
         assert len(prof_up.x) == len(profile.x)
