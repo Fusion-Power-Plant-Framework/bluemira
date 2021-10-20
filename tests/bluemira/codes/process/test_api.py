@@ -23,7 +23,7 @@ from unittest.mock import patch
 
 import pytest
 
-from BLUEPRINT.base.parameter import ParameterFrame, ParameterMapping
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
 
 from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process import api
