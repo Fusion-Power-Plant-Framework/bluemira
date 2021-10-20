@@ -390,16 +390,16 @@ class SextupleArc(GeometryParameterisation):
                 BoundedVariable("x1", 4.486, lower_bound=4, upper_bound=5),
                 # Inboard limb height
                 BoundedVariable("z1", 5, lower_bound=0, upper_bound=10),
-                #
+                # 1st arc radius
                 BoundedVariable("r1", 4, lower_bound=4, upper_bound=12),
-                #
+                # 2nd arc radius
                 BoundedVariable("r2", 5, lower_bound=4, upper_bound=12),
-                #
+                # 3rd arc radius
                 BoundedVariable("r3", 6, lower_bound=4, upper_bound=12),
-                #
+                # 4th arc radius
                 BoundedVariable("r4", 7, lower_bound=4, upper_bound=12),
-                #
-                BoundedVariable("r5", 6, lower_bound=4, upper_bound=12),
+                # 5th arc radius
+                BoundedVariable("r5", 8, lower_bound=4, upper_bound=12),
                 # 1st arc angle [degrees]
                 BoundedVariable("a1", 45, lower_bound=5, upper_bound=50),
                 # 2nd arc angle [degrees]
@@ -415,6 +415,14 @@ class SextupleArc(GeometryParameterisation):
         )
         variables.adjust_variables(var_dict)
         super().__init__(variables)
+
+    @staticmethod
+    def _project_centroid(xc, zc, xi, zi, ri):
+        vec = np.array([xi - xc, zi - zc])
+        vec /= np.linalg.norm(vec)
+        xc = xi - vec[0] * ri
+        zc = zi - vec[1] * ri
+        return xc, zc, vec
 
     def create_shape(self, label=""):
         """
@@ -442,10 +450,7 @@ class SextupleArc(GeometryParameterisation):
         zc = z1
         for i, (ai, ri) in enumerate(zip(a_values, r_values)):
             if i > 0:
-                vec = np.array([xi - xc, zi - zc])
-                vec /= np.linalg.norm(vec)
-                xc = xi - vec[0] * ri
-                zc = zi - vec[1] * ri
+                xc, zc, _ = self._project_centroid(xc, zc, xi, zi, ri)
 
             a = np.pi - a_start - ai
             xi = xc + ri * np.cos(a)
@@ -467,10 +472,8 @@ class SextupleArc(GeometryParameterisation):
 
             a_start += ai
 
-        vec = np.array([xi - xc, zi - zc])
-        vec /= np.linalg.norm(vec)
-        xc = xi - vec[0] * ri
-        zc = zi - vec[1] * ri
+        xc, zc, vec = self._project_centroid(xc, zc, xi, zi, ri)
+
         # Retrieve last arc (could be bad...)
         r6 = (xi - x1) / (1 + vec[0])
         print(r6)
@@ -502,7 +505,8 @@ import matplotlib.pyplot as plt
 from bluemira.geometry.plotting import plot_wire
 
 p = SextupleArc()
-# wire = p.create_shape()
+wire = p.create_shape()
+plot_wire(wire)
 try:
     array = p.create_array()
     f, ax = plt.subplots()
@@ -510,15 +514,6 @@ try:
     ax.set_aspect("equal")
 except:
     pass  # plot_wire(wire)
-
-    # # Find the last circle arc radius
-
-    # wires = []
-    # if z1 > 0:
-    #     straight_segment = wire_closure(BluemiraWire(wires), label="straight_segment")
-    #     wires.append(straight_segment)
-
-    # return BluemiraWire(wires, label=label)
 
 
 class PolySpline(GeometryParameterisation):
