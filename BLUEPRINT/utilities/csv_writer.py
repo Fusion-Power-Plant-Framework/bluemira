@@ -23,6 +23,7 @@
 csv writer utilities
 """
 import numpy as np
+import os
 from bluemira.base.look_and_feel import bluemira_print
 
 
@@ -99,3 +100,37 @@ def write_geometry_to_csv(loop, filename, metadata=""):
 
     # Write
     write_csv(data, filename, col_names, metadata)
+
+
+def write_components_to_csv(system, component_names, file_base, path="./", metadata=""):
+    """
+    Write the geometry objects for a given system to individual csv files.
+
+    Parameters
+    ----------
+    system: ReactorSystem
+        The system object containing the geometry objects we want to save.
+    component_names: list[str]
+    file_base: str
+        Base output file name, to be appended by loop name
+        and csv file extension. Default value is name of
+        ReactorSystem class
+    path: str
+        Optional path to directory in which to write file.
+    metadata: str
+        Optional metatdata string.
+    """
+    for name in component_names:
+        # Retrieve the loop in system geom dict
+        loop = system.geom[name]
+
+        # Remove spaces and capitals
+        name = name.replace(" ", "_")
+        name = name.lower()
+
+        # Generate output file name
+        file_name = file_base + "_" + name
+        full_path = os.sep.join([path, file_name])
+
+        # Write to file
+        write_geometry_to_csv(loop, full_path, metadata)

@@ -20,17 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-import os
-import filecmp
 from typing import Type
 
 from BLUEPRINT.base.baseclass import ReactorSystem
-from BLUEPRINT.base.file import get_BP_path
 from bluemira.base.error import BluemiraError
 from BLUEPRINT.nova.firstwall import DivertorProfile
 from BLUEPRINT.systems.blanket import BreedingBlanket
 from BLUEPRINT.systems.divertor import Divertor
-from BLUEPRINT.geometry.geomtools import make_box_xz
 
 
 class TestBaseClass:
@@ -83,65 +79,6 @@ class TestBaseClass:
 
             class MyReactorSystem(ReactorSystem):
                 pass
-
-
-class CSVWriterReactorSystem(ReactorSystem):
-    """
-    ReactorSystem to test csv write functionality.
-    """
-
-    def __init__(self):
-        self.geom["Dummy Loop"] = make_box_xz(0.0, 1.0, 0.0, 1.0)
-        self.geom["dUmmy looP 2"] = make_box_xz(0.0, 1.0, 0.0, 1.0)
-
-    @property
-    def csv_write_loop_names(self):
-        return ["Dummy Loop", "dUmmy looP 2"]
-
-
-def test_reactor_system_write_to_csv():
-    # Create an instance of our dummy class
-    csv_system = CSVWriterReactorSystem()
-
-    # Test write with all default arguments
-    test_file_base = "reactor_system"
-    csv_system.save_geom_as_csv(test_file_base)
-
-    # Fetch comparison data file
-    data_file = "reactor_system_dummy_loop_no_metadata.csv"
-    data_dir = "BLUEPRINT/base/test_data"
-    compare_path = get_BP_path(data_dir, subfolder="tests")
-    compare_file = os.sep.join([compare_path, data_file])
-
-    # Compare against test file
-    test_keys = ["dummy_loop", "dummy_loop_2"]
-    for key in test_keys:
-        test_file = test_file_base + "_" + key + ".csv"
-        assert filecmp.cmp(test_file, compare_file)
-        # Clean up
-        os.remove(test_file)
-
-    # Test write, specifying file_base, path and metadata
-    metadata = "Metadata string"
-    csv_system.save_geom_as_csv(test_file_base, compare_path, metadata)
-
-    # Fetch comparison data file
-    data_file = "reactor_system_dummy_loop_with_metadata.csv"
-    compare_file = os.sep.join([compare_path, data_file])
-
-    # Compare against test file
-    for key in test_keys:
-        test_file = os.sep.join([compare_path, test_file_base + "_" + key + ".csv"])
-        assert filecmp.cmp(test_file, compare_file)
-        # Clean up
-        os.remove(test_file)
-
-    # Create an empty reactor system which will fail write
-    fail_csv_system = ReactorSystem()
-
-    # Check write fails
-    with pytest.raises(RuntimeError):
-        fail_csv_system.save_geom_as_csv(test_file_base)
 
 
 class TestDefineSystemClass:

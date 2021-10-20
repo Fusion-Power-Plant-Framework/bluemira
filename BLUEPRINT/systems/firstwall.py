@@ -2257,15 +2257,7 @@ class FirstWall(EqInputs, ReactorSystem):
 
         return new_loop
 
-    @property
-    def csv_write_loop_names(self):
-        """
-        The loop names to save as csv
-        """
-        names = ["Preliminary profile", "Inner profile"]
-        return names
 
-    
 class FirstWallSN(FirstWall):
     """
     Reactor First Wall (FW) system

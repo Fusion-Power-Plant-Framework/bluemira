@@ -20,11 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
 import os
-import filecmp
 import numpy as np
 from BLUEPRINT.systems.firstwall import FluxSurface, FirstWallSN, FirstWallDN
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.base.file import get_BP_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
@@ -174,6 +172,8 @@ def check_firstwall(firstwall):
     assert isinstance(firstwall.geom["2D profile"], Shell)
     assert isinstance(firstwall.geom["Inboard wall"], Loop)
     assert isinstance(firstwall.geom["Outboard wall"], Loop)
+    assert isinstance(firstwall.geom["Preliminary profile"], Loop)
+    assert isinstance(firstwall.geom["Inner profile"], Loop)
     assert isinstance(firstwall.divertor_loops, list)
     assert isinstance(firstwall.divertor_cassettes, list)
 
@@ -195,33 +195,6 @@ def check_firstwall(firstwall):
             assert n_ints >= 1 and len(int_z) == n_ints
 
     return True
-
-
-def check_save_as_csv(firstwall, is_dn):
-    test_keys = ["preliminary_profile", "inner_profile"]
-
-    if is_dn:
-        fw_type = "dn"
-    else:
-        fw_type = "sn"
-    test_file_base = "first_wall_" + fw_type
-
-    metadata_str = "Metadata string"
-    firstwall.save_geom_as_csv(test_file_base, metadata=metadata_str)
-
-    for key in test_keys:
-        # Expected output file name
-        test_file = test_file_base + "_" + key + ".csv"
-
-        # Get data file for comparison
-        data_file = test_file_base + "_" + key + "_data.csv"
-        data_dir = "BLUEPRINT/systems/test_data"
-        compare_path = get_BP_path(data_dir, subfolder="tests")
-        compare_file = os.sep.join([compare_path, data_file])
-
-        assert filecmp.cmp(test_file, compare_file)
-        # Clean up
-        os.remove(test_file)
 
 
 class TestFirstWallSN:
@@ -250,10 +223,6 @@ class TestFirstWallSN:
         assert len(self.firstwall.flux_surfaces) == len(qpar)
         for i in range(len(qpar), -1):
             assert qpar[i] > qpar[i + 1]
-
-    def test_save_fw_as_csv(self):
-        self.firstwall.build()
-        check_save_as_csv(self.firstwall, is_dn=False)
 
 
 class TestFirstWallDN:
@@ -374,10 +343,6 @@ class TestFirstWallDN:
         assert prof_up.x[0] == profile.x[0]
         assert prof_up.x[-1] == profile.x[-1]
         assert len(prof_up.x) == len(profile.x)
-
-    def test_save_fw_as_csv(self):
-        self.firstwall.build()
-        check_save_as_csv(self.firstwall, is_dn=True)
 
 
 if __name__ == "__main__":

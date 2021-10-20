@@ -22,7 +22,6 @@
 """
 Home of the BLUEPRINT base class for reactor system objects
 """
-import os
 from copy import deepcopy
 import pickle  # noqa (S403)
 from typing import Type, Union
@@ -31,7 +30,6 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.error import BluemiraError
 
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.utilities.csv_writer import write_geometry_to_csv
 
 
 class ReactorSystem:
@@ -358,54 +356,6 @@ class ReactorSystem:
         """
         with open(path, "wb") as file:
             pickle.dump(self, file)
-
-    @property
-    def csv_write_loop_names(self):
-        """
-        The names of the loops stored in geom dict to be saved as csv.
-
-        Returns
-        -------
-        List[str]
-            The keys in geom dict whose corresponding loop values should
-            be saved as csv.
-        """
-        return []
-
-    def save_geom_as_csv(self, file_base, path="./", metadata=""):
-        """
-        Save loops (whose names are specified in csv_write_loop_names)
-        to individual csv files.
-
-        Parameters
-        ----------
-        file_base: str
-            Base output file name, to be appended by loop name
-            and csv file extension. Default value is name of
-            ReactorSystem class
-        path: str
-            Optional path to directory in which to write file.
-        metadata: str
-            Optional metatdata string.
-        """
-        # Retrieve all loops to write to file and throw if None
-        loop_names = self.csv_write_loop_names
-        if len(loop_names) == 0:
-            raise RuntimeError("No loops were specified to be written as csv")
-        for name in loop_names:
-            # Get the loop
-            loop = self.geom[name]
-
-            # Remove spaces and capitals
-            name = name.replace(" ", "_")
-            name = name.lower()
-
-            # Generate output file name
-            file_name = file_base + "_" + name
-            full_path = os.sep.join([path, file_name])
-
-            # Write to file
-            write_geometry_to_csv(loop, full_path, metadata)
 
     @classmethod
     def load(cls, path):
