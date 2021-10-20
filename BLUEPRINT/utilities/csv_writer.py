@@ -83,7 +83,7 @@ def write_geometry_to_csv(loop, filename, metadata=""):
     """
     Write the loop data as csv format to the specified file.
 
-    Paramaters
+    Parameters
     ----------
     loop : Loop
         The loop whose points should be written as csv
