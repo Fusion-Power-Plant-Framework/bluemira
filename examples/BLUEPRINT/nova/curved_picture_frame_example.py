@@ -25,6 +25,7 @@ object, optimized for the minimum length
 """
 
 import matplotlib.pyplot as plt
+from BLUEPRINT.geometry.geomtools import make_box_xz
 
 from bluemira.base.parameter import ParameterFrame
 

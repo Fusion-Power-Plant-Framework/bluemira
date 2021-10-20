@@ -346,10 +346,14 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.adjust_xo("r_c", value=0.5)
             self.shp.remove_oppvar("r_c")
 
-            # Central column top z-coordinate
+            # Central column top and bottom z-coordinate
             z_mid_max = np.max(self.inputs["koz_loop"]["z"])
-            self.adjust_xo("z_mid", value=z_mid_max + 1e-3)
-            self.shp.remove_oppvar("z_mid")
+            z_mid_min = np.min(self.inputs["koz_loop"]["z"])
+            self.adjust_xo("z_mid_up", value=z_mid_max + 1e-3)
+            self.shp.remove_oppvar("z_mid_up")
+
+            self.adjust_xo("z_mid_down", value=z_mid_min - 1e-3)
+            self.shp.remove_oppvar("z_mid_down")
 
             # Adjust bounds to fit problem
             if self.params.h_tf_max_in == 0:
