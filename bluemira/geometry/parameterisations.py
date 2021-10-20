@@ -466,7 +466,7 @@ class SextupleArc(GeometryParameterisation):
                 start_angle=end_angle,
                 end_angle=start_angle,
                 axis=[0, -1, 0],
-                label="arc_{i+1}",
+                label=f"arc_{i+1}",
             )
 
             wires.append(arc)
