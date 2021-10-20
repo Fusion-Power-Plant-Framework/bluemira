@@ -89,7 +89,7 @@ except FileNotFoundError:
     PATH = None
 
 DEFAULT_INDAT = os.path.join(
-    get_BP_root(), "BLUEPRINT", "codes", "process", "PROCESS_DEFAULT_IN.DAT"
+    get_BP_root(), "bluemira", "codes", "process", "PROCESS_DEFAULT_IN.DAT"
 )
 
 PTOBUNITS = {
