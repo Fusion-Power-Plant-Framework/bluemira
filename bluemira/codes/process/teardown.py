@@ -40,7 +40,7 @@ from bluemira.codes.process.api import (
     convert_unit_p_to_b,
     MFile,
 )
-from bluemira.codes.process import NAME as PROCESS
+from bluemira.codes.process.constants import NAME as PROCESS
 
 
 class BMFile(MFile):

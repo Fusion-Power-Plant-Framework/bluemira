@@ -39,7 +39,7 @@ from bluemira.codes.process.api import (
 )
 from bluemira.codes.process.setup import PROCESSInputWriter
 from bluemira.codes.process.teardown import BMFile
-from bluemira.codes.process import NAME as PROCESS
+from bluemira.codes.process.constants import NAME as PROCESS
 
 
 class RunMode(Enum):
