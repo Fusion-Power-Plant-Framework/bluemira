@@ -78,9 +78,9 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv", comment_char=
     bluemira_print("Wrote to " + filename)
 
 
-def write_loop_to_csv(loop, filename, metadata=""):
+def write_geometry_to_csv(loop, filename, metadata=""):
     """
-    Write the loop data as csv format to the specified file
+    Write the loop data as csv format to the specified file.
 
     Paramaters
     ----------

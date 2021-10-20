@@ -31,7 +31,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.error import BluemiraError
 
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.utilities.csv_writer import write_loop_to_csv
+from BLUEPRINT.utilities.csv_writer import write_geometry_to_csv
 
 
 class ReactorSystem:
@@ -405,7 +405,7 @@ class ReactorSystem:
             full_path = os.sep.join([path, file_name])
 
             # Write to file
-            write_loop_to_csv(loop, full_path, metadata)
+            write_geometry_to_csv(loop, full_path, metadata)
 
     @classmethod
     def load(cls, path):
