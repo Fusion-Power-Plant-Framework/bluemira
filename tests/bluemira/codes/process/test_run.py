@@ -58,7 +58,7 @@ class TestRun:
         # fmt: off
         [
             "RUN", "Run", "run",
-            "RERUN", "Rerun", "rerun",
+            "RUNINPUT", "RunInput", "runinput",
             "READ", "Read", "read",
             "READALL", "ReadAll", "readall",
             "MOCK", "Mock", "mock",
@@ -66,12 +66,12 @@ class TestRun:
         # fmt: on
     )
     @patch("bluemira.codes.process.run.Run._run")
-    @patch("bluemira.codes.process.run.Run._rerun")
+    @patch("bluemira.codes.process.run.Run._runinput")
     @patch("bluemira.codes.process.run.Run._read")
     @patch("bluemira.codes.process.run.Run._readall")
     @patch("bluemira.codes.process.run.Run._mock")
     def test_runmode(
-        self, mock_mock, mock_readall, mock_read, mock_rerun, mock_run, runmode
+        self, mock_mock, mock_readall, mock_read, mock_runinput, mock_run, runmode
     ):
         """
         Test that the PROCESS runner accepts valid runmodes and calls the corresponding
@@ -83,7 +83,7 @@ class TestRun:
         if runmode.upper() == "RUN":
             assert mock_run.call_count == 1
         elif runmode.upper() == "RERUN":
-            assert mock_rerun.call_count == 1
+            assert mock_runinput.call_count == 1
         elif runmode.upper() == "READ":
             assert mock_read.call_count == 1
         elif runmode.upper() == "READALL":
@@ -123,13 +123,15 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
-    def test_run(self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load):
+    def test_runinput(
+        self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
+    ):
         """
         Test in Run mode, that the correct functions are called during the run and that
         no BLUEPRINT parameters are called to be written to IN.DAT, as this should only
-        occur in Rerun mode.
+        occur in Run mode.
         """
-        self.run_PROCESS("RUN")
+        self.run_PROCESS("RUNINPUT")
 
         # Check that no calls were made to add_parameter.
         assert mock_add_parameter.call_count == 0
@@ -145,7 +147,7 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
-    def test_rerun_with_params_to_update(
+    def test_run_with_params_to_update(
         self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
     ):
         """
@@ -153,7 +155,7 @@ class TestRun:
         to be written to IN.DAT and that the correct functions are called during the run.
         """
         self.test_reactor.build_config["params_to_update"] = ["d", "f"]
-        self.run_PROCESS("RERUN")
+        self.run_PROCESS("RUN")
 
         # Check the right amount of calls were made to add_parameter.
         assert mock_add_parameter.call_count == 2
@@ -173,7 +175,7 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
-    def test_rerun_without_params_to_update(
+    def test_run_without_params_to_update(
         self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
     ):
         """
@@ -182,7 +184,7 @@ class TestRun:
         during the run.
         """
         self.test_reactor.build_config["params_to_update"] = None
-        self.run_PROCESS("RERUN")
+        self.run_PROCESS("RUN")
 
         # Check the right amount of calls were made to add_parameter.
         number_of_expected_calls = 0
