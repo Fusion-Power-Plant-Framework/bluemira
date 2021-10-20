@@ -39,6 +39,7 @@ import math
 from typing import List, Optional, Union
 
 # import errors
+from bluemira.base.error import DisplayError
 from bluemira.geometry.error import GeometryError
 
 # import visualisation
@@ -748,7 +749,7 @@ def display(
         options = [options] * len(parts)
 
     if len(options) != len(parts):
-        raise GeometryError(
+        raise DisplayError(
             "If options for display are provided then there must be as many options as "
             "there are parts to display."
         )

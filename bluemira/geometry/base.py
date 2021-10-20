@@ -227,13 +227,13 @@ class GeometryDisplayer(Displayer):
             By default None, in which case the display_options assigned to the
             BluemiraGeo object will be used.
         """
-        if options is None:
-            options = DisplayOptions()
-
         if not isinstance(geos, list):
             geos = [geos]
-        if not isinstance(options, list):
-            options = [options]
+
+        if options is None:
+            options = [DisplayOptions()] * len(geos)
+        elif not isinstance(options, list):
+            options = [options] * len(geos)
 
         if len(options) == 1 and len(geos) > 1:
             options *= len(geos)
