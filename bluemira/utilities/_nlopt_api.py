@@ -373,19 +373,19 @@ class NLOPTOptimiser:
             x_star = self._opt.optimize(x0)
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
-            self.rms = self._opt.last_optimum_value()
+            self.optimum_value = self._opt.last_optimum_value()
             x_star = self._f_objective.last_x
         except OptVariablesError:
             # Probably still some rounding errors due to numerical gradients
             # It's likely that the last call was still a reasonably good solution.
             bluemira_warn("Badly behaved numerical gradients are causing trouble...")
-            self.rms = self._opt.last_optimum_value()
+            self.optimum_value = self._opt.last_optimum_value()
             x_star = np.round(self._f_objective.last_x, 6)
         except RuntimeError:
             # Usually "more than iter SQP iterations"
             raise ExternalOptError("Usually more than iter SQP iterations")
 
-        self.rms = self._opt.last_optimum_value()
+        self.optimum_value = self._opt.last_optimum_value()
         self.n_evals = self._opt.get_numevals()
         process_NLOPT_result(self._opt)
         return x_star
