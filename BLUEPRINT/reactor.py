@@ -112,9 +112,6 @@ from bluemira.fuel_cycle.lifecycle import LifeCycle
 from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
 from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
 
-# Cost imports
-from BLUEPRINT.costs.calculator import CostCalculator
-
 # Configuration / Input imports
 from BLUEPRINT.systems.config import SingleNull
 
@@ -1450,19 +1447,6 @@ class Reactor(ReactorSystem):
             self.params, learning_strategy, availability_strategy, lc_in
         )
         return life_cycle
-
-    def cost_estimate(self):
-        """
-        Calculate an extremely crude cost "value" based on volumes and gut
-        feel.
-
-        Returns
-        -------
-        cost_estimate: float
-            Cost estimate (WARNING: absolutely not a real cost)
-        """
-        cc = CostCalculator(self)
-        return cc.calculate()
 
     def build_CAD(self):
         """

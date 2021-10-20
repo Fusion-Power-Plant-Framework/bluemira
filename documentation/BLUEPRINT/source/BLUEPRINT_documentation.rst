@@ -12,7 +12,6 @@ Modules
    base
    beams
    cad
-   costs
    geometry
    materials
    neutronics
