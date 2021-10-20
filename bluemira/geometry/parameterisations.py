@@ -25,6 +25,7 @@ Geometry parameterisations
 
 import abc
 import numpy as np
+from numpy.core.fromnumeric import var
 from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
@@ -324,7 +325,7 @@ class TripleArc(GeometryParameterisation):
         p15 = [x1 + f1 * (1 - np.cos(a15)), 0, z1 + f1 * np.sin(a15)]
         p2 = [x1 + f1 * (1 - np.cos(a1)), 0, z1 + f1 * np.sin(a1)]
 
-        a25 = a1 + 0.5 * (atot - a1)
+        a25 = a1 + 0.5 * a2
         p25 = [
             p2[0] + f2 * (np.cos(a1) - np.cos(a25)),
             0,
@@ -373,6 +374,151 @@ class TripleArc(GeometryParameterisation):
             wires.append(straight_segment)
 
         return BluemiraWire(wires, label=label)
+
+
+class SextupleArc(GeometryParameterisation):
+    """
+    Sextuple-arc up-down asymmetric geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict={}):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x1", 4.486, lower_bound=4, upper_bound=5),
+                # Inboard limb height
+                BoundedVariable("z1", 5, lower_bound=0, upper_bound=10),
+                #
+                BoundedVariable("r1", 4, lower_bound=4, upper_bound=12),
+                #
+                BoundedVariable("r2", 5, lower_bound=4, upper_bound=12),
+                #
+                BoundedVariable("r3", 6, lower_bound=4, upper_bound=12),
+                #
+                BoundedVariable("r4", 7, lower_bound=4, upper_bound=12),
+                #
+                BoundedVariable("r5", 6, lower_bound=4, upper_bound=12),
+                # 1st arc angle [degrees]
+                BoundedVariable("a1", 45, lower_bound=5, upper_bound=50),
+                # 2nd arc angle [degrees]
+                BoundedVariable("a2", 60, lower_bound=10, upper_bound=80),
+                # 3rd arc angle [degrees]
+                BoundedVariable("a3", 90, lower_bound=10, upper_bound=100),
+                # 4th arc angle [degrees]
+                BoundedVariable("a4", 40, lower_bound=10, upper_bound=80),
+                # 5th arc angle [degrees]
+                BoundedVariable("a5", 30, lower_bound=10, upper_bound=80),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the sextuple arc.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        variables = self.variables.values
+        x1, z1 = variables[:2]
+        r_values = variables[2:7]
+        a_values = np.deg2rad(variables[7:])
+
+        wires = []
+        a_start = 0
+        xi, zi = x1, z1
+        xc = x1 + r_values[0]
+        zc = z1
+        for i, (ai, ri) in enumerate(zip(a_values, r_values)):
+            if i > 0:
+                vec = np.array([xi - xc, zi - zc])
+                vec /= np.linalg.norm(vec)
+                xc = xi - vec[0] * ri
+                zc = zi - vec[1] * ri
+
+            a = np.pi - a_start - ai
+            xi = xc + ri * np.cos(a)
+            zi = zc + ri * np.sin(a)
+
+            start_angle = np.rad2deg(np.pi - a_start)
+            end_angle = np.rad2deg(a)
+
+            arc = make_circle(
+                ri,
+                center=[xc, 0, zc],
+                start_angle=end_angle,
+                end_angle=start_angle,
+                axis=[0, -1, 0],
+                label="arc_{i+1}",
+            )
+
+            wires.append(arc)
+
+            a_start += ai
+
+        vec = np.array([xi - xc, zi - zc])
+        vec /= np.linalg.norm(vec)
+        xc = xi - vec[0] * ri
+        zc = zi - vec[1] * ri
+        # Retrieve last arc (could be bad...)
+        r6 = (xi - x1) / (1 + vec[0])
+        print(r6)
+        xc6 = xi - r6 * vec[0]
+        z7 = zc6 = zi - r6 * vec[1]
+
+        closing_arc = make_circle(
+            r6,
+            center=[xc6, 0, zc6],
+            start_angle=180,
+            end_angle=np.rad2deg(np.pi - a_start),
+            axis=[0, -1, 0],
+            label="arc_6",
+        )
+
+        wires.append(closing_arc)
+
+        if not np.isclose(z1, z7):
+            straight_segment = wire_closure(
+                BluemiraWire(wires), label="straight_segment"
+            )
+            wires.append(straight_segment)
+
+        return BluemiraWire(wires, label=label)
+
+
+import matplotlib.pyplot as plt
+
+from bluemira.geometry.plotting import plot_wire
+
+p = SextupleArc()
+# wire = p.create_shape()
+try:
+    array = p.create_array()
+    f, ax = plt.subplots()
+    ax.plot(array[0], array[2])
+    ax.set_aspect("equal")
+except:
+    pass  # plot_wire(wire)
+
+    # # Find the last circle arc radius
+
+    # wires = []
+    # if z1 > 0:
+    #     straight_segment = wire_closure(BluemiraWire(wires), label="straight_segment")
+    #     wires.append(straight_segment)
+
+    # return BluemiraWire(wires, label=label)
 
 
 class PolySpline(GeometryParameterisation):
