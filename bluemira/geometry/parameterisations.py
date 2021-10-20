@@ -25,7 +25,6 @@ Geometry parameterisations
 
 import abc
 import numpy as np
-from numpy.core.fromnumeric import var
 from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
