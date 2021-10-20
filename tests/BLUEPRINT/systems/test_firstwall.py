@@ -206,7 +206,7 @@ def check_save_as_csv(firstwall, is_dn):
         fw_type = "sn"
     test_file_base = "first_wall_" + fw_type
 
-    metadata_str = "# Metadata string"
+    metadata_str = "Metadata string"
     firstwall.save_geom_as_csv(test_file_base, metadata=metadata_str)
 
     for key in test_keys:

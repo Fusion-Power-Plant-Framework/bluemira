@@ -21,7 +21,8 @@
 import pytest
 import os
 import numpy as np
-from BLUEPRINT.utilities.csv_writer import write_csv
+from BLUEPRINT.utilities.csv_writer import write_csv, write_loop_to_csv
+from BLUEPRINT.geometry.geomtools import make_box_xz
 import filecmp
 from BLUEPRINT.base.file import get_BP_path
 
@@ -46,6 +47,29 @@ def test_csv_writer():
     compare_file = os.sep.join([data_path, data_file])
 
     # Compare
+    test_file = test_file_base + ".csv"
+    assert filecmp.cmp(test_file, compare_file)
+
+    # Clean up
+    os.remove(test_file)
+
+
+def test_write_loop_to_csv():
+    # Define simple loop
+    loop = make_box_xz(0.0, 1.0, 0.0, 2.0)
+
+    # Write out the loop
+    test_file_base = "loop_test_write"
+    metadata = "Metadata string"
+    write_loop_to_csv(loop, test_file_base, metadata)
+
+    # Fetch comparison data file
+    data_file = "loop_test_data.csv"
+    data_dir = "BLUEPRINT/utilities/test_data"
+    compare_path = get_BP_path(data_dir, subfolder="tests")
+    compare_file = os.sep.join([compare_path, data_file])
+
+    # Compare generated data to data file
     test_file = test_file_base + ".csv"
     assert filecmp.cmp(test_file, compare_file)
 

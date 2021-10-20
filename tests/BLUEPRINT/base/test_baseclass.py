@@ -122,7 +122,7 @@ def test_reactor_system_write_to_csv():
         os.remove(test_file)
 
     # Test write, specifying file_base, path and metadata
-    metadata = "# Metadata string"
+    metadata = "Metadata string"
     csv_system.save_geom_as_csv(test_file_base, compare_path, metadata)
 
     # Fetch comparison data file

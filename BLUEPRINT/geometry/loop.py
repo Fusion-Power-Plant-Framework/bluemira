@@ -61,7 +61,6 @@ from BLUEPRINT.geometry.geomtools import (
 from BLUEPRINT.geometry.constants import VERY_BIG
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.utilities.csv_writer import write_csv
 from BLUEPRINT.utilities.plottools import pathify, BPPathPatch3D, Plot3D
 from BLUEPRINT.utilities.tools import is_num, furthest_perp_point
 
@@ -911,26 +910,6 @@ class Loop(GeomBase):
                 "fill": fill,
             }
             self._plot_3d(ax, **kwargs)
-
-    def write_to_csv(self, filename, metadata=""):
-        """
-        Write the loop data as csv format to the specified file
-
-        Paramaters
-        ----------
-        filename : str
-            Name of file to write to, minus the extension
-        metadata: str
-            Optional argument for string holding metadata to be written as a header
-        """
-        # Get the loop data
-        data = self.xyz.T
-
-        # Create a list of column names
-        col_names = ["x", "y", "z"]
-
-        # Write
-        write_csv(data, filename, col_names, metadata)
 
     def _plot_3d(self, ax=None, **kwargs):
         if ax is None:

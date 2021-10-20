@@ -59,12 +59,9 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv", comment_char=
     if not len(col_names) == n_cols:
         raise RuntimeError("Column names must be provided for all data fields")
 
-    # Add comment characters to existing metadata lines
-    metadata = "\n".join([comment_char + " " + line for line in metadata.split("\n")])
-
-    # Add a newline character to existing metadata
+    # Add comment characters and newline to existing metadata
     if metadata != "":
-        metadata += "\n"
+        metadata = "\n".join(["# " + line for line in metadata.split("\n")]) + "\n"
 
     # Add column headings
     metadata += ",".join(col_names)
@@ -79,3 +76,26 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv", comment_char=
         comments="",
     )
     bluemira_print("Wrote to " + filename)
+
+
+def write_loop_to_csv(loop, filename, metadata=""):
+    """
+    Write the loop data as csv format to the specified file
+
+    Paramaters
+    ----------
+    loop : Loop
+        The loop whose points should be written as csv
+    filename : str
+        Name of file to write to, minus the extension
+    metadata: str
+        Optional argument for string holding metadata to be written as a header
+    """
+    # Get the loop data
+    data = loop.xyz.T
+
+    # Create a list of column names
+    col_names = ["x", "y", "z"]
+
+    # Write
+    write_csv(data, filename, col_names, metadata)
