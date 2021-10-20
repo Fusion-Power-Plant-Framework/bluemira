@@ -114,12 +114,7 @@ class SkipAlreadyDocumented:
     """
 
     def __init__(self):
-        lis = [
-            "BLUEPRINT.systems.maintenance.RMMetrics.normalise",
-            "bluemira.codes.process.api.PROCESS_ENABLED",
-            "bluemira.codes.process.api.OBS_VARS",
-            "bluemira.codes.process.api.PATH",
-        ]
+        lis = ["BLUEPRINT.systems.maintenance.RMMetrics.normalise"]
 
         self.dict = {i: 0 for i in lis}
 
