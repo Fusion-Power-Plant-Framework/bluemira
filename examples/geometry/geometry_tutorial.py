@@ -123,10 +123,10 @@ if __name__ == "__main__":
     wire_out = geo.tools.make_polygon(pntslist_out, closed=True)
     wire_in = geo.tools.make_polygon(pntslist_in, closed=True)
     bmface = geo.face.BluemiraFace([wire_out, wire_in])
-    bmface.display()
+    geo.display(bmface)
     geo.tools.save_as_STEP([bmface], "test_face_with_hole")
     bmsolid = geo.tools.revolve_shape(bmface, direction=(0.0, 1.0, 0.0))
-    bmsolid.display()
+    geo.display(bmsolid)
     geo.tools.save_as_STEP([bmsolid], "test_solid_with_hole")
 
     print("11. Solid creation from Shell")
@@ -155,9 +155,9 @@ if __name__ == "__main__":
         faces.append(geo.face.BluemiraFace(wire, "face" + str(ind)))
     # shell creation
     shell = geo.shell.BluemiraShell(faces, "shell")
-    shell.display()
+    geo.display(shell)
     # solid creation from shell
     solid = geo.solid.BluemiraSolid(shell, "solid")
-    solid.display()
+    geo.display(solid)
     print(solid)
     geo.tools.save_as_STEP([solid], "test_cube")
