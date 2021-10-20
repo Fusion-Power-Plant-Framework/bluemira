@@ -40,6 +40,7 @@ from bluemira.codes.process.api import (
     convert_unit_p_to_b,
     MFile,
 )
+from bluemira.codes.process import NAME as PROCESS
 
 
 class BMFile(MFile):
@@ -100,7 +101,7 @@ class BMFile(MFile):
             except KeyError:
                 desc = key + ": PROCESS variable description not found"
                 unit = "N/A"
-            param.append([key, desc, val, unit, None, "PROCESS"])
+            param.append([key, desc, val, unit, None, PROCESS])
         return ParameterFrame(param)
 
     def read(self):
@@ -151,12 +152,12 @@ class BMFile(MFile):
         r_fw_ob_in = r_fw_ib_in + rb["tk_sol_ib"] + 2 * pl["rminor"] + rb["tk_sol_ob"]
         r_vv_ob_in = r_fw_ob_in + rb["fwoth"] + rb["tk_bb_ob"] + rb["g_vv_bb"]
         # fmt:off
-        rb.add_parameter("r_tf_in", "Inboard radius of the TF coil inboard leg", rtfin, "m", None, "PROCESS")
-        rb.add_parameter("r_ts_ib_in", "Inboard TS inner radius", r_ts_ib_in, "m", None, "PROCESS")
-        rb.add_parameter("r_vv_ib_in", "Inboard vessel inner radius", r_vv_ib_in, "m", None, "PROCESS")
-        rb.add_parameter("r_fw_ib_in", "Inboard first wall inner radius", r_fw_ib_in, "m", None, "PROCESS")
-        rb.add_parameter("r_fw_ob_in", "Outboard first wall inner radius", r_fw_ob_in, "m", None, "PROCESS")
-        rb.add_parameter("r_vv_ob_in", "Outboard vessel inner radius", r_vv_ob_in, "m", None, "PROCESS")
+        rb.add_parameter("r_tf_in", "Inboard radius of the TF coil inboard leg", rtfin, "m", None, PROCESS)
+        rb.add_parameter("r_ts_ib_in", "Inboard TS inner radius", r_ts_ib_in, "m", None, PROCESS)
+        rb.add_parameter("r_vv_ib_in", "Inboard vessel inner radius", r_vv_ib_in, "m", None, PROCESS)
+        rb.add_parameter("r_fw_ib_in", "Inboard first wall inner radius", r_fw_ib_in, "m", None, PROCESS)
+        rb.add_parameter("r_fw_ob_in", "Outboard first wall inner radius", r_fw_ob_in, "m", None, PROCESS)
+        rb.add_parameter("r_vv_ob_in", "Outboard vessel inner radius", r_vv_ob_in, "m", None, PROCESS)
         # fmt:on
         self.params["Radial Build"] = rb
 
@@ -359,7 +360,7 @@ def process_RB_fromOUT(f):  # noqa (N802)
     raw = raw[1:]
     if not raw:
         raise IOError("Cannot read from input file.")
-    if "PROCESS" not in raw[1] and "PROCESS" not in raw[2]:
+    if PROCESS not in raw[1] and PROCESS not in raw[2]:
         bluemira_warn(
             "Either this ain't a PROCESS OUT.DAT file, or those hijos "
             "changed the format."

@@ -295,7 +295,7 @@ class Run:
         # Load all PROCESS vars mapped with a BLUEPRINT input
         var = self.parameter_mapping.values() if read_all else self.read_mapping.values()
         param = self.reactor.__PROCESS__.extract_outputs(var)
-        self.reactor.add_parameters(dict(zip(var, param)), source="PROCESS")
+        self.reactor.add_parameters(dict(zip(var, param)), source=PROCESS)
 
     def prepare_bp_inputs(self, use_bp_inputs=True):
         """
@@ -315,8 +315,8 @@ class Run:
             return
         # Update write values to True or False
         for param in self.param_list:
-            if param.mapping is not None and "PROCESS" in param.mapping:
-                mapping = param.mapping["PROCESS"]
+            if param.mapping is not None and PROCESS in param.mapping:
+                mapping = param.mapping[PROCESS]
                 if mapping.name in self.parameter_mapping:
                     bp_name = self.parameter_mapping[mapping.name]
                     mapping.write = use_bp_inputs and bp_name in self.params_to_update
@@ -341,8 +341,8 @@ class Run:
 
         if use_bp_inputs is True:
             for param in self.param_list:  # Overwrite variables
-                if param.mapping is not None and "PROCESS" in param.mapping:
-                    mapping = param.mapping["PROCESS"]
+                if param.mapping is not None and PROCESS in param.mapping:
+                    mapping = param.mapping[PROCESS]
                     if mapping.write:
                         writer.add_parameter(
                             update_obsolete_vars(mapping.name), param.value
