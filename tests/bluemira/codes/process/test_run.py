@@ -40,7 +40,7 @@ from bluemira.codes.process import run
 class TestRun:
     test_reactor = SmokeTestSingleNullReactor(config, build_config, build_tweaks)
     test_reactor.add_parameters(FRAME_LIST)
-    test_dir = os.path.join(get_BP_root(), "tests", "BLUEPRINT", "codes", "test_data")
+    test_dir = os.path.join(get_BP_root(), "tests", "bluemira", "codes", "test_data")
     test_indat = os.path.join(test_dir, "IN.DAT")
 
     def set_runmode(self, runmode):
