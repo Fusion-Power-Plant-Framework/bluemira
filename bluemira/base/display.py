@@ -27,11 +27,12 @@ import abc
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
+from bluemira.base.error import DisplayError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import get_module
 
 
-@dataclass(frozen=True)
+@dataclass
 class DisplayOptions:
     """
     The options that are available for displaying objects in 3D
@@ -117,6 +118,10 @@ class Displayable:
 
     @display_options.setter
     def display_options(self, value: DisplayOptions):
+        if not isinstance(value, DisplayOptions):
+            raise DisplayError(
+                "Display options must be set to a DisplayOptions instance."
+            )
         self._displayer.options = value
 
     def display(self, options: Optional[DisplayOptions] = None) -> None:

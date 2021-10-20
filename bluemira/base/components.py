@@ -59,13 +59,12 @@ class Component(NodeMixin, Displayable):
         name: str,
         parent: Optional["Component"] = None,
         children: Optional[List["Component"]] = None,
-        display_options: Optional[DisplayOptions] = None,
     ):
         self.name = name
         self.parent = parent
         if children:
             self.children = children
-        self._displayer = ComponentDisplayer(display_options)
+        self._displayer = ComponentDisplayer()
 
     def __new__(cls, *args, **kwargs) -> Type["Component"]:
         """
@@ -191,9 +190,8 @@ class PhysicalComponent(Component):
         material: Any = None,
         parent: Component = None,
         children: Component = None,
-        display_options: Optional[DisplayOptions] = None,
     ):
-        super().__init__(name, parent, children, display_options)
+        super().__init__(name, parent, children)
         self.shape = shape
         self.material = material
 
@@ -233,9 +231,8 @@ class MagneticComponent(PhysicalComponent):
         conductor: Any = None,
         parent: Component = None,
         children: Component = None,
-        display_options: Optional[DisplayOptions] = None,
     ):
-        super().__init__(name, shape, material, parent, children, display_options)
+        super().__init__(name, shape, material, parent, children)
         self.conductor = conductor
 
     @property

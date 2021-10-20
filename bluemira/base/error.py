@@ -46,6 +46,14 @@ class ComponentError(BluemiraError):
     pass
 
 
+class DisplayError(BluemiraError):
+    """
+    Exception class for Display functionality.
+    """
+
+    pass
+
+
 class LogsError(BluemiraError):
     """
     Exception class for Components.

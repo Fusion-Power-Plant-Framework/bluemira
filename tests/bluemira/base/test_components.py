@@ -32,7 +32,7 @@ from bluemira.base.components import (
     MagneticComponent,
 )
 from bluemira.base.display import DisplayOptions
-from bluemira.base.error import ComponentError
+from bluemira.base.error import DisplayError, ComponentError
 from bluemira.geometry.tools import make_polygon
 
 import tests
@@ -189,8 +189,8 @@ class TestPhysicalComponent:
             "Child1",
             shape=wire1,
             parent=group,
-            display_options=DisplayOptions((0.0, 1.0, 0.0)),
         )
+        child1.display_options.rgb = (0.0, 1.0, 0.0)
         child2 = PhysicalComponent("Child2", shape=wire2, parent=group)
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
@@ -204,6 +204,9 @@ class TestPhysicalComponent:
                 child2.display_options = DisplayOptions((1.0, 0.0, 0.0))
                 group.display()
                 group.display(DisplayOptions((0.0, 0.0, 1.0)))
+
+        with pytest.raises(DisplayError):
+            child2.display_options = (0.0, 0.0, 1.0)
 
 
 class TestMagneticComponent:
