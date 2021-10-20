@@ -23,7 +23,7 @@ import os
 import pytest
 from unittest.mock import patch
 
-from BLUEPRINT.base.file import get_BP_root
+from bluemira.base.file import get_bluemira_root
 from tests.bluemira.codes.process.test_api import FRAME_LIST
 from tests.BLUEPRINT.test_reactor import (
     config,
@@ -40,7 +40,9 @@ from bluemira.codes.process import run
 class TestRun:
     test_reactor = SmokeTestSingleNullReactor(config, build_config, build_tweaks)
     test_reactor.add_parameters(FRAME_LIST)
-    test_dir = os.path.join(get_BP_root(), "tests", "bluemira", "codes", "test_data")
+    test_dir = os.path.join(
+        get_bluemira_root(), "tests", "bluemira", "codes", "test_data"
+    )
     test_indat = os.path.join(test_dir, "IN.DAT")
 
     def set_runmode(self, runmode):
