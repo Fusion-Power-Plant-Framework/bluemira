@@ -55,47 +55,5 @@ def test_update_obsolete_vars():
     assert str1 == "ni peng" and str2 == "shrubbery"
 
 
-@pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
-@pytest.mark.parametrize(
-    "read_all,expected",
-    [
-        [
-            True,
-            {
-                "cp": "c",
-                "dp": "d",
-                "ep": "e",
-                "fp": "f",
-            },
-        ],
-        [False, {"ep": "e", "fp": "f"}],
-    ],
-)
-def test_PROCESS_read_mapping(read_all, expected):
-    output = api.get_PROCESS_read_mapping(FRAME, read_all)
-    assert output == expected
-
-
-@pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
-@pytest.mark.parametrize(
-    "read_all,expected",
-    [
-        [
-            True,
-            {
-                "cp": "c",
-                "dp": "d",
-                "ep": "e",
-                "fp": "f",
-            },
-        ],
-        [False, {"dp": "d", "fp": "f"}],
-    ],
-)
-def test_PROCESS_write_mapping(read_all, expected):
-    output = api.get_PROCESS_write_mapping(FRAME, read_all)
-    assert output == expected
-
-
 if __name__ == "__main__":
     pytest.main([__file__])
