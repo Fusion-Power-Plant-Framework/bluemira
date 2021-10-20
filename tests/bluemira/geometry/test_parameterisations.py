@@ -180,7 +180,7 @@ class TestSextupleArc:
     def test_segments(self):
         p = SextupleArc()
         wire = p.create_shape()
-        assert len(wire._boundary == 7)
+        assert len(wire._boundary) == 7
 
     def test_circle(self):
         p = SextupleArc(
