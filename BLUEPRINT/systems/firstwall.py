@@ -963,16 +963,15 @@ class FirstWall(EqInputs, ReactorSystem):
         """
         raise NotImplementedError
 
-    def optimise_fw_profile(self, hf_limit=0.2):
+    def optimise_fw_profile(self, hf_limit=0.2, n_iteration_max=5):
         """
         Optimises the initial preliminary profile in terms of heat flux.
         The divertor will be attached to this profile.
 
         Parameters
         ----------
-        n_iteration: Boolean (default = None)
-            Number of iterations after which the optimiser is stopped.
-            If None, the optimisation will end according to hf_limit.
+        n_iteration_max: Boolean
+            Max number of iterations after which the optimiser is stopped.
         hf_limit: float
             Heat flux limit for the optimisation.
 
@@ -981,13 +980,12 @@ class FirstWall(EqInputs, ReactorSystem):
         profile: Loop
             Optimised profile
         """
-        preliminary_profile = self.make_preliminary_profile()
-        self.preliminary_profile = preliminary_profile
-        self.make_flux_surfaces(profile=preliminary_profile)
+        initial_profile = self.make_preliminary_profile()
+        self.preliminary_profile = initial_profile
+        self.make_flux_surfaces(profile=initial_profile)
 
-        profile = preliminary_profile
-        heat_flux_max = 1
-        while heat_flux_max > hf_limit:
+        profile = initial_profile
+        for i_it in range(n_iteration_max):
 
             x_wall, z_wall, hf_wall = self.hf_firstwall_params(profile)
 
@@ -998,6 +996,9 @@ class FirstWall(EqInputs, ReactorSystem):
             heat_flux_max = max(hf_wall)
             print(heat_flux_max)
             self.optimised_profile = profile
+            if heat_flux_max < hf_limit:
+                break
+
         return profile
 
     def reshape_curve(
