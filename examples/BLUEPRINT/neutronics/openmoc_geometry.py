@@ -32,7 +32,7 @@ from sectionproperties.analysis.cross_section import CrossSection
 import openmoc
 
 # BLUEPRINT imports
-from BLUEPRINT.base.file import get_BP_root, FileManager
+from BLUEPRINT.base.file import get_bluemira_root, FileManager
 from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.neutronics.openmoc_geometry_tools import (
     create_system_cells,
@@ -85,7 +85,7 @@ verbose = True
 # Import some materials
 # Note that example_materials.py should be run before loading this
 materials = openmoc.materialize.load_from_hdf5(
-    f"{get_BP_root()}/examples/neutronics/example_materials.h5", ""
+    f"{get_bluemira_root()}/examples/neutronics/example_materials.h5", ""
 )
 
 bluemira_print("Creating surfaces...")

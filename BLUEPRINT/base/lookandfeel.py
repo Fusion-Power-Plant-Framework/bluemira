@@ -27,9 +27,6 @@ import numpy as np
 import subprocess  # noqa (S404)
 import seaborn as sns
 from matplotlib.colors import hex2color
-from bluemira.base.look_and_feel import (
-    bluemira_print,
-)
 
 KEY_TO_PLOT = False
 
@@ -62,13 +59,6 @@ def color_kwargs(**kwargs):
         colors = ["grey"]
     colors = cycle(colors)
     return colors
-
-
-def bpinfo(string):
-    """
-    Deprecated standard template for BLUEPRINT information
-    """
-    return bluemira_print("INFO: " + string)
 
 
 if __name__ == "__main__":

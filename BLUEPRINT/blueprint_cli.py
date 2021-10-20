@@ -35,7 +35,7 @@ import tarfile
 from typing import Optional
 
 from BLUEPRINT.base.file import KEYWORD
-from BLUEPRINT.base.file import get_BP_root
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.utilities.tools import get_module
 from BLUEPRINT.utilities.tools import CommentJSONDecoder
@@ -190,7 +190,7 @@ class InputManager:
             if key in self.build_config_dict:
                 path = self.build_config_dict[key]
             else:
-                path = os.path.join(get_BP_root(), default_value)
+                path = os.path.join(get_bluemira_root(), default_value)
                 click.echo(
                     "Warning: outdir not specified in command line and no "
                     f"{key} found in {self.build_config}. Reverting to "
@@ -198,7 +198,7 @@ class InputManager:
                 )
 
         if KEYWORD in path:
-            path = path.replace(KEYWORD, get_BP_root())
+            path = path.replace(KEYWORD, get_bluemira_root())
 
         return path
 
