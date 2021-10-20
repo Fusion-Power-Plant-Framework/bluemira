@@ -970,7 +970,7 @@ class FirstWall(EqInputs, ReactorSystem):
 
         Parameters
         ----------
-        n_iteration_max: Boolean
+        n_iteration_max: integer
             Max number of iterations after which the optimiser is stopped.
         hf_limit: float
             Heat flux limit for the optimisation.
