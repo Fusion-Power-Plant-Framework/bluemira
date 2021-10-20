@@ -45,11 +45,11 @@ from bluemira.codes.process import NAME as PROCESS
 class RunMode(Enum):
     """
     Enum class to pass args and kwargs to the PROCESS functions corresponding to the
-    chosen PROCESS runmode (Run, Rerun, Read, Readall, or Mock).
+    chosen PROCESS runmode (Run, Runinput, Read, Readall, or Mock).
     """
 
     RUN = auto()
-    RERUN = auto()
+    RUNINPUT = auto()
     READ = auto()
     READALL = auto()
     MOCK = auto()
@@ -102,15 +102,17 @@ class Run:
 
     Notes
     -----
-    - "run": Run PROCESS from an unmodified input file (IN.DAT), generating the radial
-        build to use as the input to the BLUEPRINT run.
-    - "rerun": Re-run PROCESS within a BLUEPRINT run to generate an updated radial build.
+    - "run": Run PROCESS within a BLUEPRINT run to generate an radial build.
         Creates a new input file from a template IN.DAT modified with updated parameters
-        from the BLUEPRINT run.
+        from the BLUEPRINT run mapped with write=True.
+    - "runinput": Run PROCESS from an unmodified input file (IN.DAT), generating the
+        radial build to use as the input to the BLUEPRINT run. Overrides the write
+        mapping of all parameters to be False.
     - "read": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
-        only the values with reactor.params.<parameter>.mapping.read bool set to True.
+        only the parameters mapped with read=True.
     - "readall": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
         all values with a BLUEPRINT mapping regardless of the mapping.read bool.
+        Overrides the read mapping of all parameters to be True.
     - "mock": Run BLUEPRINT without running PROCESS, using the default radial build based
         on EU-DEMO. This option should not be used if PROCESS is installed, except for
         testing purposes.
@@ -172,10 +174,10 @@ class Run:
         self.runmode = RunMode[mode]
 
     def _run(self):
-        self.run_PROCESS(use_bp_inputs=False)
-
-    def _rerun(self):
         self.run_PROCESS(use_bp_inputs=True)
+
+    def _runinput(self):
+        self.run_PROCESS(use_bp_inputs=False)
 
     def _read(self):
         self.get_PROCESS_run(

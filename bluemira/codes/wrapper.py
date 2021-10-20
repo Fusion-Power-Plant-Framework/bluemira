@@ -46,18 +46,25 @@ def run_systems_code(reactor, params_to_update=None):
 
     Notes
     -----
-    - "run": Run PROCESS creating a PROCESS input file (IN.DAT) from the
-        BLUEPRINT inputs and template IN.DAT
-    - "run input": Run PROCESS from an un-modified IN.DAT
-    - "read": Read part of a PROCESS output file (MFILE.DAT)
-    - "read all": Read all PROCESS mapped variable
-    - "mock": Use a EU-DEMO default inputs without using PROCESS. Should not
-        be used if PROCESS is installed
+    - "run": Run PROCESS within a BLUEPRINT run to generate an radial build.
+        Creates a new input file from a template IN.DAT modified with updated parameters
+        from the BLUEPRINT run mapped with write=True.
+    - "runinput": Run PROCESS from an unmodified input file (IN.DAT), generating the
+        radial build to use as the input to the BLUEPRINT run. Overrides the write
+        mapping of all parameters to be False.
+    - "read": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
+        only the parameters mapped with read=True.
+    - "readall": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
+        all values with a BLUEPRINT mapping regardless of the mapping.read bool.
+        Overrides the read mapping of all parameters to be True.
+    - "mock": Run BLUEPRINT without running PROCESS, using the default radial build based
+        on EU-DEMO. This option should not be used if PROCESS is installed, except for
+        testing purposes.
 
     Raises
     ------
     CodesError
-        If PROCESS is being "run" but is not installed
+        If PROCESS is not being mocked and is not installed.
     """
     process_mode = reactor.build_config["process_mode"]
     if (not process.PROCESS_ENABLED) and (process_mode.lower() != "mock"):
