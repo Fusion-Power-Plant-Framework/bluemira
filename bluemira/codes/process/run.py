@@ -94,17 +94,16 @@ class Run:
         Default, the value specified by DEFAULT_INDAT.
     params_to_update: list
         A list of parameter names compatible with the ParameterFrame class.
-        If provided, parameters included in this list will be set to use BLUEPRINT
-        values. All other parameters with a PROCESS mapping will be set to use
-        PROCESS values. If None, the boolean which determines which value to use will
-        be left unmodified for each parameter.
-        Default, None
+        If provided, parameters included in this list will be modified to write their
+        values to PROCESS inputs, while all others will be modified to not be written to
+        the PROCESS inputs. By default, None.
 
     Notes
     -----
     - "run": Run PROCESS within a BLUEPRINT run to generate an radial build.
         Creates a new input file from a template IN.DAT modified with updated parameters
-        from the BLUEPRINT run mapped with write=True.
+        from the BLUEPRINT run mapped with write=True. If params_to_update are provided
+        then these will be modified to have write=True.
     - "runinput": Run PROCESS from an unmodified input file (IN.DAT), generating the
         radial build to use as the input to the BLUEPRINT run. Overrides the write
         mapping of all parameters to be False.
