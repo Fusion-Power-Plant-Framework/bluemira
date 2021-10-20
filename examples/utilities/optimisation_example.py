@@ -38,6 +38,8 @@ def f_rosenbrock(x, grad):
     value = (a - x[0]) ** 2 + b * (x[1] - x[0] ** 2) ** 2
 
     if grad.size > 0:
+        # Here we can calculate the gradient of the objective function
+        # NOTE: Gradients and constraints must be assigned in-place
         grad[0] = -2 * a + 4 * b * x[0] ** 3 - 4 * b * x[0] * x[1] + 2 * x[0]
         grad[1] = 2 * b * (x[1] - x[0] ** 2)
 
@@ -82,7 +84,6 @@ def f_constraint(constraint, x, grad):
         x1 + x2 < 3
         x2 - 2x1 > 1
     """
-
     constraint[0] = (x[0] + x[1]) - 3
     constraint[1] = (-2 * x[0] + x[1]) + 1
 
@@ -131,7 +132,7 @@ pprint(results)
 
 def f_eggholder(x):
     """
-    This is the multi-dimensional Egghoolder function. It is strongly multi-modal.
+    The multi-dimensional Egghoolder function. It is strongly multi-modal.
 
     For the 2-D case bounded at +/- 512, the optimum is at:
         f(512, 404.2319..) = -959.6407..
@@ -146,7 +147,7 @@ def f_eggholder(x):
 
 def f_eggholder_objective(x, grad):
     """
-    This is our little wrapper to interface with the optimiser (which needs a grad
+    Our little wrapper to interface with the optimiser (which needs a grad
     argument).
     """
     value = f_eggholder(x)
@@ -154,6 +155,7 @@ def f_eggholder_objective(x, grad):
     if grad.size > 0:
         # Here, SLSQP needs to know what the gradient of the objective function is..
         # Seeing as we are lazy, we're going to approximate it.
+        # This is not particularly robust, and can cause headaches.
         grad[:] = approx_derivative(f_eggholder, x, f0=value)
 
     return value
@@ -182,4 +184,4 @@ pprint(results)
 # SLSQP and COBYLA are local optimisation algorithms, and converge rapidly on a local
 # minimum. ISRES is a stochastic global optimisation algorithm, and keeps looking for
 # longer, finding a much better minimum, but caps out at the maximum number of
-# evaluations.
+# evaluations (usually).
