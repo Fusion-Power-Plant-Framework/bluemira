@@ -23,7 +23,6 @@
 Static API to optimisation library
 """
 import numpy as np
-from numpy.core.defchararray import lower
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # noqa
 
 from bluemira.utilities._nlopt_api import NLOPTOptimiser
