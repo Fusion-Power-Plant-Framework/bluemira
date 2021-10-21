@@ -461,7 +461,6 @@ class Paneller:
         """
         Lo adjusted so that all limit values are negative
         """
-
         d_l = self.fw_length(x_opt, 1)
         cmm[: self.n_opt + 2] = self.dl_limit["min"] - d_l
         cmm[self.n_opt + 2 :] = d_l - self.dl_limit["max"]
