@@ -45,7 +45,7 @@ class GeometryOptimisationProblem(abc.ABC):
     def __init__(self, parameterisation: GeometryParameterisation, optimiser: Optimiser):
         self.parameterisation = parameterisation
         self.optimiser = optimiser
-        self.optimiser.n_variables = parameterisation.variables.n_free_variables
+        self.optimiser.build_optimiser(parameterisation.variables.n_free_variables)
         self.optimiser.set_lower_bounds(np.zeros(optimiser.n_variables))
         self.optimiser.set_upper_bounds(np.ones(optimiser.n_variables))
         self.optimiser.set_objective_function(self.f_objective)

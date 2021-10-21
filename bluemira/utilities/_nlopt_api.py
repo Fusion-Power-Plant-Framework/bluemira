@@ -133,7 +133,6 @@ class NLOPTOptimiser:
         self.opt_parameters = opt_parameters
         self.algorithm_name = algorithm_name
         self._flag_built = False
-        self._flag_f_objective = False
         self.build_optimiser(n_variables)
 
     def _opt_inputs_ready(func):
@@ -146,6 +145,18 @@ class NLOPTOptimiser:
             func(self, *args, **kwargs)
 
         return wrapper
+
+    def _setup_teardown(self):
+        """
+        Setup / teardown the wrapper (phoenix design pattern).
+        """
+        self.n_evals = 0
+        self.optimum_value = None
+        self._f_objective = None
+        self.lower_bounds = None
+        self.upper_bounds = None
+        self.constraints = []
+        self.constraint_tols = []
 
     @property
     def algorithm_name(self):
@@ -187,11 +198,10 @@ class NLOPTOptimiser:
             return
 
         self._set_algorithm(n_variables)
+        self._flag_built = True
         self.set_termination_conditions(self.opt_conditions)
         self.set_algorithm_parameters(self.opt_parameters)
-        self.constraints = []
-        self.constraint_tols = []
-        self._flag_built = True
+        self._setup_teardown()
 
     def _append_constraint_tols(self, constraint, tolerance):
         """
@@ -233,6 +243,13 @@ class NLOPTOptimiser:
         opt_conditions: dict
             Termination conditions for the optimisation algorithm
         """
+        # Negative or 0 conditions result in inactive NLopt termination conditions, for
+        # the most part.
+
+        opt_conditions = {
+            k: v for k, v in opt_conditions.items() if v > 0 and k not in ["stop_val"]
+        }
+
         if not opt_conditions:
             raise OptUtilitiesError(
                 "You must specify at least one termination criterion for the optimisation algorithm."
@@ -265,7 +282,6 @@ class NLOPTOptimiser:
         """
         f_objective = _NLOPTObjectiveFunction(f_objective)
         self._f_objective = f_objective
-        self._flag_f_objective = True
         self._opt.set_min_objective(f_objective)
 
     @_opt_inputs_ready
@@ -368,27 +384,44 @@ class NLOPTOptimiser:
         x_star: np.ndarray
             Optimal solution vector
         """
-        if not self._flag_f_objective:
-            raise OptUtilitiesError("You must first specify an objective function.")
+        if self._f_objective is None:
+            raise OptUtilitiesError(
+                "You must first specify an objective function before performing the optimisation."
+            )
 
         if x0 is None:
             x0 = np.zeros(self.n_variables)
 
         try:
             x_star = self._opt.optimize(x0)
+
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
             self.optimum_value = self._opt.last_optimum_value()
             x_star = self._f_objective.last_x
+
         except OptVariablesError:
             # Probably still some rounding errors due to numerical gradients
             # It's likely that the last call was still a reasonably good solution.
             bluemira_warn("Badly behaved numerical gradients are causing trouble...")
             self.optimum_value = self._opt.last_optimum_value()
             x_star = np.round(self._f_objective.last_x, 6)
+
         except RuntimeError:
             # Usually "more than iter SQP iterations"
+            self.optimum_value = self._opt.last_optimum_value()
+            self.n_evals = self._opt.get_numevals()
+            process_NLOPT_result(self._opt)
             raise ExternalOptError("Usually more than iter SQP iterations")
+
+        except KeyboardInterrupt:
+            self.optimum_value = self._opt.last_optimum_value()
+            self.n_evals = self._opt.get_numevals()
+            process_NLOPT_result(self._opt)
+            raise KeyboardInterrupt(
+                "The optimisation was halted by the user. Please check "
+                "your optimisation problem and termination conditions."
+            )
 
         self.optimum_value = self._opt.last_optimum_value()
         self.n_evals = self._opt.get_numevals()

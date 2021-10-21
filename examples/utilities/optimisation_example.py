@@ -166,7 +166,7 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
     optimiser = Optimiser(
         algorithm,
         2,
-        opt_conditions={"ftol_rel": 1e-22, "ftol_abs": 1e-12, "max_eval": 10000},
+        opt_conditions={"ftol_rel": 0, "ftol_abs": 0, "max_eval": 0},
     )
     optimiser.set_objective_function(f_eggholder_objective)
     optimiser.set_lower_bounds([-512, -512])
