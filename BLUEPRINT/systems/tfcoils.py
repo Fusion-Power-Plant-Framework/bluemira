@@ -421,7 +421,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.section["case"] = {
                 "side": self.params.tk_tf_ob_casing,
                 "nose": self.params.tk_tf_ob_casing,
-                "WP": self.params.tk_tf_outboard - 2 * self.params.tk_tf_ob_casing,
+                "WP": self.params.tk_tf_outboard,
                 "inboard": self.params.tk_tf_ob_casing,
                 "outboard": self.params.tk_tf_ob_casing,
                 "external": self.params.tk_tf_ob_casing,
@@ -1504,18 +1504,22 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
         elif self.shape_type in ["CP"]:
             # Need some special variables due to doming and x_curve
-            # Specifiy Zmax here is z_mid, not the max height of dome
-            zmax_in = self.shp.parameterisation.xo["z_mid"]["value"] + tk_case_ib
-            zmax_out = zmax_in + self.section["case"]["WP"]
             # correct_l avoids notching issue, and gives a nice straight line till
             # x_curve start
             # TODO: Replace correct_l with joint location when variable available
-            correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"] - 0.2
+            correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"]
+            # Specifiy Zmax here is z_mid, not the max height of dome
+            tapered_cp_in_temp = boolean_2d_difference_loop(
+                wp_in, make_box_xz(correct_l - 0.25, 20, -15, 15)
+            )
+            zmax_in = np.max(tapered_cp_in_temp.z)
+            zmax_out = zmax_in + self.section["case"]["WP"]
+
             wp_out = self.correct_inboard_corners(wp_out, correct_l, zmax=zmax_out)
 
             wp_in = self.correct_inboard_corners(
                 wp_in,
-                tk_tapered_wp,
+                correct_l,
                 tapered=tapered,
                 xmin=xmin_wp_in_corrector,
                 zmax=zmax_in,
@@ -1618,6 +1622,10 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
             # Resistive Coils
             tk_case_ob = self.params.tk_tf_ob_casing
+            plt.figure()
+            plt.plot(wp_out.x, wp_out.z)
+            plt.plot(case_out.x, case_out.z)
+            plt.show()
             case_out = Shell(wp_out, case_out)
             case_in = Shell(case_in, wp_in)
             # Make Resistive coil casing:
