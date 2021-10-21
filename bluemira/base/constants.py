@@ -165,7 +165,7 @@ ANSI_COLOR = {
     "white": "\x1b[30m",
     "red": "\x1b[31m",
     "green": "\x1b[32m",
-    "orange": "\x1b[33m",
+    "orange": "\x1b[38;5;208m",
     "blue": "\x1b[38;5;27m",
     "purple": "\x1b[35m",
     "cyan": "\x1b[36m",
