@@ -106,7 +106,10 @@ class Loop(GeomBase):
         "outer",
     ]
 
+    warning_printed = False
+
     def __init__(self, x=None, y=None, z=None, enforce_ccw=True):
+        self._print_warning()
         self.x = x
         self.y = y
         self.z = z
@@ -128,6 +131,13 @@ class Loop(GeomBase):
             if enforce_ccw:
                 self.reverse()
         self._remove_duplicates(enforce_ccw)
+
+    def _print_warning(self):
+        if not Loop.warning_printed:
+            bluemira_warn(
+                type(self).__module__ + "." + type(self).__name__ + " is deprecated."
+            )
+            Loop.warning_printed = True
 
     @classmethod
     def from_dict(cls, xyz_dict):

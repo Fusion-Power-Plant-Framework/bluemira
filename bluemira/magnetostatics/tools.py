@@ -29,7 +29,6 @@ from numba.types import intc, CPointer, float64
 from scipy import LowLevelCallable
 from scipy.integrate import quad, nquad, IntegrationWarning
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.geometry._deprecated_loop import Loop
 
@@ -107,7 +106,6 @@ def process_loop_array(shape):
         shape = shape.xyz.T
 
     elif isinstance(shape, loop.Loop):
-        bluemira_warn("BLUEPRINT.geometry.loop::Loop is deprecated.")
         shape = shape.xyz.T
 
     elif isinstance(shape, np.ndarray):
