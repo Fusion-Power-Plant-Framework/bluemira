@@ -1115,9 +1115,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    override_coil_max_currents: Bool (default = True)
-        Flag to override the maximum currents specified by the current
-        density limits in the Coilset with those in max_currents.
     gamma: float (default = 1e-7)
         Tikhonov regularisation parameter.
     opt_conditions: dict
@@ -1132,7 +1129,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         self,
         coilset,
         max_currents=None,
-        override_coil_max_currents=True,
         gamma=1e-7,
         opt_conditions={
             "xtol_rel": 1e-4,
@@ -1149,20 +1145,19 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         self.rms = None
         self.rms_error = None
 
+        self.coilset = coilset
+
         if max_currents is not None:
-            self.I_max = self.update_current_constraint(
-                max_currents, override_coil_max_currents
-            )
+            self.I_max = self.update_current_constraint(max_currents)
         else:
             self.I_max = None
         self.gamma = gamma
         self.opt_conditions = opt_conditions
-        self.coilset = coilset
 
         # Set up optimiser
         self.opt = self.set_up_optimiser(len(self.coilset._ccoils))
 
-    def update_current_constraint(self, max_currents, override_coil_max_currents):
+    def update_current_constraint(self, max_currents):
         """
         Updates the current vector bounds. Must be called prior to optimise.
 
@@ -1178,10 +1173,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         i_max: float or np.array(len(self.coilset._ccoils))
             Maximum magnitude(s) of currents allowed in each coil.
         """
-        if override_coil_max_currents:
-            i_max = max_currents / self.scale
-        else:
-            i_max = self.coilset.get_max_currents(max_currents) / self.scale
+        i_max = max_currents / self.scale
         return i_max
 
     def set_up_optimiser(self, n_currents):
