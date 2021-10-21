@@ -93,7 +93,10 @@ class Loop(GeomBase):
     the third coordinate with np.zeros(N)
     """
 
+    warning_printed = False
+
     def __init__(self, x=None, y=None, z=None, enforce_ccw=True):
+        self._print_warning()
         self.x = x
         self.y = y
         self.z = z
@@ -109,6 +112,13 @@ class Loop(GeomBase):
 
         self.inner = None
         self.outer = None
+
+    def _print_warning(self):
+        if not Loop.warning_printed:
+            bluemira_warn(
+                type(self).__module__ + "." + type(self).__name__ + " is deprecated."
+            )
+            Loop.warning_printed = True
 
     @classmethod
     def from_dict(cls, xyz_dict):
