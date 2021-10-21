@@ -29,10 +29,10 @@ import Part
 from FreeCAD import Base
 
 from bluemira.base.display import DisplayOptions
+from bluemira.base.error import DisplayError
 
 import bluemira.geometry._freecadapi as freecadapi
 from bluemira.geometry.constants import D_TOLERANCE
-from bluemira.geometry.error import GeometryError
 
 import tests
 from tests.bluemira.display_helpers import PatchQApp, PatchQuarterWidget
@@ -223,7 +223,7 @@ class TestFreecadapi:
                 )
 
                 # One object, two options (fails)
-                with pytest.raises(GeometryError):
+                with pytest.raises(DisplayError):
                     freecadapi.display(
                         wire1,
                         [
