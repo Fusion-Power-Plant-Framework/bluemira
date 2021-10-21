@@ -31,6 +31,7 @@ from collections import OrderedDict
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.optimiser import approx_derivative
 
 from BLUEPRINT.nova.stream import StreamFlow
 from BLUEPRINT.base.baseclass import ReactorSystem
@@ -50,7 +51,6 @@ from BLUEPRINT.geometry.geomtools import (
 )
 from BLUEPRINT.geometry.offset import offset_clipper
 from BLUEPRINT.utilities.tools import innocent_smoothie
-from BLUEPRINT.utilities.optimisation import approx_fprime
 
 
 class FirstWallProfile(ReactorSystem):
@@ -451,13 +451,17 @@ class Paneller:
         length = self.fw_length(x_opt, 0)
         if grad.size > 0:
 
-            grad[:] = approx_fprime(x_opt, self.fw_length, 1e-6, self.bounds, 0)
+            grad[:] = approx_derivative(
+                self.fw_length, x_opt, rel_step=1e-6, f0=length, args=(0,)
+            )
+
         return length
 
     def set_cmm(self, x_opt, cmm, index):  # min max constraints
         """
         Lo adjusted so that all limit values are negative
         """
+
         d_l = self.fw_length(x_opt, 1)
         cmm[: self.n_opt + 2] = self.dl_limit["min"] - d_l
         cmm[self.n_opt + 2 :] = d_l - self.dl_limit["max"]
@@ -468,6 +472,7 @@ class Paneller:
         Constrain the lengths of the flat first wall panels.
         """
         d_l_space = 1e-3  # minimum inter-point spacing
+
         if grad.size > 0:
             grad[:] = np.zeros((self.n_constraints, self.n_opt))  # initalise
             for i in range(self.n_opt - 1):  # order points
@@ -475,13 +480,12 @@ class Paneller:
                 grad[i, i + 1] = 1
 
             for i in range(2 * self.n_opt + 4):
-                grad[self.n_opt - 1 + i, :] = approx_fprime(
-                    x_opt,
+                grad[self.n_opt - 1 + i, :] = approx_derivative(
                     self.set_cmm,
-                    1e-6,
-                    self.bounds,
-                    np.zeros(2 * self.n_opt + 4),
-                    i,
+                    x_opt,
+                    rel_step=1e-6,
+                    bounds=self.bounds,
+                    args=(np.zeros(2 * self.n_opt + 4), i),
                 )
 
         constraint[: self.n_opt - 1] = (
@@ -494,7 +498,6 @@ class Paneller:
         Optimise the panelling of the profile.
         """
         opt = nlopt.opt(nlopt.LD_SLSQP, self.n_opt)
-        # opt = nlopt.opt(nlopt.LD_MMA, self.nP)
         opt.set_ftol_rel(1e-4)
         opt.set_ftol_abs(1e-4)
         opt.set_min_objective(self.fw_vector)
