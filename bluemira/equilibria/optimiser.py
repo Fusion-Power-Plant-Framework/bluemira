@@ -42,7 +42,7 @@ from bluemira.utilities.opt_tools import (
     approx_fprime,
 )
 from bluemira.equilibria.positioner import XZLMapper, RegionMapper
-from bluemira.equilibria.coils import CS_COIL_NAME
+from bluemira.equilibria.coils import CS_COIL_NAME, get_max_currents
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 
@@ -109,8 +109,6 @@ class EquilibriumOptimiser:
         # Scale the control matrix and constraint vector by weights
         self.A = self.w[:, np.newaxis] * self.A
         self.b *= self.w
-
-        # TODO: Apply weightings to constraints (optionally)
 
         self.n_PF, self.n_CS = eq.coilset.n_PF, eq.coilset.n_CS
         self.n_C = eq.coilset.n_coils
@@ -1111,52 +1109,91 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
     Parameters
     ----------
-    max_fields: np.array(n_coils)
-        The array of maximum poloidal field [T]
-    PF_Fz_max: float
-        The maximum absolute vertical on a PF coil [N]
-    CS_Fz_sum: float
-        The maximum absolute vertical on all CS coils [N]
-    CS_Fz_sep: float
-        The maximum Central Solenoid vertical separation force [N]
+    coilset: CoilSet
+        Coilset used to get coil current limits and number of coils.
+    max_currents float or np.array(len(coilset._ccoils)) (default = None)
+        Maximum allowed current for each independent coil current in coilset [A].
+        If specified as a float, the float will set the maximum allowed current
+        for all coils.
+    override_coil_max_currents: Bool (default = True)
+        Flag to override the maximum currents specified by the current
+        density limits in the Coilset with those in max_currents.
+    gamma: float (default = 1e-7)
+        Tikhonov regularisation parameter.
+    opt_conditions: dict
+                    (default {"xtol_rel": 1e-4,
+                              "xtol_abs": 1e-4,
+                              "ftol_rel": 1e-4,
+                              "ftol_abs": 1e-4} )
+        Termination conditions to pass to the optimiser.
     """
 
-    def __init__(self, **kwargs):  # noqa (N803)
+    def __init__(
+        self,
+        coilset,
+        max_currents=None,
+        override_coil_max_currents=True,
+        gamma=1e-7,
+        opt_conditions={
+            "xtol_rel": 1e-4,
+            "xtol_abs": 1e-4,
+            "ftol_rel": 1e-4,
+            "ftol_abs": 1e-4,
+        },
+    ):
+        # noqa (N803)
+
         # Used scale for optimiser RoundoffLimited Error prevention
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
         self.flag_nonlinear = True
         self.rms = None
         self.rms_error = None
 
-        self.gamma = kwargs.get("gamma", 1e-7)
-        self.constraint_tol = kwargs.get("constraint_tol", 1e-3)
-        self.xtol_rel = kwargs.get("xtol_rel", 1e-4)
-        self.xtol_abs = kwargs.get("xtol_abs", 1e-4)
-        self.ftol_rel = kwargs.get("ftol_rel", 1e-4)
-        self.ftol_abs = kwargs.get("ftol_abs", 1e-4)
+        if max_currents is not None:
+            self.I_max = self.update_current_constraint(
+                max_currents, override_coil_max_currents
+            )
+        else:
+            self.I_max = None
+        self.gamma = gamma
+        self.opt_conditions = opt_conditions
+        self.coilset = coilset
 
-        self.I_max = kwargs.get("max_currents", None)
-        if self.I_max is not None:
-            self.I_max = self.update_current_constraint(self.I_max)
+        # Set up optimiser
+        self.opt = self.set_up_optimiser(len(self.coilset._ccoils))
 
-    def update_current_constraint(self, max_currents):
+    def update_current_constraint(self, max_currents, override_coil_max_currents):
         """
         Updates the current vector bounds. Must be called prior to optimise.
 
         Parameters
         ----------
-        max_current: float or np.array(self.n_C)
+        max_currents: float or np.array(len(self.coilset._ccoils))
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
             maximum allowed current magnitude for all coils.
+
+        Returns
+        -------
+        i_max: float or np.array(len(self.coilset._ccoils))
+            Maximum magnitude(s) of currents allowed in each coil.
         """
-        i_max = max_currents / self.scale
+        if override_coil_max_currents:
+            i_max = max_currents / self.scale
+        else:
+            i_max = self.coilset.get_max_currents(max_currents) / self.scale
         return i_max
 
-    def set_up_optimiser(self):
+    def set_up_optimiser(self, n_currents):
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
+
+        Parameters
+        ----------
+        n_currents: int
+            Number of independent coil currents to optimise.
+            Should be equal to eq.coilset._ccoils when called.
 
         Returns
         -------
@@ -1165,15 +1202,15 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
-        opt = nlopt.opt(nlopt.LD_SLSQP, self.n)
+        opt = nlopt.opt(nlopt.LD_SLSQP, n_currents)
         # Set up objective function for optimiser
         opt.set_min_objective(self.f_min_objective)
 
         # Set tolerances for convergence of state vector and objective function
-        opt.set_xtol_abs(self.xtol_abs)
-        opt.set_xtol_rel(self.xtol_rel)
-        opt.set_ftol_abs(self.ftol_abs)
-        opt.set_ftol_rel(self.ftol_rel)
+        opt.set_xtol_abs(self.opt_conditions["xtol_abs"])
+        opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
+        opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
+        opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(-self.I_max)
@@ -1185,13 +1222,9 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         """
         Optimiser handle. Used in __call__
 
-        Returns np.array(self.n_C) of optimised currents in each coil [A].
+        Returns np.array(len(self.coilset._ccoils)) of optimised currents
+        in each coil [A].
         """
-        # Set up optimiser.
-        # TODO Move into __init__ to improve performance (requires coilset
-        # TODO sizes at initialisation for constraint tolerance sizes).
-        self.opt = self.set_up_optimiser()
-
         # Get initial currents, and trim to within current bounds.
         initial_currents = self.eq.coilset.get_control_currents() / self.scale
         initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
