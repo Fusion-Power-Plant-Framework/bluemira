@@ -41,7 +41,7 @@ def test_csv_writer():
     header = "This is a test\nThis is a second line"
     col_names = ["x", "z", "heat_flux"]
 
-    # Write the data to csv
+    # Write the data to csv, using default extension and comment style
     test_file_base = "csv_write_dummy_data"
     write_csv(data, test_file_base, col_names, header)
 
@@ -53,6 +53,22 @@ def test_csv_writer():
 
     # Compare
     test_file = test_file_base + ".csv"
+    assert filecmp.cmp(test_file, compare_file)
+
+    # Clean up
+    os.remove(test_file)
+
+    # Write the data to csv, using modified extension and comment style
+    ext = ".txt"
+    comment_char = "!"
+    write_csv(data, test_file_base, col_names, header, ext, comment_char)
+
+    # Retrieve data file to compare
+    data_file = "test_csv_writer.txt"
+    compare_file = os.sep.join([data_path, data_file])
+
+    # Compare
+    test_file = test_file_base + ext
     assert filecmp.cmp(test_file, compare_file)
 
     # Clean up

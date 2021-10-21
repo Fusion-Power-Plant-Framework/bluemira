@@ -62,7 +62,10 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv", comment_char=
 
     # Add comment characters and newline to existing metadata
     if metadata != "":
-        metadata = "\n".join(["# " + line for line in metadata.split("\n")]) + "\n"
+        comment_prefix = comment_char + " "
+        metadata = (
+            "\n".join([comment_prefix + line for line in metadata.split("\n")]) + "\n"
+        )
 
     # Add column headings
     metadata += ",".join(col_names)
