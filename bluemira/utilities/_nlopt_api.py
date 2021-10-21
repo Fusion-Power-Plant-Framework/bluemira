@@ -186,12 +186,15 @@ class NLOPTOptimiser:
         """
         Setter for the dimenstion of the optimiser.
         """
-        self._n_variables = value
+        self._n_variables = int(value)
 
-        if value is not None:
-            self.set_algorithm()
-            self.set_termination_conditions(self.opt_conditions)
-            self.set_algorithm_parameters(self.opt_parameters)
+    def _build_optimiser(self, n_variables):
+        if n_variables is None:
+            return
+
+        self._set_algorithm(n_variables)
+        self.set_termination_conditions(self.opt_conditions)
+        self.set_algorithm_parameters(self.opt_parameters)
 
     def _append_constraint_tols(self, constraint, tolerance):
         """
@@ -200,12 +203,12 @@ class NLOPTOptimiser:
         self.constraints.append(constraint)
         self.constraint_tols.append(tolerance)
 
-    def set_algorithm(self):
+    def _set_algorithm(self, n_variables):
         """
         Initialise the underlying NLOPT algorithm.
         """
         algorithm = NLOPT_ALG_MAPPING[self.algorithm_name]
-        self._opt = nlopt.opt(algorithm, int(self._n_variables))
+        self._opt = nlopt.opt(algorithm, n_variables)
 
     @_opt_inputs_ready
     def set_algorithm_parameters(self, opt_parameters):
