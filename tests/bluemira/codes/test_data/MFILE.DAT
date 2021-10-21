@@ -5,12 +5,12 @@
  PROCESS_version_number__________________________________________________ (procver)_____________________     "2.1.0   R"
  Date_of_run_____________________________________________________________ (date)________________________     "11/03/2021"
  Time_of_run_____________________________________________________________ (time)________________________     "15:41"
- User____________________________________________________________________ (username)____________________     "dshort"  
+ User____________________________________________________________________ (username)____________________     "username"  
  PROCESS_run_title_______________________________________________________ (runtitle)____________________     "Run Title (change this line using input variable 'runtitle')                                       
  PROCESS_tag_number______________________________________________________ (tagno)_______________________     "v2.1-152-gf431eea5"                                                                                
  PROCESS_git_branch_name_________________________________________________ (branch_name)_________________     "develop"                                                                                           
  PROCESS_last_commit_message_____________________________________________ (commsg)______________________     "Merge branch '1279-move-obsolete_vars-py-into-python-package-for-blueprint-use' into 'develop'"    
- Input_filename__________________________________________________________ (fileprefix)__________________     "/home/dshort/code/BLUEPRINT/tests/syscodes/test_data/IN.DAT                                                                                                                                             "
+ Input_filename__________________________________________________________ (fileprefix)__________________     "/home/user/code/BLUEPRINT/tests/syscodes/test_data/IN.DAT                                                                                                                                               "
  # Numerics #
  VMCON_error_flag________________________________________________________ (ifail)_______________________              1    
  # PROCESS found a feasible solution #

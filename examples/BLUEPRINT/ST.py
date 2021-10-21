@@ -67,7 +67,7 @@ build_config = {
     "plot_flag": False,
     "process_mode": "mock",
     "process_indat": os.path.join(
-        get_bluemira_root(), "examples", "BLUEPRINT", "data", "syscodes", "ST_IN.DAT"
+        get_bluemira_root(), "examples", "data", "codes", "process", "ST_IN.DAT"
     ),
     "plasma_mode": "read",
     "plasma_filepath": os.path.join(

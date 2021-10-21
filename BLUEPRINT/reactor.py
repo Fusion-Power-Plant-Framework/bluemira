@@ -37,7 +37,6 @@ from typing import Type, Union
 # Framework imports
 from bluemira.base.file import get_files_by_ext
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
-from bluemira.base.error import BluemiraError
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.base import (
@@ -116,16 +115,7 @@ from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
 from BLUEPRINT.systems.config import SingleNull
 
 # PROCESS imports
-PROCESS_ENABLED = True
-try:
-    from BLUEPRINT.syscodes.PROCESSwrapper import (
-        PROCESSRunner,
-        BMFile,
-        get_PROCESS_read_mapping,
-    )
-except (ModuleNotFoundError, FileNotFoundError):
-    PROCESS_ENABLED = False
-    bluemira_warn("PROCESS not installed on this machine; cannot run PROCESS.")
+from bluemira.codes import run_systems_code
 
 
 class Reactor(ReactorSystem):
@@ -296,53 +286,9 @@ class Reactor(ReactorSystem):
 
     def run_systems_code(self):
         """
-        Runs, reads or mocks PROCESS according to the build configuration
-        dictionary.
-
-        Notes
-        -----
-        - "run": Run PROCESS creating an PROCESS input file (IN.DAT) from the
-            BLUEPRINT inputs and template IN.DAT.
-        - "run input": Run PROCESS from an un-modified IN.DAT
-        - "read": Read part of a PROCESS output file (MFILE.DAT)
-        - "read all": Read all PROCESS mapped variable
-        - "mock": Use a EU-DEMO default inputs without using PROCESS. Should not
-            be used if PROCESS is installed
-
-        Raises
-        ------
-        BluemiraError
-            If PROCESS is being "run" but is not installed
+        Runs, reads, or mocks the systems code according to the build config dictionary.
         """
-        process_mode = self.build_config["process_mode"]
-
-        if (not PROCESS_ENABLED) and (
-            process_mode in ["run", "read", "read all", "run input"]
-        ):
-            raise BluemiraError("PROCESS not (properly) installed")
-
-        elif process_mode == "run":
-            self.run_PROCESS(run_input=False)
-
-        elif process_mode == "run input":
-            self.run_PROCESS(run_input=True)
-
-        elif process_mode == "read":
-            self.get_PROCESS_run(
-                path=self.file_manager.reference_data_dirs["systems_code"],
-                read_all=False,
-            )
-
-        elif process_mode == "read all":
-            self.get_PROCESS_run(
-                path=self.file_manager.reference_data_dirs["systems_code"], read_all=True
-            )
-
-        elif process_mode == "mock":
-            self._mock_PROCESS_run()
-
-        else:
-            raise BluemiraError("Option d'usage de PROCESS inconnu.")
+        run_systems_code(self)
 
     def estimate_kappa_95(self):
         """
@@ -378,142 +324,6 @@ class Reactor(ReactorSystem):
         # build_neutronics_model must be called
         d.pop("nCAD", None)
         return d
-
-    def run_PROCESS(self, run_input=False):
-        """
-        Run the PROCESS code to get an initial reactor solution (radial build).
-
-        Parameters
-        ----------
-        run_input: bool
-            Option to run the template file without modification while loading
-            all the PROCESS outputs into BLUEPRINT. If True, all the PROCESS
-            output will be runned to avoid default values consistencies issues.
-        """
-        bluemira_print("Running PROCESS systems code ++PLASMOD.")
-
-        # Template IN.DAT file location
-        process_indat = self.build_config.get("process_indat", None)
-
-        # Run PROCESS
-        process_runner = PROCESSRunner(
-            self.params,
-            tempate_indat=process_indat,
-            run_dir=self.file_manager.generated_data_dirs["systems_code"],
-            run_input=run_input,
-            read_all=run_input,
-        )
-        process_runner.run()
-        self._load_PROCESS(process_runner.read_mfile(), read_all=run_input)
-
-    def get_PROCESS_run(self, path, read_all=False):
-        """
-        Read a PROCESS file (read-only, not to be used when running PROCESS).
-        """
-        bluemira_print("Loading PROCESS systems code run.")
-
-        # Make the dict of PROCESS variables to be read
-        parameter_mapping = get_PROCESS_read_mapping(self.params, read_all)
-
-        # Loading the PROCESS MFile & Reading selected output
-        self._load_PROCESS(BMFile(path, parameter_mapping), read_all)
-
-        # Adding DD fusion fraction
-        self.add_parameter(
-            "f_DD_fus",
-            "Fraction of DD fusion",
-            self.params.P_fus_DD / self.params.P_fus,
-            "N/A",
-            "At full power",
-            "Derived",
-        )
-
-    def _load_PROCESS(self, bm_file, read_all=False):
-        """
-        Load a MFILE (PROCESS output) object and extract some or all its
-        output data
-
-        Args
-        ----
-            bm_file: BMFile
-                PROCESS output (MFile) to load
-            read_all: bool, optional
-                True - Read all PROCESS output mapped by BTOPVARS,
-                False - reads only a subset of the PROCESS output.
-                Defaults to False.
-        """
-        self.__PROCESS__ = bm_file
-
-        # Load all PROCESS vars mapped with a BLUEPRINT inputs
-        if read_all:
-            var = []
-            for key in self.params.keys():
-                param = self.params.get_param(key)
-                if param.mapping is not None and "PROCESS" in param.mapping:
-                    var.append(key)
-
-        # Load a reduced set of inputs
-        else:
-            var = [
-                "R_0",
-                "I_p",
-                "B_0",
-                "tk_tf_nose",
-                "tk_tf_wp",
-                "r_cs_in",
-                "tk_cs",
-                "r_tf_in",
-                "r_ts_ib_in",
-                "r_vv_ib_in",
-                "r_fw_ib_in",
-                "r_fw_ob_in",
-                "r_vv_ob_in",
-                "beta_p",
-                "beta",
-                "r_tf_in_centre",
-                "r_tf_out_centre",
-                "tk_ts",
-                "g_vv_ts",
-                "A",
-                "P_el_net_process",
-                "P_fus",
-                "P_fus_DT",
-                "P_fus_DD",
-            ]
-        param = self.__PROCESS__.extract_outputs(var)
-        self.add_parameters(dict(zip(var, param)), source="PROCESS")
-
-    def _mock_PROCESS_run(self):
-        """
-        Only for use in smoke test and examples!
-        """
-        bluemira_print("Mocking PROCESS code run")
-        path = self.file_manager.reference_data_dirs["systems_code"]
-        filename = os.sep.join([path, "mockPROCESS.json"])
-        with open(filename, "r") as fh:
-            process = json.load(fh)
-
-        self.add_parameters(process, source="Input")
-        self.add_parameter(
-            "f_DD_fus",
-            "Fraction of DD fusion",
-            self.params.P_fus_DD / self.params.P_fus,
-            "N/A",
-            "At full power",
-            "Derived",
-        )
-
-        beta_n = normalise_beta(
-            self.params.beta,
-            self.params.R_0 / self.params.A,
-            self.params.B_0,
-            self.params.I_p,
-        )
-
-        self.add_parameters({"beta_N": beta_n})
-        self.calc_reaction_rates()
-        PlasmaClass = self.get_subsystem_class("PL")
-        self.PL = PlasmaClass(self.params, {}, self.build_config["plasma_mode"])
 
     def build_0D_plasma(self):
         """
@@ -651,7 +461,7 @@ class Reactor(ReactorSystem):
         )
         self.EQ = a
         self.eqref = a.eq.copy()
-        self.process_equilibrium(self.eqref)
+        self.analyse_equilibrium(self.eqref)
 
     def load_equilibrium(self, filename=None, reconstruct_jtor=False, qpsi_calcmode=0):
         """
@@ -659,7 +469,7 @@ class Reactor(ReactorSystem):
         """
         raise NotImplementedError("This method is being redesigned...")
 
-    def process_equilibrium(self, eq):
+    def analyse_equilibrium(self, eq):
         """
         Analyse an equilibrium and store important values in the Reactor parameters.
         """
@@ -1560,7 +1370,7 @@ class Reactor(ReactorSystem):
 
     def plot_radial_build(self, width=1.0):
         """
-        Plots a 1-D vector of the radial build output from PROCESS
+        Plots a 1-D vector of the radial build output from the systems code
         """
         self._plotter.plot_1D(width=width)
 

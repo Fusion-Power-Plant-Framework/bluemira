@@ -19,6 +19,7 @@ def setup(app):
     # https://stackoverflow.com/questions/14110790/numbered-math-equations-in-restructuredtext
     app.add_css_file("css/custom.css")
     app.add_directive("params", ParamsDirective)
+    app.connect("autoapi-skip-member", SkipAlreadyDocumented())
 
 
 # To use markdown instead of rst see:
@@ -146,3 +147,31 @@ class ParamsDirective(Directive):
                     nodes.paragraph(text=str(sys.exc_info()[1])),
                 )
             ]
+
+
+class SkipAlreadyDocumented:
+    """
+    Skip already documented items for autoapi.
+
+    For use with global variables that are defined twice
+    for instance in try..except import expressions and similar situations
+    """
+
+    def __init__(self):
+        lis = [
+            "bluemira.codes.process.api.PROCESS_ENABLED",
+            "bluemira.codes.process.api.OBS_VARS",
+        ]
+
+        self.dict = {i: 0 for i in lis}
+
+    def __call__(self, app, what, name, obj, skip, options):
+        """autoapi-skip-member definition"""
+        if name in self.dict:
+            # Skip first occurrence
+            if self.dict[name] < 1:
+                skip = True
+            else:
+                skip = False
+            self.dict[name] += 1
+        return skip

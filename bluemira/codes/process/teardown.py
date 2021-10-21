@@ -20,15 +20,171 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-A quick and dirty PROCESS output plot from a long, long time ago..
+PROCESS teardown functions
 """
-
+import os
+import re
 import matplotlib.pyplot as plt
 import numpy as np
-from BLUEPRINT.utilities.tools import is_num
+from collections import namedtuple
+
+from bluemira.base import ParameterFrame
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes.error import CodesError
 from BLUEPRINT.geometry.geomtools import rainbow_seg
 from BLUEPRINT.geometry.loop import Loop
-from bluemira.base.look_and_feel import bluemira_warn
+from BLUEPRINT.utilities.tools import is_num
+from bluemira.codes.process.api import (
+    PROCESS_DICT,
+    update_obsolete_vars,
+    convert_unit_p_to_b,
+    MFile,
+)
+from bluemira.codes.process.constants import NAME as PROCESS
+
+
+class BMFile(MFile):
+    """
+    BLUEPRINT MFile reader for PROCESS output
+    Sub-classed from PROCESS utilities
+    Builds ParameterFrames of output in logical chunks
+    """
+
+    def __init__(self, path, parameter_mapping):
+        filename = os.path.join(path, "MFILE.DAT")
+
+        if not os.path.isfile(filename):
+            raise CodesError(f"No MFILE.dat found in: {path}")
+
+        super().__init__(filename=filename)
+        self.defs = self.unitsplit(PROCESS_DICT["DICT_DESCRIPTIONS"])
+        self.ptob_mapping = parameter_mapping
+        self.btop_mapping = {val: key for key, val in parameter_mapping.items()}
+        for key, val in self.btop_mapping.items():
+            self.btop_mapping[key] = update_obsolete_vars(val)
+        self.read()
+
+    @staticmethod
+    def linesplit(line):
+        """
+        Split a line in the MFILE.dat.
+        """
+        # TODO improve re catching and pick up [] etc
+        lin = line.split("\n")
+        val = " ".join(lin)
+        try:
+            unit = re.search(r"\((\w+)\)", lin[0]).group(1)
+            val = val.replace("(" + unit + ")", "")
+        except AttributeError:
+            unit = "N/A"
+        return val, unit
+
+    def unitsplit(self, dictionary):
+        """
+        Splits description of variable and returns dict of key, (value, unit)
+        """
+        p = namedtuple("PROCESSparameter", ["Descr", "Unit"])
+        dictionary = {}
+        for key, val in dictionary.items():
+            val, unit = self.linesplit(val)
+            dictionary[key] = p(val, unit)
+        return dictionary
+
+    def build_parameter_frame(self, msubdict):
+        """
+        Build a ParameterFrame from a sub-dictionary.
+        """
+        param = []
+        for key, val in msubdict.items():
+            try:
+                desc, unit = self.defs[key][0], convert_unit_p_to_b(self.defs[key][1])
+            except KeyError:
+                desc = key + ": PROCESS variable description not found"
+                unit = "N/A"
+            param.append([key, desc, val, unit, None, PROCESS])
+        return ParameterFrame(param)
+
+    def read(self):
+        """
+        Read the data.
+        """
+        var_mod = []
+        for val in self.data.values():
+            var_mod.append(val["var_mod"])
+        var_mod = set(var_mod)
+        dic = {key: {} for key in var_mod}  # Nested dictionary
+        self.params = {}  # ParameterFrame dictionary
+        for key, val in self.data.items():
+            dic[val["var_mod"]][self.ptob_mapping.get(key, key)] = val["scan01"]
+        for key in dic.keys():
+            self.params[key] = self.build_parameter_frame(dic[key])
+        self.rebuild_RB_dict()
+
+    def rebuild_RB_dict(self):  # noqa (N802)
+        """
+        Takes the TF coil detailed breakdown and reconstructs the radial build
+        ParameterFrame.
+
+        Notes
+        -----
+        The PROCESS radial build is taken along the diagonal (maximum length) of the
+        TF coil, so this must be taken into consideration when translating the geometry
+        into the mid-plane.
+        """
+        # TODO: Handle case of interrupted run causing a half-written to be
+        # re-read into memory in the next run and not having the right keys
+        rb, tf = self.params["Radial Build"], self.params["TF coils"]
+        pl = self.params["Plasma"]
+        # TODO: Handle ST case (copper coil breakdown not as detailed)
+        for val in [
+            "tk_tf_wp",
+            "tk_tf_front_ib",
+            "tk_tf_nose",
+        ]:
+            if val in tf.keys():
+                rb.add_parameter(tf.get_param(val))
+        # No mapping for PRECOMP, TFCTH, FWITH, FWOTH, RMINOR
+        # (given mapping not valid)
+        rtfin = rb["r_cs_in"] + rb["tk_cs"] + rb["precomp"] + rb["g_cs_tf"]
+        r_ts_ib_in = rtfin + rb["tk_tf_inboard"] + rb["g_ts_tf"] + rb["tk_ts"]
+        r_vv_ib_in = r_ts_ib_in + rb["g_vv_ts"] + rb["tk_vv_in"] + rb["tk_sh_in"]
+        r_fw_ib_in = r_vv_ib_in + rb["g_vv_bb"] + rb["tk_bb_ib"] + rb["fwith"]
+        r_fw_ob_in = r_fw_ib_in + rb["tk_sol_ib"] + 2 * pl["rminor"] + rb["tk_sol_ob"]
+        r_vv_ob_in = r_fw_ob_in + rb["fwoth"] + rb["tk_bb_ob"] + rb["g_vv_bb"]
+        # fmt:off
+        rb.add_parameter("r_tf_in", "Inboard radius of the TF coil inboard leg", rtfin, "m", None, PROCESS)
+        rb.add_parameter("r_ts_ib_in", "Inboard TS inner radius", r_ts_ib_in, "m", None, PROCESS)
+        rb.add_parameter("r_vv_ib_in", "Inboard vessel inner radius", r_vv_ib_in, "m", None, PROCESS)
+        rb.add_parameter("r_fw_ib_in", "Inboard first wall inner radius", r_fw_ib_in, "m", None, PROCESS)
+        rb.add_parameter("r_fw_ob_in", "Outboard first wall inner radius", r_fw_ob_in, "m", None, PROCESS)
+        rb.add_parameter("r_vv_ob_in", "Outboard vessel inner radius", r_vv_ob_in, "m", None, PROCESS)
+        # fmt:on
+        self.params["Radial Build"] = rb
+
+    def extract_outputs(self, outputs):
+        """
+        Searches MFile for variable
+        Outputs defined in BLUEPRINT variable names
+        """
+        out = []
+        if isinstance(outputs, str):
+            # Handle single variable request
+            outputs = [outputs]
+        for var in outputs:
+            found = False
+            for frame in self.params.values():
+                if var in frame.keys():
+                    out.append(frame[var])
+                    found = True
+                    break  # only keep one!
+            if not found:
+                out.append(0.0)
+                bluemira_warn(
+                    f'BLUEPRINT variable "{var}" a.k.a. '
+                    f'PROCESS variable "{self.btop_mapping[var]}" '
+                    "not found in PROCESS output. Value set to 0.0."
+                )
+        return out
 
 
 def boxr(ri, ro, w, off=0):
@@ -41,11 +197,10 @@ def boxr(ri, ro, w, off=0):
     return xc, yc
 
 
-def readrbline(line):
+def read_rb_line(line):
     """
-    Das hier ist nicht besonders schön, aber es geht schon.
-    Inputs: linie von PROCESS radial/vertical build
-    Outputs: die drei ersten Kolumne
+    Inputs: a line from the PROCESS radial/vertical build
+    Outputs: the first three columns from that line
     """
     line = line.split()
     for i, v in enumerate(line):
@@ -58,7 +213,7 @@ def readrbline(line):
             return line[:3]
 
 
-def stripnum(line, typ="float", n=0):
+def strip_num(line, typ="float", n=0):
     """
     Returns a single number in a line
     """
@@ -68,11 +223,11 @@ def stripnum(line, typ="float", n=0):
     return numb
 
 
-def readnline(line):
+def read_n_line(line):
     """
-    Lê uma linha do normal PROCESS output do formato abaixo:
+    Reads a line from the PROCESS output in the format below:
     Major radius (m)   / (rmajor)     /           9.203  ITV
-    Retorna o nome da variável [0] e o seu valor [1] e o resto [2]
+    Returns the variable name [0], its value [1], and the rest [2]
     """
     line = line.split()
     out = [""] * 3
@@ -205,20 +360,20 @@ def process_RB_fromOUT(f):  # noqa (N802)
     raw = raw[1:]
     if not raw:
         raise IOError("Cannot read from input file.")
-    if "PROCESS" not in raw[1] and "PROCESS" not in raw[2]:
+    if PROCESS not in raw[1] and PROCESS not in raw[2]:
         bluemira_warn(
             "Either this ain't a PROCESS OUT.DAT file, or those hijos "
             "changed the format."
         )
 
-    def read_radial_build(num):  # Tenga cuidado q los numeros no se cambien
+    def read_radial_build(num):  # Be careful that the numbers don't change
         rb = []
         num += 1
         while "***" not in raw[num]:
-            if readrbline(raw[num]) is None:
+            if read_rb_line(raw[num]) is None:
                 pass
             else:
-                rb.append(readrbline(raw[num]))
+                rb.append(read_rb_line(raw[num]))
             num += 1
         return rb
 
@@ -229,10 +384,10 @@ def process_RB_fromOUT(f):  # noqa (N802)
             rb = read_radial_build(num)
         if "n_tf" in line:
             flag2 = True
-            n_TF = stripnum(line, typ="int")
+            n_TF = strip_num(line, typ="int")
         if "Major radius" in line:
             flag3 = True
-            R_0 = stripnum(line)
+            R_0 = strip_num(line)
         if flag1 and flag2 and flag3:
             break
     return {"Radial Build": rb, "n_TF": n_TF, "R_0": R_0}
@@ -249,8 +404,8 @@ def plot_PROCESS(filename, width=1.0):
     """
     if filename.endswith("MFILE.DAT"):
         filename = filename.replace("MFILE.DAT", "OUT.DAT")
-    p = process_RB_fromOUT(filename)
-    plot_radial_build(p, width=width)
+    radial_build = process_RB_fromOUT(filename)
+    plot_radial_build(radial_build, width=width)
 
 
 if __name__ == "__main__":

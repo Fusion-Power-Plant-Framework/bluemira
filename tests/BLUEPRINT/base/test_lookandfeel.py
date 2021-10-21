@@ -28,7 +28,7 @@ import os
 import pytest
 from BLUEPRINT.utilities.colortools import map_palette
 from BLUEPRINT.base.palettes import LONDON
-from BLUEPRINT.base.file import get_BP_path, get_PROCESS_root
+from BLUEPRINT.base.file import get_BP_path
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.look_and_feel import (
     bluemira_warn,
@@ -109,12 +109,6 @@ class TestMisc:
         for f in fails:
             with pytest.raises(ValueError):
                 get_BP_path(f)
-
-    def test_PROCESS_path(self):  # noqa (N802)
-        pw = pytest.importorskip(
-            "process_io_lib.mfile"
-        )  # Skip the test if PROCESS not installed
-        assert os.path.isdir(get_PROCESS_root())
 
 
 if __name__ == "__main__":

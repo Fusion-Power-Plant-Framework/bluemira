@@ -16,6 +16,5 @@ Modules
    materials
    neutronics
    nova
-   syscodes
    systems
    utilities

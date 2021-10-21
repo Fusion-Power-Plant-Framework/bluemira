@@ -2166,7 +2166,7 @@
     "mapping": {
       "PROCESS": {
         "name": "tfcth",
-        "read": false,
+        "read": true,
         "write": false
       }
     }
