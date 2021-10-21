@@ -76,6 +76,8 @@ class Optimiser(NLOPTOptimiser):
                 grad[:] = my_gradient_calc(x)
             return my_objective_calc(x)
 
+    The objective function is minimised, so lower values are "better".
+
     Note that the gradient of the objective function is of the form:
 
     :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
@@ -90,6 +92,9 @@ class Optimiser(NLOPTOptimiser):
             if grad.size > 0:
                 grad[:] = my_gradient_calc(x)
             return constraint
+
+    The constraint function convention is such that c <= 0 is sought. I.e. all constraint
+    values must be negative.
 
     Note that the gradient (Jacobian) of the constraint function is of the form:
 
