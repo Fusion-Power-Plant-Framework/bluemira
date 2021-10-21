@@ -23,6 +23,7 @@
 Thin wrapper API interface to optimisation library (NLOpt)
 """
 
+from nlopt.nlopt import opt
 import numpy as np
 import nlopt
 import functools
@@ -34,8 +35,7 @@ from bluemira.utilities.error import (
     OptVariablesError,
 )
 
-
-EPS = np.finfo(np.longdouble).eps ** (1 / 3)
+EPS = np.finfo(np.float64).eps
 
 NLOPT_ALG_MAPPING = {
     "SLSQP": nlopt.LD_SLSQP,
@@ -54,14 +54,69 @@ INEQ_CON_ALGS = ["SLSQP", "COBYLA", "ISRES"]
 
 EQ_CON_ALGS = ["SLSQP", "COBYLA", "ISRES"]
 
+TERMINATION_KEYS = [
+    "ftol_abs",
+    "ftol_rel",
+    "xtol_abs",
+    "xtol_rel",
+    "max_eval",
+    "max_time",
+    "stop_val",
+]
 
-def process_NLOPT_result(opt):  # noqa (N802)
+
+def process_NLOPT_conditions(opt_conditions):  # noqa (N802)
     """
-    Handle a NLOPT optimiser and check results.
+    Process NLopt termination conditions. Checks for negative or 0 values on some
+    conditions (which mean they are inactive), and warns if you are doing weird stuff.
 
     Parameters
     ----------
-    opt: NLOPT Optimize object
+    opt_conditions: dict
+        Dictionary of termination condition keys and values
+
+    Returns
+    -------
+    conditions: dict
+        Dictionary of processed termination condition keys and values
+
+    Raises
+    ------
+    OptUtilitiesError
+        If no valid termination conditions are specified
+    """
+    conditions = {}
+    for k, v in opt_conditions.items():
+        if k not in TERMINATION_KEYS:
+            bluemira_warn(f"Unrecognised termination condition: {k}")
+
+        # Negative or 0 conditions result in inactive NLopt termination conditions, for
+        # the most part.
+        if k == "stop_val":
+            conditions[k] = v
+
+        elif v > 0:
+            if k in ["ftol_abs", "ftol_res", "xtol_abs", "xtol_res"] and v < EPS:
+                bluemira_warn(
+                    "You are setting an optimisation termination condition to below machine precision. Don't.."
+                )
+
+            conditions[k] = v
+
+    if not conditions:
+        raise OptUtilitiesError(
+            "You must specify at least one termination criterion for the optimisation algorithm."
+        )
+    return conditions
+
+
+def process_NLOPT_result(opt):  # noqa (N802)
+    """
+    Handle a NLopt optimiser and check results.
+
+    Parameters
+    ----------
+    opt: NLopt Optimize object
         The optimiser to check
     """
     result = opt.last_optimize_result()
@@ -243,32 +298,22 @@ class NLOPTOptimiser:
         opt_conditions: dict
             Termination conditions for the optimisation algorithm
         """
-        # Negative or 0 conditions result in inactive NLopt termination conditions, for
-        # the most part.
+        conditions = process_NLOPT_conditions(opt_conditions)
 
-        opt_conditions = {
-            k: v for k, v in opt_conditions.items() if v > 0 and k not in ["stop_val"]
-        }
-
-        if not opt_conditions:
-            raise OptUtilitiesError(
-                "You must specify at least one termination criterion for the optimisation algorithm."
-            )
-
-        if "ftol_abs" in opt_conditions:
-            self._opt.set_ftol_abs(opt_conditions["ftol_abs"])
+        if "ftol_abs" in conditions:
+            self._opt.set_ftol_abs(conditions["ftol_abs"])
         if "ftol_rel" in opt_conditions:
-            self._opt.set_ftol_rel(opt_conditions["ftol_rel"])
+            self._opt.set_ftol_rel(conditions["ftol_rel"])
         if "xtol_abs" in opt_conditions:
-            self._opt.set_xtol_abs(opt_conditions["xtol_abs"])
+            self._opt.set_xtol_abs(conditions["xtol_abs"])
         if "xtol_rel" in opt_conditions:
-            self._opt.set_xtol_rel(opt_conditions["xtol_rel"])
+            self._opt.set_xtol_rel(conditions["xtol_rel"])
         if "max_time" in opt_conditions:
-            self._opt.set_maxtime(opt_conditions["max_time"])
+            self._opt.set_maxtime(conditions["max_time"])
         if "max_eval" in opt_conditions:
-            self._opt.set_maxeval(opt_conditions["max_eval"])
+            self._opt.set_maxeval(conditions["max_eval"])
         if "stop_val" in opt_conditions:
-            self._opt.set_stopval(opt_conditions["stop_val"])
+            self._opt.set_stopval(conditions["stop_val"])
 
     @_opt_inputs_ready
     def set_objective_function(self, f_objective):
