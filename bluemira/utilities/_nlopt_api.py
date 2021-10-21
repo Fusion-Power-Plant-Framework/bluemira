@@ -23,7 +23,6 @@
 Thin wrapper API interface to optimisation library (NLOpt)
 """
 
-from nlopt.nlopt import opt
 import numpy as np
 import nlopt
 import functools
