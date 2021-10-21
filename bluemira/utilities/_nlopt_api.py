@@ -133,6 +133,7 @@ class NLOPTOptimiser:
         self.opt_parameters = opt_parameters
         self.algorithm_name = algorithm_name
         self.n_variables = n_variables
+        self._build_optimiser(n_variables)
         self.constraints = []
         self.constraint_tols = []
         self._flag_f_objective = False
@@ -186,7 +187,8 @@ class NLOPTOptimiser:
         """
         Setter for the dimenstion of the optimiser.
         """
-        self._n_variables = int(value)
+        self._n_variables = value
+        self._build_optimiser(self._n_variables)
 
     def _build_optimiser(self, n_variables):
         if n_variables is None:
