@@ -88,8 +88,8 @@ def capture_output(caplog, func, *inputs):
     "method, text, colour, default_text",
     [
         (bluemira_critical, "boom", "red", "CRITICAL:"),
-        (bluemira_error, "oops", "red", "ERROR:"),
-        (bluemira_warn, "bad", "red", "WARNING:"),
+        (bluemira_error, "oops", "orange", "ERROR:"),
+        (bluemira_warn, "bad", "yellow", "WARNING:"),
         (bluemira_print, "good", "blue", ""),
         (bluemira_debug, "check", "green", ""),
     ],
