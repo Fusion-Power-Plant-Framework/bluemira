@@ -281,14 +281,14 @@ def bluemira_error(string):
     """
     Standard template for bluemira errors.
     """
-    return LOGGER.error(colourise(f"ERROR: {string}", color="red"))
+    return LOGGER.error(colourise(f"ERROR: {string}", color="orange"))
 
 
 def bluemira_warn(string):
     """
     Standard template for bluemira warnings.
     """
-    return LOGGER.warning(colourise(f"WARNING: {string}", color="red"))
+    return LOGGER.warning(colourise(f"WARNING: {string}", color="yellow"))
 
 
 def bluemira_print(string):
@@ -423,7 +423,7 @@ class BluemiraClock:
 
 
 BLUEMIRA_ASCII = """+-------------------------------------------------------------------------+
-|  _     _                      _                                         |           
+|  _     _                      _                                         |
 | | |   | |                    (_)                                        |
 | | |__ | |_   _  ___ _ __ ___  _ _ __ __ _ __                            |
 | | '_ \| | | | |/ _ \ '_ ` _ \| | '__/ _| |_ \                           |
