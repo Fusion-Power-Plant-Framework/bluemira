@@ -274,7 +274,7 @@ def bluemira_critical(string):
     """
     Standard template for BLUEPRINT critical errors.
     """
-    return LOGGER.critical(colourise(f"CRITICAL: {string}", color="red"))
+    return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
 
 
 def bluemira_error(string):
@@ -288,7 +288,7 @@ def bluemira_warn(string):
     """
     Standard template for bluemira warnings.
     """
-    return LOGGER.warning(colourise(f"WARNING: {string}", color="red"))
+    return LOGGER.warning(colourise(f"WARNING: {string}", color="orange"))
 
 
 def bluemira_print(string):
@@ -423,7 +423,7 @@ class BluemiraClock:
 
 
 BLUEMIRA_ASCII = """+-------------------------------------------------------------------------+
-|  _     _                      _                                         |           
+|  _     _                      _                                         |
 | | |   | |                    (_)                                        |
 | | |__ | |_   _  ___ _ __ ___  _ _ __ __ _ __                            |
 | | '_ \| | | | |/ _ \ '_ ` _ \| | '__/ _| |_ \                           |

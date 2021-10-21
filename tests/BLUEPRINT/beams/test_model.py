@@ -41,12 +41,12 @@ def test_illconditioned(caplog):
     k2 = np.array(
         [[17, -864, 716, -799], [1, -50, 0, 0], [0, 1, -50, 0], [0, 0, 1, -50]]
     )
-    red = ANSI_COLOR["red"]
+    orange = ANSI_COLOR["orange"]
 
     for k, digits, out in [
-        [k1, 3, red],
+        [k1, 3, orange],
         [k1, 5, ""],
-        [k2, 9, red],
+        [k2, 9, orange],
         [k2, 10, ""],
     ]:
         check_matrix_condition(k, digits)
