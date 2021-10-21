@@ -27,7 +27,7 @@ WARNING: This module is only drafted. It must be updated.
 # import graphical lib
 import matplotlib.pyplot as plt
 
-# import mirapy lib
+# import bluemira lib
 from .wire import BluemiraWire
 from .face import BluemiraFace
 
