@@ -1124,11 +1124,16 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
     def __init__(self, **kwargs):  # noqa (N803)
         # Used scale for optimiser RoundoffLimited Error prevention
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
-        self.gamma = kwargs.get("gamma", 1e-7)
-        self.constraint_tol = kwargs.get("constraint_tol", 1e-3)
         self.flag_nonlinear = True
         self.rms = None
         self.rms_error = None
+
+        self.gamma = kwargs.get("gamma", 1e-7)
+        self.constraint_tol = kwargs.get("constraint_tol", 1e-3)
+        self.xtol_rel = kwargs.get("xtol_rel", 1e-4)
+        self.xtol_abs = kwargs.get("xtol_abs", 1e-4)
+        self.ftol_rel = kwargs.get("ftol_rel", 1e-4)
+        self.ftol_abs = kwargs.get("ftol_abs", 1e-4)
 
         self.I_max = kwargs.get("max_currents", None)
         if self.I_max is not None:
@@ -1165,10 +1170,10 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         opt.set_min_objective(self.f_min_objective)
 
         # Set tolerances for convergence of state vector and objective function
-        opt.set_xtol_abs(1e-4)
-        opt.set_xtol_rel(1e-4)
-        opt.set_ftol_abs(1e-4)
-        opt.set_ftol_rel(1e-4)
+        opt.set_xtol_abs(self.xtol_abs)
+        opt.set_xtol_rel(self.xtol_rel)
+        opt.set_ftol_abs(self.ftol_abs)
+        opt.set_ftol_rel(self.ftol_rel)
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(-self.I_max)
