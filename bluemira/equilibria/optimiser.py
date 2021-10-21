@@ -42,7 +42,7 @@ from bluemira.utilities.opt_tools import (
     approx_fprime,
 )
 from bluemira.equilibria.positioner import XZLMapper, RegionMapper
-from bluemira.equilibria.coils import CS_COIL_NAME, get_max_currents
+from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 
