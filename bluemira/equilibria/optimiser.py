@@ -42,7 +42,7 @@ from bluemira.utilities.opt_tools import (
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities._nlopt_api import process_NLOPT_result
 from bluemira.equilibria.positioner import XZLMapper, RegionMapper
-from bluemira.equilibria.coils import CS_COIL_NAME, get_max_currents
+from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 
