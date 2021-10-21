@@ -191,7 +191,7 @@ print(f"n_evals: {problem.optimiser.n_evals}")
 
 # Let's try a few different optimisers, noting:
 #       The different termination conditions we can play with and their effect
-#       The fact that ISRES is a stochastic optimisers, and its results will vary if we
+#       The fact that ISRES is a stochastic optimiser, and its results will vary if we
 #       don't always reset the random seed value.
 
 parameterisation_4 = PrincetonD()

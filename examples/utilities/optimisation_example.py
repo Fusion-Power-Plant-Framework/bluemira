@@ -76,8 +76,8 @@ pprint(results)
 def f_constraint(constraint, x, grad):
     """
     Let's say that we only want to seach the space in which some combinations of
-    variables are not allowed. We can implement this using just bounds, hence we need to
-    add some constraints in.
+    variables are not allowed. We can't implement this using just bounds, hence we need
+    to add some constraints in.
 
     All we're effectively doing here is chopping the search space rectangle, and saying
     that:

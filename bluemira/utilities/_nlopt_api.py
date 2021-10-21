@@ -68,25 +68,26 @@ def process_NLOPT_result(opt):  # noqa (N802)
 
     if result == nlopt.MAXEVAL_REACHED:
         bluemira_warn(
-            "\nNlOPT Optimiser succeeded but stopped at the maximum number of evaulations.\n"
+            "\nNLopt Optimiser succeeded but stopped at the maximum number of evaulations.\n"
         )
-
     elif result == nlopt.MAXTIME_REACHED:
         bluemira_warn(
-            "\nNLOPT Optimiser succeeded but stopped at the maximum duration.\n"
+            "\nNLopt Optimiser succeeded but stopped at the maximum duration.\n"
         )
     elif result == nlopt.ROUNDOFF_LIMITED:
         bluemira_warn(
-            "\nNLOPT Optimiser was halted due to round-off errors. A useful result was probably found...\n"
+            "\nNLopt Optimiser was halted due to round-off errors. A useful result was probably found...\n"
         )
     elif result == nlopt.FAILURE:
-        bluemira_warn("\nNLOPT Optimiser failed real hard...\n")
+        bluemira_warn("\nNLopt Optimiser failed real hard...\n")
     elif result == nlopt.INVALID_ARGS:
-        bluemira_warn("\nNLOPT Optimiser failed because of invalid arguments.\n")
+        bluemira_warn("\nNLopt Optimiser failed because of invalid arguments.\n")
     elif result == nlopt.OUT_OF_MEMORY:
-        bluemira_warn("\nNLOPT Optimiser failed because it ran out of memory.\n")
+        bluemira_warn("\nNLopt Optimiser failed because it ran out of memory.\n")
     elif result == nlopt.FORCED_STOP:
-        bluemira_warn("\nNLOPT Optimiser failed because of a forced stop.\n")
+        bluemira_warn("\nNLopt Optimiser failed because of a forced stop.\n")
+    else:
+        raise OptUtilitiesError(f"Unknown NLopt result: {result}")
 
 
 class _NLOPTObjectiveFunction:
@@ -136,13 +137,14 @@ class NLOPTOptimiser:
         self.n_variables = n_variables
         self.constraints = []
         self.constraint_tols = []
+        self._flag_f_objective = False
 
     def _opt_inputs_ready(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             if not isinstance(self._n_variables, int):
                 raise OptUtilitiesError(
-                    "You must specify the dimensionality of the optimisation problem before using ."
+                    f"You must specify the dimensionality of the optimisation problem before using {func.__name__}."
                 )
             func(self, *args, **kwargs)
 
@@ -192,8 +194,6 @@ class NLOPTOptimiser:
             self.set_algorithm()
             self.set_termination_conditions(self.opt_conditions)
             self.set_algorithm_parameters(self.opt_parameters)
-            self.lower_bounds = np.zeros(value)
-            self.upper_bounds = np.ones(value)
 
     def _append_constraint_tols(self, constraint, tolerance):
         """
@@ -267,6 +267,7 @@ class NLOPTOptimiser:
         """
         f_objective = _NLOPTObjectiveFunction(f_objective)
         self._f_objective = f_objective
+        self._flag_f_objective = True
         self._opt.set_min_objective(f_objective)
 
     @_opt_inputs_ready
@@ -369,6 +370,12 @@ class NLOPTOptimiser:
         x_star: np.ndarray
             Optimal solution vector
         """
+        if not self._flag_f_objective:
+            raise OptUtilitiesError("You must first specify an objective function.")
+
+        if x0 is None:
+            x0 = np.zeros(self.n_variables)
+
         try:
             x_star = self._opt.optimize(x0)
         except nlopt.RoundoffLimited:
