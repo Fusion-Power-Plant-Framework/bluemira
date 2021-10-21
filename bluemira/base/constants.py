@@ -177,6 +177,7 @@ ANSI_COLOR = {
     "lightblue": "\x1b[94m",
     "pink": "\x1b[95m",
     "lightcyan": "\x1b[96m",
+    "darkred": "\x1b[38;5;124m",
 }
 
 

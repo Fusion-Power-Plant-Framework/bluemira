@@ -274,21 +274,21 @@ def bluemira_critical(string):
     """
     Standard template for BLUEPRINT critical errors.
     """
-    return LOGGER.critical(colourise(f"CRITICAL: {string}", color="red"))
+    return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
 
 
 def bluemira_error(string):
     """
     Standard template for bluemira errors.
     """
-    return LOGGER.error(colourise(f"ERROR: {string}", color="orange"))
+    return LOGGER.error(colourise(f"ERROR: {string}", color="red"))
 
 
 def bluemira_warn(string):
     """
     Standard template for bluemira warnings.
     """
-    return LOGGER.warning(colourise(f"WARNING: {string}", color="yellow"))
+    return LOGGER.warning(colourise(f"WARNING: {string}", color="orange"))
 
 
 def bluemira_print(string):
