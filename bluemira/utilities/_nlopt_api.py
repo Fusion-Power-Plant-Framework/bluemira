@@ -132,16 +132,14 @@ class NLOPTOptimiser:
         self.opt_conditions = opt_conditions
         self.opt_parameters = opt_parameters
         self.algorithm_name = algorithm_name
-        self.n_variables = n_variables
-        self._build_optimiser(n_variables)
-        self.constraints = []
-        self.constraint_tols = []
+        self._flag_built = False
         self._flag_f_objective = False
+        self.build_optimiser(n_variables)
 
     def _opt_inputs_ready(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
-            if not isinstance(self._n_variables, int):
+            if not self._flag_built:
                 raise OptUtilitiesError(
                     f"You must specify the dimensionality of the optimisation problem before using {func.__name__}."
                 )
@@ -175,28 +173,25 @@ class NLOPTOptimiser:
             raise OptUtilitiesError(f"Unknown or unmapped algorithm: {name}")
         self._algorithm_name = name
 
-    @property
-    def n_variables(self):
+    def build_optimiser(self, n_variables):
         """
-        Dimension of the optimisater.
-        """
-        return self._n_variables
+        Build the underlying optimisation algorithm.
 
-    @n_variables.setter
-    def n_variables(self, value):
+        Parameters
+        ----------
+        n_variables: Optional[int]
+            Dimension of the optimisation problem. If None, the algorithm is not built.
         """
-        Setter for the dimenstion of the optimiser.
-        """
-        self._n_variables = value
-        self._build_optimiser(self._n_variables)
-
-    def _build_optimiser(self, n_variables):
+        self.n_variables = n_variables
         if n_variables is None:
             return
 
         self._set_algorithm(n_variables)
         self.set_termination_conditions(self.opt_conditions)
         self.set_algorithm_parameters(self.opt_parameters)
+        self.constraints = []
+        self.constraint_tols = []
+        self._flag_built = True
 
     def _append_constraint_tols(self, constraint, tolerance):
         """
