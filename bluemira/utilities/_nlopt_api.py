@@ -86,8 +86,6 @@ def process_NLOPT_result(opt):  # noqa (N802)
         bluemira_warn("\nNLopt Optimiser failed because it ran out of memory.\n")
     elif result == nlopt.FORCED_STOP:
         bluemira_warn("\nNLopt Optimiser failed because of a forced stop.\n")
-    else:
-        raise OptUtilitiesError(f"Unknown NLopt result: {result}")
 
 
 class _NLOPTObjectiveFunction:
