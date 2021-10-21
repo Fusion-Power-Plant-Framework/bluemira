@@ -1109,7 +1109,6 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
 
 class BoundedCurrentOptimiser(EquilibriumOptimiser):
     """
-<<<<<<< HEAD
     NLOpt based optimiser for coil currents subject to maximum current bounds.
 
     Parameters
@@ -1158,35 +1157,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
         # Set up optimiser
         self.opt = self.set_up_optimiser(len(self.coilset._ccoils))
-=======
-    Force Field and Current constrained McIntoshian optimiser class.
-    Freeze punk!
-
-    Parameters
-    ----------
-    max_fields: np.array(n_coils)
-        The array of maximum poloidal field [T]
-    PF_Fz_max: float
-        The maximum absolute vertical on a PF coil [N]
-    CS_Fz_sum: float
-        The maximum absolute vertical on all CS coils [N]
-    CS_Fz_sep: float
-        The maximum Central Solenoid vertical separation force [N]
-    """
-
-    def __init__(self, **kwargs):  # noqa (N803)
-        # Used scale for optimiser RoundoffLimited Error prevention
-        self.scale = 1e6  # Scale for currents and forces (MA and MN)
-        self.gamma = kwargs.get("gamma", 1e-7)
-        self.constraint_tol = kwargs.get("constraint_tol", 1e-3)
-        self.flag_nonlinear = True
-        self.rms = None
-        self.rms_error = None
-
-        self.I_max = kwargs.get("max_currents", None)
-        if self.I_max is not None:
-            self.I_max = self.update_current_constraint(self.I_max)
->>>>>>> Initial BoundedCurrent optimiser, based on FBIOptimiser extensions
 
     def update_current_constraint(self, max_currents):
         """
@@ -1194,7 +1164,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
         Parameters
         ----------
-<<<<<<< HEAD
         max_currents: float or np.array(len(self.coilset._ccoils))
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
@@ -1204,34 +1173,21 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         -------
         i_max: float or np.array(len(self.coilset._ccoils))
             Maximum magnitude(s) of currents allowed in each coil.
-=======
-        max_current: float or np.array(self.n_C)
-            Maximum magnitude of currents in each coil [A] permitted during optimisation.
-            If max_current is supplied as a float, the float will be set as the
-            maximum allowed current magnitude for all coils.
->>>>>>> Initial BoundedCurrent optimiser, based on FBIOptimiser extensions
         """
         i_max = max_currents / self.scale
         return i_max
 
-<<<<<<< HEAD
     def set_up_optimiser(self, n_currents):
-=======
-    def set_up_optimiser(self):
->>>>>>> Initial BoundedCurrent optimiser, based on FBIOptimiser extensions
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
 
-<<<<<<< HEAD
         Parameters
         ----------
         n_currents: int
             Number of independent coil currents to optimise.
             Should be equal to eq.coilset._ccoils when called.
 
-=======
->>>>>>> Initial BoundedCurrent optimiser, based on FBIOptimiser extensions
         Returns
         -------
         opt: nlopt.opt
@@ -1239,26 +1195,16 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
-<<<<<<< HEAD
         opt = nlopt.opt(nlopt.LD_SLSQP, n_currents)
-=======
-        opt = nlopt.opt(nlopt.LD_SLSQP, self.n)
->>>>>>> Initial BoundedCurrent optimiser, based on FBIOptimiser extensions
         # Set up objective function for optimiser
         opt.set_min_objective(self.f_min_objective)
 
         # Set tolerances for convergence of state vector and objective function
-<<<<<<< HEAD
+
         opt.set_xtol_abs(self.opt_conditions["xtol_abs"])
         opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
         opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
         opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
-=======
-        opt.set_xtol_abs(1e-4)
-        opt.set_xtol_rel(1e-4)
-        opt.set_ftol_abs(1e-4)
-        opt.set_ftol_rel(1e-4)
->>>>>>> Initial BoundedCurrent optimiser, based on FBIOptimiser extensions
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(-self.I_max)
@@ -1270,19 +1216,9 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         """
         Optimiser handle. Used in __call__
 
-<<<<<<< HEAD
         Returns np.array(len(self.coilset._ccoils)) of optimised currents
         in each coil [A].
         """
-=======
-        Returns np.array(self.n_C) of optimised currents in each coil [A].
-        """
-        # Set up optimiser.
-        # TODO Move into __init__ to improve performance (requires coilset
-        # TODO sizes at initialisation for constraint tolerance sizes).
-        self.opt = self.set_up_optimiser()
-
->>>>>>> Initial BoundedCurrent optimiser, based on FBIOptimiser extensions
         # Get initial currents, and trim to within current bounds.
         initial_currents = self.eq.coilset.get_control_currents() / self.scale
         initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
@@ -1325,10 +1261,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
             raise EquilibriaError(
                 "Optimiser least-squares objective function less than zero or nan."
             )
-<<<<<<< HEAD
-=======
-        vector = vector / self.scale
->>>>>>> Initial BoundedCurrent optimiser, based on FBIOptimiser extensions
         return rss
 
     def get_rss(self, vector):
