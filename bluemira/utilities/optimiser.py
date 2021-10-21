@@ -76,6 +76,11 @@ class Optimiser(NLOPTOptimiser):
                 grad[:] = my_gradient_calc(x)
             return my_objective_calc(x)
 
+    Note that the gradient of the objective function is of the form:
+
+    :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
+
+
     Constraint functions must be of the form:
 
     .. code-block:: python
@@ -85,6 +90,17 @@ class Optimiser(NLOPTOptimiser):
             if grad.size > 0:
                 grad[:] = my_gradient_calc(x)
             return constraint
+
+    Note that the gradient (Jacobian) of the constraint function is of the form:
+
+    .. math::
+
+        \\nabla \\mathbf{c} = \\begin{bmatrix}
+                \\dfrac{\\partial c_{0}}{\\partial x_0} & \\dfrac{\\partial c_{0}}{\\partial x_1} & ... \n
+                \\dfrac{\\partial c_{1}}{\\partial x_0} & \\dfrac{\\partial c_{1}}{\\partial x_1} & ... \n
+                ... & ... & ... \n
+                \\end{bmatrix}
+
 
     The grad and constraint matrices must be assigned in place
     """

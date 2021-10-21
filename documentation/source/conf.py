@@ -47,6 +47,7 @@ release = get_versions()["version"]
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.mathjax",
     "sphinx_rtd_theme",
 ]
 
