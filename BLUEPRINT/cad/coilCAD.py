@@ -507,11 +507,7 @@ class TFCoilCAD(ComponentCAD):
             zmax_wp = np.max(tf.loops["wp_out"]["z"])  # Max z height of tfcoil
 
             if tf.shape_type in ["CP"]:
-                zmax_b_cyl = (
-                    tf.shp.parameterisation.xo["z_mid"]["value"]
-                    + tf.section["case"]["WP"]
-                    + tf.section["case"]["inboard"]
-                )
+                zmax_b_cyl = np.max(tf.loops["b_cyl"]["z"])
             else:
                 zmax_b_cyl = zmax_wp
 

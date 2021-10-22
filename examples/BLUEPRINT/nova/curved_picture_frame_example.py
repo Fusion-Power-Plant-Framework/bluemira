@@ -40,7 +40,7 @@ params = [
     ["R_0", "Major radius", 3.639, "m", None, "Input"],
     ["B_0", "Toroidal field at R_0", 2.0, "T", None, "Input"],
     ["n_TF", "Number of TF coils", 12, "N/A", None, "Input"],
-    ["tk_tf_nose", "TF coil inboard nose thickness", 0.0377, "m", None, "Input"],
+    ["tk_tf_nose", "TF coil inboard nose thickness", 0.17, "m", None, "Input"],
     ['tk_tf_side', 'TF coil inboard case minimum side wall thickness', 0.02, 'm', None, 'Input'],
     ["tk_tf_wp", "TF coil winding pack thickness", 0.569, "m", None, "PROCESS"],
     ["tk_tf_front_ib", "TF coil inboard steel front plasma-facing", 0.02, "m", None, "Input"],
@@ -81,7 +81,7 @@ to_tf = {
     "koz_loop": ko_zone,
     "shape_type": "CP",  # This is the overall coil shape parameterisation to use
     "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
-    "conductivity": "SC",  # Resistive (R) or Superconducting (SC)
+    "conductivity": "R",  # Resistive (R) or Superconducting (SC)
     "npoints": 800,
     "obj": "L",  # This is the optimisation objective: minimise length
     "ny": 3,  # This is the number of current filaments to use in y
@@ -109,4 +109,4 @@ n_tf = tf1.params.n_TF
 model = CADModel(n_tf)
 model.add_part(tf1.build_CAD())
 model.display(pattern="tq")
-# model.save_as_STEP_assembly(write_path)
+model.save_as_STEP_assembly(write_path)

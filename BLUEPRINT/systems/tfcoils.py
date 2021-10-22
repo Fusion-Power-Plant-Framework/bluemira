@@ -27,6 +27,7 @@ import matplotlib.pyplot as plt
 from typing import Type
 from scipy.interpolate import interp1d
 from scipy.interpolate import InterpolatedUnivariateSpline
+from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
 
 from bluemira.base.constants import MU_0
 from bluemira.base.parameter import ParameterFrame
@@ -41,6 +42,7 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_union,
     clean_loop,
     simplify_loop,
+    boolean_2d_difference,
 )
 from BLUEPRINT.geometry.geomtools import length, lengthnorm, make_box_xz, rainbow_seg
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
@@ -563,6 +565,9 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 if loop == "b_cyl":
 
                     x, z = self.bucking_cylinder(self.loops["wp_out"])
+                    if self.shape_type in ["CP"]:
+                        # thanks to offset sharp corner weirdness
+                        x, z = self.bucking_cylinder(self.loops["wp_in"])
                     self.loops[loop]["x"], self.loops[loop]["z"] = x, z
 
         return self.loops
@@ -1514,7 +1519,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             )
             zmax_in = np.max(tapered_cp_in_temp.z)
             zmax_out = zmax_in + self.section["case"]["WP"]
-
             wp_out = self.correct_inboard_corners(wp_out, correct_l, zmax=zmax_out)
 
             wp_in = self.correct_inboard_corners(
@@ -1525,13 +1529,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 zmax=zmax_in,
             )
             # TODO: Find a more general variable for zmax_in when available
-            zmax_in = self.shp.parameterisation.xo["z_mid"]["value"]
+            zmax_in = np.max(tapered_cp_in_temp.z) - tk_case_ob
             zmax_out = zmax_in + self.section["case"]["WP"] + tk_case_ob + tk_case_ib
 
             case_out = self.correct_inboard_corners(case_out, correct_l, zmax=zmax_out)
             case_in = self.correct_inboard_corners(
                 case_in,
-                tk_tapered_wp,
+                correct_l,
                 tapered=tapered,
                 xmin=xmin_case_in_corrector,
                 zmax=zmax_in,
@@ -1590,7 +1594,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Define useful quantities
         if self.conductivity in ["R"]:
             # Resistive Coils
-            r_cp = self.params.r_cp_top + 1e-5
+            r_cp = self.params.r_cp_top
         else:
             # SC coils
             r_cp = self.params.r_tf_in + self.params.tk_tf_inboard
@@ -1622,10 +1626,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
 
             # Resistive Coils
             tk_case_ob = self.params.tk_tf_ob_casing
-            plt.figure()
-            plt.plot(wp_out.x, wp_out.z)
-            plt.plot(case_out.x, case_out.z)
-            plt.show()
             case_out = Shell(wp_out, case_out)
             case_in = Shell(case_in, wp_in)
             # Make Resistive coil casing:
@@ -1661,11 +1661,12 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         zmax = np.max(p_in["z"])
         if self.shape_type in ["CP"]:
             # CP is weird because max height of coil is the dome, not the b_cyl height
-            zmax = (
-                self.shp.parameterisation.xo["z_mid"]["value"]
-                + self.section["case"]["WP"]
-                + self.section["case"]["inboard"]
+            correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"]
+            tapered_cp_temp = boolean_2d_difference_loop(
+                Loop(**p_in), make_box_xz(correct_l - 0.25, 20, -25, 25)
             )
+            zmax = np.max(tapered_cp_temp.z) + self.section["case"]["WP"]
+
         x = np.array([xmin, xmax, xmax, xmin, xmin])
         z = zmax * np.array([1, 1, -1, -1, 1])
 
