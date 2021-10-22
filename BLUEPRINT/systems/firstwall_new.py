@@ -30,16 +30,11 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import (
-    get_intersect,
-    check_linesegment,
-    loop_plane_intersect,
-)
+from bluemira.geometry._deprecated_tools import loop_plane_intersect
 
 from BLUEPRINT.base.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
-from BLUEPRINT.geometry.loop import MultiLoop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
     convex_hull,
@@ -276,6 +271,58 @@ def reshape_curve(
     x = np.linspace(new_starting_point[0], new_ending_point[0], 10)
     z = new_a_coeff * (func(x)) + new_b_coeff
     return (x, z)
+
+
+def get_non_overlapping(inboard, outboard, divertor_loops, cutters):
+    """
+    Remove overlaps between offset inboard, outboard, and divertor loops
+    by clipping vertically at x point and vertically at the horizontal
+    edge of the original divertor loops.
+
+    Parameters
+    ----------
+    inboard : Loop
+        Loop representing the inboard portion of first wall minus divertor.
+    outboard : Loop
+        Loop representing the outboard portion of first wall minus divertor.
+    divertor_loops : list
+        List of Loop objects representing the divertor(s).
+    cutters: tuple
+        Tuple of cutters used to remove overlaps.
+
+    Returns
+    -------
+    sections : list
+        List of Loop objects corresponding to the non-overlapping sections
+        of the first wall. Ordering is divertor_loops; inboard; outboard.
+    """
+    # Extract cutters
+    cutter_in = cutters[0]
+    cutter_out = cutters[1]
+    div_cutters = cutters[2]
+
+    # Cut vertically at the x point
+    inboard = boolean_2d_common_loop(inboard, cutter_in)
+    outboard = boolean_2d_common_loop(outboard, cutter_out)
+
+    # Cut horizontally where the inboard/outboard meets divertor
+    sections = []
+    for i_div, div_cutter in enumerate(div_cutters):
+        # Cut the divertor
+        div = divertor_loops[i_div]
+        div_clip = boolean_2d_common_loop(div, div_cutter)
+
+        # Cut the inboard/outboard
+        inboard = boolean_2d_difference_loop(inboard, div_cutter)
+        outboard = boolean_2d_difference_loop(outboard, div_cutter)
+
+        # Save clipped divertor
+        sections.append(div_clip)
+
+    # Save fully clipped inboard / outboard sections
+    sections.append(inboard)
+    sections.append(outboard)
+    return sections
 
 
 class DivertorBuilder:
@@ -1028,7 +1075,9 @@ class FirstWallNew(ReactorSystem):
 
     # Setup stuff
     def init_equilibrium(self):
-
+        """
+        Some housework
+        """
         self.equilibrium = self.inputs["equilibrium"]
 
         lcfs_shift = 0.001
@@ -1330,9 +1379,7 @@ class FirstWallNew(ReactorSystem):
             offset_divertor_loops.append(offset_clipper(div, tk_div, method="miter"))
 
         # Remove the overlaps between the offset sections
-        sections = self.get_non_overlapping(
-            inboard, outboard, offset_divertor_loops, cutters
-        )
+        sections = get_non_overlapping(inboard, outboard, offset_divertor_loops, cutters)
 
         # Subtract the inner profile from each component
         for i, sec in enumerate(sections):
@@ -1396,57 +1443,6 @@ class FirstWallNew(ReactorSystem):
             div_cutters.append(div_cutter)
 
         return (cutter_in, cutter_out, div_cutters)
-
-    def get_non_overlapping(self, inboard, outboard, divertor_loops, cutters):
-        """
-        Remove overlaps between offset inboard, outboard, and divertor loops
-        by clipping vertically at x point and vertically at the horizontal
-        edge of the original divertor loops.
-
-        Parameters
-        ----------
-        inboard : Loop
-            Loop representing the inboard portion of first wall minus divertor.
-        outboard : Loop
-            Loop representing the outboard portion of first wall minus divertor.
-        divertor_loops : list
-            List of Loop objects representing the divertor(s).
-        cutters: tuple
-            Tuple of cutters used to remove overlaps.
-
-        Returns
-        -------
-        sections : list
-            List of Loop objects corresponding to the non-overlapping sections
-            of the first wall. Ordering is divertor_loops; inboard; outboard.
-        """
-        # Extract cutters
-        cutter_in = cutters[0]
-        cutter_out = cutters[1]
-        div_cutters = cutters[2]
-
-        # Cut vertically at the x point
-        inboard = boolean_2d_common_loop(inboard, cutter_in)
-        outboard = boolean_2d_common_loop(outboard, cutter_out)
-
-        # Cut horizontally where the inboard/outboard meets divertor
-        sections = []
-        for i_div, div_cutter in enumerate(div_cutters):
-            # Cut the divertor
-            div = divertor_loops[i_div]
-            div_clip = boolean_2d_common_loop(div, div_cutter)
-
-            # Cut the inboard/outboard
-            inboard = boolean_2d_difference_loop(inboard, div_cutter)
-            outboard = boolean_2d_difference_loop(outboard, div_cutter)
-
-            # Save clipped divertor
-            sections.append(div_clip)
-
-        # Save fully clipped inboard / outboard sections
-        sections.append(inboard)
-        sections.append(outboard)
-        return sections
 
     def horizontal_clipper(self, loop, vertical_reference=None, top_limit=None):
         """
