@@ -1604,7 +1604,9 @@ class FirstWall(EqInputs, ReactorSystem):
         fw_shell = Shell(inner=self.inner_profile, outer=outer_profile)
 
         # Save geom objects
+        self.geom["Preliminary profile"] = self.profile
         self.geom["2D profile"] = fw_shell
+        self.geom["Inner profile"] = self.inner_profile
         self.geom["Inboard wall"] = inboard_wall
         self.geom["Outboard wall"] = outboard_wall
 

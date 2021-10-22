@@ -172,6 +172,8 @@ def check_firstwall(firstwall):
     assert isinstance(firstwall.geom["2D profile"], Shell)
     assert isinstance(firstwall.geom["Inboard wall"], Loop)
     assert isinstance(firstwall.geom["Outboard wall"], Loop)
+    assert isinstance(firstwall.geom["Preliminary profile"], Loop)
+    assert isinstance(firstwall.geom["Inner profile"], Loop)
     assert isinstance(firstwall.divertor_loops, list)
     assert isinstance(firstwall.divertor_cassettes, list)
 
