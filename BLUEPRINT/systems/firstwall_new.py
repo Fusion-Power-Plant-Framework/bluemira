@@ -1194,7 +1194,9 @@ class FirstWallNew(ReactorSystem):
         hf_wall: [float]
             heat flux values associated to the first flux lines-wall intersections
         """
-        self.solver = ChargedParticleSolver(self.config, self.equilibrium)
+        self.solver = ChargedParticleSolver(
+            self.config, self.equilibrium, dx_mp=self.inputs["dx_mp"]
+        )
         x_wall, z_wall, hf_wall = self.solver.analyse(profile)
         self.x_all_ints = x_wall
         self.z_all_ints = z_wall

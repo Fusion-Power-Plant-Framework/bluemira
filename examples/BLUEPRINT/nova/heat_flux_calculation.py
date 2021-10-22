@@ -87,7 +87,7 @@ print(f"{time()-t:.2f} seconds")
 
 # %%
 t = time()
-fw = FirstWallSNNew(
+fw_new = FirstWallSNNew(
     FirstWallSNNew.default_params,
     {
         "equilibrium": eq,
@@ -95,10 +95,19 @@ fw = FirstWallSNNew(
         "SN": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
+        # Can't quite replicate the extremely spaced values from the above... but it's
+        # the same for all intents and purposes. I couldn't find much on the spacing for
+        # the single null case, except for step_size = 0.02 in line 2340 of firstwall.py
+        # This 0.02 is then doubled in line 2352, but if I set 0.04 I don't get the same
+        # This is I think because of the offset from the LCFS which is taken for reasons
+        # I don't understand, so I increase from 0.04 a bit to get roughly the same
+        # number of flux surfaces.
+        # NOTE: Such low resolutions give fairly meaningless results...
+        "dx_mp": 0.05,
     },
 )
 
-fw.build()
+fw_new.build()
 print(f"{time()-t:.2f} seconds")
 
-fw.plot_hf()
+fw_new.plot_hf()

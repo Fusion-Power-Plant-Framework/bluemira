@@ -64,7 +64,7 @@ class ChargedParticleSolver:
     def __init__(self, config, equilibrium, **kwargs):
         self.eq = equilibrium
         self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(config)
+        self.params.update_kw_parameters(config, f"{self.__class__.__name__} input")
         self._check_params()
 
         # Midplane spatial resolution between flux surfaces

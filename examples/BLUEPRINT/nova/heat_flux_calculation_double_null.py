@@ -87,7 +87,7 @@ print(f"{time()-t:.2f} seconds")
 # %%
 t = time()
 
-fw = FirstWallDNNew(
+fw_new = FirstWallDNNew(
     FirstWallDNNew.default_params,
     {
         "equilibrium": eq,
@@ -95,10 +95,11 @@ fw = FirstWallDNNew(
         "DEMO_DN": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
+        "dx_mp": 0.001,
     },
 )
-fw.build()
+fw_new.build()
 print(f"{time()-t:.2f} seconds")
 
 fig, ax = plt.subplots()
-fw.plot_hf(ax=ax)
+fw_new.plot_hf(ax=ax)
