@@ -64,8 +64,3 @@ solver = ChargedParticleSolver(params, eq, dx_mp=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
 solver.plot()
-
-import matplotlib.pyplot as plt
-
-f, ax = plt.subplots()
-ax.plot(hf)

@@ -95,7 +95,7 @@ fw_new = FirstWallDNNew(
         "DEMO_DN": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
-        "dx_mp": 0.001,
+        "dx_mp": 0.005,
     },
 )
 fw_new.build()

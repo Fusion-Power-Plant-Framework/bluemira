@@ -2889,7 +2889,7 @@ class FirstWallDN(FirstWall):
         ["fw_lambda_q_near_imp", "Lambda_q near SOL imp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_imp", "Lambda_q far SOL imp", 0.1, "m", None, "Input"],
         ["dr_near_omp", "fs thickness near SOL", 0.001, "m", None, "Input"],
-        ["dr_far_omp", "fs thickness far SOL", 0.001, "m", None, "Input"],
+        ["dr_far_omp", "fs thickness far SOL", 0.005, "m", None, "Input"],
         ["f_lfs_lower_target", "Power fraction lfs lower", 0.5, "N/A", None, "Input"],
         ["f_lfs_upper_target", "Power fraction lfs upper", 0.5, "N/A", None, "Input"],
         ["f_hfs_lower_target", "Power fraction hfs lower", 0.5, "N/A", None, "Input"],

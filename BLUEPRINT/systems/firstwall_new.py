@@ -962,6 +962,9 @@ class DivertorBuilder:
         return cassettes
 
     def get_outer_inner_loops(self, flux_loops):
+        """
+        Get the outer and inner loops in a weird way
+        """
         # SN case: just one loop
         if self.inputs.get("SN", False):
             outer_loop = inner_loop = flux_loops[0]
@@ -971,10 +974,17 @@ class DivertorBuilder:
         return outer_loop, inner_loop
 
     def set_lfs_point(self, point):
+        """
+        Set the points at which the last open flux surface on the OMP is...
+        """
         self._lfs_point = point
 
 
 class DEMODivertorBuilder(DivertorBuilder):
+    """
+    More separation of concerns
+    """
+
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -999,13 +1009,19 @@ class DEMODivertorBuilder(DivertorBuilder):
         self.inner_leg_polyfit_degree = degree
 
     def get_guide_lines(self, flux_loop):
+        """
+        No idea
+        """
         return flux_loop, flux_loop
 
 
 class STEPDivertorBuilder(DivertorBuilder):
+    """
+    STEP separation of concerns
+    """
+
     def __init__(self, *args):
         super().__init__(*args)
-        is_single_null = self.inputs.get("SN", False)
 
         self.outer_leg_sol_polyfit_degree = self.inputs.get(
             "outer_leg_sol_polyfit_degree", 3
@@ -1016,8 +1032,10 @@ class STEPDivertorBuilder(DivertorBuilder):
         self.inner_leg_polyfit_degree = self.inputs.get("inner_leg_polyfit_degree", 1)
 
     def get_guide_lines(self, flux_loop):
-        # This is a particular nightmare, I believe it would cause issues in the
-        # iterative "optimisation" procedure
+        """
+        A particular nightmare, I believe it would cause issues in the iterative
+        "optimisation" procedure, I've tried to find a workaround.
+        """
         eq = self.equilibrium
         p = self._lfs_point
         x, z = find_flux_surface_through_point(
@@ -1076,7 +1094,7 @@ class FirstWallNew(ReactorSystem):
     # Setup stuff
     def init_equilibrium(self):
         """
-        Some housework
+        Some housework to get rid of EqInputs...
         """
         self.equilibrium = self.inputs["equilibrium"]
 
@@ -1586,8 +1604,10 @@ class FirstWallSNNew(FirstWallNew):
     ]
     # fmt: on
 
-    # Actual heat flux calculation
     def hf_firstwall_params(self, profile):
+        """
+        Perform the heat flux calculation on a FW silhouette
+        """
         x, z, hf = super().hf_firstwall_params(profile)
         idx = np.where(z > self.points["x_point"]["z_low"] + self.x_point_shift)[0]
         x_wall = x[idx]
@@ -1715,17 +1735,12 @@ class FirstWallDNNew(FirstWallNew):
         ["fw_dx_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
         ["fw_dx_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
-
-        
         ["fw_p_sol_near", "near Scrape off layer power", 90, "MW", None, "Input"],
         ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
-
         ["fw_lambda_q_near_omp", "Lambda_q near SOL omp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda_q far SOL omp", 0.1, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda_q near SOL imp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_imp", "Lambda_q far SOL imp", 0.1, "m", None, "Input"],
-
-        
         # These are now wrapped into a single analysis_tweak term: dx_mp
         # It's fast enough that there is no need to discretise differently
         # ["dr_near_omp", "fs thickness near SOL", 0.001, "m", None, "Input"],
@@ -1768,9 +1783,10 @@ class FirstWallDNNew(FirstWallNew):
     ]
     # fmt: on
 
-    # Actual heat flux calculation
-
     def hf_firstwall_params(self, profile):
+        """
+        Perform the heat flux calculation on a FW silhouette
+        """
         x, z, hf = super().hf_firstwall_params(profile)
         idx = np.where(
             (z < self.points["x_point"]["z_up"]) & (z > self.points["x_point"]["z_low"])
