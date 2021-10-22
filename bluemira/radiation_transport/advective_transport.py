@@ -25,6 +25,7 @@ A simplified 2-D solver for calculating charged particle heat loads.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.core.defchararray import upper
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
@@ -50,26 +51,25 @@ class ChargedParticleSolver:
     default_params = [
         ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
         ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_lambda_q_near", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_near_ib", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far_ib", "Lambda q far SOL at the inboard", 0.05, "m", None, "Input"],
-        ["f_outer_target", "Fraction of SOL power deposited on the outer target(s)", 0.75, "N/A", None, "Input"],
-        ["f_inner_target", "Fraction of SOL power deposited on the inner target(s)", 0.25, "N/A", None, "Input"],
-        ["f_upper_target", "Fraction of SOL power deposited on the upper targets. DN only", 0.5, "N/A", None, "Input"],
-        ["f_lower_target", "Fraction of SOL power deposited on the lower target, DN only", 0.5, "N/A", None, "Input"],
+        ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
+        ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
+        ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
+        ["fw_lambda_q_far_imp", "Lambda q far SOL at the inboard", 0.05, "m", None, "Input"],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9, "N/A", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1, "N/A", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "N/A", None, "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0, "N/A", None, "Input"],
     ]
     # fmt: on
 
     def __init__(self, config, equilibrium, **kwargs):
+        self.eq = equilibrium
         self.params = ParameterFrame(self.default_params)
         self.params.update_kw_parameters(config)
         self._check_params()
 
         # Midplane spatial resolution between flux surfaces
         self.dx_mp = kwargs.get("dx_mp", 0.001)
-
-        self.eq = equilibrium
 
         # Constructors
         self.first_wall = None
@@ -111,16 +111,22 @@ class ChargedParticleSolver:
         """
         Check input fractions for validity.
         """
-        if self.params.f_outer_target + self.params.f_inner_target != 1.0:
+        # Check lower power fractions
+        lower_power = self.params.f_lfs_lower_target + self.params.f_hfs_lower_target
+        upper_power = self.params.f_lfs_upper_target + self.params.f_hfs_upper_target
+        power_sum = lower_power + upper_power
+
+        if not np.isclose(power_sum, 1.0, rtol=0, atol=1e-9):
             raise AdvectionTransportError(
-                "Inner / outer fractions should sum to 1.0:\n"
-                f"{self.params.f_outer_target} + {self.params.f_inner_target} != 1.0:"
+                f"Total power fractions should sum to 1, not : {power_sum}"
             )
-        if self.params.f_upper_target + self.params.f_lower_target != 1.0:
-            raise AdvectionTransportError(
-                "Upper / lower fractions should sum to 1.0:\n"
-                f"{self.params.f_upper_target} + {self.params.f_lower_target} != 1.0:"
-            )
+
+        if self.eq.is_double_null:
+            if np.any(np.isclose([lower_power, upper_power], 0, rtol=0, atol=1e-9)):
+                bluemira_warn(
+                    "A DN equilibrium was detected but your power distribution"
+                    " is 0 in either the lower or upper directions."
+                )
 
     @staticmethod
     def _process_first_wall(first_wall):
@@ -292,8 +298,8 @@ class ChargedParticleSolver:
         q_par_hfs = q_par_omp * Bp_hfs / B_omp
 
         # Calculate perpendicular heat fluxes
-        heat_flux_lfs = self.params.f_outer_target * q_par_lfs * np.sin(alpha_lfs)
-        heat_flux_hfs = self.params.f_inner_target * q_par_hfs * np.sin(alpha_hfs)
+        heat_flux_lfs = self.params.f_lfs_lower_target * q_par_lfs * np.sin(alpha_lfs)
+        heat_flux_hfs = self.params.f_hfs_lower_target * q_par_hfs * np.sin(alpha_hfs)
 
         # Correct power (energy conservation)
         q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * self.dx_mp * x_omp)
@@ -350,13 +356,11 @@ class ChargedParticleSolver:
         Bt_imp = self.eq.Bt(x_imp)
         B_imp = np.hypot(Bp_imp, Bt_imp)
 
+        f_outboard = self.params.f_lfs_lower_target + self.params.f_lfs_upper_target
+        f_inboard = self.params.f_hfs_lower_target + self.params.f_hfs_upper_target
         # Parallel heat flux at the outboard and inboard midplane
-        q_par_omp = self.params.f_outer_target * self._q_par(
-            x_omp, dx_omp, B_omp, Bp_omp
-        )
-        q_par_imp = self.params.f_inner_target * self._q_par(
-            x_imp, dx_imp, B_imp, Bp_imp, outboard=False
-        )
+        q_par_omp = f_outboard * self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
+        q_par_imp = f_inboard * self._q_par(x_imp, dx_imp, B_imp, Bp_imp, outboard=False)
 
         # Calculate poloidal field at intersections
         Bp_lfs_down = self.eq.Bp(x_lfs_down_inter, z_lfs_down_inter)
@@ -373,16 +377,16 @@ class ChargedParticleSolver:
 
         # Calculate perpendicular heat fluxes
         heat_flux_lfs_down = (
-            self.params.f_lower_target * q_par_lfs_down * np.sin(alpha_lfs_down)
+            self.params.f_lfs_lower_target * q_par_lfs_down * np.sin(alpha_lfs_down)
         )
         heat_flux_lfs_up = (
-            self.params.f_upper_target * q_par_lfs_up * np.sin(alpha_lfs_up)
+            self.params.f_lfs_upper_target * q_par_lfs_up * np.sin(alpha_lfs_up)
         )
         heat_flux_hfs_down = (
-            self.params.f_lower_target * q_par_hfs_down * np.sin(alpha_hfs_down)
+            self.params.f_hfs_lower_target * q_par_hfs_down * np.sin(alpha_hfs_down)
         )
         heat_flux_hfs_up = (
-            self.params.f_upper_target * q_par_hfs_up * np.sin(alpha_hfs_up)
+            self.params.f_hfs_upper_target * q_par_hfs_up * np.sin(alpha_hfs_up)
         )
 
         # Correct power (energy conservation)
@@ -390,8 +394,8 @@ class ChargedParticleSolver:
         q_imp_int = 2 * np.pi * np.sum(q_par_imp / (B_imp / Bp_imp) * self.dx_mp * x_imp)
 
         total_power = self.params.fw_p_sol_near + self.params.fw_p_sol_far
-        f_correct_power_ob = (self.params.f_outer_target * total_power) / q_omp_int
-        f_correct_power_ib = (self.params.f_inner_target * total_power) / q_imp_int
+        f_correct_power_ob = (f_outboard * total_power) / q_omp_int
+        f_correct_power_ib = (f_inboard * total_power) / q_imp_int
 
         return (
             np.concatenate(
@@ -402,10 +406,18 @@ class ChargedParticleSolver:
             ),
             np.concatenate(
                 [
-                    f_correct_power_ob * self.params.f_lower_target * heat_flux_lfs_down,
-                    f_correct_power_ob * self.params.f_upper_target * heat_flux_lfs_up,
-                    f_correct_power_ib * self.params.f_lower_target * heat_flux_hfs_down,
-                    f_correct_power_ib * self.params.f_upper_target * heat_flux_hfs_up,
+                    f_correct_power_ob
+                    * self.params.f_lfs_lower_target
+                    * heat_flux_lfs_down,
+                    f_correct_power_ob
+                    * self.params.f_lfs_upper_target
+                    * heat_flux_lfs_up,
+                    f_correct_power_ib
+                    * self.params.f_hfs_lower_target
+                    * heat_flux_hfs_down,
+                    f_correct_power_ib
+                    * self.params.f_hfs_upper_target
+                    * heat_flux_hfs_up,
                 ]
             ),
         )
@@ -417,11 +429,11 @@ class ChargedParticleSolver:
         p_sol_near = self.params.fw_p_sol_near
         p_sol_far = self.params.fw_p_sol_far
         if outboard:
-            lq_near = self.params.fw_lambda_q_near
-            lq_far = self.params.fw_lambda_q_far
+            lq_near = self.params.fw_lambda_q_near_omp
+            lq_far = self.params.fw_lambda_q_far_omp
         else:
-            lq_near = self.params.fw_lambda_q_near_ib
-            lq_far = self.params.fw_lambda_q_far_ib
+            lq_near = self.params.fw_lambda_q_near_imp
+            lq_far = self.params.fw_lambda_q_far_imp
         return (
             (
                 p_sol_near * np.exp(-dx / lq_near) / lq_near

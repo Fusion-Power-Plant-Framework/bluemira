@@ -51,10 +51,60 @@ params = ParameterFrame(
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
         ["f_outer_target", "Power fraction", 0.75, "N/A", None, "Input"],
         ["f_inner_target", "Power fraction", 0.25, "N/A", None, "Input"],
+        ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
+        ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
+        [
+            "fw_lambda_q_near_omp",
+            "Lambda q near SOL at the outboard",
+            0.05,
+            "m",
+            None,
+            "Input",
+        ],
+        [
+            "fw_lambda_q_far_omp",
+            "Lambda q far SOL at the outboard",
+            0.05,
+            "m",
+            None,
+            "Input",
+        ],
+        [
+            "f_lfs_lower_target",
+            "Fraction of SOL power deposited on the LFS lower target",
+            0.75,
+            "N/A",
+            None,
+            "Input",
+        ],
+        [
+            "f_hfs_lower_target",
+            "Fraction of SOL power deposited on the HFS lower target",
+            0.25,
+            "N/A",
+            None,
+            "Input",
+        ],
+        [
+            "f_lfs_upper_target",
+            "Fraction of SOL power deposited on the LFS upper target (DN only)",
+            0,
+            "N/A",
+            None,
+            "Input",
+        ],
+        [
+            "f_hfs_upper_target",
+            "Fraction of SOL power deposited on the HFS upper target (DN only)",
+            0,
+            "N/A",
+            None,
+            "Input",
+        ],
     ]
 )
 
-solver = ChargedParticleSolver(params, eq, dpsi_near=0.001, dpsi_far=0.001)
+solver = ChargedParticleSolver(params, eq, dx_mp=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
 # Plot the analysis

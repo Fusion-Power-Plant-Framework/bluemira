@@ -1717,20 +1717,37 @@ class FirstWallDNNew(FirstWallNew):
         ["fw_dx_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
         ["fw_dx_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
+
+        
         ["fw_p_sol_near", "near Scrape off layer power", 90, "MW", None, "Input"],
         ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
-        ["p_rate_omp", "power sharing omp", 0.9, "%", None, "Input"],
-        ["p_rate_imp", "power sharing imp", 0.1, "%", None, "Input"],
+
         ["fw_lambda_q_near_omp", "Lambda_q near SOL omp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda_q far SOL omp", 0.1, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda_q near SOL imp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_imp", "Lambda_q far SOL imp", 0.1, "m", None, "Input"],
-        ["dr_near_omp", "fs thickness near SOL", 0.001, "m", None, "Input"],
-        ["dr_far_omp", "fs thickness far SOL", 0.005, "m", None, "Input"],
-        ["f_lfs_lower_target", "Power fraction lfs lower", 0.5, "N/A", None, "Input"],
-        ["f_lfs_upper_target", "Power fraction lfs upper", 0.5, "N/A", None, "Input"],
-        ["f_hfs_lower_target", "Power fraction hfs lower", 0.5, "N/A", None, "Input"],
-        ["f_hfs_upper_target", "Power fraction hfs upper", 0.5, "N/A", None, "Input"],
+
+        
+        # These are now wrapped into a single analysis_tweak term: dx_mp
+        # It's fast enough that there is no need to discretise differently
+        # ["dr_near_omp", "fs thickness near SOL", 0.001, "m", None, "Input"],
+        # ["dr_far_omp", "fs thickness far SOL", 0.005, "m", None, "Input"],
+        # These seem to be inconsistent with the above, or at least could be set as such
+        # Do not appear to be used anyway
+        # ["fw_dpsi_n_near", "Step size of psi in near SOL", 0.1, "N/A", None, "Input"],
+        # ["fw_dpsi_n_far", "Step size of psi in far SOL", 0.1, "N/A", None, "Input"],
+
+        # These don't seem to be used before, but they are in the new
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "N/A", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "N/A", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target", 0.9 * 0.5, "N/A", "DN only", "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target", 0.1 * 0.5, "N/A", "DN only", "Input"],
+
+        # These are now deprecated, in favour of just doing the mupltication in the
+        # inputs above
+        # ["p_rate_omp", "power sharing omp", 0.9, "%", None, "Input"],
+        # ["p_rate_imp", "power sharing imp", 0.1, "%", None, "Input"],
+
         ["hf_limit", "heat flux material limit", 0.5, "MW/m^2", None, "Input"],
         # External inputs to draw the divertor
         ["xpt_outer_gap", "Gap between x-point and outer wall", 0.7, "m", None, "Input"],
