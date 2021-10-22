@@ -28,7 +28,7 @@ from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
-from bluemira.equilibria.find import find_flux_surfs
+from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     get_intersect,
@@ -50,13 +50,13 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_common_loop,
     simplify_loop,
 )
+from BLUEPRINT.geometry.offset import offset_clipper
 from BLUEPRINT.geometry.geomtools import (
     index_of_point_on_loop,
     make_box_xz,
 )
 from BLUEPRINT.geometry.geombase import make_plane
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d
-from functools import partial
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.utilities.csv_writer import write_csv
 
@@ -222,13 +222,12 @@ def make_flux_contour_loops(eq, psi_norm):
         flux_dict[min_x] = Loop(x=flux_x, y=None, z=flux_z)
 
     # Sort the dictionary
-    sorted_dict = dict(sorted(flux_dict.items()))
+    sorted_dict = dict(sorted(flux_dict.keys()))
 
     # Get list of increasing values
-    sorted_flux_loops = list(sorted_dict.values())
+    sorted_flux_loops = list(sorted_dict.values())[::-1]
 
-    # By convention, want decreasing list
-    sorted_flux_loops.reverse()
+    print(sorted_flux_loops)
     return sorted_flux_loops
 
 
@@ -284,10 +283,17 @@ class DivertorBuilder:
     Mental health assistant
     """
 
-    def __init__(self, config, inputs, eq):
+    def __init__(self, params, config, inputs, eq):
+        self.params = params
         self.config = config
         self.inputs = inputs
         self.equilibrium = eq
+        self.points = self.inputs.pop("points")
+
+        separatrix = self.inputs.pop("separatrix")
+        if isinstance(separatrix, Loop):
+            separatrix = [separatrix]
+        self.separatrix = separatrix
 
     def make_divertor(self, fw_loop):
         """
@@ -358,7 +364,13 @@ class DivertorBuilder:
         # Bottom divertor loop
         bottom_divertor = Loop(x=x_div, z=z_div)
         bottom_divertor.close()
-        return bottom_divertor
+
+        if self.inputs["SN"]:
+            return [bottom_divertor]
+        else:
+            # Flip z coords to get top divertor loop
+            top_divertor = Loop(x=bottom_divertor.x, z=-bottom_divertor.z)
+            return [bottom_divertor, top_divertor]
 
     def make_divertor_target(
         self, strike_point, tangent, vertical_target=True, outer_target=True
@@ -715,6 +727,8 @@ class DivertorBuilder:
 
         outer_loop, inner_loop = self.get_outer_inner_loops(flux_loops)
 
+        print(inner_loop)
+
         # Get the inner intersection with the separatrix
         inner_strike_x = self.params.inner_strike_r
         x_norm = 0
@@ -773,7 +787,7 @@ class DivertorBuilder:
         ):
             # If flag in inputs is true, use psi_norm value
             psi_norm = self.params["psi_norm"]
-            flux_loops = self.make_flux_contour_loops(self.equilibrium, psi_norm)
+            flux_loops = make_flux_contour_loops(self.equilibrium, psi_norm)
         else:
             # Default: use separatrix
             flux_loops = self.separatrix
@@ -809,7 +823,7 @@ class DivertorBuilder:
 
             # Create an offset divertor with a given thickness
             offset = self.params.tk_div_cass
-            div_offset = div.offset_clipper(offset, method="miter")
+            div_offset = offset_clipper(div, offset, method="miter")
 
             # Take the outermost radial limit from offset div
             x_max = np.max(div.x) + offset
@@ -907,6 +921,9 @@ class DivertorBuilder:
             inner_loop = flux_loops[1]
         return outer_loop, inner_loop
 
+    def set_lfs_point(self, point):
+        self._lfs_point = point
+
 
 class DEMODivertorBuilder(DivertorBuilder):
     def __init__(self, *args):
@@ -951,7 +968,16 @@ class STEPDivertorBuilder(DivertorBuilder):
         self.inner_leg_polyfit_degree = self.inputs.get("inner_leg_polyfit_degree", 1)
 
     def get_guide_lines(self, flux_loop):
-        return self.flux_surface_lfs[-1], flux_loop
+        # This is a particular nightmare, I believe it would cause issues in the
+        # iterative "optimisation" procedure
+        eq = self.equilibrium
+        p = self._lfs_point
+        x, z = find_flux_surface_through_point(
+            eq.x, eq.z, eq.psi(), p[0], p[2], eq.psi(p[0], p[2])
+        )
+        lfs_loop = Loop(x=x, z=z)
+
+        return lfs_loop, flux_loop
 
 
 class FirstWallNew(ReactorSystem):
@@ -984,17 +1010,19 @@ class FirstWallNew(ReactorSystem):
         self._init_params(self.config)
         self.init_equilibrium()
 
+        # De-carbonarisation hack
+        inputs = self.inputs.copy()
+        inputs["points"] = self.points
+        inputs["separatrix"] = self.separatrix
         if self.inputs.get("DEMO_like_divertor", False):
             self.divertor_builder = DEMODivertorBuilder(
-                self.config, self.inputs, self.equilibrium
+                self.params, self.config, inputs, self.equilibrium
             )
         else:
             self.divertor_builder = STEPDivertorBuilder(
-                self.config, self.inputs, self.equilibrium
+                self.params, self.config, inputs, self.equilibrium
             )
 
-        self.build()
-        self.build_fs_to_plot()
         self._plotter = FirstWallPlotter()
 
     # Setup stuff
@@ -1029,6 +1057,7 @@ class FirstWallNew(ReactorSystem):
         # Define the mid-plane as having z-normal and containing O point.
         self.mid_plane = make_plane(self.points["o_point"]["z"], 2)
 
+    # Actual run
     def build(self):
         """
         Build the 2D profile
@@ -1042,6 +1071,7 @@ class FirstWallNew(ReactorSystem):
         else:
             self.profile = self.make_preliminary_profile()
 
+        self.hf_firstwall_params(self.profile)
         self.make_2d_profile()
 
     # Output and plotting stuff
@@ -1114,8 +1144,8 @@ class FirstWallNew(ReactorSystem):
         hf_wall: [float]
             heat flux values associated to the first flux lines-wall intersections
         """
-        solver = ChargedParticleSolver(self.config, self.eq)
-        x_wall, z_wall, hf_wall = solver.analyse(profile)
+        self.solver = ChargedParticleSolver(self.config, self.equilibrium)
+        x_wall, z_wall, hf_wall = self.solver.analyse(profile)
         self.x_all_ints = x_wall
         self.z_all_ints = z_wall
         self.hf_all_ints = hf_wall
@@ -1142,7 +1172,6 @@ class FirstWallNew(ReactorSystem):
         """
         initial_profile = self.make_preliminary_profile()
         self.preliminary_profile = initial_profile
-        self.make_flux_surfaces(profile=initial_profile)
 
         profile = initial_profile
         for _ in range(n_iteration_max):
@@ -1195,6 +1224,11 @@ class FirstWallNew(ReactorSystem):
         """
         # Ensure our starting profile is closed
         self.profile.close()
+
+        # Nightmare spaghetti
+        points = loop_plane_intersect(self.profile, self.mid_plane)
+        idx = np.argmax(points[0, :])
+        self.divertor_builder.set_lfs_point(points[idx])
 
         inner_divertor_loops = self.divertor_builder.make_divertor(self.profile)
 
@@ -1288,11 +1322,11 @@ class FirstWallNew(ReactorSystem):
             outboard = boolean_2d_difference_loop(outboard, div)
 
         # Offset each loop with the appropriate thickness
-        inboard = inboard.offset_clipper(tk_inboard, method="miter")
-        outboard = outboard.offset_clipper(tk_outboard, method="miter")
+        inboard = offset_clipper(inboard, tk_inboard, method="miter")
+        outboard = offset_clipper(outboard, tk_outboard, method="miter")
         offset_divertor_loops = []
         for div in divertor_loops:
-            offset_divertor_loops.append(div.offset_clipper(tk_div, method="miter"))
+            offset_divertor_loops.append(offset_clipper(div, tk_div, method="miter"))
 
         # Remove the overlaps between the offset sections
         sections = self.get_non_overlapping(
@@ -1567,10 +1601,6 @@ class FirstWallSNNew(FirstWallNew):
         return (x_wall, z_wall, hf_wall)
 
     # Geometry creation
-
-    def make_divertor(self, fw_loop):
-        bottom_divertor = self.divertor_builder.make_divertor(fw_loop)
-        return [bottom_divertor]
 
     def make_preliminary_profile(self):
         """
@@ -1870,12 +1900,6 @@ class FirstWallDNNew(FirstWallNew):
 
         return new_fw_profile
 
-    def make_divertor(self, fw_loop):
-        bottom_divertor = self.divertor_builder.make_divertor(fw_loop)
-        # Flip z coords to get top divertor loop
-        top_divertor = Loop(x=bottom_divertor.x, z=-bottom_divertor.z)
-        return [bottom_divertor, top_divertor]
-
     @property
     def xz_plot_loop_names(self):
         """
@@ -1906,47 +1930,3 @@ class FirstWallPlotter(ReactorSystemPlotter):
         Plot the first wall in x-z.
         """
         super().plot_xz(plot_objects, ax=ax, **kwargs)
-
-    def plot_hf(
-        self,
-        separatrix,
-        loops,
-        x_int,
-        z_int,
-        hf_int,
-        fw_profile,
-        koz=None,
-        ax=None,
-        **kwargs,
-    ):
-        """
-        Plots the 2D heat flux distribution.
-
-        Parameters
-        ----------
-        separatrix: Union[Loop, MultiLoop]
-            The separatrix loop(s) (Loop for SN, MultiLoop for DN)
-        loops: [MultiLoop]
-            The flux surface loops
-        x_int: [float]
-            List of all the x coordinates at the intersections of concern
-        z_int: [float]
-            List of all the z coordinates at the intersections of concern
-        hf_int: [float]
-            List of all hf values at the intersections of concern
-        fw_profile: Loop
-            Inner profile of a First wall
-        koz: Loop
-            Loop representing the keep-out-zone
-        ax: Axes, optional
-            The optional Axes to plot onto, by default None.
-        """
-        fw_profile.plot(ax=ax, fill=False, edgecolor="k", linewidth=1)
-        loops.plot(ax=ax, fill=False, edgecolor="r", linewidth=0.2)
-        separatrix.plot(ax=ax, fill=False, edgecolor="r", linewidth=1)
-        if koz is not None:
-            koz.plot(ax=ax, fill=False, edgecolor="g", linewidth=1)
-        ax = plt.gca()
-        cs = ax.scatter(x_int, z_int, s=25, c=hf_int, cmap="viridis", zorder=100)
-        bar = plt.gcf().colorbar(cs, ax=ax)
-        bar.set_label("Heat Flux [MW/m^2]")

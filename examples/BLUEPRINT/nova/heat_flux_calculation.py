@@ -97,3 +97,7 @@ fw = FirstWallSNNew(
         "div_vertical_inner_target": False,
     },
 )
+
+fw.build()
+
+fw.solver.plot()
