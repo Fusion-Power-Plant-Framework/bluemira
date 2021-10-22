@@ -99,12 +99,22 @@ At the first intersection point, the heat flux is calculated according
 to the model used in the FluxSurface class and presented in relevant 
 documentation.
 
-In the FirstWall class a first wall profile optimiser method is present, 
+In the FirstWall class, a first wall optimiser method is present, 
 and the user can decide whether to use it or not.
 The optimiser detects the intersection points that are associated to a 
 heat flux higher than a limit.
-In correspondence of these points the first wall profile is modified. 
-The "guideline", initially used to draw the "preliminary first wall profile", 
-locally deviates, by using the next and further flux line.
+In correspondence of these points, the first wall profile is modified. 
+The "guideline", initially used to draw the "preliminary first wall 
+profile", is locally deviates, by using the next and further flux line.
+The heat flux occurring in that region is thus reduced.
+
+.. figure:: ../images/nova/fw_optimised.png
+   :name: fig:fw_optimised
+   :align: center
+
+   The line in black is indicative of the preliminary first wall profile.
+   The line blue indicates the new and optimised first wall profile.
+
+The ultimate first wall profile is finally obtained by attacching the divertor.
 
 
