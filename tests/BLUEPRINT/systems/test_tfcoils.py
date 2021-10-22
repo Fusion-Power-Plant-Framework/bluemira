@@ -206,10 +206,10 @@ class TestTaperedPictureFrameTF:
         vol_cp_conductor = get_properties(CAD.component["shapes"][2])["Volume"]
         vol_leg_casing = get_properties(CAD.component["shapes"][3])["Volume"]
 
-        true_vol_b_cyl = 0.46925
-        true_vol_leg_conductor = 12.3735
-        true_vol_cp_conductor = 2.5788
-        true_vol_leg_casing = 10.0850
+        true_vol_b_cyl = 0.4785
+        true_vol_leg_conductor = 15.6117
+        true_vol_cp_conductor = 2.6499
+        true_vol_leg_casing = 11.6060
 
         assert np.isclose(vol_b_cyl, true_vol_b_cyl, rtol=1e-3)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)
@@ -391,9 +391,9 @@ class TestCurvedPictureframeTF:
         vol_tapered_cp = get_properties(CAD.component["shapes"][1])["Volume"]
         vol_leg_conductor = get_properties(CAD.component["shapes"][0])["Volume"]
 
-        true_vol_tapered_cp = 2.2678
-        true_vol_leg_conductor = 10.8514
-        true_vol_casing = 3.0716
+        true_vol_tapered_cp = 2.2971
+        true_vol_leg_conductor = 10.8308
+        true_vol_casing = 3.0748
         assert np.isclose(vol_casing, true_vol_casing, rtol=1e-2)
         assert np.isclose(vol_tapered_cp, true_vol_tapered_cp, rtol=1e-2)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)
@@ -457,7 +457,6 @@ class TestResistiveCurvedPictureframeTF:
         read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
-        name = os.sep.join([read_path, "KOZ_PF_test1.json"])
         ko_zone = make_box_xz(1, 9, -9, 9)
         cls.to_tf = {
             "name": "Example_PolySpline_TF",
@@ -477,7 +476,7 @@ class TestResistiveCurvedPictureframeTF:
         cls.lcfs = lcfs
         cls.ko_zone = ko_zone
 
-    def test_curved_pictureframe_SC_TF(self, tempdir):
+    def test_curved_pictureframe_R_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
         tf1.optimise()

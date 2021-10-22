@@ -541,7 +541,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         index = self.transition_index(self.loops["in"]["x"], self.loops["in"]["z"])
 
         for loop, dt_in, dt_out in zip(loops, inboard_dt, outboard_dt):
-            if self.inputs["shape_type"] in ["TP", "CP"]:
+            if self.conductivity in ["R"]:
                 # Designs that might have a tapered CP or
                 # if offset_clipper needs to be used
                 dt = dt_in
@@ -1281,6 +1281,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             tf_radii = [min(tf["out"]["x"]), min(tf["in"]["x"])]
             r_wp_inner_inb = min(tf["wp_out"]["x"])
             r_wp_inner_outb = min(tf["wp_in"]["x"])
+            # radial thickness of outboard leg wp
+            tk_wp_outb = self.params.tk_tf_outboard
             r_wp_outer_outb = max(tf["wp_out"]["x"])
             tf_wp_r = [r_wp_inner_inb, r_wp_inner_outb]
 
@@ -1297,7 +1299,13 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             # make arcs for wp inboard side and for b_cyl using tf radii from above
             # stuff below makes a rectangle for inboard leg, but leave it as it's used
             # for outer leg
-            x_wp_i_rect = [tf_wp_r[0], tf_wp_r[1], tf_wp_r[1], tf_wp_r[0], tf_wp_r[0]]
+            x_wp_i_rect = [
+                tf_wp_r[0],
+                tf_wp_r[0] + tk_wp_outb,
+                tf_wp_r[0] + tk_wp_outb,
+                tf_wp_r[0],
+                tf_wp_r[0],
+            ]
             y_wp_i_rect = [
                 tf_width / 2,
                 tf_width / 2,
