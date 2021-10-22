@@ -188,6 +188,772 @@ def make_guide_line(initial_loop, top_limit, bottom_limit):
     return guide_line
 
 
+def make_flux_contour_loops(eq, psi_norm):
+    """
+    Return an ordered list of loops corresponding to flux contours having
+    the given (normalised) psi value.
+    The ordering is in decreasing value of min x coord in loop to be
+    consisent with convention used in self.separatrix.
+
+    Parameters
+    ----------
+    eq : Equilibirum
+        Equilibrium from which to take the flux field.
+    psi_norm : float
+        Value normalised flux field to use to define the contours.
+
+    Returns
+    -------
+    flux_loops : list of Loop
+        List of flux contours as Loops
+    """
+    # Flux field
+    psi = eq.psi()
+
+    # Get the contours
+    flux_surfs = find_flux_surfs(eq.x, eq.z, psi, psi_norm)
+
+    # Create a dictionary of loops indexed in min x
+    flux_dict = {}
+    for surf in flux_surfs:
+        flux_x = surf[:, 0]
+        flux_z = surf[:, 1]
+        min_x = np.min(flux_x)
+        flux_dict[min_x] = Loop(x=flux_x, y=None, z=flux_z)
+
+    # Sort the dictionary
+    sorted_dict = dict(sorted(flux_dict.items()))
+
+    # Get list of increasing values
+    sorted_flux_loops = list(sorted_dict.values())
+
+    # By convention, want decreasing list
+    sorted_flux_loops.reverse()
+    return sorted_flux_loops
+
+
+def reshape_curve(
+    curve_x_coords,
+    curve_z_coords,
+    new_starting_point,
+    new_ending_point,
+    degree,
+):
+    """
+    Force a curve between two new points
+    Used to shape the divertor legs following the separatrix curvature
+    Mostly useful for the Super-X configuration
+
+    Parameters
+    ----------
+    curve_x_coords: [float]
+        x coordinates of the leading curve (the separatrix)
+    curve_z_coords: [float]
+        z coordinates of the leading curve (the separatrix)
+    new_starting_point: [float, float]
+        x and z coordinates of the starting point of the new curve
+        (contour of the divertor legs)
+    new_ending_point: [float, float]
+        x and z coordinates of the ending point of the new curve
+    degree: [float]
+        Degree of the fitting polynomial. The longer is the leg the harder
+        is to control the shape. Changing this value can help
+
+    Returns
+    -------
+    x: [float]
+        x coordinate of points in the new curve
+    z: [float]
+        z coordinate of points in the new curve
+    """
+    coeffs = np.polyfit(curve_x_coords, curve_z_coords, degree)
+    func = np.poly1d(coeffs)
+
+    new_a_coeff = (new_ending_point[1] - new_starting_point[1]) / (
+        func(new_ending_point[0]) - func(new_starting_point[0])
+    )
+    new_b_coeff = new_starting_point[1] - new_a_coeff * func(new_starting_point[0])
+
+    x = np.linspace(new_starting_point[0], new_ending_point[0], 10)
+    z = new_a_coeff * (func(x)) + new_b_coeff
+    return (x, z)
+
+
+class DivertorBuilder:
+    """
+    Mental health assistant
+    """
+
+    def __init__(self, config, inputs, eq):
+        self.config = config
+        self.inputs = inputs
+        self.equilibrium = eq
+
+    def make_divertor(self, fw_loop):
+        """
+        Create a long legs divertor loop(s)
+        usable both for SN and DN divertor
+
+        Parameters
+        ----------
+        fw_loop : Loop
+            first wall preliminary profile
+
+        Returns
+        -------
+        divertor_loop: Loop
+            Loop for the bottom divertor geometry
+        """
+        # Some shorthands
+        z_x_point = self.points["x_point"]["z_low"]
+        x_x_point = self.points["x_point"]["x"]
+
+        # Define point where the legs should meet
+        # In line with X point but with vertical offset
+        middle_point = [x_x_point, z_x_point - self.params.xpt_height]
+
+        # Find the intersection of the first wall loop and
+        # the x-y plane containing the lower X point
+        z_norm = 2
+        fw_int_point = get_intersection_point(
+            z_x_point, z_norm, fw_loop, x_x_point, inner=False
+        )
+
+        # Determine outermost point for outer divertor leg
+        div_top_right = max(fw_int_point[0], x_x_point + self.params.xpt_outer_gap)
+
+        # Determine outermost point for inner divertor leg
+        div_top_left = min(fw_int_point[0], x_x_point - self.params.xpt_inner_gap)
+
+        # Pick some flux loops to use to locate strike points and shape the
+        # divertor legs
+        flux_loops = self.pick_flux_loops()
+
+        # Find the strike points
+        inner_strike, outer_strike = self.find_strike_points(flux_loops)
+
+        # Make the outer leg
+        outer_leg_x, outer_leg_z = self.make_outer_leg(
+            div_top_right, outer_strike, middle_point, flux_loops[0]
+        )
+
+        # Make the inner leg
+        if len(flux_loops) == 1:
+            inner_leg_x, inner_leg_z = self.make_inner_leg(
+                div_top_left, inner_strike, middle_point, flux_loops[0]
+            )
+        else:
+            inner_leg_x, inner_leg_z = self.make_inner_leg(
+                div_top_left, inner_strike, middle_point, flux_loops[1]
+            )
+
+        # Divertor x-coords
+        x_div = np.append(inner_leg_x, outer_leg_x)
+        x_div = [round(elem, 5) for elem in x_div]
+
+        # Divertor z-coords
+        z_div = np.append(inner_leg_z, outer_leg_z)
+        z_div = [round(elem, 5) for elem in z_div]
+
+        # Bottom divertor loop
+        bottom_divertor = Loop(x=x_div, z=z_div)
+        bottom_divertor.close()
+        return bottom_divertor
+
+    def make_divertor_target(
+        self, strike_point, tangent, vertical_target=True, outer_target=True
+    ):
+        """
+        Make a divertor target
+
+        Parameters
+        ----------
+        strike_point: [float,float]
+            List of [x,z] coords corresponding to the strike point position
+
+        tangent: [float,float]
+            List of [x,z] coords corresponding to the tangent vector to the
+        appropriate flux loop at the strike point
+
+        Returns
+        -------
+        target_internal_point: [float, float]
+            x and z coordinates of the internal end point of target.
+            Meaning private flux region (PRF) side
+        target_external_point: [float, float]
+            x and z coordinates of the external end point of target.
+            Meaning scrape-off layer (SOL) side
+
+        The divertor target is a straight line
+        """
+        # If statement to set the function
+        # either for the outer target (if) or the inner target (else)
+        if outer_target:
+            sign = 1
+            theta_target = self.params.theta_outer_target
+            target_length_pfr = self.params.tk_outer_target_pfr
+            target_length_sol = self.params.tk_outer_target_sol
+        else:
+            sign = -1
+            theta_target = self.params.theta_inner_target
+            target_length_pfr = self.params.tk_inner_target_pfr
+            target_length_sol = self.params.tk_inner_target_sol
+
+        # Rotate tangent vector to appropriate flux loop to obtain
+        # a vector parallel to the outer target
+
+        # if horizontal target
+        if not vertical_target:
+            target_par = rotate_vector_2d(tangent, np.radians(theta_target * sign))
+        # if vertical target
+        else:
+            target_par = rotate_vector_2d(tangent, np.radians(-theta_target * sign))
+
+        # Create relative vectors whose length will be the offset distance
+        # from the strike point
+        pfr_target_end = -target_par * target_length_pfr * sign
+        sol_target_end = target_par * target_length_sol * sign
+
+        # Swap if we got the wrong way round
+        if outer_target:
+            swap_points = sol_target_end[0] < pfr_target_end[0]
+        # for the inner target
+        else:
+            swap_points = (
+                not vertical_target and sol_target_end[0] > pfr_target_end[0]
+            ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
+
+        if swap_points:
+            tmp = pfr_target_end
+            pfr_target_end = sol_target_end
+            sol_target_end = tmp
+
+        # Add the strike point to diffs to get the absolute positions
+        # of the end points of the target
+        pfr_target_end = pfr_target_end + strike_point
+        sol_target_end = sol_target_end + strike_point
+
+        # Return end points
+        return (pfr_target_end, sol_target_end)
+
+    def make_outer_leg(self, div_top_right, outer_strike, middle_point, flux_loop):
+        """
+        Find the coordinates of the outer leg of the divertor.
+
+        Parameters
+        ----------
+        div_top_right: float
+            Top-right x-coordinate of the divertor
+        outer_strike: [float,float]
+            Coordinates of the outer strike point
+        middle_point: [float,float]
+            Coordinates of the middle point between the inner and outer legs
+        flux_loop: Loop
+            Outer flux loop used for shaping.
+
+        Returns
+        -------
+        divertor_leg: (list, list)
+            x and z coordinates of outer leg
+        """
+        # Find the tangent to the approriate flux loop at the outer strike point
+        tangent = get_tangent_vector(outer_strike, flux_loop)
+
+        # Get the outer target points
+        (
+            outer_target_internal_point,
+            outer_target_external_point,
+        ) = self.make_divertor_target(
+            outer_strike,
+            tangent,
+            vertical_target=self.inputs["div_vertical_outer_target"],
+            outer_target=True,
+        )
+
+        # Select the degree of the fitting polynomial and
+        # the flux lines that will guide the divertor leg shape
+        degree_in = self.outer_leg_sol_polyfit_degree
+        degree_out = self.outer_leg_pfr_polyfit_degree
+        (
+            outer_leg_external_guide_line,
+            outer_leg_internal_guide_line,
+        ) = self.get_guide_lines(flux_loop)
+
+        # Select the top and bottom limits for the guide lines
+        z_x_point = self.points["x_point"]["z_low"]
+        outer_leg_external_top_limit = [div_top_right, z_x_point]
+        outer_leg_external_bottom_limit = outer_target_external_point
+
+        outer_leg_internal_top_limit = middle_point
+        outer_leg_internal_bottom_limit = outer_target_internal_point
+
+        # Make the guide lines
+        external_guide_line = make_guide_line(
+            outer_leg_external_guide_line,
+            outer_leg_external_top_limit,
+            outer_leg_external_bottom_limit,
+        )
+
+        internal_guide_line = make_guide_line(
+            outer_leg_internal_guide_line,
+            outer_leg_internal_top_limit,
+            outer_leg_internal_bottom_limit,
+        )
+
+        # Modify the clipped flux line curve (guide line) to start
+        # at the middle and end at the internal point of the outer target
+        (outer_leg_internal_line_x, outer_leg_internal_line_z,) = reshape_curve(
+            internal_guide_line.x,
+            internal_guide_line.z,
+            [middle_point[0], middle_point[1]],
+            outer_target_internal_point,
+            degree_in,
+        )
+
+        # Modify the clipped flux line curve to start at the top point of the
+        # outer target and end at the external point
+        (outer_leg_external_line_x, outer_leg_external_line_z,) = reshape_curve(
+            external_guide_line.x,
+            external_guide_line.z,
+            [div_top_right, z_x_point],
+            outer_target_external_point,
+            degree_out,
+        )
+
+        # Connect the inner and outer parts of the outer leg
+        outer_leg_x = np.append(
+            outer_leg_internal_line_x, outer_leg_external_line_x[::-1]
+        )
+        outer_leg_z = np.append(
+            outer_leg_internal_line_z, outer_leg_external_line_z[::-1]
+        )
+
+        # Return coordinate arrays
+        return (outer_leg_x, outer_leg_z)
+
+    def make_inner_leg(self, div_top_left, inner_strike, middle_point, flux_loop):
+        """
+        Find the coordinates of the outer leg of the divertor.
+
+        Parameters
+        ----------
+        div_top_left: float
+            Top-left x-coordinate of the divertor
+        inner_strike: [float,float]
+            Coordinates of the inner strike point
+        middle_point: [float,float]
+            Coordinates of the middle point between the inner and outer legs
+        flux_loop: Loop
+            Outer flux loop used for shaping.
+
+        Returns
+        -------
+        divertor_leg: (list, list)
+            x and z coordinates of outer leg
+        """
+        # Find the tangent to the approriate flux loop at the outer strike point
+        tangent = get_tangent_vector(inner_strike, flux_loop)
+
+        degree = self.inner_leg_polyfit_degree
+
+        # Get the outer target points
+        (
+            inner_target_internal_point,
+            inner_target_external_point,
+        ) = self.make_divertor_target(
+            inner_strike,
+            tangent,
+            vertical_target=self.inputs["div_vertical_inner_target"],
+            outer_target=False,
+        )
+
+        # Select those points along the given flux line below the X point
+        inner_leg_central_guide_line = flux_loop
+        z_x_point = self.points["x_point"]["z_low"]
+        top_clip_inner_leg_central_guide_line = np.where(
+            inner_leg_central_guide_line.z < z_x_point,
+        )
+
+        # Create a new Loop from the points selected along the given flux line
+        inner_leg_central_guide_line = Loop(
+            x=inner_leg_central_guide_line.x[top_clip_inner_leg_central_guide_line],
+            y=None,
+            z=inner_leg_central_guide_line.z[top_clip_inner_leg_central_guide_line],
+        )
+
+        # Select those points along the top-clipped flux line above the
+        # inner target internal point height
+        bottom_clip_inner_leg_central_guide_line = np.where(
+            inner_leg_central_guide_line.z > inner_target_internal_point[1],
+        )
+
+        # Create a new Loop from the points selected along the flux line
+        inner_leg_central_guide_line = Loop(
+            x=inner_leg_central_guide_line.x[bottom_clip_inner_leg_central_guide_line],
+            y=None,
+            z=inner_leg_central_guide_line.z[bottom_clip_inner_leg_central_guide_line],
+        )
+
+        # Modify the clipped flux line curve to start at the middle and end
+        # at the internal point of the outer target
+        (inner_leg_internal_line_x, inner_leg_internal_line_z,) = reshape_curve(
+            inner_leg_central_guide_line.x,
+            inner_leg_central_guide_line.z,
+            [middle_point[0], middle_point[1]],
+            inner_target_internal_point,
+            degree,
+        )
+
+        # Modify the clipped flux line curve to start at the top point of the
+        # outer target and end at the external point
+        (inner_leg_external_line_x, inner_leg_external_line_z,) = reshape_curve(
+            inner_leg_central_guide_line.x,
+            inner_leg_central_guide_line.z,
+            [div_top_left, z_x_point],
+            inner_target_external_point,
+            degree,
+        )
+
+        # Connect the inner and outer parts of the outer leg
+        inner_leg_x = np.append(
+            inner_leg_external_line_x, inner_leg_internal_line_x[::-1]
+        )
+        inner_leg_z = np.append(
+            inner_leg_external_line_z, inner_leg_internal_line_z[::-1]
+        )
+
+        # Return coordinate arrays
+        return (inner_leg_x, inner_leg_z)
+
+    def find_strike_points_from_koz(self, flux_loops):
+        """
+        Find the lowermost points of intersection between the
+        keep-out-zone and the given flux loops.
+
+        Parameters
+        ----------
+        flux_loops: list of Loop
+            List of flux loops used to find intersections
+
+        Returns
+        -------
+        inner, outer : list, list
+            Inner and outer strike points as [x,z] list.
+
+        """
+        # Check we have a koz and psi_norm in inputs
+        koz = self.inputs["koz"]
+
+        # Shorthand
+        z_low = self.points["x_point"]["z_low"]
+
+        # Find all_intersection points between keep-out zone and flux
+        # surface having the given psi_norm
+        all_ints = self.find_koz_flux_loop_ints(koz, flux_loops)
+
+        # Sort into a dictionary indexed by x-coord and save extremal
+        x_min = np.max(koz.x)
+        x_max = np.min(koz.x)
+        sorted = {}
+        for pt in all_ints:
+            x_now = pt[0]
+            z_now = pt[1]
+
+            # Only accept points below lower X point
+            if z_now > z_low:
+                continue
+            if x_now not in sorted:
+                sorted[x_now] = []
+            sorted[x_now].append(z_now)
+
+            # save limits
+            if x_now > x_max:
+                x_max = x_now
+            if x_now < x_min:
+                x_min = x_now
+
+        if len(sorted) == 0:
+            raise SystemsError(
+                "No intersections with keep-out zone below lower X-point."
+            )
+
+        # Check we have distinct xmin, xmax
+        if x_min == x_max:
+            raise SystemsError("All keep-out-zone intersections have same x-coord")
+
+        # Sort extremal inner and outer z coords and select lowest
+        sorted[x_min].sort()
+        sorted[x_max].sort()
+        inner_z = sorted[x_min][0]
+        outer_z = sorted[x_max][0]
+
+        # Construct the inner and outer points and return
+        inner = [x_min, inner_z]
+        outer = [x_max, outer_z]
+        return inner, outer
+
+    def find_strike_points_from_params(self, flux_loops):
+        """
+        Find the inner and outer strike points using the relative
+        height from the lower X point taken from self.params
+        and look for the intersection point with given flux loop(s).
+
+        Parameters
+        ----------
+        flux_loops : list of Loop
+            Loops with which the strike point should intersect.
+            For SN case this will be a list with one entry.
+
+        Returns
+        -------
+        inner,outer : list,list
+            Lists of [x,z] coords corresponding to inner and outer
+            strike points
+        """
+        # Some shorthands
+        x_x_point = self.points["x_point"]["x"]
+
+        outer_loop, inner_loop = self.get_outer_inner_loops(flux_loops)
+
+        # Get the inner intersection with the separatrix
+        inner_strike_x = self.params.inner_strike_r
+        x_norm = 0
+        # Does it make sense to compare x with x-norm??
+        inner_strike_z = get_intersection_point(
+            inner_strike_x, x_norm, inner_loop, x_x_point, inner=True
+        )[2]
+
+        # Get the outer intersection with the separatrix
+        outer_strike_x = self.params.outer_strike_r
+        # Does it make sense to compare x with x-norm??
+        outer_strike_z = get_intersection_point(
+            outer_strike_x, x_norm, outer_loop, x_x_point, inner=False
+        )[2]
+
+        inner_strike = [inner_strike_x, inner_strike_z]
+        outer_strike = [outer_strike_x, outer_strike_z]
+
+        return inner_strike, outer_strike
+
+    def find_strike_points(self, flux_loops):
+        """
+        Find the inner and outer strike points, taking intersections
+        from the given inner / outer flux loops
+
+        Parameters
+        ----------
+        flux_loops: list of Loop
+            List of flux loops used to find intersections
+
+        Returns
+        -------
+        inner,outer : list,list
+            Lists of [x,z] coords corresponding to inner and outer
+            strike points
+        """
+        if "strike_pts_from_koz" in self.inputs and self.inputs["strike_pts_from_koz"]:
+            return self.find_strike_points_from_koz(flux_loops)
+        else:
+            return self.find_strike_points_from_params(flux_loops)
+
+    def pick_flux_loops(self):
+        """
+        Return a list of flux loops to be used to find strike points.
+
+        Returns
+        -------
+        flux_loops : list of Loop
+            List of flux loops used to find intersections
+        """
+        flux_loops = []
+        if (
+            "pick_flux_from_psinorm" in self.inputs
+            and self.inputs["pick_flux_from_psinorm"]
+            and "psi_norm" in self.inputs
+        ):
+            # If flag in inputs is true, use psi_norm value
+            psi_norm = self.params["psi_norm"]
+            flux_loops = self.make_flux_contour_loops(self.equilibrium, psi_norm)
+        else:
+            # Default: use separatrix
+            flux_loops = self.separatrix
+        return flux_loops
+
+    def make_divertor_cassette(self, divertor_loops):
+        """
+        Given the divertor loops create the divertor cassette.
+
+        Parameters
+        ----------
+        divertor_loops : list
+            List of Loop objects representing the divertor
+
+        Returns
+        -------
+        divertor_cassette : list
+            List of Loop objects representing the divertor cassettes
+            (one for each divertor)
+        """
+        # Fetch the vacuum vessel
+        vv = self.inputs["vv_inner"]
+
+        # Find the limits of the vacuum vessel
+        z_max_vv = np.max(vv.z)
+        z_min_vv = np.min(vv.z)
+        x_max_vv = np.max(vv.x)
+        x_min_vv = np.min(vv.x)
+
+        # Make a cassette for each divertor
+        cassettes = []
+        for div in divertor_loops:
+
+            # Create an offset divertor with a given thickness
+            offset = self.params.tk_div_cass
+            div_offset = div.offset_clipper(offset, method="miter")
+
+            # Take the outermost radial limit from offset div
+            x_max = np.max(div.x) + offset
+
+            # Take the innermost radial limit from offset div, plus extra thickness
+            x_min = np.min(div.x) - offset - self.params.tk_div_cass_in
+
+            # Check we're inside the vacuum vessel
+            if x_min < x_min_vv or x_max > x_max_vv:
+                raise GeometryError(
+                    "Divertor cassette radial limits overlap with vacuum vessel.\n"
+                    f"Minimal VV radius {x_min_vv} > smallest casette radius {x_min}\n"
+                    f"Maximum VV radius {x_max_vv} < largest casette radius {x_max}\n"
+                )
+
+            # z limits: want to be flush with flat edge of (non-offset) divertor
+            z_min_div = np.min(div.z)
+            z_max_div = np.max(div.z)
+
+            # Lower or upper divertor?
+            if z_min_div > 0.0:
+                # Upper divertor
+                z_min = z_min_div
+                z_max = z_max_vv
+            else:
+                # Lower divertor
+                z_max = z_max_div
+                z_min = z_min_vv
+
+            # Check z coords are inside acceptable bounds
+            if z_max > z_max_vv or z_min < z_min_vv:
+                raise GeometryError(
+                    "Divertor cassette z-limits overlap with vacuum vessel\n"
+                    f"Minimal VV half-height {z_min_vv} > smallest casette half-height {z_min}"
+                    f"Maximum VV half-height {z_max_vv} < largest casette half-height {z_max}"
+                )
+
+            div_box = make_box_xz(x_min, x_max, z_min, z_max)
+
+            # Want to cut out space between outer leg and box
+            cutters = boolean_2d_difference_split(div_box, div_offset)
+
+            # Deduce the correct cutter by its limits
+            cutter_select = None
+            for cutter in cutters:
+                cutter_x_max = np.max(cutter.x)
+                cutter_x_min = np.min(cutter.x)
+                if z_min_div > 0.0:
+                    # Upper divertor
+                    cutter_z_lim = np.min(cutter.z)
+                    z_lim = z_min_div
+                else:
+                    # Lower divertor
+                    cutter_z_lim = np.max(cutter.z)
+                    z_lim = z_max_div
+
+                if (
+                    np.isclose(cutter_x_max, x_max)
+                    and np.isclose(cutter_z_lim, z_lim)
+                    and cutter_x_min > x_min
+                ):
+                    cutter_select = cutter
+                    break
+
+            # If outer leg is vertical, no space to cut: cutter may be None
+            if cutter_select:
+                # Apply our cutter
+                div_box = boolean_2d_difference_loop(div_box, cutter_select)
+
+            # Find the overlap between the vv and the box
+            cassette = boolean_2d_common_loop(div_box, vv)
+
+            # Subtract the divertor (get an inner and outer piece)
+            subtracted = boolean_2d_difference(cassette, div)
+            if not len(subtracted) == 2:
+                raise GeometryError("Unexpected number of loops")
+            # Select the outer one
+            if np.max(subtracted[0].x) > np.max(subtracted[1].x):
+                cassette = subtracted[0]
+            else:
+                cassette = subtracted[1]
+
+            # Finally, simplify
+            cassette = simplify_loop(cassette)
+            cassettes.append(cassette)
+
+        return cassettes
+
+    def get_outer_inner_loops(self, flux_loops):
+        # SN case: just one loop
+        if self.inputs.get("SN", False):
+            outer_loop = inner_loop = flux_loops[0]
+        else:
+            outer_loop = flux_loops[0]
+            inner_loop = flux_loops[1]
+        return outer_loop, inner_loop
+
+
+class DEMODivertorBuilder(DivertorBuilder):
+    def __init__(self, *args):
+        super().__init__(*args)
+        is_single_null = self.inputs.get("SN", False)
+
+        if is_single_null:
+            degree_in = degree_out = self.inputs.get(
+                "outer_leg_sol_polyfit_degree",
+                self.inputs.get("outer_leg_pfr_polyfit_degree", 2),
+            )
+
+        else:
+            degree_in = degree_out = self.inputs.get(
+                "outer_leg_sol_polyfit_degree",
+                self.inputs.get("outer_leg_pfr_polyfit_degree", 1),
+            )
+        self.outer_leg_sol_polyfit_degree = degree_in
+        self.outer_leg_pfr_polyfit_degree = degree_out
+
+        if is_single_null:
+            degree = self.inputs.get("inner_leg_polyfit_degree", 2)
+        else:
+            degree = self.inputs.get("inner_leg_polyfit_degree", 1)
+        self.inner_leg_polyfit_degree = degree
+
+    def get_guide_lines(self, flux_loop):
+        return flux_loop, flux_loop
+
+
+class STEPDivertorBuilder(DivertorBuilder):
+    def __init__(self, *args):
+        super().__init__(*args)
+        is_single_null = self.inputs.get("SN", False)
+
+        self.outer_leg_sol_polyfit_degree = self.inputs.get(
+            "outer_leg_sol_polyfit_degree", 3
+        )
+        self.outer_leg_pfr_polyfit_degree = self.inputs.get(
+            "outer_leg_pfr_polyfit_degree", 3
+        )
+        self.inner_leg_polyfit_degree = self.inputs.get("inner_leg_polyfit_degree", 1)
+
+    def get_guide_lines(self, flux_loop):
+        return self.flux_surface_lfs[-1], flux_loop
+
+
 class FirstWallNew(ReactorSystem):
     """
     Reactor First Wall (FW) system abstract base class
@@ -214,8 +980,19 @@ class FirstWallNew(ReactorSystem):
     def __init__(self, config, inputs):
         self.config = config
         self.inputs = inputs
+
         self._init_params(self.config)
         self.init_equilibrium()
+
+        if self.inputs.get("DEMO_like_divertor", False):
+            self.divertor_builder = DEMODivertorBuilder(
+                self.config, self.inputs, self.equilibrium
+            )
+        else:
+            self.divertor_builder = STEPDivertorBuilder(
+                self.config, self.inputs, self.equilibrium
+            )
+
         self.build()
         self.build_fs_to_plot()
         self._plotter = FirstWallPlotter()
@@ -384,403 +1161,6 @@ class FirstWallNew(ReactorSystem):
 
         return profile
 
-    def reshape_curve(
-        self,
-        curve_x_coords,
-        curve_z_coords,
-        new_starting_point,
-        new_ending_point,
-        degree,
-    ):
-        """
-        Force a curve between two new points
-        Used to shape the divertor legs following the separatrix curvature
-        Mostly useful for the Super-X configuration
-
-        Parameters
-        ----------
-        curve_x_coords: [float]
-            x coordinates of the leading curve (the separatrix)
-        curve_z_coords: [float]
-            z coordinates of the leading curve (the separatrix)
-        new_starting_point: [float, float]
-            x and z coordinates of the starting point of the new curve
-            (contour of the divertor legs)
-        new_ending_point: [float, float]
-            x and z coordinates of the ending point of the new curve
-        degree: [float]
-            Degree of the fitting polynomial. The longer is the leg the harder
-            is to control the shape. Changing this value can help
-
-        Returns
-        -------
-        x: [float]
-            x coordinate of points in the new curve
-        z: [float]
-            z coordinate of points in the new curve
-        """
-        coeffs = np.polyfit(curve_x_coords, curve_z_coords, degree)
-        func = np.poly1d(coeffs)
-
-        new_a_coeff = (new_ending_point[1] - new_starting_point[1]) / (
-            func(new_ending_point[0]) - func(new_starting_point[0])
-        )
-        new_b_coeff = new_starting_point[1] - new_a_coeff * func(new_starting_point[0])
-
-        x = np.linspace(new_starting_point[0], new_ending_point[0], 10)
-        z = new_a_coeff * (func(x)) + new_b_coeff
-        return (x, z)
-
-    def make_divertor_target(
-        self, strike_point, tangent, vertical_target=True, outer_target=True
-    ):
-        """
-        Make a divertor target
-
-        Parameters
-        ----------
-        strike_point: [float,float]
-            List of [x,z] coords corresponding to the strike point position
-
-        tangent: [float,float]
-            List of [x,z] coords corresponding to the tangent vector to the
-        appropriate flux loop at the strike point
-
-        Returns
-        -------
-        target_internal_point: [float, float]
-            x and z coordinates of the internal end point of target.
-            Meaning private flux region (PRF) side
-        target_external_point: [float, float]
-            x and z coordinates of the external end point of target.
-            Meaning scrape-off layer (SOL) side
-
-        The divertor target is a straight line
-        """
-        # If statement to set the function
-        # either for the outer target (if) or the inner target (else)
-        if outer_target:
-            sign = 1
-            theta_target = self.params.theta_outer_target
-            target_length_pfr = self.params.tk_outer_target_pfr
-            target_length_sol = self.params.tk_outer_target_sol
-        else:
-            sign = -1
-            theta_target = self.params.theta_inner_target
-            target_length_pfr = self.params.tk_inner_target_pfr
-            target_length_sol = self.params.tk_inner_target_sol
-
-        # Rotate tangent vector to appropriate flux loop to obtain
-        # a vector parallel to the outer target
-
-        # if horizontal target
-        if not vertical_target:
-            target_par = rotate_vector_2d(tangent, np.radians(theta_target * sign))
-        # if vertical target
-        else:
-            target_par = rotate_vector_2d(tangent, np.radians(-theta_target * sign))
-
-        # Create relative vectors whose length will be the offset distance
-        # from the strike point
-        pfr_target_end = -target_par * target_length_pfr * sign
-        sol_target_end = target_par * target_length_sol * sign
-
-        # Swap if we got the wrong way round
-        if outer_target:
-            swap_points = sol_target_end[0] < pfr_target_end[0]
-        # for the inner target
-        else:
-            swap_points = (
-                not vertical_target and sol_target_end[0] > pfr_target_end[0]
-            ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
-
-        if swap_points:
-            tmp = pfr_target_end
-            pfr_target_end = sol_target_end
-            sol_target_end = tmp
-
-        # Add the strike point to diffs to get the absolute positions
-        # of the end points of the target
-        pfr_target_end = pfr_target_end + strike_point
-        sol_target_end = sol_target_end + strike_point
-
-        # Return end points
-        return (pfr_target_end, sol_target_end)
-
-    def make_outer_leg(self, div_top_right, outer_strike, middle_point, flux_loop):
-        """
-        Find the coordinates of the outer leg of the divertor.
-
-        Parameters
-        ----------
-        div_top_right: float
-            Top-right x-coordinate of the divertor
-        outer_strike: [float,float]
-            Coordinates of the outer strike point
-        middle_point: [float,float]
-            Coordinates of the middle point between the inner and outer legs
-        flux_loop: Loop
-            Outer flux loop used for shaping.
-
-        Returns
-        -------
-        divertor_leg: (list, list)
-            x and z coordinates of outer leg
-        """
-        # Find the tangent to the approriate flux loop at the outer strike point
-        tangent = get_tangent_vector(outer_strike, flux_loop)
-
-        # Get the outer target points
-        (
-            outer_target_internal_point,
-            outer_target_external_point,
-        ) = self.make_divertor_target(
-            outer_strike,
-            tangent,
-            vertical_target=self.inputs["div_vertical_outer_target"],
-            outer_target=True,
-        )
-
-        # Select the degree of the fitting polynomial and
-        # the flux lines that will guide the divertor leg shape
-        if self.inputs.get("DEMO_DN", False):
-            degree_in = degree_out = self.inputs.get(
-                "outer_leg_sol_polyfit_degree",
-                self.inputs.get("outer_leg_pfr_polyfit_degree", 1),
-            )
-            outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
-        elif self.inputs.get("SN", False):
-            degree_in = degree_out = self.inputs.get(
-                "outer_leg_sol_polyfit_degree",
-                self.inputs.get("outer_leg_pfr_polyfit_degree", 2),
-            )
-            outer_leg_external_guide_line = outer_leg_internal_guide_line = flux_loop
-        else:
-            degree_out = self.inputs.get("outer_leg_sol_polyfit_degree", 3)
-            degree_in = self.inputs.get("outer_leg_pfr_polyfit_degree", 3)
-            outer_leg_external_guide_line = self.flux_surface_lfs[-1]
-            outer_leg_internal_guide_line = flux_loop
-
-        # Select the top and bottom limits for the guide lines
-        z_x_point = self.points["x_point"]["z_low"]
-        outer_leg_external_top_limit = [div_top_right, z_x_point]
-        outer_leg_external_bottom_limit = outer_target_external_point
-
-        outer_leg_internal_top_limit = middle_point
-        outer_leg_internal_bottom_limit = outer_target_internal_point
-
-        # Make the guide lines
-        external_guide_line = make_guide_line(
-            outer_leg_external_guide_line,
-            outer_leg_external_top_limit,
-            outer_leg_external_bottom_limit,
-        )
-
-        internal_guide_line = make_guide_line(
-            outer_leg_internal_guide_line,
-            outer_leg_internal_top_limit,
-            outer_leg_internal_bottom_limit,
-        )
-
-        # Modify the clipped flux line curve (guide line) to start
-        # at the middle and end at the internal point of the outer target
-        (outer_leg_internal_line_x, outer_leg_internal_line_z,) = self.reshape_curve(
-            internal_guide_line.x,
-            internal_guide_line.z,
-            [middle_point[0], middle_point[1]],
-            outer_target_internal_point,
-            degree_in,
-        )
-
-        # Modify the clipped flux line curve to start at the top point of the
-        # outer target and end at the external point
-        (outer_leg_external_line_x, outer_leg_external_line_z,) = self.reshape_curve(
-            external_guide_line.x,
-            external_guide_line.z,
-            [div_top_right, z_x_point],
-            outer_target_external_point,
-            degree_out,
-        )
-
-        # Connect the inner and outer parts of the outer leg
-        outer_leg_x = np.append(
-            outer_leg_internal_line_x, outer_leg_external_line_x[::-1]
-        )
-        outer_leg_z = np.append(
-            outer_leg_internal_line_z, outer_leg_external_line_z[::-1]
-        )
-
-        # Return coordinate arrays
-        return (outer_leg_x, outer_leg_z)
-
-    def make_inner_leg(self, div_top_left, inner_strike, middle_point, flux_loop):
-        """
-        Find the coordinates of the outer leg of the divertor.
-
-        Parameters
-        ----------
-        div_top_left: float
-            Top-left x-coordinate of the divertor
-        inner_strike: [float,float]
-            Coordinates of the inner strike point
-        middle_point: [float,float]
-            Coordinates of the middle point between the inner and outer legs
-        flux_loop: Loop
-            Outer flux loop used for shaping.
-
-        Returns
-        -------
-        divertor_leg: (list, list)
-            x and z coordinates of outer leg
-        """
-        # Find the tangent to the approriate flux loop at the outer strike point
-        tangent = get_tangent_vector(inner_strike, flux_loop)
-
-        if self.inputs.get("DEMO_DN", False):
-            degree = self.inputs.get("inner_leg_polyfit_degree", 1)
-        else:
-            degree = self.inputs.get("inner_leg_polyfit_degree", 2)
-
-        # Get the outer target points
-        (
-            inner_target_internal_point,
-            inner_target_external_point,
-        ) = self.make_divertor_target(
-            inner_strike,
-            tangent,
-            vertical_target=self.inputs["div_vertical_inner_target"],
-            outer_target=False,
-        )
-
-        # Select those points along the given flux line below the X point
-        inner_leg_central_guide_line = flux_loop
-        z_x_point = self.points["x_point"]["z_low"]
-        top_clip_inner_leg_central_guide_line = np.where(
-            inner_leg_central_guide_line.z < z_x_point,
-        )
-
-        # Create a new Loop from the points selected along the given flux line
-        inner_leg_central_guide_line = Loop(
-            x=inner_leg_central_guide_line.x[top_clip_inner_leg_central_guide_line],
-            y=None,
-            z=inner_leg_central_guide_line.z[top_clip_inner_leg_central_guide_line],
-        )
-
-        # Select those points along the top-clipped flux line above the
-        # inner target internal point height
-        bottom_clip_inner_leg_central_guide_line = np.where(
-            inner_leg_central_guide_line.z > inner_target_internal_point[1],
-        )
-
-        # Create a new Loop from the points selected along the flux line
-        inner_leg_central_guide_line = Loop(
-            x=inner_leg_central_guide_line.x[bottom_clip_inner_leg_central_guide_line],
-            y=None,
-            z=inner_leg_central_guide_line.z[bottom_clip_inner_leg_central_guide_line],
-        )
-
-        # Modify the clipped flux line curve to start at the middle and end
-        # at the internal point of the outer target
-        (inner_leg_internal_line_x, inner_leg_internal_line_z,) = self.reshape_curve(
-            inner_leg_central_guide_line.x,
-            inner_leg_central_guide_line.z,
-            [middle_point[0], middle_point[1]],
-            inner_target_internal_point,
-            degree,
-        )
-
-        # Modify the clipped flux line curve to start at the top point of the
-        # outer target and end at the external point
-        (inner_leg_external_line_x, inner_leg_external_line_z,) = self.reshape_curve(
-            inner_leg_central_guide_line.x,
-            inner_leg_central_guide_line.z,
-            [div_top_left, z_x_point],
-            inner_target_external_point,
-            degree,
-        )
-
-        # Connect the inner and outer parts of the outer leg
-        inner_leg_x = np.append(
-            inner_leg_external_line_x, inner_leg_internal_line_x[::-1]
-        )
-        inner_leg_z = np.append(
-            inner_leg_external_line_z, inner_leg_internal_line_z[::-1]
-        )
-
-        # Return coordinate arrays
-        return (inner_leg_x, inner_leg_z)
-
-    def make_divertor(self, fw_loop):
-        """
-        Create a long legs divertor loop(s)
-        usable both for SN and DN divertor
-
-        Parameters
-        ----------
-        fw_loop : Loop
-            first wall preliminary profile
-
-        Returns
-        -------
-        divertor_loop: Loop
-            Loop for the bottom divertor geometry
-        """
-        # Some shorthands
-        z_x_point = self.points["x_point"]["z_low"]
-        x_x_point = self.points["x_point"]["x"]
-
-        # Define point where the legs should meet
-        # In line with X point but with vertical offset
-        middle_point = [x_x_point, z_x_point - self.params.xpt_height]
-
-        # Find the intersection of the first wall loop and
-        # the x-y plane containing the lower X point
-        z_norm = 2
-        fw_int_point = get_intersection_point(
-            z_x_point, z_norm, fw_loop, x_x_point, inner=False
-        )
-
-        # Determine outermost point for outer divertor leg
-        div_top_right = max(fw_int_point[0], x_x_point + self.params.xpt_outer_gap)
-
-        # Determine outermost point for inner divertor leg
-        div_top_left = min(fw_int_point[0], x_x_point - self.params.xpt_inner_gap)
-
-        # Pick some flux loops to use to locate strike points and shape the
-        # divertor legs
-        flux_loops = self.pick_flux_loops()
-
-        # Find the strike points
-        inner_strike, outer_strike = self.find_strike_points(flux_loops)
-
-        # Make the outer leg
-        outer_leg_x, outer_leg_z = self.make_outer_leg(
-            div_top_right, outer_strike, middle_point, flux_loops[0]
-        )
-
-        # Make the inner leg
-        if len(flux_loops) == 1:
-            inner_leg_x, inner_leg_z = self.make_inner_leg(
-                div_top_left, inner_strike, middle_point, flux_loops[0]
-            )
-        else:
-            inner_leg_x, inner_leg_z = self.make_inner_leg(
-                div_top_left, inner_strike, middle_point, flux_loops[1]
-            )
-
-        # Divertor x-coords
-        x_div = np.append(inner_leg_x, outer_leg_x)
-        x_div = [round(elem, 5) for elem in x_div]
-
-        # Divertor z-coords
-        z_div = np.append(inner_leg_z, outer_leg_z)
-        z_div = [round(elem, 5) for elem in z_div]
-
-        # Bottom divertor loop
-        bottom_divertor = Loop(x=x_div, z=z_div)
-        bottom_divertor.close()
-        return bottom_divertor
-
     def attach_divertor(self, fw_loop, divertor_loops):
         """
         Attaches a divertor to the first wall
@@ -816,12 +1196,7 @@ class FirstWallNew(ReactorSystem):
         # Ensure our starting profile is closed
         self.profile.close()
 
-        # Make a divertor
-        if self.inputs.get("DEMO_like_divertor", False):
-            inner_divertor_loops = self.make_divertor_demo_like(self.profile)
-        # It makes a long legs dievertor
-        else:
-            inner_divertor_loops = self.make_divertor(self.profile)
+        inner_divertor_loops = self.divertor_builder.make_divertor(self.profile)
 
         # Attach the divertor to the initial profile
         self.inner_profile = self.attach_divertor(self.profile, inner_divertor_loops)
@@ -841,7 +1216,9 @@ class FirstWallNew(ReactorSystem):
         outboard_wall = sections[-1]
 
         # For now, make the divertor cassette here (to be refactored)
-        self.divertor_cassettes = self.make_divertor_cassette(self.divertor_loops)
+        self.divertor_cassettes = self.divertor_builder.make_divertor_cassette(
+            self.divertor_loops
+        )
 
         # Make a shell from the inner and outer profile
         fw_shell = Shell(inner=self.inner_profile, outer=outer_profile)
@@ -1036,125 +1413,6 @@ class FirstWallNew(ReactorSystem):
         sections.append(outboard)
         return sections
 
-    def make_divertor_cassette(self, divertor_loops):
-        """
-        Given the divertor loops create the divertor cassette.
-
-        Parameters
-        ----------
-        divertor_loops : list
-            List of Loop objects representing the divertor
-
-        Returns
-        -------
-        divertor_cassette : list
-            List of Loop objects representing the divertor cassettes
-            (one for each divertor)
-        """
-        # Fetch the vacuum vessel
-        vv = self.inputs["vv_inner"]
-
-        # Find the limits of the vacuum vessel
-        z_max_vv = np.max(vv.z)
-        z_min_vv = np.min(vv.z)
-        x_max_vv = np.max(vv.x)
-        x_min_vv = np.min(vv.x)
-
-        # Make a cassette for each divertor
-        cassettes = []
-        for div in divertor_loops:
-
-            # Create an offset divertor with a given thickness
-            offset = self.params.tk_div_cass
-            div_offset = div.offset_clipper(offset, method="miter")
-
-            # Take the outermost radial limit from offset div
-            x_max = np.max(div.x) + offset
-
-            # Take the innermost radial limit from offset div, plus extra thickness
-            x_min = np.min(div.x) - offset - self.params.tk_div_cass_in
-
-            # Check we're inside the vacuum vessel
-            if x_min < x_min_vv or x_max > x_max_vv:
-                raise GeometryError(
-                    "Divertor cassette radial limits overlap with vacuum vessel.\n"
-                    f"Minimal VV radius {x_min_vv} > smallest casette radius {x_min}\n"
-                    f"Maximum VV radius {x_max_vv} < largest casette radius {x_max}\n"
-                )
-
-            # z limits: want to be flush with flat edge of (non-offset) divertor
-            z_min_div = np.min(div.z)
-            z_max_div = np.max(div.z)
-
-            # Lower or upper divertor?
-            if z_min_div > 0.0:
-                # Upper divertor
-                z_min = z_min_div
-                z_max = z_max_vv
-            else:
-                # Lower divertor
-                z_max = z_max_div
-                z_min = z_min_vv
-
-            # Check z coords are inside acceptable bounds
-            if z_max > z_max_vv or z_min < z_min_vv:
-                raise GeometryError(
-                    "Divertor cassette z-limits overlap with vacuum vessel\n"
-                    f"Minimal VV half-height {z_min_vv} > smallest casette half-height {z_min}"
-                    f"Maximum VV half-height {z_max_vv} < largest casette half-height {z_max}"
-                )
-
-            div_box = make_box_xz(x_min, x_max, z_min, z_max)
-
-            # Want to cut out space between outer leg and box
-            cutters = boolean_2d_difference_split(div_box, div_offset)
-
-            # Deduce the correct cutter by its limits
-            cutter_select = None
-            for cutter in cutters:
-                cutter_x_max = np.max(cutter.x)
-                cutter_x_min = np.min(cutter.x)
-                if z_min_div > 0.0:
-                    # Upper divertor
-                    cutter_z_lim = np.min(cutter.z)
-                    z_lim = z_min_div
-                else:
-                    # Lower divertor
-                    cutter_z_lim = np.max(cutter.z)
-                    z_lim = z_max_div
-
-                if (
-                    np.isclose(cutter_x_max, x_max)
-                    and np.isclose(cutter_z_lim, z_lim)
-                    and cutter_x_min > x_min
-                ):
-                    cutter_select = cutter
-                    break
-
-            # If outer leg is vertical, no space to cut: cutter may be None
-            if cutter_select:
-                # Apply our cutter
-                div_box = boolean_2d_difference_loop(div_box, cutter_select)
-
-            # Find the overlap between the vv and the box
-            cassette = boolean_2d_common_loop(div_box, vv)
-
-            # Subtract the divertor (get an inner and outer piece)
-            subtracted = boolean_2d_difference(cassette, div)
-            if not len(subtracted) == 2:
-                raise GeometryError("Unexpected number of loops")
-            # Select the outer one
-            if np.max(subtracted[0].x) > np.max(subtracted[1].x):
-                cassette = subtracted[0]
-            else:
-                cassette = subtracted[1]
-
-            # Finally, simplify
-            cassette = simplify_loop(cassette)
-            cassettes.append(cassette)
-
-        return cassettes
-
     def horizontal_clipper(self, loop, vertical_reference=None, top_limit=None):
         """
         Loop clipper.
@@ -1311,7 +1569,7 @@ class FirstWallSNNew(FirstWallNew):
     # Geometry creation
 
     def make_divertor(self, fw_loop):
-        bottom_divertor = super().make_divertor(fw_loop)
+        bottom_divertor = self.divertor_builder.make_divertor(fw_loop)
         return [bottom_divertor]
 
     def make_preliminary_profile(self):
@@ -1613,7 +1871,7 @@ class FirstWallDNNew(FirstWallNew):
         return new_fw_profile
 
     def make_divertor(self, fw_loop):
-        bottom_divertor = super().make_divertor(fw_loop)
+        bottom_divertor = self.divertor_builder.make_divertor(fw_loop)
         # Flip z coords to get top divertor loop
         top_divertor = Loop(x=bottom_divertor.x, z=-bottom_divertor.z)
         return [bottom_divertor, top_divertor]
