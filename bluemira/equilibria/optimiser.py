@@ -1104,8 +1104,7 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
 
 class BoundedCurrentOptimiser(EquilibriumOptimiser):
     """
-    Force Field and Current constrained McIntoshian optimiser class.
-    Freeze punk!
+    NLOpt based optimiser for coil currents subject to maximum current bounds.
 
     Parameters
     ----------
@@ -1118,10 +1117,8 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
     gamma: float (default = 1e-7)
         Tikhonov regularisation parameter.
     opt_conditions: dict
-                    (default {"xtol_rel": 1e-4,
-                              "xtol_abs": 1e-4,
-                              "ftol_rel": 1e-4,
-                              "ftol_abs": 1e-4} )
+    opt_conditions: dict
+        (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
         Termination conditions to pass to the optimiser.
     """
 
