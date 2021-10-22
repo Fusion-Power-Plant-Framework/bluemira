@@ -25,7 +25,6 @@ A simplified 2-D solver for calculating charged particle heat loads.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy.core.defchararray import upper
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
