@@ -1097,27 +1097,10 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-<<<<<<< HEAD
-<<<<<<< HEAD
     gamma: float (default = 1e-7)
         Tikhonov regularisation parameter.
-    opt_conditions: dict
     opt_conditions: dict
         (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
-=======
-    override_coil_max_currents: Bool (default = True)
-        Flag to override the maximum currents specified by the current
-        density limits in the Coilset with those in max_currents.
-=======
->>>>>>> Removes broken option to get maximum currents from CoilSet j_max
-    gamma: float (default = 1e-7)
-        Tikhonov regularisation parameter.
-    opt_conditions: dict
-                    (default {"xtol_rel": 1e-4,
-                              "xtol_abs": 1e-4,
-                              "ftol_rel": 1e-4,
-                              "ftol_abs": 1e-4} )
->>>>>>> Update API to allow user to specify optimisation parameters
         Termination conditions to pass to the optimiser.
     """
 
