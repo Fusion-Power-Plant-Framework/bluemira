@@ -33,6 +33,7 @@ from . import _freecadapi
 
 import copy
 
+
 class BluemiraGeo(ABC):
     """Base abstract class for geometry
 
@@ -210,7 +211,7 @@ class BluemiraGeo(ABC):
         return geo_copy
 
     def deepcopy(self, label=None):
-        """Make a copy of the BluemiraGeo"""
+        """Make a deepcopy of the BluemiraGeo"""
         geo_copy = copy.deepcopy(self)
         if label is not None:
             geo_copy.label = label
