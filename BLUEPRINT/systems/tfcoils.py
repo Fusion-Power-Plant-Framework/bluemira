@@ -27,7 +27,6 @@ import matplotlib.pyplot as plt
 from typing import Type
 from scipy.interpolate import interp1d
 from scipy.interpolate import InterpolatedUnivariateSpline
-from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
 
 from bluemira.base.constants import MU_0
 from bluemira.base.parameter import ParameterFrame
@@ -42,7 +41,6 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_union,
     clean_loop,
     simplify_loop,
-    boolean_2d_difference,
 )
 from BLUEPRINT.geometry.geomtools import length, lengthnorm, make_box_xz, rainbow_seg
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
