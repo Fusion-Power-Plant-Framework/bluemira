@@ -462,7 +462,7 @@
     },
     "H2O": {
         "material_class": "Liquid",
-        "symbol": "H20",
+        "symbol": "H2O",
         "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Water')"
     },
     "He": {
