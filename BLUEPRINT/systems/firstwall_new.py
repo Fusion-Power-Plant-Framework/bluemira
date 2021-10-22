@@ -295,6 +295,8 @@ class DivertorBuilder:
             separatrix = [separatrix]
         self.separatrix = separatrix
 
+        self.inputs["SN"] = self.inputs.get("SN", False)
+
     def make_divertor(self, fw_loop):
         """
         Create a long legs divertor loop(s)
@@ -928,9 +930,8 @@ class DivertorBuilder:
 class DEMODivertorBuilder(DivertorBuilder):
     def __init__(self, *args):
         super().__init__(*args)
-        is_single_null = self.inputs.get("SN", False)
 
-        if is_single_null:
+        if self.inputs["SN"]:
             degree_in = degree_out = self.inputs.get(
                 "outer_leg_sol_polyfit_degree",
                 self.inputs.get("outer_leg_pfr_polyfit_degree", 2),
@@ -944,7 +945,7 @@ class DEMODivertorBuilder(DivertorBuilder):
         self.outer_leg_sol_polyfit_degree = degree_in
         self.outer_leg_pfr_polyfit_degree = degree_out
 
-        if is_single_null:
+        if self.inputs["SN"]:
             degree = self.inputs.get("inner_leg_polyfit_degree", 2)
         else:
             degree = self.inputs.get("inner_leg_polyfit_degree", 1)
@@ -1114,7 +1115,7 @@ class FirstWallNew(ReactorSystem):
             separatrix = separatrix[0]
         self._plotter.plot_hf(
             separatrix,
-            self.geom["fs"],
+            self.solver.flux_surfaces,
             self.x_wall,
             self.z_wall,
             self.hf_wall,
@@ -1757,7 +1758,7 @@ class FirstWallDNNew(FirstWallNew):
     def hf_firstwall_params(self, profile):
         x, z, hf = super().hf_firstwall_params(profile)
         idx = np.where(
-            z < self.points["x_point"]["z_up"] & z > self.points["x_point"]["z_low"]
+            (z < self.points["x_point"]["z_up"]) & (z > self.points["x_point"]["z_low"])
         )[0]
 
         x_wall = x[idx]
@@ -1930,3 +1931,49 @@ class FirstWallPlotter(ReactorSystemPlotter):
         Plot the first wall in x-z.
         """
         super().plot_xz(plot_objects, ax=ax, **kwargs)
+
+    def plot_hf(
+        self,
+        separatrix,
+        loops,
+        x_int,
+        z_int,
+        hf_int,
+        fw_profile,
+        koz=None,
+        ax=None,
+        **kwargs,
+    ):
+        """
+        Plots the 2D heat flux distribution.
+
+        Parameters
+        ----------
+        separatrix: Union[Loop, MultiLoop]
+            The separatrix loop(s) (Loop for SN, MultiLoop for DN)
+        loops: [MultiLoop]
+            The flux surface loops
+        x_int: [float]
+            List of all the x coordinates at the intersections of concern
+        z_int: [float]
+            List of all the z coordinates at the intersections of concern
+        hf_int: [float]
+            List of all hf values at the intersections of concern
+        fw_profile: Loop
+            Inner profile of a First wall
+        koz: Loop
+            Loop representing the keep-out-zone
+        ax: Axes, optional
+            The optional Axes to plot onto, by default None.
+        """
+        fw_profile.plot(ax=ax, fill=False, edgecolor="k", linewidth=1)
+        for loop in loops:
+            loop.plot(ax=ax, fill=False, edgecolor="r", linewidth=0.2)
+
+        separatrix.plot(ax=ax, fill=False, edgecolor="r", linewidth=1)
+        if koz is not None:
+            koz.plot(ax=ax, fill=False, edgecolor="g", linewidth=1)
+        ax = plt.gca()
+        cs = ax.scatter(x_int, z_int, s=25, c=hf_int, cmap="viridis", zorder=100)
+        bar = plt.gcf().colorbar(cs, ax=ax)
+        bar.set_label("Heat Flux [MW/m^2]")

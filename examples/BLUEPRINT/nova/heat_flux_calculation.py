@@ -86,7 +86,7 @@ print(f"{time()-t:.2f} seconds")
 
 
 # %%
-
+t = time()
 fw = FirstWallSNNew(
     FirstWallSNNew.default_params,
     {
@@ -99,5 +99,6 @@ fw = FirstWallSNNew(
 )
 
 fw.build()
+print(f"{time()-t:.2f} seconds")
 
-fw.solver.plot()
+fw.plot_hf()
