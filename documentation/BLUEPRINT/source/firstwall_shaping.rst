@@ -65,13 +65,46 @@ used at the inboard and outboard.
 The region between the LCFS and the preliminary profile is "filled" with a set of flux surfaces.
 Thus, the SOL is discretised by flux surfaces (lines) spaced apart by a given dx. 
 
-.. figure:: ../images/nova/fs_set.png
-   :name: fig:fs_set
+.. figure:: ../images/nova/set_fs.png
+   :name: fig:set_fs
    :align: center
 
    SOL discretised by a finite number of flux surfaces
 
 - Find intersections
 
+Each flux line intersects the first wall in at least one point.
+More likely there are several intersections but only the first one 
+is associated with a heat load contribution. 
+Once a flux line hits the first wall for the first time, the rest 
+of the wall is in its own shade, and it cannot be reached by the 
+same flux line for a second time.
+To detect the first intersection point, the flux line is considered 
+to start at the OMP. Moving clockwise, the intersection point with 
+the smallest distance from the OMP is the first intersection point 
+for the LFS.
+Similarly, moving anti-clockwise, the intersection point with 
+the smallest distance from the OMP is the first intersection point 
+for the HFS.
+
+.. figure:: ../images/nova/ints_fs.png
+   :name: fig:ints_fs
+   :align: center
+
+   Each flux surface carries energy into the wall in two points, one 
+   at the lfs and one at the hfs. These points shadow all the other 
+   intersection points between flux surface and first wall
+
+At the first intersection point, the heat flux is calculated according 
+to the model used in the FluxSurface class and presented in relevant 
+documentation.
+
+In the FirstWall class a first wall profile optimiser method is present, 
+and the user can decide whether to use it or not.
+The optimiser detects the intersection points that are associated to a 
+heat flux higher than a limit.
+In correspondence of these points the first wall profile is modified. 
+The "guideline", initially used to draw the "preliminary first wall profile", 
+locally deviates, by using the next and further flux line.
 
 
