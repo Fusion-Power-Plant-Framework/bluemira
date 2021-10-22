@@ -355,11 +355,9 @@ class ChargedParticleSolver:
         Bt_imp = self.eq.Bt(x_imp)
         B_imp = np.hypot(Bp_imp, Bt_imp)
 
-        f_outboard = self.params.f_lfs_lower_target + self.params.f_lfs_upper_target
-        f_inboard = self.params.f_hfs_lower_target + self.params.f_hfs_upper_target
         # Parallel heat flux at the outboard and inboard midplane
-        q_par_omp = f_outboard * self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
-        q_par_imp = f_inboard * self._q_par(x_imp, dx_imp, B_imp, Bp_imp, outboard=False)
+        q_par_omp = self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
+        q_par_imp = self._q_par(x_imp, dx_imp, B_imp, Bp_imp, outboard=False)
 
         # Calculate poloidal field at intersections
         Bp_lfs_down = self.eq.Bp(x_lfs_down_inter, z_lfs_down_inter)
@@ -369,29 +367,23 @@ class ChargedParticleSolver:
 
         # Calculate parallel heat fluxes at the intersections
         # Note that flux expansion terms cancelate down to this
-        q_par_lfs_down = q_par_omp * Bp_lfs_down / B_omp
-        q_par_lfs_up = q_par_omp * Bp_lfs_up / B_omp
-        q_par_hfs_down = q_par_imp * Bp_hfs_down / B_imp
-        q_par_hfs_up = q_par_imp * Bp_hfs_up / B_imp
+        q_par_lfs_down = self.params.f_lfs_lower_target * q_par_omp * Bp_lfs_down / B_omp
+        q_par_lfs_up = self.params.f_lfs_upper_target * q_par_omp * Bp_lfs_up / B_omp
+        q_par_hfs_down = self.params.f_hfs_lower_target * q_par_imp * Bp_hfs_down / B_imp
+        q_par_hfs_up = self.params.f_hfs_upper_target * q_par_imp * Bp_hfs_up / B_imp
 
         # Calculate perpendicular heat fluxes
-        heat_flux_lfs_down = (
-            self.params.f_lfs_lower_target * q_par_lfs_down * np.sin(alpha_lfs_down)
-        )
-        heat_flux_lfs_up = (
-            self.params.f_lfs_upper_target * q_par_lfs_up * np.sin(alpha_lfs_up)
-        )
-        heat_flux_hfs_down = (
-            self.params.f_hfs_lower_target * q_par_hfs_down * np.sin(alpha_hfs_down)
-        )
-        heat_flux_hfs_up = (
-            self.params.f_hfs_upper_target * q_par_hfs_up * np.sin(alpha_hfs_up)
-        )
+        heat_flux_lfs_down = q_par_lfs_down * np.sin(alpha_lfs_down)
+        heat_flux_lfs_up = q_par_lfs_up * np.sin(alpha_lfs_up)
+        heat_flux_hfs_down = q_par_hfs_down * np.sin(alpha_hfs_down)
+        heat_flux_hfs_up = q_par_hfs_up * np.sin(alpha_hfs_up)
 
         # Correct power (energy conservation)
         q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * self.dx_mp * x_omp)
         q_imp_int = 2 * np.pi * np.sum(q_par_imp / (B_imp / Bp_imp) * self.dx_mp * x_imp)
 
+        f_outboard = self.params.f_lfs_lower_target + self.params.f_lfs_upper_target
+        f_inboard = self.params.f_hfs_lower_target + self.params.f_hfs_upper_target
         total_power = self.params.fw_p_sol_near + self.params.fw_p_sol_far
         f_correct_power_ob = (f_outboard * total_power) / q_omp_int
         f_correct_power_ib = (f_inboard * total_power) / q_imp_int
@@ -405,18 +397,10 @@ class ChargedParticleSolver:
             ),
             np.concatenate(
                 [
-                    f_correct_power_ob
-                    * self.params.f_lfs_lower_target
-                    * heat_flux_lfs_down,
-                    f_correct_power_ob
-                    * self.params.f_lfs_upper_target
-                    * heat_flux_lfs_up,
-                    f_correct_power_ib
-                    * self.params.f_hfs_lower_target
-                    * heat_flux_hfs_down,
-                    f_correct_power_ib
-                    * self.params.f_hfs_upper_target
-                    * heat_flux_hfs_up,
+                    f_correct_power_ob * heat_flux_lfs_down,
+                    f_correct_power_ob * heat_flux_lfs_up,
+                    f_correct_power_ib * heat_flux_hfs_down,
+                    f_correct_power_ib * heat_flux_hfs_up,
                 ]
             ),
         )
