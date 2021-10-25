@@ -33,7 +33,7 @@ from BLUEPRINT.geometry.loop import Loop, make_ring
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.systems.mixins import Meshable, OnionRing
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 

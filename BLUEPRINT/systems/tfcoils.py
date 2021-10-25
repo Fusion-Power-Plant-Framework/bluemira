@@ -33,7 +33,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 
 from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.offset import offset_smc, offset
 from BLUEPRINT.geometry.boolean import (

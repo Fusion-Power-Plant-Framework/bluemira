@@ -28,7 +28,7 @@ from typing import Type
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base import ReactorSystem
+from BLUEPRINT.systems import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 

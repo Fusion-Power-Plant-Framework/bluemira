@@ -28,7 +28,7 @@ from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.cad.vesselCAD import VesselCAD, SegmentedVesselCAD
 from BLUEPRINT.geometry.boolean import (
