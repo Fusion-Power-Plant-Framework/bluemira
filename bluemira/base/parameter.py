@@ -38,8 +38,8 @@ import wrapt
 import numpy as np
 from functools import wraps
 
-from .error import ParameterError
-from .look_and_feel import bluemira_warn
+from bluemira.base.error import ParameterError
+from bluemira.base.look_and_feel import bluemira_warn
 
 
 __all__ = ["Parameter", "ParameterFrame", "ParameterMapping"]
@@ -180,8 +180,12 @@ class Parameter(wrapt.ObjectProxy):
         self.mapping = mapping
 
         self._source = source
-        self._value_history = [value.copy() if hasattr(value, "copy") else value]
-        self._source_history = [source]
+        if value is not None:
+            self._value_history = [value.copy() if hasattr(value, "copy") else value]
+            self._source_history = [source]
+        else:
+            self._value_history = []
+            self._source_history = []
 
     def __deepcopy__(self, memo):
         """
@@ -296,7 +300,10 @@ class Parameter(wrapt.ObjectProxy):
         self.__wrapped__ = val
         self._source = None
 
-        self._update_history()
+        if val is None and len(self.value_history) == 0:
+            pass
+        else:
+            self._update_history()
 
     @property
     def source(self):
@@ -325,7 +332,7 @@ class Parameter(wrapt.ObjectProxy):
 
     def _update_history(self):
         if (
-            self.source_history[-1] is None
+            len(self.source_history) > 0 and self.source_history[-1] is None
         ):  # Should I be more strict and error out here?
             bluemira_warn(
                 f"The source of the value of {self.var} not consistently known"
@@ -510,6 +517,7 @@ class ParameterFrame:
     __default_params = {}
     __defaults_setting = False
     __defaults_set = False
+    __template_params = {}
 
     def __init__(self, record_list=None, *, with_defaults=False):
         if with_defaults:
@@ -557,8 +565,36 @@ class ParameterFrame:
         cls.__defaults_set = True
 
     @classmethod
+    def set_template_parameters(cls, params):
+        for param in params:
+            cls.__template_params[param[0]] = {
+                "name": param[1],
+                "unit": param[3],
+            }
+
+    @classmethod
     def __setattr(cls, *args, **kwargs):
         return cls.__setattr(cls, *args, **kwargs)
+
+    @classmethod
+    def from_template(cls, param_vars):
+        if cls.__template_params != {}:
+            from BLUEPRINT.systems.config import Configuration
+
+            cls.set_template_parameters(Configuration.params)
+
+        params = ParameterFrame()
+        for var in param_vars:
+            if var not in cls.__template_params:
+                raise ParameterError(
+                    f"Parameter with short name {var} is not known as a template "
+                    f"parameter for class {cls.__name__}."
+                )
+            name = cls.__template_params[var]["name"]
+            unit = cls.__template_params[var]["unit"]
+            params.add_parameter(var=var, name=name, unit=unit)
+
+        return params
 
     @staticmethod
     def modify_source(source, param):
@@ -809,14 +845,24 @@ class ParameterFrame:
                 continue
             if isinstance(var, dict):
                 src = var.get("source") if source is None else source
+                desc = var.get("description")
+                mapping = var.get("mapping")
                 var = var.get("value")
             elif isinstance(var, Parameter):
                 src = var.source if source is None else source
+                desc = var.description
+                mapping = var.mapping
                 var = var.value
             else:
                 src = source
+                desc = None
+                mapping = None
 
             self.__setattr__(key, self.modify_source(src, var))
+            if desc is not None:
+                self.__dict__[key].description = desc
+            if mapping is not None:
+                self.__dict__[key].mapping = mapping
 
     def items(self):
         """
@@ -841,7 +887,7 @@ class ParameterFrame:
         """
         return list(self.__dict__.values())
 
-    def get_param(self, var):
+    def get_param(self, var) -> Parameter:
         """
         Returns a Parameter object using the short var_name
         """
