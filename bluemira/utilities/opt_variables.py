@@ -183,7 +183,17 @@ class BoundedVariable:
         if not lower_bound <= value <= upper_bound:
             raise OptVariablesError("Variable value is out of its bounds.")
 
-    def __str__(self):
+    def __repr__(self) -> str:
+        """
+        Representation of Bounded variable
+        """
+        fixed = f",{self.lower_bound}, {self.upper_bound}"
+        return f"BoundedVariable({self.name}, {self.value}{fixed})"
+
+    def __str__(self) -> str:
+        """
+        Pretty representation of Bounded variable
+        """
         bound = (
             f" Bounds: ({self.lower_bound}, {self.upper_bound})"
             if not self.fixed
