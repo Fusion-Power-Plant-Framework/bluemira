@@ -118,6 +118,32 @@ The heat flux occurring in that region is thus reduced.
 The ultimate first wall profile is finally obtained by attacching the divertor.
 The divertor shape is not optimised in terms of heat flux onto the divertor 
 plates, and the user can design the profile through a set of geometrical parameters,
-such as 
+such as
+
+- xpt_outer_gap: Gap between x-point and outer wall
+- xpt_inner_gap: Gap between x-point and inner wall
+- outer_strike_r: Outer strike point major radius
+- inner_strike_r: Inner strike point major radius
+- tk_outer_target_sol: Outer target length between strike point and SOL side
+- tk_outer_target_pf: Outer target length between strike point and PFR side
+- tk_inner_target_sol: Inner target length SOL side
+- tk_inner_target_pfr: Inner target length PFR side
+- theta_outer_target: Angle between flux line tangent at outer strike point and SOL side of outer target
+- theta_inner_target: Angle between flux line tangent at inner strike point and SOL side of inner target
+
+Additionally, can choose between long leg divertor configuration 
+and DEMO like dovertor configuration. 
+
+.. figure:: ../images/nova/long_leg.png
+   :name: fig:long_leg
+   :align: center
+
+   Long leg divertor configuration
+
+.. figure:: ../images/nova/demo_leg.png
+   :name: fig:demo_leg
+   :align: center
+
+   DEMO like divertor configuration
 
 
