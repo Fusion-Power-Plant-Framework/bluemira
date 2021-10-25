@@ -94,6 +94,7 @@ fw_new = FirstWallSNNew(
         "equilibrium": eq,
         "vv_inner": vv_box,
         "SN": True,
+        "DEMO_like_divertor": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
         # Can't quite replicate the extremely spaced values from the above... but it's

@@ -533,8 +533,8 @@ class DivertorBuilder:
 
         # Select the degree of the fitting polynomial and
         # the flux lines that will guide the divertor leg shape
-        degree_in = self.outer_leg_sol_polyfit_degree
-        degree_out = self.outer_leg_pfr_polyfit_degree
+        degree_in = self.outer_leg_pfr_polyfit_degree
+        degree_out = self.outer_leg_sol_polyfit_degree
         (
             outer_leg_external_guide_line,
             outer_leg_internal_guide_line,

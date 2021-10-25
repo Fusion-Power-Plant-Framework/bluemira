@@ -92,7 +92,8 @@ fw_new = FirstWallDNNew(
     {
         "equilibrium": eq,
         "vv_inner": vv_box,
-        "DEMO_DN": True,
+        "SN": False,
+        "DEMO_like_divertor": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
         "dx_mp": 0.001,
