@@ -22,6 +22,7 @@
 Plotting module examples
 """
 
+import bluemira.geometry.tools
 from bluemira.plotting.plotter import (
     PointsPlotter,
     WirePlotter,
@@ -133,6 +134,7 @@ new_bari = face.center_of_mass
 diff = bari - new_bari
 v = (diff[0], diff[1], diff[2])
 face.translate(v)
+print(v)
 
 # creation of a face compound plotter
 # color test with palettes
@@ -147,3 +149,25 @@ cplotter.plot_points = False
 cplotter([face3, face], ndiscr=100, byedges=True)
 cplotter.ax.set_title("Compound plot - test with single color light:#105ba4")
 cplotter.show_plot()
+
+points = [[0,0,0], [1,0,0], [1,0,3], [0,0,3]]
+wire = bluemira.geometry.tools.make_polygon(points, closed=True)
+wire1 = wire.deepcopy()
+wire1.translate((3,0,5))
+wplotter(wire, show=False, block=False, ndiscr=10, byedges=True)
+wplotter.ax.set_title("wire")
+wplotter.show_plot()
+wplotter(wire1, show=False, block=False, ndiscr=10, byedges=True)
+wplotter.ax.set_title("wire1")
+wplotter.show_plot()
+
+wface = BluemiraFace(wire)
+w1face = BluemiraFace(wire1)
+cplotter([wface, w1face], ndiscr=10, byedges=True)
+cplotter.ax.set_title("test faces")
+cplotter.show_plot()
+
+wplotter(wface.boundary[0], ndiscr=10, byedges=True)
+wplotter(w1face.boundary[0], ax=wplotter.ax, ndiscr=10, byedges=True)
+wplotter.ax.set_title("test w1face")
+wplotter.show_plot()

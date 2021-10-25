@@ -757,4 +757,8 @@ def change_plane(geo, plane):
     nothing:
         The object is directly modified.
     """
-    geo.Placement = geo.Placement.multiply(plane)
+    old_base = geo.Placement.Base
+    new_placement = geo.Placement.multiply(plane)
+    new_base = plane.multVec(geo.Placement.Base)
+    new_placement.Base = new_base
+    geo.Placement = new_placement

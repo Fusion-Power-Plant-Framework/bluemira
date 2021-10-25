@@ -64,17 +64,6 @@ class BluemiraWire(BluemiraGeo):
         # connection variable with BLUEPRINT Loop
         self._bp_loop = None
 
-    def copy(self):
-        """Make a copy of the BluemiraWire"""
-        return BluemiraWire(self.boundary, self.label)
-
-    def deepcopy(self):
-        """Make a copy of the BluemiraWire"""
-        boundary = []
-        for o in self.boundary:
-            boundary += [o.copy()]
-        return BluemiraWire(boundary, self.label)
-
     @staticmethod
     def _converter(func):
         def wrapper(*args, **kwargs):
