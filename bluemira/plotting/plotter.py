@@ -162,7 +162,7 @@ class BasePlotter(ABC):
         elif plane == "xz":
             # Base.Placement(origin, axis, angle)
             self.options["plane"] = BluemiraPlane(axis=(1.0, 0.0, 0.0), angle=-90.0)
-        elif plane == "yz":
+        elif plane == "zy":
             # Base.Placement(origin, axis, angle)
             self.options["plane"] = BluemiraPlane(axis=(0.0, 1.0, 0.0), angle=90.0)
         elif isinstance(plane, BluemiraPlane):
