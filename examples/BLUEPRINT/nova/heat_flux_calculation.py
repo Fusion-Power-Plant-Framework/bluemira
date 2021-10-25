@@ -68,6 +68,7 @@ fw = FirstWallSN(
         "SN": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
+        "FW_optimisation": True,
     },
 )
 

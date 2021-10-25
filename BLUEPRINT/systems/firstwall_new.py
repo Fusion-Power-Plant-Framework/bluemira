@@ -1124,6 +1124,7 @@ class FirstWallNew(ReactorSystem):
 
         # Define the mid-plane as having z-normal and containing O point.
         self.mid_plane = make_plane(self.points["o_point"]["z"], 2)
+        self.x_imp_lcfs = np.min(loop_plane_intersect(self.lcfs, self.mid_plane).T[0])
 
     # Actual run
     def build(self):
