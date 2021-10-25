@@ -24,7 +24,7 @@ Interfaces for builder and build steps classes
 """
 
 import abc
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, Tuple
 
 from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
@@ -52,11 +52,11 @@ class Builder(abc.ABC):
         self._params.update_kw_parameters(params)
 
     @abc.abstractmethod
-    def build(self, params, **kwargs) -> Dict[str, Component]:
+    def build(self, params, **kwargs) -> List[Tuple[str, Component]]:
         self._validate_params(params)
         self._params.update_kw_parameters(params)
         bluemira_print(f"Building {self.name}")
-        return {}
+        return [()]
 
     @property
     def name(self):

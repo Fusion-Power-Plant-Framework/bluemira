@@ -50,9 +50,9 @@ class MakeParameterisedShape(Builder):
                 shape.adjust_variable(key, val)
 
         target = self._target.split("/")
-        return {
-            "/".join(target[:-1]): PhysicalComponent(target[-1], shape.create_shape())
-        }
+        return [
+            ("/".join(target[:-1]), PhysicalComponent(target[-1], shape.create_shape()))
+        ]
 
     def _extract_config(self, build_config: Dict[str, Any]):
         def _get_param_class(param_class: str) -> Type[GeometryParameterisation]:
