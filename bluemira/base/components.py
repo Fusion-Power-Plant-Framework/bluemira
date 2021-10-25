@@ -26,7 +26,7 @@ Module containing the base Component class.
 import anytree
 from anytree import NodeMixin, RenderTree
 import copy
-from typing import Any, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from bluemira.display.plotter import Plottable
 from bluemira.display.displayer import DisplayableCAD
@@ -246,3 +246,34 @@ class MagneticComponent(PhysicalComponent):
     @conductor.setter
     def conductor(self, value):
         self._conductor = value
+
+
+class ComponentManager:
+    _trees: Dict[str, Component]
+
+    def __init__(self, keys: List[str]):
+        self._trees = {key: GroupingComponent(key) for key in keys}
+
+    @property
+    def trees(self):
+        return self._trees
+
+    def get_by_path(self, path: str) -> Component:
+        path = path.split("/")
+        tree = self._trees[path[0]]
+        for node in path[1:]:
+            tree = tree.get_component(node)
+        return tree
+
+    def insert_at_path(self, path: str, component: Component, *, fill_tree=True):
+        path = path.split("/")
+        tree = self._trees[path[0]]
+        for idx, node in enumerate(path[1:], 1):
+            tree = tree.get_component(node)
+            if tree is None:
+                if fill_tree:
+                    parent = self.get_by_path("/".join(path[:idx]))
+                    tree = GroupingComponent(node, parent=parent)
+                else:
+                    raise ComponentError(f"Component at path {'/'.join(path)} not found")
+        component.parent = tree

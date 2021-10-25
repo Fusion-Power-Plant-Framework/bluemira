@@ -23,6 +23,7 @@ import pytest
 
 from bluemira.base.components import (
     Component,
+    ComponentManager,
     GroupingComponent,
     PhysicalComponent,
     MagneticComponent,
@@ -179,6 +180,51 @@ class TestMagneticComponent:
     def test_conductor(self):
         component = MagneticComponent("Dummy", shape="A shape", conductor="A conductor")
         assert component.conductor == "A conductor"
+
+
+class TestComponentManager:
+    """
+    Tests for the ComponentManager class.
+    """
+
+    def test_set_trees(self):
+        trees = ["xz", "xy"]
+        manager = ComponentManager(trees)
+        assert list(manager.trees.keys()) == trees
+
+    def test_insert_get_path_fresh_tree(self):
+        component_name = "Shape"
+        component = PhysicalComponent(component_name, "A Shape")
+        path = "xz/TF Coils"
+        trees = ["xz", "xy"]
+        manager = ComponentManager(trees)
+        manager.insert_at_path(path, component)
+        in_tree = manager.get_by_path("/".join([path, component_name]))
+        assert in_tree == component
+
+    def test_insert_get_path_existing_tree(self):
+        component_name = "Shape"
+        component = PhysicalComponent(component_name, "A Shape")
+        tf_coils = "TF Coils"
+        tree = "xz"
+        trees = ["xz", "xy"]
+        manager = ComponentManager(trees)
+        manager.insert_at_path(tree, GroupingComponent(tf_coils), fill_tree=False)
+        manager.insert_at_path("/".join([tree, tf_coils]), component, fill_tree=False)
+        in_tree = manager.get_by_path("/".join([tree, tf_coils, component_name]))
+        assert in_tree == component
+
+    def test_insert_get_path_missing_tree(self):
+        component_name = "Shape"
+        component = PhysicalComponent(component_name, "A Shape")
+        tf_coils = "TF Coils"
+        tree = "xz"
+        trees = ["xz", "xy"]
+        manager = ComponentManager(trees)
+        with pytest.raises(ComponentError, match="xz/TF Coils"):
+            manager.insert_at_path(
+                "/".join([tree, tf_coils]), component, fill_tree=False
+            )
 
 
 if __name__ == "__main__":
