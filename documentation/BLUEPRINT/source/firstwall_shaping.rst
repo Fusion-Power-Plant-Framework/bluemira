@@ -116,5 +116,8 @@ The heat flux occurring in that region is thus reduced.
    The line blue indicates the new and optimised first wall profile.
 
 The ultimate first wall profile is finally obtained by attacching the divertor.
+The divertor shape is not optimised in terms of heat flux onto the divertor 
+plates, and the user can design the profile through a set of geometrical parameters,
+such as 
 
 
