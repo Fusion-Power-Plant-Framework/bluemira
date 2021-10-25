@@ -92,7 +92,7 @@ class BoundedVariable:
 
     __slots__ = ("name", "lower_bound", "upper_bound", "fixed", "_value")
 
-    def __init__(self, name, value, lower_bound, upper_bound, fixed=False):
+    def __init__(self, name, value, lower_bound, upper_bound, fixed=False, descr=None):
         self._validate_bounds(lower_bound, upper_bound)
         self._validate_value(value, lower_bound, upper_bound)
         self.name = name
@@ -102,6 +102,7 @@ class BoundedVariable:
         self.fixed = False  # Required to set value initially
         self.value = value
         self.fixed = fixed
+        self._description = descr
 
     @property
     def value(self):
@@ -178,6 +179,9 @@ class BoundedVariable:
         if not lower_bound <= value <= upper_bound:
             raise OptVariablesError("Variable value is out of its bounds.")
 
+    def __repr__(self):
+        super().__repr__()
+
 
 class OptVariables:
     """
@@ -192,9 +196,10 @@ class OptVariables:
         prevents any adding or removal of variables after instantiation.
     """
 
-    def __init__(self, variables, frozen=False):
+    def __init__(self, variables, frozen=False, descr=None):
         self._var_dict = {v.name: v for v in variables}
         self.frozen = frozen
+        self._description = descr
 
     def add_variable(self, variable):
         """
@@ -367,6 +372,9 @@ class OptVariables:
         """
         self._check_presence(name)
         return self._var_dict[name]
+
+    def __repr__(self):
+        super().__repr__()
 
     def plot(self):
         """
