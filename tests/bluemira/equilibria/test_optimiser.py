@@ -28,7 +28,12 @@ from scipy.optimize import minimize
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import make_circle_arc
-from bluemira.equilibria.optimiser import PositionOptimiser, BreakdownOptimiser
+from bluemira.equilibria.optimiser import (
+    CoilsetOptimiser,
+    PositionOptimiser,
+    BreakdownOptimiser,
+    CoilsetOptimiser,
+)
 from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.grid import Grid
@@ -222,29 +227,26 @@ class TestCoilsetOptimiser:
         )
 
         cls.coilset = CoilSet([coil2, circuit])
+        cls.optimiser = CoilsetOptimiser(cls.coilset)
 
     def test_modify_coilset(self):
         # Read
-        x = np.array([c.x for c in self.coilset.coils.values()])
-        z = np.array([c.z for c in self.coilset.coils.values()])
-        currents = np.array([c.current for c in self.coilset.coils.values()])
-        coilset_state = np.concatenate((x, z, currents))
+        coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
 
         # Modify vectors
+        x, z, currents = np.array_split(coilset_state, substates)
         x += 1.1
         z += 0.6
-        currents += 0.99e6
+        currents += 0.99
         updated_coilset_state = np.concatenate((x, z, currents))
+        self.optimiser.set_coilset_state(updated_coilset_state)
 
-        state_x, state_z, state_i = np.array_split(updated_coilset_state, 3)
+        coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
+        state_x, state_z, state_i = np.array_split(coilset_state, substates)
         assert np.allclose(state_x, x)
         assert np.allclose(state_z, z)
         assert np.allclose(state_i, currents)
 
-        for i, coil in enumerate(self.coilset.coils.values()):
-            coil.x = x[i]
-            coil.z = z[i]
-            coil.set_current(currents[i])
         print(self.coilset)
 
 
