@@ -377,10 +377,12 @@ class TestParameterFrame:
         assert params_copy.R_0 == 10
         assert params_copy.get_param("R_0").name == self.params.get_param("R_0").name
         assert params_copy.get_param("R_0").unit == self.params.get_param("R_0").unit
-        assert (
-            params_copy.get_param("R_0").description
-            == self.params.get_param("R_0").description
-        )
+        # TODO: Remove - Users should be able to define their own description IMO
+        # Perhaps we should prevent a change of description if they have set it though
+        # assert (
+        #     params_copy.get_param("R_0").description
+        #     == self.params.get_param("R_0").description
+        # )
         # The source should be updated because it has changed
         # assert params_copy.get("R_0").source == self.params.get("R_0").source
 
