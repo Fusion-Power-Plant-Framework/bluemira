@@ -59,13 +59,14 @@ pplotter(points, show=True, block=True)
 # - ndiscr = 10
 # - plot title
 wplotter = WirePlotter(plane="xz")
+wplotter.options.flag_points = True
 wplotter.options.poptions["s"] = 10
 wplotter.options.ndiscr = 10
 wplotter(wire, show=False, block=True)
 wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options.ndiscr}")
 wplotter.show_plot()
 
-# in this exaple points plot is disabled.
+# in this example points plot is disabled just removing the poptions.
 wplotter.options.poptions = {}
 wplotter(wire, show=True, block=True)
 # The plot is immediately shown, so it is not possible to act on the plot setup
@@ -93,7 +94,6 @@ face2 = BluemiraFace(wire2)
 # been changed, the two faces will be plotted in the same way (e.g. same color).
 fplotter2 = FacePlotter(plane="xz")
 fplotter2.plot_points = True
-fplotter2.options.ndiscr = 10
 fplotter2.options.foptions = {"color": "blue"}
 fplotter2(face, show=False, block=True)
 fplotter2(face2, ax=fplotter2.ax, show=False, block=True)
@@ -172,11 +172,38 @@ cplotter.show_plot()
 
 wplotter(wface.boundary[0])
 wplotter(w1face.boundary[0], ax=wplotter.ax)
-wplotter.ax.set_title("test w1face")
+wplotter.ax.set_title("test boundary from faces")
 wplotter.show_plot()
 
-from bluemira.base.components import PhysicalComponent
-c = bluemira.base.components.PhysicalComponent("Comp", face)
+# plot of a component
+import matplotlib.pyplot as plt
+from bluemira.base.components import PhysicalComponent, GroupingComponent
+c = PhysicalComponent("Comp", face)
 c._plotter2d.options.plane = 'xz'
-c._plotter2d.options.ndiscr = 10
-c.plot2d()
+c._plotter2d.options.ndiscr = 30
+ax = c.plot2d(show=False)
+ax.set_title("test component plot")
+plt.gca().set_aspect("equal")
+plt.show(block=True)
+
+# plot of a group of components
+group = GroupingComponent("Components")
+c1 = PhysicalComponent("Comp1", face, parent=group)
+c2 = PhysicalComponent("Comp2", wface, parent=group)
+c3 = PhysicalComponent("Comp3", w1face, parent=group)
+group.plot2d()
+
+# combined plot of Componennt and BluemiraGeo instances
+wplotter.options.woptions['color'] = 'red'
+ax = wplotter(wface.boundary[0])
+fplotter.options.foptions['color'] = 'green'
+fplotter.options.woptions['color'] = 'black'
+ax = fplotter(w1face, ax=ax)
+ax = c.plot2d(ax=ax)
+ax.set_title("test component + bluemirageo plot")
+plt.gca().set_aspect("equal")
+plt.show(block=True)
+
+print(wplotter.options.asdict())
+print(fplotter.options.asdict())
+print(c.plot2d_options.asdict())

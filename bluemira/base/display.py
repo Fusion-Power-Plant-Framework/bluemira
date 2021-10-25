@@ -75,7 +75,7 @@ class Displayer(abc.ABC):
         self._options = val
 
     @abc.abstractmethod
-    def _display(self, obj, options: Optional[DisplayOptions] = None) -> None:
+    def _display(self, obj, options: Optional[DisplayOptions] = None, *args, **kwargs) -> None:
         """
         Display the object by calling the display function within the API.
         Parameters
@@ -86,7 +86,7 @@ class Displayer(abc.ABC):
             The options to use to display the object, by default None in which case the
         default values for the DisplayOptions class are used.
         """
-        self._display_func(obj, options)
+        return self._display_func(obj, options, *args, **kwargs)
 
 
 # # =============================================================================
@@ -111,7 +111,7 @@ class Plotter2D(Displayer):
             options
         self._display_func = get_module(api).plot2d
 
-    def _display(self, obj, options: Optional[Plot2DOptions] = None) -> None:
+    def _display(self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs) -> None:
         """
         Display the primitive objects with the provided options.
         Parameters
@@ -125,11 +125,12 @@ class Plotter2D(Displayer):
             options = self.options
 
         #try:
-        super()._display(obj, options)
+        return super()._display(obj, options, *args, **kwargs)
         #except Exception as e:
         #    bluemira_warn(f"Unable to display object {obj} - {e}")
 
-    def plot2d(self, obj, options: Optional[DisplayOptions] = None) -> None:
+    def plot2d(self, obj, options: Optional[DisplayOptions] = None, *args, **kwargs) -> \
+            None:
         """
         2D plot the object by calling the display function within the API.
         Parameters
@@ -140,7 +141,7 @@ class Plotter2D(Displayer):
             The options to use to display the object, by default None in which case the
         default values for the DisplayOptions class are used.
         """
-        return self._display(obj, options)
+        return self._display(obj, options, *args, **kwargs)
 
 
 class Plottable2D:
@@ -167,7 +168,7 @@ class Plottable2D:
             )
         self._plotter2d.options = value
 
-    def plot2d(self, options: Optional[Plot2DOptions] = None) -> None:
+    def plot2d(self, options: Optional[Plot2DOptions] = None, *args, **kwargs) -> None:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -177,7 +178,7 @@ class Plottable2D:
             If not None then override the object's display_options with the provided
             options. By default None.
         """
-        self._plotter2d.plot2d(self, options)
+        return self._plotter2d.plot2d(self, options, *args, **kwargs)
 
 
 # # =============================================================================
@@ -192,7 +193,7 @@ class PlotCADOptions(DisplayOptions):
 
 class PlotterCAD(Displayer):
 
-    def plotcad(self, obj, options: Optional[DisplayOptions] = None) -> None:
+    def plotcad(self, obj, options: Optional[DisplayOptions] = None, *args, **kwargs) -> None:
         """
         2D plot the object by calling the display function within the API.
         Parameters
@@ -203,7 +204,7 @@ class PlotterCAD(Displayer):
             The options to use to display the object, by default None in which case the
         default values for the DisplayOptions class are used.
         """
-        return self.__display(obj, options)
+        return self.__display(obj, options, *args, **kwargs)
 
 
 class PlottableCAD:
@@ -230,7 +231,7 @@ class PlottableCAD:
             )
         self._plottercad.options = value
 
-    def plotcad(self, options: Optional[PlotCADOptions] = None) -> None:
+    def plotcad(self, options: Optional[PlotCADOptions] = None, *args, **kwargs) -> None:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -240,4 +241,4 @@ class PlottableCAD:
             If not None then override the object's display_options with the provided
             options. By default None.
         """
-        self._plottercad.plotcad(self, options)
+        self._plottercad.plotcad(self, options, *args, **kwargs)

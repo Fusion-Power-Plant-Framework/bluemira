@@ -253,7 +253,7 @@ class ComponentPlotter2D(Plotter2D):
     """
 
     def plot2d(
-        self, component: "Component", options: Optional[Plot2DOptions] = None
+        self, component: "Component", options: Optional[Plot2DOptions] = None, *args, **kwargs
     ) -> None:
         """
         2D plot a component by searching through the component's tree and finding any
@@ -284,4 +284,4 @@ class ComponentPlotter2D(Plotter2D):
         for descendant in component.descendants or []:
             _append_shape_and_options(descendant)
 
-        super().plot2d(shapes, options)
+        return super().plot2d(shapes, options, *args, **kwargs)

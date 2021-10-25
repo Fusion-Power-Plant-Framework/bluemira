@@ -31,18 +31,17 @@ import bluemira.geometry as geo
 from . import display
 from .error import DisplayError
 
-import dataclasses
-from dataclasses import field
+import copy
 
 DEFAULT = {}
 DEFAULT["flags"] = {"points": True, "wires": True, "faces": True}
 DEFAULT["flag_points"] = False
 DEFAULT["flag_wires"] = True
 DEFAULT["flag_faces"] = True
-DEFAULT["poptions"] = {"s": 10, "facecolors": "blue", "edgecolors": "black"}
+DEFAULT["poptions"] = {"s": 10, "facecolors": "red", "edgecolors": "black"}
 DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5"}
-DEFAULT["foptions"] = {"color": "red"}
-DEFAULT["plane"] = "xy"
+DEFAULT["foptions"] = {"color": "blue"}
+DEFAULT["plane"] = "xz"
 DEFAULT["palette"] = None
 DEFAULT["ndiscr"] = 100
 DEFAULT["byedges"] = True
@@ -77,7 +76,7 @@ class MatplotlibOptions(display.Plot2DOptions):
     """
 
     def __init__(self, **kwargs):
-        self._options = DEFAULT.copy()
+        self._options = copy.deepcopy(DEFAULT)
         if kwargs:
             for k in kwargs:
                 if k in self.options:
@@ -335,7 +334,7 @@ class FaceCompoundPlotter(FacePlotter):
 def plot2d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
     options: Optional[Union[MatplotlibOptions, List[MatplotlibOptions]]] = None,
-    ax = None, show: bool = True, block: bool = True,
+    ax = None, show: bool = False, block: bool = True,
 ):
     """
     The implementation of the display API for FreeCAD parts.
