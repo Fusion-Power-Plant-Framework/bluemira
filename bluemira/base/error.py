@@ -38,6 +38,14 @@ class BluemiraError(Exception):
         return fill(dedent(self.args[0]))
 
 
+class BuilderError(BluemiraError):
+    """
+    Exception class for Builders.
+    """
+
+    pass
+
+
 class ComponentError(BluemiraError):
     """
     Exception class for Components.
