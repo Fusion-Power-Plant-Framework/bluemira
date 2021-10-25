@@ -1368,6 +1368,13 @@ class CoilsetOptimiser(EquilibriumOptimiser):
             coil.set_current(currents[i] * self.scale)
         return self
 
+    def set_state_bounds(self, opt, x_bounds, z_bounds, current_bounds):
+        lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
+        upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
+        opt.set_lower_bounds(lower_bounds)
+        opt.set_upper_bounds(upper_bounds)
+        return opt
+
     def update_current_constraint(self, max_currents):
         """
         Updates the current vector bounds. Must be called prior to optimise.
@@ -1416,9 +1423,14 @@ class CoilsetOptimiser(EquilibriumOptimiser):
         opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
 
         # Set state vector bounds (current limits)
-        opt.set_lower_bounds(-self.I_max)
-        opt.set_upper_bounds(self.I_max)
+        x_bounds = (self.x0 - 0.5, self.x0 + 0.5)
+        z_bounds = (self.z0 - 0.5, self.z0 + 0.5)
+        current_bounds = (
+            -self.I_max * np.ones(len(self.I0)),
+            -self.I_max * np.ones(len(self.I0)),
+        )
 
+        self.set_state_bounds(opt, x_bounds, z_bounds, current_bounds)
         return opt
 
     def optimise(self):
