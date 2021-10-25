@@ -326,6 +326,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
     ]
     # fmt: on
     ParameterFrame.set_default_parameters(params)
+    ParameterFrame.set_template_parameters(params)
 
     def __init__(self, custom_params=None):
         super().__init__(custom_params, with_defaults=True)
