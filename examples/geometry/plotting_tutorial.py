@@ -207,3 +207,6 @@ plt.show(block=True)
 print(wplotter.options.asdict())
 print(fplotter.options.asdict())
 print(c.plot2d_options.asdict())
+
+#plot CAD
+group.plotcad()

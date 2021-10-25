@@ -28,10 +28,9 @@ from typing import Optional, Tuple
 from bluemira.utilities.tools import get_module
 from .error import DisplayError
 from .look_and_feel import bluemira_warn
-from . import _matplotlib_plot
 
 
-class DisplayOptions():
+class DisplayOptions:
     """
     The options that are available for displaying objects
     """
@@ -107,7 +106,7 @@ class Plotter2D(Displayer):
         api: str = 'bluemira.base._matplotlib_plot',
     ):
         super().__init__(options, api)
-        self._options = _matplotlib_plot.MatplotlibOptions() if options is None else \
+        self._options = get_module(api).MatplotlibOptions() if options is None else \
             options
         self._display_func = get_module(api).plot2d
 
@@ -129,7 +128,7 @@ class Plotter2D(Displayer):
         #except Exception as e:
         #    bluemira_warn(f"Unable to display object {obj} - {e}")
 
-    def plot2d(self, obj, options: Optional[DisplayOptions] = None, *args, **kwargs) -> \
+    def plot2d(self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs) -> \
             None:
         """
         2D plot the object by calling the display function within the API.
@@ -193,7 +192,35 @@ class PlotCADOptions(DisplayOptions):
 
 class PlotterCAD(Displayer):
 
-    def plotcad(self, obj, options: Optional[DisplayOptions] = None, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        options: Optional[PlotCADOptions] = None,
+        api: str = 'bluemira.base._freecad_plot',
+    ):
+        super().__init__(options, api)
+        self._options = get_module(api).FreeCADPlotOptions() if options is None else \
+            options
+        self._display_func = get_module(api).plotcad
+
+    def _display(self, obj, options: Optional[PlotCADOptions] = None, *args, **kwargs) -> None:
+        """
+        Display the primitive objects with the provided options.
+        Parameters
+        ----------
+        obj
+            The CAD primitive objects to be displayed.
+        options: Optional[DisplayOptions]
+            The options to use to display the primitives.
+        """
+        if options is None:
+            options = self.options
+
+        #try:
+        return super()._display(obj, options, *args, **kwargs)
+        #except Exception as e:
+        #    bluemira_warn(f"Unable to display object {obj} - {e}")
+
+    def plotcad(self, obj, options: Optional[PlotCADOptions] = None, *args, **kwargs) -> None:
         """
         2D plot the object by calling the display function within the API.
         Parameters
@@ -204,7 +231,7 @@ class PlotterCAD(Displayer):
             The options to use to display the object, by default None in which case the
         default values for the DisplayOptions class are used.
         """
-        return self.__display(obj, options, *args, **kwargs)
+        return self._display(obj, options, *args, **kwargs)
 
 
 class PlottableCAD:
@@ -227,7 +254,7 @@ class PlottableCAD:
     def plotcad_options(self, value: PlotCADOptions):
         if not isinstance(value, PlotCADOptions):
             raise DisplayError(
-                "Display options must be set to a Plot2DOptions instance."
+                "Display options must be set to a PlotCADOptions instance."
             )
         self._plottercad.options = value
 
