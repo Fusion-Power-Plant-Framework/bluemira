@@ -23,7 +23,7 @@ import numpy as np
 import pytest
 import tests
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import MultiLoop
 from BLUEPRINT.geometry.shell import MultiShell
 from BLUEPRINT.reactor import Reactor

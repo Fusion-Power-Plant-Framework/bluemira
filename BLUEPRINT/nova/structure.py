@@ -30,7 +30,7 @@ from scipy.optimize import minimize_scalar, minimize
 from scipy.optimize import fmin_slsqp
 from BLUEPRINT.geometry.geomtools import normal
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.geometry.constants import VERY_BIG

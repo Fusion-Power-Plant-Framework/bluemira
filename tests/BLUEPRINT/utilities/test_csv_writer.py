@@ -29,7 +29,7 @@ from BLUEPRINT.utilities.csv_writer import (
 from BLUEPRINT.geometry.geomtools import make_box_xz
 import filecmp
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 def test_csv_writer():
