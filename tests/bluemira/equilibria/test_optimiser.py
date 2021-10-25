@@ -249,6 +249,12 @@ class TestCoilsetOptimiser:
 
         print(self.coilset)
 
+    # def test_optimiser_setup(self):
+    #     # Read
+    #     coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
+
+    #     print(self.coilset)
+
 
 # Recursion test and comparision between scipy and NLopt implementation of
 # Breakdown optimisation:
