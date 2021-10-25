@@ -59,24 +59,25 @@ pplotter(points, show=True, block=True)
 # - ndiscr = 10
 # - plot title
 wplotter = WirePlotter(plane="xz")
-wplotter.change_poptions(("s", 10))
-ndiscr = 10
-wplotter(wire, show=False, block=True, ndiscr=ndiscr, byedges=True)
-wplotter.ax.set_title(f"Wire plot, ndiscr: {ndiscr}")
+wplotter.options.poptions["s"] = 10
+wplotter.options.ndiscr = 10
+wplotter(wire, show=False, block=True)
+wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options.ndiscr}")
 wplotter.show_plot()
 
 # in this exaple points plot is disabled.
-wplotter.change_poptions({})
-wplotter(wire, show=True, block=True, ndiscr=10, byedges=True)
+wplotter.options.poptions = {}
+wplotter(wire, show=True, block=True)
 # The plot is immediately shown, so it is not possible to act on the plot setup
 # e.g. following commands would not work
-# wplotter.ax.set_title(f"Wire plot, ndiscr: {ndiscr}")
+# wplotter.ax.set_title(f"Wire plot")
 # wplotter.show_plot()
 
 # face plot
 fplotter = FacePlotter(plane="xz")
 fplotter.plot_points = False
-fplotter(face, show=False, block=True, ndiscr=10, byedges=True)
+fplotter.options.ndiscr = 30
+fplotter(face, show=False, block=True)
 fplotter.ax.set_title("Face plot")
 fplotter.show_plot()
 
@@ -92,18 +93,19 @@ face2 = BluemiraFace(wire2)
 # been changed, the two faces will be plotted in the same way (e.g. same color).
 fplotter2 = FacePlotter(plane="xz")
 fplotter2.plot_points = True
+fplotter2.options.ndiscr = 10
 fplotter2.options.foptions = {"color": "blue"}
-fplotter2(face, show=False, block=True, ndiscr=100, byedges=True)
-fplotter2(face2, ax=fplotter2.ax, show=False, block=True, ndiscr=100, byedges=True)
+fplotter2(face, show=False, block=True)
+fplotter2(face2, ax=fplotter2.ax, show=False, block=True)
 fplotter2.ax.set_title("Both faces in blue")
 fplotter2.show_plot()
 
 # plot both face with different color.
 # Note: if face is plotte before face2, face2 will be "covered" by face.
 fplotter2.options.foptions = {"color": "blue"}
-fplotter2(face2, show=False, block=True, ndiscr=100, byedges=True)
+fplotter2(face2, show=False, block=True)
 fplotter2.options.foptions = {"color": "green"}
-fplotter2(face, ax=fplotter2.ax, show=False, block=True, ndiscr=100, byedges=True)
+fplotter2(face, ax=fplotter2.ax, show=False, block=True)
 fplotter2.ax.set_title("Both faces with different colors")
 fplotter2.show_plot()
 
@@ -117,13 +119,13 @@ fplotter2.show_plot()
 face3 = BluemiraFace([wire2.deepcopy(), wire.deepcopy()])
 fplotter3 = FacePlotter(plane="xz")
 fplotter3.plot_points = True
-fplotter3(face3, ndiscr=100, byedges=True)
+fplotter3(face3)
 fplotter3.ax.set_title("Face with hole - points enabled")
 fplotter3.show_plot()
 
 fplotter3.plot_points = False
-fplotter3.change_foptions(("color", "blue"))
-fplotter3(face3, ax=None, ndiscr=100, byedges=True)
+fplotter3.options.foptions['color'] = "blue"
+fplotter3(face3, ax=None)
 fplotter3.ax.set_title("Face with hole - points disabled - blue")
 fplotter3.show_plot()
 
@@ -141,13 +143,13 @@ print(v)
 cplotter = FaceCompoundPlotter(palette="Blues_r")
 cplotter.set_plane('xz')
 cplotter.plot_points = False
-cplotter([face3, face], ndiscr=100, byedges=True)
+cplotter([face3, face])
 cplotter.ax.set_title("Compound plot - test in Blue_r")
 cplotter.show_plot()
 
 cplotter = FaceCompoundPlotter(plane="xz", palette="light:#105ba4")
 cplotter.plot_points = False
-cplotter([face3, face], ndiscr=100, byedges=True)
+cplotter([face3, face])
 cplotter.ax.set_title("Compound plot - test with single color light:#105ba4")
 cplotter.show_plot()
 
@@ -155,25 +157,26 @@ points = [[0,0,0], [1,0,0], [1,0,3], [0,0,3]]
 wire = bluemira.geometry.tools.make_polygon(points, closed=True)
 wire1 = wire.deepcopy()
 wire1.translate((3,0,5))
-wplotter(wire, show=False, block=False, ndiscr=10, byedges=True)
+wplotter(wire, show=False, block=False)
 wplotter.ax.set_title("wire")
 wplotter.show_plot()
-wplotter(wire1, show=False, block=False, ndiscr=10, byedges=True)
+wplotter(wire1, show=False, block=False)
 wplotter.ax.set_title("wire1")
 wplotter.show_plot()
 
 wface = BluemiraFace(wire)
 w1face = BluemiraFace(wire1)
-cplotter([wface, w1face], ndiscr=10, byedges=True)
+cplotter([wface, w1face])
 cplotter.ax.set_title("test faces")
 cplotter.show_plot()
 
-wplotter(wface.boundary[0], ndiscr=10, byedges=True)
-wplotter(w1face.boundary[0], ax=wplotter.ax, ndiscr=10, byedges=True)
+wplotter(wface.boundary[0])
+wplotter(w1face.boundary[0], ax=wplotter.ax)
 wplotter.ax.set_title("test w1face")
 wplotter.show_plot()
 
 from bluemira.base.components import PhysicalComponent
 c = bluemira.base.components.PhysicalComponent("Comp", face)
 c._plotter2d.options.plane = 'xz'
+c._plotter2d.options.ndiscr = 10
 c.plot2d()

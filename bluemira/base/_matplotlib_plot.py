@@ -36,6 +36,9 @@ from dataclasses import field
 
 DEFAULT = {}
 DEFAULT["flags"] = {"points": True, "wires": True, "faces": True}
+DEFAULT["flag_points"] = False
+DEFAULT["flag_wires"] = True
+DEFAULT["flag_faces"] = True
 DEFAULT["poptions"] = {"s": 10, "facecolors": "blue", "edgecolors": "black"}
 DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5"}
 DEFAULT["foptions"] = {"color": "red"}
@@ -45,6 +48,9 @@ DEFAULT["ndiscr"] = 100
 DEFAULT["byedges"] = True
 
 
+# Note: This class cannot be an instance of dataclasses 'cause it fails when inserting
+# a field that is a Base.Placement (or something that contains a Base.Placement). The
+# given error is "TypeError: can't pickle Base.Placement objects"
 class MatplotlibOptions(display.Plot2DOptions):
     """ The options that are available for plotting objects in 3D
     Parameters
@@ -65,7 +71,7 @@ class MatplotlibOptions(display.Plot2DOptions):
         dictionary with matplotlib options for faces. By default {"color": "red"}
     plane: [str, Plane]
         The plane on which the object is projected for plotting. As string, possible
-        options are "xy", "xz", "yz". By default 'xz'.
+        options are "xy", "xz", "zy". By default 'xz'.
     palette:
         palette
     """
@@ -75,18 +81,16 @@ class MatplotlibOptions(display.Plot2DOptions):
         if kwargs:
             for k in kwargs:
                 if k in self.options:
-                    if k == "plane":
-                        self.set_plane(kwargs[k])
-                    else:
-                        self.options[k] = kwargs[k]
+                    self.options[k] = kwargs[k]
+        # Todo: in this way class attributes are not seen till runtime. Not sure if
+        #  this should be changed manually declaring all the attributes.
         for k in self._options:
             setattr(self, k, self._options[k])
 
+
 # Note: when plotting points, it can happen that markers are not centered properly as
 # described in https://github.com/matplotlib/matplotlib/issues/11836
-
-
-class BasePlotter():
+class BasePlotter:
     """
     Base utility plotting class
     """
@@ -113,96 +117,6 @@ class BasePlotter():
     def options(self, val: MatplotlibOptions) -> None:
         self._options = MatplotlibOptions() if val is None else val
 
-    @property
-    def flag_points(self):
-        """Set the flag to plot points"""
-        return self.options.flags["points"]
-
-    @flag_points.setter
-    def flag_points(self, value):
-        self.options.flags["points"] = value
-
-    @property
-    def flag_wires(self):
-        """Set the flag to plot wires"""
-        return self.options.flags["wires"]
-
-    @flag_wires.setter
-    def flag_wires(self, value):
-        self.options.flags["wires"] = value
-
-    @property
-    def flag_faces(self):
-        """Set the flag to plot faces"""
-        return self.options.flags["faces"]
-
-    @flag_faces.setter
-    def flag_faces(self, value):
-        self.options.flags["faces"] = value
-
-    @property
-    def poptions(self):
-        """Plot options for points"""
-        return self.options.poptions
-
-    @property
-    def woptions(self):
-        """Plot options for wires"""
-        return self.options.woptions
-
-    @property
-    def foptions(self):
-        """Plot options for faces"""
-        return self.options.foptions
-
-    def change_poptions(self, value):
-        """Function to change the plot options for points
-        Parameters
-        ----------
-        value: dict or tuple
-            If dict, all the points plot options are replaced by the new dict
-            if tuple:(plot_key, value), the specified plot_key is added/replaced
-            into the plot options dictionary with the specified value.
-        """
-        if isinstance(value, dict):
-            self.options.poptions = value
-        elif isinstance(value, tuple):
-            self.options.poptions[value[0]] = value[1]
-        else:
-            raise ValueError(f"{value} is not a valid dict or tuple(key, value)")
-
-    def change_woptions(self, value: [dict, tuple]):
-        """Function to change the plot options for wires
-        Parameters
-        ----------
-        value: dict or tuple
-            If dict, all the wires plot options are replaced by the new dict
-            if tuple:(plot_key, value), the specified plot_key is added/replaced
-            into the plot options dictionary with the specified value.
-        """
-        if isinstance(value, dict):
-            self.options.woptions = value
-        elif isinstance(value, tuple):
-            self.options.woptions[value[0]] = value[1]
-        else:
-            raise ValueError(f"{value} is not a valid dict or tuple(key, value)")
-
-    def change_foptions(self, value: [dict, tuple]):
-        """Function to change the plot options for faces
-        Parameters
-        ----------
-        value: dict or tuple
-            If dict, all the faces plot options are replaced by the new dict
-            if tuple:(plot_key, value), the specified plot_key is added/replaced
-            into the plot options dictionary with the specified value.
-        """
-        if isinstance(value, dict):
-            self.options.foptions = value
-        elif isinstance(value, tuple):
-            self.options.foptions[value[0]] = value[1]
-        else:
-            raise ValueError(f"{value} is not a valid dict or tuple(key, value)")
-
     def set_plane(self, plane):
         """Set the plotting plane"""
         if plane == "xy":
@@ -212,7 +126,7 @@ class BasePlotter():
             # Base.Placement(origin, axis, angle)
             self.options.plane = geo.plane.BluemiraPlane(axis=(1.0, 0.0, 0.0),
                                                         angle=-90.0)
-        elif plane == "yz":
+        elif plane == "zy":
             # Base.Placement(origin, axis, angle)
             self.options.plane = geo.plane.BluemiraPlane(axis=(0.0, 1.0, 0.0),
                                                          angle=90.0)
@@ -283,17 +197,17 @@ class PointsPlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if not self.flag_points:
+        if not self.options.flag_points:
             return False
         # check if no options have been specified
-        if not self.poptions:
+        if not self.options.poptions:
             return False
         return True
 
     def _make_plot(self, points, *args, **kwargs):
         self._data = points.tolist() if not isinstance(points, list) else points
         self._data_to_plot = points[0:2]
-        self.ax.scatter(*self._data_to_plot, **self.poptions)
+        self.ax.scatter(*self._data_to_plot, **self.options.poptions)
 
 
 class WirePlotter(BasePlotter):
@@ -308,26 +222,27 @@ class WirePlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if not self.flag_points and not self.flag_wires:
+        if not self.options.flag_points and not self.options.flag_wires:
             return False
 
         # check if no options have been specified
-        if not self.poptions and not self.woptions:
+        if not self.options.poptions and not self.options.woptions:
             return False
 
         return True
 
-    def _make_plot(self, wire, ndiscr: int = 100, byedges: bool = True):
+    def _make_plot(self, wire):
         new_wire = wire.deepcopy()
         new_wire.change_plane(self.options.plane)
-        pointsw = new_wire.discretize(ndiscr=ndiscr, byedges=byedges).T
+        pointsw = new_wire.discretize(ndiscr=self.options.ndiscr,
+                                      byedges=self.options.byedges).T
         self._data = pointsw.tolist()
         self._data_to_plot = pointsw[0:2]
 
-        if self.flag_wires:
+        if self.options.flag_wires:
             self.ax.plot(*self._data_to_plot, **self.options.woptions)
 
-        if self.flag_points:
+        if self.options.flag_points:
             pplotter = PointsPlotter(self.options)
             self.ax = pplotter(self._data_to_plot, self.ax, show=False)
 
@@ -342,20 +257,20 @@ class FacePlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if not self.flag_points and not self.flag_wires and not self.flag_faces:
+        if not self.options.flag_points and not self.options.flag_wires and not self.options.flag_faces:
             return False
 
         # check if no options have been specified
         if (
-            not self.poptions
-            and not self.woptions
-            and not self.foptions
+            not self.options.poptions
+            and not self.options.woptions
+            and not self.options.foptions
         ):
             return False
 
         return True
 
-    def _make_plot(self, face, ndiscr: int = 100, byedges: bool = True):
+    def _make_plot(self, face):
         self._data = [[], [], []]
 
         # Todo: the for must to be done using face._shape.Wires because FreeCAD
@@ -364,12 +279,10 @@ class FacePlotter(BasePlotter):
         for w in face._shape.Wires:
             boundary = geo.wire.BluemiraWire(w)
             wplotter = WirePlotter(self.options)
-            if not self.flag_wires and not self.flag_points:
-                wplotter._make_data(boundary, ndiscr, byedges)
+            if not self.options.flag_wires and not self.options.flag_points:
+                wplotter._make_data(boundary, self.options.ndiscr, self.options.byedges)
             else:
-                wplotter(
-                    boundary, ax=self.ax, show=False, ndiscr=ndiscr, byedges=byedges
-                )
+                wplotter(boundary, ax=self.ax, show=False,)
 
                 self._data[0] += wplotter._data[0][::-1] + [None]
                 self._data[1] += wplotter._data[1][::-1] + [None]
@@ -381,8 +294,8 @@ class FacePlotter(BasePlotter):
 
         self._data_to_plot = self._data[0:2]
 
-        if self.flag_faces and self.foptions:
-            plt.fill(*self._data_to_plot, **self.foptions)
+        if self.options.flag_faces and self.options.foptions:
+            plt.fill(*self._data_to_plot, **self.options.foptions)
 
 
 class FaceCompoundPlotter(FacePlotter):
@@ -404,22 +317,17 @@ class FaceCompoundPlotter(FacePlotter):
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
-    def _make_plot(self, objs, ndiscr, byedges):
+    def _make_plot(self, objs):
         if "palette" in self.options.asdict():
             import seaborn as sns
-
             palette = sns.color_palette(self.options.palette, len(objs))
-            print(f"palette: {palette}")
         else:
             palette = self.options.foptions["color"]
 
         for id, obj in enumerate(objs):
             temp_fplotter = FacePlotter(self.options)
-            temp_fplotter.change_foptions(("color", palette[id]))
-            print(temp_fplotter.foptions)
-            self.ax = temp_fplotter(
-                obj, ax=self.ax, show=False, ndiscr=ndiscr, byedges=byedges
-            )
+            temp_fplotter.options.foptions['color'] = palette[id]
+            self.ax = temp_fplotter(obj, ax=self.ax, show=False)
             self._data += [temp_fplotter._data]
             self._data_to_plot += [temp_fplotter._data_to_plot]
 
@@ -461,7 +369,7 @@ def plot2d(
             raise DisplayError(
                 f"{part} object cannot be plotted. No Plotter available for {type(part)}"
             )
-        ax = plotter.plot(part, ax, False, False, option.ndiscr, option.byedges)
+        ax = plotter.plot(part, ax, False, False)
 
     if show:
         plotter.show_plot(block=block)
