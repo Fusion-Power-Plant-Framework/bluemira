@@ -256,7 +256,7 @@ class ComponentPlotter2D(Plotter2D):
     A Displayer class for displaying Components in 3D.
     """
 
-    def plot2d(
+    def _display(
         self, component: "Component", options: Optional[Plot2DOptions] = None, *args, **kwargs
     ) -> None:
         """
@@ -288,7 +288,7 @@ class ComponentPlotter2D(Plotter2D):
         for descendant in component.descendants or []:
             _append_shape_and_options(descendant)
 
-        return super().plot2d(shapes, options, *args, **kwargs)
+        return super()._display(shapes, options, *args, **kwargs)
 
 
 class ComponentPlotterCAD(PlotterCAD):
@@ -296,7 +296,7 @@ class ComponentPlotterCAD(PlotterCAD):
     A Displayer class for displaying Components in 3D.
     """
 
-    def plotcad(
+    def _display(
         self, component: "Component", options: Optional[PlotCADOptions] = None, *args,
             **kwargs
     ) -> None:
@@ -329,4 +329,4 @@ class ComponentPlotterCAD(PlotterCAD):
         for descendant in component.descendants or []:
             _append_shape_and_options(descendant)
 
-        return super().plotcad(shapes, options, *args, **kwargs)
+        return super()._display(shapes, options, *args, **kwargs)
