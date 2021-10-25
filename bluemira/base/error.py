@@ -60,3 +60,11 @@ class ParameterError(BluemiraError):
     """
 
     pass
+
+
+class DisplayError(BluemiraError):
+    """
+    Exception class for Parameters.
+    """
+
+    pass

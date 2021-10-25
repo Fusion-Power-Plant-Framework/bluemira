@@ -23,7 +23,7 @@ Plotting module examples
 """
 
 import bluemira.geometry.tools
-from bluemira.plotting.plotter import (
+from bluemira.base._matplotlib_plot import (
     PointsPlotter,
     WirePlotter,
     FacePlotter,
@@ -92,7 +92,7 @@ face2 = BluemiraFace(wire2)
 # been changed, the two faces will be plotted in the same way (e.g. same color).
 fplotter2 = FacePlotter(plane="xz")
 fplotter2.plot_points = True
-fplotter2.options["foptions"] = {"color": "blue"}
+fplotter2.options.foptions = {"color": "blue"}
 fplotter2(face, show=False, block=True, ndiscr=100, byedges=True)
 fplotter2(face2, ax=fplotter2.ax, show=False, block=True, ndiscr=100, byedges=True)
 fplotter2.ax.set_title("Both faces in blue")
@@ -100,9 +100,9 @@ fplotter2.show_plot()
 
 # plot both face with different color.
 # Note: if face is plotte before face2, face2 will be "covered" by face.
-fplotter2.options["foptions"] = {"color": "blue"}
+fplotter2.options.foptions = {"color": "blue"}
 fplotter2(face2, show=False, block=True, ndiscr=100, byedges=True)
-fplotter2.options["foptions"] = {"color": "green"}
+fplotter2.options.foptions = {"color": "green"}
 fplotter2(face, ax=fplotter2.ax, show=False, block=True, ndiscr=100, byedges=True)
 fplotter2.ax.set_title("Both faces with different colors")
 fplotter2.show_plot()
@@ -138,7 +138,8 @@ print(v)
 
 # creation of a face compound plotter
 # color test with palettes
-cplotter = FaceCompoundPlotter(plane="xz", palette="Blues_r")
+cplotter = FaceCompoundPlotter(palette="Blues_r")
+cplotter.set_plane('xz')
 cplotter.plot_points = False
 cplotter([face3, face], ndiscr=100, byedges=True)
 cplotter.ax.set_title("Compound plot - test in Blue_r")
@@ -171,3 +172,8 @@ wplotter(wface.boundary[0], ndiscr=10, byedges=True)
 wplotter(w1face.boundary[0], ax=wplotter.ax, ndiscr=10, byedges=True)
 wplotter.ax.set_title("test w1face")
 wplotter.show_plot()
+
+from bluemira.base.components import PhysicalComponent
+c = bluemira.base.components.PhysicalComponent("Comp", face)
+c._plotter2d.options.plane = 'xz'
+c.plot2d()
