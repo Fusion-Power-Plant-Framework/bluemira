@@ -90,7 +90,7 @@ class BoundedVariable:
         Whether or not the variable is to be held constant
     """
 
-    __slots__ = ("name", "lower_bound", "upper_bound", "fixed", "_value")
+    __slots__ = ("name", "lower_bound", "upper_bound", "fixed", "_value", "_description")
 
     def __init__(self, name, value, lower_bound, upper_bound, fixed=False, descr=None):
         self._validate_bounds(lower_bound, upper_bound)
@@ -121,6 +121,10 @@ class BoundedVariable:
 
         self._validate_value(value, self.lower_bound, self.upper_bound)
         self._value = value
+
+    @property
+    def description(self):
+        return self._description
 
     def fix(self, value: float):
         """
@@ -179,8 +183,15 @@ class BoundedVariable:
         if not lower_bound <= value <= upper_bound:
             raise OptVariablesError("Variable value is out of its bounds.")
 
-    def __repr__(self):
-        super().__repr__()
+    def __str__(self):
+        bound = (
+            f" Bounds: ({self.lower_bound}, {self.upper_bound})"
+            if not self.fixed
+            else ""
+        )
+        descr = f' "{self.description}"' if self.description is not None else ""
+
+        return f"{self.name} = {self.value}{bound}{descr}"
 
 
 class OptVariables:
@@ -196,10 +207,9 @@ class OptVariables:
         prevents any adding or removal of variables after instantiation.
     """
 
-    def __init__(self, variables, frozen=False, descr=None):
+    def __init__(self, variables, frozen=False):
         self._var_dict = {v.name: v for v in variables}
         self.frozen = frozen
-        self._description = descr
 
     def add_variable(self, variable):
         """
