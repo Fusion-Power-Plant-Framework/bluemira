@@ -66,10 +66,10 @@ class TestMakeParameterisedShape:
             plt.gca().set_aspect("equal")
             plt.show()
 
-        assert list(component.keys()) == [target_path]
-        assert component[target_path].name == component_name
+        assert component[0][0] == target_path
+        assert component[0][1].name == component_name
 
-        discr = component[target_path].shape.discretize()
+        discr = component[0][1].shape.discretize()
         assert min(discr.T[0]) == pytest.approx(params["r_tf_in_centre"][0], abs=1e-3)
         assert max(discr.T[0]) == pytest.approx(params["r_tf_out_centre"][0], abs=1e-3)
         assert np.average(discr.T[1]) == pytest.approx(
