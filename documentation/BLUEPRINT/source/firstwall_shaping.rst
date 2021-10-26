@@ -48,9 +48,9 @@ Procedure
 * Make preliminary first wall profile
   
 The preliminary first wall profile is drawn following some objects referred as "guidelines". 
-This guidelines are the flux lines chosen by the designer, according to 
-the input :math:`\Delta_{fw}` . Either the same offset or two different offset values can be
-used at the inboard and outboard.
+These guidelines are the flux lines chosen by the designer, according to 
+the input :math:`\Delta_{fw}` . 
+Either the same offset or two different offsets can be used at the inboard and outboard.
 For the single null, the guideline is obtained offsetting the LCFS by :math:`\Delta_{fw}`.
 For the double null, two guide lines are selected. They are the flux lines passing through 
 the points lying on the mid-plane (IMP and OMP), and offsetted by :math:`\Delta_{fw}` from the LCFS.
@@ -80,7 +80,7 @@ Thus, the SOL is discretised by flux surfaces (lines) spaced apart by a given dx
 
 Each flux line intersects the first wall in at least one point.
 More likely there are several intersections but only the first one 
-is associated with a heat load contribution. 
+correspondes to a power contribution into the wall. 
 Once a flux line hits the first wall for the first time, the rest 
 of the wall is in its own shade, and it cannot be reached by the 
 same flux line for a second time.
@@ -136,7 +136,7 @@ such as
 - theta_outer_target: Angle between flux line tangent at outer strike point and SOL side of outer target
 - theta_inner_target: Angle between flux line tangent at inner strike point and SOL side of inner target
 
-Additionally, can choose between long leg divertor configuration 
+Additionally, the user can choose between long leg divertor configuration 
 and DEMO like dovertor configuration. 
 
 .. figure:: ../images/nova/long_leg.png
