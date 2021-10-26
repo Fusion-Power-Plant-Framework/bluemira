@@ -5,17 +5,62 @@ This document refers to the ``DivertorBuilder`` class in ``firstwall.py``.
 
 Overview
 --------
-Building the divertor is the last step to add to the first wall shaping 
+Building the divertor is the last step, after the first wall shaping, 
 to obtain the final wall.
 While the first wall profile is shaped (``FirstWall`` class), via iterations, 
-to minimise the heat flux onto the surfaces, and hence downstream of an heat 
+to minimise the heat flux onto the surfaces, and hence downstream of a heat 
 flux calculation (``FluxSurface`` class), the divertor profile shaping can be 
 seen as a geometrical optimisation. Such optimisation is obtained via external 
-geometrical inputs, and according the equilibrium. Specifically, separatrix and 
-flux lines in the divertor region. 
+geometrical inputs, and according the equilibrium configuraion. Specifically, 
+separatrix and flux lines in the divertor region. 
+First wall profile and divertor profile are two different grometries that need 
+to be "attached". The shared border between the two geometries, along whichh they
+will be attached, is a xz plane passing through the x-point(s). Thus, the 
+first wall profile is extended until the x-point, and the divertor profile starts 
+from the x-point.
 
 Divertor entrance
 -----------------
+The divertor profile starts to be drawn from the x-point. 
+Hence the divertor entrance has the z coordinate of the x-point. 
+The lower threshold of how wide this aperture should be, is decided by the user 
+through two inputs:
+
+* xpt_outer_gap: Gap between x-point and outer wall
+* xpt_inner_gap: Gap between x-point and inner wall
+
+From the first wall profile optimisation, if the aperture needs be wider to handle 
+the heat loads, the abovementioned inputs are overwritten accordingly.
+
+Divertor target plates
+----------------------
+How long the divertor should be is decided by the divertor target plates.
+As first input, the user has to decide the strike points, meaning where the separatrix
+has to intersect inner and outer target. The two unique points are set giving:
+
+* outer_strike_r: Outer strike point major radius
+* inner_strike_r: Inner strike point major radius
+
+Once identified the strike points, the user can decide how long the plates should be, 
+giving:
+
+* tk_outer_target_sol: Outer target length between strike point and SOL side
+* tk_outer_target_pfr: Outer target length between strike point and PFR side
+* tk_inner_target_sol: Inner target length between strike point and SOL side
+* tk_inner_target_pfr: Inner target length between strike point and PFR side
+
+Finally the plates can be tilted. The user can assign an angle between flux line 
+and target plate:
+
+* theta_outer_target: Angle between flux line tangent at outer strike point and SOL side of outer target
+* theta_inner_target: Angle between flux line tangent at inner strike point and SOL side of inner target
+
+To be noticed, the abovementioned :math:`\theta` is not the glancing angle, 
+commonly indicated with :math:`\Gamma`, but its component over a poloidal plane.
+A further, and better description should accept the actual glancing angle as input.
+
+Input soggetti a limitazioni
+
 
 
 
