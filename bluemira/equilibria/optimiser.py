@@ -1296,7 +1296,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         return rss, err
 
 
-class CoilsetOptimiser(EquilibriumOptimiser):
+class CoilsetOptimiser:
     """
     NLOpt based optimiser for coilsets (currents and positions)
     subject to maximum current bounds.
@@ -1323,10 +1323,10 @@ class CoilsetOptimiser(EquilibriumOptimiser):
         max_currents=None,
         gamma=1e-7,
         opt_conditions={
-            "xtol_rel": 1e-4,
-            "xtol_abs": 1e-4,
-            "ftol_rel": 1e-4,
-            "ftol_abs": 1e-4,
+            "xtol_rel": 1e-1,
+            "xtol_abs": 1e-1,
+            "ftol_rel": 1e-1,
+            "ftol_abs": 1e-1,
         },
     ):
         # noqa (N803)
@@ -1373,6 +1373,8 @@ class CoilsetOptimiser(EquilibriumOptimiser):
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
         opt.set_lower_bounds(lower_bounds)
         opt.set_upper_bounds(upper_bounds)
+
+        opt.set_maxeval(20)
         return opt
 
     def update_current_constraint(self, max_currents):
@@ -1412,7 +1414,7 @@ class CoilsetOptimiser(EquilibriumOptimiser):
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
-        opt = nlopt.opt(nlopt.LD_SLSQP, dimension)
+        opt = nlopt.opt(nlopt.LN_SBPLX, dimension)
         # Set up objective function for optimiser
         opt.set_min_objective(self.f_min_objective)
 
@@ -1421,16 +1423,16 @@ class CoilsetOptimiser(EquilibriumOptimiser):
         opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
         opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
         opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
-
+        opt.set_maxeval(10)  # Pretty generic
         # Set state vector bounds (current limits)
         x_bounds = (self.x0 - 0.5, self.x0 + 0.5)
         z_bounds = (self.z0 - 0.5, self.z0 + 0.5)
         current_bounds = (
             -self.I_max * np.ones(len(self.I0)),
-            -self.I_max * np.ones(len(self.I0)),
+            self.I_max * np.ones(len(self.I0)),
         )
 
-        self.set_state_bounds(opt, x_bounds, z_bounds, current_bounds)
+        opt = self.set_state_bounds(opt, x_bounds, z_bounds, current_bounds)
         return opt
 
     def optimise(self):
@@ -1441,17 +1443,19 @@ class CoilsetOptimiser(EquilibriumOptimiser):
         in each coil [A].
         """
         # Get initial currents, and trim to within current bounds.
-        initial_currents = self.eq.coilset.get_control_currents() / self.scale
-        initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
+        initial_state, _ = self.read_coilset_state(self.coilset)
+        # initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
 
         # Optimise
-        currents = self.opt.optimize(initial_currents)
+        state = self.opt.optimize(initial_state)
 
         # Store found optimum of objective function and currents at optimum
+        self.set_coilset_state(state)
+
         self.rms = self.opt.last_optimum_value()
-        self._I_star = currents * self.scale
+        # self._I_star = currents * self.scale
         process_NLOPT_result(self.opt)
-        return currents * self.scale
+        return self.coilset
 
     def f_min_objective(self, vector, grad):
         """
@@ -1471,18 +1475,26 @@ class CoilsetOptimiser(EquilibriumOptimiser):
         -------
         rss: Value of objective function (figure of merit).
         """
-        vector = vector * self.scale
-        rss, err = self.get_rss(vector)
-        if grad.size > 0:
-            jac = 2 * self.A.T @ self.A @ vector
-            jac -= 2 * self.A.T @ self.b
-            jac += 2 * self.gamma * self.gamma * vector
-            grad[:] = self.scale * jac
+        self.set_coilset_state(vector)
+
+        # Update target
+        self.eq._remap_greens()
+        self.eq.solve(self.eq._profiles)
+        self.constraints(self.eq, I_not_dI=True, fixed_coils=False)
+        self.A = self.constraints.A
+        self.b = self.constraints.b
+        self.w = self.constraints.w
+        self.A = self.w[:, np.newaxis] * self.A
+        self.b *= self.w
+
+        # Calculate objective function
+        x_arr, z_arr, current_arr = np.array_split(vector, self.substates)
+        current_arr = current_arr * self.scale
+        rss, err = self.get_rss(current_arr)
         if not rss > 0:
             raise EquilibriaError(
                 "Optimiser least-squares objective function less than zero or nan."
             )
-        vector = vector / self.scale
         return rss
 
     def get_rss(self, vector):
@@ -1508,3 +1520,41 @@ class CoilsetOptimiser(EquilibriumOptimiser):
         rss = err.T @ err + self.gamma * self.gamma * vector.T @ vector
         self.rms_error = rss
         return rss, err
+
+    def __call__(self, eq, constraints, psi_bndry=None):
+        """
+        Parameters
+        ----------
+        eq: Equilibrium object
+            The Equilibrium to be optimised
+        constraints: Constraints object
+            The Constraints to apply to the equilibrium. NOTE: these only
+            include linearised constraints. Quadratic and/or non-linear
+            constraints must be provided in the sub-classes
+
+        Attributes
+        ----------
+        A: np.array(N, M)
+            Response matrix
+        b: np.array(N)
+            Constraint vector
+
+        \t:math:`\\mathbf{A}\\mathbf{x}-\\mathbf{b}=\\mathbf{b_{plasma}}`
+
+        Notes
+        -----
+        The weight vector is used to scale the response matrix and
+        constraint vector. The weights are assumed to be uncorrelated, such that the
+        weight matrix W_ij used to define (for example) the least-squares objective
+        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+        weights[i] = w[i] = sqrt(W[i,i]).
+        """
+        self.eq = eq
+        self.constraints = constraints
+        return self.optimise()
+
+    def copy(self):
+        """
+        Get a deep copy of the EquilibriumOptimiser.
+        """
+        return deepcopy(self)
