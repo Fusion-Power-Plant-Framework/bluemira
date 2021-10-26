@@ -28,7 +28,7 @@ from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
 from bluemira.equilibria.find import find_flux_surfs

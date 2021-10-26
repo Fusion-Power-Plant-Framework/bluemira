@@ -31,7 +31,7 @@ from typing import Type
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_print, plot_defaults
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.file import get_BP_path, try_get_BP_path
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop

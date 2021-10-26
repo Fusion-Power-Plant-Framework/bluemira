@@ -22,7 +22,7 @@
 import pytest
 from typing import Type
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from bluemira.base.error import BluemiraError
 from BLUEPRINT.nova.firstwall import DivertorProfile
 from BLUEPRINT.systems.blanket import BreedingBlanket

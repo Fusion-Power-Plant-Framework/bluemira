@@ -33,7 +33,7 @@ from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import Loop
 
 

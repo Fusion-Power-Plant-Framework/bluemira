@@ -24,7 +24,7 @@ Central column neutron shield system
 """
 import numpy as np
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
 from BLUEPRINT.geometry.boolean import (

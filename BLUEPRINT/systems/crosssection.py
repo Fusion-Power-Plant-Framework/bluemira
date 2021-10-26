@@ -32,7 +32,7 @@ from typing import Type
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.nova.firstwall import DivertorProfile, FirstWallProfile
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell

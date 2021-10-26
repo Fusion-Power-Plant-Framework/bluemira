@@ -22,7 +22,7 @@
 import pytest
 from typing import Type
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping
 

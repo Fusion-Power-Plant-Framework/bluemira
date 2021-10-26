@@ -39,10 +39,7 @@ from bluemira.base.file import get_files_by_ext
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base import (
-    ReactorSystem,
-    BLUE,
-)
+from BLUEPRINT.base import BLUE
 from BLUEPRINT.base.file import FileManager
 from BLUEPRINT.base.error import GeometryError
 
@@ -55,6 +52,7 @@ from BLUEPRINT.utilities.tools import CommentJSONDecoder
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (
+    ReactorSystem,
     STBreedingBlanket,
     BreedingBlanket,
     Divertor,
