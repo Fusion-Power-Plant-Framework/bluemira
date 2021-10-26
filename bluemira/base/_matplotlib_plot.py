@@ -89,6 +89,86 @@ class MatplotlibOptions(display.Plot2DOptions):
                 if k in self._options:
                     self._options[k] = kwargs[k]
 
+    @property
+    def flag_points(self):
+        return self._options['flag_points']
+
+    @flag_points.setter
+    def flag_points(self, val):
+        self._options['flag_points'] = val
+
+    @property
+    def flag_wires(self):
+        return self._options['flag_wires']
+
+    @flag_wires.setter
+    def flag_wires(self, val):
+        self._options['flag_wires'] = val
+
+    @property
+    def flag_faces(self):
+        return self._options['flag_wires']
+
+    @flag_faces.setter
+    def flag_faces(self, val):
+        self._options['flag_faces'] = val
+
+    @property
+    def ndiscr(self):
+        return self._options['ndiscr']
+
+    @ndiscr.setter
+    def ndiscr(self, val):
+        self._options['ndiscr'] = val
+
+    @property
+    def byedges(self):
+        return self._options['byedges']
+
+    @byedges.setter
+    def byedges(self, val):
+        self._options['byedges'] = val
+
+    @property
+    def poptions(self):
+        return self._options['poptions']
+
+    @poptions.setter
+    def poptions(self, val):
+        self._options['poptions'] = val
+
+    @property
+    def woptions(self):
+        return self._options['woptions']
+
+    @woptions.setter
+    def woptions(self, val):
+        self._options['woptions'] = val
+
+    @property
+    def foptions(self):
+        return self._options['foptions']
+
+    @foptions.setter
+    def foptions(self, val):
+        self._options['foptions'] = val
+
+    @property
+    def plane(self):
+        return self._options['plane']
+
+    @plane.setter
+    def plane(self, val):
+        self._options['plane'] = val
+
+    @property
+    def palette(self):
+        return self._options['palette']
+
+    @palette.setter
+    def palette(self, val):
+        self._options['palette'] = val
+
 
 # Note: when plotting points, it can happen that markers are not centered properly as
 # described in https://github.com/matplotlib/matplotlib/issues/11836

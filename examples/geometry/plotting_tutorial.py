@@ -64,8 +64,8 @@ pplotter.plot3d(points, show=True, block=True)
 # - plot title
 print("wire plot")
 wplotter = WirePlotter(plane="xz")
-wplotter.options._options['poptions']["s"] = 20
-wplotter.options._options['ndiscr'] = 10
+wplotter.options.poptions["s"] = 20
+wplotter.options.ndiscr = 5
 wplotter.plot2d(wire, show=False, block=True)
 wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options._options['ndiscr']}")
 wplotter.show_plot2d()
@@ -76,7 +76,7 @@ wplotter.plot3d(wire, show=True, block=True)
 
 # in this example poptions is set to an empty dict. The default matplotlib are used.
 print("wire plot other options")
-wplotter.options._options['poptions'] = {}
+wplotter.options.poptions = {}
 wplotter.plot2d(wire, show=True, block=True)
 # The plot is immediately shown, so it is not possible to act on the plot setup
 # e.g. following commands would not work
@@ -89,15 +89,15 @@ bluemira.base._matplotlib_plot.DEFAULT["flag_points"] = False
 
 # face plot
 fplotter = FacePlotter(plane="xz")
-fplotter.options._options['ndiscr'] = 30
+fplotter.options.ndiscr = 30
 fplotter.plot2d(face, show=False, block=True)
 fplotter.ax.set_title("Face plot without points")
 fplotter.show_plot2d()
 
 # face plot - points enabled - just to check
 fplotter = FacePlotter(plane="xz")
-fplotter.options._options['ndiscr'] = 30
-fplotter.options._options['flag_points'] = True
+fplotter.options.ndiscr = 30
+fplotter.options.flag_points = True
 fplotter.plot2d(face, show=False, block=True)
 fplotter.ax.set_title("Face plot with points")
 fplotter.show_plot2d()
@@ -114,8 +114,8 @@ face2 = BluemiraFace(wire2)
 # been changed, the two faces will be plotted in the same way (e.g. same color).
 # Note: internal points are not plotted 'cause they are covered by fill plot.
 fplotter2 = FacePlotter(plane="xz")
-fplotter2.options._options['flag_points'] = True
-fplotter2.options._options['foptions'] = {"color": "blue"}
+fplotter2.options.flag_points = True
+fplotter2.options.foptions = {"color": "blue"}
 fplotter2.plot2d(face, show=False, block=True)
 fplotter2.plot2d(face2, ax=fplotter2.ax, show=False, block=True)
 fplotter2.ax.set_title("Both faces in blue")
@@ -123,10 +123,10 @@ fplotter2.show_plot2d()
 print(f"fplotter2.options: {fplotter2.options.asdict()}")
 
 # plot both face with different color.
-# Note: if face is plotte before face2, face2 will be "covered" by face.
-fplotter2.options._options['foptions'] = {"color": "blue"}
+# Note: if face is plotted before face2, face2 will be "covered" by face.
+fplotter2.options.foptions = {"color": "blue"}
 fplotter2.plot2d(face2, show=False, block=True)
-fplotter2.options._options['foptions'] = {"color": "green"}
+fplotter2.options.foptions = {"color": "green"}
 fplotter2.plot2d(face, ax=fplotter2.ax, show=False, block=True)
 fplotter2.ax.set_title("Both faces with different colors")
 fplotter2.show_plot2d()
@@ -198,7 +198,7 @@ wplotter.show_plot2d()
 
 # plot of faces boundary. Note that, since poptions = {}, points color is
 # automatically changed by matplotlib
-wplotter.options._options['woptions'] = {}
+wplotter.options.woptions = {}
 wplotter.plot2d(wface.boundary[0])
 print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
 wplotter.plot2d(w1face.boundary[0], ax=wplotter.ax)
@@ -211,8 +211,8 @@ wplotter.show_plot2d()
 import matplotlib.pyplot as plt
 from bluemira.base.components import PhysicalComponent, GroupingComponent
 c = PhysicalComponent("Comp", face)
-c._plotter2d.options._options['plane'] = 'xz'
-c._plotter2d.options._options['ndiscr'] = 30
+c._plotter2d.options.plane = 'xz'
+c._plotter2d.options.ndiscr = 30
 ax = c.plot2d(show=False)
 ax.set_title("test component plot")
 plt.gca().set_aspect("equal")
@@ -228,10 +228,10 @@ c3 = PhysicalComponent("Comp3", w1face, parent=group)
 group.plot2d(show=True, block=True)
 
 # combined plot of Componennt and BluemiraGeo instances
-wplotter.options._options['woptions']['color'] = 'red'
+wplotter.options.woptions['color'] = 'red'
 ax = wplotter.plot2d(wface.boundary[0])
-fplotter.options._options['foptions']['color'] = 'green'
-fplotter.options._options['woptions']['color'] = 'black'
+fplotter.options.foptions['color'] = 'green'
+fplotter.options.woptions['color'] = 'black'
 ax = fplotter.plot2d(w1face, ax=ax)
 ax = c.plot2d(ax=ax)
 ax.set_title("test component + bluemirageo plot")
