@@ -53,6 +53,7 @@ print("points plot")
 pplotter = PointsPlotter2D(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
 pplotter(points, show=True, block=True)
 
+pplotter.plot3d(points, show=True, block=True)
 
 # plot the wire
 # a WirePlotter2D is used with the default setup with:

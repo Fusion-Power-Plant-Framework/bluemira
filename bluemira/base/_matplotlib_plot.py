@@ -102,8 +102,10 @@ class BasePlotter2D(ABC):
     """
 
     def __init__(self, options: Optional[MatplotlibOptions] = None, *args, **kwargs):
-        self._data = []  # data passed to the BasePlotter2D
-        self._data_to_plot = []  # real data that is plotted
+        # discretization points representing the shape in global coordinate system
+        self._data = []
+        # modified discretization points for plotting (e.g. after plane transformation)
+        self._data_to_plot = []
         self.ax = None
         self.options = options
         self.set_plane(self.options.plane)
@@ -198,6 +200,46 @@ class BasePlotter2D(ABC):
                 self.show_plot(block=block)
         return self.ax
 
+    ################################################
+    #### 3D functions ##############################
+    ################################################
+    def initialize_plot3d(self, ax=None):
+        """Initialize the plot environment"""
+        if ax is None:
+            fig = plt.figure()
+            self.ax = fig.add_subplot(projection='3d')
+        else:
+            self.ax = ax
+
+    def show_plot3d(self, aspect: str = "auto", block=True):
+        """Function to show a plot"""
+        plt.gca().set_aspect(aspect)
+        plt.show(block=block)
+
+    @abstractmethod
+    def _make_plot3d(self, *args, **kwargs):
+        """Internal function that makes the plot. It should use self._data and
+        self._data_to_plot, so _populate_data should be called before.
+        """
+        pass
+
+    def plot3d(self, obj, ax=None, show: bool = False, block: bool = False, *args,
+             **kwargs):
+        """3D plotting method"""
+        self._check_obj(obj)
+
+        if not self._check_options():
+            self.ax = ax
+        else:
+            self.initialize_plot3d()
+            self._populate_data(obj, *args, **kwargs)
+            self._make_plot3d(*args, **kwargs)
+
+            if show:
+                self.show_plot3d(block=block)
+
+        return self.ax
+
     def __call__(
         self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
     ):
@@ -220,17 +262,20 @@ class PointsPlotter2D(BasePlotter2D):
         return True
 
     def _populate_data(self, points, *args, **kwargs):
-        self._data = points.tolist() if not isinstance(points, list) else points
+        self._data = points
         #apply rotation matrix given by options.plane
         self.rot = self.options.plane.to_matrix().T
-        self.temp_data = np.array(self._data)
-        self.temp_data = np.c_[self.temp_data, np.ones(len(self.temp_data))]
+        self.temp_data = np.c_[self._data, np.ones(len(self._data))]
         self._data_to_plot = self.temp_data.dot(self.rot).T
         self._data_to_plot = self._data_to_plot[0:2]
 
     def _make_plot(self, *args, **kwargs):
         if self.options.flag_points:
             self.ax.scatter(*self._data_to_plot, **self.options.poptions)
+
+    def _make_plot3d(self, *args, **kwargs):
+        if self.options.flag_points:
+            self.ax.scatter(*self._data.T, **self.options.poptions)
 
 
 class WirePlotter2D(BasePlotter2D):
@@ -268,6 +313,12 @@ class WirePlotter2D(BasePlotter2D):
         if self.options.flag_points:
             self._pplotter.ax = self.ax
             self._pplotter._make_plot()
+
+    def _make_plot3d(self, *args, **kwargs):
+        """Internal function that makes the plot. It should use self._data and
+        self._data_to_plot, so _populate_data should be called before.
+        """
+        pass
 
 
 class FacePlotter2D(BasePlotter2D):
@@ -316,6 +367,12 @@ class FacePlotter2D(BasePlotter2D):
             w.ax = self.ax
             w._make_plot()
 
+    def _make_plot3d(self, *args, **kwargs):
+        """Internal function that makes the plot. It should use self._data and
+        self._data_to_plot, so _populate_data should be called before.
+        """
+        pass
+
 
 class FaceCompoundPlotter2D(FacePlotter2D):
     """
@@ -359,6 +416,11 @@ class FaceCompoundPlotter2D(FacePlotter2D):
             fplotter.options.foptions['color'] = palette[id]
             fplotter._make_plot()
 
+    def _make_plot3d(self, *args, **kwargs):
+        """Internal function that makes the plot. It should use self._data and
+        self._data_to_plot, so _populate_data should be called before.
+        """
+        pass
 
 def plot2d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
