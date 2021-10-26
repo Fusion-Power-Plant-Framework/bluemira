@@ -22,7 +22,7 @@
 """
 api for plotting using matplotlib
 """
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 import matplotlib.pyplot as plt
 
 from typing import Optional, Union, List, Dict
@@ -89,7 +89,7 @@ class MatplotlibOptions(display.Plot2DOptions):
 
 # Note: when plotting points, it can happen that markers are not centered properly as
 # described in https://github.com/matplotlib/matplotlib/issues/11836
-class BasePlotter2D:
+class BasePlotter2D(ABC):
     """
     Base utility plotting class
     """
@@ -158,9 +158,16 @@ class BasePlotter2D:
         plt.show(block=block)
 
     @abstractmethod
-    def _make_plot(self, obj, *args, **kwargs):
+    def _populate_data(self, obj, *args, **kwargs):
         """Internal function that makes the plot. It fills self._data and
         self._data_to_plot
+        """
+        pass
+
+    @abstractmethod
+    def _make_plot(self, *args, **kwargs):
+        """Internal function that makes the plot. It should use self._data and
+        self._data_to_plot, so _populate_data should be called before.
         """
         pass
 
@@ -173,8 +180,8 @@ class BasePlotter2D:
             self.ax = ax
         else:
             self.initialize_plot(ax)
-
-            self._make_plot(obj, *args, **kwargs)
+            self._populate_data(obj, *args, **kwargs)
+            self._make_plot(*args, **kwargs)
 
             if show:
                 self.show_plot(block=block)
@@ -203,9 +210,11 @@ class PointsPlotter2D(BasePlotter2D):
             return False
         return True
 
-    def _make_plot(self, points, *args, **kwargs):
+    def _populate_data(self, points, *args, **kwargs):
         self._data = points.tolist() if not isinstance(points, list) else points
         self._data_to_plot = points[0:2]
+
+    def _make_plot(self, *args, **kwargs):
         self.ax.scatter(*self._data_to_plot, **self.options.poptions)
 
 
@@ -230,7 +239,7 @@ class WirePlotter2D(BasePlotter2D):
 
         return True
 
-    def _make_plot(self, wire):
+    def _populate_data(self, wire, *args, **kwargs):
         new_wire = wire.deepcopy()
         new_wire.change_plane(self.options.plane)
         pointsw = new_wire.discretize(ndiscr=self.options.ndiscr,
@@ -238,6 +247,7 @@ class WirePlotter2D(BasePlotter2D):
         self._data = pointsw.tolist()
         self._data_to_plot = pointsw[0:2]
 
+    def _make_plot(self):
         if self.options.flag_wires:
             self.ax.plot(*self._data_to_plot, **self.options.woptions)
 
@@ -269,29 +279,32 @@ class FacePlotter2D(BasePlotter2D):
 
         return True
 
-    def _make_plot(self, face):
+    def _populate_data(self, face, *args, **kwargs):
         self._data = [[], [], []]
-
+        self._wplooters = []
         # Todo: the for must be done using face._shape.Wires because FreeCAD
         #  re-orient the Wires in the correct way for display. Find another way to do
         #  it (maybe adding this function to the freecadapi.
         for w in face._shape.Wires:
             boundary = geo.wire.BluemiraWire(w)
             wplotter = WirePlotter2D(self.options)
-            if not self.options.flag_wires and not self.options.flag_points:
-                wplotter._make_data(boundary, self.options.ndiscr, self.options.byedges)
-            else:
-                wplotter(boundary, ax=self.ax, show=False,)
+            self._wplooters.append(wplotter)
+            wplotter._populate_data(boundary)
 
-                self._data[0] += wplotter._data[0][::-1] + [None]
-                self._data[1] += wplotter._data[1][::-1] + [None]
-                self._data[2] += wplotter._data[2][::-1] + [None]
+            self._data[0] += wplotter._data[0][::-1] + [None]
+            self._data[1] += wplotter._data[1][::-1] + [None]
+            self._data[2] += wplotter._data[2][::-1] + [None]
 
         self._data[0] = self._data[0][:-1]
         self._data[1] = self._data[1][:-1]
         self._data[2] = self._data[2][:-1]
 
         self._data_to_plot = self._data[0:2]
+
+    def _make_plot(self):
+        for w in self._wplooters:
+            w.ax = self.ax
+            w._make_plot()
 
         if self.options.flag_faces and self.options.foptions:
             plt.fill(*self._data_to_plot, **self.options.foptions)
@@ -316,19 +329,26 @@ class FaceCompoundPlotter2D(FacePlotter2D):
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
-    def _make_plot(self, objs):
+    def _populate_data(self, objs, *args, **kwargs):
+        self._fplotters = []
+        for id, obj in enumerate(objs):
+            temp_fplotter = FacePlotter2D(self.options)
+            temp_fplotter._populate_data(obj)
+            self._data += [temp_fplotter._data]
+            self._data_to_plot += [temp_fplotter._data_to_plot]
+            self._fplotters.append(temp_fplotter)
+
+    def _make_plot(self):
         if "palette" in self.options.asdict():
             import seaborn as sns
-            palette = sns.color_palette(self.options.palette, len(objs))
+            palette = sns.color_palette(self.options.palette, len(self._fplotters))
         else:
             palette = self.options.foptions["color"]
 
-        for id, obj in enumerate(objs):
-            temp_fplotter = FacePlotter2D(self.options)
-            temp_fplotter.options.foptions['color'] = palette[id]
-            self.ax = temp_fplotter(obj, ax=self.ax, show=False)
-            self._data += [temp_fplotter._data]
-            self._data_to_plot += [temp_fplotter._data_to_plot]
+        for id, fplotter in enumerate(self._fplotters):
+            fplotter.ax = self.ax
+            fplotter.options.foptions['color'] = palette[id]
+            fplotter._make_plot()
 
 
 def plot2d(
