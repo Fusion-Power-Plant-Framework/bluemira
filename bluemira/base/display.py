@@ -209,7 +209,7 @@ class Plotter3D(Displayer):
         Parameters
         ----------
         obj
-            The CAD primitive objects to be displayed.
+            The primitive objects to be displayed.
         options: Optional[DisplayOptions]
             The options to use to display the primitives.
         """
@@ -224,7 +224,7 @@ class Plotter3D(Displayer):
     def plot3d(self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs) -> \
             None:
         """
-        2D plot the object by calling the display function within the API.
+        3D plot the object by calling the display function within the API.
         Parameters
         ----------
         obj
@@ -243,7 +243,7 @@ class Plottable3D:
     appropriate Displayer class.
     """
 
-    _plotter2d: Plotter3D = None
+    _plotter3d: Plotter3D = None
 
     @property
     def plot3d_options(self) -> Plot3DOptions:

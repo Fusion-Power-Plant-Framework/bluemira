@@ -86,17 +86,13 @@ class MatplotlibOptions(display.Plot2DOptions):
         self._options = copy.deepcopy(DEFAULT)
         if kwargs:
             for k in kwargs:
-                if k in self.options:
-                    self.options[k] = kwargs[k]
-        # Todo: in this way class attributes are not seen till runtime. Not sure if
-        #  this should be changed manually declaring all the attributes.
-        for k in self._options:
-            setattr(self, k, self._options[k])
+                if k in self._options:
+                    self._options[k] = kwargs[k]
 
 
 # Note: when plotting points, it can happen that markers are not centered properly as
 # described in https://github.com/matplotlib/matplotlib/issues/11836
-class BasePlotter2D(ABC):
+class BasePlotter(ABC):
     """
     Base utility plotting class
     """
@@ -107,43 +103,24 @@ class BasePlotter2D(ABC):
         # modified discretization points for plotting (e.g. after plane transformation)
         self._data_to_plot = []
         self.ax = None
-        self.options = options
-        self.set_plane(self.options.plane)
-        if kwargs:
-            for k in kwargs:
-                if k in self.options.asdict():
-                    # Todo: probably it could be better to store the plane as a
-                    #  dictionary or a tuple (e.g. (base, direction, angle) and create
-                    #  the real plane in "set_plane". In this way we could use a
-                    #  dataclass for MatplotlibOptions.
-                    if k == "plane":
-                        self.set_plane(kwargs[k])
-                    else:
-                        setattr(self.options, k, kwargs[k])
-
-    @property
-    def options(self):
-        return self._options
-
-    @options.setter
-    def options(self, val: MatplotlibOptions) -> None:
-        self._options = MatplotlibOptions() if val is None else val
+        self.options = MatplotlibOptions() if options is None else options
+        self.set_plane(self.options._options['plane'])
 
     def set_plane(self, plane):
         """Set the plotting plane"""
         if plane == "xy":
             # Base.Placement(origin, axis, angle)
-            self.options.plane = geo.plane.BluemiraPlane()
+            self.options._options['plane'] = geo.plane.BluemiraPlane()
         elif plane == "xz":
             # Base.Placement(origin, axis, angle)
-            self.options.plane = geo.plane.BluemiraPlane(axis=(1.0, 0.0, 0.0),
+            self.options._options['plane'] = geo.plane.BluemiraPlane(axis=(1.0, 0.0, 0.0),
                                                         angle=-90.0)
         elif plane == "zy":
             # Base.Placement(origin, axis, angle)
-            self.options.plane = geo.plane.BluemiraPlane(axis=(0.0, 1.0, 0.0),
+            self.options._options['plane'] = geo.plane.BluemiraPlane(axis=(0.0, 1.0, 0.0),
                                                          angle=90.0)
         elif isinstance(plane, geo.plane.BluemiraPlane):
-            self.options.plane = plane
+            self.options._options['plane'] = plane
         else:
             DisplayError(f"{plane} is not a valid plane")
 
@@ -157,7 +134,7 @@ class BasePlotter2D(ABC):
         """Internal function that check if it is needed to plot something"""
         pass
 
-    def initialize_plot(self, ax=None):
+    def initialize_plot2d(self, ax=None):
         """Initialize the plot environment"""
         if ax is None:
             fig = plt.figure()
@@ -165,7 +142,7 @@ class BasePlotter2D(ABC):
         else:
             self.ax = ax
 
-    def show_plot(self, aspect: str = "equal", block=True):
+    def show_plot2d(self, aspect: str = "equal", block=True):
         """Function to show a plot"""
         plt.gca().set_aspect(aspect)
         plt.show(block=block)
@@ -178,7 +155,7 @@ class BasePlotter2D(ABC):
         pass
 
     @abstractmethod
-    def _make_plot(self, *args, **kwargs):
+    def _make_plot2d(self, *args, **kwargs):
         """Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
@@ -192,12 +169,12 @@ class BasePlotter2D(ABC):
         if not self._check_options():
             self.ax = ax
         else:
-            self.initialize_plot(ax)
+            self.initialize_plot2d(ax)
             self._populate_data(obj, *args, **kwargs)
-            self._make_plot(*args, **kwargs)
+            self._make_plot2d(*args, **kwargs)
 
             if show:
-                self.show_plot(block=block)
+                self.show_plot2d(block=block)
         return self.ax
 
     ################################################
@@ -232,6 +209,11 @@ class BasePlotter2D(ABC):
             self.ax = ax
         else:
             self.initialize_plot3d()
+            # this function can be common to 2D and 3D plot
+            # self._data is used for 3D plot
+            # self._data_to_plot is used for 2D plot
+            # Todo: probably better to rename self._data_to_plot into
+            #  self._projected_data or self._data2d
             self._populate_data(obj, *args, **kwargs)
             self._make_plot3d(*args, **kwargs)
 
@@ -240,12 +222,12 @@ class BasePlotter2D(ABC):
 
         return self.ax
 
-    def __call__(
-        self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
-    ):
-        return self.plot2d(obj, ax=ax, show=show, block=block, *args, **kwargs)
+    # def __call__(
+    #     self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
+    # ):
+    #     return self.plot2d(obj, ax=ax, show=show, block=block, *args, **kwargs)
 
-class PointsPlotter2D(BasePlotter2D):
+class PointsPlotter(BasePlotter):
     """
     Base utility plotting class for points
     """
@@ -257,28 +239,28 @@ class PointsPlotter2D(BasePlotter2D):
     def _check_options(self):
         print(self.options.asdict())
         # Check if nothing has to be plotted
-        if not self.options.flag_points:
+        if not self.options._options['flag_points']:
             return False
         return True
 
     def _populate_data(self, points, *args, **kwargs):
         self._data = points
-        #apply rotation matrix given by options.plane
-        self.rot = self.options.plane.to_matrix().T
+        #apply rotation matrix given by options['plane']
+        self.rot = self.options._options['plane'].to_matrix().T
         self.temp_data = np.c_[self._data, np.ones(len(self._data))]
         self._data_to_plot = self.temp_data.dot(self.rot).T
         self._data_to_plot = self._data_to_plot[0:2]
 
-    def _make_plot(self, *args, **kwargs):
-        if self.options.flag_points:
-            self.ax.scatter(*self._data_to_plot, **self.options.poptions)
+    def _make_plot2d(self, *args, **kwargs):
+        if self.options._options['flag_points']:
+            self.ax.scatter(*self._data_to_plot, **self.options._options['poptions'])
 
     def _make_plot3d(self, *args, **kwargs):
-        if self.options.flag_points:
-            self.ax.scatter(*self._data.T, **self.options.poptions)
+        if self.options._options['flag_points']:
+            self.ax.scatter(*self._data.T, **self.options._options['poptions'])
 
 
-class WirePlotter2D(BasePlotter2D):
+class WirePlotter(BasePlotter):
     """
     Base utility plotting class for bluemira wires
     """
@@ -290,38 +272,40 @@ class WirePlotter2D(BasePlotter2D):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if not self.options.flag_points and not self.options.flag_wires:
+        if not self.options._options['flag_points'] and not self.options._options['flag_wires']:
             return False
 
         return True
 
     def _populate_data(self, wire, *args, **kwargs):
-        self._pplotter = PointsPlotter2D(self.options)
+        self._pplotter = PointsPlotter(self.options)
         new_wire = wire.deepcopy()
         # # change of plane integrated in PointsPlotter2D. Not necessary here.
-        # new_wire.change_plane(self.options.plane)
-        pointsw = new_wire.discretize(ndiscr=self.options.ndiscr,
-                                      byedges=self.options.byedges)
+        # new_wire.change_plane(self.options._options['plane'])
+        pointsw = new_wire.discretize(ndiscr=self.options._options['ndiscr'],
+                                      byedges=self.options._options['byedges'])
         self._pplotter._populate_data(pointsw)
         self._data = pointsw
         self._data_to_plot = self._pplotter._data_to_plot
 
-    def _make_plot(self):
-        if self.options.flag_wires:
-            self.ax.plot(*self._data_to_plot, **self.options.woptions)
+    def _make_plot2d(self):
+        if self.options._options['flag_wires']:
+            self.ax.plot(*self._data_to_plot, **self.options._options['woptions'])
 
-        if self.options.flag_points:
+        if self.options._options['flag_points']:
             self._pplotter.ax = self.ax
-            self._pplotter._make_plot()
+            self._pplotter._make_plot2d()
 
     def _make_plot3d(self, *args, **kwargs):
-        """Internal function that makes the plot. It should use self._data and
-        self._data_to_plot, so _populate_data should be called before.
-        """
-        pass
+        if self.options._options['flag_wires']:
+            self.ax.plot(*self._data.T, **self.options._options['woptions'])
+
+        if self.options._options['flag_points']:
+            self._pplotter.ax = self.ax
+            self._pplotter._make_plot3d()
 
 
-class FacePlotter2D(BasePlotter2D):
+class FacePlotter(BasePlotter):
     """Base utility plotting class for bluemira faces"""
 
     def _check_obj(self, obj):
@@ -332,9 +316,9 @@ class FacePlotter2D(BasePlotter2D):
     def _check_options(self):
         # Check if nothing has to be plotted
         if (
-            not self.options.flag_points
-            and not self.options.flag_wires
-            and not self.options.flag_faces
+            not self.options._options['flag_points']
+            and not self.options._options['flag_wires']
+            and not self.options._options['flag_faces']
         ):
             return False
 
@@ -348,10 +332,9 @@ class FacePlotter2D(BasePlotter2D):
         #  it (maybe adding this function to the freecadapi.
         for w in face._shape.Wires:
             boundary = geo.wire.BluemiraWire(w)
-            wplotter = WirePlotter2D(self.options)
+            wplotter = WirePlotter(self.options)
             self._wplooters.append(wplotter)
             wplotter._populate_data(boundary)
-
             self._data.append(wplotter._data)
 
         self._data_to_plot = [[], []]
@@ -359,22 +342,23 @@ class FacePlotter2D(BasePlotter2D):
             self._data_to_plot[0] += w._data_to_plot[0].tolist() + [None]
             self._data_to_plot[1] += w._data_to_plot[1].tolist() + [None]
 
-    def _make_plot(self):
-        if self.options.flag_faces:
-            self.ax.fill(*self._data_to_plot, **self.options.foptions)
+    def _make_plot2d(self):
+        if self.options._options['flag_faces']:
+            self.ax.fill(*self._data_to_plot, **self.options._options['foptions'])
 
         for w in self._wplooters:
             w.ax = self.ax
-            w._make_plot()
+            w._make_plot2d()
 
     def _make_plot3d(self, *args, **kwargs):
         """Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
+        # Todo: to be implemented
         pass
 
 
-class FaceCompoundPlotter2D(FacePlotter2D):
+class FaceCompoundPlotter(FacePlotter):
     """
     Base utility plotting class for shape compounds.
     """
@@ -398,28 +382,29 @@ class FaceCompoundPlotter2D(FacePlotter2D):
     def _populate_data(self, objs, *args, **kwargs):
         self._fplotters = []
         for id, obj in enumerate(objs):
-            temp_fplotter = FacePlotter2D(self.options)
+            temp_fplotter = FacePlotter(self.options)
             temp_fplotter._populate_data(obj)
             self._data += [temp_fplotter._data]
             self._data_to_plot += [temp_fplotter._data_to_plot]
             self._fplotters.append(temp_fplotter)
 
-    def _make_plot(self):
+    def _make_plot2d(self):
         if "palette" in self.options.asdict():
             import seaborn as sns
-            palette = sns.color_palette(self.options.palette, len(self._fplotters))
+            palette = sns.color_palette(self.options._options['palette'], len(self._fplotters))
         else:
-            palette = self.options.foptions["color"]
+            palette = self.options._options['foptions']["color"]
 
         for id, fplotter in enumerate(self._fplotters):
             fplotter.ax = self.ax
-            fplotter.options.foptions['color'] = palette[id]
-            fplotter._make_plot()
+            fplotter.options._options['foptions']['color'] = palette[id]
+            fplotter._make_plot2d()
 
     def _make_plot3d(self, *args, **kwargs):
         """Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
+        # Todo: to be implemented
         pass
 
 def plot2d(
@@ -452,9 +437,9 @@ def plot2d(
 
     for part, option in zip(parts, options):
         if isinstance(part, geo.wire.BluemiraWire):
-            plotter = WirePlotter2D(option)
+            plotter = WirePlotter(option)
         elif isinstance(part, geo.face.BluemiraFace):
-            plotter = FacePlotter2D(option)
+            plotter = FacePlotter(option)
         else:
             raise DisplayError(
                 f"{part} object cannot be plotted. No Plotter available for {type(part)}"
@@ -462,6 +447,53 @@ def plot2d(
         ax = plotter.plot2d(part, ax, False, False)
 
     if show:
-        plotter.show_plot(block=block)
+        plotter.show_plot2d(block=block)
+
+    return ax
+
+
+# Todo: it would be better to use a decorator for plot2d and plot3d to avoid all that
+#  repeated code.
+def plot3d(
+    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
+    options: Optional[Union[MatplotlibOptions, List[MatplotlibOptions]]] = None,
+    ax = None, show: bool = False, block: bool = True,
+):
+    """
+    The implementation of the display API for FreeCAD parts.
+    Parameters
+    ----------
+    parts: Union[Part.Shape, List[Part.Shape]]
+        The parts to display.
+    options: Optional[Union[Plot2DOptions, List[Plot2DOptions]]]
+        The options to use to display the parts.
+    """
+    if not isinstance(parts, list):
+        parts = [parts]
+
+    if options is None:
+        options = [MatplotlibOptions()] * len(parts)
+    elif not isinstance(options, list):
+        options = [options] * len(parts)
+
+    if len(options) != len(parts):
+        raise DisplayError(
+            "If options for plot are provided then there must be as many options as "
+            "there are parts to plot."
+        )
+
+    for part, option in zip(parts, options):
+        if isinstance(part, geo.wire.BluemiraWire):
+            plotter = WirePlotter(option)
+        elif isinstance(part, geo.face.BluemiraFace):
+            plotter = FacePlotter(option)
+        else:
+            raise DisplayError(
+                f"{part} object cannot be plotted. No Plotter available for {type(part)}"
+            )
+        ax = plotter.plot3d(part, ax, False, False)
+
+    if show:
+        plotter.show_plot3d(block=block)
 
     return ax
