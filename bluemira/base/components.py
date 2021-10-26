@@ -249,23 +249,65 @@ class MagneticComponent(PhysicalComponent):
 
 
 class ComponentManager:
+    """
+    A manager for components. Allows a variety of component trees to be accessed and
+    updated by tracing through a / separated path.
+
+    Parameters
+    ----------
+    keys: List[str]
+        The root keys for all of the component trees to be managed.
+    """
+
     _trees: Dict[str, Component]
 
     def __init__(self, keys: List[str]):
         self._trees = {key: GroupingComponent(key) for key in keys}
 
     @property
-    def trees(self):
+    def trees(self) -> Dict[str, "Component"]:
+        """
+        The component trees that are being managed.
+        """
         return self._trees
 
     def get_by_path(self, path: str) -> Component:
+        """
+        Get a component corresponding to the provided path.
+
+        Parameters
+        ----------
+        path: str
+            The path to the component to be retrieved. Each node name should be separated
+            by a /.
+
+        Returns
+        -------
+        tree: Component
+            The component at the requested path.
+        """
         path = path.split("/")
         tree = self._trees[path[0]]
         for node in path[1:]:
             tree = tree.get_component(node)
         return tree
 
-    def insert_at_path(self, path: str, component: Component, *, fill_tree=True):
+    def insert_at_path(self, path: str, component: Component, *, fill_tree: bool = True):
+        """
+        Insert the provided component at the given path.
+
+        Parameters
+        ----------
+        path: str
+            The path at which to insert the component. Each node name should be separated
+            by a /.
+        component: Component
+            The component to insert into the tree at the provided path.
+        fill_tree: bool
+            If True then the tree will be filled with GroupingComponents for any missing
+            nodes in the path. If False then a ComponentError will be raised if there
+            are missing nodes in the path. By default True.
+        """
         path = path.split("/")
         tree = self._trees[path[0]]
         for idx, node in enumerate(path[1:], 1):

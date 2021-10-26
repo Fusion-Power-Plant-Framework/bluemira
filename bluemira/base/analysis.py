@@ -54,19 +54,31 @@ class Analysis:
         self._params.update_kw_parameters(params)
 
     @property
-    def component_manager(self):
+    def component_manager(self) -> ComponentManager:
+        """
+        The ComponentManager associated with this Analysis.
+        """
         return self._component_manager
 
     @property
-    def params(self):
+    def params(self) -> ParameterFrame:
+        """
+        The ParameterFrame associated with this Analysis.
+        """
         return self._params
 
     def run(self):
+        """
+        Runs through the Builders associated with this Analysis. Components and
+        Parameters are transferred onto the Analysis after each step.
+        """
         for builder in self._builders:
             build_result = builder.build(self._params)
             for result in build_result:
                 self._component_manager.insert_at_path(result[0], result[1])
-            self._params.update_kw_parameters(builder._params.to_dict())
+            self._params.update_kw_parameters(
+                builder._params.to_dict(), source=builder.name
+            )
 
     def _extract_builders(self):
         """

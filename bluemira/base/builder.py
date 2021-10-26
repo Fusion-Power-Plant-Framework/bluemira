@@ -53,22 +53,36 @@ class Builder(abc.ABC):
 
     @abc.abstractmethod
     def build(self, params, **kwargs) -> List[Tuple[str, Component]]:
+        """
+        Runs this Builder's build process to generate the required Components.
+
+        Parameters
+        ----------
+        params: Dict[str, Any]
+            The parameterisation containing at least the required params for this
+            Builder.
+
+        Returns
+        -------
+        build_results: List[Tuple[str, Component]]
+            The Components build by this builder, including the target paths.
+        """
         self._validate_params(params)
         self._params.update_kw_parameters(params)
         bluemira_print(f"Building {self.name}")
         return [()]
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         The name of the builder.
         """
         return self._name
 
     @property
-    def required_parameters(self):
+    def required_parameters(self) -> List[str]:
         """
-        The names of the parameters that are needed to run this builder.
+        The variable names of the parameters that are needed to run this builder.
         """
         return self._required_params
 
@@ -77,7 +91,7 @@ class Builder(abc.ABC):
         """
         The names of the build configuration values that are needed to run this builder.
         """
-        return self._required_params
+        return self._required_config
 
     def _validate_requirement(self, input, source: Literal["params", "config"]):
         missing = []
