@@ -26,6 +26,7 @@ Wrapper for FreeCAD Plane (Placement) objects
 from __future__ import annotations
 
 import math
+import numpy as np
 import bluemira.geometry._freecadapi as _freecadapi
 
 
@@ -89,7 +90,7 @@ class BluemiraPlane:
 
     def to_matrix(self):
         """Returns a matrix (quaternion) representing the Plane's transformation"""
-        return self._shape.toMatrix()
+        return np.array(self._shape.Matrix.A).reshape(4, 4)
 
     def move(self, vector):
         """Moves the Plane along the given vector"""

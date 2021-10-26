@@ -43,14 +43,16 @@ wire = p.create_shape()
 face = BluemiraFace(wire)
 
 # discretize the wire
-points = p.create_array(n_points=10)
+points = p.create_array(n_points=10).T
 
 # simple plot of the obtained points
 # a PointsPlotter2D is created specifying size, edge and face colors.
 # Note: 2D plot of points is always made on the first 2 coordinates. For this reason
 # the plot is shown as a points cloud on a line
+print("points plot")
 pplotter = PointsPlotter2D(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
 pplotter(points, show=True, block=True)
+
 
 # plot the wire
 # a WirePlotter2D is used with the default setup with:
@@ -58,15 +60,16 @@ pplotter(points, show=True, block=True)
 # - point size = 10
 # - ndiscr = 10
 # - plot title
+print("wire plot")
 wplotter = WirePlotter2D(plane="xz")
-wplotter.options.flag_points = True
-wplotter.options.poptions["s"] = 10
+wplotter.options.poptions["s"] = 20
 wplotter.options.ndiscr = 10
 wplotter(wire, show=False, block=True)
 wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options.ndiscr}")
 wplotter.show_plot()
 
-# in this example points plot is disabled just removing the poptions.
+# in this example poptions is set to an empty dict. The default matplotlib are used.
+print("wire plot other options")
 wplotter.options.poptions = {}
 wplotter(wire, show=True, block=True)
 # The plot is immediately shown, so it is not possible to act on the plot setup
@@ -74,12 +77,23 @@ wplotter(wire, show=True, block=True)
 # wplotter.ax.set_title(f"Wire plot")
 # wplotter.show_plot()
 
+# Just disabling points plotting from now on modifying directly the DEFAULT
+# dictionary. Not really a good pratice, but it is easy in this case.
+bluemira.base._matplotlib_plot.DEFAULT["flag_points"] = False
+
 # face plot
 fplotter = FacePlotter2D(plane="xz")
-fplotter.plot_points = False
 fplotter.options.ndiscr = 30
 fplotter(face, show=False, block=True)
-fplotter.ax.set_title("Face plot")
+fplotter.ax.set_title("Face plot without points")
+fplotter.show_plot()
+
+# face plot - points enabled - just to check
+fplotter = FacePlotter2D(plane="xz")
+fplotter.options.ndiscr = 30
+fplotter.options.flag_points = True
+fplotter(face, show=False, block=True)
+fplotter.ax.set_title("Face plot with points")
 fplotter.show_plot()
 
 # a second geometry is created (it contains the first face)
@@ -92,13 +106,15 @@ face2 = BluemiraFace(wire2)
 
 # face and face2 are plotted using the same FacePlotter2D. Since no plot options have
 # been changed, the two faces will be plotted in the same way (e.g. same color).
+# Note: internal points are not plotted 'cause they are covered by fill plot.
 fplotter2 = FacePlotter2D(plane="xz")
-fplotter2.plot_points = True
+fplotter2.options.flag_points = True
 fplotter2.options.foptions = {"color": "blue"}
 fplotter2(face, show=False, block=True)
 fplotter2(face2, ax=fplotter2.ax, show=False, block=True)
 fplotter2.ax.set_title("Both faces in blue")
 fplotter2.show_plot()
+print(f"fplotter2.options: {fplotter2.options.asdict()}")
 
 # plot both face with different color.
 # Note: if face is plotte before face2, face2 will be "covered" by face.
@@ -136,7 +152,6 @@ new_bari = face.center_of_mass
 diff = bari - new_bari
 v = (diff[0], diff[1], diff[2])
 face.translate(v)
-print(v)
 
 # creation of a face compound plotter
 # color test with palettes
@@ -170,9 +185,24 @@ cplotter([wface, w1face])
 cplotter.ax.set_title("test faces")
 cplotter.show_plot()
 
+# plot of faces boundary. Note that, since poptions = {}, points color is
+# automatically changed by matplotlib
 wplotter(wface.boundary[0])
+print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
 wplotter(w1face.boundary[0], ax=wplotter.ax)
-wplotter.ax.set_title("test boundary from faces")
+print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
+wplotter.ax.set_title("test boundary from faces - matplotlib default poptions")
+wplotter.show_plot()
+
+# plot of faces boundary. Note that, since poptions = {}, points color is
+# automatically changed by matplotlib
+wplotter.options.woptions = {}
+wplotter(wface.boundary[0])
+print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
+wplotter(w1face.boundary[0], ax=wplotter.ax)
+print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
+wplotter.ax.set_title("test boundary from faces - matplotlib default poptions and "
+                      "woptions")
 wplotter.show_plot()
 
 # plot of a component
@@ -187,11 +217,13 @@ plt.gca().set_aspect("equal")
 plt.show(block=True)
 
 # plot of a group of components
+bluemira.base._matplotlib_plot.DEFAULT["foptions"] = {}
+bluemira.base._matplotlib_plot.DEFAULT["woptions"] = {}
 group = GroupingComponent("Components")
 c1 = PhysicalComponent("Comp1", face, parent=group)
 c2 = PhysicalComponent("Comp2", wface, parent=group)
 c3 = PhysicalComponent("Comp3", w1face, parent=group)
-group.plot2d()
+group.plot2d(show=True, block=True)
 
 # combined plot of Componennt and BluemiraGeo instances
 wplotter.options.woptions['color'] = 'red'
@@ -204,6 +236,7 @@ ax.set_title("test component + bluemirageo plot")
 plt.gca().set_aspect("equal")
 plt.show(block=True)
 
+# just a check that the options dict is modified correctly
 print(wplotter.options.asdict())
 print(fplotter.options.asdict())
 print(c.plot2d_options.asdict())
