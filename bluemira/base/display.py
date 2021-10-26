@@ -181,6 +181,99 @@ class Plottable2D:
 
 
 # # =============================================================================
+# # Plot3D
+# # =============================================================================
+class Plot3DOptions(DisplayOptions):
+    """
+    The options that are available for 2D-plotting objects
+    """
+    pass
+
+
+class Plotter3D(Displayer):
+
+    def __init__(
+        self,
+        options: Optional[Plot3DOptions] = None,
+        api: str = 'bluemira.base._matplotlib_plot',
+    ):
+        super().__init__(options, api)
+        self._options = get_module(api).MatplotlibOptions() if options is None else \
+            options
+        self._display_func = get_module(api).plot3d
+
+    def _display(self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs) \
+            -> None:
+        """
+        Display the primitive objects with the provided options.
+        Parameters
+        ----------
+        obj
+            The CAD primitive objects to be displayed.
+        options: Optional[DisplayOptions]
+            The options to use to display the primitives.
+        """
+        if options is None:
+            options = self.options
+
+        #try:
+        return super()._display(obj, options, *args, **kwargs)
+        #except Exception as e:
+        #    bluemira_warn(f"Unable to display object {obj} - {e}")
+
+    def plot3d(self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs) -> \
+            None:
+        """
+        2D plot the object by calling the display function within the API.
+        Parameters
+        ----------
+        obj
+            The object to display
+        options: Optional[DisplayOptions]
+            The options to use to display the object, by default None in which case the
+        default values for the DisplayOptions class are used.
+        """
+        return self._display(obj, options, *args, **kwargs)
+
+
+class Plottable3D:
+    """
+    Mixin class to make a class displayable by imparting a display method and options.
+    The implementing class must set the _displayer attribute to an instance of the
+    appropriate Displayer class.
+    """
+
+    _plotter2d: Plotter3D = None
+
+    @property
+    def plot3d_options(self) -> Plot3DOptions:
+        """
+        The options that will be used to display the object.
+        """
+        return self._plotter3d.options
+
+    @plot3d_options.setter
+    def plot3d_options(self, value: Plot3DOptions):
+        if not isinstance(value, Plot3DOptions):
+            raise DisplayError(
+                "Display options must be set to a Plot3DOptions instance."
+            )
+        self._plotter3d.options = value
+
+    def plot3d(self, options: Optional[Plot3DOptions] = None, *args, **kwargs) -> None:
+        """
+        Default method to call display the object by calling into the Displayer's display
+        method.
+        Parameters
+        ----------
+        options: Optional[DisplayOptions]
+            If not None then override the object's display_options with the provided
+            options. By default None.
+        """
+        return self._plotter3d.plot3d(self, options, *args, **kwargs)
+
+
+# # =============================================================================
 # # PlotCAD
 # # =============================================================================
 class PlotCADOptions(DisplayOptions):

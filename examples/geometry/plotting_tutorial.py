@@ -24,10 +24,10 @@ Plotting module examples
 
 import bluemira.geometry.tools
 from bluemira.base._matplotlib_plot import (
-    PointsPlotter,
-    WirePlotter,
-    FacePlotter,
-    FaceCompoundPlotter,
+    PointsPlotter2D,
+    WirePlotter2D,
+    FacePlotter2D,
+    FaceCompoundPlotter2D,
 )
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.face import BluemiraFace
@@ -46,19 +46,19 @@ face = BluemiraFace(wire)
 points = p.create_array(n_points=10)
 
 # simple plot of the obtained points
-# a PointsPlotter is created specifying size, edge and face colors.
+# a PointsPlotter2D is created specifying size, edge and face colors.
 # Note: 2D plot of points is always made on the first 2 coordinates. For this reason
 # the plot is shown as a points cloud on a line
-pplotter = PointsPlotter(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
+pplotter = PointsPlotter2D(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
 pplotter(points, show=True, block=True)
 
 # plot the wire
-# a WirePlotter is used with the default setup with:
+# a WirePlotter2D is used with the default setup with:
 # - plane = xz (this is the projection plane, not a section plane)
 # - point size = 10
 # - ndiscr = 10
 # - plot title
-wplotter = WirePlotter(plane="xz")
+wplotter = WirePlotter2D(plane="xz")
 wplotter.options.flag_points = True
 wplotter.options.poptions["s"] = 10
 wplotter.options.ndiscr = 10
@@ -75,7 +75,7 @@ wplotter(wire, show=True, block=True)
 # wplotter.show_plot()
 
 # face plot
-fplotter = FacePlotter(plane="xz")
+fplotter = FacePlotter2D(plane="xz")
 fplotter.plot_points = False
 fplotter.options.ndiscr = 30
 fplotter(face, show=False, block=True)
@@ -90,9 +90,9 @@ p2.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire2 = p2.create_shape()
 face2 = BluemiraFace(wire2)
 
-# face and face2 are plotted using the same FacePlotter. Since no plot options have
+# face and face2 are plotted using the same FacePlotter2D. Since no plot options have
 # been changed, the two faces will be plotted in the same way (e.g. same color).
-fplotter2 = FacePlotter(plane="xz")
+fplotter2 = FacePlotter2D(plane="xz")
 fplotter2.plot_points = True
 fplotter2.options.foptions = {"color": "blue"}
 fplotter2(face, show=False, block=True)
@@ -117,7 +117,7 @@ fplotter2.show_plot()
 # - face3 is created with a wire deepcopy in order to be able to modify face and face2
 # (and thus wire and wire2) without modifying face3
 face3 = BluemiraFace([wire2.deepcopy(), wire.deepcopy()])
-fplotter3 = FacePlotter(plane="xz")
+fplotter3 = FacePlotter2D(plane="xz")
 fplotter3.plot_points = True
 fplotter3(face3)
 fplotter3.ax.set_title("Face with hole - points enabled")
@@ -140,14 +140,14 @@ print(v)
 
 # creation of a face compound plotter
 # color test with palettes
-cplotter = FaceCompoundPlotter(palette="Blues_r")
+cplotter = FaceCompoundPlotter2D(palette="Blues_r")
 cplotter.set_plane('xz')
 cplotter.plot_points = False
 cplotter([face3, face])
 cplotter.ax.set_title("Compound plot - test in Blue_r")
 cplotter.show_plot()
 
-cplotter = FaceCompoundPlotter(plane="xz", palette="light:#105ba4")
+cplotter = FaceCompoundPlotter2D(plane="xz", palette="light:#105ba4")
 cplotter.plot_points = False
 cplotter([face3, face])
 cplotter.ax.set_title("Compound plot - test with single color light:#105ba4")

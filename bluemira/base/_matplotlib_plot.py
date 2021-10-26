@@ -89,13 +89,13 @@ class MatplotlibOptions(display.Plot2DOptions):
 
 # Note: when plotting points, it can happen that markers are not centered properly as
 # described in https://github.com/matplotlib/matplotlib/issues/11836
-class BasePlotter:
+class BasePlotter2D:
     """
     Base utility plotting class
     """
 
     def __init__(self, options: Optional[MatplotlibOptions] = None, *args, **kwargs):
-        self._data = []  # data passed to the BasePlotter
+        self._data = []  # data passed to the BasePlotter2D
         self._data_to_plot = []  # real data that is plotted
         self.ax = None
         self.options = options
@@ -185,7 +185,7 @@ class BasePlotter:
     ):
         return self.plot(obj, ax=ax, show=show, block=block, *args, **kwargs)
 
-class PointsPlotter(BasePlotter):
+class PointsPlotter2D(BasePlotter2D):
     """
     Base utility plotting class for points
     """
@@ -209,7 +209,7 @@ class PointsPlotter(BasePlotter):
         self.ax.scatter(*self._data_to_plot, **self.options.poptions)
 
 
-class WirePlotter(BasePlotter):
+class WirePlotter2D(BasePlotter2D):
     """
     Base utility plotting class for bluemira wires
     """
@@ -242,11 +242,11 @@ class WirePlotter(BasePlotter):
             self.ax.plot(*self._data_to_plot, **self.options.woptions)
 
         if self.options.flag_points:
-            pplotter = PointsPlotter(self.options)
+            pplotter = PointsPlotter2D(self.options)
             self.ax = pplotter(self._data_to_plot, self.ax, show=False)
 
 
-class FacePlotter(BasePlotter):
+class FacePlotter2D(BasePlotter2D):
     """Base utility plotting class for bluemira faces"""
 
     def _check_obj(self, obj):
@@ -272,12 +272,12 @@ class FacePlotter(BasePlotter):
     def _make_plot(self, face):
         self._data = [[], [], []]
 
-        # Todo: the for must to be done using face._shape.Wires because FreeCAD
+        # Todo: the for must be done using face._shape.Wires because FreeCAD
         #  re-orient the Wires in the correct way for display. Find another way to do
         #  it (maybe adding this function to the freecadapi.
         for w in face._shape.Wires:
             boundary = geo.wire.BluemiraWire(w)
-            wplotter = WirePlotter(self.options)
+            wplotter = WirePlotter2D(self.options)
             if not self.options.flag_wires and not self.options.flag_points:
                 wplotter._make_data(boundary, self.options.ndiscr, self.options.byedges)
             else:
@@ -297,7 +297,7 @@ class FacePlotter(BasePlotter):
             plt.fill(*self._data_to_plot, **self.options.foptions)
 
 
-class FaceCompoundPlotter(FacePlotter):
+class FaceCompoundPlotter2D(FacePlotter2D):
     """
     Base utility plotting class for shape compounds
     """
@@ -324,7 +324,7 @@ class FaceCompoundPlotter(FacePlotter):
             palette = self.options.foptions["color"]
 
         for id, obj in enumerate(objs):
-            temp_fplotter = FacePlotter(self.options)
+            temp_fplotter = FacePlotter2D(self.options)
             temp_fplotter.options.foptions['color'] = palette[id]
             self.ax = temp_fplotter(obj, ax=self.ax, show=False)
             self._data += [temp_fplotter._data]
@@ -361,9 +361,9 @@ def plot2d(
 
     for part, option in zip(parts, options):
         if isinstance(part, geo.wire.BluemiraWire):
-            plotter = WirePlotter(option)
+            plotter = WirePlotter2D(option)
         elif isinstance(part, geo.face.BluemiraFace):
-            plotter = FacePlotter(option)
+            plotter = FacePlotter2D(option)
         else:
             raise DisplayError(
                 f"{part} object cannot be plotted. No Plotter available for {type(part)}"
