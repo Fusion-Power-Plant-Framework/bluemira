@@ -30,6 +30,7 @@ import json
 from typing import TextIO, Union
 
 import numpy as np
+from numpy.lib.function_base import append
 from scipy.special import iv as bessel
 
 from bluemira.geometry._deprecated_tools import distance_between_points
@@ -2167,5 +2168,142 @@ class BotDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
         )
 
         wires.append(bot_leg_curve)
+
+        return BluemiraWire(wires, label=label)
+
+
+class CurvedPictureFrame(GeometryParameterisation):
+    """
+    Tapered picture-frame geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict={}):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_in", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Middle limb radius
+                BoundedVariable("x_mid", 1.1, lower_bound=1, upper_bound=1.3),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 6.5, lower_bound=6, upper_bound=10),
+                # Outer limb radius
+                BoundedVariable("x_out", 0.5, lower_bound=0.4, upper_bound=0.8),
+                # Height at which to stop the taper angle
+                BoundedVariable("z_in", 6.5, lower_bound=6, upper_bound=8),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7, lower_bound=6, upper_bound=9),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", 7, lower_bound=6, upper_bound=9),
+                # Upper limb max height
+                BoundedVariable("z_max_up", 7, lower_bound=6, upper_bound=9),
+                # Lower limb max height
+                BoundedVariable("z_max_down", 7, lower_bound=6, upper_bound=9),
+                # Corner/transition joint radius
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=1),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        (
+            x_in,
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_in,
+            z_mid_up,
+            z_mid_down,
+            z_max_up,
+            z_max_down,
+            r_j,
+        ) = self.variables.values
+        axis = [0, -1, 0]
+        p1 = [x_mid, 0, z_mid_up]
+        p2 = [x_curve_start, 0, z_mid_up]
+        wires = [make_polygon([p1, p2], label="top_limb_flat")]
+        # Top Curve
+        if z_max_up - z_mid_up > 0.001:
+
+            # Define basic Top Curve (with no joint or corner transitions)
+            r_j = min(x_curve_start - x_mid, r_j)
+            alpha = np.arctan(0.5 * (x_out - x_curve_start) / (z_max_up - z_mid_up))
+            theta_leg_basic = 2 * (np.pi - 2 * alpha)
+            r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
+            leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_max_up - r_leg)
+
+            sin_a = np.sin(theta_leg_basic / 2)
+            cos_a = np.cos(theta_leg_basic / 2)
+
+            # Joint Curve
+            theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
+            joint_curve_centre = (
+                leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
+                z_mid + r_j,
+            )
+
+            theta_leg_final = theta_leg_basic / 2 - theta_j
+
+        else:
+            wires.append(
+                make_circle(
+                    r_j,
+                    (x_out - r_j, z_mid_up - r_j),
+                    start_angle=90,
+                    end_angle=0,
+                    axis=axis,
+                    label="upper_ob_corner",
+                )
+            )
+
+        p3 = [x2, 0, z2]
+        p4 = [x1, 0, z1]
+        p5 = [x1, 0, -z1]
+        p6 = [x2, 0, -z2]
+        p7 = [x2, 0, -z3]
+        p8 = [x3 - r, 0, -z3]
+        c1 = [x3 - r, 0, -z3 + r]
+        p9 = [x3, 0, -z3 + r]
+        p10 = [x3, 0, z3 - r]
+        c2 = [x3 - r, 0, z3 - r]
+
+        wires = [make_polygon([p1, p2, p3, p4, p5, p6, p7, p8], label="inner_limb")]
+
+        if r != 0.0:
+            wires.append(
+                make_circle(
+                    r,
+                    c1,
+                    start_angle=270,
+                    end_angle=360,
+                    axis=axis,
+                    label="lower_corner",
+                )
+            )
+
+        wires.append(make_polygon([p9, p10], label="outer_limb"))
+
+        if r != 0.0:
+            wires.append(
+                make_circle(
+                    r, c2, start_angle=0, end_angle=90, axis=axis, label="upper_corner"
+                )
+            )
 
         return BluemiraWire(wires, label=label)
