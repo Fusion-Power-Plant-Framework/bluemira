@@ -127,6 +127,9 @@ class BoundedVariable:
 
     @property
     def description(self):
+        """
+        The description of the variable.
+        """
         return self._description
 
     def fix(self, value: float):
