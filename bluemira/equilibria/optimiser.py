@@ -788,7 +788,6 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
         self.PF_Fz_max = PF_Fz_max / self.scale
         self.CS_Fz_sum = CS_Fz_sum / self.scale
         self.CS_Fz_sep = CS_Fz_sep / self.scale
-        self.flag_nonlinear = True
         self.rms = None
         self.rms_error = None
         self.I_max = None
@@ -1138,7 +1137,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
         # Used scale for optimiser RoundoffLimited Error prevention
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
-        self.flag_nonlinear = True
         self.rms = None
         self.rms_error = None
 
