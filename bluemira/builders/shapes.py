@@ -32,6 +32,10 @@ from ..utilities.tools import get_module
 
 
 class MakeParameterisedShape(Builder):
+    """
+    A builder that constructs a Component using a parameterised shape.
+    """
+
     _required_config = ["param_class", "variables_map", "target"]
 
     _param_class: Type[GeometryParameterisation]
@@ -39,6 +43,21 @@ class MakeParameterisedShape(Builder):
     _target: str
 
     def build(self, params, **kwargs) -> Dict[str, Component]:
+        """
+        Build the components from parameterised shapes using the provided configuration
+        and parameterisation.
+
+        Parameters
+        ----------
+        params: Dict[str, Any]
+            The parameters to use for building.
+
+        Returns
+        -------
+        build_results: List[Tuple[str, Component]]
+            The Components build by this builder, including the target paths. For this
+            Builder the results will contain one item.
+        """
         super().build(params, **kwargs)
 
         shape_params = self._derive_shape_params()

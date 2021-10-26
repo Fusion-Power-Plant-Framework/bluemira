@@ -32,8 +32,7 @@ import os
 import gc
 from pandas import DataFrame
 from tabulate import tabulate
-from typing import Dict
-from typing import Union
+from typing import Any, Dict, List, Union
 import wrapt
 import numpy as np
 from functools import wraps
@@ -565,7 +564,16 @@ class ParameterFrame:
         cls.__defaults_set = True
 
     @classmethod
-    def set_template_parameters(cls, params):
+    def set_template_parameters(cls, params: List[List[Any]]):
+        """
+        Fills the template parameters from the minimal content of the provided parameter
+        records list.
+
+        Parameters
+        ----------
+        params: List[List[Any]]
+            The parameter record list to use to populate the template.
+        """
         for param in params:
             cls.__template_params[param[0]] = {
                 "name": param[1],
@@ -577,7 +585,21 @@ class ParameterFrame:
         return cls.__setattr(cls, *args, **kwargs)
 
     @classmethod
-    def from_template(cls, param_vars):
+    def from_template(cls, param_vars: List[str]) -> "ParameterFrame":
+        """
+        Generate a minimal ParameterFrame from the provided parameter variable names.
+
+        Parameters
+        ----------
+        param_vars: List[str]
+            The parameter variable names to include in the resulting ParameterFrame.
+
+        Returns
+        -------
+        params: ParameterFrame
+            The ParameterFrame including the minimal content for the requested parameter
+            variable names.
+        """
         if cls.__template_params != {}:
             from BLUEPRINT.systems.config import Configuration
 
