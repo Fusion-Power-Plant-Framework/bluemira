@@ -57,6 +57,7 @@ the points lying on the mid-plane (IMP and OMP), and offsetted by :math:`\Delta_
 The obtained flux line(s) is cut below the X-point and/or above the upper X-point.
 
 .. figure:: ../images/nova/preliminary_fw_profile.png
+   :scale: 40 %
    :name: fig:preliminary_fw_profile
    :align: center
 
@@ -69,6 +70,7 @@ The region between the LCFS and the preliminary profile is "filled" with a set o
 Thus, the SOL is discretised by flux surfaces (lines) spaced apart by a given dx. 
 
 .. figure:: ../images/nova/set_fs.png
+   :scale: 50 %
    :name: fig:set_fs
    :align: center
 
