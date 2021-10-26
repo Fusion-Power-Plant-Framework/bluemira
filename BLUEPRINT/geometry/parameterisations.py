@@ -936,9 +936,9 @@ def curved_picture_frame(
 
     # If no taper, define a straight line
     npts = int(npoints * 0.1)
-    if abs(x_mid - x_in) <= 1e-3:
-        x_c_t = np.append(x, x_mid * np.ones(npts))
-        z_c_t = np.append(z, np.linspace(0.0, z_in, npts))
+    if abs(x_mid - x_in) <= 1e-3 or z_in == 0:
+        x_c_t = x_mid * np.ones(npts)
+        z_c_t = np.linspace(0.0, z_mid_up, npts)
 
     # Inboard Curved Taper, positive z
     else:
