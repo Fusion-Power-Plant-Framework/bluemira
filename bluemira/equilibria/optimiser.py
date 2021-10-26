@@ -1256,7 +1256,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
             raise EquilibriaError(
                 "Optimiser least-squares objective function less than zero or nan."
             )
-        vector = vector / self.scale
         return rss
 
     def get_rss(self, vector):
