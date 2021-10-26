@@ -31,12 +31,12 @@ from bluemira.materials import MaterialCache
 #
 # Materials play an important role in reactor design, be that via neutronics properties,
 # structural properties, or thermal properties. This example gives an overview of how
-# to define and use materials within BLUEPRINT.
+# to define and use materials within bluemira.
 #
 # ## Defining Materials
 #
 # Materials will usually be defined via JSON files, such as the default definitions
-# [provided with BLUEPRINT](../../data/materials). Whe defining your own materials for
+# [provided with bluemira](../../data/materials). Whe defining your own materials for
 # your studies you can either take the JSON approach, or for preliminary analysis you can
 # define materials using dictionaries as shown below.
 
@@ -87,7 +87,7 @@ mixture_dict = {
 # %%[markdown]
 # ## The Materials Cache
 #
-# BLUEPRINT materials are managed by a defining a `MaterialCache` instance. This allows
+# Bluemira materials are managed by a defining a `MaterialCache` instance. This allows
 # material objects to be created from dictionaries or JSON files. Below gives an example
 # of how to create materials in a cache for the dictionary definitions we have defined
 # above.
