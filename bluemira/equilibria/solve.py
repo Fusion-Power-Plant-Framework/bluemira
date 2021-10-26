@@ -850,6 +850,28 @@ class PicardAbsCoilsetIterator(CoilsetPropertiesOptimiser, PicardBaseIterator):
         self.eq.solve(self.profiles, psi=self.psi)
 
 
+class PicardAbsCoilsetIterator(CoilsetPropertiesOptimiser, PicardBaseIterator):
+    """
+    Picard solver for unconstrained plasma profiles (li) using I iteration.
+    Best used for constrained coil optimisation
+    """
+
+    @property
+    def current_optimiser_kwargs(self):
+        """
+        Get the kwargs for the current optimiser.
+        """
+        return {"psib": None, "update_size": True}
+
+    def _solve(self):
+        """
+        Solve for this iteration.
+        """
+        # self.coilset.mesh_coils(d_coil=0.4)
+        # self.eq._remap_greens()
+        self.eq.solve(self.profiles, psi=self.psi)
+
+
 class PicardLiAbsIterator(CurrentOptimiser, PicardBaseIterator):
     """
     Picard solver for constrained plasma profiles (li) using I iteration.
