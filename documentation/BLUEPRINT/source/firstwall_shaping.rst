@@ -1,11 +1,11 @@
 First wall profile procedure
 ============================
 
-This document refers to the ``FirstWall`` class in ``firstwall.py``.  
+This document refers to the classes ``FirstWall``, ``FirstWallSN``, and ``FirstWallDN`` in ``firstwall.py``.  
 
 Overview
 --------
-Provided a plasma equilibrium, the FirstWall class allows to design 
+Provided a plasma equilibrium, the ``FirstWall`` class allows to design 
 a first wall profile and optimise it, in order to reduce the heat flux values 
 within prescribed limits. 
 Currently, the first wall profile can be made either for the SN or the DN configuration.
@@ -22,11 +22,11 @@ Input
 -----
 - Equilibrium (e.g. .eqdsk, .geqdsk)
 - Type of plasma (e.g. SN, DN)
-- First wall geometrical offset, :math:`Delta_{fw}` 
+- First wall geometrical offset, :math:`\Delta_{fw}` 
   (Starting offset between plasma and wall. Either a single value 
   or two different values for inboard and outboard)
-- Scrape-off layer power decay length, :math:`lambda_{q,nearSOL}` and 
-  :math:`lambda_{q,farSOL}` (Either a single couple of valuesor two for inboard and outboard)
+- Scrape-off layer power decay length, :math:`\lambda_{q,nearSOL}` and 
+  :math:`\lambda_{q,farSOL}` (Either a single couple of valuesor two for inboard and outboard)
 - Power crossing the SOL, :math:`P_{SOL,near}` and :math:`P_{SOL,far}`
   (Either a single couple of valuesor two for inboard and outboard)
 - Hypothetical power sharing among targets
@@ -37,21 +37,24 @@ Output
 
 Procedure
 ---------
-- Load equilibrium file
-- Extract key attributes:
-  - Last Closed Flux Surface (LCFS)
-  - O-point coordinates
-  - X-point(s) coordinates
-  - Separatrix 
+* Load equilibrium file
+* Extract key attributes
+
+  * Last Closed Flux Surface (LCFS)
+  * O-point coordinates
+  * X-point(s) coordinates
+  * Separatrix
+
+* Make preliminary first wall profile
   
-The preliminary first wall profile is drawn following some objects referred in the script 
-as "guidelines". This guidelines are the flux lines chosen by the designer, according to 
-the input :math:`Delta_{fw}` . Either the same offset or two different offset values can be
+The preliminary first wall profile is drawn following some objects referred as "guidelines". 
+This guidelines are the flux lines chosen by the designer, according to 
+the input :math:`\Delta_{fw}` . Either the same offset or two different offset values can be
 used at the inboard and outboard.
-- SN: Offset the LCFS by :math:`Delta_{fw}` .
-- DN: Get the flux lines passing through the points lying on the mid-plane (IMP and OMP), 
-  and offsetted by :math:`Delta_{fw}` from the LCFS.
-- Cut the obtained flux line(s) below the X-point and/or above the upper X-point
+For the single null, the guideline is obtained offsetting the LCFS by :math:`\Delta_{fw}`.
+For the double null, two guide lines are selected. They are the flux lines passing through 
+the points lying on the mid-plane (IMP and OMP), and offsetted by :math:`\Delta_{fw}` from the LCFS.
+The obtained flux line(s) is cut below the X-point and/or above the upper X-point.
 
 .. figure:: ../images/nova/preliminary_fw_profile.png
    :name: fig:preliminary_fw_profile
