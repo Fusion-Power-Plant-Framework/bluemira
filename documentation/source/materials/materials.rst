@@ -70,7 +70,7 @@ the case of liquids), and will be described more when we discuss
 :ref:`material-properties`.
 
 - :py:class:`bluemira.materials.material.Void`: A dummy material class for defining
-  evacuated regions. This class has no composition and is taken to be zero density. The
+  void regions. This class has no composition and is taken to be zero density. The
   ``Void`` material is simply defined as below:
 
 .. code-block:: json
