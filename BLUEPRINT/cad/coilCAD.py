@@ -506,15 +506,6 @@ class TFCoilCAD(ComponentCAD):
             coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
             zmax_wp = np.max(tf.loops["wp_out"]["z"])  # Max z height of tfcoil
 
-            if tf.shape_type in ["CP"]:
-                zmax_b_cyl = (
-                    tf.shp.parameterisation.xo["z_mid"]["value"]
-                    + tf.section["case"]["WP"]
-                    + tf.section["case"]["inboard"]
-                )
-            else:
-                zmax_b_cyl = zmax_wp
-
             if tf.conductivity in ["SC"]:
                 # r_cp_top doesn't exist for SC coils, so need to define our
                 # own r_cp (i.e outboard edge of Centrepost)
@@ -544,6 +535,10 @@ class TFCoilCAD(ComponentCAD):
             if tf.conductivity in ["R"]:
                 # Resistive tapered CP coils
                 tk_case = tf.params.tk_tf_ob_casing
+                if tf.shape_type in ["CP"]:
+                    zmax_b_cyl = np.max(tf.loops["b_cyl"]["z"])
+                else:
+                    zmax_b_cyl = zmax_wp
 
                 # Make B Cyl
                 ri = np.min(tf.loops["b_cyl"]["x"])

@@ -41,6 +41,7 @@ from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from bluemira.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.cadtools import get_properties
+from bluemira.base.look_and_feel import bluemira_error
 
 
 # Make temporary sub-directory for tests.
@@ -206,10 +207,10 @@ class TestTaperedPictureFrameTF:
         vol_cp_conductor = get_properties(CAD.component["shapes"][2])["Volume"]
         vol_leg_casing = get_properties(CAD.component["shapes"][3])["Volume"]
 
-        true_vol_b_cyl = 0.46925
-        true_vol_leg_conductor = 12.3735
-        true_vol_cp_conductor = 2.5788
-        true_vol_leg_casing = 10.0850
+        true_vol_b_cyl = 0.4785
+        true_vol_leg_conductor = 15.6117
+        true_vol_cp_conductor = 2.6499
+        true_vol_leg_casing = 11.6060
 
         assert np.isclose(vol_b_cyl, true_vol_b_cyl, rtol=1e-3)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)
@@ -347,7 +348,6 @@ class TestCurvedPictureframeTF:
             ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
             ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.75, "m", None, "PROCESS"],
             ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
-            ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
             ["tf_wp_depth", "TF coil winding pack depth (in y)", 0.4625, "m", "Including insulation", "PROCESS"],
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
@@ -392,9 +392,9 @@ class TestCurvedPictureframeTF:
         vol_tapered_cp = get_properties(CAD.component["shapes"][1])["Volume"]
         vol_leg_conductor = get_properties(CAD.component["shapes"][0])["Volume"]
 
-        true_vol_tapered_cp = 2.2678
-        true_vol_leg_conductor = 10.8514
-        true_vol_casing = 3.0716
+        true_vol_tapered_cp = 2.2971
+        true_vol_leg_conductor = 10.8308
+        true_vol_casing = 3.0748
         assert np.isclose(vol_casing, true_vol_casing, rtol=1e-2)
         assert np.isclose(vol_tapered_cp, true_vol_tapered_cp, rtol=1e-2)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)
@@ -416,6 +416,112 @@ class TestCurvedPictureframeTF:
 
         CAD = tf1.build_CAD()
         expected_names = [
+            "Toroidal field coils_leg_conductor",
+            "Toroidal field coils_cp_conductor",
+            "Toroidal field coils_case",
+        ]
+        assert CAD.component["names"] == expected_names
+
+
+class TestResistiveCurvedPictureframeTF:
+    @classmethod
+    def setup_class(cls):
+        # fmt: off
+        params = [
+            ["R_0", "Major radius", 3.639, "m", None, "Input"],
+            ["B_0", "Toroidal field at R_0", 2.0, "T", None, "Input"],
+            ["n_TF", "Number of TF coils", 12, "N/A", None, "Input"],
+            ["tk_tf_nose", "TF coil inboard nose thickness", 0.17, "m", None, "Input"],
+            ['tk_tf_side', 'TF coil inboard case minimum side wall thickness', 0.02, 'm', None, 'Input'],
+            ["tk_tf_wp", "TF coil winding pack thickness", 0.569, "m", None, "PROCESS"],
+            ["tk_tf_front_ib", "TF coil inboard steel front plasma-facing", 0.02, "m", None, "Input"],
+            ["tk_tf_ins", "TF coil ground insulation thickness", 0.008, "m", None, "Input"],
+            ["tk_tf_insgap", "TF coil WP insertion gap", 1.0E-7, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
+            ["r_tf_in", "Inboard radius of the TF coil inboard leg", 0.148, "m", None, "PROCESS"],
+            ["TF_ripple_limit", "Ripple limit constraint", 0.65, "%", None, "Input"],
+            ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
+            ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
+            ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.75, "m", None, "PROCESS"],
+            ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
+            ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
+            ["tf_wp_depth", "TF coil winding pack depth (in y)", 0.4625, "m", "Including insulation", "PROCESS"],
+            ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
+            ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
+            ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
+            ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
+            ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
+            ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
+        ]
+        # fmt: on
+        cls.parameters = ParameterFrame(params)
+        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
+        lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
+        lcfs.close()
+        ko_zone = make_box_xz(1, 9, -9, 9)
+        cls.to_tf = {
+            "name": "Example_PolySpline_TF",
+            "plasma": lcfs,
+            "koz_loop": ko_zone,
+            "shape_type": "CP",  # This is the shape parameterisation to use
+            "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
+            "conductivity": "R",  # Resistive (R) or Superconducting (SC)
+            "npoints": 800,
+            "obj": "L",  # This is the optimisation objective: minimise length
+            "ny": 3,  # This is the number of current filaments to use in y
+            "nr": 2,  # This is the number of current filaments to use in x
+            "nrip": 4,  # This is the number of points on the separatrix to calculate ripple for
+            "read_folder": read_path,  # This is the path that the shape will be read from
+            "write_folder": None,  # This is the path that the shape will be written to (replace in tests)
+        }
+        cls.lcfs = lcfs
+        cls.ko_zone = ko_zone
+
+    def test_curved_pictureframe_R_TF(self, tempdir):
+        self.to_tf["write_folder"] = tempdir
+        tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
+        tf1.optimise()
+
+        # Test CAD Model
+
+        CAD = tf1.build_CAD()
+        vol_b_cyl = get_properties(CAD.component["shapes"][0])["Volume"]
+        vol_leg_conductor = get_properties(CAD.component["shapes"][1])["Volume"]
+        vol_cp_conductor = get_properties(CAD.component["shapes"][2])["Volume"]
+        vol_leg_casing = get_properties(CAD.component["shapes"][3])["Volume"]
+
+        true_vol_b_cyl = 0.4249
+        true_vol_leg_conductor = 19.3274
+        true_vol_cp_conductor = 2.5586
+        true_vol_leg_casing = 12.9689
+
+        assert np.isclose(vol_b_cyl, true_vol_b_cyl, rtol=1e-3)
+        assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)
+        assert np.isclose(vol_cp_conductor, true_vol_cp_conductor, rtol=1e-2)
+        try:
+            # OCC volume bug
+            assert np.isclose(vol_leg_casing, true_vol_leg_casing, rtol=1e-1)
+        except AssertionError:
+            bluemira_error("OCC Volume Bug - Resistive CP coil case")
+
+        if tests.PLOTTING:
+            f1, ax = plt.subplots()
+            self.lcfs.plot(ax, edgecolor="r", fill=False)
+            self.ko_zone.plot(ax, edgecolor="b", fill=False)
+            tf1.plot_ripple(ax)
+            plt.show()
+        assert tf1.cage.get_max_ripple() <= 1.002 * 1.1
+
+    def test_cad_components(self, tempdir):
+        self.to_tf["write_folder"] = tempdir
+        tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
+
+        # Ensure we've got all the geometry that we need to generate CAD
+        tf1._generate_xz_plot_loops()
+
+        CAD = tf1.build_CAD()
+        expected_names = [
+            "Toroidal field coils_b_cyl",
             "Toroidal field coils_leg_conductor",
             "Toroidal field coils_cp_conductor",
             "Toroidal field coils_case",
