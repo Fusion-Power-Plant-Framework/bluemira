@@ -25,6 +25,9 @@ Optimisation variable class.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from operator import attrgetter
+from pandas import DataFrame
+from tabulate import tabulate
 
 from bluemira.utilities.error import OptVariablesError
 from bluemira.base.constants import BLUEMIRA_PAL_MAP
@@ -90,7 +93,7 @@ class BoundedVariable:
         Whether or not the variable is to be held constant
     """
 
-    __slots__ = ("name", "lower_bound", "upper_bound", "fixed", "_value", "_description")
+    __slots__ = ("name", "_value", "lower_bound", "upper_bound", "fixed", "_description")
 
     def __init__(self, name, value, lower_bound, upper_bound, fixed=False, descr=None):
         self._validate_bounds(lower_bound, upper_bound)
@@ -393,8 +396,83 @@ class OptVariables:
         self._check_presence(name)
         return self._var_dict[name]
 
+    def _to_records(self):
+        return sorted(
+            [
+                attrgetter(*BoundedVariable.__slots__)(self._var_dict[key])
+                for key in self._var_dict.keys()
+            ]
+        )
+
+    @staticmethod
+    def float_format(num):
+        """
+        Format a float
+        """
+        if type(num) is float:
+            return f"{num:.4g}"
+        else:
+            return num
+
+    def format_values(self):
+        """
+        Format values in the underlying DataFrame
+        """
+        db = self._get_db()
+        return db["Value"].apply(self.float_format)
+
+    def _get_db(self):
+        columns = [
+            "Name",
+            "Value",
+            "Lower Bound",
+            "Upper Bound",
+            "Fixed",
+            "Description",
+        ]
+        db = DataFrame.from_records(self._to_records(), columns=columns)
+        return db
+
+    def tabulator(self, keys=None, db=None, tablefmt="fancy_grid"):
+        """
+        Tabulate the underlying DataFrame of the ParameterFrame
+
+        Parameters
+        ----------
+        keys: list
+            database column keys
+        db: DataFrame
+            database to tabulate
+        tablefmt: str (default="fancy_grid")
+            The format of the table - see
+            https://github.com/astanin/python-tabulate#table-format
+
+        Returns
+        -------
+        tabulated: str
+            The tabulated DataFrame
+        """
+        db = self._get_db() if db is None else db
+        if keys is None:
+            columns = list(db.columns)
+        else:
+            db = db[keys]
+            columns = keys
+        return tabulate(
+            db,
+            headers=columns,
+            tablefmt=tablefmt,
+            showindex=False,
+            numalign="right",
+        )
+
     def __repr__(self):
-        super().__repr__()
+        """
+        Prints a representation of the OptVariables inside the console
+        """
+        fdb = self._get_db()
+        fdb["Value"] = self.format_values()
+        return self.tabulator(keys=None, db=fdb)
 
     def plot(self):
         """
