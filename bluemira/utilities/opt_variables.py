@@ -193,8 +193,8 @@ class BoundedVariable:
         """
         Representation of Bounded variable
         """
-        fixed = f",{self.lower_bound}, {self.upper_bound}"
-        return f"BoundedVariable({self.name}, {self.value}{fixed})"
+        lower_bound, upper_bound, fixed = self.lower_bound, self.upper_bound, self.fixed
+        return f"{self.__class__.__name__}({self.name}, {self.value}, {lower_bound=}, {upper_bound=}, {fixed=})"
 
     def __str__(self) -> str:
         """
