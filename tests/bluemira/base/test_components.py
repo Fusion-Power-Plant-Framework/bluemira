@@ -226,6 +226,16 @@ class TestComponentManager:
                 "/".join([tree, tf_coils]), component, fill_tree=False
             )
 
+    def test_insert_get_path_name_in_path(self):
+        component_name = "Shape"
+        component = PhysicalComponent(component_name, "A Shape")
+        path = "xz/TF Coils/Shape"
+        trees = ["xz", "xy"]
+        manager = ComponentManager(trees)
+        manager.insert_at_path(path, component)
+        in_tree = manager.get_by_path("/".join([path, component_name]))
+        assert in_tree == component
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
