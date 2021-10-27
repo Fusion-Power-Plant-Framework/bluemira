@@ -25,7 +25,7 @@ Tests for the Analysis module.
 
 import matplotlib.pyplot as plt
 
-from bluemira.base.analysis import Analysis
+from bluemira.base import Analysis
 
 import tests
 

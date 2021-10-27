@@ -24,6 +24,7 @@ Base classes and functionality for the bluemira code.
 """
 
 """
+from .analysis import Analysis
 from .builder import Builder
 from .components import (
     GroupingComponent,
