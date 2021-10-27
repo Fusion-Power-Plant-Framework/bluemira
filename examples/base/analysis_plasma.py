@@ -20,11 +20,11 @@ params = {
     "R_0": (9.0, "Input"),
     "A": (3.5, "Input"),
 }
-analysis = bm_base.Analysis(params, build_config)
-analysis.run()
+design = bm_base.Design(params, build_config)
+design.run()
 
 for dims in ["xy", "xz"]:
-    component: bm_base.PhysicalComponent = analysis.component_manager.get_by_path(
+    component: bm_base.PhysicalComponent = design.component_manager.get_by_path(
         "/".join([dims, build_config["Plasma"]["target"]])
     )
 
@@ -35,7 +35,7 @@ for dims in ["xy", "xz"]:
         ax.set_aspect("equal")
     plt.show()
 
-component: bm_base.PhysicalComponent = analysis.component_manager.get_by_path(
+component: bm_base.PhysicalComponent = design.component_manager.get_by_path(
     "/".join(["xyz", build_config["Plasma"]["target"]])
 )
 geo.tools.save_as_STEP(component.shape, "plasma")

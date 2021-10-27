@@ -35,7 +35,7 @@ from bluemira.base.parameter import ParameterFrame
 class Builder(abc.ABC):
     """
     The Builder classes in bluemira define the various steps that will take place to
-    build components when an Analysis is run.
+    build components when a Design is run.
     """
 
     _required_params: List[str] = []

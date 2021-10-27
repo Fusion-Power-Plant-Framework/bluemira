@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Module containing the bluemira Analysis class.
+Module containing the bluemira Design class.
 """
 
 from typing import Any, Dict, List, Type
@@ -31,9 +31,9 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.utilities.tools import get_module
 
 
-class Analysis:
+class Design:
     """
-    The Analysis class is the main bluemira class that controls the design study that is
+    The Design class is the main bluemira class that controls the design study that is
     being performed. It allows a series of Builder objects to be created, which are
     configured using the input parameters and configuration and walked though to produce
     the analysis results and reactor components.
@@ -56,21 +56,21 @@ class Analysis:
     @property
     def component_manager(self) -> ComponentManager:
         """
-        The ComponentManager associated with this Analysis.
+        The ComponentManager associated with this Design.
         """
         return self._component_manager
 
     @property
     def params(self) -> ParameterFrame:
         """
-        The ParameterFrame associated with this Analysis.
+        The ParameterFrame associated with this Design.
         """
         return self._params
 
     def run(self):
         """
-        Runs through the Builders associated with this Analysis. Components and
-        Parameters are transferred onto the Analysis after each step.
+        Runs through the Builders associated with this Design. Components and
+        Parameters are transferred onto the Design after each step.
         """
         for builder in self._builders:
             build_result = builder.build(self._params)
