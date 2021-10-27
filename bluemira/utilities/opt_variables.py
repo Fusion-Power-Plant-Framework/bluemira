@@ -436,7 +436,7 @@ class OptVariables:
         db = DataFrame.from_records(self._to_records(), columns=columns)
         return db
 
-    def tabulator(self, keys=None, db=None, tablefmt="fancy_grid"):
+    def tabulator(self, keys=None, db=None, tablefmt="fancy_grid") -> str:
         """
         Tabulate the underlying DataFrame of the ParameterFrame
 
@@ -469,13 +469,23 @@ class OptVariables:
             numalign="right",
         )
 
-    def __repr__(self):
+    def __str__(self) -> str:
         """
-        Prints a representation of the OptVariables inside the console
+        Pretty prints a representation of the OptVariables inside the console
         """
         fdb = self._get_db()
         fdb["Value"] = self.format_values()
         return self.tabulator(keys=None, db=fdb)
+
+    def __repr__(self) -> str:
+        """
+        Prints a representation of the OptVariables inside the console
+        """
+        return (
+            f"{self.__class__.__name__}(\n    "
+            + "\n    ".join([repr(var) for var in self._var_dict.values()])
+            + "\n)"
+        )
 
     def plot(self):
         """
