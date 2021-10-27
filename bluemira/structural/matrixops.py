@@ -105,8 +105,10 @@ def cyclic_decomposition(k, p, l_nodes, r_nodes):
     p_l = p[left]
     p_i = p[interior]
 
-    k_cyc = np.array([[k_rr, k_rl, k_ri], [k_lr, k_ll, k_li], [k_ir, k_il, k_ii]])
-    p_cyc = np.array([p_r, p_l, p_i])
+    k_cyc = np.array(
+        [[k_rr, k_rl, k_ri], [k_lr, k_ll, k_li], [k_ir, k_il, k_ii]], dtype=object
+    )
+    p_cyc = np.array([p_r, p_l, p_i], dtype=object)
     selections = [left, right, interior]
 
     return k_cyc, p_cyc, selections
