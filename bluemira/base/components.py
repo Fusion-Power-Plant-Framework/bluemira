@@ -309,6 +309,8 @@ class ComponentManager:
             are missing nodes in the path. By default True.
         """
         path = path.split("/")
+        if path[-1] == component.name:
+            del path[-1]
         tree = self._trees[path[0]]
         for idx, node in enumerate(path[1:], 1):
             tree = tree.get_component(node)
