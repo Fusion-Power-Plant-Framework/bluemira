@@ -78,7 +78,7 @@ class CyclicSymmetry:
 
             angle = get_angle_between_points(r_point, pa, l_point)
 
-            n.append(360 / angle)
+            n.append(2 * np.pi / angle)
 
         n = np.round(n).astype(np.int32)
 

@@ -31,7 +31,6 @@ from sectionproperties.pre.pre import Material as SPMaterial
 from sectionproperties.analysis.cross_section import CrossSection as _CrossSection
 
 from bluemira.geometry._deprecated_loop import Loop
-from BLUEPRINT.geometry.shell import Shell
 from bluemira.geometry._deprecated_tools import (
     make_circle_arc,
     get_control_point,
@@ -39,6 +38,7 @@ from bluemira.geometry._deprecated_tools import (
 )
 from bluemira.structural.error import StructuralError
 from bluemira.structural.constants import NEAR_ZERO
+from BLUEPRINT.geometry.shell import Shell
 
 
 def _get_min_length(loop):
