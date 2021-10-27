@@ -452,8 +452,8 @@ class FiniteElementModel:
 
         if u_max >= length / R_LARGE_DISP:
             bluemira_warn(
-                "Beams::FiniteElementModel:\n Large displacements detected"
-                "!\nVocê não pode confiar nos resultados..."
+                "structural::FiniteElementModel:\n Large displacements detected"
+                "!\nYou can't trust the results..."
             )
 
     def _apply_boundary_conditions(self, k, p, method="Przemieniecki"):
