@@ -22,9 +22,8 @@
 """
 Configuration classes
 """
-from BLUEPRINT.base.parameter import ParameterFrame
-from BLUEPRINT.base.parameter import ParameterMapping
-from BLUEPRINT.base.config_schema import ConfigurationSchema
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
+from bluemira.base.config_schema import ConfigurationSchema
 
 
 class Configuration(ConfigurationSchema, ParameterFrame):
@@ -106,21 +105,68 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['f_cd_aux', 'Auxiliary current drive fraction', 0.1, 'N/A', None, 'Input'],
         ['f_cd_ohm', 'Ohmic current drive fraction', 0.1, 'N/A', None, 'Input'],
 
-        # First wall and divertor profile
-        ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],
+        # First wall profile
         ['fw_dx', 'Minimum distance of FW to separatrix', 0.225, 'm', None, 'Input'],
+        ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],
+        ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
+        ['fw_dL_max', 'Maximum FW module length', 2, 'm', None, 'Input'],
+        ['fw_a_max', 'Maximum angle between FW modules', 25, 'Ã‚Â°', None, 'Input'],
+        ['fw_p_sol_near', 'near Scrape off layer power', 50, 'MW', None, 'Input'],
+        ['fw_p_sol_far', 'far Scrape off layer power', 50, 'MW', None, 'Input'],
+        ['hf_limit', 'heat flux material limit', 0.5, 'MW/m^2', None, 'Input'],
+        # ad hoc SN variables
+        ['fw_lambda_q_near', 'Lambda q near SOL', 0.05, 'm', None, 'Input'],
+        ['fw_lambda_q_far', 'Lambda q far SOL', 0.05, 'm', None, 'Input'],
+        ['f_outer_target', 'Power fraction', 0.75, 'N/A', None, 'Input'],
+        ['f_inner_target', 'Power fraction', 0.25, 'N/A', None, 'Input'],
+        # ad hoc DN variables
+        ['fw_dpsi_n_near', 'Step size of psi in near SOL', 0.1, 'N/A', None, 'Input'],
+        ['fw_dpsi_n_far', 'Step size of psi in far SOL', 0.1, 'N/A', None, 'Input'],
+        ['fw_dx_omp', 'Initial offset from LCFS omp', 0.2, 'm', None, 'Input'],
+        ['fw_dx_imp', 'Initial offset from LCFS imp', 0.05, 'm', None, 'Input'],
+        ['p_rate_omp', 'power sharing omp', 0.9, '%', None, 'Input'],
+        ['p_rate_imp', 'power sharing imp', 0.1, '%', None, 'Input'],
+        ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
+        ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
+        ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.003, 'm', None, 'Input'],
+        ['fw_lambda_q_far_imp', 'Lambda_q far SOL imp', 0.1, 'm', None, 'Input'],
+        ['dr_near_omp', 'fs thickness near SOL', 0.001, 'm', None, 'Input'],
+        ['dr_far_omp', 'fs thickness far SOL', 0.005, 'm', None, 'Input'],
+        ['f_lfs_lower_target', 'Power fraction lfs lower', 0.5, 'N/A', None, 'Input'],
+        ['f_lfs_upper_target', 'Power fraction lfs upper', 0.5, 'N/A', None, 'Input'],
+        ['f_hfs_lower_target', 'Power fraction hfs lower', 0.5, 'N/A', None, 'Input'],
+        ['f_hfs_upper_target', 'Power fraction hfs upper', 0.5, 'N/A', None, 'Input'],
+
+        # Divertor profile
         ['div_L2D_ib', 'Inboard divertor leg length', 1.1, 'm', None, 'Input'],
         ['div_L2D_ob', 'Outboard divertor leg length', 1.45, 'm', None, 'Input'],
         ['div_graze_angle', 'Divertor SOL grazing angle', 1.5, '°', None, 'Input'],
         ['div_psi_o', 'Divertor flux offset', 0.5, 'n/a', None, 'Input'],
         ['div_Ltarg', 'Divertor target length', 0.5, 'm', None, 'Input'],
         ['div_open', 'Divertor open/closed configuration', False, 'N/A', None, 'Input'],
-        ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
-        ['fw_dL_max', 'Maximum FW module length', 2, 'm', None, 'Input'],
-        ['fw_a_max', 'Maximum angle between FW modules', 25, 'Ã‚Â°', None, 'Input'],
         ['g_vv_div_add', 'Additional divertor/VV gap', 0, 'm', None, 'Input'],
         ['LPangle', 'Lower port inclination angle', -30, '°', None, 'Input'],
-        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'N/A', None, "Common decision"],
+        ['n_div_cassettes', 'Number of divertor cassettes per sector', 3, 'N/A', None, 'Common decision'],
+        ['psi_norm', 'Normalised flux value of strike-point contours', 1, 'N/A', None, 'Input'],
+        ['xpt_outer_gap', 'Gap between x-point and outer wall', 2, 'm', None, 'Input'],
+        ['xpt_inner_gap', 'Gap between x-point and inner wall', 0.4, 'm', None, 'Input'],
+        ['tk_outer_target_sol', 'Outer target length SOL side', 0.7, 'm', None, 'Input'],
+        ['tk_outer_target_pfr', 'Outer target length PFR side', 0.3, 'm', None, 'Input'],
+        ['tk_inner_target_sol', 'Inner target length SOL side', 0.3, 'm', None, 'Input'],
+        ['tk_inner_target_pfr', 'Inner target length PFR side', 0.5, 'm', None, 'Input'],
+        # ad hoc SN variables
+        ['outer_strike_h', 'Outer strike point height', 2, 'm', None, 'Input'],
+        ['inner_strike_h', 'Inner strike point height', 1, 'm', None, 'Input'],
+        # ad hoc DN variables
+        ['outer_strike_r', 'Outer strike point major radius', 10.3, 'm', None, 'Input'],
+        ['inner_strike_r', 'Inner strike point major radius', 8, 'm', None, 'Input'],
+        ['theta_outer_target', 'Angle between flux line tangent at outer strike point and SOL side of outer target', 20, 'deg', None, 'Input'],
+        ['theta_inner_target', 'Angle between flux line tangent at inner strike point and SOL side of inner target', 20, 'deg', None, 'Input'],
+        ['xpt_height', 'x-point vertical_gap', 0.35, 'm', None, 'Input'],
+        # Divertor cassette
+        ['tk_div_cass', 'Minimum thickness between inner divertor profile and cassette', 0.3, 'm', None, 'Input'],
+        ['tk_div_cass_in', 'Additional radial thickness on inboard side relative to to inner strike point', 0.1, 'm', None, 'Input'],
+
 
         # Blanket
         ["bb_e_mult", "Energy multiplication factor", 1.35, "N/A", None, "HCPB classic", {"PROCESS": ParameterMapping("emult", False, True)}],
@@ -131,6 +177,11 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "N/A", None, "HCPB 2015 design description document"],
         ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "N/A", None, "HCPB 2015 design description document"],
         ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "N/A", None, "HCPB 2015 design description document"],
+
+        # ST Breeding blanket
+        ['g_bb_fw', 'Separation between the first wall and the breeding blanket', 0.05, 'm', None, 'Input'],
+        ['tk_bb_bz', 'Breeding zone thickness', 1.0, 'm', None, 'Input'],
+        ['tk_bb_man', 'Breeding blanket manifold thickness', 0.2, 'm', None, 'Input'],
 
         # Component radial thicknesses (some vertical)
         ['tk_bb_ib', 'Inboard blanket thickness', 0.8, 'm', None, 'Input', {"PROCESS": ParameterMapping("blnkith", True, True)}],
@@ -153,8 +204,12 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_ob_ts', 'Outboard TS thickness', 0.05, 'm', None, 'Input'],
         ['tk_cr_vv', 'Cryostat VV thickness', 0.3, 'm', None, 'Input', {"PROCESS": ParameterMapping("ddwex", False, True)}],
         ['tk_rs', 'Radiation shield thickness', 2.5, 'm', None, 'Input'],
+        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
+        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],
+        ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
 
         # TF coils
+        ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfcth", True, False)}],
         ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfthko", False, False)}],
         ['tk_tf_nose', 'TF coil inboard nose thickness', 0.6, 'm', None, 'Input', {"PROCESS": ParameterMapping("thkcas", True, False)}],
         ['tk_tf_wp', 'TF coil winding pack thickness', 0.5, 'm', 'Excluding insulation', 'PROCESS', {"PROCESS": ParameterMapping("dr_tf_wp", True, False)}],
@@ -162,10 +217,11 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_tf_ins', 'TF coil ground insulation thickness', 0.08, 'm', None, 'Input'],
         ['tk_tf_insgap', 'TF coil WP insertion gap', 0.1, 'm', 'Backfilled with epoxy resin (impregnation)', 'Input'],
         ['tk_tf_side', 'TF coil inboard case minimum side wall thickness', 0.1, 'm', None, 'Input', {"PROCESS": ParameterMapping("casths", False, True)}],
+        ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.02, "m", None, "PROCESS"],
         ['tk_tf_case_out_in', 'TF coil case thickness on the outboard inside', 0.35, 'm', None, 'Input'],
         ['tk_tf_case_out_out', 'TF coil case thickness on the outboard outside', 0.4, 'm', None, 'Input'],
         ['tf_wp_width', 'TF coil winding pack radial width', 0.76, 'm', 'Including insulation', 'PROCESS'],
-        ['tf_wp_depth', 'TF coil winding pack depth (in y)', 1.05, 'm', 'Including insulation', 'PROCESS'],
+        ['tf_wp_depth', 'TF coil winding pack depth (in y)', 1.05, 'm', 'Including insulation', 'PROCESS', {"PROCESS": ParameterMapping("wwp1", False, False)}],
         ['tk_cs', 'Central Solenoid radial thickness', 0.8, 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("ohcth", True, False)}],
         ["sigma_tf_max", "Maximum von Mises stress in the TF coil nose", 550e6, "Pa", None, "Input", {"PROCESS": ParameterMapping("alstrtf", False, False)}],
         ['h_cp_top', 'Height of the TF coil inboard Tapered section end', 6., 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("h_cp_top", False, False)}],
@@ -173,6 +229,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['B_tf_peak', 'Peak field inside the TF coil winding pack', 12, 'T', None, 'PROCESS'],
         ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
         ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
+        ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
+        ['r_tf_curve', "Start of the upper curve of domed picture frame shale", 3., 'm', None, 'Input'],
 
         # Coil structures
         ['x_g_support', 'TF coil gravity support radius', 13, 'm', None, 'Input'],
@@ -265,7 +323,15 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         # Maintenance
         ['bmd', 'Blanket maintenance duration', 150, 'days', 'Full replacement intervention duration', 'Input'],
         ['dmd', 'Divertor maintenance duration', 90, 'days', 'Full replacement intervention duration', 'Input'],
-        ['RMTFI', 'RM Technical Feasibility Index', 1, 'N/A', 'Default value. Should not really be 1', 'Input']
+        ['RMTFI', 'RM Technical Feasibility Index', 1, 'N/A', 'Default value. Should not really be 1', 'Input'],
+
+        # Central column shield
+        ["g_ccs_vv_inboard", "Gap between central column shield and the vacuum vessel on the inboard side", 0.05, "m", None, "Input"],
+        ["g_ccs_vv_add", "Additional gap between the central column shield and the vacuum vessel", 0.0, "m", None, "Input"],
+        ["g_ccs_fw", "Gap between the central column shield and the first wall", 0.05, "m", None, "Input"],
+        ["g_ccs_div", "Gap between the central column shield and the divertor cassette", 0.05, "m", None, "Input"],
+        ["tk_ccs_min", "Minimum thickness of the central column shield", 0.1, "m", None, "Input"],
+        ["r_ccs", "Outer radius of the central column shield", 2.5, "m", None, "Input"]
     ]
     # fmt: on
     ParameterFrame.set_default_parameters(params)

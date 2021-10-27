@@ -59,7 +59,7 @@ class PlasmaCAD(ComponentCAD):
 
         p = plasma["LCFS"].rotate(angle, p1=[0, 0, 0], p2=[0, 0, 1], update=False)
         p.interpolate(200)
-        p = make_face(p, spline=True)
+        p = make_face(p, spline=False)
         lcfs = revolve(p, None, width)
         p = plasma["Separatrix"].rotate(angle, p1=[0, 0, 0], p2=[0, 0, 1], update=False)
 
@@ -71,7 +71,7 @@ class PlasmaCAD(ComponentCAD):
         seps = []
         for loop in loops:
             loop.interpolate(200)
-            loop = make_face(loop, spline=True)
+            loop = make_face(loop, spline=False)
             sep = revolve(loop, None, width)
             seps.append(sep)
         return lcfs, seps

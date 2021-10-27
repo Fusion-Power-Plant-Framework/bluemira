@@ -25,11 +25,14 @@ Plasma system
 import numpy as np
 from typing import Type
 import matplotlib.pyplot as plt
+
+from bluemira.base.constants import MU_0
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.geometry.geomtools import loop_volume
 from BLUEPRINT.geometry.loop import make_ring
 from BLUEPRINT.systems.physicstoolbox import n_DT_reactions, r_T_burn, P_LH
-from bluemira.base.constants import MU_0
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.cad.plasmaCAD import PlasmaCAD
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
@@ -87,8 +90,7 @@ class Plasma(Meshable, ReactorSystem):
         self.method = method
         self._plotter = PlasmaPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         if len(self.profiles) != 0:
             self.profiles = self.profiles.copy()

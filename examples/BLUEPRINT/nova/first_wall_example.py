@@ -30,16 +30,15 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.base.file import get_BP_path, make_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_union,
     boolean_2d_difference,
     convex_hull,
 )
-from BLUEPRINT.equilibria.equilibrium import Equilibrium
-from BLUEPRINT.equilibria.eqdsk import EQDSKInterface
-from BLUEPRINT.equilibria.limiter import Limiter
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.limiter import Limiter
 from BLUEPRINT.nova.firstwall import Paneller
 
 plot_defaults()
@@ -48,7 +47,7 @@ plot_defaults()
 # Let's load some Equilibrium objects, so that we have something to work with
 
 # %%
-read_path = get_BP_path("equilibria", subfolder="data/BLUEPRINT")
+read_path = get_bluemira_path("equilibria", subfolder="data/bluemira")
 eof_name = "EU-DEMO_EOF.json"
 sof_name = "EU-DEMO_SOF.json"
 
@@ -210,7 +209,7 @@ div_box = Loop(x=[0, 20, 20, 0, 0], z=[-10, -10, z_min + 0.1, z_min + 0.1, -10])
 
 count = 0
 for i, point in enumerate(hull.d2.T):
-    if div_box.point_in_poly(point):
+    if div_box.point_inside(point):
         if count > 2:
             hull.reorder(i, 0)
             hull.open_()
@@ -260,14 +259,3 @@ f, ax = plt.subplots()
 
 eof.plot(ax)
 sof.plot(ax)
-
-# Export EOF equilibrium as an EQDSK.
-# NOTE: eqdsk is a shit file format and you should never use it unless you are
-# interfacing to legacy codes.
-
-data = eof.to_dict()
-path = make_BP_path("equilibria", subfolder="generated_data")
-filename = os.sep.join([path, "eof_example.eqdsk"])
-
-eqdsk_writer = EQDSKInterface()
-eqdsk_writer.write(filename, data, formatt="eqdsk")

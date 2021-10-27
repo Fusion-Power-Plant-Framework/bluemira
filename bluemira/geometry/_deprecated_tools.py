@@ -552,6 +552,10 @@ def get_area_3d(x, y, z):
     area: float
         The area of the polygon [m^2]
     """
+    if np.all(x == x[0]) and np.all(y == y[0]) and np.all(z == z[0]):
+        # Basically a point, but avoid getting the normal vector..
+        return 0
+
     v3 = get_normal_vector(x, y, z)
     m = np.zeros((3, len(x)))
     m[0, :] = x
@@ -709,7 +713,7 @@ def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray):
     x: array_like
         x coordinates of the loop [m]
     y: array_like
-        x coordinates of the loop [m]
+        y coordinates of the loop [m]
     z: array_like
         z coordinates of the loop [m]
 
@@ -1434,7 +1438,7 @@ def get_control_point(loop):
     """
     if loop.__class__.__name__ == "Loop":
         cp = [loop.centroid[0], loop.centroid[1]]
-        if loop.point_in_poly(cp):
+        if loop.point_inside(cp):
             return cp
         else:
             return _montecarloloopcontrol(loop)
@@ -1468,7 +1472,7 @@ def _montecarloloopcontrol(loop):
         n, m = np.random.rand(2)
         x = xmin + n * dx
         y = ymin + m * dy
-        if loop.point_in_poly([x, y]):
+        if loop.point_inside([x, y]):
             return [x, y]
     raise GeometryError(
         "Unable to find a control point for this Loop using brute force."
@@ -1891,21 +1895,33 @@ class MixedFaceMaker:
         # Get the vertices of polygon-like segments
         p_vertices = self._find_polygon_vertices()
 
-        # identify sequences of polygon indices
-        p_sequences = self._get_polygon_sequences(p_vertices)
+        if len(p_vertices) > 0:
+            # identify sequences of polygon indices
+            p_sequences = self._get_polygon_sequences(p_vertices)
 
-        # Get the (negative) of the polygon sequences to get spline sequences
-        s_sequences = self._get_spline_sequences(p_sequences)
+            if (
+                len(p_sequences) == 1
+                and p_sequences[0][0] == 0
+                and p_sequences[0][-1] == len(p_vertices) - 1
+            ):
+                # All vertices are pure polygon-like so just make the wire
+                self.wires = make_wire(self.x, self.y, self.z, spline=False)
+            else:
+                # Get the (negative) of the polygon sequences to get spline sequences
+                s_sequences = self._get_spline_sequences(p_sequences)
 
-        if self.debug:
-            print("p_sequences :", p_sequences)
-            print("s_sequences :", s_sequences)
+                if self.debug:
+                    print("p_sequences :", p_sequences)
+                    print("s_sequences :", s_sequences)
 
-        # Make coordinates for all the segments
-        self._make_subcoordinates(p_sequences, s_sequences)
+                # Make coordinates for all the segments
+                self._make_subcoordinates(p_sequences, s_sequences)
 
-        # Make the wires for each of the sub-coordinates, and daisychain them
-        self._make_subwires()
+                # Make the wires for each of the sub-coordinates, and daisychain them
+                self._make_subwires()
+        else:
+            # All vertices are pure spline-like so just make the wire
+            self.wires = make_wire(self.x, self.y, self.z, spline=True)
 
         # Finally, make the OCC face from the wire formed from the boundary wires
         self._make_wire()
@@ -1929,9 +1945,9 @@ class MixedFaceMaker:
         angles = np.zeros(len(self.x) - 2)
         for i in range(len(self.x) - 2):
             angles[i] = get_angle_between_points(
-                [self.x[i], self.z[i]],
-                [self.x[i + 1], self.z[i + 1]],
-                [self.x[i + 2], self.z[i + 2]],
+                [self.x[i], self.y[i], self.z[i]],
+                [self.x[i + 1], self.y[i + 1], self.z[i + 1]],
+                [self.x[i + 2], self.y[i + 2], self.z[i + 2]],
             )
         if (
             self.x[0] == self.x[-1]
@@ -1940,7 +1956,9 @@ class MixedFaceMaker:
         ):
             # Get the angle over the closed joint
             join_angle = get_angle_between_points(
-                [self.x[-2], self.z[-2]], [self.x[0], self.z[0]], [self.x[1], self.z[1]]
+                [self.x[-2], self.y[-2], self.z[-2]],
+                [self.x[0], self.y[0], self.z[0]],
+                [self.x[1], self.y[1], self.z[1]],
             )
             angles = np.append(angles, join_angle)
 
@@ -1982,6 +2000,10 @@ class MixedFaceMaker:
             The list of start and end tuples of the polygon segments
         """
         sequences = []
+
+        if len(vertices) == 0:
+            return sequences
+
         start = vertices[0]
         for i, vertex in enumerate(vertices[:-1]):
 
@@ -2003,6 +2025,14 @@ class MixedFaceMaker:
 
         if not sequences:
             raise GeometryError("Not a good candidate for a mixed face ==> spline")
+
+        if (
+            len(sequences) == 1
+            and sequences[0][0] == 0
+            and sequences[0][1] == len(vertices) - 1
+        ):
+            # Shape is a pure polygon
+            return sequences
 
         # Now check the start and end of the loop, to see if a polygon segment
         # bridges the join

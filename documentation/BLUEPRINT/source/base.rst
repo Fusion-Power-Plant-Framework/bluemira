@@ -96,7 +96,7 @@ The framework uses Python annotations and the :py:mod:`typing` module to enforce
 .. code-block:: python
 
     from typing import Type, List
-    from BLUEPRINT.base.baseclass import ReactorSystem
+    from BLUEPRINT.systems.baseclass import ReactorSystem
     from BLUEPRINT.geometry.loop import Loop
 
     class Example(ReactorSystem):

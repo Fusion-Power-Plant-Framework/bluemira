@@ -615,6 +615,22 @@
     "source": "Input",
     "mapping": null
   },
+  "dr_far_omp": {
+    "name": "fs thickness far SOL",
+    "value": 0.005,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "dr_near_omp": {
+    "name": "fs thickness near SOL",
+    "value": 0.001,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "e_nbi": {
     "name": "Neutral beam energy",
     "value": 1000,
@@ -689,6 +705,46 @@
     "source": "Input",
     "mapping": null
   },
+  "f_hfs_lower_target": {
+    "name": "Power fraction hfs lower",
+    "value": 0.5,
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "f_hfs_upper_target": {
+    "name": "Power fraction hfs upper",
+    "value": 0.5,
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "f_inner_target": {
+    "name": "Power fraction",
+    "value": 0.25,
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "f_lfs_lower_target": {
+    "name": "Power fraction lfs lower",
+    "value": 0.5,
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "f_lfs_upper_target": {
+    "name": "Power fraction lfs upper",
+    "value": 0.5,
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "f_ni": {
     "name": "Non-inductive current drive fraction",
     "value": 0.1,
@@ -702,6 +758,14 @@
         "write": false
       }
     }
+  },
+  "f_outer_target": {
+    "name": "Power fraction",
+    "value": 0.75,
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
   },
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
@@ -727,6 +791,22 @@
     "source": "Input",
     "mapping": null
   },
+  "fw_dpsi_n_far": {
+    "name": "Step size of psi in far SOL",
+    "value": 0.1,
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_dpsi_n_near": {
+    "name": "Step size of psi in near SOL",
+    "value": 0.1,
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "fw_dx": {
     "name": "Minimum distance of FW to separatrix",
     "value": 0.225,
@@ -735,10 +815,130 @@
     "source": "Input",
     "mapping": null
   },
+  "fw_dx_imp": {
+    "name": "Initial offset from LCFS imp",
+    "value": 0.05,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_dx_omp": {
+    "name": "Initial offset from LCFS omp",
+    "value": 0.2,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_lambda_q_far": {
+    "name": "Lambda q far SOL",
+    "value": 0.05,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_lambda_q_far_imp": {
+    "name": "Lambda_q far SOL imp",
+    "value": 0.1,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_lambda_q_far_omp": {
+    "name": "Lambda_q far SOL omp",
+    "value": 0.1,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_lambda_q_near": {
+    "name": "Lambda q near SOL",
+    "value": 0.05,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_lambda_q_near_imp": {
+    "name": "Lambda_q near SOL imp",
+    "value": 0.003,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_lambda_q_near_omp": {
+    "name": "Lambda_q near SOL omp",
+    "value": 0.003,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_p_sol_far": {
+    "name": "far Scrape off layer power",
+    "value": 50,
+    "unit": "MW",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "fw_p_sol_near": {
+    "name": "near Scrape off layer power",
+    "value": 50,
+    "unit": "MW",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "fw_psi_n": {
     "name": "Normalised psi boundary to fit FW to",
     "value": 1.07,
     "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "g_bb_fw": {
+    "name": "Separation between the first wall and the breeding blanket",
+    "value": 0.05,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "g_ccs_div": {
+    "name": "Gap between the central column shield and the divertor cassette",
+    "value": 0.05,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "g_ccs_fw": {
+    "name": "Gap between the central column shield and the first wall",
+    "value": 0.05,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "g_ccs_vv_add": {
+    "name": "Additional gap between the central column shield and the vacuum vessel",
+    "value": 0.0,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "g_ccs_vv_inboard": {
+    "name": "Gap between central column shield and the vacuum vessel on the inboard side",
+    "value": 0.05,
+    "unit": "m",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -955,6 +1155,30 @@
       }
     }
   },
+  "hf_limit": {
+    "name": "heat flux material limit",
+    "value": 0.5,
+    "unit": "MW/m^2",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "inner_strike_h": {
+    "name": "Inner strike point height",
+    "value": 1,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "inner_strike_r": {
+    "name": "Inner strike point major radius",
+    "value": 8,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "kappa": {
     "name": "Last closed surface plasma elongation",
     "value": 1.792,
@@ -1115,6 +1339,22 @@
     "source": "Input",
     "mapping": null
   },
+  "outer_strike_h": {
+    "name": "Outer strike point height",
+    "value": 2,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "outer_strike_r": {
+    "name": "Outer strike point major radius",
+    "value": 10.3,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "p_ec": {
     "name": "EC launcher power",
     "value": 10,
@@ -1131,9 +1371,33 @@
     "source": "Input",
     "mapping": null
   },
+  "p_rate_imp": {
+    "name": "power sharing imp",
+    "value": 0.1,
+    "unit": "%",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "p_rate_omp": {
+    "name": "power sharing omp",
+    "value": 0.9,
+    "unit": "%",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "plasma_type": {
     "name": "Type of plasma",
     "value": "SN",
+    "unit": "N/A",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "psi_norm": {
+    "name": "Normalised flux value of strike-point contours",
+    "value": 1,
     "unit": "N/A",
     "description": null,
     "source": "Input",
@@ -1157,6 +1421,14 @@
     "name": "Control HCD power",
     "value": 50,
     "unit": "MW",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "r_ccs": {
+    "name": "Outer radius of the central column shield",
+    "value": 2.5,
+    "unit": "m",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -1225,6 +1497,14 @@
       }
     }
   },
+  "r_tf_curve": {
+    "name": "Start of the upper curve of domed picture frame shale",
+    "value": 3.0,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "r_tf_in": {
     "name": "Inboard radius of the TF coil inboard leg",
     "value": 3.2,
@@ -1252,6 +1532,14 @@
         "write": false
       }
     }
+  },
+  "r_tf_inboard_corner": {
+    "name": "Corner Radius of TF coil inboard legs",
+    "value": 0.0,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
   },
   "r_tf_inboard_out": {
     "name": "Outboard Radius of the TF coil inboard leg tapered region",
@@ -1451,7 +1739,13 @@
     "unit": "m",
     "description": "Including insulation",
     "source": "PROCESS",
-    "mapping": null
+    "mapping": {
+      "PROCESS": {
+        "name": "wwp1",
+        "read": false,
+        "write": false
+      }
+    }
   },
   "tf_wp_width": {
     "name": "TF coil winding pack radial width",
@@ -1461,9 +1755,33 @@
     "source": "PROCESS",
     "mapping": null
   },
+  "theta_inner_target": {
+    "name": "Angle between flux line tangent at inner strike point and SOL side of inner target",
+    "value": 20,
+    "unit": "deg",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "theta_outer_target": {
+    "name": "Angle between flux line tangent at outer strike point and SOL side of outer target",
+    "value": 20,
+    "unit": "deg",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "tk_bb_arm": {
     "name": "Tungsten armour thickness",
     "value": 0.002,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_bb_bz": {
+    "name": "Breeding zone thickness",
+    "value": 1.0,
     "unit": "m",
     "description": null,
     "source": "Input",
@@ -1491,6 +1809,14 @@
       }
     }
   },
+  "tk_bb_man": {
+    "name": "Breeding blanket manifold thickness",
+    "value": 0.2,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "tk_bb_ob": {
     "name": "Outboard blanket thickness",
     "value": 1.1,
@@ -1504,6 +1830,14 @@
         "write": true
       }
     }
+  },
+  "tk_ccs_min": {
+    "name": "Minimum thickness of the central column shield",
+    "value": 0.1,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
   },
   "tk_cr_vv": {
     "name": "Cryostat VV thickness",
@@ -1549,9 +1883,65 @@
     "source": "Input",
     "mapping": null
   },
+  "tk_div_cass": {
+    "name": "Minimum thickness between inner divertor profile and cassette",
+    "value": 0.3,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_div_cass_in": {
+    "name": "Additional radial thickness on inboard side relative to to inner strike point",
+    "value": 0.1,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_fw_div": {
+    "name": "First wall thickness around divertor",
+    "value": 0.052,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_fw_in": {
+    "name": "Inboard first wall thickness",
+    "value": 0.052,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_fw_out": {
+    "name": "Outboard first wall thickness",
+    "value": 0.052,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
   "tk_ib_ts": {
     "name": "Inboard TS thickness",
     "value": 0.05,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_inner_target_pfr": {
+    "name": "Inner target length PFR side",
+    "value": 0.5,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_inner_target_sol": {
+    "name": "Inner target length SOL side",
+    "value": 0.3,
     "unit": "m",
     "description": null,
     "source": "Input",
@@ -1568,6 +1958,22 @@
   "tk_oic": {
     "name": "Outer inter-coil structure thickness",
     "value": 0.3,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_outer_target_pfr": {
+    "name": "Outer target length PFR side",
+    "value": 0.3,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "tk_outer_target_sol": {
+    "name": "Outer target length SOL side",
+    "value": 0.7,
     "unit": "m",
     "description": null,
     "source": "Input",
@@ -1751,6 +2157,20 @@
       }
     }
   },
+  "tk_tf_inboard": {
+    "name": "TF coil inboard thickness",
+    "value": 1,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tfcth",
+        "read": true,
+        "write": false
+      }
+    }
+  },
   "tk_tf_ins": {
     "name": "TF coil ground insulation thickness",
     "value": 0.08,
@@ -1780,6 +2200,14 @@
         "write": false
       }
     }
+  },
+  "tk_tf_ob_casing": {
+    "name": "TF leg conductor casing general thickness",
+    "value": 0.02,
+    "unit": "m",
+    "description": null,
+    "source": "PROCESS",
+    "mapping": null
   },
   "tk_tf_outboard": {
     "name": "TF coil outboard thickness",
@@ -1950,6 +2378,30 @@
   "x_g_support": {
     "name": "TF coil gravity support radius",
     "value": 13,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "xpt_height": {
+    "name": "x-point vertical_gap",
+    "value": 0.35,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "xpt_inner_gap": {
+    "name": "Gap between x-point and inner wall",
+    "value": 0.4,
+    "unit": "m",
+    "description": null,
+    "source": "Input",
+    "mapping": null
+  },
+  "xpt_outer_gap": {
+    "name": "Gap between x-point and outer wall",
+    "value": 2,
     "unit": "m",
     "description": null,
     "source": "Input",

@@ -22,8 +22,9 @@ import matplotlib.pyplot as plt
 import os
 import pytest
 
-from BLUEPRINT.base.file import get_BP_root
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
+from bluemira.base.file import get_bluemira_root
 from BLUEPRINT.nova.firstwall import FirstWallProfile
 from BLUEPRINT.nova.stream import StreamFlow
 from BLUEPRINT.systems.crosssection import ReactorCrossSection
@@ -51,7 +52,7 @@ class TestReactorCrossSection:
             ),
             (
                 "DN",
-                "tests/BLUEPRINT/equilibria/test_data/DN-DEMO_eqref.json",
+                "tests/bluemira/equilibria/test_data/DN-DEMO_eqref.json",
                 "S",
                 "S",
                 6.9,
@@ -61,7 +62,7 @@ class TestReactorCrossSection:
             ),
             (
                 "DN",
-                "tests/BLUEPRINT/equilibria/test_data/DN-DEMO_eqref.json",
+                "tests/bluemira/equilibria/test_data/DN-DEMO_eqref.json",
                 "P",
                 "P",
                 6.8,
@@ -94,7 +95,7 @@ class TestReactorCrossSection:
         params.r_vv_ib_in = r_vv_ib_in
         params.r_vv_ob_in = r_vv_ob_in
 
-        eq_fullpath = os.path.join(get_BP_root(), eq_file)
+        eq_fullpath = os.path.join(get_bluemira_root(), eq_file)
         first_wall = FirstWallProfile(
             params, {"name": params.Name, "parameterisation": fw_param}
         )

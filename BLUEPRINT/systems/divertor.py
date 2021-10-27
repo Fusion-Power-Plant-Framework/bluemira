@@ -25,11 +25,14 @@ Divertor system
 from collections import OrderedDict
 import numpy as np
 from typing import Type
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.cad.divertorCAD import DivertorCAD
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
 from BLUEPRINT.geometry.boolean import boolean_2d_difference
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.base.error import SystemsError
@@ -65,8 +68,7 @@ class Divertor(Meshable, ReactorSystem):
         self.inputs = inputs
         self._plotter = DivertorPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.n_div = self.params.n_TF * self.params.n_div_cassettes
         if self.params.plasma_type == "DN":

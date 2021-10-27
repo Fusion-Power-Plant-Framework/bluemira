@@ -67,7 +67,9 @@ build_config = {
     "tf_mode": "run",
     # TF coil config
     "TF_type": "S",
+    "wp_shape": "N",  # This is the winding pack shape choice for the inboard leg
     "TF_objective": "L",
+    "conductivity": "SC",
     # FW and VV config
     "VV_parameterisation": "S",
     "FW_parameterisation": "S",

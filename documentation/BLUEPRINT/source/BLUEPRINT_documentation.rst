@@ -12,14 +12,9 @@ Modules
    base
    beams
    cad
-   costs
-   equilibria
-   fuelcycle
    geometry
    materials
-   magnetostatics
    neutronics
    nova
-   syscodes
    systems
    utilities

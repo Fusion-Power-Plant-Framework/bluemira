@@ -23,8 +23,53 @@ import pytest
 import os
 import numpy as np
 import json
+from io import StringIO
+
 from bluemira.base.file import get_bluemira_path
-from bluemira.utilities.tools import NumpyJSONEncoder, is_num, asciistr, dot, norm, cross
+from bluemira.utilities.tools import (
+    CommentJSONDecoder,
+    NumpyJSONEncoder,
+    is_num,
+    asciistr,
+    levi_civita_tensor,
+    dot,
+    norm,
+    cross,
+    clip,
+    cartesian_to_polar,
+    polar_to_cartesian,
+    get_module,
+)
+
+
+class TestCommentJSONDecoder:
+    def test_decoder(self):
+        loaded = json.load(
+            StringIO(
+                """{
+                "reference_data_root": "",
+                "generated_data_root": "",
+                "plot_flag": {"abgc": false},
+                "process_mode": "run input",
+                "process_indat": "IN.DAT",
+                "plasma_mode": "mock",  //Thisis a comment @#$%^&*()_+|'
+                // hellloo
+                }
+            """
+            ),
+            cls=CommentJSONDecoder,
+        )
+
+        result = {
+            "reference_data_root": "",
+            "generated_data_root": "",
+            "plot_flag": {"abgc": False},
+            "process_mode": "run input",
+            "process_indat": "IN.DAT",
+            "plasma_mode": "mock",
+        }
+
+        assert loaded == result
 
 
 class TestNumpyJSONEncoder:
@@ -63,6 +108,35 @@ class TestAsciiStr:
 
         with pytest.raises(ValueError):
             asciistr(53)
+
+
+class TestLeviCivitaTensor:
+    def test_lct_creation(self):
+        d1 = np.array(1)
+        d2 = np.array([[0, 1], [-1, 0]])
+        d3 = np.zeros((3, 3, 3))
+        d3[0, 1, 2] = d3[1, 2, 0] = d3[2, 0, 1] = 1
+        d3[0, 2, 1] = d3[2, 1, 0] = d3[1, 0, 2] = -1
+        d4 = np.zeros((4, 4, 4, 4))
+
+        min1 = (
+            np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+            np.array([1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2]),
+            np.array([3, 1, 2, 2, 3, 0, 3, 0, 1, 1, 2, 0]),
+            np.array([2, 3, 1, 3, 0, 2, 1, 3, 0, 2, 0, 1]),
+        )
+        plus1 = (
+            np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+            np.array([1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2]),
+            np.array([2, 3, 1, 3, 0, 2, 1, 3, 0, 2, 0, 1]),
+            np.array([3, 1, 2, 2, 3, 0, 3, 0, 1, 1, 2, 0]),
+        )
+
+        d4[min1] = -1
+        d4[plus1] = 1
+
+        for i, arr in enumerate([d1, d2, d3, d4], start=1):
+            np.testing.assert_equal(levi_civita_tensor(i), arr)
 
 
 class TestEinsumNorm:
@@ -126,6 +200,67 @@ class TestEinsumCross:
 
         with pytest.raises(ValueError):
             cross(val, val)
+
+
+class TestClip:
+    def test_clip_array(self):
+        test_array = [0.1234, 1.0, 0.3, 1, 0.0, 0.756354, 1e-8, 0]
+        test_array = np.array(test_array)
+        test_array = clip(test_array, 1e-8, 1 - 1e-8)
+        expected_array = [0.1234, 1 - 1e-8, 0.3, 1 - 1e-8, 1e-8, 0.756354, 1e-8, 1e-8]
+        expected_array = np.array(expected_array)
+        assert np.allclose(test_array, expected_array)
+
+    def test_clip_float(self):
+        test_float = 0.1234
+        test_float = clip(test_float, 1e-8, 1 - 1e-8)
+        expected_float = 0.1234
+        assert np.allclose(test_float, expected_float)
+
+        test_float = 0.0
+        test_float = clip(test_float, 1e-8, 1 - 1e-8)
+        expected_float = 1e-8
+        assert np.allclose(test_float, expected_float)
+
+        test_float = 1.0
+        test_float = clip(test_float, 1e-8, 1 - 1e-8)
+        expected_float = 1 - 1e-8
+        assert np.allclose(test_float, expected_float)
+
+
+def test_polar_cartesian():
+    x = np.random.rand(100)
+    z = np.random.rand(100)
+    x_ref = np.random.rand()
+    z_ref = np.random.rand()
+    r, phi = cartesian_to_polar(x, z, x_ref, z_ref)
+    xx, zz = polar_to_cartesian(r, phi, x_ref, z_ref)
+    assert np.allclose(x, xx)
+    assert np.allclose(z, zz)
+
+
+class TestGetModule:
+    def test_getmodule(self):
+        test_mod = "bluemira.utilities.tools"
+        test_mod_loc = get_bluemira_path("utilities") + "/tools.py"
+
+        for mod in [test_mod, test_mod_loc]:
+            module = get_module(mod)
+            assert module.__name__.rsplit(".", 1)[-1] == test_mod.rsplit(".", 1)[-1]
+
+    def test_getmodule_failures(self):
+
+        # Path doesn't exist
+        with pytest.raises(FileNotFoundError):
+            get_module("/This/file/doesnt/exist.py")
+
+        # Directory exists but not file
+        with pytest.raises(FileNotFoundError):
+            get_module(get_bluemira_path() + "/README.md")
+
+        # Not a python module
+        with pytest.raises(ImportError):
+            get_module(get_bluemira_path() + "../README.md")
 
 
 if __name__ == "__main__":

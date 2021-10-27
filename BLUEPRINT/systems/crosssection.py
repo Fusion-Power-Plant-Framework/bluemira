@@ -28,8 +28,11 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize
 from collections import OrderedDict
 from typing import Type
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.nova.firstwall import DivertorProfile, FirstWallProfile
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
@@ -106,8 +109,7 @@ class ReactorCrossSection(ReactorSystem):
         self.inputs = inputs
         self._plotter = ReactorCrossSectionPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.configuration = self.params.Name + "_cross_section"
         self.sf = self.inputs["sf"]
@@ -213,7 +215,7 @@ class ReactorCrossSection(ReactorSystem):
         # Let's find a point on the inner loop that is inside the divertor KOZ
         count = 0
         for i, point in enumerate(inner):
-            if div_koz.point_in_poly(point):
+            if div_koz.point_inside(point):
                 # Now we re-order the loop and open it, such that it is open
                 # inside the KOZ
                 if count > 0:
@@ -263,7 +265,7 @@ class ReactorCrossSection(ReactorSystem):
         # Let's find a point on the inner loop that is inside the divertor KOZ
         count = 0
         for i, point in enumerate(inner):
-            if div_koz.point_in_poly(point):
+            if div_koz.point_inside(point):
                 # Now we re-order the loop and open it, such that it is open
                 # inside the KOZ
                 if count > 1:

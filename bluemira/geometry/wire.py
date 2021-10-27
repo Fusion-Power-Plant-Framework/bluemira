@@ -130,10 +130,13 @@ class BluemiraWire(BluemiraGeo):
         if not self.is_closed():
             raise NotClosedWire("The open boundary has not been closed.")
 
-    def discretize(self, ndiscr: int = 100, byedges: bool = False) -> numpy.ndarray:
-        """Discretize the wire in ndiscr equidistant points. If byedges is True,
-        each edges is discretized separately using and approximated distance (
-        wire.Length/ndiscr).
+    def discretize(
+        self, ndiscr: int = 100, byedges: bool = False, dl: float = None
+    ) -> numpy.ndarray:
+        """Discretize the wire in ndiscr equidistant points or with a reference dl
+        segment step.
+        If byedges is True, each edges is discretized separately using an approximated
+        distance (wire.Length/ndiscr) or the specified dl.
 
         Returns
         -------
@@ -141,9 +144,9 @@ class BluemiraWire(BluemiraGeo):
             a numpy array with the x,y,z coordinates of the discretized points.
         """
         if byedges:
-            points = discretize_by_edges(self._shape, ndiscr)
+            points = discretize_by_edges(self._shape, ndiscr=ndiscr, dl=dl)
         else:
-            points = discretize(self._shape, ndiscr)
+            points = discretize(self._shape, ndiscr=ndiscr, dl=dl)
         return points
 
     def scale(self, factor) -> None:

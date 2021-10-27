@@ -25,7 +25,6 @@ Generic plot utilities, figure and gif operations
 import os
 import numpy as np
 from copy import deepcopy
-from natsort import natsorted
 import imageio
 import matplotlib.pyplot as plt
 from matplotlib.sankey import Sankey
@@ -237,7 +236,7 @@ def makegif(folder, figname, formatt="png", clean=True):
             if filename.endswith(formatt):
                 fp = os.path.join(folder, filename)
                 ims.append(fp)
-    ims = natsorted(ims)
+    ims = sorted(ims)
     images = [imageio.imread(fp) for fp in ims]
     if clean:
         for fp in ims:
@@ -433,7 +432,10 @@ class BPPathPatch3D(PathPatch3D):
         """
         Transfer the key getattr to underlying PathPatch object.
         """
-        return getattr(self._patch2d, key)
+        if key != "_patch2d":
+            return getattr(self._patch2d, key)
+        else:
+            return self.__dict__.get("_patch2d", None)
 
     @staticmethod
     def rotation_matrix(v1, v2):

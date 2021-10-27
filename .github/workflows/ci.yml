@@ -12,9 +12,25 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # FreeCAD and click do not play nicely together, so make sure we're using the
+    # environment variables that are set in the conda env (this is needed because
+    # GitHub Actions run in their own shell so conda environment variables don't appear
+    # to be picked up.
+    env:
+      LANG: 'C'
+      LC_ALL: 'C'
+      PYTHONIOENCODING: 'utf-8'
+
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+
+    - name: Checkout bluemira-private-data
+      uses: actions/checkout@v2
+      with:
+        repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
+        ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+        path: './bluemira_private_data'
 
     - name: Cache pip
       uses: actions/cache@v2
@@ -58,11 +74,6 @@ jobs:
         flake8 --count
         black --check .
 
-    - name: Build Documentation mirapy
-      shell: bash -l {0}
-      run: |
-        sphinx-build -W documentation/mirapy/source documentation/mirapy/build
-
     - name: Build Documentation BLUEPRINT
       shell: bash -l {0}
       run: |
@@ -72,11 +83,6 @@ jobs:
       shell: bash -l {0}
       run: |
         sphinx-build -W documentation/source documentation/build
-
-    - name: Run pytest mirapy
-      shell: bash -l {0}
-      run: |
-        pytest --cov=mirapy --cov-report html:htmlcov_mirapy tests/mirapy
 
     - name: Run pytest BLUEPRINT
       shell: bash -l {0}

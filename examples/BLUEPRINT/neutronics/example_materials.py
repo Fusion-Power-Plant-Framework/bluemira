@@ -15,11 +15,11 @@ Example materials definitions as provided by OpenMOC
 import h5py
 import numpy
 
-from BLUEPRINT.base.file import get_BP_root
+from BLUEPRINT.base.file import get_bluemira_root
 
 
 # Create the file to store C5G7 multi-groups cross-sections
-f = h5py.File(f"{get_BP_root()}/examples/neutronics/example_materials.h5", "w")
+f = h5py.File(f"{get_bluemira_root()}/examples/neutronics/example_materials.h5", "w")
 f.attrs["# groups"] = 7
 
 # Create a group to specify that MGXS are split by material (vs. cell)

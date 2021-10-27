@@ -23,14 +23,120 @@
 A collection of plotting tools.
 """
 
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.path import Path
 from matplotlib.patches import Patch, PathPatch
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from mpl_toolkits.mplot3d import Axes3D
+import imageio
 
-from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2, check_ccw
+from bluemira.base.components import Component, GroupingComponent
+from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.base.file import get_bluemira_path
+
+
+__all__ = [
+    "str_to_latex",
+    "make_gif",
+    "save_figure",
+    "coordinates_to_path",
+    "Plot3D",
+    "BluemiraPathPatch3D",
+]
+
+
+def gsymbolify(string):
+    """
+    Convert a string to a LaTEX printable greek letter if detected.
+
+    Parameters
+    ----------
+    string: str
+        The string to add Greek symbols to
+
+    Returns
+    -------
+    string: str
+        The modified string. Returns input if no changes made
+    """
+    if string in GREEK_ALPHABET or string in GREEK_ALPHABET_CAPS:
+        return "\\" + string
+    else:
+        return string
+
+
+def str_to_latex(string):
+    """
+    Create a new string which can be printed in LaTEX nicely.
+
+    Parameters
+    ----------
+    string: str
+        The string to be converted
+
+    Returns
+    -------
+    string: str
+        The mathified string
+
+    'I_m_p' ==> '$I_{m_{p}}$'
+    """
+    s = string.split("_")
+    s = [gsymbolify(sec) for sec in s]
+    ss = "".join(["_" + "{" + lab for i, lab in enumerate(s[1:])])
+    return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
+
+
+def make_gif(folder, figname, formatt="png", clean=True):
+    """
+    Makes a GIF image from a set of images with similar names in a folder
+    Cleans up the temporary figure files (deletes!)
+    Creates a GIF file in the folder directory
+
+    Parameters
+    ----------
+    folder: str
+        Full path folder name
+    figname: str
+        Figure name prefix. E.g. 'figure_A'[1, 2, 3, ..]
+    formatt: str (default = 'png')
+        Figure filename extension
+    clean: bool (default = True)
+        Delete figures after completion?
+    """
+    ims = []
+    for filename in os.listdir(folder):
+        if filename.startswith(figname):
+            if filename.endswith(formatt):
+                fp = os.path.join(folder, filename)
+                ims.append(fp)
+    ims = sorted(ims)
+    images = [imageio.imread(fp) for fp in ims]
+    if clean:
+        for fp in ims:
+            os.remove(fp)
+    gifname = os.path.join(folder, figname) + ".gif"
+    kwargs = {"duration": 0.5, "loop": 3}
+    imageio.mimsave(gifname, images, "GIF-FI", **kwargs)
+
+
+def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
+    """
+    Saves a figure to the directory if save flag active
+    Meant to be used to switch on/off output figs from main BLUEPRINT run,
+    typically flagged in reactor.py
+    """
+    if save is True:
+        if folder is None:
+            folder = get_bluemira_path("plots", subfolder="data")
+        name = os.sep.join([folder, name]) + "." + formatt
+        if os.path.isfile(name):
+            os.remove(name)  # f.savefig will otherwise not overwrite
+        fig.savefig(name, dpi=dpi, bbox_inches="tight", format=formatt, **kwargs)
+    else:
+        pass
 
 
 def ring_coding(n):
@@ -47,6 +153,8 @@ def coordinates_to_path(x, z):
     """
     Convert coordinates to path vertices.
     """
+    from bluemira.geometry._deprecated_tools import check_ccw
+
     if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
@@ -88,6 +196,8 @@ class BluemiraPathPatch3D(PathPatch3D):
     # Thank you StackOverflow
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
     def __init__(self, path, normal, translation=None, color="b", **kwargs):
+        from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2
+
         Patch.__init__(self, **kwargs)
 
         if translation is None:
@@ -112,3 +222,26 @@ class BluemiraPathPatch3D(PathPatch3D):
         Transfer the key getattr to underlying PathPatch object.
         """
         return getattr(self._patch2d, key)
+
+
+def plot_component(component: Component, axis=None):
+    """
+    Plot the Component on the provided axis.
+
+    If the Component is a GroupingComponent then all child components with shapes will be
+    plotted.
+    """
+    from bluemira.geometry.plotting import plot_face
+
+    if axis is None:
+        axis = Plot3D()
+
+    if isinstance(component, GroupingComponent):
+        for child in component.children:
+            plot_component(child, axis=axis)
+        return
+
+    if hasattr(component, "shape"):
+        plot_face(component.shape, axis=axis)
+    else:
+        raise ValueError(f"Could not plot component {component}")

@@ -57,14 +57,6 @@ class SystemsError(BluemiraError):
     pass
 
 
-class EquilibriaError(BluemiraError):
-    """
-    Error class for use in the equilibria module
-    """
-
-    pass
-
-
 class UtilitiesError(BluemiraError):
     """
     Error class for use in the utilities module
@@ -76,14 +68,6 @@ class UtilitiesError(BluemiraError):
 class MaterialsError(BluemiraError):
     """
     Error class for use in the materials module
-    """
-
-    pass
-
-
-class MagnetostaticsError(BluemiraError):
-    """
-    Error class for use in the magnetostatics module
     """
 
     pass
@@ -116,14 +100,6 @@ class NovaError(BluemiraError):
 class BaseError(BluemiraError):
     """
     Error class for use in the base module
-    """
-
-    pass
-
-
-class FuelCycleError(BluemiraError):
-    """
-    Error class for use in the fuelcycle module
     """
 
     pass

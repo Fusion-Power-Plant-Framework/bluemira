@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,8 +24,11 @@ First wall CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import make_mixed_shell, revolve, rotate_shape
-from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.cad.cadtools import (
+    make_face,
+    revolve,
+    rotate_shape,
+)
 
 
 class FirstWallCAD(ComponentCAD):
@@ -45,17 +48,13 @@ class FirstWallCAD(ComponentCAD):
     firstwall.geom : dict
         Dictionary to specify 2D geometry
 
-         - firstwall.geom["2D profile"] : Shell
-
-            first wall 2D profile
-
     kwargs: dict
         Keyword arguments as for :class:`BLUEPRINT.cad.component.ComponentCAD`
 
     Attributes
     ----------
-    profile: Shell
-        2D profile of the wall
+    plot_loops : list
+        List of Loops containing 2D profiles of components to be plotted
     n_TF : int
         number of TF coils
     """
@@ -71,11 +70,14 @@ class FirstWallCAD(ComponentCAD):
             )
 
         # Fetch the 2D profile from geom
-        self.profile = firstwall.geom["2D profile"]
+        plot_names = firstwall.xz_plot_loop_names
+        self.plot_loops = []
+        for name in plot_names:
+            obj = firstwall.geom[name]
+            self.plot_loops.append(obj)
+
         self.n_TF = firstwall.params.n_TF
 
-        if not isinstance(self.profile, Shell):
-            raise TypeError("2D profile key does not map to a Shell object")
         ComponentCAD.__init__(self, "Reactor first wall", palette=BLUE["FW"], **kwargs)
 
     def build(self, **kwargs):
@@ -83,18 +85,21 @@ class FirstWallCAD(ComponentCAD):
         Build the CAD for the first wall.
         Invoked automatically during :code:`__init__`
         """
-        # Make OCC face BLUEPRINT Shell object
-        # (mixed method is compromise between spliny and non-spliny)
-        shell = make_mixed_shell(self.profile)
+        # Make OCC faces
+        shapes = []
+        for loop in self.plot_loops:
+            face = make_face(loop)
+            shapes.append(face)
 
-        # Rotate the 2-D shape
-        segment = rotate_shape(shell, None, -180 / self.n_TF)
+        for shape in shapes:
+            # Rotate the 2-D shape
+            shape_rot = rotate_shape(shape, None, -180 / self.n_TF)
 
-        # Revolve about z-axis to get a segment
-        wall = revolve(segment, None, 360 / self.n_TF)
+            # Revolve about z-axis to get a segment
+            segment = revolve(shape_rot, None, 360 / self.n_TF)
 
-        # Save
-        self.add_shape(wall)
+            # Save
+            self.add_shape(segment)
 
 
 if __name__ == "__main__":

@@ -121,5 +121,7 @@
     "tension": "full",
     "family": "S",
     "objective": "L",
-    "n_TF": 16.0
+    "wp_shape": "wp_shape",
+    "n_TF": 16.0,
+    "conductivity": "SC"
 }

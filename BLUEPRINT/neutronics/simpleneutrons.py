@@ -27,8 +27,11 @@ import numpy as np
 import os
 import json
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_print, plot_defaults
+
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.file import get_BP_path, try_get_BP_path
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop
@@ -209,8 +212,7 @@ class BlanketCoverage(ReactorSystem):
         self.config = config
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(config)
 
         self.nb_regions = []
         self.lgh_regions = []

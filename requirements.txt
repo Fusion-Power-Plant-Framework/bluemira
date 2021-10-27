@@ -6,11 +6,12 @@ appnope==0.1.2
 asteval==0.9.23
 attrs==20.3.0
 backcall==0.2.0
-click==7.1.2
+click==8.0.1
 CoolProp==6.4.1
 cycler==0.10.0
 dataclasses==0.8; python_version == '3.6'
 decorator==5.0.7
+fortranformat==1.0.1
 gmsh-interop==2021.1
 imageio==2.9.0
 importlib-metadata==4.0.1
@@ -68,5 +69,6 @@ traitlets==4.3.3
 trimesh==3.9.14
 typing-extensions==3.7.4.3
 wcwidth==0.2.5
+wrapt==1.12.1
 zipp==3.4.1
 scipy==1.4.1

@@ -41,6 +41,7 @@ from BLUEPRINT.geometry.geomtools import (
     bounding_box,
     get_control_point,
     clean_loop_points,
+    get_intersect,
 )
 
 
@@ -58,9 +59,15 @@ class Shell(GeomBase):
     """
 
     def __init__(self, inner, outer):
-        i, o = [self._type_checks(p) for p in [inner, outer]]
-        self.inner = i
-        self.outer = o
+        inner_tmp, outer_tmp = [self._type_checks(p) for p in [inner, outer]]
+
+        # Check for intersections
+        x_int, z_int = get_intersect(inner_tmp, outer_tmp)
+        if len(x_int) > 0 or len(z_int) > 0:
+            raise GeometryError("Cannot create a shell from two insersecting loops")
+
+        self.inner = inner_tmp
+        self.outer = outer_tmp
 
     @classmethod
     def from_dict(cls, xyz_dict):
@@ -208,7 +215,7 @@ class Shell(GeomBase):
         segments = []
         for p in range(len(i) - 1):
             mp = [(i[p][0] + i[p + 1][0]) / 2, (i[p][1] + i[p + 1][1]) / 2]
-            if self.point_in_poly(mp):
+            if self.point_inside(mp):
                 segments.append(np.array([i[p], i[p + 1]]))
         if plot:
             self.plot()
@@ -227,13 +234,13 @@ class Shell(GeomBase):
         i, v = np.histogram(d)
         return v[0]
 
-    def point_in_poly(self, point):
+    def point_inside(self, point):
         """
         Determine whether a point lies inside the Shell.
         """
         # Doesn't check boundary! But this is what you want
-        if self.outer.point_in_poly(point):
-            if not self.inner.point_in_poly(point):
+        if self.outer.point_inside(point):
+            if not self.inner.point_inside(point):
                 return True
         else:
             return False
@@ -570,6 +577,13 @@ class Shell(GeomBase):
         The enclosed area of the Shell (inner Loop).
         """
         return self.inner.area
+
+    @property
+    def length(self):
+        """
+        Perimeter
+        """
+        return self.inner.length + self.outer.length
 
     @property
     def plane(self):

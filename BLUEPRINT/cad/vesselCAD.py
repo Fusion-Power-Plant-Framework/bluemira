@@ -31,7 +31,6 @@ from BLUEPRINT.cad.cadtools import (  # noqa (F401)  Used in some variations com
     revolve,
     boolean_cut,
     make_face,
-    make_mixed_face,
     make_shell,
     extrude,
     make_compound,
@@ -215,7 +214,7 @@ class SegmentedVesselCAD(OnionCAD, ComponentCAD):
             profile_vv_2d = simplify_loop(profile)
 
             # Making the CAD faces
-            profile_vv = make_mixed_face(profile_vv_2d)
+            profile_vv = make_face(profile_vv_2d)
 
             # rotate it so that we can get a clean sector
             profile_vv = rotate_shape(profile_vv, None, -180 / n_TF)

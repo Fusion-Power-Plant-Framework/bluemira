@@ -22,6 +22,7 @@
 """
 Coil CAD routines
 """
+from BLUEPRINT.geometry.offset import offset_clipper
 import numpy as np
 from collections import OrderedDict
 
@@ -64,7 +65,13 @@ from BLUEPRINT.cad.cadtools import (
     _make_OCCface,
     _make_OCCsolid,
 )
-from BLUEPRINT.geometry.boolean import boolean_2d_difference
+from BLUEPRINT.geometry.boolean import (
+    boolean_2d_difference_loop,
+    clean_loop,
+    simplify_loop,
+)
+from BLUEPRINT.geometry.parameterisations import picture_frame
+from BLUEPRINT.geometry.geomtools import make_box_xz
 
 
 class RingCAD:
@@ -191,6 +198,10 @@ class TFCoilCAD(ComponentCAD):
         super().__init__(
             "Toroidal field coils", tf, palette=BLUE["TF"], n_colors=12, **kwargs
         )
+        if tf.conductivity in ["SC"] and tf.shape_type in ["TP"]:
+            raise NotImplementedError(
+                "Superconducting Tapered Pictureframe coils not supported"
+            )
         self.n_TF = None
 
     def build(self, **kwargs):
@@ -210,6 +221,189 @@ class TFCoilCAD(ComponentCAD):
             self.add_shape(tf_components[name], name=name)
 
     @staticmethod
+    def sanity_check(face):
+        """
+        Checks if the x-z geometries for CAD generation are in the
+        right format, and converts them to OCC faces
+        """
+        if isinstance(face, Shell):
+            geom = make_mixed_shell(face)
+
+        elif isinstance(face, Loop):
+            geom = make_mixed_face(face)
+
+        else:
+            raise TypeError("The face argument must be either a Shell or a Loop")
+
+        return geom
+
+    @staticmethod
+    def wedge_from_xz(tf, face, coil_toroidal_angle, x_shift=0, case=False):
+        """
+        Build a coil cad with a wedge shaped inner leg. Done by sweeping
+        2D x-z face through full toroidal angle, then cutting off excess bits
+
+        Parameters
+        ----------
+        tf: ToroidalFieldCoils
+            Toroidal field coil object used to make the CAD
+        face: Shell or Loop
+            2D x-z face of TF coil geometry
+        coil_toroidal_angle: float
+            2pi/n_TF radians
+        x_shift: float
+            Radial offset (from machine centre) for axis about
+            which coil_toroidal_angle is used (useful if inboard
+            legs aren't meant to touch, e.g WPs inside a casing)
+        case: bool
+            Checks if required geometry is a casing
+
+        Outputs
+        -------
+        geom: OCC 3D geometry
+            3D model of face with relevant tf parameters
+        """
+        # Shift face to lie along the 'zero toroidal angle' line
+        geom = face.rotate(
+            theta=-np.rad2deg(coil_toroidal_angle / 2),
+            xo=[x_shift, 0, 0],
+            dx=[0, 0, 1],
+            update=False,
+        )
+
+        # Make the CAD face
+        geom = TFCoilCAD.sanity_check(geom)
+
+        # Sweep Winding Pack thorugh full toroidal angle
+        geom_axis = make_axis([x_shift, 0, 0], [0, 0, 1])
+        geom = revolve(geom, axis=geom_axis, angle=np.rad2deg(coil_toroidal_angle))
+
+        # Now Cut away excess bits
+        # from wp
+        xmax = max(tf.p_in["x"]) + 15
+        zmax = max(tf.p_in["z"]) + 15
+        cutter_outer_2D = make_box_xz(x_min=0.0, x_max=xmax, z_min=-zmax, z_max=zmax)
+        wp_half_depth = tf.section["winding_pack"]["depth"] / 2
+        side = 0
+        case_front = 0
+
+        # Lateral extent of the cut defining the end of the wedge
+        # ---
+        # Tapered coils
+        if tf.conductivity in ["R"]:
+            cut_half_depth = tf.params.r_cp_top * np.sin(0.5 * coil_toroidal_angle)
+
+        # Other coils (SC like)
+        else:
+            # Check if CAD being generated is TF casing or WP (for casing the
+            # cutter will have to be shifted further of course)
+            if case:
+                side = tf.params.tk_tf_side
+                case_front = tf.params.tk_tf_front_ib
+            cut_half_depth = (
+                wp_half_depth + side + case_front * np.tan(0.5 * coil_toroidal_angle)
+            )
+
+        # Translate the cut loop on the y direction
+        # ordering of loop is important (boolean upper cut then lower cut)
+        for cut_depth, ex_length in [[cut_half_depth, 15], [-cut_half_depth, -15]]:
+            cutter = cutter_outer_2D.translate([0, cut_depth, 0], update=False)
+
+            # Make the CAD object
+            cutter = make_face(cutter)
+
+            # Make it a massive square
+            cutter = extrude(cutter, axis="y", length=ex_length)
+
+            # Cut to obtain the final geometry
+            geom = boolean_cut(geom, cutter)
+
+        return geom
+
+    @staticmethod
+    def rect_from_xz(tf, face, coil_toroidal_angle, x_shift=0, case=False):
+        """
+        Build a tf coil cad with an inner leg with a rectangular cross
+        section. Done by extruding 2D xz face by full toroidal depth
+        then cutting away excess
+
+        Parameters
+        ----------
+        tf: ToroidalFieldCoils
+            Toroidal field coil object used to make the CAD
+        face: Shell or Loop
+            2D x-z face of TF coil geometry
+        coil_toroidal_angle: float
+            2pi/n_TF radians
+        x_shift: float
+            Radial offset (from machine centre) for axis about
+            which coil_toroidal_angle is used (useful if inboard
+            legs aren't meant to touch, e.g WPs inside a casing)
+        case: bool
+            Checks if required geometry is a casing
+
+        Outputs
+        -------
+        geom: OCC 3D geometry
+            3D model of face with relevant tf parameters
+        """
+        # Shift face to lie along the 'zero toroidal angle' line
+        geom = face.translate([0, -0.5 * tf.params.tf_wp_depth, 0], update=False)
+
+        # Make the CAD face
+        geom = TFCoilCAD.sanity_check(geom)
+
+        side = 0
+        case_front = 0
+        if case:
+            side = tf.params.tk_tf_side
+            case_front = tf.params.tk_tf_front_ib
+
+        # Make the WP volume (extrude)
+        geom = extrude(geom, axis="y", length=tf.params.tf_wp_depth + 2 * side)
+
+        # Define the xz loop of the cutter objects
+        # ---
+        # Use r_cp_top for tapered coils
+        if tf.conductivity in ["R"]:
+            cutter_radius = tf.params.r_cp_top
+
+        # SC coils
+        else:
+            geom_inner_leg_outboard_radius = np.min(tf.loops["wp_in"]["x"])
+            cutter_radius = geom_inner_leg_outboard_radius + case_front + 0.001
+
+        zmax = max(tf.p_in["z"]) + 5
+        geom_inner_2D = Loop(
+            x=cutter_radius * np.array([0.0, 1, 1, 0]),
+            z=zmax * np.array([1.0, 1.0, -1.0, -1.0]),
+        )
+        geom_inner_2D.close()
+
+        # Shift the xz loop of the cutter
+        geom_inner_leg_inboard_radius = np.min(tf.loops["wp_out"]["x"]) - x_shift
+        geom_inner_half_depth = geom_inner_leg_inboard_radius * np.sin(
+            coil_toroidal_angle / 2
+        )
+        # ordering of loop is important (boolean upper cut then lower cut)
+        extrude_length = np.max(tf.loops["wp_out"]["x"]) + 5
+        for geom_depth, ex_length in [
+            [geom_inner_half_depth, extrude_length],
+            [-geom_inner_half_depth, -extrude_length],
+        ]:
+            geom_cutter = geom_inner_2D.translate([0, geom_depth, 0], update=False)
+            # Make the cutter CAD face
+            geom_cutter = make_face(geom_cutter)
+
+            # Make the cutter volume
+            geom_cutter = extrude(geom_cutter, axis="y", length=ex_length)
+
+            # Cut the lateral objects
+            geom = boolean_cut(geom, geom_cutter)
+
+        return geom
+
+    @staticmethod
     def _build(tf):
         """
         Strong and stable... and slow?. Suspect will help with neutronics
@@ -217,115 +411,262 @@ class TFCoilCAD(ComponentCAD):
         But it works for everything... and a few 100 lines shorter
         """
         geom = tf.geom
-
-        depth = tf.section["winding_pack"]["depth"]
         side = tf.section["case"]["side"]
 
-        if tf.inputs["shape_type"] != "TP":
-            # Winding Pack
-            wp = geom["TF WP"]
-            wp = wp.translate([0, -depth / 2, 0], update=False)
-            wp = make_mixed_shell(wp)
-            wp = extrude(wp, axis="y", length=depth)
-            # Case
-            case = Shell(geom["TF case in"].inner, geom["TF case out"].outer)
-            case = case.translate([0, -(depth + side) / 2, 0], update=False)
-            case = make_mixed_shell(case)
+        if tf.inputs["shape_type"] == "P":
+            case_front = tf.params.tk_tf_front_ib
+            case_nose = tf.params.tk_tf_nose
+            coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
 
-            case = extrude(case, axis="y", length=depth + side)
+            # Make 2D x-z cross section:
+            # wp_in:
+            x1_in = np.min(tf.loops["wp_in"]["x"])
+            x2_in = np.max(tf.loops["wp_in"]["x"])
+            z1_in = np.max(tf.loops["wp_in"]["z"])
+            z2_in = -z1_in
+            ro_in = np.max(
+                [tf.params.r_tf_outboard_corner - tf.params.tk_tf_wp / np.sqrt(2), 0]
+            )
+            ri_in = np.max(
+                [tf.params.r_tf_inboard_corner - tf.params.tk_tf_wp / np.sqrt(2), 0]
+            )
+            x, z = picture_frame(x1_in, x2_in, z1_in, z2_in, ri_in, ro_in, npoints=200)
+            # x, z = tf.loops["wp_in"]["x"], tf.loops["wp_in"]["z"]
+            wp_in_2D = Loop(x=x, z=z)
+            wp_in_2D.close()
+            wp_in_2D = clean_loop(wp_in_2D)
+            wp_in_2D = simplify_loop(wp_in_2D)
+
+            # wp_out:
+            wp_initial_2D = Shell.from_offset(wp_in_2D, tf.params.tk_tf_wp)
+            x_shift = side / np.tan(coil_toroidal_angle / 2)
+
+            if tf.wp_shape == "R" or tf.wp_shape == "N":
+
+                wp = TFCoilCAD.rect_from_xz(
+                    tf, wp_initial_2D, coil_toroidal_angle, x_shift=x_shift
+                )
+
+            elif tf.wp_shape == "W":
+
+                wp = TFCoilCAD.wedge_from_xz(
+                    tf, wp_initial_2D, coil_toroidal_angle, x_shift=x_shift
+                )
+            # case:
+
+            # case_in:
+            x1_in = np.min(tf.loops["wp_in"]["x"]) + case_front
+            x2_in = np.max(tf.loops["wp_in"]["x"]) - case_front
+            z1_in = np.max(tf.loops["wp_in"]["z"]) - case_front
+            z2_in = -z1_in
+            ro_in = np.max(
+                [
+                    tf.params.r_tf_outboard_corner
+                    - (tf.params.tk_tf_wp + case_front) / np.sqrt(2),
+                    0,
+                ]
+            )
+            ri_in = np.max(
+                [
+                    tf.params.r_tf_inboard_corner
+                    - (tf.params.tk_tf_wp + case_front) / np.sqrt(2),
+                    0,
+                ]
+            )
+            x, z = picture_frame(x1_in, x2_in, z1_in, z2_in, ri_in, ro_in, npoints=200)
+            # x, z = tf.loops["in"]["x"], tf.loops["in"]["z"]
+            case_in_2D = Loop(x=x, z=z)
+            case_in_2D.close()
+            case_in_2D = clean_loop(case_in_2D)
+            case_in_2D = simplify_loop(case_in_2D)
+
+            # case_out:
+            case_initial_2D = Shell.from_offset(
+                case_in_2D, tf.params.tk_tf_wp + case_front + case_nose
+            )
+            # Sweep Case thorugh full toroidal angle
+
+            case = TFCoilCAD.wedge_from_xz(
+                tf, case_initial_2D, coil_toroidal_angle, x_shift=0, case=True
+            )
+
+            # from case
             case = boolean_cut(case, wp)
+
             rbox = cut_box(side="right", n_TF=tf.params.n_TF)
             lbox = cut_box(side="left", n_TF=tf.params.n_TF)
             case = boolean_cut(case, rbox)
             case = boolean_cut(case, lbox)
 
-        else:
+            # ---
+
+        elif tf.inputs["shape_type"] in ["TP", "CP"]:
+            # Coils with a tapered centrepost segemented from tf leg conductors
+            # Central collumn dimensions
             coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
-            # Make B Cyl
-            ri = np.min(tf.loops["b_cyl"]["x"])
-            ro = np.max(tf.loops["b_cyl"]["x"])
-            zmax = np.max(tf.loops["b_cyl"]["z"])  # Max z height of tfcoil
-            ci = make_circle([0, 0, zmax], [0, 0, 1], ri)
-            co = make_circle([0, 0, zmax], [0, 0, 1], ro)
-            b_cyl_face = boolean_cut(co, ci)
-            b_cyl = extrude(b_cyl_face, axis="z", length=-2 * zmax)
+            zmax_wp = np.max(tf.loops["wp_out"]["z"])  # Max z height of tfcoil
+
+            if tf.conductivity in ["SC"]:
+                # r_cp_top doesn't exist for SC coils, so need to define our
+                # own r_cp (i.e outboard edge of Centrepost)
+                r_cp = tf.params.r_tf_in + tf.params.tk_tf_inboard
+                TF_depth_at_r_cp = 2 * (r_cp * np.tan(np.pi / tf.params.n_TF))
+                x_shift = side / np.tan(coil_toroidal_angle / 2)
+
+            else:
+                TF_depth_at_r_cp = 2 * (
+                    tf.params.r_cp_top * np.tan(np.pi / tf.params.n_TF)
+                )
+                x_shift = 0
 
             # Edit WP
-            tfcoil_loop = geom["TF WP"]
-            # tfcoil_loop = tfcoil_loop.translate([0, -depth / 2, 0], update=False)
-            tfcoil_loop_shifted = tfcoil_loop.rotate(
-                theta=-np.rad2deg(coil_toroidal_angle / 2),
-                p1=[0, 0, 0],
-                p2=[0, 0, 1],
-                update=False,
+            wp_loop = geom["TF WP"]
+            winding_pack = TFCoilCAD.wedge_from_xz(
+                tf, wp_loop, coil_toroidal_angle, x_shift=x_shift
             )
 
-            tfcoil_shell = make_mixed_shell(tfcoil_loop_shifted)
-            tfcoil = revolve(
-                tfcoil_shell, axis=None, angle=np.rad2deg(coil_toroidal_angle)
+            # Central column
+            tapered_cp = tf.geom["TF Tapered CP"]
+            tapered_cp = TFCoilCAD.wedge_from_xz(
+                tf, tapered_cp, coil_toroidal_angle, x_shift=x_shift
             )
-            # Now Cut away excess bits
-            tf_cutter_2D = Loop(x=[0, 15, 15, 0, 0], z=[15, 15, -15, -15, 15])
-            tf_cutter_down = tf_cutter_2D.translate([0, -depth / 2, 0], update=False)
-            tf_cutter_up = tf_cutter_2D.translate([0, depth / 2, 0], update=False)
-            tf_cutter_up = make_mixed_face(tf_cutter_up)
-            tf_cutter_down = make_mixed_face(tf_cutter_down)
-            tf_cutter_down = extrude(tf_cutter_down, axis="y", length=-5)
-            tf_cutter_up = extrude(tf_cutter_up, axis="y", length=5)
-            tfcoil = boolean_cut(tfcoil, tf_cutter_up)
-            tfcoil = boolean_cut(tfcoil, tf_cutter_down)
-            # tfcoil = extrude(tfcoil_shell, axis="y", length=depth)
+            leg_conductor = boolean_cut(winding_pack, tapered_cp)
 
-            # Central collumn
-            # ---
-            # Loop to cut the outer section of the TF coil to select the centrepost
-            x_outer_cut_loop = [
-                tf.params["r_cp_top"],
-                np.max(tf.loops["wp_out"]["x"]) + 2,
-                np.max(tf.loops["wp_out"]["x"]) + 2,
-                tf.params["r_cp_top"],
-            ]
-            z_outer_cut_loop = [
-                np.max(tf.loops["b_cyl"]["z"]),
-                np.max(tf.loops["b_cyl"]["z"]),
-                -np.max(tf.loops["b_cyl"]["z"]),
-                -np.max(tf.loops["b_cyl"]["z"]),
-            ]
-            outer_cut_loop = Loop(x=x_outer_cut_loop, z=z_outer_cut_loop)
-            outer_cut_loop.close()
+            if tf.conductivity in ["R"]:
+                # Resistive tapered CP coils
+                tk_case = tf.params.tk_tf_ob_casing
+                if tf.shape_type in ["CP"]:
+                    zmax_b_cyl = np.max(tf.loops["b_cyl"]["z"])
+                else:
+                    zmax_b_cyl = zmax_wp
 
-            # Cutting the TF shell to get the CP loop
-            tapered_cp = boolean_2d_difference(tfcoil_loop, outer_cut_loop)
-            tapered_cp = tapered_cp[0]
-            tapered_cp = tapered_cp.rotate(
-                theta=-np.rad2deg(coil_toroidal_angle / 2),
-                p1=[0, 0, 0],
-                p2=[0, 0, 1],
-                update=False,
+                # Make B Cyl
+                ri = np.min(tf.loops["b_cyl"]["x"])
+                ro = np.max(tf.loops["b_cyl"]["x"])
+                b_cyl_loop = make_box_xz(
+                    x_min=ri, x_max=ro, z_min=-zmax_b_cyl, z_max=zmax_b_cyl
+                )
+                b_cyl = TFCoilCAD.wedge_from_xz(tf, b_cyl_loop, coil_toroidal_angle)
+
+                # Define casing loop
+                # Can't use Casing Loops since they aren't connected to each other
+                # in the xz plane. Instead:
+                # Take the leg conductor loop, offset it by the casing thickness
+                # then cut to match the casing loops
+                leg_conductor_loop = geom["TF Leg Conductor"]
+                case = offset_clipper(leg_conductor_loop, tk_case)
+                xmax_cut = 1.03 * (
+                    (0.5 * TF_depth_at_r_cp + tk_case)
+                    / np.tan(0.5 * coil_toroidal_angle)
+                )
+                inner_cut_loop = make_box_xz(
+                    x_min=-5.0 * xmax_cut,
+                    x_max=xmax_cut,
+                    z_min=-(zmax_wp + 5.0),
+                    z_max=zmax_wp + 5.0,
+                )
+                case = boolean_2d_difference_loop(case, inner_cut_loop)
+
+                # Shift the casing loop in the y direction prepare the extrusion
+                half_depth_casing = 0.5 * TF_depth_at_r_cp + tf.params.tk_tf_ob_casing
+                case = case.translate([0, -half_depth_casing, 0], update=False)
+
+                # Make the case CAD object (extrusion/WP subtraction)
+                case = TFCoilCAD.sanity_check(case)
+                case = extrude(case, axis="y", length=2 * half_depth_casing)
+                case = boolean_cut(case, leg_conductor)
+                rbox = cut_box(side="right", n_TF=tf.params.n_TF)
+                lbox = cut_box(side="left", n_TF=tf.params.n_TF)
+
+            else:
+                # For SC SEGMENTED coils
+                case_front = tf.params.tk_tf_front_ib
+                case_nose = tf.params.tk_tf_nose
+                coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
+
+                # Make 2D x-z cross section:
+                # wp:
+                leg_initial_2D = geom["TF Leg Conductor"]
+
+                # case:
+                case_initial_2D = Shell(
+                    geom["TF case in"].inner, geom["TF case out"].outer
+                )
+
+                leg_conductor = TFCoilCAD.wedge_from_xz(
+                    tf, leg_initial_2D, coil_toroidal_angle, x_shift=x_shift
+                )
+
+                # Now make case
+                case = TFCoilCAD.wedge_from_xz(
+                    tf, case_initial_2D, coil_toroidal_angle, x_shift=0, case=True
+                )
+
+                # from case
+                case = boolean_cut(case, leg_conductor)
+                case = boolean_cut(case, tapered_cp)
+                rbox = cut_box(side="right", n_TF=tf.params.n_TF)
+                lbox = cut_box(side="left", n_TF=tf.params.n_TF)
+                case = boolean_cut(case, rbox)
+                case = boolean_cut(case, lbox)
+
+                # ---
+
+        else:
+            case_front = tf.params.tk_tf_front_ib
+            case_nose = tf.params.tk_tf_nose
+            coil_toroidal_angle = 2 * np.pi / tf.params.n_TF
+
+            # Make 2D x-z cross section:
+            # wp:
+            x_shift = side / np.tan(coil_toroidal_angle / 2)
+            wp_initial_2D = geom["TF WP"]
+
+            # case:
+            case_initial_2D = Shell(geom["TF case in"].inner, geom["TF case out"].outer)
+
+            if tf.wp_shape == "R" or tf.wp_shape == "N":
+
+                wp = TFCoilCAD.rect_from_xz(
+                    tf, wp_initial_2D, coil_toroidal_angle, x_shift=x_shift
+                )
+
+            elif tf.wp_shape == "W":
+
+                wp = TFCoilCAD.wedge_from_xz(
+                    tf, wp_initial_2D, coil_toroidal_angle, x_shift=x_shift
+                )
+
+            # Now make case
+
+            case = TFCoilCAD.wedge_from_xz(
+                tf, case_initial_2D, coil_toroidal_angle, x_shift=0, case=True
             )
-            # CP CAD building
-            tapered_cp = make_face(tapered_cp)
-            tapered_cp = revolve(
-                tapered_cp, axis=None, angle=np.rad2deg(coil_toroidal_angle)
-            )
-            # Merging the centrepost and the leg CAD
-            # ---
-            tfcoil = boolean_cut(tfcoil, tapered_cp)
+
+            # from case
+            case = boolean_cut(case, wp)
+
             rbox = cut_box(side="right", n_TF=tf.params.n_TF)
             lbox = cut_box(side="left", n_TF=tf.params.n_TF)
-            tfcoil = boolean_cut(tfcoil, rbox)
-            tfcoil = boolean_cut(tfcoil, lbox)
+            case = boolean_cut(case, rbox)
+            case = boolean_cut(case, lbox)
+
             # ---
 
         comp_dict = OrderedDict()
-        if tf.inputs["shape_type"] != "TP":
+
+        if tf.conductivity in ["R"]:
+            comp_dict["b_cyl"] = b_cyl
+            comp_dict["leg_conductor"] = leg_conductor
+            comp_dict["cp_conductor"] = tapered_cp
+            comp_dict["case"] = case
+        elif tf.shape_type in ["CP"]:
+            comp_dict["leg_conductor"] = leg_conductor
+            comp_dict["cp_conductor"] = tapered_cp
+            comp_dict["case"] = case
+        else:
             comp_dict["case"] = case
             comp_dict["wp"] = wp
-        else:
-            comp_dict["b_cyl"] = b_cyl
-            comp_dict["leg_conductor"] = tfcoil
-            comp_dict["cp_conductor"] = tapered_cp
-
         return comp_dict
 
     # Storage.. old stuff from the Architect days (needed for neutronics)

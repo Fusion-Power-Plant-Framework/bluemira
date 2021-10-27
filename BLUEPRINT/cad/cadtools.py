@@ -25,7 +25,7 @@ CAD functions and operations
 # High level imports
 import os
 from itertools import zip_longest
-from collections import Iterable
+from collections.abc import Iterable
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -332,7 +332,7 @@ def get_properties(shape, lift_point=None):
 
 def check_watertight(stl_filename):
     """
-    Wasserdichtigkeit eines STLobjekts
+    Check watertightness of an STL file.
 
     Parameters
     ----------
@@ -409,7 +409,7 @@ def save_as_STL(  # noqa (N802)
     scale=1,
 ):
     """
-    Speichert einen Shape in einem STL format
+    Saves a shape in an STL format.
 
     Parameters
     ----------
@@ -449,7 +449,7 @@ def save_as_STEP(
     shape, filename="test", partname=None, scale=1, standard="AP214"
 ):  # noqa (N802)
     """
-    Speichert einen Shape in einem STP format
+    Saves a shape in an STP format.
 
     Parameters
     ----------
@@ -562,7 +562,7 @@ def make_compound(topos):
 
 def scale_shape(shape, scale):
     """
-    Escala un objeto
+    Scale an object.
 
     Parameters
     ----------
@@ -773,12 +773,12 @@ def make_circle(centre, direction, radius):
 
 def make_spline_face(loop, **kwargs):
     """
-    Crée une courbe de Bézier à partir d'une boucle (Loop).
+    Creates a Bézier curve from a Loop.
 
     Parameters
     ----------
     loop: Loop
-        La boucle à transformer
+        The loop to transform.
 
     Returns
     -------
@@ -833,7 +833,7 @@ def make_mixed_face(loop, **kwargs):
     try:
         mfm.build()
 
-    except RuntimeError:
+    except CADError:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
         return make_face(loop, **kwargs)
 
@@ -862,7 +862,7 @@ def make_mixed_wire(loop, **kwargs):
     mfm = MixedFaceMaker(loop, **kwargs)
     try:
         mfm.build()
-    except RuntimeError:
+    except CADError:
         bluemira_warn("CAD: MixedFaceMaker failed to build as expected.")
         return make_wire(loop)
 
@@ -1052,11 +1052,14 @@ class MixedFaceMaker:
         """
         sequences = []
         start = vertices[0]
+        # Loop over all vertices except last (which is same as first)
         for i, vertex in enumerate(vertices[:-1]):
 
             delta = vertices[i + 1] - vertex
 
-            if i == len(vertices) - 2:
+            # Add the last point in the loop but only if we've already
+            # added something to sequences
+            if i == len(vertices) - 2 and len(sequences) > 0:
                 # end of loop clean-up
                 end = vertices[i + 1]
                 sequences.append([start, end])
@@ -1630,7 +1633,7 @@ def sweep(profile, path):
 
 def make_box(corner, v1, v2, v3):
     """
-    Faca uma caixa orientada
+    Make an oriented box.
 
     Parameters
     ----------
@@ -1667,7 +1670,7 @@ def make_box(corner, v1, v2, v3):
 
 def make_bezier_curve(points):
     """
-    Crée une courbe de Bézier à partir de quelques points
+    Create a Bézier curve from some points.
 
     Parameters
     ----------
@@ -1774,12 +1777,12 @@ def _points_to_bspline(points, deg=3, continuity=GeomAbs_C2):
 
 def curve_to_wire(curve):
     """
-    Convertit une courbe Bézier à un object OCC Wire
+    Converts a Bézier curve to an OCC Wire object.
 
     Parameters
     ----------
     curve: OCC.Geom.BSplineCurve
-        La courbe Bézier à convertir
+        The Bézier curve to convert.
 
     Returns
     -------
@@ -1926,7 +1929,7 @@ def _make_OCCsolid(*args):  # noqa (N802)
 
 def boolean_cut(shape, cutshape):
     """
-    Operación de corte booleano
+    Boolean cut operation.
 
     Parameters
     ----------
@@ -1956,7 +1959,7 @@ def boolean_cut(shape, cutshape):
 
 def boolean_fuse(shape1, shape2):
     """
-    Operación booleano
+    Boolean fuse operation.
 
     Parameters
     ----------

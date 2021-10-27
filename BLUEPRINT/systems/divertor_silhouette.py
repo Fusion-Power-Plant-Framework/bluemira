@@ -31,10 +31,9 @@ import operator
 from scipy.optimize import minimize_scalar
 from typing import Type
 
+from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.find import find_OX_points
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.base.parameter import ParameterFrame
-from BLUEPRINT.base.typebase import SelectFrom
-from BLUEPRINT.equilibria.find import find_OX
 from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d, unique, xz_interp
 from BLUEPRINT.geometry.loop import Loop
@@ -42,7 +41,7 @@ from BLUEPRINT.geometry.offset import offset_clipper
 from BLUEPRINT.nova.firstwall import DivertorProfile
 
 
-class Location(SelectFrom):
+class Location:
     """
     Type-checking struct for location values (lower/upper)
     """
@@ -50,10 +49,9 @@ class Location(SelectFrom):
     __name__ = "Location"
     lower = "lower"
     upper = "upper"
-    _args = [lower, upper]
 
 
-class Leg(SelectFrom):
+class Leg:
     """
     Type-checking struct for leg values (inner/outer)
     """
@@ -61,7 +59,6 @@ class Leg(SelectFrom):
     __name__ = "Leg"
     inner = "inner"
     outer = "outer"
-    _args = [inner, outer]
 
 
 class DivertorSilhouette(DivertorProfile):
@@ -99,8 +96,7 @@ class DivertorSilhouette(DivertorProfile):
         self.config = config
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self._validate_inputs()
         self.sf = self.inputs["sf"]
@@ -108,7 +104,7 @@ class DivertorSilhouette(DivertorProfile):
         self.debug = self.inputs.get("debug", False)
         self.baffle_max_iter = self.inputs.get("baffle_max_iter", 500)
 
-        o_points, x_points = find_OX(self.sf.x2d, self.sf.z2d, self.sf.psi)
+        o_points, x_points = find_OX_points(self.sf.x2d, self.sf.z2d, self.sf.psi)
         self.o_points = np.array([[point[0], point[1]] for point in o_points])
         self.x_points = np.array([[point[0], point[1]] for point in x_points])
 
@@ -565,7 +561,7 @@ class DivertorSilhouette(DivertorProfile):
 
         count = 0
         for i, point in enumerate(inner):
-            if div_koz.point_in_poly(point):
+            if div_koz.point_inside(point):
                 # Now we re-order the loop and open it, such that it is open
                 # inside the KOZ
                 if count > 1:

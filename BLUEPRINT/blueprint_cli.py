@@ -34,10 +34,11 @@ import sys
 import tarfile
 from typing import Optional
 
-
 from BLUEPRINT.base.file import KEYWORD
-from BLUEPRINT.base.file import get_BP_root
-from BLUEPRINT.reactor import ConfigurableReactor
+from bluemira.base.file import get_bluemira_root
+from bluemira.base.logs import set_log_level
+from bluemira.utilities.tools import get_module
+from BLUEPRINT.utilities.tools import CommentJSONDecoder
 
 try:
     from functools import cached_property
@@ -76,6 +77,7 @@ class InputManager:
     build_tweaks: str
     indir: str
     reactornamein: str
+    datadir: str
     outdir: str
     reactornameout: str
 
@@ -85,7 +87,7 @@ class InputManager:
         return os.path.join(self.indir, file_name)
 
     @property
-    def template_path_in(self) -> str:
+    def template_config_path_in(self) -> str:
         """
         The input template configuration file path.
         """
@@ -127,10 +129,10 @@ class InputManager:
             return self.reactornameout
         elif self.reactornamein is not None:
             return self.reactornamein
+        elif isinstance(self.config_dict["Name"], dict):
+            return self.config_dict["Name"]["value"]
         else:
-            with open(self.config_path_in, "r") as fh:
-                config_dict = json.load(fh)
-            return config_dict["Name"]
+            return self.config_dict["Name"]
 
     @cached_property
     def build_config_dict(self) -> str:
@@ -152,7 +154,7 @@ class InputManager:
         The root output path, excluding the reactor subdirectory for the run.
         """
         return self._try_get_path_from_config(
-            "generated_data_root", "generated_data", dir=self.outdir
+            "generated_data_root", "generated_data/BLUEPRINT", dir=self.outdir
         )
 
     @cached_property
@@ -168,7 +170,9 @@ class InputManager:
         """
         The root reference data path, excluding the reactor subdirectory for the run
         """
-        return self._try_get_path_from_config("reference_data_root", "data")
+        return self._try_get_path_from_config(
+            "reference_data_root", "data/BLUEPRINT", dir=self.datadir
+        )
 
     @cached_property
     def reference_path(self) -> str:
@@ -186,7 +190,7 @@ class InputManager:
             if key in self.build_config_dict:
                 path = self.build_config_dict[key]
             else:
-                path = os.path.join(get_BP_root(), default_value)
+                path = os.path.join(get_bluemira_root(), default_value)
                 click.echo(
                     "Warning: outdir not specified in command line and no "
                     f"{key} found in {self.build_config}. Reverting to "
@@ -194,7 +198,7 @@ class InputManager:
                 )
 
         if KEYWORD in path:
-            path = path.replace(KEYWORD, get_BP_root())
+            path = path.replace(KEYWORD, get_bluemira_root())
 
         return path
 
@@ -203,7 +207,7 @@ class InputManager:
         Reads a json file and returns a dict object of its contents.
         """
         with open(file, "r") as fh:
-            file_dict = json.load(fh)
+            file_dict = json.load(fh, cls=CommentJSONDecoder)
         return file_dict
 
 
@@ -282,10 +286,19 @@ class OutputManager:
             The Input instance containing the template, config, build_config, and
             build_tweaks paths to copy the files from
         """
-        shutil.copy(inputs.template_path_in, self.template)
-        shutil.copy(inputs.config_path_in, self.config)
-        shutil.copy(inputs.build_config_path_in, self.build_config)
-        shutil.copy(inputs.build_tweaks_path_in, self.build_tweaks)
+        variables = {
+            "template_config_path": self.template,
+            "config_path": self.config,
+            "build_config_path": self.build_config,
+            "build_tweaks_path": self.build_tweaks,
+        }
+        self.reactor_kwargs = {}
+        for name, var in variables.items():
+            try:
+                shutil.copy(getattr(inputs, f"{name}_in"), var)
+                self.reactor_kwargs[name] = var
+            except FileNotFoundError:
+                click.echo(f"No {name} file")
 
 
 def dump_json(dict_object: dict, output_path: str):
@@ -314,6 +327,42 @@ def _check_path(name, path: str, force: bool = False, make: bool = True):
         Path(path).mkdir(parents=True)
 
 
+def get_reactor_class(reactor_string):
+    """
+    Dynamically import reactor class
+
+    Parameters
+    ----------
+    reactor_string: str
+        string to import reactor from
+
+    Returns
+    -------
+    reactor class
+
+    Notes
+    -----
+    reactor string examples:
+
+    "Reactor" - default reactor from BLUEPRINT
+    "path/to/file.py::Reactor" - import reactor from file
+    "path.to.module.Reactor" - import reactor from known module
+
+    """
+    if "::" in reactor_string:
+        module_string, reactor = reactor_string.split("::")
+    elif "." in reactor_string:
+        module_string, reactor = reactor_string.rsplit(".", 1)
+    else:
+        module_string = "BLUEPRINT.reactor"
+        reactor = reactor_string
+
+    try:
+        return getattr(get_module(module_string), reactor)
+    except AttributeError:
+        raise ImportError(f"Class '{reactor_string}' not found")
+
+
 @click.command()
 @click.argument("template", type=click.Path(), default="template.json", required=False)
 @click.argument("config", type=click.Path(), default="config.json", required=False)
@@ -337,6 +386,15 @@ def _check_path(name, path: str, force: bool = False, make: bool = True):
     help="Specifies a reactor name used as a prefix to each input filename.",
 )
 @click.option(
+    "-d",
+    "--datadir",
+    type=click.Path(writable=True),
+    default=None,
+    help="Specifies the directory in which any input reference data is stored. Note \
+    that these inputs must be stored in a subdirectory within the directory provided, \
+    corresponding to the specified reactor name at reactors/{reactor name}.",
+)
+@click.option(
     "-o",
     "--outdir",
     type=click.Path(writable=True),
@@ -356,8 +414,14 @@ def _check_path(name, path: str, force: bool = False, make: bool = True):
 @click.option(
     "-v",
     "--verbose",
-    is_flag=True,
-    help="Enables verbose mode. When on, output data will include metadata.",
+    count=True,
+    help="Increase logging severity level.",
+)
+@click.option(
+    "-q",
+    "--quiet",
+    count=True,
+    help="Decrease logging severity level.",
 )
 @click.option(
     "-f",
@@ -392,22 +456,34 @@ def _check_path(name, path: str, force: bool = False, make: bool = True):
     default=False,
     help="Enables/disables output of the 3D cad model.",
 )
+@click.option(
+    "-r",
+    "--reactor_class",
+    default="ConfigurableReactor",
+    help="specify reactor class (file or package path)",
+)
+@click.version_option(package_name="bluemira", prog_name="bluemira")
+@click.pass_context
 def cli(
+    ctx,
     template,
     config,
     build_config,
     build_tweaks,
     indir,
     reactornamein,
+    datadir,
     outdir,
     reactornameout,
     verbose,
+    quiet,
     force_rerun,
     tarball,
     log,
     data,
     plots,
     cad,
+    reactor_class,
 ):
     """
     Run BLUEPRINT build for a configurable reactor.
@@ -422,6 +498,8 @@ def cli(
     4.  build_tweaks  [default = build_tweaks.json]
             file containing additional build parameters.
     """
+    set_log_level(min(max(0, 2 + quiet - verbose), 5))
+
     inputs = InputManager(
         template=template,
         config=config,
@@ -429,6 +507,7 @@ def cli(
         build_tweaks=build_tweaks,
         indir=indir,
         reactornamein=reactornamein,
+        datadir=datadir,
         outdir=outdir,
         reactornameout=reactornameout,
     )
@@ -442,7 +521,11 @@ def cli(
     outputs.copy_files(inputs)
 
     # Update generated_data_root to value given in CLI options.
-    inputs.build_config_dict["generated_data_root"] = inputs.output_root_path
+    inputs.build_config_dict["generated_data_root"] = str(inputs.output_root_path)
+
+    # Update generated_data_root to value given in CLI options.
+    inputs.build_config_dict["reference_data_root"] = str(inputs.reference_root_path)
+
     dump_json(inputs.build_config_dict, outputs.build_config)
 
     # Update reactor name and make a copy of reference data to a subdirectory using the
@@ -465,12 +548,7 @@ def cli(
         dump_json(inputs.config_dict, outputs.config)
 
     # Instantiate BLUEPRINT reactor class.
-    reactor = ConfigurableReactor.from_json(
-        outputs.template,
-        outputs.config,
-        outputs.build_config,
-        outputs.build_tweaks,
-    )
+    reactor = get_reactor_class(reactor_class).from_json(**outputs.reactor_kwargs)
 
     # Return output log.
     if log:
@@ -491,6 +569,13 @@ def cli(
     click.echo("Running BLUEPRINT build.")
     reactor.build()
     click.echo("BLUEPRINT build complete.")
+
+    if (
+        isinstance(ctx.obj, dict)
+        and "standalone_mode" in ctx.obj
+        and not ctx.obj["standalone_mode"]
+    ):
+        return reactor
 
     # Return specified outputs.
     click.echo(f"Saving outputs to {inputs.output_path}")

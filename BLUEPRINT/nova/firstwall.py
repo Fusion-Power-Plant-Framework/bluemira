@@ -28,9 +28,12 @@ from typing import Type, List
 from scipy.interpolate import InterpolatedUnivariateSpline
 import nlopt
 from collections import OrderedDict
-from BLUEPRINT.nova.stream import StreamFlow
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
+
+from BLUEPRINT.nova.stream import StreamFlow
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
 from BLUEPRINT.geometry.stringgeom import String
@@ -78,8 +81,7 @@ class FirstWallProfile(ReactorSystem):
         self.config = config
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.name = self.inputs["name"] + "_firstwallprofile"
         self.shp = None
@@ -556,21 +558,21 @@ class DivertorProfile(ReactorSystem):
         self.config = config
         self.inputs = inputs
 
-        self.p = ParameterFrame(self.default_params.to_records())
-        self.p.update_kw_parameters(self.config)
+        self.params = ParameterFrame(self.default_params.to_records())
+        self._init_params(self.config)
 
         self.sf = self.inputs["sf"]
         self.targets = self.inputs["targets"]
         self.debug = self.inputs["debug"]
-        self.p.dx_div = self.p.tk_div.value
-        self.p.bb_gap = self.p.c_rm.value
+        self.params.dx_div = self.params.tk_div.value
+        self.params.bb_gap = self.params.c_rm.value
 
-        if self.inputs["flux_conformal"]:
-            loop = self.sf.firstwall_loop(psi_n=self.p.fw_psi_n)
+        if inputs["flux_conformal"]:
+            loop = self.sf.firstwall_loop(psi_n=self.params.fw_psi_n)
         else:
-            loop = self.sf.firstwall_loop(dx=self.p.fw_dx)
+            loop = self.sf.firstwall_loop(dx=self.params.fw_dx)
 
-        self.p.Xfw, self.p.Zfw, self.p.psi_fw = loop
+        self.params.Xfw, self.params.Zfw, self.params.psi_fw = loop
 
     def set_target(self, leg, **kwargs):
         """
@@ -656,13 +658,13 @@ class DivertorProfile(ReactorSystem):
         # divertor outer wall
         # Offset the inner divertor loop to get a thick wavy plate
         div_outer = offset_clipper(
-            geom["divertor_inner"], self.p.dx_div, method="square"
+            geom["divertor_inner"], self.params.dx_div, method="square"
         )
 
         # Clip this with the inner loop
         geom["divertor_outer"] = boolean_2d_difference(div_outer, fw_loop)[0]
         # Offset this outer divertor shape to get the gap to the BB and vessel
-        geom["divertor_gap"] = offset_clipper(geom["divertor_outer"], self.p.bb_gap)
+        geom["divertor_gap"] = offset_clipper(geom["divertor_outer"], self.params.bb_gap)
         geom["vessel_gap"] = boolean_2d_union(fw_loop, geom["divertor_gap"])[0]
         # Now, make the divertor space reservation
         geom["divertor"] = boolean_2d_difference(
@@ -675,7 +677,7 @@ class DivertorProfile(ReactorSystem):
 
         count = 0
         for i, point in enumerate(inner):
-            if div_koz.point_in_poly(point):
+            if div_koz.point_inside(point):
                 # Now we re-order the loop and open it, such that it is open
                 # inside the KOZ
                 if count > 1:
@@ -714,15 +716,15 @@ class DivertorProfile(ReactorSystem):
                 directions = directions[::-1]
 
             if "inner" in leg:
-                psi_plasma = self.p.psi_fw[1]
+                psi_plasma = self.params.psi_fw[1]
             else:
-                psi_plasma = self.p.psi_fw[0]
+                psi_plasma = self.params.psi_fw[0]
 
-            dpsi = self.p.psi_fw[1] - self.sf.x_psi
-            phi_target = [psi_plasma, self.sf.x_psi - self.p.div_psi_o * dpsi]
+            dpsi = self.params.psi_fw[1] - self.sf.x_psi
+            phi_target = [psi_plasma, self.sf.x_psi - self.params.div_psi_o * dpsi]
 
             if leg == "inner1" or leg == "outer2":
-                phi_target[0] = self.sf.x_psi + self.p.div_psi_o * dpsi
+                phi_target[0] = self.sf.x_psi + self.params.div_psi_o * dpsi
 
             if self.targets[leg]["open"]:
                 theta_sign *= -1
@@ -771,19 +773,25 @@ class DivertorProfile(ReactorSystem):
             x_b = np.append(x_b, self.targets["inner2"]["X"][1:])
             z_b = np.append(z_b, self.targets["inner2"]["Z"][1:])
             x, z = self._connect(
-                self.sf.x_psi - self.p.div_psi_o * dpsi, ["inner2", "inner1"], [-1, -1]
+                self.sf.x_psi - self.params.div_psi_o * dpsi,
+                ["inner2", "inner1"],
+                [-1, -1],
             )
             x_b, z_b = self._append(x_b, z_b, x, z)
             x_b = np.append(x_b, self.targets["inner1"]["X"][::-1])
             z_b = np.append(z_b, self.targets["inner1"]["Z"][::-1])
             x, z = self._connect(
-                self.sf.x_psi + self.p.div_psi_o * dpsi, ["inner1", "outer2"], [0, 0]
+                self.sf.x_psi + self.params.div_psi_o * dpsi,
+                ["inner1", "outer2"],
+                [0, 0],
             )
             x_b, z_b = self._append(x_b, z_b, x, z)
             x_b = np.append(x_b, self.targets["outer2"]["X"][1:])
             z_b = np.append(z_b, self.targets["outer2"]["Z"][1:])
             x, z = self._connect(
-                self.sf.x_psi - self.p.div_psi_o * dpsi, ["outer2", "outer1"], [-1, -1]
+                self.sf.x_psi - self.params.div_psi_o * dpsi,
+                ["outer2", "outer1"],
+                [-1, -1],
             )
             x_b, z_b = self._append(x_b, z_b, x, z)
             x_b = np.append(x_b, self.targets["outer1"]["X"][::-1])
@@ -793,7 +801,7 @@ class DivertorProfile(ReactorSystem):
             x_b = np.append(x_b, self.targets["inner"]["X"][1:])
             z_b = np.append(z_b, self.targets["inner"]["Z"][1:])
             x, z = self._connect(
-                self.sf.x_psi - self.p.div_psi_o * dpsi, ["inner", "outer"], [-1, 0]
+                self.sf.x_psi - self.params.div_psi_o * dpsi, ["inner", "outer"], [-1, 0]
             )
             x_b, z_b = self._append(x_b, z_b, x, z)
             x_b = np.append(x_b, self.targets["outer"]["X"][1:])

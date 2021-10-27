@@ -408,6 +408,153 @@ class Parameterisation:
         )
 
 
+def picture_frame(x1, x2, z1, z2, ri=0.8, ro=0.8, npoints=200):
+    """
+    Defines PictureFrame shape parameterisation
+
+    Parameters
+    ----------
+    x1: float
+        x-coordinate (from machine axis) of innermost leg [m]
+    x2: float
+        x-coordinate (from machine axis) of outer leg [m]
+    z1: float
+        z-height (from mid-plane) of coil [m]
+    ri: float
+        radius of inner rounded corners [m]
+    ro: float
+        radius of outer rounded corners [m]
+    npoints: int (default = 200)
+        The size of the x, z coordinate sets to return
+
+    Returns
+    -------
+    x: np.array(npoints)
+        The x coordinates of the tapered PictureFrame shape
+    z: np.array(npoints)
+        The z coordinates of the tapered PictureFrame shape
+
+    Note
+    ----
+    Returns an open set of coordinates
+    """
+    if x2 < x1:
+        raise GeometryError(
+            "picture_frame parameterisation requires an x2 "
+            f"value greater than or equal to x1: {x2} < {x1}"
+        )
+
+    if z1 < 0:
+        raise GeometryError(
+            "picture_frame parameterisation requires an z1 value"
+            f"that is not negative: {0} >= {z1}"
+        )
+
+    if z2 > 0:
+        raise GeometryError(
+            "picture_frame parameterisation requires an z1 value"
+            f"that is not positive: {0} <= {z2}"
+        )
+
+    if ro >= x2 - x1:
+        raise GeometryError(
+            "picture_frame parameterisation requires an ro value "
+            f"less than x2-x1: {ro} >= {x2-x1}"
+        )
+    if ri >= x2 - x1:
+        raise GeometryError(
+            "picture_frame parameterisation requires an ri value "
+            f"less than x2-x1: {ri} >= {x2-x1}"
+        )
+    if ro >= z1:
+        raise GeometryError(
+            "picture_frame parameterisation requires an ro value"
+            f"less than z1: {ro} >= {z1}"
+        )
+    if ri >= z1:
+        raise GeometryError(
+            "picture_frame parameterisation requires an ri value"
+            f"less than z1: {ri} >= {z1}"
+        )
+    if x1 <= 0:
+        raise GeometryError(
+            "picture_frame parameterisation requires an x1 value"
+            f"greater than 0: {0} >= {x1}"
+        )
+
+    if ro < 0:
+        raise GeometryError(
+            "picture_frame parameterisation requires an ro value"
+            f"that is positive or 0: {0} > {ro}"
+        )
+    if ri < 0:
+        print("Given negative ri value, resetting ri to = 0")
+        ri = 0
+
+    if npoints < 10:
+        raise ValueError(
+            "At least 10 point must be used to define the shape" f"= {npoints}"
+        )
+
+    x, z = [], []
+    # Inner leg, positive z
+    npts = 2
+    ri = np.round(ri, decimals=1)
+    x = np.append(x, x1 * np.ones(npts))
+    z = np.append(z, np.linspace(0, z1 - ri, npts))
+
+    # Top inner corner
+    if ri > 0:
+        npts = int((npoints) * 0.25)
+        x_c, z_c = circle_seg(ri, (x1 + ri, z1 - ri), angle=-90, npoints=npts, start=180)
+        x = np.append(x, x_c)
+        z = np.append(z, z_c)
+    else:
+        x = np.append(x, x1)
+        z = np.append(z, z1)
+
+    # Top leg
+    npts = 2
+    x = np.append(x, np.linspace(x1 + ri, x2 - ro, npts))
+    z = np.append(z, z1 * np.ones(npts))
+
+    # Top outer corner
+    npts = int((npoints) * 0.25)
+    x_c, z_c = circle_seg(ro, (x2 - ro, z1 - ro), angle=-90, npoints=npts, start=90)
+    x = np.append(x, x_c)
+    z = np.append(z, z_c)
+
+    # Outer Leg
+    npts = 2
+    x = np.append(x, x2 * np.ones(npts))
+    z = np.append(z, np.linspace(z1 - ro, z2 + ro, npts))
+
+    # Bottom Outer Corner
+    npts = int((npoints) * 0.25)
+    x_c, z_c = circle_seg(ro, (x2 - ro, z2 + ro), angle=-90, npoints=npts, start=0)
+    x = np.append(x, x_c)
+    z = np.append(z, z_c)
+
+    # Bottom leg
+    npts = 2
+    x = np.append(x, np.linspace(x2 - ro, x1 + ri, npts))
+    z = np.append(z, z2 * np.ones(npts))
+
+    # Bottom inner corner
+    if ri > 0:
+        npts = int((npoints) * 0.25)
+        x_c, z_c = circle_seg(ri, (x1 + ri, z2 + ri), angle=-90, npoints=npts, start=-90)
+        x = np.append(x, x_c)
+        z = np.append(z, z_c)
+
+    # Inner leg, negative z
+    npts = 2
+    x = np.append(x, x1 * np.ones(npts))
+    z = np.append(z, np.linspace(z2 + ri, 0, npts))
+
+    return x, z
+
+
 class PictureFrame(Parameterisation):
     """
     Picture-frame parameterisation
@@ -422,7 +569,8 @@ class PictureFrame(Parameterisation):
         self.xo["x2"] = {"value": 16, "lb": 14, "ub": 20}  # outer leg
         self.xo["z1"] = {"value": 8, "lb": 5, "ub": 15}  # Vertical height
         self.xo["z2"] = {"value": -6, "lb": -15, "ub": -3}  # vertical
-        self.xo["r"] = {"value": 2, "lb": 1.999, "ub": 2.001}  # Corner radius
+        self.xo["ri"] = {"value": 0.0, "lb": 0.0, "ub": 0.2}  # Inboard corner radius
+        self.xo["ro"] = {"value": 2, "lb": 1.999, "ub": 2.001}  # outboard corner radius
         self.oppvar = list(self.xo.keys())
 
         self.segments = None
@@ -438,24 +586,9 @@ class PictureFrame(Parameterisation):
         """
         self.set_input(**kwargs)
 
-        x1, x2, z1, z2, r = self.xo.get_value()
+        x1, x2, z1, z2, ri, ro = self.xo.get_value()
 
-        x, z = x1 * np.ones(2), np.zeros(2)
-        z[1] = z1 - r
-        theta = np.linspace(np.pi, np.pi / 2)
-        x = np.append(x, (x1 + r) + r * np.cos(theta))
-        z = np.append(z, (z1 - r) + r * np.sin(theta))
-        theta = np.linspace(np.pi / 2, 0)
-        x = np.append(x, (x2 - r) + r * np.cos(theta))
-        z = np.append(z, (z1 - r) + r * np.sin(theta))
-        theta = np.linspace(0, -np.pi / 2)
-        x = np.append(x, (x2 - r) + r * np.cos(theta))
-        z = np.append(z, ((z2 - r) + r * np.sin(theta)) + 2 * r)
-        theta = np.linspace(-np.pi / 2, 0)
-        x = np.append(x, (x1 + r) - r * np.cos(theta))
-        z = np.append(z, ((z2 - r) + r * np.sin(theta) + 2 * r))
-        x = np.append(x, x[0])
-        z = np.append(z, z[0])
+        x, z = picture_frame(x1, x2, z1, z2, ri, ro)
         self.segments = {"x": x, "z": z}
         p = self.segments
         p = self.close_loop(p)
@@ -465,7 +598,7 @@ class PictureFrame(Parameterisation):
 
 def tapered_picture_frame(x1, x2, x3, z1_frac, z2, z3, r, npoints=200):
     """
-    Tapered PictureFrame shape parameterisation
+    Defines Tapered PictureFrame shape parameterisation
 
     Parameters
     ----------
@@ -553,23 +686,25 @@ def tapered_picture_frame(x1, x2, x3, z1_frac, z2, z3, r, npoints=200):
             f"that is positive or 0: {0} > {r}"
         )
     if npoints < 10:
-        raise ValueError("N. of Points must be > 10, npoints inputted " f"= {npoints}")
+        raise ValueError(
+            "At least 10 point must be used to define the shape" f"= {npoints}"
+        )
 
     # Define segments of shape, and assign number of points
     # inner most vertical bit (-z1 to z1)
-    n_pts_inner_vertical = int(
-        1 + npoints / 50
-    )  # minimum number 1 , can be changed to fraction of npoints later
+    n_pts_inner_vertical = (
+        1  # minimum number 1 , can be changed to fraction of npoints later
+    )
 
     # diagonals (z1 to z2_frac, -z1 to -z2_frac)
-    n_pts_diagonals = int(1 + npoints / 50)  # minimum 1, can play w npoints later
+    n_pts_diagonals = 1  # minimum 1, can play w npoints later
 
     # z2_frac to z3 verticals
-    n_pts_mid_vertical = int(1 + npoints / 50)
+    n_pts_mid_vertical = 1
 
-    n_pts_long_horizontal = int(1 + npoints / 50)
+    n_pts_long_horizontal = 1
 
-    n_pts_outer_vertical = int(1 + npoints / 50)
+    n_pts_outer_vertical = 1
 
     n_pts_corner = int(
         2
@@ -586,19 +721,17 @@ def tapered_picture_frame(x1, x2, x3, z1_frac, z2, z3, r, npoints=200):
     )
 
     # Make sections
-    xn = x1 * np.ones(1)
-    zn = np.zeros(1)
 
-    z_inner_pos = np.linspace(0, (z1), n_pts_inner_vertical)
+    z_inner_pos = np.linspace(0, (z1), n_pts_inner_vertical, endpoint=False)
     x_inner_pos = x1 * np.ones(n_pts_inner_vertical)
 
-    z_diag_pos = np.linspace((z1), z2, n_pts_diagonals)
-    x_diag_pos = np.linspace(x1, x2, n_pts_diagonals)
+    z_diag_pos = np.linspace((z1), z2, n_pts_diagonals, endpoint=False)
+    x_diag_pos = np.linspace(x1, x2, n_pts_diagonals, endpoint=False)
 
-    z_mid_pos = np.linspace(z2, z3, n_pts_mid_vertical)
+    z_mid_pos = np.linspace(z2, z3, n_pts_mid_vertical, endpoint=False)
     x_mid_pos = x2 * np.ones(n_pts_mid_vertical)
 
-    x_hor_pos = np.linspace(x2, x3 - r, n_pts_long_horizontal)
+    x_hor_pos = np.linspace(x2, x3 - r, n_pts_long_horizontal, endpoint=False)
     z_hor_pos = z3 * np.ones(n_pts_long_horizontal)
 
     (
@@ -606,28 +739,28 @@ def tapered_picture_frame(x1, x2, x3, z1_frac, z2, z3, r, npoints=200):
         z_corner_pos,
     ) = circle_seg(r, (x3 - r, z3 - r), angle=-90, npoints=n_pts_corner, start=90)
 
-    z_outer = np.linspace(z3 - r, -z3 + r, n_pts_outer_vertical * 2 - 1)
+    z_outer = np.linspace(z3 - r, -z3 + r, n_pts_outer_vertical * 2 - 1, endpoint=False)
     x_outer = x3 * np.ones(
         n_pts_outer_vertical * 2 - 1,
     )
-    x_outer = x_outer[1:]
-    z_outer = z_outer[1:]
-    (
-        x_corner_neg,
-        z_corner_neg,
-    ) = circle_seg(r, (x3 - r, -z3 + r), angle=-90, npoints=n_pts_corner, start=0)
 
-    x_hor_neg = np.linspace(x3 - r, x2, n_pts_long_horizontal)
+    x_corner_neg = np.flip(x_corner_pos)
+    z_corner_neg = -np.flip(z_corner_pos)
+
+    # now remove extra point from top outboard corner (repeated curve end point):
+    x_corner_pos = x_corner_pos[:-1]
+    z_corner_pos = z_corner_pos[:-1]
+
+    x_hor_neg = np.flip(x_hor_pos)  # np.linspace(x3 - r, x2, n_pts_long_horizontal)
     z_hor_neg = -z_hor_pos
-    x_hor_neg = x_hor_neg[1:-1]
-    z_hor_neg = z_hor_neg[1:-1]
-    z_mid_neg = np.linspace(-z3, -z2, n_pts_mid_vertical)
+
+    z_mid_neg = -np.flip(z_mid_pos)
     x_mid_neg = x_mid_pos
 
-    z_diag_neg = np.linspace(-z2, -int(z1), n_pts_diagonals)
-    x_diag_neg = np.linspace(x2, x1, n_pts_diagonals)
+    z_diag_neg = -np.flip(z_diag_pos)
+    x_diag_neg = np.flip(x_diag_pos)
 
-    z_inner_neg = np.linspace(-int(z1), 0, n_pts_inner_vertical)
+    z_inner_neg = -np.flip(z_inner_pos)
     x_inner_neg = x_inner_pos
 
     xx = np.concatenate(
@@ -643,7 +776,6 @@ def tapered_picture_frame(x1, x2, x3, z1_frac, z2, z3, r, npoints=200):
             x_mid_neg,
             x_diag_neg,
             x_inner_neg,
-            xn,
         ]
     )
     zz = np.concatenate(
@@ -659,7 +791,6 @@ def tapered_picture_frame(x1, x2, x3, z1_frac, z2, z3, r, npoints=200):
             z_mid_neg,
             z_diag_neg,
             z_inner_neg,
-            zn,
         ]
     )
 
@@ -703,6 +834,256 @@ class TaperedPictureFrame(Parameterisation):
 
         x1, x2, x3, z1, z2_frac, z3, r = self.xo.get_value()
         x, z = tapered_picture_frame(x1, x2, x3, z1, z2_frac, z3, r, npoints=200)
+        self.segments = {"x": x, "z": z}
+        p = self.segments
+        p = self.close_loop(p)
+        p["x"], p["z"] = clock(p["x"], p["z"])
+        return p
+
+
+def curved_picture_frame(
+    x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c, npoints=200
+):
+    """
+    Curved PictureFrame shape parameterisation
+
+    Parameters
+    ----------
+    x_in: float
+        x-coordinate (from machine axis) of innermost leg [m]
+    x_mid: float
+        x-coordinate (from machine axis) of the taper top [m]
+    x_j: float
+        x-coordinate (from machine axis) of start of top curve [m]
+    x_out: float
+        x-coordinate (from machine axis) of outermost leg [m]
+    z_in: float
+        z-height (from mid-plane) of coil tapered section [m]
+    z_mid: float
+        z-height of straight part of coil top leg [m]
+    z_top: float
+        max height of top/bottom legs [m]
+    r_c: float
+        radius of corner/transitioning curves [m]
+    npoints: int (default = 200)
+        The size of the x, z coordinate sets to return
+
+    Returns
+    -------
+    x: np.array(npoints)
+        The x coordinates of the tapered PictureFrame shape
+    z: np.array(npoints)
+        The z coordinates of the tapered PictureFrame shape
+
+    Note
+    ----
+    Returns an open set of coordinates
+    """
+    if x_in < 0:
+        raise GeometryError(
+            "Curved picture_frame parameterisation requires an x_in value"
+            f"that is not negative: {0} >= {x_in}"
+        )
+    # SC coil
+    if x_mid == 0:
+        x_mid = x_in
+    if z_in == 0:
+        z_in = z_mid
+
+    if x_mid < x_in:
+        raise GeometryError(
+            "Curved picture_frame parameterisation requires an x_mid "
+            f"value greater than or equal to x_in: {x_mid} < {x_in}"
+        )
+    if x_curve_start < x_mid:
+        raise GeometryError(
+            "Curved picture_frame parameterisation requires an x_curve_start "
+            f"value greater than or equal to x_mid: {x_curve_start} < {x_mid}"
+        )
+    if x_out < x_curve_start:
+        raise GeometryError(
+            "Curved picture_frame parameterisation requires an x_out "
+            f"value greater than or equal to x_curve_start: {x_curve_start} < {x_mid}"
+        )
+    if z_in < 0:
+        raise GeometryError(
+            "Curved picture_frame parameterisation requires an z_in value"
+            f"that is not negative: {0} >= {z_in}"
+        )
+    if z_mid < z_in:
+        raise GeometryError(
+            "Curved tapered_picture_frame parameterisation requires an z_mid"
+            f"value greater than or equal to z_in: {z_mid} < {z_in}"
+        )
+    if z_top < z_mid:
+        raise GeometryError(
+            "Curved tapered_picture_frame parameterisation requires an z_top "
+            f"value greater than or equal to z_mid: {z_top} < {z_mid}"
+        )
+
+    if npoints < 10:
+        raise ValueError("N. of Points must be > 10, npoints inputted " f"= {npoints}")
+
+    x, z = x_in * np.ones(1), np.zeros(1)
+
+    # If no taper, define a straight line
+    npts = int(npoints * 0.1)
+    if abs(x_mid - x_in) <= 1e-3:
+        x_c_t = np.append(x, x_mid * np.ones(npts))
+        z_c_t = np.append(z, np.linspace(0.0, z_in, npts))
+
+    # Inboard Curved Taper, positive z
+    else:
+        # Curved taper radius
+        x_t = x_mid - x_in
+        alpha = np.arctan(z_in / (x_t))
+        theta_t = np.pi - 2 * alpha
+        r_taper = z_in / np.sin(theta_t)
+
+        # Curved taper angle
+        angle = np.rad2deg(np.arcsin(z_in / r_taper))
+
+        x_c_t, z_c_t = circle_seg(
+            r_taper, h=(x_in + r_taper, 0), angle=-angle, start=180, npoints=npts
+        )
+    x = np.append(x, x_c_t)
+    z = np.append(z, z_c_t)
+
+    # Inner leg, positive z
+    npts = 2
+    x = np.append(x, x_mid * np.ones(npts))
+    z = np.append(z, np.linspace(z_in, z_mid, npts))
+
+    # Define basic Top Curve (with no joint or corner transitions)
+    r_j = min(x_curve_start - x_mid, 0.8)
+    z_j = z_mid  # define start point for curve
+    x_curve_start2 = x_curve_start
+    alpha = np.arctan(0.5 * (x_out - x_curve_start2) / (z_top - z_j))
+    theta_leg_basic = 2 * (np.pi - 2 * alpha)
+    r_leg = 0.5 * (x_out - x_curve_start2) / np.sin(theta_leg_basic / 2)
+    leg_centre = (x_out - 0.5 * (x_out - x_curve_start2), z_top - r_leg)
+
+    # Transitioning Curve
+    r_c = 0
+    sin_a = np.sin(theta_leg_basic / 2)
+    cos_a = np.cos(theta_leg_basic / 2)
+    alpha_leg = (
+        np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
+    )
+
+    # Joint Curve
+    theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
+    joint_curve_centre = (leg_centre[0] - (r_leg + r_j) * np.sin(theta_j), z_mid + r_j)
+
+    theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
+
+    x_c_j, z_c_j = circle_seg(
+        r_j,
+        h=joint_curve_centre,
+        angle=np.rad2deg(theta_j),
+        start=-90,
+        npoints=int(npoints * 0.1),
+    )
+    x = np.append(x, x_c_j)
+    z = np.append(z, z_c_j)
+
+    x_c_l, z_c_l = circle_seg(
+        r_leg,
+        h=leg_centre,
+        angle=-1 * np.rad2deg(theta_leg_final),
+        start=90 + np.rad2deg(theta_j),
+        npoints=int(npoints * 0.2),
+    )
+    x = np.append(x, x_c_l)
+    z = np.append(z, z_c_l)
+
+    theta_trans = np.pi / 2 + theta_leg_basic / 2 - alpha_leg
+    trans_curve_centre = (
+        x_out - r_c,
+        z_top - r_leg + (r_leg - r_c) * np.sin(theta_trans),
+    )
+
+    x_c_trans, z_c_trans = circle_seg(
+        r_c,
+        h=(trans_curve_centre),
+        angle=-np.rad2deg(theta_trans),
+        start=np.rad2deg(theta_trans),
+        npoints=int(npoints * 0.1),
+    )
+    x = np.append(x, x_c_trans)
+    z = np.append(z, z_c_trans)
+
+    # Outer leg
+    npts = 2
+    x = np.append(x, x_out * np.ones(npts))
+    z = np.append(z, np.linspace(z_mid, -z_mid, npts))
+
+    # Bottom Curve
+    x = np.append(x, np.flip(x_c_trans))
+    z = np.append(z, -np.flip(z_c_trans))
+    x = np.append(x, np.flip(x_c_l))
+    z = np.append(z, -np.flip(z_c_l))
+
+    # Bottom leg, joint
+    x = np.append(x, np.flip(x_c_j))
+    z = np.append(z, -np.flip(z_c_j))
+
+    # Inner leg, negative z
+    npts = 2
+    x = np.append(x, x_mid * np.ones(npts))
+    z = np.append(z, np.linspace(-z_mid, -z_in, npts))
+
+    if x_mid != x_in:
+        # Inboard Curved Taper, positive z
+        x = np.append(x, np.flip(x_c_t))
+        z = np.append(z, -np.flip(z_c_t))
+    else:
+        x = np.append(x, x_in)
+        z = np.append(z, 0)
+
+    return x, z
+
+
+class CurvedPictureFrame(Parameterisation):
+    """
+    Curved Picture-frame parameterisation
+    """
+
+    name = "CurvedPictureFrame"
+
+    def __init__(self, npoints=200, **kwargs):
+        super().__init__(npoints=npoints)
+        # Do special stuff, like defining optimization variables
+
+        self.xo["x_in"] = {"value": 0.4, "lb": 0.3, "ub": 0.5}  # inner leg
+        self.xo["x_mid"] = {"value": 1.55, "lb": 1.5, "ub": 1.6}  # middle leg
+        self.xo["x_curve_start"] = {"value": 2.5, "lb": 2.4, "ub": 2.6}  # middle leg
+        self.xo["x_out"] = {"value": 9.5, "lb": 9.4, "ub": 9.8}  # outer leg
+        self.xo["z_in"] = {"value": 0.5, "lb": 0.45, "ub": 0.8}  # Vertical height
+        self.xo["z_mid"] = {"value": 7.5, "lb": 6, "ub": 8}  # vertical
+        self.xo["z_top"] = {"value": 14.5, "lb": 14.0, "ub": 15}  # vertical
+        self.xo["r_c"] = {"value": 0.3, "lb": 0.00, "ub": 0.8}  # Corner radius
+
+        self.oppvar = list(self.xo.keys())
+
+        self.segments = None
+
+    def draw(self, **kwargs):
+        # Draw the x, z points of the shape parameterisation
+        """
+        Calculate the curved PictureFrame parameterisation shape.
+
+        Returns
+        -------
+        p: dict
+            The coordinate dictionary of points
+        """
+        self.set_input(**kwargs)
+
+        x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c = self.xo.get_value()
+        x, z = curved_picture_frame(
+            x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c, npoints=200
+        )
         self.segments = {"x": x, "z": z}
         p = self.segments
         p = self.close_loop(p)

@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ WARNING: This module is only drafted. It must be updated.
 # import graphical lib
 import matplotlib.pyplot as plt
 
-# import mirapy lib
+# import bluemira lib
 from .wire import BluemiraWire
 from .face import BluemiraFace
 

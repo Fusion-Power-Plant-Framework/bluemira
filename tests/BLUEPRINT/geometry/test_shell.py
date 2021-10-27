@@ -26,9 +26,10 @@ import matplotlib.pyplot as plt
 import filecmp
 from BLUEPRINT.base.file import get_BP_path
 from bluemira.base.look_and_feel import plot_defaults
+from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geomtools import rotate_matrix
+from BLUEPRINT.geometry.geomtools import rotate_matrix, circle_seg
 
 
 class TestShell:
@@ -290,7 +291,18 @@ class TestShell:
 
         # Note that control points are generated stochastically for Shells.
         # So just check that the control point is in the polygon.
-        assert test_shell.point_in_poly(clean_shell.get_control_point())
+        assert test_shell.point_inside(clean_shell.get_control_point())
+
+
+def test_fail_if_intersect():
+    # Create a circle of radius 1
+    x_arr, z_arr = circle_seg(1.0)
+    loop_1 = Loop(x=x_arr, z=z_arr)
+    # Translate the loop
+    loop_2 = loop_1.translate([0.5, 0.0, 0.0], update=False)
+    with pytest.raises(GeometryError) as err:
+        # Try to create a shell - should raise and error
+        shell = Shell(loop_1, loop_2)
 
 
 if __name__ == "__main__":

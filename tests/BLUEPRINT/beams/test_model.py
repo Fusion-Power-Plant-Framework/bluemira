@@ -20,11 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 
-from io import StringIO
 import numpy as np
 import pytest
-from unittest import mock
 from BLUEPRINT.base.error import BeamsError
+from bluemira.base.constants import ANSI_COLOR
 from BLUEPRINT.beams.model import FiniteElementModel, check_matrix_condition
 from BLUEPRINT.beams.crosssection import IBeam, RectangularBeam
 from BLUEPRINT.beams.material import SS316
@@ -35,29 +34,25 @@ import tests
 SS316 = SS316()
 
 
-class TestIllConditioned:
-    # Tout ces messages "print to warn" devraient probablement etre geres avec
-    # un logger ou quelquechose dans le genre!
-    @mock.patch("sys.stdout", new_callable=StringIO)
-    def stdout(self, matrix, digits, mock_stdout):
-        check_matrix_condition(matrix, digits)
-        return mock_stdout.getvalue()
+def test_illconditioned(caplog):
+    # http://www.ti3.tu-harburg.de/paper/rump/NiRuOi11.pdf
 
-    def test_illconditioned(self):
-        # http://www.ti3.tu-harburg.de/paper/rump/NiRuOi11.pdf
-        k = np.array([[1, -6, 7, -9], [1, -5, 0, 0], [0, 1, -5, 0], [0, 0, 1, -5]])
-        output = self.stdout(k, 3)
-        assert output.startswith("\x1b[31m")
-        output = self.stdout(k, 5)
-        assert output == ""
+    k1 = np.array([[1, -6, 7, -9], [1, -5, 0, 0], [0, 1, -5, 0], [0, 0, 1, -5]])
+    k2 = np.array(
+        [[17, -864, 716, -799], [1, -50, 0, 0], [0, 1, -50, 0], [0, 0, 1, -50]]
+    )
+    orange = ANSI_COLOR["orange"]
 
-        k = np.array(
-            [[17, -864, 716, -799], [1, -50, 0, 0], [0, 1, -50, 0], [0, 0, 1, -50]]
-        )
-        output = self.stdout(k, 9)
-        assert output.startswith("\x1b[31m")
-        output = self.stdout(k, 10)
-        assert output == ""
+    for k, digits, out in [
+        [k1, 3, orange],
+        [k1, 5, ""],
+        [k2, 9, orange],
+        [k2, 10, ""],
+    ]:
+        check_matrix_condition(k, digits)
+        output = "".join(caplog.messages)
+        assert output == "" if len(out) == 0 else output.startswith(out)
+        caplog.clear()
 
 
 class TestFEModel:

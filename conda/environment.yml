@@ -7,7 +7,11 @@ variables:
   # Avoid use of .local
   PYTHONNOUSERSITE: '1'
 
-  # The below settings are needed to support FreeCAD integration alongside click
+  # The below settings are needed to support FreeCAD integration alongside click.
+  # When adding or changing an environment variable you should consider including it
+  # in the environment variables used in the .github/workflows/ci.yml, so as to replicate
+  # the user environment as closely as possible (since they don't appear to be loaded
+  # into the GitHub Actions shell).
   # NOTE: This may produce a warning when activating the conda environment if overriding
   # the machine's language
   LANG: 'C'
@@ -31,6 +35,7 @@ dependencies:
   - MeshPy=2018.2.1
   - pyside2=5.13.2
   - scipy=1.4.1
+  - wrapt=1.12.1
   - graphviz
   - pip
   - pip:

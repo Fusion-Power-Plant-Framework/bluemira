@@ -30,7 +30,8 @@ from scipy.optimize import minimize_scalar, minimize
 from scipy.optimize import fmin_slsqp
 from BLUEPRINT.geometry.geomtools import normal
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from BLUEPRINT.systems.baseclass import ReactorSystem
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.geombase import Plane
@@ -44,7 +45,7 @@ from BLUEPRINT.geometry.geomtools import (
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import boolean_2d_difference
-from BLUEPRINT.equilibria.positioner import XZLMapper
+from bluemira.equilibria.positioner import XZLMapper
 from BLUEPRINT.cad.coilCAD import CoilStructureCAD
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
@@ -90,8 +91,7 @@ class CoilArchitect(ReactorSystem):
         self.inputs = inputs
         self._plotter = CoilArchitectPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.tf = self.inputs["tf"]
         self.pf = self.inputs["pf"]

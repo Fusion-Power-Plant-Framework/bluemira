@@ -86,13 +86,14 @@ build_config = {
     "tf_mode": "run",
     # TF coil config
     "TF_type": "S",
+    "wp_shape": "N",
+    "conductivity": "SC",
     "TF_objective": "L",
     "GS_type": "ITER",
     # FW and VV config
     "VV_parameterisation": "S",
     "FW_parameterisation": "S",
     "BB_segmentation": "radial",
-    "lifecycle_mode": "life",
     "HCD_method": "power",
 }
 

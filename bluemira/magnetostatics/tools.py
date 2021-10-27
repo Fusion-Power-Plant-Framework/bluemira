@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ import numba as nb
 from numba.types import intc, CPointer, float64
 from scipy import LowLevelCallable
 from scipy.integrate import quad, nquad, IntegrationWarning
+
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.geometry._deprecated_loop import Loop
 
@@ -97,9 +98,14 @@ def process_loop_array(shape):
     -------
     shape: np.array(N, 3)
     """
+    from BLUEPRINT.geometry import loop
+
     if isinstance(shape, Loop):
         # Convert Loop to numpy array
         # TODO: Raise DeprecationWarning
+        shape = shape.xyz.T
+
+    elif isinstance(shape, loop.Loop):
         shape = shape.xyz.T
 
     elif isinstance(shape, np.ndarray):
@@ -229,7 +235,7 @@ def integrate(func, args, bound1, bound2):
     """
     warnings.filterwarnings("error", category=IntegrationWarning)
     try:
-        return quad(func, bound1, bound2, args=args)[0]
+        result = quad(func, bound1, bound2, args=args)[0]
     except IntegrationWarning:
         points = [
             0.25 * (bound2 - bound1),
@@ -237,8 +243,9 @@ def integrate(func, args, bound1, bound2):
             0.75 * (bound2 - bound1),
         ]
         result = quad(func, bound1, bound2, args=args, points=points, limit=200)[0]
-        warnings.filterwarnings("default", category=IntegrationWarning)
-        return result
+
+    warnings.filterwarnings("default", category=IntegrationWarning)
+    return result
 
 
 def n_integrate(func, args, bounds):

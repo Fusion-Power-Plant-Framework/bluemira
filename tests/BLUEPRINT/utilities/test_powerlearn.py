@@ -22,7 +22,7 @@
 import pytest
 import numpy as np
 from pandas import DataFrame
-from BLUEPRINT.base.typebase import TypeFrameworkError
+
 from BLUEPRINT.utilities.powerlearn import PowerLaw, LinearLaw, surface_fit
 
 
@@ -136,15 +136,6 @@ class TestSurfaceFit:
         _, _, _, coeffs, r2 = surface_fit(x, y, z, order=3)
 
         assert np.allclose(coeffs_true, coeffs)
-
-    def test_order_wrong(self):
-        x = np.array([1, 2, 3, 4, 5, 6, 7, 9, 2, 4, 10, 12, 13])
-        y = np.array([0, 2, 0, 1, 3, 5, 1, 2, 4, 5, 2, 0, 2])
-        z = np.random.rand(len(x))
-        bad_orders = [4, 1.3, 1.0, 0, 0.0, "2", np.linspace(1, 3, 40)]
-        for bad in bad_orders:
-            with pytest.raises((ValueError, TypeFrameworkError)):
-                surface_fit(x, y, z, order=bad)
 
     def test_bad_inputs(self):
         x = np.array([1, 2, 3, 4, 5, 6, 7, 9, 2, 4, 10, 12])

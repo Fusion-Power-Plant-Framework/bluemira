@@ -17,9 +17,10 @@ with open("README.md", "r") as f:
 install_requires = [  # PYL = Version limited by python version
     "aocxchange;python_version<='3.6'",  # 0.3.0
     "asteval",  # 0.9.23
-    "click",  # 7.1.2
+    "click",  # 8.0.1
     "CoolProp",  # 6.4.1
     "dataclasses;python_version<='3.6'",  # 0.8
+    "fortranformat",  # 1.0.1
     "imageio",  # 2.9.0
     "ipykernel",  # 5.5.3
     "matplotlib",  # 3.3.4   PYL
@@ -41,6 +42,7 @@ install_requires = [  # PYL = Version limited by python version
     "tabulate",  # 0.8.9
     "trimesh",  # 3.9.14
     "scipy",  # 1.4.1 Last OK version
+    "wrapt",  # 1.12.1
 ]
 
 openmoc = [

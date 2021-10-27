@@ -23,7 +23,10 @@
 Poloidal field system
 """
 from typing import Type
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.coilCAD import PFSystemCAD
 from BLUEPRINT.geometry.geomtools import get_boundary
@@ -50,8 +53,7 @@ class PoloidalFieldCoils(Meshable, ReactorSystem):
     def __init__(self, config):
         self.config = config
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
         self._plotter = PoloidalFieldCoilsPlotter()
 
     def update_coilset(self, coilset):

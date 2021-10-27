@@ -30,10 +30,13 @@ import itertools
 import sys
 import getpass
 from typing import Type
-from BLUEPRINT.base.file import get_BP_path
+
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.constants import GRAVITY
-from BLUEPRINT.base import ReactorSystem, ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.base.file import get_BP_path
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 if sys.platform != "darwin" and getpass.getuser() != "mcintos":  # !!!
@@ -54,8 +57,7 @@ class RMMetrics(ReactorSystem):
         self.config = config
         self.inputs = inputs
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.segments = self.inputs["BBgeometry"]
         self.get_AHPw()

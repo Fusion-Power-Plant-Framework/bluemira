@@ -316,6 +316,58 @@ class Plane(GeomBase):
         return point, vector
 
 
+# =============================================================================
+# Some plane maker methods
+# =============================================================================
+
+
+def make_xy_plane(z_point):
+    """
+    Create a plane with z-normal that intersects the z axis at the given point
+    """
+    return Plane([1, 0, z_point], [0, 1, z_point], [0, 0, z_point])
+
+
+def make_yz_plane(x_point):
+    """
+    Create a plane with x-normal that intersects the x axis at the given point
+    """
+    return Plane([x_point, 1, 0], [x_point, 0, 1], [x_point, 0, 0])
+
+
+def make_xz_plane(y_point):
+    """
+    Create a plane with y-normal that intersects the y axis at the given point
+    """
+    return Plane([0, y_point, 1], [1, y_point, 0], [0, y_point, 0])
+
+
+def make_plane(point, norm):
+    """
+    Create a plane with normal in x (norm=0), y (norm=1) or z (norm=2) dir
+    intersecting the given axis at the given point
+
+    Parameters
+    ----------
+    point : float
+        The point where plane intersects the axis parallel to plane normal
+    norm: int
+        Integer to indicate the plane normal direction
+
+    Returns
+    -------
+    plane: Plane
+    """
+    if norm == 0:
+        return make_yz_plane(point)
+    elif norm == 1:
+        return make_xz_plane(point)
+    elif norm == 2:
+        return make_xy_plane(point)
+    else:
+        raise NotImplementedError
+
+
 if __name__ == "__main__":
     from BLUEPRINT import test
 

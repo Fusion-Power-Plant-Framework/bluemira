@@ -25,13 +25,14 @@ Plotting utilities for ReactorSystem objects
 from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.typebase import Contract
+
 from BLUEPRINT.geometry.geomtools import qrotate
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
 from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.syscodes.postPROCESS import plot_PROCESS
 from BLUEPRINT.utilities.colortools import color_kwargs
+
+import bluemira.codes as codes
 
 DEFAULTS = {"linewidth": 0.3, "edgecolor": "k", "alpha": 1}
 
@@ -181,7 +182,7 @@ class ReactorPlotter:
         """
         # TODO: POSTprocess.py is archaic... need to refactor heavily and bring
         # into the fold...
-        plot_PROCESS(self.reactor.__PROCESS__.filename, width=width)
+        codes.plot_PROCESS(self.reactor.__PROCESS__.filename, width=width)
 
     def plot_xz(self, x=None, z=None, show_eq=False, force=False):
         """
@@ -207,11 +208,23 @@ class ReactorPlotter:
         ReactorPlotter.set_defaults(force=force)
         failed = []
         _, self.axxz = plt.subplots(figsize=[14, 10])
-        for name in ["PL", "PF", "TF", "ATEC", "DIV", "BB", "VV", "TS", "CR", "RS"]:
+        for name in [
+            "PL",
+            "PF",
+            "TF",
+            "ATEC",
+            "DIV",
+            "BB",
+            "VV",
+            "TS",
+            "CR",
+            "RS",
+            "STBB",
+        ]:
             if hasattr(self.reactor, name):
                 obj = getattr(self.reactor, name)
 
-                if obj is None or isinstance(obj, Contract):
+                if obj is None:
                     # System has not been built: cannot plot
                     failed.append(name)
                     continue

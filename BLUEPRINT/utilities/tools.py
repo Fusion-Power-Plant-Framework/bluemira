@@ -22,6 +22,7 @@
 """
 Generic miscellaneous tools, including some amigo port-overs
 """
+from functools import partial
 import numpy as np
 import operator
 import string
@@ -29,18 +30,20 @@ from scipy.interpolate import griddata, interp1d
 from scipy.interpolate import UnivariateSpline
 from scipy.spatial.distance import cdist
 from itertools import permutations
+from json.encoder import _make_iterencode
 import nlopt
 import re
-from json import JSONEncoder
-from collections import OrderedDict, Mapping, Iterable
-from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
-from BLUEPRINT.base.parameter import Parameter
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-from BLUEPRINT.geometry.geomtools import lengthnorm
-
+from json import JSONEncoder, JSONDecoder
+from collections import OrderedDict
+from collections.abc import Mapping, Iterable
+from typing import List, Union
 from unittest.mock import patch
-from json.encoder import _make_iterencode
-from functools import partial
+
+from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
+from bluemira.base.parameter import Parameter
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+
+from BLUEPRINT.geometry.geomtools import lengthnorm
 
 
 CROSS_P_TOL = 1e-14  # Cross product tolerance
@@ -134,6 +137,32 @@ def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
     return _make_iterencode(
         markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
     )
+
+
+class CommentJSONDecoder(JSONDecoder):
+    """
+    Decode JSON with comments
+
+    Notes
+    -----
+    Regex does the following for comments:
+
+        - starts with // followed by most chr (not ")
+        - if not followed by " and any of (whitespace , }) and \\n
+
+    and removes extra commas from the end of dict like objects
+    """
+
+    comments = re.compile(r'[/]{2}(\s*\w*[#-/:-@{-~!^_`\[\]]*)*(?!["]\s*[,]*[\}]*\n)')
+    comma = re.compile(r"[,](\n*\s*)*[\}]")
+    eof = re.compile(r"[,](\n*\s*)*$")
+
+    def decode(self, s, *args, **kwargs):
+        """Return the Python representation of ``s`` (a ``str`` instance
+        containing a JSON document).
+        """
+        s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
+        return super().decode(s, *args, **kwargs)
 
 
 class PowerLawScaling:
@@ -747,7 +776,7 @@ def _split_rule(rule):
     return re.split("([<>=]+)", rule)
 
 
-def nested_dict_search(odict, rules: "['z>0', '5<x<7']"):  # noqa (F821)
+def nested_dict_search(odict, rules: Union[str, List[str]]):
     """
     Returns sub-set of nested dictionary which meet str rules for keys in each
     sub-dict.

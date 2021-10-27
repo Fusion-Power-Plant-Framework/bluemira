@@ -35,7 +35,7 @@ class TestVVCAD:
     def test_vacuumvessel(self):
         v = VesselCAD(self.vessel, neutronics=False)
         volume = v.get_properties()["vessel"]["Volume"]
-        assert np.isclose(round(volume, 3), 102.44)
+        assert np.isclose(round(volume, 3), 102.528)
 
 
 if __name__ == "__main__":

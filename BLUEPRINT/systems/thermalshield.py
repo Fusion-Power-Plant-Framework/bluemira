@@ -26,11 +26,13 @@ from itertools import cycle
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Type
+
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.cad.shieldCAD import ThermalShieldCAD, SegmentedThermalShieldCAD
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.base import ReactorSystem
-from BLUEPRINT.base import ParameterFrame
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     boolean_2d_union,
@@ -74,8 +76,7 @@ class ThermalShield(ReactorSystem):
         self.inputs = inputs
         self._plotter = ThermalShieldPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
         self.tf_min_surf()
 
         self.build_vvts(inboardoff=self.params.g_vv_ts, topbotoff=self.params.g_vv_ts)
@@ -130,7 +131,7 @@ class ThermalShield(ReactorSystem):
         ----------
         TFprofile: BLUEPRINT Loop
             Outer edge of the toroidal field coil casing
-        PFcoilset: BLUEPRINT.equilibria CoilSet object
+        PFcoilset: bluemira.equilibria CoilSet object
             The set of poloidal field coils (including central solenoid)
 
 
@@ -207,7 +208,7 @@ class ThermalShield(ReactorSystem):
             Centre of gravity of the divertor 2-D cross-section
         TFprofile: BLUEPRINT Loop
             Outer edge of the toroidal field coil casing
-        PFcoilset: BLUEPRINT.equilibria CoilSet object
+        PFcoilset: bluemira.equilibria CoilSet object
             The set of poloidal field coils (including central solenoid)
         lp_height: float
             Height of the lower port
@@ -620,7 +621,7 @@ class SegmentedThermalShield(ReactorSystem):
         # Rem: config does not seems to be a config file but rather containing
         #      the genuine class inputs.
         self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         # Loading the inputs loops into class attributes
         self.tf_inner_loop = self.inputs["TF inner loop"]

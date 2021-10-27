@@ -29,11 +29,6 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.plot_tools import (
-    coordinates_to_path,
-    Plot3D,
-    BluemiraPathPatch3D,
-)
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
 from bluemira.geometry._deprecated_tools import (
@@ -48,8 +43,14 @@ from bluemira.geometry._deprecated_tools import (
     get_normal_vector,
     offset,
     vector_lengthnorm,
+    in_polygon,
 )
 from bluemira.utilities.tools import is_num
+from bluemira.utilities.plot_tools import (
+    coordinates_to_path,
+    Plot3D,
+    BluemiraPathPatch3D,
+)
 
 
 class Loop(GeomBase):
@@ -145,7 +146,7 @@ class Loop(GeomBase):
         return cls(x=x, y=y, z=z)
 
     @classmethod
-    def from_array(cls, xyz_array):
+    def from_array(cls, xyz_array, enforce_ccw=True):
         """
         Initialise a Loop object from a numpy array.
 
@@ -156,7 +157,7 @@ class Loop(GeomBase):
         """
         if xyz_array.shape[0] != 3:
             raise GeometryError("Need a (3, n) shape coordinate array.")
-        return cls(*xyz_array)
+        return cls(*xyz_array, enforce_ccw=enforce_ccw)
 
     # =========================================================================
     # Conversions
@@ -260,7 +261,11 @@ class Loop(GeomBase):
         area: float
             The area of the polygon [m^2]
         """
-        return get_area(*self.xyz)
+        try:
+            return get_area(*self.xyz)
+        except GeometryError:
+            # Can't find a normal vector from a point cloud? It's probably 0 area
+            return 0.0
 
     @property
     def length(self) -> float:
@@ -558,9 +563,40 @@ class Loop(GeomBase):
         self.y = interp1d(ll, self.y)(linterp)
         self.z = interp1d(ll, self.z)(linterp)
 
+    def interpolate_midpoints(self):
+        """
+        Interpolate the Loop adding the midpoint of each segment to the Loop
+        """
+        xyz_new = self.xyz[:, :-1] + np.diff(self.xyz) / 2
+        xyz_new = np.insert(xyz_new, np.arange(len(self) - 1), self.xyz[:, :-1], axis=1)
+        xyz_new = np.append(xyz_new, self.xyz[:, -1].reshape(3, 1), axis=1)
+        self.x = xyz_new[0]
+        self.y = xyz_new[1]
+        self.z = xyz_new[2]
+
     # =========================================================================
     # Queries
     # =========================================================================
+
+    def point_inside(self, point, include_edges=False):
+        """
+        Determines whether or not a point is within in the Loop
+
+        Parameters
+        ----------
+        point: iterable(2-3)
+            The 2-D or 3-D coordinates of the point (coord conversion handled)
+        include_edges: bool
+            Whether or not to return True if a point is on the perimeter of the
+            Loop
+
+        Returns
+        -------
+        in_polygon: bool
+            Whether or not the point is within the Loop
+        """
+        point = self._point32d(point)
+        return in_polygon(*point, self.d2.T, include_edges=include_edges)
 
     def distance_to(self, point):
         """
@@ -802,8 +838,8 @@ class Loop(GeomBase):
         """
         if self.ndim == 3:
             return True  # Assume ccw if 3D Loop
-
-        return check_ccw(*self.d2)
+        i, j = [self.__getattribute__(k) for k in self.plan_dims]
+        return check_ccw(i, j)
 
     def _remove_duplicates(self, enforce_ccw):
         """

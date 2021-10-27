@@ -25,13 +25,13 @@ Supporting functions for the bluemira geometry module.
 
 from __future__ import annotations
 
-# import from freecad
 import freecad  # noqa: F401
 import Part
 from FreeCAD import Base
 
-# import numpy lib
+# import math lib
 import numpy as np
+import math
 
 # import typing
 from typing import Union
@@ -122,14 +122,17 @@ def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.
 
     Parameters
     ----------
-        points (Union[list, np.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed shape. Defaults to False.
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed shape.
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the polygon
+    wire: Part.Wire
+        a FreeCAD wire that contains the polygon
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -144,14 +147,17 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
 
     Parameters
     ----------
-        points (Union[list, np.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed shape. Defaults to False.
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed shape.
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the bezier curve
+    wire: Part.Wire
+        a FreeCAD wire that contains the bezier curve
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -170,15 +176,19 @@ def make_bspline(
 
     Parameters
     ----------
-        points (Union[list, np.ndarray]): list of points. It can be given
-            as a list of 3D tuples, a 3D numpy array, or similar.
-        closed (bool, optional): if True, the first and last points will be
-            connected in order to form a closed shape. Defaults to False.
-        Parameters: (optional) knot sequence
+    points: Union[list, np.ndarray]
+        list of points. It can be given as a list of 3D tuples, a 3D numpy array,
+        or similar.
+    closed: bool, default = False
+        if True, the first and last points will be connected in order to form a
+        closed shape.
+    Parameters: (optional)
+        knot sequence
 
     Returns
     -------
-        Part.Wire: a FreeCAD wire that contains the bezier curve
+    wire: Part.Wire
+        a FreeCAD wire that contains the bezier curve
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
@@ -187,6 +197,123 @@ def make_bspline(
     bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
     wire = Part.Wire(bsc.toShape())
     return wire
+
+
+def make_circle(
+    radius=1.0,
+    center=[0.0, 0.0, 0.0],
+    start_angle=0.0,
+    end_angle=360.0,
+    axis=[0.0, 0.0, 1.0],
+):
+    """
+    Create a circle or arc of circle object with given parameters.
+
+    Parameters
+    ----------
+    radius: float, default =1.0
+        Radius of the circle
+    center: Iterable, default = [0, 0, 0]
+        Center of the circle
+    start_angle: float, default = 0.0
+        Start angle of the arc [degrees]
+    end_angle: float, default = 360.0
+        End angle of the arc [degrees]. If start_angle == end_angle, a circle is created,
+        otherwise a circle arc is created
+    axis: Iterable, default = [0, 0, 1]
+        Normal vector to the circle plane. It defines the clockwise/anticlockwise
+        circle orientation according to the right hand rule. Default [0., 0., 1.].
+
+    Returns
+    -------
+    wire: Part.Wire
+        FreeCAD wire that contains the arc or circle
+    """
+    # TODO: check the creation of the arc when start_angle < end_angle
+    output = Part.Circle()
+    output.Radius = radius
+    output.Center = Base.Vector(center)
+    output.Axis = Base.Vector(axis)
+    if start_angle != end_angle:
+        output = Part.ArcOfCircle(
+            output, math.radians(start_angle), math.radians(end_angle)
+        )
+    return Part.Wire(Part.Edge(output))
+
+
+def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
+    """
+    Create an arc of circle object given three points.
+
+    Parameters
+    ----------
+    p1: Iterable
+        Starting point of the circle arc
+    p2: Iterable
+        Middle point of the circle arc
+    p3: Iterable
+        End point of the circle arc
+
+    Returns
+    -------
+    wire: Part.Wire
+        FreeCAD wire that contains the arc of circle
+    """
+    # TODO: check what happens when the 3 points are in a line
+    arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+    return Part.Wire(Part.Edge(arc))
+
+
+def make_ellipse(
+    center=[0.0, 0.0, 0.0],
+    major_radius=2.0,
+    minor_radius=1.0,
+    major_axis=[1, 0, 0],
+    minor_axis=[0, 1, 0],
+    start_angle=0.0,
+    end_angle=360.0,
+):
+    """
+    Creates an ellipse or arc of ellipse object with given parameters.
+
+    Parameters
+    ----------
+    center: Iterable, default = [0, 0, 0]
+        Center of the ellipse
+    major_radius: float, default = 2
+        the major radius of the ellipse
+    minor_radius: float, default = 1
+        the minor radius of the ellipse
+    major_axis: Iterable, default = [1, 0, 0,]
+        major axis direction
+    minor_axis: Iterable, default = [0, 1, 0,]
+        minor axis direction
+    start_angle: float, default = 0.0
+        Start angle of the arc [degrees]
+    end_angle: float, default = 360.0
+        End angle of the arc [degrees]. If start_angle == end_angle, an ellipse is
+        created, otherwise an arc of ellipse is created
+
+    Returns
+    -------
+    wire: Part.Wire
+        FreeCAD wire that contains the ellipse or arc of ellipse
+    """
+    # TODO: check the creation of the arc when start_angle < end_angle
+    s1 = Base.Vector(major_axis).normalize().multiply(major_radius)
+    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius)
+    center = Base.Vector(center)
+    output = Part.Ellipse(s1, s2, center)
+
+    start_angle = start_angle % 360.0
+    end_angle = end_angle % 360.0
+
+    if start_angle != end_angle:
+        output = Part.ArcOfEllipse(
+            output, math.radians(start_angle), math.radians(end_angle)
+        )
+
+    return Part.Wire(Part.Edge(output))
 
 
 # # =============================================================================
@@ -286,7 +413,7 @@ def close_wire(wire: Part.Wire):
     return wire
 
 
-def discretize(w: Part.Wire, ndiscr: int):
+def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     """Discretize a wire.
 
     Parameters
@@ -295,57 +422,103 @@ def discretize(w: Part.Wire, ndiscr: int):
         wire to be discretized.
     ndiscr : int
         number of points for the whole wire discretization.
+    dl : float
+        target discretization length (default None). If dl is defined,
+        ndiscr is not considered.
 
     Returns
     -------
-    output : list(Base.Vector)
-        list of Base.Vector points.
+    output : list(numpy.ndarray)
+        list of points.
 
     """
+    # discretization points array
+    output = []
+
+    if dl is None:
+        pass
+    elif dl <= 0.0:
+        raise ValueError("dl must be > 0.")
+    else:
+        # a dl is calculated for the discretisation of the different edges
+        # NOTE: must discretise to at least two points.
+        ndiscr = max(math.ceil(w.Length / dl), 2)
+
     # discretization points array
     output = w.discretize(ndiscr)
     output = vector_to_numpy(output)
     return output
 
 
-def discretize_by_edges(w: Part.Wire, ndiscr: int):
-    """Discretize a wire taking into account the edges of which it consists of.
+def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
+    """
+    Discretize a wire taking into account the edges of which it consists of.
 
     Parameters
     ----------
     w : Part.Wire
         wire to be discretized.
     ndiscr : int
-        number of points for the whole wire discretization.
+        number of points for the whole wire discretization. Final number of points
+        can be slightly different due to edge discretization routine.
+    dl : float
+        target discretization length (default None). If dl is defined,
+        ndiscr is not considered.
 
     Returns
     -------
-    output : list(Base.Vector)
-        list of Base.Vector points.
-
+    output : list(numpy.ndarray)
+        list of points.
     """
     # discretization points array
     output = []
-    # a dl is calculated for the discretisation of the different edges
-    dl = w.Length / float(ndiscr)
+
+    if dl is None:
+        # dl is calculated for the discretisation of the different edges
+        dl = w.Length / float(ndiscr)
+    elif dl <= 0.0:
+        raise ValueError("dl must be > 0.")
+
     # edges are discretised taking into account their orientation
-    # Note: this is a tricky part in Freecad. Reversed wires need a
-    # reverse operation for the generated points and the list of generated
-    # points for each edge.
+    # Note: OrderedEdges already return a list of edges that considers the edge in the
+    # correct sequence and orientation. No need for tricks after the discretization.
     for e in w.OrderedEdges:
-        pointse = e.discretize(Distance=dl)
-        # if edge orientation is reversed, the generated list of points
-        # must be reversed
-        if e.Orientation == "Reversed":
-            pointse.reverse()
-        output += pointse[:-1]
+        pointse = list(discretize(Part.Wire(e), dl=dl))
+        output += pointse[0:-1]
+
     if w.isClosed():
-        output += pointse[-1:]
-    # if wire orientation is reversed, output must be reversed
-    if w.Orientation == "Reversed":
-        output.reverse()
-    output = vector_to_numpy(output)
+        output += [output[0]]
+    else:
+        output += [pointse[-1]]
+
+    output = np.array(output)
     return output
+
+
+def dist_to_shape(shape1, shape2):
+    """Find the minimum distance between two shapes
+
+    Parameters
+    ----------
+    shape1:
+        reference shape.
+    shape2:
+        target shape.
+
+    Returns
+    -------
+    output:
+        a tuple of two -> (dist, vectors)
+        dist is the minimum distance (float value)
+        vectors is a list of tuples corresponding to the nearest points (numpy.ndarray)
+        between shape1 and shape2. The distance between those points is the minimum
+        distance given by dist.
+    """
+    dist, solution, info = shape1.distToShape(shape2)
+    vectors = []
+    for v1, v2 in solution:
+        vectors.append((vector_to_numpy(v1), vector_to_numpy(v2)))
+    return dist, vectors
 
 
 # # =============================================================================

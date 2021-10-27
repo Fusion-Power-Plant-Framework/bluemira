@@ -25,7 +25,7 @@ A collection of geometry utility functions
 import numba as nb
 import numpy as np
 from numpy.linalg import LinAlgError
-from collections import Iterable
+from collections.abc import Iterable
 from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
@@ -167,6 +167,29 @@ def bounding_box(x, y, z):
     y_b = 0.5 * size * np.array([-1, -1, 1, 1, -1, -1, 1, 1]) + 0.5 * (ymax + ymin)
     z_b = 0.5 * size * np.array([-1, 1, -1, 1, -1, 1, -1, 1]) + 0.5 * (zmax + zmin)
     return x_b, y_b, z_b
+
+
+def make_box_xz(x_min, x_max, z_min, z_max):
+    """
+    Create a box in the xz plane given the min and max x,z params
+
+    Returns
+    -------
+    box : Loop
+    """
+    # Import here to avoid circular import
+    from BLUEPRINT.geometry.loop import Loop
+
+    if x_max < x_min:
+        raise GeometryError("Require x_max > x_min")
+    if z_max < z_min:
+        raise GeometryError("Require z_max > z_min")
+
+    x_box = [x_min, x_max, x_max, x_min]
+    z_box = [z_max, z_max, z_min, z_min]
+    box = Loop(x=x_box, z=z_box)
+    box.close()
+    return box
 
 
 def grid_2d_contour(loop):
@@ -412,6 +435,81 @@ def check_linesegment(point_a, point_b, point_c):
         return False
     else:
         return True
+
+
+def get_points_of_loop(loop):
+    """
+    Get the [x, z] points corresponding to this loop. If the loop is closed then skips
+    the last (closing) point.
+
+    Parameters
+    ----------
+    loop: Loop
+        Loop to get the points of
+
+    Returns
+    -------
+    points : List[float, float]
+        The [x, z] points corresponding to this loop.
+
+    Notes
+    -----
+        Deprecation / portover utility
+    """
+    if loop.closed:
+        return loop.d2.T[:-1].tolist()
+    else:
+        return loop.d2.T.tolist()
+
+
+def index_of_point_on_loop(loop, point_on_loop, before=True):
+    """
+    Return the index of the point on the given loop belonging to a
+    pair which form a linesegment that intersects the given point.
+    Raises a GeometryError if given point does not intersect the loop.
+
+    Parameters
+    ----------
+    loop : Loop
+        Loop on with which the point should intersect
+    point_on_loop: [ float, float]
+        List of x,z coords of point
+    before: bool
+        If :code:`True`, return the index of the first point in the intersecting
+        linesegment on the loop which intersects our point. If :code:`False`,
+        return the index of the second in the pair.
+
+    Returns
+    -------
+    index_of_point: int
+        Index of the nearest point on the loop to the given point.
+        Either before or after depending on the value of :code:`before` arg.
+    """
+    # Combine coords into single array, skipping the last if it's a closed loop
+    coords = np.array(get_points_of_loop(loop))
+
+    # Get the number of points in the loop
+    n_points = coords.shape[0]
+
+    # By creating linesegments from pairs of points along the loop,
+    # check which intersect the outer strike point, and create an array of
+    # indices corresponding to those which do
+    index_of_point = None
+
+    for i in range(n_points):
+        i_start = i
+        i_end = (i + 1) % n_points
+        if check_linesegment(coords[i_start], coords[i_end], point_on_loop):
+            if before:
+                index_of_point = i_start
+            else:
+                index_of_point = i_end
+            break
+
+    if not index_of_point:
+        raise GeometryError("Point is not on loop")
+
+    return index_of_point
 
 
 def join_intersect(loop1, loop2, get_arg=False):
@@ -1540,7 +1638,7 @@ def get_control_point(loop):
     """
     if loop.__class__.__name__ == "Loop":
         cp = [loop.centroid[0], loop.centroid[1]]
-        if loop.point_in_poly(cp):
+        if loop.point_inside(cp):
             return cp
         else:
             return _montecarloloopcontrol(loop)
@@ -1576,7 +1674,7 @@ def _montecarloloopcontrol(loop):
         n, m = np.random.rand(2)
         x = xmin + n * dx
         y = ymin + m * dy
-        if loop.point_in_poly([x, y]):
+        if loop.point_inside([x, y]):
             return [x, y]
     raise ValueError("Da musst du was Besseres scheiben...")
 
@@ -1608,7 +1706,7 @@ def _montecarloshellcontrol(shell):
         n, m = np.random.rand(2)
         x = xmin + n * dx
         y = ymin + m * dy
-        if shell.point_in_poly([x, y]):
+        if shell.point_inside([x, y]):
             return [x, y]
     raise ValueError("Da musst du was Besseres schreiben...")
 

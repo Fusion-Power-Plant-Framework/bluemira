@@ -27,6 +27,9 @@ import matplotlib as mpl
 
 import tests
 
+from bluemira.base.file import try_get_bluemira_private_data_root
+from bluemira.base.look_and_feel import bluemira_warn
+
 
 def pytest_addoption(parser):
     """
@@ -53,6 +56,22 @@ def pytest_addoption(parser):
         help="enable reactor end-to-end test",
     )
 
+    parser.addoption(
+        "--private",
+        action="store_true",
+        dest="private",
+        default=False,
+        help="run tests that use private data",
+    )
+
+    parser.addoption(
+        "--integration",
+        action="store_true",
+        dest="integration",
+        default=False,
+        help="enable tests for BLUEPRINT/bluemira integration",
+    )
+
 
 def pytest_configure(config):
     """
@@ -63,7 +82,22 @@ def pytest_configure(config):
     else:
         # We're not displaying plots so use a display-less backend
         mpl.use("Agg")
-    if not config.option.longrun and not config.option.reactor:
-        setattr(config.option, "markexpr", "not longrun and not reactor")
-    elif not config.option.longrun:
-        setattr(config.option, "markexpr", "not longrun")
+
+    options = {
+        "longrun": config.option.longrun,
+        "reactor": config.option.reactor,
+        "private": config.option.private,
+        "integration": config.option.integration,
+    }
+    if options["private"] and try_get_bluemira_private_data_root() is None:
+        bluemira_warn("You cannot run private tests. Disabling this test flag.")
+        options["private"] = not options["private"]
+
+    strings = []
+    for name, value in options.items():
+        if not value:
+            strings.append(f"not {name}")
+
+    logic_string = " and ".join(strings)
+
+    setattr(config.option, "markexpr", logic_string)

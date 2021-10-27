@@ -24,9 +24,11 @@ Heating and current drive system
 """
 import numpy as np
 from typing import Type
+
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base import ReactorSystem
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
@@ -57,8 +59,7 @@ class HCDSystem(ReactorSystem):
         self.inputs = inputs
         self._plotter = HCDSystemPlotter()
 
-        self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.f_bs = self.params.f_bs
         if self.params.op_mode == "Pulsed":
@@ -151,7 +152,7 @@ class GenericHCD(ReactorSystem):
         self.inputs = inputs
 
         self.params = ParameterFrame(self.default_params.to_records())
-        self.params.update_kw_parameters(self.config)
+        self._init_params(self.config)
 
         self.R_0 = self.params.R_0
         self.n_TF = self.params.n_TF

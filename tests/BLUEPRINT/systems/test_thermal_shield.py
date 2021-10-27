@@ -25,11 +25,12 @@ Testing routines for different thermal shield system
 import numpy as np
 import pytest
 
-from BLUEPRINT.base.parameter import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
+
 from BLUEPRINT.systems.thermalshield import SegmentedThermalShield
 from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
 from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.equilibria.coils import Coil
+from bluemira.equilibria.coils import Coil
 
 
 class TestSegmentedThermalShield:
@@ -113,8 +114,8 @@ class TestSegmentedThermalShield:
         # Test if the merge shell is properly obtained
         ts_out = thermal_shield.geom["2D profile"].outer
         ts_in = thermal_shield.geom["2D profile"].inner
-        assert ts_out.point_in_poly([2.0, 0.0])
-        assert ts_in.point_in_poly([2.0, 0.0])
+        assert ts_out.point_inside([2.0, 0.0])
+        assert ts_in.point_inside([2.0, 0.0])
 
     def test_disconneted_ts_build(self):
         self.parameters.tk_ob_ts = 0.15
@@ -133,8 +134,8 @@ class TestSegmentedThermalShield:
         # Test if the merge shell is properly obtained
         ts_out = thermal_shield.geom["2D profile"].outer
         ts_in = thermal_shield.geom["2D profile"].inner
-        assert ts_out.point_in_poly([2.0, 0.0])
-        assert ts_in.point_in_poly([2.0, 0.0])
+        assert ts_out.point_inside([2.0, 0.0])
+        assert ts_in.point_inside([2.0, 0.0])
 
     def test_ts_wrapping(self):
         thermal_shield = SegmentedThermalShield(self.parameters, self.to_ts)
@@ -143,7 +144,7 @@ class TestSegmentedThermalShield:
         # i.e. not inside the thermal shield loop
         ts_out = thermal_shield.geom["2D profile"].outer
         for coil in self.pf_coils:
-            assert not ts_out.point_in_poly([coil.x, coil.z])
+            assert not ts_out.point_inside([coil.x, coil.z])
 
     def test_pf_koz_raises(self):
         with pytest.raises(NotImplementedError):
