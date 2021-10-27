@@ -4,7 +4,7 @@ A basic tutorial for configuring running and running an analysis.
 
 import matplotlib.pyplot as plt
 
-from bluemira.base import Analysis
+import bluemira.base as bm_base
 
 
 build_config = {
@@ -37,12 +37,12 @@ params = {
     "r_tf_in_centre": (5.0, "Input"),
     "r_tf_out_centre": (15.0, "Input"),
 }
-analysis = Analysis(params, build_config)
-analysis.run()
+design = bm_base.Design(params, build_config)
+design.run()
 
 _, ax = plt.subplots()
 for build in build_config.values():
-    component = analysis.component_manager.get_by_path(build["target"])
+    component = design.component_manager.get_by_path(build["target"])
     shape = component.shape.discretize()
     ax.plot(*shape.T[0::2])
 ax.set_aspect("equal")

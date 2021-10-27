@@ -32,5 +32,6 @@ from .components import (
     MagneticComponent,
     ComponentManager,
 )
+from .design import Design
 from .parameter import *
 """
