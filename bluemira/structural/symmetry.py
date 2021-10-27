@@ -91,7 +91,7 @@ class CyclicSymmetry:
 
         n = n[0]
         theta = angle
-        self.t_block = rotation_matrix(np.deg2rad(theta), axis)
+        self.t_block = rotation_matrix(theta, axis)
         self._build_t_matrix(6 * len(left_nodes))
         self.left_nodes = left_nodes
         self.right_nodes = right_nodes
