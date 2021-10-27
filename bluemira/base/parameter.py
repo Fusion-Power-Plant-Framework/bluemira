@@ -600,7 +600,7 @@ class ParameterFrame:
             The ParameterFrame including the minimal content for the requested parameter
             variable names.
         """
-        if cls.__template_params != {}:
+        if not hasattr(cls, "__template_params") or cls.__template_params != {}:
             from BLUEPRINT.systems.config import Configuration
 
             cls.set_template_parameters(Configuration.params)
