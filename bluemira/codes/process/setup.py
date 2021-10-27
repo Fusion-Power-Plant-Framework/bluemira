@@ -46,9 +46,3 @@ class PROCESSInputWriter(InDat):
         else:
             super().__init__(filename=None)
             self.filename = template_indat
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

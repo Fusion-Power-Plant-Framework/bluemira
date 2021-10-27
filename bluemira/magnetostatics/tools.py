@@ -98,14 +98,13 @@ def process_loop_array(shape):
     -------
     shape: np.array(N, 3)
     """
-    from BLUEPRINT.geometry import loop
-
     if isinstance(shape, Loop):
         # Convert Loop to numpy array
         # TODO: Raise DeprecationWarning
         shape = shape.xyz.T
 
-    elif isinstance(shape, loop.Loop):
+    elif shape.__class__.__name__ == "Loop":
+        # Deprecated.. Deprecation warning raised in old Loop class.
         shape = shape.xyz.T
 
     elif isinstance(shape, np.ndarray):

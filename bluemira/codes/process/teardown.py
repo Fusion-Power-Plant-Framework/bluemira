@@ -32,8 +32,8 @@ from bluemira.base import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
 from BLUEPRINT.geometry.geomtools import rainbow_seg
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.utilities.tools import is_num
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.utilities.tools import is_num
 from bluemira.codes.process.api import (
     PROCESS_DICT,
     update_obsolete_vars,
@@ -45,7 +45,7 @@ from bluemira.codes.process.constants import NAME as PROCESS
 
 class BMFile(MFile):
     """
-    BLUEPRINT MFile reader for PROCESS output
+    Bluemira MFile reader for PROCESS output
     Sub-classed from PROCESS utilities
     Builds ParameterFrames of output in logical chunks
     """
@@ -164,7 +164,7 @@ class BMFile(MFile):
     def extract_outputs(self, outputs):
         """
         Searches MFile for variable
-        Outputs defined in BLUEPRINT variable names
+        Outputs defined in bluemira variable names
         """
         out = []
         if isinstance(outputs, str):
@@ -180,7 +180,7 @@ class BMFile(MFile):
             if not found:
                 out.append(0.0)
                 bluemira_warn(
-                    f'BLUEPRINT variable "{var}" a.k.a. '
+                    f'bluemira variable "{var}" a.k.a. '
                     f'PROCESS variable "{self.btop_mapping[var]}" '
                     "not found in PROCESS output. Value set to 0.0."
                 )
@@ -406,9 +406,3 @@ def plot_PROCESS(filename, width=1.0):
         filename = filename.replace("MFILE.DAT", "OUT.DAT")
     radial_build = process_RB_fromOUT(filename)
     plot_radial_build(radial_build, width=width)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

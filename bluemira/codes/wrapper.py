@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-BLUEPRINT External Codes Wrapper
+Bluemira External Codes Wrapper
 """
 
 from bluemira.codes.error import CodesError
@@ -72,9 +72,3 @@ def run_systems_code(reactor, params_to_update=None):
         raise CodesError("PROCESS not (properly) installed")
 
     process.Run(reactor, params_to_update)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

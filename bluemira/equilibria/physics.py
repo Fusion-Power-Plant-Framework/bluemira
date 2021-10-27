@@ -433,3 +433,82 @@ def calc_summary(eq):
         "V": volume,
         "beta_p": beta_p,
     }
+
+
+def beta(pressure, field):
+    """
+    The ratio of plasma pressure to magnetic pressure
+
+    \t:math:`\\beta = \\dfrac{\\langle p \\rangle}{B^2/2\\mu_0}`
+
+    Parameters
+    ----------
+    pressure: 1-D np.array
+        Plasma pressure, from which the mean is to be calculated [Pa]
+    field: float
+        Mean total field strength [T]
+
+    Returns
+    -------
+    beta: float
+        Ratio of plasma to magnetic pressure
+    """
+    return np.mean(pressure) / (field ** 2 / 2 * MU_0)
+
+
+def beta_p(pressure, Bp):
+    """
+    The ratio of plasma pressure to poloidal magnetic pressure
+    """
+    return beta(pressure, Bp)
+
+
+def normalise_beta(beta, a, b_tor, Ip):
+    """
+    Converts beta to normalised beta
+
+    \t:math:`\\beta_{N} = \\beta\\dfrac{aB_{T}}{I_{p}}`
+
+    Parameters
+    ----------
+    beta: float
+        Ratio of plasma to magnetic pressure
+    a: float
+        Plasma minor radius [m]
+    b_tor: float
+        Toroidal field [T]
+    Ip: float
+        Plasma current [MA]
+
+    Returns
+    -------
+    beta_N: float
+        Normalised ratio of plasma to magnetic pressure (Troyon factor)
+    """
+    return beta * a * b_tor / Ip
+
+
+def beta_N_to_beta(beta_N, a, Btor, Ip):  # noqa (N802)
+    """
+    Converts normalised beta to beta
+
+    \t:math:`\\beta = \\beta_{N}\\dfrac{I_{p}}{aB_{T}}`
+
+    Parameters
+    ----------
+    beta_N: float
+        Normalised ratio of plasma to magnetic pressure (Troyon factor)
+    a: float
+        Plasma minor radius [m]
+    b_tor: float
+        Toroidal field [T]
+    Ip: float
+        Plasma current [MA]
+
+    Returns
+    -------
+    beta: float
+        Ratio of plasma to magnetic pressure
+
+    """
+    return beta_N * Ip / (a * Btor)
