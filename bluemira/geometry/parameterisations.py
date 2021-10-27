@@ -412,30 +412,62 @@ class SextupleArc(GeometryParameterisation):
     def __init__(self, var_dict={}):
         variables = OptVariables(
             [
-                # Inner limb radius
-                BoundedVariable("x1", 4.486, lower_bound=4, upper_bound=5),
-                # Inboard limb height
-                BoundedVariable("z1", 5, lower_bound=0, upper_bound=10),
-                # 1st arc radius
-                BoundedVariable("r1", 4, lower_bound=4, upper_bound=12),
-                # 2nd arc radius
-                BoundedVariable("r2", 5, lower_bound=4, upper_bound=12),
-                # 3rd arc radius
-                BoundedVariable("r3", 6, lower_bound=4, upper_bound=12),
-                # 4th arc radius
-                BoundedVariable("r4", 7, lower_bound=4, upper_bound=12),
-                # 5th arc radius
-                BoundedVariable("r5", 8, lower_bound=4, upper_bound=12),
-                # 1st arc angle [degrees]
-                BoundedVariable("a1", 45, lower_bound=5, upper_bound=50),
-                # 2nd arc angle [degrees]
-                BoundedVariable("a2", 60, lower_bound=10, upper_bound=80),
-                # 3rd arc angle [degrees]
-                BoundedVariable("a3", 90, lower_bound=10, upper_bound=100),
-                # 4th arc angle [degrees]
-                BoundedVariable("a4", 40, lower_bound=10, upper_bound=80),
-                # 5th arc angle [degrees]
-                BoundedVariable("a5", 30, lower_bound=10, upper_bound=80),
+                BoundedVariable(
+                    "x1", 4.486, lower_bound=4, upper_bound=5, descr="Inner limb radius"
+                ),
+                BoundedVariable(
+                    "z1", 5, lower_bound=0, upper_bound=10, descr="Inboard limb height"
+                ),
+                BoundedVariable(
+                    "r1", 4, lower_bound=4, upper_bound=12, descr="1st arc radius"
+                ),
+                BoundedVariable(
+                    "r2", 5, lower_bound=4, upper_bound=12, descr="2nd arc radius"
+                ),
+                BoundedVariable(
+                    "r3", 6, lower_bound=4, upper_bound=12, descr="3rd arc radius"
+                ),
+                BoundedVariable(
+                    "r4", 7, lower_bound=4, upper_bound=12, descr="4th arc radius"
+                ),
+                BoundedVariable(
+                    "r5", 8, lower_bound=4, upper_bound=12, descr="5th arc radius"
+                ),
+                BoundedVariable(
+                    "a1",
+                    45,
+                    lower_bound=5,
+                    upper_bound=50,
+                    descr="1st arc angle [degrees]",
+                ),
+                BoundedVariable(
+                    "a2",
+                    60,
+                    lower_bound=10,
+                    upper_bound=80,
+                    descr="2nd arc angle [degrees]",
+                ),
+                BoundedVariable(
+                    "a3",
+                    90,
+                    lower_bound=10,
+                    upper_bound=100,
+                    descr="3rd arc angle [degrees]",
+                ),
+                BoundedVariable(
+                    "a4",
+                    40,
+                    lower_bound=10,
+                    upper_bound=80,
+                    descr="4th arc angle [degrees]",
+                ),
+                BoundedVariable(
+                    "a5",
+                    30,
+                    lower_bound=10,
+                    upper_bound=80,
+                    descr="5th arc angle [degrees]",
+                ),
             ],
             frozen=True,
         )
