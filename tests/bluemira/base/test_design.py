@@ -20,17 +20,17 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Tests for the Analysis module.
+Tests for the design module.
 """
 
 import matplotlib.pyplot as plt
 
-from bluemira.base import Analysis
+from bluemira.base import Design
 
 import tests
 
 
-class TestAnalysis:
+class TestDesign:
     def test_builders(self):
         build_config = {
             "Plasma": {
@@ -62,13 +62,13 @@ class TestAnalysis:
             "r_tf_in_centre": (5.0, "Input"),
             "r_tf_out_centre": (15.0, "Input"),
         }
-        analysis = Analysis(params, build_config)
-        analysis.run()
+        design = Design(params, build_config)
+        design.run()
 
         if tests.PLOTTING:
             _, ax = plt.subplots()
             for build in build_config.values():
-                component = analysis.component_manager.get_by_path(build["target"])
+                component = design.component_manager.get_by_path(build["target"])
                 shape = component.shape.discretize()
                 ax.plot(*shape.T[0::2])
             ax.set_aspect("equal")
