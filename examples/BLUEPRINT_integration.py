@@ -36,9 +36,9 @@ from BLUEPRINT.geometry.geombase import GeomBase
 from BLUEPRINT.geometry.shell import Shell, MultiShell
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
 
 from bluemira.base.components import GroupingComponent, PhysicalComponent, ComponentError
+from bluemira.base.config import SingleNull
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry._deprecated_tools import (
     convert_coordinates_to_face,

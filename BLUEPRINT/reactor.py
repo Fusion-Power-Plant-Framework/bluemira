@@ -110,7 +110,7 @@ from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
 from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
 
 # Configuration / Input imports
-from BLUEPRINT.systems.config import SingleNull
+from bluemira.base.config import SingleNull
 
 # PROCESS imports
 from bluemira.codes import run_systems_code
