@@ -24,7 +24,7 @@ A negative triangularity tokamak fusion power reactor.
 import matplotlib.pyplot as plt
 
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
+from bluemira.base.config import SingleNull
 
 # Structural imports
 import os

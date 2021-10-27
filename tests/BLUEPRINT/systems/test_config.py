@@ -21,7 +21,7 @@
 import pytest
 
 
-from BLUEPRINT.systems.config import Configuration, SingleNull
+from bluemira.base.config import Configuration, SingleNull
 
 
 build_config = {

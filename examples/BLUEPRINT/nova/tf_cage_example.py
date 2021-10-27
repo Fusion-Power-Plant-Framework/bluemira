@@ -25,7 +25,7 @@ An example file to perform a simple beam FE analysis on a coil cage
 from IPython import get_ipython
 import matplotlib.pyplot as plt
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
+from bluemira.base.config import SingleNull
 from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.nova.structuralsolver import StructuralSolver
 

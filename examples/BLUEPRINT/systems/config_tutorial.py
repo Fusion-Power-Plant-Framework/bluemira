@@ -24,27 +24,27 @@ Some examples on updating and extending Configurations
 
 # %%[markdown]
 # # Configuration Tutorial
-# This tutorial goes through different ways of modifying the BLUEPRINT configuration.
+# This tutorial goes through different ways of modifying the bluemira configuration.
 #
-# The BLUEPRINT configuration controls the initial state of the physical parameters that
-# setup the BLUEPRINT run for a given reactor design.
+# The bluemira configuration controls the initial state of the physical parameters that
+# setup the bluemira run for a given reactor design.
 
 # %%
 from bluemira.base.parameter import Parameter, ParameterFrame
 
-from BLUEPRINT.base.config_schema import ConfigurationSchema
-from BLUEPRINT.base.file import get_bluemira_root
+from bluemira.base.config_schema import ConfigurationSchema
+from bluemira.base.file import get_bluemira_root
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import Configuration
+from bluemira.base.config import Configuration
 
 c = Configuration()
 c.to_dict()
 
 # %%[markdown]
-# ## The Core BLUEPRINT Configuration
+# ## The Core bluemira Configuration
 #
-# BLUEPRINT has a default (core) configuration, which defines the physical parameters
-# that control how the built-in functionality of BLUEPRINT works. It has default
+# Bluemira has a default (core) configuration, which defines the physical parameters
+# that control how the built-in functionality of bluemira works. It has default
 # values provided for all of those parameters.
 
 # %%
@@ -98,7 +98,7 @@ core_c.Name = "My reactor"
 # That's great for exploring some settings, but not so good if we want to be able to
 # look back on what we've done later. When you've settled on some values the it might
 # be useful to create a custom class to codify your design parameters - you can see
-# examples of that in the BLUEPRINT/systems/config.py file for DoubleNull and Spherical
+# examples of that in the bluemira/base/config.py file for DoubleNull and Spherical
 # configurations, or below to see how the parameters we've changed above would be set
 # in a configuration class.
 
@@ -174,7 +174,7 @@ build_config = {
 
 # %%[markdown]
 # If we want, we can also define some build tweak parameters, for example if needed to
-# stabilise some of BLUEPRINT's optimisers
+# stabilise some of bluemira's optimisers
 
 # %%
 build_tweaks = {
@@ -200,12 +200,12 @@ r_run4 = MyReactor(config_run4, build_config, build_tweaks)
 #
 # The method for defining our configuration that we've used so far is fine if we're
 # writing our configuration in Python. However, it may be convenient to save and load
-# configuration parameters from text files. This is supported in BLUEPRINT in JSON
+# configuration parameters from text files. This is supported in bluemira in JSON
 # format.
 #
-# ### Extracting a BLUEPRINT configuration
+# ### Extracting a bluemira configuration
 #
-# Let's first look at how to extract a configuration from BLUEPRINT. This can be done in
+# Let's first look at how to extract a configuration from bluemira. This can be done in
 # two levels of verbosity: concise and verbose. The concise level just gives the
 # parameter names and their values, while the verbose level expands each parameter with
 # it's metadata. The default verbosity level is concise.
@@ -227,7 +227,7 @@ core_c.to_json(
 )
 
 # %%[markdown]
-# ### Loading a BLUEPRINT configuration
+# ### Loading a bluemira configuration
 #
 # We can also load configurations from JSON files. In this case the verbose and concise
 # configuration formats perform two different roles.
@@ -314,19 +314,19 @@ r_partial.params.to_json(
 )
 
 # %%[markdown]
-# ## Extending the BLUEPRINT configuration
+# ## Extending the bluemira configuration
 #
 # It is possible to add new parameters or to define new values for parameters by
-# extending the core BLUEPRINT configuration. This section gives some examples to
+# extending the core bluemira configuration. This section gives some examples to
 # show how you might go about doing that.
 #
 # ### Schema Definition
 #
-# The configuration schema tells BLUEPRINT what parameters are available for that run.
+# The configuration schema tells bluemira what parameters are available for that run.
 # The basic set of parameters are defined in the `ConfigurationSchema` class. However,
 # it is possible to add new parameters with a custom schema class, which inherits from
 # the basic `ConfigurationSchema`. This could be useful if you'd want to provide
-# additional functionality in BLUEPRINT that needs your new parameter.
+# additional functionality in bluemira that needs your new parameter.
 #
 # ---
 # **Note**
@@ -337,7 +337,7 @@ r_partial.params.to_json(
 # %%
 class MyExtendedConfigurationSchema(ConfigurationSchema):
     """
-    A custom schema that extends the core BLUEPRINT configuration with my_new_parameter.
+    A custom schema that extends the core bluemira configuration with my_new_parameter.
     """
 
     my_new_parameter: Parameter
@@ -356,7 +356,7 @@ class MyExtendedConfigurationSchema(ConfigurationSchema):
 # %%
 class MyExtendedConfiguration(MyExtendedConfigurationSchema, ParameterFrame):
     """
-    A custom configuration that extends the core BLUEPRINT configuration with
+    A custom configuration that extends the core bluemira configuration with
     my_new_parameter and sets a custom major radius value.
     """
 

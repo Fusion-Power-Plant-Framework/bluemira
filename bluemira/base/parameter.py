@@ -591,7 +591,7 @@ class ParameterFrame:
             variable names.
         """
         if not hasattr(cls, "__template_params") or cls.__template_params != {}:
-            from BLUEPRINT.systems.config import Configuration
+            from bluemira.base.config import Configuration
 
             cls.set_template_parameters(Configuration.params)
 
