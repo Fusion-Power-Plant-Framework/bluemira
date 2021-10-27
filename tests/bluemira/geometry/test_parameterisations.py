@@ -29,6 +29,7 @@ from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PrincetonD,
     TripleArc,
+    SextupleArc,
     PictureFrame,
     PolySpline,
     TaperedPictureFrame,
@@ -173,3 +174,31 @@ class TestTaperedPictureFrame:
         p.adjust_variable("r", value=0)
         wire = p.create_shape()
         assert len(wire._boundary) == 2
+
+
+class TestSextupleArc:
+    def test_segments(self):
+        p = SextupleArc()
+        wire = p.create_shape()
+        assert len(wire._boundary) == 7
+
+    def test_circle(self):
+        p = SextupleArc(
+            {
+                "x1": {"value": 4},
+                "z1": {"value": 0},
+                "r1": {"value": 4},
+                "r2": {"value": 4},
+                "r3": {"value": 4},
+                "r4": {"value": 4},
+                "r5": {"value": 4},
+                "a1": {"value": 60, "upper_bound": 60},
+                "a2": {"value": 60, "upper_bound": 60},
+                "a3": {"value": 60, "upper_bound": 60},
+                "a4": {"value": 60, "upper_bound": 60},
+                "a5": {"value": 60, "upper_bound": 60},
+            }
+        )
+        wire = p.create_shape()
+
+        assert np.isclose(wire.length, 2 * np.pi * 4)
