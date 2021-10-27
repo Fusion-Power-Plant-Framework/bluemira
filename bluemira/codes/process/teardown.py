@@ -249,7 +249,6 @@ def plot_radial_build(run, width=1.0):
     Input: Dictionary of PROCESS output
     Output: Plots
     """
-    n_TF = run["n_TF"]
     R_0 = run["R_0"]
 
     col = {
