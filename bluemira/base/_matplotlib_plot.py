@@ -183,7 +183,7 @@ class BasePlotter(ABC):
         # modified discretization points for plotting (e.g. after plane transformation)
         self._data_to_plot = []
         self.ax = None
-        self.options = MatplotlibOptions() if options is None else options
+        self.options = MatplotlibOptions(**kwargs) if options is None else options
         self.set_plane(self.options._options['plane'])
 
     def set_plane(self, plane):
@@ -471,13 +471,13 @@ class FaceCompoundPlotter(FacePlotter):
     def _make_plot2d(self):
         if "palette" in self.options.asdict():
             import seaborn as sns
-            palette = sns.color_palette(self.options._options['palette'], len(self._fplotters))
+            palette = sns.color_palette(self.options.palette, len(self._fplotters))
         else:
-            palette = self.options._options['foptions']["color"]
+            palette = self.options.foptions['color']
 
         for id, fplotter in enumerate(self._fplotters):
             fplotter.ax = self.ax
-            fplotter.options._options['foptions']['color'] = palette[id]
+            fplotter.options.foptions['color'] = palette[id]
             fplotter._make_plot2d()
 
     def _make_plot3d(self, *args, **kwargs):
