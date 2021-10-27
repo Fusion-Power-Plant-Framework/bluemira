@@ -25,13 +25,13 @@ PROCESS teardown functions
 import os
 import re
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as np
 from collections import namedtuple
 
 from bluemira.base import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
-from BLUEPRINT.geometry.geomtools import rainbow_seg
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.tools import is_num
 from bluemira.codes.process.api import (
@@ -243,7 +243,7 @@ def read_n_line(line):
     return out
 
 
-def plot_radial_build(run, typ="Cross-section", width=1.0):
+def plot_radial_build(run, width=1.0):
     """
     Plots radial and vertical build of a PROCESS run
     Input: Dictionary of PROCESS output
@@ -265,87 +265,69 @@ def plot_radial_build(run, typ="Cross-section", width=1.0):
         "solenoid": "#0072bd",
         "Thermal shield": "#77ac30",
     }
-    if typ == "Plan":
-        f, ax = plt.subplots()
-        for comp in run["Radial Build"]:
-            xc, yc = rainbow_seg(comp[2] - comp[1], comp[2], angle=alpha)
-            loop = Loop(x=xc, y=yc)
-            for key, c in col.items():
-                if key in comp[0]:
-                    c = c
-                    ax.plot(xc, yc, color=c, linewidth=0)
+
+    f, ax = plt.subplots(figsize=[14, 10])
+
+    lpatches = []
+    gkeys = [
+        "blanket",
+        "TF coil",
+        "Vacuum vessel",
+        "Plasma",
+        "scrape-off",
+        "solenoid",
+        "Thermal shield",
+    ]
+    glabels = {
+        "blanket": "Breeding blanket",
+        "TF coil": "TF coil",
+        "Plasma": "Plasma",
+        "Vacuum vessel": "Vacuum vessel",
+        "scrape-off": "Scrape-off layer",
+        "solenoid": "Central solenoid",
+        "Thermal shield": "Thermal shield",
+    }
+    for comp in run["Radial Build"]:
+        xc, yc = boxr(comp[2] - comp[1], comp[2], width)
+        yc = np.array(yc)
+        loop = Loop(x=xc, y=yc)
+        for key, c in col.items():
+            if key in comp[0]:
+                c = c
+                ax.plot(xc, yc, color=c, linewidth=0, label=key)
+                if comp[1] > 0:
                     loop.plot(ax, facecolor=c, edgecolor="k", linewidth=0)
-                    ax.annotate(
-                        comp[0],
-                        xy=[np.mean(xc), np.mean(abs(yc)) * np.random.rand(1)],
-                        fontsize=10,
-                    )
+                if key in gkeys:
+                    gkeys.remove(key)
+                    lpatches.append(patches.Patch(color=c, label=glabels[key]))
 
-        ax.set_aspect("equal")
-    elif typ == "Cross-section":
-        f, ax = plt.subplots(figsize=[14, 10])
-        import matplotlib.patches as p
+    ax.set_xlim([0, np.ceil(run["Radial Build"][-1][-1])])
+    ax.set_ylim([-width * 0.5, width * 0.5])
+    ax.set_xticks(list(ax.get_xticks()) + [R_0])
 
-        lpatches = []
-        gkeys = [
-            "blanket",
-            "TF coil",
-            "Vacuum vessel",
-            "Plasma",
-            "scrape-off",
-            "solenoid",
-            "Thermal shield",
-        ]
-        glabels = {
-            "blanket": "Breeding blanket",
-            "TF coil": "TF coil",
-            "Plasma": "Plasma",
-            "Vacuum vessel": "Vacuum vessel",
-            "scrape-off": "Scrape-off layer",
-            "solenoid": "Central solenoid",
-            "Thermal shield": "Thermal shield",
-        }
-        for comp in run["Radial Build"]:
-            xc, yc = boxr(comp[2] - comp[1], comp[2], width)
-            yc = np.array(yc)
-            loop = Loop(x=xc, y=yc)
-            for key, c in col.items():
-                if key in comp[0]:
-                    c = c
-                    ax.plot(xc, yc, color=c, linewidth=0, label=key)
-                    if comp[1] > 0:
-                        loop.plot(ax, facecolor=c, edgecolor="k", linewidth=0)
-                    if key in gkeys:
-                        gkeys.remove(key)
-                        lpatches.append(p.Patch(color=c, label=glabels[key]))
+    def tick_format(value, n):
+        if value == R_0:
+            return "\n$R_{0}$"
+        else:
+            return int(value)
 
-        ax.set_xlim([0, np.ceil(run["Radial Build"][-1][-1])])
-        ax.set_ylim([-width * 0.5, width * 0.5])
-        ax.set_xticks(list(ax.get_xticks()) + [R_0])
+    def tick_formaty(value, n):
+        if value == 0:
+            return int(value)
+        else:
+            return ""
 
-        def tick_format(value, n):
-            if value == R_0:
-                return "\n$R_{0}$"
-            else:
-                return int(value)
-
-        def tick_formaty(value, n):
-            if value == 0:
-                return int(value)
-            else:
-                return ""
-
-        ax.xaxis.set_major_formatter(plt.FuncFormatter(tick_format))
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(tick_formaty))
-        ax.set_xlabel("$x$ [m]")
-        ax.set_aspect("equal")
-        ax.legend(
-            handles=lpatches,
-            ncol=3,
-            loc="lower left",
-            bbox_to_anchor=(0.0, 1.0),
-            frameon=False,
-        )
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(tick_format))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(tick_formaty))
+    ax.set_xlabel("$x$ [m]")
+    ax.set_aspect("equal")
+    ax.legend(
+        handles=lpatches,
+        ncol=3,
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.0),
+        frameon=False,
+    )
 
 
 def process_RB_fromOUT(f):  # noqa (N802)
