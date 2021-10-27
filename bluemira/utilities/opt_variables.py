@@ -91,6 +91,8 @@ class BoundedVariable:
         Upper bound of the variable
     fixed: bool
         Whether or not the variable is to be held constant
+    descr: str
+        Description of the variable
     """
 
     __slots__ = ("name", "_value", "lower_bound", "upper_bound", "fixed", "_description")
