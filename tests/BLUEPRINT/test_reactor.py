@@ -29,8 +29,7 @@ from matplotlib import pyplot as plt
 from bluemira.base.file import BM_ROOT
 from bluemira.utilities.tools import set_random_seed
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
-
+from bluemira.base.config import SingleNull
 import tests
 
 
