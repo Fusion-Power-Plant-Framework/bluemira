@@ -316,6 +316,48 @@ def make_ellipse(
     return Part.Wire(Part.Edge(output))
 
 
+def offset_wire(
+    wire: Part.Wire, thickness: float, join: str = "arc", open_wire: bool = True
+) -> Part.Wire:
+    """
+    Make an offset from a wire.
+
+    Parameters
+    ----------
+    wire: Part.Wire
+        Wire to offset from
+    thickness: float
+        Offset distance. Positive values outwards, negative values inwards
+    join: str
+        Offset method. "arc" gives rounded corners, and "intersect" gives sharp corners
+    open_wire: bool
+        For open wires (counter-clockwise default) whether or not to make an open offset
+        wire, or a closed offset wire that encompasses the original wire. This is
+        disabled for closed wires.
+
+    Returns
+    -------
+    wire: Part.Wire
+        Offset wire
+    """
+    if wire.isClosed() and open_wire:
+        # Disable open_wire argument for closed wires
+        open_wire = False
+
+    # NOTE: The "tangent": 1 option misbehaves in FreeCAD
+    if join == "arc":
+        f_join = 0
+    elif join == "intersect":
+        f_join = 2
+    else:
+        raise GeometryError(
+            f"Unrecognised join value: {join}. Please choose from ['arc', 'tangent', 'intersect']."
+        )
+
+    shape = Part.Shape(wire)
+    return Part.Wire(shape.makeOffset2D(thickness, f_join, False, open_wire))
+
+
 # # =============================================================================
 # # Object's properties
 # # =============================================================================
