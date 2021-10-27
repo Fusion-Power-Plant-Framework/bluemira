@@ -251,7 +251,7 @@ def plot_radial_build(run, width=1.0):
     """
     n_TF = run["n_TF"]
     R_0 = run["R_0"]
-    alpha = np.radians(360 / n_TF)
+
     col = {
         "Gap": "w",
         "blanket": "#edb120",
