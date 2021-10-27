@@ -38,7 +38,6 @@ from bluemira.structural.crosssection import (
     RapidCustomCrossSection,
     CompositeCrossSection,
     AnalyticalShellComposite,
-    MultiCrossSection,
 )
 import tests
 
@@ -177,7 +176,7 @@ class TestComposite:
 class TestDuploRectangle:
     @classmethod
     def setup_class(cls):
-        path = get_bluemira_path("structural", subfolder="tests")
+        path = get_bluemira_path("structural", subfolder="tests/bluemira")
         filename = os.sep.join([path, "tf_shell_sections.pkl"])
         with open(filename, "rb") as f:
             cls.shells = pickle.load(f)  # noqa (S301)
@@ -357,27 +356,6 @@ class TestRotation:
         assert np.isclose(izz, r_custom.i_zz)
         assert np.isclose(iyy, r_custom.i_yy)
         assert np.isclose(izy, r_custom.i_zy)
-
-
-class TestMultiCrossSection:
-    def test_multi(self):
-        """
-        Check that a multi cross-section recovers Ibeam easy properties.
-        Note that J cannot be recovered as the parts are touching.
-        """
-        base, depth, flange, web = 0.5, 1, 0.1, 0.05
-        lower = RectangularBeam(base, flange)
-        lower.translate([0, 0, -(depth - flange) / 2])
-        upper = RectangularBeam(base, flange)
-        upper.translate([0, 0, (depth - flange) / 2])
-        middle = RectangularBeam(web, depth - flange * 2)
-
-        multi = MultiCrossSection([lower, middle, upper], centroid=[0, 0])
-        ibeam = IBeam(base, depth, flange, web)
-        assert np.isclose(multi.area, ibeam.area)
-        assert np.isclose(multi.i_zz, ibeam.i_zz)
-        assert np.isclose(multi.i_yy, ibeam.i_yy)
-        assert np.isclose(multi.i_zy, ibeam.i_zy)
 
 
 if __name__ == "__main__":

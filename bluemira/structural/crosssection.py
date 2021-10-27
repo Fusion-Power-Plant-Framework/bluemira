@@ -29,12 +29,24 @@ from copy import deepcopy
 from sectionproperties.pre.sections import CustomSection, MergedSection
 from sectionproperties.pre.pre import Material as SPMaterial
 from sectionproperties.analysis.cross_section import CrossSection as _CrossSection
+
 from bluemira.geometry._deprecated_loop import Loop
-from BLUEPRINT.geometry.loop import MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from bluemira.geometry._deprecated_tools import make_circle_arc, get_control_point
+from bluemira.geometry._deprecated_tools import (
+    make_circle_arc,
+    get_control_point,
+    segment_lengths,
+)
 from bluemira.structural.error import StructuralError
 from bluemira.structural.constants import NEAR_ZERO
+
+
+def _get_min_length(loop):
+    return np.min(segment_lengths(loop.x, loop.y, loop.z))
+
+
+def _get_max_length(loop):
+    return np.max(segment_lengths(loop.x, loop.y, loop.z))
 
 
 @nb.jit(nopython=True, cache=True)
@@ -510,7 +522,7 @@ class CustomCrossSection(CrossSection):
         points, facets = loop_to_point_facet(loop)
         cp = get_control_point(loop)
         geometry = CustomSection(points, facets, [], [cp])
-        mesh_size = loop.get_min_length()
+        mesh_size = _get_min_length(loop)
         # Keep the mesh size in the geometry
         geometry.mesh_size = mesh_size
         return geometry
@@ -536,8 +548,8 @@ class CustomCrossSection(CrossSection):
         # individual mesh regions
         geometry = CustomSection(points, facets, holes, control)
 
-        l_1 = shell.inner.get_min_length()
-        l_2 = shell.outer.get_min_length()
+        l_1 = _get_min_length(shell.inner)
+        l_2 = _get_min_length(shell.outer)
         mesh_size = min([l_1, l_2])
 
         geometry.mesh_size = mesh_size
@@ -660,52 +672,6 @@ class RapidCustomHollowCrossSection(CrossSection):
         # OK so there is no cute general polygon form for J... need FE!
         # St Venant approach
         self.j = self.area ** 4 / (j_opt_var * (i_yy + i_zz))
-
-
-class MultiCrossSection(CrossSection):
-    """
-    A multiple cross-section class. Do not use for CrossSections that are touching.
-
-    Parameters
-    ----------
-    x_sections: List[CrossSection]
-        The list of CrossSections from which to make a MultiCrossSection
-    centroid: iterable(2)
-        The cz, cy centroid of the MultiCrossSection
-    """
-
-    def __init__(self, x_sections, centroid):
-        super().__init__()
-        self.geometry = MultiLoop([xs.geometry for xs in x_sections], stitch=False)
-        self.centroid = centroid
-
-        area = 0.0
-        qyy = 0.0
-        qzz = 0.0
-        i_yy = 0.0
-        i_zz = 0.0
-        i_zy = 0.0
-        for xs in x_sections:
-            dz = abs(self.centroid[1] - xs.centroid[1])
-            dy = abs(self.centroid[0] - xs.centroid[0])
-            area += xs.area
-            qyy += xs.area * dz
-            qzz += xs.area * dy
-            # Parallel axis theorem
-            i_yy += xs.i_yy + xs.area * dz ** 2
-            i_zz += xs.i_zz + xs.area * dy ** 2
-        self.area = area
-        self.qyy = qyy
-        self.qzz = qzz
-        self.i_yy = i_yy
-        self.i_zz = i_zz
-        self.i_zy = i_zy
-
-        self.ry = np.sqrt(self.i_yy / self.area)
-        self.rz = np.sqrt(self.i_zz / self.area)
-
-        # This is probably a bad idea... but should be OK for disconnected sections
-        self.j = sum([xs.j for xs in x_sections])
 
 
 class CompositeCrossSection(CustomCrossSection):
@@ -880,8 +846,8 @@ class AnalyticalShellComposite(CompositeCrossSection):
 
         inner, outer = loops
 
-        a = inner.get_max_length() / 2
-        b = inner.get_min_length() / 2
+        a = _get_max_length(inner) / 2
+        b = _get_min_length(inner) / 2
         # Use analytical relation for a rectangle torsion constant
         j_inner = a * b ** 3 * (16 / 3 - 3.36 * (b / a) * (1 - b ** 4 / (12 * a ** 4)))
 

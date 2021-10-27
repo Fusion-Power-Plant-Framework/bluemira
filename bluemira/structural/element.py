@@ -23,8 +23,8 @@
 Finite element class
 """
 import numpy as np
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
+from bluemira.geometry._deprecated_loop import Loop
 from bluemira.base.constants import GRAVITY
 from bluemira.structural.error import StructuralError
 from bluemira.structural.constants import NU, SD_LIMIT, N_INTERP
@@ -541,10 +541,10 @@ class Element:
                 zo = c_s.outer.z - c_s.centroid[1]
                 y = np.append(yi, yo)
                 z = np.append(zi, zo)
-            elif isinstance(c_s, MultiLoop):
-                centroid = self._cross_section.centroid
-                y = np.concatenate([xs.y for xs in c_s.loops]) - centroid[0]
-                z = np.concatenate([xs.z for xs in c_s.loops]) - centroid[1]
+            else:
+                raise StructuralError(
+                    f"Unrecognised X-section geometry type :{type(c_s)}"
+                )
 
             n_points = len(y)
             # Tile coordinates
