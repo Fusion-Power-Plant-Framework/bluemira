@@ -27,6 +27,7 @@ from operator import sub
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.error import GeometryError
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.plotting import plot_wire
 from . import _freecadapi
 
 # import bluemira geometries
@@ -330,7 +331,7 @@ def offset_wire(
     wire: BluemiraWire
         Offset wire
     """
-    thickness *= -1  # FreeCAD apparently has a clockwise convention...
+    # thickness *= -1  # FreeCAD apparently has a clockwise convention...
     if len(wire._boundary) == 1:
         if _wire_is_straight(wire):
             raise GeometryError("Cannot offset a straight line...")
@@ -343,6 +344,9 @@ def offset_wire(
         return BluemiraWire(
             _freecadapi.offset_wire(wire._shape, thickness, join, open_wire), label=""
         )
+
+    if wire.is_closed and open_wire:
+        open_wire = False
 
     # Treat sub-wires separately and propagate labelling
     o_wires = []
@@ -360,10 +364,14 @@ def offset_wire(
             )
 
         o_wires.append(o_wire)
+    # plot_wire(o_wires)
 
     o_wires = _apply_joining(wire, o_wires, thickness, join, open_wire)
 
     return BluemiraWire(o_wires, label=label)
+
+
+from copy import deepcopy
 
 
 def _apply_joining(wire, o_wires, thickness, join, open_wire):
@@ -378,26 +386,32 @@ def _apply_joining(wire, o_wires, thickness, join, open_wire):
         )
     primary_vertexes = _get_wire_vertexes(wire)
 
-    if wire.is_closed:
-        o_wires.append(o_wires[0])
-
     # Manually apply joining if the sub_wires were not tangent to one another...
-    for i, o_sub_wire in enumerate(o_wires[:-1]):
-        if not _wires_consecutive(o_sub_wire, o_wires[i + 1]):
-
+    for i in range(len(o_wires) - 1):
+        if not _wires_consecutive(o_wires[i], o_wires[i + 1]):
+            # if i != len(o_wires) - 1:
+            #    o_wires[i + 1] = o_wires[0]
             # Case 1: Tangent but not "consecutive" => "heal" point precision
 
             # Case 2: Not tangent, insert join (arc or intersection)
             j_wire_1, j_wire_2 = f_join(
-                o_sub_wire, o_wires[i + 1], primary_vertexes[i], thickness
+                deepcopy(o_wires[i]),
+                deepcopy(o_wires[i + 1]),
+                primary_vertexes[i],
+                thickness,
             )
             # Replace wires with their joiners
-            o_wires[i] = j_wire_1
-            o_wires[i + 1] = j_wire_2
+            o_wires[i] = deepcopy(j_wire_1)
+            o_wires[i + 1] = deepcopy(j_wire_2)
+        else:
+            print("consecutive")
 
     if wire.is_closed:
-        o_wires[0] = o_wires[-1]
-        o_wires.pop()
+        j_wire_1, j_wire_2 = f_join(
+            deepcopy(o_wires[-1]), deepcopy(o_wires[0]), primary_vertexes[0], thickness
+        )
+        o_wires[-1] = j_wire_1
+        o_wires[0] = j_wire_2
 
     return o_wires
 
@@ -407,26 +421,63 @@ def _join_arc(wire_1, wire_2, primary_vertex, thickness):
 
 
 def _join_intersect(wire_1, wire_2, primary_vertex, thickness):
-    w_1_last = wire_1._shape.Edges[-1]
+    w_1_last = wire_1._shape.OrderedEdges[-1]
     v_1_last = w_1_last.Vertexes[-1]
+    v_1_last = np.array([v_1_last.X, v_1_last.Y, v_1_last.Z])
     t_1 = w_1_last.tangentAt(w_1_last.Length)
-    w_2_first = wire_2._shape.Edges[0]
+    t_1 = np.array([t_1.x, t_1.y, t_1.z])
+    w_2_first = wire_2._shape.OrderedEdges[0]
     v_2_first = w_2_first.Vertexes[0]
+    v_2_first = np.array([v_2_first.X, v_2_first.Y, v_2_first.Z])
     t_2 = w_2_first.tangentAt(0)
-    v_15 = _intersect_point_tangent(v_1_last, t_1, v_2_first, t_2)
+    t_2 = np.array([t_2.x, t_2.y, t_2.z])
 
-    j_1 = make_polygon([[v_1_last.X, v_1_last.Y, v_1_last.Z], v_15])
-    j_2 = make_polygon([v_15, [v_2_first.X, v_2_first.Y, v_2_first.Z]])
+    v_15 = _intersect_line_line(v_1_last, v_1_last + t_1, v_2_first, v_2_first - t_2)
+
+    # TODO: Check if intersection lies on the wire (negative thickness case)
+
+    j_1 = make_polygon([v_1_last, v_15])
+    j_2 = make_polygon([v_15, v_2_first])
     j_wire_1 = BluemiraWire([wire_1, j_1], label=wire_1.label)
     j_wire_2 = BluemiraWire([j_2, wire_2], label=wire_2.label)
 
     return j_wire_1, j_wire_2
 
 
-def _intersect_point_tangent(v_1, t_1, v_2, t_2):
-    from ._deprecated_tools import vector_intersect
+from bluemira.base.constants import EPS
 
-    return vector_intersect(v_1 - t_1, v_1, v_2, v_2 + t_2)
+
+def _intersect_line_line(p_1, p_2, p_3, p_4):
+    """
+    Notes
+    -----
+    Credit: Paul Bourke at http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline3d/
+    """
+    p_13 = p_1 - p_3
+    p_43 = p_4 - p_3
+
+    if np.linalg.norm(p_13) < EPS:
+        raise GeometryError("No intersection between 3-D lines.")
+    p_21 = p_2 - p_1
+    if np.linalg.norm(p_21) < EPS:
+        raise GeometryError("No intersection between 3-D lines.")
+
+    d1343 = np.dot(p_13, p_43)
+    d4321 = np.dot(p_43, p_21)
+    d1321 = np.dot(p_13, p_21)
+    d4343 = np.dot(p_43, p_43)
+    d2121 = np.dot(p_21, p_21)
+
+    denom = d2121 * d4343 - d4321 * d4321
+
+    if np.abs(denom) < EPS:
+        raise GeometryError("No intersection between 3-D lines.")
+
+    numer = d1343 * d4321 - d1321 * d4343
+
+    mua = numer / denom
+    intersection = p_1 + mua * p_21
+    return intersection
 
 
 # # =============================================================================

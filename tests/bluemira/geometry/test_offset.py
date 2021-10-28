@@ -21,6 +21,7 @@
 
 import numpy as np
 
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.tools import make_polygon, offset_wire
 from bluemira.geometry.parameterisations import (
     PrincetonD,
@@ -66,3 +67,34 @@ class TestOffset:
         for wire in self.all_wires:
             new_wire = offset_wire(wire, 0.0, by_sub_wires=True, label="new")
             assert np.isclose(wire.length, new_wire.length)
+
+    def test_orientation(self):
+        for wire in self.all_wires:
+            new_wire = offset_wire(wire, 1.0, by_sub_wires=False)
+            assert new_wire.length > wire.length
+
+    def test_1_offset(self):
+        o_rect = offset_wire(self.rect_wire, 0.25, join="intersect")
+        assert self.rect_wire.length == 4.0
+        assert o_rect.length == 6.0
+
+    def test_by_sub_wires(self):
+        rect = BluemiraWire(
+            [
+                make_polygon([[0, 0, 0], [2, 0, 0]], label="1"),
+                make_polygon([[2, 0, 0], [2, 0, 2]], label="2"),
+                make_polygon([[2, 0, 2], [0, 0, 2]], label="3"),
+                make_polygon([[0, 0, 2], [0, 0, 0]], label="4"),
+            ],
+            label="individual",
+        )
+        o = offset_wire(rect, 1.0, join="intersect", open_wire=False, by_sub_wires=True)
+
+        tri = BluemiraWire(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0]], label="1"),
+                make_polygon([[1, 0, 0], [0.5, 0, 0.5]], label="2"),
+                make_polygon([[0.5, 0, 0.5], [0, 0, 0]], label="3"),
+            ]
+        )
+        o = offset_wire(tri, 0.5, join="intersect", open_wire=False, by_sub_wires=True)
