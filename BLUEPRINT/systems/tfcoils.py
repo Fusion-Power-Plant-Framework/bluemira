@@ -90,6 +90,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'N/A', None, 'PROCESS'],
         ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input'],
         ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.8934, "m", None, "PROCESS"],
+        ['h_tf_min_in', 'Plasma side TF coil min height', -6.5, 'm', None, 'PROCESS'],
     ]
     # fmt: on
     CADConstructor = TFCoilCAD
@@ -345,15 +346,29 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.adjust_xo("r_c", value=0.5)
             self.shp.remove_oppvar("r_c")
 
-            # Central column top z-coordinate
+            # Central column top and bottom z-coordinate
             z_mid_max = np.max(self.inputs["koz_loop"]["z"])
-            self.adjust_xo("z_mid", value=z_mid_max + 1e-3)
-            self.shp.remove_oppvar("z_mid")
+            z_mid_min = np.min(self.inputs["koz_loop"]["z"])
 
-            # Adjust bounds to fit problem
-            z_top = self.params.h_tf_max_in
-            self.adjust_xo("z_top", value=z_top + 1.0e-3)
-            self.shp.remove_oppvar("z_top")
+            z_top_val = (
+                z_mid_max + 1e-3
+                if self.params.h_tf_max_in == 0
+                else self.params.h_tf_max_in
+            )
+            z_bottom_val = (
+                z_mid_min - 1e-3
+                if self.params.h_tf_min_in == 0
+                else self.params.h_tf_min_in
+            )
+            adjustments = {
+                "z_mid_up": z_mid_max + 1e-3,
+                "z_mid_down": z_mid_min - 1e-3,
+                "z_top": z_top_val,
+                "z_bottom": z_bottom_val,
+            }
+            for key, value in adjustments.items():
+                self.adjust_xo(key, value=value)
+                self.shp.remove_oppvar(key)
 
             # Outboard leg position (ripple optimization variable)
             xmax = np.max(self.inputs["koz_loop"]["x"])
@@ -1605,8 +1620,8 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             # SC coils
             r_cp = self.params.r_tf_in + self.params.tk_tf_inboard
 
-        z_max = np.max(self.loops["out"]["z"])
-        x_max = np.max(self.loops["out"]["x"])
+        z_max = np.max(np.abs(self.loops["out"]["z"]))
+        x_max = np.max(np.abs(self.loops["out"]["x"]))
         TF_depth_at_r_cp = self.section["winding_pack"]["depth"]
 
         # Make a Loop to cut the outer section of the TF coil to
