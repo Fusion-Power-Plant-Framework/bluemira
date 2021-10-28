@@ -1535,7 +1535,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 zmax=zmax_in,
             )
             # TODO: Find a more general variable for zmax_in when available
-            zmax_in = np.max(tapered_cp_in_temp.z) - tk_case_ob
+            zmax_in = np.max(tapered_cp_in_temp.z) - tk_case_ib
             zmax_out = zmax_in + self.section["case"]["WP"] + tk_case_ob + tk_case_ib
 
             case_out = self.correct_inboard_corners(case_out, correct_l, zmax=zmax_out)
