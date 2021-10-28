@@ -26,6 +26,7 @@ Useful functions for bluemira geometries.
 from operator import sub
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.error import GeometryError
+from bluemira.base.look_and_feel import bluemira_warn
 from . import _freecadapi
 
 # import bluemira geometries
@@ -246,6 +247,18 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
+def _get_wire_vertexes(wire):
+    vertexes = []
+    for i, sub_wire in enumerate(wire._boundary):
+        if i == 0:
+            vertexes.append(sub_wire._shape.Edges[0].Vertexes[0])
+        vertexes.append(sub_wire._shape.Edges[-1].Vertexes[-1])
+
+    if wire.is_closed:
+        vertexes.append(vertexes[0])
+    return vertexes
+
+
 def _wire_is_straight(wire):
     if len(wire._shape.Edges) == 1:
         edge = wire._shape.Edges[0]
@@ -256,12 +269,12 @@ def _wire_is_straight(wire):
     return False
 
 
-def _vertexes_coincident(vertex_1, vertex_2):
+def _vertexes_coincident(vertex_1, vertex_2, atol=1e-6):
     return np.allclose(
         [vertex_1.X, vertex_1.Y, vertex_1.Z],
         [vertex_2.X, vertex_2.Y, vertex_2.Z],
         rtol=0,
-        atol=1e-9,
+        atol=atol,
     )
 
 
@@ -289,9 +302,10 @@ def _offset_straight_line(sub_wire, thickness, label=""):
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
-    join: str = "arc",
+    join: str = "intersect",
     open_wire: bool = True,
-    label="",
+    label: str = "",
+    by_sub_wires: bool = False,
 ) -> BluemiraWire:
     """
     Make a planar offset from a planar wire.
@@ -308,13 +322,15 @@ def offset_wire(
         For open wires (counter-clockwise default) whether or not to make an open offset
         wire, or a closed offset wire that encompasses the original wire. This is
         disabled for closed wires.
+    by_sub_wires: bool
+        Whether or not to offset the wire by its sub-wires and preserve labelling
 
     Returns
     -------
     wire: BluemiraWire
         Offset wire
     """
-    thickness *= -1
+    thickness *= -1  # FreeCAD apparently has a clockwise convention...
     if len(wire._boundary) == 1:
         if _wire_is_straight(wire):
             raise GeometryError("Cannot offset a straight line...")
@@ -323,7 +339,12 @@ def offset_wire(
             _freecadapi.offset_wire(wire._shape, thickness, join, open_wire), label=""
         )
 
-    # Treat sub-wires separately and preserve labelling
+    if not by_sub_wires:
+        return BluemiraWire(
+            _freecadapi.offset_wire(wire._shape, thickness, join, open_wire), label=""
+        )
+
+    # Treat sub-wires separately and propagate labelling
     o_wires = []
     for sub_wire in wire._boundary:
         if _wire_is_straight(sub_wire):
@@ -340,20 +361,72 @@ def offset_wire(
 
         o_wires.append(o_wire)
 
-    # Manually apply joining if the sub_wires were not tangent to one another...
-    for i, w in enumerate(o_wires[:-1]):
-        if not _wires_consecutive(w, o_wires[i + 1]):
-            # Apply joining procedures
-            print("wires not consecutive")
-            pass
+    o_wires = _apply_joining(wire, o_wires, thickness, join, open_wire)
+
+    return BluemiraWire(o_wires, label=label)
+
+
+def _apply_joining(wire, o_wires, thickness, join, open_wire):
+    # Select the joining strategy
+    if join == "arc":
+        f_join = _join_arc
+    elif join == "intersect":
+        f_join = _join_intersect
+    else:
+        raise GeometryError(
+            f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
+        )
+    primary_vertexes = _get_wire_vertexes(wire)
 
     if wire.is_closed:
-        if not _wires_consecutive(o_wires[-1], o_wires[0]):
-            # Treat closure
-            print("closing wires not consecutive")
-            pass
+        o_wires.append(o_wires[0])
 
-    return o_wires  # BluemiraWire(o_wires, label=label)
+    # Manually apply joining if the sub_wires were not tangent to one another...
+    for i, o_sub_wire in enumerate(o_wires[:-1]):
+        if not _wires_consecutive(o_sub_wire, o_wires[i + 1]):
+
+            # Case 1: Tangent but not "consecutive" => "heal" point precision
+
+            # Case 2: Not tangent, insert join (arc or intersection)
+            j_wire_1, j_wire_2 = f_join(
+                o_sub_wire, o_wires[i + 1], primary_vertexes[i], thickness
+            )
+            # Replace wires with their joiners
+            o_wires[i] = j_wire_1
+            o_wires[i + 1] = j_wire_2
+
+    if wire.is_closed:
+        o_wires[0] = o_wires[-1]
+        o_wires.pop()
+
+    return o_wires
+
+
+def _join_arc(wire_1, wire_2, primary_vertex, thickness):
+    raise NotImplementedError
+
+
+def _join_intersect(wire_1, wire_2, primary_vertex, thickness):
+    w_1_last = wire_1._shape.Edges[-1]
+    v_1_last = w_1_last.Vertexes[-1]
+    t_1 = w_1_last.tangentAt(w_1_last.Length)
+    w_2_first = wire_2._shape.Edges[0]
+    v_2_first = w_2_first.Vertexes[0]
+    t_2 = w_2_first.tangentAt(0)
+    v_15 = _intersect_point_tangent(v_1_last, t_1, v_2_first, t_2)
+
+    j_1 = make_polygon([[v_1_last.X, v_1_last.Y, v_1_last.Z], v_15])
+    j_2 = make_polygon([v_15, [v_2_first.X, v_2_first.Y, v_2_first.Z]])
+    j_wire_1 = BluemiraWire([wire_1, j_1], label=wire_1.label)
+    j_wire_2 = BluemiraWire([j_2, wire_2], label=wire_2.label)
+
+    return j_wire_1, j_wire_2
+
+
+def _intersect_point_tangent(v_1, t_1, v_2, t_2):
+    from ._deprecated_tools import vector_intersect
+
+    return vector_intersect(v_1 - t_1, v_1, v_2, v_2 + t_2)
 
 
 # # =============================================================================

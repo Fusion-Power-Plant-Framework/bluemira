@@ -317,7 +317,7 @@ def make_ellipse(
 
 
 def offset_wire(
-    wire: Part.Wire, thickness: float, join: str = "arc", open_wire: bool = True
+    wire: Part.Wire, thickness: float, join: str = "intersect", open_wire: bool = True
 ) -> Part.Wire:
     """
     Make an offset from a wire.
@@ -351,7 +351,7 @@ def offset_wire(
         f_join = 2
     else:
         raise GeometryError(
-            f"Unrecognised join value: {join}. Please choose from ['arc', 'tangent', 'intersect']."
+            f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
         )
 
     shape = Part.Shape(wire)
