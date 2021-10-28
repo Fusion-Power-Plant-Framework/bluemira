@@ -1634,7 +1634,8 @@ class CoilsetOptimiser:
         Returns
         -------
         coilset_state: np.array
-            State vector containing substate (position and current) information for each coil.
+            State vector containing substate (position and current)
+            information for each coil.
         substates: int
             Number of substates (blocks) in the state vector.
         """
@@ -1675,6 +1676,7 @@ class CoilsetOptimiser:
             Tuple containing lower and upper bounds on the vertical coil positions.
         current_bounds: tuple
             Tuple containing bounds on the coil currents.
+
         Returns
         -------
         opt: nlopt.opt
