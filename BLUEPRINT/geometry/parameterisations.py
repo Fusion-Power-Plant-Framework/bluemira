@@ -1033,6 +1033,9 @@ class CurvedPictureFrame(Parameterisation):
     def domed_leg(
         x, x_out, x_curve_start, x_mid, z, z_top, z_mid, npoints, flip=False, *, r_c=0
     ):
+        """
+        Makes smooth dome for CP coils
+        """
         # If top leg is domed
         # Define basic Top Curve (with no joint or corner transitions)
         r_j = min(x_curve_start - x_mid, 0.8)
