@@ -875,7 +875,7 @@ def curved_picture_frame(
         z_height of straight part of coil bottom leg
     z_top: float
         max height of top legs [m]
-    z_top: float
+    z_bottom: float
         max height of bottom legs [m]
     r_c: float
         radius of corner/transitioning curves [m]
