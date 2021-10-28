@@ -350,25 +350,12 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             z_mid_max = np.max(self.inputs["koz_loop"]["z"])
             z_mid_min = np.min(self.inputs["koz_loop"]["z"])
 
-            self.adjust_xo("z_mid_up", value=z_mid_max + 1e-3)
-            self.shp.remove_oppvar("z_mid_up")
-            self.adjust_xo("z_mid_down", value=z_mid_min - 1e-3)
-            self.shp.remove_oppvar("z_mid_down")
-
-            if self.params.h_tf_max_in == 0:
-                z_top = z_mid_max + 1e-3
-            else:
-                z_top = self.params.h_tf_max_in
-            self.adjust_xo("z_top", value=z_top)
-            self.shp.remove_oppvar("z_top")
-
-            if self.params.h_tf_min_in == 0:
-                z_bottom = z_mid_min - 1e-3
-            else:
-                z_bottom = self.params.h_tf_min_in
-
-            self.adjust_xo("z_bottom", value=z_bottom)
-            self.shp.remove_oppvar("z_bottom")
+            z_top_val = z_mid_max + 1e-3 if self.params.h_tf_max_in == 0 else self.params.h_tf_max_in
+            z_bottom_val = ...
+            adjustments ={ "z_mid_up": z_mid_max + 1e-3, "z_mid_down": z_mid_min - 1e-3, "z_top": z_top_val, "z_bottom": z_bottom_val}
+            for key, value in adjustments.items(): 
+                self.adjust_xo(key, value=value)
+                self.shp.remove_oppvar(key)
 
             # Outboard leg position (ripple optimization variable)
             xmax = np.max(self.inputs["koz_loop"]["x"])
