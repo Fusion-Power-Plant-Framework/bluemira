@@ -350,10 +350,23 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             z_mid_max = np.max(self.inputs["koz_loop"]["z"])
             z_mid_min = np.min(self.inputs["koz_loop"]["z"])
 
-            z_top_val = z_mid_max + 1e-3 if self.params.h_tf_max_in == 0 else self.params.h_tf_max_in
-            z_bottom_val = ...
-            adjustments ={ "z_mid_up": z_mid_max + 1e-3, "z_mid_down": z_mid_min - 1e-3, "z_top": z_top_val, "z_bottom": z_bottom_val}
-            for key, value in adjustments.items(): 
+            z_top_val = (
+                z_mid_max + 1e-3
+                if self.params.h_tf_max_in == 0
+                else self.params.h_tf_max_in
+            )
+            z_bottom_val = (
+                z_mid_min - 1e-3
+                if self.params.h_tf_min_in == 0
+                else self.params.h_tf_min_in
+            )
+            adjustments = {
+                "z_mid_up": z_mid_max + 1e-3,
+                "z_mid_down": z_mid_min - 1e-3,
+                "z_top": z_top_val,
+                "z_bottom": z_bottom_val,
+            }
+            for key, value in adjustments.items():
                 self.adjust_xo(key, value=value)
                 self.shp.remove_oppvar(key)
 
