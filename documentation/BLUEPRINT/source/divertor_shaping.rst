@@ -11,10 +11,10 @@ While the first wall profile is shaped (``FirstWall`` class), via iterations,
 to minimise the heat flux onto the surfaces, and hence downstream of a heat 
 flux calculation (``FluxSurface`` class), the divertor profile shaping can be 
 seen as a geometrical optimisation. Such optimisation is obtained via external 
-geometrical inputs, and according the equilibrium configuraion. Specifically, 
+geometrical inputs, and the according equilibrium configuraion. Specifically, 
 separatrix and flux lines in the divertor region. 
-First wall profile and divertor profile are two different grometries that need 
-to be "attached". The shared border between the two geometries, along whichh they
+First wall profile and divertor profile are two different geometries that need 
+to be "attached". The shared border between the two geometries, along which they
 will be attached, is a xz plane passing through the x-point(s). Thus, the 
 first wall profile is extended until the x-point, and the divertor profile starts 
 from the x-point.
