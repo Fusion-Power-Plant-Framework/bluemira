@@ -23,7 +23,9 @@
 Useful functions for bluemira geometries.
 """
 # import from freecadapi
+from operator import sub
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.error import GeometryError
 from . import _freecadapi
 
 # import bluemira geometries
@@ -244,6 +246,46 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
+def _wire_is_straight(wire):
+    if len(wire._shape.Edges) == 1:
+        edge = wire._shape.Edges[0]
+        if len(edge.Vertexes) == 2:
+            straight = _freecadapi.dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
+            if np.isclose(straight, wire.length, rtol=0, atol=1e-8):
+                return True
+    return False
+
+
+def _vertexes_coincident(vertex_1, vertex_2):
+    return np.allclose(
+        [vertex_1.X, vertex_1.Y, vertex_1.Z],
+        [vertex_2.X, vertex_2.Y, vertex_2.Z],
+        rtol=0,
+        atol=1e-9,
+    )
+
+
+def _wires_consecutive(wire_1, wire_2):
+    return _vertexes_coincident(
+        wire_1._shape.Edges[-1].Vertexes[-1], wire_2._shape.Edges[0].Vertexes[0]
+    )
+
+
+def _offset_straight_line(sub_wire, thickness, label=""):
+    edge = sub_wire._shape.Edges[0]
+    v1 = edge.Vertexes[0]
+    v2 = edge.Vertexes[1]
+
+    v_line = np.array([v2.X - v1.X, v2.Y - v1.Y, v2.Z - v1.Z])
+    # CCW convention
+    # For now, assume we are working in x-z plane
+    n_hat = np.array([-v_line[2], 0, v_line[0]])
+    n_hat = n_hat / np.linalg.norm(n_hat)
+    v1_o = np.array([v1.X, v1.Y, v1.Z]) + thickness * n_hat
+    v2_o = np.array([v2.X, v2.Y, v2.Z]) + thickness * n_hat
+    return make_polygon([v1_o, v2_o], label=label)
+
+
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
@@ -252,7 +294,7 @@ def offset_wire(
     label="",
 ) -> BluemiraWire:
     """
-    Make an offset from a wire.
+    Make a planar offset from a planar wire.
 
     Parameters
     ----------
@@ -272,14 +314,46 @@ def offset_wire(
     wire: BluemiraWire
         Offset wire
     """
+    thickness *= -1
     if len(wire._boundary) == 1:
+        if _wire_is_straight(wire):
+            raise GeometryError("Cannot offset a straight line...")
+
         return BluemiraWire(
             _freecadapi.offset_wire(wire._shape, thickness, join, open_wire), label=""
         )
 
     # Treat sub-wires separately and preserve labelling
+    o_wires = []
+    for sub_wire in wire._boundary:
+        if _wire_is_straight(sub_wire):
 
-    return
+            o_wire = _offset_straight_line(sub_wire, thickness, label=sub_wire.label)
+
+        else:
+            o_wire = BluemiraWire(
+                _freecadapi.offset_wire(
+                    sub_wire._shape, thickness, join, open_wire=True
+                ),
+                label=sub_wire.label,
+            )
+
+        o_wires.append(o_wire)
+
+    # Manually apply joining if the sub_wires were not tangent to one another...
+    for i, w in enumerate(o_wires[:-1]):
+        if not _wires_consecutive(w, o_wires[i + 1]):
+            # Apply joining procedures
+            print("wires not consecutive")
+            pass
+
+    if wire.is_closed:
+        if not _wires_consecutive(o_wires[-1], o_wires[0]):
+            # Treat closure
+            print("closing wires not consecutive")
+            pass
+
+    return o_wires  # BluemiraWire(o_wires, label=label)
 
 
 # # =============================================================================
