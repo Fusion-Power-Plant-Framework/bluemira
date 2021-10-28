@@ -80,7 +80,7 @@ between near and far scrape off layer:
    
    q_{p,u}(r_u) = \dfrac{P_{SOL,n}e^{-r_u/\lambda_n}}{2 \pi R(r_u)\lambda_n} + \dfrac{P_{SOL,f}e^{-r_u/\lambda_f}}{2 \pi R(r_u)\lambda_f}
 
-At the OMP, the heat flux parallel to the magnetic field :math:`q_{\parallel,u}` and that parallel to 
+At the OMP, the heat flux parallel to the magnetic field :math:`q_{\parallel,u}` and parallel to 
 the poloidal component of the field :math:`q_{p,u}` are related by :math:`q_{\parallel,u} = q_{p,u}(B_{tot,u}/B_{p,u)}`.
 
 To compute the heat flux at the target location, one must consider that each poloidal 
