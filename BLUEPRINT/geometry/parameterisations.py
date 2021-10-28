@@ -963,56 +963,9 @@ def curved_picture_frame(
 
     if z_top > (z_mid_up + 0.01):
         # If top leg is domed
-        # Define basic Top Curve (with no joint or corner transitions)
-        r_j = min(x_curve_start - x_mid, 0.8)
-        alpha = np.arctan(0.5 * (x_out - x_curve_start) / (z_top - z_mid_up))
-        theta_leg_basic = 2 * (np.pi - 2 * alpha)
-        r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
-        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_top - r_leg)
-
-        # Transitioning Curve
-        r_c = 0
-        sin_a = np.sin(theta_leg_basic / 2)
-        cos_a = np.cos(theta_leg_basic / 2)
-        alpha_leg = (
-            np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
+        x, z = CurvedPictureFrame.domed_leg(
+            x, x_out, x_curve_start, x_mid, z, z_top, z_mid_up, npoints, flip=False
         )
-
-        # Joint Curve
-        theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
-        joint_curve_centre = (
-            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
-            z_mid_up + r_j,
-        )
-
-        theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
-
-        x_c_j, z_c_j = circle_seg(
-            r_j,
-            h=joint_curve_centre,
-            angle=np.rad2deg(theta_j),
-            start=-90,
-            npoints=int(npoints * 0.1),
-        )
-
-        x_c_l, z_c_l = circle_seg(
-            r_leg,
-            h=leg_centre,
-            angle=-np.rad2deg(theta_leg_final),
-            start=90 + np.rad2deg(theta_j),
-            npoints=int(npoints * 0.2),
-        )
-        x = np.append(x, x_c_j)
-        z = np.append(z, z_c_j)
-
-        x = np.append(x, x_c_l)
-        z = np.append(z, z_c_l)
-
-        # Outer leg
-        npts = 2
-        x = np.append(x, x_out * np.ones(npts))
-        z = np.append(z, np.linspace(z_mid_up, z_mid_down, npts))
-
     else:
         # If top leg is flat
         r_c = min(x_curve_start - x_mid, 0.8)
@@ -1024,59 +977,15 @@ def curved_picture_frame(
         )
         x = np.append(x, x_c)
         z = np.append(z, z_c)
-
-        # Outer leg
-        npts = 2
-        x = np.append(x, x_out)
-        z = np.append(z, z_mid_down)
-
+    # Outer leg
+    npts = 2
+    x = np.append(x, x_out)
+    z = np.append(z, z_mid_down)
     if z_bottom < (z_mid_down - 0.01):
         # Domed bottom leg
-        # Define basic bottom Curve (with no joint or corner transitions)
-        r_j = min(x_curve_start - x_mid, 0.8)
-        alpha = np.arctan(0.5 * (x_out - x_curve_start) / -(z_bottom - z_mid_down))
-        theta_leg_basic = 2 * (np.pi - 2 * alpha)
-        r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
-        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_bottom + r_leg)
-
-        # Transitioning Curve
-        r_c = 0
-        sin_a = np.sin(theta_leg_basic / 2)
-        cos_a = np.cos(theta_leg_basic / 2)
-        alpha_leg = (
-            np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
+        x, z = CurvedPictureFrame.domed_leg(
+            x, x_out, x_curve_start, x_mid, z, z_bottom, z_mid_down, npoints, flip=True
         )
-
-        # Joint Curve
-        theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
-        joint_curve_centre = (
-            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
-            z_mid_down - r_j,
-        )
-
-        theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
-
-        x_c_j, z_c_j = circle_seg(
-            r_j,
-            h=joint_curve_centre,
-            angle=-np.rad2deg(theta_j),
-            start=90,
-            npoints=int(npoints * 0.1),
-        )
-
-        x_c_l, z_c_l = circle_seg(
-            r_leg,
-            h=leg_centre,
-            angle=np.rad2deg(theta_leg_final),
-            start=-90 - np.rad2deg(theta_j),
-            npoints=int(npoints * 0.2),
-        )
-
-        x = np.append(x, np.flip(x_c_l))
-        z = np.append(z, np.flip(z_c_l))
-
-        x = np.append(x, np.flip(x_c_j))
-        z = np.append(z, np.flip(z_c_j))
     else:
         # flat bottom leg
         x = np.append(x, x_out - r_c)
@@ -1119,6 +1028,61 @@ class CurvedPictureFrame(Parameterisation):
         self.oppvar = list(self.xo.keys())
 
         self.segments = None
+
+    @staticmethod
+    def domed_leg(
+        x, x_out, x_curve_start, x_mid, z, z_top, z_mid, npoints, flip=False, *, r_c=0
+    ):
+        # If top leg is domed
+        # Define basic Top Curve (with no joint or corner transitions)
+        r_j = min(x_curve_start - x_mid, 0.8)
+        alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
+        theta_leg_basic = 2 * (np.pi - 2 * alpha)
+        r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
+        z_top_r_leg = z_top + r_leg if flip else z_top - r_leg
+        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_top_r_leg)
+        # Transitioning Curve
+        sin_a = np.sin(theta_leg_basic / 2)
+        cos_a = np.cos(theta_leg_basic / 2)
+        alpha_leg = (
+            np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
+        )
+        # Joint Curve
+        theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
+        z_mid_r_j = z_mid - r_j if flip else z_mid + r_j
+        joint_curve_centre = (
+            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
+            z_mid_r_j,
+        )
+        theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
+        x_c_j, z_c_j = circle_seg(
+            r_j,
+            h=joint_curve_centre,
+            angle=-np.rad2deg(theta_j) if flip else np.rad2deg(theta_j),
+            start=90 if flip else -90,
+            npoints=int(npoints * 0.1),
+        )
+        angle2 = np.rad2deg(theta_leg_final)
+        start2 = 90 + np.rad2deg(theta_j)
+        x_c_l, z_c_l = circle_seg(
+            r_leg,
+            h=leg_centre,
+            angle=angle2 if flip else -angle2,
+            start=-start2 if flip else start2,
+            npoints=int(npoints * 0.2),
+        )
+        if flip:
+            x = np.append(x, np.flip(x_c_l))
+            z = np.append(z, np.flip(z_c_l))
+            x = np.append(x, np.flip(x_c_j))
+            z = np.append(z, np.flip(z_c_j))
+        else:
+            x = np.append(x, x_c_j)
+            z = np.append(z, z_c_j)
+            x = np.append(x, x_c_l)
+            z = np.append(z, z_c_l)
+
+        return x, z
 
     def draw(self, **kwargs):
         # Draw the x, z points of the shape parameterisation
