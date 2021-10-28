@@ -1346,7 +1346,6 @@ class CoilsetOptimiser:
 
         # Used scale for optimiser RoundoffLimited Error prevention
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
-        self.flag_nonlinear = True
         self.rms = None
         self.rms_error = None
 
@@ -1367,6 +1366,22 @@ class CoilsetOptimiser:
         self.opt = self.set_up_optimiser(len(self.initial_state))
 
     def read_coilset_state(self, coilset):
+        """
+        Reads the input coilset and generates the state vector as an array to represent
+        it.
+
+        Parameters
+        ----------
+        coilset: Coilset
+            Coilset to be read into the state vector.
+
+        Returns
+        -------
+        coilset_state: np.array
+            State vector containing substate (position and current) information for each coil.
+        substates: int
+            Number of substates (blocks) in the state vector.
+        """
         substates = 3
         x = np.array([c.x for c in coilset.coils.values()])
         z = np.array([c.z for c in coilset.coils.values()])
@@ -1375,6 +1390,15 @@ class CoilsetOptimiser:
         return coilset_state, substates
 
     def set_coilset_state(self, coilset_state):
+        """
+        Set the optimiser coilset from a provided state vector.
+
+        Parameters
+        ----------
+        coilset_state: np.array
+            State vector representing degrees of freedom of the coilset,
+            to be used to update the coilset.
+        """
         x, z, currents = np.array_split(coilset_state, 3)
         for i, coil in enumerate(self.coilset.coils.values()):
             coil.x = x[i]
@@ -1382,6 +1406,24 @@ class CoilsetOptimiser:
             coil.set_current(currents[i] * self.scale)
 
     def set_state_bounds(self, opt, x_bounds, z_bounds, current_bounds):
+        """
+        Set bounds on the state vector from provided bounds on the substates.
+
+        Parameters
+        ----------
+        opt: nlopt.opt
+            Optimiser on which to set the bounds.
+        x_bounds: tuple
+            Tuple containing lower and upper bounds on the radial coil positions.
+        z_bounds: tuple
+            Tuple containing lower and upper bounds on the vertical coil positions.
+        current_bounds: tuple
+            Tuple containing bounds on the coil currents.
+        Returns
+        -------
+        opt: nlopt.opt
+            Optimiser updated in-place with bounds set.
+        """
         lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
         opt.set_lower_bounds(lower_bounds)
