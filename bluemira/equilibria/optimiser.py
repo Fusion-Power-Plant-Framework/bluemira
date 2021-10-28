@@ -1327,6 +1327,7 @@ class CoilsetOptimiser:
             "xtol_abs": 1e-1,
             "ftol_rel": 1e-1,
             "ftol_abs": 1e-1,
+            "maxeval": 10,
         },
     ):
         # noqa (N803)
@@ -1366,15 +1367,12 @@ class CoilsetOptimiser:
             coil.x = x[i]
             coil.z = z[i]
             coil.set_current(currents[i] * self.scale)
-        return self
 
     def set_state_bounds(self, opt, x_bounds, z_bounds, current_bounds):
         lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
         opt.set_lower_bounds(lower_bounds)
         opt.set_upper_bounds(upper_bounds)
-
-        opt.set_maxeval(20)
         return opt
 
     def update_current_constraint(self, max_currents):
@@ -1423,10 +1421,10 @@ class CoilsetOptimiser:
         opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
         opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
         opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
-        opt.set_maxeval(10)  # Pretty generic
+        opt.set_maxeval(self.opt_conditions["maxeval"])  # Pretty generic
         # Set state vector bounds (current limits)
-        x_bounds = (self.x0 - 0.5, self.x0 + 0.5)
-        z_bounds = (self.z0 - 0.5, self.z0 + 0.5)
+        x_bounds = (self.x0 - 2.0, self.x0 + 2.0)
+        z_bounds = (self.z0 - 2.0, self.z0 + 2.0)
         current_bounds = (
             -self.I_max * np.ones(len(self.I0)),
             self.I_max * np.ones(len(self.I0)),
@@ -1455,6 +1453,7 @@ class CoilsetOptimiser:
         self.rms = self.opt.last_optimum_value()
         # self._I_star = currents * self.scale
         process_NLOPT_result(self.opt)
+        print("Figure of merit: ", self.rms)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -1479,7 +1478,7 @@ class CoilsetOptimiser:
 
         # Update target
         self.eq._remap_greens()
-        self.eq.solve(self.eq._profiles)
+
         self.constraints(self.eq, I_not_dI=True, fixed_coils=False)
         self.A = self.constraints.A
         self.b = self.constraints.b
