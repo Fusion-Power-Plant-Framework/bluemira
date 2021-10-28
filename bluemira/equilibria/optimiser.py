@@ -1305,13 +1305,19 @@ class CoilsetOptimiser:
     ----------
     coilset: CoilSet
         Coilset used to get coil current limits and number of coils.
-    max_currents float or np.array(len(coilset._ccoils)) (default = None)
+    max_currents: float or np.array(len(coilset._ccoils)) (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
+    max_coil_shifts: dict
+        (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
+                  "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
+        Dict specifying maximum tolerable shifts for each coil from its initial
+        position during optimisation [m]. Shifts are specified as either
+        np.array(len(coilset._ccoils)) with the shift for each coil specified,
+        or as a float to apply to all coils.
     gamma: float (default = 1e-7)
         Tikhonov regularisation parameter.
-    opt_conditions: dict
     opt_conditions: dict
         (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
         Termination conditions to pass to the optimiser.
@@ -1321,6 +1327,12 @@ class CoilsetOptimiser:
         self,
         coilset,
         max_currents=None,
+        max_coil_shifts={
+            "x_shifts_lower": -1.0,
+            "x_shifts_upper": 1.0,
+            "z_shifts_lower": -1.0,
+            "z_shifts_upper": 1.0,
+        },
         gamma=1e-7,
         opt_conditions={
             "xtol_rel": 1e-1,
@@ -1346,6 +1358,7 @@ class CoilsetOptimiser:
             self.I_max = np.inf
         self.gamma = gamma
         self.opt_conditions = opt_conditions
+        self.max_coil_shifts = max_coil_shifts
 
         self.initial_state, self.substates = self.read_coilset_state(self.coilset)
         self.x0, self.z0, self.I0 = np.array_split(self.initial_state, self.substates)
@@ -1423,8 +1436,14 @@ class CoilsetOptimiser:
         opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
         opt.set_maxeval(self.opt_conditions["maxeval"])  # Pretty generic
         # Set state vector bounds (current limits)
-        x_bounds = (self.x0 - 2.0, self.x0 + 2.0)
-        z_bounds = (self.z0 - 2.0, self.z0 + 2.0)
+        x_bounds = (
+            self.x0 + self.max_coil_shifts["x_shifts_lower"],
+            self.x0 + self.max_coil_shifts["x_shifts_upper"],
+        )
+        z_bounds = (
+            self.z0 + self.max_coil_shifts["z_shifts_lower"],
+            self.z0 + self.max_coil_shifts["z_shifts_upper"],
+        )
         current_bounds = (
             -self.I_max * np.ones(len(self.I0)),
             self.I_max * np.ones(len(self.I0)),
