@@ -22,6 +22,7 @@
 Plotting module examples
 """
 
+# %%
 import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools
@@ -35,9 +36,16 @@ from bluemira.base._matplotlib_plot import (
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.face import BluemiraFace
 
+# %%[markdown]
+# ## Setup
+#
 # Creation of a closed wire and respective face
+#
 # PrincetonD parametrization is used as example.
+#
 # Note: the curve is generated into the xz plane
+
+# %%
 p = PrincetonD()
 p.adjust_variable("x1", 4, lower_bound=3, upper_bound=5)
 p.adjust_variable("x2", 16, lower_bound=10, upper_bound=20)
@@ -45,27 +53,46 @@ p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire = p.create_shape()
 face = BluemiraFace(wire)
 
+# %%[markdown]
+#
 # Discretize the wire
+
+# %%
 points = p.create_array(n_points=10).T
 
-# Simple plot of the obtained points
-# a PointsPlotter is created specifying size, edge and face colors.
+# %%[markdown]
+# ## Points Plot
+#
+# Simple plot of the obtained points.
+#
+# A PointsPlotter is created specifying size, edge and face colors.
+#
 # Note: 2D plot of points is always made on the first 2 coordinates. For this reason
-# the plot is shown as a points cloud on a line
-print("points plot")
+# the plot is shown as a cloud of points on a line
+
+# %%
 pplotter = PointsPlotter(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
 pplotter.plot2d(points, show=True, block=True)
 
-# Initial example for 3d scatter plot
+# %%[markdown]
+# ## 3D Scatter Plot
+#
+# A plot of the same points, but in 3D this time.
+
+# %%
 pplotter.plot3d(points, show=True, block=True)
 
-# Plot the wire
-# a WirePlotter is used with the default setup with:
+# %%[markdown]
+# ## Wire Plot
+#
+# A WirePlotter is used with the default setup with:
+#
 # - plane = xz (this is the projection plane, not a section plane)
 # - point size = 10
 # - ndiscr = 10
 # - plot title
-print("wire plot")
+
+# %%
 wplotter = WirePlotter(plane="xz")
 wplotter.options.poptions["s"] = 20
 wplotter.options.ndiscr = 5
@@ -74,11 +101,20 @@ wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options.ndiscr}")
 wplotter.show_plot2d()
 
 
-# Initial example for 3d curve plot
+# %%[markdown]
+# ## 3D Curve Plot
+#
+# A plot of the same wire, but in 3D this time.
+
+# %%
 wplotter.plot3d(wire, show=True, block=True)
 
+# %%[markdown]
+# ## Wire Plot with Matplotlib Default Options
+#
 # In this example poptions is set to an empty dict. The default matplotlib are used.
-print("wire plot other options")
+
+# %%
 wplotter.options.poptions = {}
 wplotter.plot2d(wire, show=True, block=True)
 # The plot is immediately shown, so it is not possible to act on the plot setup
@@ -86,18 +122,36 @@ wplotter.plot2d(wire, show=True, block=True)
 # wplotter.ax.set_title(f"Wire plot")
 # wplotter.show_plot()
 
-# Just disabling points plotting from now on modifying directly the DEFAULT
+# %%[markdown]
+# We'll disable plotting of points from now on by directly modifying the DEFAULT
 # dictionary. Not really a good pratice, but it is easy in this case.
+
+# %%
 bluemira.base._matplotlib_plot.DEFAULT["flag_points"] = False
 
-# Face plot
+# %%[markdown]
+# ## Face Plot
+#
+# A FacePlotter is used with the default setup with:
+#
+# - plane = xz (this is the projection plane, not a section plane)
+# - ndiscr = 30
+# - plot title
+
+# %%
 fplotter = FacePlotter(plane="xz")
 fplotter.options.ndiscr = 30
 fplotter.plot2d(face, show=False, block=True)
 fplotter.ax.set_title("Face plot without points")
 fplotter.show_plot2d()
 
-# Face plot - points enabled - just to check
+# %%[markdown]
+# ## Face Plot with Points Enabled
+#
+# We've set the points to be disabled by default, but we can activate them again for
+# individual plotters.
+
+# %%
 fplotter = FacePlotter(plane="xz")
 fplotter.options.ndiscr = 30
 fplotter.options.flag_points = True
@@ -105,7 +159,12 @@ fplotter.plot2d(face, show=False, block=True)
 fplotter.ax.set_title("Face plot with points")
 fplotter.show_plot2d()
 
-# A second geometry is created (it contains the first face)
+# %%[markdown]
+# ## Make a Second Face
+#
+# A second geometry is created, surrounding our original face.
+
+# %%
 p2 = PrincetonD()
 p2.adjust_variable("x1", 3.5, lower_bound=3, upper_bound=5)
 p2.adjust_variable("x2", 17, lower_bound=10, upper_bound=20)
@@ -113,9 +172,13 @@ p2.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire2 = p2.create_shape()
 face2 = BluemiraFace(wire2)
 
+# %%[markdown]
+# ## Combined Face Plot
+#
 # Face and face2 are plotted using the same FacePlotter. Since no plot options have
 # been changed, the two faces will be plotted in the same way (e.g. same color).
-# Note: internal points are not plotted 'cause they are covered by fill plot.
+
+# %%
 fplotter2 = FacePlotter(plane="xz")
 fplotter2.options.flag_points = True
 fplotter2.options.foptions = {"color": "blue"}
@@ -125,8 +188,14 @@ fplotter2.ax.set_title("Both faces in blue")
 fplotter2.show_plot2d()
 print(f"fplotter2.options: {fplotter2.options.as_dict()}")
 
-# Plot both face with different color.
+# %%[markdown]
+# ## Combined Face Plot with Different Colours
+#
+# Plot both face with different colour.
+#
 # Note: if face is plotted before face2, face2 will be "covered" by face.
+
+# %%
 fplotter2.options.foptions = {"color": "blue"}
 fplotter2.plot2d(face2, show=False, block=True)
 fplotter2.options.foptions = {"color": "green"}
@@ -134,13 +203,19 @@ fplotter2.plot2d(face, ax=fplotter2.ax, show=False, block=True)
 fplotter2.ax.set_title("Both faces with different colors")
 fplotter2.show_plot2d()
 
+# %%[markdown]
+# ## Face with Hole
+#
 # A third face is create as difference between face and face2 (a BluemiraFace object
-# has been created using wire2 as outer boundary and wire as inner boundary
+# has been created using wire2 as outer boundary and wire as inner boundary).
+#
 # Note:
 # - when plotting points, it can happen that markers are not centred properly as
 #       described in https://github.com/matplotlib/matplotlib/issues/11836
 # - face3 is created with a wire deepcopy in order to be able to modify face and face2
 # (and thus wire and wire2) without modifying face3
+
+# %%
 face3 = BluemiraFace([wire2.deepcopy(), wire.deepcopy()])
 fplotter3 = FacePlotter(plane="xz")
 fplotter3.options.flag_points = True
@@ -149,11 +224,17 @@ fplotter3.ax.set_title("Face with hole - points enabled")
 fplotter3.show_plot2d()
 
 fplotter3.options.foptions["color"] = "blue"
+fplotter3.options.flag_points = False
 fplotter3.plot2d(face3, ax=None)
 fplotter3.ax.set_title("Face with hole - points disabled - blue")
 fplotter3.show_plot2d()
 
-# Some operations on face
+# %%[markdown]
+# ## Perform Some Face Operations
+#
+# Scale and move our face
+
+# %%
 bari = face.center_of_mass
 face.scale(0.5)
 new_bari = face.center_of_mass
@@ -161,8 +242,12 @@ diff = bari - new_bari
 v = (diff[0], diff[1], diff[2])
 face.translate(v)
 
-# Creation of a face compound plotter
-# color test with palettes
+# %%[markdown]
+# ## Face Compound Plotter
+#
+# Creation of a face compound plotters using the Blues_r and single colour palettes.
+
+# %%
 cplotter = FaceCompoundPlotter(palette="Blues_r")
 cplotter.set_plane("xz")
 cplotter.plot2d([face3, face])
@@ -174,6 +259,12 @@ cplotter.plot2d([face3, face])
 cplotter.ax.set_title("Compound plot - test with single color light:#105ba4")
 cplotter.show_plot2d()
 
+# %%[markdown]
+# ## Wires and Faces
+#
+# Create and plot a couple of Wires and then create and plot the corresponding Faces.
+
+# %%
 points = [[0, 0, 0], [1, 0, 0], [1, 0, 3], [0, 0, 3]]
 wire = bluemira.geometry.tools.make_polygon(points, closed=True)
 wire1 = wire.deepcopy()
@@ -181,6 +272,7 @@ wire1.translate((3, 0, 5))
 wplotter.plot2d(wire, show=False, block=False)
 wplotter.ax.set_title("wire")
 wplotter.show_plot2d()
+
 wplotter.plot2d(wire1, show=False, block=False)
 wplotter.ax.set_title("wire1")
 wplotter.show_plot2d()
@@ -188,11 +280,17 @@ wplotter.show_plot2d()
 wface = BluemiraFace(wire)
 w1face = BluemiraFace(wire1)
 cplotter.plot2d([wface, w1face])
-cplotter.ax.set_title("test faces")
+cplotter.ax.set_title("faces")
 cplotter.show_plot2d()
 
-# Plot of faces boundary. Note that, since poptions = {}, points color is
-# automatically changed by matplotlib
+# %%[markdown]
+# ## Plots with Matplotlib Default Point Options
+#
+# Plot the points on a boundary of a face with matplotlib defaults.
+#
+# Note that, since poptions = {}, points color is automatically changed by matplotlib.
+
+# %%
 wplotter.plot2d(wface.boundary[0])
 print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.plot2d(w1face.boundary[0], ax=wplotter.ax)
@@ -200,8 +298,14 @@ print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.ax.set_title("test boundary from faces - matplotlib default poptions")
 wplotter.show_plot2d()
 
-# Plot of faces boundary. Note that, since poptions = {}, points color is
-# automatically changed by matplotlib
+# %%[markdown]
+# ## Plot with Matplotlib Default Wire Options
+#
+# Plot the boundary of a face with matplotlib defaults.
+#
+# Note that, since woptions = {}, wire color is automatically changed by matplotlib
+
+# %%
 wplotter.options.woptions = {}
 wplotter.plot2d(wface.boundary[0])
 print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
@@ -212,7 +316,12 @@ wplotter.ax.set_title(
 )
 wplotter.show_plot2d()
 
-# Plot of a Component
+# %%[markdown]
+# ## PhysicalComponent Plot
+#
+# Creates a `PhysicalComponent` and plots it in the xz plane
+
+# %%
 c = PhysicalComponent("Comp", face)
 c.plot2d_options.plane = "xz"
 c.plot2d_options.ndiscr = 30
@@ -221,7 +330,12 @@ ax.set_title("test component plot")
 plt.gca().set_aspect("equal")
 plt.show(block=True)
 
-# Plot of a group of Components
+# %%[markdown]
+# ## GroupingComponent Plot
+#
+# Creates a `GroupingComponent` and plots it in the xz plane using matplotlib defaults.
+
+# %%
 bluemira.base._matplotlib_plot.DEFAULT["foptions"] = {}
 bluemira.base._matplotlib_plot.DEFAULT["woptions"] = {}
 group = GroupingComponent("Components")
@@ -230,7 +344,12 @@ c2 = PhysicalComponent("Comp2", wface, parent=group)
 c3 = PhysicalComponent("Comp3", w1face, parent=group)
 group.plot2d(show=True, block=True)
 
-# Combined plot of Component and BluemiraGeo instances
+# %%[markdown]
+# ## Component and BluemiraGeo Combined Plot
+#
+# Plots a component on the same axes as a BluemiraFace.
+
+# %%
 wplotter.options.woptions["color"] = "red"
 ax = wplotter.plot2d(wface.boundary[0])
 fplotter.options.foptions["color"] = "green"
@@ -241,10 +360,18 @@ ax.set_title("test component + bluemirageo plot")
 plt.gca().set_aspect("equal")
 plt.show(block=True)
 
-# Just a check that the options dict is modified correctly
-print(wplotter.options.as_dict())
-print(fplotter.options.as_dict())
-print(c.plot2d_options.as_dict())
+# %%[markdown]
+# Show the options from our combined plot
 
-# Plot CAD
+# %%
+print(f"wire plotter options: {wplotter.options.as_dict()}")
+print(f"face plotter options: {fplotter.options.as_dict()}")
+print(f"component plotter options: {c.plot2d_options.as_dict()}")
+
+# %%[markdown]
+# ## CAD Display
+#
+# Displays a GroupingComponent in a bluemira display window.
+
+# %%
 group.plotcad()
