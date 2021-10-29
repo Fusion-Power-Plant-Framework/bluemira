@@ -48,6 +48,7 @@ class BluemiraFace(BluemiraGeo):
     def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
+        self._create_face()
 
     @staticmethod
     def _converter(func):
@@ -107,11 +108,11 @@ class BluemiraFace(BluemiraGeo):
         return wires
 
     @classmethod
-    def _create(cls, obj: Part.Face) -> BluemiraFace:
+    def _create(cls, obj: Part.Face, label="") -> BluemiraFace:
         if isinstance(obj, Part.Face):
             bmwires = []
             for w in obj.Wires:
                 bmwires += [BluemiraWire(w)]
-            bmface = BluemiraFace(bmwires)
+            bmface = BluemiraFace(bmwires, label=label)
             return bmface
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")

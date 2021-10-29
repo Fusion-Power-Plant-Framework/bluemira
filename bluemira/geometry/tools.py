@@ -31,12 +31,28 @@ from .wire import BluemiraWire
 from .face import BluemiraFace
 from .shell import BluemiraShell
 from .solid import BluemiraSolid
+from .error import GeometryError
 
 # import mathematical modules
 import numpy as np
 
 # import typing
 from typing import Union
+
+
+def convert(apiobj, label=""):
+    """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
+    if isinstance(apiobj, _freecadapi.apiWire):
+        output = BluemiraWire(apiobj, label)
+    elif isinstance(apiobj, _freecadapi.apiFace):
+        output = BluemiraFace._create(apiobj, label)
+    elif isinstance(apiobj, _freecadapi.apiShell):
+        output = BluemiraShell._create(apiobj, label)
+    elif isinstance(apiobj, _freecadapi.apiSolid):
+        output = BluemiraSolid._create(apiobj, label)
+    else:
+        raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
+    return output
 
 
 # # =============================================================================
@@ -360,3 +376,93 @@ def save_as_STEP(shapes, filename="test", scale=1):
 
     freecad_shapes = [s._shape for s in shapes]
     _freecadapi.save_as_STEP(freecad_shapes, filename, scale)
+
+
+# # =============================================================================
+# # Boolean operations
+# # =============================================================================
+def fuse(shapes, label=""):
+    """
+    Fuse two or more shapes together. Internal splitter are removed.
+
+    Parameters
+    ----------
+    shapes: Iterable (BluemiraGeo, ...)
+        List of shape objects to be saved
+    label: str
+        Label for the resulting shape
+
+    Returns
+    -------
+    merged_geo: BluemiraGeo
+        Result of the boolean operation.
+
+    Raises
+    ------
+    error: GeometryError
+        In case the boolean operation fails.
+    """
+    if isinstance(shapes, list):
+        if len(shapes) > 1:
+            # check that all the shapes are of the same time
+            _type = type(shapes[0])
+            check = all(isinstance(s, _type) for s in shapes)
+            api_shapes = [s._shape for s in shapes]
+            if check:
+                try:
+                    merged_shape = _freecadapi.fuse(api_shapes)
+                    _type = type(merged_shape)
+                    if _type in [_freecadapi.apiWire, _freecadapi.apiFace]:
+                        return convert(merged_shape, label)
+                    else:
+                        raise ValueError(
+                            f"Fuse function still not implemented for "
+                            f"{_type} instances."
+                        )
+                except Exception as e:
+                    raise GeometryError(f"Fuse operation fails. {e}")
+            else:
+                raise ValueError(f"All instances in {shapes} must be of the same type.")
+        else:
+            raise ValueError("At least 2 shapes must be given")
+    else:
+        raise ValueError(f"{shapes} is not a list.")
+
+
+def cut(shape, tools):
+    """
+    Difference of shape and a given (list of) topo shape cut(tools)
+
+    Parameters
+    ----------
+    shape: BluemiraGeo
+        the reference object
+    tools: Iterable
+        List of BluemiraGeo shape objects to be used as tools.
+
+    Returns
+    -------
+    cut_shape:
+        Result of the boolean operation.
+
+    Raises
+    ------
+    error: GeometryError
+        In case the boolean operation fails.
+    """
+    apishape = shape._shape
+    if not isinstance(tools, list):
+        tools = [tools]
+    apitools = [t._shape for t in tools]
+    cut_shape = _freecadapi.cut(apishape, apitools)
+
+    _type = type(cut_shape)
+    if _type == list:
+        output = [convert(obj, shape.label) for obj in cut_shape]
+        return output
+    elif _type in [_freecadapi.apiWire, _freecadapi.apiFace]:
+        return convert(cut_shape, shape.label)
+    else:
+        raise ValueError(
+            f"cut function still not implemented for " f"{_type} instances."
+        )

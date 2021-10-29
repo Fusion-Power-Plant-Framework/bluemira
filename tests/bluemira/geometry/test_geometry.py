@@ -21,6 +21,8 @@
 
 from bluemira.geometry.wire import BluemiraWire
 
+import bluemira.geometry.tools as tools
+
 from bluemira.geometry.tools import (
     make_polygon,
     make_ellipse,
@@ -136,3 +138,47 @@ class TestGeometry:
 
         assert wire_copy.label == "wire_copy"
         assert wire_deepcopy.label == "wire_deepcopy"
+
+    shapes = [
+        pytest.param(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+            ],
+            (2, False),
+            id="coincident",
+        ),
+        pytest.param(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
+                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            (4, True),
+            id="closed",
+        ),
+        pytest.param(
+            [
+                make_polygon(
+                    [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
+                ),
+                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            (4, True),
+            id="overlap",
+        ),
+        pytest.param(
+            [
+                make_polygon(
+                    [[0, 0, 0], [1, 0, 0], [-1, 1, 0]], label="wire1"
+                ),
+                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            (4, True),
+            id="intersection",
+        ),
+    ]
+
+    @pytest.mark.parametrize("test_input, expected", shapes)
+    def test_fuse(self, test_input, expected):
+        wire_fuse = tools.fuse(test_input)
+        assert (wire_fuse.length, wire_fuse.is_closed()) == expected
