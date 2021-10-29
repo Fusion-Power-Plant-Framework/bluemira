@@ -70,7 +70,7 @@ wplotter = WirePlotter(plane="xz")
 wplotter.options.poptions["s"] = 20
 wplotter.options.ndiscr = 5
 wplotter.plot2d(wire, show=False, block=True)
-wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options._options['ndiscr']}")
+wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options.ndiscr}")
 wplotter.show_plot2d()
 
 
@@ -148,7 +148,7 @@ fplotter3.plot2d(face3)
 fplotter3.ax.set_title("Face with hole - points enabled")
 fplotter3.show_plot2d()
 
-fplotter3.options._options["foptions"]["color"] = "blue"
+fplotter3.options.foptions["color"] = "blue"
 fplotter3.plot2d(face3, ax=None)
 fplotter3.ax.set_title("Face with hole - points disabled - blue")
 fplotter3.show_plot2d()
@@ -214,8 +214,8 @@ wplotter.show_plot2d()
 
 # Plot of a Component
 c = PhysicalComponent("Comp", face)
-c._plotter2d.options.plane = "xz"
-c._plotter2d.options.ndiscr = 30
+c.plot2d_options.plane = "xz"
+c.plot2d_options.ndiscr = 30
 ax = c.plot2d(show=False)
 ax.set_title("test component plot")
 plt.gca().set_aspect("equal")
