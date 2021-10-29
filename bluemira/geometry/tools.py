@@ -245,19 +245,6 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
-def _wire_is_straight(wire):
-    if len(wire._boundary) == 1:
-        if len(wire._shape.Edges) == 1:
-            edge = wire._shape.Edges[0]
-            if len(edge.Vertexes) == 2:
-                straight = _freecadapi.dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[
-                    0
-                ]
-                if np.isclose(straight, wire.length, rtol=0, atol=1e-8):
-                    return True
-    return False
-
-
 def offset_wire(
     wire: BluemiraWire,
     thickness: float,
@@ -286,45 +273,9 @@ def offset_wire(
     wire: BluemiraWire
         Offset wire
     """
-    if _wire_is_straight(wire):
-        raise GeometryError("Cannot offset a straight line...")
-
     return BluemiraWire(
         _freecadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
     )
-
-
-def _intersect_line_line(p_1, p_2, p_3, p_4):
-    """
-    Notes
-    -----
-    Credit: Paul Bourke at http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline3d/
-    """
-    p_13 = p_1 - p_3
-    p_43 = p_4 - p_3
-
-    if np.linalg.norm(p_13) < EPS:
-        raise GeometryError("No intersection between 3-D lines.")
-    p_21 = p_2 - p_1
-    if np.linalg.norm(p_21) < EPS:
-        raise GeometryError("No intersection between 3-D lines.")
-
-    d1343 = np.dot(p_13, p_43)
-    d4321 = np.dot(p_43, p_21)
-    d1321 = np.dot(p_13, p_21)
-    d4343 = np.dot(p_43, p_43)
-    d2121 = np.dot(p_21, p_21)
-
-    denom = d2121 * d4343 - d4321 * d4321
-
-    if np.abs(denom) < EPS:
-        raise GeometryError("No intersection between 3-D lines.")
-
-    numer = d1343 * d4321 - d1321 * d4343
-
-    mua = numer / denom
-    intersection = p_1 + mua * p_21
-    return intersection
 
 
 # # =============================================================================

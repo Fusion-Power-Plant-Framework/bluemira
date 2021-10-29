@@ -35,6 +35,7 @@ import math
 
 # import typing
 from typing import Union
+from bluemira.base.look_and_feel import bluemira_warn
 
 # import errors
 from bluemira.geometry.error import GeometryError
@@ -316,6 +317,27 @@ def make_ellipse(
     return Part.Wire(Part.Edge(output))
 
 
+def _wire_is_planar(wire):
+    """
+    Check if a wire is planar.
+    """
+    face = Part.Face(wire)
+    return isinstance(face.Surface, Part.Plane)
+
+
+def _wire_is_straight(wire):
+    """
+    Check if a wire is a straight line.
+    """
+    if len(wire.Edges) == 1:
+        edge = wire.Edges[0]
+        if len(edge.Vertexes) == 2:
+            straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
+            if np.isclose(straight, wire.length, rtol=0, atol=1e-8):
+                return True
+    return False
+
+
 def offset_wire(
     wire: Part.Wire, thickness: float, join: str = "intersect", open_wire: bool = True
 ) -> Part.Wire:
@@ -340,8 +362,14 @@ def offset_wire(
     wire: Part.Wire
         Offset wire
     """
+    if not _wire_is_planar(wire):
+        raise GeometryError("Cannot offset a non-planar wire.")
+
+    if _wire_is_straight(wire):
+        raise GeometryError("Cannot offset a straight line.")
+
     if wire.isClosed() and open_wire:
-        # Disable open_wire argument for closed wires
+        bluemira_warn(f"Offsetting a closed wire with {open_wire=}. Disabling this.")
         open_wire = False
 
     # NOTE: The "tangent": 1 option misbehaves in FreeCAD
@@ -355,7 +383,17 @@ def offset_wire(
         )
 
     shape = Part.Shape(wire)
-    return Part.Wire(shape.makeOffset2D(thickness, f_join, False, open_wire))
+    try:
+        wire = Part.Wire(shape.makeOffset2D(thickness, f_join, False, open_wire))
+    except Base.FreeCADError as error:
+        msg = "\n".join(
+            [
+                "FreeCAD was unable to make an offset of wire:",
+                f"{error.args[0]['sErrMsg']}",
+            ]
+        )
+        raise GeometryError(msg)
+    return wire
 
 
 # # =============================================================================

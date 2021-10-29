@@ -61,53 +61,25 @@ class TestOffset:
 
     def test_simple(self):
         for wire in self.all_wires:
-            new_wire = offset_wire(wire, 0.0, by_sub_wires=False, label="new")
+            new_wire = offset_wire(wire, 0.0, label="new")
             assert np.isclose(wire.length, new_wire.length)
+            assert new_wire.label == "new"
 
         for wire in self.all_wires:
-            new_wire = offset_wire(wire, 0.0, by_sub_wires=True, label="new")
+            new_wire = offset_wire(wire, 0.0, label="new")
             assert np.isclose(wire.length, new_wire.length)
+            assert new_wire.label == "new"
 
     def test_orientation(self):
         for wire in self.all_wires:
-            new_wire = offset_wire(wire, 1.0, by_sub_wires=False)
+            new_wire = offset_wire(wire, 1.0)
             assert new_wire.length > wire.length
+
+        for wire in self.all_wires:
+            new_wire = offset_wire(wire, -0.15)
+            assert new_wire.length < wire.length
 
     def test_1_offset(self):
         o_rect = offset_wire(self.rect_wire, 0.25, join="intersect")
         assert self.rect_wire.length == 4.0
         assert o_rect.length == 6.0
-
-    def test_by_sub_wires(self):
-        rect = BluemiraWire(
-            [
-                make_polygon([[0, 0, 0], [2, 0, 0]], label="1"),
-                make_polygon([[2, 0, 0], [2, 0, 2]], label="2"),
-                make_polygon([[2, 0, 2], [0, 0, 2]], label="3"),
-                make_polygon([[0, 0, 2], [0, 0, 0]], label="4"),
-            ],
-            label="individual",
-        )
-        o = offset_wire(rect, 0.25, join="intersect", open_wire=False, by_sub_wires=True)
-
-        assert o.length == 10.0
-        assert len(o._boundary) == 4
-        assert o._boundary[0].label == "1"
-        assert o._boundary[1].label == "2"
-        assert o._boundary[2].label == "3"
-        assert o._boundary[3].label == "4"
-
-        tri = BluemiraWire(
-            [
-                make_polygon([[0, 0, 0], [1, 0, 0]], label="1"),
-                make_polygon([[1, 0, 0], [0.5, 0, 0.5]], label="2"),
-                make_polygon([[0.5, 0, 0.5], [0, 0, 0]], label="3"),
-            ]
-        )
-        o = offset_wire(tri, 0.5, join="intersect", open_wire=False, by_sub_wires=True)
-
-        assert np.isclose(o.length, 2 * tri.length)
-        assert len(o._boundary) == 3
-        assert o._boundary[0].label == "1"
-        assert o._boundary[1].label == "2"
-        assert o._boundary[2].label == "3"
