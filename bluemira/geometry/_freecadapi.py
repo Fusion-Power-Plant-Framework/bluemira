@@ -321,7 +321,10 @@ def _wire_is_planar(wire):
     """
     Check if a wire is planar.
     """
-    face = Part.Face(wire)
+    try:
+        face = Part.Face(wire)
+    except Part.OCCError:
+        return False
     return isinstance(face.Surface, Part.Plane)
 
 
@@ -333,7 +336,7 @@ def _wire_is_straight(wire):
         edge = wire.Edges[0]
         if len(edge.Vertexes) == 2:
             straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
-            if np.isclose(straight, wire.length, rtol=0, atol=1e-8):
+            if np.isclose(straight, wire.Length, rtol=0, atol=1e-8):
                 return True
     return False
 
@@ -362,11 +365,11 @@ def offset_wire(
     wire: Part.Wire
         Offset wire
     """
-    if not _wire_is_planar(wire):
-        raise GeometryError("Cannot offset a non-planar wire.")
-
     if _wire_is_straight(wire):
         raise GeometryError("Cannot offset a straight line.")
+
+    if not _wire_is_planar(wire):
+        raise GeometryError("Cannot offset a non-planar wire.")
 
     if wire.isClosed() and open_wire:
         bluemira_warn(f"Offsetting a closed wire with {open_wire=}. Disabling this.")

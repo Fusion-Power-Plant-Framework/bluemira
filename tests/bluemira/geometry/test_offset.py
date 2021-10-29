@@ -20,8 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+import pytest
 
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_polygon, offset_wire
 from bluemira.geometry.parameterisations import (
     PrincetonD,
@@ -83,3 +84,18 @@ class TestOffset:
         o_rect = offset_wire(self.rect_wire, 0.25, join="intersect")
         assert self.rect_wire.length == 4.0
         assert o_rect.length == 6.0
+
+    def test_errors(self):
+        with pytest.raises(GeometryError):
+            offset_wire(self.rect_wire, 1.0, join="bad")
+
+    def test_straight_line(self):
+        straight = make_polygon([[0, 0, 0], [0, 0, 1]], label="straight_line")
+
+        with pytest.raises(GeometryError):
+            offset_wire(straight, 1.0)
+
+    def test_non_planar(self):
+        non_planar = make_polygon([[0, 0, 0], [1, 0, 0], [2, 0, 1], [3, 1, 1]])
+        with pytest.raises(GeometryError):
+            offset_wire(non_planar, 1.0)
