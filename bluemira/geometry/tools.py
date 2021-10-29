@@ -23,11 +23,8 @@
 Useful functions for bluemira geometries.
 """
 # import from freecadapi
-from operator import sub
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.error import GeometryError
-from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.plotting import plot_wire
 from . import _freecadapi
 
 # import bluemira geometries
