@@ -313,6 +313,35 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
     return bmsolid
 
 
+def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
+    """
+    Sweep a a set of profiles along a path.
+
+    Parameters
+    ----------
+    profiles: Iterable[BluemiraWire]
+        Set of profiles to sweep
+    path: BluemiraWire
+        Path along which to sweep the profiles
+    solid: bool
+        Whether or not to create a Solid
+    frenet: bool
+        If true, the orientation of the profile(s) is calculated based on local curvature
+        and tangency. For planar paths, should not make a difference.
+
+    Returns
+    -------
+    swept: Union[BluemiraSolid, BluemiraShell]
+        Swept geometry object
+    """
+    result = _freecadapi.sweep_shape(profiles, path, solid, frenet)
+
+    if solid:
+        return BluemiraSolid(result, label=label)
+    else:
+        return BluemiraShell(result, label=label)
+
+
 def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     """Calculate the distance between two BluemiraGeos.
 

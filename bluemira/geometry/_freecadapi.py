@@ -34,9 +34,10 @@ import numpy as np
 import math
 
 # import typing
-from typing import Union
+from typing import Iterable, Union
 
 # import errors
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError
 
 
@@ -680,6 +681,51 @@ def extrude_shape(shape, vec: tuple):
     """
     vec = Base.Vector(vec)
     return shape.extrude(vec)
+
+
+def sweep_shape(profiles, path, solid=True, frenet=True):
+    """
+    Sweep a a set of profiles along a path.
+
+    Parameters
+    ----------
+    profiles: Iterable[Part.Wire]
+        Set of profiles to sweep
+    path: Part.Wire
+        Path along which to sweep the profiles
+    solid: bool
+        Whether or not to create a Solid
+    frenet: bool
+        If true, the orientation of the profile(s) is calculated based on local curvature
+        and tangency. For planar paths, should not make a difference.
+
+    Returns
+    -------
+    swept: Union[Part.Solid, Part.Shell]
+        Swept geometry object
+    """
+    if not isinstance(profiles, Iterable):
+        profiles = [profiles]
+
+    closures = [p.isClosed for p in profiles]
+
+    if all(closures) or (not any(closures)):
+        raise GeometryError("You cannot mix open and closed profiles when sweeping.")
+
+    if (not any(closures)) and solid:
+        bluemira_warn(
+            "You cannot sweep open profiles and expect a Solid result. Disabling this."
+        )
+        solid = False
+
+    # Check that the path is fully tangent (otherwise unexpected results)
+
+    result = Part.Wire(path).makePipeShell(profiles, solid, frenet)
+
+    if solid:
+        return Part.Solid(result)
+    else:
+        return Part.Shell(result)
 
 
 def make_compound(shapes):
