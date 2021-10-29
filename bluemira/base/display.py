@@ -330,7 +330,7 @@ class Plottable3D:
 # # =============================================================================
 class PlotCADOptions(DisplayOptions):
     """
-    The options that are available for 2D-plotting objects
+    The options that are available for displaying CAD objects
     """
 
     pass
