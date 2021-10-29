@@ -41,9 +41,9 @@ DEFAULT["flag_wires"] = True
 DEFAULT["flag_faces"] = True
 # matplotlib set of options to plot points, wires, and faces. If an empty dictionary
 # is specified, the default color plot of matplotlib is used.
-DEFAULT["poptions"] = {"s": 10, "facecolors": "red", "edgecolors": "black"}
-DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5"}
-DEFAULT["foptions"] = {"color": "blue"}
+DEFAULT["poptions"] = {"s": 10, "facecolors": "red", "edgecolors": "black", "zorder": 30}
+DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5", "zorder": 20}
+DEFAULT["foptions"] = {"color": "blue", "zorder": 10}
 # projection plane
 DEFAULT["plane"] = "xz"
 # palette
