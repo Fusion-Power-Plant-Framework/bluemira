@@ -24,10 +24,10 @@ CAD model object for assemblies of components
 """
 import os
 import re
+import numpy as np
+import json
 from collections import OrderedDict
 from itertools import cycle
-
-import numpy as np
 from matplotlib.colors import to_rgb
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -41,6 +41,7 @@ from BLUEPRINT.cad.cadtools import (
 )
 from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.utilities.colortools import force_rgb
+from bluemira.base.look_and_feel import bluemira_print
 
 
 class CADModel:
@@ -230,6 +231,39 @@ class CADModel:
         for name, part in self.parts.items():
             filename = os.sep.join([filepath, name])
             part.save_as_STL(filename, scale=scale)
+
+    def save_component_names_as_json(self, filename):
+        """
+        Save the mapping of system to component names as JSON format.
+        """
+        # Populate the silo dict with all CAD components and their data
+        if self.silo is None:
+            self.pattern("sector")
+
+        # Only get the name data
+        component_dict = {}
+        current_id = 0
+        for system, component in self.silo.items():
+            # Get sub compon
+            names = component["names"]
+
+            # Generate ids
+            start_id = current_id + 1
+            end_id = start_id + len(names)
+            ids = list(range(start_id, end_id))
+            current_id = end_id - 1
+
+            # Make tuples of names and ids
+            sub_components = list(zip(names, ids))
+
+            # Save mapping of system to subcomponents
+            component_dict[system] = sub_components
+
+        if not filename.endswith(".json"):
+            filename += ".json"
+        bluemira_print(f"Writing {filename}")
+        with open(filename, "w") as handle:
+            json.dump(component_dict, handle, indent=4)
 
 
 class Patterner:
