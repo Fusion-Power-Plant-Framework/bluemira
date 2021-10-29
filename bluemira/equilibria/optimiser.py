@@ -39,8 +39,12 @@ from bluemira.utilities.opt_tools import (
     regularised_lsq_fom,
     tikhonov,
 )
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+<<<<<<< HEAD
+from bluemira.utilities.optimiser import approx_derivative
 from bluemira.utilities._nlopt_api import process_NLOPT_result
+=======
+from scipy.optimize._numdiff import approx_derivative
+>>>>>>> Adds optional gradient information to be calculated to allow wider range of optimisers to be used
 from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
@@ -1604,6 +1608,7 @@ class CoilsetOptimiser:
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
         self.rms = None
         self.rms_error = None
+        self.iter = 0
 
         self.coilset = coilset
 
@@ -1686,6 +1691,7 @@ class CoilsetOptimiser:
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
         opt.set_lower_bounds(lower_bounds)
         opt.set_upper_bounds(upper_bounds)
+        self.bounds = np.array([lower_bounds, upper_bounds])
         return opt
 
     def update_current_constraint(self, max_currents):
@@ -1793,6 +1799,37 @@ class CoilsetOptimiser:
         -------
         rss: Value of objective function (figure of merit).
         """
+        self.iter += 1
+        fom = self.get_state_figure_of_merit(vector)
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                self.get_state_figure_of_merit,
+                vector,
+                bounds=self.bounds,
+                f0=fom,
+                rel_step=1e-3,
+            )
+        bluemira_print_flush(
+            f"EQUILIBRIA position optimisation iteration {self.iter}: "
+            f"FoM = {self.rms_error:.2f}"
+        )
+        return fom
+
+    def get_state_figure_of_merit(self, vector):
+        """
+        Calculates figure of merit from objective function,
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+
+        Returns
+        -------
+        rss: Value of objective function (figure of merit).
+        """
         self.set_coilset_state(vector)
 
         # Update target
@@ -1809,10 +1846,6 @@ class CoilsetOptimiser:
         x_arr, z_arr, current_arr = np.array_split(vector, self.substates)
         current_arr = current_arr * self.scale
         rss, err = self.get_rss(current_arr)
-        if not rss > 0:
-            raise EquilibriaError(
-                "Optimiser least-squares objective function less than zero or nan."
-            )
         return rss
 
     def get_rss(self, vector):
@@ -1837,6 +1870,10 @@ class CoilsetOptimiser:
         err = np.dot(self.A, vector) - self.b
         rss = err.T @ err + self.gamma * self.gamma * vector.T @ vector
         self.rms_error = rss
+        if not self.rms_error > 0:
+            raise EquilibriaError(
+                "Optimiser least-squares objective function less than zero or nan."
+            )
         return rss, err
 
     def __call__(self, eq, constraints, psi_bndry=None):
