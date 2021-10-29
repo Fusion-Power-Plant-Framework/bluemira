@@ -1556,7 +1556,148 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         return rss, err
 
 
-class CoilsetOptimiser:
+class CoilsetOptimiserBase:
+    """
+    NLOpt based optimiser for coilsets (currents and positions)
+    subject to maximum current bounds.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset used to get coil current limits and number of coils.
+    max_currents: float or np.array(len(coilset._ccoils)) (default = None)
+        Maximum allowed current for each independent coil current in coilset [A].
+        If specified as a float, the float will set the maximum allowed current
+        for all coils.
+    max_coil_shifts: dict
+        (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
+                  "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
+        Dict specifying maximum tolerable shifts for each coil from its initial
+        position during optimisation [m]. Shifts are specified as either
+        np.array(len(coilset._ccoils)) with the shift for each coil specified,
+        or as a float to apply to all coils.
+    gamma: float (default = 1e-7)
+        Tikhonov regularisation parameter.
+    opt_conditions: dict
+        (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
+        Termination conditions to pass to the optimiser.
+    """
+
+    def __init__(self, coilset):
+        # noqa (N803)
+        self.scale = 1e6  # Scale for currents and forces (MA and MN)
+
+        self.coilset = coilset
+
+        self.initial_state, self.substates = self.read_coilset_state(self.coilset)
+        self.x0, self.z0, self.I0 = np.array_split(self.initial_state, self.substates)
+
+    def read_coilset_state(self, coilset):
+        """
+        Reads the input coilset and generates the state vector as an array to represent
+        it.
+
+        Parameters
+        ----------
+        coilset: Coilset
+            Coilset to be read into the state vector.
+
+        Returns
+        -------
+        coilset_state: np.array
+            State vector containing substate (position and current)
+            information for each coil.
+        substates: int
+            Number of substates (blocks) in the state vector.
+        """
+        substates = 3
+        x = np.array([c.x for c in coilset.coils.values()])
+        z = np.array([c.z for c in coilset.coils.values()])
+        currents = np.array([c.current for c in coilset.coils.values()]) / self.scale
+        coilset_state = np.concatenate((x, z, currents))
+        return coilset_state, substates
+
+    def set_coilset_state(self, coilset_state):
+        """
+        Set the optimiser coilset from a provided state vector.
+
+        Parameters
+        ----------
+        coilset_state: np.array
+            State vector representing degrees of freedom of the coilset,
+            to be used to update the coilset.
+        """
+        x, z, currents = np.array_split(coilset_state, 3)
+        for i, coil in enumerate(self.coilset.coils.values()):
+            coil.x = x[i]
+            coil.z = z[i]
+            coil.set_current(currents[i] * self.scale)
+
+    def get_state_bounds(self, opt, x_bounds, z_bounds, current_bounds):
+        """
+        Set bounds on the state vector from provided bounds on the substates.
+
+        Parameters
+        ----------
+        opt: nlopt.opt
+            Optimiser on which to set the bounds.
+        x_bounds: tuple
+            Tuple containing lower and upper bounds on the radial coil positions.
+        z_bounds: tuple
+            Tuple containing lower and upper bounds on the vertical coil positions.
+        current_bounds: tuple
+            Tuple containing bounds on the coil currents.
+
+        Returns
+        -------
+        opt: nlopt.opt
+            Optimiser updated in-place with bounds set.
+        """
+        lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
+        upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
+        bounds = np.array([lower_bounds, upper_bounds])
+        return bounds
+
+    def __call__(self, eq, constraints, psi_bndry=None):
+        """
+        Parameters
+        ----------
+        eq: Equilibrium object
+            The Equilibrium to be optimised
+        constraints: Constraints object
+            The Constraints to apply to the equilibrium. NOTE: these only
+            include linearised constraints. Quadratic and/or non-linear
+            constraints must be provided in the sub-classes
+
+        Attributes
+        ----------
+        A: np.array(N, M)
+            Response matrix
+        b: np.array(N)
+            Constraint vector
+
+        \t:math:`\\mathbf{A}\\mathbf{x}-\\mathbf{b}=\\mathbf{b_{plasma}}`
+
+        Notes
+        -----
+        The weight vector is used to scale the response matrix and
+        constraint vector. The weights are assumed to be uncorrelated, such that the
+        weight matrix W_ij used to define (for example) the least-squares objective
+        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+        weights[i] = w[i] = sqrt(W[i,i]).
+        """
+        self.eq = eq
+        self.constraints = constraints
+        return self.optimise()
+
+    def copy(self):
+        """
+        Get a deep copy of the EquilibriumOptimiser.
+        """
+        return deepcopy(self)
+
+
+class CoilsetOptimiser(CoilsetOptimiserBase):
     """
     NLOpt based optimiser for coilsets (currents and positions)
     subject to maximum current bounds.
@@ -1603,14 +1744,12 @@ class CoilsetOptimiser:
         },
     ):
         # noqa (N803)
+        super().__init__(coilset)
 
         # Used scale for optimiser RoundoffLimited Error prevention
-        self.scale = 1e6  # Scale for currents and forces (MA and MN)
         self.rms = None
         self.rms_error = None
         self.iter = 0
-
-        self.coilset = coilset
 
         if max_currents is not None:
             self.I_max = self.update_current_constraint(max_currents)
@@ -1620,79 +1759,8 @@ class CoilsetOptimiser:
         self.opt_conditions = opt_conditions
         self.max_coil_shifts = max_coil_shifts
 
-        self.initial_state, self.substates = self.read_coilset_state(self.coilset)
-        self.x0, self.z0, self.I0 = np.array_split(self.initial_state, self.substates)
-
         # Set up optimiser
         self.opt = self.set_up_optimiser(len(self.initial_state))
-
-    def read_coilset_state(self, coilset):
-        """
-        Reads the input coilset and generates the state vector as an array to represent
-        it.
-
-        Parameters
-        ----------
-        coilset: Coilset
-            Coilset to be read into the state vector.
-
-        Returns
-        -------
-        coilset_state: np.array
-            State vector containing substate (position and current)
-            information for each coil.
-        substates: int
-            Number of substates (blocks) in the state vector.
-        """
-        substates = 3
-        x = np.array([c.x for c in coilset.coils.values()])
-        z = np.array([c.z for c in coilset.coils.values()])
-        currents = np.array([c.current for c in coilset.coils.values()]) / self.scale
-        coilset_state = np.concatenate((x, z, currents))
-        return coilset_state, substates
-
-    def set_coilset_state(self, coilset_state):
-        """
-        Set the optimiser coilset from a provided state vector.
-
-        Parameters
-        ----------
-        coilset_state: np.array
-            State vector representing degrees of freedom of the coilset,
-            to be used to update the coilset.
-        """
-        x, z, currents = np.array_split(coilset_state, 3)
-        for i, coil in enumerate(self.coilset.coils.values()):
-            coil.x = x[i]
-            coil.z = z[i]
-            coil.set_current(currents[i] * self.scale)
-
-    def set_state_bounds(self, opt, x_bounds, z_bounds, current_bounds):
-        """
-        Set bounds on the state vector from provided bounds on the substates.
-
-        Parameters
-        ----------
-        opt: nlopt.opt
-            Optimiser on which to set the bounds.
-        x_bounds: tuple
-            Tuple containing lower and upper bounds on the radial coil positions.
-        z_bounds: tuple
-            Tuple containing lower and upper bounds on the vertical coil positions.
-        current_bounds: tuple
-            Tuple containing bounds on the coil currents.
-
-        Returns
-        -------
-        opt: nlopt.opt
-            Optimiser updated in-place with bounds set.
-        """
-        lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
-        upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
-        opt.set_lower_bounds(lower_bounds)
-        opt.set_upper_bounds(upper_bounds)
-        self.bounds = np.array([lower_bounds, upper_bounds])
-        return opt
 
     def update_current_constraint(self, max_currents):
         """
@@ -1754,8 +1822,9 @@ class CoilsetOptimiser:
             -self.I_max * np.ones(len(self.I0)),
             self.I_max * np.ones(len(self.I0)),
         )
-
-        opt = self.set_state_bounds(opt, x_bounds, z_bounds, current_bounds)
+        self.bounds = self.get_state_bounds(opt, x_bounds, z_bounds, current_bounds)
+        opt.set_lower_bounds(self.bounds[0])
+        opt.set_upper_bounds(self.bounds[1])
         return opt
 
     def optimise(self):
@@ -1875,41 +1944,3 @@ class CoilsetOptimiser:
                 "Optimiser least-squares objective function less than zero or nan."
             )
         return rss, err
-
-    def __call__(self, eq, constraints, psi_bndry=None):
-        """
-        Parameters
-        ----------
-        eq: Equilibrium object
-            The Equilibrium to be optimised
-        constraints: Constraints object
-            The Constraints to apply to the equilibrium. NOTE: these only
-            include linearised constraints. Quadratic and/or non-linear
-            constraints must be provided in the sub-classes
-
-        Attributes
-        ----------
-        A: np.array(N, M)
-            Response matrix
-        b: np.array(N)
-            Constraint vector
-
-        \t:math:`\\mathbf{A}\\mathbf{x}-\\mathbf{b}=\\mathbf{b_{plasma}}`
-
-        Notes
-        -----
-        The weight vector is used to scale the response matrix and
-        constraint vector. The weights are assumed to be uncorrelated, such that the
-        weight matrix W_ij used to define (for example) the least-squares objective
-        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
-        weights[i] = w[i] = sqrt(W[i,i]).
-        """
-        self.eq = eq
-        self.constraints = constraints
-        return self.optimise()
-
-    def copy(self):
-        """
-        Get a deep copy of the EquilibriumOptimiser.
-        """
-        return deepcopy(self)
