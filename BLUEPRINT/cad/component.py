@@ -58,7 +58,7 @@ class ComponentCAD:
     """
 
     def __init__(self, name, *args, pair=False, palette="Paired", n_colors=5, **kwargs):
-        self.name = name
+        self.name = name.replace(" ", "_")
         self.args = args  # store build specific argument list
         self.pair = pair  # cycles color saturation within component
         self.palette = cycle(palette)
@@ -130,6 +130,7 @@ class ComponentCAD:
         """
         self.n_shape += 1
         sub_name = kwargs.get("name", "{}".format(self.n_shape))
+        sub_name = sub_name.replace(" ", "_")
         name = "{}_{}".format(self.name, sub_name)
         self._check_shape(name, shape)
         color = kwargs.get("color", next(self.palette))
