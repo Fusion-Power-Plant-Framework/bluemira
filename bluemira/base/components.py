@@ -257,7 +257,7 @@ class MagneticComponent(PhysicalComponent):
 
 class ComponentPlotter2D(Plotter2D):
     """
-    A Displayer class for displaying Components in 3D.
+    A Plotter2D class for displaying Components in 2D.
     """
 
     def _display(
