@@ -143,6 +143,7 @@ fplotter2.show_plot2d()
 # (and thus wire and wire2) without modifying face3
 face3 = BluemiraFace([wire2.deepcopy(), wire.deepcopy()])
 fplotter3 = FacePlotter(plane="xz")
+fplotter3.options.flag_points = True
 fplotter3.plot2d(face3)
 fplotter3.ax.set_title("Face with hole - points enabled")
 fplotter3.show_plot2d()
@@ -245,5 +246,5 @@ print(wplotter.options.as_dict())
 print(fplotter.options.as_dict())
 print(c.plot2d_options.as_dict())
 
-# plot CAD
+# Plot CAD
 group.plotcad()
