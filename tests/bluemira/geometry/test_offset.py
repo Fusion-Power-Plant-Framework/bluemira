@@ -99,3 +99,8 @@ class TestOffset:
         non_planar = make_polygon([[0, 0, 0], [1, 0, 0], [2, 0, 1], [3, 1, 1]])
         with pytest.raises(GeometryError):
             offset_wire(non_planar, 1.0)
+
+    def test_freecad_failure(self):
+        with pytest.raises(GeometryError):
+            # This will offset the triangle such that it no longer exists
+            offset_wire(self.tri_wire, -1.0)

@@ -371,19 +371,19 @@ def offset_wire(
     if not _wire_is_planar(wire):
         raise GeometryError("Cannot offset a non-planar wire.")
 
-    if wire.isClosed() and open_wire:
-        bluemira_warn(f"Offsetting a closed wire with {open_wire=}. Disabling this.")
-        open_wire = False
-
-    # NOTE: The "tangent": 1 option misbehaves in FreeCAD
     if join == "arc":
         f_join = 0
     elif join == "intersect":
         f_join = 2
     else:
+        # NOTE: The "tangent": 1 option misbehaves in FreeCAD
         raise GeometryError(
             f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
         )
+
+    if wire.isClosed() and open_wire:
+        bluemira_warn(f"Offsetting a closed wire with {open_wire=}. Disabling this.")
+        open_wire = False
 
     shape = Part.Shape(wire)
     try:
