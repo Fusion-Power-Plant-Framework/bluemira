@@ -46,6 +46,14 @@ class ComponentError(BluemiraError):
     pass
 
 
+class DisplayError(BluemiraError):
+    """
+    Exception class for Displayers.
+    """
+
+    pass
+
+
 class LogsError(BluemiraError):
     """
     Exception class for Components.
@@ -55,14 +63,6 @@ class LogsError(BluemiraError):
 
 
 class ParameterError(BluemiraError):
-    """
-    Exception class for Parameters.
-    """
-
-    pass
-
-
-class DisplayError(BluemiraError):
     """
     Exception class for Parameters.
     """

@@ -23,26 +23,29 @@
 Module containing the base display classes.
 """
 import abc
-import dataclasses
-from typing import Optional, Tuple
+from typing import Optional
 from bluemira.utilities.tools import get_module
 from .error import DisplayError
-from .look_and_feel import bluemira_warn
 
 
 class DisplayOptions:
     """
-    The options that are available for displaying objects
+    The options that are available for displaying objects.
     """
+
     _options = None
 
-    def asdict(self):
+    def as_dict(self):
+        """
+        Returns the instance as a dictionary.
+        """
         return self._options
 
 
 class Displayer(abc.ABC):
     """
-    Abstract base class to handle displaying objects
+    Abstract base class to handle displaying objects.
+
     Parameters
     ----------
     options: Optional[DisplayOptions]
@@ -74,16 +77,22 @@ class Displayer(abc.ABC):
         self._options = val
 
     @abc.abstractmethod
-    def _display(self, obj, options: Optional[DisplayOptions] = None, *args, **kwargs) -> None:
+    def _display(self, obj, options: Optional[DisplayOptions] = None, *args, **kwargs):
         """
         Display the object by calling the display function within the API.
+
         Parameters
         ----------
         obj
             The object to display
         options: Optional[DisplayOptions]
             The options to use to display the object, by default None in which case the
-        default values for the DisplayOptions class are used.
+            default values for the DisplayOptions class are used.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
         """
         return self._display_func(obj, options, *args, **kwargs)
 
@@ -93,45 +102,55 @@ class Displayer(abc.ABC):
 # # =============================================================================
 class Plot2DOptions(DisplayOptions):
     """
-    The options that are available for 2D-plotting objects
+    The options that are available for plotting objects in 2D.
     """
+
     pass
 
 
 class Plotter2D(Displayer):
+    """
+    A class for plotting primitive objects in 3D.
+    """
 
     def __init__(
         self,
         options: Optional[Plot2DOptions] = None,
-        api: str = 'bluemira.base._matplotlib_plot',
+        api: str = "bluemira.base._matplotlib_plot",
     ):
         super().__init__(options, api)
-        self._options = get_module(api).MatplotlibOptions() if options is None else \
-            options
+        self._options = (
+            get_module(api).MatplotlibOptions() if options is None else options
+        )
         self._display_func = get_module(api).plot2d
 
-    def _display(self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs) -> None:
+    def _display(self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs):
         """
         Display the primitive objects with the provided options.
+
         Parameters
         ----------
         obj
             The CAD primitive objects to be displayed.
         options: Optional[DisplayOptions]
             The options to use to display the primitives.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
         """
         if options is None:
             options = self.options
 
-        #try:
         return super()._display(obj, options, *args, **kwargs)
-        #except Exception as e:
-        #    bluemira_warn(f"Unable to display object {obj} - {e}")
 
-    def plot2d(self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs) -> \
-            None:
+    def plot2d(
+        self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs
+    ) -> None:
         """
         2D plot the object by calling the display function within the API.
+
         Parameters
         ----------
         obj
@@ -139,15 +158,24 @@ class Plotter2D(Displayer):
         options: Optional[DisplayOptions]
             The options to use to display the object, by default None in which case the
         default values for the DisplayOptions class are used.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
         """
         return self._display(obj, options, *args, **kwargs)
 
 
 class Plottable2D:
     """
-    Mixin class to make a class displayable by imparting a display method and options.
-    The implementing class must set the _displayer attribute to an instance of the
-    appropriate Displayer class.
+    Mixin class to make a class plottable in 2D by imparting a plot2d method and
+    options.
+
+    Notes
+    -----
+    The implementing class must set the _plotter2D attribute to an instance of the
+    appropriate Plotter2D class.
     """
 
     _plotter2d: Plotter2D = None
@@ -171,11 +199,17 @@ class Plottable2D:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
+
         Parameters
         ----------
         options: Optional[DisplayOptions]
             If not None then override the object's display_options with the provided
             options. By default None.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
         """
         return self._plotter2d.plot2d(self, options, *args, **kwargs)
 
@@ -185,46 +219,55 @@ class Plottable2D:
 # # =============================================================================
 class Plot3DOptions(DisplayOptions):
     """
-    The options that are available for 2D-plotting objects
+    The options that are available for plotting objects in 3D
     """
+
     pass
 
 
 class Plotter3D(Displayer):
+    """
+    A class for plotting primitive objects in 3D.
+    """
 
     def __init__(
         self,
         options: Optional[Plot3DOptions] = None,
-        api: str = 'bluemira.base._matplotlib_plot',
+        api: str = "bluemira.base._matplotlib_plot",
     ):
         super().__init__(options, api)
-        self._options = get_module(api).MatplotlibOptions() if options is None else \
-            options
+        self._options = (
+            get_module(api).MatplotlibOptions() if options is None else options
+        )
         self._display_func = get_module(api).plot3d
 
-    def _display(self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs) \
-            -> None:
+    def _display(self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs):
         """
         Display the primitive objects with the provided options.
+
         Parameters
         ----------
         obj
             The primitive objects to be displayed.
         options: Optional[DisplayOptions]
             The options to use to display the primitives.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
         """
         if options is None:
             options = self.options
 
-        #try:
         return super()._display(obj, options, *args, **kwargs)
-        #except Exception as e:
-        #    bluemira_warn(f"Unable to display object {obj} - {e}")
 
-    def plot3d(self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs) -> \
-            None:
+    def plot3d(
+        self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs
+    ) -> None:
         """
         3D plot the object by calling the display function within the API.
+
         Parameters
         ----------
         obj
@@ -238,8 +281,11 @@ class Plotter3D(Displayer):
 
 class Plottable3D:
     """
-    Mixin class to make a class displayable by imparting a display method and options.
-    The implementing class must set the _displayer attribute to an instance of the
+    Mixin class to make a class plottable in 3D by imparting a plot3D method and options.
+
+    Notes
+    -----
+    The implementing class must set the _plotter3d attribute to an instance of the
     appropriate Displayer class.
     """
 
@@ -264,11 +310,17 @@ class Plottable3D:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
+
         Parameters
         ----------
         options: Optional[DisplayOptions]
             If not None then override the object's display_options with the provided
             options. By default None.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
         """
         return self._plotter3d.plot3d(self, options, *args, **kwargs)
 
@@ -280,57 +332,78 @@ class PlotCADOptions(DisplayOptions):
     """
     The options that are available for 2D-plotting objects
     """
+
     pass
 
 
 class PlotterCAD(Displayer):
+    """
+    A class for displaying CAD representations of primitive objects.
+    """
 
     def __init__(
         self,
         options: Optional[PlotCADOptions] = None,
-        api: str = 'bluemira.base._freecad_plot',
+        api: str = "bluemira.base._freecad_plot",
     ):
         super().__init__(options, api)
-        self._options = get_module(api).FreeCADPlotOptions() if options is None else \
-            options
+        self._options = (
+            get_module(api).FreeCADPlotOptions() if options is None else options
+        )
         self._display_func = get_module(api).plotcad
 
-    def _display(self, obj, options: Optional[PlotCADOptions] = None, *args, **kwargs) -> None:
+    def _display(
+        self, obj, options: Optional[PlotCADOptions] = None, *args, **kwargs
+    ) -> None:
         """
         Display the primitive objects with the provided options.
+
         Parameters
         ----------
         obj
             The CAD primitive objects to be displayed.
         options: Optional[DisplayOptions]
             The options to use to display the primitives.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
         """
         if options is None:
             options = self.options
 
-        #try:
         return super()._display(obj, options, *args, **kwargs)
-        #except Exception as e:
-        #    bluemira_warn(f"Unable to display object {obj} - {e}")
 
-    def plotcad(self, obj, options: Optional[PlotCADOptions] = None, *args, **kwargs) -> None:
+    def plotcad(
+        self, obj, options: Optional[PlotCADOptions] = None, *args, **kwargs
+    ) -> None:
         """
-        2D plot the object by calling the display function within the API.
+        Display the CAD object by calling the display function within the API.
+
         Parameters
         ----------
         obj
             The object to display
         options: Optional[DisplayOptions]
             The options to use to display the object, by default None in which case the
-        default values for the DisplayOptions class are used.
+            default values for the DisplayOptions class are used.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
         """
         return self._display(obj, options, *args, **kwargs)
 
 
 class PlottableCAD:
     """
-    Mixin class to make a class displayable by imparting a display method and options.
-    The implementing class must set the _displayer attribute to an instance of the
+    Mixin class to make a class displayable by imparting a plotcad method and options.
+
+    Notes
+    -----
+    The implementing class must set the _plottercad attribute to an instance of the
     appropriate Displayer class.
     """
 
@@ -355,6 +428,7 @@ class PlottableCAD:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
+
         Parameters
         ----------
         options: Optional[DisplayOptions]

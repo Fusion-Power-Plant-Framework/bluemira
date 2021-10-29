@@ -30,7 +30,7 @@ import FreeCADGui
 import Part
 
 # import typing
-from typing import List, Optional, Union, Tuple
+from typing import List, Optional, Union
 
 # import errors
 from bluemira.base.error import DisplayError
@@ -60,13 +60,14 @@ class FreeCADPlotOptions(display.PlotCADOptions):
     transparency: float
         The transparency to display the object, by default 0.0.
     """
+
     def __init__(self, **kwargs):
         self._options = copy.deepcopy(DEFAULT)
         if kwargs:
             for k in kwargs:
                 if k in self.options:
                     self.options[k] = kwargs[k]
-        # Todo: in this way class attributes are not seen till runtime. Not sure if
+        # TODO: in this way class attributes are not seen till runtime. Not sure if
         #  this should be changed manually declaring all the attributes.
         for k in self._options:
             setattr(self, k, self._options[k])
@@ -90,6 +91,7 @@ def plotcad(
 ):
     """
     The implementation of the display API for FreeCAD parts.
+
     Parameters
     ----------
     parts: Union[Part.Shape, List[Part.Shape]]

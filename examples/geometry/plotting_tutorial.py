@@ -22,7 +22,10 @@
 Plotting module examples
 """
 
+import matplotlib.pyplot as plt
+
 import bluemira.geometry.tools
+from bluemira.base.components import PhysicalComponent, GroupingComponent
 from bluemira.base._matplotlib_plot import (
     PointsPlotter,
     WirePlotter,
@@ -53,7 +56,7 @@ print("points plot")
 pplotter = PointsPlotter(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
 pplotter.plot2d(points, show=True, block=True)
 
-# inital test for 3d scatter plot
+# Initial test for 3d scatter plot
 pplotter.plot3d(points, show=True, block=True)
 
 # plot the wire
@@ -71,7 +74,7 @@ wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options._options['ndiscr']}
 wplotter.show_plot2d()
 
 
-# inital test for 3d curve plot
+# Initial test for 3d curve plot
 wplotter.plot3d(wire, show=True, block=True)
 
 # in this example poptions is set to an empty dict. The default matplotlib are used.
@@ -120,7 +123,7 @@ fplotter2.plot2d(face, show=False, block=True)
 fplotter2.plot2d(face2, ax=fplotter2.ax, show=False, block=True)
 fplotter2.ax.set_title("Both faces in blue")
 fplotter2.show_plot2d()
-print(f"fplotter2.options: {fplotter2.options.asdict()}")
+print(f"fplotter2.options: {fplotter2.options.as_dict()}")
 
 # plot both face with different color.
 # Note: if face is plotted before face2, face2 will be "covered" by face.
@@ -134,7 +137,7 @@ fplotter2.show_plot2d()
 # a third face is create as difference between face and face2 (a BluemiraFace object
 # has been created using wire2 as outer boundary and wire as inner boundary
 # Note:
-# - when plotting points, it can happen that markers are not centered properly as
+# - when plotting points, it can happen that markers are not centred properly as
 #       described in https://github.com/matplotlib/matplotlib/issues/11836
 # - face3 is created with a wire deepcopy in order to be able to modify face and face2
 # (and thus wire and wire2) without modifying face3
@@ -144,7 +147,7 @@ fplotter3.plot2d(face3)
 fplotter3.ax.set_title("Face with hole - points enabled")
 fplotter3.show_plot2d()
 
-fplotter3.options._options['foptions']['color'] = "blue"
+fplotter3.options._options["foptions"]["color"] = "blue"
 fplotter3.plot2d(face3, ax=None)
 fplotter3.ax.set_title("Face with hole - points disabled - blue")
 fplotter3.show_plot2d()
@@ -160,7 +163,7 @@ face.translate(v)
 # creation of a face compound plotter
 # color test with palettes
 cplotter = FaceCompoundPlotter(palette="Blues_r")
-cplotter.set_plane('xz')
+cplotter.set_plane("xz")
 cplotter.plot2d([face3, face])
 cplotter.ax.set_title("Compound plot - test in Blue_r")
 cplotter.show_plot2d()
@@ -170,10 +173,10 @@ cplotter.plot2d([face3, face])
 cplotter.ax.set_title("Compound plot - test with single color light:#105ba4")
 cplotter.show_plot2d()
 
-points = [[0,0,0], [1,0,0], [1,0,3], [0,0,3]]
+points = [[0, 0, 0], [1, 0, 0], [1, 0, 3], [0, 0, 3]]
 wire = bluemira.geometry.tools.make_polygon(points, closed=True)
 wire1 = wire.deepcopy()
-wire1.translate((3,0,5))
+wire1.translate((3, 0, 5))
 wplotter.plot2d(wire, show=False, block=False)
 wplotter.ax.set_title("wire")
 wplotter.show_plot2d()
@@ -190,9 +193,9 @@ cplotter.show_plot2d()
 # plot of faces boundary. Note that, since poptions = {}, points color is
 # automatically changed by matplotlib
 wplotter.plot2d(wface.boundary[0])
-print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
+print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.plot2d(w1face.boundary[0], ax=wplotter.ax)
-print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
+print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.ax.set_title("test boundary from faces - matplotlib default poptions")
 wplotter.show_plot2d()
 
@@ -200,18 +203,20 @@ wplotter.show_plot2d()
 # automatically changed by matplotlib
 wplotter.options.woptions = {}
 wplotter.plot2d(wface.boundary[0])
-print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
+print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.plot2d(w1face.boundary[0], ax=wplotter.ax)
-print(f"test_boundary wplotter options: {wplotter.options.asdict()}")
-wplotter.ax.set_title("test boundary from faces - matplotlib default poptions and "
-                      "woptions")
+print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
+wplotter.ax.set_title(
+    "test boundary from faces - matplotlib default poptions and " "woptions"
+)
 wplotter.show_plot2d()
 
-# plot of a component
-import matplotlib.pyplot as plt
-from bluemira.base.components import PhysicalComponent, GroupingComponent
+# ---------------------------------------------------------------------------------------
+# Plot of a Component
+# ---------------------------------------------------------------------------------------
+
 c = PhysicalComponent("Comp", face)
-c._plotter2d.options.plane = 'xz'
+c._plotter2d.options.plane = "xz"
 c._plotter2d.options.ndiscr = 30
 ax = c.plot2d(show=False)
 ax.set_title("test component plot")
@@ -227,11 +232,11 @@ c2 = PhysicalComponent("Comp2", wface, parent=group)
 c3 = PhysicalComponent("Comp3", w1face, parent=group)
 group.plot2d(show=True, block=True)
 
-# combined plot of Componennt and BluemiraGeo instances
-wplotter.options.woptions['color'] = 'red'
+# combined plot of Component and BluemiraGeo instances
+wplotter.options.woptions["color"] = "red"
 ax = wplotter.plot2d(wface.boundary[0])
-fplotter.options.foptions['color'] = 'green'
-fplotter.options.woptions['color'] = 'black'
+fplotter.options.foptions["color"] = "green"
+fplotter.options.woptions["color"] = "black"
 ax = fplotter.plot2d(w1face, ax=ax)
 ax = c.plot2d(ax=ax)
 ax.set_title("test component + bluemirageo plot")
@@ -239,9 +244,9 @@ plt.gca().set_aspect("equal")
 plt.show(block=True)
 
 # just a check that the options dict is modified correctly
-print(wplotter.options.asdict())
-print(fplotter.options.asdict())
-print(c.plot2d_options.asdict())
+print(wplotter.options.as_dict())
+print(fplotter.options.as_dict())
+print(c.plot2d_options.as_dict())
 
-#plot CAD
+# plot CAD
 group.plotcad()

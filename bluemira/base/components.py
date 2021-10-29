@@ -30,8 +30,12 @@ from typing import Any, List, Optional, Type, Union
 
 from .error import ComponentError
 from .display import (
-    Plottable2D, Plotter2D, Plot2DOptions,
-    PlottableCAD, PlotterCAD, PlotCADOptions,
+    Plottable2D,
+    Plotter2D,
+    Plot2DOptions,
+    PlottableCAD,
+    PlotterCAD,
+    PlotCADOptions,
 )
 
 
@@ -257,13 +261,18 @@ class ComponentPlotter2D(Plotter2D):
     """
 
     def _display(
-        self, component: "Component", options: Optional[Plot2DOptions] = None, *args, **kwargs
+        self,
+        component: "Component",
+        options: Optional[Plot2DOptions] = None,
+        *args,
+        **kwargs,
     ) -> None:
         """
-        2D plot a component by searching through the component's tree and finding any
+        Plot a component in 2D by searching through the component's tree and finding any
         components that have a shape. Then uses the child component's display_options
         configure the display if the provided options are None, otherwise overrides the
         display options for all shapes with those provided.
+
         Parameters
         ----------
         component: Component
@@ -297,14 +306,18 @@ class ComponentPlotterCAD(PlotterCAD):
     """
 
     def _display(
-        self, component: "Component", options: Optional[PlotCADOptions] = None, *args,
-            **kwargs
+        self,
+        component: "Component",
+        options: Optional[PlotCADOptions] = None,
+        *args,
+        **kwargs,
     ) -> None:
         """
-        2D plot a component by searching through the component's tree and finding any
-        components that have a shape. Then uses the child component's display_options
+        Display a component in 3D by searching through the component's tree and finding
+        any components that have a shape. Then uses the child component's display_options
         configure the display if the provided options are None, otherwise overrides the
         display options for all shapes with those provided.
+
         Parameters
         ----------
         component: Component
