@@ -745,11 +745,19 @@ def fuse(shapes):
             if check:
                 try:
                     if _type == Part.Wire:
-                        merged_shape = BOPTools.SplitAPI.booleanFragments(shapes,
-                                                                          'Split')
-                        merged_shape = merged_shape.fuse(merged_shape.Wires)
-                        merged_shape = Part.Wire(merged_shape.Wires)
-                        return merged_shape
+                        merged_shape = BOPTools.SplitAPI.booleanFragments(
+                            shapes, "Split"
+                        )
+                        if len(merged_shape.Wires) > len(shapes):
+                            raise GeometryError(
+                                f"Fuse wire creation failed. Possible "
+                                f"overlap or internal intersection of "
+                                f"input shapes."
+                            )
+                        else:
+                            merged_shape = merged_shape.fuse(merged_shape.Wires)
+                            merged_shape = Part.Wire(merged_shape.Wires)
+                            return merged_shape
                     elif _type == Part.Face:
                         merged_shape = shapes[0].fuse(shapes[1:])
                         merged_shape = merged_shape.removeSplitter()
