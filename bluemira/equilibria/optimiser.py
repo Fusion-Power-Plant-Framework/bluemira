@@ -1734,7 +1734,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             "xtol_abs": 1e-1,
             "ftol_rel": 1e-1,
             "ftol_abs": 1e-1,
-            "maxeval": 10,
+            "maxeval": 15,
         },
         sub_opt_conditions={
             "xtol_rel": 1e-4,
@@ -1818,7 +1818,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         """
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset)
-        x_vals, z_vals, current_vals = np.array_split(initial_state, substates)
+        x_vals, z_vals, self.currents = np.array_split(initial_state, substates)
         initial_positions = np.concatenate((x_vals, z_vals))
 
         # initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
@@ -1827,10 +1827,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         state = self.opt.optimize(initial_positions)
 
         # Store found optimum of objective function and currents at optimum
-        final_state = np.concatenate((state, self.I0))
-        self.set_coilset_state(final_state)
+        self.rms = self.get_state_figure_of_merit(state)
 
-        self.rms = self.opt.last_optimum_value()
         # self._I_star = currents * self.scale
         process_NLOPT_result(self.opt)
         print("Figure of merit: ", self.rms)
@@ -1885,7 +1883,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         -------
         rss: Value of objective function (figure of merit).
         """
-        coilset_state = np.concatenate((vector, self.I0))
+        coilset_state = np.concatenate((vector, self.currents))
         self.set_coilset_state(coilset_state)
 
         # Update target
@@ -1899,6 +1897,6 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         self.b *= self.w
 
         # Calculate objective function
-        self.sub_opt(self.eq, self.constraints)
+        self.currents = self.sub_opt(self.eq, self.constraints) / self.scale
         self.rms = self.sub_opt.rms
         return self.rms
