@@ -752,7 +752,7 @@ def fuse(shapes):
                             raise GeometryError(
                                 f"Fuse wire creation failed. Possible "
                                 f"overlap or internal intersection of "
-                                f"input shapes."
+                                f"input shapes {shapes}."
                             )
                         else:
                             merged_shape = merged_shape.fuse(merged_shape.Wires)
@@ -783,7 +783,7 @@ def fuse(shapes):
         raise ValueError(f"{shapes} is not a list.")
 
 
-def cut(shape, tools):
+def cut(shape, tools, split=True):
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
@@ -793,6 +793,8 @@ def cut(shape, tools):
         the reference object
     tools: Iterable
         List of FreeCAD shape objects to be used as tools.
+    split: bool
+        If True, shape is split into pieces based on intersections with tools.
 
     Returns
     -------
@@ -810,6 +812,8 @@ def cut(shape, tools):
         tools = [tools]
 
     cut_shape = shape.cut(tools)
+    if split:
+        cut_shape = BOPTools.SplitAPI.slice(cut_shape, tools, mode="Split")
 
     if _type == Part.Wire:
         output = cut_shape.Wires

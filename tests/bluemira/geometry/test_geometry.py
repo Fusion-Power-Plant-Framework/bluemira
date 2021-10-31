@@ -170,9 +170,7 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon(
-                    [[0, 0, 0], [1, 0, 0], [-1, 1, 0]], label="wire1"
-                ),
+                make_polygon([[0, 0, 0], [1, 0, 0], [-1, 1, 0]], label="wire1"),
                 make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             (4, True),
@@ -185,7 +183,6 @@ class TestGeometry:
     def test_fuse(self, test_input, expected):
         wire_fuse = tools.fuse(test_input)
         assert (wire_fuse.length, wire_fuse.is_closed()) == expected
-
 
     params_for_cut = [
         pytest.param(
@@ -216,12 +213,10 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon(
-                    [[0, 0, 0], [1, 0, 0], [1, 2, 0]], label="wire1"
-                ),
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 2, 0]], label="wire1"),
                 make_polygon([[2, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
             ],
-            [(3, False)],
+            [(2, False), (1, False)],
             id="intersection",
         ),
     ]
