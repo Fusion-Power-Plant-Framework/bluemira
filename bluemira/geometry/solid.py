@@ -60,7 +60,7 @@ class BluemiraSolid(BluemiraGeo):
         return self._create_solid()
 
     @classmethod
-    def _create(cls, obj: Part.Solid, label=''):
+    def _create(cls, obj: Part.Solid, label=""):
         if isinstance(obj, Part.Solid):
             shells = obj.Shells
             if len(shells) == 1:

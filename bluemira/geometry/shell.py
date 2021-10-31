@@ -56,7 +56,7 @@ class BluemiraShell(BluemiraGeo):
         return self._create_shell()
 
     @classmethod
-    def _create(cls, obj: Part.Shell, label=''):
+    def _create(cls, obj: Part.Shell, label=""):
         if isinstance(obj, Part.Shell):
             faces = obj.Faces
             bmfaces = []
