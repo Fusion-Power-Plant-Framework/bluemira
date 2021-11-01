@@ -1222,7 +1222,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         fom: Value of objective function (figure of merit).
         """
         vector = vector * self.scale
-        fom, err = regularised_lsq_fom(vector, self.A, self.b, self.gamma)
+        fom, err = self.get_fom(vector)
         if grad.size > 0:
             jac = 2 * self.A.T @ self.A @ vector / np.float(len(self.b))
             jac -= 2 * self.A.T @ self.b / np.float(len(self.b))
@@ -1232,32 +1232,9 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
             raise EquilibriaError(
                 "Optimiser least-squares objective function less than zero or nan."
             )
-        return rss
+        return fom
 
-
-class CoilsetOptimiserBase:
-    """
-    Base class for optimisers acting on data stored in Coilsets,
-    such as coil currents and coil positions.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        Coilset used to get coil current limits and number of coils.
-    """
-
-    def __init__(self, coilset):
-        # noqa (N803)
-        # Scale for currents and forces (MA and MN) to protect against
-        # floating point errors.
-        self.scale = 1e6
-
-        self.coilset = coilset
-
-        self.initial_state, self.substates = self.read_coilset_state(self.coilset)
-        self.x0, self.z0, self.I0 = np.array_split(self.initial_state, self.substates)
-
-    def read_coilset_state(self, coilset):
+    def get_fom(self, vector):
         """
         Reads the input coilset and generates the state vector as an array to represent
         it.
@@ -1537,14 +1514,15 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         Returns
         -------
         fom: Value of objective function (figure of merit).
+        err: Residual (Ax - b) corresponding to the state vector x.
         """
         err = np.dot(self.A, vector) - self.b
-        rss = (
+        fom = (
             err.T @ err / np.float(len(self.b))
             + self.gamma * self.gamma * vector.T @ vector
         )
-        self.rms_error = rss
-        return rss, err
+        self.rms_error = fom
+        return fom, err
 
 
 class CoilsetOptimiserBase:
@@ -1842,7 +1820,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         """
         self.iter += 1
         fom = self.get_state_figure_of_merit(vector)
@@ -1872,7 +1850,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         """
         self.set_coilset_state(vector)
 
@@ -1889,10 +1867,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # Calculate objective function
         x_arr, z_arr, current_arr = np.array_split(vector, self.substates)
         current_arr = current_arr * self.scale
-        rss, err = self.get_rss(current_arr)
-        return rss
+        fom, err = self.get_fom(current_arr)
+        return fom
 
-    def get_rss(self, vector):
+    def get_fom(self, vector):
         """
         Calculates the value and residual of the least-squares objective
         function with Tikhonov regularisation term:
@@ -1908,20 +1886,20 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         err: Residual (Ax - b) corresponding to the state vector x.
         """
         err = np.dot(self.A, vector) - self.b
-        rss = (
+        fom = (
             err.T @ err / np.float(len(err))
             + self.gamma * self.gamma * vector.T @ vector
         )
-        self.rms_error = rss
+        self.rms_error = fom
         if not self.rms_error > 0:
             raise EquilibriaError(
                 "Optimiser least-squares objective function less than zero or nan."
             )
-        return rss, err
+        return fom, err
 
 
 class NestedCoilsetOptimiser(CoilsetOptimiserBase):
