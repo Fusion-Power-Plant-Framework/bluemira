@@ -1248,22 +1248,22 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         """
         vector = vector * self.scale
-        rss, err = self.get_rss(vector)
+        fom, err = self.get_fom(vector)
         if grad.size > 0:
             jac = 2 * self.A.T @ self.A @ vector / np.float(len(self.b))
             jac -= 2 * self.A.T @ self.b / np.float(len(self.b))
             jac += 2 * self.gamma * self.gamma * vector
             grad[:] = self.scale * jac
-        if not rss > 0:
+        if not fom > 0:
             raise EquilibriaError(
                 "Optimiser least-squares objective function less than zero or nan."
             )
-        return rss
+        return fom
 
-    def get_rss(self, vector):
+    def get_fom(self, vector):
         """
         Calculates the value and residual of the least-squares objective
         function with Tikhonov regularisation term:
@@ -1279,16 +1279,16 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         err: Residual (Ax - b) corresponding to the state vector x.
         """
         err = np.dot(self.A, vector) - self.b
-        rss = (
+        fom = (
             err.T @ err / np.float(len(self.b))
             + self.gamma * self.gamma * vector.T @ vector
         )
-        self.rms_error = rss
-        return rss, err
+        self.rms_error = fom
+        return fom, err
 
 
 class CoilsetOptimiserBase:
@@ -1586,7 +1586,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         """
         self.iter += 1
         fom = self.get_state_figure_of_merit(vector)
@@ -1616,7 +1616,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         """
         self.set_coilset_state(vector)
 
@@ -1633,10 +1633,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # Calculate objective function
         x_arr, z_arr, current_arr = np.array_split(vector, self.substates)
         current_arr = current_arr * self.scale
-        rss, err = self.get_rss(current_arr)
-        return rss
+        fom, err = self.get_fom(current_arr)
+        return fom
 
-    def get_rss(self, vector):
+    def get_fom(self, vector):
         """
         Calculates the value and residual of the least-squares objective
         function with Tikhonov regularisation term:
@@ -1652,20 +1652,20 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         err: Residual (Ax - b) corresponding to the state vector x.
         """
         err = np.dot(self.A, vector) - self.b
-        rss = (
+        fom = (
             err.T @ err / np.float(len(err))
             + self.gamma * self.gamma * vector.T @ vector
         )
-        self.rms_error = rss
+        self.rms_error = fom
         if not self.rms_error > 0:
             raise EquilibriaError(
                 "Optimiser least-squares objective function less than zero or nan."
             )
-        return rss, err
+        return fom, err
 
 
 class NestedCoilsetOptimiser(CoilsetOptimiserBase):
