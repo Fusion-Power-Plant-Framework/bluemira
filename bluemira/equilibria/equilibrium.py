@@ -152,6 +152,7 @@ class MHDState:
         self._psi_green = self.coilset.map_psi_greens(self.x, self.z)
         self._bx_green = self.coilset.map_Bx_greens(self.x, self.z)
         self._bz_green = self.coilset.map_Bz_greens(self.x, self.z)
+        self.set_forcefield()
 
     def set_forcefield(self):
         """

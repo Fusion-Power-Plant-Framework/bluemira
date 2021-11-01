@@ -1160,14 +1160,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         self.opt_conditions = opt_conditions
         self.coilset = coilset
 
-        if max_currents is not None:
-            self.I_max = self.update_current_constraint(max_currents)
-        else:
-            self.I_max = np.inf
-        self.gamma = gamma
-        self.opt_conditions = opt_conditions
-        self.coilset = coilset
-
         # Set up optimiser
         self.opt = self.set_up_optimiser(len(self.coilset._ccoils))
 
