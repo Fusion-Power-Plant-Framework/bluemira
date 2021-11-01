@@ -1134,7 +1134,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
             self.I_max = np.inf
         self.gamma = gamma
         self.opt_conditions = opt_conditions
-        self.coilset = coilset
 
         # Set up optimiser
         self.opt = self.set_up_optimiser(len(self.coilset._ccoils))
@@ -1676,7 +1675,8 @@ class CoilsetOptimiserBase:
 class CoilsetOptimiser(CoilsetOptimiserBase):
     """
     NLOpt based optimiser for coilsets (currents and positions)
-    subject to maximum current bounds.
+    subject to maximum current and position bounds.
+    Coil currents and positions are optimised simultaneously.
 
     Parameters
     ----------
@@ -1927,7 +1927,9 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 class NestedCoilsetOptimiser(CoilsetOptimiserBase):
     """
     NLOpt based optimiser for coilsets (currents and positions)
-    subject to maximum current bounds.
+    subject to maximum current and position bounds. Performs a
+    nested optimisation for coil currents within each position
+    optimisation function call.
 
     Parameters
     ----------
