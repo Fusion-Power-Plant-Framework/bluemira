@@ -1102,7 +1102,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         If specified as a float, the float will set the maximum allowed current
         for all coils.
     gamma: float (default = 1e-7)
-        Tikhonov regularisation parameter.
+        Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
         (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
         Termination conditions to pass to the optimiser.
@@ -1552,7 +1552,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         fom: Value of objective function (figure of merit).
         """
         err = np.dot(self.A, vector) - self.b
-        rss = err.T @ err + self.gamma * self.gamma * vector.T @ vector
+        rss = (
+            err.T @ err / np.float(len(self.b))
+            + self.gamma * self.gamma * vector.T @ vector
+        )
         self.rms_error = rss
         return rss, err
 
@@ -1578,7 +1581,7 @@ class CoilsetOptimiserBase:
         np.array(len(coilset._ccoils)) with the shift for each coil specified,
         or as a float to apply to all coils.
     gamma: float (default = 1e-7)
-        Tikhonov regularisation parameter.
+        Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
         (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
         Termination conditions to pass to the optimiser.
@@ -1719,10 +1722,15 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         np.array(len(coilset._ccoils)) with the shift for each coil specified,
         or as a float to apply to all coils.
     gamma: float (default = 1e-7)
-        Tikhonov regularisation parameter.
+        Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
-        (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
+        (default {"stopval: 1.0, "maxeval": 100,
+        "xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
         Termination conditions to pass to the optimiser.
+        Setting stopval and maxeval is the most reliable way to stop optimisation
+        at the desired figure of merit and number of iterations respectively.
+        Some NLOpt optimisers display unexpected behaviour when setting xtol and
+        ftol, and may not terminate as expected when those criteria are reached.
     """
 
     def __init__(
@@ -1737,11 +1745,12 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         },
         gamma=1e-7,
         opt_conditions={
+            "stopval": 1.0,
+            "maxeval": 100,
             "xtol_rel": 1e-1,
             "xtol_abs": 1e-1,
             "ftol_rel": 1e-1,
             "ftol_abs": 1e-1,
-            "maxeval": 10,
         },
     ):
         # noqa (N803)
@@ -1805,11 +1814,13 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         opt.set_min_objective(self.f_min_objective)
 
         # Set tolerances for convergence of state vector and objective function
+        opt.set_stopval(self.opt_conditions["stopval"])
+        opt.set_maxeval(self.opt_conditions["maxeval"])
         opt.set_xtol_abs(self.opt_conditions["xtol_abs"])
         opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
         opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
         opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
-        opt.set_maxeval(self.opt_conditions["maxeval"])  # Pretty generic
+
         # Set state vector bounds (current limits)
         x_bounds = (
             self.x0 + self.max_coil_shifts["x_shifts_lower"],
@@ -1938,7 +1949,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         err: Residual (Ax - b) corresponding to the state vector x.
         """
         err = np.dot(self.A, vector) - self.b
-        rss = err.T @ err + self.gamma * self.gamma * vector.T @ vector
+        rss = (
+            err.T @ err / np.float(len(err))
+            + self.gamma * self.gamma * vector.T @ vector
+        )
         self.rms_error = rss
         if not self.rms_error > 0:
             raise EquilibriaError(
@@ -1968,10 +1982,15 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         np.array(len(coilset._ccoils)) with the shift for each coil specified,
         or as a float to apply to all coils.
     gamma: float (default = 1e-7)
-        Tikhonov regularisation parameter.
+        Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
-        (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
+        (default {"stopval: 1.0, "maxeval": 100,
+        "xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
         Termination conditions to pass to the optimiser.
+        Setting stopval and maxeval is the most reliable way to stop optimisation
+        at the desired figure of merit and number of iterations respectively.
+        Some NLOpt optimisers display unexpected behaviour when setting xtol and
+        ftol, and may not terminate as expected when those criteria are reached.
     """
 
     def __init__(
@@ -1986,11 +2005,12 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         },
         gamma=1e-7,
         opt_conditions={
+            "stopval": 1.0,
+            "maxeval": 100,
             "xtol_rel": 1e-1,
             "xtol_abs": 1e-1,
             "ftol_rel": 1e-1,
             "ftol_abs": 1e-1,
-            "maxeval": 15,
         },
         sub_opt_conditions={
             "xtol_rel": 1e-4,
@@ -2043,11 +2063,13 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         opt.set_min_objective(self.f_min_objective)
 
         # Set tolerances for convergence of state vector and objective function
+        opt.set_stopval(self.opt_conditions["stopval"])
+        opt.set_maxeval(self.opt_conditions["maxeval"])
         opt.set_xtol_abs(self.opt_conditions["xtol_abs"])
         opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
         opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
         opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
-        opt.set_maxeval(self.opt_conditions["maxeval"])  # Pretty generic
+
         # Set state vector bounds (current limits)
         x_bounds = (
             self.x0 + self.max_coil_shifts["x_shifts_lower"],
