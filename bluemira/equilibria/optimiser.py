@@ -1549,8 +1549,8 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
 class CoilsetOptimiserBase:
     """
-    Base optimiser for data contained in coilsets, such as coil currents
-    and coil positions
+    Base class for optimisers acting on data stored in Coilsets,
+    such as coil currents and coil positions.
 
     Parameters
     ----------
