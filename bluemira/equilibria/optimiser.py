@@ -1562,29 +1562,13 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
 class CoilsetOptimiserBase:
     """
-    NLOpt based optimiser for coilsets (currents and positions)
-    subject to maximum current bounds.
+    Base optimiser for data contained in coilsets, such as coil currents
+    and coil positions
 
     Parameters
     ----------
     coilset: CoilSet
         Coilset used to get coil current limits and number of coils.
-    max_currents: float or np.array(len(coilset._ccoils)) (default = None)
-        Maximum allowed current for each independent coil current in coilset [A].
-        If specified as a float, the float will set the maximum allowed current
-        for all coils.
-    max_coil_shifts: dict
-        (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
-                  "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
-        Dict specifying maximum tolerable shifts for each coil from its initial
-        position during optimisation [m]. Shifts are specified as either
-        np.array(len(coilset._ccoils)) with the shift for each coil specified,
-        or as a float to apply to all coils.
-    gamma: float (default = 1e-7)
-        Tikhonov regularisation parameter in units of [A⁻¹].
-    opt_conditions: dict
-        (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
-        Termination conditions to pass to the optimiser.
     """
 
     def __init__(self, coilset):
@@ -1637,7 +1621,7 @@ class CoilsetOptimiserBase:
             coil.z = z[i]
             coil.set_current(currents[i] * self.scale)
 
-    def get_state_bounds(self, opt, x_bounds, z_bounds, current_bounds):
+    def get_state_bounds(self, x_bounds, z_bounds, current_bounds):
         """
         Set bounds on the state vector from provided bounds on the substates.
 
@@ -1725,7 +1709,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
         (default {"stopval: 1.0, "maxeval": 100,
-        "xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
+        "xtol_rel": 1e-1, "xtol_abs": 1e-1,"ftol_rel": 1e-1, "ftol_abs": 1e-1})
         Termination conditions to pass to the optimiser.
         Setting stopval and maxeval is the most reliable way to stop optimisation
         at the desired figure of merit and number of iterations respectively.
@@ -1834,7 +1818,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             -self.I_max * np.ones(len(self.I0)),
             self.I_max * np.ones(len(self.I0)),
         )
-        self.bounds = self.get_state_bounds(opt, x_bounds, z_bounds, current_bounds)
+        self.bounds = self.get_state_bounds(x_bounds, z_bounds, current_bounds)
         opt.set_lower_bounds(self.bounds[0])
         opt.set_upper_bounds(self.bounds[1])
         return opt
@@ -1985,8 +1969,15 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
         (default {"stopval: 1.0, "maxeval": 100,
-        "xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
-        Termination conditions to pass to the optimiser.
+        "xtol_rel": 1e-1, "xtol_abs": 1e-1,"ftol_rel": 1e-1, "ftol_abs": 1e-1})
+        Termination conditions to pass to the optimiser for coil positions.
+    sub_opt_conditions: dict
+        (default
+        {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
+        Termination conditions to pass to the sub-optimiser for coil currents.
+
+    Notes
+    -----
         Setting stopval and maxeval is the most reliable way to stop optimisation
         at the desired figure of merit and number of iterations respectively.
         Some NLOpt optimisers display unexpected behaviour when setting xtol and
@@ -2048,8 +2039,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         Parameters
         ----------
         dimension: int
-            Number of independent coil currents to optimise.
-            Should be equal to eq.coilset._ccoils when called.
+            Number of independent coil coordinates to optimise.
+            Should be equal to 2*eq.coilset._ccoils when called.
 
         Returns
         -------
@@ -2091,8 +2082,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         """
         Optimiser handle. Used in __call__
 
-        Returns np.array(len(self.coilset._ccoils)) of optimised currents
-        in each coil [A].
+        Returns optimised coilset object.
         """
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset)
@@ -2128,7 +2118,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         """
         self.iter += 1
         fom = self.get_state_figure_of_merit(vector)
@@ -2159,7 +2149,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        rss: Value of objective function (figure of merit).
+        self.rms: Value of objective function (figure of merit).
         """
         coilset_state = np.concatenate((vector, self.currents))
         self.set_coilset_state(coilset_state)
