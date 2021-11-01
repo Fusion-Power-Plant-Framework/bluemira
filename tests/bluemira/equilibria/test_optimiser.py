@@ -29,7 +29,6 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.equilibria.optimiser import (
-    CoilsetOptimiser,
     PositionOptimiser,
     BreakdownOptimiser,
     CoilsetOptimiser,
