@@ -1101,7 +1101,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    gamma: float (default = 1e-7)
+    gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
         (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
@@ -1112,7 +1112,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         self,
         coilset,
         max_currents=None,
-        gamma=1e-7,
+        gamma=1e-8,
         opt_conditions={
             "xtol_rel": 1e-4,
             "xtol_abs": 1e-4,
@@ -1189,11 +1189,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         opt.set_min_objective(self.f_min_objective)
 
         # Set tolerances for convergence of state vector and objective function
-
-        opt.set_xtol_abs(self.opt_conditions["xtol_abs"])
-        opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
-        opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
-        opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
+        set_termination_conditions(opt, self.opt_conditions)
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(-self.I_max)
@@ -1705,7 +1701,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         position during optimisation [m]. Shifts are specified as either
         np.array(len(coilset._ccoils)) with the shift for each coil specified,
         or as a float to apply to all coils.
-    gamma: float (default = 1e-7)
+    gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
         (default {"stopval: 1.0, "maxeval": 100,
@@ -1727,7 +1723,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             "z_shifts_lower": -1.0,
             "z_shifts_upper": 1.0,
         },
-        gamma=1e-7,
+        gamma=1e-8,
         opt_conditions={
             "stopval": 1.0,
             "maxeval": 100,
@@ -1743,7 +1739,6 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # Used scale for optimiser RoundoffLimited Error prevention
         self.rms = None
         self.rms_error = None
-        self.iter = 0
 
         if max_currents is not None:
             self.I_max = self.update_current_constraint(max_currents)
@@ -1798,12 +1793,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         opt.set_min_objective(self.f_min_objective)
 
         # Set tolerances for convergence of state vector and objective function
-        opt.set_stopval(self.opt_conditions["stopval"])
-        opt.set_maxeval(self.opt_conditions["maxeval"])
-        opt.set_xtol_abs(self.opt_conditions["xtol_abs"])
-        opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
-        opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
-        opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
+        set_termination_conditions(opt, self.opt_conditions)
 
         # Set state vector bounds (current limits)
         x_bounds = (
@@ -1832,18 +1822,16 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         """
         # Get initial currents, and trim to within current bounds.
         initial_state, _ = self.read_coilset_state(self.coilset)
-        # initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
 
         # Optimise
+        self.iter = 0
         state = self.opt.optimize(initial_state)
 
         # Store found optimum of objective function and currents at optimum
         self.set_coilset_state(state)
 
         self.rms = self.opt.last_optimum_value()
-        # self._I_star = currents * self.scale
         process_NLOPT_result(self.opt)
-        print("Figure of merit: ", self.rms)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -1875,8 +1863,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
                 rel_step=1e-3,
             )
         bluemira_print_flush(
-            f"EQUILIBRIA position optimisation iteration {self.iter}: "
-            f"FoM = {self.rms_error:.2f}"
+            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {self.rms:.2e}"
         )
         return fom
 
@@ -1965,7 +1952,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         position during optimisation [m]. Shifts are specified as either
         np.array(len(coilset._ccoils)) with the shift for each coil specified,
         or as a float to apply to all coils.
-    gamma: float (default = 1e-7)
+    gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
         (default {"stopval: 1.0, "maxeval": 100,
@@ -1994,7 +1981,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             "z_shifts_lower": -1.0,
             "z_shifts_upper": 1.0,
         },
-        gamma=1e-7,
+        gamma=1e-8,
         opt_conditions={
             "stopval": 1.0,
             "maxeval": 100,
@@ -2016,7 +2003,6 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Used scale for optimiser RoundoffLimited Error prevention
         self.rms = None
         self.rms_error = None
-        self.iter = 0
 
         self.opt_conditions = opt_conditions
         self.max_coil_shifts = max_coil_shifts
@@ -2054,12 +2040,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         opt.set_min_objective(self.f_min_objective)
 
         # Set tolerances for convergence of state vector and objective function
-        opt.set_stopval(self.opt_conditions["stopval"])
-        opt.set_maxeval(self.opt_conditions["maxeval"])
-        opt.set_xtol_abs(self.opt_conditions["xtol_abs"])
-        opt.set_xtol_rel(self.opt_conditions["xtol_rel"])
-        opt.set_ftol_abs(self.opt_conditions["ftol_abs"])
-        opt.set_ftol_rel(self.opt_conditions["ftol_rel"])
+        set_termination_conditions(opt, self.opt_conditions)
 
         # Set state vector bounds (current limits)
         x_bounds = (
@@ -2089,17 +2070,14 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         x_vals, z_vals, self.currents = np.array_split(initial_state, substates)
         initial_positions = np.concatenate((x_vals, z_vals))
 
-        # initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
-
         # Optimise
+        self.iter = 0
         state = self.opt.optimize(initial_positions)
 
         # Store found optimum of objective function and currents at optimum
         self.rms = self.get_state_figure_of_merit(state)
 
-        # self._I_star = currents * self.scale
         process_NLOPT_result(self.opt)
-        print("Figure of merit: ", self.rms)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -2131,8 +2109,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
                 rel_step=1e-3,
             )
         bluemira_print_flush(
-            f"EQUILIBRIA position optimisation iteration {self.iter}: "
-            f"FoM = {self.rms:.2f}"
+            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {self.rms:.2e}"
         )
         return fom
 
@@ -2168,3 +2145,33 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         self.currents = self.sub_opt(self.eq, self.constraints) / self.scale
         self.rms = self.sub_opt.rms
         return self.rms
+
+
+def set_termination_conditions(opt, opt_conditions):
+    """
+    Set the optimisation algorithm termination condition(s) to use.
+    Adapted from upcoming OptimiserInterface NLOpt API (#358)
+
+    Parameters
+    ----------
+    opt: nlopt.opt
+        NLOpt optimiser to set termination conditions for in-place.
+    opt_conditions: dict
+        NLOpt termination conditions for the optimisation.
+    """
+    conditions = opt_conditions
+
+    if "ftol_abs" in conditions:
+        opt.set_ftol_abs(conditions["ftol_abs"])
+    if "ftol_rel" in opt_conditions:
+        opt.set_ftol_rel(conditions["ftol_rel"])
+    if "xtol_abs" in opt_conditions:
+        opt.set_xtol_abs(conditions["xtol_abs"])
+    if "xtol_rel" in opt_conditions:
+        opt.set_xtol_rel(conditions["xtol_rel"])
+    if "max_time" in opt_conditions:
+        opt.set_maxtime(conditions["max_time"])
+    if "maxeval" in opt_conditions:
+        opt.set_maxeval(conditions["maxeval"])
+    if "stopval" in opt_conditions:
+        opt.set_stopval(conditions["stopval"])
