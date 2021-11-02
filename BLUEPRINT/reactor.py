@@ -48,7 +48,7 @@ from BLUEPRINT.geometry.loop import Loop, point_loop_cast
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 from BLUEPRINT.utilities.colortools import force_rgb
-from BLUEPRINT.utilities.tools import CommentJSONDecoder
+from bluemira.utilities.tools import CommentJSONDecoder
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (

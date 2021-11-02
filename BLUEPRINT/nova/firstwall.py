@@ -49,7 +49,7 @@ from BLUEPRINT.geometry.geomtools import (
     xz_interp,
 )
 from BLUEPRINT.geometry.offset import offset_clipper
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from BLUEPRINT.utilities.optimisation import approx_fprime
 
 

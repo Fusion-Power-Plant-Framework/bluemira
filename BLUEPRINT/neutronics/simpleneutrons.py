@@ -41,7 +41,7 @@ from BLUEPRINT.geometry.geomtools import (
     join_intersect,
 )
 from BLUEPRINT.geometry.boolean import boolean_2d_common
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 
 
 TBR_DATA_ROOT = "_TBR_data.json"

@@ -25,7 +25,7 @@
 import pickle  # noqa (S403)
 import pytest
 from matplotlib import pyplot as plt
-from BLUEPRINT.utilities.tools import set_random_seed
+from bluemira.utilities.tools import set_random_seed
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
 import tests

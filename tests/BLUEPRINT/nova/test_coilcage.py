@@ -27,7 +27,7 @@ import json
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.nova.coilcage import HelmholtzCage
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 import tests
 
 
