@@ -1666,7 +1666,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         for all coils.
     max_coil_shifts: dict
         (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
-                  "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
+        "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
         Dict specifying maximum tolerable shifts for each coil from its initial
         position during optimisation [m]. Shifts are specified as either
         np.array(len(coilset._ccoils)) with the shift for each coil specified,
@@ -1919,7 +1919,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         for all coils.
     max_coil_shifts: dict
         (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
-                  "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
+        "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
         Dict specifying maximum tolerable shifts for each coil from its initial
         position during optimisation [m]. Shifts are specified as either
         np.array(len(coilset._ccoils)) with the shift for each coil specified,
