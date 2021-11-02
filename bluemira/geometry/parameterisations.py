@@ -1491,6 +1491,64 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         variables.adjust_variables(var_dict)
         super().__init__(variables)
 
+    @staticmethod
+    def _domed_leg(
+        x, x_out, x_curve_start, x_mid, z, z_top, z_mid, npoints, flip=False, *, r_c=0
+    ):
+        """
+        Makes smooth dome for CP coils
+        """
+        # If top leg is domed
+        # Define basic Top Curve (with no joint or corner transitions)
+        r_j = min(x_curve_start - x_mid, 0.8)
+        alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
+        theta_leg_basic = 2 * (np.pi - 2 * alpha)
+        r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
+        z_top_r_leg = z_top + r_leg if flip else z_top - r_leg
+        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_top_r_leg)
+        # Transitioning Curve
+        sin_a = np.sin(theta_leg_basic / 2)
+        cos_a = np.cos(theta_leg_basic / 2)
+        alpha_leg = (
+            np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
+        )
+        # Joint Curve
+        theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
+        z_mid_r_j = z_mid - r_j if flip else z_mid + r_j
+        joint_curve_centre = (
+            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
+            z_mid_r_j,
+        )
+        theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
+        x_c_j, z_c_j = circle_seg(
+            r_j,
+            h=joint_curve_centre,
+            angle=-np.rad2deg(theta_j) if flip else np.rad2deg(theta_j),
+            start=90 if flip else -90,
+            npoints=int(npoints * 0.1),
+        )
+        angle2 = np.rad2deg(theta_leg_final)
+        start2 = 90 + np.rad2deg(theta_j)
+        x_c_l, z_c_l = circle_seg(
+            r_leg,
+            h=leg_centre,
+            angle=angle2 if flip else -angle2,
+            start=-start2 if flip else start2,
+            npoints=int(npoints * 0.2),
+        )
+        if flip:
+            x = np.append(x, np.flip(x_c_l))
+            z = np.append(z, np.flip(z_c_l))
+            x = np.append(x, np.flip(x_c_j))
+            z = np.append(z, np.flip(z_c_j))
+        else:
+            x = np.append(x, x_c_j)
+            z = np.append(z, z_c_j)
+            x = np.append(x, x_c_l)
+            z = np.append(z, z_c_l)
+
+        return x, z
+
     def create_shape(self, label=""):
         """
         Make a CAD representation of the curved picture frame.
