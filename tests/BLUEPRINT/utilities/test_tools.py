@@ -21,11 +21,7 @@
 
 import pytest
 import numpy as np
-import os
-import json
-from io import StringIO
 from collections import OrderedDict
-from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.utilities.tools import (
     PowerLawScaling,
     nested_dict_search,
@@ -37,7 +33,6 @@ from BLUEPRINT.utilities.tools import (
     ellipse,
 )
 from BLUEPRINT.geometry.geomtools import polyarea
-from bluemira.utilities.tools import clip, is_num
 
 
 class TestPowerLaw:
