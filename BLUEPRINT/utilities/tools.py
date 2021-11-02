@@ -22,28 +22,16 @@
 """
 Generic miscellaneous tools, including some amigo port-overs
 """
-from functools import partial
 import numpy as np
-import operator
-import string
-from scipy.interpolate import griddata, interp1d
-from scipy.interpolate import UnivariateSpline
 from scipy.spatial.distance import cdist
-from itertools import permutations
-from json.encoder import _make_iterencode
-import nlopt
 import re
-from json import JSONEncoder, JSONDecoder
 from collections import OrderedDict
 from collections.abc import Mapping, Iterable
 from typing import List, Union
-from unittest.mock import patch
 
-from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
-from bluemira.base.parameter import Parameter
+from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-
-from BLUEPRINT.geometry.geomtools import lengthnorm
+from bluemira.utilities.tools import is_num
 
 
 CROSS_P_TOL = 1e-14  # Cross product tolerance
@@ -328,6 +316,7 @@ def perc_change(v2, v1ref, verbose=False):
     return perc
 
 
+# materials functions
 def tokelvin(temp_in_celsius):
     """
     Convert a temperature in Celsius to Kelvin.
@@ -404,6 +393,9 @@ def gcm3tokgm3(density):
     """
     if density is not None:
         return array_or_num(list_array(density) * 1000.0)
+
+
+##########################
 
 
 def print_format_table():
