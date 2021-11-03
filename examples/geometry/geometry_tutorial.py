@@ -75,12 +75,12 @@ if __name__ == "__main__":
     print("6. Test Save as STEP file.")
     shapes = [bmwire._shape, bmface._shape]
     print(shapes)
-    bluemira.external_api._freecadapi.save_as_STEP(shapes)
+    geo._freecadapi.save_as_STEP(shapes)
 
     print("7. Test BluemiraWire.close")
     print("7.1 when boundary is list(Part.Wire)")
     pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
-    wire = bluemira.external_api._freecadapi.make_polygon(pntslist, closed=False)
+    wire = geo._freecadapi.make_polygon(pntslist, closed=False)
     bmwire_nc = geo.wire.BluemiraWire(wire)
     print(bmwire_nc)
     bmwire_nc.close()

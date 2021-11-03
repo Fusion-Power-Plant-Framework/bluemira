@@ -36,13 +36,10 @@ import numpy as np
 import math
 
 # import typing
-from typing import Union
+from typing import List, Optional, Union, Dict
 
 # import errors
 from bluemira.geometry.error import FreeCADError
-
-# import typing
-from typing import List, Optional, Union, Dict
 
 # import visualisation
 from pivy import coin, quarter
@@ -51,6 +48,8 @@ from PySide2.QtWidgets import QApplication
 # # =============================================================================
 # # Array, List, Vector, Point manipulation
 # # =============================================================================
+
+
 def check_data_type(data_type):
     """Decorator to check the data type of the first parameter input (args[0]) of a
     function.
