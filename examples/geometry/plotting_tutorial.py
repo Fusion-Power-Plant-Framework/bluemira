@@ -27,25 +27,23 @@ import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools
 from bluemira.base.components import PhysicalComponent, GroupingComponent
+import bluemira.display as display
 from bluemira.display._matplotlib_plot import (
     PointsPlotter,
     WirePlotter,
     FacePlotter,
-    FaceCompoundPlotter,
 )
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.face import BluemiraFace
-
-import bluemira.display as display
 
 # %%[markdown]
 # ## Setup
 #
 # Creation of a closed wire and respective face
 #
-# PrincetonD parametrization is used as example.
+# PrincetonD parametrisation is used as example.
 #
-# Note: the curve is generated into the xz plane
+# Note: the curve is generated on the x-z plane
 
 # %%
 p = PrincetonD()
@@ -55,14 +53,22 @@ p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire = p.create_shape()
 face = BluemiraFace(wire)
 
+
+# %%[markdown]
+# ## Default plotting
+#
+# We can display the BluemiraWire and BluemiraFace in the following way, using the
+# default settings.
+
+# %%
 display.plot_2d(wire)
-display.plot_3d(face)
+display.plot_3d(wire)
 display.show_cad(face)
 
 
 # %%[markdown]
 #
-# Discretize the wire
+# Discretise the wire to an array of points.
 
 # %%
 points = p.create_array(n_points=10).T
@@ -79,7 +85,7 @@ points = p.create_array(n_points=10).T
 
 # %%
 pplotter = PointsPlotter(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
-pplotter.plot_2d(points, show=False, block=True)
+pplotter.plot_2d(points)
 
 # %%[markdown]
 # ## 3D Scatter Plot
@@ -87,7 +93,7 @@ pplotter.plot_2d(points, show=False, block=True)
 # A plot of the same points, but in 3D this time.
 
 # %%
-pplotter.plot_3d(points, show=True, block=True)
+pplotter.plot_3d(points)
 
 # %%[markdown]
 # ## Wire Plot
@@ -103,9 +109,7 @@ pplotter.plot_3d(points, show=True, block=True)
 wplotter = WirePlotter(plane="xz")
 wplotter.options.poptions["s"] = 20
 wplotter.options.ndiscr = 5
-wplotter.plot_2d(wire, show=False, block=True)
-wplotter.ax.set_title(f"Wire plot, ndiscr: {wplotter.options.ndiscr}")
-wplotter.show_plot_2d()
+wplotter.plot_2d(wire)
 
 
 # %%[markdown]
@@ -114,7 +118,7 @@ wplotter.show_plot_2d()
 # A plot of the same wire, but in 3D this time.
 
 # %%
-wplotter.plot_3d(wire, show=True, block=True)
+wplotter.plot_3d(wire)
 
 # %%[markdown]
 # ## Wire Plot with Matplotlib Default Options
@@ -123,18 +127,23 @@ wplotter.plot_3d(wire, show=True, block=True)
 
 # %%
 wplotter.options.poptions = {}
-wplotter.plot_2d(wire, show=True, block=True)
-# The plot is immediately shown, so it is not possible to act on the plot setup
-# e.g. following commands would not work
+wplotter.plot_2d(wire)
+# The plot is immediately shown by default, so it is not possible to act on the plot
+# setup e.g. following commands would not work
 # wplotter.ax.set_title(f"Wire plot")
 # wplotter.show_plot()
 
 # %%[markdown]
-# We'll disable plotting of points from now on by directly modifying the DEFAULT
-# dictionary. Not really a good pratice, but it is easy in this case.
+# ## Wire plot with some modifications
+#
+# In this example, we disable the automatic display of the plot (show=False), and apply
+# a title to the plot
 
 # %%
-bluemira.display._matplotlib_plot.DEFAULT["flag_points"] = False
+wplotter.options.poptions = {}
+wplotter.plot_2d(wire, show=False)
+wplotter.ax.set_title(f"Wire plot")
+wplotter.show_plot_2d()
 
 # %%[markdown]
 # ## Face Plot
@@ -148,7 +157,7 @@ bluemira.display._matplotlib_plot.DEFAULT["flag_points"] = False
 # %%
 fplotter = FacePlotter(plane="xz")
 fplotter.options.ndiscr = 30
-fplotter.plot_2d(face, show=False, block=True)
+fplotter.plot_2d(face, show=False)
 fplotter.ax.set_title("Face plot without points")
 fplotter.show_plot_2d()
 
@@ -161,8 +170,8 @@ fplotter.show_plot_2d()
 # %%
 fplotter = FacePlotter(plane="xz")
 fplotter.options.ndiscr = 30
-fplotter.options.flag_points = True
-fplotter.plot_2d(face, show=False, block=True)
+fplotter.options.show_points = True
+fplotter.plot_2d(face, show=False)
 fplotter.ax.set_title("Face plot with points")
 fplotter.show_plot_2d()
 
@@ -187,10 +196,10 @@ face2 = BluemiraFace(wire2)
 
 # %%
 fplotter2 = FacePlotter(plane="xz")
-fplotter2.options.flag_points = True
+fplotter2.options.show_points = True
 fplotter2.options.foptions = {"color": "blue"}
-fplotter2.plot_2d(face, show=False, block=True)
-fplotter2.plot_2d(face2, ax=fplotter2.ax, show=False, block=True)
+fplotter2.plot_2d(face, show=False)
+fplotter2.plot_2d(face2, ax=fplotter2.ax, show=False)
 fplotter2.ax.set_title("Both faces in blue")
 fplotter2.show_plot_2d()
 print(f"fplotter2.options: {fplotter2.options.as_dict()}")
@@ -204,9 +213,9 @@ print(f"fplotter2.options: {fplotter2.options.as_dict()}")
 
 # %%
 fplotter2.options.foptions = {"color": "blue"}
-fplotter2.plot_2d(face2, show=False, block=True)
+fplotter2.plot_2d(face2, show=False)
 fplotter2.options.foptions = {"color": "green"}
-fplotter2.plot_2d(face, ax=fplotter2.ax, show=False, block=True)
+fplotter2.plot_2d(face, ax=fplotter2.ax, show=False)
 fplotter2.ax.set_title("Both faces with different colors")
 fplotter2.show_plot_2d()
 
@@ -225,14 +234,14 @@ fplotter2.show_plot_2d()
 # %%
 face3 = BluemiraFace([wire2.deepcopy(), wire.deepcopy()])
 fplotter3 = FacePlotter(plane="xz")
-fplotter3.options.flag_points = True
-fplotter3.plot_2d(face3)
+fplotter3.options.show_points = True
+fplotter3.plot_2d(face3, show=False)
 fplotter3.ax.set_title("Face with hole - points enabled")
 fplotter3.show_plot_2d()
 
 fplotter3.options.foptions["color"] = "blue"
-fplotter3.options.flag_points = False
-fplotter3.plot_2d(face3, ax=None)
+fplotter3.options.show_points = False
+fplotter3.plot_2d(face3, show=False, ax=None)
 fplotter3.ax.set_title("Face with hole - points disabled - blue")
 fplotter3.show_plot_2d()
 
@@ -249,22 +258,6 @@ diff = bari - new_bari
 v = (diff[0], diff[1], diff[2])
 face.translate(v)
 
-# %%[markdown]
-# ## Face Compound Plotter
-#
-# Creation of a face compound plotters using the Blues_r and single colour palettes.
-
-# %%
-cplotter = FaceCompoundPlotter(palette="Blues_r")
-cplotter.set_plane("xz")
-cplotter.plot_2d([face3, face])
-cplotter.ax.set_title("Compound plot - test in Blues_r")
-cplotter.show_plot_2d()
-
-cplotter = FaceCompoundPlotter(plane="xz", palette="light:#105ba4")
-cplotter.plot_2d([face3, face])
-cplotter.ax.set_title("Compound plot - test with single color light:#105ba4")
-cplotter.show_plot_2d()
 
 # %%[markdown]
 # ## Wires and Faces
@@ -278,17 +271,12 @@ wire1 = wire.deepcopy()
 wire1.translate((3, 0, 5))
 wplotter.plot_2d(wire, show=False)
 wplotter.ax.set_title("wire")
-wplotter.show_plot_2d()
+# wplotter.show_plot_2d()
 
 wplotter.plot_2d(wire1, show=False)
 wplotter.ax.set_title("wire1")
 wplotter.show_plot_2d()
 
-wface = BluemiraFace(wire)
-w1face = BluemiraFace(wire1)
-cplotter.plot_2d([wface, w1face])
-cplotter.ax.set_title("faces")
-cplotter.show_plot_2d()
 
 # %%[markdown]
 # ## Plots with Matplotlib Default Point Options
@@ -298,6 +286,8 @@ cplotter.show_plot_2d()
 # Note that, since poptions = {}, points color is automatically changed by matplotlib.
 
 # %%
+wface = BluemiraFace(wire)
+w1face = BluemiraFace(wire1)
 wplotter.plot_2d(wface.boundary[0])
 print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.plot_2d(w1face.boundary[0], ax=wplotter.ax)

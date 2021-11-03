@@ -36,9 +36,9 @@ import numpy as np
 
 DEFAULT = {
     # flags to enable points, wires, and faces plot
-    "flag_points": True,
-    "flag_wires": True,
-    "flag_faces": True,
+    "show_points": True,
+    "show_wires": True,
+    "show_faces": True,
     # matplotlib set of options to plot points, wires, and faces. If an empty dictionary
     # is specified, the default color plot of matplotlib is used.
     "poptions": {"s": 10, "facecolors": "red", "edgecolors": "black", "zorder": 30},
@@ -64,11 +64,11 @@ class _Plot2DOptions(display.Plot2DOptions):
 
     Parameters
     ----------
-    flag_points: bool
+    show_points: bool
         If True, points are plotted. By default True.
-    flag_wires: bool
+    show_wires: bool
         If True, wires are plotted. By default True.
-    flag_faces: bool
+    show_faces: bool
         If True, faces are plotted. By default True.
     poptions: Dict
         Dictionary with matplotlib options for points. By default  {"s": 10,
@@ -97,37 +97,37 @@ class _Plot2DOptions(display.Plot2DOptions):
                     self._options[k] = kwargs[k]
 
     @property
-    def flag_points(self):
+    def show_points(self):
         """
         If true, points are plotted.
         """
-        return self._options["flag_points"]
+        return self._options["show_points"]
 
-    @flag_points.setter
-    def flag_points(self, val):
-        self._options["flag_points"] = val
+    @show_points.setter
+    def show_points(self, val):
+        self._options["show_points"] = val
 
     @property
-    def flag_wires(self):
+    def show_wires(self):
         """
         If True, wires are plotted.
         """
-        return self._options["flag_wires"]
+        return self._options["show_wires"]
 
-    @flag_wires.setter
-    def flag_wires(self, val):
-        self._options["flag_wires"] = val
+    @show_wires.setter
+    def show_wires(self, val):
+        self._options["show_wires"] = val
 
     @property
-    def flag_faces(self):
+    def show_faces(self):
         """
         If True, faces are plotted.
         """
-        return self._options["flag_faces"]
+        return self._options["show_faces"]
 
-    @flag_faces.setter
-    def flag_faces(self, val):
-        self._options["flag_faces"] = val
+    @show_faces.setter
+    def show_faces(self, val):
+        self._options["show_faces"] = val
 
     @property
     def poptions(self):
@@ -268,21 +268,23 @@ class BasePlotter(ABC):
         else:
             self.ax = ax
 
-    def show_plot_2d(self, aspect: str = "equal"):
+    def show_plot_2d(self):
         """Function to show a plot"""
-        plt.gca().set_aspect(aspect)
+        self.ax.set_aspect("equal")
         plt.show(block=True)
 
     @abstractmethod
     def _populate_data(self, obj, *args, **kwargs):
-        """Internal function that makes the plot. It fills self._data and
+        """
+        Internal function that makes the plot. It fills self._data and
         self._data_to_plot
         """
         pass
 
     @abstractmethod
     def _make_plot_2d(self, *args, **kwargs):
-        """Internal function that makes the plot. It should use self._data and
+        """
+        Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
         pass
@@ -299,7 +301,7 @@ class BasePlotter(ABC):
             self._make_plot_2d(*args, **kwargs)
 
             if show:
-                self.show_plot_2d(block=True)
+                self.show_plot_2d()
         return self.ax
 
     ################################################
@@ -313,9 +315,9 @@ class BasePlotter(ABC):
         else:
             self.ax = ax
 
-    def show_plot_3d(self, aspect: str = "auto"):
+    def show_plot_3d(self):
         """Function to show a plot"""
-        plt.gca().set_aspect(aspect)
+        self.ax.set_aspect("auto")
         plt.show(block=True)
 
     @abstractmethod
@@ -358,7 +360,7 @@ class PointsPlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if not self.options._options["flag_points"]:
+        if not self.options.show_points:
             return False
         return True
 
@@ -371,11 +373,11 @@ class PointsPlotter(BasePlotter):
         self._data_to_plot = self._data_to_plot[0:2]
 
     def _make_plot_2d(self, *args, **kwargs):
-        if self.options._options["flag_points"]:
+        if self.options.show_points:
             self.ax.scatter(*self._data_to_plot, **self.options._options["poptions"])
 
     def _make_plot_3d(self, *args, **kwargs):
-        if self.options._options["flag_points"]:
+        if self.options.show_points:
             self.ax.scatter(*self._data.T, **self.options._options["poptions"])
 
 
@@ -391,10 +393,7 @@ class WirePlotter(BasePlotter):
 
     def _check_options(self):
         # Check if nothing has to be plotted
-        if (
-            not self.options._options["flag_points"]
-            and not self.options._options["flag_wires"]
-        ):
+        if not self.options.show_points and not self.options.show_wires:
             return False
 
         return True
@@ -413,18 +412,18 @@ class WirePlotter(BasePlotter):
         self._data_to_plot = self._pplotter._data_to_plot
 
     def _make_plot_2d(self):
-        if self.options._options["flag_wires"]:
+        if self.options.show_wires:
             self.ax.plot(*self._data_to_plot, **self.options._options["woptions"])
 
-        if self.options._options["flag_points"]:
+        if self.options.show_points:
             self._pplotter.ax = self.ax
             self._pplotter._make_plot_2d()
 
     def _make_plot_3d(self, *args, **kwargs):
-        if self.options._options["flag_wires"]:
+        if self.options.show_wires:
             self.ax.plot(*self._data.T, **self.options._options["woptions"])
 
-        if self.options._options["flag_points"]:
+        if self.options.show_points:
             self._pplotter.ax = self.ax
             self._pplotter._make_plot_3d()
 
@@ -440,9 +439,9 @@ class FacePlotter(BasePlotter):
     def _check_options(self):
         # Check if nothing has to be plotted
         if (
-            not self.options._options["flag_points"]
-            and not self.options._options["flag_wires"]
-            and not self.options._options["flag_faces"]
+            not self.options.show_points
+            and not self.options.show_wires
+            and not self.options.show_faces
         ):
             return False
 
@@ -467,7 +466,7 @@ class FacePlotter(BasePlotter):
             self._data_to_plot[1] += w._data_to_plot[1].tolist() + [None]
 
     def _make_plot_2d(self):
-        if self.options._options["flag_faces"]:
+        if self.options.show_faces:
             self.ax.fill(*self._data_to_plot, **self.options._options["foptions"])
 
         for w in self._wplotters:
@@ -475,58 +474,8 @@ class FacePlotter(BasePlotter):
             w._make_plot_2d()
 
     def _make_plot_3d(self, *args, **kwargs):
-        """Internal function that makes the plot. It should use self._data and
-        self._data_to_plot, so _populate_data should be called before.
         """
-        # TODO: to be implemented
-        pass
-
-
-class FaceCompoundPlotter(FacePlotter):
-    """
-    Base utility plotting class for shape compounds.
-    """
-
-    # TODO: this is just a test class. A strategy for filling faces with a color
-    #  defined by a palette has still not been defined.
-    def _check_obj(self, objs):
-        """Check if objects in objs are of the correct type for this class"""
-        self._acceptable_classes = [geo.face.BluemiraFace]
-        if not hasattr(objs, "__len__"):
-            objs = [objs]
-        check = False
-        for c in self._acceptable_classes:
-            check = check or (all(isinstance(o, c) for o in objs))
-            if check:
-                return objs
-        raise TypeError(
-            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
-        )
-
-    def _populate_data(self, objs, *args, **kwargs):
-        self._fplotters = []
-        for id, obj in enumerate(objs):
-            temp_fplotter = FacePlotter(self.options)
-            temp_fplotter._populate_data(obj)
-            self._data += [temp_fplotter._data]
-            self._data_to_plot += [temp_fplotter._data_to_plot]
-            self._fplotters.append(temp_fplotter)
-
-    def _make_plot_2d(self):
-        if "palette" in self.options.as_dict():
-            import seaborn as sns
-
-            palette = sns.color_palette(self.options.palette, len(self._fplotters))
-        else:
-            palette = self.options.foptions["color"]
-
-        for id, fplotter in enumerate(self._fplotters):
-            fplotter.ax = self.ax
-            fplotter.options.foptions["color"] = palette[id]
-            fplotter._make_plot_2d()
-
-    def _make_plot_3d(self, *args, **kwargs):
-        """Internal function that makes the plot. It should use self._data and
+        Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
         # TODO: to be implemented
@@ -534,6 +483,9 @@ class FaceCompoundPlotter(FacePlotter):
 
 
 def _validate_plot_inputs(parts, options, default_options):
+    """
+    Validate the lists of parts and options, applying some default options
+    """
     if not isinstance(parts, list):
         parts = [parts]
 
@@ -551,6 +503,9 @@ def _validate_plot_inputs(parts, options, default_options):
 
 
 def _get_plotter_class(part):
+    """
+    Get the plotting class for a BluemiraGeo object.
+    """
     if isinstance(part, geo.wire.BluemiraWire):
         plot_class = WirePlotter
     elif isinstance(part, geo.face.BluemiraFace):
@@ -577,6 +532,10 @@ def plot_2d(
         The parts to display.
     options: Optional[Union[Plot2DOptions, List[Plot2DOptions]]]
         The options to use to display the parts.
+    ax: Optional[Axes]
+        The axes onto which to plot
+    show: bool
+        Whether or not to show the plot immediately (default=True)
     """
     parts, options = _validate_plot_inputs(parts, options, _Plot2DOptions())
 
@@ -606,6 +565,10 @@ def plot_3d(
         The parts to display.
     options: Optional[Union[Plot3DOptions, List[Plot3Options]]]
         The options to use to display the parts.
+    ax: Optional[Axes]
+        The axes onto which to plot
+    show: bool
+        Whether or not to show the plot immediately (default=True)
     """
     parts, options = _validate_plot_inputs(parts, options, _Plot3DOptions())
 
