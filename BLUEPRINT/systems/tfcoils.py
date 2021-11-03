@@ -321,7 +321,10 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             # Taper end z corrdinate (curve top end)
 
             if self.conductivity in ["R"]:
-                self.adjust_xo("x_in", value=self.params.r_tf_inboard_out)
+                self.adjust_xo(
+                    "x_in",
+                    value=self.params.r_tf_inboard_out + self.params.tk_tf_ob_casing,
+                )
                 self.adjust_xo("z_in", value=self.params.h_cp_top)
             else:
                 self.adjust_xo("x_in", value=r_tf_inboard_out)
