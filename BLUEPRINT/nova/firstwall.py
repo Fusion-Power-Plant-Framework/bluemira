@@ -51,6 +51,7 @@ from BLUEPRINT.geometry.geomtools import (
 )
 from BLUEPRINT.geometry.offset import offset_clipper
 from bluemira.geometry._deprecated_tools import innocent_smoothie
+from bluemira.utilities.opt_tools import approx_fprime
 
 
 class FirstWallProfile(ReactorSystem):

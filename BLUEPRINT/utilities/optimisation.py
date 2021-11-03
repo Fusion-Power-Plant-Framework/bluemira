@@ -32,116 +32,94 @@ from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import distance_between_points, normal, get_intersect
 
 
-class InternalOptError(Exception):
+class _NLOPTFunction:
     """
-    Error class for errors inside the optimisation algorithms.
-    """
-
-    pass
-
-
-class ExternalOptError(Exception):
-    """
-    Error class for errors relating to the optimisation, but not originating
-    inside the optimisers.
-    """
-
-    pass
-
-
-def tikhonov(A, b, gamma):
-    """
-    Tikhonov regularisation of Ax-b problem.
-
-    \t:math:`\\textrm{minimise} || Ax - b ||^2 + ||{\\gamma} \\cdot x ||^2`\n
-    \t:math:`x = (A^T A + {\\gamma}^2 I)^{-1}A^T b`
+    Base class for an optimisation function where numerical estimations of the
+    gradient or jacobian are required.
 
     Parameters
     ----------
-    A: np.array(n, m)
-        The 2-D A matrix of responses
-    b: np.array(n)
-        The 1-D b vector of values
-    gamma: float
-        The Tikhonov regularisation parameter
-
-    Returns
-    -------
-    x: np.array(m)
-        The result vector
+    func: callable
+        The function to calculate the objective or constraints
+    bounds: np.array(n, 2)
+        The array of lower and upper bounds
     """
-    try:
-        return dot(inv(dot(A.T, A) + gamma ** 2 * eye(A.shape[1])), dot(A.T, b))
-    except LinAlgError:
-        bluemira_warn("utilities/optimisation.py: Tikhonov singular matrix..!")
-        return dot(pinv(dot(A.T, A) + gamma ** 2 * eye(A.shape[1])), dot(A.T, b))
+
+    def __init__(self, func, bounds):
+        self.func = func
+        self.bounds = bounds
 
 
-def leastsquares(A, b):
+class NLOPTObjectiveFunction(_NLOPTFunction):
     """
-    Least squares optimisation.
-
-    \t:math:`\\textrm{minimise} || Ax - b ||^{2}_{2}`\n
-    \t:math:`x = (A^T A)^{-1}A^T b`
-
-    Parameters
-    ----------
-    A: np.array(n, m)
-        The 2-D A matrix of responses
-    b: np.array(n)
-        The 1-D b vector of values
-
-    Returns
-    -------
-    x: np.array(m)
-        The result vector
+    An objective function with numerical calculation of the gradient.
     """
-    return np.linalg.solve(A, b)
+
+    def __call__(self, x, grad, *args):
+        """
+        Calculate the objective functions and its gradient (numerically).
+
+        Parameters
+        ----------
+        x: np.array
+            The optimisation variable vector
+        grad: np.array
+            The array of the gradient in NLopt
+        args: tuple
+            The additional arguments used in the function evaluation
+
+        Returns
+        -------
+        result: float
+            The value of the objective function
+
+        Notes
+        -----
+        Modifies `grad` in-place as per NLopt usage.
+        """
+        result = self.func(x, *args)
+
+        if grad.size > 0:
+            grad[:] = approx_fprime(x, self.func, 1e-6, self.bounds, *args, f0=result)
+
+        return result
 
 
-def process_scipy_result(res):
+class NLOPTConstraintFunction(_NLOPTFunction):
     """
-    Handle a scipy.minimize OptimizeResult object. Process error codes, if any.
-
-    Parameters
-    ----------
-    res: OptimizeResult
-
-    Returns
-    -------
-    x: np.array
-        The optimal set of parameters (result of the optimisation)
-
-    Raises
-    ------
-    InternalOptError if an error code returned without a usable result.
+    A constraint function with numerical calculation of the Jacobian.
     """
-    if res.success:
-        return res.x
 
-    if not hasattr(res, "status"):
-        bluemira_warn("Scipy optimisation was not succesful. Failed without status.")
-        raise InternalOptError("\n".join([res.message, res.__str__()]))
+    def __call__(self, constraint, x, grad, *args):
+        """
+        Calculate the objective functions and its gradient (numerically).
 
-    elif res.status == 8:
-        # This can happen when scipy is not convinced that it has found a minimum.
-        bluemira_warn(
-            "\nOptimiser (scipy) found a positive directional derivative,\n"
-            "returning suboptimal result. \n"
-            "\n".join([res.message, res.__str__()])
-        )
-        return res.x
+        Parameters
+        ----------
+        constraint: np.array
+            The array of the constraint equations
+        x: np.array
+            The optimisation variable vector
+        grad: np.array
+            The array of the gradient in NLopt
+        args: tuple
+            The additional arguments used in the function evaluation
 
-    elif res.status == 9:
-        bluemira_warn(
-            "\nOptimiser (scipy) exceeded number of iterations, returning "
-            "suboptimal result. \n"
-            "\n".join([res.message, res.__str__()])
-        )
-        return res.x
+        Returns
+        -------
+        constraint: np.array
+            The array of the constraint equations
 
-    else:
-        raise InternalOptError("\n".join([res.message, res.__str__()]))
+        Notes
+        -----
+        Modifies `grad` and `constraint` in-place as per NLopt usage.
+        """
+        constraint[:] = self.func(x, *args)
+
+        if grad.size > 0:
+            grad[:] = approx_jacobian(
+                x, self.func, 1e-6, self.bounds, *args, f0=constraint
+            )
 
 
 def convert_scipy_constraints(list_of_con_dicts):
