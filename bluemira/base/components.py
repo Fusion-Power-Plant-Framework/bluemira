@@ -33,13 +33,13 @@ from bluemira.display.display import (
     Plottable2D,
     Plotter2D,
     Plot2DOptions,
-    PlottableCAD,
-    PlotterCAD,
-    PlotCADOptions,
+    DisplayableCAD,
+    DisplayerCAD,
+    DisplayCADOptions,
 )
 
 
-class Component(NodeMixin, Plottable2D, PlottableCAD):
+class Component(NodeMixin, Plottable2D, DisplayableCAD):
     """
     The Component is the fundamental building block for a bluemira reactor design. It
     encodes the way that the corresponding part of the reactor will be built, along with
@@ -71,8 +71,8 @@ class Component(NodeMixin, Plottable2D, PlottableCAD):
         if children:
             self.children = children
 
-        self._plotter2d = ComponentPlotter2D()
-        self._plottercad = ComponentPlotterCAD()
+        self._plotter_2d = ComponentPlotter2D()
+        self._displayer_cad = ComponentPlotterCAD()
 
     def __new__(cls, *args, **kwargs) -> Type["Component"]:
         """
@@ -290,7 +290,7 @@ class ComponentPlotter2D(Plotter2D):
             if hasattr(comp, "shape") and comp.shape is not None:
                 shapes.append(comp.shape)
                 if not override_options:
-                    options.append(comp.plot2d_options)
+                    options.append(comp.plot_2d_options)
 
         _append_shape_and_options(component)
 
@@ -300,7 +300,7 @@ class ComponentPlotter2D(Plotter2D):
         return super()._display(shapes, options, *args, **kwargs)
 
 
-class ComponentPlotterCAD(PlotterCAD):
+class ComponentPlotterCAD(DisplayerCAD):
     """
     A Displayer class for displaying Components in 3D.
     """
@@ -308,7 +308,7 @@ class ComponentPlotterCAD(PlotterCAD):
     def _display(
         self,
         component: "Component",
-        options: Optional[PlotCADOptions] = None,
+        options: Optional[DisplayCADOptions] = None,
         *args,
         **kwargs,
     ) -> None:
@@ -335,7 +335,7 @@ class ComponentPlotterCAD(PlotterCAD):
             if hasattr(comp, "shape") and comp.shape is not None:
                 shapes.append(comp.shape)
                 if not override_options:
-                    options.append(comp.plotcad_options)
+                    options.append(comp.displayer_cad_options)
 
         _append_shape_and_options(component)
 

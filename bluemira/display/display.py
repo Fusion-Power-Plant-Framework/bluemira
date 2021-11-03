@@ -119,10 +119,8 @@ class Plotter2D(Displayer):
         api: str = "bluemira.display._matplotlib_plot",
     ):
         super().__init__(options, api)
-        self._options = (
-            get_module(api)._Plot2DOptions() if options is None else options
-        )
-        self._display_func = get_module(api).plot2d
+        self._options = get_module(api)._Plot2DOptions() if options is None else options
+        self._display_func = get_module(api).plot_2d
 
     def _display(self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs):
         """
@@ -145,7 +143,7 @@ class Plotter2D(Displayer):
 
         return super()._display(obj, options, *args, **kwargs)
 
-    def plot2d(
+    def plot_2d(
         self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs
     ) -> None:
         """
@@ -178,24 +176,24 @@ class Plottable2D:
     appropriate Plotter2D class.
     """
 
-    _plotter2d: Plotter2D = None
+    _plotter_2d: Plotter2D = None
 
     @property
-    def plot2d_options(self) -> Plot2DOptions:
+    def plot_2d_options(self) -> Plot2DOptions:
         """
         The options that will be used to display the object.
         """
-        return self._plotter2d.options
+        return self._plotter_2d.options
 
-    @plot2d_options.setter
-    def plot2d_options(self, value: Plot2DOptions):
+    @plot_2d_options.setter
+    def plot_2d_options(self, value: Plot2DOptions):
         if not isinstance(value, Plot2DOptions):
             raise DisplayError(
                 "Display options must be set to a Plot2DOptions instance."
             )
-        self._plotter2d.options = value
+        self._plotter_2d.options = value
 
-    def plot2d(self, options: Optional[Plot2DOptions] = None, *args, **kwargs) -> None:
+    def plot_2d(self, options: Optional[Plot2DOptions] = None, *args, **kwargs) -> None:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -211,7 +209,7 @@ class Plottable2D:
         axes
             The axes that the plot has been displayed onto.
         """
-        return self._plotter2d.plot2d(self, options, *args, **kwargs)
+        return self._plotter_2d.plot_2d(self, options, *args, **kwargs)
 
 
 # # =============================================================================
@@ -236,10 +234,8 @@ class Plotter3D(Displayer):
         api: str = "bluemira.display._matplotlib_plot",
     ):
         super().__init__(options, api)
-        self._options = (
-            get_module(api)._Plot3DOptions() if options is None else options
-        )
-        self._display_func = get_module(api).plot3d
+        self._options = get_module(api)._Plot3DOptions() if options is None else options
+        self._display_func = get_module(api).plot_3d
 
     def _display(self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs):
         """
@@ -262,7 +258,7 @@ class Plotter3D(Displayer):
 
         return super()._display(obj, options, *args, **kwargs)
 
-    def plot3d(
+    def plot_3d(
         self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs
     ) -> None:
         """
@@ -289,24 +285,24 @@ class Plottable3D:
     appropriate Displayer class.
     """
 
-    _plotter3d: Plotter3D = None
+    _plotter_3d: Plotter3D = None
 
     @property
-    def plot3d_options(self) -> Plot3DOptions:
+    def plot_3d_options(self) -> Plot3DOptions:
         """
         The options that will be used to display the object.
         """
-        return self._plotter3d.options
+        return self._plotter_3d.options
 
-    @plot3d_options.setter
-    def plot3d_options(self, value: Plot3DOptions):
+    @plot_3d_options.setter
+    def plot_3d_options(self, value: Plot3DOptions):
         if not isinstance(value, Plot3DOptions):
             raise DisplayError(
                 "Display options must be set to a Plot3DOptions instance."
             )
-        self._plotter3d.options = value
+        self._plotter_3d.options = value
 
-    def plot3d(self, options: Optional[Plot3DOptions] = None, *args, **kwargs) -> None:
+    def plot_3d(self, options: Optional[Plot3DOptions] = None, *args, **kwargs) -> None:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -322,13 +318,13 @@ class Plottable3D:
         axes
             The axes that the plot has been displayed onto.
         """
-        return self._plotter3d.plot3d(self, options, *args, **kwargs)
+        return self._plotter_3d.plot_3d(self, options, *args, **kwargs)
 
 
 # # =============================================================================
 # # PlotCAD
 # # =============================================================================
-class PlotCADOptions(DisplayOptions):
+class DisplayCADOptions(DisplayOptions):
     """
     The options that are available for displaying CAD objects
     """
@@ -336,24 +332,24 @@ class PlotCADOptions(DisplayOptions):
     pass
 
 
-class PlotterCAD(Displayer):
+class DisplayerCAD(Displayer):
     """
     A class for displaying CAD representations of primitive objects.
     """
 
     def __init__(
         self,
-        options: Optional[PlotCADOptions] = None,
+        options: Optional[DisplayCADOptions] = None,
         api: str = "bluemira.display._freecad_plot",
     ):
         super().__init__(options, api)
         self._options = (
-            get_module(api)._PlotCADOptions() if options is None else options
+            get_module(api)._DisplayCADOptions() if options is None else options
         )
         self._display_func = get_module(api).plotcad
 
     def _display(
-        self, obj, options: Optional[PlotCADOptions] = None, *args, **kwargs
+        self, obj, options: Optional[DisplayCADOptions] = None, *args, **kwargs
     ) -> None:
         """
         Display the primitive objects with the provided options.
@@ -375,8 +371,8 @@ class PlotterCAD(Displayer):
 
         return super()._display(obj, options, *args, **kwargs)
 
-    def plotcad(
-        self, obj, options: Optional[PlotCADOptions] = None, *args, **kwargs
+    def show_cad(
+        self, obj, options: Optional[DisplayCADOptions] = None, *args, **kwargs
     ) -> None:
         """
         Display the CAD object by calling the display function within the API.
@@ -397,7 +393,7 @@ class PlotterCAD(Displayer):
         return self._display(obj, options, *args, **kwargs)
 
 
-class PlottableCAD:
+class DisplayableCAD:
     """
     Mixin class to make a class displayable by imparting a plotcad method and options.
 
@@ -407,24 +403,26 @@ class PlottableCAD:
     appropriate Displayer class.
     """
 
-    _plottercad: PlotterCAD = None
+    _displayer_cad: DisplayerCAD = None
 
     @property
-    def plotcad_options(self) -> PlotCADOptions:
+    def displayer_cad_options(self) -> DisplayCADOptions:
         """
         The options that will be used to display the object.
         """
-        return self._plottercad.options
+        return self._displayer_cad.options
 
-    @plotcad_options.setter
-    def plotcad_options(self, value: PlotCADOptions):
-        if not isinstance(value, PlotCADOptions):
+    @displayer_cad_options.setter
+    def displayer_cad_options(self, value: DisplayCADOptions):
+        if not isinstance(value, DisplayCADOptions):
             raise DisplayError(
                 "Display options must be set to a PlotCADOptions instance."
             )
-        self._plottercad.options = value
+        self._displayer_cad.options = value
 
-    def plotcad(self, options: Optional[PlotCADOptions] = None, *args, **kwargs) -> None:
+    def show_cad(
+        self, options: Optional[DisplayCADOptions] = None, *args, **kwargs
+    ) -> None:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -435,4 +433,4 @@ class PlottableCAD:
             If not None then override the object's display_options with the provided
             options. By default None.
         """
-        self._plottercad.plotcad(self, options, *args, **kwargs)
+        self._displayer_cad.show_cad(self, options, *args, **kwargs)

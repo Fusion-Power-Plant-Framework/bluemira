@@ -260,7 +260,7 @@ class BasePlotter(ABC):
         """Internal function that check if it is needed to plot something"""
         pass
 
-    def initialize_plot2d(self, ax=None):
+    def initialize_plot_2d(self, ax=None):
         """Initialize the plot environment"""
         if ax is None:
             fig = plt.figure()
@@ -268,7 +268,7 @@ class BasePlotter(ABC):
         else:
             self.ax = ax
 
-    def show_plot2d(self, aspect: str = "equal", block=True):
+    def show_plot_2d(self, aspect: str = "equal", block=True):
         """Function to show a plot"""
         plt.gca().set_aspect(aspect)
         plt.show(block=block)
@@ -281,13 +281,13 @@ class BasePlotter(ABC):
         pass
 
     @abstractmethod
-    def _make_plot2d(self, *args, **kwargs):
+    def _make_plot_2d(self, *args, **kwargs):
         """Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
         pass
 
-    def plot2d(
+    def plot_2d(
         self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
     ):
         """2D plotting method"""
@@ -296,18 +296,18 @@ class BasePlotter(ABC):
         if not self._check_options():
             self.ax = ax
         else:
-            self.initialize_plot2d(ax)
+            self.initialize_plot_2d(ax)
             self._populate_data(obj, *args, **kwargs)
-            self._make_plot2d(*args, **kwargs)
+            self._make_plot_2d(*args, **kwargs)
 
             if show:
-                self.show_plot2d(block=block)
+                self.show_plot_2d(block=block)
         return self.ax
 
     ################################################
     #                 3D functions                 #
     ################################################
-    def initialize_plot3d(self, ax=None):
+    def initialize_plot_3d(self, ax=None):
         """Initialize the plot environment"""
         if ax is None:
             fig = plt.figure()
@@ -315,19 +315,19 @@ class BasePlotter(ABC):
         else:
             self.ax = ax
 
-    def show_plot3d(self, aspect: str = "auto", block=True):
+    def show_plot_3d(self, aspect: str = "auto", block=True):
         """Function to show a plot"""
         plt.gca().set_aspect(aspect)
         plt.show(block=block)
 
     @abstractmethod
-    def _make_plot3d(self, *args, **kwargs):
+    def _make_plot_3d(self, *args, **kwargs):
         """Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
         pass
 
-    def plot3d(
+    def plot_3d(
         self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
     ):
         """3D plotting method"""
@@ -336,24 +336,19 @@ class BasePlotter(ABC):
         if not self._check_options():
             self.ax = ax
         else:
-            self.initialize_plot3d()
+            self.initialize_plot_3d()
             # this function can be common to 2D and 3D plot
             # self._data is used for 3D plot
             # self._data_to_plot is used for 2D plot
             # TODO: probably better to rename self._data_to_plot into
             #  self._projected_data or self._data2d
             self._populate_data(obj, *args, **kwargs)
-            self._make_plot3d(*args, **kwargs)
+            self._make_plot_3d(*args, **kwargs)
 
             if show:
-                self.show_plot3d(block=block)
+                self.show_plot_3d(block=block)
 
         return self.ax
-
-    # def __call__(
-    #     self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
-    # ):
-    #     return self.plot2d(obj, ax=ax, show=show, block=block, *args, **kwargs)
 
 
 class PointsPlotter(BasePlotter):
@@ -379,11 +374,11 @@ class PointsPlotter(BasePlotter):
         self._data_to_plot = self.temp_data.dot(self.rot).T
         self._data_to_plot = self._data_to_plot[0:2]
 
-    def _make_plot2d(self, *args, **kwargs):
+    def _make_plot_2d(self, *args, **kwargs):
         if self.options._options["flag_points"]:
             self.ax.scatter(*self._data_to_plot, **self.options._options["poptions"])
 
-    def _make_plot3d(self, *args, **kwargs):
+    def _make_plot_3d(self, *args, **kwargs):
         if self.options._options["flag_points"]:
             self.ax.scatter(*self._data.T, **self.options._options["poptions"])
 
@@ -421,15 +416,15 @@ class WirePlotter(BasePlotter):
         self._data = pointsw
         self._data_to_plot = self._pplotter._data_to_plot
 
-    def _make_plot2d(self):
+    def _make_plot_2d(self):
         if self.options._options["flag_wires"]:
             self.ax.plot(*self._data_to_plot, **self.options._options["woptions"])
 
         if self.options._options["flag_points"]:
             self._pplotter.ax = self.ax
-            self._pplotter._make_plot2d()
+            self._pplotter._make_plot_2d()
 
-    def _make_plot3d(self, *args, **kwargs):
+    def _make_plot_3d(self, *args, **kwargs):
         if self.options._options["flag_wires"]:
             self.ax.plot(*self._data.T, **self.options._options["woptions"])
 
@@ -475,15 +470,15 @@ class FacePlotter(BasePlotter):
             self._data_to_plot[0] += w._data_to_plot[0].tolist() + [None]
             self._data_to_plot[1] += w._data_to_plot[1].tolist() + [None]
 
-    def _make_plot2d(self):
+    def _make_plot_2d(self):
         if self.options._options["flag_faces"]:
             self.ax.fill(*self._data_to_plot, **self.options._options["foptions"])
 
         for w in self._wplotters:
             w.ax = self.ax
-            w._make_plot2d()
+            w._make_plot_2d()
 
-    def _make_plot3d(self, *args, **kwargs):
+    def _make_plot_3d(self, *args, **kwargs):
         """Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
@@ -521,7 +516,7 @@ class FaceCompoundPlotter(FacePlotter):
             self._data_to_plot += [temp_fplotter._data_to_plot]
             self._fplotters.append(temp_fplotter)
 
-    def _make_plot2d(self):
+    def _make_plot_2d(self):
         if "palette" in self.options.as_dict():
             import seaborn as sns
 
@@ -532,9 +527,9 @@ class FaceCompoundPlotter(FacePlotter):
         for id, fplotter in enumerate(self._fplotters):
             fplotter.ax = self.ax
             fplotter.options.foptions["color"] = palette[id]
-            fplotter._make_plot2d()
+            fplotter._make_plot_2d()
 
-    def _make_plot3d(self, *args, **kwargs):
+    def _make_plot_3d(self, *args, **kwargs):
         """Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
@@ -542,7 +537,7 @@ class FaceCompoundPlotter(FacePlotter):
         pass
 
 
-def plot2d(
+def plot_2d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
     options: Optional[Union[_Plot2DOptions, List[_Plot2DOptions]]] = None,
     ax=None,
@@ -582,17 +577,17 @@ def plot2d(
             raise DisplayError(
                 f"{part} object cannot be plotted. No Plotter available for {type(part)}"
             )
-        ax = plotter.plot2d(part, ax, False, False)
+        ax = plotter.plot_2d(part, ax, False, False)
 
     if show:
-        plotter.show_plot2d(block=block)
+        plotter.show_plot_2d(block=block)
 
     return ax
 
 
 # TODO: it would be better to use a decorator for plot2d and plot3d to avoid all that
 #  repeated code.
-def plot3d(
+def plot_3d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
     options: Optional[Union[_Plot3DOptions, List[_Plot3DOptions]]] = None,
     ax=None,
@@ -632,9 +627,9 @@ def plot3d(
             raise DisplayError(
                 f"{part} object cannot be plotted. No Plotter available for {type(part)}"
             )
-        ax = plotter.plot3d(part, ax, False, False)
+        ax = plotter.plot_3d(part, ax, False, False)
 
     if show:
-        plotter.show_plot3d(block=block)
+        plotter.show_plot_3d(block=block)
 
     return ax

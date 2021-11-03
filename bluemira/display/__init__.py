@@ -24,6 +24,6 @@ Plotting module
 """
 from . import _matplotlib_plot, _freecad_plot
 
-plot2d = _matplotlib_plot.plot2d
-plot3d = _matplotlib_plot.plot3d
-plotcad = _freecad_plot.plotcad
+plot_2d = _matplotlib_plot.plot_2d
+plot_3d = _matplotlib_plot.plot_3d
+show_cad = _freecad_plot.show_cad

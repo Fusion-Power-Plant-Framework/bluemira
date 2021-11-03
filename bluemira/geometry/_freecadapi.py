@@ -779,13 +779,14 @@ default_display_options = {
     "transparency": 0.0,
 }
 
+
 def _colourise(
     node: coin.SoNode,
     options: Dict = default_display_options,
 ):
     if isinstance(node, coin.SoMaterial):
-        rgb = options['rgb']
-        transparency = options['transparency']
+        rgb = options["rgb"]
+        transparency = options["transparency"]
         node.ambientColor.setValue(coin.SbColor(*rgb))
         node.diffuseColor.setValue(coin.SbColor(*rgb))
         node.transparency.setValue(transparency)
@@ -793,7 +794,7 @@ def _colourise(
         _colourise(child, options)
 
 
-def plotcad(
+def show_cad(
     parts: Union[Part.Shape, List[Part.Shape]],
     options: Optional[Union[Dict, List[Dict]]] = None,
 ):
