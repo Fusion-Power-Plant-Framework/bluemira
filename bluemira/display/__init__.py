@@ -20,43 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Bluemira base error class
+Plotting module
 """
+from . import _matplotlib_plot, _freecad_plot
 
-from textwrap import fill, dedent
-
-
-class BluemiraError(Exception):
-    """
-    Base exception class. Sub-class from this for module level Errors.
-    """
-
-    def __str__(self):
-        """
-        Prettier handling of the Exception strings
-        """
-        return fill(dedent(self.args[0]))
-
-
-class ComponentError(BluemiraError):
-    """
-    Exception class for Components.
-    """
-
-    pass
-
-
-class LogsError(BluemiraError):
-    """
-    Exception class for Components.
-    """
-
-    pass
-
-
-class ParameterError(BluemiraError):
-    """
-    Exception class for Parameters.
-    """
-
-    pass
+plot2d = _matplotlib_plot.plot2d
+plot3d = _matplotlib_plot.plot3d
+plotcad = _freecad_plot.plotcad

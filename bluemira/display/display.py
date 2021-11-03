@@ -116,7 +116,7 @@ class Plotter2D(Displayer):
     def __init__(
         self,
         options: Optional[Plot2DOptions] = None,
-        api: str = "bluemira.base._matplotlib_plot",
+        api: str = "bluemira.display._matplotlib_plot",
     ):
         super().__init__(options, api)
         self._options = (
@@ -233,7 +233,7 @@ class Plotter3D(Displayer):
     def __init__(
         self,
         options: Optional[Plot3DOptions] = None,
-        api: str = "bluemira.base._matplotlib_plot",
+        api: str = "bluemira.display._matplotlib_plot",
     ):
         super().__init__(options, api)
         self._options = (
@@ -344,7 +344,7 @@ class PlotterCAD(Displayer):
     def __init__(
         self,
         options: Optional[PlotCADOptions] = None,
-        api: str = "bluemira.base._freecad_plot",
+        api: str = "bluemira.display._freecad_plot",
     ):
         super().__init__(options, api)
         self._options = (

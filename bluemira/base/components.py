@@ -29,7 +29,7 @@ import copy
 from typing import Any, List, Optional, Type, Union
 
 from .error import ComponentError
-from .display import (
+from bluemira.display.display import (
     Plottable2D,
     Plotter2D,
     Plot2DOptions,
@@ -333,7 +333,7 @@ class ComponentPlotterCAD(PlotterCAD):
 
         def _append_shape_and_options(comp: Component):
             if hasattr(comp, "shape") and comp.shape is not None:
-                shapes.append(comp.shape._shape)
+                shapes.append(comp.shape)
                 if not override_options:
                     options.append(comp.plotcad_options)
 

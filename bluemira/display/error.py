@@ -20,43 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Bluemira base error class
+Bluemira display error class
 """
+from bluemira.base.error import BluemiraError
 
-from textwrap import fill, dedent
-
-
-class BluemiraError(Exception):
+class DisplayError(BluemiraError):
     """
-    Base exception class. Sub-class from this for module level Errors.
-    """
-
-    def __str__(self):
-        """
-        Prettier handling of the Exception strings
-        """
-        return fill(dedent(self.args[0]))
-
-
-class ComponentError(BluemiraError):
-    """
-    Exception class for Components.
-    """
-
-    pass
-
-
-class LogsError(BluemiraError):
-    """
-    Exception class for Components.
-    """
-
-    pass
-
-
-class ParameterError(BluemiraError):
-    """
-    Exception class for Parameters.
+    Exception class for Displayers.
     """
 
     pass

@@ -34,9 +34,9 @@ import Part
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 
-import bluemira.geometry._freecadapi as _freecadapi
+import bluemira._external_api._freecadapi as _freecadapi
 
-from bluemira.geometry._freecadapi import (
+from bluemira._external_api._freecadapi import (
     discretize_by_edges,
     discretize,
     wire_closure,

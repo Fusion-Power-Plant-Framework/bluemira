@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools
 from bluemira.base.components import PhysicalComponent, GroupingComponent
-from bluemira.base._matplotlib_plot import (
+from bluemira.display._matplotlib_plot import (
     PointsPlotter,
     WirePlotter,
     FacePlotter,
@@ -35,6 +35,8 @@ from bluemira.base._matplotlib_plot import (
 )
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.face import BluemiraFace
+
+import bluemira.display as display
 
 # %%[markdown]
 # ## Setup
@@ -52,6 +54,11 @@ p.adjust_variable("x2", 16, lower_bound=10, upper_bound=20)
 p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire = p.create_shape()
 face = BluemiraFace(wire)
+
+display.plot2d(wire, show=True)
+display.plot2d(face, show=True)
+display.plotcad(face)
+
 
 # %%[markdown]
 #
@@ -72,7 +79,7 @@ points = p.create_array(n_points=10).T
 
 # %%
 pplotter = PointsPlotter(poptions={"s": 30, "facecolors": "red", "edgecolors": "black"})
-pplotter.plot2d(points, show=True, block=True)
+pplotter.plot2d(points, show=False, block=True)
 
 # %%[markdown]
 # ## 3D Scatter Plot
@@ -127,7 +134,7 @@ wplotter.plot2d(wire, show=True, block=True)
 # dictionary. Not really a good pratice, but it is easy in this case.
 
 # %%
-bluemira.base._matplotlib_plot.DEFAULT["flag_points"] = False
+bluemira.display._matplotlib_plot.DEFAULT["flag_points"] = False
 
 # %%[markdown]
 # ## Face Plot
@@ -336,8 +343,8 @@ plt.show(block=True)
 # Creates a `GroupingComponent` and plots it in the xz plane using matplotlib defaults.
 
 # %%
-bluemira.base._matplotlib_plot.DEFAULT["foptions"] = {}
-bluemira.base._matplotlib_plot.DEFAULT["woptions"] = {}
+bluemira.display._matplotlib_plot.DEFAULT["foptions"] = {}
+bluemira.display._matplotlib_plot.DEFAULT["woptions"] = {}
 group = GroupingComponent("Components")
 c1 = PhysicalComponent("Comp1", face, parent=group)
 c2 = PhysicalComponent("Comp2", wface, parent=group)

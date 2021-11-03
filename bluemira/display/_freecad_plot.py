@@ -24,27 +24,24 @@ api for plotting using freecad
 """
 from __future__ import annotations
 
-import freecad  # noqa: F401
-import FreeCAD
-import FreeCADGui
-import Part
-
 # import typing
 from typing import List, Optional, Union
 
 # import errors
-from bluemira.base.error import DisplayError
+from .error import DisplayError
 
 # import visualisation
-from pivy import coin, quarter
-from PySide2.QtWidgets import QApplication
+from bluemira._external_api import _freecadapi
+
+import bluemira.geometry as geo
 
 from . import display
 import copy
 
-DEFAULT = {}
-DEFAULT["rgb"] = (0.5, 0.5, 0.5)
-DEFAULT["transparency"] = 0.0
+DEFAULT = {
+    "rgb": (0.5, 0.5, 0.5),
+    "transparency": 0.0,
+}
 
 
 # =======================================================================================
@@ -72,21 +69,12 @@ class FreeCADPlotOptions(display.PlotCADOptions):
         for k in self._options:
             setattr(self, k, self._options[k])
 
-
-def _colourise(
-    node: coin.SoNode,
-    options: FreeCADPlotOptions,
-):
-    if isinstance(node, coin.SoMaterial):
-        node.ambientColor.setValue(coin.SbColor(*options.rgb))
-        node.diffuseColor.setValue(coin.SbColor(*options.rgb))
-        node.transparency.setValue(options.transparency)
-    for child in node.getChildren() or []:
-        _colourise(child, options)
+    def as_dict(self):
+        return self._options
 
 
 def plotcad(
-    parts: Union[Part.Shape, List[Part.Shape]],
+    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
     options: Optional[Union[FreeCADPlotOptions, List[FreeCADPlotOptions]]] = None,
 ):
     """
@@ -113,32 +101,8 @@ def plotcad(
             "there are parts to display."
         )
 
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication([])
+    shapes = [part._shape for part in parts]
+    freecad_options = [o.as_dict() for o in options]
 
-    if not hasattr(FreeCADGui, "subgraphFromObject"):
-        FreeCADGui.setupWithoutGUI()
+    _freecadapi.plotcad(shapes, freecad_options)
 
-    doc = FreeCAD.newDocument()
-
-    root = coin.SoSeparator()
-
-    for part, option in zip(parts, options):
-        new_part = part.copy()
-        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::Feature")
-        obj.Shape = new_part
-        doc.recompute()
-        subgraph = FreeCADGui.subgraphFromObject(obj)
-        _colourise(subgraph, option)
-        root.addChild(subgraph)
-
-    viewer = quarter.QuarterWidget()
-    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
-    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
-    viewer.setSceneGraph(root)
-
-    viewer.setWindowTitle("Bluemira Display")
-    viewer.show()
-    app.exec_()

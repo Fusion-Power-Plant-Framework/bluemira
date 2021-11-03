@@ -28,30 +28,31 @@ import matplotlib.pyplot as plt
 from typing import Optional, Union, List
 
 import bluemira.geometry as geo
-from . import display
+from bluemira.display import display
 from .error import DisplayError
 
 import copy
 import numpy as np
 
-DEFAULT = {}
-# flags to enable points, wires, and faces plot
-DEFAULT["flag_points"] = True
-DEFAULT["flag_wires"] = True
-DEFAULT["flag_faces"] = True
-# matplotlib set of options to plot points, wires, and faces. If an empty dictionary
-# is specified, the default color plot of matplotlib is used.
-DEFAULT["poptions"] = {"s": 10, "facecolors": "red", "edgecolors": "black", "zorder": 30}
-DEFAULT["woptions"] = {"color": "black", "linewidth": "0.5", "zorder": 20}
-DEFAULT["foptions"] = {"color": "blue", "zorder": 10}
-# projection plane
-DEFAULT["plane"] = "xz"
-# palette
-# TODO: it's use is still in progress
-DEFAULT["palette"] = None
-# discretization properties for plotting wires (and faces)
-DEFAULT["ndiscr"] = 100
-DEFAULT["byedges"] = True
+DEFAULT = {
+    # flags to enable points, wires, and faces plot
+    "flag_points": True,
+    "flag_wires": True,
+    "flag_faces": True,
+    # matplotlib set of options to plot points, wires, and faces. If an empty dictionary
+    # is specified, the default color plot of matplotlib is used.
+    "poptions": {"s": 10, "facecolors": "red", "edgecolors": "black", "zorder": 30},
+    "woptions": {"color": "black", "linewidth": "0.5", "zorder": 20},
+    "foptions": {"color": "blue", "zorder": 10},
+    # projection plane
+    "plane": "xz",
+    # palette
+    # TODO: it's use is still in progress
+    "palette": None,
+    # discretization properties for plotting wires (and faces)
+    "ndiscr": 100,
+    "byedges": True,
+}
 
 
 # Note: This class cannot be an instance of dataclasses 'cause it fails when inserting
@@ -359,7 +360,6 @@ class PointsPlotter(BasePlotter):
         return True
 
     def _check_options(self):
-        print(self.options.as_dict())
         # Check if nothing has to be plotted
         if not self.options._options["flag_points"]:
             return False

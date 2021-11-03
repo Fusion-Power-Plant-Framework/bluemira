@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import math
 import numpy as np
-import bluemira.geometry._freecadapi as _freecadapi
+import bluemira._external_api._freecadapi as _freecadapi
 
 
 class BluemiraPlane:
