@@ -29,7 +29,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 # import freecad api
-from .._external_api import _freecadapi
+from . import _freecadapi
 
 import copy
 

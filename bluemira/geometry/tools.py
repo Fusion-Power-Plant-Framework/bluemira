@@ -24,7 +24,7 @@ Useful functions for bluemira geometries.
 """
 # import from freecadapi
 from bluemira.geometry.base import BluemiraGeo
-from .._external_api import _freecadapi
+from . import _freecadapi
 
 # import bluemira geometries
 from .wire import BluemiraWire

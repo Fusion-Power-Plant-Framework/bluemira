@@ -34,7 +34,7 @@ import Part
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.wire import BluemiraWire
-import bluemira._external_api._freecadapi as _freecadapi
+import bluemira.geometry._freecadapi as _freecadapi
 
 # import from error
 from bluemira.geometry.error import NotClosedWire, DisjointedFace

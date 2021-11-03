@@ -39,7 +39,7 @@ import math
 from typing import Union
 
 # import errors
-from .error import FreeCADError
+from bluemira.geometry.error import FreeCADError
 
 # import typing
 from typing import List, Optional, Union, Dict

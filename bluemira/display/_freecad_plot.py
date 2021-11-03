@@ -31,7 +31,7 @@ from typing import List, Optional, Union
 from .error import DisplayError
 
 # import visualisation
-from bluemira._external_api import _freecadapi
+from ..geometry import _freecadapi
 
 import bluemira.geometry as geo
 

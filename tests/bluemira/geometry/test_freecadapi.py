@@ -26,7 +26,7 @@ import freecad  # noqa: F401
 import Part
 from FreeCAD import Base
 
-import bluemira._external_api._freecadapi as freecadapi
+import bluemira.geometry._freecadapi as freecadapi
 from bluemira.geometry.constants import D_TOLERANCE
 
 
