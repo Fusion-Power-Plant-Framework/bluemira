@@ -276,11 +276,11 @@ points = [[0, 0, 0], [1, 0, 0], [1, 0, 3], [0, 0, 3]]
 wire = bluemira.geometry.tools.make_polygon(points, closed=True)
 wire1 = wire.deepcopy()
 wire1.translate((3, 0, 5))
-wplotter.plot_2d(wire, show=False, block=False)
+wplotter.plot_2d(wire, show=False)
 wplotter.ax.set_title("wire")
 wplotter.show_plot_2d()
 
-wplotter.plot_2d(wire1, show=False, block=False)
+wplotter.plot_2d(wire1, show=False)
 wplotter.ax.set_title("wire1")
 wplotter.show_plot_2d()
 
@@ -349,7 +349,7 @@ group = GroupingComponent("Components")
 c1 = PhysicalComponent("Comp1", face, parent=group)
 c2 = PhysicalComponent("Comp2", wface, parent=group)
 c3 = PhysicalComponent("Comp3", w1face, parent=group)
-group.plot_2d(show=True, block=True)
+group.plot_2d()
 
 # %%[markdown]
 # ## Component and BluemiraGeo Combined Plot

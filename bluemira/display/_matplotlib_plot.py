@@ -612,7 +612,7 @@ def plot_3d(
     for part, option in zip(parts, options):
         plot_class = _get_plotter_class(part)
         plotter = plot_class(option)
-        ax = plotter.plot_3d(part, ax, False, False)
+        ax = plotter.plot_3d(part, ax, False)
 
     if show:
         plotter.show_plot_3d()
