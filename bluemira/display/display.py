@@ -120,7 +120,7 @@ class Plotter2D(Displayer):
     ):
         super().__init__(options, api)
         self._options = (
-            get_module(api).MatplotlibOptions() if options is None else options
+            get_module(api)._Plot2DOptions() if options is None else options
         )
         self._display_func = get_module(api).plot2d
 
@@ -237,7 +237,7 @@ class Plotter3D(Displayer):
     ):
         super().__init__(options, api)
         self._options = (
-            get_module(api).MatplotlibOptions() if options is None else options
+            get_module(api)._Plot3DOptions() if options is None else options
         )
         self._display_func = get_module(api).plot3d
 
@@ -348,7 +348,7 @@ class PlotterCAD(Displayer):
     ):
         super().__init__(options, api)
         self._options = (
-            get_module(api).FreeCADPlotOptions() if options is None else options
+            get_module(api)._PlotCADOptions() if options is None else options
         )
         self._display_func = get_module(api).plotcad
 

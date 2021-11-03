@@ -804,7 +804,7 @@ def plotcad(
     ----------
     parts: Union[Part.Shape, List[Part.Shape]]
         The parts to display.
-    options: Optional[Union[FreeCADPlotOptions, List[FreeCADPlotOptions]]]
+    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.
     """
     if not isinstance(parts, list):

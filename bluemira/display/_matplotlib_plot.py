@@ -58,7 +58,7 @@ DEFAULT = {
 # Note: This class cannot be an instance of dataclasses 'cause it fails when inserting
 # a field that is a Base.Placement (or something that contains a Base.Placement). The
 # given error is "TypeError: can't pickle Base.Placement objects"
-class MatplotlibOptions(display.Plot2DOptions):
+class _Plot2DOptions(display.Plot2DOptions):
     """
     The options that are available for plotting objects in 3D.
 
@@ -208,6 +208,12 @@ class MatplotlibOptions(display.Plot2DOptions):
         self._options["byedges"] = val
 
 
+# The definition of this class is necessary to maintain the consistency with the
+# display architecture.
+class _Plot3DOptions(display.Plot3DOptions, _Plot2DOptions):
+    pass
+
+
 # Note: when plotting points, it can happen that markers are not centred properly as
 # described in https://github.com/matplotlib/matplotlib/issues/11836
 class BasePlotter(ABC):
@@ -215,13 +221,13 @@ class BasePlotter(ABC):
     Base utility plotting class
     """
 
-    def __init__(self, options: Optional[MatplotlibOptions] = None, *args, **kwargs):
+    def __init__(self, options: Optional[_Plot2DOptions] = None, *args, **kwargs):
         # discretization points representing the shape in global coordinate system
         self._data = []
         # modified discretization points for plotting (e.g. after plane transformation)
         self._data_to_plot = []
         self.ax = None
-        self.options = MatplotlibOptions(**kwargs) if options is None else options
+        self.options = _Plot2DOptions(**kwargs) if options is None else options
         self.set_plane(self.options._options["plane"])
 
     def set_plane(self, plane):
@@ -538,7 +544,7 @@ class FaceCompoundPlotter(FacePlotter):
 
 def plot2d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
-    options: Optional[Union[MatplotlibOptions, List[MatplotlibOptions]]] = None,
+    options: Optional[Union[_Plot2DOptions, List[_Plot2DOptions]]] = None,
     ax=None,
     show: bool = False,
     block: bool = True,
@@ -557,7 +563,7 @@ def plot2d(
         parts = [parts]
 
     if options is None:
-        options = [MatplotlibOptions()] * len(parts)
+        options = [_Plot2DOptions()] * len(parts)
     elif not isinstance(options, list):
         options = [options] * len(parts)
 
@@ -588,7 +594,7 @@ def plot2d(
 #  repeated code.
 def plot3d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
-    options: Optional[Union[MatplotlibOptions, List[MatplotlibOptions]]] = None,
+    options: Optional[Union[_Plot3DOptions, List[_Plot3DOptions]]] = None,
     ax=None,
     show: bool = False,
     block: bool = True,
@@ -607,7 +613,7 @@ def plot3d(
         parts = [parts]
 
     if options is None:
-        options = [MatplotlibOptions()] * len(parts)
+        options = [_Plot2DOptions()] * len(parts)
     elif not isinstance(options, list):
         options = [options] * len(parts)
 

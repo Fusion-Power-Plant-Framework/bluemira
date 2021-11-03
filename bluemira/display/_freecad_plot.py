@@ -47,7 +47,7 @@ DEFAULT = {
 # =======================================================================================
 # Visualisation
 # =======================================================================================
-class FreeCADPlotOptions(display.PlotCADOptions):
+class _PlotCADOptions(display.PlotCADOptions):
     """
     The options that are available for displaying objects in 3D
     Parameters
@@ -75,7 +75,7 @@ class FreeCADPlotOptions(display.PlotCADOptions):
 
 def plotcad(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
-    options: Optional[Union[FreeCADPlotOptions, List[FreeCADPlotOptions]]] = None,
+    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]] = None,
 ):
     """
     The implementation of the display API for FreeCAD parts.
@@ -84,14 +84,14 @@ def plotcad(
     ----------
     parts: Union[Part.Shape, List[Part.Shape]]
         The parts to display.
-    options: Optional[Union[FreeCADPlotOptions, List[FreeCADPlotOptions]]]
+    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.
     """
     if not isinstance(parts, list):
         parts = [parts]
 
     if options is None:
-        options = [FreeCADPlotOptions()] * len(parts)
+        options = [_PlotCADOptions()] * len(parts)
     elif not isinstance(options, list):
         options = [options] * len(parts)
 
