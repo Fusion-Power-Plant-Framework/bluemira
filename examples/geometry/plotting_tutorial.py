@@ -107,7 +107,7 @@ pplotter.plot_3d(points)
 
 # %%
 wplotter = WirePlotter(plane="xz")
-wplotter.options.poptions["s"] = 20
+wplotter.options.point_options["s"] = 20
 wplotter.options.ndiscr = 5
 wplotter.plot_2d(wire)
 
@@ -126,7 +126,7 @@ wplotter.plot_3d(wire)
 # In this example poptions is set to an empty dict. The default matplotlib are used.
 
 # %%
-wplotter.options.poptions = {}
+wplotter.options.point_options = {}
 wplotter.plot_2d(wire)
 # The plot is immediately shown by default, so it is not possible to act on the plot
 # setup e.g. following commands would not work
@@ -140,9 +140,9 @@ wplotter.plot_2d(wire)
 # a title to the plot
 
 # %%
-wplotter.options.poptions = {}
+wplotter.options.point_options = {}
 wplotter.plot_2d(wire, show=False)
-wplotter.ax.set_title(f"Wire plot")
+wplotter.ax.set_title("Wire plot")
 wplotter.show_plot_2d()
 
 # %%[markdown]
@@ -197,7 +197,7 @@ face2 = BluemiraFace(wire2)
 # %%
 fplotter2 = FacePlotter(plane="xz")
 fplotter2.options.show_points = True
-fplotter2.options.foptions = {"color": "blue"}
+fplotter2.options.face_options = {"color": "blue"}
 fplotter2.plot_2d(face, show=False)
 fplotter2.plot_2d(face2, ax=fplotter2.ax, show=False)
 fplotter2.ax.set_title("Both faces in blue")
@@ -212,9 +212,9 @@ print(f"fplotter2.options: {fplotter2.options.as_dict()}")
 # Note: if face is plotted before face2, face2 will be "covered" by face.
 
 # %%
-fplotter2.options.foptions = {"color": "blue"}
+fplotter2.options.face_options = {"color": "blue"}
 fplotter2.plot_2d(face2, show=False)
-fplotter2.options.foptions = {"color": "green"}
+fplotter2.options.face_options = {"color": "green"}
 fplotter2.plot_2d(face, ax=fplotter2.ax, show=False)
 fplotter2.ax.set_title("Both faces with different colors")
 fplotter2.show_plot_2d()
@@ -239,7 +239,7 @@ fplotter3.plot_2d(face3, show=False)
 fplotter3.ax.set_title("Face with hole - points enabled")
 fplotter3.show_plot_2d()
 
-fplotter3.options.foptions["color"] = "blue"
+fplotter3.options.face_options["color"] = "blue"
 fplotter3.options.show_points = False
 fplotter3.plot_2d(face3, show=False, ax=None)
 fplotter3.ax.set_title("Face with hole - points disabled - blue")
@@ -303,7 +303,7 @@ wplotter.show_plot_2d()
 # Note that, since woptions = {}, wire color is automatically changed by matplotlib
 
 # %%
-wplotter.options.woptions = {}
+wplotter.options.wire_options = {}
 wplotter.plot_2d(wface.boundary[0])
 print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.plot_2d(w1face.boundary[0], ax=wplotter.ax)
@@ -347,10 +347,10 @@ group.plot_2d()
 # Plots a component on the same axes as a BluemiraFace.
 
 # %%
-wplotter.options.woptions["color"] = "red"
+wplotter.options.wire_options["color"] = "red"
 ax = wplotter.plot_2d(wface.boundary[0])
-fplotter.options.foptions["color"] = "green"
-fplotter.options.woptions["color"] = "black"
+fplotter.options.face_options["color"] = "green"
+fplotter.options.wire_options["color"] = "black"
 ax = fplotter.plot_2d(w1face, ax=ax)
 ax = c.plot_2d(ax=ax)
 ax.set_title("test component + bluemirageo plot")

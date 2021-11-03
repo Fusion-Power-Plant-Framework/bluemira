@@ -70,13 +70,13 @@ class _Plot2DOptions(display.Plot2DOptions):
         If True, wires are plotted. By default True.
     show_faces: bool
         If True, faces are plotted. By default True.
-    poptions: Dict
+    point_options: Dict
         Dictionary with matplotlib options for points. By default  {"s": 10,
         "facecolors": "blue", "edgecolors": "black"}
-    woptions: Dict
+    wire_options: Dict
         Dictionary with matplotlib options for wires. By default {"color": "black",
         "linewidth": "0.5"}
-    foptions: Dict
+    face_options: Dict
         Dictionary with matplotlib options for faces. By default {"color": "red"}
     plane: [str, Plane]
         The plane on which the object is projected for plotting. As string, possible
@@ -130,37 +130,37 @@ class _Plot2DOptions(display.Plot2DOptions):
         self._options["show_faces"] = val
 
     @property
-    def poptions(self):
+    def point_options(self):
         """
         Dictionary with matplotlib options for points.
         """
-        return self._options["poptions"]
+        return self._options["point_options"]
 
-    @poptions.setter
-    def poptions(self, val):
-        self._options["poptions"] = val
+    @point_options.setter
+    def point_options(self, val):
+        self._options["point_options"] = val
 
     @property
-    def woptions(self):
+    def wire_options(self):
         """
         Dictionary with matplotlib options for wires.
         """
-        return self._options["woptions"]
+        return self._options["wire_options"]
 
-    @woptions.setter
-    def woptions(self, val):
-        self._options["woptions"] = val
+    @wire_options.setter
+    def wire_options(self, val):
+        self._options["wire_options"] = val
 
     @property
-    def foptions(self):
+    def face_options(self):
         """
         Dictionary with matplotlib options for faces.
         """
-        return self._options["foptions"]
+        return self._options["face_options"]
 
-    @foptions.setter
-    def foptions(self, val):
-        self._options["foptions"] = val
+    @face_options.setter
+    def face_options(self, val):
+        self._options["face_options"] = val
 
     @property
     def plane(self):
@@ -367,18 +367,18 @@ class PointsPlotter(BasePlotter):
     def _populate_data(self, points, *args, **kwargs):
         self._data = points
         # apply rotation matrix given by options['plane']
-        self.rot = self.options._options["plane"].to_matrix().T
+        self.rot = self.options.plane.to_matrix().T
         self.temp_data = np.c_[self._data, np.ones(len(self._data))]
         self._data_to_plot = self.temp_data.dot(self.rot).T
         self._data_to_plot = self._data_to_plot[0:2]
 
     def _make_plot_2d(self, *args, **kwargs):
         if self.options.show_points:
-            self.ax.scatter(*self._data_to_plot, **self.options._options["poptions"])
+            self.ax.scatter(*self._data_to_plot, **self.options.point_options)
 
     def _make_plot_3d(self, *args, **kwargs):
         if self.options.show_points:
-            self.ax.scatter(*self._data.T, **self.options._options["poptions"])
+            self.ax.scatter(*self._data.T, **self.options.point_options)
 
 
 class WirePlotter(BasePlotter):
@@ -413,7 +413,7 @@ class WirePlotter(BasePlotter):
 
     def _make_plot_2d(self):
         if self.options.show_wires:
-            self.ax.plot(*self._data_to_plot, **self.options._options["woptions"])
+            self.ax.plot(*self._data_to_plot, **self.options.wire_options)
 
         if self.options.show_points:
             self._pplotter.ax = self.ax
@@ -421,7 +421,7 @@ class WirePlotter(BasePlotter):
 
     def _make_plot_3d(self, *args, **kwargs):
         if self.options.show_wires:
-            self.ax.plot(*self._data.T, **self.options._options["woptions"])
+            self.ax.plot(*self._data.T, **self.options.wire_options)
 
         if self.options.show_points:
             self._pplotter.ax = self.ax
@@ -467,7 +467,7 @@ class FacePlotter(BasePlotter):
 
     def _make_plot_2d(self):
         if self.options.show_faces:
-            self.ax.fill(*self._data_to_plot, **self.options._options["foptions"])
+            self.ax.fill(*self._data_to_plot, **self.options.face_options)
 
         for w in self._wplotters:
             w.ax = self.ax
