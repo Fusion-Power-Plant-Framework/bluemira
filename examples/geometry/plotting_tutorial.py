@@ -55,8 +55,8 @@ p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire = p.create_shape()
 face = BluemiraFace(wire)
 
-display.plot_2d(wire, show=True)
-display.plot_3d(face, show=True)
+display.plot_2d(wire)
+display.plot_3d(face)
 display.show_cad(face)
 
 

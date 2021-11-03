@@ -268,10 +268,10 @@ class BasePlotter(ABC):
         else:
             self.ax = ax
 
-    def show_plot_2d(self, aspect: str = "equal", block=True):
+    def show_plot_2d(self, aspect: str = "equal"):
         """Function to show a plot"""
         plt.gca().set_aspect(aspect)
-        plt.show(block=block)
+        plt.show(block=True)
 
     @abstractmethod
     def _populate_data(self, obj, *args, **kwargs):
@@ -287,9 +287,7 @@ class BasePlotter(ABC):
         """
         pass
 
-    def plot_2d(
-        self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
-    ):
+    def plot_2d(self, obj, ax=None, show: bool = True, *args, **kwargs):
         """2D plotting method"""
         self._check_obj(obj)
 
@@ -301,7 +299,7 @@ class BasePlotter(ABC):
             self._make_plot_2d(*args, **kwargs)
 
             if show:
-                self.show_plot_2d(block=block)
+                self.show_plot_2d(block=True)
         return self.ax
 
     ################################################
@@ -315,10 +313,10 @@ class BasePlotter(ABC):
         else:
             self.ax = ax
 
-    def show_plot_3d(self, aspect: str = "auto", block=True):
+    def show_plot_3d(self, aspect: str = "auto"):
         """Function to show a plot"""
         plt.gca().set_aspect(aspect)
-        plt.show(block=block)
+        plt.show(block=True)
 
     @abstractmethod
     def _make_plot_3d(self, *args, **kwargs):
@@ -327,9 +325,7 @@ class BasePlotter(ABC):
         """
         pass
 
-    def plot_3d(
-        self, obj, ax=None, show: bool = False, block: bool = False, *args, **kwargs
-    ):
+    def plot_3d(self, obj, ax=None, show: bool = True, *args, **kwargs):
         """3D plotting method"""
         self._check_obj(obj)
 
@@ -346,7 +342,7 @@ class BasePlotter(ABC):
             self._make_plot_3d(*args, **kwargs)
 
             if show:
-                self.show_plot_3d(block=block)
+                self.show_plot_3d()
 
         return self.ax
 
@@ -430,7 +426,7 @@ class WirePlotter(BasePlotter):
 
         if self.options._options["flag_points"]:
             self._pplotter.ax = self.ax
-            self._pplotter._make_plot3d()
+            self._pplotter._make_plot_3d()
 
 
 class FacePlotter(BasePlotter):
@@ -537,12 +533,40 @@ class FaceCompoundPlotter(FacePlotter):
         pass
 
 
+def _validate_plot_inputs(parts, options, default_options):
+    if not isinstance(parts, list):
+        parts = [parts]
+
+    if options is None:
+        options = [default_options] * len(parts)
+    elif not isinstance(options, list):
+        options = [options] * len(parts)
+
+    if len(options) != len(parts):
+        raise DisplayError(
+            "If options for plot are provided then there must be as many options as "
+            "there are parts to plot."
+        )
+    return parts, options
+
+
+def _get_plotter_class(part):
+    if isinstance(part, geo.wire.BluemiraWire):
+        plot_class = WirePlotter
+    elif isinstance(part, geo.face.BluemiraFace):
+        plot_class = FacePlotter
+    else:
+        raise DisplayError(
+            f"{part} object cannot be plotted. No Plotter available for {type(part)}"
+        )
+    return plot_class
+
+
 def plot_2d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
     options: Optional[Union[_Plot2DOptions, List[_Plot2DOptions]]] = None,
     ax=None,
-    show: bool = False,
-    block: bool = True,
+    show: bool = True,
 ):
     """
     The implementation of the display API for FreeCAD parts.
@@ -554,82 +578,43 @@ def plot_2d(
     options: Optional[Union[Plot2DOptions, List[Plot2DOptions]]]
         The options to use to display the parts.
     """
-    if not isinstance(parts, list):
-        parts = [parts]
-
-    if options is None:
-        options = [_Plot2DOptions()] * len(parts)
-    elif not isinstance(options, list):
-        options = [options] * len(parts)
-
-    if len(options) != len(parts):
-        raise DisplayError(
-            "If options for plot are provided then there must be as many options as "
-            "there are parts to plot."
-        )
+    parts, options = _validate_plot_inputs(parts, options, _Plot2DOptions())
 
     for part, option in zip(parts, options):
-        if isinstance(part, geo.wire.BluemiraWire):
-            plotter = WirePlotter(option)
-        elif isinstance(part, geo.face.BluemiraFace):
-            plotter = FacePlotter(option)
-        else:
-            raise DisplayError(
-                f"{part} object cannot be plotted. No Plotter available for {type(part)}"
-            )
-        ax = plotter.plot_2d(part, ax, False, False)
+        plot_class = _get_plotter_class(part)
+        plotter = plot_class(option)
+        ax = plotter.plot_2d(part, ax, False)
 
     if show:
-        plotter.show_plot_2d(block=block)
+        plotter.show_plot_2d()
 
     return ax
 
 
-# TODO: it would be better to use a decorator for plot2d and plot3d to avoid all that
-#  repeated code.
 def plot_3d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
     options: Optional[Union[_Plot3DOptions, List[_Plot3DOptions]]] = None,
     ax=None,
     show: bool = False,
-    block: bool = True,
 ):
     """
-    The implementation of the display API for FreeCAD parts.
+    The implementation of the display API for BluemiraGeo parts.
 
     Parameters
     ----------
     parts: Union[Part.Shape, List[Part.Shape]]
         The parts to display.
-    options: Optional[Union[Plot2DOptions, List[Plot2DOptions]]]
+    options: Optional[Union[Plot3DOptions, List[Plot3Options]]]
         The options to use to display the parts.
     """
-    if not isinstance(parts, list):
-        parts = [parts]
-
-    if options is None:
-        options = [_Plot2DOptions()] * len(parts)
-    elif not isinstance(options, list):
-        options = [options] * len(parts)
-
-    if len(options) != len(parts):
-        raise DisplayError(
-            "If options for plot are provided then there must be as many options as "
-            "there are parts to plot."
-        )
+    parts, options = _validate_plot_inputs(parts, options, _Plot3DOptions())
 
     for part, option in zip(parts, options):
-        if isinstance(part, geo.wire.BluemiraWire):
-            plotter = WirePlotter(option)
-        elif isinstance(part, geo.face.BluemiraFace):
-            plotter = FacePlotter(option)
-        else:
-            raise DisplayError(
-                f"{part} object cannot be plotted. No Plotter available for {type(part)}"
-            )
+        plot_class = _get_plotter_class(part)
+        plotter = plot_class(option)
         ax = plotter.plot_3d(part, ax, False, False)
 
     if show:
-        plotter.show_plot_3d(block=block)
+        plotter.show_plot_3d()
 
     return ax

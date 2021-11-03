@@ -346,7 +346,7 @@ class DisplayerCAD(Displayer):
         self._options = (
             get_module(api)._DisplayCADOptions() if options is None else options
         )
-        self._display_func = get_module(api).plotcad
+        self._display_func = get_module(api).show_cad
 
     def _display(
         self, obj, options: Optional[DisplayCADOptions] = None, *args, **kwargs
