@@ -23,13 +23,11 @@
 Optimisation utilities
 """
 import numpy as np
-from numpy import dot, eye
-from numpy.linalg import inv, pinv, LinAlgError
 from scipy.optimize._constraints import old_constraint_to_new
-from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import distance_between_points, normal, get_intersect
+from bluemira.utilities.opt_tools import approx_fprime, approx_jacobian
 
 
 class _NLOPTFunction:
