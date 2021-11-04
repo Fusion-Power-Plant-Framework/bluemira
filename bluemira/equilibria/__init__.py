@@ -38,7 +38,6 @@ from .profiles import BetaIpProfile, CustomProfile
 from .shapes import flux_surface_johner, flux_surface_cunningham, flux_surface_manickam
 from .optimiser import (
     Norm2Tikhonov,
-    LeastSquares,
     FBIOptimiser,
     BoundedCurrentOptimiser,
     PositionOptimiser,
