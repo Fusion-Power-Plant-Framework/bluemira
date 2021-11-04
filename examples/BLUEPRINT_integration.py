@@ -432,8 +432,8 @@ if __name__ == "__main__":
     reactor = BluemiraReactor(config, build_config, build_tweaks)
     reactor.build()
 
-    plot_component(reactor.component_trees["xz"])
-    plot_component(reactor.component_trees["xy"])
+    reactor.component_trees["xz"].plot_2d(plane="xz")
+    reactor.component_trees["xy"].plot_2d(plane="xy")
 
     print(reactor.component_trees["xz"].tree())
     print(reactor.component_trees["xy"].tree())
