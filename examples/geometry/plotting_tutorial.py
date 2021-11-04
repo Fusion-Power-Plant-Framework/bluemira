@@ -274,7 +274,7 @@ wire1 = wire.deepcopy()
 wire1.translate((3, 0, 5))
 wplotter.plot_2d(wire, show=False)
 wplotter.ax.set_title("wire")
-# wplotter.show_plot_2d()
+wplotter.show()
 
 wplotter.plot_2d(wire1, show=False)
 wplotter.ax.set_title("wire1")
@@ -296,7 +296,7 @@ wplotter.plot_2d(wface.boundary[0])
 print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.plot_2d(w1face.boundary[0], ax=wplotter.ax)
 print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
-wplotter.ax.set_title("test boundary from faces - matplotlib default poptions")
+wplotter.ax.set_title("test boundary from faces - matplotlib default point_options")
 wplotter.show()
 
 # %%[markdown]
@@ -313,7 +313,7 @@ print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.plot_2d(w1face.boundary[0], ax=wplotter.ax)
 print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
 wplotter.ax.set_title(
-    "test boundary from faces - matplotlib default poptions and " "woptions"
+    "test boundary from faces - matplotlib default point_options and wire_options"
 )
 wplotter.show()
 
@@ -328,7 +328,6 @@ c.plot_2d_options.plane = "xz"
 c.plot_2d_options.ndiscr = 30
 ax = c.plot_2d(show=False)
 ax.set_title("test component plot")
-plt.gca().set_aspect("equal")
 plt.show(block=True)
 
 # %%[markdown]
@@ -361,7 +360,6 @@ fplotter.options.wire_options["color"] = "black"
 ax = fplotter.plot_2d(w1face, ax=ax)
 ax = c.plot_2d(ax=ax)
 ax.set_title("test component + bluemirageo plot")
-plt.gca().set_aspect("equal")
 plt.show(block=True)
 
 # %%[markdown]

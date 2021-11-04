@@ -310,9 +310,9 @@ class BasePlotter(ABC):
                 self.show()
         return self.ax
 
-    ################################################
-    #                 3D functions                 #
-    ################################################
+    # # =================================================================================
+    # # 3-D functions
+    # # =================================================================================
     def initialize_plot_3d(self, ax=None):
         """Initialize the plot environment"""
         if ax is None:
@@ -549,9 +549,8 @@ def plot_2d(
     parts, options = _validate_plot_inputs(parts, options, _Plot2DOptions())
 
     for part, option in zip(parts, options):
-        plot_class = _get_plotter_class(part)
-        plotter = plot_class(option)
-        ax = plotter.plot_2d(part, ax, False)
+        plotter = _get_plotter_class(part)(option)
+        ax = plotter.plot_2d(part, ax, show=False)
 
     if show:
         plotter.show()
@@ -584,11 +583,10 @@ def plot_3d(
     parts, options = _validate_plot_inputs(parts, options, _Plot3DOptions())
 
     for part, option in zip(parts, options):
-        plot_class = _get_plotter_class(part)
-        plotter = plot_class(option)
-        ax = plotter.plot_3d(part, ax, False)
+        plotter = _get_plotter_class(part)(option)
+        ax = plotter.plot_3d(part, ax, show=False)
 
     if show:
-        plotter.show_plot_3d()
+        plotter.show()
 
     return ax
