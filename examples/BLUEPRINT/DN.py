@@ -70,6 +70,8 @@ build_config = {
     # TF coil config
     "TF_type": "D",
     "TF_objective": "L",
+    "wp_shape": "N",
+    "conductivity": "SC",
     "GS_type": "JT60SA",
     # FW and VV config
     "VV_parameterisation": "S",

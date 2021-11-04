@@ -122,5 +122,6 @@
     "family": "S",
     "objective": "L",
     "wp_shape": "wp_shape",
-    "n_TF": 16.0
+    "n_TF": 16.0,
+    "conductivity": "SC"
 }

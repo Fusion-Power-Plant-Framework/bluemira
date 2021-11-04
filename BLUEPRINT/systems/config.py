@@ -23,8 +23,7 @@
 Configuration classes
 """
 from bluemira.base.parameter import ParameterFrame, ParameterMapping
-
-from BLUEPRINT.base.config_schema import ConfigurationSchema
+from bluemira.base.config_schema import ConfigurationSchema
 
 
 class Configuration(ConfigurationSchema, ParameterFrame):
@@ -210,7 +209,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
 
         # TF coils
-        ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfcth", False, False)}],
+        ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfcth", True, False)}],
         ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfthko", False, False)}],
         ['tk_tf_nose', 'TF coil inboard nose thickness', 0.6, 'm', None, 'Input', {"PROCESS": ParameterMapping("thkcas", True, False)}],
         ['tk_tf_wp', 'TF coil winding pack thickness', 0.5, 'm', 'Excluding insulation', 'PROCESS', {"PROCESS": ParameterMapping("dr_tf_wp", True, False)}],
@@ -227,6 +226,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["sigma_tf_max", "Maximum von Mises stress in the TF coil nose", 550e6, "Pa", None, "Input", {"PROCESS": ParameterMapping("alstrtf", False, False)}],
         ['h_cp_top', 'Height of the TF coil inboard Tapered section end', 6., 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("h_cp_top", False, False)}],
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 6.5, 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("hmax", False, False)}],
+        ['h_tf_min_in', 'Plasma side TF coil min height', -6.5, 'm', None, 'PROCESS'],
         ['B_tf_peak', 'Peak field inside the TF coil winding pack', 12, 'T', None, 'PROCESS'],
         ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
         ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],

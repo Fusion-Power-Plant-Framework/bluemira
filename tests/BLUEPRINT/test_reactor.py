@@ -25,7 +25,7 @@
 import pickle  # noqa (S403)
 import pytest
 from matplotlib import pyplot as plt
-from BLUEPRINT.utilities.tools import set_random_seed
+from bluemira.utilities.tools import set_random_seed
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
 import tests
@@ -69,6 +69,7 @@ build_config = {
     "TF_type": "S",
     "wp_shape": "N",  # This is the winding pack shape choice for the inboard leg
     "TF_objective": "L",
+    "conductivity": "SC",
     # FW and VV config
     "VV_parameterisation": "S",
     "FW_parameterisation": "S",

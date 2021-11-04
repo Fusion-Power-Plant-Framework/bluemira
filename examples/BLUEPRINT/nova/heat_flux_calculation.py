@@ -31,7 +31,7 @@ from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from bluemira.equilibria.equilibrium import Equilibrium
 
-from BLUEPRINT.systems.firstwall import FirstWall
+from BLUEPRINT.systems.firstwall import FirstWallSN
 from time import time
 
 # %%[markdown]
@@ -39,83 +39,45 @@ from time import time
 
 t = time()
 
-read_path = get_bluemira_path("equilibria", subfolder="data/bluemira")
+read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "EU-DEMO_EOF.json"
 eq_name = os.sep.join([read_path, eq_name])
 eq = Equilibrium.from_eqdsk(eq_name, load_large_file=True)
-profile = Loop.from_file("first_wall.json")
+x_box = [4, 15, 15, 4, 4]
+z_box = [-11, -11, 11, 11, -11]
+vv_box = Loop(x=x_box, z=z_box)
 
 # %%[markdown]
-# Calling the First Wall Class
-# First Wall Class will create a set of flux surfaces between the LCFS and the FW
-# In this case we are going to calculate the heat fluxes onto the provided profile
-# Alternatively we can also call the class only providing an equilibrium
-# In this case a "preliminary first wall" profile will be designed
+# Calling the First Wall Class which will run
+# the whole first wall optimisation being everything
+# defined in the relevant __init__ function.
+# Some basic inputs need to be specified.
+# Particularly, if the user is dealing with a configuration
+# different than STEP DN, this needs to be specified.
+# At the moment, options alternative to STEP DN are
+# "DEMO_DN" and "SN".
 
-fw = FirstWall(FirstWall.default_params, {"equilibrium": eq, "profile": profile})
-
-# %%[markdown]
-# We are going to define the key parameters for the flux surfaces
-
-(
-    lfs_first_intersection,
-    hfs_first_intersection,
-    qpar_omp,
-    qpar_local_lfs,
-    qpar_local_hfs,
-    glancing_angle_lfs,
-    glancing_angle_hfs,
-    f_lfs,
-    f_hfs,
-) = fw.define_flux_surfaces_parameters()
-# %%[markdown]
-# We are going to calculate the heat flux onto the FW
-
-x, z, hf, hf_lfs, hf_hfs, th = fw.calculate_heat_flux_lfs_hfs(
-    lfs_first_intersection,
-    hfs_first_intersection,
-    qpar_omp,
-    qpar_local_lfs,
-    qpar_local_hfs,
-    glancing_angle_lfs,
-    glancing_angle_hfs,
+# %%
+fw = FirstWallSN(
+    FirstWallSN.default_params,
+    {
+        "equilibrium": eq,
+        "vv_inner": vv_box,
+        "SN": True,
+        "div_vertical_outer_target": True,
+        "div_vertical_inner_target": False,
+    },
 )
 
 # %%[markdown]
-# Plots
+# The funtion "plot_hf" gives a summary plot of
+# optimised wall, heat flux and flux surfaces.
 
-# %%[markdown]
-# First wall, separatrix and flux surfaces
-f, ax = plt.subplots()
-fw.lcfs.plot(ax, fill=False, facecolor="b", linewidth=0.1)
-fw.separatrix.plot(ax, fill=False, facecolor="b", linewidth=0.5)
-fw.profile.plot(ax, fill=False, facecolor="b", linewidth=0.1)
-for fs in fw.flux_surfaces:
-    fs.loop.plot(ax, fill=False, facecolor="r", linewidth=0.1)
+# %%
 
-plt.show()
-
-# %%[markdown]
-# First wall shape, hit points and heat flux values
 fig, ax = plt.subplots()
-fw.profile.plot(ax=ax)
-cs = ax.scatter(x, z, c=hf, cmap="viridis", zorder=100)
-bar = fig.colorbar(cs, ax=ax)
-bar.set_label("Heat Flux [MW/m^2]")
-
+fw.plot_hf()
 plt.show()
 
-# %%[markdown]
-# Heat flux values against poloidal location
-
-plt.style.use("seaborn")
-fig, ax = plt.subplots()
-ax.scatter(th, hf, c=hf, cmap="viridis", s=100)
-ax.legend()
-ax.set_title("Heat flux on the wall", fontsize=24)
-ax.set_xlabel("Theta", fontsize=14)
-ax.set_ylabel("HF (MW/m^2)", fontsize=14)
-ax.tick_params(axis="both", which="major", labelsize=14)
-plt.show()
 
 print(f"{time()-t:.2f} seconds")

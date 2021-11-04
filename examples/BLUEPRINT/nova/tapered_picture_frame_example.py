@@ -56,6 +56,7 @@ params = [
     ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
     ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
+    ['tk_tf_inboard', 'TF coil inboard thickness', 0.4505, 'm', None, 'Input', 'PROCESS'],
 ]
 # fmt: on
 
@@ -76,6 +77,7 @@ to_tf = {
     "koz_loop": ko_zone,
     "shape_type": "TP",  # This is the overall coil shape parameterisation to use
     "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
+    "conductivity": "R",  # Resistive (R) or Superconducting (SC)
     "npoints": 400,
     "obj": "L",  # This is the optimisation objective: minimise length
     "ny": 3,  # This is the number of current filaments to use in y

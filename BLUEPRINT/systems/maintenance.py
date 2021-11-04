@@ -36,7 +36,7 @@ from bluemira.base.constants import GRAVITY
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 if sys.platform != "darwin" and getpass.getuser() != "mcintos":  # !!!

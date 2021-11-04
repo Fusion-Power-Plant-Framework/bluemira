@@ -35,7 +35,7 @@ from bluemira.base.constants import (
 )
 
 from BLUEPRINT.utilities.plottools import SuperSankey
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.palettes import B_PAL_MAP
 from BLUEPRINT.utilities.tools import tokelvin
 

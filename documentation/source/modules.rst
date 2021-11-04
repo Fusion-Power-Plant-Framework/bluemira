@@ -7,6 +7,7 @@ Bluemira Modules
     :hidden:
  
     base/base
+    codes
     components
     equilibria/equilibria
     fuel_cycle/fuel_cycle

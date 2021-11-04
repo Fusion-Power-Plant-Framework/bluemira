@@ -28,7 +28,7 @@ __version__ = get_versions()["version"]
 import pathlib  # noqa
 import subprocess  # noqa (S404)
 import sys  # noqa
-from BLUEPRINT.base.file import get_BP_root  # noqa
+from bluemira.base.file import get_bluemira_root  # noqa
 
 __all__ = ["test", "__version__"]
 del get_versions
@@ -52,12 +52,12 @@ def test(path=None, *, plotting=False):
         path = frame.f_globals["__file__"]
 
     # Relative path from project root to the file as a tuple
-    parts = pathlib.Path(path).absolute().relative_to(get_BP_root()).parts
+    parts = pathlib.Path(path).absolute().relative_to(get_bluemira_root()).parts
     # We want the directory path with "tests/BLUEPRINT" instead of "BLUEPRINT" and
     # without the filename
     directory = ("tests/BLUEPRINT",) + parts[1:-1]
     test_file = "test_" + parts[-1]
-    full_path = pathlib.Path(get_BP_root(), *directory, test_file)
+    full_path = pathlib.Path(get_bluemira_root(), *directory, test_file)
     if not full_path.is_file():
         sys.stderr.write(f'Test file "{full_path}" not found.\n')
         sys.exit(1)

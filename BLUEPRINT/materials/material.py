@@ -45,8 +45,8 @@ from BLUEPRINT.utilities.tools import (
     tokelvin,
     list_array,
     array_or_num,
-    is_num,
 )
+from bluemira.utilities.tools import is_num
 
 # Set any custom symbols for use in asteval
 asteval_user_symbols = {"PropsSI": PropsSI, "tocelcius": tocelsius, "tokelvin": tokelvin}

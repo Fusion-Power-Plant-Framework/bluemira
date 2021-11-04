@@ -31,7 +31,7 @@ from scipy.special import iv as bessel
 from collections import OrderedDict
 from pandas import DataFrame
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from BLUEPRINT.geometry.geomtools import clock, qrotate, xz_interp
 from BLUEPRINT.geometry.geomtools import circle_seg
 
@@ -842,7 +842,17 @@ class TaperedPictureFrame(Parameterisation):
 
 
 def curved_picture_frame(
-    x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c, npoints=200
+    x_in,
+    x_mid,
+    x_curve_start,
+    x_out,
+    z_in,
+    z_mid_up,
+    z_mid_down,
+    z_top,
+    z_bottom,
+    r_c,
+    npoints=200,
 ):
     """
     Curved PictureFrame shape parameterisation
@@ -859,10 +869,14 @@ def curved_picture_frame(
         x-coordinate (from machine axis) of outermost leg [m]
     z_in: float
         z-height (from mid-plane) of coil tapered section [m]
-    z_mid: float
+    z_mid_up: float
         z-height of straight part of coil top leg [m]
+    z_mid_down: float
+        z_height of straight part of coil bottom leg
     z_top: float
-        max height of top/bottom legs [m]
+        max height of top legs [m]
+    z_bottom: float
+        max height of bottom legs [m]
     r_c: float
         radius of corner/transitioning curves [m]
     npoints: int (default = 200)
@@ -887,8 +901,6 @@ def curved_picture_frame(
     # SC coil
     if x_mid == 0:
         x_mid = x_in
-    if z_in == 0:
-        z_in = z_mid
 
     if x_mid < x_in:
         raise GeometryError(
@@ -910,27 +922,18 @@ def curved_picture_frame(
             "Curved picture_frame parameterisation requires an z_in value"
             f"that is not negative: {0} >= {z_in}"
         )
-    if z_mid < z_in:
-        raise GeometryError(
-            "Curved tapered_picture_frame parameterisation requires an z_mid"
-            f"value greater than or equal to z_in: {z_mid} < {z_in}"
-        )
-    if z_top < z_mid:
-        raise GeometryError(
-            "Curved tapered_picture_frame parameterisation requires an z_top "
-            f"value greater than or equal to z_mid: {z_top} < {z_mid}"
-        )
 
     if npoints < 10:
         raise ValueError("N. of Points must be > 10, npoints inputted " f"= {npoints}")
 
-    x, z = x_in * np.ones(1), np.zeros(1)
+    x, z = [], []
 
     # If no taper, define a straight line
     npts = int(npoints * 0.1)
-    if abs(x_mid - x_in) <= 1e-3:
-        x_c_t = np.append(x, x_mid * np.ones(npts))
-        z_c_t = np.append(z, np.linspace(0.0, z_in, npts))
+    if abs(x_mid - x_in) <= 1e-3 or z_in == 0:
+        # If there is no tapering
+        x = np.append(x, [x_in, x_in])
+        z = np.append(z, [z_mid_down, z_mid_up])
 
     # Inboard Curved Taper, positive z
     else:
@@ -944,102 +947,58 @@ def curved_picture_frame(
         angle = np.rad2deg(np.arcsin(z_in / r_taper))
 
         x_c_t, z_c_t = circle_seg(
-            r_taper, h=(x_in + r_taper, 0), angle=-angle, start=180, npoints=npts
+            r_taper,
+            h=(x_in + r_taper, 0),
+            angle=-2 * angle,
+            start=180 + angle,
+            npoints=npts,
         )
-    x = np.append(x, x_c_t)
-    z = np.append(z, z_c_t)
 
-    # Inner leg, positive z
-    npts = 2
-    x = np.append(x, x_mid * np.ones(npts))
-    z = np.append(z, np.linspace(z_in, z_mid, npts))
+        x = np.append(x, x_mid)
+        z = np.append(z, z_mid_down)
+        x = np.append(x, x_c_t)
+        z = np.append(z, z_c_t)
+        x = np.append(x, x_mid)
+        z = np.append(z, z_mid_up)
 
-    # Define basic Top Curve (with no joint or corner transitions)
-    r_j = min(x_curve_start - x_mid, 0.8)
-    z_j = z_mid  # define start point for curve
-    x_curve_start2 = x_curve_start
-    alpha = np.arctan(0.5 * (x_out - x_curve_start2) / (z_top - z_j))
-    theta_leg_basic = 2 * (np.pi - 2 * alpha)
-    r_leg = 0.5 * (x_out - x_curve_start2) / np.sin(theta_leg_basic / 2)
-    leg_centre = (x_out - 0.5 * (x_out - x_curve_start2), z_top - r_leg)
-
-    # Transitioning Curve
-    r_c = 0
-    sin_a = np.sin(theta_leg_basic / 2)
-    cos_a = np.cos(theta_leg_basic / 2)
-    alpha_leg = (
-        np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
-    )
-
-    # Joint Curve
-    theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
-    joint_curve_centre = (leg_centre[0] - (r_leg + r_j) * np.sin(theta_j), z_mid + r_j)
-
-    theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
-
-    x_c_j, z_c_j = circle_seg(
-        r_j,
-        h=joint_curve_centre,
-        angle=np.rad2deg(theta_j),
-        start=-90,
-        npoints=int(npoints * 0.1),
-    )
-    x = np.append(x, x_c_j)
-    z = np.append(z, z_c_j)
-
-    x_c_l, z_c_l = circle_seg(
-        r_leg,
-        h=leg_centre,
-        angle=-1 * np.rad2deg(theta_leg_final),
-        start=90 + np.rad2deg(theta_j),
-        npoints=int(npoints * 0.2),
-    )
-    x = np.append(x, x_c_l)
-    z = np.append(z, z_c_l)
-
-    theta_trans = np.pi / 2 + theta_leg_basic / 2 - alpha_leg
-    trans_curve_centre = (
-        x_out - r_c,
-        z_top - r_leg + (r_leg - r_c) * np.sin(theta_trans),
-    )
-
-    x_c_trans, z_c_trans = circle_seg(
-        r_c,
-        h=(trans_curve_centre),
-        angle=-np.rad2deg(theta_trans),
-        start=np.rad2deg(theta_trans),
-        npoints=int(npoints * 0.1),
-    )
-    x = np.append(x, x_c_trans)
-    z = np.append(z, z_c_trans)
-
+    if z_top > (z_mid_up + 0.01):
+        # If top leg is domed
+        x, z = CurvedPictureFrame.domed_leg(
+            x, x_out, x_curve_start, x_mid, z, z_top, z_mid_up, npoints, flip=False
+        )
+    else:
+        # If top leg is flat
+        r_c = min(x_curve_start - x_mid, 0.8)
+        x = np.append(x, x_out - r_c)
+        z = np.append(z, z_mid_up)
+        npts = int(npoints * 0.1)
+        x_c, z_c = circle_seg(
+            r_c, h=(x_out - r_c, z_mid_up - r_c), angle=-90, npoints=npts, start=90
+        )
+        x = np.append(x, x_c)
+        z = np.append(z, z_c)
     # Outer leg
     npts = 2
-    x = np.append(x, x_out * np.ones(npts))
-    z = np.append(z, np.linspace(z_mid, -z_mid, npts))
-
-    # Bottom Curve
-    x = np.append(x, np.flip(x_c_trans))
-    z = np.append(z, -np.flip(z_c_trans))
-    x = np.append(x, np.flip(x_c_l))
-    z = np.append(z, -np.flip(z_c_l))
-
-    # Bottom leg, joint
-    x = np.append(x, np.flip(x_c_j))
-    z = np.append(z, -np.flip(z_c_j))
-
-    # Inner leg, negative z
-    npts = 2
-    x = np.append(x, x_mid * np.ones(npts))
-    z = np.append(z, np.linspace(-z_mid, -z_in, npts))
-
-    if x_mid != x_in:
-        # Inboard Curved Taper, positive z
-        x = np.append(x, np.flip(x_c_t))
-        z = np.append(z, -np.flip(z_c_t))
+    x = np.append(x, x_out)
+    z = np.append(z, z_mid_down)
+    if z_bottom < (z_mid_down - 0.01):
+        # Domed bottom leg
+        x, z = CurvedPictureFrame.domed_leg(
+            x, x_out, x_curve_start, x_mid, z, z_bottom, z_mid_down, npoints, flip=True
+        )
     else:
-        x = np.append(x, x_in)
-        z = np.append(z, 0)
+        # flat bottom leg
+        x = np.append(x, x_out - r_c)
+        z = np.append(z, z_mid_down)
+        npts = int(npoints * 0.1)
+        x_c, z_c = circle_seg(
+            r_c, h=(x_out - r_c, z_mid_down + r_c), angle=-90, npoints=npts, start=0
+        )
+        x = np.append(x, x_c)
+        z = np.append(z, z_c)
+
+    x = np.append(x, x_mid)
+    z = np.append(z, z_mid_down)
 
     return x, z
 
@@ -1060,13 +1019,73 @@ class CurvedPictureFrame(Parameterisation):
         self.xo["x_curve_start"] = {"value": 2.5, "lb": 2.4, "ub": 2.6}  # middle leg
         self.xo["x_out"] = {"value": 9.5, "lb": 9.4, "ub": 9.8}  # outer leg
         self.xo["z_in"] = {"value": 0.5, "lb": 0.45, "ub": 0.8}  # Vertical height
-        self.xo["z_mid"] = {"value": 7.5, "lb": 6, "ub": 8}  # vertical
+        self.xo["z_mid_up"] = {"value": 7.5, "lb": 6, "ub": 8}  # vertical
+        self.xo["z_mid_down"] = {"value": -7.5, "lb": -8, "ub": -6}  # vertical
         self.xo["z_top"] = {"value": 14.5, "lb": 14.0, "ub": 15}  # vertical
+        self.xo["z_bottom"] = {"value": -14.5, "lb": -15.0, "ub": -14}  # vertical
         self.xo["r_c"] = {"value": 0.3, "lb": 0.00, "ub": 0.8}  # Corner radius
 
         self.oppvar = list(self.xo.keys())
 
         self.segments = None
+
+    @staticmethod
+    def domed_leg(
+        x, x_out, x_curve_start, x_mid, z, z_top, z_mid, npoints, flip=False, *, r_c=0
+    ):
+        """
+        Makes smooth dome for CP coils
+        """
+        # If top leg is domed
+        # Define basic Top Curve (with no joint or corner transitions)
+        r_j = min(x_curve_start - x_mid, 0.8)
+        alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
+        theta_leg_basic = 2 * (np.pi - 2 * alpha)
+        r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
+        z_top_r_leg = z_top + r_leg if flip else z_top - r_leg
+        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_top_r_leg)
+        # Transitioning Curve
+        sin_a = np.sin(theta_leg_basic / 2)
+        cos_a = np.cos(theta_leg_basic / 2)
+        alpha_leg = (
+            np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
+        )
+        # Joint Curve
+        theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
+        z_mid_r_j = z_mid - r_j if flip else z_mid + r_j
+        joint_curve_centre = (
+            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
+            z_mid_r_j,
+        )
+        theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
+        x_c_j, z_c_j = circle_seg(
+            r_j,
+            h=joint_curve_centre,
+            angle=-np.rad2deg(theta_j) if flip else np.rad2deg(theta_j),
+            start=90 if flip else -90,
+            npoints=int(npoints * 0.1),
+        )
+        angle2 = np.rad2deg(theta_leg_final)
+        start2 = 90 + np.rad2deg(theta_j)
+        x_c_l, z_c_l = circle_seg(
+            r_leg,
+            h=leg_centre,
+            angle=angle2 if flip else -angle2,
+            start=-start2 if flip else start2,
+            npoints=int(npoints * 0.2),
+        )
+        if flip:
+            x = np.append(x, np.flip(x_c_l))
+            z = np.append(z, np.flip(z_c_l))
+            x = np.append(x, np.flip(x_c_j))
+            z = np.append(z, np.flip(z_c_j))
+        else:
+            x = np.append(x, x_c_j)
+            z = np.append(z, z_c_j)
+            x = np.append(x, x_c_l)
+            z = np.append(z, z_c_l)
+
+        return x, z
 
     def draw(self, **kwargs):
         # Draw the x, z points of the shape parameterisation
@@ -1080,9 +1099,30 @@ class CurvedPictureFrame(Parameterisation):
         """
         self.set_input(**kwargs)
 
-        x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c = self.xo.get_value()
+        (
+            x_in,
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_in,
+            z_mid_up,
+            z_mid_down,
+            z_top,
+            z_bottom,
+            r_c,
+        ) = self.xo.get_value()
         x, z = curved_picture_frame(
-            x_in, x_mid, x_curve_start, x_out, z_in, z_mid, z_top, r_c, npoints=200
+            x_in,
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_in,
+            z_mid_up,
+            z_mid_down,
+            z_top,
+            z_bottom,
+            r_c,
+            npoints=400,
         )
         self.segments = {"x": x, "z": z}
         p = self.segments

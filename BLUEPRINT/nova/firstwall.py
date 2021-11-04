@@ -34,7 +34,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.optimiser import approx_derivative
 
 from BLUEPRINT.nova.stream import StreamFlow
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
 from BLUEPRINT.geometry.stringgeom import String
@@ -50,7 +50,7 @@ from BLUEPRINT.geometry.geomtools import (
     xz_interp,
 )
 from BLUEPRINT.geometry.offset import offset_clipper
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 
 
 class FirstWallProfile(ReactorSystem):
