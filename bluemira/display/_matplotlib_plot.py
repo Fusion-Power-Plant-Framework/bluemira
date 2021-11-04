@@ -41,9 +41,9 @@ DEFAULT = {
     "show_faces": True,
     # matplotlib set of options to plot points, wires, and faces. If an empty dictionary
     # is specified, the default color plot of matplotlib is used.
-    "poptions": {"s": 10, "facecolors": "red", "edgecolors": "black", "zorder": 30},
-    "woptions": {"color": "black", "linewidth": "0.5", "zorder": 20},
-    "foptions": {"color": "blue", "zorder": 10},
+    "point_options": {"s": 10, "facecolors": "red", "edgecolors": "black", "zorder": 30},
+    "wire_options": {"color": "black", "linewidth": "0.5", "zorder": 20},
+    "face_options": {"color": "blue", "zorder": 10},
     # projection plane
     "plane": "xz",
     # palette
@@ -60,7 +60,7 @@ DEFAULT = {
 # given error is "TypeError: can't pickle Base.Placement objects"
 class _Plot2DOptions(display.Plot2DOptions):
     """
-    The options that are available for plotting objects in 3D.
+    The options that are available for plotting objects in 2D.
 
     Parameters
     ----------
@@ -268,9 +268,8 @@ class BasePlotter(ABC):
         else:
             self.ax = ax
 
-    def show_plot_2d(self):
+    def show(self):
         """Function to show a plot"""
-        self.ax.set_aspect("equal")
         plt.show(block=True)
 
     @abstractmethod
@@ -289,6 +288,12 @@ class BasePlotter(ABC):
         """
         pass
 
+    def _set_aspect_2d(self):
+        self.ax.set_aspect("equal")
+
+    def _set_aspect_3d(self):
+        self.ax.set_aspect("auto")
+
     def plot_2d(self, obj, ax=None, show: bool = True, *args, **kwargs):
         """2D plotting method"""
         self._check_obj(obj)
@@ -299,9 +304,10 @@ class BasePlotter(ABC):
             self.initialize_plot_2d(ax)
             self._populate_data(obj, *args, **kwargs)
             self._make_plot_2d(*args, **kwargs)
+            self._set_aspect_2d()
 
             if show:
-                self.show_plot_2d()
+                self.show()
         return self.ax
 
     ################################################
@@ -314,11 +320,6 @@ class BasePlotter(ABC):
             self.ax = fig.add_subplot(projection="3d")
         else:
             self.ax = ax
-
-    def show_plot_3d(self):
-        """Function to show a plot"""
-        self.ax.set_aspect("auto")
-        plt.show(block=True)
 
     @abstractmethod
     def _make_plot_3d(self, *args, **kwargs):
@@ -342,9 +343,10 @@ class BasePlotter(ABC):
             #  self._projected_data or self._data2d
             self._populate_data(obj, *args, **kwargs)
             self._make_plot_3d(*args, **kwargs)
+            self._set_aspect_3d()
 
             if show:
-                self.show_plot_3d()
+                self.show()
 
         return self.ax
 
@@ -375,10 +377,12 @@ class PointsPlotter(BasePlotter):
     def _make_plot_2d(self, *args, **kwargs):
         if self.options.show_points:
             self.ax.scatter(*self._data_to_plot, **self.options.point_options)
+        self._set_aspect_2d()
 
     def _make_plot_3d(self, *args, **kwargs):
         if self.options.show_points:
             self.ax.scatter(*self._data.T, **self.options.point_options)
+        self._set_aspect_3d()
 
 
 class WirePlotter(BasePlotter):
@@ -418,6 +422,7 @@ class WirePlotter(BasePlotter):
         if self.options.show_points:
             self._pplotter.ax = self.ax
             self._pplotter._make_plot_2d()
+        self._set_aspect_2d()
 
     def _make_plot_3d(self, *args, **kwargs):
         if self.options.show_wires:
@@ -426,6 +431,7 @@ class WirePlotter(BasePlotter):
         if self.options.show_points:
             self._pplotter.ax = self.ax
             self._pplotter._make_plot_3d()
+        self._set_aspect_3d()
 
 
 class FacePlotter(BasePlotter):
@@ -472,6 +478,7 @@ class FacePlotter(BasePlotter):
         for w in self._wplotters:
             w.ax = self.ax
             w._make_plot_2d()
+        self._set_aspect_2d()
 
     def _make_plot_3d(self, *args, **kwargs):
         """
@@ -479,12 +486,12 @@ class FacePlotter(BasePlotter):
         self._data_to_plot, so _populate_data should be called before.
         """
         # TODO: to be implemented
-        pass
+        self._set_aspect_3d()
 
 
 def _validate_plot_inputs(parts, options, default_options):
     """
-    Validate the lists of parts and options, applying some default options
+    Validate the lists of parts and options, applying some default options.
     """
     if not isinstance(parts, list):
         parts = [parts]
@@ -524,7 +531,7 @@ def plot_2d(
     show: bool = True,
 ):
     """
-    The implementation of the display API for FreeCAD parts.
+    The implementation of the display API for BluemiraGeo parts.
 
     Parameters
     ----------
@@ -535,7 +542,9 @@ def plot_2d(
     ax: Optional[Axes]
         The axes onto which to plot
     show: bool
-        Whether or not to show the plot immediately (default=True)
+        Whether or not to show the plot immediately (default=True). Note
+        that if using iPython or Jupyter, this has no effect; the plot is shown
+        automatically.
     """
     parts, options = _validate_plot_inputs(parts, options, _Plot2DOptions())
 
@@ -545,7 +554,7 @@ def plot_2d(
         ax = plotter.plot_2d(part, ax, False)
 
     if show:
-        plotter.show_plot_2d()
+        plotter.show()
 
     return ax
 
@@ -568,7 +577,9 @@ def plot_3d(
     ax: Optional[Axes]
         The axes onto which to plot
     show: bool
-        Whether or not to show the plot immediately (default=True)
+        Whether or not to show the plot immediately in the console. (default=True). Note
+        that if using iPython or Jupyter, this has no effect; the plot is shown
+        automatically.
     """
     parts, options = _validate_plot_inputs(parts, options, _Plot3DOptions())
 

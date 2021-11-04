@@ -110,7 +110,7 @@ class Plot2DOptions(DisplayOptions):
 
 class Plotter2D(Displayer):
     """
-    A class for plotting primitive objects in 3D.
+    A class for plotting primitive objects in 2D.
     """
 
     def __init__(
