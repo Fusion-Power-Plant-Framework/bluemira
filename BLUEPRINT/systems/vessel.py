@@ -529,7 +529,7 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             cutter_loop = make_box_xz(
                 x_min=self.params.r_vv_joint,
                 x_max=np.amax(offset_loop.x) + 0.1,
-                z_min=-np.amax(offset_loop.z) - 0.1,
+                z_min=np.min(offset_loop.z) - 0.1,
                 z_max=np.amax(offset_loop.z) + 0.1,
             )
 
@@ -538,7 +538,7 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             cutter_loop = make_box_xz(
                 x_min=np.amin(offset_loop.x) - 0.1,
                 x_max=self.params.r_vv_joint,
-                z_min=-np.amax(offset_loop.z) - 0.1,
+                z_min=np.min(offset_loop.z) - 0.1,
                 z_max=np.amax(offset_loop.z) + 0.1,
             )
 
