@@ -36,7 +36,7 @@ from .solid import BluemiraSolid
 import numpy as np
 
 # import typing
-from typing import Union
+from typing import Union, Iterable
 
 
 # # =============================================================================
@@ -334,12 +334,16 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     swept: Union[BluemiraSolid, BluemiraShell]
         Swept geometry object
     """
+    if not isinstance(profiles, Iterable):
+        profiles = [profiles]
+    profiles = [p._shape for p in profiles]
+    path = path._shape
     result = _freecadapi.sweep_shape(profiles, path, solid, frenet)
 
     if solid:
-        return BluemiraSolid(result, label=label)
+        return BluemiraSolid._create(result, label=label)
     else:
-        return BluemiraShell(result, label=label)
+        return BluemiraShell._create(result, label=label)
 
 
 def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):

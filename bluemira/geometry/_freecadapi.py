@@ -683,6 +683,39 @@ def extrude_shape(shape, vec: tuple):
     return shape.extrude(vec)
 
 
+def _edges_tangent(edge_1, edge_2):
+    """
+    Check if two adjacent edges are tangent to one another.
+    """
+    return np.isclose(
+        edge_1.tangentAt(0).getAngle(edge_2.tangentAt(edge_2.Length)),
+        0.0,
+        rtol=1e-8,
+        atol=1e-8,
+    )
+
+
+def _wire_edges_tangent(wire):
+    """
+    Check that all consecutive edges in a wire are tangent
+    """
+    if len(wire.Edges) <= 1:
+        return True
+
+    else:
+        edges_tangent = []
+        for i in range(len(wire.Edges) - 1):
+            edge_1 = wire.Edges[i]
+            edge_2 = wire.Edges[i + 1]
+            edges_tangent.append(_edges_tangent(edge_1, edge_2))
+
+    if wire.isClosed():
+        # Check last and first edge tangency
+        edges_tangent.append(wire.Edges[-1], wire.Edges[0])
+
+    return all(edges_tangent)
+
+
 def sweep_shape(profiles, path, solid=True, frenet=True):
     """
     Sweep a a set of profiles along a path.
@@ -707,9 +740,9 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
     if not isinstance(profiles, Iterable):
         profiles = [profiles]
 
-    closures = [p.isClosed for p in profiles]
+    closures = [p.isClosed() for p in profiles]
 
-    if all(closures) or (not any(closures)):
+    if (not all(closures)) or (not any(closures)):
         raise GeometryError("You cannot mix open and closed profiles when sweeping.")
 
     if (not any(closures)) and solid:
@@ -719,8 +752,13 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
         solid = False
 
     # Check that the path is fully tangent (otherwise unexpected results)
+    path = Part.Wire(path)
+    if not _wire_edges_tangent(path):
+        raise GeometryError(
+            "Sweep path contains edges that are not consecutively tangent. This will produce unexpected results."
+        )
 
-    result = Part.Wire(path).makePipeShell(profiles, solid, frenet)
+    result = path.makePipeShell(profiles, solid, frenet)
 
     if solid:
         return Part.Solid(result)

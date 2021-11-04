@@ -60,13 +60,13 @@ class BluemiraSolid(BluemiraGeo):
         return self._create_solid()
 
     @classmethod
-    def _create(cls, obj: Part.Solid):
+    def _create(cls, obj: Part.Solid, label=""):
         if isinstance(obj, Part.Solid):
             shells = obj.Shells
             if len(shells) == 1:
-                bmshell = BluemiraShell(shells[0])
-                bmsolid = BluemiraSolid(bmshell)
-                return bmsolid
+                bmshell = BluemiraShell._create(shells[0])
+                return cls(bmshell, label=label)
+
             else:
                 raise DisjointedSolid("Disjointed solids are not accepted.")
         raise TypeError(
