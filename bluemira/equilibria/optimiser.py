@@ -39,12 +39,8 @@ from bluemira.utilities.opt_tools import (
     regularised_lsq_fom,
     tikhonov,
 )
-<<<<<<< HEAD
-from bluemira.utilities.optimiser import approx_derivative
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities._nlopt_api import process_NLOPT_result
-=======
-from scipy.optimize._numdiff import approx_derivative
->>>>>>> Adds optional gradient information to be calculated to allow wider range of optimisers to be used
 from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
@@ -1955,12 +1951,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         },
         gamma=1e-8,
         opt_conditions={
-            "stopval": 1.0,
-            "maxeval": 100,
-            "xtol_rel": 1e-1,
-            "xtol_abs": 1e-1,
-            "ftol_rel": 1e-1,
-            "ftol_abs": 1e-1,
+            "stop_val": 1.0,
+            "max_eval": 100,
         },
         sub_opt_conditions={
             "xtol_rel": 1e-4,
@@ -2007,12 +1999,9 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
-        opt = nlopt.opt(nlopt.LN_SBPLX, dimension)
+        opt = Optimiser("SBPLX", dimension, self.opt_conditions)
         # Set up objective function for optimiser
-        opt.set_min_objective(self.f_min_objective)
-
-        # Set tolerances for convergence of state vector and objective function
-        set_termination_conditions(opt, self.opt_conditions)
+        opt.set_objective_function(self.f_min_objective)
 
         # Set state vector bounds (current limits)
         x_bounds = (
@@ -2044,12 +2033,10 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
         # Optimise
         self.iter = 0
-        state = self.opt.optimize(initial_positions)
+        state = self.opt.optimise(initial_positions)
 
         # Store found optimum of objective function and currents at optimum
         self.rms = self.get_state_figure_of_merit(state)
-
-        process_NLOPT_result(self.opt)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -2073,12 +2060,10 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         self.iter += 1
         fom = self.get_state_figure_of_merit(vector)
         if grad.size > 0:
-            grad[:] = approx_derivative(
+            grad[:] = self.opt.approx_derivative(
                 self.get_state_figure_of_merit,
                 vector,
-                bounds=self.bounds,
                 f0=fom,
-                rel_step=1e-3,
             )
         bluemira_print_flush(
             f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {self.rms:.2e}"
