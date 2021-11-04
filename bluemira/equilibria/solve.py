@@ -762,6 +762,10 @@ class PicardLiDeltaIterator(CurrentGradientOptimiser, PicardBaseIterator):
         if self.i < self.miniter:  # free internal plasma control
             self.eq.solve(self.profiles, psi=self.psi)
         else:  # constrain plasma li
+            # This is still required because the l_i requires an updated Bp field
+            # which changes with moving coils
+            # TODO: Remove Li iterators altogether, and get the profiles from fixed
+            # boundary equilibria, without optimising profiles at each G-S iteration...
             self.coilset.mesh_coils(d_coil=0.4)
             self.eq._remap_greens()
             self.eq.solve_li(self.profiles, psi=self.psi)
@@ -784,8 +788,6 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Solve for this iteration.
         """
-        self.coilset.mesh_coils(d_coil=0.4)
-        self.eq._remap_greens()
         self.eq.solve(self.profiles, psi=self.psi)
 
 
@@ -809,8 +811,6 @@ class PicardLiAbsIterator(CurrentOptimiser, PicardBaseIterator):
         if self.i < self.miniter:  # free internal plasma control
             self.eq.solve(self.profiles, psi=self.psi)
         else:  # constrain plasma li
-            self.coilset.mesh_coils(d_coil=0.4)
-            self.eq._remap_greens()
             self.eq.solve_li(self.profiles, psi=self.psi)
 
 

@@ -726,6 +726,8 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
     coilset: None or CoilSet object
         Coilset from which to set up the equilibrium problem. If not specified,
         other input parameters will be used to generate a default coilset.
+    d_coil: float
+        Coil "mesh" size default = 0.4 [m]
     """
 
     def __init__(
@@ -758,6 +760,7 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
         profile=None,
         psi=None,
         coilset=None,
+        d_coil=0.4,
     ):
         super().__init__()
         # Make FD grid for G-S solver
@@ -833,6 +836,7 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
             self.coilset = coilset.copy()
         self.coilset.assign_coil_materials("PF", j_max=NBTI_J_MAX, b_max=NBTI_B_MAX)
         self.coilset.assign_coil_materials("CS", j_max=NB3SN_J_MAX, b_max=NB3SN_B_MAX)
+        self._d_coil = d_coil
         # Limiter for mathematical stability (occasionally)
         self.lim = Limiter(x=[x_min + 0.3, x_max - 0.3], z=[0, 0])
         # Equilibrium object
