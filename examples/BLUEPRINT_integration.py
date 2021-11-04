@@ -44,7 +44,6 @@ from bluemira.geometry._deprecated_tools import (
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
 )
-from bluemira.utilities.plot_tools import plot_component
 
 
 class ConversionMethod(enum.Enum):

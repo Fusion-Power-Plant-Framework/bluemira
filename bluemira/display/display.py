@@ -340,7 +340,7 @@ class DisplayerCAD(Displayer):
     def __init__(
         self,
         options: Optional[DisplayCADOptions] = None,
-        api: str = "bluemira.display._freecad_plot",
+        api: str = "bluemira.display._freecad_show",
     ):
         super().__init__(options, api)
         self._options = (
