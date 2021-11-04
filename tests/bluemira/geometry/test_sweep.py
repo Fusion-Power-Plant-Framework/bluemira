@@ -28,6 +28,7 @@ from bluemira.geometry.tools import (
     sweep_shape,
     extrude_shape,
 )
+from bluemira.geometry.face import BluemiraFace
 
 
 class TestSweep:
@@ -37,7 +38,18 @@ class TestSweep:
             [[-1, -1, 0], [1, -1, 0], [1, 1, 0], [-1, 1, 0]], closed=True
         )
 
-        extrusion = extrude_shape(profile, vec=(0, 0, 1))
+        extrusion = extrude_shape(BluemiraFace(profile), vec=(0, 0, 1))
         sweep = sweep_shape(profile, path, solid=True)
 
         assert np.isclose(extrusion.volume, sweep.volume)
+
+    def test_circle(self):
+        path = make_circle()
+        profile = make_polygon(
+            [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
+        )
+
+        revolution = revolve_shape(BluemiraFace(profile))
+        sweep = sweep_shape(profile, path, solid=True)
+
+        assert np.isclose(revolution.volume, sweep.volume)
