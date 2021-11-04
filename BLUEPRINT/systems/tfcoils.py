@@ -1419,7 +1419,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         return funcs
 
     def correct_inboard_corners(
-        self, loop, x_thick, tapered=False, xmin=None, zmax=None
+        self, loop, x_thick, tapered=False, xmin=None, zmax=None, zmin=None
     ):
         """
         Fix inboard corner to be 90 degrees
@@ -1440,12 +1440,15 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             xmin = np.min(loop.x)
         if zmax is None:
             zmax = np.max(loop.z)
+        if zmin is None:
+            zmin = np.min(loop.z)
+
         xmax = xmin + x_thick
         if tapered:
             zmin = self.params.h_cp_top
             corrector = make_box_xz(xmin, xmax, zmin, zmax)
         else:
-            corrector = make_box_xz(xmin, xmax, -zmax, zmax)
+            corrector = make_box_xz(xmin, xmax, zmin, zmax)
 
         corrected_loop = boolean_2d_union(loop, corrector)[0]
         if tapered:
@@ -1539,11 +1542,15 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"]
             # Specifiy Zmax here is z_mid, not the max height of dome
             tapered_cp_in_temp = boolean_2d_difference_loop(
-                wp_in, make_box_xz(correct_l - 0.25, 20, -15, 15)
+                wp_in, make_box_xz(correct_l - 0.25, 20, -25, 25)
             )
             zmax_in = np.max(tapered_cp_in_temp.z)
+            zmin_in = np.min(tapered_cp_in_temp.z)
             zmax_out = zmax_in + self.section["case"]["WP"]
-            wp_out = self.correct_inboard_corners(wp_out, correct_l, zmax=zmax_out)
+            zmin_out = zmin_in - self.section["case"]["WP"]
+            wp_out = self.correct_inboard_corners(
+                wp_out, correct_l, zmax=zmax_out, zmin=zmin_out
+            )
 
             wp_in = self.correct_inboard_corners(
                 wp_in,
@@ -1551,18 +1558,24 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
                 tapered=tapered,
                 xmin=xmin_wp_in_corrector,
                 zmax=zmax_in,
+                zmin=zmin_in,
             )
             # TODO: Find a more general variable for zmax_in when available
             zmax_in = np.max(tapered_cp_in_temp.z) - tk_case_ib
             zmax_out = zmax_in + self.section["case"]["WP"] + tk_case_ob + tk_case_ib
+            zmin_in = zmin_in + tk_case_ib
+            zmin_out = zmin_out - tk_case_ob
 
-            case_out = self.correct_inboard_corners(case_out, correct_l, zmax=zmax_out)
+            case_out = self.correct_inboard_corners(
+                case_out, correct_l, zmax=zmax_out, zmin=zmin_out
+            )
             case_in = self.correct_inboard_corners(
                 case_in,
                 correct_l,
                 tapered=tapered,
                 xmin=xmin_case_in_corrector,
                 zmax=zmax_in,
+                zmin=zmin_in,
             )
 
         wp_out = clean_loop(wp_out)
