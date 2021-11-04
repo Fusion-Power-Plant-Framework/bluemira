@@ -774,7 +774,7 @@ def change_plane(geo, plane):
 # # Plane manipulations
 # # =============================================================================
 default_display_options = {
-    "rgb": (0.5, 0.5, 0.5),
+    "color": (0.5, 0.5, 0.5),
     "transparency": 0.0,
 }
 
@@ -784,7 +784,7 @@ def _colourise(
     options: Dict = default_display_options,
 ):
     if isinstance(node, coin.SoMaterial):
-        rgb = options["rgb"]
+        rgb = options["color"]
         transparency = options["transparency"]
         node.ambientColor.setValue(coin.SbColor(*rgb))
         node.diffuseColor.setValue(coin.SbColor(*rgb))

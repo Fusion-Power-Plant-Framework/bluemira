@@ -41,6 +41,12 @@ class DisplayOptions:
         """
         return self._options
 
+    def modify(self, **kwargs):
+        if kwargs:
+            for k in kwargs:
+                if k in self._options:
+                    self._options[k] = kwargs[k]
+
 
 class Displayer(abc.ABC):
     """
