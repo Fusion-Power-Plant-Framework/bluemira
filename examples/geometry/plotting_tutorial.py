@@ -24,7 +24,6 @@ Plotting module examples
 
 # %%
 import matplotlib.pyplot as plt
-import copy
 
 import bluemira.geometry.tools
 from bluemira.base.components import PhysicalComponent, GroupingComponent

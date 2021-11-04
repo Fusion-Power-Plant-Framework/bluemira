@@ -42,6 +42,9 @@ class DisplayOptions:
         return self._options
 
     def modify(self, **kwargs):
+        """
+        Function to override plotting options.
+        """
         if kwargs:
             for k in kwargs:
                 if k in self._options:
