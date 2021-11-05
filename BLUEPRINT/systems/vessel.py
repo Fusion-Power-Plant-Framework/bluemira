@@ -586,8 +586,8 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
 
         z_ib_joint_bot_neg = np.amin(joint_ib_intersect.T[2])
         z_ob_joint_bot_neg = np.amin(joint_ob_intersect.T[2])
-        z_ib_joint_top_neg = z_ib_joint_top_neg + self.params.tk_vv_in
-        z_ob_joint_top_neg = z_ob_joint_top_neg + self.params.tk_vv_out
+        z_ib_joint_top_neg = z_ib_joint_bot_neg + self.params.tk_vv_in
+        z_ob_joint_top_neg = z_ob_joint_bot_neg + self.params.tk_vv_out
 
         contact = (
             (  # Case 1: The outboard is on top of the inboard
@@ -647,12 +647,6 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
                 self.geom["Outboard profile"],
                 build_loop,
             )[0]
-            plt.figure()
-            plt.plot(self.geom["Outboard profile"].x, self.geom["Outboard profile"].z)
-            plt.plot(self.geom["Inboard profile"].x, self.geom["Inboard profile"].z)
-            plt.plot(vv_junction_loop_bot.x, vv_junction_loop_bot.z)
-            plt.plot(vv_junction_loop_top.x, vv_junction_loop_top.z)
-            plt.show()
 
             # Try to merge the two sections without a joint
             loop_union = boolean_2d_union(
