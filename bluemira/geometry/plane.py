@@ -104,3 +104,16 @@ class BluemiraPlane:
         new.append(f" angle: {self.angle}")
         new.append(")")
         return ", ".join(new)
+
+    def copy(self, label=None):
+        """Make a copy of the BluemiraPlane"""
+        plane_copy = BluemiraPlane(self.base, self.axis, self.angle)
+        if label is not None:
+            plane_copy.label = label
+        else:
+            plane_copy.label = self.label
+        return plane_copy
+
+    def deepcopy(self, label=None):
+        """Make a deepcopy of the BluemiraPlane"""
+        return self.copy()

@@ -88,6 +88,21 @@ class _Plot2DOptions(display.Plot2DOptions):
         self._options = copy.deepcopy(DEFAULT)
         self.modify(**kwargs)
 
+    def as_dict(self):
+        """
+        Returns the instance as a dictionary.
+        """
+        output_dict = {}
+        for k, v in self._options.items():
+            # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
+            # copy.deepcopy. For this reason, its deepcopy method must to be used in
+            # this case.
+            if isinstance(v, geo.plane.BluemiraPlane):
+                output_dict[k] = v.deepcopy()
+            else:
+                output_dict[k] = copy.deepcopy(v)
+        return output_dict
+
     @property
     def show_points(self):
         """
@@ -532,7 +547,9 @@ def _get_plotter_class(part):
     """
     Get the plotting class for a BluemiraGeo object.
     """
-    if isinstance(part, geo.wire.BluemiraWire):
+    if isinstance(part, (list, np.ndarray)):
+        plot_class = PointsPlotter
+    elif isinstance(part, geo.wire.BluemiraWire):
         plot_class = WirePlotter
     elif isinstance(part, geo.face.BluemiraFace):
         plot_class = FacePlotter

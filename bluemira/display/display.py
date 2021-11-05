@@ -29,6 +29,12 @@ from typing import Optional
 from bluemira.utilities.tools import get_module
 from .error import DisplayError
 
+import copy
+
+DEFAULT_2D_PLOT_API = "bluemira.display._matplotlib_plot"
+DEFAULT_3D_PLOT_API = "bluemira.display._matplotlib_plot"
+DEFAULT_CAD_SHOW_API = "bluemira.display._freecad_show"
+
 
 class DisplayOptions:
     """
@@ -41,7 +47,7 @@ class DisplayOptions:
         """
         Returns the instance as a dictionary.
         """
-        return self._options
+        return copy.deepcopy(self._options)
 
     def modify(self, **kwargs):
         """
@@ -133,10 +139,13 @@ class Plotter2D(Displayer):
     def __init__(
         self,
         options: Optional[Plot2DOptions] = None,
-        api: str = "bluemira.display._matplotlib_plot",
+        api: str = DEFAULT_2D_PLOT_API,
+        **kwargs,
     ):
         super().__init__(options, api)
-        self._options = get_module(api)._Plot2DOptions() if options is None else options
+        self._options = (
+            get_module(api)._Plot2DOptions(**kwargs) if options is None else options
+        )
         self._display_func = get_module(api).plot_2d
 
     def _display(self, obj, options: Optional[Plot2DOptions] = None, *args, **kwargs):
@@ -248,10 +257,13 @@ class Plotter3D(Displayer):
     def __init__(
         self,
         options: Optional[Plot3DOptions] = None,
-        api: str = "bluemira.display._matplotlib_plot",
+        api: str = DEFAULT_2D_PLOT_API,
+        **kwargs,
     ):
         super().__init__(options, api)
-        self._options = get_module(api)._Plot3DOptions() if options is None else options
+        self._options = (
+            get_module(api)._Plot3DOptions(**kwargs) if options is None else options
+        )
         self._display_func = get_module(api).plot_3d
 
     def _display(self, obj, options: Optional[Plot3DOptions] = None, *args, **kwargs):
@@ -357,7 +369,7 @@ class DisplayerCAD(Displayer):
     def __init__(
         self,
         options: Optional[DisplayCADOptions] = None,
-        api: str = "bluemira.display._freecad_show",
+        api: str = DEFAULT_CAD_SHOW_API,
     ):
         super().__init__(options, api)
         self._options = (

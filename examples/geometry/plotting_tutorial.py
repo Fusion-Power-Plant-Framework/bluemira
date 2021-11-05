@@ -28,11 +28,10 @@ import matplotlib.pyplot as plt
 import bluemira.geometry.tools
 from bluemira.base.components import PhysicalComponent, GroupingComponent
 import bluemira.display as display
-from bluemira.display._matplotlib_plot import (
-    PointsPlotter,
-    WirePlotter,
-    FacePlotter,
+from bluemira.display.display import (
+    Plotter2D,
 )
+
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.face import BluemiraFace
 
@@ -58,35 +57,68 @@ face = BluemiraFace(wire)
 # ## Default plotting
 #
 # We can display the BluemiraWire and BluemiraFace in the following way, using the
-# default settings.
+# display built-in function with default settings
 
 # %%
 display.plot_2d(wire)
 display.plot_3d(wire)
 display.show_cad(face)
 
+# %%[markdown]
+
+# or, in a similar way, using a Plotter
+
+# %%
+plotter_2d = Plotter2D()
+plotter_2d.plot_2d(wire)
 
 # %%[markdown]
+
+# Similar procedure for a Plotter3D or a DisplayerCAD.
+
+
 # ## Modifying defaults
 #
 # Default plot options can be obtained in form of a dictionary instancing one of the
-# default plotters, e.g.:
+# plotters, e.g.:
 
 # %%
-my_options = FacePlotter().options.as_dict()
+plotter_2d = Plotter2D()
+my_options = plotter_2d.options.as_dict()
+
+# %%[markdown]
+
 # Modifying the dictionary and passing it to a plot function will display the plot
 # with the new options
+
+# %%
 my_options["show_points"] = False
 display.plot_2d(wire, **my_options)
+
+# %%[markdown]
+
+# Alternatively, plot options can be modified directly inside a Plotter, e.g.:
+
+# %%
+plotter_2d.options.show_points = False
+plotter_2d.options.ndiscr = 15
+plotter_2d.plot_2d(wire)
+
+# %%[markdown]
+
 
 # Once you get familiar with the options, you can also make your own dictionaries, and
 # pass them to the plotting functions
 
+# %%
 my_options = {"show_points": False, "wire_options": {"color": "red", "linewidth": 3}}
 display.plot_2d(wire, **my_options)
 
-
 # %%[markdown]
+
+# Being matplotlib the default plot library, points_options, wire_options,
+# and face_options are equivalent to the **kwargs passed to the functions scatter,
+# plot, and fill, respectively.
 #
 # Discretise the wire to an array of points.
 
@@ -97,14 +129,17 @@ points = p.create_array(n_points=10).T
 # ## Points Plot
 #
 # Simple plot of the obtained points.
-#
-# A PointsPlotter is created specifying size, edge and face colors.
 
 # %%
-pplotter = PointsPlotter(
-    point_options={"s": 30, "facecolors": "red", "edgecolors": "black"}
+# A 2D plot with the built-in display functions
+display.plot_2d(
+    points, point_options={"s": 30, "facecolors": "red", "edgecolors": "black"}
 )
-pplotter.plot_2d(points)
+# or with a Plotter
+# pplotter = Plotter2D(
+#     point_options={"s": 30, "facecolors": "red", "edgecolors": "black"}
+# )
+# pplotter.plot_2d(points)
 
 # %%[markdown]
 # ## 3D Scatter Plot
@@ -112,7 +147,14 @@ pplotter.plot_2d(points)
 # A plot of the same points, but in 3D this time.
 
 # %%
-pplotter.plot_3d(points)
+display.plot_3d(
+    points, point_options={"s": 30, "facecolors": "red", "edgecolors": "black"}
+)
+
+# pplotter = Plotter3D(
+#      point_options={"s": 30, "facecolors": "red", "edgecolors": "black"}
+# )
+# pplotter.plot_3d(points)
 
 # %%[markdown]
 # ## Wire Plot
@@ -120,12 +162,11 @@ pplotter.plot_3d(points)
 # A WirePlotter is used with the default setup with:
 #
 # - plane = xz (this is the projection plane, not a section plane)
-# - point size = 10
-# - ndiscr = 10
-# - plot title
+# - point size = 20
+# - ndiscr = 5
 
 # %%
-wplotter = WirePlotter(plane="xz")
+wplotter = Plotter2D(plane="xz")
 wplotter.options.point_options["s"] = 20
 wplotter.options.ndiscr = 5
 wplotter.plot_2d(wire)
@@ -137,16 +178,15 @@ wplotter.plot_2d(wire)
 # A plot of the same wire, but in 3D this time.
 
 # %%
-wplotter.plot_3d(wire)
+display.plot_3d(wire, **wplotter.options.as_dict())
 
 # %%[markdown]
 # ## Wire Plot with Matplotlib Default Options
 #
-# In this example poptions is set to an empty dict. The default matplotlib are used.
+# In this example point_options is set to an empty dict. The default matplotlib are used.
 
 # %%
-wplotter.options.point_options = {}
-wplotter.plot_2d(wire)
+display.plot_2d(wire, points_options={})
 # The plot is immediately shown by default, so it is not possible to act on the plot
 
 # %%[markdown]
@@ -174,23 +214,23 @@ plt.show()
 
 # %%
 f, ax = plt.subplots()
-fplotter = FacePlotter(plane="xz")
+fplotter = Plotter2D(plane="xz")
 fplotter.options.ndiscr = 30
 fplotter.plot_2d(face, ax=ax, show=False)
 ax.set_title("Face plot without points")
 plt.show()
 
 # %%[markdown]
-# ## Face Plot with Points Enabled
+# ## Face Plot with Points Disabled
 #
-# We've set the points to be disabled by default, but we can activate them again for
+# We've set the points to be activate by default, but we can disable them again for
 # individual plotters.
 
 # %%
 f, ax = plt.subplots()
-fplotter = FacePlotter(plane="xz")
+fplotter = Plotter2D(plane="xz")
 fplotter.options.ndiscr = 30
-fplotter.options.show_points = True
+fplotter.options.show_points = False
 fplotter.plot_2d(face, ax=ax, show=False)
 ax.set_title("Face plot with points")
 plt.show()
@@ -215,7 +255,7 @@ face2 = BluemiraFace(wire2)
 # been changed, the two faces will be plotted in the same way (e.g. same color).
 
 # %%
-fplotter2 = FacePlotter(plane="xz")
+fplotter2 = Plotter2D(plane="xz")
 fplotter2.options.show_points = True
 fplotter2.options.face_options = {"color": "blue"}
 
@@ -256,18 +296,20 @@ plt.show()
 # (and thus wire and wire2) without modifying face3
 
 # %%
+f, ax = plt.subplots()
 face3 = BluemiraFace([wire2.deepcopy(), wire.deepcopy()])
-fplotter3 = FacePlotter(plane="xz")
+fplotter3 = Plotter2D(plane="xz")
 fplotter3.options.show_points = True
-fplotter3.plot_2d(face3, show=False)
-fplotter3.ax.set_title("Face with hole - points enabled")
-fplotter3.show()
+ax = fplotter3.plot_2d(face3, ax=ax, show=False)
+ax.set_title("Face with hole - points enabled")
+plt.show()
 
+f, ax = plt.subplots()
 fplotter3.options.face_options["color"] = "blue"
 fplotter3.options.show_points = False
-fplotter3.plot_2d(face3, show=False, ax=None)
-fplotter3.ax.set_title("Face with hole - points disabled - blue")
-fplotter3.show()
+fplotter3.plot_2d(face3, ax=ax, show=False)
+ax.set_title("Face with hole - points disabled - blue")
+plt.show()
 
 # %%[markdown]
 # ## Perform Some Face Operations
@@ -293,13 +335,14 @@ points = [[0, 0, 0], [1, 0, 0], [1, 0, 3], [0, 0, 3]]
 wire = bluemira.geometry.tools.make_polygon(points, closed=True)
 wire1 = wire.deepcopy()
 wire1.translate((3, 0, 5))
-wplotter.plot_2d(wire, show=False)
-wplotter.ax.set_title("wire")
-wplotter.show()
+wplotter = Plotter2D(plane="xz")
+ax = wplotter.plot_2d(wire, show=False)
+ax.set_title("wire")
+plt.show()
 
-wplotter.plot_2d(wire1, show=False)
-wplotter.ax.set_title("wire1")
-wplotter.show()
+ax = wplotter.plot_2d(wire1, show=False)
+ax.set_title("wire1")
+plt.show()
 
 
 # %%[markdown]
@@ -313,12 +356,13 @@ wplotter.show()
 # %%
 wface = BluemiraFace(wire)
 w1face = BluemiraFace(wire1)
-wplotter.plot_2d(wface.boundary[0])
+wplotter.options.point_options = {}
+ax = wplotter.plot_2d(wface.boundary[0], show=False)
 print(f"test_boundary wplotter options: {wplotter.options}")
-wplotter.plot_2d(w1face.boundary[0], ax=wplotter.ax)
+ax = wplotter.plot_2d(w1face.boundary[0], ax=ax, show=False)
 print(f"test_boundary wplotter options: {wplotter.options}")
-wplotter.ax.set_title("test boundary from faces - matplotlib default point_options")
-wplotter.show()
+ax.set_title("test boundary from faces - matplotlib default point_options")
+plt.show()
 
 # %%[markdown]
 # ## Plot with Matplotlib Default Wire Options
@@ -329,14 +373,14 @@ wplotter.show()
 
 # %%
 wplotter.options.wire_options = {}
-wplotter.plot_2d(wface.boundary[0])
+ax = wplotter.plot_2d(wface.boundary[0], show=False)
 print(f"test_boundary wplotter options: {wplotter.options}")
-wplotter.plot_2d(w1face.boundary[0], ax=wplotter.ax)
+ax = wplotter.plot_2d(w1face.boundary[0], ax=ax, show=False)
 print(f"test_boundary wplotter options: {wplotter.options}")
-wplotter.ax.set_title(
+ax.set_title(
     "test boundary from faces - matplotlib default point_options and wire_options"
 )
-wplotter.show()
+plt.show()
 
 # %%[markdown]
 # ## PhysicalComponent Plot
@@ -358,11 +402,10 @@ plt.show(block=True)
 # Here we override some defaults and make our custom set of plot options.
 
 # %%
-
-my_group_options = FacePlotter().options.as_dict()
+group = GroupingComponent("Components")
+my_group_options = group.plot_2d_options.as_dict()
 my_group_options["wire_options"] = {}
 my_group_options["face_options"] = {"color": "red"}
-group = GroupingComponent("Components")
 c1 = PhysicalComponent("Comp1", face, parent=group)
 c2 = PhysicalComponent("Comp2", wface, parent=group)
 c3 = PhysicalComponent("Comp3", w1face, parent=group)
@@ -375,11 +418,11 @@ group.plot_2d(**my_group_options)
 
 # %%
 wplotter.options.wire_options["color"] = "red"
-ax = wplotter.plot_2d(wface.boundary[0])
+ax = wplotter.plot_2d(wface.boundary[0], show=False)
 fplotter.options.face_options["color"] = "green"
 fplotter.options.wire_options["color"] = "black"
-ax = fplotter.plot_2d(w1face, ax=ax)
-ax = c.plot_2d(ax=ax)
+ax = fplotter.plot_2d(w1face, ax=ax, show=False)
+ax = c.plot_2d(ax=ax, show=False)
 ax.set_title("test component + bluemirageo plot")
 plt.show(block=True)
 
