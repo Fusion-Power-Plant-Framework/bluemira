@@ -1154,7 +1154,17 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         i_max: float or np.ndarray
             Maximum magnitude(s) of currents allowed in each coil.
         """
-        i_max = max_currents / self.scale
+        control_current_limits = np.asarray(max_currents)
+        if np.size(control_current_limits) == 1 or np.size(
+            control_current_limits
+        ) == np.size(self.coilset._ccoils):
+            i_max = control_current_limits / self.scale
+        else:
+            raise EquilibriaError(
+                "Length of max_currents array provided to optimiser is not"
+                "equal to the number of control coils present."
+            )
+
         return i_max
 
     def set_up_optimiser(self, dimension):
@@ -1741,7 +1751,17 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         i_max: float or np.array(len(self.coilset._ccoils))
             Maximum magnitude(s) of currents allowed in each coil.
         """
-        i_max = max_currents / self.scale
+
+        control_current_limits = np.asarray(max_currents)
+        if np.size(control_current_limits) == 1 or np.size(
+            control_current_limits
+        ) == np.size(self.I0):
+            i_max = control_current_limits / self.scale
+        else:
+            raise EquilibriaError(
+                "Length of max_currents array provided to optimiser is not"
+                "equal to the number of control coils present."
+            )
         return i_max
 
     def set_up_optimiser(self, dimension):
