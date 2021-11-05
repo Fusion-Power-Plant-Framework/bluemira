@@ -1148,8 +1148,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
         # Used scale for optimiser RoundoffLimited Error prevention
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
-        self.rms = None
-        self.rms_error = None
         self.coilset = coilset
 
         if max_currents is not None:
@@ -1233,10 +1231,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
         # Optimise
         currents = self.opt.optimise(initial_currents)
-
-        # Store found optimum of objective function and currents at optimum
-        self.rms = self.opt.optimum_value
-        self._I_star = currents * self.scale
         return currents * self.scale
 
     def f_min_objective(self, vector, grad):
@@ -1294,7 +1288,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
             err.T @ err / np.float(len(self.b))
             + self.gamma * self.gamma * vector.T @ vector
         )
-        self.rms_error = fom
         return fom, err
 
 
@@ -1416,12 +1409,6 @@ class CoilsetOptimiserBase:
         self.constraints = constraints
         return self.optimise()
 
-    def copy(self):
-        """
-        Get a deep copy of the EquilibriumOptimiser.
-        """
-        return deepcopy(self)
-
 
 class CoilsetOptimiser(CoilsetOptimiserBase):
     """
@@ -1481,10 +1468,6 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
     ):
         # noqa (N803)
         super().__init__(coilset)
-
-        # Used scale for optimiser RoundoffLimited Error prevention
-        self.rms = None
-        self.rms_error = None
 
         if max_currents is not None:
             self.I_max = self.update_current_constraint(max_currents)
@@ -1561,9 +1544,9 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             -self.I_max * np.ones(len(self.I0)),
             self.I_max * np.ones(len(self.I0)),
         )
-        self.bounds = self.get_state_bounds(x_bounds, z_bounds, current_bounds)
-        opt.set_lower_bounds(self.bounds[0])
-        opt.set_upper_bounds(self.bounds[1])
+        bounds = self.get_state_bounds(x_bounds, z_bounds, current_bounds)
+        opt.set_lower_bounds(bounds[0])
+        opt.set_upper_bounds(bounds[1])
         return opt
 
     def optimise(self):
@@ -1580,8 +1563,11 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         self.iter = 0
         state = self.opt.optimise(initial_state)
 
-        # Store found optimum of objective function and currents at optimum
-        self.rms = self.get_state_figure_of_merit(state)
+        # Call objective function final time on optimised state
+        # to set coilset.
+        # Necessary as optimised state may not always be the final
+        # one evaluated by optimiser.
+        self.get_state_figure_of_merit(state)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -1756,10 +1742,6 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # noqa (N803)
         super().__init__(coilset)
 
-        # Used scale for optimiser RoundoffLimited Error prevention
-        self.rms = None
-        self.rms_error = None
-
         self.max_coil_shifts = max_coil_shifts
         self.initial_positions = np.concatenate((self.x0, self.z0))
 
@@ -1806,10 +1788,9 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         )
         lower_bounds = np.concatenate((x_bounds[0], z_bounds[0]))
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1]))
-        self.bounds = np.array([lower_bounds, upper_bounds])
 
-        opt.set_lower_bounds(self.bounds[0])
-        opt.set_upper_bounds(self.bounds[1])
+        opt.set_lower_bounds(lower_bounds)
+        opt.set_upper_bounds(upper_bounds)
         return opt
 
     def optimise(self):
@@ -1825,10 +1806,13 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
         # Optimise
         self.iter = 0
-        state = self.opt.optimise(initial_positions)
+        positions = self.opt.optimise(initial_positions)
 
-        # Store found optimum of objective function and currents at optimum
-        self.rms = self.get_state_figure_of_merit(state)
+        # Call objective function final time on optimised state
+        # to set coilset.
+        # Necessary as optimised state may not always be the final
+        # one evaluated by optimiser.
+        self.get_state_figure_of_merit(positions)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -1892,5 +1876,9 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
         # Calculate objective function
         self.currents = self.sub_opt(self.eq, self.constraints) / self.scale
-        self.rms = self.sub_opt.rms
-        return self.rms
+        fom = self.sub_opt.opt.optimum_value
+
+        # Update coilset state with optimised currents
+        coilset_state = np.concatenate((vector, self.currents))
+        self.set_coilset_state(coilset_state)
+        return fom
