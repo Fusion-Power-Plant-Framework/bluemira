@@ -2133,33 +2133,3 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         self.currents = self.sub_opt(self.eq, self.constraints) / self.scale
         self.rms = self.sub_opt.rms
         return self.rms
-
-
-def set_termination_conditions(opt, opt_conditions):
-    """
-    Set the optimisation algorithm termination condition(s) to use.
-    Adapted from upcoming OptimiserInterface NLOpt API (#358)
-
-    Parameters
-    ----------
-    opt: nlopt.opt
-        NLOpt optimiser to set termination conditions for in-place.
-    opt_conditions: dict
-        NLOpt termination conditions for the optimisation.
-    """
-    conditions = opt_conditions
-
-    if "ftol_abs" in conditions:
-        opt.set_ftol_abs(conditions["ftol_abs"])
-    if "ftol_rel" in opt_conditions:
-        opt.set_ftol_rel(conditions["ftol_rel"])
-    if "xtol_abs" in opt_conditions:
-        opt.set_xtol_abs(conditions["xtol_abs"])
-    if "xtol_rel" in opt_conditions:
-        opt.set_xtol_rel(conditions["xtol_rel"])
-    if "max_time" in opt_conditions:
-        opt.set_maxtime(conditions["max_time"])
-    if "maxeval" in opt_conditions:
-        opt.set_maxeval(conditions["maxeval"])
-    if "stopval" in opt_conditions:
-        opt.set_stopval(conditions["stopval"])
