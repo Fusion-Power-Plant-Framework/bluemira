@@ -1669,9 +1669,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         or as a float to apply to all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
+    opt_algorithm: string (default = "SBPLX")
+        Name of NLOpt algorithm to use during optimisation.
     opt_conditions: dict
-        (default {"stopval: 1.0, "maxeval": 100,
-        "xtol_rel": 1e-1, "xtol_abs": 1e-1,"ftol_rel": 1e-1, "ftol_abs": 1e-1})
+        (default {"stopval: 1.0, "maxeval": 100})
         Termination conditions to pass to the optimiser.
         Setting stopval and maxeval is the most reliable way to stop optimisation
         at the desired figure of merit and number of iterations respectively.
@@ -1690,13 +1691,13 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             "z_shifts_upper": 1.0,
         },
         gamma=1e-8,
-        opt_conditions={
-            "stopval": 1.0,
-            "maxeval": 100,
-            "xtol_rel": 1e-1,
-            "xtol_abs": 1e-1,
-            "ftol_rel": 1e-1,
-            "ftol_abs": 1e-1,
+        opt_args={
+            "algorithm_name": "SBPLX",
+            "opt_conditions": {
+                "stop_val": 1.0,
+                "max_eval": 100,
+            },
+            "opt_parameters": {},
         },
     ):
         # noqa (N803)
@@ -1710,9 +1711,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             self.I_max = self.update_current_constraint(max_currents)
         else:
             self.I_max = np.inf
-        self.gamma = gamma
-        self.opt_conditions = opt_conditions
         self.max_coil_shifts = max_coil_shifts
+        self.gamma = gamma
+
+        self.opt_args = opt_args
 
         # Set up optimiser
         self.opt = self.set_up_optimiser(len(self.initial_state))
@@ -1754,12 +1756,9 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
-        opt = nlopt.opt(nlopt.LN_SBPLX, dimension)
+        opt = Optimiser(**self.opt_args, n_variables=dimension)
         # Set up objective function for optimiser
-        opt.set_min_objective(self.f_min_objective)
-
-        # Set tolerances for convergence of state vector and objective function
-        set_termination_conditions(opt, self.opt_conditions)
+        opt.set_objective_function(self.f_min_objective)
 
         # Set state vector bounds (current limits)
         x_bounds = (
@@ -1791,13 +1790,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         # Optimise
         self.iter = 0
-        state = self.opt.optimize(initial_state)
+        state = self.opt.optimise(initial_state)
 
         # Store found optimum of objective function and currents at optimum
-        self.set_coilset_state(state)
-
-        self.rms = self.opt.last_optimum_value()
-        process_NLOPT_result(self.opt)
+        self.rms = self.get_state_figure_of_merit(state)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -1829,7 +1825,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
                 rel_step=1e-3,
             )
         bluemira_print_flush(
-            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {self.rms:.2e}"
+            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {fom:.2e}"
         )
         return fom
 
@@ -1923,9 +1919,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
     opt_conditions: dict
-        (default {"stopval: 1.0, "maxeval": 100,
-        "xtol_rel": 1e-1, "xtol_abs": 1e-1,"ftol_rel": 1e-1, "ftol_abs": 1e-1})
-        Termination conditions to pass to the optimiser for coil positions.
+        (default {"stopval: 1.0, "maxeval": 100})
+        Termination conditions to pass to the NLOpt optimiser for coil positions.
     sub_opt_conditions: dict
         (default
         {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
@@ -1950,9 +1945,13 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             "z_shifts_upper": 1.0,
         },
         gamma=1e-8,
-        opt_conditions={
-            "stop_val": 1.0,
-            "max_eval": 100,
+        opt_args={
+            "algorithm_name": "SBPLX",
+            "opt_conditions": {
+                "stop_val": 1.0,
+                "max_eval": 100,
+            },
+            "opt_parameters": {},
         },
         sub_opt_conditions={
             "xtol_rel": 1e-4,
@@ -1968,11 +1967,11 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         self.rms = None
         self.rms_error = None
 
-        self.opt_conditions = opt_conditions
         self.max_coil_shifts = max_coil_shifts
-
         self.initial_positions = np.concatenate((self.x0, self.z0))
+
         # Set up optimiser
+        self.opt_args = opt_args
         self.opt = self.set_up_optimiser(len(self.initial_positions))
         self.sub_opt = BoundedCurrentOptimiser(
             coilset,
@@ -1999,7 +1998,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
-        opt = Optimiser("SBPLX", dimension, self.opt_conditions)
+        opt = Optimiser(**self.opt_args, n_variables=dimension)
         # Set up objective function for optimiser
         opt.set_objective_function(self.f_min_objective)
 
@@ -2066,7 +2065,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
                 f0=fom,
             )
         bluemira_print_flush(
-            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {self.rms:.2e}"
+            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {fom:.2e}"
         )
         return fom
 
