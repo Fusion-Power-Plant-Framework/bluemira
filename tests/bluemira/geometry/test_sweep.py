@@ -44,12 +44,12 @@ class TestSweep:
         assert np.isclose(extrusion.volume, sweep.volume)
 
     def test_circle(self):
-        path = make_circle()
+        path = make_circle(start_angle=0, end_angle=180)
         profile = make_polygon(
             [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
         )
 
-        revolution = revolve_shape(BluemiraFace(profile))
+        revolution = revolve_shape(BluemiraFace(profile), degree=180)
         sweep = sweep_shape(profile, path, solid=True)
 
         assert np.isclose(revolution.volume, sweep.volume)
