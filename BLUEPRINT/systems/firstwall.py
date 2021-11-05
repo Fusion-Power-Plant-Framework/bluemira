@@ -1442,6 +1442,9 @@ class FirstWall(ReactorSystem):
         # Remove the overlaps between the offset sections
         sections = get_non_overlapping(inboard, outboard, offset_divertor_loops, cutters)
 
+        # Now find the union of our offset loops and the original profile
+        outer_wall = self.attach_divertor(inner_wall, sections)
+
         # Subtract the inner profile from each component
         for i, sec in enumerate(sections):
             section = boolean_2d_difference_loop(sec, inner_wall)
@@ -1451,9 +1454,6 @@ class FirstWall(ReactorSystem):
             clean_loop = Loop(x=clean_array[0], z=clean_array[1])
             clean_loop.close()
             sections[i] = clean_loop
-
-        # Now find the union of our offset loops and the original profile
-        outer_wall = self.attach_divertor(inner_wall, sections)
 
         # Return both the union and individual sections
         return outer_wall, sections
