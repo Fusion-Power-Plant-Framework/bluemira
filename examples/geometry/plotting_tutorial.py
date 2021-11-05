@@ -24,7 +24,6 @@ Plotting module examples
 
 # %%
 import matplotlib.pyplot as plt
-import copy
 
 import bluemira.geometry.tools
 from bluemira.base.components import PhysicalComponent, GroupingComponent
@@ -66,6 +65,14 @@ display.plot_2d(wire)
 display.plot_3d(wire)
 display.show_cad(face)
 
+# default plot options can be obtained in form of a dictionary instancing one of the
+# default plotters, e.g.:
+my_options = FacePlotter().options.as_dict()
+# modifying the dictionary and passing it to a plot function will display the plot
+# with the new options
+my_options["show_points"] = False
+display.plot_2d(wire, **my_options)
+
 
 # %%[markdown]
 #
@@ -80,9 +87,6 @@ points = p.create_array(n_points=10).T
 # Simple plot of the obtained points.
 #
 # A PointsPlotter is created specifying size, edge and face colors.
-#
-# Note: 2D plot of points is always made on the first 2 coordinates. For this reason
-# the plot is shown as a cloud of points on a line
 
 # %%
 pplotter = PointsPlotter(
@@ -338,14 +342,14 @@ plt.show(block=True)
 
 # %%
 
-my_group_options = copy.deepcopy(bluemira.display._matplotlib_plot.DEFAULT)
+my_group_options = FacePlotter().options.as_dict()
 my_group_options["wire_options"] = {}
-my_group_options["face_options"] = {"facecolors": "red"}
+my_group_options["face_options"] = {"color": "red"}
 group = GroupingComponent("Components")
 c1 = PhysicalComponent("Comp1", face, parent=group)
 c2 = PhysicalComponent("Comp2", wface, parent=group)
 c3 = PhysicalComponent("Comp3", w1face, parent=group)
-group.plot_2d(options=display.Plot2DOptions(**my_group_options))
+group.plot_2d(**my_group_options)
 
 # %%[markdown]
 # ## Component and BluemiraGeo Combined Plot

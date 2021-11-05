@@ -46,9 +46,6 @@ DEFAULT = {
     "face_options": {"color": "blue", "zorder": 10},
     # projection plane
     "plane": "xz",
-    # palette
-    # TODO: it's use is still in progress
-    "palette": None,
     # discretization properties for plotting wires (and faces)
     "ndiscr": 100,
     "byedges": True,
@@ -81,8 +78,6 @@ class _Plot2DOptions(display.Plot2DOptions):
     plane: [str, Plane]
         The plane on which the object is projected for plotting. As string, possible
         options are "xy", "xz", "zy". By default 'xz'.
-    palette:
-        The colour palette.
     ndiscr: int
         The number of points to use when discretising a wire or face.
     byedges: bool
@@ -91,10 +86,7 @@ class _Plot2DOptions(display.Plot2DOptions):
 
     def __init__(self, **kwargs):
         self._options = copy.deepcopy(DEFAULT)
-        if kwargs:
-            for k in kwargs:
-                if k in self._options:
-                    self._options[k] = kwargs[k]
+        self.modify(**kwargs)
 
     @property
     def show_points(self):
@@ -175,17 +167,6 @@ class _Plot2DOptions(display.Plot2DOptions):
         self._options["plane"] = val
 
     @property
-    def palette(self):
-        """
-        The colour palette.
-        """
-        return self._options["palette"]
-
-    @palette.setter
-    def palette(self, val):
-        self._options["palette"] = val
-
-    @property
     def ndiscr(self):
         """
         The number of points to use when discretising a wire or face.
@@ -221,13 +202,14 @@ class BasePlotter(ABC):
     Base utility plotting class
     """
 
-    def __init__(self, options: Optional[_Plot2DOptions] = None, *args, **kwargs):
+    def __init__(self, options: Optional[_Plot2DOptions] = None, **kwargs):
         # discretization points representing the shape in global coordinate system
         self._data = []
         # modified discretization points for plotting (e.g. after plane transformation)
         self._data_to_plot = []
         self.ax = None
-        self.options = _Plot2DOptions(**kwargs) if options is None else options
+        self.options = _Plot2DOptions() if options is None else options
+        self.options.modify(**kwargs)
         self.set_plane(self.options._options["plane"])
 
     def set_plane(self, plane):
@@ -529,6 +511,7 @@ def plot_2d(
     options: Optional[Union[_Plot2DOptions, List[_Plot2DOptions]]] = None,
     ax=None,
     show: bool = True,
+    **kwargs,
 ):
     """
     The implementation of the display API for BluemiraGeo parts.
@@ -549,7 +532,7 @@ def plot_2d(
     parts, options = _validate_plot_inputs(parts, options, _Plot2DOptions())
 
     for part, option in zip(parts, options):
-        plotter = _get_plotter_class(part)(option)
+        plotter = _get_plotter_class(part)(option, **kwargs)
         ax = plotter.plot_2d(part, ax, show=False)
 
     if show:
@@ -562,7 +545,8 @@ def plot_3d(
     parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
     options: Optional[Union[_Plot3DOptions, List[_Plot3DOptions]]] = None,
     ax=None,
-    show: bool = False,
+    show: bool = True,
+    **kwargs,
 ):
     """
     The implementation of the display API for BluemiraGeo parts.
@@ -583,7 +567,7 @@ def plot_3d(
     parts, options = _validate_plot_inputs(parts, options, _Plot3DOptions())
 
     for part, option in zip(parts, options):
-        plotter = _get_plotter_class(part)(option)
+        plotter = _get_plotter_class(part)(option, **kwargs)
         ax = plotter.plot_3d(part, ax, show=False)
 
     if show:
