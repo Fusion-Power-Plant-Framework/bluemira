@@ -23,7 +23,9 @@
 Module containing the base display classes.
 """
 import abc
+import pprint
 from typing import Optional
+
 from bluemira.utilities.tools import get_module
 from .error import DisplayError
 
@@ -49,6 +51,9 @@ class DisplayOptions:
             for k in kwargs:
                 if k in self._options:
                     self._options[k] = kwargs[k]
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}{pprint.pformat(self._options)}"
 
 
 class Displayer(abc.ABC):
