@@ -8,17 +8,15 @@ Overview
 Provided a plasma equilibrium, the ``FirstWall`` class allows to design 
 a first wall profile and optimise it, in order to reduce the heat flux values 
 within prescribed limits. 
-Currently, the first wall profile can be made either for the SN or the DN configuration.
+The first wall profile can be made either for the Single Null (SN) or the 
+Double Null (DN) divertor configuration.
 
-The procedure is analogous for the SN configuration and the DN configuration.
-For the DN configuration, all reasoning are essentially doubled.
-The reason lies in how the charged particle flow is assumed.
+For SN configurations, the charged particle are predominantly released in the outbard side 
+(low magnetic field driving weak confinement), hence we assume the particle source to be in 
+the Outboard Mid-Plane (OMP). The particle are then assumed to travel towards 
+both Low Field Side (LFS), and High Field Side (HFS).
 
-In the SN, the charged particles can flow from the Outboard Mid-Plane (OMP) towards 
-both Low Field Side (LFS), and High Field Side (HFS). Thus, the power coming from the
-OMP is responsible for the heat flux onto outer and inner wall.
-
-In the DN, although such scenario would be ideal, there is no charged particle flow between 
+For an ideal DN configuration, there is no charged particle flow between 
 LFS and HFS. Thus the power coming from the OMP is responsible for the heat flux onto the 
 outer wall, and the power coming from the Inboard Mid-Plane (IMP) is responsible for the heat flux
 onto the inner wall.
@@ -32,18 +30,20 @@ Input
  by the parent class ``EqInputs``.
 
 * Type of plasma (e.g. SN, DN)
-* First wall geometrical offset, :math:`\Delta_{fw}` 
+* First wall geometrical offset, :math:`\Delta_{fw}` (``fw_dx``)
   (Starting offset between plasma and wall. Either a single value 
-  or two different values for inboard and outboard)
+  or two different values for inboard and outboard).
 * Scrape-off layer power decay length, :math:`\lambda_{q,nearSOL}` and 
-  :math:`\lambda_{q,farSOL}` (Either a single couple of valuesor two for inboard and outboard)
+  :math:`\lambda_{q,farSOL}` (``fw_lambda_q_near`` and ``fw_lambda_q_far``)
 * Power crossing the SOL, :math:`P_{SOL,near}` and :math:`P_{SOL,far}`
-  (Either a single couple of valuesor two for inboard and outboard)
-* Hypothetical power sharing among targets
+  (``fw_p_sol_near`` and ``fw_p_sol_far``)
+* Hypothetical power sharing among targets 
+  (``f_outer_target`` and ``f_inner_target``)
+* Divertor baffle opening (``xpt_outer_gap`` and ``xpt_inner_gap``)
 
 Output
 ------
-- Heat flux onto the first wall
+- Heat flux values at the first intersections between flux lines and first wall
 
 Procedure
 ---------
@@ -59,12 +59,19 @@ Procedure
   
  The preliminary first wall profile is drawn following some objects referred as "guidelines". 
  These guidelines are the flux lines chosen by the designer, according to 
- the input :math:`\Delta_{fw}` . 
- Either the same offset or two different offsets can be used at the inboard and outboard.
- For the single null, the guideline is obtained offsetting the LCFS by :math:`\Delta_{fw}`.
+ the input :math:`\Delta_{fw}` and other inputs. 
+ Either the same offset or two different offsets can be used at the inboard mid-plane and 
+ outboard mid-plane.
+
+ For the single null, the guideline is a ``convex_hull`` between a first loop obtained by 
+ offsetting the LCFS by :math:`\Delta_{fw}`, and a second loop, obtained by getting the 
+ flux surface with a given ``fw_psi_n`` (normalised psi boundary).
+
  For the double null, two guide lines are selected. They are the flux lines passing through 
  the points lying on the mid-plane (IMP and OMP), and offsetted by :math:`\Delta_{fw}` from the LCFS.
  The obtained flux line(s) is cut below the X-point and/or above the upper X-point.
+
+ As additional constraint, the preliminary first wall profile is forced by the divertor baffle opening. 
 
 .. figure:: ../images/nova/preliminary_fw_profile.png
    :scale: 40 %
@@ -153,7 +160,7 @@ Procedure
   * theta_inner_target: Angle between flux line tangent at inner strike point and SOL side of inner target
 
  Additionally, the user can choose between long leg divertor configuration 
- and DEMO like dovertor configuration. 
+ and DEMO like divertor configuration. 
 
 .. figure:: ../images/nova/div_conf.png
    :name: fig:div_conf
