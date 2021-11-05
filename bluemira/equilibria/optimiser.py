@@ -1133,11 +1133,15 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         coilset,
         max_currents=None,
         gamma=1e-8,
-        opt_conditions={
-            "xtol_rel": 1e-4,
-            "xtol_abs": 1e-4,
-            "ftol_rel": 1e-4,
-            "ftol_abs": 1e-4,
+        opt_args={
+            "algorithm_name": "SLSQP",
+            "opt_conditions": {
+                "xtol_rel": 1e-4,
+                "xtol_abs": 1e-4,
+                "ftol_rel": 1e-4,
+                "ftol_abs": 1e-4,
+            },
+            "opt_parameters": {},
         },
     ):
         # noqa (N803)
@@ -1153,7 +1157,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         else:
             self.I_max = np.inf
         self.gamma = gamma
-        self.opt_conditions = opt_conditions
+        self.opt_args = opt_args
 
         # Set up optimiser
         self.opt = self.set_up_optimiser(len(self.coilset._ccoils))
@@ -1177,14 +1181,14 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         i_max = max_currents / self.scale
         return i_max
 
-    def set_up_optimiser(self, n_currents):
+    def set_up_optimiser(self, dimension):
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
 
         Parameters
         ----------
-        n_currents: int
+        dimension: int
             Number of independent coil currents to optimise.
             Should be equal to eq.coilset._ccoils when called.
 
@@ -1195,12 +1199,10 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
-        opt = nlopt.opt(nlopt.LD_SLSQP, n_currents)
-        # Set up objective function for optimiser
-        opt.set_min_objective(self.f_min_objective)
+        opt = Optimiser(**self.opt_args, n_variables=dimension)
 
-        # Set tolerances for convergence of state vector and objective function
-        set_termination_conditions(opt, self.opt_conditions)
+        # Set up objective function for optimiser
+        opt.set_objective_function(self.f_min_objective)
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(-self.I_max)
@@ -1220,12 +1222,11 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         initial_currents = np.clip(initial_currents, -self.I_max, self.I_max)
 
         # Optimise
-        currents = self.opt.optimize(initial_currents)
+        currents = self.opt.optimise(initial_currents)
 
         # Store found optimum of objective function and currents at optimum
-        self.rms = self.opt.last_optimum_value()
+        self.rms, _ = self.get_fom(currents)
         self._I_star = currents * self.scale
-        process_NLOPT_result(self.opt)
         return currents * self.scale
 
     def f_min_objective(self, vector, grad):
@@ -1583,12 +1584,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         self.iter += 1
         fom = self.get_state_figure_of_merit(vector)
         if grad.size > 0:
-            grad[:] = approx_derivative(
+            grad[:] = self.opt.approx_derivative(
                 self.get_state_figure_of_merit,
                 vector,
-                bounds=self.bounds,
                 f0=fom,
-                rel_step=1e-3,
             )
         bluemira_print_flush(
             f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {fom:.2e}"
@@ -1719,11 +1718,15 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {},
         },
-        sub_opt_conditions={
-            "xtol_rel": 1e-4,
-            "xtol_abs": 1e-4,
-            "ftol_rel": 1e-4,
-            "ftol_abs": 1e-4,
+        sub_opt_args={
+            "algorithm_name": "SLSQP",
+            "opt_conditions": {
+                "xtol_rel": 1e-4,
+                "xtol_abs": 1e-4,
+                "ftol_rel": 1e-4,
+                "ftol_abs": 1e-4,
+            },
+            "opt_parameters": {},
         },
     ):
         # noqa (N803)
@@ -1743,7 +1746,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             coilset,
             max_currents=max_currents,
             gamma=gamma,
-            opt_conditions=sub_opt_conditions,
+            opt_args=sub_opt_args,
         )
 
     def set_up_optimiser(self, dimension):
