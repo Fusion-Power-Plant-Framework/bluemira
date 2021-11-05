@@ -5,19 +5,11 @@ This document refers to the ``DivertorBuilder`` class in ``firstwall.py``.
 
 Overview
 --------
-Building the divertor is the last step, after the first wall shaping, 
-to obtain the final wall.
-While the first wall profile is shaped (``FirstWall`` class), via iterations, 
-to minimise the heat flux onto the surfaces, and hence downstream of a heat 
-flux calculation (``FluxSurface`` class), the divertor profile shaping can be 
-seen as a geometrical optimisation. Such optimisation is obtained via external 
-geometrical inputs, and the according equilibrium configuraion. Specifically, 
-separatrix and flux lines in the divertor region. 
-First wall profile and divertor profile are two different geometries that need 
-to be "attached". The shared border between the two geometries, along which they
-will be attached, is a xz plane passing through the x-point(s). Thus, the 
-first wall profile is extended until the x-point, and the divertor profile starts 
-from the x-point.
+The divertor profile shaping can be seen as a geometrical parametrisation. 
+Such parametrisation is obtained via external geometrical inputs, and the 
+according equilibrium configuraion. Specifically, separatrix and flux 
+lines in the divertor region. 
+The top limit is a xz plane passing through the x-point(s).
 
 .. figure:: ../images/nova/profiles.png
    :scale: 70%
@@ -42,7 +34,7 @@ the heat loads, the abovementioned inputs are overwritten accordingly.
 
 Divertor target plates
 ----------------------
-How long the divertor should be is decided by the divertor target plates.
+How long the divertor should be is decided by the divertor strike point position.
 As first input, the user has to decide the strike points, meaning where the separatrix
 has to intersect inner and outer target. The two unique points are set giving:
 
@@ -52,6 +44,11 @@ has to intersect inner and outer target. The two unique points are set giving:
 However, these inputs can be constrained, shifting from independent to dependent variables.
 This is the case if a "keep out zone" (koz) is given in input. If so, this draws a border 
 outside of which the entire first wall profile cannot be extended.
+
+Alternatively, the strike points can be determined using the intersection between a 
+Keep out Zone 2D loop, and the separatrix. In such case, it should be noted that there is 
+no guarantee for any is any intersection to occur. It may happen that, even though the 
+strike point falls with the koz, the target plates extends to the outside.
 
 Two functions, namely ``find_strike_points_from_koz`` and ``find_strike_points_from_params`` 
 sort the options.
