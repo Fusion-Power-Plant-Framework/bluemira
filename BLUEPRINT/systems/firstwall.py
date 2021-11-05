@@ -25,7 +25,6 @@ Flux surface attributes and first wall profile based on heat flux calculation
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Type
-
 from bluemira.base.parameter import ParameterFrame
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
@@ -876,7 +875,7 @@ class DivertorBuilder:
             flux_loops = self.separatrix
         return flux_loops
 
-    def make_divertor_cassette(self, divertor_loops):
+    def make_divertor_cassette(self, divertor_loops, outer_profile):
         """
         Given the divertor loops create the divertor cassette.
 
@@ -884,6 +883,8 @@ class DivertorBuilder:
         ----------
         divertor_loops : list
             List of Loop objects representing the divertor
+        outer_profile : Loop
+            Loop of the outer profile of first wall.
 
         Returns
         -------
@@ -979,15 +980,9 @@ class DivertorBuilder:
             # Find the overlap between the vv and the box
             cassette = boolean_2d_common_loop(div_box, vv)
 
-            # Subtract the divertor (get an inner and outer piece)
-            subtracted = boolean_2d_difference(cassette, div)
-            if not len(subtracted) == 2:
-                raise GeometryError("Unexpected number of loops")
-            # Select the outer one
-            if np.max(subtracted[0].x) > np.max(subtracted[1].x):
-                cassette = subtracted[0]
-            else:
-                cassette = subtracted[1]
+            # Subtract the first wall outer profile
+            subtracted = boolean_2d_difference(cassette, outer_profile)
+            cassette = subtracted[0]
 
             # Finally, simplify
             cassette = simplify_loop(cassette)
@@ -1358,11 +1353,6 @@ class FirstWall(ReactorSystem):
         inboard_wall = sections[-2]
         outboard_wall = sections[-1]
 
-        # For now, make the divertor cassette here (to be refactored)
-        self.divertor_cassettes = self.divertor_builder.make_divertor_cassette(
-            self.divertor_loops
-        )
-
         # Make a shell from the inner and outer profile
         fw_shell = Shell(inner=self.inner_profile, outer=outer_profile)
 
@@ -1372,6 +1362,11 @@ class FirstWall(ReactorSystem):
         self.geom["Inner profile"] = self.inner_profile
         self.geom["Inboard wall"] = inboard_wall
         self.geom["Outboard wall"] = outboard_wall
+
+        # For now, make the divertor cassette here (to be refactored)
+        self.divertor_cassettes = self.divertor_builder.make_divertor_cassette(
+            self.divertor_loops, self.geom["2D profile"].outer
+        )
 
         n_div = len(self.divertor_loops)
         n_cass = len(self.divertor_cassettes)
