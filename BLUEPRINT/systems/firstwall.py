@@ -49,6 +49,7 @@ from BLUEPRINT.geometry.offset import offset_clipper
 from BLUEPRINT.geometry.geomtools import (
     index_of_point_on_loop,
     make_box_xz,
+    clean_loop_points,
 )
 from BLUEPRINT.geometry.geombase import make_plane
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d
@@ -1443,7 +1444,13 @@ class FirstWall(ReactorSystem):
 
         # Subtract the inner profile from each component
         for i, sec in enumerate(sections):
-            sections[i] = boolean_2d_difference_loop(sec, inner_wall)
+            section = boolean_2d_difference_loop(sec, inner_wall)
+            # Remove duplicate points on the loop
+            clean_points = clean_loop_points(section, 1e-4)
+            clean_array = np.array(clean_points).T
+            clean_loop = Loop(x=clean_array[0], z=clean_array[1])
+            clean_loop.close()
+            sections[i] = clean_loop
 
         # Now find the union of our offset loops and the original profile
         outer_wall = self.attach_divertor(inner_wall, sections)
