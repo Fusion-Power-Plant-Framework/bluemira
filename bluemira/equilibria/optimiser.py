@@ -1211,7 +1211,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         currents = self.opt.optimise(initial_currents)
 
         # Store found optimum of objective function and currents at optimum
-        self.rms, _ = self.get_fom(currents)
+        self.rms = self.opt.optimum_value
         self._I_star = currents * self.scale
         return currents * self.scale
 
