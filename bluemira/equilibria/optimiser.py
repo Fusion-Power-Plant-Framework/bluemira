@@ -1123,9 +1123,9 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         for all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
-    opt_conditions: dict
-        (default {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
-        Termination conditions to pass to the optimiser.
+    opt_args: dict
+        Dictionary containing arguments to pass to NLOpt optimiser.
+        Defaults to using LD_SLSQP.
     """
 
     def __init__(
@@ -1446,11 +1446,13 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         or as a float to apply to all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
-    opt_algorithm: string (default = "SBPLX")
-        Name of NLOpt algorithm to use during optimisation.
-    opt_conditions: dict
-        (default {"stopval: 1.0, "maxeval": 100})
-        Termination conditions to pass to the optimiser.
+    opt_args: dict
+        Dictionary containing arguments to pass to NLOpt optimiser.
+        Defaults to using LN_SBPLX, terminating when the figure of
+        merit < stop_val = 1.0, or max_eval =100.
+
+    Notes
+    -----
         Setting stopval and maxeval is the most reliable way to stop optimisation
         at the desired figure of merit and number of iterations respectively.
         Some NLOpt optimisers display unexpected behaviour when setting xtol and
@@ -1703,13 +1705,16 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         or as a float to apply to all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
-    opt_conditions: dict
-        (default {"stopval: 1.0, "maxeval": 100})
-        Termination conditions to pass to the NLOpt optimiser for coil positions.
-    sub_opt_conditions: dict
-        (default
-        {"xtol_rel": 1e-4, "xtol_abs": 1e-4,"ftol_rel": 1e-4, "ftol_abs": 1e-4})
-        Termination conditions to pass to the sub-optimiser for coil currents.
+    opt_args: dict
+        Dictionary containing arguments to pass to NLOpt optimiser
+        used in position optimisation.
+        Defaults to using LN_SBPLX, terminating when the figure of
+        merit < stop_val = 1.0, or max_eval = 100.
+    sub_opt_args: dict
+        Dictionary containing arguments to pass to NLOpt optimiser
+        used in the nested current optimisation at each trial set of coil
+        positions.
+        Defaults to using LD_SLSQP.
 
     Notes
     -----
