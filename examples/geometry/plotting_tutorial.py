@@ -65,12 +65,24 @@ display.plot_2d(wire)
 display.plot_3d(wire)
 display.show_cad(face)
 
-# default plot options can be obtained in form of a dictionary instancing one of the
+
+# %%[markdown]
+# ## Modifying defaults
+#
+# Default plot options can be obtained in form of a dictionary instancing one of the
 # default plotters, e.g.:
+
+# %%
 my_options = FacePlotter().options.as_dict()
-# modifying the dictionary and passing it to a plot function will display the plot
+# Modifying the dictionary and passing it to a plot function will display the plot
 # with the new options
 my_options["show_points"] = False
+display.plot_2d(wire, **my_options)
+
+# Once you get familiar with the options, you can also make your own dictionaries, and
+# pass them to the plotting functions
+
+my_options = {"show_points": False, "wire_options": {"color": "red", "linewidth": 3}}
 display.plot_2d(wire, **my_options)
 
 
@@ -136,21 +148,20 @@ wplotter.plot_3d(wire)
 wplotter.options.point_options = {}
 wplotter.plot_2d(wire)
 # The plot is immediately shown by default, so it is not possible to act on the plot
-# setup e.g. following commands would not work
-# wplotter.ax.set_title(f"Wire plot")
-# wplotter.show_plot()
 
 # %%[markdown]
 # ## Wire plot with some modifications
 #
-# In this example, we disable the automatic display of the plot (show=False), and apply
-# a title to the plot
+# In this example, we choose our own matplotlib Axes onto which to plot, disable the
+# automatic display of the plot (show=False), and apply a title to the plot
 
 # %%
+
+f, ax = plt.subplots()
 wplotter.options.point_options = {}
-wplotter.plot_2d(wire, show=False)
-wplotter.ax.set_title("Wire plot")
-wplotter.show()
+wplotter.plot_2d(wire, ax=ax, show=False)
+ax.set_title("Wire plot")
+plt.show()
 
 # %%[markdown]
 # ## Face Plot
@@ -162,11 +173,12 @@ wplotter.show()
 # - plot title
 
 # %%
+f, ax = plt.subplots()
 fplotter = FacePlotter(plane="xz")
 fplotter.options.ndiscr = 30
-fplotter.plot_2d(face, show=False)
-fplotter.ax.set_title("Face plot without points")
-fplotter.show()
+fplotter.plot_2d(face, ax=ax, show=False)
+ax.set_title("Face plot without points")
+plt.show()
 
 # %%[markdown]
 # ## Face Plot with Points Enabled
@@ -175,12 +187,13 @@ fplotter.show()
 # individual plotters.
 
 # %%
+f, ax = plt.subplots()
 fplotter = FacePlotter(plane="xz")
 fplotter.options.ndiscr = 30
 fplotter.options.show_points = True
-fplotter.plot_2d(face, show=False)
-fplotter.ax.set_title("Face plot with points")
-fplotter.show()
+fplotter.plot_2d(face, ax=ax, show=False)
+ax.set_title("Face plot with points")
+plt.show()
 
 # %%[markdown]
 # ## Make a Second Face
@@ -205,11 +218,13 @@ face2 = BluemiraFace(wire2)
 fplotter2 = FacePlotter(plane="xz")
 fplotter2.options.show_points = True
 fplotter2.options.face_options = {"color": "blue"}
-fplotter2.plot_2d(face, show=False)
-fplotter2.plot_2d(face2, ax=fplotter2.ax, show=False)
-fplotter2.ax.set_title("Both faces in blue")
-fplotter2.show()
-print(f"fplotter2.options: {fplotter2.options.as_dict()}")
+
+f, ax = plt.subplots()
+fplotter2.plot_2d(face, ax=ax, show=False)
+fplotter2.plot_2d(face2, ax=ax, show=False)
+ax.set_title("Both faces in blue")
+plt.show()
+print(f"fplotter2.options: {fplotter2.options}")
 
 # %%[markdown]
 # ## Combined Face Plot with Different Colours
@@ -219,12 +234,14 @@ print(f"fplotter2.options: {fplotter2.options.as_dict()}")
 # Note: if face is plotted before face2, face2 will be "covered" by face.
 
 # %%
+f, ax = plt.subplots()
+
 fplotter2.options.face_options = {"color": "blue"}
-fplotter2.plot_2d(face2, show=False)
+fplotter2.plot_2d(face2, ax=ax, show=False)
 fplotter2.options.face_options = {"color": "green"}
-fplotter2.plot_2d(face, ax=fplotter2.ax, show=False)
-fplotter2.ax.set_title("Both faces with different colors")
-fplotter2.show()
+fplotter2.plot_2d(face, ax=ax, show=False)
+ax.set_title("Both faces with different colors")
+plt.show()
 
 # %%[markdown]
 # ## Face with Hole
@@ -297,9 +314,9 @@ wplotter.show()
 wface = BluemiraFace(wire)
 w1face = BluemiraFace(wire1)
 wplotter.plot_2d(wface.boundary[0])
-print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
+print(f"test_boundary wplotter options: {wplotter.options}")
 wplotter.plot_2d(w1face.boundary[0], ax=wplotter.ax)
-print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
+print(f"test_boundary wplotter options: {wplotter.options}")
 wplotter.ax.set_title("test boundary from faces - matplotlib default point_options")
 wplotter.show()
 
@@ -313,9 +330,9 @@ wplotter.show()
 # %%
 wplotter.options.wire_options = {}
 wplotter.plot_2d(wface.boundary[0])
-print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
+print(f"test_boundary wplotter options: {wplotter.options}")
 wplotter.plot_2d(w1face.boundary[0], ax=wplotter.ax)
-print(f"test_boundary wplotter options: {wplotter.options.as_dict()}")
+print(f"test_boundary wplotter options: {wplotter.options}")
 wplotter.ax.set_title(
     "test boundary from faces - matplotlib default point_options and wire_options"
 )
@@ -370,9 +387,9 @@ plt.show(block=True)
 # Show the options from our combined plot
 
 # %%
-print(f"wire plotter options: {wplotter.options.as_dict()}")
-print(f"face plotter options: {fplotter.options.as_dict()}")
-print(f"component plotter options: {c.plot_2d_options.as_dict()}")
+print(f"wire plotter options: {wplotter.options}")
+print(f"face plotter options: {fplotter.options}")
+print(f"component plotter options: {c.plot_2d_options}")
 
 # %%[markdown]
 # ## CAD Display
@@ -380,4 +397,11 @@ print(f"component plotter options: {c.plot_2d_options.as_dict()}")
 # Displays a GroupingComponent in a bluemira display window.
 
 # %%
+group.show_cad()
+
+# We can also change the appeare of individual components inside the group
+c1.displayer_cad_options.modify(**{"color": (0.1, 0.1, 0.1)})
+c2.displayer_cad_options.modify(**{"color": (0.3, 0.2, 0.6)})
+c3.displayer_cad_options.modify(**{"color": (0.2, 0.6, 0.1), "transparency": 0.5})
+
 group.show_cad()

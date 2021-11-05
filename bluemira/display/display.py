@@ -53,7 +53,10 @@ class DisplayOptions:
                     self._options[k] = kwargs[k]
 
     def __repr__(self):
-        return f"{self.__class__.__name__}{pprint.pformat(self._options)}"
+        """
+        Representation string of the DisplayOptions.
+        """
+        return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
 
 
 class Displayer(abc.ABC):
