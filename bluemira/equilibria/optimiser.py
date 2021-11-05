@@ -1514,7 +1514,6 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         i_max: float or np.array(len(self.coilset._ccoils))
             Maximum magnitude(s) of currents allowed in each coil.
         """
-
         control_current_limits = np.asarray(max_currents)
         if np.size(control_current_limits) == 1 or np.size(
             control_current_limits
