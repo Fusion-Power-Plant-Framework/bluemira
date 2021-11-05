@@ -44,6 +44,7 @@ from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import loop_plane_intersect, make_box_xz
 from BLUEPRINT.systems.mixins import Meshable, UpperPort
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
+import matplotlib.pyplot as plt
 
 
 class VacuumVessel(Meshable, ReactorSystem):
@@ -583,6 +584,11 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
         z_ib_joint_bot = z_ib_joint_top - self.params.tk_vv_in
         z_ob_joint_bot = z_ob_joint_top - self.params.tk_vv_out
 
+        z_ib_joint_bot_neg = np.amin(joint_ib_intersect.T[2])
+        z_ob_joint_bot_neg = np.amin(joint_ob_intersect.T[2])
+        z_ib_joint_top_neg = z_ib_joint_top_neg + self.params.tk_vv_in
+        z_ob_joint_top_neg = z_ob_joint_top_neg + self.params.tk_vv_out
+
         contact = (
             (  # Case 1: The outboard is on top of the inboard
                 z_ib_joint_top < z_ob_joint_top and z_ob_joint_bot < z_ib_joint_top
@@ -619,8 +625,17 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
                     min(z_ib_joint_bot, z_ob_joint_bot),
                 ]
             )
+
+            loop_z_neg = np.array(
+                [
+                    max(z_ib_joint_top_neg, z_ob_joint_top_neg),
+                    max(z_ib_joint_top_neg, z_ob_joint_top_neg),
+                    min(z_ib_joint_bot_neg, z_ob_joint_bot_neg),
+                    min(z_ib_joint_bot_neg, z_ob_joint_bot_neg),
+                ]
+            )
             vv_junction_loop_top = Loop(x=loop_x, z=loop_z)
-            vv_junction_loop_bot = Loop(x=loop_x, z=-loop_z)
+            vv_junction_loop_bot = Loop(x=loop_x, z=loop_z_neg)
             vv_junction_loop_top.close()
             vv_junction_loop_bot.close()
 
@@ -632,6 +647,12 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
                 self.geom["Outboard profile"],
                 build_loop,
             )[0]
+            plt.figure()
+            plt.plot(self.geom["Outboard profile"].x, self.geom["Outboard profile"].z)
+            plt.plot(self.geom["Inboard profile"].x, self.geom["Inboard profile"].z)
+            plt.plot(vv_junction_loop_bot.x, vv_junction_loop_bot.z)
+            plt.plot(vv_junction_loop_top.x, vv_junction_loop_top.z)
+            plt.show()
 
             # Try to merge the two sections without a joint
             loop_union = boolean_2d_union(
