@@ -29,17 +29,10 @@ import copy
 from typing import Any, List, Optional, Type, Union
 
 from .error import ComponentError
-from bluemira.display.display import (
-    Plottable2D,
-    Plotter2D,
-    Plot2DOptions,
-    DisplayableCAD,
-    DisplayerCAD,
-    DisplayCADOptions,
-)
+from bluemira.display.plotter import Plottable
+from bluemira.display.displayer import DisplayableCAD
 
-
-class Component(NodeMixin, Plottable2D, DisplayableCAD):
+class Component(NodeMixin, Plottable, DisplayableCAD):
     """
     The Component is the fundamental building block for a bluemira reactor design. It
     encodes the way that the corresponding part of the reactor will be built, along with
@@ -66,13 +59,11 @@ class Component(NodeMixin, Plottable2D, DisplayableCAD):
         parent: Optional["Component"] = None,
         children: Optional[List["Component"]] = None,
     ):
+        super().__init__()
         self.name = name
         self.parent = parent
         if children:
             self.children = children
-
-        self._plotter_2d = ComponentPlotter2D()
-        self._displayer_cad = ComponentPlotterCAD()
 
     def __new__(cls, *args, **kwargs) -> Type["Component"]:
         """
@@ -253,93 +244,3 @@ class MagneticComponent(PhysicalComponent):
     @conductor.setter
     def conductor(self, value):
         self._conductor = value
-
-
-class ComponentPlotter2D(Plotter2D):
-    """
-    A Plotter2D class for displaying Components in 2D.
-    """
-
-    def _display(
-        self,
-        component: "Component",
-        options: Optional[Plot2DOptions] = None,
-        *args,
-        **kwargs,
-    ) -> None:
-        """
-        Plot a component in 2D by searching through the component's tree and finding any
-        components that have a shape. Then uses the child component's display_options
-        configure the display if the provided options are None, otherwise overrides the
-        display options for all shapes with those provided.
-
-        Parameters
-        ----------
-        component: Component
-            The component to be displayed.
-        options: Optional[DisplayOptions]
-            The options to use to display the component and its children.
-            By default None, in which case the display_options assigned to the component
-            and any children that can be displayed will be used.
-        """
-        shapes = []
-        override_options = options is not None
-        options = options if override_options else []
-
-        def _append_shape_and_options(comp: Component):
-            if hasattr(comp, "shape") and comp.shape is not None:
-                shapes.append(comp.shape)
-                if not override_options:
-                    options.append(comp.plot_2d_options)
-
-        _append_shape_and_options(component)
-
-        for descendant in component.descendants or []:
-            _append_shape_and_options(descendant)
-
-        return super()._display(shapes, options, *args, **kwargs)
-
-
-class ComponentPlotterCAD(DisplayerCAD):
-    """
-    A Displayer class for displaying Components in 3D.
-    """
-
-    def _display(
-        self,
-        component: "Component",
-        options: Optional[DisplayCADOptions] = None,
-        *args,
-        **kwargs,
-    ) -> None:
-        """
-        Display a component in 3D by searching through the component's tree and finding
-        any components that have a shape. Then uses the child component's display_options
-        configure the display if the provided options are None, otherwise overrides the
-        display options for all shapes with those provided.
-
-        Parameters
-        ----------
-        component: Component
-            The component to be displayed.
-        options: Optional[DisplayOptions]
-            The options to use to display the component and its children.
-            By default None, in which case the display_options assigned to the component
-            and any children that can be displayed will be used.
-        """
-        shapes = []
-        override_options = options is not None
-        options = options if override_options else []
-
-        def _append_shape_and_options(comp: Component):
-            if hasattr(comp, "shape") and comp.shape is not None:
-                shapes.append(comp.shape)
-                if not override_options:
-                    options.append(comp.displayer_cad_options)
-
-        _append_shape_and_options(component)
-
-        for descendant in component.descendants or []:
-            _append_shape_and_options(descendant)
-
-        return super()._display(shapes, options, *args, **kwargs)
