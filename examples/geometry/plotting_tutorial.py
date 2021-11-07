@@ -31,7 +31,6 @@ from bluemira.base.components import PhysicalComponent, GroupingComponent
 import bluemira.display as display
 
 from bluemira.display.plotter import (
-    PointsPlotter,
     WirePlotter,
     FacePlotter,
 )
@@ -112,8 +111,10 @@ plotter_2d.plot_2d(wire)
 # pass them to the plotting functions
 
 # %%
-my_options = {"show_points": False, "wire_options": {"color": "red", "linewidth": 3,
-                                                     "linestyle": 'dashed'}}
+my_options = {
+    "show_points": False,
+    "wire_options": {"color": "red", "linewidth": 3, "linestyle": "dashed"},
+}
 display.plot_2d(wire, **my_options)
 
 # %%[markdown]
@@ -339,7 +340,7 @@ wire1 = wire.deepcopy()
 wire1.translate((3, 0, 5))
 wplotter = WirePlotter(plane="xz")
 ax = wplotter.plot_2d(wire, show=False)
-ax = wplotter.plot_2d(wire1,ax=ax, show=False)
+ax = wplotter.plot_2d(wire1, ax=ax, show=False)
 ax.set_title("Two wires")
 plt.show()
 

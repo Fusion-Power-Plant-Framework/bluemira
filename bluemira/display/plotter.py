@@ -435,7 +435,7 @@ class PointsPlotter(BasePlotter):
     Base utility plotting class for points
     """
 
-    _CLASS_PLOT_OPTIONS = {'show_points': True}
+    _CLASS_PLOT_OPTIONS = {"show_points": True}
 
     def _check_obj(self, obj):
         # TODO: create a function that checks if the obj is a cloud of 3D or 2D points
@@ -471,7 +471,7 @@ class WirePlotter(BasePlotter):
     Base utility plotting class for bluemira wires
     """
 
-    _CLASS_PLOT_OPTIONS = {'show_points': False}
+    _CLASS_PLOT_OPTIONS = {"show_points": False}
 
     def _check_obj(self, obj):
         if not isinstance(obj, geo.wire.BluemiraWire):
@@ -520,7 +520,7 @@ class WirePlotter(BasePlotter):
 class FacePlotter(BasePlotter):
     """Base utility plotting class for bluemira faces"""
 
-    _CLASS_PLOT_OPTIONS = {'show_points': False, 'show_wires': False}
+    _CLASS_PLOT_OPTIONS = {"show_points": False, "show_wires": False}
 
     def _check_obj(self, obj):
         if not isinstance(obj, geo.face.BluemiraFace):
@@ -577,7 +577,7 @@ class FacePlotter(BasePlotter):
 class ComponentPlotter(BasePlotter):
     """Base utility plotting class for bluemira faces"""
 
-    _CLASS_PLOT_OPTIONS = {'show_points': False, 'show_wires': False}
+    _CLASS_PLOT_OPTIONS = {"show_points": False, "show_wires": False}
 
     def _check_obj(self, obj):
         if not isinstance(obj, bluemira.base.components.Component):
@@ -606,7 +606,6 @@ class ComponentPlotter(BasePlotter):
                 plotter = _get_plotter_class(child.shape)(self.options)
                 plotter._populate_data(child.shape)
                 self._cplotters.append(plotter)
-
 
     def _make_plot_2d(self):
         for plotter in self._cplotters:
@@ -757,9 +756,7 @@ class Plottable:
     @plot_options.setter
     def plot_options(self, value: PlotOptions):
         if not isinstance(value, PlotOptions):
-            raise DisplayError(
-                "Display options must be set to a PlotOptions instance."
-            )
+            raise DisplayError("Display options must be set to a PlotOptions instance.")
         self._plot_options = value
 
     @property

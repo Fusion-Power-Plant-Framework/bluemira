@@ -53,38 +53,7 @@ def get_default_options():
     return copy.deepcopy(DEFAULT_DISPLAY_OPTIONS)
 
 
-class DisplayOptions:
-    """
-    The options that are available for displaying objects.
-    """
-
-    _options = None
-
-    def as_dict(self):
-        """
-        Returns the instance as a dictionary.
-        """
-        return copy.deepcopy(self._options)
-
-    def modify(self, **kwargs):
-        """
-        Function to override plotting options.
-        """
-        if kwargs:
-            for k in kwargs:
-                if k in self._options:
-                    self._options[k] = kwargs[k]
-
-    def __repr__(self):
-        """
-        Representation string of the DisplayOptions.
-        """
-        return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
-
-# =======================================================================================
-# Visualisation
-# =======================================================================================
-class DisplayCADOptions(DisplayOptions):
+class DisplayCADOptions:
     """
     The options that are available for displaying objects in 3D
     Parameters
@@ -107,9 +76,30 @@ class DisplayCADOptions(DisplayOptions):
             setattr(self, k, self._options[k])
 
     def as_dict(self):
-        return self._options
+        """
+        Returns the instance as a dictionary.
+        """
+        return copy.deepcopy(self._options)
+
+    def modify(self, **kwargs):
+        """
+        Function to override plotting options.
+        """
+        if kwargs:
+            for k in kwargs:
+                if k in self._options:
+                    self._options[k] = kwargs[k]
+
+    def __repr__(self):
+        """
+        Representation string of the DisplayOptions.
+        """
+        return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
 
 
+# =======================================================================================
+# Visualisation
+# =======================================================================================
 def _get_displayer_class(part):
     """
     Get the displayer class for an object.
@@ -177,6 +167,8 @@ def show_cad(
 
 
 class BaseDisplayer(ABC):
+    """Displaer abstract class"""
+
     _CLASS_DISPLAY_OPTIONS = {}
 
     def __init__(self, options: Optional[DisplayCADOptions] = None, **kwargs):
@@ -187,6 +179,7 @@ class BaseDisplayer(ABC):
 
     @abstractmethod
     def show_cad(self, objs, **kwargs):
+        """Display a CAD"""
         pass
 
 
@@ -196,6 +189,13 @@ class ComponentDisplayer(BaseDisplayer):
     """
 
     def show_cad(self, comp, **kwargs):
+        """
+        Display the CAD of a component
+        Parameters
+        ----------
+        comp:
+            Component to be displayed
+        """
         self._shapes = []
         self._options = []
         if comp.is_leaf:
@@ -232,9 +232,7 @@ class DisplayableCAD:
     @display_cad_options.setter
     def display_cad_options(self, value: DisplayCADOptions):
         if not isinstance(value, DisplayCADOptions):
-            raise DisplayError(
-                "Display options must be set to a PlotOptions instance."
-            )
+            raise DisplayError("Display options must be set to a PlotOptions instance.")
         self._display_cad_options = value
 
     @property
