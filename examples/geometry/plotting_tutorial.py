@@ -42,7 +42,7 @@ from bluemira.geometry.face import BluemiraFace
 # %%[markdown]
 # ## Setup
 #
-# Creation of a closed wire and respective face
+# Creation of a closed wire and respective face and discretization points.
 #
 # PrincetonD parametrisation is used as example.
 #
@@ -55,33 +55,28 @@ p.adjust_variable("x2", 16, lower_bound=10, upper_bound=20)
 p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
 wire = p.create_shape()
 face = BluemiraFace(wire)
-points = wire.discretize(ndiscr=10, byedges=True)
 
 # %%[markdown]
-## Default plotting
+# ## Default plotting
 
-# We can display the BluemiraWire and BluemiraFace in the following way, using the
-# display built-in function with default settings
+# We can plot the list of points, as well as the BluemiraWire and BluemiraFace
+# in the following way, using the display built-in function with default settings
 
 # %%
-display.plot_2d(points)
 display.plot_2d(wire)
 display.plot_3d(wire)
 display.plot_2d(face)
-display.show_cad(face)
 
 # %%[markdown]
 
-# or, in a similar way, using a Plotter
+# In a similar way, it is possible to use specific Plotters for each entity,
+# i.e. PointsPlotter, WirePlotter, and FacePlotter. For example:
 
 # %%
 plotter_2d = WirePlotter()
 plotter_2d.plot_2d(wire)
 
 # %%[markdown]
-
-# Similar procedure for a Plotter3D or a DisplayerCAD.
-
 
 # ## Modifying defaults
 #
@@ -90,6 +85,7 @@ plotter_2d.plot_2d(wire)
 
 # %%
 my_options = display.plotter.get_default_options()
+print(my_options)
 
 # %%[markdown]
 
@@ -97,7 +93,7 @@ my_options = display.plotter.get_default_options()
 # with the new options
 
 # %%
-my_options["show_points"] = False
+my_options["wire_options"] = {"color": "red", "linewidth": "1.5"}
 display.plot_2d(wire, **my_options)
 
 # %%[markdown]
@@ -105,7 +101,7 @@ display.plot_2d(wire, **my_options)
 # Alternatively, plot options can be modified directly inside a Plotter, e.g.:
 
 # %%
-plotter_2d.options.show_points = False
+plotter_2d.options.show_points = True
 plotter_2d.options.ndiscr = 15
 plotter_2d.plot_2d(wire)
 
@@ -116,7 +112,8 @@ plotter_2d.plot_2d(wire)
 # pass them to the plotting functions
 
 # %%
-my_options = {"show_points": False, "wire_options": {"color": "red", "linewidth": 3}}
+my_options = {"show_points": False, "wire_options": {"color": "red", "linewidth": 3,
+                                                     "linestyle": 'dashed'}}
 display.plot_2d(wire, **my_options)
 
 # %%[markdown]
@@ -128,15 +125,16 @@ display.plot_2d(wire, **my_options)
 # Discretise the wire to an array of points.
 
 # %%
-points = p.create_array(n_points=10).T
+points = wire.discretize(ndiscr=10, byedges=True)
 
 # %%[markdown]
 # ## Points Plot
 #
 # Simple plot of the obtained points.
+#
+# A 2D plot with the built-in display functions
 
 # %%
-# A 2D plot with the built-in display functions
 display.plot_2d(
     points, point_options={"s": 30, "facecolors": "red", "edgecolors": "black"}
 )
@@ -168,12 +166,12 @@ display.plot_3d(
 #
 # - plane = xz (this is the projection plane, not a section plane)
 # - point size = 20
-# - ndiscr = 5
+# - ndiscr = 15
 
 # %%
 wplotter = WirePlotter(plane="xz")
 wplotter.options.point_options["s"] = 20
-wplotter.options.ndiscr = 5
+wplotter.options.ndiscr = 15
 wplotter.plot_2d(wire)
 
 
@@ -222,20 +220,20 @@ f, ax = plt.subplots()
 fplotter = FacePlotter(plane="xz")
 fplotter.options.ndiscr = 30
 fplotter.plot_2d(face, ax=ax, show=False)
-ax.set_title("Face plot without points")
+ax.set_title("Face plot without points (default)")
 plt.show()
 
 # %%[markdown]
-# ## Face Plot with Points Disabled
+# ## Face Plot with Points
 #
-# We've set the points to be activate by default, but we can disable them again for
+# We've set the points to be deactivate by default, but we can enable them again for
 # individual plotters.
 
 # %%
 f, ax = plt.subplots()
 fplotter = FacePlotter(plane="xz")
 fplotter.options.ndiscr = 30
-fplotter.options.show_points = False
+fplotter.options.show_points = True
 fplotter.plot_2d(face, ax=ax, show=False)
 ax.set_title("Face plot with points")
 plt.show()
@@ -280,7 +278,6 @@ print(f"fplotter2.options: {fplotter2.options}")
 
 # %%
 f, ax = plt.subplots()
-
 fplotter2.options.face_options = {"color": "blue"}
 fplotter2.plot_2d(face2, ax=ax, show=False)
 fplotter2.options.face_options = {"color": "green"}
@@ -342,11 +339,8 @@ wire1 = wire.deepcopy()
 wire1.translate((3, 0, 5))
 wplotter = WirePlotter(plane="xz")
 ax = wplotter.plot_2d(wire, show=False)
-ax.set_title("wire")
-plt.show()
-
-ax = wplotter.plot_2d(wire1, show=False)
-ax.set_title("wire1")
+ax = wplotter.plot_2d(wire1,ax=ax, show=False)
+ax.set_title("Two wires")
 plt.show()
 
 
@@ -361,37 +355,12 @@ plt.show()
 # %%
 wface = BluemiraFace(wire)
 w1face = BluemiraFace(wire1)
-# wplotter.options.point_options = {}
-# ax = wplotter.plot_2d(wface.boundary[0], show=False)
-# print(f"test_boundary wplotter options: {wplotter.options}")
-# ax = wplotter.plot_2d(w1face.boundary[0], ax=ax, show=False)
-# print(f"test_boundary wplotter options: {wplotter.options}")
-# ax.set_title("test boundary from faces - matplotlib default point_options")
-# plt.show()
+
+# %%[markdown]
+# ## PhysicalComponent Plot
 #
-# # %%[markdown]
-# # ## Plot with Matplotlib Default Wire Options
-# #
-# # Plot the boundary of a face with matplotlib defaults.
-# #
-# # Note that, since wire_options = {}, wire color is automatically changed by matplotlib
-#
-# # %%
-# wplotter.options.wire_options = {}
-# ax = wplotter.plot_2d(wface.boundary[0], show=False)
-# print(f"test_boundary wplotter options: {wplotter.options}")
-# ax = wplotter.plot_2d(w1face.boundary[0], ax=ax, show=False)
-# print(f"test_boundary wplotter options: {wplotter.options}")
-# ax.set_title(
-#     "test boundary from faces - matplotlib default point_options and wire_options"
-# )
-# plt.show()
-#
-# # %%[markdown]
-# # ## PhysicalComponent Plot
-# #
-# # Creates a `PhysicalComponent` and plots it in the xz plane
-#
+# Creates a `PhysicalComponent` and plots it in the xz plane
+
 # %%
 c = PhysicalComponent("Comp", face)
 c.plot_options.plane = "xz"
@@ -417,6 +386,8 @@ c3 = PhysicalComponent("Comp3", w1face, parent=group)
 display.plot_2d(group, **my_group_options)
 
 # %%[markdown]
+# Note that, since wire_options = {}, wire color is automatically changed by matplotlib
+#
 # ## Component and BluemiraGeo Combined Plot
 #
 # Plots a component on the same axes as a BluemiraFace.
@@ -442,12 +413,22 @@ print(f"component plotter options: {c.plot_options}")
 # %%[markdown]
 # ## CAD Display
 #
-# Displays a GroupingComponent in a bluemira display window.
+# BluemiraWire and BluemiraFace can be displayed as CAD using the built-in display
+# function:
+
+# %%
+display.show_cad(face)
+
+# %%[markdown]
+# Fow what concern Components, the component function show_cad is used.
 
 # %%
 group.show_cad()
 
+# %%[markdown]
 # We can also change the appeare of individual components inside the group
+
+# %%
 c1.display_cad_options.modify(**{"color": (0.1, 0.1, 0.1)})
 c2.display_cad_options.modify(**{"color": (0.3, 0.2, 0.6)})
 c3.display_cad_options.modify(**{"color": (0.2, 0.6, 0.1), "transparency": 0.5})
