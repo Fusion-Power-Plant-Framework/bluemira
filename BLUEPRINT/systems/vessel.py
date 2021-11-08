@@ -529,7 +529,7 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             cutter_loop = make_box_xz(
                 x_min=self.params.r_vv_joint,
                 x_max=np.amax(offset_loop.x) + 0.1,
-                z_min=-np.amax(offset_loop.z) - 0.1,
+                z_min=np.min(offset_loop.z) - 0.1,
                 z_max=np.amax(offset_loop.z) + 0.1,
             )
 
@@ -538,7 +538,7 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             cutter_loop = make_box_xz(
                 x_min=np.amin(offset_loop.x) - 0.1,
                 x_max=self.params.r_vv_joint,
-                z_min=-np.amax(offset_loop.z) - 0.1,
+                z_min=np.min(offset_loop.z) - 0.1,
                 z_max=np.amax(offset_loop.z) + 0.1,
             )
 
@@ -583,6 +583,11 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
         z_ib_joint_bot = z_ib_joint_top - self.params.tk_vv_in
         z_ob_joint_bot = z_ob_joint_top - self.params.tk_vv_out
 
+        z_ib_joint_bot_neg = np.amin(joint_ib_intersect.T[2])
+        z_ob_joint_bot_neg = np.amin(joint_ob_intersect.T[2])
+        z_ib_joint_top_neg = z_ib_joint_bot_neg + self.params.tk_vv_in
+        z_ob_joint_top_neg = z_ob_joint_bot_neg + self.params.tk_vv_out
+
         contact = (
             (  # Case 1: The outboard is on top of the inboard
                 z_ib_joint_top < z_ob_joint_top and z_ob_joint_bot < z_ib_joint_top
@@ -619,8 +624,17 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
                     min(z_ib_joint_bot, z_ob_joint_bot),
                 ]
             )
+
+            loop_z_neg = np.array(
+                [
+                    max(z_ib_joint_top_neg, z_ob_joint_top_neg),
+                    max(z_ib_joint_top_neg, z_ob_joint_top_neg),
+                    min(z_ib_joint_bot_neg, z_ob_joint_bot_neg),
+                    min(z_ib_joint_bot_neg, z_ob_joint_bot_neg),
+                ]
+            )
             vv_junction_loop_top = Loop(x=loop_x, z=loop_z)
-            vv_junction_loop_bot = Loop(x=loop_x, z=-loop_z)
+            vv_junction_loop_bot = Loop(x=loop_x, z=loop_z_neg)
             vv_junction_loop_top.close()
             vv_junction_loop_bot.close()
 
