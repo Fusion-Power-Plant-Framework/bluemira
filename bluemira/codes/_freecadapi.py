@@ -1106,7 +1106,6 @@ def point_inside_shape(point, shape):
 # Geometry healing
 # ======================================================================================
 
-
 def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
     """
     Fix a wire by removing any small edges and joining the remaining edges.
