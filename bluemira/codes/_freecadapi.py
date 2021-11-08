@@ -1298,13 +1298,11 @@ def serialize_shape(shape):
     """
     type_ = type(shape)
 
-    bluemira_debug(f"Serializing {type_}")
-
     if type_ == Part.Wire:
         output = []
         edges = shape.OrderedEdges
         for count, e in enumerate(edges):
-            output.append({'edge': serialize_shape(e)})
+            output.append(serialize_shape(e))
         return {'Wire': output}
 
     if type_ == Part.Edge:
@@ -1350,15 +1348,11 @@ def deserialize_shape(buffer):
     for type_, v in buffer.items():
         if type_ == "Wire":
             temp_list = []
-            for curve, params in v.items():
-                bluemira_debug(f"curve: {curve}, params: {params}")
-                wire = deserialize_shape({curve: params})
-                bluemira_debug(f"wire: {wire}")
-                temp_list.append(wire)
+            for edge in v:
+                temp_list.append(deserialize_shape(edge))
             return Part.Wire(temp_list)
         if type_ == "LineSegment":
-            segment = Part.LineSegment(v['StartPoint'], v['EndPoint'])
-            return Part.Wire(Part.Shape([segment]).Edges)
+            return make_polygon([v['StartPoint'], v['EndPoint']])
         elif type_ == "BezierCurve":
             return make_bezier(v['Poles'])
         elif type_ == "BSplineCurve":

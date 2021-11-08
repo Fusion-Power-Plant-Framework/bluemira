@@ -861,6 +861,7 @@ def deserialize_shape(buffer):
                     else:
                         wire = cadapi.deserialize_shape(item)
                     temp_list.append(wire)
+            print(f"wire temp_list: {temp_list}")
             return BluemiraWire(label=label, boundary=temp_list)
         if type_ == "BluemiraFace":
             label = v['label']
@@ -868,6 +869,7 @@ def deserialize_shape(buffer):
             temp_list = []
             for item in boundary:
                 temp_list.append(deserialize_shape(item))
+            print(f"face temp_list: {temp_list}")
             return BluemiraFace(label=label, boundary=temp_list)
         if type_ == "BluemiraShell":
             label = v['label']
