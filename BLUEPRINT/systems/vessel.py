@@ -44,7 +44,6 @@ from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import loop_plane_intersect, make_box_xz
 from BLUEPRINT.systems.mixins import Meshable, UpperPort
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
-import matplotlib.pyplot as plt
 
 
 class VacuumVessel(Meshable, ReactorSystem):

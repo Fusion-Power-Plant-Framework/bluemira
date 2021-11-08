@@ -1540,9 +1540,12 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             # x_curve start
             # TODO: Replace correct_l with joint location when variable available
             correct_l = self.shp.parameterisation.xo["x_curve_start"]["value"]
+            zmax_abs = np.max(self.loops["out"]["z"])
+            zmin_abs = np.min(self.loops["out"]["z"])
+            xmax_abs = np.max(self.loops["out"]["x"])
             # Specifiy Zmax here is z_mid, not the max height of dome
             tapered_cp_in_temp = boolean_2d_difference_loop(
-                wp_in, make_box_xz(correct_l - 0.25, 20, -25, 25)
+                wp_in, make_box_xz(correct_l - 0.25, xmax_abs, zmin_abs, zmax_abs)
             )
             zmax_in = np.max(tapered_cp_in_temp.z)
             zmin_in = np.min(tapered_cp_in_temp.z)
