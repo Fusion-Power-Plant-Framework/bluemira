@@ -30,7 +30,7 @@ from typing import Dict, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from bluemira.equilibria.coils import Coil
 from BLUEPRINT.geometry.geombase import GeomBase
 from BLUEPRINT.geometry.shell import Shell, MultiShell

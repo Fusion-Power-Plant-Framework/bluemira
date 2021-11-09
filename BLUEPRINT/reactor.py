@@ -39,10 +39,7 @@ from bluemira.base.file import get_files_by_ext
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base import (
-    ReactorSystem,
-    BLUE,
-)
+from BLUEPRINT.base import BLUE
 from BLUEPRINT.base.file import FileManager
 from BLUEPRINT.base.error import GeometryError
 
@@ -51,10 +48,11 @@ from BLUEPRINT.geometry.loop import Loop, point_loop_cast
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 from BLUEPRINT.utilities.colortools import force_rgb
-from BLUEPRINT.utilities.tools import CommentJSONDecoder
+from bluemira.utilities.tools import CommentJSONDecoder
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (
+    ReactorSystem,
     STBreedingBlanket,
     BreedingBlanket,
     Divertor,
@@ -72,7 +70,6 @@ from BLUEPRINT.systems import (
 from BLUEPRINT.systems.maintenance import RMMetrics
 from BLUEPRINT.systems.plotting import ReactorPlotter
 from BLUEPRINT.systems.physicstoolbox import (
-    normalise_beta,
     n_DT_reactions,
     n_DD_reactions,
     lambda_q,
@@ -87,6 +84,7 @@ from bluemira.equilibria.constants import (
     NBTI_J_MAX,
     NB3SN_J_MAX,
 )
+from bluemira.equilibria.physics import normalise_beta
 
 # BLUPRINT.cad imports
 from BLUEPRINT.cad import ReactorCAD

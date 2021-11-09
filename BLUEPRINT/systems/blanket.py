@@ -42,7 +42,7 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
 )
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, mirror
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 

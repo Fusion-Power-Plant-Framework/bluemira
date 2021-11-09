@@ -219,6 +219,8 @@ class ConfigurationSchema:
     r_tf_outboard_corner: Parameter
     r_tf_inboard_corner: Parameter
     r_tf_curve: Parameter
+    h_tf_max_in: Parameter
+    h_tf_min_in: Parameter
 
     # Coil structures
     x_g_support: Parameter

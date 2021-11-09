@@ -1155,6 +1155,14 @@
       }
     }
   },
+  "h_tf_min_in": {
+    "name": "Plasma side TF coil min height",
+    "value": -6.5,
+    "unit": "m",
+    "description": null,
+    "source": "PROCESS",
+    "mapping": null
+  },
   "hf_limit": {
     "name": "heat flux material limit",
     "value": 0.5,

@@ -28,7 +28,7 @@ from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
 from bluemira.equilibria.find import find_flux_surfs
@@ -1604,7 +1604,9 @@ class FirstWall(EqInputs, ReactorSystem):
         fw_shell = Shell(inner=self.inner_profile, outer=outer_profile)
 
         # Save geom objects
+        self.geom["Preliminary profile"] = self.profile
         self.geom["2D profile"] = fw_shell
+        self.geom["Inner profile"] = self.inner_profile
         self.geom["Inboard wall"] = inboard_wall
         self.geom["Outboard wall"] = outboard_wall
 

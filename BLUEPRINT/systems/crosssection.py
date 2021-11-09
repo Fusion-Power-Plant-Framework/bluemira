@@ -32,7 +32,7 @@ from typing import Type
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.nova.firstwall import DivertorProfile, FirstWallProfile
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
@@ -45,7 +45,7 @@ from BLUEPRINT.geometry.offset import offset_smc, max_steps
 from BLUEPRINT.geometry.parameterisations import PolySpline, PictureFrame
 from BLUEPRINT.geometry.shape import Shape
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 
 
 class ReactorCrossSection(ReactorSystem):

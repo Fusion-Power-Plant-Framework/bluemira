@@ -32,7 +32,7 @@ from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.cad.shieldCAD import ThermalShieldCAD, SegmentedThermalShieldCAD
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     boolean_2d_union,
@@ -1038,7 +1038,7 @@ class SegmentedThermalShield(ReactorSystem):
         # Split into the two sections
         split_out = ts_inner_shell.split_by_line(
             p2=np.array([self.params.r_ts_joint, np.amax(ts_outer_loop.z)]),
-            p1=np.array([self.params.r_ts_joint, -np.amax(ts_outer_loop.z)]),
+            p1=np.array([self.params.r_ts_joint, np.min(ts_outer_loop.z)]),
         )
 
         # Outputs

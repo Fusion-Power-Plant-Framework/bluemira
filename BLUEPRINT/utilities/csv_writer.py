@@ -23,12 +23,13 @@
 csv writer utilities
 """
 import numpy as np
+import os
 from bluemira.base.look_and_feel import bluemira_print
 
 
-def write_csv(data, base_name, col_names, metadata="", ext=".csv"):
+def write_csv(data, base_name, col_names, metadata="", ext=".csv", comment_char="#"):
     """
-    Write data
+    Write data in comma-separated value format.
 
     Parameters
     ----------
@@ -36,14 +37,16 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv"):
         Array of data to be written to csv file. Will raise an error if the
         dimensionality of the data is not two
     base_name : str
-        Name of file to write to, minus the extension
+        Name of file to write to, minus the extension.
     col_names : list(str)
-        List containing comma
-    metadata: string
-        Option argument for tring holding metadata to be written as a header
-    ext : string
-        Optional argument for file extension, defaults to ".csv"
-
+        List of strings for column headings for each data field provided.
+    metadata: str
+        Optional argument for metadata to be written as a header.
+    ext : str
+        Optional argument for file extension, defaults to ".csv".
+    comment_char : str
+        Optional argument to specify character(s) to prepend to metadata lines
+        as a comment character (defaults to "#").
 
     """
     # Fetch number of cols
@@ -57,7 +60,15 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv"):
     if not len(col_names) == n_cols:
         raise RuntimeError("Column names must be provided for all data fields")
 
-    metadata += "\n" + ",".join(col_names)
+    # Add comment characters and newline to existing metadata
+    if metadata != "":
+        comment_prefix = comment_char + " "
+        metadata = (
+            "\n".join([comment_prefix + line for line in metadata.split("\n")]) + "\n"
+        )
+
+    # Add column headings
+    metadata += ",".join(col_names)
 
     np.savetxt(
         filename,
@@ -69,3 +80,60 @@ def write_csv(data, base_name, col_names, metadata="", ext=".csv"):
         comments="",
     )
     bluemira_print("Wrote to " + filename)
+
+
+def write_geometry_to_csv(loop, filename, metadata=""):
+    """
+    Write the loop data as csv format to the specified file.
+
+    Parameters
+    ----------
+    loop : Loop
+        The loop whose points should be written as csv
+    filename : str
+        Name of file to write to, minus the extension
+    metadata: str
+        Optional argument for string holding metadata to be written as a header
+    """
+    # Get the loop data
+    data = loop.xyz.T
+
+    # Create a list of column names
+    col_names = ["x", "y", "z"]
+
+    # Write
+    write_csv(data, filename, col_names, metadata)
+
+
+def write_components_to_csv(system, component_names, file_base, path="./", metadata=""):
+    """
+    Write the geometry objects for a given system to individual csv files.
+
+    Parameters
+    ----------
+    system: ReactorSystem
+        The system object containing the geometry objects we want to save.
+    component_names: list[str]
+    file_base: str
+        Base output file name, to be appended by loop name
+        and csv file extension. Default value is name of
+        ReactorSystem class
+    path: str
+        Optional path to directory in which to write file.
+    metadata: str
+        Optional metatdata string.
+    """
+    for name in component_names:
+        # Retrieve the loop in system geom dict
+        loop = system.geom[name]
+
+        # Remove spaces and capitals
+        name = name.replace(" ", "_")
+        name = name.lower()
+
+        # Generate output file name
+        file_name = file_base + "_" + name
+        full_path = os.sep.join([path, file_name])
+
+        # Write to file
+        write_geometry_to_csv(loop, full_path, metadata)

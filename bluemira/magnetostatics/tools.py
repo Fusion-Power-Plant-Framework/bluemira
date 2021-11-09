@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -98,14 +98,13 @@ def process_loop_array(shape):
     -------
     shape: np.array(N, 3)
     """
-    from BLUEPRINT.geometry import loop
-
     if isinstance(shape, Loop):
         # Convert Loop to numpy array
         # TODO: Raise DeprecationWarning
         shape = shape.xyz.T
 
-    elif isinstance(shape, loop.Loop):
+    elif shape.__class__.__name__ == "Loop":
+        # Deprecated.. Deprecation warning raised in old Loop class.
         shape = shape.xyz.T
 
     elif isinstance(shape, np.ndarray):

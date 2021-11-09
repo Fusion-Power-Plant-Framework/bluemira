@@ -125,8 +125,6 @@ def make_gif(folder, figname, formatt="png", clean=True):
 def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
     """
     Saves a figure to the directory if save flag active
-    Meant to be used to switch on/off output figs from main BLUEPRINT run,
-    typically flagged in reactor.py
     """
     if save is True:
         if folder is None:

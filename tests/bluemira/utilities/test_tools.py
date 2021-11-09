@@ -27,18 +27,19 @@ from io import StringIO
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.tools import (
-    CommentJSONDecoder,
-    NumpyJSONEncoder,
-    is_num,
     asciistr,
-    levi_civita_tensor,
-    dot,
-    norm,
-    cross,
-    clip,
     cartesian_to_polar,
-    polar_to_cartesian,
+    clip,
+    CommentJSONDecoder,
+    compare_dicts,
+    cross,
+    dot,
     get_module,
+    is_num,
+    levi_civita_tensor,
+    norm,
+    NumpyJSONEncoder,
+    polar_to_cartesian,
 )
 
 
@@ -200,6 +201,75 @@ class TestEinsumCross:
 
         with pytest.raises(ValueError):
             cross(val, val)
+
+
+class TestCompareDicts:
+    def test_equal(self):
+        a = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
+        b = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
+        assert compare_dicts(a, b, almost_equal=False, verbose=False)
+        c = {"a": 1.111111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
+        assert compare_dicts(a, c, almost_equal=False, verbose=False) is False
+        c = {
+            "a": 1.11111111,
+            "b": np.array([1.00001, 2.09, 2.3000000000001]),
+            "c": "test",
+        }
+        assert compare_dicts(a, c, almost_equal=False, verbose=False) is False
+        c = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "ttest"}
+        assert compare_dicts(a, c, almost_equal=False, verbose=False) is False
+        c = {
+            "a": 1.11111111,
+            "b": np.array([1, 2.09, 2.3000000000001]),
+            "c": "test",
+            "extra_key": 1,
+        }
+        assert compare_dicts(a, c, almost_equal=False, verbose=False) is False
+
+        # This will work, because it is an array of length 1
+        c = {
+            "a": np.array([1.11111111]),
+            "b": np.array([1, 2.09, 2.3000000000001]),
+            "c": "test",
+        }
+        assert compare_dicts(a, c, almost_equal=False, verbose=False)
+
+    def test_almost_equal(self):
+        a = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
+        b = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
+        assert compare_dicts(a, b, almost_equal=True, verbose=False)
+        c = {"a": 1.111111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
+        assert compare_dicts(a, c, almost_equal=True, verbose=False)
+        c = {
+            "a": 1.11111111,
+            "b": np.array([1.00001, 2.09, 2.3000000000001]),
+            "c": "test",
+        }
+        assert compare_dicts(a, c, almost_equal=True, verbose=False)
+        c = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "ttest"}
+        assert compare_dicts(a, c, almost_equal=True, verbose=False) is False
+        c = {
+            "a": 1.11111111,
+            "b": np.array([1, 2.09, 2.3000000000001]),
+            "c": "test",
+            "extra_key": 1,
+        }
+        assert compare_dicts(a, c, almost_equal=True, verbose=False) is False
+
+        # This will work, because it is an array of length 1
+        c = {
+            "a": np.array([1.11111111]),
+            "b": np.array([1, 2.09, 2.3000000000001]),
+            "c": "test",
+        }
+        assert compare_dicts(a, c, almost_equal=True, verbose=False)
+
+        c = {
+            "a": np.array([1.111111111]),
+            "b": np.array([1, 2.09, 2.3000000000001]),
+            "c": "test",
+        }
+        assert compare_dicts(a, c, almost_equal=True, verbose=False)
 
 
 class TestClip:

@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from bluemira.geometry.wire import BluemiraWire
+
 from bluemira.geometry.tools import (
     make_polygon,
     make_ellipse,
@@ -103,3 +105,34 @@ class TestGeometry:
         # Wire.Length and Edge.length giving a result slightly different
         # but enough to make the following assert fail. To be investigated.
         # assert pytest.approx(bm_ellipse.length) == expected_length
+
+    def test_copy_deepcopy(self):
+        points = self.square_points
+        points.append(self.square_points[0])
+        wire1 = make_polygon(points[0:4], label="wire1")
+        wire2 = make_polygon(points[3:], label="wire2")
+        wire = BluemiraWire([wire1, wire2], label="wire")
+        wire_copy = wire.copy()
+        wire_deepcopy = wire.deepcopy()
+
+        assert wire_copy.label == wire.label
+        assert wire_deepcopy.label == wire.label
+        assert wire.length == (wire1.length + wire2.length)
+        assert wire.length == wire_copy.length
+        assert wire.length == wire_deepcopy.length
+        w1_len = wire1.length
+        w2_len = wire2.length
+        w_len = wire.length
+
+        wire.scale(2)
+        assert wire.length == 2 * w_len
+        assert wire.length == wire_copy.length
+        assert w_len == wire_deepcopy.length
+        assert wire1.length == 2 * w1_len
+        assert wire2.length == 2 * w2_len
+
+        wire_copy = wire.copy("wire_copy")
+        wire_deepcopy = wire.deepcopy("wire_deepcopy")
+
+        assert wire_copy.label == "wire_copy"
+        assert wire_deepcopy.label == "wire_deepcopy"
