@@ -123,7 +123,12 @@ keep the wall as close as possible to the scrape-off layer, and at the same time
 avoiding the intersection between flux lines and wall before they reach the divertor targets.
 The degree can vary between 1 and 3. Degree uqual to 1 corresponds to a straight line.
 
+.. figure:: ../images/nova/degrees.png
+   :name: fig:degrees
+   :align: center
 
+   Divertor shape with different degree of the fitting polynomial at the outer leg. 
+   On the left, the degree is equal to 1. On the right, the degree is equal to 3.
 
 The inner leg is commonly shorter, and the separatrix and the last flux line in the 
 scrape-off layer have similar curvature. Thus the function that describes the separatrix is 
@@ -133,3 +138,6 @@ and the separatrix and the last flux line in the scrape-off layer can have diver
 Thus, in the latter case, the function that describes the separatrix is interpolated to draw 
 the "internal guide line", and the function that describes the last flux line in the scrape-off 
 layer is interpolated to draw the"external guide line".
+
+Although in the majority of cases, this procedure prevents from having intersections between 
+wall and flux lines of the scrape-off layer, such unwanted scenario can still occur. 
