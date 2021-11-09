@@ -27,7 +27,6 @@ import matplotlib.pyplot as plt
 
 from typing import Optional, Union, List
 
-import bluemira.base.components
 import bluemira.geometry as geo
 from .error import DisplayError
 
@@ -580,6 +579,8 @@ class ComponentPlotter(BasePlotter):
     _CLASS_PLOT_OPTIONS = {"show_points": False, "show_wires": False}
 
     def _check_obj(self, obj):
+        import bluemira.base.components
+
         if not isinstance(obj, bluemira.base.components.Component):
             raise ValueError(f"{obj} must be a BluemiraComponent")
         return True
@@ -646,6 +647,8 @@ def _get_plotter_class(part):
     """
     Get the plotting class for a BluemiraGeo object.
     """
+    import bluemira.base.components
+
     if isinstance(part, (list, np.ndarray)):
         plot_class = PointsPlotter
     elif isinstance(part, geo.wire.BluemiraWire):

@@ -33,7 +33,6 @@ from .error import DisplayError
 # import visualisation
 from ..geometry import _freecadapi
 
-import bluemira as bluemira
 import bluemira.geometry as geo
 
 import pprint
@@ -104,6 +103,8 @@ def _get_displayer_class(part):
     """
     Get the displayer class for an object.
     """
+    import bluemira.base.components
+
     if isinstance(part, bluemira.base.components.Component):
         plot_class = ComponentDisplayer
     else:
