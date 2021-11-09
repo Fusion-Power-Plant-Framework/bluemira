@@ -69,8 +69,20 @@ giving:
    Schematic of key points to draw the divertor. :math:`E_1` and :math:`E_2` are the divertor entrance end points.
    :math:`S_1` and :math:`S_2` are the strike points. The target plates are within the keep out zone (blue line).
 
-Finally the plates can be tilted. The user can assign an angle between flux line 
-and target plate:
+Additionally, the function ``make_divertor_target`` gives the option of selecting 
+between vertical and horizontal target. The key parameter is ``vertical_target`` 
+and by default the boolean ``True`` is assigned. Giving ``vertical_target=False`` 
+the option horizontal target is selected.
+
+.. figure:: ../images/nova/horizontal_vertical.png
+   :name: fig:horizontal_vertical
+   :align: center
+
+   On the left, the divertor configuration with the horizontal outer target. 
+   On the right, the divertor configuration with the vertical outer target.
+
+Finally the plates can be tilted. The user can assign an angle between flux 
+line and target plate:
 
 * theta_outer_target: Angle between flux line tangent at outer strike point and SOL side of outer target
 * theta_inner_target: Angle between flux line tangent at inner strike point and SOL side of inner target
@@ -83,14 +95,15 @@ Divertor legs
 -------------
 Once top limit (divertor entrance) and bottom limit (divertor targets) are defined, 
 these need to be connected, thus the divertor legs need to be drawn.
+
 Firstly, the user has to input where outer leg and inner leg will meet in the 
-private flux region (below the x-point), providing "xpt_height", the x-point vertical gap.
+private flux region (below the x-point), providing ``xpt_height``, the x-point vertical gap.
 
 The divertor legs are drawn using "guide lines". 
 Both outer leg and inner leg have an "internal guide line" and an "external guide line".
 The internal guide lines have in common the starting point. This is the "middle point", 
 which has same x coordinate of the x-point and z coordinate which is shifted from the 
-x-point by the given "xpt_height".
+x-point by the above mentioned ``xpt_height``.
 The guide lines reach the relative target end, and close the divertor profile in the
 private flux region (PFR) side.
 The external guide lines start from relative divertor aperture side, and reach relative 
@@ -103,10 +116,15 @@ target end, closing the divertor profile at the scrape-off layer (SOL) side.
    Schematic of the last divertor building step. The red dot (x-point) and the blue dot 
    (middle point) are spaced by "xpt_height". 
 
-The guide lines are not straight lines. They have a curvature that is extrapolated by 
+The guide lines have a curvature that is extrapolated by 
 interpolating either the separatrix or a specific flux line function.
-The choice of the right curvature aims to not to intercept any flux line of the scrape-off 
-layer before it reaches the divertor target.
+The curvature is tuned by changing the degree of the fitting polynomial, in order to 
+keep the wall as close as possible to the scrape-off layer, and at the same time 
+avoiding the intersection between flux lines and wall before they reach the divertor targets.
+The degree can vary between 1 and 3. Degree uqual to 1 corresponds to a straight line.
+
+
+
 The inner leg is commonly shorter, and the separatrix and the last flux line in the 
 scrape-off layer have similar curvature. Thus the function that describes the separatrix is 
 interpolated to draw both "internal guide line" and "external guide line".
