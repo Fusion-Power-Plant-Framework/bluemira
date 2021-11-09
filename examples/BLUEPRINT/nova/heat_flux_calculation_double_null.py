@@ -33,7 +33,6 @@ import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from BLUEPRINT.systems.firstwall import FirstWallDN
-from BLUEPRINT.systems.firstwall_new import FirstWallDNNew
 from BLUEPRINT.geometry.loop import Loop
 from time import time
 
@@ -67,9 +66,12 @@ fw = FirstWallDN(
     {
         "equilibrium": eq,
         "vv_inner": vv_box,
-        "DEMO_DN": True,
+        "SN": False,
+        "DEMO_like_divertor": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
+        "dx_mp": 0.001,
+        "FW_optimisation": True,
     },
 )
 
@@ -83,25 +85,3 @@ fig, ax = plt.subplots()
 fw.plot_hf()
 
 print(f"{time()-t:.2f} seconds")
-
-# %%
-t = time()
-
-fw_new = FirstWallDNNew(
-    FirstWallDNNew.default_params,
-    {
-        "equilibrium": eq,
-        "vv_inner": vv_box,
-        "SN": False,
-        "DEMO_like_divertor": True,
-        "div_vertical_outer_target": True,
-        "div_vertical_inner_target": False,
-        "dx_mp": 0.001,
-        "FW_optimisation": True,
-    },
-)
-fw_new.build()
-print(f"{time()-t:.2f} seconds")
-
-fig, ax = plt.subplots()
-fw_new.plot_hf(ax=ax)
