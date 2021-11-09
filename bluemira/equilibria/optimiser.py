@@ -1304,7 +1304,9 @@ class CoilsetOptimiserBase:
 
     def __init__(self, coilset):
         # noqa (N803)
-        self.scale = 1e6  # Scale for currents and forces (MA and MN)
+        # Scale for currents and forces (MA and MN) to protect against
+        # floating point errors during optimisation.
+        self.scale = 1e6
 
         self.coilset = coilset
 
