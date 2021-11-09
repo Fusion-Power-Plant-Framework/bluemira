@@ -8,12 +8,6 @@ attached operation, and as such results for the divertor regions in particular s
 ignored if detached operation is expected. The model is predominantly intended to be
 used to calculate the charged particle heat fluxes on the first wall.
 
-Two input objects are required to perform the analysis:
-
-* an Equilibrium object, representing the equilibrium state of the plasma and the associated coils
-* a geometry object, representing the first wall (i.e. all potentially flux-intercepting surfaces)
-
-
 Heat Flux Model
 ---------------
 A tokamak plasma can be seen as separated in two regions, the core and the 
@@ -130,6 +124,17 @@ considering the angle between flux surface and target surface:
 .. [Nespoli_2017] NESPOLI, Federico. Scrape-Off Layer physics in limited plasmas in TCV. s.l.: EPFL, 2017
 
 .. [Maurizio_2020] MAURIZIO, Roberto. Investigating Scrape-Off Layer transport in alternative divertor geometries on the TCV tokamak. s.l.: EPFL, 2020.
+
+In practice
+-----------
+
+Two input objects are required to perform the analysis:
+
+* an Equilibrium object, representing the equilibrium state of the plasma and the associated coils
+* a geometry object, representing the first wall (i.e. all potentially flux-intercepting surfaces).
+  The geometry must be closed.
+
+See `examples/radiation_transport/heat_flux_calculation.py`.
 
 
 
