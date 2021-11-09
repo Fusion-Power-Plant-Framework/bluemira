@@ -11,15 +11,32 @@ within prescribed limits.
 The first wall profile can be made either for the Single Null (SN) or the 
 Double Null (DN) divertor configuration.
 
-For SN configurations, the charged particle are predominantly released in the outbard side 
+For SN configurations, the charged particles are predominantly released in the outbard side 
 (low magnetic field driving weak confinement), hence we assume the particle source to be in 
 the Outboard Mid-Plane (OMP). The particle are then assumed to travel towards 
 both Low Field Side (LFS), and High Field Side (HFS).
 
-For an ideal DN configuration, there is no charged particle flow between 
-LFS and HFS. Thus the power coming from the OMP is responsible for the heat flux onto the 
-outer wall, and the power coming from the Inboard Mid-Plane (IMP) is responsible for the heat flux
-onto the inner wall.
+The double-null divertor configuration has two magnetic separatrices, presenting an up-down symmetry.
+In this divertor configuration, the majority of the exhaust power tends to flow to the outer legs. 
+As for the SN divertor configuration, the particle source can be assumed at the OMP.
+According to [], the "null balance" is quantified by :math:`\delta R_{sep}, distance between
+the two magnetic separatrices. A negative value corresponds to lower null, a positive value to upper null,
+and :math:`\delta R_{sep} = 0 corresponds to a ideal double null.
+The primary divertor is the one that is directly connected to the LCFS. Assuming a upper divertor, 
+the power crossing only the primary separatrix goes to relevant targets. 
+From the primary scrape-off layer, the power crossing the secondary separatrix is split, 
+and goes towards upper and lower divertor.
+
+In our model we assume :math:`\delta R_{sep} = 0, and the power shared 50%-50% between 
+upper and lower divertor.
+At double null, the fraction of the total power flux to the inner divertors is ~5% for L-mode, 
+<20% for H-mode, and <10% for I-mode.
+In our model we assume this fraction to be 10%, and in order to drive relevant power 
+to lower and upper inner plates, we make the further assumption of a secondary particle source
+at the Inboard Mid-Plane (IMP).
+Moreover, we assume that the fraction of the total power flux to the inner divertors is 10%, which corresponds
+to for L-mode, <20% for
+H-mode, and <10% for I-mode.
 
 Input
 -----
