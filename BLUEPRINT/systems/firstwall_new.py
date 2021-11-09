@@ -32,7 +32,7 @@ from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import loop_plane_intersect
 
-from BLUEPRINT.base.baseclass import ReactorSystem
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
 from BLUEPRINT.geometry.shell import Shell
@@ -1241,6 +1241,7 @@ class FirstWallNew(ReactorSystem):
         profile: Loop
             Optimised profile
         """
+        # NOTE: Not an optimisation
         initial_profile = self.make_preliminary_profile()
         self.preliminary_profile = initial_profile
 
@@ -1751,7 +1752,6 @@ class FirstWallDNNew(FirstWallNew):
         # ["fw_dpsi_n_near", "Step size of psi in near SOL", 0.1, "N/A", None, "Input"],
         # ["fw_dpsi_n_far", "Step size of psi in far SOL", 0.1, "N/A", None, "Input"],
 
-        # These don't seem to be used before, but they are in the new
         ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "N/A", None, "Input"],
         ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "N/A", None, "Input"],
         ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target", 0.9 * 0.5, "N/A", "DN only", "Input"],
