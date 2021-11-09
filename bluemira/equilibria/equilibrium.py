@@ -33,7 +33,6 @@ import tabulate
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import (
-    bluemira_critical,
     bluemira_print_flush,
     bluemira_warn,
 )
