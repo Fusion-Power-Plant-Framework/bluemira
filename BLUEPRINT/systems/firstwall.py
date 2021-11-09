@@ -222,7 +222,6 @@ def make_flux_contour_loops(eq, psi_norm):
     # Get list of increasing values
     sorted_flux_loops = list(sorted_dict.values())[::-1]
 
-    print(sorted_flux_loops)
     return sorted_flux_loops
 
 
@@ -775,8 +774,6 @@ class DivertorBuilder:
         x_x_point = self.points["x_point"]["x"]
 
         outer_loop, inner_loop = self.get_outer_inner_loops(flux_loops)
-
-        print(inner_loop)
 
         # Get the inner intersection with the separatrix
         inner_strike_x = self.params.inner_strike_r

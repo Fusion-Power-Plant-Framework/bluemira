@@ -32,14 +32,11 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.equilibrium import Equilibrium
 
-from BLUEPRINT.systems.firstwall_new import FirstWallSNNew
 from BLUEPRINT.systems.firstwall import FirstWallSN
 
 
 # %%[markdown]
 # Loading an equilibrium file and a first wall profile
-
-t = time()
 
 read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "EU-DEMO_EOF.json"
@@ -60,36 +57,9 @@ vv_box = Loop(x=x_box, z=z_box)
 # "DEMO_DN" and "SN".
 
 # %%
+t = time()
 fw = FirstWallSN(
     FirstWallSN.default_params,
-    {
-        "equilibrium": eq,
-        "vv_inner": vv_box,
-        "SN": True,
-        "div_vertical_outer_target": True,
-        "div_vertical_inner_target": False,
-        "FW_optimisation": True,
-    },
-)
-
-# %%[markdown]
-# The funtion "plot_hf" gives a summary plot of
-# optimised wall, heat flux and flux surfaces.
-
-# %%
-
-fig, ax = plt.subplots()
-fw.plot_hf()
-plt.show()
-
-
-print(f"{time()-t:.2f} seconds")
-
-
-# %%
-t = time()
-fw_new = FirstWallSNNew(
-    FirstWallSNNew.default_params,
     {
         "equilibrium": eq,
         "vv_inner": vv_box,
@@ -108,8 +78,15 @@ fw_new = FirstWallSNNew(
         "dx_mp": 0.05,
     },
 )
-
-fw_new.build()
+fw.build()
 print(f"{time()-t:.2f} seconds")
 
-fw_new.plot_hf()
+# %%[markdown]
+# The funtion "plot_hf" gives a summary plot of
+# optimised wall, heat flux and flux surfaces.
+
+# %%
+
+fig, ax = plt.subplots()
+fw.plot_hf()
+plt.show()
