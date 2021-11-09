@@ -28,9 +28,10 @@ from anytree import NodeMixin, RenderTree
 import copy
 from typing import Any, List, Optional, Type, Union
 
-from .error import ComponentError
 from bluemira.display.plotter import Plottable
 from bluemira.display.displayer import DisplayableCAD
+
+from .error import ComponentError
 
 
 class Component(NodeMixin, Plottable, DisplayableCAD):

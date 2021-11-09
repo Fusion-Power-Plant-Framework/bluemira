@@ -23,17 +23,16 @@
 api for plotting using matplotlib
 """
 from abc import abstractmethod, ABC
+import copy
+import numpy as np
 import matplotlib.pyplot as plt
-
+import pprint
 from typing import Optional, Union, List
 
 import bluemira.geometry as geo
+
 from .error import DisplayError
 
-import copy
-import numpy as np
-
-import pprint
 
 DEFAULT_PLOT_OPTIONS = {
     # flags to enable points, wires, and faces plot

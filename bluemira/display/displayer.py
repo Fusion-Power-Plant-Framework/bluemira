@@ -24,20 +24,16 @@ api for plotting using freecad
 """
 from __future__ import annotations
 
-# import typing
+from abc import ABC, abstractmethod
+import copy
+import pprint
 from typing import List, Optional, Union
 
-# import errors
+import bluemira.geometry as geo
+from bluemira.geometry import _freecadapi
+
 from .error import DisplayError
 
-# import visualisation
-from ..geometry import _freecadapi
-
-import bluemira.geometry as geo
-
-import pprint
-import copy
-from abc import ABC, abstractmethod
 
 DEFAULT_DISPLAY_OPTIONS = {
     "color": (0.5, 0.5, 0.5),
