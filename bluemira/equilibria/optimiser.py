@@ -36,6 +36,7 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.utilities.plot_tools import save_figure
 from bluemira.utilities.opt_tools import (
+    regularised_lsq_fom,
     least_squares,
     tikhonov,
 )
@@ -1252,7 +1253,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         fom: Value of objective function (figure of merit).
         """
         vector = vector * self.scale
-        fom, err = self.get_fom(vector)
+        fom, err = regularised_lsq_fom(vector, self.A, self.b, self.gamma)
         if grad.size > 0:
             jac = 2 * self.A.T @ self.A @ vector / np.float(len(self.b))
             jac -= 2 * self.A.T @ self.b / np.float(len(self.b))
@@ -1263,32 +1264,6 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
                 "Optimiser least-squares objective function less than zero or nan."
             )
         return fom
-
-    def get_fom(self, vector):
-        """
-        Calculates the value and residual of the least-squares objective
-        function with Tikhonov regularisation term:
-
-        ||(Ax - b)||² + ||Γx||²
-
-        for the state vector x.
-
-        Parameters
-        ----------
-        vector: np.array(n_C)
-            State vector of the array of coil currents.
-
-        Returns
-        -------
-        fom: Value of objective function (figure of merit).
-        err: Residual (Ax - b) corresponding to the state vector x.
-        """
-        err = np.dot(self.A, vector) - self.b
-        fom = (
-            err.T @ err / np.float(len(self.b))
-            + self.gamma * self.gamma * vector.T @ vector
-        )
-        return fom, err
 
 
 class CoilsetOptimiserBase:
@@ -1305,7 +1280,7 @@ class CoilsetOptimiserBase:
     def __init__(self, coilset):
         # noqa (N803)
         # Scale for currents and forces (MA and MN) to protect against
-        # floating point errors during optimisation.
+        # machine and precision erro
         self.scale = 1e6
 
         self.coilset = coilset
@@ -1349,10 +1324,10 @@ class CoilsetOptimiserBase:
             to be used to update the coilset.
         """
         x, z, currents = np.array_split(coilset_state, 3)
-        positions = list(zip(x, z))
-
-        self.coilset.set_positions(positions)
-        self.coilset.set_control_currents(currents * self.scale)
+        for i, coil in enumerate(self.coilset.coils.values()):
+            coil.x = x[i]
+            coil.z = z[i]
+            coil.set_current(currents[i] * self.scale)
 
     def get_state_bounds(self, x_bounds, z_bounds, current_bounds):
         """
@@ -1632,39 +1607,8 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # Calculate objective function
         x_arr, z_arr, current_arr = np.array_split(vector, self.substates)
         current_arr = current_arr * self.scale
-        fom, err = self.get_fom(current_arr)
+        fom, err = regularised_lsq_fom(current_arr, self.A, self.b, self.gamma)
         return fom
-
-    def get_fom(self, vector):
-        """
-        Calculates the value and residual of the least-squares objective
-        function with Tikhonov regularisation term:
-
-        ||(Ax - b)||² + ||Γx||²
-
-        for the state vector x.
-
-        Parameters
-        ----------
-        vector: np.array(n_C)
-            State vector of the array of coil currents.
-
-        Returns
-        -------
-        fom: Value of objective function (figure of merit).
-        err: Residual (Ax - b) corresponding to the state vector x.
-        """
-        err = np.dot(self.A, vector) - self.b
-        fom = (
-            err.T @ err / np.float(len(err))
-            + self.gamma * self.gamma * vector.T @ vector
-        )
-        self.rms_error = fom
-        if not self.rms_error > 0:
-            raise EquilibriaError(
-                "Optimiser least-squares objective function less than zero or nan."
-            )
-        return fom, err
 
 
 class NestedCoilsetOptimiser(CoilsetOptimiserBase):
