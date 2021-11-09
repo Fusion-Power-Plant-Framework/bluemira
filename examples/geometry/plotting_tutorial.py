@@ -65,6 +65,7 @@ face = BluemiraFace(wire)
 display.plot_2d(wire)
 display.plot_3d(wire)
 display.plot_2d(face)
+display.plot_3d(face)
 
 # %%[markdown]
 

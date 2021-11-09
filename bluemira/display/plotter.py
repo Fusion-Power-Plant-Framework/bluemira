@@ -26,6 +26,7 @@ from abc import abstractmethod, ABC
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d as a3
 import pprint
 from typing import Optional, Union, List
 
@@ -547,7 +548,8 @@ class FacePlotter(BasePlotter):
             wplotter = WirePlotter(self.options)
             self._wplotters.append(wplotter)
             wplotter._populate_data(boundary)
-            self._data.append(wplotter._data)
+            self._data.extend(wplotter._data.tolist())
+        self._data = np.array(self._data)
 
         self._data_to_plot = [[], []]
         for w in self._wplotters:
@@ -564,11 +566,13 @@ class FacePlotter(BasePlotter):
         self._set_aspect_2d()
 
     def _make_plot_3d(self):
-        """
-        Internal function that makes the plot. It should use self._data and
-        self._data_to_plot, so _populate_data should be called before.
-        """
-        # TODO: to be implemented
+        if self.options.show_faces:
+            poly = a3.art3d.Poly3DCollection([self._data], **self.options.face_options)
+            self.ax.add_collection3d(poly)
+
+        for w in self._wplotters:
+            w.ax = self.ax
+            w._make_plot_3d()
         self._set_aspect_3d()
 
 
@@ -618,8 +622,12 @@ class ComponentPlotter(BasePlotter):
         Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
-        # TODO: to be implemented
-        self._set_aspect_3d()
+        for plotter in self._cplotters:
+            plotter.ax = self.ax
+            plotter._make_plot_3d()
+
+    def _set_aspect_3d(self):
+        pass
 
 
 def _validate_plot_inputs(parts, options):
