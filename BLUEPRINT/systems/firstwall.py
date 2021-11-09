@@ -776,7 +776,7 @@ class DivertorBuilder:
         outer_loop, inner_loop = self.get_outer_inner_loops(flux_loops)
 
         # Get the inner intersection with the separatrix
-        inner_strike_x = self.params.inner_strike_r
+        inner_strike_x = self.params.inner_strike_r.value
         x_norm = 0
         # Does it make sense to compare x with x-norm??
         inner_strike_z = get_intersection_point(

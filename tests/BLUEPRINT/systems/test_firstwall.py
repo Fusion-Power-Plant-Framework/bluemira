@@ -262,6 +262,13 @@ class TestFirstWallDN:
         max_z = round(self.firstwall.points["x_point"]["z_low"], 5)
         min_z = round(tar_out[0][1], 5)
         # min_z = round(max_z - 2.25,5)
+        import matplotlib.pyplot as plt
+
+        f, ax = plt.subplots()
+        fw_loop.plot(ax)
+        ax.plot(tar_in[0], tar_in[1])
+        ax.plot(tar_out[0], tar_out[1])
+        plt.show()
 
         # Check the bounds
         div_x_max = np.max(div.x)
