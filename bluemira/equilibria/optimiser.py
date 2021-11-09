@@ -1166,14 +1166,14 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
 
         Parameters
         ----------
-        max_currents: float or np.array(len(self.coilset._ccoils))
+        max_currents: float or np.ndarray
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
             maximum allowed current magnitude for all coils.
 
         Returns
         -------
-        i_max: float or np.array(len(self.coilset._ccoils))
+        i_max: float or np.ndarray
             Maximum magnitude(s) of currents allowed in each coil.
         """
         control_current_limits = np.asarray(max_currents)
@@ -1222,7 +1222,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
         """
         Optimiser handle. Used in __call__
 
-        Returns np.array(len(self.coilset._ccoils)) of optimised currents
+        Returns np.ndarray of optimised currents
         in each coil [A].
         """
         # Get initial currents, and trim to within current bounds.
@@ -1440,10 +1440,10 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
     Notes
     -----
-        Setting stopval and maxeval is the most reliable way to stop optimisation
-        at the desired figure of merit and number of iterations respectively.
-        Some NLOpt optimisers display unexpected behaviour when setting xtol and
-        ftol, and may not terminate as expected when those criteria are reached.
+    Setting stopval and maxeval is the most reliable way to stop optimisation
+    at the desired figure of merit and number of iterations respectively.
+    Some NLOpt optimisers display unexpected behaviour when setting xtol and
+    ftol, and may not terminate as expected when those criteria are reached.
     """
 
     def __init__(
@@ -1487,14 +1487,14 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         Parameters
         ----------
-        max_currents: float or np.array(len(self.coilset._ccoils))
+        max_currents: float or np.ndarray
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
             maximum allowed current magnitude for all coils.
 
         Returns
         -------
-        i_max: float or np.array(len(self.coilset._ccoils))
+        i_max: float or np.ndarray
             Maximum magnitude(s) of currents allowed in each coil.
         """
         control_current_limits = np.asarray(max_currents)
@@ -1531,7 +1531,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # Set up objective function for optimiser
         opt.set_objective_function(self.f_min_objective)
 
-        # Set state vector bounds (current limits)
+        # Set state vector bounds (current and centroid position limits)
         x_bounds = (
             self.x0 + self.max_coil_shifts["x_shifts_lower"],
             self.x0 + self.max_coil_shifts["x_shifts_upper"],
@@ -1553,8 +1553,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         """
         Optimiser handle. Used in __call__
 
-        Returns np.array(len(self.coilset._ccoils)) of optimised currents
-        in each coil [A].
+        Returns np.ndarray of optimised currents in each coil [A].
         """
         # Get initial currents, and trim to within current bounds.
         initial_state, _ = self.read_coilset_state(self.coilset)
@@ -1777,7 +1776,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Set up objective function for optimiser
         opt.set_objective_function(self.f_min_objective)
 
-        # Set state vector bounds (current limits)
+        # Set state vector bounds (centroid position limits)
         x_bounds = (
             self.x0 + self.max_coil_shifts["x_shifts_lower"],
             self.x0 + self.max_coil_shifts["x_shifts_upper"],
@@ -1818,8 +1817,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
     def f_min_objective(self, vector, grad):
         """
         Objective function for nlopt optimisation (minimisation),
-        consisting of a least-squares objective with Tikhonov
-        regularisation term, which updates the gradient in-place.
+        fetched from the current optimiser provided at each
+        trial set of coil positions.
 
         Parameters
         ----------
@@ -1848,9 +1847,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
     def get_state_figure_of_merit(self, vector):
         """
-        Calculates figure of merit from objective function,
-        consisting of a least-squares objective with Tikhonov
-        regularisation term, which updates the gradient in-place.
+        Calculates figure of merit, returned from the current
+        optimiser at each trial coil position.
 
         Parameters
         ----------
