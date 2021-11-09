@@ -19,24 +19,29 @@ both Low Field Side (LFS), and High Field Side (HFS).
 The double-null divertor configuration has two magnetic separatrices, presenting an up-down symmetry.
 In this divertor configuration, the majority of the exhaust power tends to flow to the outer legs. 
 As for the SN divertor configuration, the particle source can be assumed at the OMP.
-According to [], the "null balance" is quantified by :math:`\delta R_{sep}, distance between
+According to [Brunner_2018]_, the "null balance" is quantified by :math:`\delta R_{sep}`, distance between
 the two magnetic separatrices. A negative value corresponds to lower null, a positive value to upper null,
-and :math:`\delta R_{sep} = 0 corresponds to a ideal double null.
+and :math:`\delta R_{sep}` = 0 corresponds to a ideal double null.
+
+.. figure:: ../images/nova/Brunner.png
+   :name: fig:Brunner
+   :align: center
+
+   Equilibrium, last closed flux surface, and secondary separatrix for lower null, double null, 
+   and upper null magnetic topologies [Brunner_2018]_.
+
 The primary divertor is the one that is directly connected to the LCFS. Assuming a upper divertor, 
 the power crossing only the primary separatrix goes to relevant targets. 
 From the primary scrape-off layer, the power crossing the secondary separatrix is split, 
 and goes towards upper and lower divertor.
 
-In our model we assume :math:`\delta R_{sep} = 0, and the power shared 50%-50% between 
+In our model, we assume :math:`\delta R_{sep}` = 0, and the power shared 50%-50% between 
 upper and lower divertor.
 At double null, the fraction of the total power flux to the inner divertors is ~5% for L-mode, 
 <20% for H-mode, and <10% for I-mode.
 In our model we assume this fraction to be 10%, and in order to drive relevant power 
 to lower and upper inner plates, we make the further assumption of a secondary particle source
 at the Inboard Mid-Plane (IMP).
-Moreover, we assume that the fraction of the total power flux to the inner divertors is 10%, which corresponds
-to for L-mode, <20% for
-H-mode, and <10% for I-mode.
 
 Input
 -----
@@ -184,5 +189,12 @@ Procedure
    :align: center
 
    Long leg divertor configuration and DEMO like divertor configuration
+
+.. rubric:: References
+
+.. [Brunner_2018] Brunner, D., Kuang, A. Q., LaBombard, B., & Terry, J. L. (2018). 
+  The dependence of divertor power sharing on magnetic flux balance in near double-null 
+  configurations on Alcator C-Mod. Nuclear Fusion, 58(7), 076010.
+
 
 
