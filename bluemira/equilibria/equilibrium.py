@@ -32,7 +32,11 @@ from scipy.optimize import minimize
 import tabulate
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
+from bluemira.base.look_and_feel import (
+    bluemira_critical,
+    bluemira_print_flush,
+    bluemira_warn,
+)
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
@@ -1271,9 +1275,13 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        flux surface: Loop
+        flux surface: List[Loop]
         """
-        # NOTE: You should use find.py::find_flux_surface_through_point
+        # NOTE: You should use find.py::find_flux_surface_through_point, this is just
+        # wrong, but is still used in BLUEPRINT.systems.firstwall.py
+        bluemira_warn(
+            "This function does not do what it should do. You should not use " "it."
+        )
         psi = self.psi(x, z)
         psi_n = calc_psi_norm(psi, *self.get_OX_psis())
         loops = find_flux_surfs(self.x, self.z, self.psi(), psi_n)
