@@ -1588,10 +1588,10 @@ class CoilsetOptimiserBase:
             to be used to update the coilset.
         """
         x, z, currents = np.array_split(coilset_state, 3)
-        for i, coil in enumerate(self.coilset.coils.values()):
-            coil.x = x[i]
-            coil.z = z[i]
-            coil.set_current(currents[i] * self.scale)
+        positions = list(zip(x, z))
+
+        self.coilset.set_positions(positions)
+        self.coilset.set_control_currents(currents * self.scale)
 
     def get_state_bounds(self, x_bounds, z_bounds, current_bounds):
         """
