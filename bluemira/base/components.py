@@ -32,6 +32,7 @@ from .error import ComponentError
 from bluemira.display.plotter import Plottable
 from bluemira.display.displayer import DisplayableCAD
 
+
 class Component(NodeMixin, Plottable, DisplayableCAD):
     """
     The Component is the fundamental building block for a bluemira reactor design. It
