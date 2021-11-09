@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
 import os
-import numpy as np
 from BLUEPRINT.systems.firstwall import FirstWallSN, FirstWallDN, get_tangent_vector
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
