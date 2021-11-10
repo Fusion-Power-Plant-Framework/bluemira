@@ -26,7 +26,11 @@ Simple relations for power.
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import to_kelvin
+
+
+# TODO: Get from Dan's material utilities
+def to_kelvin(C):
+    return C + 273.15
 
 
 def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
@@ -115,15 +119,14 @@ def He_pumping(  # noqa (N802)
     \t:math:`f_{pump}=\\dfrac{dP}{dTc_P\\rho_{av}}`
     """  # noqa (W505)
     d_temp = t_out - t_in
-    d_pressure = pressure_in - pressure_out
     t_bb_inlet = to_kelvin(t_in)
     # Ideal monoatomic gas - small compression ratios
-    t_comp_inlet = t_bb_inlet / ((pressure_in / (pressure_in - d_pressure)) ** (2 / 5))
+    t_comp_inlet = t_bb_inlet / ((pressure_in / pressure_out) ** (2 / 5))
     # Ivo not sure why can't refind it - probably right but very little
     # difference ~ 1 K
     # T_comp_inlet = eta_isen*T_bb_inlet/((P/(P-dP))**(6/15)+eta_isen-1)
     f_pump = (t_comp_inlet / (eta_isen * d_temp)) * (
-        (pressure_in / (pressure_in - d_pressure)) ** (2 / 5) - 1
+        (pressure_in / pressure_out) ** (2 / 5) - 1
     )  # kJ/kg
     p_pump_is = f_pump * blanket_power / (1 - f_pump)
     p_pump_el = p_pump_is / eta_el

@@ -213,16 +213,16 @@ BALANCE_PLOT_DEFAULTS = {
     "radius": 0,
     "shoulder": 0,
     "head_angle": 150,
-    "trunklength": 0.7,
-    "standardlength": 0.6,
-    "mediumlength": 1.0,
+    "trunk_length": 0.7,
+    "standard_length": 0.6,
+    "medium_length": 1.0,
     # Text font, colour and size
     "unit": "MW",
     "format": "%.0f",
-    "fontweight": "bold",
-    "fontcolor": "white",
-    "fontsize": 14,
-    "flowfontsize": 11,
+    "font_weight": "bold",
+    "font_color": "white",
+    "font_size": 14,
+    "flow_font_size": 11,
 }
 
 
@@ -240,7 +240,7 @@ class BalanceOfPlantPlotter:
         self.fig = None
         self.sankey = None
 
-    def plot(self, flow_dict):
+    def plot(self, flow_dict, title=None):
         """
         Plots the BalanceOfPlant system, based on the inputs and flows.
 
@@ -273,6 +273,9 @@ class BalanceOfPlantPlotter:
         )
         self._build_diagram(flow_dict)
         self._polish()
+        self.fig.suptitle(
+            title, color=self.plot_options["font_color"], fontsize=24, weight="bold"
+        )
 
     def _build_diagram(self, flow_dict):
         """
@@ -280,9 +283,9 @@ class BalanceOfPlantPlotter:
         some structs, but that's how it used to be and it was hard to modify.
         This is easier to read and modify.
         """
-        trunk_length = self.trunk_length
-        l_s = self.l_standard
-        l_m = self.l_medium
+        trunk_length = self.plot_options["trunk_length"]
+        l_s = self.plot_options["standard_length"]
+        l_m = self.plot_options["medium_length"]
 
         # 0: Plasma
         self.sankey.add(
@@ -396,7 +399,7 @@ class BalanceOfPlantPlotter:
         ]
         orientations = [0, -1, -1, -1, -1, -1, -1, -1, 0]
 
-        if self.flow_dict["Electricity"][-1] > 0:
+        if flow_dict["Electricity"][-1] > 0:
             # Conversely, this means "net electric loss"
             labels[-1] = "Grid"
             orientations[-1] = 1
@@ -530,11 +533,11 @@ class BalanceOfPlantPlotter:
         """
         diagrams = self.sankey.finish()
         for diagram in diagrams:
-            diagram.text.set_fontweight("bold")
-            diagram.text.set_fontsize("14")
-            diagram.text.set_color("white")
+            diagram.text.set_fontweight(self.plot_options["font_weight"])
+            diagram.text.set_fontsize(self.plot_options["font_size"])
+            diagram.text.set_color(self.plot_options["font_color"])
             for text in diagram.texts:
-                text.set_fontsize("11")
-                text.set_color("white")
+                text.set_fontsize(self.plot_options["flow_font_size"])
+                text.set_color(self.plot_options["font_color"])
 
         self.fig.tight_layout()

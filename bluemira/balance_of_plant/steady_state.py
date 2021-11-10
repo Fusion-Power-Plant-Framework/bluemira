@@ -20,10 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import abc
-from typing import Type, List
 import numpy as np
 
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
 from bluemira.balance_of_plant.error import BalanceOfPlantError
 from bluemira.balance_of_plant.calculations import (
@@ -35,15 +34,50 @@ from bluemira.balance_of_plant.plotting import BalanceOfPlantPlotter
 
 
 class CoolantPumping(abc.ABC):
+    """
+    Pumping power strategy abstract base class
+    """
+
     def __init__(self, *args, **kwargs):
         pass
 
     @abc.abstractmethod
-    def pump(self, power) -> List[float]:
+    def pump(self, power):
+        """
+        Calculate the pump work and electrical pumping power required for a given power.
+        """
         pass
 
 
 class HePumping(CoolantPumping):
+    """
+    He-cooling pumping power calculation strategy
+
+    Parameters
+    ----------
+    pressure_in: float
+        Inlet pressure [MPa]
+    pressure_out: float
+        Pressure drop [MPa]
+    t_in: float
+        Inlet temperature [°C]
+    t_out: float
+        Outlet temperature [°C]
+    blanket_power: float
+        Total blanket power excluding pumping power [MW]
+    eta_isen: float
+        Isentropic efficiency of the He compressors
+    eta_el: float
+        Electrical efficiency of the He compressors
+
+    Returns
+    -------
+    P_pump_is: float
+        The isentropic pumping power (added to the working fluid)
+    P_pump_el: float
+        The eletrical pumping power (parasitic load)
+    """
+
     def __init__(
         self, pressure_in, pressure_out, temp_in, temp_out, eta_isentropic, eta_electric
     ):
@@ -55,12 +89,15 @@ class HePumping(CoolantPumping):
         self.eta_el = eta_electric
 
     def pump(self, power):
+        """
+        Calculate the pump work and electrical pumping power required for a given power.
+        """
         p_pump, p_electric = He_pumping(
-            power,
-            self.pressure_in,
-            self.pressure_out,
+            self.p_in,
+            self.p_out,
             self.t_in,
             self.t_out,
+            power,
             self.eta_isen,
             self.eta_el,
         )
@@ -68,12 +105,28 @@ class HePumping(CoolantPumping):
 
 
 class H2OPumping(CoolantPumping):
+    """
+    H20-cooling pumping power calculation strategy
+
+    Parameters
+    ----------
+    f_pump: float
+        Fraction of thermal power required to pump
+    eta_isen: float
+        Isentropic efficiency of the water pumps
+    eta_el: float
+        Electrical efficiency of the water pumps
+    """
+
     def __init__(self, f_pump, eta_isentropic, eta_electric):
         self.f_pump = f_pump
         self.eta_isen = eta_isentropic
         self.eta_el = eta_electric
 
     def pump(self, power):
+        """
+        Calculate the pump work and electrical pumping power required for a given power.
+        """
         p_pump, p_electric = H2O_pumping(power, self.f_pump, self.eta_isen, self.eta_el)
         return p_pump, p_electric
 
@@ -89,7 +142,7 @@ class PowerCycleEfficiencyCalc(abc.ABC):
 
 class PredeterminedEfficiency(PowerCycleEfficiencyCalc):
     def __init__(self, efficiency):
-        self.efficiency
+        self.efficiency = efficiency
 
     def calculate(self, p_blanket, p_divertor) -> float:
         return self.efficiency
@@ -119,17 +172,6 @@ class FractionSplitStrategy(abc.ABC):
             )
 
 
-class FusionPowerStrategy(FractionSplitStrategy):
-    def __init__(self):
-        self.f_neutron_DT = HE_MOLAR_MASS / (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
-        self.f_neutron_DD = 0.5 * HE3_MOLAR_MASS / (NEUTRON_MOLAR_MASS + HE3_MOLAR_MASS)
-
-    def split(self, p_fusion_DT, p_fusion_DD):
-        p_neutron = self.f_neutron_DT * p_fusion_DT + self.f_neutron_DD * p_fusion_DD
-        p_charged = p_fusion_DT + p_fusion_DD - p_neutron
-        return p_neutron, p_charged
-
-
 class NeutronPowerStrategy(FractionSplitStrategy):
     def __init__(self, f_blanket, f_divertor, f_vessel, f_other, energy_multiplication):
         self.check_fractions([f_blanket, f_divertor, f_vessel, f_other])
@@ -144,7 +186,7 @@ class NeutronPowerStrategy(FractionSplitStrategy):
         div_power = self.f_divertor * neutron_power
         vv_power = self.f_vessel * neutron_power
         aux_power = self.f_other * neutron_power
-        mult_power = self.f_blanket * neutron_power - blk_power
+        mult_power = blk_power - self.f_blanket * neutron_power
         return blk_power, div_power, vv_power, aux_power, mult_power
 
 
@@ -202,7 +244,29 @@ class ParasiticLoadStrategy:
 
 class BalanceOfPlant:
     """
-    Balance of plant system for a fusion power reactor
+    Balance of plant calculator for a fusion power reactor
+
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        Input parameters
+    rad_sep_strat: FractionSplitStrategy
+        Strategy to calculate the where the radiation and charged particle power
+        in the scrape-off-layer is carried to
+    neutron_strat: FractionSplitStrategy
+        Strategy to calculate where the neutron power is carried to
+    blanket_pump_strat: CoolantPumping
+        Strategy to calculate the coolant pumping power for the blanket
+    divertor_pump_strat: CoolantPumping
+        Strategy to calculate the coolant pumping power for the divertor
+    bop_cycle_strat: PowerCycleEfficiencyCalc
+        Strategy to calculate the balance of plant thermal efficiency
+    parasitic_load_strat: ParasiticLoadStrategy
+        Strategy to caculate the parasitic loads
+
+    Notes
+    -----
 
     .. math::
         P_{el}={\\eta}_{BOP}\\Bigg[\\Bigg(\\frac{4}{5}P_{fus}f_{nrgm}-\\
@@ -213,44 +277,20 @@ class BalanceOfPlant:
 
     """  # noqa (W505)
 
-    config: Type[ParameterFrame]
-    inputs: dict
     _plotter = BalanceOfPlantPlotter
-
-    # fmt: off
-    default_params = [
-        ['P_fus_DT', 'D-T fusion power', 1995, 'MW', None, 'PLASMOD'],
-        ['P_fus_DD', 'D-D fusion power', 5, 'MW', None, 'PLASMOD'],
-        ['P_rad', 'Radiation power', 400, 'MW', None, 'PLASMOD'],
-        ['pradfw', 'Fraction of core radiation deposited in the FW', 0.9, 'N/A', None, None],
-        ['eta_el_He', 'He compressor electrical efficiency', 0.87, 'N/A', None, 'D.J. Ward, W.E. Han. Results of system studies for DEMO. Report of DEMO study, Task TW6-TRP-002. July 2007'],
-        ['eta_isen_He', 'He compressor isentropic efficiency', 0.9, 'N/A', None, 'Fabio Cismondi08/12/16'],
-        ['fsolrad', 'SOL radiation fraction', 0.75, 'N/A', None, 'F. Maviglia standard'],
-        ['fsolradfw', 'Fraction of SOL radiation deposited in the FW', 0.8, 'N/A', None, 'MC guess'],
-        ['fsepchblk', 'SOL power in the form of charged particles', 0.8, 'N/A', None, 'F. Maviglia standard'],
-        ['f_fw_a_blk', 'Fraction of alpha and aux power deposited on the blanket FW', 0.91, 'N/A', None, 'Taken from some Bachmann crap'],
-        ['eta_el_H2O', 'H2O pump electrical efficiency', 0.87, 'N/A', None, 'F. Cismondi'],
-        ['eta_isen_H2O', 'H2O pump isentropic efficiency', 0.99, 'N/A', None, 'F. Cismondi'],
-        ['f_pump_H2O_BB', 'BB pumping fraction for WC blanket', 0.004, 'N/A', None, 'F. Cismondi 08/12/16'],
-        ['f_pump_H2O_DIV', 'DIV pumping fraction', 0.05, 'N/A', None, 'MC guess x 10-20 lit numbers for BB'],
-        ['f_alpha_plasma', 'Fraction of charged particle power deposited in the plasma', 0.95, 'N/A', None, 'PROCESS reference value in 2019']
-    ]
-    # fmt: on
 
     def __init__(
         self,
-        config,
-        fusion_power_strat,
-        charged_particle_strat,
+        params,
+        rad_sep_strat,
         neutron_strat,
         blanket_pump_strat,
         divertor_pump_strat,
         bop_cycle_strat,
         parasitic_load_strat,
     ):
-        self.params = config
-        self.fusion_power_strat = fusion_power_strat
-        self.charged_part_strat = charged_particle_strat
+        self.params = params
+        self.rad_sep_strat = rad_sep_strat
         self.neutron_strat = neutron_strat
         self.blanket_pump_strat = blanket_pump_strat
         self.divertor_pump_strat = divertor_pump_strat
@@ -259,27 +299,34 @@ class BalanceOfPlant:
         self.flow_dict = None
 
     def build(self):
-
-        p_neutron, p_charged = self.fusion_power_strat.split(
-            self.params.P_fus_DT, self.params.P_fus_DD
+        """
+        Carry out the balance of plant calculation
+        """
+        p_fusion = self.params.P_fus_DT.value + self.params.P_fus_DD.value
+        f_neutron_DT = HE_MOLAR_MASS / (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
+        f_neutron_DD = 0.5 * HE3_MOLAR_MASS / (NEUTRON_MOLAR_MASS + HE3_MOLAR_MASS)
+        p_neutron = (
+            f_neutron_DT * self.params.P_fus_DT.value
+            + f_neutron_DD * self.params.P_fus_DD.value
         )
-        p_fusion = self.params.P_fus_DT + self.params.P_fus_DD
-        p_radiation = self.params.P_rad
-        p_hcd = self.params.P_hcd
-        p_hcd_el = self.params.P_hcd_el
-        p_separatrix = p_charged - p_radiation - p_hcd
+        p_charged = self.params.P_fus_DT.value + self.params.P_fus_DD.value - p_neutron
+
+        p_radiation = self.params.P_rad.value
+        p_hcd = self.params.P_hcd.value
+        p_hcd_el = self.params.P_hcd_el.value
+        p_separatrix = p_charged - p_radiation + p_hcd
         p_n_blk, p_n_div, p_n_vv, p_n_aux, p_nrgm = self.neutron_strat.split(p_neutron)
-        p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux = self.charged_part_strat.split(
+        p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux = self.rad_sep_strat.split(
             p_radiation, p_separatrix
         )
         p_rad_sep_fw = p_rad_sep_blk + p_rad_sep_aux
 
-        p_blanket = p_n_blk
-
+        p_blk_decay = self.params.P_bb_decay.value
+        p_blanket = p_n_blk + p_blk_decay + p_rad_sep_blk
         p_blk_pump, p_blk_pump_el = self.blanket_pump_strat.pump(p_blanket)
         p_blanket += p_blk_pump
 
-        p_div = p_n_div
+        p_div = p_n_div + p_rad_sep_div
         p_div_pump, p_div_pump_el = self.divertor_pump_strat.pump(p_div)
         p_div += p_div_pump
 
@@ -310,10 +357,10 @@ class BalanceOfPlant:
                 -p_rad_sep_fw,
                 -p_rad_sep_div,
             ],
-            "Blanket": [p_n_blk, p_rad_sep_blk, p_blk_pump, p_blk_decayheat, -p_blanket],
-            "Divertor": [p_n_div, p_rad_sep_div, -p_div],
+            "Blanket": [p_n_blk, p_rad_sep_blk, p_blk_pump, p_blk_decay, -p_blanket],
+            "Divertor": [p_n_div, p_rad_sep_div, -p_n_div - p_rad_sep_div],
             "First wall": [p_rad_sep_fw, -p_rad_sep_aux, -p_rad_sep_blk],
-            "BoP": [p_blanket, p_div + p_div_pump, -p_bop_loss, -p_bop],
+            "BoP": [p_blanket, p_div, -p_bop_loss, -p_bop],
             "Electricity": [
                 p_bop,
                 -p_t_plant,
@@ -326,9 +373,9 @@ class BalanceOfPlant:
                 -p_el_net,
             ],
             "_H&CD loop": [p_hcd_el, -p_hcd_el],
-            "_Divertor 2": [p_rad_sep_div, -(p_div - p_n_div)],
+            "_Divertor 2": [p_rad_sep_div, -p_rad_sep_div],
             "_H&CD loop 2": [p_hcd_el, -p_hcd_el],
-            "_DIV to BOP": [p_div, p_div_pump, -p_div - p_div_pump],
+            "_DIV to BOP": [p_div - p_div_pump, p_div_pump, -p_div],
             "_BB coolant loop turn": [
                 p_blk_pump_el,
                 -p_blk_pump_el + p_blk_pump,
@@ -342,38 +389,39 @@ class BalanceOfPlant:
             ],
             "_DIV coolant loop divertor": [p_div_pump, -p_div_pump],
         }
+        self.sanity()
 
-    def plot(self, **kwargs):
+    def sanity(self):
+        """
+        Perform a series of sanity checks.
+        """
+        # Per block check
+        for label, flow in self.flow_dict.items():
+            delta = sum(flow)
+            if round(delta) != 0:
+                bluemira_warn(
+                    f"Power block {label} is not self-consistent.. {delta:.2f} MW are missing"
+                )
+
+        # Global check
+        delta_truth = sum(np.sum(list(self.flow_dict.values())))
+        if round(delta_truth) != 0:
+            bluemira_warn(
+                f"The balance of plant model is inconsistent: {delta_truth:.2f} MW are lost somewhere."
+            )
+
+    def plot(self, title=None, **kwargs):
+        """
+        Plot the BalanceOfPlant object.
+
+        Parameters
+        ----------
+        title: Optional[str]
+            Title to print on the plot
+
+        Other Parameters
+        ----------------
+        see BALANCE_PLOT_DEFAULTS for details
+        """
         plotter = self._plotter(**kwargs)
-        return plotter.plot(self.flow_dict)
-
-
-if __name__ == "__main__":
-
-    neutron_power_strat = NeutronPowerStrategy(
-        f_blanket=0.9, f_divertor=0.05, f_vessel=0.04, f_other=0.01
-    )
-    rad_sep_strat = RadChargedPowerStrategy(
-        f_core_rad_fw=0.9,
-        f_sol_rad=0.75,
-        f_sol_rad_fw=0.8,
-        f_sol_ch_fw=0.8,
-        f_fw_blk=0.91,
-    )
-    blanket_pump_strat = HePumping(
-        8, 7.5, 300, 500, eta_isentropic=0.9, eta_electric=0.87
-    )
-    bop_cycle = SuperheatedRankine(500)
-    divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
-    parasitic_load_strat = ParasiticLoadStrategy()
-
-    bop = BalanceOfPlant(
-        default_params,
-        FusionPowerStrategy(),
-        charged_particle_strat=rad_sep_strat,
-        neutron_strat=neutron_power_strat,
-        blanket_pump_strat=blanket_pump_strat,
-        divertor_pump_strat=divertor_pump_strat,
-        bop_cycle_strat=bop_cycle,
-        parasitic_load_strat=parasitic_load_strat,
-    )
+        return plotter.plot(self.flow_dict, title=title)
