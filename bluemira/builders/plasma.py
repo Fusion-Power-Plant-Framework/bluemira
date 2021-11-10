@@ -25,8 +25,7 @@ Built-in build steps for making a parameterised plasma
 
 from typing import Dict, List, Tuple, Type, Union
 
-from bluemira.base import PhysicalComponent
-from bluemira.base.components import Component
+from bluemira.base.components import Component, PhysicalComponent
 import bluemira.geometry as geo
 from bluemira.geometry.parameterisations import GeometryParameterisation
 
@@ -55,11 +54,13 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
     def build(self, params, **kwargs) -> List[Tuple[str, Component]]:
         """
-        Build a plasma using the requested targets and methods.
+        Build a plasma with a boundary shape defined by the parameterisation.
+
+        Constructs a Component at each of the target paths using the defined methods.
         """
         super().build(params, **kwargs)
 
-        boundary = self._shape_builder.build(params)[0][1].shape
+        boundary = self.create_parameterisation().create_shape()
 
         result_components = []
         for target, func in self._targets.items():
@@ -68,6 +69,22 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         return result_components
 
     def build_xz(self, boundary: geo.wire.BluemiraWire, target: str):
+        """
+        Build a PhysicalComponent with a BluemiraFace using the provided plasma boundary
+        in the xz plane.
+
+        Parameters
+        ----------
+        boundary: BluemiraWire
+            The plasma boundary.
+        target: str
+            The target path in which to insert the component on output.
+
+        Returns
+        -------
+        result: Tuple[str, PhysicalComponent]
+            The resulting target path and component.
+        """
         label = target.split("/")[-1]
         return (
             target,
@@ -75,6 +92,26 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         )
 
     def build_xy(self, boundary: geo.wire.BluemiraWire, target: str):
+        """
+        Build a PhysicalComponent with a BluemiraFace using the provided plasma boundary
+        in the xy plane.
+
+        The projection onto the xy plane is taken as the ring bound by the maximum and
+        minimum values of the boundary in the radial direction.
+
+        Parameters
+        ----------
+        boundary: BluemiraWire
+            The plasma boundary.
+        target: str
+            The target path in which to insert the component on output.
+
+
+        Returns
+        -------
+        result: Tuple[str, PhysicalComponent]
+            The resulting target path and component.
+        """
         label = target.split("/")[-1]
 
         inner = geo.tools.make_circle(boundary.bounding_box[0], axis=[0, 1, 0])
@@ -86,6 +123,26 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         )
 
     def build_xyz(self, boundary: geo.wire.BluemiraWire, target: str):
+        """
+        Build a PhysicalComponent with a BluemiraShell using the provided plasma boundary
+        in 3D.
+
+        The 3D shell is created by revolving the boundary through the provided segment
+        angle.
+
+        Parameters
+        ----------
+        boundary: BluemiraWire
+            The plasma boundary.
+        target: str
+            The target path in which to insert the component on output.
+
+
+        Returns
+        -------
+        result: Tuple[str, PhysicalComponent]
+            The resulting target path and component.
+        """
         label = target.split("/")[-1]
 
         shell = geo.tools.revolve_shape(

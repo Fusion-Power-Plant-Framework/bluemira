@@ -70,6 +70,15 @@ class ParameterisedShapeBuilder(Builder):
         return shape_params
 
     def create_parameterisation(self):
+        """
+        Create the GeometryParameterisation from the provided param_class and
+        variables_map.
+
+        Returns
+        -------
+        shape: GeometryParameterisation
+            The shape resulting from the provided param_class and variables_map.
+        """
         shape_params = self._derive_shape_params()
         shape = self._param_class()
         for key, val in shape_params.items():
