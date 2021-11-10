@@ -29,7 +29,7 @@ import matplotlib.patches as patches
 import numpy as np
 from collections import namedtuple
 
-from bluemira.base import ParameterFrame
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.geometry._deprecated_loop import Loop

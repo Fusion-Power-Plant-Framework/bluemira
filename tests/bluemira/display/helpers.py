@@ -20,8 +20,34 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Base classes and functionality for the bluemira code.
+Helper functions and classes for display tests.
 """
 
-# from .components import GroupingComponent, PhysicalComponent, MagneticComponent
-# from .parameter import *
+
+class PatchQApp:
+    def __init__(self, *args):
+        pass
+
+    def exec_(self):
+        pass
+
+    @classmethod
+    def instance(cls):
+        return None
+
+
+class PatchQuarterWidget:
+    def setBackgroundColor(self, color):  # noqa: N802 - match interface
+        pass
+
+    def setTransparencyType(self, type):  # noqa: N802 - match interface
+        pass
+
+    def setSceneGraph(self, root):  # noqa: N802 - match interface
+        pass
+
+    def setWindowTitle(self, title):  # noqa: N802 - match interface
+        pass
+
+    def show(self):
+        pass

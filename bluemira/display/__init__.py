@@ -20,8 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Base classes and functionality for the bluemira code.
+Plotting module
 """
+from . import plotter, displayer
 
-# from .components import GroupingComponent, PhysicalComponent, MagneticComponent
-# from .parameter import *
+plot_2d = plotter.plot_2d
+plot_3d = plotter.plot_3d
+show_cad = displayer.show_cad

@@ -28,10 +28,13 @@ from anytree import NodeMixin, RenderTree
 import copy
 from typing import Any, List, Optional, Type, Union
 
+from bluemira.display.plotter import Plottable
+from bluemira.display.displayer import DisplayableCAD
+
 from .error import ComponentError
 
 
-class Component(NodeMixin):
+class Component(NodeMixin, Plottable, DisplayableCAD):
     """
     The Component is the fundamental building block for a bluemira reactor design. It
     encodes the way that the corresponding part of the reactor will be built, along with
@@ -58,6 +61,7 @@ class Component(NodeMixin):
         parent: Optional["Component"] = None,
         children: Optional[List["Component"]] = None,
     ):
+        super().__init__()
         self.name = name
         self.parent = parent
         if children:

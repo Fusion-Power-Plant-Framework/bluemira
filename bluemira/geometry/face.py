@@ -34,9 +34,12 @@ import Part
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.wire import BluemiraWire
+import bluemira.geometry._freecadapi as _freecadapi
 
 # import from error
 from bluemira.geometry.error import NotClosedWire, DisjointedFace
+
+import numpy as np
 
 
 class BluemiraFace(BluemiraGeo):
@@ -48,6 +51,7 @@ class BluemiraFace(BluemiraGeo):
     def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
+        self._create_face()
 
     @staticmethod
     def _converter(func):
@@ -60,6 +64,17 @@ class BluemiraFace(BluemiraGeo):
             return output
 
         return wrapper
+
+    def copy(self):
+        """Make a copy of the BluemiraFace"""
+        return BluemiraFace(self.boundary, self.label)
+
+    def deepcopy(self):
+        """Make a copy of the BluemiraFace"""
+        boundary = []
+        for o in self.boundary:
+            boundary += [o.copy()]
+        return BluemiraFace(boundary, self.label)
 
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class"""
@@ -115,3 +130,30 @@ class BluemiraFace(BluemiraGeo):
             bmface = BluemiraFace(bmwires)
             return bmface
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
+
+    def discretize(
+        self, ndiscr: int = 100, byedges: bool = False, dl: float = None
+    ) -> np.ndarray:
+        """
+        Make an array of the geometry.
+
+        Parameters
+        ----------
+        ndiscr: int
+            Number of points in the array
+        byedges: bool
+            Whether or not to discretise by edges
+
+        Returns
+        -------
+        xyz: np.ndarray
+            (M, (3, N)) array of point coordinates where M is the number of boundaries
+            and N the number of discretization points.
+        """
+        points = []
+        for w in self._shape.Wires:
+            if byedges:
+                points.append(_freecadapi.discretize_by_edges(w, ndiscr=ndiscr, dl=dl))
+            else:
+                points.append(_freecadapi.discretize(w, ndiscr=ndiscr, dl=dl))
+        return points

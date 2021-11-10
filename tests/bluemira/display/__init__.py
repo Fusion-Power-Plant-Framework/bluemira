@@ -18,10 +18,3 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
-"""
-Base classes and functionality for the bluemira code.
-"""
-
-# from .components import GroupingComponent, PhysicalComponent, MagneticComponent
-# from .parameter import *

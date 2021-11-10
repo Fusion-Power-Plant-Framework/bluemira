@@ -27,22 +27,29 @@ from __future__ import annotations
 
 import freecad  # noqa: F401
 import Part
+import FreeCAD
 from FreeCAD import Base
+import FreeCADGui
 
 # import math lib
 import numpy as np
 import math
 
 # import typing
-from typing import Union
+from typing import List, Optional, Union, Dict
 
 # import errors
-from bluemira.geometry.error import GeometryError
+from bluemira.geometry.error import FreeCADError
 
+# import visualisation
+from pivy import coin, quarter
+from PySide2.QtWidgets import QApplication
 
 # # =============================================================================
 # # Array, List, Vector, Point manipulation
 # # =============================================================================
+
+
 def check_data_type(data_type):
     """Decorator to check the data type of the first parameter input (args[0]) of a
     function.
@@ -325,7 +332,7 @@ def length(obj) -> float:
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def area(obj) -> float:
@@ -334,7 +341,7 @@ def area(obj) -> float:
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def volume(obj) -> float:
@@ -343,7 +350,7 @@ def volume(obj) -> float:
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def center_of_mass(obj) -> np.ndarray:
@@ -353,7 +360,7 @@ def center_of_mass(obj) -> np.ndarray:
         # CenterOfMass returns a vector.
         return getattr(obj, prop)
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def is_null(obj):
@@ -362,7 +369,7 @@ def is_null(obj):
     if hasattr(obj, prop):
         return getattr(obj, prop)()
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def is_closed(obj):
@@ -371,7 +378,7 @@ def is_closed(obj):
     if hasattr(obj, prop):
         return getattr(obj, prop)()
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def bounding_box(obj):
@@ -384,7 +391,7 @@ def bounding_box(obj):
         box = getattr(obj, prop)
         return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 # # =============================================================================
@@ -442,7 +449,7 @@ def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     else:
         # a dl is calculated for the discretisation of the different edges
         # NOTE: must discretise to at least two points.
-        ndiscr = max(math.ceil(w.Length / dl), 2)
+        ndiscr = max(math.ceil(w.Length / dl + 1), 2)
 
     # discretization points array
     output = w.discretize(ndiscr)
@@ -484,7 +491,7 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     # correct sequence and orientation. No need for tricks after the discretization.
     for e in w.OrderedEdges:
         pointse = list(discretize(Part.Wire(e), dl=dl))
-        output += pointse[0:-1]
+        output += pointse[:-1]
 
     if w.isClosed():
         output += [output[0]]
@@ -544,7 +551,7 @@ def save_as_STEP(shapes, filename="test", scale=1):
         shapes = [shapes]
 
     if not all(not shape.isNull() for shape in shapes):
-        raise GeometryError("Shape is null.")
+        raise FreeCADError("Shape is null.")
 
     compound = make_compound(shapes)
 
@@ -688,7 +695,7 @@ def make_compound(shapes):
 
     Parameters
     ----------
-    *shapes: list of FreeCAD shape objects
+    shapes: list of FreeCAD shape objects
         A set of objects to be compounded
 
     Returns
@@ -698,3 +705,152 @@ def make_compound(shapes):
     """
     compound = Part.makeCompound(shapes)
     return compound
+
+
+# # =============================================================================
+# # Plane manipulations
+# # =============================================================================
+def make_plane(base, axis, angle):
+    """
+    Make a FreeCAD Placement
+
+    Parameters
+    ----------
+    base: Iterable
+        a vector representing the Plane's position
+    axis: Iterable
+        normal vector to the Plane
+    angle:
+        rotation angle in degree
+    """
+    base = Base.Vector(base)
+    axis = Base.Vector(axis)
+
+    return Base.Placement(base, axis, angle)
+
+
+def move_plane(plane, vector):
+    """
+    Moves the FreeCAD Plane along the given vector
+
+    Parameters
+    ----------
+    plane: FreeCAD plane
+        the FreeCAD plane to be modified
+    vector: Iterable
+        direction along which the plane is moved
+
+    Returns
+    -------
+    nothing:
+        The plane is directly modified.
+    """
+    plane.move(Base.Vector(vector))
+
+
+def change_plane(geo, plane):
+    """
+    Change the placement of a FreeCAD object
+
+    Parameters
+    ----------
+    geo: FreeCAD object
+        the object to be modified
+    plane: FreeCAD plane
+        the FreeCAD plane to be modified
+
+    Returns
+    -------
+    nothing:
+        The object is directly modified.
+    """
+    new_placement = geo.Placement.multiply(plane)
+    new_base = plane.multVec(geo.Placement.Base)
+    new_placement.Base = new_base
+    geo.Placement = new_placement
+
+
+# # =============================================================================
+# # Plane manipulations
+# # =============================================================================
+default_display_options = {
+    "color": (0.5, 0.5, 0.5),
+    "transparency": 0.0,
+}
+
+
+def _colourise(
+    node: coin.SoNode,
+    options: Dict = default_display_options,
+):
+    if isinstance(node, coin.SoMaterial):
+        rgb = options["color"]
+        transparency = options["transparency"]
+        node.ambientColor.setValue(coin.SbColor(*rgb))
+        node.diffuseColor.setValue(coin.SbColor(*rgb))
+        node.transparency.setValue(transparency)
+    for child in node.getChildren() or []:
+        _colourise(child, options)
+
+
+def show_cad(
+    parts: Union[Part.Shape, List[Part.Shape]],
+    options: Optional[Union[Dict, List[Dict]]] = None,
+):
+    """
+    The implementation of the display API for FreeCAD parts.
+
+    Parameters
+    ----------
+    parts: Union[Part.Shape, List[Part.Shape]]
+        The parts to display.
+    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
+        The options to use to display the parts.
+    """
+    if not isinstance(parts, list):
+        parts = [parts]
+
+    if options is None:
+        dict_options = {
+            "color": (0.5, 0.5, 0.5),
+            "transparency": 0.0,
+        }
+        options = [dict_options] * len(parts)
+    elif not isinstance(options, list):
+        options = [options] * len(parts)
+
+    if len(options) != len(parts):
+        raise FreeCADError(
+            "If options for display are provided then there must be as many options as "
+            "there are parts to display."
+        )
+
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+
+    if not hasattr(FreeCADGui, "subgraphFromObject"):
+        FreeCADGui.setupWithoutGUI()
+
+    doc = FreeCAD.newDocument()
+
+    root = coin.SoSeparator()
+
+    for part, option in zip(parts, options):
+        new_part = part.copy()
+        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
+        obj = doc.addObject("Part::Feature")
+        obj.Shape = new_part
+        doc.recompute()
+        subgraph = FreeCADGui.subgraphFromObject(obj)
+        _colourise(subgraph, option)
+        root.addChild(subgraph)
+
+    viewer = quarter.QuarterWidget()
+    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
+    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
+    viewer.setSceneGraph(root)
+
+    viewer.setWindowTitle("Bluemira Display")
+    viewer.show()
+    app.exec_()

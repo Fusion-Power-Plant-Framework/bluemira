@@ -20,8 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Base classes and functionality for the bluemira code.
+Bluemira display error class
 """
+from bluemira.base.error import BluemiraError
 
-# from .components import GroupingComponent, PhysicalComponent, MagneticComponent
-# from .parameter import *
+
+class DisplayError(BluemiraError):
+    """
+    Exception class for Displayers.
+    """
+
+    pass
