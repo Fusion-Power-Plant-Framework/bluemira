@@ -349,117 +349,31 @@ class BalanceOfPlant:
 
 
 if __name__ == "__main__":
-    default_params = ParameterFrame(
-        [
-            ["P_fus_DT", "D-T fusion power", 1995, "MW", None, "PLASMOD"],
-            ["P_fus_DD", "D-D fusion power", 5, "MW", None, "PLASMOD"],
-            ["P_rad", "Radiation power", 400, "MW", None, "PLASMOD"],
-            [
-                "pradfw",
-                "Fraction of core radiation deposited in the FW",
-                0.9,
-                "N/A",
-                None,
-                None,
-            ],
-            [
-                "eta_el_He",
-                "He compressor electrical efficiency",
-                0.87,
-                "N/A",
-                None,
-                "D.J. Ward, W.E. Han. Results of system studies for DEMO. Report of DEMO study, Task TW6-TRP-002. July 2007",
-            ],
-            [
-                "eta_isen_He",
-                "He compressor isentropic efficiency",
-                0.9,
-                "N/A",
-                None,
-                "Fabio Cismondi08/12/16",
-            ],
-            [
-                "fsolrad",
-                "SOL radiation fraction",
-                0.75,
-                "N/A",
-                None,
-                "F. Maviglia standard",
-            ],
-            [
-                "fsolradfw",
-                "Fraction of SOL radiation deposited in the FW",
-                0.8,
-                "N/A",
-                None,
-                "MC guess",
-            ],
-            [
-                "fsepchblk",
-                "SOL power in the form of charged particles",
-                0.8,
-                "N/A",
-                None,
-                "F. Maviglia standard",
-            ],
-            [
-                "f_fw_a_blk",
-                "Fraction of alpha and aux power deposited on the blanket FW",
-                0.91,
-                "N/A",
-                None,
-                "Taken from some Bachmann crap",
-            ],
-            [
-                "eta_el_H2O",
-                "H2O pump electrical efficiency",
-                0.87,
-                "N/A",
-                None,
-                "F. Cismondi",
-            ],
-            [
-                "eta_isen_H2O",
-                "H2O pump isentropic efficiency",
-                0.99,
-                "N/A",
-                None,
-                "F. Cismondi",
-            ],
-            [
-                "f_pump_H2O_BB",
-                "BB pumping fraction for WC blanket",
-                0.004,
-                "N/A",
-                None,
-                "F. Cismondi 08/12/16",
-            ],
-            [
-                "f_pump_H2O_DIV",
-                "DIV pumping fraction",
-                0.05,
-                "N/A",
-                None,
-                "MC guess x 10-20 lit numbers for BB",
-            ],
-            [
-                "f_alpha_plasma",
-                "Fraction of charged particle power deposited in the plasma",
-                0.95,
-                "N/A",
-                None,
-                "PROCESS reference value in 2019",
-            ],
-        ]
+
+    neutron_power_strat = NeutronPowerStrategy(
+        f_blanket=0.9, f_divertor=0.05, f_vessel=0.04, f_other=0.01
     )
+    rad_sep_strat = RadChargedPowerStrategy(
+        f_core_rad_fw=0.9,
+        f_sol_rad=0.75,
+        f_sol_rad_fw=0.8,
+        f_sol_ch_fw=0.8,
+        f_fw_blk=0.91,
+    )
+    blanket_pump_strat = HePumping(
+        8, 7.5, 300, 500, eta_isentropic=0.9, eta_electric=0.87
+    )
+    bop_cycle = SuperheatedRankine(500)
+    divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
+    parasitic_load_strat = ParasiticLoadStrategy()
 
     bop = BalanceOfPlant(
         default_params,
         FusionPowerStrategy(),
-        charged_particle_strat=None,
-        neutron_strat=NeutronPowerStrategy(),
-        blanket_pump_strat=HePumping(),
-        divertor_pump_strat=H2OPumping(),
-        bop_cycle_strat=SuperheatedRankine(),
-        parasitic_load_strat=None,
+        charged_particle_strat=rad_sep_strat,
+        neutron_strat=neutron_power_strat,
+        blanket_pump_strat=blanket_pump_strat,
+        divertor_pump_strat=divertor_pump_strat,
+        bop_cycle_strat=bop_cycle,
+        parasitic_load_strat=parasitic_load_strat,
     )
