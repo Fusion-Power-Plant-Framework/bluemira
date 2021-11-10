@@ -26,7 +26,7 @@ Module containing the base Component class.
 import anytree
 from anytree import NodeMixin, RenderTree
 import copy
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, List, Optional, Type, Union
 
 from bluemira.display.plotter import Plottable
 from bluemira.display.displayer import DisplayableCAD
@@ -250,26 +250,26 @@ class MagneticComponent(PhysicalComponent):
 
 class ComponentManager:
     """
-    A manager for components. Allows a variety of component trees to be accessed and
-    updated by tracing through a / separated path.
+    A manager for components. Allows a component tree to be accessed and updated by
+    tracing through a / separated path.
 
     Parameters
     ----------
-    keys: List[str]
-        The root keys for all of the component trees to be managed.
+    name: str
+        The root key the component tree to be managed.
     """
 
-    _trees: Dict[str, Component]
+    _tree: Component
 
-    def __init__(self, keys: List[str]):
-        self._trees = {key: GroupingComponent(key) for key in keys}
+    def __init__(self, name: str):
+        self._tree = GroupingComponent(name)
 
     @property
-    def trees(self) -> Dict[str, "Component"]:
+    def name(self) -> str:
         """
-        The component trees that are being managed.
+        The name of the root node in the tree.
         """
-        return self._trees
+        return self._tree.name
 
     def get_by_path(self, path: str) -> Component:
         """
@@ -287,8 +287,8 @@ class ComponentManager:
             The component at the requested path.
         """
         path = path.split("/")
-        tree = self._trees[path[0]]
-        for node in path[1:]:
+        tree = self._tree
+        for node in path:
             tree = tree.get_component(node)
         return tree
 
@@ -308,15 +308,19 @@ class ComponentManager:
             nodes in the path. If False then a ComponentError will be raised if there
             are missing nodes in the path. By default True.
         """
+        path = self.name if path == "/" else path
         path = path.split("/")
         if path[-1] == component.name:
             del path[-1]
-        tree = self._trees[path[0]]
-        for idx, node in enumerate(path[1:], 1):
+        tree = self._tree
+        for idx, node in enumerate(path):
             tree = tree.get_component(node)
             if tree is None:
                 if fill_tree:
-                    parent = self.get_by_path("/".join(path[:idx]))
+                    if idx == 0:
+                        parent = self._tree.root
+                    else:
+                        parent = self.get_by_path("/".join(path[:idx]))
                     tree = GroupingComponent(node, parent=parent)
                 else:
                     raise ComponentError(f"Component at path {'/'.join(path)} not found")

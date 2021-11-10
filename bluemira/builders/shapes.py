@@ -31,47 +31,12 @@ from ..geometry.parameterisations import GeometryParameterisation
 from ..utilities.tools import get_module
 
 
-class MakeParameterisedShape(Builder):
+class ParameterisedShapeBuilder(Builder):
     """
-    A builder that constructs a Component using a parameterised shape.
+    Abstract builder class for building parameterised shapes.
     """
 
-    _required_config = ["param_class", "variables_map", "target"]
-
-    _param_class: Type[GeometryParameterisation]
-    _variables_map: Dict[str, str]
-    _target: str
-
-    def build(self, params, **kwargs) -> Dict[str, Component]:
-        """
-        Build the components from parameterised shapes using the provided configuration
-        and parameterisation.
-
-        Parameters
-        ----------
-        params: Dict[str, Any]
-            The parameters to use for building.
-
-        Returns
-        -------
-        build_results: List[Tuple[str, Component]]
-            The Components build by this builder, including the target paths. For this
-            Builder the results will contain one item.
-        """
-        super().build(params, **kwargs)
-
-        shape_params = self._derive_shape_params()
-        shape = self._param_class()
-        for key, val in shape_params.items():
-            if isinstance(val, dict):
-                shape.adjust_variable(key, **val)
-            else:
-                shape.adjust_variable(key, val)
-
-        target = self._target.split("/")
-        return [
-            ("/".join(target[:-1]), PhysicalComponent(target[-1], shape.create_shape()))
-        ]
+    _required_config = ["param_class", "variables_map"]
 
     def _extract_config(self, build_config: Dict[str, Any]):
         def _get_param_class(param_class: str) -> Type[GeometryParameterisation]:
@@ -84,7 +49,6 @@ class MakeParameterisedShape(Builder):
         self._param_class = _get_param_class(build_config["param_class"])
         self._variables_map: Dict[str, str] = build_config["variables_map"]
         self._extract_required_params()
-        self._target: str = build_config["target"]
 
     def _extract_required_params(self):
         self._required_params = []
@@ -104,3 +68,58 @@ class MakeParameterisedShape(Builder):
                     val["value"] = self._params.get(val["value"])
             shape_params[key] = val
         return shape_params
+
+    def create_parameterisation(self):
+        shape_params = self._derive_shape_params()
+        shape = self._param_class()
+        for key, val in shape_params.items():
+            if isinstance(val, dict):
+                shape.adjust_variable(key, **val)
+            else:
+                shape.adjust_variable(key, val)
+        return shape
+
+
+class MakeParameterisedShape(ParameterisedShapeBuilder):
+    """
+    A builder that constructs a Component using a parameterised shape.
+    """
+
+    _required_config = ParameterisedShapeBuilder._required_params + ["target"]
+
+    _param_class: Type[GeometryParameterisation]
+    _variables_map: Dict[str, str]
+    _target: str
+
+    def _extract_config(self, build_config: Dict[str, Any]):
+        super()._extract_config(build_config)
+
+        self._target: str = build_config["target"]
+
+    def build(self, params, **kwargs) -> Dict[str, Component]:
+        """
+        Build the components from parameterised shapes using the provided configuration
+        and parameterisation.
+
+        Parameters
+        ----------
+        params: Dict[str, Any]
+            The parameters to use for building.
+
+        Returns
+        -------
+        build_results: List[Tuple[str, Component]]
+            The Components build by this builder, including the target paths. For this
+            Builder the results will contain one item.
+        """
+        super().build(params, **kwargs)
+
+        parameterisation = self.create_parameterisation()
+
+        target = self._target.split("/")
+        return [
+            (
+                "/".join(target[:-1]),
+                PhysicalComponent(target[-1], parameterisation.create_shape()),
+            )
+        ]
