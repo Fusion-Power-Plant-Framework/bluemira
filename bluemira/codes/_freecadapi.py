@@ -71,6 +71,10 @@ apiCompound = Part.Compound  # noqa :N816
 # Array, List, Vector, Point manipulation
 # ======================================================================================
 
+Wire = Part.Wire
+Face = Part.Face
+Shell = Part.Shell
+Solid = Part.Solid
 
 def check_data_type(data_type):
     """
