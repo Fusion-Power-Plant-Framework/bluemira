@@ -50,7 +50,7 @@ class TestMakeParameterisedShape:
                 },
                 "dz": 0.0,
             },
-            "target": "xz/TF Coils/Shape",
+            "target": "TF Coils/xz/Shape",
         }
         builder = MakeParameterisedShape(params, build_config)
         component = builder.build(params)
@@ -61,7 +61,7 @@ class TestMakeParameterisedShape:
         component_name = target_split[-1]
 
         if tests.PLOTTING:
-            shape = component[target_path].shape.discretize()
+            shape = component[0][1].shape.discretize()
             plt.plot(*shape.T[0::2])
             plt.gca().set_aspect("equal")
             plt.show()

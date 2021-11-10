@@ -36,7 +36,7 @@ build_config = {
             "r_0": "R_0",
             "a": "A",
         },
-        "target": "xz/Plasma/Shape",
+        "target": "Plasma/xz/Shape",
     },
     "TF Coils": {
         "class": "MakeParameterisedShape",
@@ -49,7 +49,7 @@ build_config = {
             },
             "dz": 0.0,
         },
-        "target": "xz/TF Coils/Shape",
+        "target": "TF Coils/xz/Shape",
     },
 }
 params = {

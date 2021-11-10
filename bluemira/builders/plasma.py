@@ -23,72 +23,73 @@
 Built-in build steps for making a parameterised plasma
 """
 
-from typing import Any, Dict, List, Tuple, Type
+from typing import Dict, List, Tuple, Type, Union
 
 from bluemira.base import PhysicalComponent
 from bluemira.base.components import Component
 import bluemira.geometry as geo
 from bluemira.geometry.parameterisations import GeometryParameterisation
 
-from bluemira.builders.shapes import MakeParameterisedShape
+from bluemira.builders.shapes import ParameterisedShapeBuilder
 
 
-class MakeParameterisedPlasma(MakeParameterisedShape):
+class MakeParameterisedPlasma(ParameterisedShapeBuilder):
     """
     A class that builds a plasma based on a parameterised shape
     """
 
-    _required_config = ["param_class", "variables_map", "target", "segment_angle"]
+    _required_config = ParameterisedShapeBuilder._required_params + [
+        "targets",
+        "segment_angle",
+    ]
 
     _param_class: Type[GeometryParameterisation]
     _variables_map: Dict[str, str]
-    _target: str
+    _targets: Dict[str, str]
 
-    def __init__(self, params, build_config: Dict[str, Any], **kwargs):
-        super().__init__(params, build_config, **kwargs)
-
-        self._label = self._target.split("/")[-1]
-
-    def _extract_config(self, build_config: Dict[str, Any]):
+    def _extract_config(self, build_config: Dict[str, Union[float, int, str]]):
         super()._extract_config(build_config)
 
+        self._targets = build_config["targets"]
         self._segment_angle: float = build_config["segment_angle"]
 
     def build(self, params, **kwargs) -> List[Tuple[str, Component]]:
         """
-        Build a plasma using the provided parameterisation in the xz, xy and xyz
-        dimensions.
+        Build a plasma using the requested targets and methods.
         """
-        shape_component: PhysicalComponent = super().build(params, **kwargs)[0][1]
-        boundary = shape_component.shape
+        super().build(params, **kwargs)
+
+        boundary = self._shape_builder.build(params)[0][1].shape
 
         result_components = []
-        result_components.append(self._build_xz(boundary))
-        result_components.append(self._build_xy(boundary))
-        result_components.append(self._build_xyz(boundary))
+        for target, func in self._targets.items():
+            result_components.append(getattr(self, func)(boundary, target))
 
         return result_components
 
-    def _build_xz(self, boundary: geo.wire.BluemiraWire):
+    def build_xz(self, boundary: geo.wire.BluemiraWire, target: str):
+        label = target.split("/")[-1]
         return (
-            f"xz/{self._target}",
-            PhysicalComponent(self._label, geo.face.BluemiraFace(boundary, self._label)),
+            target,
+            PhysicalComponent(label, geo.face.BluemiraFace(boundary, label)),
         )
 
-    def _build_xy(self, boundary: geo.wire.BluemiraWire):
+    def build_xy(self, boundary: geo.wire.BluemiraWire, target: str):
+        label = target.split("/")[-1]
+
         inner = geo.tools.make_circle(boundary.bounding_box[0], axis=[0, 1, 0])
         outer = geo.tools.make_circle(boundary.bounding_box[3], axis=[0, 1, 0])
 
         return (
-            f"xy/{self._target}",
-            PhysicalComponent(
-                self._label, geo.face.BluemiraFace([outer, inner], self._label)
-            ),
+            target,
+            PhysicalComponent(label, geo.face.BluemiraFace([outer, inner], label)),
         )
 
-    def _build_xyz(self, boundary: geo.wire.BluemiraWire):
+    def build_xyz(self, boundary: geo.wire.BluemiraWire, target: str):
+        label = target.split("/")[-1]
+
         shell = geo.tools.revolve_shape(
             boundary, direction=(0, 0, 1), degree=self._segment_angle
         )
 
-        return (f"xyz/{self._target}", PhysicalComponent(self._label, shell))
+        return (target, PhysicalComponent(label, shell))

@@ -37,7 +37,11 @@ build_config = {
             "r_0": "R_0",
             "a": "A",
         },
-        "target": "Plasma/LCFS",
+        "targets": {
+            "Plasma/xz/LCFS": "build_xz",
+            "Plasma/xy/LCFS": "build_xy",
+            "Plasma/xyz/LCFS": "build_xyz",
+        },
         "segment_angle": 270.0,
     },
 }
@@ -48,9 +52,9 @@ params = {
 design = bm_base.Design(params, build_config)
 design.run()
 
-for dims in ["xy", "xz"]:
+for dims in ["xz", "xy"]:
     component: bm_base.PhysicalComponent = design.component_manager.get_by_path(
-        "/".join([dims, build_config["Plasma"]["target"]])
+        f"Plasma/{dims}/LCFS"
     )
 
     _, ax = plt.subplots()
@@ -61,6 +65,6 @@ for dims in ["xy", "xz"]:
     plt.show()
 
 component: bm_base.PhysicalComponent = design.component_manager.get_by_path(
-    "/".join(["xyz", build_config["Plasma"]["target"]])
+    "Plasma/xyz/LCFS"
 )
 geo.tools.save_as_STEP(component.shape, "plasma")
