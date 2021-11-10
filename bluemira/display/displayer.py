@@ -26,13 +26,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import copy
-import pprint
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import bluemira.geometry as geo
 from bluemira.geometry import _freecadapi
 
 from .error import DisplayError
+from .plotter import DisplayOptions
 
 
 DEFAULT_DISPLAY_OPTIONS = {
@@ -48,9 +48,10 @@ def get_default_options():
     return copy.deepcopy(DEFAULT_DISPLAY_OPTIONS)
 
 
-class DisplayCADOptions:
+class DisplayCADOptions(DisplayOptions):
     """
     The options that are available for displaying objects in 3D
+
     Parameters
     ----------
     color: Tuple[float, float, float]
@@ -61,35 +62,29 @@ class DisplayCADOptions:
 
     def __init__(self, **kwargs):
         self._options = get_default_options()
-        if kwargs:
-            for k in kwargs:
-                if k in self._options:
-                    self._options[k] = kwargs[k]
-        # TODO: in this way class attributes are not seen till runtime. Not sure if
-        #  this should be changed manually declaring all the attributes.
-        for k in self._options:
-            setattr(self, k, self._options[k])
+        self.modify(**kwargs)
 
-    def as_dict(self):
+    @property
+    def color(self) -> Tuple[float, float, float]:
         """
-        Returns the instance as a dictionary.
+        The RBG colour to display the object.
         """
-        return copy.deepcopy(self._options)
+        return self._options["color"]
 
-    def modify(self, **kwargs):
-        """
-        Function to override plotting options.
-        """
-        if kwargs:
-            for k in kwargs:
-                if k in self._options:
-                    self._options[k] = kwargs[k]
+    @color.setter
+    def color(self, val: Tuple[float, float, float]):
+        self._options["color"] = val
 
-    def __repr__(self):
+    @property
+    def transparency(self) -> float:
         """
-        Representation string of the DisplayOptions.
+        The transparency to display the object.
         """
-        return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
+        return self._options["transparency"]
+
+    @transparency.setter
+    def transparency(self, val: float):
+        self._options["transparency"] = val
 
 
 # =======================================================================================
@@ -164,19 +159,25 @@ def show_cad(
 
 
 class BaseDisplayer(ABC):
-    """Displaer abstract class"""
+    """
+    Displayer abstract class
+    """
 
     _CLASS_DISPLAY_OPTIONS = {}
 
     def __init__(self, options: Optional[DisplayCADOptions] = None, **kwargs):
         self.options = (
-            DisplayCADOptions(**self._CLASS_PLOT_OPTIONS) if options is None else options
+            DisplayCADOptions(**self._CLASS_DISPLAY_OPTIONS)
+            if options is None
+            else options
         )
         self.options.modify(**kwargs)
 
     @abstractmethod
     def show_cad(self, objs, **kwargs):
-        """Display a CAD"""
+        """
+        Display a CAD object
+        """
         pass
 
 
@@ -188,6 +189,7 @@ class ComponentDisplayer(BaseDisplayer):
     def show_cad(self, comp, **kwargs):
         """
         Display the CAD of a component
+
         Parameters
         ----------
         comp:
@@ -197,7 +199,7 @@ class ComponentDisplayer(BaseDisplayer):
         self._options = []
         if comp.is_leaf:
             self._shapes.append(comp.shape)
-            self._options.append(self.display_cad_options)
+            self._options.append(comp.display_cad_options)
         else:
             for child in comp.children:
                 self._shapes.append(child.shape)
@@ -207,12 +209,7 @@ class ComponentDisplayer(BaseDisplayer):
 
 class DisplayableCAD:
     """
-    Mixin class to make a class displayable by imparting a plotcad method and options.
-
-    Notes
-    -----
-    The implementing class must set the _plottercad attribute to an instance of the
-    appropriate Displayer class.
+    Mixin class to make a class displayable by imparting a show_cad method and options.
     """
 
     def __init__(self):
@@ -229,7 +226,9 @@ class DisplayableCAD:
     @display_cad_options.setter
     def display_cad_options(self, value: DisplayCADOptions):
         if not isinstance(value, DisplayCADOptions):
-            raise DisplayError("Display options must be set to a PlotOptions instance.")
+            raise DisplayError(
+                "Display options must be set to a DisplayCADOptions instance."
+            )
         self._display_cad_options = value
 
     @property
