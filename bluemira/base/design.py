@@ -23,11 +23,11 @@
 Module containing the bluemira Design class.
 """
 
-from typing import Any, Dict, List, Type
+from typing import Dict, List, Type, Union
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import ComponentManager
-from bluemira.base.parameter import ParameterFrame
+from bluemira.base.config import Configuration
 from bluemira.utilities.tools import get_module
 
 
@@ -39,19 +39,18 @@ class Design:
     the analysis results and reactor components.
     """
 
-    _required_params: List[str] = []
-    _params: ParameterFrame
-    _build_config: Dict[str, Dict[str, Any]]
+    _required_params: List[str] = ["Name"]
+    _params: Configuration
+    _build_config: Dict[str, Dict[str, Union[float, int, str]]]
     _builders: List[Builder]
     _component_manager: ComponentManager
 
-    def __init__(self, params, build_config, trees=["xz", "xy", "xyz"]):
-        self._params = params
+    def __init__(self, params, build_config):
         self._build_config = build_config
-        self._extract_builders()
-        self._component_manager = ComponentManager(trees)
-        self._params = ParameterFrame.from_template(self._required_params)
+        self._extract_builders(params)
+        self._params = Configuration.from_template(self._required_params)
         self._params.update_kw_parameters(params)
+        self._component_manager = ComponentManager(self.params.Name)
 
     @property
     def component_manager(self) -> ComponentManager:
@@ -61,7 +60,7 @@ class Design:
         return self._component_manager
 
     @property
-    def params(self) -> ParameterFrame:
+    def params(self) -> Configuration:
         """
         The ParameterFrame associated with this Design.
         """
@@ -80,7 +79,7 @@ class Design:
                 builder._params.to_dict(), source=builder.name
             )
 
-    def _extract_builders(self):
+    def _extract_builders(self, params):
         """
         Extracts the builders from the config, which must be an ordered dictionary
         mapping the name of the builder to the corresponding options.
@@ -98,5 +97,5 @@ class Design:
             class_name = val.pop("class")
             val["name"] = key
             builder_class = _get_builder_class(class_name)
-            self._builders += [builder_class(self._params, val)]
+            self._builders += [builder_class(params, val)]
             self._required_params += self._builders[-1]._required_params

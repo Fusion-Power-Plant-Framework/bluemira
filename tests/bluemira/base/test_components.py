@@ -187,17 +187,17 @@ class TestComponentManager:
     Tests for the ComponentManager class.
     """
 
-    def test_set_trees(self):
-        trees = ["xz", "xy"]
-        manager = ComponentManager(trees)
-        assert list(manager.trees.keys()) == trees
+    def test_set_name(self):
+        name = "Test"
+        manager = ComponentManager(name)
+        assert manager.name == name
 
     def test_insert_get_path_fresh_tree(self):
         component_name = "Shape"
         component = PhysicalComponent(component_name, "A Shape")
-        path = "xz/TF Coils"
-        trees = ["xz", "xy"]
-        manager = ComponentManager(trees)
+        path = "TF Coils/xz"
+        name = "Test"
+        manager = ComponentManager(name)
         manager.insert_at_path(path, component)
         in_tree = manager.get_by_path("/".join([path, component_name]))
         assert in_tree == component
@@ -206,32 +206,31 @@ class TestComponentManager:
         component_name = "Shape"
         component = PhysicalComponent(component_name, "A Shape")
         tf_coils = "TF Coils"
-        tree = "xz"
-        trees = ["xz", "xy"]
-        manager = ComponentManager(trees)
-        manager.insert_at_path(tree, GroupingComponent(tf_coils), fill_tree=False)
-        manager.insert_at_path("/".join([tree, tf_coils]), component, fill_tree=False)
-        in_tree = manager.get_by_path("/".join([tree, tf_coils, component_name]))
+        dims = "xz"
+        name = "Test"
+        manager = ComponentManager(name)
+        manager.insert_at_path("/", GroupingComponent(tf_coils), fill_tree=False)
+        manager.insert_at_path(tf_coils, GroupingComponent(dims), fill_tree=False)
+        manager.insert_at_path(f"{tf_coils}/{dims}", component, fill_tree=False)
+        in_tree = manager.get_by_path("/".join([tf_coils, dims, component_name]))
         assert in_tree == component
 
     def test_insert_get_path_missing_tree(self):
         component_name = "Shape"
         component = PhysicalComponent(component_name, "A Shape")
         tf_coils = "TF Coils"
-        tree = "xz"
-        trees = ["xz", "xy"]
-        manager = ComponentManager(trees)
-        with pytest.raises(ComponentError, match="xz/TF Coils"):
-            manager.insert_at_path(
-                "/".join([tree, tf_coils]), component, fill_tree=False
-            )
+        dims = "xz"
+        name = "Test"
+        manager = ComponentManager(name)
+        with pytest.raises(ComponentError, match=f"{tf_coils}"):
+            manager.insert_at_path(f"{tf_coils}/{dims}", component, fill_tree=False)
 
     def test_insert_get_path_name_in_path(self):
         component_name = "Shape"
         component = PhysicalComponent(component_name, "A Shape")
-        path = "xz/TF Coils/Shape"
-        trees = ["xz", "xy"]
-        manager = ComponentManager(trees)
+        path = "TF Coils/xz/Shape"
+        name = "Test"
+        manager = ComponentManager(name)
         manager.insert_at_path(path, component)
         in_tree = manager.get_by_path("/".join([path, component_name]))
         assert in_tree == component
