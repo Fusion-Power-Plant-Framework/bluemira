@@ -128,7 +128,7 @@ class MakeParameterisedShape(ParameterisedShapeBuilder):
         target = self._target.split("/")
         return [
             (
-                "/".join(target[:-1]),
+                "/".join(target),
                 PhysicalComponent(target[-1], parameterisation.create_shape()),
             )
         ]
