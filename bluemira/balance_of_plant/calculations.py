@@ -29,8 +29,8 @@ from bluemira.base.look_and_feel import bluemira_warn
 
 
 # TODO: Get from Dan's material utilities
-def to_kelvin(C):
-    return C + 273.15
+def to_kelvin(celsius):
+    return celsius + 273.15
 
 
 def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
