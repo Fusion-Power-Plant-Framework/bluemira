@@ -25,7 +25,7 @@ A basic tutorial for configuring and running a design with parameterised shapes.
 
 import matplotlib.pyplot as plt
 
-import bluemira.base as bm_base
+from bluemira.base.design import Design
 
 
 build_config = {
@@ -58,7 +58,7 @@ params = {
     "r_tf_in_centre": (5.0, "Input"),
     "r_tf_out_centre": (15.0, "Input"),
 }
-design = bm_base.Design(params, build_config)
+design = Design(params, build_config)
 design.run()
 
 _, ax = plt.subplots()

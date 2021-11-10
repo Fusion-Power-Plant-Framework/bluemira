@@ -25,7 +25,7 @@ Tests for the design module.
 
 import matplotlib.pyplot as plt
 
-from bluemira.base import Design
+from bluemira.base.design import Design
 
 import tests
 

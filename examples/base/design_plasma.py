@@ -23,10 +23,7 @@
 A basic tutorial for configuring and running a design with a parameterised plasma.
 """
 
-import matplotlib.pyplot as plt
-
-import bluemira.base as bm_base
-import bluemira.geometry as geo
+from bluemira.base.design import Design
 
 
 build_config = {
@@ -49,22 +46,16 @@ params = {
     "R_0": (9.0, "Input"),
     "A": (3.5, "Input"),
 }
-design = bm_base.Design(params, build_config)
+design = Design(params, build_config)
 design.run()
 
+color = (0.80078431, 0.54, 0.80078431)
 for dims in ["xz", "xy"]:
-    component: bm_base.PhysicalComponent = design.component_manager.get_by_path(
-        f"Plasma/{dims}/LCFS"
-    )
+    component = design.component_manager.get_by_path(f"Plasma/{dims}/LCFS")
+    component.plot_options.face_options["color"] = color
+    component.plot_2d()
 
-    _, ax = plt.subplots()
-    for wire in component.shape.boundary:
-        shape = wire.discretize()
-        ax.plot(*shape.T[0::2])
-        ax.set_aspect("equal")
-    plt.show()
-
-component: bm_base.PhysicalComponent = design.component_manager.get_by_path(
-    "Plasma/xyz/LCFS"
-)
-geo.tools.save_as_STEP(component.shape, "plasma")
+component = design.component_manager.get_by_path("Plasma/xyz/LCFS")
+component.display_cad_options.color = color
+component.display_cad_options.transparency = 0.2
+component.show_cad()
