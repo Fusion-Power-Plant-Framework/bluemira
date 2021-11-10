@@ -25,9 +25,7 @@ Some examples of using bluemira mesh module.
 
 import freecad  # noqa: F401
 import FreeCAD
-import Part
 
-import bluemira.codes._freecadapi as cadapi
 import bluemira.geometry as geo
 
 from bluemira.mesh.meshing import Mesh
@@ -35,17 +33,17 @@ from bluemira.mesh.meshing import Mesh
 # Defining my parameters
 import bluemira.geometry.tools
 
+
 r1 = 0
 r2 = r1 + 1
 z1 = 0
 z2 = z1 + 1
 
-r3 = r2
+r3 = r2 + 0.2
 r4 = r3 + 1
 z3 = 0
-z4 = z3 + 0.25
+z4 = z3 + 0.5
 
-# Points of the Bezier curve
 p1 = FreeCAD.Vector(r1, 0, z1)
 p2 = FreeCAD.Vector(r2, 0, z1)
 p3 = FreeCAD.Vector(r2, 0, z2)
@@ -59,67 +57,6 @@ p7 = FreeCAD.Vector(r4, 0, z4)
 p8 = FreeCAD.Vector(r3, 0, z4)
 
 Points2 = [p5, p6, p7, p8]
-
-# Creating the Bezier curve
-bez = Part.BezierCurve()
-bez.setPoles(Points)
-bez_curve = Part.Edge(bez)
-Part.show(bez_curve)
-
-# Obtaining the length of the Bezier curve
-L = bez_curve.Length
-
-# find the parameter corresponding to the given distance
-distance = 0.3 * L
-parameter = bez.parameterAtDistance(distance, bez.FirstParameter)
-
-# creating the 2 parts
-part_1 = bez.copy()
-part_1.segment(part_1.FirstParameter, parameter)
-wire1 = Part.Wire(part_1.toShape())
-
-part_2 = bez.copy()
-part_2.segment(parameter, part_2.LastParameter)
-wire2 = Part.Wire(part_2.toShape())
-
-# display the 2 parts
-# Part.show(part_1.toShape())
-# Part.show(part_2.toShape())
-
-ser_bz = cadapi.serialize_shape(bez_curve)
-print(f"ser_bz: {ser_bz}")
-wire = Part.Wire(Part.Shape(bez_curve))
-ser_wire = cadapi.serialize_shape(wire)
-print(f"ser_wire: {ser_wire}")
-des_wire = cadapi.deserialize_shape(ser_wire)
-print(f"des_wire: {des_wire}")
-
-bmwire = geo.wire.BluemiraWire(wire)
-ser_bmwire = bluemira.geometry.tools.serialize_shape(bmwire)
-des_bmwire = bluemira.geometry.tools.deserialize_shape(ser_bmwire)
-print(des_bmwire)
-
-bmwire2 = geo.wire.BluemiraWire(
-    [
-        geo.wire.BluemiraWire(wire1, label="wire1"),
-        geo.wire.BluemiraWire(wire2, label="wire2"),
-    ],
-    label="full_wire",
-)
-bmwire2.close()
-
-# m = Mesh()
-# buffer = m(bmwire2)
-# print(m.get_gmsh_dict(buffer))
-#
-# bmface = geo.face.BluemiraFace(bmwire2)
-# ser_bmface = geo.tools.serialize_shape(bmface)
-# print(ser_bmface)
-#
-# buffer2 = m(bmface)
-#
-# des_bmface = geo.tools.deserialize_shape(ser_bmface)
-# print(des_bmface)
 
 poly1 = geo.tools.make_polygon(Points, "poly1", True)
 ser_poly1 = bluemira.geometry.tools.serialize_shape(poly1)
@@ -147,7 +84,14 @@ print(f"ser_shell1: {ser_shell1}")
 des_shell1 = geo.tools.deserialize_shape(ser_shell1)
 print(f"des_shell1: {des_shell1}")
 
-m = Mesh()
-buffer = m(des_shell1)
+face1.mesh_options = {'lcar': 0.1}
+poly2.mesh_options = {'physical_group': 'test'}
 
+m = Mesh()
+buffer = m(shell1)
 print(m.get_gmsh_dict(buffer))
+
+# import json
+#
+# with open("mesh_dict.json", "w") as outfile:
+#     json.dump(buffer, outfile)
