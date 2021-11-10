@@ -33,8 +33,8 @@ from bluemira.base.constants import (
     NEUTRON_MOLAR_MASS,
     HE3_MOLAR_MASS,
 )
+from bluemira.balance_of_plant.plotting import SuperSankey
 
-from BLUEPRINT.utilities.plottools import SuperSankey
 from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.palettes import B_PAL_MAP
 from BLUEPRINT.utilities.tools import tokelvin
