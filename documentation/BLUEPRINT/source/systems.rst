@@ -6,3 +6,4 @@ systems
    
     tapered tf coils <tapered_pictureframe.rst>
     heat flux calculation <heatflux_calculation_theory.rst>
+    divertor shaping <divertor_shaping.rst>
