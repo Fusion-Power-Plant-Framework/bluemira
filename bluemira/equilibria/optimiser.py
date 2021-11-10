@@ -1141,6 +1141,7 @@ class BoundedCurrentOptimiser(EquilibriumOptimiser):
                 "xtol_abs": 1e-4,
                 "ftol_rel": 1e-4,
                 "ftol_abs": 1e-4,
+                "max_eval": 100,
             },
             "opt_parameters": {},
         },
@@ -1406,7 +1407,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
         Dict specifying maximum tolerable shifts for each coil from its initial
         position during optimisation [m]. Shifts are specified as either
-        np.array(len(coilset._ccoils)) with the shift for each coil specified,
+        np.ndarray with the shift for each coil specified,
         or as a float to apply to all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
@@ -1620,31 +1621,22 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
     Parameters
     ----------
-    coilset: CoilSet
-        Coilset used to get coil current limits and number of coils.
-    max_currents: float or np.array(len(coilset._ccoils)) (default = None)
-        Maximum allowed current for each independent coil current in coilset [A].
-        If specified as a float, the float will set the maximum allowed current
-        for all coils.
+    sub_opt: EquilibriumOptimiser
+        Optimiser to use for the optimisation of coil currents at each trial
+        set of coil positions. sub_opt.coilset must exist, and will be
+        modified during the optimisation.
     max_coil_shifts: dict
         (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
         "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
         Dict specifying maximum tolerable shifts for each coil from its initial
         position during optimisation [m]. Shifts are specified as either
-        np.array(len(coilset._ccoils)) with the shift for each coil specified,
+        np.ndarray with the shift for each coil specified,
         or as a float to apply to all coils.
-    gamma: float (default = 1e-8)
-        Tikhonov regularisation parameter in units of [A⁻¹].
     opt_args: dict
         Dictionary containing arguments to pass to NLOpt optimiser
         used in position optimisation.
         Defaults to using LN_SBPLX, terminating when the figure of
         merit < stop_val = 1.0, or max_eval = 100.
-    sub_opt_args: dict
-        Dictionary containing arguments to pass to NLOpt optimiser
-        used in the nested current optimisation at each trial set of coil
-        positions.
-        Defaults to using LD_SLSQP.
 
     Notes
     -----
@@ -1656,15 +1648,13 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
     def __init__(
         self,
-        coilset,
-        max_currents=None,
+        sub_opt,
         max_coil_shifts={
             "x_shifts_lower": -1.0,
             "x_shifts_upper": 1.0,
             "z_shifts_lower": -1.0,
             "z_shifts_upper": 1.0,
         },
-        gamma=1e-8,
         opt_args={
             "algorithm_name": "SBPLX",
             "opt_conditions": {
@@ -1673,19 +1663,9 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {},
         },
-        sub_opt_args={
-            "algorithm_name": "SLSQP",
-            "opt_conditions": {
-                "xtol_rel": 1e-4,
-                "xtol_abs": 1e-4,
-                "ftol_rel": 1e-4,
-                "ftol_abs": 1e-4,
-            },
-            "opt_parameters": {},
-        },
     ):
         # noqa (N803)
-        super().__init__(coilset)
+        super().__init__(sub_opt.coilset)
 
         self.max_coil_shifts = max_coil_shifts
         self.initial_positions = np.concatenate((self.x0, self.z0))
@@ -1693,12 +1673,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Set up optimiser
         self.opt_args = opt_args
         self.opt = self.set_up_optimiser(len(self.initial_positions))
-        self.sub_opt = BoundedCurrentOptimiser(
-            coilset,
-            max_currents=max_currents,
-            gamma=gamma,
-            opt_args=sub_opt_args,
-        )
+        self.sub_opt = sub_opt
 
     def set_up_optimiser(self, dimension):
         """
@@ -1709,7 +1684,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         ----------
         dimension: int
             Number of independent coil coordinates to optimise.
-            Should be equal to 2*eq.coilset._ccoils when called.
+            Should be equal to the number of independent position coordinates
+            of the control coils when called.
 
         Returns
         -------
@@ -1803,7 +1779,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns
         -------
-        self.rms: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         """
         coilset_state = np.concatenate((vector, self.currents))
         self.set_coilset_state(coilset_state)
