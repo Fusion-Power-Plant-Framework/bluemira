@@ -360,3 +360,85 @@ def save_as_STEP(shapes, filename="test", scale=1):
 
     freecad_shapes = [s._shape for s in shapes]
     _freecadapi.save_as_STEP(freecad_shapes, filename, scale)
+
+
+# # =============================================================================
+# # Serialize and Deserialize
+# # =============================================================================
+def serialize_shape(shape):
+    """Serialize a FreeCAD topological data object"""
+    type_ = type(shape)
+
+    if type_ == BluemiraWire:
+        output = []
+        for wire in shape.boundary:
+            if type(wire) == BluemiraWire:
+                output.append(serialize_shape(wire))
+            else:
+                output.append(_freecadapi.serialize_shape(wire))
+        return {"BluemiraWire": {"label": shape.label, "boundary": output}}
+    if type_ == BluemiraFace:
+        output = []
+        for wire in shape.boundary:
+            output.append(serialize_shape(wire))
+        return {"BluemiraFace": {"label": shape.label, "boundary": output}}
+    if type_ == BluemiraShell:
+        output = []
+        for face in shape.boundary:
+            output.append(serialize_shape(face))
+        return {"BluemiraShell": {"label": shape.label, "boundary": output}}
+    if type_ == BluemiraSolid:
+        output = []
+        for face in shape.boundary:
+            output.append(serialize_shape(face))
+        return {"BluemiraSolid": {"label": shape.label, "boundary": output}}
+    raise NotImplementedError(f"Serialization non implemented for {type_}")
+
+
+def deserialize_shape(buffer):
+    """Deserialize a FreeCAD topological data object obtained from serialize_shape.
+
+    Parameters
+    ----------
+        buffer: object serialization as stored by serialize_shape
+
+    Returns
+    -------
+        the deserialized FreeCAD object
+    """
+    for type_, v in buffer.items():
+        if type_ == "BluemiraWire":
+            label = v["label"]
+            boundary = v["boundary"]
+            temp_list = []
+            for item in boundary:
+                for k, v1 in item.items():
+                    if k == "BluemiraWire":
+                        wire = deserialize_shape(item)
+                    else:
+                        wire = _freecadapi.deserialize_shape(item)
+                    temp_list.append(wire)
+            print(f"wire temp_list: {temp_list}")
+            return BluemiraWire(label=label, boundary=temp_list)
+        if type_ == "BluemiraFace":
+            label = v["label"]
+            boundary = v["boundary"]
+            temp_list = []
+            for item in boundary:
+                temp_list.append(deserialize_shape(item))
+            return BluemiraFace(label=label, boundary=temp_list)
+        if type_ == "BluemiraShell":
+            label = v["label"]
+            boundary = v["boundary"]
+            temp_list = []
+            for item in boundary:
+                temp_list.append(deserialize_shape(item))
+            return BluemiraShell(label=label, boundary=temp_list)
+        if type_ == "BluemiraSolid":
+            label = v["label"]
+            boundary = v["boundary"]
+            temp_list = []
+            for item in boundary:
+                temp_list.append(deserialize_shape(item))
+            return BluemiraSolid(label=label, boundary=temp_list)
+        raise NotImplementedError(f"Deserialization non implemented for {type_}")
