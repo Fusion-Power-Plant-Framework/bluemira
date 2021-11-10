@@ -30,6 +30,9 @@ from bluemira.base.look_and_feel import bluemira_warn
 
 # TODO: Get from Dan's material utilities
 def to_kelvin(celsius):
+    """
+    C -> K
+    """
     return celsius + 273.15
 
 
