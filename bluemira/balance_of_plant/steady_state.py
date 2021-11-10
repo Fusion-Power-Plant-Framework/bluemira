@@ -132,39 +132,92 @@ class H2OPumping(CoolantPumping):
 
 
 class PowerCycleEfficiencyCalc(abc.ABC):
+    """
+    Power cycle efficiency calculation abstract base class
+    """
+
     def __init__(self, *args, **kwargs):
         pass
 
     @abc.abstractmethod
     def calculate(self, *args) -> float:
+        """
+        Calculate the efficiency of the power cycle
+        """
         pass
 
 
 class PredeterminedEfficiency(PowerCycleEfficiencyCalc):
+    """
+    Predetermined efficiency 'calculation'
+    """
+
     def __init__(self, efficiency):
         self.efficiency = efficiency
 
     def calculate(self, p_blanket, p_divertor) -> float:
+        """
+        Calculate the efficiency of the power cycle
+        """
         return self.efficiency
 
 
 class SuperheatedRankine(PowerCycleEfficiencyCalc):
-    def __init__(self, bb_t_out):
+    """
+    Superheated Rankine power cycle for use with gas coolants
+
+    Parameters
+    ----------
+    bb_t_out: float
+        Breeding blanket outlet temperature [C]
+    delta_t_turbine: float
+        Turbine inlet delta T [C]
+    """
+
+    def __init__(self, bb_t_out, delta_t_turbine):
         self.bb_t_out = bb_t_out
+        self.delta_t_turbine = delta_t_turbine
 
     def calculate(self, p_blanket, p_divertor) -> float:
-        return superheated_rankine(p_blanket, p_divertor, self.bb_t_out)
+        """
+        Calculate the efficiency of the power cycle
+
+        Parameters
+        ----------
+        blanket_power: float
+            Blanket thermal power [MW]
+        div_power: float
+            Divertor thermal power [MW]
+        """
+        return superheated_rankine(
+            p_blanket, p_divertor, self.bb_t_out, self.delta_t_turbine
+        )
 
 
 class FractionSplitStrategy(abc.ABC):
+    """
+    Strategy ABC for splitting flows according to fractions.
+    """
+
     def __init__(self, *args, **kwargs):
         pass
 
     @abc.abstractmethod
     def split(self, *args):
+        """
+        Split flows somehow.
+        """
         pass
 
     def check_fractions(self, fractions):
+        """
+        Check that fractions sum to 1.0
+
+        Raises
+        ------
+        BalanceOfPlantError
+            If they do not
+        """
         frac_sum = sum(fractions)
         if not np.isclose(frac_sum, 1.0, atol=1e-6, rtol=0):
             raise BalanceOfPlantError(
@@ -173,15 +226,57 @@ class FractionSplitStrategy(abc.ABC):
 
 
 class NeutronPowerStrategy(FractionSplitStrategy):
+    """
+    Strategy for distributing neutron power among components
+
+    Parameters
+    ----------
+    f_blanket: float
+        Fraction of neutron power going to the blankets
+    f_divertor: float
+        Fraction of neutron power going to the divertors
+    f_vessel: float
+        Fraction of neutron power going to the vacuum vessel
+    f_other: float
+        Fraction of neutron power going to other systems
+    energy_multiplication: float
+        Energy multiplication factor applied to blanket neutron power
+    """
+
     def __init__(self, f_blanket, f_divertor, f_vessel, f_other, energy_multiplication):
         self.check_fractions([f_blanket, f_divertor, f_vessel, f_other])
         self.f_blanket = f_blanket
         self.f_divertor = f_divertor
         self.f_vessel = f_vessel
         self.f_other = f_other
+        if energy_multiplication < 1.0:
+            raise BalanceOfPlantError(
+                "Energy multiplication factor cannot be less than 1.0"
+            )
         self.nrg_mult = energy_multiplication
 
     def split(self, neutron_power):
+        """
+        Split neutron power into several flows
+
+        Parameters
+        ----------
+        neutron_power: float
+            Total neutron power
+
+        Returns
+        -------
+        blk_power: float
+            Neutron power to blankets
+        div_power: float
+            Neutron power to divertors
+        vv_power: float
+            Neutron power to vessel
+        aux_power: float
+            Neutron power to auxiliary systems
+        mult_power: float
+            Energy multiplication power (in the blanket, sort of..)
+        """
         blk_power = self.f_blanket * self.nrg_mult * neutron_power
         div_power = self.f_divertor * neutron_power
         vv_power = self.f_vessel * neutron_power
@@ -191,6 +286,24 @@ class NeutronPowerStrategy(FractionSplitStrategy):
 
 
 class RadChargedPowerStrategy(FractionSplitStrategy):
+    """
+    Strategy for distributing radiation and charged particle power from the plasma
+    core and scrape-off layer
+
+    Parameters
+    ----------
+    f_core_rad_fw: float
+        Fraction of core radiation power distributed to the first wall
+    f_sol_rad: float
+        Fraction of SOL power that is radiated
+    f_sol_rad_fw: float
+        Fraction of radiated SOL power that is distributed to the first wall
+    f_sol_ch_fw: float
+        Fraction of SOL charged particle power that is distributed to the first wall
+    f_fw_blk: float
+        Fraction of first power that actually goes into auxiliary systems
+    """
+
     def __init__(self, f_core_rad_fw, f_sol_rad, f_sol_rad_fw, f_sol_ch_fw, f_fw_blk):
         self.f_core_rad_fw = f_core_rad_fw
         self.f_sol_rad = f_sol_rad
@@ -199,6 +312,16 @@ class RadChargedPowerStrategy(FractionSplitStrategy):
         self.f_fw_blk = f_fw_blk
 
     def split(self, p_radiation, p_separatrix):
+        """
+        Split the radiation and charged particle power
+
+        Parameters
+        ----------
+        p_radiation: float
+            Plasma core radiation power
+        p_separatrix: float
+            Charged particle power crossing the separatrix
+        """
         # Core radiation
         p_core_rad_fw = p_radiation * self.f_core_rad_fw
         p_core_rad_div = p_radiation - p_core_rad_fw
@@ -234,6 +357,9 @@ class ParasiticLoadStrategy:
         self.p_other = 31
 
     def calculate(self, p_fusion):
+        """
+        Because we were told to do this. Nobody trusts models.
+        """
         f_norm = p_fusion / self.p_fusion_ref
         p_mag = f_norm * self.p_mag
         p_cryo = f_norm * self.p_cryo

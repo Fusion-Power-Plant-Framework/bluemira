@@ -62,7 +62,7 @@ rad_sep_strat = RadChargedPowerStrategy(
     f_fw_blk=0.91,
 )
 blanket_pump_strat = HePumping(8, 7.5, 300, 500, eta_isentropic=0.9, eta_electric=0.87)
-bop_cycle = SuperheatedRankine(500)
+bop_cycle = SuperheatedRankine(bb_t_out=500, delta_t_turbine=20)
 divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
 parasitic_load_strat = ParasiticLoadStrategy()
 

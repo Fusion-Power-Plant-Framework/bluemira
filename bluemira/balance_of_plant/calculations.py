@@ -134,6 +134,25 @@ def He_pumping(  # noqa (N802)
 
 
 def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa (N802)
+    """
+    H20-cooling pumping power calculation strategy
+
+    Parameters
+    ----------
+    f_pump: float
+        Fraction of thermal power required to pump
+    eta_isen: float
+        Isentropic efficiency of the water pumps
+    eta_el: float
+        Electrical efficiency of the water pumps
+
+    Returns
+    -------
+    P_pump_is: float
+        The isentropic pumping power (added to the working fluid)
+    P_pump_el: float
+        The eletrical pumping power (parasitic load)
+    """
     # TODO: Add proper pump model
     f_pump /= eta_isen
 
@@ -142,13 +161,23 @@ def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa (N802)
     return p_pump_is, p_pump_el
 
 
-def superheated_rankine(blanket_power, div_power, bb_outlet_temp):
+def superheated_rankine(blanket_power, div_power, bb_outlet_temp, delta_t_turbine):
     """
     PROCESS C. Harrington correlation. Accounts for low-grade heat penalty.
     Used for He-cooled blankets. Not applicable to H2O temperatures.
+
+    Parameters
+    ----------
+    blanket_power: float
+        Blanket thermal power [MW]
+    div_power: float
+        Divertor thermal power [MW]
+    bb_outlet_temp: float
+        Blanket outlet temperature [C]
+    delta_t_turbine: float
+        Turbine inlet temperature drop [C]
     """
-    d_t_turb = 20  # Turbine inlet delta-T to BB_out [K]
-    t_turb = to_kelvin(bb_outlet_temp - d_t_turb)
+    t_turb = to_kelvin(bb_outlet_temp - delta_t_turbine)
     if t_turb < 657 or t_turb > 915:
         bluemira_warn("BoP turbine inlet temperature outside range of validity.")
     f_lgh = div_power / (blanket_power + div_power)
