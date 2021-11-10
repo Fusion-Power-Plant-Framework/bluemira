@@ -57,7 +57,7 @@ class TestMakeParameterisedShape:
         assert component is not None
 
         target_split = build_config["target"].split("/")
-        target_path = "/".join(target_split[:-1])
+        target_path = "/".join(target_split)
         component_name = target_split[-1]
 
         if tests.PLOTTING:
