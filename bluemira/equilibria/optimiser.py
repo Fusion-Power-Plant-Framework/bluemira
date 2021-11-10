@@ -1308,9 +1308,9 @@ class CoilsetOptimiserBase:
             Number of substates (blocks) in the state vector.
         """
         substates = 3
-        x = np.array([c.x for c in coilset.coils.values()])
-        z = np.array([c.z for c in coilset.coils.values()])
-        currents = np.array([c.current for c in coilset.coils.values()]) / self.scale
+        x, z = coilset.get_positions()
+        currents = coilset.get_control_currents() / self.scale
+
         coilset_state = np.concatenate((x, z, currents))
         return coilset_state, substates
 
