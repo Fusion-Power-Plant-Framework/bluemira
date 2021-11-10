@@ -203,6 +203,29 @@ class SuperSankey(Sankey):
         return result.x
 
 
+BALANCE_PLOT_DEFAULTS = {
+    # Matplotlib figure
+    "facecolor": "k",
+    "figsize": (14, 10),
+    # Sankey scalings
+    "scale": 0.001,
+    "gap": 0.25,
+    "radius": 0,
+    "shoulder": 0,
+    "head_angle": 150,
+    "trunklength": 0.7,
+    "standardlength": 0.6,
+    "mediumlength": 1.0,
+    # Text font, colour and size
+    "unit": "MW",
+    "format": "%.0f",
+    "fontweight": "bold",
+    "fontcolor": "white",
+    "fontsize": 14,
+    "flowfontsize": 11,
+}
+
+
 class BalanceOfPlantPlotter:
     """
     The plotting object for the BalanceOfPlant system. Builds a relatively
@@ -210,16 +233,10 @@ class BalanceOfPlantPlotter:
     reactor.
     """
 
-    def __init__(self, figsize, facecolor):
-        # Sankey diagram scaling and sizing defaults
-        self.scale = 0.001
-        self.gap = 0.25
-        self.trunk_length = 0.0007 / self.scale
-        self.l_standard = 0.0006 / self.scale  # standard arrow length
-        self.l_medium = 0.001 / self.scale  # medium arrow length
+    plot_options = deepcopy(BALANCE_PLOT_DEFAULTS)
 
-        self.inputs = None
-        self.flow_dict = None
+    def __init__(self, **kwargs):
+        self.plot_options = {**self.plot_options, **kwargs}
         self.fig = None
         self.sankey = None
 
@@ -237,19 +254,22 @@ class BalanceOfPlantPlotter:
             The dictionary of flows for each of the Sankey diagrams.
         """
         # Build the base figure object
-        self.fig = plt.figure(figsize=self.figsize, facecolor=self.facecolor)
+        self.fig = plt.figure(
+            figsize=self.plot_options["figsize"],
+            facecolor=self.plot_options["facecolor"],
+        )
         ax = self.fig.add_subplot(1, 1, 1, xticks=[], yticks=[])
         plt.axis("off")
 
         self.sankey = SuperSankey(
             ax=ax,
-            scale=self.scale,
-            format="%.0f",
-            unit="MW",
-            gap=self.gap,
-            radius=0,
-            shoulder=0,
-            head_angle=150,
+            scale=self.plot_options["scale"],
+            format=self.plot_options["format"],
+            unit=self.plot_options["unit"],
+            gap=self.plot_options["gap"],
+            radius=self.plot_options["radius"],
+            shoulder=self.plot_options["shoulder"],
+            head_angle=self.plot_options["head_angle"],
         )
         self._build_diagram(flow_dict)
         self._polish()
