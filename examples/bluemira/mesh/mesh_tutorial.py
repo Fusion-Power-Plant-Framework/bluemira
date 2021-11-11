@@ -83,8 +83,8 @@ print(f"ser_shell1: {ser_shell1}")
 des_shell1 = geo.tools.deserialize_shape(ser_shell1)
 print(f"des_shell1: {des_shell1}")
 
-# face1.mesh_options = {"lcar": 0.1, "physical_group": "face1_fg"}
-# face2.mesh_options = {"lcar": 0.3, "physical_group": "face1_fg"}
+face1.mesh_options = {"lcar": 0.1, "physical_group": "face1_fg"}
+face2.mesh_options = {"lcar": 0.3, "physical_group": "face2_fg"}
 poly2.mesh_options = {"physical_group": "poly2_fg"}
 shell1.mesh_options = {"lcar": 0.5}
 
