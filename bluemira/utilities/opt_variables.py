@@ -264,7 +264,9 @@ class OptVariables:
 
         del self._var_dict[name]
 
-    def adjust_variable(self, name, value=None, lower_bound=None, upper_bound=None):
+    def adjust_variable(
+        self, name, value=None, lower_bound=None, upper_bound=None, fixed=False
+    ):
         """
         Adjust a variable in the set.
 
@@ -278,9 +280,17 @@ class OptVariables:
             Value of the lower bound to set
         upper_bound: Optional[float]
             Value of the upper to set
+        fixed: bool
+            Whether or not the variable is to be held constant
         """
         self._check_presence(name)
-        self._var_dict[name].adjust(value, lower_bound, upper_bound)
+
+        if fixed:
+            self._var_dict[name].adjust(lower_bound=lower_bound, upper_bound=upper_bound)
+            self.fix_variable(name, value)
+
+        else:
+            self._var_dict[name].adjust(value, lower_bound, upper_bound)
 
     def adjust_variables(self, var_dict={}):
         """
@@ -298,6 +308,7 @@ class OptVariables:
                 v.get("value", None),
                 v.get("lower_bound", None),
                 v.get("upper_bound", None),
+                v.get("fixed", None),
             ]
             if all([i is None for i in args]):
                 raise OptVariablesError(
