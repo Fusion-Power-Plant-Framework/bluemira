@@ -231,12 +231,8 @@ class TestCoilsetOptimiser:
     def test_modify_coilset(self):
         # Read
         coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
-        print(coilset_state)
         # Modify vectors
         x, z, currents = np.array_split(coilset_state, substates)
-        print(x)
-        print(z)
-        print(currents)
         x += 1.1
         z += 0.6
         currents += 0.99
@@ -244,7 +240,6 @@ class TestCoilsetOptimiser:
         self.optimiser.set_coilset_state(updated_coilset_state)
 
         coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
-        print(coilset_state)
         state_x, state_z, state_i = np.array_split(coilset_state, substates)
         assert np.allclose(state_x, x)
         assert np.allclose(state_z, z)
