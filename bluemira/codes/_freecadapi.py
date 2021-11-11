@@ -366,8 +366,8 @@ def make_ellipse(
         FreeCAD wire that contains the ellipse or arc of ellipse
     """
     # TODO: check the creation of the arc when start_angle < end_angle
-    s1 = Base.Vector(major_axis).normalize().multiply(major_radius)
-    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius)
+    s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(center)
+    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(center)
     center = Base.Vector(center)
     output = Part.Ellipse(s1, s2, center)
 
@@ -1303,30 +1303,67 @@ def serialize_shape(shape):
         edges = shape.OrderedEdges
         for count, e in enumerate(edges):
             output.append(serialize_shape(e))
-        return {'Wire': output}
+        return {"Wire": output}
 
     if type_ == Part.Edge:
         output = serialize_shape(_convert_edge_to_curve(shape))
         return output
 
     if type_ in [Part.LineSegment, Part.Line]:
-        output = {"LineSegment": {"StartPoint": shape.StartPoint,
-                                  "EndPoint": shape.EndPoint},
-                  }
+        output = {
+            "LineSegment": {"StartPoint": shape.StartPoint, "EndPoint": shape.EndPoint},
+        }
         return output
 
     if type_ == Part.BezierCurve:
-        output = {"BezierCurve": {"Poles": vector_to_list(shape.getPoles()),
-                                  "FirstParameter": shape.FirstParameter,
-                                  "LastParameter": shape.LastParameter}
-                  }
+        output = {
+            "BezierCurve": {
+                "Poles": vector_to_list(shape.getPoles()),
+                "FirstParameter": shape.FirstParameter,
+                "LastParameter": shape.LastParameter,
+            }
+        }
         return output
 
     if type_ == Part.BSplineCurve:
-        output = {"BSplineCurve": {"Poles": vector_to_list(shape.getPoles()),
-                                   "FirstParameter": shape.FirstParameter,
-                                   "LastParameter": shape.LastParameter}
-                  }
+        output = {
+            "BSplineCurve": {
+                "Poles": vector_to_list(shape.getPoles()),
+                "FirstParameter": shape.FirstParameter,
+                "LastParameter": shape.LastParameter,
+            }
+        }
+        return output
+
+    if type_ == Part.ArcOfCircle:
+        output = {
+            "ArcOfCircle": {
+                "Radius": shape.Radius,
+                "Center": shape.Center,
+                "Axis": shape.Axis,
+                "StartAngle": math.degrees(shape.FirstParameter),
+                "EndAngle": math.degrees(shape.LastParameter),
+                "StartPoint": shape.StartPoint,
+                "EndPoint": shape.EndPoint,
+            }
+        }
+        return output
+
+    if type_ == Part.ArcOfEllipse:
+        output = {
+            "ArcOfEllipse": {
+                "Center": shape.Center,
+                "MajorRadius": shape.MajorRadius,
+                "MinorRadius": shape.MinorRadius,
+                "MajorAxis": shape.XAxis,
+                "MinorAxis": shape.YAxis,
+                "StartAngle": math.degrees(shape.FirstParameter),
+                "EndAngle": math.degrees(shape.LastParameter),
+                "Focus1": shape.Ellipse.Focus1,
+                "StartPoint": shape.StartPoint,
+                "EndPoint": shape.EndPoint,
+            }
+        }
         return output
 
     raise NotImplementedError(f"Serialization non implemented for {type_}")
@@ -1352,11 +1389,25 @@ def deserialize_shape(buffer):
                 temp_list.append(deserialize_shape(edge))
             return Part.Wire(temp_list)
         if type_ == "LineSegment":
-            return make_polygon([v['StartPoint'], v['EndPoint']])
+            return make_polygon([v["StartPoint"], v["EndPoint"]])
         elif type_ == "BezierCurve":
-            return make_bezier(v['Poles'])
+            return make_bezier(v["Poles"])
         elif type_ == "BSplineCurve":
-            return make_bspline(v['Poles'])
+            return make_bspline(v["Poles"])
+        elif type_ == "ArcOfCircle":
+            return make_circle(
+                v["Radius"], v["Center"], v["StartAngle"], v["EndAngle"], v["Axis"]
+            )
+        elif type_ == "ArcOfEllipse":
+            return make_ellipse(
+                v["Center"],
+                v["MajorRadius"],
+                v["MinorRadius"],
+                v["MajorAxis"],
+                v["MinorAxis"],
+                v["StartAngle"],
+                v["EndAngle"],
+            )
         else:
             raise NotImplementedError(f"Deserialization non implemented for {type_}")
 
@@ -1390,20 +1441,22 @@ def _convert_edge_to_curve(edge):
             output.Axis = -output.Axis
             p0 = curve.value(first)
             p1 = curve.value(last)
-            output = Part.ArcOfEllipse(output.Ellipse,
-                                       output.Ellipse.parameter(p0),
-                                       output.Ellipse.parameter(p1),
-                                       )
+            output = Part.ArcOfEllipse(
+                output.Ellipse,
+                output.Ellipse.parameter(p0),
+                output.Ellipse.parameter(p1),
+            )
     elif isinstance(curve, Part.Circle):
         output = Part.ArcOfCircle(curve, first, last)
         if edge.Orientation == "Reversed":
             output.Axis = -output.Axis
             p0 = curve.value(first)
             p1 = curve.value(last)
-            output = Part.ArcOfCircle(output.Circle,
-                                      output.Circle.parameter(p0),
-                                      output.Circle.parameter(p1),
-                                      )
+            output = Part.ArcOfCircle(
+                output.Circle,
+                output.Circle.parameter(p0),
+                output.Circle.parameter(p1),
+            )
     elif isinstance(curve, Part.BezierCurve):
         output = Part.BezierCurve()
         poles = curve.getPoles()

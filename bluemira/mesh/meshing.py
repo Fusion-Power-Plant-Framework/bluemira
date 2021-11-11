@@ -459,6 +459,8 @@ class _freecadGmsh:
         # on the terminal, just set the "General.Terminal" option to 1:
         gmsh.option.setNumber("General.Terminal", terminal)
 
+        # gmsh.option.setNumber("Mesh.MshFileVersion", 2.0)
+
         # Next we add a new model named "t1" (if gmsh.model.add() is
         # not called a new
         # unnamed model will be created on the fly, if necessary):
@@ -529,7 +531,7 @@ class _freecadGmsh:
                 start_point_tag = gmsh.model.occ.addPoint( start_point[0],
                                                            start_point[1], start_point[2])
                 points_tag.append(start_point_tag)
-                end_point = buffer[type_]["StartPoint"]
+                end_point = buffer[type_]["EndPoint"]
                 end_point_tag = gmsh.model.occ.addPoint( end_point[0],
                                                            end_point[1], end_point[2])
                 points_tag.append(end_point_tag)
@@ -546,13 +548,18 @@ class _freecadGmsh:
                 start_point_tag = gmsh.model.occ.addPoint( start_point[0],
                                                            start_point[1], start_point[2])
                 points_tag.append(start_point_tag)
-                end_point = buffer[type_]["StartPoint"]
+                end_point = buffer[type_]["EndPoint"]
                 end_point_tag = gmsh.model.occ.addPoint( end_point[0],
                                                            end_point[1], end_point[2])
                 points_tag.append(end_point_tag)
+                print("Ellipse")
                 center = buffer[type_]["Center"]
+                print(start_point)
+                print(center)
                 center_tag = gmsh.model.occ.addPoint(center[0], center[1], center[2])
                 focus = buffer[type_]["Focus1"]
+                print(focus)
+                print(end_point)
                 focus_tag = gmsh.model.occ.addPoint(focus[0], focus[1], focus[2])
                 curve_tag.append(gmsh.model.occ.addEllipseArc(
                     start_point_tag,
