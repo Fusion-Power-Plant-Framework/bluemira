@@ -1038,7 +1038,7 @@ class SegmentedThermalShield(ReactorSystem):
         # Split into the two sections
         split_out = ts_inner_shell.split_by_line(
             p2=np.array([self.params.r_ts_joint, np.amax(ts_outer_loop.z)]),
-            p1=np.array([self.params.r_ts_joint, -np.amax(ts_outer_loop.z)]),
+            p1=np.array([self.params.r_ts_joint, np.min(ts_outer_loop.z)]),
         )
 
         # Outputs

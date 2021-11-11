@@ -36,7 +36,7 @@ from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import find_OX_points
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import NovaError
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from BLUEPRINT.geometry.geomtools import theta_sort, length, lengthnorm, clock
 from BLUEPRINT.geometry.offset import offset_smc
 

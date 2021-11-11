@@ -110,14 +110,14 @@ BTOPUNITS = {val: key for key, val in PTOBUNITS.items()}
 
 def update_obsolete_vars(process_map_name: str) -> str:
     """
-    Check if the BLUEPRINT variable is up to date using the OBS_VAR dict.
+    Check if the bluemira variable is up to date using the OBS_VAR dict.
     If the PROCESS variable name has been updated in the installed version
     this function will provide the updated variable name.
 
     Parameters
     ----------
     process_map_name: str
-        PROCESS variable name obtained from the BLUEPRINT mapping.
+        PROCESS variable name obtained from the bluemira mapping.
 
     Returns
     -------
@@ -151,7 +151,7 @@ def _pconvert(dictionary, key):
 
 def convert_unit_p_to_b(s):
     """
-    Conversion from PROCESS units to BLUEPRINT units
+    Conversion from PROCESS units to bluemira units
     Handles text formatting only
     """
     return _convert(PTOBUNITS, s)
@@ -159,12 +159,6 @@ def convert_unit_p_to_b(s):
 
 def convert_unit_b_to_p(s):
     """
-    Conversion from BLUEPRINT units to PROCESS units
+    Conversion from bluemira units to PROCESS units
     """
     return _convert(BTOPUNITS, s)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

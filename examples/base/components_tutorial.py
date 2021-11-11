@@ -25,7 +25,11 @@ An example of how to use Components to represent a set of objects in a reactor.
 
 # %%
 from anytree import RenderTree
-import bluemira.base as bm_base
+from bluemira.base.components import (
+    GroupingComponent,
+    MagneticComponent,
+    PhysicalComponent,
+)
 
 # %%[markdown]
 # Example of a Tree structure
@@ -33,11 +37,11 @@ import bluemira.base as bm_base
 # but represent common systems within a reactor (or indeed the reactor itself).
 
 # %%
-reactor = bm_base.GroupingComponent("Reactor")
+reactor = GroupingComponent("Reactor")
 
-magnets = bm_base.GroupingComponent("Magnets", parent=reactor)
-tf_coils = bm_base.GroupingComponent("TFCoils", parent=magnets)
-pf_coils = bm_base.GroupingComponent("PFCoils", parent=magnets)
+magnets = GroupingComponent("Magnets", parent=reactor)
+tf_coils = GroupingComponent("TFCoils", parent=magnets)
+pf_coils = GroupingComponent("PFCoils", parent=magnets)
 
 # %%[markdown]
 # Definition of some sub-components as physical components
@@ -46,7 +50,7 @@ pf_coils = bm_base.GroupingComponent("PFCoils", parent=magnets)
 
 # %%
 for i in range(6):
-    bm_base.MagneticComponent(
+    MagneticComponent(
         "PF" + str(i),
         shape="pf_shape" + str(i),
         material="pf_material" + str(i),
@@ -58,9 +62,9 @@ for i in range(6):
 # Do the same for the CS coils
 
 # %%
-cs_coils = bm_base.GroupingComponent("CSCoils", parent=magnets)
+cs_coils = GroupingComponent("CSCoils", parent=magnets)
 for i in range(6):
-    bm_base.MagneticComponent(
+    MagneticComponent(
         "CS" + str(i),
         shape="cs_shape" + str(i),
         material="cs_material" + str(i),
@@ -72,20 +76,20 @@ for i in range(6):
 # Adding in vessel components
 
 # %%
-in_vessel = bm_base.GroupingComponent("InVessel", parent=reactor)
-blanket = bm_base.PhysicalComponent(
+in_vessel = GroupingComponent("InVessel", parent=reactor)
+blanket = PhysicalComponent(
     "Blanket",
     shape="BB_shape",
     material="BB_material",
     parent=in_vessel,
 )
-divertor = bm_base.PhysicalComponent(
+divertor = PhysicalComponent(
     "Divertor",
     shape="Div_shape",
     material="Div_material",
     parent=in_vessel,
 )
-vessel = bm_base.PhysicalComponent(
+vessel = PhysicalComponent(
     "Vessel",
     shape="VV_shape",
     material="VV_material",

@@ -189,7 +189,7 @@ class BoundedVariable:
     @staticmethod
     def _validate_value(value, lower_bound, upper_bound):
         if not lower_bound <= value <= upper_bound:
-            raise OptVariablesError("Variable value is out of its bounds.")
+            raise OptVariablesError(f"Variable value {value} is out of bounds.")
 
     def __repr__(self) -> str:
         """

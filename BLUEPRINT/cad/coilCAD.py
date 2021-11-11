@@ -566,6 +566,7 @@ class TFCoilCAD(ComponentCAD):
                     z_max=zmax_wp + 5.0,
                 )
                 case = boolean_2d_difference_loop(case, inner_cut_loop)
+                case.interpolate(800)
 
                 # Shift the casing loop in the y direction prepare the extrusion
                 half_depth_casing = 0.5 * TF_depth_at_r_cp + tf.params.tk_tf_ob_casing
@@ -589,6 +590,8 @@ class TFCoilCAD(ComponentCAD):
                 leg_initial_2D = geom["TF Leg Conductor"]
 
                 # case:
+                geom["TF case in"].inner.interpolate(800)
+                geom["TF case out"].outer.interpolate(800)
                 case_initial_2D = Shell(
                     geom["TF case in"].inner, geom["TF case out"].outer
                 )
