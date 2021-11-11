@@ -54,6 +54,9 @@ def convert(apiobj, label=""):
         raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
 
+import bluemira.geometry as geo
+import bluemira.mesh.meshing as meshing
+
 
 # # =============================================================================
 # # Geometry creation
@@ -815,7 +818,14 @@ def serialize_shape(shape):
     if isinstance(shape, BluemiraGeo):
         for obj in shape.boundary:
             output.append(serialize_shape(obj))
-        return {str(type(shape).__name__): {"label": shape.label, "boundary": output}}
+            dict = {"label": shape.label, "boundary": output}
+            if isinstance(shape, geo.base.GeoMeshable):
+                if shape.mesh_options is not None:
+                    if shape.mesh_options.lcar is not None:
+                        dict['lcar'] = shape.mesh_options.lcar
+                    if shape.mesh_options.physical_group is not None:
+                        dict['physical_group'] = shape.mesh_options.physical_group
+        return {str(type(shape).__name__): dict}
     elif isinstance(shape, _freecadapi.Wire):
         return _freecadapi.serialize_shape(shape)
     else:
@@ -834,7 +844,6 @@ def deserialize_shape(buffer):
     from bluemira.utilities.tools import get_module
 
     for type_, v in buffer.items():
-        # print(type_)
         if type_ == "BluemiraWire":
             label = v['label']
             boundary = v['boundary']
