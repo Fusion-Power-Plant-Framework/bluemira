@@ -215,7 +215,6 @@ class Mesh:
         if len(points_lcar2) > 0:
             for p in points_lcar2:
                 _freecadGmsh._set_mesh_size([(0, p[0])], p[1])
-                print(f"applied: {p}")
 
     def __create_dict_for_mesh_size(self, buffer):
         dim = 0
@@ -249,7 +248,6 @@ class Mesh:
         remove_object=True,
         remove_tool=True,
     ):
-        print(buffer)
         all_ent, oo, oov = _freecadGmsh._fragment(
             dim, all_ent, tools, remove_object, remove_tool
         )
@@ -357,7 +355,6 @@ class Mesh:
                     self.__apply_fragment(buffer, all_ent=all_ent)
                 elif dim == 2:
                     value["gmsh"]["curveloop_tag"] = []
-                    # print(f"buffer = {buffer}")
                     for item in boundary:
                         dict_curve = self.get_gmsh_dict(item)
                         value["gmsh"]["curveloop_tag"].append(
@@ -638,7 +635,6 @@ class _freecadGmsh:
         tag = gmsh.model.addPhysicalGroup(dim, tags)
         if name is not None:
             gmsh.model.setPhysicalName(dim, tag, name)
-
 
     @staticmethod
     def _set_mesh_size(dimtags, size):

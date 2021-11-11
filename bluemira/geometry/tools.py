@@ -921,3 +921,16 @@ def deserialize_shape(buffer):
                 shell.mesh_options = mesh_options
             return shell
         raise NotImplementedError(f"Deserialization non implemented for {type_}")
+
+
+# # =============================================================================
+# # shape utils
+# # =============================================================================
+def get_shape_by_name(shape, name: str):
+    shapes = []
+    if hasattr(shape, 'label') and shape.label == name:
+        shapes.append(shape)
+    if hasattr(shape, 'boundary'):
+        for o in shape.boundary:
+            shapes += get_shape_by_name(o, name)
+    return shapes
