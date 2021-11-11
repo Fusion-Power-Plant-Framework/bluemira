@@ -126,6 +126,12 @@ class ChargedParticleSolver:
                     "A DN equilibrium was detected but your power distribution"
                     " is 0 in either the lower or upper directions."
                 )
+        else:
+            if not np.any(np.isclose([lower_power, upper_power], 0, rtol=0, atol=1e-9)):
+                bluemira_warn(
+                    "A SN equilibrium was detected but you power distribution is not 0"
+                    " in either the lower or upper directions."
+                )
 
     @staticmethod
     def _process_first_wall(first_wall):
