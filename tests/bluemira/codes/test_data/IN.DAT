@@ -350,6 +350,9 @@ epsvmc   = 1.0e-8 * epsvmc /1;0e-6/ ; error tolerance for VMCON
 *---------------------Ode Mod----------------------*
 
 
+*------------------Optimiz Module------------------*
+
+
 *------------------Output Module-------------------*
 
 
@@ -492,9 +495,6 @@ lpulse   = 1, * Switch for reactor model;
 *-----------------Sctfcoil Module------------------*
 
 
-*------------------Startup Module------------------*
-
-
 *----------------Startup Variables-----------------*
 
 
@@ -521,6 +521,7 @@ lpulse   = 1, * Switch for reactor model;
 
 *-----------------Tfcoil Variables-----------------*
 
+alstrtf  = 8.25d8 * Allowable Tresca stress in TF coil structural material (Pa)
 casthi   = 0.05, * inboard TF coil case plasma side thickness (m) (calculated for stellarators)
 casths   = 0.10, * inboard TF coil sidewall case thickness (m) (calculated for stellarators)
 cpttf    = 6.5e+04 * TF coil current per turn (A); (calculated for stellarators) (calculated for 
@@ -557,9 +558,6 @@ tburn    = 1.0d4, * burn time (s) (calculated if `lpulse=1`)
 *-------------------Vmcon Module-------------------*
 
 gamma    = 0.3 * Ejima coefficient for resistive startup V-s formula
-
-*--------------------Vmcon Test--------------------*
-
 
 *--------------Water Usage Variables---------------*
 

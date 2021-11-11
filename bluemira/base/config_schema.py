@@ -107,7 +107,7 @@ class ConfigurationSchema:
     fw_p_sol_far: Parameter
     hf_limit: Parameter
 
-    # ad hoc SN/DN variables
+    # SN/DN variables for heat flux transport
     fw_dpsi_n_near: Parameter
     fw_dpsi_n_far: Parameter
     fw_dx_omp: Parameter

@@ -115,14 +115,13 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['fw_p_sol_far', 'far Scrape off layer power', 50, 'MW', None, 'Input'],
         ['hf_limit', 'heat flux material limit', 0.5, 'MW/m^2', None, 'Input'],
 
-        # ad hoc SN/DN variables
+        # SN/DN variables for heat flux transport
         ['fw_dx_omp', 'Initial offset from LCFS omp', 0.2, 'm', None, 'Input'],
         ['fw_dx_imp', 'Initial offset from LCFS imp', 0.05, 'm', None, 'Input'],
         ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_imp', 'Lambda_q far SOL imp', 0.1, 'm', None, 'Input'],
-
         ['f_lfs_lower_target', 'Power fraction lfs lower', 0.5, 'N/A', None, 'Input'],
         ['f_lfs_upper_target', 'Power fraction lfs upper', 0.5, 'N/A', None, 'Input'],
         ['f_hfs_lower_target', 'Power fraction hfs lower', 0.5, 'N/A', None, 'Input'],
