@@ -784,7 +784,7 @@ class DivertorBuilder:
         )[2]
 
         # Get the outer intersection with the separatrix
-        outer_strike_x = self.params.outer_strike_r
+        outer_strike_x = self.params.outer_strike_r.value
         # Does it make sense to compare x with x-norm??
         outer_strike_z = get_intersection_point(
             outer_strike_x, x_norm, outer_loop, x_x_point, inner=False
@@ -1668,7 +1668,7 @@ class FirstWallSN(FirstWall):
         profile: Loop
             First wall to optimise
         x_int_hf: float
-            x coordinate at the inetersection
+            x coordinate at the intersection
         z_int_hf: float
             z coordinate at the intersection
         heat_flux: float
