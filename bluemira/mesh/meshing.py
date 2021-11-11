@@ -164,6 +164,8 @@ class Mesh:
             _freecadGmsh._initialize_mesh(self.terminal, self.modelname)
             buffer = self.__mesh_obj(obj)
 
+            Mesh.__iterate_gmsh_dict(buffer, Mesh._check_intersections)
+
             self._apply_physical_group(buffer)
 
             self._apply_mesh_size(buffer)
@@ -209,9 +211,17 @@ class Mesh:
                     self._apply_physical_group(o)
 
     def _apply_mesh_size(self, buffer):
+        points_lcar2 = self.__create_dict_for_mesh_size(buffer)
+        if len(points_lcar2) > 0:
+            for p in points_lcar2:
+                _freecadGmsh._set_mesh_size([(0, p[0])], p[1])
+                print(f"applied: {p}")
+
+    def __create_dict_for_mesh_size(self, buffer):
         dim = 0
         dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2}
         other_dict = {0: "points_tag", 1: "curve_tag", 2: "surface_tag"}
+        points_lcar = []
         for k, v in buffer.items():
             if k in dict_dim.keys():
                 if "lcar" in v.keys():
@@ -220,9 +230,15 @@ class Mesh:
                             other_dict[0]
                         ]
                         if len(points_tags) > 0:
-                            _freecadGmsh._set_mesh_size(points_tags, v["lcar"])
+                            points_lcar +=[(p[1], v["lcar"]) for p in points_tags]
                 for o in v["boundary"]:
-                    self._apply_mesh_size(o)
+                    points_lcar += self.__create_dict_for_mesh_size(o)
+        points_lcar = sorted(points_lcar, key=lambda element: (element[0], element[1]))
+        points_lcar.reverse()
+        points_lcar = dict(points_lcar)
+        points_lcar = [(k, v) for k, v in points_lcar.items()]
+        return points_lcar
+
 
     def __apply_fragment(
         self,
@@ -233,10 +249,19 @@ class Mesh:
         remove_object=True,
         remove_tool=True,
     ):
+        print(buffer)
         all_ent, oo, oov = _freecadGmsh._fragment(
             dim, all_ent, tools, remove_object, remove_tool
         )
         Mesh.__iterate_gmsh_dict(buffer, _freecadGmsh._map_mesh_dict, all_ent, oov)
+
+    @staticmethod
+    def _check_intersections(gmsh_dict):
+        if len(gmsh_dict['curve_tag'])>0:
+            gmsh_curve_tag = [(1, tag) for tag in gmsh_dict['curve_tag']]
+            new_points = _freecadGmsh._get_boundary(gmsh_curve_tag)
+            new_points = list(set([tag[1] for tag in new_points]))
+            gmsh_dict['points_tag'] = new_points
 
     @staticmethod
     def __iterate_gmsh_dict(buffer, function, *args):
@@ -618,3 +643,7 @@ class _freecadGmsh:
     @staticmethod
     def _set_mesh_size(dimtags, size):
         gmsh.model.mesh.setSize(dimtags, size)
+
+    @staticmethod
+    def _get_boundary(dimtags, combined=False, recursive=False):
+        return gmsh.model.getBoundary(dimtags, combined, recursive)
