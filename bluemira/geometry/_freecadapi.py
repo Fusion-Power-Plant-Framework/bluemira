@@ -374,10 +374,10 @@ def offset_wire(
         Offset wire
     """
     if _wire_is_straight(wire):
-        raise GeometryError("Cannot offset a straight line.")
+        raise FreeCADError("Cannot offset a straight line.")
 
     if not _wire_is_planar(wire):
-        raise GeometryError("Cannot offset a non-planar wire.")
+        raise FreeCADError("Cannot offset a non-planar wire.")
 
     if join == "arc":
         f_join = 0
@@ -385,7 +385,7 @@ def offset_wire(
         f_join = 2
     else:
         # NOTE: The "tangent": 1 option misbehaves in FreeCAD
-        raise GeometryError(
+        raise FreeCADError(
             f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
         )
 
@@ -403,7 +403,7 @@ def offset_wire(
                 f"{error.args[0]['sErrMsg']}",
             ]
         )
-        raise GeometryError(msg)
+        raise FreeCADError(msg)
     return wire
 
 
