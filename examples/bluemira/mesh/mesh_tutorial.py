@@ -33,13 +33,12 @@ from bluemira.mesh.meshing import Mesh
 # Defining my parameters
 import bluemira.geometry.tools
 
-
 r1 = 0
 r2 = r1 + 1
 z1 = 0
 z2 = z1 + 1
 
-r3 = r2 + 0.2
+r3 = r2
 r4 = r3 + 1
 z3 = 0
 z4 = z3 + 0.5
@@ -84,10 +83,12 @@ print(f"ser_shell1: {ser_shell1}")
 des_shell1 = geo.tools.deserialize_shape(ser_shell1)
 print(f"des_shell1: {des_shell1}")
 
-face1.mesh_options = {'lcar': 0.1}
-poly2.mesh_options = {'physical_group': 'test'}
+# face1.mesh_options = {"lcar": 0.1, "physical_group": "face1_fg"}
+# face2.mesh_options = {"lcar": 0.3, "physical_group": "face1_fg"}
+poly2.mesh_options = {"physical_group": "poly2_fg"}
+shell1.mesh_options = {"lcar": 0.5}
 
-m = Mesh()
+m = Mesh(meshfile=["Mesh.geo_unrolled", "Mesh.msh2"])
 buffer = m(shell1)
 print(m.get_gmsh_dict(buffer))
 
@@ -95,3 +96,10 @@ print(m.get_gmsh_dict(buffer))
 #
 # with open("mesh_dict.json", "w") as outfile:
 #     json.dump(buffer, outfile)
+
+# ser1 = geo.tools.serialize_shape(shell1)
+# print(ser1)
+#
+# des1 = geo.tools.deserialize_shape(ser1)
+# print(des1)
+# print(des1.print_mesh_options(True))
