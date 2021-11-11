@@ -1582,8 +1582,11 @@ class FirstWallSN(FirstWall):
         ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
-        ["f_outer_target", "Power fraction", 0.75, "N/A", None, "Input"],
-        ["f_inner_target", "Power fraction", 0.25, "N/A", None, "Input"],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "N/A", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.25, "N/A", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target", 0.0, "N/A", "DN only", "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target", 0.0, "N/A", "DN only", "Input"],
+
         # Parameters used in make_divertor_loop
         ["xpt_outer_gap", "Gap between x-point and outer wall", 1, "m", None, "Input"],
         ["xpt_inner_gap", "Gap between x-point and inner wall", 1, "m", None, "Input"],

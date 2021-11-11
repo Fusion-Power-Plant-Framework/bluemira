@@ -110,28 +110,19 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],
         ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
         ['fw_dL_max', 'Maximum FW module length', 2, 'm', None, 'Input'],
-        ['fw_a_max', 'Maximum angle between FW modules', 25, 'Ã‚Â°', None, 'Input'],
+        ['fw_a_max', 'Maximum angle between FW modules', 25, '°', None, 'Input'],
         ['fw_p_sol_near', 'near Scrape off layer power', 50, 'MW', None, 'Input'],
         ['fw_p_sol_far', 'far Scrape off layer power', 50, 'MW', None, 'Input'],
         ['hf_limit', 'heat flux material limit', 0.5, 'MW/m^2', None, 'Input'],
-        # ad hoc SN variables
-        ['fw_lambda_q_near', 'Lambda q near SOL', 0.05, 'm', None, 'Input'],
-        ['fw_lambda_q_far', 'Lambda q far SOL', 0.05, 'm', None, 'Input'],
-        ['f_outer_target', 'Power fraction', 0.75, 'N/A', None, 'Input'],
-        ['f_inner_target', 'Power fraction', 0.25, 'N/A', None, 'Input'],
-        # ad hoc DN variables
-        ['fw_dpsi_n_near', 'Step size of psi in near SOL', 0.1, 'N/A', None, 'Input'],
-        ['fw_dpsi_n_far', 'Step size of psi in far SOL', 0.1, 'N/A', None, 'Input'],
+
+        # ad hoc SN/DN variables
         ['fw_dx_omp', 'Initial offset from LCFS omp', 0.2, 'm', None, 'Input'],
         ['fw_dx_imp', 'Initial offset from LCFS imp', 0.05, 'm', None, 'Input'],
-        ['p_rate_omp', 'power sharing omp', 0.9, '%', None, 'Input'],
-        ['p_rate_imp', 'power sharing imp', 0.1, '%', None, 'Input'],
         ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_imp', 'Lambda_q far SOL imp', 0.1, 'm', None, 'Input'],
-        ['dr_near_omp', 'fs thickness near SOL', 0.001, 'm', None, 'Input'],
-        ['dr_far_omp', 'fs thickness far SOL', 0.005, 'm', None, 'Input'],
+
         ['f_lfs_lower_target', 'Power fraction lfs lower', 0.5, 'N/A', None, 'Input'],
         ['f_lfs_upper_target', 'Power fraction lfs upper', 0.5, 'N/A', None, 'Input'],
         ['f_hfs_lower_target', 'Power fraction hfs lower', 0.5, 'N/A', None, 'Input'],
