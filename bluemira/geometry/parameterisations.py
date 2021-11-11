@@ -1493,7 +1493,7 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
 
     @staticmethod
     def _domed_leg(
-        x, x_out, x_curve_start, x_mid, z, z_top, z_mid, npoints, flip=False, *, r_c=0
+        x, x_out, x_curve_start, x_mid, z, z_top, z_mid, npoints, flip=False, r_c=0
     ):
         """
         Makes smooth dome for CP coils
@@ -1506,12 +1506,14 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
         z_top_r_leg = z_top + r_leg if flip else z_top - r_leg
         leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_top_r_leg)
+
         # Transitioning Curve
         sin_a = np.sin(theta_leg_basic / 2)
         cos_a = np.cos(theta_leg_basic / 2)
         alpha_leg = (
             np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
         )
+
         # Joint Curve
         theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
         z_mid_r_j = z_mid - r_j if flip else z_mid + r_j
@@ -2295,30 +2297,28 @@ class CurvedPictureFrame(GeometryParameterisation):
         axis = [0, -1, 0]
         p1 = [x_mid, 0, z_mid_up]
         p2 = [x_curve_start, 0, z_mid_up]
-        wires = [make_polygon([p1, p2], label="top_limb_flat")]
+        wires = [make_polygon([p1, p2], label="top_limb_inb")]
+
         # Top Curve
         if z_max_up - z_mid_up > 0.001:
-
-            # Define basic Top Curve (with no joint or corner transitions)
-            r_j = min(x_curve_start - x_mid, r_j)
-            alpha = np.arctan(0.5 * (x_out - x_curve_start) / (z_max_up - z_mid_up))
-            theta_leg_basic = 2 * (np.pi - 2 * alpha)
-            r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
-            leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_max_up - r_leg)
-
-            sin_a = np.sin(theta_leg_basic / 2)
-            cos_a = np.cos(theta_leg_basic / 2)
-
-            # Joint Curve
-            theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
-            joint_curve_centre = (
-                leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
-                z_mid + r_j,
+            # If top leg is curved
+            x_leg_top, z_leg_top = CurvedPictureFrame._domed_leg(
+                x,
+                x_out,
+                x_curve_start,
+                x_mid,
+                z,
+                z_top,
+                z_mid,
+                npoints,
+                flip=False,
+                r_c=0,
             )
 
-            theta_leg_final = theta_leg_basic / 2 - theta_j
+            wires.append(make_polygon([x_leg_top, 0, z_leg_top], label="top_limb_outb"))
 
         else:
+            # If top leg is flat
             wires.append(
                 make_circle(
                     r_j,
@@ -2326,10 +2326,46 @@ class CurvedPictureFrame(GeometryParameterisation):
                     start_angle=90,
                     end_angle=0,
                     axis=axis,
-                    label="upper_ob_corner",
+                    label="top_limb_outb",
                 )
             )
 
+        # Bottom Curve
+        if z_max_down + z_mid_down < -0.001:
+            # If bottom leg is curved
+            x_leg_bot, z_leg_bot = CurvedPictureFrame._domed_leg(
+                x,
+                x_out,
+                x_curve_start,
+                x_mid,
+                z,
+                z_top,
+                z_mid,
+                npoints,
+                flip=False,
+                r_c=0,
+            )
+
+            wires.append(
+                make_polygon([x_leg_bot, 0, z_leg_bot], label="bottom_limb_outb")
+            )
+
+        else:
+            # If bottom leg is flat
+            wires.append(
+                make_circle(
+                    r_j,
+                    (x_out - r_j, z_mid_down + r_j),
+                    start_angle=0,
+                    end_angle=-90,
+                    axis=axis,
+                    label="bottom_limb_outb",
+                )
+            )
+
+        p1 = [x_mid, 0, z_mid_up]
+        p2 = [x_curve_start, 0, z_mid_up]
+        wires = [make_polygon([p1, p2], label="top_limb_inb")]
         p3 = [x2, 0, z2]
         p4 = [x1, 0, z1]
         p5 = [x1, 0, -z1]
