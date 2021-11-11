@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from BLUEPRINT.geometry.geomtools import xz_interp
 import pytest
 import tests
 import os
@@ -295,10 +296,10 @@ class TestRegionMapper:
 
     def create_rectangular_region(self):
         max_coil_shifts = {
-            "x_shifts_lower": -1.0,
+            "x_shifts_lower": -2.0,
             "x_shifts_upper": 1.0,
             "z_shifts_lower": -1.0,
-            "z_shifts_upper": 1.0,
+            "z_shifts_upper": 5.0,
         }
 
         pfregions = {}
@@ -316,7 +317,19 @@ class TestRegionMapper:
     def test_region_mapper(self):
         pfregions = self.create_rectangular_region()
         region_mapper = RegionMapper(pfregions)
-        intial_mapped_positions = region_mapper.get_Lmap(self.coilset)
+        l_values = region_mapper.l_values
+
+        intial_mapped_positions = region_mapper.get_Lmap(self.coilset)[0]
+        x_init, z_init = self.coilset.get_positions()
+        initial_positions = np.concatenate((x_init, z_init))
+
+        mapped_positions = region_mapper.coilset_xz_to_L(self.coilset)
+        region_mapper.set_L_from_Lmap(mapped_positions)
+        x, z = region_mapper.coilset_L_to_xz(self.coilset)
+
+        assert np.allclose(intial_mapped_positions, mapped_positions)
+        assert np.allclose(x_init, x)
+        assert np.allclose(z_init, z)
 
 
 class TestCoilPositioner:

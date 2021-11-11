@@ -1625,12 +1625,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
     def __init__(
         self,
         sub_opt,
-        max_coil_shifts={
-            "x_shifts_lower": -1.0,
-            "x_shifts_upper": 1.0,
-            "z_shifts_lower": -1.0,
-            "z_shifts_upper": 1.0,
-        },
+        pfregions,
         opt_args={
             "algorithm_name": "SBPLX",
             "opt_conditions": {
@@ -1643,12 +1638,12 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # noqa (N803)
         super().__init__(sub_opt.coilset)
 
-        self.max_coil_shifts = max_coil_shifts
-        self.initial_positions = np.concatenate((self.x0, self.z0))
+        self.region_mapper = RegionMapper(pfregions)
+        self.initial_mapped_positions = self.region_mapper.get_Lmap(self.coilset)[0]
 
         # Set up optimiser
         self.opt_args = opt_args
-        self.opt = self.set_up_optimiser(len(self.initial_positions))
+        self.opt = self.set_up_optimiser(len(self.initial_mapped_positions))
         self.sub_opt = sub_opt
 
     def set_up_optimiser(self, dimension):
@@ -1674,17 +1669,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Set up objective function for optimiser
         opt.set_objective_function(self.f_min_objective)
 
-        # Set state vector bounds (centroid position limits)
-        x_bounds = (
-            self.x0 + self.max_coil_shifts["x_shifts_lower"],
-            self.x0 + self.max_coil_shifts["x_shifts_upper"],
-        )
-        z_bounds = (
-            self.z0 + self.max_coil_shifts["z_shifts_lower"],
-            self.z0 + self.max_coil_shifts["z_shifts_upper"],
-        )
-        lower_bounds = np.concatenate((x_bounds[0], z_bounds[0]))
-        upper_bounds = np.concatenate((x_bounds[1], z_bounds[1]))
+        _, lower_bounds, upper_bounds = self.region_mapper.get_Lmap(self.coilset)
 
         opt.set_lower_bounds(lower_bounds)
         opt.set_upper_bounds(upper_bounds)
@@ -1699,11 +1684,11 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset)
         x_vals, z_vals, self.currents = np.array_split(initial_state, substates)
-        initial_positions = np.concatenate((x_vals, z_vals))
+        intial_mapped_positions = self.region_mapper.coilset_xz_to_L(self.coilset)
 
         # Optimise
         self.iter = 0
-        positions = self.opt.optimise(initial_positions)
+        positions = self.opt.optimise(intial_mapped_positions)
 
         # Call objective function final time on optimised state
         # to set coilset.
@@ -1757,7 +1742,10 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         -------
         fom: Value of objective function (figure of merit).
         """
-        coilset_state = np.concatenate((vector, self.currents))
+        self.region_mapper.set_L_from_Lmap(vector)
+        x_vals, z_vals = self.region_mapper.coilset_L_to_xz(self.coilset)
+        positions = np.concatenate((x_vals, z_vals))
+        coilset_state = np.concatenate((positions, self.currents))
         self.set_coilset_state(coilset_state)
 
         # Update target
@@ -1775,6 +1763,6 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         fom = self.sub_opt.opt.optimum_value
 
         # Update coilset state with optimised currents
-        coilset_state = np.concatenate((vector, self.currents))
+        coilset_state = np.concatenate((positions, self.currents))
         self.set_coilset_state(coilset_state)
         return fom

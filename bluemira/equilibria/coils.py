@@ -1968,9 +1968,8 @@ class CoilSet(CoilGroup):
         """
         Returns the arrays of the coil centre coordinates
         """
-        coil_values = self.coils.values()
-        x, z = np.zeros(len(coil_values)), np.zeros(len(coil_values))
-        for i, coil in enumerate(coil_values):
+        x, z = np.zeros(len(self.coils.values())), np.zeros(len(self.coils.values()))
+        for i, coil in enumerate(self.coils.values()):
             x[i] = float(coil.x)
             z[i] = float(coil.z)
         return x, z

@@ -562,6 +562,8 @@ class RegionMapper:
         self.no_regions = len(self.regions)
 
         self.l_values = np.zeros((self.no_regions, 2))
+        self.l_map = self.l_values.flatten()
+
         self.max_currents = np.zeros(self.no_regions)
 
     def _region_setup(self, pf_name, loop_reg):
@@ -645,13 +647,28 @@ class RegionMapper:
             self.l_values[no] = self.xz_to_L(region, coil.x, coil.z)
 
         # Force all initial positions to be within region
-        self.l_values = tools.clip(self.l_values, 0, 1).flatten()
-
+        self.l_map = tools.clip(self.l_values, 0, 1).flatten()
         return (
-            self.l_values,
-            np.zeros_like(self.l_values),
-            np.ones_like(self.l_values),
+            self.l_map,
+            np.zeros_like(self.l_map),
+            np.ones_like(self.l_map),
         )
+
+    def set_L_from_Lmap(self, l_map):
+        self.l_values = l_map.reshape(-1, 2)
+
+    def coilset_xz_to_L(self, coilset):
+        for i, region in enumerate(self.regions.keys()):
+            coil = coilset[self._name_converter(region)]
+            self.l_values[i] = self.xz_to_L(region, coil.x, coil.z)
+        return tools.clip(self.l_values, 0, 1).flatten()
+
+    def coilset_L_to_xz(self, coilset):
+        x, z = np.zeros(len(self.l_values)), np.zeros(len(self.l_values))
+        for i, region in enumerate(self.regions.keys()):
+            coil = coilset[self._name_converter(region)]
+            x[i], z[i] = self.L_to_xz(region, self.l_values[i])
+        return x, z
 
     def get_size_current_limit(self):
         """
