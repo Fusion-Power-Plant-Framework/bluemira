@@ -73,7 +73,9 @@ class TestSuperSankey:
         sankey.finish()
         figure = plt.gcf()
 
-        path = get_bluemira_path("bluemira/utilities/test_data", subfolder="tests")
+        path = get_bluemira_path(
+            "bluemira/balance_of_plant/test_data", subfolder="tests"
+        )
         name_new = os.sep.join([path, "sankey_test_new.png"])
         figure.savefig(name_new)
         name_old = os.sep.join([path, "sankey_test.png"])
