@@ -372,8 +372,8 @@ def make_ellipse(
         FreeCAD wire that contains the ellipse or arc of ellipse
     """
     # TODO: check the creation of the arc when start_angle < end_angle
-    s1 = Base.Vector(major_axis).normalize().multiply(major_radius)
-    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius)
+    s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(center)
+    s2 = Base.Vector(minor_axis).normalize().multiply(minor_radius) + Base.Vector(center)
     center = Base.Vector(center)
     output = Part.Ellipse(s1, s2, center)
 
@@ -1124,7 +1124,6 @@ def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
         Minimum edge length
     """
     wire.fix(precision, min_length, min_length)
-
 
 # ======================================================================================
 # Plane manipulations
