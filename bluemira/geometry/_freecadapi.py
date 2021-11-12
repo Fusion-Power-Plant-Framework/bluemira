@@ -785,7 +785,7 @@ def boolean_fuse(shapes):
                 f"Fuse function still not implemented for {_type} instances."
             )
     except Exception as e:
-        raise FreeCADError(f"Fuse operation failed. {e}")
+        raise FreeCADError(str(e))
 
 
 def boolean_cut(shape, tools, split=True):
