@@ -181,13 +181,13 @@ class Run:
     def _read(self):
         self.get_PROCESS_run(
             path=self.reactor.file_manager.reference_data_dirs["systems_code"],
-            read_all=False,
+            recv_all=False,
         )
 
     def _readall(self):
         self.get_PROCESS_run(
             path=self.reactor.file_manager.reference_data_dirs["systems_code"],
-            read_all=True,
+            recv_all=True,
         )
 
     def _mock(self):
@@ -218,17 +218,17 @@ class Run:
         self._check_PROCESS_output()
 
         # Load PROCESS results into bluemira
-        self._load_PROCESS(self.read_mfile(), read_all=not use_bp_inputs)
+        self._load_PROCESS(self.read_mfile(), recv_all=not use_bp_inputs)
 
-    def get_PROCESS_run(self, path, read_all=False):
+    def get_PROCESS_run(self, path, recv_all=False):
         """
         Loads an existing PROCESS file (read-only). Not to be used when running PROCESS.
         """
         bluemira_print("Loading PROCESS systems code run.")
 
         # Load the PROCESS MFile & read selected output
-        params_to_read = self.parameter_mapping if read_all else self.recv_mapping
-        self._load_PROCESS(BMFile(path, params_to_read), read_all)
+        params_to_recv = self.parameter_mapping if recv_all else self.recv_mapping
+        self._load_PROCESS(BMFile(path, params_to_recv), recv_all)
 
         # Add DD fusion fraction
         self.reactor.add_parameter(
@@ -277,7 +277,7 @@ class Run:
             self.reactor.params, {}, self.reactor.build_config["plasma_mode"]
         )
 
-    def _load_PROCESS(self, bm_file, read_all=False):
+    def _load_PROCESS(self, bm_file, recv_all=False):
         """
         Loads a PROCESS output file (MFILE.DAT) and extract some or all its output data
 
@@ -285,7 +285,7 @@ class Run:
         ----------
             bm_file: BMFile
                 PROCESS output file (MFILE.DAT) to load
-            read_all: bool, optional
+            recv_all: bool, optional
                 True - Read all PROCESS output mapped by BTOPVARS,
                 False - reads only a subset of the PROCESS output.
                 Default, False
@@ -293,7 +293,7 @@ class Run:
         self.reactor.__PROCESS__ = bm_file
 
         # Load all PROCESS vars mapped with a bluemira input
-        var = self.parameter_mapping.values() if read_all else self.recv_mapping.values()
+        var = self.parameter_mapping.values() if recv_all else self.recv_mapping.values()
         param = self.reactor.__PROCESS__.extract_outputs(var)
         self.reactor.add_parameters(dict(zip(var, param)), source=PROCESS)
 
