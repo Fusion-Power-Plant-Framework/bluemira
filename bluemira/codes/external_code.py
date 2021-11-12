@@ -31,23 +31,7 @@ class RunMode(Enum):
     BATCH = auto()
     MOCK = auto()
 
-
-class Task():
-    """
-    A class for any task integration
-    """
-
-    # todo: ensure a correspondence between the specified runmode and the implemented
-    #  functions
-
-    def __init__(self, runmode):
-        self.set_runmode(runmode)
-
-    def set_runmode(self, runmode):
-        """Set the runmode"""
-        self.runmode = RunMode[runmode]
-
-    def __call__(self, obj=None, *args, **kwargs):
+    def __call__(self, obj, *args, **kwargs):
         """
         Call function of object with lowercase name of
         enum
@@ -64,26 +48,52 @@ class Task():
         -------
         function result
         """
-        if obj is None:
-            obj = self
-        func = getattr(obj, f"_{self.runmode.name.lower()}")
+        func = getattr(obj, f"_{self.name.lower()}")
         return func(*args, **kwargs)
 
-    def _prominence(self):
-        print("running _prominence")
+
+class Task():
+    """
+    A class for any task integration
+    """
+    # todo: ensure a correspondence between the specified runmode and the implemented
+    #  functions (if possible).
+
+    def __init__(self, runmode):
+        self.set_runmode(runmode)
+
+    def set_runmode(self, runmode):
+        """Set the runmode"""
+        self.runmode = RunMode[runmode]
+
+    def _prominence(self, *args, **kwargs):
+        print(f"running {self.__class__.__name__}_prominence")
         # raise NotImplementedError
 
-    def _batch(self):
-        print("running _batch")
+    def _batch(self, *args, **kwargs):
+        print(f"running {self.__class__.__name__} _batch")
         # raise NotImplementedError
 
-    def _mock(self):
-        print("running _mock")
+    def _mock(self, *args, **kwargs):
+        print(f"running {self.__class__.__name__} _mock")
         # raise NotImplementedError
+
+    def __call__(self, *args, **kwargs):
+        return self.runmode(self, *args, **kwargs)
 
 
 class ExternalCode(Task):
     """An external code wrapper"""
+    def __init__(self, runmode, *args, **kwargs):
+        super().__init__(runmode)
+        self.setup = ExternalCode.Setup(runmode, *args, **kwargs)
+        self.run = ExternalCode.Run(runmode, *args, **kwargs)
+        self.teardown = ExternalCode.Teardown(runmode, *args, **kwargs)
+
+    def __call__(self):
+        self.runmode(self.setup)
+        self.runmode(self.run)
+        self.runmode(self.teardown)
 
     class Setup(Task):
         """A class that specified the code setup"""
