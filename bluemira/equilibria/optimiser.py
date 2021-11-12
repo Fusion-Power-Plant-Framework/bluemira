@@ -1326,8 +1326,8 @@ class CoilsetOptimiserBase:
         """
         x, z, currents = np.array_split(coilset_state, 3)
 
-        ## coilset.set_positions not currently working for
-        ## SymmetricCircuits, it appears...
+        # coilset.set_positions not currently working for
+        # SymmetricCircuits, it appears...
         # positions = list(zip(x, z))
         # self.coilset.set_positions(positions)
         for i, coil in enumerate(self.coilset.coils.values()):
