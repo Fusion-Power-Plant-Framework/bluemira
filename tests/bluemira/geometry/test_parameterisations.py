@@ -106,6 +106,13 @@ class TestPrincetonD:
         with pytest.raises(OptVariablesError):
             p.variables.remove_variable("x1")
 
+    def test_instantiation_fixed(self):
+        p = PrincetonD(
+            {"x1": {"value": 5, "fixed": True}, "x2": {"value": 14, "fixed": False}}
+        )
+        assert p.variables["x1"].fixed
+        assert not p.variables["x2"].fixed
+
 
 class TestPictureFrame:
     def test_length(self):

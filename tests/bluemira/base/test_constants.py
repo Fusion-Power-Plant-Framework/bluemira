@@ -22,7 +22,7 @@ import pytest
 import numpy as np
 
 from bluemira.base.constants import E_IJK, E_IJ, E_I
-from BLUEPRINT.utilities.tools import levi_civita_tensor
+from bluemira.utilities.tools import levi_civita_tensor
 
 
 def test_lct_constants():

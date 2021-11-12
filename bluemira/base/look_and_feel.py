@@ -272,7 +272,7 @@ def colourise(string, width=73, color="blue", end=None, flush=False):
 
 def bluemira_critical(string):
     """
-    Standard template for BLUEPRINT critical errors.
+    Standard template for bluemira critical errors.
     """
     return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
 

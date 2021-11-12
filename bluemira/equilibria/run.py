@@ -428,7 +428,7 @@ class EquilibriumProblem:
             The plasma loop voltage during burn [V]
         psi_bd: float (default = None)
             The plasma boundary magnetic flux value at breakdown [V.s]
-        pfcoiltrack: BLUEPRINT Loop
+        pfcoiltrack: Loop
             The track along which the PF coil positions are optimised
         pf_exclusions: list(Loop, Loop, ..)
             Set of exclusion zones to apply to the PF coil track
@@ -443,7 +443,7 @@ class EquilibriumProblem:
         figure_folder: str (default = None)
             The path where figures will be saved. If the input value is None (e.g.
             default) then this will be reinterpreted as the path data/plots/equilibria
-            under the BLUEPRINT root folder, if that path is available.
+            under the bluemira root folder, if that path is available.
 
         Note
         ----

@@ -34,6 +34,8 @@ import Part
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 
+import bluemira.geometry._freecadapi as _freecadapi
+
 from bluemira.geometry._freecadapi import (
     discretize_by_edges,
     discretize,
@@ -168,3 +170,11 @@ class BluemiraWire(BluemiraGeo):
                 translate_shape(o, vector)
             else:
                 o.translate(vector)
+
+    def change_plane(self, plane):
+        """Apply a plane transformation to the wire"""
+        for o in self.boundary:
+            if isinstance(o, Part.Wire):
+                _freecadapi.change_plane(o, plane._shape)
+            else:
+                o.change_plane(plane)

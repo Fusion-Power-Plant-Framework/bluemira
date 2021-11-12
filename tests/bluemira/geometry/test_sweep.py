@@ -44,7 +44,7 @@ class TestSweep:
         assert np.isclose(extrusion.volume, sweep.volume)
 
     def test_circle(self):
-        path = make_circle()
+        path = make_circle(start_angle=0, end_angle=180)
         profile = make_polygon(
             [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
         )

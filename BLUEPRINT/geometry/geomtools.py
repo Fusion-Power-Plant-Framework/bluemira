@@ -1354,7 +1354,7 @@ def clock(x, z, reverse=True):
     Order loop anti-clockwise with spline smoothing.
     """
     # Circular import
-    from BLUEPRINT.utilities.tools import innocent_smoothie
+    from bluemira.geometry._deprecated_tools import innocent_smoothie
 
     rc, zc = (np.mean(x), np.mean(z))
     radius = ((x - rc) ** 2 + (z - zc) ** 2) ** 0.5

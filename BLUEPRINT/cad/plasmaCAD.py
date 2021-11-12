@@ -40,8 +40,7 @@ class PlasmaCAD(ComponentCAD):
 
     def __init__(self, plasma, **kwargs):
         palette = BLUE["PL"]
-        ComponentCAD.__init__(
-            self,
+        super().__init__(
             "Plasma",
             plasma.geom,
             plasma.params.n_TF,
