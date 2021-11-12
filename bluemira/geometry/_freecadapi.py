@@ -383,6 +383,9 @@ def is_closed(obj):
 
 def bounding_box(obj):
     """Object's bounding box"""
+    # FreeCAD BoundBox is a FreeCAD object. For the moment there is not a
+    # complementary object in bluemira. Thus, this method will just return
+    # (XMin, YMin, Zmin, XMax, YMax, ZMax)
     box = _get_api_attr(obj, "BoundBox")
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
