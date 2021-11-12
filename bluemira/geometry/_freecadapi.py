@@ -723,6 +723,16 @@ def _wire_edges_tangent(wire):
     return all(edges_tangent)
 
 
+def _split_wire(wire):
+    edges = wire.OrderedEdges
+    if len(edges) == 1:
+        # Only one edge in the wire, which we need to split
+        curve = edges[0].Curve
+
+    n_split = int(len(edges) / 2)
+    return [Part.Wire(edges[:n_split]), Part.Wire(edges[n_split:])]
+
+
 def sweep_shape(profiles, path, solid=True, frenet=True):
     """
     Sweep a a set of profiles along a path.
@@ -764,6 +774,10 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
         raise FreeCADError(
             "Sweep path contains edges that are not consecutively tangent. This will produce unexpected results."
         )
+
+    if path.isClosed():
+        # Split and fuse
+        pass
 
     result = path.makePipeShell(profiles, solid, frenet)
 

@@ -337,12 +337,14 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     if not isinstance(profiles, Iterable):
         profiles = [profiles]
     profiles = [p._shape for p in profiles]
-    path = path._shape
-    result = _freecadapi.sweep_shape(profiles, path, solid, frenet)
+    result = _freecadapi.sweep_shape(profiles, path._shape, solid, frenet)
 
     if solid:
         return BluemiraSolid._create(result, label=label)
     else:
+        raise NotImplementedError(
+            "This to crash with no error and I don't yet know why..."
+        )
         return BluemiraShell._create(result, label=label)
 
 
