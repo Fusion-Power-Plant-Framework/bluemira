@@ -172,6 +172,8 @@ class PlasmodParameters:
 
 
 def write_input_file(params: Union[PlasmodParameters, dict], filename: str):
+    '''Write a set of PlasmodParameters into a file'''
+
     # open input file
     fid = open(filename, "w")
 
@@ -183,6 +185,7 @@ def write_input_file(params: Union[PlasmodParameters, dict], filename: str):
 
 
 def print_parameter_list(params: Union[PlasmodParameters, dict], fid = sys.stdout):
+    '''Print a set of parameter to screen or into an open file'''
     if isinstance(params, PlasmodParameters):
         print_parameter_list(fid, params.as_dict())
     elif isinstance(params, dict):
@@ -196,6 +199,7 @@ def print_parameter_list(params: Union[PlasmodParameters, dict], fid = sys.stdou
 
 
 def read_output_files(output_file, profiles_file):
+    '''Read the Plasmod profiles from the output file'''
     output = {}
     with open(profiles_file, 'r') as fd:
         reader = csv.reader(fd, delimiter='\t')
@@ -217,6 +221,14 @@ class PlasmodSolver(ExternalCode):
         elif isinstance(parameters, Dict):
             self._parameters = PlasmodParameters(**parameters)
         super().__init__(runmode)
+
+    class Setup(ExternalCode.Setup):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.test = "Test"
+
+        def _batch(self, *args, **kwargs):
+            print(f"running new {self.__class__.__name__} _batch")
 
     # # ******************** public attributes (plasmod inputs) ******************** #
     #
