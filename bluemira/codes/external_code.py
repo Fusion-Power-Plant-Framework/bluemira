@@ -67,16 +67,13 @@ class Task():
         self.runmode = RunMode[runmode]
 
     def _prominence(self, *args, **kwargs):
-        print(f"running {self.__class__.__name__}_prominence")
-        # raise NotImplementedError
+        raise NotImplementedError
 
     def _batch(self, *args, **kwargs):
-        print(f"running {self.__class__.__name__} _batch")
-        # raise NotImplementedError
+        raise NotImplementedError
 
     def _mock(self, *args, **kwargs):
-        print(f"running {self.__class__.__name__} _mock")
-        # raise NotImplementedError
+        raise NotImplementedError
 
     def __call__(self, *args, **kwargs):
         return self.runmode(self, *args, **kwargs)
@@ -97,15 +94,18 @@ class ExternalCode(Task):
 
     class Setup(Task):
         """A class that specified the code setup"""
-        def __init__(self, outer):
+        def __init__(self, outer, *args, **kwargs):
+            self.outer = outer
             self.runmode = outer.runmode
 
     class Run(Task):
         """A class that specified the code run process"""
-        def __init__(self, outer):
+        def __init__(self, outer, *args, **kwargs):
+            self.outer = outer
             self.runmode = outer.runmode
 
     class Teardown(Task):
         """A class that for the teardown"""
-        def __init__(self, outer):
+        def __init__(self, outer, *args, **kwargs):
+            self.outer = outer
             self.runmode = outer.runmode
