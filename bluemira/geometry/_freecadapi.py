@@ -744,13 +744,24 @@ def _wire_edges_tangent(wire):
 
 
 def _split_wire(wire):
+    """
+    Split a wire into two parts.
+    """
     edges = wire.OrderedEdges
     if len(edges) == 1:
         # Only one edge in the wire, which we need to split
-        curve = edges[0].Curve
+        edge = edges[0]
+        p_start, p_end = edge.ParameterRange
+        p_mid = 0.5 * (p_end - p_start)
+        edges_1 = edge.Curve.toShape(p_start, p_mid)
+        edges_2 = edge.Curve.toShape(p_mid, p_end)
 
-    n_split = int(len(edges) / 2)
-    return [Part.Wire(edges[:n_split]), Part.Wire(edges[n_split:])]
+    else:
+        # We can just sub-divide the wire by its edges
+        n_split = int(len(edges) / 2)
+        edges_1, edges_2 = edges[:n_split], edges[n_split:]
+
+    return Part.Wire(edges_1), Part.Wire(edges_2)
 
 
 def sweep_shape(profiles, path, solid=True, frenet=True):
@@ -797,9 +808,15 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
 
     if path.isClosed():
         # Split and fuse
-        pass
+        path_1, path_2 = _split_wire(path)
+        result_1 = path_1.makePipeShell(profiles, solid, frenet)
+        result_2 = path_2.makePipeShell(profiles, solid, frenet)
+        result = result_1.fuse(result_2)
+        result.removeSplitter()
 
-    result = path.makePipeShell(profiles, solid, frenet)
+    else:
+
+        result = path.makePipeShell(profiles, solid, frenet)
 
     if solid:
         return Part.Solid(result)

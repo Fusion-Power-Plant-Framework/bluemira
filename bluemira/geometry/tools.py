@@ -330,14 +330,14 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
     return bmsolid
 
 
-def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
+def sweep_shape(profile, path, solid=True, frenet=True, label=""):
     """
-    Sweep a a set of profiles along a path.
+    Sweep a profile along a path.
 
     Parameters
     ----------
-    profiles: Iterable[BluemiraWire]
-        Set of profiles to sweep
+    profiles: BluemiraWire
+        Profile to sweep
     path: BluemiraWire
         Path along which to sweep the profiles
     solid: bool
@@ -351,10 +351,7 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     swept: Union[BluemiraSolid, BluemiraShell]
         Swept geometry object
     """
-    if not isinstance(profiles, Iterable):
-        profiles = [profiles]
-    profiles = [p._shape for p in profiles]
-    result = _freecadapi.sweep_shape(profiles, path._shape, solid, frenet)
+    result = _freecadapi.sweep_shape(profile._shape, path._shape, solid, frenet)
 
     if solid:
         return BluemiraSolid._create(result, label=label)
