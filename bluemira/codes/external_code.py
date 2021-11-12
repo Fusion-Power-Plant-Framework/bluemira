@@ -86,9 +86,9 @@ class ExternalCode(Task):
     """An external code wrapper"""
     def __init__(self, runmode, *args, **kwargs):
         super().__init__(runmode)
-        self.setup = ExternalCode.Setup(runmode, *args, **kwargs)
-        self.run = ExternalCode.Run(runmode, *args, **kwargs)
-        self.teardown = ExternalCode.Teardown(runmode, *args, **kwargs)
+        self.setup = self.Setup(self, *args, **kwargs)
+        self.run = self.Run(self, *args, **kwargs)
+        self.teardown = self.Teardown(self, *args, **kwargs)
 
     def __call__(self):
         self.runmode(self.setup)
@@ -97,12 +97,15 @@ class ExternalCode(Task):
 
     class Setup(Task):
         """A class that specified the code setup"""
-        pass
+        def __init__(self, outer):
+            self.runmode = outer.runmode
 
     class Run(Task):
         """A class that specified the code run process"""
-        pass
+        def __init__(self, outer):
+            self.runmode = outer.runmode
 
     class Teardown(Task):
         """A class that for the teardown"""
-        pass
+        def __init__(self, outer):
+            self.runmode = outer.runmode
