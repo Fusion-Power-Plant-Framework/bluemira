@@ -72,7 +72,7 @@ class CentralColumnShieldCAD(ComponentCAD):
 
         if not isinstance(self.profile, Loop):
             raise TypeError("2D profile key does not map to a Loop object")
-        super().__init__(self, "Central column shield", palette=BLUE["CCS"], **kwargs)
+        super().__init__("Central column shield", palette=BLUE["CCS"], **kwargs)
 
     def build(self, **kwargs):
         """
