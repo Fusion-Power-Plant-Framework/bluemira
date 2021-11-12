@@ -343,10 +343,9 @@ class Run:
             for param in self.param_list:  # Overwrite variables
                 if param.mapping is not None and PROCESS in param.mapping:
                     mapping = param.mapping[PROCESS]
-                    if mapping.send:
-                        writer.add_parameter(
-                            update_obsolete_vars(mapping.name), param.value
-                        )
+                    if mapping.send
+                        for new_mapping in update_obsolete_vars(mapping.name):
+                            writer.add_parameter(new_mapping, param.value)
 
         filename = os.path.join(self.run_dir, "IN.DAT")
         writer.write_in_dat(output_filename=filename)

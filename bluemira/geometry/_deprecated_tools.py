@@ -30,7 +30,6 @@ import numba as nb
 from numba.np.extensions import cross2d
 from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
-from typing import Iterable
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -40,6 +39,7 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.bound_box import BoundingBox
+from bluemira.utilities.tools import flatten_iterable
 
 
 # =============================================================================
@@ -2281,14 +2281,7 @@ class MixedFaceMaker:
             if b is not None:
                 wires.append(b)
 
-        def flatten_list(v_list):
-            for val in v_list:
-                if isinstance(val, Iterable):
-                    yield from flatten_list(val)
-                else:
-                    yield val
-
-        self.wires = list(flatten_list(wires))
+        self.wires = list(flatten_iterable(wires))
         self._debugger = coords_order
 
     def _make_wire(self):

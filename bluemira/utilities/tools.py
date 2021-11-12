@@ -24,12 +24,16 @@ A collection of miscellaneous tools.
 """
 
 import numpy as np
+import nlopt
 import operator
+import re
+import string
+from collections.abc import Iterable
+from functools import partial
 from importlib import util as imp_u, import_module as imp
+from itertools import permutations
 from json import JSONDecoder, JSONEncoder
 from json.encoder import _make_iterencode
-import string
-import nlopt
 from os import listdir
 import re
 from functools import partial
@@ -40,6 +44,10 @@ from unittest.mock import patch
 from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.base.parameter import Parameter
+
+# =====================================================
+# JSON utilities
+# =====================================================
 
 
 class CommentJSONDecoder(JSONDecoder):
@@ -124,51 +132,6 @@ def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
     return _make_iterencode(
         markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
     )
-
-
-def is_num(thing):
-    """
-    Determine whether or not the input is a number.
-
-    Parameters
-    ----------
-    thing: unknown type
-        The input which we need to determine is a number or not
-
-    Returns
-    -------
-    num: bool
-        Whether or not the input is a number
-    """
-    if thing is True or thing is False:
-        return False
-    if thing is np.nan:
-        return False
-    try:
-        float(thing)
-        return True
-    except (ValueError, TypeError):
-        return False
-
-
-def abs_rel_difference(v2, v1_ref):
-    """
-    Calculate the absolute relative difference between a new value and an old
-    reference value.
-
-    Parameters
-    ----------
-    v2: float
-        The new value to compare to the old
-    v1_ref: float
-        The old reference value
-
-    Returns
-    -------
-    delta: float
-        The absolute relative difference between v2 and v1ref
-    """
-    return abs((v2 - v1_ref) / v1_ref)
 
 
 # =====================================================
@@ -376,6 +339,55 @@ norm = wrap.norm
 dot = wrap.dot
 cross = wrap.cross
 
+# =====================================================
+# Misc utilities
+# =====================================================
+
+
+def is_num(thing):
+    """
+    Determine whether or not the input is a number.
+
+    Parameters
+    ----------
+    thing: unknown type
+        The input which we need to determine is a number or not
+
+    Returns
+    -------
+    num: bool
+        Whether or not the input is a number
+    """
+    if thing is True or thing is False:
+        return False
+    if thing is np.nan:
+        return False
+    try:
+        float(thing)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def abs_rel_difference(v2, v1_ref):
+    """
+    Calculate the absolute relative difference between a new value and an old
+    reference value.
+
+    Parameters
+    ----------
+    v2: float
+        The new value to compare to the old
+    v1_ref: float
+        The old reference value
+
+    Returns
+    -------
+    delta: float
+        The absolute relative difference between v2 and v1ref
+    """
+    return abs((v2 - v1_ref) / v1_ref)
+
 
 def set_random_seed(seed_number: int):
     """
@@ -511,6 +523,28 @@ def clip(val, val_min, val_max):
     return val
 
 
+def flatten_iterable(iters):
+    """
+    Expands a nested iterable structure, flattening it into one iterable
+
+    Parameters
+    ----------
+    lists: set of Iterables
+        The object(s) to de-nest
+
+    Yields
+    ------
+        elements of iterable
+    """
+    for _iter in iters:
+        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes)):
+            print(_iter)
+            for _it in flatten_iterable(_iter):
+                yield _it
+        else:
+            yield _iter
+
+
 # ======================================================================================
 # Coordinate system transformations
 # ======================================================================================
@@ -569,6 +603,11 @@ def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
     x = x_ref + r * np.cos(phi)
     z = z_ref + r * np.sin(phi)
     return x, z
+
+
+# ======================================================================================
+# Dynamic module loading
+# ======================================================================================
 
 
 def get_module(name):
