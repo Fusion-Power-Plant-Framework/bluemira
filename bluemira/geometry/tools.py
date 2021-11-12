@@ -378,10 +378,10 @@ def save_as_STEP(shapes, filename="test", scale=1):
     _freecadapi.save_as_STEP(freecad_shapes, filename, scale)
 
 
-# # =============================================================================
-# # Boolean operations
-# # =============================================================================
-def fuse(shapes, label=""):
+# ======================================================================================
+# Boolean operations
+# ======================================================================================
+def boolean_fuse(shapes, label=""):
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
@@ -402,34 +402,29 @@ def fuse(shapes, label=""):
     error: GeometryError
         In case the boolean operation fails.
     """
-    if isinstance(shapes, list):
-        if len(shapes) > 1:
-            # check that all the shapes are of the same time
-            _type = type(shapes[0])
-            check = all(isinstance(s, _type) for s in shapes)
-            api_shapes = [s._shape for s in shapes]
-            if check:
-                try:
-                    merged_shape = _freecadapi.fuse(api_shapes)
-                    _type = type(merged_shape)
-                    if _type in [_freecadapi.apiWire, _freecadapi.apiFace]:
-                        return convert(merged_shape, label)
-                    else:
-                        raise ValueError(
-                            f"Fuse function still not implemented for "
-                            f"{_type} instances."
-                        )
-                except Exception as e:
-                    raise GeometryError(f"Fuse operation fails. {e}")
-            else:
-                raise ValueError(f"All instances in {shapes} must be of the same type.")
-        else:
-            raise ValueError("At least 2 shapes must be given")
-    else:
+    if not isinstance(shapes, list):
         raise ValueError(f"{shapes} is not a list.")
+    if len(shapes) < 2:
+        raise ValueError("At least 2 shapes must be given")
+    # check that all the shapes are of the same time
+    _type = type(shapes[0])
+    if not all(isinstance(s, _type) for s in shapes):
+        raise ValueError(f"All instances in {shapes} must be of the same type.")
+    api_shapes = [s._shape for s in shapes]
+    try:
+        merged_shape = _freecadapi.fuse(api_shapes)
+        _type = type(merged_shape)
+        if _type in [_freecadapi.apiWire, _freecadapi.apiFace]:
+            return convert(merged_shape, label)
+        else:
+            raise ValueError(
+                f"Fuse function still not implemented for {_type} instances."
+            )
+    except Exception as e:
+        raise GeometryError(f"Fuse operation fails. {e}")
 
 
-def cut(shape, tools):
+def boolean_cut(shape, tools):
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
@@ -454,7 +449,7 @@ def cut(shape, tools):
     if not isinstance(tools, list):
         tools = [tools]
     apitools = [t._shape for t in tools]
-    cut_shape = _freecadapi.cut(apishape, apitools)
+    cut_shape = _freecadapi.boolean_cut(apishape, apitools)
 
     _type = type(cut_shape)
     if _type == list:

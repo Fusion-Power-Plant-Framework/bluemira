@@ -182,7 +182,7 @@ class TestGeometry:
 
     @pytest.mark.parametrize("test_input, expected", params_for_fuse_wires)
     def test_fuse_wires(self, test_input, expected):
-        wire_fuse = tools.fuse(test_input)
+        wire_fuse = tools.boolean_fuse(test_input)
         assert (wire_fuse.length, wire_fuse.is_closed()) == expected
 
     params_for_fuse_faces = [
@@ -271,7 +271,7 @@ class TestGeometry:
 
     @pytest.mark.parametrize("test_input, expected", params_for_fuse_faces)
     def test_fuse_faces(self, test_input, expected):
-        face_fuse = tools.fuse(test_input)
+        face_fuse = tools.boolean_fuse(test_input)
         assert (
             face_fuse.length,
             face_fuse.area,
@@ -316,7 +316,7 @@ class TestGeometry:
 
     @pytest.mark.parametrize("test_input, expected", params_for_cut_wires)
     def test_cut_wires(self, test_input, expected):
-        wire_cut = tools.cut(test_input[0], test_input[1:])
+        wire_cut = tools.boolean_cut(test_input[0], test_input[1:])
         output = [(w.length, w.is_closed()) for w in wire_cut]
         assert output == expected
 
@@ -406,6 +406,6 @@ class TestGeometry:
 
     @pytest.mark.parametrize("test_input, expected", params_for_cut_faces)
     def test_cut_faces(self, test_input, expected):
-        face_cut = tools.cut(test_input[0], test_input[1:])
+        face_cut = tools.boolean_cut(test_input[0], test_input[1:])
         output = [(f.length, f.area) for f in face_cut]
         assert output == expected

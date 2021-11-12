@@ -31,7 +31,7 @@ from scipy.special import iv as bessel
 from collections import OrderedDict
 from pandas import DataFrame
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from BLUEPRINT.geometry.geomtools import clock, qrotate, xz_interp
 from BLUEPRINT.geometry.geomtools import circle_seg
 
