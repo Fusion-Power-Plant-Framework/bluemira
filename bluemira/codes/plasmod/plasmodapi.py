@@ -25,17 +25,18 @@ API for the transport code PLASMOD and related functions
 
 import os
 import sys
-from io import StringIO
-from typing import List, Any
 
 import numpy as np
 
-from typing import Optional, Union, List
+from typing import Union, Dict
 import copy
 
 import csv
+import pprint
 
 from ..external_code import ExternalCode
+
+PLASMOD_PATH = ""
 
 DEFAULT_INPUTS = {
     ############################
@@ -96,9 +97,7 @@ class PlasmodParameters:
     List of plasmod inputs
     """
 
-    def __init__(self, **kwargs):
-        self.__options = {**get_default_inputs(), **get_default_outputs()}
-        self.modify(**kwargs)
+    _options = None
 
     def as_dict(self):
         """
@@ -112,14 +111,21 @@ class PlasmodParameters:
         """
         if kwargs:
             for k in kwargs:
-                if hasattr(self, k) and self.k.fset is not None:
-                    self.k = kwargs[k]
+                if k in self._options:
+                    self._options[k] = kwargs[k]
 
     def __repr__(self):
         """
         Representation string of the DisplayOptions.
         """
-        return f"{self.__class__.__name__}({pprint.pformat(self.__options)}" + "\n)"
+        return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
+
+
+class Inputs(PlasmodParameters):
+
+    def __init__(self, **kwargs):
+        self._options = get_default_inputs()
+        self.modify(**kwargs)
 
     # @property
     # def name(self):
@@ -131,29 +137,35 @@ class PlasmodParameters:
 
     @property
     def A(self):
-        return self.__options["A"]
+        return self._options["A"]
 
     @A.setter
     def A(self, val):
-        self.__options["A"] = val
+        self._options["A"] = val
 
     @property
     def Bt(self):
-        return self.__options["Bt"]
+        return self._options["Bt"]
 
     @Bt.setter
     def Bt(self, val):
-        self.__options["Bt"] = val
+        self._options["Bt"] = val
 
     @property
     def cW(self):
-        return self.__options["cW"]
+        return self._options["cW"]
 
     @cW.setter
     def cW(self, val):
-        self.__options["cW"] = val
+        self._options["cW"] = val
 
-    ##### OUTPUT PARAMETERS #######
+
+class Outputs(PlasmodParameters):
+
+    def __init__(self, **kwargs):
+        self._options = get_default_outputs()
+        self.modify(**kwargs)
+
     @property
     def _beta_p(self):
         return self._options["_beta_p"]
@@ -172,63 +184,112 @@ class PlasmodParameters:
 
 
 def write_input_file(params: Union[PlasmodParameters, dict], filename: str):
-    '''Write a set of PlasmodParameters into a file'''
+    """Write a set of PlasmodParameters into a file"""
 
     # open input file
     fid = open(filename, "w")
 
     # print all input parameters
-    self.print_parameter_list(fid, params)
+    print_parameter_list(params, fid)
 
     # close file
     fid.close()
 
 
-def print_parameter_list(params: Union[PlasmodParameters, dict], fid = sys.stdout):
-    '''Print a set of parameter to screen or into an open file'''
+def print_parameter_list(params: Union[PlasmodParameters, dict], fid=sys.stdout):
+    """Print a set of parameter to screen or into an open file"""
     if isinstance(params, PlasmodParameters):
-        print_parameter_list(fid, params.as_dict())
+        print_parameter_list(params.as_dict(), fid)
     elif isinstance(params, dict):
-        for k,v in params.items():
+        for k, v in params.items():
             if isinstance(v, int):
-                print(params[i] + " %d" % v, file=fid)
+                print(k + " %d" % v, file=fid)
             elif isinstance(v, float):
-                print(params[i] + " % 5.4e" % v, file=fid)
+                print(k + " % 5.4e" % v, file=fid)
     else:
         raise ValueError("Wrong input")
 
 
-def read_output_files(output_file, profiles_file):
-    '''Read the Plasmod profiles from the output file'''
+def read_output_files(profiles_file):
+    """Read the Plasmod profiles from the output file"""
     output = {}
-    with open(profiles_file, 'r') as fd:
-        reader = csv.reader(fd, delimiter='\t')
+    with open(profiles_file, "r") as fd:
+        reader = csv.reader(fd, delimiter="\t")
         for row in reader:
             arr = row[0].split()
-            output[arr[0]] = np.array(arr[1:])
-            output[arr[0]] = output[arr[0]].astype(np.float)
+            output_key = "_" + arr[0]
+            output_value = arr[1:]
+            if len(output_value) > 1:
+                output[output_key] = np.array(arr[1:])
+                output[output_key] = output[output_key].astype(np.float)
+            else:
+                output[output_key] = float(arr[1])
     return output
 
 
 class PlasmodSolver(ExternalCode):
     """Plasmod solver class"""
 
-    def __init__(self, runmode="BATCH", parameters=None, **kwargs):
-        if parameters is None:
-            self._parameters = PlasmodParameters()
-        elif isinstance(parameters, PlasmodParameters):
-            self._parameters = parameters
-        elif isinstance(parameters, Dict):
-            self._parameters = PlasmodParameters(**parameters)
-        super().__init__(runmode)
+    def __init__(
+        self,
+        runmode="BATCH",
+        input_params=None,
+        input_file="plasmod_input.dat",
+        output_file="outputs.dat",
+        profiles_file="profiles.dat",
+    ):
+        if input_params is None:
+            self._parameters = Inputs()
+        elif isinstance(input_params, Inputs):
+            self._parameters = input_params
+        elif isinstance(input_params, Dict):
+            self._parameters = Inputs(**input_params)
+        super().__init__(runmode, input_file, output_file, profiles_file)
 
     class Setup(ExternalCode.Setup):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.test = "Test"
+        def __init__(self, outer, input_file, output_file, profiles_file):
+            super().__init__(outer)
+            self.input_file = input_file
+            self.output_file = output_file
+            self.profiles_file = profiles_file
 
         def _batch(self, *args, **kwargs):
-            print(f"running new {self.__class__.__name__} _batch")
+            print(self.outer._parameters)
+
+        def _mock(self, *args, **kwargs):
+            print(self.outer._parameters)
+
+    class Run(ExternalCode.Run):
+        def _batch(self, *args, **kwargs):
+            write_input_file(self.outer._parameters, self.outer.setup.input_file)
+            os.system(
+                f"{PLASMOD_PATH}/plasmod.o '{self.outer.setup.input_file}' '"
+                f"{self.outer.setup.output_file}' '"
+                f"{self.outer.setup.profiles_file}'"
+            )
+
+        def _mock(self, *args, **kwargs):
+            write_input_file(self.outer._parameters, self.outer.setup.input_file)
+            print(
+                f"{PLASMOD_PATH}/plasmod.o '{self.outer.setup.input_file}' '"
+                f"{self.outer.setup.output_file}' '"
+                f"{self.outer.setup.profiles_file}'"
+            )
+
+    class Teardown(ExternalCode.Teardown):
+        def _batch(self, *args, **kwargs):
+            output = read_output_files(self.outer.setup.output_file)
+            self.outer._parameters.modify(**output)
+            output = read_output_files(self.outer.setup.profiles_file)
+            self.outer._parameters.modify(**output)
+            print_parameter_list(self.outer._parameters)
+
+        def _mock(self, *args, **kwargs):
+            output = read_output_files(self.outer.setup.output_file)
+            self.outer._parameters.modify(**output)
+            output = read_output_files(self.outer.setup.profiles_file)
+            self.outer._parameters.modify(**output)
+            print_parameter_list(self.outer._parameters)
 
     # # ******************** public attributes (plasmod inputs) ******************** #
     #
