@@ -26,7 +26,7 @@ Parameters provide the value as well as a set of supporting metadata, including:
     ...     unit="m",
     ...     description="The tokamak major radius",
     ...     source="Input",
-    ...     mapping={"PROCESS": ParameterMapping("rmajor", read=True, write=False)},
+    ...     mapping={"PROCESS": ParameterMapping("rmajor", recv=True, send=False)},
     ... )
     >>> print(r_0)
 
@@ -237,7 +237,7 @@ As an analysis progresses, various values within the ParameterFrame will be upda
 different sources. This is handled in bulk by updating Parameters based on their keyword
 name, which can be done either directly or via an external json source.
 
-.. note:: 
+.. note::
 
     Keywords must match the current Parameters contained within the ParameterFrame in
     order to update the corresponding value.
