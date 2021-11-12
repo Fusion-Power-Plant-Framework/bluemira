@@ -74,7 +74,7 @@ class TestParameter:
         "Input",
         {"PROCESS": ParameterMapping("rmajor", False, True)},
     )
-    p_str = "r_0 = 9 m (Major radius) : marjogrgrbg {'PROCESS': {'name': 'rmajor', 'read': False, 'write': True}}"
+    p_str = "r_0 = 9 m (Major radius) : marjogrgrbg {'PROCESS': {'name': 'rmajor', 'recv': False, 'send': True}}"
     g = Parameter(
         "B_0",
         "Toroidal field at R_0",

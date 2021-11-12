@@ -30,21 +30,21 @@ from . import error as code_err
 
 
 def _get_mapping(
-    params, code_name: str, read_write: Literal["read", "write"], override: bool = False
+    params, code_name: str, send_recv: Literal["send", "recv"], override: bool = False
 ) -> Dict[str, str]:
     """
-    Create a dictionary to get the read or write mappings for a given code.
+    Create a dictionary to get the send or recieve mappings for a given code.
 
     Parameters
     ----------
     params: ParameterFrame
-        The parameters with mappings that define what is going to be read or written.
+        The parameters with mappings that define what is going to be sent or recieved.
     code_name: str
-        The identifying name of the code that is being read or written from.
-    read_write: Literal["read", "write"]
-        Whether to generate a mapping for reading or writing.
+        The identifying name of the code that data being send to or recieved from.
+    send_recv: Literal["send", "recv"]
+        Whether to generate a mapping for sending or reciving.
     override: bool, optional
-        If True then map variables with a mapping defined, even if read or write=False.
+        If True then map variables with a mapping defined, even if recv or send=False.
         By default, False.
 
     Yields
@@ -53,64 +53,64 @@ def _get_mapping(
         The mapping between external code parameter names (key) and bluemira parameter
         names (value).
     """
-    if read_write not in ["read", "write"]:
-        raise code_err.CodesError("Mapping must be obtained for either read or write.")
+    if send_recv not in ["send", "recv"]:
+        raise code_err.CodesError("Mapping must be obtained for either send or recv.")
 
     mapping = {}
     for key in params.keys():
         param = params.get_param(key)
         has_mapping = param.mapping is not None and code_name in param.mapping
         map_param = has_mapping and (
-            override or getattr(param.mapping[code_name], read_write)
+            override or getattr(param.mapping[code_name], send_recv)
         )
         if map_param:
             mapping[param.mapping[code_name].name] = key
     return mapping
 
 
-def get_read_mapping(params, code_name, read_all=False):
+def get_recv_mapping(params, code_name, recv_all=False):
     """
-    Get the read mapping for variables mapped from the external code to the provided
+    Get the recieve mapping for variables mapped from the external code to the provided
     input ParameterFrame.
 
     Parameters
     ----------
     params: ParameterFrame
-        The parameters with mappings that define what is going to be read.
+        The parameters with mappings that define what is going to be recieved.
     code_name: str
-        The identifying name of the code that is being read from.
-    read_all: bool, optional
-        If True then read all variables with a mapping defined, even if read=False. By
+        The identifying name of the code that is being recieved from.
+    recv_all: bool, optional
+        If True then recieve all variables with a mapping defined, even if recv=False. By
         default, False.
 
     Returns
     -------
     mapping: Dict[str, str]
         The mapping between external code parameter names (key) and bluemira parameter
-        names (value) to use for readings.
+        names (value) to use for recieving.
     """
-    return _get_mapping(params, code_name, "read", read_all)
+    return _get_mapping(params, code_name, "recv", recv_all)
 
 
-def get_write_mapping(params, code_name, write_all=False):
+def get_send_mapping(params, code_name, send_all=False):
     """
-    Get the write mapping for variables mapped from the external code to the provided
+    Get the send mapping for variables mapped from the external code to the provided
     input ParameterFrame.
 
     Parameters
     ----------
     params: ParameterFrame
-        The parameters with mappings that define what is going to be written.
+        The parameters with mappings that define what is going to be sent.
     code_name: str
-        The identifying name of the code that is being written to.
-    write_all: bool, optional
-        If True then write all variables with a mapping defined, even if write=False. By
+        The identifying name of the code that is being sent to.
+    send_all: bool, optional
+        If True then send all variables with a mapping defined, even if send=False. By
         default, False.
 
     Returns
     -------
     mapping: Dict[str, str]
         The mapping between external code parameter names (key) and bluemira parameter
-        names (value) to use for writing.
+        names (value) to use for sending.
     """
-    return _get_mapping(params, code_name, "write", write_all)
+    return _get_mapping(params, code_name, "send", send_all)
