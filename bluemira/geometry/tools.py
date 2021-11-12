@@ -241,7 +241,8 @@ def make_ellipse(
 
 
 def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
-    """Close this wire with a line segment
+    """
+    Close this wire with a line segment
 
     Parameters
     ----------
@@ -330,7 +331,8 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
 
 
 def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
-    """Calculate the distance between two BluemiraGeos.
+    """
+    Calculate the distance between two BluemiraGeos.
 
     Parameters
     ----------
@@ -412,7 +414,7 @@ def boolean_fuse(shapes, label=""):
         raise ValueError(f"All instances in {shapes} must be of the same type.")
     api_shapes = [s._shape for s in shapes]
     try:
-        merged_shape = _freecadapi.fuse(api_shapes)
+        merged_shape = _freecadapi.boolean_fuse(api_shapes)
         _type = type(merged_shape)
         if _type in [_freecadapi.apiWire, _freecadapi.apiFace]:
             return convert(merged_shape, label)
