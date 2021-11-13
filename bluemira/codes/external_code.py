@@ -59,13 +59,6 @@ class Task():
     # todo: ensure a correspondence between the specified runmode and the implemented
     #  functions (if possible).
 
-    def __init__(self, runmode):
-        self.set_runmode(runmode)
-
-    def set_runmode(self, runmode):
-        """Set the runmode"""
-        self.runmode = RunMode[runmode]
-
     def _prominence(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -75,37 +68,36 @@ class Task():
     def _mock(self, *args, **kwargs):
         raise NotImplementedError
 
-    def __call__(self, *args, **kwargs):
-        return self.runmode(self, *args, **kwargs)
 
-
-class ExternalCode(Task):
+class ExternalCode():
     """An external code wrapper"""
     def __init__(self, runmode, *args, **kwargs):
-        super().__init__(runmode)
-        self.setup = self.Setup(self, *args, **kwargs)
-        self.run = self.Run(self, *args, **kwargs)
-        self.teardown = self.Teardown(self, *args, **kwargs)
+        self.runmode = None
+        self.set_runmode(runmode)
+        self.setup_obj = self.Setup(self, *args, **kwargs)
+        self.run_obj = self.Run(self, *args, **kwargs)
+        self.teardown_obj = self.Teardown(self, *args, **kwargs)
 
-    def __call__(self):
-        self.runmode(self.setup)
-        self.runmode(self.run)
-        self.runmode(self.teardown)
+    def set_runmode(self, runmode):
+        """Set the runmode"""
+        self.runmode = RunMode[runmode]
+
+    def run(self):
+        self.runmode(self.setup_obj)
+        self.runmode(self.run_obj)
+        self.runmode(self.teardown_obj)
 
     class Setup(Task):
         """A class that specified the code setup"""
         def __init__(self, outer, *args, **kwargs):
             self.outer = outer
-            self.runmode = outer.runmode
 
     class Run(Task):
         """A class that specified the code run process"""
         def __init__(self, outer, *args, **kwargs):
             self.outer = outer
-            self.runmode = outer.runmode
 
     class Teardown(Task):
         """A class that for the teardown"""
         def __init__(self, outer, *args, **kwargs):
             self.outer = outer
-            self.runmode = outer.runmode
