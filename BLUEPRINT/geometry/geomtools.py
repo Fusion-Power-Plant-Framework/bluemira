@@ -24,14 +24,16 @@ A collection of geometry utility functions
 """
 import numba as nb
 import numpy as np
-from numpy.linalg import LinAlgError
 from collections.abc import Iterable
 from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
+
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.geometry._deprecated_tools import get_intersect
+
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 

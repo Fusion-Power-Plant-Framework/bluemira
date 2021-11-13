@@ -690,12 +690,14 @@ class DivertorBuilder:
         Find intersections between the keep-out-zone loop
         and the given flux loops.  Only upper and lower most
         intersections for each flux line are returned.
+
         Parameters
         ----------
         koz : Loop
             Loop representing the keep-out-zone
         flux_loops: list of Loop
             List of flux loops used to find intersections
+
         Returns
         -------
         all_points : list

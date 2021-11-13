@@ -22,7 +22,6 @@
 """
 Optimisation utilities
 """
-from matplotlib.pyplot import get
 import numpy as np
 from scipy.optimize._constraints import old_constraint_to_new
 
