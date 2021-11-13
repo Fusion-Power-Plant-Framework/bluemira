@@ -345,9 +345,9 @@ def make_ellipse(
 # Object properties
 # ======================================================================================
 def _get_api_attr(obj, prop):
-    if hasattr(obj, prop):
+    try:
         return getattr(obj, prop)
-    else:
+    except AttributeError:
         raise FreeCADError(f"FreeCAD object {obj} does not have an attribute: {prop}")
 
 
