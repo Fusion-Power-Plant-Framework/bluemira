@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.constants import EPS
 from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_tools import (
     loop_plane_intersect,
@@ -115,13 +116,13 @@ class ChargedParticleSolver:
         upper_power = self.params.f_lfs_upper_target + self.params.f_hfs_upper_target
         power_sum = lower_power + upper_power
 
-        if not np.isclose(power_sum, 1.0, rtol=0, atol=1e-9):
+        if not np.isclose(power_sum, 1.0, rtol=EPS, atol=1e-9):
             raise AdvectionTransportError(
                 f"Total power fractions should sum to 1, not : {power_sum}"
             )
 
         zero_in_one_direction = np.any(
-            np.isclose([lower_power, upper_power], 0, rtol=0, atol=1e-9)
+            np.isclose([lower_power, upper_power], 0, rtol=EPS, atol=1e-9)
         )
         if self.eq.is_double_null and zero_in_one_direction:
             bluemira_warn(
@@ -291,14 +292,14 @@ class ChargedParticleSolver:
         Bt_omp = self.eq.Bt(x_omp)
         B_omp = np.hypot(Bp_omp, Bt_omp)
 
-        # Parallel heat flux at the outboard midplane
+        # Parallel power at the outboard midplane
         q_par_omp = self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
 
         # Calculate values at intersections
         Bp_lfs = self.eq.Bp(x_lfs_inter, z_lfs_inter)
         Bp_hfs = self.eq.Bp(x_hfs_inter, z_hfs_inter)
 
-        # Calculate parallel heat fluxes at the intersections
+        # Calculate parallel power at the intersections
         # Note that flux expansion terms cancelate down to this
         q_par_lfs = q_par_omp * Bp_lfs / B_omp
         q_par_hfs = q_par_omp * Bp_hfs / B_omp
@@ -362,7 +363,7 @@ class ChargedParticleSolver:
         Bt_imp = self.eq.Bt(x_imp)
         B_imp = np.hypot(Bp_imp, Bt_imp)
 
-        # Parallel heat flux at the outboard and inboard midplane
+        # Parallel power at the outboard and inboard midplane
         q_par_omp = self._q_par(x_omp, dx_omp, B_omp, Bp_omp)
         q_par_imp = self._q_par(x_imp, dx_imp, B_imp, Bp_imp, outboard=False)
 
@@ -372,7 +373,7 @@ class ChargedParticleSolver:
         Bp_hfs_down = self.eq.Bp(x_hfs_down_inter, z_hfs_down_inter)
         Bp_hfs_up = self.eq.Bp(x_hfs_up_inter, z_hfs_up_inter)
 
-        # Calculate parallel heat fluxes at the intersections
+        # Calculate parallel power at the intersections
         # Note that flux expansion terms cancelate down to this
         q_par_lfs_down = q_par_omp * Bp_lfs_down / B_omp
         q_par_lfs_up = q_par_omp * Bp_lfs_up / B_omp
@@ -432,7 +433,7 @@ class ChargedParticleSolver:
 
     def _q_par(self, x, dx, B, Bp, outboard=True):
         """
-        Calculate the parallel heat flux at the midplane.
+        Calculate the parallel power at the midplane.
         """
         p_sol_near = self.params.fw_p_sol_near
         p_sol_far = self.params.fw_p_sol_far
