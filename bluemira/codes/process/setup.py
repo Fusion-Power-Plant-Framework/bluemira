@@ -31,7 +31,7 @@ from bluemira.codes.process.api import DEFAULT_INDAT, InDat
 
 class PROCESSInputWriter(InDat):
     """
-    BLUEPRINT IN.DAT writer for PROCESS input.
+    Bluemira IN.DAT writer for PROCESS input.
 
     Parameters
     ----------
@@ -46,9 +46,3 @@ class PROCESSInputWriter(InDat):
         else:
             super().__init__(filename=None)
             self.filename = template_indat
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

@@ -27,25 +27,49 @@ from __future__ import annotations
 
 import freecad  # noqa: F401
 import Part
+import FreeCAD
 from FreeCAD import Base
+import BOPTools
+import BOPTools.SplitAPI
+import BOPTools.GeneralFuseResult
+import BOPTools.JoinAPI
+import BOPTools.JoinFeatures
+import BOPTools.ShapeMerge
+import BOPTools.Utils
+import BOPTools.SplitFeatures
+import FreeCADGui
 
 # import math lib
 import numpy as np
 import math
 
 # import typing
-from typing import Union
+from typing import List, Optional, Union, Dict
+
+# import errors and warnings
+from bluemira.geometry.error import FreeCADError
 from bluemira.base.look_and_feel import bluemira_warn
 
-# import errors
-from bluemira.geometry.error import GeometryError
+from bluemira.base.constants import EPS
+
+# import visualisation
+from pivy import coin, quarter
+from PySide2.QtWidgets import QApplication
+
+apiWire = Part.Wire  # noqa (N816)
+apiFace = Part.Face  # noqa (N816)
+apiShell = Part.Shell  # noqa (N816)
+apiSolid = Part.Solid  # noqa (N816)
 
 
-# # =============================================================================
-# # Array, List, Vector, Point manipulation
-# # =============================================================================
+# ======================================================================================
+# Array, List, Vector, Point manipulation
+# ======================================================================================
+
+
 def check_data_type(data_type):
-    """Decorator to check the data type of the first parameter input (args[0]) of a
+    """
+    Decorator to check the data type of the first parameter input (args[0]) of a
     function.
 
     Raises
@@ -115,11 +139,12 @@ def vertex_to_numpy(vertexes):
     return np.array([np.array([v.X, v.Y, v.Z]) for v in vertexes])
 
 
-# # =============================================================================
-# # Geometry creation
-# # =============================================================================
+# ======================================================================================
+# Geometry creation
+# ======================================================================================
 def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
-    """Make a polygon from a set of points.
+    """
+    Make a polygon from a set of points.
 
     Parameters
     ----------
@@ -144,7 +169,8 @@ def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.
 
 
 def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
-    """Make a bezier curve from a set of points.
+    """
+    Make a bezier curve from a set of points.
 
     Parameters
     ----------
@@ -173,7 +199,8 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
 def make_bspline(
     points: Union[list, np.ndarray], closed: bool = False, **kwargs
 ) -> Part.Wire:
-    """Make a bezier curve from a set of points.
+    """
+    Make a bezier curve from a set of points.
 
     Parameters
     ----------
@@ -336,7 +363,7 @@ def _wire_is_straight(wire):
         edge = wire.Edges[0]
         if len(edge.Vertexes) == 2:
             straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
-            if np.isclose(straight, wire.Length, rtol=0, atol=1e-8):
+            if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
                 return True
     return False
 
@@ -366,10 +393,10 @@ def offset_wire(
         Offset wire
     """
     if _wire_is_straight(wire):
-        raise GeometryError("Cannot offset a straight line.")
+        raise FreeCADError("Cannot offset a straight line.")
 
     if not _wire_is_planar(wire):
-        raise GeometryError("Cannot offset a non-planar wire.")
+        raise FreeCADError("Cannot offset a non-planar wire.")
 
     if join == "arc":
         f_join = 0
@@ -377,7 +404,7 @@ def offset_wire(
         f_join = 2
     else:
         # NOTE: The "tangent": 1 option misbehaves in FreeCAD
-        raise GeometryError(
+        raise FreeCADError(
             f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
         )
 
@@ -395,20 +422,20 @@ def offset_wire(
                 f"{error.args[0]['sErrMsg']}",
             ]
         )
-        raise GeometryError(msg)
+        raise FreeCADError(msg)
     return wire
 
 
-# # =============================================================================
-# # Object's properties
-# # =============================================================================
+# ======================================================================================
+# Object properties
+# ======================================================================================
 def length(obj) -> float:
     """Object's length"""
     prop = "Length"
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def area(obj) -> float:
@@ -417,7 +444,7 @@ def area(obj) -> float:
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def volume(obj) -> float:
@@ -426,7 +453,7 @@ def volume(obj) -> float:
     if hasattr(obj, prop):
         return getattr(obj, prop)
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def center_of_mass(obj) -> np.ndarray:
@@ -436,7 +463,7 @@ def center_of_mass(obj) -> np.ndarray:
         # CenterOfMass returns a vector.
         return getattr(obj, prop)
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def is_null(obj):
@@ -445,7 +472,7 @@ def is_null(obj):
     if hasattr(obj, prop):
         return getattr(obj, prop)()
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def is_closed(obj):
@@ -454,7 +481,7 @@ def is_closed(obj):
     if hasattr(obj, prop):
         return getattr(obj, prop)()
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
 def bounding_box(obj):
@@ -467,12 +494,12 @@ def bounding_box(obj):
         box = getattr(obj, prop)
         return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
     else:
-        raise GeometryError(f"FreeCAD object {obj} has not property {prop}")
+        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
 
 
-# # =============================================================================
-# # Part.Wire manipulation
-# # =============================================================================
+# ======================================================================================
+# Wire manipulation
+# ======================================================================================
 def wire_closure(wire: Part.Wire):
     """Create a line segment wire that closes an open wire"""
     closure = None
@@ -497,7 +524,8 @@ def close_wire(wire: Part.Wire):
 
 
 def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
-    """Discretize a wire.
+    """
+    Discretize a wire.
 
     Parameters
     ----------
@@ -525,7 +553,7 @@ def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     else:
         # a dl is calculated for the discretisation of the different edges
         # NOTE: must discretise to at least two points.
-        ndiscr = max(math.ceil(w.Length / dl), 2)
+        ndiscr = max(math.ceil(w.Length / dl + 1), 2)
 
     # discretization points array
     output = w.discretize(ndiscr)
@@ -567,7 +595,7 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     # correct sequence and orientation. No need for tricks after the discretization.
     for e in w.OrderedEdges:
         pointse = list(discretize(Part.Wire(e), dl=dl))
-        output += pointse[0:-1]
+        output += pointse[:-1]
 
     if w.isClosed():
         output += [output[0]]
@@ -579,7 +607,8 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
 
 
 def dist_to_shape(shape1, shape2):
-    """Find the minimum distance between two shapes
+    """
+    Find the minimum distance between two shapes
 
     Parameters
     ----------
@@ -604,9 +633,9 @@ def dist_to_shape(shape1, shape2):
     return dist, vectors
 
 
-# # =============================================================================
-# # Save functions
-# # =============================================================================
+# ======================================================================================
+# Save functions
+# ======================================================================================
 def save_as_STEP(shapes, filename="test", scale=1):
     """
     Saves a series of Shape objects as a STEP assembly
@@ -627,7 +656,7 @@ def save_as_STEP(shapes, filename="test", scale=1):
         shapes = [shapes]
 
     if not all(not shape.isNull() for shape in shapes):
-        raise GeometryError("Shape is null.")
+        raise FreeCADError("Shape is null.")
 
     compound = make_compound(shapes)
 
@@ -771,7 +800,7 @@ def make_compound(shapes):
 
     Parameters
     ----------
-    *shapes: list of FreeCAD shape objects
+    shapes: list of FreeCAD shape objects
         A set of objects to be compounded
 
     Returns
@@ -781,3 +810,255 @@ def make_compound(shapes):
     """
     compound = Part.makeCompound(shapes)
     return compound
+
+
+# ======================================================================================
+# Boolean operations
+# ======================================================================================
+def boolean_fuse(shapes):
+    """
+    Fuse two or more shapes together. Internal splitter are removed.
+
+    Parameters
+    ----------
+    shapes: Iterable
+        List of FreeCAD shape objects to be fused together. All the objects in the
+        list must be of the same type.
+
+    Returns
+    -------
+    fuse_shape:
+        Result of the boolean operation.
+
+    Raises
+    ------
+    error: GeometryError
+        In case the boolean operation fails.
+    """
+    if not isinstance(shapes, list):
+        raise ValueError(f"{shapes} is not a list.")
+    if len(shapes) < 2:
+        raise ValueError("At least 2 shapes must be given")
+    # check that all the shapes are of the same time
+    _type = type(shapes[0])
+    if not all(isinstance(s, _type) for s in shapes):
+        raise ValueError(f"All instances in {shapes} must be of the same type.")
+    try:
+        if _type == Part.Wire:
+            merged_shape = BOPTools.SplitAPI.booleanFragments(shapes, "Split")
+            if len(merged_shape.Wires) > len(shapes):
+                raise FreeCADError(
+                    f"Fuse wire creation failed. Possible "
+                    f"overlap or internal intersection of "
+                    f"input shapes {shapes}."
+                )
+            else:
+                merged_shape = merged_shape.fuse(merged_shape.Wires)
+                merged_shape = Part.Wire(merged_shape.Wires)
+                return merged_shape
+        elif _type == Part.Face:
+            merged_shape = shapes[0].fuse(shapes[1:])
+            merged_shape = merged_shape.removeSplitter()
+            if len(merged_shape.Faces) > 1:
+                raise FreeCADError(
+                    f"Fuse boolean operation on {shapes} gives more that one face."
+                )
+            else:
+                return merged_shape.Faces[0]
+        else:
+            raise ValueError(
+                f"Fuse function still not implemented for {_type} instances."
+            )
+    except Exception as e:
+        raise FreeCADError(str(e))
+
+
+def boolean_cut(shape, tools, split=True):
+    """
+    Difference of shape and a given (list of) topo shape cut(tools)
+
+    Parameters
+    ----------
+    shape: FreeCAD shape
+        the reference object
+    tools: Iterable
+        List of FreeCAD shape objects to be used as tools.
+    split: bool
+        If True, shape is split into pieces based on intersections with tools.
+
+    Returns
+    -------
+    cut_shape:
+        Result of the boolean operation.
+
+    Raises
+    ------
+    error: GeometryError
+        In case the boolean operation fails.
+    """
+    _type = type(shape)
+
+    if not isinstance(tools, list):
+        tools = [tools]
+
+    cut_shape = shape.cut(tools)
+    if split:
+        cut_shape = BOPTools.SplitAPI.slice(cut_shape, tools, mode="Split")
+
+    if _type == Part.Wire:
+        output = cut_shape.Wires
+    elif _type == Part.Face:
+        output = cut_shape.Faces
+    elif _type == Part.Shell:
+        output = cut_shape.Shells
+    elif _type == Part.Solid:
+        output = cut_shape.Solid
+    else:
+        raise ValueError(f"Cut function not implemented for {_type} objects.")
+    return output
+
+
+# ======================================================================================
+# Plane manipulations
+# ======================================================================================
+def make_plane(base, axis, angle):
+    """
+    Make a FreeCAD Placement
+
+    Parameters
+    ----------
+    base: Iterable
+        a vector representing the Plane's position
+    axis: Iterable
+        normal vector to the Plane
+    angle:
+        rotation angle in degree
+    """
+    base = Base.Vector(base)
+    axis = Base.Vector(axis)
+
+    return Base.Placement(base, axis, angle)
+
+
+def move_plane(plane, vector):
+    """
+    Moves the FreeCAD Plane along the given vector
+
+    Parameters
+    ----------
+    plane: FreeCAD plane
+        the FreeCAD plane to be modified
+    vector: Iterable
+        direction along which the plane is moved
+
+    Returns
+    -------
+    nothing:
+        The plane is directly modified.
+    """
+    plane.move(Base.Vector(vector))
+
+
+def change_plane(geo, plane):
+    """
+    Change the placement of a FreeCAD object
+
+    Parameters
+    ----------
+    geo: FreeCAD object
+        the object to be modified
+    plane: FreeCAD plane
+        the FreeCAD plane to be modified
+
+    Returns
+    -------
+    nothing:
+        The object is directly modified.
+    """
+    new_placement = geo.Placement.multiply(plane)
+    new_base = plane.multVec(geo.Placement.Base)
+    new_placement.Base = new_base
+    geo.Placement = new_placement
+
+
+default_display_options = {
+    "color": (0.5, 0.5, 0.5),
+    "transparency": 0.0,
+}
+
+
+def _colourise(
+    node: coin.SoNode,
+    options: Dict = default_display_options,
+):
+    if isinstance(node, coin.SoMaterial):
+        rgb = options["color"]
+        transparency = options["transparency"]
+        node.ambientColor.setValue(coin.SbColor(*rgb))
+        node.diffuseColor.setValue(coin.SbColor(*rgb))
+        node.transparency.setValue(transparency)
+    for child in node.getChildren() or []:
+        _colourise(child, options)
+
+
+def show_cad(
+    parts: Union[Part.Shape, List[Part.Shape]],
+    options: Optional[Union[Dict, List[Dict]]] = None,
+):
+    """
+    The implementation of the display API for FreeCAD parts.
+
+    Parameters
+    ----------
+    parts: Union[Part.Shape, List[Part.Shape]]
+        The parts to display.
+    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
+        The options to use to display the parts.
+    """
+    if not isinstance(parts, list):
+        parts = [parts]
+
+    if options is None:
+        dict_options = {
+            "color": (0.5, 0.5, 0.5),
+            "transparency": 0.0,
+        }
+        options = [dict_options] * len(parts)
+    elif not isinstance(options, list):
+        options = [options] * len(parts)
+
+    if len(options) != len(parts):
+        raise FreeCADError(
+            "If options for display are provided then there must be as many options as "
+            "there are parts to display."
+        )
+
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+
+    if not hasattr(FreeCADGui, "subgraphFromObject"):
+        FreeCADGui.setupWithoutGUI()
+
+    doc = FreeCAD.newDocument()
+
+    root = coin.SoSeparator()
+
+    for part, option in zip(parts, options):
+        new_part = part.copy()
+        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
+        obj = doc.addObject("Part::Feature")
+        obj.Shape = new_part
+        doc.recompute()
+        subgraph = FreeCADGui.subgraphFromObject(obj)
+        _colourise(subgraph, option)
+        root.addChild(subgraph)
+
+    viewer = quarter.QuarterWidget()
+    viewer.setBackgroundColor(coin.SbColor(1, 1, 1))
+    viewer.setTransparencyType(coin.SoGLRenderAction.SCREEN_DOOR)
+    viewer.setSceneGraph(root)
+
+    viewer.setWindowTitle("Bluemira Display")
+    viewer.show()
+    app.exec_()

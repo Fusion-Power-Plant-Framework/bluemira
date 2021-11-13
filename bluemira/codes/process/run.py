@@ -31,7 +31,7 @@ import string
 
 from bluemira.codes.error import CodesError
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
-from BLUEPRINT.systems.physicstoolbox import normalise_beta
+from bluemira.equilibria.physics import normalise_beta
 from bluemira.codes.utilities import get_read_mapping, get_write_mapping
 from bluemira.codes.process.api import (
     DEFAULT_INDAT,
@@ -78,7 +78,7 @@ class RunMode(Enum):
 class Run:
     """
     PROCESS Run functions. Runs, loads or mocks PROCESS to generate the reactor's radial
-    build as an input for the BLUEPRINT run.
+    build as an input for the bluemira run.
 
     Parameters
     ----------
@@ -100,19 +100,19 @@ class Run:
 
     Notes
     -----
-    - "run": Run PROCESS within a BLUEPRINT run to generate an radial build.
+    - "run": Run PROCESS within a bluemira run to generate an radial build.
         Creates a new input file from a template IN.DAT modified with updated parameters
-        from the BLUEPRINT run mapped with write=True. If params_to_update are provided
+        from the bluemira run mapped with write=True. If params_to_update are provided
         then these will be modified to have write=True.
     - "runinput": Run PROCESS from an unmodified input file (IN.DAT), generating the
-        radial build to use as the input to the BLUEPRINT run. Overrides the write
+        radial build to use as the input to the bluemira run. Overrides the write
         mapping of all parameters to be False.
     - "read": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
         only the parameters mapped with read=True.
     - "readall": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
-        all values with a BLUEPRINT mapping regardless of the mapping.read bool.
+        all values with a bluemira mapping regardless of the mapping.read bool.
         Overrides the read mapping of all parameters to be True.
-    - "mock": Run BLUEPRINT without running PROCESS, using the default radial build based
+    - "mock": Run bluemira without running PROCESS, using the default radial build based
         on EU-DEMO. This option should not be used if PROCESS is installed, except for
         testing purposes.
     """
@@ -200,14 +200,14 @@ class Run:
         Parameters
         ----------
         use_bp_inputs: bool, optional
-            Option to use BLUEPRINT values as PROCESS inputs. Used to re-run PROCESS
-            within a BLUEPRINT run. If False, runs PROCESS without modifying inputs.
+            Option to use bluemira values as PROCESS inputs. Used to re-run PROCESS
+            within a bluemira run. If False, runs PROCESS without modifying inputs.
             Default, True
         """
         bluemira_print("Running PROCESS systems code")
 
         # Write the IN.DAT file and store in the main PROCESS folder
-        # Note that if use_bp_inputs is True, BLUEPRINT outputs with
+        # Note that if use_bp_inputs is True, bluemira outputs with
         # param.mapping.write == True will be written to IN.DAT.
         self.prepare_bp_inputs()
         self.write_indat(use_bp_inputs=use_bp_inputs)
@@ -217,7 +217,7 @@ class Run:
         self._run_subprocess()
         self._check_PROCESS_output()
 
-        # Load PROCESS results into BLUEPRINT
+        # Load PROCESS results into bluemira
         self._load_PROCESS(self.read_mfile(), read_all=not use_bp_inputs)
 
     def get_PROCESS_run(self, path, read_all=False):
@@ -292,7 +292,7 @@ class Run:
         """
         self.reactor.__PROCESS__ = bm_file
 
-        # Load all PROCESS vars mapped with a BLUEPRINT input
+        # Load all PROCESS vars mapped with a bluemira input
         var = self.parameter_mapping.values() if read_all else self.read_mapping.values()
         param = self.reactor.__PROCESS__.extract_outputs(var)
         self.reactor.add_parameters(dict(zip(var, param)), source=PROCESS)
@@ -304,7 +304,7 @@ class Run:
         Parameters
         ----------
         use_bp_inputs: bool, optional
-            Option to use BLUEPRINT values as PROCESS inputs. If True, sets the write
+            Option to use bluemira values as PROCESS inputs. If True, sets the write
             value for params in the params_to_update list to True and sets all others to
             False. If True but no params_to_update list provided, makes no changes to
             write values. If False, sets all write values to False.
@@ -328,11 +328,11 @@ class Run:
         Parameters
         ----------
         use_bp_inputs: bool, optional
-            Option to use BLUEPRINT values as PROCESS inputs. Used to re-run PROCESS
-            within a BLUEPRINT run. If False, runs PROCESS without modifying inputs.
+            Option to use bluemira values as PROCESS inputs. Used to re-run PROCESS
+            within a bluemira run. If False, runs PROCESS without modifying inputs.
             Default, True
         """
-        # Load defaults in BLUEPRINT folder
+        # Load defaults in bluemira folder
         writer = PROCESSInputWriter(template_indat=self.template_indat)
         if writer.data == {}:
             raise CodesError(
@@ -427,9 +427,3 @@ class Run:
 
     def _run_subprocess(self):
         subprocess.run("process", cwd=self.run_dir)  # noqa (S603)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

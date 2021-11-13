@@ -22,147 +22,19 @@
 """
 Generic miscellaneous tools, including some amigo port-overs
 """
-from functools import partial
 import numpy as np
-import operator
-import string
-from scipy.interpolate import griddata, interp1d
-from scipy.interpolate import UnivariateSpline
 from scipy.spatial.distance import cdist
-from itertools import permutations
-from json.encoder import _make_iterencode
-import nlopt
 import re
-from json import JSONEncoder, JSONDecoder
 from collections import OrderedDict
 from collections.abc import Mapping, Iterable
 from typing import List, Union
-from unittest.mock import patch
 
-from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_IJK, E_IJ, E_I
-from bluemira.base.parameter import Parameter
+from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-
-from BLUEPRINT.geometry.geomtools import lengthnorm
+from bluemira.utilities.tools import is_num
 
 
 CROSS_P_TOL = 1e-14  # Cross product tolerance
-
-
-def levi_civita_tensor(dim=3):
-    """
-    N dimensional Levi-Civita Tensor.
-
-    For dim=3 this looks like:
-
-    e_ijk = np.zeros((3, 3, 3))
-    e_ijk[0, 1, 2] = e_ijk[1, 2, 0] = e_ijk[2, 0, 1] = 1
-    e_ijk[0, 2, 1] = e_ijk[2, 1, 0] = e_ijk[1, 0, 2] = -1
-
-    Parameters
-    ----------
-    dim: int
-        The number of dimensions for the LCT
-
-    Returns
-    -------
-    np.array (n_0,n_1,...n_n)
-
-    """
-    perms = np.array(list(set(permutations(np.arange(dim)))))
-
-    e_ijk = np.zeros([dim for d in range(dim)])
-
-    idx = np.triu_indices(n=dim, k=1)
-
-    for perm in perms:
-        e_ijk[tuple(perm)] = np.prod(np.sign(perm[idx[1]] - perm[idx[0]]))
-
-    return e_ijk
-
-
-class NumpyJSONEncoder(JSONEncoder):
-    """
-    Une lacune ennuyante dans json...
-    """
-
-    def default(self, obj):
-        """
-        Override the JSONEncoder default object handling behaviour for np.arrays.
-        """
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super().default(obj)
-
-    @staticmethod
-    def floatstr(_floatstr, obj, *args, **kwargs):
-        """
-        Awaiting python bugs:
-
-        https://github.com/python/cpython/pull/13233
-        https://bugs.python.org/issue36841
-        https://bugs.python.org/issue42434
-        https://bugs.python.org/issue31466
-        """
-        if isinstance(obj, Parameter):
-            obj = obj.value
-        return _floatstr(obj, *args, **kwargs)
-
-    def iterencode(self, o, _one_shot=False):
-        """
-        Patch iterencode type checking
-        """
-        with patch("json.encoder._make_iterencode", new=_patcher):
-            return super().iterencode(o, _one_shot=_one_shot)
-
-
-def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
-    """
-    Modify the json encoder to be less strict on
-    type checking.
-    Pythons built in types (float, int) have __repr__ written in c
-    and json encoder doesn't yet allow custom type checking
-
-    For example
-    p = Parameter(var='hi', value=1, source='here')
-    repr(p) == '1' # True
-    isinstance(p, int) # True
-    int.__repr__(p) # TypeError
-
-    Currently there is a comment in the _make_iterencode function that
-    calls itself a hack therefore this is ok...
-    """
-    _floatstr = partial(NumpyJSONEncoder.floatstr, _floatstr)
-    kwargs["_intstr"] = repr
-    return _make_iterencode(
-        markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
-    )
-
-
-class CommentJSONDecoder(JSONDecoder):
-    """
-    Decode JSON with comments
-
-    Notes
-    -----
-    Regex does the following for comments:
-
-        - starts with // followed by most chr (not ")
-        - if not followed by " and any of (whitespace , }) and \\n
-
-    and removes extra commas from the end of dict like objects
-    """
-
-    comments = re.compile(r'[/]{2}(\s*\w*[#-/:-@{-~!^_`\[\]]*)*(?!["]\s*[,]*[\}]*\n)')
-    comma = re.compile(r"[,](\n*\s*)*[\}]")
-    eof = re.compile(r"[,](\n*\s*)*$")
-
-    def decode(self, s, *args, **kwargs):
-        """Return the Python representation of ``s`` (a ``str`` instance
-        containing a JSON document).
-        """
-        s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
-        return super().decode(s, *args, **kwargs)
 
 
 class PowerLawScaling:
@@ -235,21 +107,6 @@ class PowerLawScaling:
         Get the length of the PowerLawScaling object.
         """
         return self._len
-
-
-def set_random_seed(seed_number: int):
-    """
-    Sets the random seed number in numpy and NLopt. Useful when repeatable
-    results are desired in Monte Carlo methods and stochastic optimisation
-    methods.
-
-    Parameters
-    ----------
-    seed_number: int
-        The random seed number, preferably a very large integer
-    """
-    np.random.seed(seed_number)
-    nlopt.srand(seed_number)
 
 
 def latin_hypercube_sampling(dimensions: int, samples: int):
@@ -339,95 +196,6 @@ def map_nested_dict(obj, function):
             obj[k] = function(v)
 
 
-def compare_dicts(d1, d2, almost_equal=False, verbose=True):
-    """
-    Compares two dictionaries. Will print information about the differences
-    between the two to the console. Dictionaries are compared by length, keys,
-    and values per common keys
-
-    Parameters
-    ----------
-    d1: dict
-        The reference dictionary
-    d2: dict
-        The dictionary to be compared with the reference
-    almost_equal: bool (default = False)
-        Whether or not to use np.isclose and np.allclose for numbers and arrays
-    verbose: bool (default = True)
-        Whether or not to print to the console
-
-    Returns
-    -------
-    the_same: bool
-        Whether or not the dictionaries are the same
-    """
-    nkey_diff = len(d1) - len(d2)
-    k1 = set(d1.keys())
-    k2 = set(d2.keys())
-    intersect = k1.intersection(k2)
-    new_diff = k1 - k2
-    old_diff = k2 - k1
-    same, different = [], []
-
-    # Define functions to use for comparison in either the array, dict, or
-    # numeric cases.
-    def dict_eq(value_1, value_2):
-        return compare_dicts(value_1, value_2, almost_equal, verbose)
-
-    if almost_equal:
-        array_eq, num_eq = np.allclose, np.isclose
-    else:
-        array_eq, num_eq = lambda val1, val2: (val1 == val2).all(), operator.eq
-
-    # Map the comparison functions to the keys based on the type of value in d1.
-    comp_map = {
-        key: array_eq
-        if isinstance(val, np.ndarray)
-        else dict_eq
-        if isinstance(val, dict)
-        else num_eq
-        if is_num(val)
-        else operator.eq
-        for key, val in d1.items()
-    }
-
-    # Do the comparison
-    for k in intersect:
-        v1, v2 = d1[k], d2[k]
-        try:
-            if comp_map[k](v1, v2):
-                same.append(k)
-            else:
-                different.append(k)
-        except ValueError:  # One is an array and the other not
-            different.append(k)
-
-    the_same = False
-    result = "===========================================================\n"
-    if nkey_diff != 0:
-        compare = "more" if nkey_diff > 0 else "fewer"
-        result += f"d1 has {nkey_diff} {compare} keys than d2" + "\n"
-    if new_diff != set():
-        result += "d1 has the following keys which d2 does not have:\n"
-        new_diff = ["\t" + str(i) for i in new_diff]
-        result += "\n".join(new_diff) + "\n"
-    if old_diff != set():
-        result += "d2 has the following keys which d1 does not have:\n"
-        old_diff = ["\t" + str(i) for i in old_diff]
-        result += "\n".join(old_diff) + "\n"
-    if different:
-        result += "the following shared keys have different values:\n"
-        different = ["\t" + str(i) for i in different]
-        result += "\n".join(different) + "\n"
-    if nkey_diff == 0 and new_diff == set() and old_diff == set() and different == []:
-        the_same = True
-    else:
-        result += "==========================================================="
-        if verbose:
-            print(result)
-    return the_same
-
-
 def get_max_PF(coil_dict):  # noqa (N802)
     """
     Returns maximum external radius of the largest PF coil
@@ -471,23 +239,6 @@ def furthest_point_arg(point, loop, coords=None, closest=False):
     return np.argmax(distances)
 
 
-def innocent_smoothie(x, y, n=500, s=0):
-    """
-    Pillaged from S. McIntosh geom.py "rzSLine" and modded
-    sharing the spline love :)
-    """
-    length_norm = lengthnorm(x, y)
-    n = int(n)
-    l_interp = np.linspace(0, 1, n)
-    if s == 0:
-        x = interp1d(length_norm, x)(l_interp)
-        y = interp1d(length_norm, y)(l_interp)
-    else:
-        x = UnivariateSpline(length_norm, x, s=s)(l_interp)
-        y = UnivariateSpline(length_norm, y, s=s)(l_interp)
-    return x, y
-
-
 def ellipse(a, b, n=100):
     """
     Calculates an ellipse shape
@@ -508,62 +259,6 @@ def ellipse(a, b, n=100):
     x = np.append(x, x[:-1][::-1])
     y = np.append(y, -y[:-1][::-1])
     return x, y
-
-
-def is_num(s):
-    """
-    Determines whether or not the input is a number
-
-    Parameters
-    ----------
-    s: unknown type
-        The input which we need to determine is a number or not
-
-    Returns
-    -------
-    num: bool
-        Whether or not the input is a number
-    """
-    if s is True or s is False:
-        return False
-    if s is np.nan:
-        return False
-    try:
-        float(s)
-        return True
-    except (ValueError, TypeError):
-        return False
-
-
-def findnoisylocals(f, x_bins=50, mode="min"):
-    """
-    Esta función encuentra los puntos máximos en cada basura!
-    """
-    n = len(f)
-    bin_size = round(n / x_bins)
-    y_bins = [f[i : i + bin_size] for i in range(0, n, bin_size)]
-    localm = []
-    localmidx = []
-    for i, y_bin in enumerate(y_bins):
-        if mode == "max":
-            localm.append(np.max(y_bin))
-            localmidx.append(np.argmax(y_bin) + i * bin_size)
-        else:
-            localm.append(np.min(y_bin))
-            localmidx.append(np.argmin(y_bin) + i * bin_size)
-    return localmidx, localm
-
-
-def discretise_1d(x, y, n, method="linear"):
-    """
-    Isso aqui é uma função para discretizar uma função 1D com n puntos. \n
-    Se você quiser uma lista, pode pedir!
-    """
-    x = np.array(x)
-    y = np.array(y)
-    x_1d = np.linspace(x[0], x[-1], n)
-    y_1d = griddata(x, y, xi=x_1d, method=method)
-    return [x_1d, y_1d]
 
 
 def delta(v2, v1ref):
@@ -621,6 +316,7 @@ def perc_change(v2, v1ref, verbose=False):
     return perc
 
 
+# materials functions
 def tokelvin(temp_in_celsius):
     """
     Convert a temperature in Celsius to Kelvin.
@@ -699,46 +395,7 @@ def gcm3tokgm3(density):
         return array_or_num(list_array(density) * 1000.0)
 
 
-def tomols(flow_in_pam3_s):
-    """
-    Convert a flow in Pa.m^3/s to a flow in mols.
-
-    Parameters
-    ----------
-    flow_in_pam3_s: Union[float, np.array]
-        The flow in Pa.m^3/s to convert
-
-    Returns
-    -------
-    flow_in_mols: Union[float, np.array]
-        The flow in mol/s
-
-    Notes
-    -----
-    At 273.15 K for a diatomic gas
-    """
-    return flow_in_pam3_s / 2270
-
-
-def to_Pam3_s(flow_in_mols):  # noqa (N802)
-    """
-    Convert a flow in Pa.m^3/s to a flow in mols.
-
-    Parameters
-    ----------
-    flow_in_mols: Union[float, np.array]
-        The flow in mol/s to convert
-
-    Returns
-    -------
-    flow_in_pam3_s: Union[float, np.array]
-        The flow in Pa.m^3/s
-
-    Notes
-    -----
-    At 273.15 K for a diatomic gas
-    """
-    return flow_in_mols * 2270
+##########################
 
 
 def print_format_table():
@@ -797,36 +454,6 @@ def nested_dict_search(odict, rules: Union[str, List[str]]):
     return sub
 
 
-def clip(val, val_min, val_max):
-    """
-    Clips (limits) val between val_min and val_max.
-    This function wraps the numpy core umath minimum and maximum functions
-    in order to avoid the standard numpy clip function, as described in:
-    https://github.com/numpy/numpy/issues/14281
-
-    Handles scalars using built-ins.
-
-    Parameters
-    ----------
-    val: scalar or array
-        The value to be clipped.
-    val_min: scalar or array
-        The minimum value.
-    val_max: scalar or array
-        The maximum value.
-
-    Returns
-    -------
-    clipped_val: scalar or array
-        The clipped values.
-    """
-    if isinstance(val, np.ndarray):
-        np.core.umath.clip(val, val_min, val_max, out=val)
-    else:
-        val = val_min if val < val_min else val_max if val > val_max else val
-    return val
-
-
 def maximum(val, val_min):
     """
     Gets the maximum of val and val_min.
@@ -853,181 +480,6 @@ def maximum(val, val_min):
     else:
         val = val_min if val < val_min else val
     return val
-
-
-def asciistr(length):
-    """
-    Get a string of characters of desired length.
-
-    Current max is 52 characters
-
-    Parameters
-    ----------
-    length: int
-        number of characters to return
-
-    Returns
-    -------
-    str of length specified
-
-    """
-    if length > 52:
-        raise ValueError("Unsupported string length")
-
-    return string.ascii_letters[:length]
-
-
-class EinsumWrapper:
-    """
-    Preallocator for einsum versions of dot, cross and norm.
-    """
-
-    def __init__(self):
-
-        norm_a0 = "ij, ij -> j"
-        norm_a1 = "ij, ij -> i"
-
-        self.norm_strs = [norm_a0, norm_a1]
-
-        # Not fool proof for huge no's of dims
-        self.dot_1x1 = "i, i -> ..."
-        self.dot_1x2 = "i, ik -> k"
-        self.dot_2x1 = "ij, j -> i"
-        self.dot_2x2 = "ij, jk -> ik"
-        self.dot_1xn = "y, {}yz -> {}z"
-        self.dot_nx1 = "{}z, z -> {}"
-        self.dot_nxn = "{}y, {}yz -> {}z"
-
-        cross_2x1 = "i, i, i -> i"
-        cross_2x2 = "xy, ix, iy -> i"
-        cross_2x3 = "xyz, ix, iy -> iz"
-
-        self.cross_strs = [cross_2x1, cross_2x2, cross_2x3]
-        self.cross_lcts = [E_I, E_IJ, E_IJK]
-
-    def norm(self, ix, axis=0):
-        """
-        Emulates some of the functionality of np.linalg.norm for 2D arrays.
-
-        Specifically:
-        np.linalg.norm(ix, axis=0)
-        np.linalg.norm(ix, axis=1)
-
-        For optimum speed and customisation use np.einsum modified for your use case.
-
-        Parameters
-        ----------
-        ix: np.array
-            Array to perform norm on
-        axis: int
-            axis for the norm to occur on
-
-        Returns
-        -------
-        np.array
-
-        """
-        try:
-            return np.sqrt(np.einsum(self.norm_strs[axis], ix, ix))
-        except IndexError:
-            raise ValueError("matrices dimensions >2d Unsupported")
-
-    def dot(self, ix, iy, out=None):
-        """
-        A dot product emulation using np.einsum.
-
-        For optimum speed and customisation use np.einsum modified for your use case.
-
-        Should follow the same mechanics as np.dot, a few examples:
-
-        ein_str = 'i, i -> ...'
-        ein_str = 'ij, jk -> ik' # Classic dot product
-        ein_str = 'ij, j -> i'
-        ein_str = 'i, ik -> k'
-        ein_str = 'aij, ajk -> aik' # for loop needed with np.dot
-
-        Parameters
-        ----------
-        ix: np.array
-            First array
-        iy: np.array
-            Second array
-        out: np.array
-            output array for inplace dot product
-
-        Returns
-        -------
-        np.array
-
-        """
-        # Ordered hopefully by most used
-        if ix.ndim == 2 and iy.ndim == 2:
-            out_str = self.dot_2x2
-        elif ix.ndim > 2 and iy.ndim > 2:
-            ix_str = asciistr(ix.ndim - 1)
-            iy_str = asciistr(iy.ndim - 2)
-            out_str = self.dot_nxn.format(ix_str, iy_str, ix_str)
-        elif ix.ndim < 2 and iy.ndim == 2:
-            out_str = self.dot_1x2
-        elif ix.ndim >= 2 and iy.ndim < 2:
-            ix_str = asciistr(ix.ndim - 1)
-            out_str = self.dot_nx1.format(ix_str, ix_str)
-        elif iy.ndim >= 2 or ix.ndim == 2:
-            raise ValueError(
-                f"Undefined behaviour ix.shape:{ix.shape}, iy.shape:{iy.shape}"
-            )
-        else:
-            out_str = self.dot_1x1
-
-        return np.einsum(out_str, ix, iy, out=out)
-
-    def cross(self, ix, iy, out=None):
-        """
-        A row-wise cross product of a 2D matrices of vectors.
-
-        This function mirrors the properties of np.cross
-        such as vectors of 2 or 3 elements. 1D is also accepted
-        but just do x * y.
-        Only 7D has similar orthogonal properties above 3D.
-
-        For optimum speed and customisation use np.einsum modified for your use case.
-
-        Parameters
-        ----------
-        ix: np.array
-            1st array to cross
-        iy: np.array
-            2nd array to cross
-        out: np.array
-            output array for inplace cross product
-
-        Returns
-        -------
-        np.array (ix.shape)
-
-        Raises
-        ------
-        ValueError
-            If the dimensions of the cross product are > 3
-
-        """
-        dim = ix.shape[-1] - 1 if ix.ndim > 1 else 0
-
-        try:
-            return np.einsum(self.cross_strs[dim], self.cross_lcts[dim], ix, iy, out=out)
-        except IndexError:
-            raise ValueError("Incompatible dimension for cross product")
-
-
-# =====================================================
-# Einsum string preallocation
-# =====================================================
-wrap = EinsumWrapper()
-
-norm = wrap.norm
-dot = wrap.dot
-cross = wrap.cross
-# ====================================================
 
 
 def list_array(list_):

@@ -40,16 +40,13 @@ params = [
     ["R_0", "Major radius", 3.639, "m", None, "Input"],
     ["B_0", "Toroidal field at R_0", 2.0, "T", None, "Input"],
     ["n_TF", "Number of TF coils", 12, "N/A", None, "Input"],
-    ["tk_tf_nose", "TF coil inboard nose thickness", 0.0377, "m", None, "Input"],
+    ["tk_tf_nose", "TF coil inboard nose thickness", 0.17, "m", None, "Input"],
     ['tk_tf_side', 'TF coil inboard case minimum side wall thickness', 0.02, 'm', None, 'Input'],
     ["tk_tf_wp", "TF coil winding pack thickness", 0.569, "m", None, "PROCESS"],
-    ["tk_tf_front_ib", "TF coil inboard steel front plasma-facing", 0.02, "m", None, "Input"],
     ["tk_tf_ins", "TF coil ground insulation thickness", 0.008, "m", None, "Input"],
     ["tk_tf_insgap", "TF coil WP insertion gap", 1.0E-7, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
     ["r_tf_in", "Inboard radius of the TF coil inboard leg", 0.148, "m", None, "PROCESS"],
     ["TF_ripple_limit", "Ripple limit constraint", 0.65, "%", None, "Input"],
-    ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
-    ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
     ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.75, "m", None, "PROCESS"],
     ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
     ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
@@ -59,9 +56,8 @@ params = [
     ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
     ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
     ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
-    ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
     ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
-
+    ['h_tf_min_in', 'Plasma side TF coil min height', -12.0, 'm', None, 'PROCESS'],
 ]
 # fmt: on
 
@@ -81,7 +77,7 @@ to_tf = {
     "koz_loop": ko_zone,
     "shape_type": "CP",  # This is the overall coil shape parameterisation to use
     "wp_shape": "W",  # This is the winding pack shape choice for the inboard leg
-    "conductivity": "SC",  # Resistive (R) or Superconducting (SC)
+    "conductivity": "R",  # Resistive (R) or Superconducting (SC)
     "npoints": 800,
     "obj": "L",  # This is the optimisation objective: minimise length
     "ny": 3,  # This is the number of current filaments to use in y
@@ -109,4 +105,4 @@ n_tf = tf1.params.n_TF
 model = CADModel(n_tf)
 model.add_part(tf1.build_CAD())
 model.display(pattern="tq")
-# model.save_as_STEP_assembly(write_path)
+model.save_as_STEP_assembly(write_path)

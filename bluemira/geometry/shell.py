@@ -56,13 +56,13 @@ class BluemiraShell(BluemiraGeo):
         return self._create_shell()
 
     @classmethod
-    def _create(cls, obj: Part.Shell):
+    def _create(cls, obj: Part.Shell, label=""):
         if isinstance(obj, Part.Shell):
             faces = obj.Faces
             bmfaces = []
             for face in faces:
                 bmfaces.append(BluemiraFace._create(face))
-            bmshell = BluemiraShell(bmfaces)
+            bmshell = BluemiraShell(bmfaces, label=label)
             return bmshell
         raise TypeError(
             f"Only Part.Shell objects can be used to create a {cls} instance"
