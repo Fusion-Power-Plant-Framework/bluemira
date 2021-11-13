@@ -25,6 +25,9 @@ An attempt at including structural constraints in TF coil optimisations..
 # flake8: noqa - UNDER DEVELOPMENT
 
 import numpy as np
+
+from bluemira.geometry._deprecated_tools import get_intersect
+
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.constants import VERY_BIG
@@ -33,7 +36,6 @@ from BLUEPRINT.geometry.geomtools import (
     qrotate,
     rotate_matrix,
     get_angle_between_vectors,
-    get_intersect,
 )
 from BLUEPRINT.materials import materials_cache
 from BLUEPRINT.beams.node import get_midpoint

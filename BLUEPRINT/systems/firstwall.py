@@ -30,7 +30,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import loop_plane_intersect
+from bluemira.geometry._deprecated_tools import loop_plane_intersect, get_intersect
 
 from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.error import SystemsError, GeometryError
@@ -684,6 +684,40 @@ class DivertorBuilder:
 
         # Return coordinate arrays
         return (inner_leg_x, inner_leg_z)
+
+    def find_koz_flux_loop_ints(self, koz, flux_loops):
+        """
+        Find intersections between the keep-out-zone loop
+        and the given flux loops.  Only upper and lower most
+        intersections for each flux line are returned.
+        Parameters
+        ----------
+        koz : Loop
+            Loop representing the keep-out-zone
+        flux_loops: list of Loop
+            List of flux loops used to find intersections
+        Returns
+        -------
+        all_points : list
+             List of the [x,z] coordinates of the intersections
+        """
+        # For each flux loop find the intersections with the koz
+        all_points = []
+        for loop in flux_loops:
+            # Expectation is that flux loop is open
+            if loop.closed:
+                raise SystemsError(
+                    "Selected flux contour is closed, please check psi_norm"
+                )
+
+            # Get the intersections
+            int_x, int_z = get_intersect(koz, loop)
+
+            # Combine into [x,z] points
+            points = list(map(list, zip(int_x, int_z)))
+            all_points.extend(points)
+
+        return all_points
 
     def find_strike_points_from_koz(self, flux_loops):
         """

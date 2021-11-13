@@ -24,9 +24,9 @@ from BLUEPRINT.systems.firstwall import FirstWallSN, FirstWallDN, get_tangent_ve
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import get_intersect
 import BLUEPRINT.geometry.loop as old_loop  # noqa (N813)
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geomtools import get_intersect
 
 
 DATA_PATH = get_bluemira_path("equilibria", subfolder="data")
