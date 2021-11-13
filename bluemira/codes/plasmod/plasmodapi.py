@@ -38,8 +38,8 @@ from ..external_code import ExternalCode
 
 PLASMOD_PATH = ""
 
-#DEFAULT_INPUTS is the dictionary containing all the inputs as requested by Plasmod
-DEFAULT_INPUTS = {
+#DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
+DEFAULT_PLASMOD_INPUTS = {
     ############################
     # list geometry properties
     ############################
@@ -54,11 +54,11 @@ DEFAULT_INPUTS = {
     "delta95": 0.33,
     # [-] plasma edge elongation (used only for first iteration,
     # then iterated to constrain kappa95)
-    "kappaX": 3,
+    "kappaX": 1.8,
     # [-] plasma elongation at 95 % flux
-    "kappa95": 4,
+    "kappa95": 1.65,
     # [-] safety factor at 95% flux surface
-    "q95": 7,
+    "q95": 4,
     # [-] plasma aspect ratio
     "A": 3.1,
     # [T] Toroidal field at plasma center
@@ -100,9 +100,7 @@ DEFAULT_INPUTS = {
 # i_pedestal = 1          # [-] pedestal model: 1 fixed pedestal temperature, 2 Saarelma scaling
 # isiccir = 0             # [-] SOL routine: 0 - fit, 1 - Mattia Siccinio's model
 #
-# kappa95 = 1.65          # [-] plasma elongation at 95 % flux
-# kappaX = 1.8            # [-] plasma edge elongation (used only for first iteration, then iterated to constrain kappa95)
-#
+
 # nbcdeff = 0.3           # [m*MA/MW] * CD = this * PCD   units: m*MA/MW (MA/m^2 * m^3/MW)
 # name = 'DEMO'           # [-] plasmod instance name
 # nx = 41                 # [-] number of interpolated grid points (better not modify this parameter)
@@ -117,7 +115,6 @@ DEFAULT_INPUTS = {
 #
 # q_control = 50.         # [MW] minimum power required for control, e.g. auxiliary power in MW
 # qdivt_max = 10.         # [MW/m2] max divertor heat flux --> calculate argon concentration
-# q95 = 4.0               # [-] safety factor at 95% flux surface
 #
 # rho_n = 0.94            # [-] normalized coordinate of pedestal height
 # rho_T = 0.94            # [-] normalized coordinate of pedestal height
@@ -134,7 +131,7 @@ DEFAULT_INPUTS = {
 
 
 
-DEFAULT_OUTPUTS = {
+DEFAULT_PLASMOD_OUTPUTS = {
     # [-] poloidal beta
     "_beta_p": [],
     # [-] normalized beta
@@ -145,22 +142,20 @@ DEFAULT_OUTPUTS = {
     "_Bpav": [],
     # [(m*T) * (m*T) / Wb == T] FF' profile
     "_FFprime": [],
+    # [-] Argon concentration (ratio nAr/ne)
+    "_cAr": [],
+    # [-] Hydrogen concentration (ratio nH/ne)
+    "_cH": [],
+    # [-] Helium concentration (ratio nH/ne)
+    "_cHe": [],
+    # [-] Xenon concentration (ratio nH/ne)
+    "_cXe": [],
 }
 
 
 #
 # # ******************** private scalar attributes (plasmod outputs) ******************** #
-#
-# _beta_p = []            # [-] poloidal beta
-# _beta_n = []            # [%] normalized beta
-# _beta_t = []            # [-] toroidal beta
-# _Bpav = []              # [T] average poloidal field
-#
-# _cAr = []               # [-] Argon concentration (ratio nAr/ne)
-# _cH = []                # [-] Hydrogen concentration (ratio nH/ne)
-# _cHe = []               # [-] Helium concentration (ratio nHe/ne)
-# _cXe = []               # [-] Xenon concentration (ratio nXe/ne)
-#
+
 # _deltaE = []            # [-] plasma edge triangularity
 #
 # _fBS = []               # [-] plasma bootstrap current fraction
@@ -218,18 +213,18 @@ DEFAULT_OUTPUTS = {
 # _x = []                 # [-] normalized toroidal flux coordinate (Phi/Phi_b)
 # _X = []                 # [-] normalized poloidal flux coordinate (sqrt(Psi_ax - Psi)/(Psi_ax - Psi_b)))
 
-def get_default_inputs():
+def get_default_plasmod_inputs():
     """
     Returns the instance as a dictionary.
     """
-    return copy.deepcopy(DEFAULT_INPUTS)
+    return copy.deepcopy(DEFAULT_PLASMOD_INPUTS)
 
 
-def get_default_outputs():
+def get_default_plasmod_outputs():
     """
     Returns the instance as a dictionary.
     """
-    return copy.deepcopy(DEFAULT_OUTPUTS)
+    return copy.deepcopy(DEFAULT_PLASMOD_OUTPUTS)
 
 
 class PlasmodParameters:
@@ -237,8 +232,12 @@ class PlasmodParameters:
     List of plasmod inputs
     """
 
+    _options = None
+
     def __init__(self, **kwargs):
-        self._options = kwargs
+        self.modify(**kwargs)
+        for k, v in self._options.items():
+            setattr(self, k, v)
 
     def as_dict(self):
         """
@@ -254,6 +253,7 @@ class PlasmodParameters:
             for k in kwargs:
                 if k in self._options:
                     self._options[k] = kwargs[k]
+                    setattr(self, k, self._options[k])
 
     def __repr__(self):
         """
@@ -265,67 +265,15 @@ class PlasmodParameters:
 class Inputs(PlasmodParameters):
 
     def __init__(self, **kwargs):
-        self._options = get_default_inputs()
-        self.modify(**kwargs)
-
-    # @property
-    # def name(self):
-    #     return self._options["name"]
-    #
-    # @name.setter
-    # def name(self, val):
-    #     self._options["name"] = val
-
-    @property
-    def A(self):
-        return self._options["A"]
-
-    @A.setter
-    def A(self, val):
-        self._options["A"] = val
-
-    @property
-    def Bt(self):
-        return self._options["Bt"]
-
-    @Bt.setter
-    def Bt(self, val):
-        self._options["Bt"] = val
-
-    @property
-    def cW(self):
-        return self._options["cW"]
-
-    @cW.setter
-    def cW(self, val):
-        self._options["cW"] = val
+        self._options = get_default_plasmod_inputs()
+        super().__init__(**kwargs)
 
 
 class Outputs(PlasmodParameters):
 
     def __init__(self, **kwargs):
-        self._options = get_default_outputs()
-        self.modify(**kwargs)
-
-    @property
-    def _beta_p(self):
-        return self._options["_beta_p"]
-
-    @property
-    def _beta_n(self):
-        return self._options["_beta_n"]
-
-    @property
-    def _beta_t(self):
-        return self._options["_beta_t"]
-
-    @property
-    def _Bpav(self):
-        return self._options["_Bpav"]
-
-    @property
-    def FFprime(self):
-        return self._options["_FFprime"]
+        self._options = get_default_plasmod_outputs()
+        super().__init__(**kwargs)
 
 
 def write_input_file(params: Union[PlasmodParameters, dict], filename: str):
@@ -349,18 +297,18 @@ def print_parameter_list(params: Union[PlasmodParameters, dict], fid=sys.stdout)
         for k, v in params.items():
             if isinstance(v, int):
                 print(k + " %d" % v, file=fid)
-            elif isinstance(v, float):
+            if isinstance(v, float):
                 print(k + " % 5.4e" % v, file=fid)
             else:
-                print(k + " " + v, file=fid)
+                print(f"{k} {v}", file=fid)
     else:
         raise ValueError("Wrong input")
 
 
-def read_output_files(profiles_file):
-    """Read the Plasmod profiles from the output file"""
+def read_output_files(output_file):
+    """Read the Plasmod output parameters from the output file"""
     output = {}
-    with open(profiles_file, "r") as fd:
+    with open(output_file, "r") as fd:
         reader = csv.reader(fd, delimiter="\t")
         for row in reader:
             arr = row[0].split()
@@ -410,32 +358,34 @@ class PlasmodSolver(ExternalCode):
 
     class Run(ExternalCode.Run):
         def _batch(self, *args, **kwargs):
-            write_input_file(self.outer._parameters, self.outer.setup.input_file)
+            print("run batch")
+            write_input_file(self.outer._parameters, self.outer.setup_obj.input_file)
             os.system(
-                f"{PLASMOD_PATH}/plasmod.o '{self.outer.setup.input_file}' '"
-                f"{self.outer.setup.output_file}' '"
-                f"{self.outer.setup.profiles_file}'"
+                f"{PLASMOD_PATH}/plasmod.o '{self.outer.setup_obj.input_file}' '"
+                f"{self.outer.setup_obj.output_file}' '"
+                f"{self.outer.setup_obj.profiles_file}'"
             )
 
         def _mock(self, *args, **kwargs):
-            write_input_file(self.outer._parameters, self.outer.setup.input_file)
+            print("run mock")
+            write_input_file(self.outer._parameters, self.outer.setup_obj.input_file)
             print(
-                f"{PLASMOD_PATH}/plasmod.o '{self.outer.setup.input_file}' '"
-                f"{self.outer.setup.output_file}' '"
-                f"{self.outer.setup.profiles_file}'"
+                f"{PLASMOD_PATH}/plasmod.o '{self.outer.setup_obj.input_file}' '"
+                f"{self.outer.setup_obj.output_file}' '"
+                f"{self.outer.setup_obj.profiles_file}'"
             )
 
     class Teardown(ExternalCode.Teardown):
         def _batch(self, *args, **kwargs):
-            output = read_output_files(self.outer.setup.output_file)
+            output = read_output_files(self.outer.setup_obj.output_file)
             self.outer._out_params.modify(**output)
-            output = read_output_files(self.outer.setup.profiles_file)
+            output = read_output_files(self.outer.setup_obj.profiles_file)
             self.outer._out_params.modify(**output)
             print_parameter_list(self.outer._out_params)
 
         def _mock(self, *args, **kwargs):
-            output = read_output_files(self.outer.setup.output_file)
+            output = read_output_files(self.outer.setup_obj.output_file)
             self.outer._out_params.modify(**output)
-            output = read_output_files(self.outer.setup.profiles_file)
+            output = read_output_files(self.outer.setup_obj.profiles_file)
             self.outer._out_params.modify(**output)
             print_parameter_list(self.outer._out_params)
