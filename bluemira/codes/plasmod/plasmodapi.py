@@ -36,8 +36,10 @@ import pprint
 
 from ..external_code import ExternalCode
 
+# Absolute path to plasmod excutable
 PLASMOD_PATH = ""
 
+# Todo: both INPUTS and OUTPUTS must to be completed.
 #DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
 DEFAULT_PLASMOD_INPUTS = {
     ############################
@@ -215,21 +217,21 @@ DEFAULT_PLASMOD_OUTPUTS = {
 
 def get_default_plasmod_inputs():
     """
-    Returns the instance as a dictionary.
+    Returns a copy of the default plasmo inputs
     """
     return copy.deepcopy(DEFAULT_PLASMOD_INPUTS)
 
 
 def get_default_plasmod_outputs():
     """
-    Returns the instance as a dictionary.
+    Returns a copy of the defaults plasmod outputs.
     """
     return copy.deepcopy(DEFAULT_PLASMOD_OUTPUTS)
 
 
 class PlasmodParameters:
     """
-    List of plasmod inputs
+    A class to mandage plasmod parameters
     """
 
     _options = None
@@ -247,7 +249,7 @@ class PlasmodParameters:
 
     def modify(self, **kwargs):
         """
-        Function to override plotting options.
+        Function to override parameters value.
         """
         if kwargs:
             for k in kwargs:
@@ -262,15 +264,18 @@ class PlasmodParameters:
         return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
 
 
+# Plasmod Inputs and Outputs have been separated to make easier the writing of plasmod
+# input file and the reading of outputs from file. However, other strategies could be
+# applied to make use of a single PlasmodParameters instance.
 class Inputs(PlasmodParameters):
-
+    """Class for Plasmod inputs"""
     def __init__(self, **kwargs):
         self._options = get_default_plasmod_inputs()
         super().__init__(**kwargs)
 
 
 class Outputs(PlasmodParameters):
-
+    """Class for Plasmod outputs"""
     def __init__(self, **kwargs):
         self._options = get_default_plasmod_outputs()
         super().__init__(**kwargs)
@@ -290,7 +295,21 @@ def write_input_file(params: Union[PlasmodParameters, dict], filename: str):
 
 
 def print_parameter_list(params: Union[PlasmodParameters, dict], fid=sys.stdout):
-    """Print a set of parameter to screen or into an open file"""
+    """
+    Print a set of parameter to screen or into an open file
+
+    Parameters
+    ----------
+    params: Union[PlasmodParameters, dict]
+        set of parameters to be printed
+    fid:
+        object where to direct the output of print. Default sys.stdout (print to
+        screen)
+
+    Notes
+    -----
+    Used format: %d for integer, %5.4e for float, default format for other instances.
+    """
     if isinstance(params, PlasmodParameters):
         print_parameter_list(params.as_dict(), fid)
     elif isinstance(params, dict):
@@ -334,6 +353,7 @@ class PlasmodSolver(ExternalCode):
         output_file="outputs.dat",
         profiles_file="profiles.dat",
     ):
+        #todo: add a path variable where files are stored
         if input_params is None:
             self._parameters = Inputs()
         elif isinstance(input_params, Inputs):
@@ -341,9 +361,10 @@ class PlasmodSolver(ExternalCode):
         elif isinstance(input_params, Dict):
             self._parameters = Inputs(**input_params)
         self._out_params = Outputs()
-        super().__init__(runmode, input_file, output_file, profiles_file)
+        super().__init__(runmode, input_file, output_file, profiles_file, dir_name)
 
     class Setup(ExternalCode.Setup):
+        """Setup class for Plasmod"""
         def __init__(self, outer, input_file, output_file, profiles_file):
             super().__init__(outer)
             self.input_file = input_file
@@ -351,9 +372,11 @@ class PlasmodSolver(ExternalCode):
             self.profiles_file = profiles_file
 
         def _batch(self, *args, **kwargs):
+            """batch setup function"""
             print(self.outer._parameters)
 
         def _mock(self, *args, **kwargs):
+            """Mock setup function"""
             print(self.outer._parameters)
 
     class Run(ExternalCode.Run):
