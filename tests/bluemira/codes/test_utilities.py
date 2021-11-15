@@ -25,8 +25,7 @@ Tests for utilities for external code integration
 
 import pytest
 
-from bluemira.base import ParameterFrame
-from bluemira.base.parameter import ParameterMapping
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
 
 from bluemira.codes.utilities import get_read_mapping, get_write_mapping
 
