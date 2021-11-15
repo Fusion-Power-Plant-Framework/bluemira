@@ -361,7 +361,7 @@ class PlasmodSolver(ExternalCode):
         elif isinstance(input_params, Dict):
             self._parameters = Inputs(**input_params)
         self._out_params = Outputs()
-        super().__init__(runmode, input_file, output_file, profiles_file, dir_name)
+        super().__init__(runmode, input_file, output_file, profiles_file)
 
     class Setup(ExternalCode.Setup):
         """Setup class for Plasmod"""
