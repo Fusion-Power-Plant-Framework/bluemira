@@ -53,3 +53,34 @@ class TestSweep:
         sweep = sweep_shape(profile, path, solid=True)
 
         assert np.isclose(revolution.volume, sweep.volume)
+
+
+if __name__ == "__main__":
+    import bluemira.geometry._freecadapi as cadapi
+    import freecad
+    import Part
+    from bluemira.geometry.face import BluemiraFace
+    from bluemira.geometry.wire import BluemiraWire
+    from bluemira.geometry.shell import BluemiraShell
+    from bluemira.geometry.solid import BluemiraSolid
+
+    path = make_circle(start_angle=0, end_angle=180)
+    profile = make_polygon(
+        [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
+    )
+
+    fc_sweep = cadapi.sweep_shape(profile._shape, path._shape, solid=True)
+    sweep = sweep_shape(profile, path, solid=True)
+
+    faces = fc_sweep.Shells[0].Faces
+    wires = [f.Wires for f in faces]
+    bm_wires = [BluemiraWire(w) for w in wires]
+    bm_faces = [BluemiraFace(w) for w in bm_wires]
+    bm_shell = BluemiraShell(bm_faces)
+    recon_fc_sweep = Part.Solid(Part.Shell(faces))
+    recon_bm_sweep = BluemiraSolid(bm_shell)
+
+    print(fc_sweep.Volume)
+    print(recon_fc_sweep.Volume)
+    print(recon_bm_sweep.volume)
+    print(sweep.volume)

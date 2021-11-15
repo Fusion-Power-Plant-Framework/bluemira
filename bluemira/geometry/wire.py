@@ -88,7 +88,8 @@ class BluemiraWire(BluemiraGeo):
     @property
     def _shape(self) -> Part.Wire:
         """Part.Wire: shape of the object as a single wire"""
-        return Part.Wire(self._wires)
+        wire = Part.Wire(self._wires)
+        return wire
 
     @property
     def _wires(self) -> List[Part.Wire]:
