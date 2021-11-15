@@ -75,6 +75,7 @@ class BluemiraWire(BluemiraGeo):
             raise MixedOrientationWireError(
                 f"Cannot make a BluemiraWire from wires of mixed orientations: {orientations}"
             )
+        self._orientation = orientations[0]
         return orientations
 
     @staticmethod
@@ -90,11 +91,7 @@ class BluemiraWire(BluemiraGeo):
     @property
     def _shape(self) -> apiWire:
         """apiWire: shape of the object as a single wire"""
-        wires = self._wires
-        if len(wires) == 1 and isinstance(wires[0], apiWire):
-            return wires[0]
-
-        return apiWire(self._wires)
+        return self._check_reverse(apiWire(self._wires))
 
     @property
     def _wires(self) -> List[apiWire]:
@@ -104,8 +101,6 @@ class BluemiraWire(BluemiraGeo):
             if isinstance(o, apiWire):
                 for w in o.Wires:
                     wires += [apiWire(w.OrderedEdges)]
-                if w.Orientation != wires[-1].Orientation:
-                    wires[-1].reverse()
             else:
                 wires += o._wires
         return wires
