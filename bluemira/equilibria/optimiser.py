@@ -184,8 +184,8 @@ class PositionOptimiser:
         Regions in which each PF coil resides. The loop object must be 2d.
     CS: bool (default = False)
         Whether or not to optimise the CS module positions as well
-    d_coil: Optional[float]
-        Mesh size for coils
+    d_coil: float
+        Mesh size for coils [m] (default = 0.4)
     plot: bool (default = False)
         Plot progress
     gif: bool (default = False)
@@ -213,7 +213,7 @@ class PositionOptimiser:
         pf_exclusions=None,
         pf_coilregions=None,
         CS=False,
-        d_coil=None,
+        d_coil=0.4,
         plot=False,
         gif=False,
         figure_folder=None,
@@ -243,8 +243,6 @@ class PositionOptimiser:
             self.flag_PFR = False
             self.region_coils = set()
 
-        if d_coil is None:
-            d_coil = 0.4
         self._d_coil = d_coil
 
         self.psi_vals = psi_values if psi_values is not None else [0]
