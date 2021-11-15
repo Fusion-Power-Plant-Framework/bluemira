@@ -24,8 +24,12 @@ Test for plasmod run
 """
 from bluemira.codes.plasmod import plasmodapi
 
-plasmod_solver = plasmodapi.PlasmodSolver()
-plasmod_solver.set_runmode('MOCK')
+plasmodapi.PLASMOD_PATH = "~/bwSyncShare/plasmod_bluemira"
+
+new_params = {"R0": 9, "q95": 3.5}
+
+plasmod_solver = plasmodapi.PlasmodSolver(input_params=new_params)
+plasmod_solver.set_runmode('BATCH')
 plasmod_solver.run()
 
 print(f"FFprime: {plasmod_solver._out_params._FFprime}")
