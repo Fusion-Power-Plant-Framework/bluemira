@@ -70,6 +70,7 @@ class BluemiraGeo(ABC):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
+        self._orientation = "Forward"
 
     @staticmethod
     def _converter(func):
@@ -115,6 +116,15 @@ class BluemiraGeo(ABC):
     @boundary.setter
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
+
+    @property
+    def orientation(self):
+        """Shape's orientation"""
+        return self._orientation
+
+    @orientation.setter
+    def orientation(self, orientation):
+        self._orientation = orientation
 
     @property
     @abstractmethod

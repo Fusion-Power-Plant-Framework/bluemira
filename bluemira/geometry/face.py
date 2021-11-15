@@ -96,6 +96,7 @@ class BluemiraFace(BluemiraGeo):
         """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
         face = Part.Face(external._shape)
+
         if len(self.boundary) > 1:
             fholes = [Part.Face(h._shape) for h in self.boundary[1:]]
             face = face.cut(fholes)
@@ -103,6 +104,9 @@ class BluemiraFace(BluemiraGeo):
                 face = face.Faces[0]
             else:
                 raise DisjointedFace("Any or more than one face has been created.")
+
+        if self.orientation == "Reversed":
+            face.reverse()
         return face
 
     @property
@@ -124,10 +128,12 @@ class BluemiraFace(BluemiraGeo):
     @classmethod
     def _create(cls, obj: Part.Face, label="") -> BluemiraFace:
         if isinstance(obj, Part.Face):
+            orientation = obj.Orientation
             bmwires = []
             for w in obj.Wires:
                 bmwires += [BluemiraWire(w)]
             bmface = BluemiraFace(bmwires, label=label)
+            bmface.orientation = orientation
             return bmface
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
 
