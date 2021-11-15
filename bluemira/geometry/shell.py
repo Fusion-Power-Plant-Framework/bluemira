@@ -41,14 +41,12 @@ class BluemiraShell(BluemiraGeo):
         boundary_classes = [BluemiraFace]
         super().__init__(boundary, label, boundary_classes)
 
-    def _check_boundary(self, objs):
-        """Check if objects in objs are of the correct type for this class"""
-        return super()._check_boundary(objs)
-
     def _create_shell(self):
         """Creation of the shell"""
         faces = [f._shape for f in self.boundary]
-        return Part.makeShell(faces)
+        shell = Part.makeShell(faces)
+
+        return self._check_reverse(shell)
 
     @property
     def _shape(self):
@@ -58,11 +56,13 @@ class BluemiraShell(BluemiraGeo):
     @classmethod
     def _create(cls, obj: Part.Shell, label=""):
         if isinstance(obj, Part.Shell):
+            orientation = obj.Orientation
             faces = obj.Faces
             bmfaces = []
             for face in faces:
                 bmfaces.append(BluemiraFace._create(face))
             bmshell = BluemiraShell(bmfaces, label=label)
+            bmshell._orientation = orientation
             return bmshell
         raise TypeError(
             f"Only Part.Shell objects can be used to create a {cls} instance"

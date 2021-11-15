@@ -42,6 +42,14 @@ class NotClosedWire(BluemiraError):
     pass
 
 
+class MixedOrientationWireError(BluemiraError):
+    """
+    Mixed Orientation Wire Error
+    """
+
+    pass
+
+
 class DisjointedFace(BluemiraError):
     """
     Disjointed Face Error
