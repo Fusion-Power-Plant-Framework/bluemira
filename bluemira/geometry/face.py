@@ -105,9 +105,7 @@ class BluemiraFace(BluemiraGeo):
             else:
                 raise DisjointedFace("Any or more than one face has been created.")
 
-        if self.orientation == "Reversed":
-            face.reverse()
-        return face
+        return self._check_reverse(face)
 
     @property
     def _shape(self) -> Part.Face:
@@ -133,8 +131,9 @@ class BluemiraFace(BluemiraGeo):
             for w in obj.Wires:
                 bmwires += [BluemiraWire(w)]
             bmface = BluemiraFace(bmwires, label=label)
-            bmface.orientation = orientation
+            bmface._orientation = orientation
             return bmface
+
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
 
     def discretize(

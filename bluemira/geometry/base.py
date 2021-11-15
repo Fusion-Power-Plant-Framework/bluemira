@@ -25,6 +25,8 @@ Base classes and functionality for the bluemira geometry module.
 
 from __future__ import annotations
 
+import enum
+
 # import for abstract class
 from abc import ABC, abstractmethod
 
@@ -32,6 +34,11 @@ from abc import ABC, abstractmethod
 from . import _freecadapi
 
 import copy
+
+
+class _Orientation(enum.Enum):
+    FORWARD = "Forward"
+    REVERSED = "Reversed"
 
 
 class BluemiraGeo(ABC):
@@ -70,7 +77,7 @@ class BluemiraGeo(ABC):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
-        self._orientation = "Forward"
+        self._orientation = _Orientation.FORWARD
 
     @staticmethod
     def _converter(func):
@@ -117,14 +124,11 @@ class BluemiraGeo(ABC):
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
 
-    @property
-    def orientation(self):
-        """Shape's orientation"""
-        return self._orientation
-
-    @orientation.setter
-    def orientation(self, orientation):
-        self._orientation = orientation
+    def _check_reverse(self, obj):
+        if self._orientation != obj.Orientation:
+            obj.reverse()
+            self._orientation = obj.Orientation
+        return obj
 
     @property
     @abstractmethod
@@ -167,7 +171,8 @@ class BluemiraGeo(ABC):
         return _freecadapi.is_closed(self._shape)
 
     def search(self, label: str):
-        """Search for a shape with the specified label
+        """
+        Search for a shape with the specified label
 
         Parameters
         ----------
@@ -189,14 +194,16 @@ class BluemiraGeo(ABC):
         return output
 
     def scale(self, factor) -> None:
-        """Apply scaling with factor to this object. This function modifies the self
+        """
+        Apply scaling with factor to this object. This function modifies the self
         object.
         """
         for o in self.boundary:
             o.scale(factor)
 
     def translate(self, vector) -> None:
-        """Translate this shape with the vector. This function modifies the self
+        """
+        Translate this shape with the vector. This function modifies the self
         object.
         """
         for o in self.boundary:

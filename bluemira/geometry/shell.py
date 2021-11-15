@@ -45,9 +45,8 @@ class BluemiraShell(BluemiraGeo):
         """Creation of the shell"""
         faces = [f._shape for f in self.boundary]
         shell = Part.makeShell(faces)
-        if self.orientation == "Reversed":
-            shell.reverse()
-        return shell
+
+        return self._check_reverse(shell)
 
     @property
     def _shape(self):
@@ -63,7 +62,7 @@ class BluemiraShell(BluemiraGeo):
             for face in faces:
                 bmfaces.append(BluemiraFace._create(face))
             bmshell = BluemiraShell(bmfaces, label=label)
-            bmshell.orientation = orientation
+            bmshell._orientation = orientation
             return bmshell
         raise TypeError(
             f"Only Part.Shell objects can be used to create a {cls} instance"

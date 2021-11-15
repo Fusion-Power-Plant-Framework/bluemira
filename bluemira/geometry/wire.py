@@ -45,7 +45,7 @@ from bluemira.geometry._freecadapi import (
 import numpy
 
 # import from error
-from bluemira.geometry.error import NotClosedWire
+from bluemira.geometry.error import NotClosedWire, MixedOrientationWireError
 
 
 class BluemiraWire(BluemiraGeo):
@@ -57,21 +57,24 @@ class BluemiraWire(BluemiraGeo):
     def __init__(self, boundary, label: str = ""):
         boundary_classes = [self.__class__, apiWire]
         super().__init__(boundary, label, boundary_classes)
-        # self._orientations = self._get_orientations(boundary)
+        self._check_orientations()
 
         # connection variable with BLUEPRINT Loop
         self._bp_loop = None
 
-    def _get_orientations(self, objs):
+    def _check_orientations(self):
         orientations = []
-        for obj in objs:
-            if isinstance(obj, apiWire):
-                orient = obj.Orientation
-            elif isinstance(obj, self):
-                orient = obj._shape.Orientation
-            else:
-                raise ValueError
+        for boundary in self.boundary:
+            if isinstance(boundary, apiWire):
+                orient = boundary.Orientation
+            elif isinstance(boundary, self):
+                orient = boundary._shape.Orientation
             orientations.append(orient)
+
+        if orientations.count(orientations[0]) != len(orientations):
+            raise MixedOrientationWireError(
+                f"Cannot make a BluemiraWire from wires of mixed orientations: {orientations}"
+            )
         return orientations
 
     @staticmethod
