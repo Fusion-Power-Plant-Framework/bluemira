@@ -67,7 +67,7 @@ class BluemiraWire(BluemiraGeo):
         for boundary in self.boundary:
             if isinstance(boundary, apiWire):
                 orient = boundary.Orientation
-            elif isinstance(boundary, self):
+            elif isinstance(boundary, self.__class__):
                 orient = boundary._shape.Orientation
             orientations.append(orient)
 
