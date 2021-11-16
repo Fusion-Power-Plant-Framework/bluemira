@@ -40,15 +40,16 @@ from ..external_code import ExternalCode
 PLASMOD_PATH = ""
 
 # Todo: both INPUTS and OUTPUTS must to be completed.
-#DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
+# DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
 DEFAULT_PLASMOD_INPUTS = {
+
     ############################
     # list geometry properties
     ############################
-    # [m] plasma major radius
-    "R0": 9,
-    # [m3] constrained plasma volume (set zero to disable volume constraining)
-    "V_in": 0,
+    # [-] plasma aspect ratio
+    "A": 3.1,
+    # [T] Toroidal field at plasma center
+    "Bt": 5.8,
     # [-] plasma edge triangularity (used only for first iteration,
     # then iterated to constrain delta95)
     "deltaX": 0.5,
@@ -60,80 +61,157 @@ DEFAULT_PLASMOD_INPUTS = {
     # [-] plasma elongation at 95 % flux
     "kappa95": 1.65,
     # [-] safety factor at 95% flux surface
-    "q95": 4,
-    # [-] plasma aspect ratio
-    "A": 3.1,
-    # [T] Toroidal field at plasma center
-    "Bt": 5.8,
-    # [-] Tungsten concentration
-    "cW": 0.0,
+    "q95": 3.5,
+    # [m] plasma major radius
+    "R0": 9.0,
+    # [m3] constrained plasma volume (set zero to disable volume constraining)
+    "V_in": 0,
+
+    ############################
+    # list numerics properties
+    #############################
     # [-] Newton differential
     "dgy": 1e-5,
-    # [-] max time step between iterations
-    "dtmax": 1e-2,
     # [-] min time step between iterations
     "dtmin": 1e-2,
-    # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x [nbi, ech]
-    "dx_control": 0.2,
+    # [-] max time step between iterations
+    "dtmax": 1e-2,
+    # [-] number of interpolated grid points
+    "nx": 41,
+    # [-] number of reduced grid points
+    "nxt": 5,
+    # [-] max number of iteration
+    "test": 10000,
+    # [-] max iteration error between transport/equilibrium iterations
+    "tol": 1E-10,
+
+    ############################
+    # list transport & confinement properties
+    #############################
     # [-] Greenwald density fraction at pedestal
     "f_gwped": 0.85,
     # [-] Greenwald density fraction at separatrix
     "f_gws": 0.5,
-    # [-] required fraction of non inductive current, if 0, dont use CD
-    "f_ni": 0.0,
     # [-] fraction of NBI power to ions
     "fpion": 0.5,
-    # [-] tauparticle / tauE for D, T, He, Xe
-    "fP2E": 7.1,
-    # [-] tauparticle / tauE for Ar particles
-    "fP2EAr": 1.0,
+    # [-] tauparticle / tauE for D
+    "fp2e_d": 5.0,
+    # [-] tauparticle / tauE for T
+    "fp2e_t": 5.0,
+    # [-] tauparticle / tauE for He
+    "fp2e_he": 5.0,
+    # [-] tauparticle / tauE for Xe
+    "fp2e_xe": 5.0,
+    # [-] tauparticle / tauE for Ar
+    "fp2e_ar": 5.0,
+    # [-] input H-factor:if i_modeltype > 1 H factor calculated
+    "hfact_inp": 1.0,
+    # [-] normalized coordinate of pedestal density
+    "rho_n": 0.94,
+    # [-] normalized coordinate of pedestal temperature
+    "rho_T": 0.94,
+    # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
+    "Teped_inp": 5.5,
+    # [keV] electrons/ions temperature at separatrix
+    "Tesep": 0.1,
+
+    ############################
+    # list composition properties
+    #############################
+    # [-] Tungsten concentration
+    "cwol": 0.0,
     # [-] fuel mix D/T
     "fuelmix": 0.5,
+
+    ############################
+    # list control & transport settings
+    #############################
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x for NBI heating (CD) to control Vloop or f_ni
+    "dx_cd_nbi": 0.2,
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x for fixed NBI heating
+    "dx_control_nbi": 0.2,
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x, for NBI heating to control fusion power
+    "dx_fus_nbi": 0.2,
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x, for NBI heating to control H-mode
+    "dx_heat_nbi": 0.2,
+    # [-] required fraction of non inductive current, if 0, dont use CD
+    "f_ni": 0.0,
+    # [-] equilibrium model selector:
+    # 1 - EMEQ solves equilibrium with given q95, with sawteeth.
+    # 2 - EMEQ solves with given Ip, with sawteeth
+    "i_equiltype": 1,
+    # [-] impurity model selector:
+    # 0 - fixed concentration,
+    # 1 - concentration fixed at pedestal top, then fixed density.
+    "i_impmodel": 1,
+    # [-] selector for transport model: (see trmodel.f90)
+    # 1 - simple gyrobohm scaling with imposed H factor,
+    # 555 - H factor scaling from F. Palermo
+    # 111 - another model based on gyro-Bohm transport
+    # 2 - no reference in the source code
+    "i_modeltype": 1,
+    # [-] pedestal model selector:
+    # 1 - fixed pedestal temperature (Teped_in),
+    # 2 - Saarelma scaling
+    "i_pedestal": 1,
+    # [-] SOL model selector:
+    # 0 - fit based on Eich scaling
+    # 1 - Mattia Siccinio's model
+    "isiccir": 0,
+    # [m*MA/MW] Normalized CD efficiency
+    "nbcdeff": 0.3,
+    # [MW] max allowed power for control (fusion power, H-mode)
+    "Pheat_max": 100.,
+    # [MW] required fusion power.
+    # 0. - ignored
+    # > 0 - Auxiliary heating is calculated to match Pfus_req
+    "Pfus_req": 0.,
+    # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
+    # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
+    "PsepBt_qAR_max": 9.2,
+    # [-] max P_sep/P_LH. if Psep/PLH > Psep/PLH_max -> use Xe
+    "Psep_PLH_max": 50.0,
+    # [-] min P_sep/P_LH. if Psep/PLH < Psep/PLH_max -> use heating
+    "Psep_PLH_min": 1.1,
+    # [MW/m] Divertor challenging criterion Psep / R0
+    # if Psep/R0 > Psep_R0_max seed Xenon
+    "Psep_R0_max": 17.5,
+    # [MW] fixed auxiliary heating power required for control
+    "q_control": 50.,
+    # [MW/m2] max divertor heat flux -->
+    # if qdivt > qdivt_max -> seed argon
+    "qdivt_max": 10.,
+    # [-]  normalized mean location of NBI power for
+    # controlling loop voltage or f_ni
+    "x_cd_nbi": 0.0,
+    # [-]  normalized mean location of fixed NBI heating
+    "x_control_nbi": 0.0,
+    # [-]  normalized mean location of NBI heating for
+    # controlling fusion power (Pfus = Pfus_req)
+    "x_fus_nbi": 0.0,
+    # [-]  normalized mean location of aux. heating for
+    # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
+    "x_heat_nbi": 0.0,
+    # [V] target loop voltage (if lower than -1e-3, ignored)
+    "v_loop_in": -1.e-6
 }
 
-
 #
-# H = 1.0                 # [-] H-factor: input if i_modeltype = 1, calculated if i_modeltype > 1
-#
-# i_equiltype = 1         # [-] equilibrium model: 1 - EMEQ, solve equilibrium with given q95, with sawteeth. 2- EMEQ, solve with given Ip, with sawteeth
-# i_impmodel = 1          # [-] impurity model: 0 - fixed concentration, 1 - concentration fixed at pedestal top, then fixed density.
-# i_modeltype = 1         # [-] 1 - simple gyrobohm scaling with imposed H factor, > 1, other models with H in output
-# i_pedestal = 1          # [-] pedestal model: 1 fixed pedestal temperature, 2 Saarelma scaling
-# isiccir = 0             # [-] SOL routine: 0 - fit, 1 - Mattia Siccinio's model
-#
-
-# nbcdeff = 0.3           # [m*MA/MW] * CD = this * PCD   units: m*MA/MW (MA/m^2 * m^3/MW)
-# name = 'DEMO'           # [-] plasmod instance name
-# nx = 41                 # [-] number of interpolated grid points (better not modify this parameter)
-# nxt = 5                 # [-] number of reduced grid points
-#
-# Pheat_max = 50.         # [MW] max allowed power for heating + CD + fusion control
-# Pfus_req = 0.           # [MW] target fusion power. If 0., not used (otherwise it would be controlled with Pauxheat)
-# PsepBt_qAR_max = 9.2    # [MW * T / m] Psep * Bt / (q95 * A R0) max
-# Psep_PLH_max = 50.0     # [-] Psep/PLH max -> use Xe
-# Psep_PLH_min = 1.1      # [-] Psep/PLH min -> H mode
-# Psep_R0_max = 17.5      # [MW/m] Psep/R0 max
-#
-# q_control = 50.         # [MW] minimum power required for control, e.g. auxiliary power in MW
-# qdivt_max = 10.         # [MW/m2] max divertor heat flux --> calculate argon concentration
-#
-# rho_n = 0.94            # [-] normalized coordinate of pedestal height
-# rho_T = 0.94            # [-] normalized coordinate of pedestal height
-# R0 = 9.                 # [m] plasma major radius
-#
-# test = 10000            # [-] max number of iteration
-# tol = 1E-10             # [-] iteration error between transport/equilibrium iterations
-# Teped = 5.5             # [keV] electron temperature at pedestal (overridden by calculated value from Samuli scaling if i_pedestal = 2)
-# Tesep = 0.1             # [keV] electron temperature at separatrix
-#
-# x_control = 0.0         # [-]  normalized location of heat deposition [nbi, ech]
-#
-# V_in = 0                # [m3] constrained plasma volume (set zero to disable volume constraining)
-
 
 
 DEFAULT_PLASMOD_OUTPUTS = {
+
+    ############################
+    # list scalar outputs
+    #############################
+    # [m²] plasma poloidal cross section area
+    "_area_pol": [],
+    # [m²] plasma toroidal surface
+    "_area_tor": [],
     # [-] poloidal beta
     "_beta_p": [],
     # [-] normalized beta
@@ -142,78 +220,170 @@ DEFAULT_PLASMOD_OUTPUTS = {
     "_beta_t": [],
     # [T] average poloidal field
     "_Bpav": [],
-    # [(m*T) * (m*T) / Wb == T] FF' profile
-    "_FFprime": [],
     # [-] Argon concentration (ratio nAr/ne)
-    "_cAr": [],
+    "_c_ar": [],
     # [-] Hydrogen concentration (ratio nH/ne)
-    "_cH": [],
+    "_c_h": [],
     # [-] Helium concentration (ratio nH/ne)
-    "_cHe": [],
+    "_c_he": [],
     # [-] Xenon concentration (ratio nH/ne)
-    "_cXe": [],
+    "_c_xe": [],
+    # [-] plasma edge triangularity
+    "_delta_e": [],
+    # [-] tolerance on kinetic profiles
+    "_etol": [],
+    # [-] plasma bootstrap current fraction
+    "_f_bs": [],
+    # [-] plasma current drive fraction
+    "_f_cd": [],
+    # [-] plasma current inductive fraction
+    "_f_ind": [],
+    # [-] H-factor
+    "_H": [],
+    # [-] exit flag
+    #  1: PLASMOD converged successfully
+    # -1: Max number of iterations achieved
+    # (equilibrium oscillating, pressure too high, reduce H)
+    # 0: transport solver crashed (abnormal parameters
+    # or too large dtmin and/or dtmin
+    # -2: Equilibrium solver crashed: too high pressure
+    "_i_flag": [],
+    # [MA] plasma current
+    "_Ip": [],
+    # [-] plasma edge elongation
+    "_kappa_e": [],
+    # [-] plasma internal inductance
+    "_li": [],
+    # [-] number of iterations
+    "_niter": [],
+    # [1E19/m3] electron/ion density at pedestal height
+    "_nped": [],
+    # [1E19/m3] electron/ion density at separatrix
+    "_nsep": [],
+    # [W] additional heating power
+    "_Padd": [],
+    # [W] alpha power
+    "_Palpha": [],
+    # [W] Bremsstrahlung radiation power
+    "_Pbrem": [],
+    # [W] Fusion power
+    "_Pfus": [],
+    # [W] DD fusion power
+    "_PfusDD": [],
+    # [W] DT fusion power
+    "_PfusDT": [],
+    # [m] plasma perimeter
+    "_perim": [],
+    # [W] Line radiation power
+    "_Pline": [],
+    # [W] LH transition power
+    "_PLH": [],
+    # [W] neutron fusion power
+    "_Pneut": [],
+    # [W] Ohimic heating power
+    "_Pohm": [],
+    # [W] total radiation power
+    "_Prad": [],
+    # [W] total power across plasma separatrix
+    "_Psep": [],
+    # [MW/m] Divertor challenging criterion Psep/R0
+    "_Psep_R0": [],
+    # [MW * T/ m] Divertor challenging criterion Psep * Bt /(q95 * a)
+    "_Psep_Bt_q95_A_R0": [],
+    # [W] Synchrotron radiation power
+    "_Psync": [],
+    # [W/m2] divertor heat flux
+    "_qdivt": [],
+    # [-] Edge safety factor
+    "_q_sep": [],
+    # [m] Plasma minor radius
+    "_rpminor": [],
+    # [Ohm] plasma resistance
+    "_rplas": [],
+    # [s] energy confinement time
+    "_tau_e": [],
+    # [keV] Ions/Electrons at pedestal
+    "_Teped": [],
+    # [-] tolerance on safety factor profile
+    "_toleq": [],
+    # [-] overall tolerance
+    "_tolfin": [],
+    # [V] plasma loop voltage
+    "_Vloop": [],
+    # [J] plasma thermal energy
+    "_Wth": [],
+    # [-] plasma effective charge
+    "_Zeff": [],
+
+    ############################
+    # list profiles
+    #############################
+    # [A/m²] Bootstrap parallel current density profile
+    "_cubb": [],
+    # [-] Triangularity profile
+    "_delta": [],
+    # [m³] Volume increment profile
+    "_dV": [],
+    # [(m*T) * (m*T) / Wb == T] FF' profile
+    "_ffprime": [],
+    # [m⁴] < |grad V|²> g1 metric coefficient's profile
+    "_g1": [],
+    # [m²] < |grad V|²/r²> g2 metric coefficient's profile
+    "_g2": [],
+    # [m⁻²] < 1/r²> g3 metric coefficient's profile
+    "_g3": [],
+    # [m*T] Poloidal current profile
+    "_ipol": [],
+    # [A/m²] Parallel current density profile
+    "_jpar": [],
+    # [A/m²] CD parallel current density profile
+    "_jcdr": [],
+    # [-] Elongation profile
+    "_kappa": [],
+    # [Pa/Wb] p' profile
+    "_pprime": [],
+    # [10¹⁹/m3] argon density profile
+    "_nar": [],
+    # [10¹⁹/m3] deuterium density profile
+    "_ndeut": [],
+    # [10¹⁹/m3] electron density profile
+    "_nepr": [],
+    # [10¹⁹/m3] fuel density profile
+    "_nfuel": [],
+    # [10¹⁹/m3] helium density profile
+    "_nhe": [],
+    # [10¹⁹/m³] ion density profile
+    "_nions": [],
+    # [10¹⁹/m3] tritium density profile
+    "_ntrit": [],
+    # [10¹⁹/m3] xenon density profile
+    "_nxe": [],
+    # [Wb] Toroidal flux profile
+    "_phi": [],
+    # [Pa] Plasma pressure profile
+    "_pressure": [],
+    # [Wb] Poloidal flux profile
+    "_psi": [],
+    # [W/m³] fusion power density profile (DT + DT)
+    "_qfus": [],
+    # [W/m³] neutron power density profile
+    "_qneut": [],
+    # [-] Safety factor profile
+    "_qprf": [],
+    # [W/m³] radiation power density profile
+    "_qrad": [],
+    # [m] Grad-Shafranov shift profile
+    "_shif": [],
+    # [keV] Electron temperature profile
+    "_Tepr": [],
+    # [keV] Ion temperature profile
+    "_Tipr": [],
+    # [-] normalized toroidal flux coordinate (Phi/Phi_b)
+    "_x": [],
+    # [m³] Volume profile
+    "_V": [],
 }
 
-
-#
-# # ******************** private scalar attributes (plasmod outputs) ******************** #
-
-# _deltaE = []            # [-] plasma edge triangularity
-#
-# _fBS = []               # [-] plasma bootstrap current fraction
-# _fCD = []               # [-] plasma current drive fraction
-# _find = []              # [-] plasma current inductive fraction
-#
-# _kappaE = []            # [-] plasma edge elongation
-#
-# _Ip = []                # [MA] plasma current
-#
-# _li = []                # [-] plasma internal inductance
-# _Lp = []                # [H] plasma inductance
-#
-# _nped = []              # [1E19/m3] electron/ion density at pedestal height
-# _nsep = []              # [1E19/m3] electron/ion density at separatrix
-#
-# _Padd = []              # [MW] additional heating power
-# _Palpha = []            # [MW] alpha power
-# _Pbrem = []             # [MW] Bremsstrahlung radiation power
-# _Pfus = []              # [MW] Fusion power
-# _PfusDD = []            # [MW] DD fusion power
-# _PfusDT = []            # [MW] DT fusion power
-# _Pline = []             # [MW] Line radiation power
-# _PLH = []               # [MW] LH transition power
-# _Pneut = []             # [MW] neutron fusion power
-# _Poh = []               # [MW] Ohimic heating power
-# _Prad = []              # [MW] total radiation power
-# _Psep = []              # [MW] total power across plasma separatrix
-# _Psep_R0 = []           # [MW/m] Psep/R0 ratio
-# _Psep_Bt_q95_A_R0 = []  # [MW * T/ m] Psep * Bt /(q95 * a)
-# _Psync = []             # [MW] Synchrotron radiation power
-#
-# _qEdge = []             # [-] Edge safety factor
-#
-# _rpminor = []           # [m] plasma minor radius
-# _Rp = []                # [Ohm] plasma resistance
-#
-# _Sp = []                # [m2] plasma poloidal cross section area
-# _St = []                # [m2] plasma toroidal surface
-#
-# _tauE = []              # [s] energy confinement time
-#
-# _Vloop = []             # [V] plasma loop voltage
-#
-# _Wth = []               # [MJ] plasma thermal energy
-#
-# _Zeff = []              # [-] plasma effective charge
-#
-# # ******************** private array  (plasmod outputs) ******************** #
-# _FFprime = []           # [(m*T) * (m*T) / Wb == T] FF' profile
-#
-# _pprime = []            # [Pa/Wb] pprime profile
-# _Psi = []               # [Wb] Poloidal flux profile
-#
-# _x = []                 # [-] normalized toroidal flux coordinate (Phi/Phi_b)
-# _X = []                 # [-] normalized poloidal flux coordinate (sqrt(Psi_ax - Psi)/(Psi_ax - Psi_b)))
 
 def get_default_plasmod_inputs():
     """
@@ -269,6 +439,7 @@ class PlasmodParameters:
 # applied to make use of a single PlasmodParameters instance.
 class Inputs(PlasmodParameters):
     """Class for Plasmod inputs"""
+
     def __init__(self, **kwargs):
         self._options = get_default_plasmod_inputs()
         super().__init__(**kwargs)
@@ -276,6 +447,7 @@ class Inputs(PlasmodParameters):
 
 class Outputs(PlasmodParameters):
     """Class for Plasmod outputs"""
+
     def __init__(self, **kwargs):
         self._options = get_default_plasmod_outputs()
         super().__init__(**kwargs)
@@ -341,19 +513,18 @@ def read_output_files(output_file):
     return output
 
 
-
 class PlasmodSolver(ExternalCode):
     """Plasmod solver class"""
 
     def __init__(
-        self,
-        runmode="BATCH",
-        input_params=None,
-        input_file="plasmod_input.dat",
-        output_file="outputs.dat",
-        profiles_file="profiles.dat",
+            self,
+            runmode="BATCH",
+            input_params=None,
+            input_file="plasmod_input.dat",
+            output_file="outputs.dat",
+            profiles_file="profiles.dat",
     ):
-        #todo: add a path variable where files are stored
+        # todo: add a path variable where files are stored
         if input_params is None:
             self._parameters = Inputs()
         elif isinstance(input_params, Inputs):
@@ -363,8 +534,24 @@ class PlasmodSolver(ExternalCode):
         self._out_params = Outputs()
         super().__init__(runmode, input_file, output_file, profiles_file)
 
+    def get_ffprime(self):
+        return self._out_params._ffprime
+
+    def get_ppprime(self):
+        return self._out_params._ppprime
+
+    def get_te(self):
+        return self._out_params._Tepr
+
+    def get_ti(self):
+        return self._out_params._Tipr
+
+    def get_x(self):
+        return self._out_params._x
+
     class Setup(ExternalCode.Setup):
         """Setup class for Plasmod"""
+
         def __init__(self, outer, input_file, output_file, profiles_file):
             super().__init__(outer)
             self.input_file = input_file
