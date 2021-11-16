@@ -21,14 +21,18 @@
 
 import pytest
 
+from typing import List
 
-from bluemira.base.builder import Builder
+from bluemira.base.builder import Builder, BuildResult
 from bluemira.base.error import BuilderError
 
 
 class NoParamBuilder(Builder):
-    def build(self, params, **kwargs):
-        return super().build(params, **kwargs)
+    def build(self, **kwargs) -> List[BuildResult]:
+        return super().build(**kwargs)
+
+    def reinitialise(self, params, **kwargs) -> None:
+        return super().reinitialise(params, **kwargs)
 
 
 class ABuilder(Builder):
@@ -38,8 +42,11 @@ class ABuilder(Builder):
         "n_TF",
     ]
 
-    def build(self, params, **kwargs):
-        return super().build(params, **kwargs)
+    def build(self, **kwargs) -> List[BuildResult]:
+        return super().build(**kwargs)
+
+    def reinitialise(self, params, **kwargs) -> None:
+        return super().reinitialise(params, **kwargs)
 
 
 class TestBuilder:

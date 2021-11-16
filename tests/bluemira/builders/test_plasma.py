@@ -50,7 +50,7 @@ class TestMakeParameterisedPlasma:
             "segment_angle": 270.0,
         }
         builder = MakeParameterisedPlasma(params, build_config)
-        outputs = builder.build(params)
+        outputs = builder(params)
         assert outputs is not None
         assert isinstance(outputs, list)
         assert len(outputs) == 3

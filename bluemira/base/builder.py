@@ -24,12 +24,21 @@ Interfaces for builder and build steps classes
 """
 
 import abc
-from typing import Any, Dict, List, Literal, Tuple
+from typing import Any, Dict, List, Literal, NamedTuple
 
-from bluemira.base.components import Component
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
+
+
+class BuildResult(NamedTuple):
+    """
+    The result of a bluemira build is the component and it's corresponding target path.
+    """
+
+    target: str
+    component: PhysicalComponent
 
 
 class Builder(abc.ABC):
@@ -47,14 +56,13 @@ class Builder(abc.ABC):
 
         self._validate_config(build_config)
         self._extract_config(build_config)
-        self._validate_params(params)
         self._params = ParameterFrame.from_template(self._required_params)
-        self._params.update_kw_parameters(params)
+        self.reinitialise(params)
 
-    @abc.abstractmethod
-    def build(self, params, **kwargs) -> List[Tuple[str, Component]]:
+    def __call__(self, params, **kwargs) -> List[BuildResult]:
         """
-        Runs this Builder's build process to generate the required Components.
+        Perform the full build process, including reinitialisation, using the provided
+        parameters.
 
         Parameters
         ----------
@@ -64,11 +72,36 @@ class Builder(abc.ABC):
 
         Returns
         -------
-        build_results: List[Tuple[str, Component]]
+        build_results: List[BuildResult]
             The Components build by this builder, including the target paths.
         """
-        self._validate_params(params)
-        self._params.update_kw_parameters(params)
+        self.reinitialise(params)
+        return self.build()
+
+    @abc.abstractmethod
+    def reinitialise(self, params, **kwargs) -> None:
+        """
+        Initialise the state of this builder ready for a new run.
+
+        Parameters
+        ----------
+        params: Dict[str, Any]
+            The parameterisation containing at least the required params for this
+            Builder.
+        """
+        bluemira_debug(f"Reinitialising {self.name}")
+        self._reset_params(params)
+
+    @abc.abstractmethod
+    def build(self, **kwargs) -> List[BuildResult]:
+        """
+        Runs this Builder's build process to generate the required Components.
+
+        Returns
+        -------
+        build_results: List[BuildResult]
+            The Components build by this builder, including the target paths.
+        """
         bluemira_print(f"Building {self.name}")
         return [()]
 
@@ -87,13 +120,15 @@ class Builder(abc.ABC):
         return self._required_params
 
     @property
-    def required_config(self):
+    def required_config(self) -> List[str]:
         """
         The names of the build configuration values that are needed to run this builder.
         """
         return self._required_config
 
-    def _validate_requirement(self, input, source: Literal["params", "config"]):
+    def _validate_requirement(
+        self, input, source: Literal["params", "config"]
+    ) -> List[str]:
         missing = []
         for req in getattr(self, f"_required_{source}"):
             if req not in input.keys():
@@ -117,6 +152,10 @@ class Builder(abc.ABC):
                 f"Required parameters {', '.join(missing_params)} not provided to "
                 f"Builder {self._name}"
             )
+
+    def _reset_params(self, params):
+        self._validate_params(params)
+        self._params.update_kw_parameters(params)
 
     def _extract_config(self, build_config: Dict[str, Any]):
         pass

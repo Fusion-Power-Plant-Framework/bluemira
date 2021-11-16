@@ -23,9 +23,10 @@
 Built-in build steps for making a parameterised plasma
 """
 
-from typing import Dict, List, Tuple, Type, Union
+from typing import Dict, List, Type, Union
 
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.builder import BuildResult
+from bluemira.base.components import PhysicalComponent
 import bluemira.geometry as geo
 from bluemira.geometry.parameterisations import GeometryParameterisation
 
@@ -45,30 +46,31 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
     _param_class: Type[GeometryParameterisation]
     _variables_map: Dict[str, str]
     _targets: Dict[str, str]
+    _segment_angle: float
 
     def _extract_config(self, build_config: Dict[str, Union[float, int, str]]):
         super()._extract_config(build_config)
 
         self._targets = build_config["targets"]
-        self._segment_angle: float = build_config["segment_angle"]
+        self._segment_angle = build_config["segment_angle"]
 
-    def build(self, params, **kwargs) -> List[Tuple[str, Component]]:
+    def build(self, **kwargs) -> List[BuildResult]:
         """
         Build a plasma with a boundary shape defined by the parameterisation.
 
         Constructs a Component at each of the target paths using the defined methods.
         """
-        super().build(params, **kwargs)
-
-        boundary = self.create_parameterisation().create_shape()
+        super().build(**kwargs)
 
         result_components = []
         for target, func in self._targets.items():
-            result_components.append(getattr(self, func)(boundary, target))
+            result_components.append(
+                getattr(self, func)(self._shape.create_shape(), target)
+            )
 
         return result_components
 
-    def build_xz(self, boundary: geo.wire.BluemiraWire, target: str):
+    def build_xz(self, boundary: geo.wire.BluemiraWire, target: str) -> BuildResult:
         """
         Build a PhysicalComponent with a BluemiraFace using the provided plasma boundary
         in the xz plane.
@@ -82,16 +84,16 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
         Returns
         -------
-        result: Tuple[str, PhysicalComponent]
+        result: BuildResult
             The resulting target path and component.
         """
         label = target.split("/")[-1]
-        return (
-            target,
-            PhysicalComponent(label, geo.face.BluemiraFace(boundary, label)),
+        return BuildResult(
+            target=target,
+            component=PhysicalComponent(label, geo.face.BluemiraFace(boundary, label)),
         )
 
-    def build_xy(self, boundary: geo.wire.BluemiraWire, target: str):
+    def build_xy(self, boundary: geo.wire.BluemiraWire, target: str) -> BuildResult:
         """
         Build a PhysicalComponent with a BluemiraFace using the provided plasma boundary
         in the xy plane.
@@ -109,7 +111,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
         Returns
         -------
-        result: Tuple[str, PhysicalComponent]
+        result: BuildResult
             The resulting target path and component.
         """
         label = target.split("/")[-1]
@@ -117,12 +119,14 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         inner = geo.tools.make_circle(boundary.bounding_box[0], axis=[0, 1, 0])
         outer = geo.tools.make_circle(boundary.bounding_box[3], axis=[0, 1, 0])
 
-        return (
-            target,
-            PhysicalComponent(label, geo.face.BluemiraFace([outer, inner], label)),
+        return BuildResult(
+            target=target,
+            component=PhysicalComponent(
+                label, geo.face.BluemiraFace([outer, inner], label)
+            ),
         )
 
-    def build_xyz(self, boundary: geo.wire.BluemiraWire, target: str):
+    def build_xyz(self, boundary: geo.wire.BluemiraWire, target: str) -> BuildResult:
         """
         Build a PhysicalComponent with a BluemiraShell using the provided plasma boundary
         in 3D.
@@ -140,7 +144,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
         Returns
         -------
-        result: Tuple[str, PhysicalComponent]
+        result: BuildResult
             The resulting target path and component.
         """
         label = target.split("/")[-1]

@@ -28,7 +28,9 @@ import pytest
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.builders.shapes import MakeParameterisedShape
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
+
+from bluemira.builders.shapes import MakeParameterisedShape, MakeOptimisedShape
 
 import tests
 
@@ -53,25 +55,103 @@ class TestMakeParameterisedShape:
             "target": "TF Coils/xz/Shape",
         }
         builder = MakeParameterisedShape(params, build_config)
-        component = builder.build(params)
-        assert component is not None
+        build_results = builder(params)
+        assert build_results is not None
 
         target_split = build_config["target"].split("/")
         target_path = "/".join(target_split)
         component_name = target_split[-1]
 
         if tests.PLOTTING:
-            shape = component[0][1].shape.discretize()
+            shape = build_results[0].component.shape.discretize()
             plt.plot(*shape.T[0::2])
             plt.gca().set_aspect("equal")
             plt.show()
 
-        assert component[0][0] == target_path
-        assert component[0][1].name == component_name
+        assert build_results[0].target == target_path
+        assert build_results[0].component.name == component_name
 
-        discr = component[0][1].shape.discretize()
+        discr = build_results[0].component.shape.discretize()
         assert min(discr.T[0]) == pytest.approx(params["r_tf_in_centre"][0], abs=1e-3)
         assert max(discr.T[0]) == pytest.approx(params["r_tf_out_centre"][0], abs=1e-3)
+        assert np.average(discr.T[1]) == pytest.approx(
+            build_config["variables_map"]["dz"], abs=1e-3
+        )
+
+
+class TestMakeOptimisedShape:
+    class MinimiseLength(GeometryOptimisationProblem):
+        """
+        A simple geometry optimisation problem that minimises length without constraints.
+        """
+
+        def calculate_length(self, x):
+            """
+            Calculate the length of the GeometryParameterisation
+            """
+            self.update_parameterisation(x)
+            return self.parameterisation.create_shape().length
+
+        def f_objective(self, x, grad):
+            """
+            Objective function is the length of the parameterised shape.
+            """
+            length = self.calculate_length(x)
+
+            if grad.size > 0:
+                # Only called if a gradient-based optimiser is used
+                grad[:] = self.optimiser.approx_derivative(
+                    self.calculate_length, x, f0=length
+                )
+
+            return length
+
+    def test_builder(self):
+        params = {
+            "r_tf_in_centre": (5.0, "Input"),
+            "r_tf_out_centre": (9.0, "Input"),
+        }
+        build_config = {
+            "name": "TF Shape",
+            "param_class": "PrincetonD",
+            "variables_map": {
+                "x1": {
+                    "value": "r_tf_in_centre",
+                    "upper_bound": 6.0,
+                },
+                "x2": {
+                    "value": "r_tf_out_centre",
+                    "lower_bound": 8.0,
+                },
+                "dz": 0.0,
+            },
+            "problem_class": TestMakeOptimisedShape.MinimiseLength,
+            "target": "TF Coils/xz/Shape",
+        }
+        builder = MakeOptimisedShape(params, build_config)
+        build_results = builder(params)
+        assert build_results is not None
+
+        target_split = build_config["target"].split("/")
+        target_path = "/".join(target_split)
+        component_name = target_split[-1]
+
+        if tests.PLOTTING:
+            shape = build_results[0].component.shape.discretize()
+            plt.plot(*shape.T[0::2])
+            plt.gca().set_aspect("equal")
+            plt.show()
+
+        assert build_results[0].target == target_path
+        assert build_results[0].component.name == component_name
+
+        discr = build_results[0].component.shape.discretize()
+        assert min(discr.T[0]) == pytest.approx(
+            build_config["variables_map"]["x1"]["upper_bound"], abs=1e-3
+        )
+        assert max(discr.T[0]) == pytest.approx(
+            build_config["variables_map"]["x2"]["lower_bound"], abs=1e-3
+        )
         assert np.average(discr.T[1]) == pytest.approx(
             build_config["variables_map"]["dz"], abs=1e-3
         )
