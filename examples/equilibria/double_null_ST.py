@@ -23,7 +23,8 @@ ST equilibrium attempt
 """
 import numpy as np
 import matplotlib.pyplot as plt
-
+import copy
+import argparse
 from bluemira.base.look_and_feel import plot_defaults
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.grid import Grid
@@ -33,8 +34,17 @@ from bluemira.equilibria.constraints import (
 )
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimiser import Norm2Tikhonov
-from bluemira.equilibria.solve import PicardDeltaIterator
+from bluemira.equilibria.optimiser import (
+    Norm2Tikhonov,
+    BoundedCurrentOptimiser,
+    CoilsetOptimiser,
+    NestedCoilsetOptimiser,
+)
+from bluemira.equilibria.solve import (
+    PicardDeltaIterator,
+    PicardAbsIterator,
+    PicardAbsCoilsetIterator,
+)
 
 # Clean up and make plots look good
 plt.close("all")
@@ -57,206 +67,374 @@ program.iterate_once()
 interactive = False
 
 # Intialise some parameters
-
 R0 = 2.6
 Z0 = 0
-A = 1.6
-kappa = 2.75
-delta = 0.5
 Bt = 1.9
-betap = 2.6
 Ip = 16e6
 
 
-# Make a grid
-
-r0, r1 = 0.2, 8
-z0, z1 = -8, 8
-nx, nz = 129, 257
-
-grid = Grid(r0, r1, z0, z1, nx, nz)
-
-
-# Set up a custom profile object
-pprime = np.array(
-    [
-        -850951,
-        -844143,
-        -782311,
-        -714610,
-        -659676,
-        -615987,
-        -572963,
-        -540556,
-        -509991,
-        -484261,
-        -466462,
-        -445186,
-        -433472,
-        -425413,
-        -416325,
-        -411020,
-        -410672,
-        -406795,
-        -398001,
-        -389309,
-        -378528,
-        -364607,
-        -346119,
-        -330297,
-        -312817,
-        -293764,
-        -267515,
-        -261466,
-        -591725,
-        -862663,
-    ]
-)
-ffprime = np.array(
-    [
-        7.23,
-        5.89,
-        4.72,
-        3.78,
-        3.02,
-        2.39,
-        1.86,
-        1.43,
-        1.01,
-        0.62,
-        0.33,
-        0.06,
-        -0.27,
-        -0.61,
-        -0.87,
-        -1.07,
-        -1.24,
-        -1.18,
-        -0.83,
-        -0.51,
-        -0.2,
-        0.08,
-        0.24,
-        0.17,
-        0.13,
-        0.1,
-        0.07,
-        0.05,
-        0.15,
-        0.28,
-    ]
-)
-# pprime = LaoPolynomialFunc([3.65, -9.72, 13.2])
-# ffprime = LaoPolynomialFunc([0.96, -4.44, 5.05])
+def init_grid():
+    """
+    Create the grid for the FBE solver.
+    """
+    r0, r1 = 0.2, 8
+    z0, z1 = -8, 8
+    nx, nz = 129, 257
+    grid = Grid(r0, r1, z0, z1, nx, nz)
+    return grid
 
 
-profile = CustomProfile(pprime, ffprime, R_0=R0, B_0=Bt, Ip=Ip)
-
-# Make a family of constraints
-
-x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
-z_lcfs = np.array([0, 4.19, 0, -4.19])
-
-lcfs_isoflux = IsofluxConstraint(x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
-
-x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70])
-z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71])
-x_hfs = np.array([1.42, 1.06, 0.81, 0.67, 0.62, 0.62, 0.64, 0.60])
-z_hfs = np.array([4.80, 5.09, 5.38, 5.72, 6.01, 6.65, 6.82, 7.34])
-
-x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
-z_legs = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
-
-legs_isoflux = IsofluxConstraint(x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
-
-constraint_set = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
-
-
-# Make a coilset
-# No CS coils needed for the equilibrium (Last 2 coils are CS below)
-
-coil_x = [1.05, 6.85, 6.85, 1.05, 3.2, 5.7, 5.3]
-coil_z = [7.85, 4.75, 3.35, 6.0, 8.0, 7.8, 5.50]
-coil_dx = [0.45, 0.5, 0.5, 0.3, 0.6, 0.5, 0.25]
-coil_dz = [0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5]
-currents = [0, 0, 0, 0, 0, 0, 0]
-
-circuits = []
-for i in range(len(coil_x)):
-    coil = Coil(
-        coil_x[i],
-        coil_z[i],
-        dx=coil_dx[i] / 2,
-        dz=coil_dz[i] / 2,
-        current=currents[i],
-        ctype="PF",
+def init_profile():
+    """
+    Create the plasma profiles for the FBE solver.
+    """
+    pprime = np.array(
+        [
+            -850951,
+            -844143,
+            -782311,
+            -714610,
+            -659676,
+            -615987,
+            -572963,
+            -540556,
+            -509991,
+            -484261,
+            -466462,
+            -445186,
+            -433472,
+            -425413,
+            -416325,
+            -411020,
+            -410672,
+            -406795,
+            -398001,
+            -389309,
+            -378528,
+            -364607,
+            -346119,
+            -330297,
+            -312817,
+            -293764,
+            -267515,
+            -261466,
+            -591725,
+            -862663,
+        ]
     )
-    circuit = SymmetricCircuit(coil)
-    circuits.append(circuit)
+    ffprime = np.array(
+        [
+            7.23,
+            5.89,
+            4.72,
+            3.78,
+            3.02,
+            2.39,
+            1.86,
+            1.43,
+            1.01,
+            0.62,
+            0.33,
+            0.06,
+            -0.27,
+            -0.61,
+            -0.87,
+            -1.07,
+            -1.24,
+            -1.18,
+            -0.83,
+            -0.51,
+            -0.2,
+            0.08,
+            0.24,
+            0.17,
+            0.13,
+            0.1,
+            0.07,
+            0.05,
+            0.15,
+            0.28,
+        ]
+    )
+    profile = CustomProfile(pprime, ffprime, R_0=R0, B_0=Bt, Ip=Ip)
+    return profile
 
 
-coilset = CoilSet(circuits)
-coilset_temp = CoilSet(circuits)
+def init_constraints():
+    """
+    Create the set of constraints for the FBE solver.
+    """
+    x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
+    z_lcfs = np.array([0, 4.19, 0, -4.19])
 
-# Temporarily add a simple plasma coil to get a good starting guess for psi
-coilset_temp.add_coil(
-    Coil(R0 + 0.5, Z0, dx=0.5, dz=0.5, current=Ip, name="plasma_dummy", control=False)
-)
+    lcfs_isoflux = IsofluxConstraint(x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
 
-eq = Equilibrium(
-    coilset_temp,
-    grid,
-    force_symmetry=True,
-    limiter=None,
-    psi=None,
-    Ip=0,
-    li=None,
-)
-constraint_set(eq)
-optimiser = Norm2Tikhonov(gamma=1e-7)  # This is still a bit of a magic number..
-currents = optimiser(eq, constraint_set)
+    x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70])
+    z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71])
+    x_hfs = np.array([1.42, 1.06, 0.81, 0.67, 0.62, 0.62, 0.64, 0.60])
+    z_hfs = np.array([4.80, 5.09, 5.38, 5.72, 6.01, 6.65, 6.82, 7.34])
 
-coilset_temp.set_control_currents(currents)
-coilset.set_control_currents(currents)
+    x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
+    z_legs = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
 
-psi = coilset_temp.psi(grid.x, grid.z).copy()
+    legs_isoflux = IsofluxConstraint(x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
 
-# Set up an equilibrium problem and solve it
+    constraint_set = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
+    return constraint_set
 
-eq = Equilibrium(
+
+def init_coilset():
+    """
+    Create the initial coilset.
+    """
+    # Make a coilset
+    coil_x = [1.05, 6.85, 6.85, 1.05, 3.2, 5.7, 5.3]
+    coil_z = [7.85, 4.75, 3.35, 6.0, 8.0, 7.8, 5.50]
+    coil_dx = [0.45, 0.5, 0.5, 0.3, 0.6, 0.5, 0.25]
+    coil_dz = [0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5]
+    currents = [0, 0, 0, 0, 0, 0, 0]
+
+    circuits = []
+    for i in range(len(coil_x)):
+        coil = Coil(
+            coil_x[i],
+            coil_z[i],
+            dx=coil_dx[i] / 2,
+            dz=coil_dz[i] / 2,
+            current=currents[i],
+            ctype="PF",
+        )
+        circuit = SymmetricCircuit(coil)
+        circuits.append(circuit)
+    coilset = CoilSet(circuits)
+    return coilset
+
+
+def init_equilibrium(grid, coilset, constraint_set):
+    """
+    Create an initial guess for the Equilibrium state.
+    Temporarily add a simple plasma coil to get a good starting guess for psi.
+    """
+    coilset_temp = copy.deepcopy(coilset)
+
+    coilset_temp.add_coil(
+        Coil(
+            R0 + 0.5, Z0, dx=0.5, dz=0.5, current=Ip, name="plasma_dummy", control=False
+        )
+    )
+
+    eq = Equilibrium(
+        coilset_temp,
+        grid,
+        force_symmetry=True,
+        limiter=None,
+        psi=None,
+        Ip=0,
+        li=None,
+    )
+    constraint_set(eq)
+    optimiser = Norm2Tikhonov(gamma=1e-7)
+    currents = optimiser(eq, constraint_set)
+
+    coilset_temp.set_control_currents(currents)
+    coilset.set_control_currents(currents)
+
+    psi = coilset_temp.psi(grid.x, grid.z).copy()
+
+    # Set up an equilibrium problem and solve it
+    eq = Equilibrium(
+        coilset,
+        grid,
+        force_symmetry=True,
+        vcontrol=None,
+        psi=psi,
+        Ip=Ip,
+        li=None,
+    )
+    return eq
+
+
+def optimise_fbe(program):
+    """
+    Run the iterator to optimise the FBE.
+    """
+    if interactive:
+        next(program)
+    else:
+        program()
+        plt.close("all")
+
+        f, ax = plt.subplots()
+        program.eq.plot(ax=ax)
+        program.constraints.plot(ax=ax)
+    return
+
+
+def pre_optimise(eq, profile, constraint_set):
+    """
+    Run a simple unconstrained optimisation to improve the
+    initial equilibrium for the main optimiser.
+    """
+    optimiser = Norm2Tikhonov(gamma=1e-8)  # This is still a bit of a magic number..
+
+    program = PicardDeltaIterator(
+        eq,
+        profile,  # jetto
+        constraint_set,
+        optimiser,
+        plot=True,
+        gif=False,
+        relaxation=0.3,
+        # convergence=CunninghamConvergence(),
+        maxiter=400,
+    )
+
+    eq = optimise_fbe(program)
+    return eq
+
+
+def set_coilset_optimiser(
     coilset,
-    grid,
-    force_symmetry=True,
-    vcontrol=None,
-    psi=psi,
-    Ip=Ip,
-    li=None,
-)
-eq.plot()
-plt.show()
+    optimiser_name,
+    optimisation_options,
+    suboptimiser_name="BoundedCurrentOptimiser",
+    suboptimisation_options=None,
+):
+    """
+    Create the optimiser to be used to optimise the coilset.
+    """
+    if optimiser_name in ["Norm2Tikhonov"]:
+        optimiser = Norm2Tikhonov(**optimisation_options)
+    elif optimiser_name in ["BoundedCurrentOptimiser"]:
+        optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
+    elif optimiser_name in ["CoilsetOptimiser"]:
+        optimiser = CoilsetOptimiser(coilset, **optimisation_options)
+    elif optimiser_name in ["NestedCoilsetOptimiser"]:
+        sub_optimiser = set_coilset_optimiser(
+            coilset,
+            optimiser_name=suboptimiser_name,
+            optimisation_options=suboptimisation_options,
+        )
+        optimiser = NestedCoilsetOptimiser(sub_optimiser, **optimisation_options)
+    return optimiser
 
 
-# Simple unconstrained optimisation
-optimiser = Norm2Tikhonov(gamma=1e-8)  # This is still a bit of a magic number..
+def set_iterator(eq, profile, constraint_set, optimiser):
+    """
+    Create the iterator to be used to solve the FBE.
+    """
+    optimiser_name = type(optimiser).__name__
+    iterator_args = (eq, profile, constraint_set, optimiser)
+    iterator_kwargs = {"plot": True, "gif": False, "relaxation": 0.3, "maxiter": 400}
 
-program = PicardDeltaIterator(
-    eq,
-    profile,  # jetto
-    constraint_set,
-    optimiser,
-    plot=True,
-    gif=False,
-    relaxation=0.3,
-    # convergence=CunninghamConvergence(),
-    maxiter=400,
-)
+    if optimiser_name == "BoundedCurrentOptimiser":
+        program = PicardAbsIterator(*iterator_args, **iterator_kwargs)
+    elif optimiser_name in ["CoilsetOptimiser", "NestedCoilsetOptimiser"]:
+        program = PicardAbsCoilsetIterator(*iterator_args, **iterator_kwargs)
+    else:
+        program = PicardDeltaIterator(*iterator_args, **iterator_kwargs)
 
-if interactive:
-    next(program)
-else:
-    program()
-    plt.close("all")
+    return program
 
-    f, ax = plt.subplots()
-    eq.plot(ax=ax)
-    constraint_set.plot(ax=ax)
+
+def default_optimiser_options(optimiser_name):
+    """
+    Specifies default optimiser options.
+    """
+    options = {"optimiser_name": optimiser_name}
+    if optimiser_name in ["Norm2Tikhonov"]:
+        options["optimisation_options"] = {"gamma": 1e-8}
+    elif optimiser_name in ["BoundedCurrentOptimiser"]:
+        options["optimisation_options"] = {
+            "max_currents": 2.0e7,
+            "gamma": 1e-8,
+        }
+    elif optimiser_name in ["CoilsetOptimiser"]:
+        options["optimisation_options"] = {
+            "max_currents": 2.0e7,
+            "gamma": 1e-8,
+            "max_coil_shifts": {
+                "x_shifts_lower": -1.0,
+                "x_shifts_upper": 1.0,
+                "z_shifts_lower": -1.0,
+                "z_shifts_upper": 1.0,
+            },
+            "opt_args": {
+                "algorithm_name": "SBPLX",
+                "opt_conditions": {
+                    "stop_val": 2.5e-2,
+                    "max_eval": 100,
+                },
+                "opt_parameters": {},
+            },
+        }
+    elif optimiser_name in ["NestedCoilsetOptimiser"]:
+        options["optimisation_options"] = {
+            "max_coil_shifts": {
+                "x_shifts_lower": -1.0,
+                "x_shifts_upper": 1.0,
+                "z_shifts_lower": -1.0,
+                "z_shifts_upper": 1.0,
+            },
+            "opt_args": {
+                "algorithm_name": "SBPLX",
+                "opt_conditions": {
+                    "stop_val": 2.5e-2,
+                    "max_eval": 100,
+                },
+                "opt_parameters": {},
+            },
+        }
+        options["suboptimiser_name"] = "BoundedCurrentOptimiser"
+        options["suboptimisation_options"] = {"max_currents": 2.0e7, "gamma": 1e-8}
+    else:
+        print("Coilset optimiser name not supported for this example")
+    return options
+
+
+def run(args):
+    """
+    Main program to solve the specified FBE problem.
+    """
+    optimiser_name = args.optimiser_name
+    grid = init_grid()
+    profile = init_profile()
+    constraint_set = init_constraints()
+    coilset = init_coilset()
+    eq = init_equilibrium(grid, coilset, constraint_set)
+
+    # Perform a fast initial unconstrained optimisation to create a
+    # self consistent initial state
+    if args.pre_optimise is True:
+        pre_optimise(eq, profile, constraint_set)
+    if optimiser_name is not None:
+        options = default_optimiser_options(optimiser_name)
+        optimiser = set_coilset_optimiser(eq.coilset, **options)
+        program = set_iterator(eq, profile, constraint_set, optimiser)
+        optimise_fbe(program)
+    eq.plot()
+    plt.show()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--optimiser_name",
+        help="Name of optimiser to use",
+        choices=[
+            "Norm2Tikhonov",
+            "BoundedCurrentOptimiser",
+            "CoilsetOptimiser",
+            "NestedCoilsetOptimiser",
+        ],
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--pre_optimise",
+        help="Flag controlling if state should be pre optimised using unconstrained optimisation before passing to the constrained optimiser",
+        type=bool,
+        default=True,
+    )
+    args = parser.parse_args()
+    run(args)

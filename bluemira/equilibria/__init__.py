@@ -41,6 +41,8 @@ from .optimiser import (
     FBIOptimiser,
     BoundedCurrentOptimiser,
     PositionOptimiser,
+    CoilsetOptimiser,
+    NestedCoilsetOptimiser,
 )
 from .find import find_flux_surfs, find_LCFS_separatrix, find_OX_points
 from .equilibrium import Equilibrium, Breakdown
@@ -49,5 +51,6 @@ from .solve import (
     PicardDeltaIterator,
     PicardLiAbsIterator,
     PicardLiDeltaIterator,
+    PicardAbsCoilsetIterator,
 )
 from .run import AbInitioEquilibriumProblem

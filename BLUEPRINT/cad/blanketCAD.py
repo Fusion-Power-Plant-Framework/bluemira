@@ -44,8 +44,7 @@ class BlanketCAD(ComponentCAD):
     """
 
     def __init__(self, blanket, **kwargs):
-        ComponentCAD.__init__(
-            self,
+        super().__init__(
             "Breeding blanket",
             blanket.geom,
             blanket.params.n_TF,
@@ -134,7 +133,7 @@ class STBlanketCAD(ComponentCAD):
 
         self.n_TF = blanket.params.n_TF
 
-        ComponentCAD.__init__(self, "Breeding blanket", palette=BLUE["BB"], **kwargs)
+        super().__init__("Breeding blanket", palette=BLUE["BB"], **kwargs)
 
     def build(self, **kwargs):
         """
