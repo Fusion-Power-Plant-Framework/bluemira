@@ -170,6 +170,10 @@ class BluemiraGeo(ABC):
         """Checks if the shape is closed"""
         return _freecadapi.is_closed(self._shape)
 
+    def is_valid(self):
+        """Checks if the shape is valid"""
+        return _freecadapi.is_valid(self._shape)
+
     def search(self, label: str):
         """
         Search for a shape with the specified label

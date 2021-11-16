@@ -49,7 +49,7 @@ class TestSweep:
         )
 
         sweep = sweep_shape(profile, path, solid=True)
-
+        assert sweep.is_valid
         assert np.isclose(sweep.volume, np.pi)
 
     def test_circle(self):
@@ -60,9 +60,8 @@ class TestSweep:
 
         sweep = sweep_shape(profile, path, solid=True)
 
+        assert sweep.is_valid
         assert np.isclose(sweep.volume, 2 * np.pi)
-
-        sweep = sweep_shape(profile, path, solid=False)
 
     def test_multiple_profiles(self):
         path = make_polygon([[0, 0, 0], [0, 0, 10]])
@@ -77,7 +76,7 @@ class TestSweep:
         )
         sweep = sweep_shape([profile_1, profile_2, profile_3], path)
 
-        assert sweep._shape.isValid()
+        assert sweep.is_valid
 
     def test_princeton_d(self):
         x2 = 14
@@ -91,7 +90,7 @@ class TestSweep:
 
         sweep = sweep_shape(profile, path)
 
-        assert sweep._shape.isValid()
+        assert sweep.is_valid
 
     def test_triple_arc(self):
         x1 = 4
@@ -104,7 +103,7 @@ class TestSweep:
         )
         sweep = sweep_shape(profile, path)
 
-        assert sweep._shape.isValid()
+        assert sweep.is_valid
 
     def test_bad_profiles(self):
         path = make_polygon([[0, 0, 0], [0, 0, 10]])
@@ -130,4 +129,4 @@ class TestSweep:
         profile = make_polygon([[1, 0, 0], [1, 1, 0], [2, 1, 0]])
         sweep = sweep_shape(profile, path, solid=False)
 
-        assert sweep._shape.isValid()
+        assert sweep.is_valid

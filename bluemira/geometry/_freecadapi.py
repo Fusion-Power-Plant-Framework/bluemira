@@ -382,6 +382,11 @@ def is_closed(obj):
     return _get_api_attr(obj, "isClosed")()
 
 
+def is_valid(obj):
+    """True if obj is valid"""
+    return _get_api_attr(obj, "isVlosed")()
+
+
 def bounding_box(obj):
     """Object's bounding box"""
     # FreeCAD BoundBox is a FreeCAD object. For the moment there is not a

@@ -119,7 +119,8 @@ class BluemiraWire(BluemiraGeo):
         return output
 
     def close(self) -> None:
-        """Close the shape with a line segment between shape's end and start point.
+        """
+        Close the shape with a line segment between shape's end and start point.
         This function modify the object boundary.
         """
         if not self.is_closed():
@@ -136,7 +137,8 @@ class BluemiraWire(BluemiraGeo):
     def discretize(
         self, ndiscr: int = 100, byedges: bool = False, dl: float = None
     ) -> numpy.ndarray:
-        """Discretize the wire in ndiscr equidistant points or with a reference dl
+        """
+        Discretize the wire in ndiscr equidistant points or with a reference dl
         segment step.
         If byedges is True, each edges is discretized separately using an approximated
         distance (wire.Length/ndiscr) or the specified dl.
@@ -153,7 +155,8 @@ class BluemiraWire(BluemiraGeo):
         return points
 
     def scale(self, factor) -> None:
-        """Apply scaling with factor to this object. This function modifies the self
+        """
+        Apply scaling with factor to this object. This function modifies the self
         object.
         """
         for o in self.boundary:
@@ -163,7 +166,8 @@ class BluemiraWire(BluemiraGeo):
                 o.scale(factor)
 
     def translate(self, vector) -> None:
-        """Translate this shape with the vector. This function modifies the self
+        """
+        Translate this shape with the vector. This function modifies the self
         object.
         """
         for o in self.boundary:
