@@ -198,7 +198,11 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
 
 
 def make_bspline(
-    points: Union[list, np.ndarray], closed: bool = False, **kwargs
+    points: Union[list, np.ndarray],
+    closed: bool = False,
+    start_tangent=None,
+    end_tangent=None,
+    **kwargs,
 ) -> Part.Wire:
     """
     Make a bezier curve from a set of points.
@@ -211,20 +215,34 @@ def make_bspline(
     closed: bool, default = False
         if True, the first and last points will be connected in order to form a
         closed shape.
-    Parameters: (optional)
+    start_tangent: Optional[np.ndarray]
+        Start point tangent vector. Must be specific with end_tangent
+    end_tangent: Optional[np.ndarray]
+        End point tangent vector. Must be specified with start_tangent
+
+    Other Parameters
+    ----------------
         knot sequence
 
     Returns
     -------
-    wire: Part.Wire
+    wire: apiWire
         a FreeCAD wire that contains the bezier curve
     """
+    both_tangents = start_tangent is not None and end_tangent is not None
+    if both_tangents:
+        start_tangent = Base.Vector(start_tangent)
+        end_tangent = Base.Vector(end_tangent)
+    else:
+        if start_tangent or end_tangent:
+            raise FreeCADError("Must specify both start and end tangents or not at all.")
+
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
     pntslist = [Base.Vector(x) for x in points]
     bsc = Part.BSplineCurve()
     bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
-    wire = Part.Wire(bsc.toShape())
+    wire = apiWire(bsc.toShape())
     return wire
 
 

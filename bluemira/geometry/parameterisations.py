@@ -205,15 +205,14 @@ class PrincetonD(GeometryParameterisation):
             *self.variables.values,
             n_points,
         )
-        dz_small = 1e-3 * abs(z[0] - z[-1])
-        n_small = 0.025 * n_points
-        z_down = np.linspace(z[0], z[0] - dz_small, n_small)
-        z_up = np.linspace(z[0], z[0] + dz_small, n_small)
-        x = np.concatenate([x[0] * np.ones(n_small), x, x[0] * np.ones(n_small)])
-        z = np.concatenate([z_up, z, z_down])
         xyz = np.array([x, np.zeros(len(x)), z])
 
-        outer_arc = make_bspline(xyz.T, label="outer_arc")
+        outer_arc = make_bspline(
+            xyz.T,
+            label="outer_arc",
+            start_tangent=np.array([0, 0, -1]),
+            end_tangent=np.array([0, 0, -1]),
+        )
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
