@@ -106,10 +106,7 @@ def make_bspline(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
-    return BluemiraWire(
-        _freecadapi.make_bspline(points, closed),
-        label=label,
-    )
+    return BluemiraWire(_freecadapi.make_bspline(points, closed), label=label)
 
 
 def make_bezier(
