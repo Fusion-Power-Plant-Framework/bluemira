@@ -24,7 +24,7 @@ from __future__ import annotations
 # import mesher lib (gmsh)
 import gmsh
 
-# import mirapy modules
+# import bluemira modules
 import bluemira.geometry as geo
 
 from .error import MeshOptionsError
@@ -34,6 +34,9 @@ import pprint
 
 from typing import Dict, Union
 
+# Mesh options for the moment are limited to definition of mesh size for each point (
+# quantity called lcar to be consistent with gmsh) and the definition of physical
+# groups.
 DEFAULT_MESH_OPTIONS = {
     "lcar": None,
     "physical_group": None,
@@ -49,7 +52,7 @@ def get_default_options():
 
 class MeshOptions:
     """
-    The options that are available for meshing objects
+    The options that are available for meshing objects.
     """
 
     def __init__(self, **kwargs):
@@ -59,7 +62,7 @@ class MeshOptions:
     @property
     def lcar(self):
         """
-        If true, points are plotted.
+        Mesh size of points.
         """
         return self._options["lcar"]
 
@@ -70,7 +73,7 @@ class MeshOptions:
     @property
     def physical_group(self):
         """
-        If true, points are plotted.
+        Definition of physical groups.
         """
         return self._options["physical_group"]
 
@@ -86,7 +89,7 @@ class MeshOptions:
 
     def modify(self, **kwargs):
         """
-        Function to override plotting options.
+        Function to override meshing options.
         """
         if kwargs:
             for k in kwargs:
@@ -110,7 +113,7 @@ class Meshable:
     @property
     def mesh_options(self) -> MeshOptions:
         """
-        The options that will be used to display the object.
+        The options that will be used to mesh the object.
         """
         return self._mesh_options
 
@@ -125,23 +128,21 @@ class Meshable:
         else:
             raise MeshOptionsError("Mesh options must be set to a MeshOptions instance.")
 
-    def remove_mesh_options(self):
-        self._mesh_options = None
-
 
 class Mesh:
     def __init__(
-        self,
-        modelname="Mesh",
-        terminal=1,
-        meshfile="Mesh.geo_unrolled",
+        self, modelname="Mesh", terminal=1, meshfile=["Mesh.geo_unrolled", "Mesh.msh"]
     ):
-
         self.modelname = modelname
         self.terminal = terminal
         self.meshfile = meshfile
 
     def _check_meshfile(self, meshfile):
+        """
+        Check the mesh file input.
+        """
+        # todo: should be implemented also a check on the file extension. Only a
+        # limited type of file extensions is allowed by gmsh.
         if isinstance(meshfile, str):
             meshfile = [meshfile]
         elif isinstance(meshfile, list):
@@ -161,27 +162,45 @@ class Mesh:
 
     def __call__(self, obj):
         if isinstance(obj, Meshable):
+            # gmsh is inizialized
             _freecadGmsh._initialize_mesh(self.terminal, self.modelname)
+            # Mesh the object. A dictionary with the geometrical and internal
+            # information that are used by gmsh is returned. In particular,
+            # a gmsh key is added to any meshed entity.
             buffer = self.__mesh_obj(obj)
-
+            # Check for possible intersection (only allowed at the boundary to adjust
+            # the gmsh_dictionary
             Mesh.__iterate_gmsh_dict(buffer, Mesh._check_intersections)
 
+            # Create the physical groups
             self._apply_physical_group(buffer)
 
+            # apply the mesh size
             self._apply_mesh_size(buffer)
 
+            # generate the mesh
             _freecadGmsh._generate_mesh()
 
+            # save the mesh file
             for file in self.meshfile:
                 _freecadGmsh._save_mesh(file)
+
+            # close gmsh
             _freecadGmsh._finalize_mesh()
         else:
-            raise ValueError(f"Only Meshable objects can be meshed")
+            raise ValueError("Only Meshable objects can be meshed")
         return buffer
 
     def __mesh_obj(self, obj, dim=2):
+        """
+        Function to mesh the object.
+        """
         if not hasattr(obj, "ismeshed") or not obj.ismeshed:
+            # object is serialized into a dictionary
             buffer = geo.tools.serialize_shape(obj)
+            # Each object is recreated into gmsh. Here there is a trick: in order to
+            # allow the correct mesh in case of intersection, the procedure
+            # is made meshing the objects with increasing dimension.
             for d in range(1, dim + 1, 1):
                 for k, v in buffer.items():
                     if k == "BluemiraWire":
@@ -196,7 +215,9 @@ class Mesh:
         return buffer
 
     def _apply_physical_group(self, buffer):
-        dim = 0
+        """
+        Function to apply physical groups
+        """
         dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2}
         other_dict = {0: "points_tag", 1: "curve_tag", 2: "surface_tag"}
         for k, v in buffer.items():
@@ -205,19 +226,29 @@ class Mesh:
                     _freecadGmsh.add_physical_group(
                         dict_dim[k],
                         self.get_gmsh_dict(buffer, "default")[other_dict[dict_dim[k]]],
-                        v['physical_group']
+                        v["physical_group"],
                     )
                 for o in v["boundary"]:
                     self._apply_physical_group(o)
 
     def _apply_mesh_size(self, buffer):
+        """
+        Function to apply mesh size.
+        """
+        # mesh size is applied not only to the vertexes of the defined geometry,
+        # but also to the intersection points (new vertexes). For this reason,
+        # it is important to do this operation after the completition of the mesh
+        # procedure.
         points_lcar2 = self.__create_dict_for_mesh_size(buffer)
         if len(points_lcar2) > 0:
             for p in points_lcar2:
                 _freecadGmsh._set_mesh_size([(0, p[0])], p[1])
 
     def __create_dict_for_mesh_size(self, buffer):
-        dim = 0
+        """
+        Function to create the correct dictionary format for the
+        application of the mesh size.
+        """
         dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2}
         other_dict = {0: "points_tag", 1: "curve_tag", 2: "surface_tag"}
         points_lcar = []
@@ -225,11 +256,9 @@ class Mesh:
             if k in dict_dim.keys():
                 if "lcar" in v.keys():
                     if v["lcar"] is not None:
-                        points_tags = self.get_gmsh_dict(buffer, "gmsh")[
-                            other_dict[0]
-                        ]
+                        points_tags = self.get_gmsh_dict(buffer, "gmsh")[other_dict[0]]
                         if len(points_tags) > 0:
-                            points_lcar +=[(p[1], v["lcar"]) for p in points_tags]
+                            points_lcar += [(p[1], v["lcar"]) for p in points_tags]
                 for o in v["boundary"]:
                     points_lcar += self.__create_dict_for_mesh_size(o)
         points_lcar = sorted(points_lcar, key=lambda element: (element[0], element[1]))
@@ -237,7 +266,6 @@ class Mesh:
         points_lcar = dict(points_lcar)
         points_lcar = [(k, v) for k, v in points_lcar.items()]
         return points_lcar
-
 
     def __apply_fragment(
         self,
@@ -248,6 +276,9 @@ class Mesh:
         remove_object=True,
         remove_tool=True,
     ):
+        """
+        Apply the boolean fragment operation.
+        """
         all_ent, oo, oov = _freecadGmsh._fragment(
             dim, all_ent, tools, remove_object, remove_tool
         )
@@ -255,14 +286,20 @@ class Mesh:
 
     @staticmethod
     def _check_intersections(gmsh_dict):
-        if len(gmsh_dict['curve_tag'])>0:
-            gmsh_curve_tag = [(1, tag) for tag in gmsh_dict['curve_tag']]
+        """
+        Check intersection and add the necessary vertexes to the gmsh dict.
+        """
+        if len(gmsh_dict["curve_tag"]) > 0:
+            gmsh_curve_tag = [(1, tag) for tag in gmsh_dict["curve_tag"]]
             new_points = _freecadGmsh._get_boundary(gmsh_curve_tag)
             new_points = list(set([tag[1] for tag in new_points]))
-            gmsh_dict['points_tag'] = new_points
+            gmsh_dict["points_tag"] = new_points
 
     @staticmethod
     def __iterate_gmsh_dict(buffer, function, *args):
+        """
+        Supporting function to iterate over a gmsh dict.
+        """
         if "BluemiraWire" in buffer:
             boundary = buffer["BluemiraWire"]["boundary"]
             if "gmsh" in buffer["BluemiraWire"]:
@@ -291,9 +328,11 @@ class Mesh:
                         Mesh.__iterate_gmsh_dict(item, function, *args)
 
     def __convert_wire_to_gmsh(self, buffer, dim=1):
+        """
+        Converts a wire to gmsh.
+        """
         for type_, value in buffer.items():
             if type_ == "BluemiraWire":
-                label = value["label"]
                 boundary = value["boundary"]
                 if dim == 1:
                     value["gmsh"] = {
@@ -335,9 +374,11 @@ class Mesh:
                 raise NotImplementedError(f"Serialization non implemented for {type_}")
 
     def __convert_face_to_gmsh(self, buffer, dim):
+        """
+        Converts a face to gmsh.
+        """
         for type_, value in buffer.items():
             if type_ == "BluemiraFace":
-                label = value["label"]
                 boundary = value["boundary"]
                 if dim == 1:
                     value["gmsh"] = {}
@@ -369,9 +410,11 @@ class Mesh:
                     pass
 
     def __convert_shell_to_gmsh(self, buffer, dim):
+        """
+        Converts a shell to gmsh.
+        """
         for type_, value in buffer.items():
             if type_ == "BluemiraShell":
-                label = value["label"]
                 boundary = value["boundary"]
                 if dim == 1:
                     value["gmsh"] = {}
@@ -391,6 +434,10 @@ class Mesh:
                     pass
 
     def get_gmsh_dict(self, buffer, format="default"):
+        """
+        Returns the gmsh dict in a default (only tags) or gmsh (tuple(dim,
+        tag)) format.
+        """
         gmsh_dict = {}
         output = None
 
@@ -494,6 +541,9 @@ class _freecadGmsh:
 
     @staticmethod
     def create_gmsh_curve(buffer):
+        """
+        Function to create gmsh curve from a dictionary (buffer).
+        """
         gmsh_dict = {}
 
         points_tag = []
@@ -528,29 +578,34 @@ class _freecadGmsh:
                 points_tag.append(cntrpoints_tag[-1])
             elif type_ == "ArcOfCircle":
                 start_point = buffer[type_]["StartPoint"]
-                start_point_tag = gmsh.model.occ.addPoint( start_point[0],
-                                                           start_point[1], start_point[2])
+                start_point_tag = gmsh.model.occ.addPoint(
+                    start_point[0], start_point[1], start_point[2]
+                )
                 points_tag.append(start_point_tag)
                 end_point = buffer[type_]["EndPoint"]
-                end_point_tag = gmsh.model.occ.addPoint( end_point[0],
-                                                           end_point[1], end_point[2])
+                end_point_tag = gmsh.model.occ.addPoint(
+                    end_point[0], end_point[1], end_point[2]
+                )
                 points_tag.append(end_point_tag)
                 center = buffer[type_]["Center"]
                 center_tag = gmsh.model.occ.addPoint(center[0], center[1], center[2])
 
-                curve_tag.append(gmsh.model.occ.addCircleArc(
-                    start_point_tag,
-                    center_tag,
-                    end_point_tag))
+                curve_tag.append(
+                    gmsh.model.occ.addCircleArc(
+                        start_point_tag, center_tag, end_point_tag
+                    )
+                )
                 cntrpoints_tag.append(center_tag)
             elif type_ == "ArcOfEllipse":
                 start_point = buffer[type_]["StartPoint"]
-                start_point_tag = gmsh.model.occ.addPoint( start_point[0],
-                                                           start_point[1], start_point[2])
+                start_point_tag = gmsh.model.occ.addPoint(
+                    start_point[0], start_point[1], start_point[2]
+                )
                 points_tag.append(start_point_tag)
                 end_point = buffer[type_]["EndPoint"]
-                end_point_tag = gmsh.model.occ.addPoint( end_point[0],
-                                                           end_point[1], end_point[2])
+                end_point_tag = gmsh.model.occ.addPoint(
+                    end_point[0], end_point[1], end_point[2]
+                )
                 points_tag.append(end_point_tag)
                 print("Ellipse")
                 center = buffer[type_]["Center"]
@@ -561,11 +616,11 @@ class _freecadGmsh:
                 print(focus)
                 print(end_point)
                 focus_tag = gmsh.model.occ.addPoint(focus[0], focus[1], focus[2])
-                curve_tag.append(gmsh.model.occ.addEllipseArc(
-                    start_point_tag,
-                    center_tag,
-                    focus_tag,
-                    end_point_tag))
+                curve_tag.append(
+                    gmsh.model.occ.addEllipseArc(
+                        start_point_tag, center_tag, focus_tag, end_point_tag
+                    )
+                )
 
                 cntrpoints_tag.append(center_tag)
                 cntrpoints_tag.append(focus_tag)
