@@ -241,7 +241,12 @@ def make_bspline(
     # left for consistency with other methods.
     pntslist = [Base.Vector(x) for x in points]
     bsc = Part.BSplineCurve()
-    bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
+    bsc.interpolate(
+        pntslist,
+        PeriodicFlag=closed,
+        InitialTangent=start_tangent,
+        FinalTangent=end_tangent,
+    )  # , **kwargs)
     wire = apiWire(bsc.toShape())
     return wire
 

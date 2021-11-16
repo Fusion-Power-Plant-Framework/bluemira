@@ -266,6 +266,7 @@ class PrincetonD(GeometryParameterisation):
 
         xo = np.sqrt(x1 * x2)
         k = 0.5 * np.log(x2 / x1)
+        # npoints = int(npoints // 2)
         theta = np.linspace(-0.5 * np.pi, 1.5 * np.pi, npoints)
         s = np.zeros(npoints, dtype="complex128")
         n = 0
@@ -282,6 +283,9 @@ class PrincetonD(GeometryParameterisation):
 
         z = abs(xo * k * (bessel(1, k) * theta + s))
         x = xo * np.exp(k * np.sin(theta))
+        # z -= max(z)
+        # x = np.concatenate([x, x[1:][::-1]])
+        # z = np.concatenate([z, -z[1:][::-1]])
         z -= np.mean(z)
         z += dz  # vertical shift
         return x, z
