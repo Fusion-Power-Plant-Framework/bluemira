@@ -39,6 +39,7 @@ EPS = np.finfo(np.float64).eps
 NLOPT_ALG_MAPPING = {
     "SLSQP": nlopt.LD_SLSQP,
     "COBYLA": nlopt.LN_COBYLA,
+    "SBPLX": nlopt.LN_SBPLX,
     "MMA": nlopt.LD_MMA,
     "BFGS": nlopt.LD_LBFGS,
     "DIRECT": nlopt.GN_DIRECT,

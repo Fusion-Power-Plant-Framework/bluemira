@@ -50,6 +50,8 @@ from typing import List, Optional, Iterable, Union, Dict
 from bluemira.geometry.error import FreeCADError
 from bluemira.base.look_and_feel import bluemira_warn
 
+from bluemira.base.constants import EPS
+
 # import visualisation
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
@@ -340,6 +342,88 @@ def make_ellipse(
         )
 
     return Part.Wire(Part.Edge(output))
+
+
+def _wire_is_planar(wire):
+    """
+    Check if a wire is planar.
+    """
+    try:
+        face = Part.Face(wire)
+    except Part.OCCError:
+        return False
+    return isinstance(face.Surface, Part.Plane)
+
+
+def _wire_is_straight(wire):
+    """
+    Check if a wire is a straight line.
+    """
+    if len(wire.Edges) == 1:
+        edge = wire.Edges[0]
+        if len(edge.Vertexes) == 2:
+            straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
+            if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
+                return True
+    return False
+
+
+def offset_wire(
+    wire: Part.Wire, thickness: float, join: str = "intersect", open_wire: bool = True
+) -> Part.Wire:
+    """
+    Make an offset from a wire.
+
+    Parameters
+    ----------
+    wire: Part.Wire
+        Wire to offset from
+    thickness: float
+        Offset distance. Positive values outwards, negative values inwards
+    join: str
+        Offset method. "arc" gives rounded corners, and "intersect" gives sharp corners
+    open_wire: bool
+        For open wires (counter-clockwise default) whether or not to make an open offset
+        wire, or a closed offset wire that encompasses the original wire. This is
+        disabled for closed wires.
+
+    Returns
+    -------
+    wire: Part.Wire
+        Offset wire
+    """
+    if _wire_is_straight(wire):
+        raise FreeCADError("Cannot offset a straight line.")
+
+    if not _wire_is_planar(wire):
+        raise FreeCADError("Cannot offset a non-planar wire.")
+
+    if join == "arc":
+        f_join = 0
+    elif join == "intersect":
+        f_join = 2
+    else:
+        # NOTE: The "tangent": 1 option misbehaves in FreeCAD
+        raise FreeCADError(
+            f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
+        )
+
+    if wire.isClosed() and open_wire:
+        bluemira_warn(f"Offsetting a closed wire with {open_wire=}. Disabling this.")
+        open_wire = False
+
+    shape = Part.Shape(wire)
+    try:
+        wire = Part.Wire(shape.makeOffset2D(thickness, f_join, False, open_wire))
+    except Base.FreeCADError as error:
+        msg = "\n".join(
+            [
+                "FreeCAD was unable to make an offset of wire:",
+                f"{error.args[0]['sErrMsg']}",
+            ]
+        )
+        raise FreeCADError(msg)
+    return wire
 
 
 # ======================================================================================

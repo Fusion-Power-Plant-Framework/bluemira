@@ -67,6 +67,42 @@ def tikhonov(A, b, gamma):
         )
 
 
+def regularised_lsq_fom(x, A, b, gamma):
+    """
+    Figure of merit for the least squares problem Ax = b, with
+    Tikhonov regularisation term. Normalised for the number of
+    targets.
+
+    ||(Ax - b)||²/ len(b)] + ||Γx||²
+
+    Parameters
+    ----------
+    x : np.array(m)
+        The 1-D x state vector.
+    A: np.array(n, m)
+        The 2-D A control matrix
+    b: np.array(n)
+        The 1-D b vector of target values
+    gamma: float
+        The Tikhonov regularisation parameter.
+
+    Returns
+    -------
+    fom: float
+        Figure of merit, explicitly given by
+        ||(Ax - b)||²/ len(b)] + ||Γx||²
+    residual: np.array(n)
+        Residual vector (Ax - b)
+    """
+    residual = np.dot(A, x) - b
+    number_of_targets = np.float(len(residual))
+    fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
+
+    if not fom > 0:
+        raise bluemira_warn("Least-squares objective function less than zero or nan.")
+    return fom, residual
+
+
 def least_squares(A, b):
     """
     Least squares optimisation.
