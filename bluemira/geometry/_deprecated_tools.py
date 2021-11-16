@@ -1147,22 +1147,22 @@ def rotation_matrix_v1v2(v1, v2):
 
 def vector_intersect(p1, p2, p3, p4):
     """
-    Get the intersection point between two vectors.
+    Get the intersection point between two 2-D vectors.
 
     Parameters
     ----------
-    p1: np.array(2)
+    p1: np.ndarray(2)
         The first point on the first vector
-    p2: np.array(2)
+    p2: np.ndarray(2)
         The second point on the first vector
-    p3: np.array(2)
+    p3: np.ndarray(2)
         The first point on the second vector
-    p4: np.array(2)
+    p4: np.ndarray(2)
         The second point on the second vector
 
     Returns
     -------
-    p_inter: np.array(2)
+    p_inter: np.ndarray(2)
         The point of the intersection between the two vectors
     """
     da = p2 - p1
@@ -1178,6 +1178,57 @@ def vector_intersect(p1, p2, p3, p4):
         num = np.dot(dap, dp)
         point = num / denom.astype(float) * db + p3
     return point
+
+
+def vector_intersect_3d(p_1, p_2, p_3, p_4):
+    """
+    Get the intersection point between two 3-D vectors.
+
+    Parameters
+    ----------
+    p1: np.ndarray(3)
+        The first point on the first vector
+    p2: np.ndarray(3)
+        The second point on the first vector
+    p3: np.ndarray(3)
+        The first point on the second vector
+    p4: np.ndarray(3)
+        The second point on the second vector
+
+    Returns
+    -------
+    p_inter: np.ndarray(3)
+        The point of the intersection between the two vectors
+
+    Notes
+    -----
+    Credit: Paul Bourke at http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline3d/
+    """
+    p_13 = p_1 - p_3
+    p_43 = p_4 - p_3
+
+    if np.linalg.norm(p_13) < EPS:
+        raise GeometryError("No intersection between 3-D lines.")
+    p_21 = p_2 - p_1
+    if np.linalg.norm(p_21) < EPS:
+        raise GeometryError("No intersection between 3-D lines.")
+
+    d1343 = np.dot(p_13, p_43)
+    d4321 = np.dot(p_43, p_21)
+    d1321 = np.dot(p_13, p_21)
+    d4343 = np.dot(p_43, p_43)
+    d2121 = np.dot(p_21, p_21)
+
+    denom = d2121 * d4343 - d4321 * d4321
+
+    if np.abs(denom) < EPS:
+        raise GeometryError("No intersection between 3-D lines.")
+
+    numer = d1343 * d4321 - d1321 * d4343
+
+    mua = numer / denom
+    intersection = p_1 + mua * p_21
+    return intersection
 
 
 def loop_plane_intersect(loop, plane):

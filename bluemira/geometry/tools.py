@@ -261,6 +261,39 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     return closure
 
 
+def offset_wire(
+    wire: BluemiraWire,
+    thickness: float,
+    join: str = "intersect",
+    open_wire: bool = True,
+    label: str = "",
+) -> BluemiraWire:
+    """
+    Make a planar offset from a planar wire.
+
+    Parameters
+    ----------
+    wire: BluemiraWire
+        Wire to offset from
+    thickness: float
+        Offset distance. Positive values outwards, negative values inwards
+    join: str
+        Offset method. "arc" gives rounded corners, and "intersect" gives sharp corners
+    open_wire: bool
+        For open wires (counter-clockwise default) whether or not to make an open offset
+        wire, or a closed offset wire that encompasses the original wire. This is
+        disabled for closed wires.
+
+    Returns
+    -------
+    wire: BluemiraWire
+        Offset wire
+    """
+    return BluemiraWire(
+        _freecadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
+    )
+
+
 # # =============================================================================
 # # Shape operation
 # # =============================================================================
