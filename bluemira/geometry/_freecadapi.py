@@ -345,72 +345,50 @@ def make_ellipse(
 # ======================================================================================
 # Object properties
 # ======================================================================================
+def _get_api_attr(obj, prop):
+    try:
+        return getattr(obj, prop)
+    except AttributeError:
+        raise FreeCADError(f"FreeCAD object {obj} does not have an attribute: {prop}")
+
+
 def length(obj) -> float:
     """Object's length"""
-    prop = "Length"
-    if hasattr(obj, prop):
-        return getattr(obj, prop)
-    else:
-        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
+    return _get_api_attr(obj, "Length")
 
 
 def area(obj) -> float:
     """Object's Area"""
-    prop = "Area"
-    if hasattr(obj, prop):
-        return getattr(obj, prop)
-    else:
-        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
+    return _get_api_attr(obj, "Area")
 
 
 def volume(obj) -> float:
     """Object's volume"""
-    prop = "Volume"
-    if hasattr(obj, prop):
-        return getattr(obj, prop)
-    else:
-        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
+    return _get_api_attr(obj, "Volume")
 
 
 def center_of_mass(obj) -> np.ndarray:
     """Object's center of mass"""
-    prop = "CenterOfMass"
-    if hasattr(obj, prop):
-        # CenterOfMass returns a vector.
-        return getattr(obj, prop)
-    else:
-        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
+    return _get_api_attr(obj, "CenterOfMass")
 
 
 def is_null(obj):
     """True if obj is null"""
-    prop = "isNull"
-    if hasattr(obj, prop):
-        return getattr(obj, prop)()
-    else:
-        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
+    return _get_api_attr(obj, "isNull")()
 
 
 def is_closed(obj):
     """True if obj is closed"""
-    prop = "isClosed"
-    if hasattr(obj, prop):
-        return getattr(obj, prop)()
-    else:
-        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
+    return _get_api_attr(obj, "isClosed")()
 
 
 def bounding_box(obj):
     """Object's bounding box"""
-    prop = "BoundBox"
-    if hasattr(obj, prop):
-        # FreeCAD BoundBox is a FreeCAD object. For the moment there is not a
-        # complementary object in bluemira. Thus, this method will just return
-        # (XMin, YMin, Zmin, XMax, YMax, ZMax)
-        box = getattr(obj, prop)
-        return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
-    else:
-        raise FreeCADError(f"FreeCAD object {obj} has not property {prop}")
+    # FreeCAD BoundBox is a FreeCAD object. For the moment there is not a
+    # complementary object in bluemira. Thus, this method will just return
+    # (XMin, YMin, Zmin, XMax, YMax, ZMax)
+    box = _get_api_attr(obj, "BoundBox")
+    return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
 
 # ======================================================================================
