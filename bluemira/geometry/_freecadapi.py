@@ -60,6 +60,7 @@ apiWire = Part.Wire  # noqa (N816)
 apiFace = Part.Face  # noqa (N816)
 apiShell = Part.Shell  # noqa (N816)
 apiSolid = Part.Solid  # noqa (N816)
+apiShape = Part.Shape  # noqa (N816)
 
 
 # ======================================================================================
@@ -369,8 +370,8 @@ def _wire_is_straight(wire):
 
 
 def offset_wire(
-    wire: Part.Wire, thickness: float, join: str = "intersect", open_wire: bool = True
-) -> Part.Wire:
+    wire: apiWire, thickness: float, join: str = "intersect", open_wire: bool = True
+) -> apiWire:
     """
     Make an offset from a wire.
 
@@ -409,12 +410,11 @@ def offset_wire(
         )
 
     if wire.isClosed() and open_wire:
-        bluemira_warn(f"Offsetting a closed wire with {open_wire=}. Disabling this.")
         open_wire = False
 
-    shape = Part.Shape(wire)
+    shape = apiShape(wire)
     try:
-        wire = Part.Wire(shape.makeOffset2D(thickness, f_join, False, open_wire))
+        wire = apiWire(shape.makeOffset2D(thickness, f_join, False, open_wire))
     except Base.FreeCADError as error:
         msg = "\n".join(
             [

@@ -184,7 +184,7 @@ class PrincetonD(GeometryParameterisation):
 
         super().__init__(variables)
 
-    def create_shape(self, label="", n_points=2000):
+    def create_shape(self, label="", n_points=1000):
         """
         Make a CAD representation of the Princeton D.
 
@@ -205,10 +205,13 @@ class PrincetonD(GeometryParameterisation):
             *self.variables.values,
             n_points,
         )
-        xyz = np.array([x, np.zeros(n_points), z])
-        outer_arc = make_bspline(xyz.T, label="outer_arc")
-        straight_segment = wire_closure(outer_arc, label="straight_segment")
-        return BluemiraWire([outer_arc, straight_segment], label=label)
+        xyz = np.array([x, np.zeros(len(x)), z])
+
+        # TODO: This loses the individually labelled straight leg wire, but this was the
+        # only easy way to maintain continuous tangency with different numbers of
+        # interpolation points for the BSpline... Fix if we need the label.
+        outer_arc = make_bspline(xyz.T, label=label, closed=True)
+        return outer_arc
 
     @staticmethod
     def _princeton_d(x1, x2, dz, npoints=2000):
