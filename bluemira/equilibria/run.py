@@ -47,12 +47,10 @@ from bluemira.equilibria.profiles import (
     LaoPolynomialFunc,
     DoublePowerFunc,
     ShapeFunction,
-    CustomProfile,
 )
-from bluemira.equilibria.physics import calc_psib, calc_li, calc_betap
+from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.constraints import (
-    AutoConstraints,
     EUDEMOSingleNullConstraints,
     EUDEMODoubleNullConstraints,
 )
@@ -185,6 +183,7 @@ class EquilibriumProblem:
         self.li = None
         self.Ip = None
         self.B_0 = None
+        self._d_coil = None
         self.q95min = None
         self.eqtype = None
         self.c_ejima = None
@@ -336,13 +335,13 @@ class EquilibriumProblem:
         for name in cs_names:
             max_currents = self.coilset.coils[name].get_max_current()
             self.coilset.coils[name].current = max_currents
-            self.coilset.coils[name].mesh_coil(0.3)
+            self.coilset.coils[name].mesh_coil(self._d_coil)
         pf_names = self.coilset.get_PF_names()
         for name in pf_names:
             self.coilset.coils[name].current = self.Ip
             self.coilset.coils[name].make_size()
             self.coilset.coils[name].fix_size()
-            self.coilset.coils[name].mesh_coil(0.4)
+            self.coilset.coils[name].mesh_coil(self._d_coil)
         bd._remap_greens()
         currents = optimiser(bd)
         self.coilset.set_control_currents(currents)
@@ -462,7 +461,7 @@ class EquilibriumProblem:
             CS_Fz_sep=CS_Fz_sum,
         )
         psis = np.linspace(*swing, self.n_swing)
-        psis /= 2 * np.pi  # Per rad für die Optimierung
+        psis /= 2 * np.pi  # Per rad for optimisation
 
         if CS is True:
             solenoid = self.coilset.get_solenoid()
@@ -533,7 +532,7 @@ class EquilibriumProblem:
         max_currents = np.max(np.abs(currents), axis=0)
         self.coilset.adjust_sizes(max_currents)
         self.coilset.fix_sizes()
-        self.coilset.mesh_coils(0.3)
+        self.coilset.mesh_coils(self._d_coil)
         max_currents = self.coilset.get_max_currents(0)  # Sizes should all be fixed
         eqbase.coilset = self.coilset
         eqbase._remap_greens()
@@ -603,7 +602,7 @@ class EquilibriumProblem:
             coilset=bd.coilset,
         )
         self.coilset.reset()
-        self.coilset.mesh_coils(0.4)
+        self.coilset.mesh_coils(self._d_coil)
 
     def report(self):
         """
@@ -726,6 +725,8 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
     coilset: None or CoilSet object
         Coilset from which to set up the equilibrium problem. If not specified,
         other input parameters will be used to generate a default coilset.
+    d_coil: float
+        Coil "mesh" size default = 0.4 [m]
     """
 
     def __init__(
@@ -758,6 +759,7 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
         profile=None,
         psi=None,
         coilset=None,
+        d_coil=0.4,
     ):
         super().__init__()
         # Make FD grid for G-S solver
@@ -833,6 +835,7 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
             self.coilset = coilset.copy()
         self.coilset.assign_coil_materials("PF", j_max=NBTI_J_MAX, b_max=NBTI_B_MAX)
         self.coilset.assign_coil_materials("CS", j_max=NB3SN_J_MAX, b_max=NB3SN_B_MAX)
+        self._d_coil = d_coil
         # Limiter for mathematical stability (occasionally)
         self.lim = Limiter(x=[x_min + 0.3, x_max - 0.3], z=[0, 0])
         # Equilibrium object
@@ -878,44 +881,3 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
         self.c_ejima = c_ejima
         self.eqtype = eqtype
         self.snapshots = {}
-
-
-class AbExtraEquilibriumProblem(EquilibriumProblem):
-    """
-    Class for defining and re-solving ab extra equilibria
-
-    Parameters
-    ----------
-    filename: str
-        Filename of an .eqdsk file
-    """
-
-    def __init__(self, filename, load_large_file=False):
-        super().__init__()
-        self.eq = Equilibrium.from_eqdsk(filename, load_large_file=load_large_file)
-        self.coilset = self.eq.coilset
-        self.lim = None  # self.eq.limiter  # bloody CREATE
-        self.tfcoil = None
-        self.profiles = CustomProfile.from_eqdsk(filename)
-        self.eq._reassign_profiles(self.profiles)
-        self.Ip = self.profiles.Ip
-        self.B_0 = self.profiles._B_0
-        self.betap = calc_betap(self.eq)
-        self.li = calc_li(self.eq)
-        self.optimiser = Norm2Tikhonov(gamma=1e-12)
-        self.constraints = AutoConstraints(self.eq)
-        self.set_shape_characteristics()
-        self.snapshots = {}
-
-    def set_shape_characteristics(self):
-        """
-        Analyse the separatrix to get shape characteristics.
-        """
-        d = self.eq.analyse_separatrix()
-        kappa = "kappa_u"  # TODO: Handle eq type reocvery
-        delta = "delta_l"
-        self.eqtype = "SN"
-        d["kappa"] = d[kappa]
-        d["delta"] = d[delta]
-        for a in ["A", "R_0", "kappa", "delta"]:
-            setattr(self, a, d[a])

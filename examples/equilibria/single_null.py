@@ -187,6 +187,6 @@ SN.optimise_positions(
     pf_exclusions=[LP, EQ, UP],
     pf_coilregions=pf_coilregions,
     CS=False,
-    plot=True,
+    plot=False,
     gif=False,
 )

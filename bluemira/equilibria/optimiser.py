@@ -37,7 +37,6 @@ from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.utilities.plot_tools import save_figure
 from bluemira.utilities.opt_tools import (
     regularised_lsq_fom,
-    least_squares,
     tikhonov,
 )
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
@@ -153,35 +152,6 @@ class Norm2Tikhonov(EquilibriumOptimiser):
         self.rss_error = np.sum(err ** 2) + np.sum((self.gamma * self.x) ** 2)
 
 
-class LeastSquares(EquilibriumOptimiser):
-    """
-    Unconstrained least squares optimisation
-
-    Returns x*
-    """
-
-    def __init__(self):
-        pass
-
-    def optimise(self):
-        """
-        Optimise the prescribed problem.
-        """
-        self.x = least_squares(self.A, self.b)
-        self.calc_error()
-        return self.x
-
-    def calc_error(self):
-        """
-        Calculate the RSS and RMS errors.
-        """
-        x = self.x.reshape(-1, 1)
-        b = self.b.reshape(len(self.b), 1)
-        err = np.dot(self.A, x) - b
-        self.rms_error = np.sqrt(np.mean(err ** 2))
-        self.rss_error = np.sum(err ** 2)
-
-
 class PositionOptimiser:
     """
     Coil position optimiser a la McIntosh
@@ -217,6 +187,8 @@ class PositionOptimiser:
         Regions in which each PF coil resides. The loop object must be 2d.
     CS: bool (default = False)
         Whether or not to optimise the CS module positions as well
+    d_coil: float
+        Mesh size for coils [m] (default = 0.4)
     plot: bool (default = False)
         Plot progress
     gif: bool (default = False)
@@ -244,6 +216,7 @@ class PositionOptimiser:
         pf_exclusions=None,
         pf_coilregions=None,
         CS=False,
+        d_coil=0.4,
         plot=False,
         gif=False,
         figure_folder=None,
@@ -272,6 +245,8 @@ class PositionOptimiser:
         else:
             self.flag_PFR = False
             self.region_coils = set()
+
+        self._d_coil = d_coil
 
         self.psi_vals = psi_values if psi_values is not None else [0]
         self.flag_CS = CS
@@ -536,12 +511,12 @@ class PositionOptimiser:
             self._get_PFR_pos(pos_vector)
 
         self.eq.coilset.set_positions(self._positions)
-        self.eq.coilset.mesh_coils()
+        self.eq.coilset.mesh_coils(self._d_coil)
+        self.eq.set_forcefield()
 
         if self.flag_plot:
+            # We only need to remap the greens funcs to the grid if we are plotting
             self.eq._remap_greens()
-        else:
-            self.eq.set_forcefield()
 
         return self._optimise_currents()
 
