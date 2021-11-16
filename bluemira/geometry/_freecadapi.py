@@ -717,7 +717,6 @@ def _edges_tangent(edge_1, edge_2):
     angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
         edge_2.tangentAt(edge_2.FirstParameter)
     )
-    print(angle)
     return np.isclose(
         angle,
         0.0,
@@ -765,7 +764,7 @@ def _split_wire(wire):
         n_split = int(len(edges) / 2)
         edges_1, edges_2 = edges[:n_split], edges[n_split:]
 
-    return Part.Wire(edges_1), Part.Wire(edges_2)
+    return apiWire(edges_1), apiWire(edges_2)
 
 
 def sweep_shape(profiles, path, solid=True, frenet=True):
@@ -774,9 +773,9 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
 
     Parameters
     ----------
-    profiles: Iterable[Part.Wire]
+    profiles: Iterable[apiWire]
         Set of profiles to sweep
-    path: Part.Wire
+    path: apiWire
         Path along which to sweep the profiles
     solid: bool
         Whether or not to create a Solid
@@ -793,36 +792,24 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
         profiles = [profiles]
 
     closures = [p.isClosed() for p in profiles]
+    all_closed = sum(closures) == len(closures)
+    none_closed = sum(closures) == 0
 
-    if (not all(closures)) or (not any(closures)):
+    if not all_closed and not none_closed:
         raise FreeCADError("You cannot mix open and closed profiles when sweeping.")
 
-    if (not any(closures)) and solid:
+    if none_closed and solid:
         bluemira_warn(
             "You cannot sweep open profiles and expect a Solid result. Disabling this."
         )
         solid = False
 
-    # Check that the path is fully tangent (otherwise unexpected results)
-    path = apiWire(path)
     if not _wire_edges_tangent(path):
         raise FreeCADError(
             "Sweep path contains edges that are not consecutively tangent. This will produce unexpected results."
         )
 
-    if path.isClosed():
-        # Split and fuse
-        result = path.makePipeShell(profiles, True, frenet)
-
-        # path_1, path_2 = _split_wire(path)
-        # result_1 = path_1.makePipeShell(profiles, True, frenet)
-        # result_2 = path_2.makePipeShell(profiles, True, frenet)
-        # result = result_1.fuse(result_2)
-        # result.removeSplitter()
-
-    else:
-
-        result = path.makePipeShell(profiles, True, frenet)
+    result = path.makePipeShell(profiles, True, frenet)
 
     solid_result = apiSolid(result)
     if solid:

@@ -91,6 +91,8 @@ class TestSweep:
 
         sweep = sweep_shape(profile, path)
 
+        assert sweep._shape.isValid()
+
     def test_triple_arc(self):
         x1 = 4
         dx = 0.5
@@ -122,3 +124,10 @@ class TestSweep:
         )
         with pytest.raises(FreeCADError):
             sweep = sweep_shape(profile, path)
+
+    def test_open_shell(self):
+        path = make_polygon([[0, 0, 0], [0, 0, 10]])
+        profile = make_polygon([[1, 0, 0], [1, 1, 0], [2, 1, 0]])
+        sweep = sweep_shape(profile, path, solid=False)
+
+        assert sweep._shape.isValid()
