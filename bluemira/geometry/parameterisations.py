@@ -210,8 +210,6 @@ class PrincetonD(GeometryParameterisation):
         outer_arc = make_bspline(
             xyz.T,
             label="outer_arc",
-            start_tangent=np.array([0, 0, -1]),
-            end_tangent=np.array([0, 0, -1]),
         )
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)

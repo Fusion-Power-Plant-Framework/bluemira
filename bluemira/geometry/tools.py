@@ -86,8 +86,6 @@ def make_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
     closed: bool = False,
-    start_tangent=None,
-    end_tangent=None,
 ) -> BluemiraWire:
     """Make a bspline from a set of points.
 
@@ -101,20 +99,13 @@ def make_bspline(
     closed: bool, default = False
         if True, the first and last points will be connected in order to form a
         closed bspline. Defaults to False.
-    start_tangent: Optional[np.ndarray]
-        Start point tangent vector. Must be specific with end_tangent
-    end_tangent: Optional[np.ndarray]
-        End point tangent vector. Must be specified with start_tangent
-
     Returns
     -------
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
     return BluemiraWire(
-        _freecadapi.make_bspline(
-            points, closed, start_tangent=start_tangent, end_tangent=end_tangent
-        ),
+        _freecadapi.make_bspline(points, closed),
         label=label,
     )
 
