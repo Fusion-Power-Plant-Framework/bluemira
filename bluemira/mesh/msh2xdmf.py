@@ -20,6 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 # from https://github.com/floiseau/msh2xdmf.git
+
+#todo: import msh2xdmf as external module
+
 import argparse
 import meshio
 import os
