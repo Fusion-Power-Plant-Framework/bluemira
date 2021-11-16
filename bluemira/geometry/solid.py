@@ -43,10 +43,6 @@ class BluemiraSolid(BluemiraGeo):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
 
-    def _check_boundary(self, objs):
-        """Check if objects in objs are of the correct type for this class"""
-        return super()._check_boundary(objs)
-
     def _create_solid(self):
         """Creation of the solid"""
         new_shell = self.boundary[0]._shape

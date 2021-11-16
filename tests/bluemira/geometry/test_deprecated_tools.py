@@ -588,12 +588,13 @@ class TestMixedFaces:
         comparison in an output-friendly way.
         """
         error = False
+        kwargs = {"atol": 1e-8, "rtol": 1e-5}
         keys, expected, actual = [], [], []
         for key, value in true_props.items():
             comp_method = np.allclose if isinstance(value, tuple) else np.isclose
             result = getattr(part, key, None)
             assert result is not None, f"Attribute {key} not defined on part {part}."
-            if not comp_method(value, result):
+            if not comp_method(value, result, **kwargs):
                 error = True
                 keys.append(key)
                 expected.append(value)
@@ -609,9 +610,9 @@ class TestMixedFaces:
                 100,
                 {
                     "center_of_mass": (
-                        3.50441,
+                        3.50440,
                         4.17634,
-                        1.17872,
+                        1.17870,
                     ),
                     "volume": 106.080,
                     "area": 348.296,
@@ -622,12 +623,12 @@ class TestMixedFaces:
                 15,
                 {
                     "center_of_mass": (
-                        11.5832,
-                        1.52466,
-                        -0.186014,
+                        11.583014,
+                        1.524777,
+                        -0.186182,
                     ),
-                    "volume": 43.0179,
-                    "area": 121.559,
+                    "volume": 43.0233,
+                    "area": 121.5713,
                 },
             ),
         ],
@@ -675,12 +676,12 @@ class TestMixedFaces:
                 (0, 2, 0),
                 {
                     "center_of_mass": (
-                        8.03267,
-                        0.990025,
+                        8.03265,
+                        0.9900,
                         -6.44432,
                     ),
-                    "volume": 4.58975,
-                    "area": 29.1873,
+                    "volume": 4.58959,
+                    "area": 29.1868,
                 },
             ),
         ],
