@@ -20,15 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+import pytest
 
+from bluemira.geometry.error import FreeCADError
 from bluemira.geometry.tools import (
     make_polygon,
     make_circle,
-    revolve_shape,
     sweep_shape,
-    extrude_shape,
 )
-from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 
 
 class TestSweep:
@@ -38,49 +38,87 @@ class TestSweep:
             [[-1, -1, 0], [1, -1, 0], [1, 1, 0], [-1, 1, 0]], closed=True
         )
 
-        extrusion = extrude_shape(BluemiraFace(profile), vec=(0, 0, 1))
         sweep = sweep_shape(profile, path, solid=True)
 
-        assert np.isclose(extrusion.volume, sweep.volume)
+        assert np.isclose(sweep.volume, 4.0)
 
-    def test_circle(self):
+    def test_semicircle(self):
         path = make_circle(start_angle=0, end_angle=180)
         profile = make_polygon(
             [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
         )
 
-        revolution = revolve_shape(BluemiraFace(profile), degree=180)
         sweep = sweep_shape(profile, path, solid=True)
 
-        assert np.isclose(revolution.volume, sweep.volume)
+        assert np.isclose(sweep.volume, np.pi)
 
+    def test_circle(self):
+        path = make_circle(start_angle=0, end_angle=360)
+        profile = make_polygon(
+            [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
+        )
 
-if __name__ == "__main__":
-    import bluemira.geometry._freecadapi as cadapi
-    import freecad
-    import Part
-    from bluemira.geometry.face import BluemiraFace
-    from bluemira.geometry.wire import BluemiraWire
-    from bluemira.geometry.shell import BluemiraShell
-    from bluemira.geometry.solid import BluemiraSolid
+        sweep = sweep_shape(profile, path, solid=True)
 
-    path = make_circle(start_angle=0, end_angle=180)
-    profile = make_polygon(
-        [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
-    )
+        assert np.isclose(sweep.volume, 2 * np.pi)
 
-    fc_sweep = cadapi.sweep_shape(profile._shape, path._shape, solid=True)
-    sweep = sweep_shape(profile, path, solid=True)
+        sweep = sweep_shape(profile, path, solid=False)
 
-    faces = fc_sweep.Shells[0].Faces
-    wires = [f.Wires for f in faces]
-    bm_wires = [BluemiraWire(w) for w in wires]
-    bm_faces = [BluemiraFace(w) for w in bm_wires]
-    bm_shell = BluemiraShell(bm_faces)
-    recon_fc_sweep = Part.Solid(Part.Shell(faces))
-    recon_bm_sweep = BluemiraSolid(bm_shell)
+    def test_multiple_profiles(self):
+        path = make_polygon([[0, 0, 0], [0, 0, 10]])
+        profile_1 = make_polygon(
+            [[-1, -1, 0], [1, -1, 0], [1, 1, 0], [-1, 1, 0]], closed=True
+        )
+        profile_2 = make_circle(
+            axis=[0, 0, 1], center=[0, 0, 5], radius=1, start_angle=0, end_angle=360
+        )
+        profile_3 = make_circle(
+            axis=[0, 0, 1], center=[0, 0, 10], radius=2, start_angle=0, end_angle=360
+        )
+        sweep = sweep_shape([profile_1, profile_2, profile_3], path)
 
-    print(fc_sweep.Volume)
-    print(recon_fc_sweep.Volume)
-    print(recon_bm_sweep.volume)
-    print(sweep.volume)
+        assert sweep._shape.isValid()
+
+    def test_princeton_d(self):
+        x2 = 14
+        dx = 0.5
+        dy = 1
+        path = PrincetonD({"x2": {"value": x2}}).create_shape()
+        profile = make_polygon(
+            [[x2 - dx, -dy, 0], [x2 + dx, -dy, 0], [x2 + dx, dy, 0], [x2 - dx, dy, 0]],
+            closed=True,
+        )
+
+        sweep = sweep_shape(profile, path)
+
+    def test_triple_arc(self):
+        x1 = 4
+        dx = 0.5
+        dy = 1
+        path = TripleArc().create_shape({"x1": {"value": x1}})
+        profile = make_polygon(
+            [[x1 - dx, -dy, 0], [x1 + dx, -dy, 0], [x1 + dx, dy, 0], [x1 - dx, dy, 0]],
+            closed=True,
+        )
+        sweep = sweep_shape(profile, path)
+
+        assert sweep._shape.isValid()
+
+    def test_bad_profiles(self):
+        path = make_polygon([[0, 0, 0], [0, 0, 10]])
+        profile_1 = make_polygon(
+            [[-1, -1, 0], [1, -1, 0], [1, 1, 0], [-1, 1, 0]], closed=True
+        )
+        profile_2 = make_polygon(
+            [[-1, -1, 10], [1, -1, 10], [1, 1, 10], [-1, 1, 10]], closed=False
+        )
+        with pytest.raises(FreeCADError):
+            sweep = sweep_shape([profile_1, profile_2], path)
+
+    def test_bad_path(self):
+        path = make_polygon([[0, 0, 0], [0, 0, 10], [10, 0, 10]])
+        profile = make_circle(
+            axis=[0, 0, 1], center=[0, 0, 0], start_angle=0, end_angle=360
+        )
+        with pytest.raises(FreeCADError):
+            sweep = sweep_shape(profile, path)

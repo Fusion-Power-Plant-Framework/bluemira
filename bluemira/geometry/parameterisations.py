@@ -184,7 +184,7 @@ class PrincetonD(GeometryParameterisation):
 
         super().__init__(variables)
 
-    def create_shape(self, label="", n_points=200):
+    def create_shape(self, label="", n_points=2000):
         """
         Make a CAD representation of the Princeton D.
 
@@ -211,7 +211,7 @@ class PrincetonD(GeometryParameterisation):
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
     @staticmethod
-    def _princeton_d(x1, x2, dz, npoints=200):
+    def _princeton_d(x1, x2, dz, npoints=2000):
         """
         Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
         File, Mills, and Sheffield, 1971)
@@ -224,7 +224,7 @@ class PrincetonD(GeometryParameterisation):
             The outboard centrleine radius of the Princeton D
         dz: float
             The vertical offset (from z=0)
-        npoints: int (default = 200)
+        npoints: int (default = 2000)
             The size of the x, z coordinate sets to return
 
         Returns

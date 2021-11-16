@@ -714,11 +714,15 @@ def _edges_tangent(edge_1, edge_2):
     """
     Check if two adjacent edges are tangent to one another.
     """
+    angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
+        edge_2.tangentAt(edge_2.FirstParameter)
+    )
+    print(angle)
     return np.isclose(
-        edge_1.tangentAt(0).getAngle(edge_2.tangentAt(edge_2.Length)),
+        angle,
         0.0,
-        rtol=1e-8,
-        atol=1e-8,
+        rtol=1e-4,
+        atol=1e-4,
     )
 
 
@@ -738,7 +742,7 @@ def _wire_edges_tangent(wire):
 
     if wire.isClosed():
         # Check last and first edge tangency
-        edges_tangent.append(wire.Edges[-1], wire.Edges[0])
+        edges_tangent.append(_edges_tangent(wire.Edges[-1], wire.Edges[0]))
 
     return all(edges_tangent)
 
@@ -800,7 +804,7 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
         solid = False
 
     # Check that the path is fully tangent (otherwise unexpected results)
-    path = Part.Wire(path)
+    path = apiWire(path)
     if not _wire_edges_tangent(path):
         raise FreeCADError(
             "Sweep path contains edges that are not consecutively tangent. This will produce unexpected results."
@@ -808,20 +812,23 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
 
     if path.isClosed():
         # Split and fuse
-        path_1, path_2 = _split_wire(path)
-        result_1 = path_1.makePipeShell(profiles, solid, frenet)
-        result_2 = path_2.makePipeShell(profiles, solid, frenet)
-        result = result_1.fuse(result_2)
-        result.removeSplitter()
+        result = path.makePipeShell(profiles, True, frenet)
+
+        # path_1, path_2 = _split_wire(path)
+        # result_1 = path_1.makePipeShell(profiles, True, frenet)
+        # result_2 = path_2.makePipeShell(profiles, True, frenet)
+        # result = result_1.fuse(result_2)
+        # result.removeSplitter()
 
     else:
 
-        result = path.makePipeShell(profiles, solid, frenet)
+        result = path.makePipeShell(profiles, True, frenet)
 
+    solid_result = apiSolid(result)
     if solid:
-        return Part.Solid(result)
+        return solid_result
     else:
-        return Part.Shell(result)
+        return solid_result.Shells[0]
 
 
 def make_compound(shapes):
