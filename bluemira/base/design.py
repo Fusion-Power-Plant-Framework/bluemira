@@ -72,7 +72,7 @@ class Design:
         Parameters are transferred onto the Design after each step.
         """
         for builder in self._builders:
-            build_result = builder.build(self._params)
+            build_result = builder(self._params)
             for result in build_result:
                 self._component_manager.insert_at_path(result[0], result[1])
             self._params.update_kw_parameters(
