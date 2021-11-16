@@ -281,9 +281,6 @@ class PrincetonD(GeometryParameterisation):
 
         z = abs(xo * k * (bessel(1, k) * theta + s))
         x = xo * np.exp(k * np.sin(theta))
-        # z -= max(z)
-        # x = np.concatenate([x, x[1:][::-1]])
-        # z = np.concatenate([z, -z[1:][::-1]])
         z -= np.mean(z)
         z += dz  # vertical shift
         return x, z
