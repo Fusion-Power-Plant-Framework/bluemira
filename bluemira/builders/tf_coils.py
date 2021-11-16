@@ -24,8 +24,9 @@ Built-in build steps for making a parameterised plasma
 """
 
 from typing import Any, Dict, List, Tuple, Type, Union
-from bluemira.base.builder import Builder
+import numpy as np
 
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 import bluemira.geometry as geo
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
@@ -34,12 +35,57 @@ from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import get_module
 
 from bluemira.builders.shapes import ParameterisedShapeBuilder
+from bluemira.magnetostatics.circuits import HelmholtzCage
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 
 
-class MyProblem(GeometryOptimisationProblem):
+class TFWPOptimisationProblem(GeometryOptimisationProblem):
     """
     A simple geometry optimisation problem
     """
+
+    def __init__(self, parameterisation, optimiser, params, separatrix):
+        super().__init__(parameterisation, optimiser)
+        self.params = params
+        self.separatrix = separatrix
+        self.ripple_points = self._make_ripple_points(separatrix)
+        self.ripple_values = None
+        self.optimiser.add_ineq_constraints(
+            self.f_constrain_ripple, 1e-3 * np.ones(len(ripple_points[0]))
+        )
+
+    def _make_ripple_points(self, separatrix):
+        points = separatrix.create_array(n_points=100)
+        idx = np.where(points[0] > self.params.R_0.value)[0]
+        return points[:, idx]
+
+    def update_parameterisation(self, x):
+        super().update_parameterisation(x)
+        points = self.parameterisation.create_array(200)
+        self.cage = HelmholtzCage(
+            BiotSavartFilament(points.T, radius=1, current=1), self.params.n_TF.value
+        )
+        field = self.cage.field(self.params.R_0, 0, self.params.z_0)
+        current = -self.params.B_0 / field[1]  # single coil amp-turns
+        self.cage.set_current(current)
+
+    def calculate_ripple(self, x):
+        self.update_parameterisation(x)
+        ripple = self.cage.ripple(*self.ripple_points)
+        print(max(ripple))
+        self.ripple_values = ripple
+        return ripple - self.params.TF_ripple_limit
+
+    def f_constrain_ripple(self, constraint, x, grad):
+        constraint[:] = self.calculate_ripple(x)
+
+        if grad.size > 0:
+            # Only called if a gradient-based optimiser is used
+            grad[:] = self.optimiser.approx_derivative(
+                self.calculate_ripple, x, constraint
+            )
+
+        return constraint
 
     def calculate_length(self, x):
         """
@@ -67,6 +113,59 @@ class MyProblem(GeometryOptimisationProblem):
             )
 
         return length
+
+    # I just need to see... I worry about the proliferation of Plotters
+    def plot_loops(self, ax=None, **kwargs):
+        """
+        Plot the ripple along the separatrix loop.
+
+        Parameters
+        ----------
+        ax: Axes, optional
+            The optional Axes to plot onto, by default None.
+            If None then the current Axes will be used.
+
+        Returns
+        -------
+        sm: ScalarMappable
+            The scalar mappable to set the colorbar in the ripple plot
+        """
+        import matplotlib.pyplot as plt
+        import matplotlib
+        from bluemira.display import plot_2d
+
+        if ax is None:
+            ax = kwargs.get("ax", plt.gca())
+
+        # FFS I can't stack plot calls by default?!
+        plot_2d(
+            self.separatrix.create_shape(),
+            ax=ax,
+            show=False,
+            wire_options={"color": "red", "linewidth": "0.5"},
+        )
+        plot_2d(self.parameterisation.create_shape(), ax=ax, show=False)
+
+        # Yet again... CCW default one of the main motivations of Loop
+        xpl, zpl = self.ripple_points[0, :][::-1], self.ripple_points[2, :][::-1]
+        rv = self.ripple_values[::-1]
+        dx, dz = rv * np.gradient(xpl), rv * np.gradient(zpl)
+        norm = matplotlib.colors.Normalize()
+        norm.autoscale(rv)
+        cm = matplotlib.cm.viridis
+        sm = matplotlib.cm.ScalarMappable(cmap=cm, norm=norm)
+        sm.set_array([])
+        ax.quiver(
+            xpl,
+            zpl,
+            dz,
+            -dx,
+            color=cm(norm(rv)),
+            headaxislength=0,
+            headlength=0,
+            width=0.02,
+        )
+        return sm
 
 
 class MakeOptimisedTFWindingPack(ParameterisedShapeBuilder):
@@ -156,3 +255,64 @@ class BuildTFCoils(Builder):
 
     def __init__(self, params, build_config: Dict[str, Any], **kwargs):
         super().__init__(params, build_config, **kwargs)
+
+
+if __name__ == "__main__":
+    from bluemira.geometry.parameterisations import PrincetonD
+    from bluemira.equilibria.shapes import JohnerLCFS
+    from bluemira.utilities.optimiser import Optimiser
+    from bluemira.base.parameter import ParameterFrame
+
+    parameterisation = PrincetonD(
+        {
+            "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
+            "x2": {"lower_bound": 10, "value": 14, "upper_bound": 18},
+            "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5},
+        }
+    )
+    parameterisation.fix_variable("x1", 4)
+    parameterisation.fix_variable("dz", 0)
+    optimiser = Optimiser(
+        "SLSQP",
+        opt_conditions={
+            "ftol_rel": 1e-3,
+            "xtol_rel": 1e-12,
+            "xtol_abs": 1e-12,
+            "max_eval": 1000,
+        },
+    )
+
+    # I just don't know where to get these any more
+    params = ParameterFrame(
+        [
+            ["R_0", "Major radius", 9, "m", None, "Input", None],
+            ["z_0", "Vertical height at major radius", 0, "m", None, "Input", None],
+            ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
+            ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
+            ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
+        ]
+    )
+
+    # Aaand this is why Loops where made..
+    separatrix = JohnerLCFS(
+        {
+            "r_0": {"value": 9},
+            "z_0": {"value": 0},
+            "a": {"value": 9 / 3.1},
+            "kappa_u": {"value": 1.65},
+            "kappa_l": {"value": 1.8},
+        }
+    )
+    points = separatrix.create_array(n_points=100)
+    idx = np.where(points[0] > 9)[0]
+    ripple_points = points[:, idx]
+
+    # Need to pass around lots of information between different parts of the build procedure
+    # Starting to worry we're making things too configurable:
+    #   - what about different magnetostatics solvers
+    #   - different discretisations if we use BiotSavart
+    #   - different separatrix shapes need to be checked at different areas for peak ripple..
+    # Might be simpler just to have a SystemBuilder that people subclass or write replacements for, I don't know.
+    # I fear the full build config just for the TF coil WP design optimisation will be absolutely massive.
+    problem = TFWPOptimisationProblem(parameterisation, optimiser, params, separatrix)
+    problem.solve()
