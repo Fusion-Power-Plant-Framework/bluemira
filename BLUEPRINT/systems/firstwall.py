@@ -1332,7 +1332,7 @@ class FirstWall(ReactorSystem):
 
         # Nightmare spaghetti
         points = loop_plane_intersect(self.profile, self.mid_plane)
-        idx = np.argmax(points[0, :])
+        idx = np.argmax(points[:, 0])
         self.divertor_builder.set_lfs_point(points[idx])
 
         inner_divertor_loops = self.divertor_builder.make_divertor(self.profile)
