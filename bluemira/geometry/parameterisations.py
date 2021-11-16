@@ -211,6 +211,7 @@ class PrincetonD(GeometryParameterisation):
             xyz.T,
             label="outer_arc",
         )
+        # TODO: Enforce tangency of this bspline... causing issues with offsetting
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
