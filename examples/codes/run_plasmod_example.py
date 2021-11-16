@@ -23,13 +23,27 @@
 Test for plasmod run
 """
 from bluemira.codes.plasmod import plasmodapi
+import matplotlib.pyplot as plt
 
 plasmodapi.PLASMOD_PATH = "~/bwSyncShare/plasmod_bluemira"
 
-new_params = {"R0": 9, "q95": 3.5}
+new_params = {"A": 3.1, "Bt": 5.3, "R0": 8.93, "q95": 3.23, "Pfus_req": 2000, "i_modeltype": 111}
 
 plasmod_solver = plasmodapi.PlasmodSolver(input_params=new_params)
 plasmod_solver.set_runmode('BATCH')
 plasmod_solver.run()
 
-print(f"FFprime: {plasmod_solver._out_params._FFprime}")
+ffprime = plasmod_solver.get_ffprime()
+Te = plasmod_solver.get_te()
+x = plasmod_solver.get_x()
+fig, ax = plt.subplots()
+ax.plot(x, Te)
+ax.set(xlabel='x (-)', ylabel='T_e (keV)')
+ax.grid()
+plt.show()
+
+print(f"Plasma current [MA]: {plasmod_solver._out_params._Ip}")
+print(f"Fusion power [MW]: {plasmod_solver._out_params._Pfus/1E6}")
+print(f"Additional heating power [MW]: {plasmod_solver._out_params._Padd/1E6}")
+print(f"Radiation power [MW]: {plasmod_solver._out_params._Prad/1E6}")
+print(f"Transport power across separatrix [MW]: {plasmod_solver._out_params._Psep/1E6}")
