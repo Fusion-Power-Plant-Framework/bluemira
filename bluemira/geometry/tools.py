@@ -37,7 +37,7 @@ from .error import GeometryError
 import numpy as np
 
 # import typing
-from typing import Final, Union, Iterable
+from typing import Union, Iterable
 
 
 def convert(apiobj, label=""):
@@ -87,7 +87,8 @@ def make_bspline(
     label: str = "",
     closed: bool = False,
 ) -> BluemiraWire:
-    """Make a bspline from a set of points.
+    """
+    Make a bspline from a set of points.
 
     Parameters
     ----------
@@ -99,6 +100,7 @@ def make_bspline(
     closed: bool, default = False
         if True, the first and last points will be connected in order to form a
         closed bspline. Defaults to False.
+
     Returns
     -------
     wire: BluemiraWire
