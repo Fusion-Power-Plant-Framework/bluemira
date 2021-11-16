@@ -89,4 +89,3 @@ print(f"{time()-t:.2f} seconds")
 
 fig, ax = plt.subplots()
 fw.plot_hf()
-plt.show()

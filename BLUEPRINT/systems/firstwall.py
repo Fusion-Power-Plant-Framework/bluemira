@@ -1173,6 +1173,9 @@ class FirstWall(ReactorSystem):
         else:
             self.profile = self.make_preliminary_profile()
 
+        self.make_2d_profile()
+        self.profile = self.geom["2D profile"].inner
+
         self.hf_firstwall_params(self.profile)
         self.make_2d_profile()
 
@@ -1220,7 +1223,7 @@ class FirstWall(ReactorSystem):
             self.x_wall,
             self.z_wall,
             self.hf_wall,
-            self.inner_profile,
+            self.geom["2D profile"].inner,
             koz,
             ax=ax,
             **kwargs,
@@ -1770,8 +1773,6 @@ class FirstWallDN(FirstWall):
     # fmt: off
     default_params = FirstWall.base_default_params + [
         ["fw_psi_init", "Initial psi norm value", 1, "N/A", None, "Input"],
-        ["fw_dpsi_n_near", "Step size of psi in near SOL", 0.1, "N/A", None, "Input"],
-        ["fw_dpsi_n_far", "Step size of psi in far SOL", 0.1, "N/A", None, "Input"],
         ["fw_dx_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
         ["fw_dx_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
