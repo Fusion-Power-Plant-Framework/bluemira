@@ -183,7 +183,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             read_directory=self.inputs["read_folder"],
             write_directory=self.inputs["write_folder"],
         )
-
         # The outer point of the TF coil inboard in the mid-plane
         r_tf_inboard_out = (
             self.params.r_tf_in
@@ -647,12 +646,14 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.cage.set_coil(xloop["cl"])  # update coil cage
         return xloop
 
-    def optimise(self, verbose=True, **kwargs):
+    def build(self, callback=None, verbose=True, **kwargs):
         """
         Carry out the optimisation of the TF coil centreline shape.
 
         Parameters
         ----------
+        callback: callable (optional)
+            A routine which, if present, performs the optimisation.
         verbose: bool (default = True)
             Verbosity of the scipy optimiser
 
@@ -688,13 +689,17 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Perform optimisation with geometric and magnetic constraints
         self.ripple = True
         self.shp.args = (self.ripple, self.ripple_limit)
-        self.shp.optimise(verbose=verbose, **kwargs)
+
+        # Perform an optimisation (if desired)
+        if callback is not None:
+            callback(self, verbose, kwargs)
 
         self.shp.write()
         self.cage.loop_ripple()
         self.sanity()
 
         # Update various loops and parameters with optimised result
+        # These should probably be moved into a separate method...
         self.store_info()
         self._generate_xz_plot_loops()
         self._generate_xy_plot_loops()
