@@ -22,7 +22,6 @@
 """
 A collection of geometry utility functions
 """
-import numba as nb
 import numpy as np
 from collections.abc import Iterable
 from pyquaternion import Quaternion
@@ -44,6 +43,7 @@ from bluemira.geometry._deprecated_tools import (  # noqa
     get_intersect,
     polygon_in_polygon,
     vector_intersect,
+    bounding_box,
     rotation_matrix,
 )
 
@@ -119,40 +119,6 @@ def project_point_axis(point, axis):
     point = np.array(point)
     axis = np.array(axis)
     return axis * np.dot(point, axis) / np.dot(axis, axis)
-
-
-def bounding_box(x, y, z):
-    """
-    Calculates a bounding box for a set of 3-D coordinates
-
-    Parameters
-    ----------
-    x: np.array(N)
-        The x coordinates
-    y: np.array(N)
-        The y coordinates
-    z: np.array(N)
-        The z coordinates
-
-    Returns
-    -------
-    x_b: np.array(8)
-        The x coordinates of the bounding box rectangular cuboid
-    y_b: np.array(8)
-        The y coordinates of the bounding box rectangular cuboid
-    z_b: np.array(8)
-        The z coordinates of the bounding box rectangular cuboid
-    """
-    xmax, xmin = np.max(x), np.min(x)
-    ymax, ymin = np.max(y), np.min(y)
-    zmax, zmin = np.max(z), np.min(z)
-
-    size = max([xmax - xmin, ymax - ymin, zmax - zmin])
-
-    x_b = 0.5 * size * np.array([-1, -1, -1, -1, 1, 1, 1, 1]) + 0.5 * (xmax + xmin)
-    y_b = 0.5 * size * np.array([-1, -1, 1, 1, -1, -1, 1, 1]) + 0.5 * (ymax + ymin)
-    z_b = 0.5 * size * np.array([-1, 1, -1, 1, -1, 1, -1, 1]) + 0.5 * (zmax + zmin)
-    return x_b, y_b, z_b
 
 
 def make_box_xz(x_min, x_max, z_min, z_max):

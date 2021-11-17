@@ -32,9 +32,7 @@ from BLUEPRINT.geometry.geomtools import (
     loop_volume,
     circle_seg,
     circle_arc,
-    rotate_matrix,
     project_point_axis,
-    bounding_box,
     polyarea,
     loop_surface,
     lineq,
@@ -188,27 +186,6 @@ class TestPointAxisProjection:
 
         result = project_point_axis([4, 4, 0], [0, 1, 0])
         assert np.allclose(result, [0, 4, 0])
-
-
-class TestBoundingBox:
-    def test_null(self):
-        x, y, z = np.zeros(100), np.zeros(100), np.zeros(100)
-        xb, yb, zb = bounding_box(x, y, z)
-        assert np.all(xb == 0)
-        assert np.all(yb == 0)
-        assert np.all(zb == 0)
-
-    def test_random(self):
-        x, y, z = np.random.rand(100), np.random.rand(100), np.random.rand(100)
-        args = np.random.randint(0, 100, 8)
-        x[args] = np.array([-2, -2, -2, -2, 2, 2, 2, 2])
-        y[args] = np.array([-2, -2, 2, 2, 2, -2, -2, 2])
-        z[args] = np.array([-2, 2, -2, 2, -2, 2, -2, 2])
-        xb, yb, zb = bounding_box(x, y, z)
-
-        assert np.allclose(xb, np.array([-2, -2, -2, -2, 2, 2, 2, 2]))
-        assert np.allclose(yb, np.array([-2, -2, 2, 2, -2, -2, 2, 2]))
-        assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
 
 
 class TestLineEq:
