@@ -268,6 +268,8 @@ class BuildTFCoils(Builder):
 
 
 if __name__ == "__main__":
+
+    # Sorry for the script... I needed to check if this was working
     from bluemira.geometry.parameterisations import PrincetonD
     from bluemira.equilibria.shapes import JohnerLCFS
     from bluemira.utilities.optimiser import Optimiser
