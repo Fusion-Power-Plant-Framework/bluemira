@@ -48,8 +48,22 @@ from bluemira.geometry._deprecated_tools import (  # noqa
 )
 from BLUEPRINT.base.error import GeometryError
 
+# A couple of name changes
 rotate_matrix = rotation_matrix  # noqa
 qrotate = quart_rotate  # noqa
+
+# This is let the BLUEPRINT docs build correctly...
+distance_between_points = distance_between_points  # noqa
+vector_intersect = vector_intersect  # noqa
+in_polygon = in_polygon  # noqa
+loop_plane_intersect = loop_plane_intersect  # noqa
+bounding_box = bounding_box  # noqa
+get_intersect = get_intersect  # noqa
+join_intersect = join_intersect  # noqa
+check_linesegment = check_linesegment  # noqa
+polygon_in_polygon = polygon_in_polygon  # noqa
+close_coordinates = close_coordinates  # noqa
+on_polygon = on_polygon  # noqa
 
 
 def get_normal_vector(x, y, z):
