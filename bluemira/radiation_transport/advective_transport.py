@@ -438,14 +438,14 @@ class ChargedParticleSolver:
         if ax is None:
             ax = plt.gca()
 
-        self.first_wall.plot(ax, linewidth=0.1, fill=False)
+        self.first_wall.plot(ax, linewidth=0.2, fill=False)
         separatrix = self.eq.get_separatrix()
 
         if isinstance(separatrix, Loop):
             separatrix = [separatrix]
 
         for sep in separatrix:
-            sep.plot(ax, linewidth=0.12)
+            sep.plot(ax, linewidth=0.2)
 
         for f_s in self.flux_surfaces:
             f_s.plot(ax, linewidth=0.01)
@@ -454,7 +454,7 @@ class ChargedParticleSolver:
             self.result[0],
             self.result[1],
             c=self.result[2],
-            s=2,
+            s=5,
             zorder=40,
             cmap="plasma",
         )

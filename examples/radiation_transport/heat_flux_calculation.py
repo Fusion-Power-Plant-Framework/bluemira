@@ -45,16 +45,16 @@ fw_shape = Loop.from_file(fw_name)
 
 params = ParameterFrame(
     [
-        ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
-        ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
+        ["fw_p_sol_near", "near scrape-off layer power", 75, "MW", None, "Input"],
+        ["fw_p_sol_far", "far scrape-off layer power", 75, "MW", None, "Input"],
+        ["fw_lambda_q_near", "Lambda q near SOL", 0.01, "m", None, "Input"],
+        ["fw_lambda_q_far", "Lambda q far SOL", 0.07, "m", None, "Input"],
         ["f_outer_target", "Power fraction", 0.75, "N/A", None, "Input"],
         ["f_inner_target", "Power fraction", 0.25, "N/A", None, "Input"],
     ]
 )
 
-solver = ChargedParticleSolver(params, eq, dpsi_near=0.001, dpsi_far=0.001)
+solver = ChargedParticleSolver(params, eq, dx_mp=0.001)
 x, z, hf = solver.analyse(first_wall=fw_shape)
 
 # Plot the analysis
