@@ -31,10 +31,8 @@ from BLUEPRINT.geometry.geomtools import (
     inloop,
     circle_line_intersect,
     loop_volume,
-    distance_between_points,
     circle_seg,
     circle_arc,
-    loop_plane_intersect,
     on_polygon,
     rotate_matrix,
     project_point_axis,
@@ -170,13 +168,12 @@ class TestCircleArcSeg:
         x, y = circle_arc([5.5, -0.5], [0.5, 0], angle=90)
         assert x[0] == 5.5
         assert y[0] == -0.5
-        d = distance_between_points([5.5, -0.5], [0.5, 0])
         assert round(abs(x[-1] - 1), 7) == 0
         assert round(abs(y[-1] - 5), 7) == 0
+
         x, y = circle_arc([-5.5, -0.5], [0.5, 0], angle=90)
         assert round(abs(x[0] - -5.5), 7) == 0
         assert round(abs(y[0] - -0.5), 7) == 0
-        d = distance_between_points([5.5, -0.5], [0.5, 0])
         assert round(abs(x[-1] - 1), 7) == 0
         assert round(abs(y[-1] - -6), 7) == 0
 
@@ -214,84 +211,6 @@ class TestBoundingBox:
         assert np.allclose(xb, np.array([-2, -2, -2, -2, 2, 2, 2, 2]))
         assert np.allclose(yb, np.array([-2, -2, 2, 2, -2, -2, 2, 2]))
         assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
-
-
-class TestLoopPlane:
-    def test_simple(self):
-        loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
-        plane = Plane([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
-        e = np.array([[0, 0, 0], [2, 0, 0]])
-        assert np.allclose(intersect, e)
-
-    def test_complex(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            z=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-        )
-        plane = Plane([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
-        assert len(intersect) == 2
-        f, ax = plt.subplots()
-        loop.plot(ax)
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
-        plane = Plane([0, 0, 2.7], [1, 0, 2.7], [0, 1, 2.7])  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
-        assert len(intersect) == 4
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
-
-        plane = Plane([0, 0, 4], [1, 0, 4], [0, 1, 4])  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
-        assert len(intersect) == 1
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
-
-        plane = Plane([0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005])  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
-        assert intersect is None
-
-    def test_other_dims(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            y=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-        )
-        plane = Plane([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
-        assert len(intersect) == 2
-        f, ax = plt.subplots()
-        loop.plot(ax)
-        for i in intersect:
-            ax.plot(i[0], i[2], marker="o", color="r")
-
-        plane = Plane([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
-        assert intersect is None
-
-    def test_xyzplane(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            y=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-        )
-        loop.translate([-2, 0, 0])
-        plane = Plane([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
-        intersect = loop_plane_intersect(loop, plane)
-        f, ax = plt.subplots()
-        loop.plot(ax)
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
-
-    def test_flat_intersect(self):
-        # test that a shared segment with plane only gives two intersects
-        loop = Loop(x=[0, 2, 2, 0, 0], z=[-1, -1, 1, 1, -1])
-        plane = Plane([0, 0, 1], [0, 1, 1], [1, 0, 1])
-        inter = loop_plane_intersect(loop, plane)
-        assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
 
 
 class TestRotationMatrix:

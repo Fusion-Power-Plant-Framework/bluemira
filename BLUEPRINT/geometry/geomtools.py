@@ -30,11 +30,10 @@ from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
 
-from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 
 # Port over without modifying imports
-from bluemira.geometry._deprecated_tools import (
+from bluemira.geometry._deprecated_tools import (  # noqa
     check_linesegment,
     loop_plane_intersect,  # noqa
     join_intersect,  # noqa
@@ -356,59 +355,6 @@ def index_of_point_on_loop(loop, point_on_loop, before=True):
         raise GeometryError("Point is not on loop")
 
     return index_of_point
-
-
-def join_intersect(loop1, loop2, get_arg=False):
-    """
-    Adds the intersection points between Loop1 and Loop2 to Loop1
-
-    Parameters
-    ----------
-    loop1: BLUEPRINT Loop object
-        The Loop to which the intersection points should be added
-    loop2: BLUEPRINT Loop object
-        The intersecting Loop
-    get_arg: bool (default = False)
-
-    Returns
-    -------
-    (if get_arg is True)
-    args: list(int, int, ..) of len(N_intersections)
-        The arguments of Loop1 in which the intersections were added.
-
-    Note
-    ----
-    Modifies loop1
-    """
-    x_inter, z_inter = get_intersect(loop1, loop2)
-    xz = loop1.d2.T
-    count = 0
-    args = []
-    for i, (x, z) in enumerate(zip(x_inter, z_inter)):
-        for j, (xx, zz) in enumerate(xz[:-1]):
-            if check_linesegment((xx, zz), xz[j + 1], (x, z)):
-                args.append(j)
-                break
-
-    orderr = np.array(args).argsort()
-    x_int = x_inter[orderr]
-    z_int = z_inter[orderr]
-    for i, (x, z) in enumerate(zip(x_int, z_int)):
-        for j, (xx, zz) in enumerate(xz[:-1]):
-            if check_linesegment((xx, zz), xz[j + 1], (x, z)):
-                arg = j + count + 1
-                loop1.insert((x, z), pos=arg)
-                count += 1
-                # Stop looking (can only be one)
-                # Occasional duplicates will happen when the intersection lies
-                # on a point of the Loop
-                break
-
-    if get_arg:
-        args = []
-        for x, z in zip(x_inter, z_inter):
-            args.append(loop1.argmin([x, z]))
-        return list(set(args))
 
 
 def _ccw(a, b, c):
