@@ -474,7 +474,7 @@ def is_closed(obj):
 
 def is_valid(obj):
     """True if obj is valid"""
-    return _get_api_attr(obj, "isVlosed")()
+    return _get_api_attr(obj, "isValid")()
 
 
 def bounding_box(obj):
