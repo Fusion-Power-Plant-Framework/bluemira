@@ -146,7 +146,7 @@ CS_Fz_sep = 350e6
 
 # %%
 
-grid = Grid(0.1, 18.0, -10.0, 10.0, 100, 100)
+grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
 # %%[markdown]
 
@@ -217,7 +217,7 @@ eof = Equilibrium(
     coilset.copy(),
     grid,
     Ip=I_p / 1e6,
-    li=None,
+    li=l_i,
     profiles=None,
     RB0=[R_0, B_0],
 )
@@ -260,7 +260,7 @@ profile_eof = CustomProfile(
 
 
 iterator = PicardAbsIterator(
-    eof, profile_eof, eof_constraints, optimiser, plot=True, relaxation=0.3
+    eof, profile_eof, eof_constraints, optimiser, plot=True, relaxation=0.2
 )
 iterator()
 
@@ -282,7 +282,7 @@ ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
 
-# bluemira_print("SOF:\n" f"beta_p: {calc_beta_p(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
+bluemira_print("SOF:\n" f"beta_p: {calc_beta_p(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
 
-
+# TODO: Fix this example...
 # bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
