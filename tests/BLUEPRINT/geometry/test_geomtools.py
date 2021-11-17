@@ -23,8 +23,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pytest
 
-from bluemira.geometry._deprecated_tools import get_intersect
-
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
