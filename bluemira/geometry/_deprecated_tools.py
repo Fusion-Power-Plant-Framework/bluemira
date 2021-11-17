@@ -121,8 +121,8 @@ def check_linesegment(point_a, point_b, point_c):
     """
     # Do some protection of numba against integers and lists
 
-    a_c = np.array([point_c[0] - point_a[0], point_c[1] - point_a[1]])
-    a_b = np.array([point_b[0] - point_a[0], point_b[1] - point_a[1]])
+    a_c = np.array([point_c[0] - point_a[0], point_c[1] - point_a[1]], dtype=np.float_)
+    a_b = np.array([point_b[0] - point_a[0], point_b[1] - point_a[1]], dtype=np.float_)
 
     distance = np.sqrt(np.sum(a_b ** 2))
     # Numba doesn't like doing cross-products of things with size 2
