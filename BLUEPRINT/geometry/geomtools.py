@@ -24,7 +24,6 @@ A collection of geometry utility functions
 """
 import numpy as np
 from collections.abc import Iterable
-from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
@@ -47,10 +46,10 @@ from bluemira.geometry._deprecated_tools import (  # noqa
     rotation_matrix,
     quart_rotate,
 )
+from BLUEPRINT.base.error import GeometryError
 
 rotate_matrix = rotation_matrix  # noqa
 qrotate = quart_rotate  # noqa
-from BLUEPRINT.base.error import GeometryError
 
 
 def get_normal_vector(x, y, z):
