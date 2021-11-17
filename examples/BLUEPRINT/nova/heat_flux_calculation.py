@@ -25,19 +25,18 @@ Heat flux calculation example
 # # Heat Flux Calculation
 # %%
 import os
+from time import time
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.loop import Loop
+from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.equilibrium import Equilibrium
 
 from BLUEPRINT.systems.firstwall import FirstWallSN
-from time import time
+
 
 # %%[markdown]
 # Loading an equilibrium file and a first wall profile
-
-t = time()
 
 read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "EU-DEMO_EOF.json"
@@ -58,16 +57,29 @@ vv_box = Loop(x=x_box, z=z_box)
 # "DEMO_DN" and "SN".
 
 # %%
+t = time()
 fw = FirstWallSN(
     FirstWallSN.default_params,
     {
         "equilibrium": eq,
         "vv_inner": vv_box,
         "SN": True,
+        "DEMO_like_divertor": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
+        # Can't quite replicate the extremely spaced values from the above... but it's
+        # the same for all intents and purposes. I couldn't find much on the spacing for
+        # the single null case, except for step_size = 0.02 in line 2340 of firstwall.py
+        # This 0.02 is then doubled in line 2352, but if I set 0.04 I don't get the same
+        # This is I think because of the offset from the LCFS which is taken for reasons
+        # I don't understand, so I increase from 0.04 a bit to get roughly the same
+        # number of flux surfaces.
+        # NOTE: Such low resolutions give fairly meaningless results...
+        "dx_mp": 0.05,
     },
 )
+fw.build()
+print(f"{time()-t:.2f} seconds")
 
 # %%[markdown]
 # The funtion "plot_hf" gives a summary plot of
@@ -77,7 +89,3 @@ fw = FirstWallSN(
 
 fig, ax = plt.subplots()
 fw.plot_hf()
-plt.show()
-
-
-print(f"{time()-t:.2f} seconds")

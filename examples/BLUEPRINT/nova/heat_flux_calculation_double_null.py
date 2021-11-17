@@ -36,8 +36,6 @@ from BLUEPRINT.systems.firstwall import FirstWallDN
 from BLUEPRINT.geometry.loop import Loop
 from time import time
 
-t = time()
-
 # %%[markdown]
 # Loading an equilibrium file
 
@@ -61,17 +59,23 @@ vv_box = Loop(x=x_box, z=z_box)
 # "DEMO_DN" and "SN".
 
 # %%
+t = time()
 fw = FirstWallDN(
     FirstWallDN.default_params,
     {
         "equilibrium": eq,
         "vv_inner": vv_box,
-        "DEMO_DN": True,
+        "SN": False,
+        "DEMO_like_divertor": True,
         "div_vertical_outer_target": True,
         "div_vertical_inner_target": False,
+        "dx_mp": 0.001,
+        "FW_optimisation": True,
     },
 )
 
+fw.build()
+print(f"{time()-t:.2f} seconds")
 # %%[markdown]
 # The funtion "plot_hf" gives a summary plot of
 # optimised wall, heat flux and flux surfaces.
@@ -80,5 +84,3 @@ fw = FirstWallDN(
 
 fig, ax = plt.subplots()
 fw.plot_hf()
-
-print(f"{time()-t:.2f} seconds")
