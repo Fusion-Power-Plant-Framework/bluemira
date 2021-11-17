@@ -25,7 +25,6 @@ import pytest
 
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import (
     inloop,
@@ -33,7 +32,6 @@ from BLUEPRINT.geometry.geomtools import (
     loop_volume,
     circle_seg,
     circle_arc,
-    on_polygon,
     rotate_matrix,
     project_point_axis,
     bounding_box,
@@ -211,30 +209,6 @@ class TestBoundingBox:
         assert np.allclose(xb, np.array([-2, -2, -2, -2, 2, 2, 2, 2]))
         assert np.allclose(yb, np.array([-2, -2, 2, 2, -2, -2, 2, 2]))
         assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
-
-
-class TestRotationMatrix:
-    def test_axes(self):
-        axes = ["x", "y", "z"]
-        axes2 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-
-        for a1, a2 in zip(axes, axes2):
-            r_1 = rotate_matrix(np.pi / 6, a1)
-            r_2 = rotate_matrix(np.pi / 6, a2)
-            assert np.allclose(r_1, r_2), a1
-
-        axes = ["fail", "somthing", "1"]
-        for axis in axes:
-            with pytest.raises(GeometryError):
-                rotate_matrix(30, axis)
-
-    def test_ccw(self):
-        p1 = [9, 0, 0]
-
-        r_matrix = rotate_matrix(np.pi / 2, axis="z")
-        p2 = r_matrix @ p1
-
-        assert np.isclose(p2[1], 9), p2
 
 
 class TestLineEq:

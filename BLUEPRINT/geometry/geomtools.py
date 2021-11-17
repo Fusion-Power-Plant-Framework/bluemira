@@ -35,14 +35,19 @@ from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 # Port over without modifying imports
 from bluemira.geometry._deprecated_tools import (  # noqa
     check_linesegment,
-    loop_plane_intersect,  # noqa
-    join_intersect,  # noqa
+    loop_plane_intersect,
+    join_intersect,
     in_polygon,
-    on_polygon,  # noqa
+    on_polygon,
     distance_between_points,
-    close_coordinates,  # noqa
+    close_coordinates,
     get_intersect,
+    polygon_in_polygon,
+    vector_intersect,
+    rotation_matrix,
 )
+
+rotate_matrix = rotation_matrix  # noqa
 from BLUEPRINT.base.error import GeometryError
 
 
@@ -416,34 +421,6 @@ def check_ccw(x, z):
     return a < 0
 
 
-@nb.jit(cache=True, nopython=True)
-def polygon_in_polygon(poly1, poly2, include_edges=False):
-    """
-    Determines what points of a polygon are inside another polygon
-
-    Parameters
-    ----------
-    poly1: np.array(2, N1)
-        The array of polygon1 point coordinates
-    poly2: np.array(2, N2)
-        The array of polygon2 point coordinates
-    include_edges: bool
-        Whether or not to return True if a point is on the perimeter of the
-        polygon
-
-    Returns
-    -------
-    inside: np.array(N1, dtype=bool)
-        The array of boolean values per index of polygon1
-    """
-    inside_array = np.empty(len(poly1), dtype=np.bool_)
-    for i in range(len(poly1)):
-        inside_array[i] = in_polygon(
-            poly1[i][0], poly1[i][1], poly2, include_edges=include_edges
-        )
-    return inside_array
-
-
 # # TODO: test/compare speed with ray-tracer algos also found here
 def inloop(x_loop, z_loop, x, z, side="in"):
     """
@@ -813,40 +790,6 @@ def normal_vector(side_vectors):
     return a
 
 
-def vector_intersect(p1, p2, p3, p4):
-    """
-
-    Parameters
-    ----------
-    p1: np.array(2)
-        The first point on the first vector
-    p2: np.array(2)
-        The second point on the first vector
-    p3: np.array(2)
-        The first point on the second vector
-    p4: np.array(2)
-        The second point on the second vector
-
-    Returns
-    -------
-    p_inter: np.array(2)
-        The point of the intersection between the two vectors
-    """
-    da = p2 - p1
-    db = p4 - p3
-
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
-        # NOTE: careful modifying this, different behaviour required...
-        point = p2
-    else:
-        dp = p1 - p3
-        dap = normal_vector(da)
-        denom = np.dot(dap, db)
-        num = np.dot(dap, dp)
-        point = num / denom.astype(float) * db + p3
-    return point
-
-
 def unique(x, z):
     """
     Removes duplicates
@@ -983,69 +926,6 @@ def qrotate(point, **kwargs):
             p[var] = rpoint[:, i]
         rpoint = p
     return rpoint
-
-
-def rotate_matrix(theta, axis="z"):
-    """
-    Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
-    \t:math:`\\mathbf{x^{'}}=\\mathbf{R_{u}}(\\theta)\\mathbf{x}`
-
-    \t:math:`\\mathbf{R_{u}}(\\theta)=cos(\\theta)\\mathbf{I}+sin(\\theta)[\\mathbf{u}]_{\\times}(1-cos(\\theta))(\\mathbf{u}\\otimes\\mathbf{u})`
-
-    Parameters
-    ----------
-    theta: float
-        The rotation angle [radians] (counter-clockwise about axis!)
-    axis: Union[str, iterable(3)]
-        The rotation axis (specified by axis label or vector)
-
-    Returns
-    -------
-    r_matrix: np.array((3, 3))
-        The (active) rotation matrix about the axis for an angle theta
-    """
-    if isinstance(axis, str):
-        # All das hier lass ich rein, damit alle verstehen koennen, dass es
-        # sich um normalen Rotation Matrices handelt.
-        if axis == "z":
-            r_matrix = np.array(
-                [
-                    [np.cos(theta), -np.sin(theta), 0],
-                    [np.sin(theta), np.cos(theta), 0],
-                    [0, 0, 1],
-                ]
-            )
-        elif axis == "y":
-            r_matrix = np.array(
-                [
-                    [np.cos(theta), 0, np.sin(theta)],
-                    [0, 1, 0],
-                    [-np.sin(theta), 0, np.cos(theta)],
-                ]
-            )
-        elif axis == "x":
-            r_matrix = np.array(
-                [
-                    [1, 0, 0],
-                    [0, np.cos(theta), -np.sin(theta)],
-                    [0, np.sin(theta), np.cos(theta)],
-                ]
-            )
-        else:
-            raise GeometryError(
-                f"Incorrect rotation axis: {axis}\n"
-                "please select from: ['x', 'y', 'z']"
-            )
-    else:
-        # Mignon, mais difficile de savoir ce qui se passe
-        axis = np.array(axis) / np.linalg.norm(axis)  # Unit vector
-        cos = np.cos(theta)
-        sin = np.sin(theta)
-        x, y, z = axis
-        u_x = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
-        u_o_u = np.outer(axis, axis)
-        r_matrix = cos * np.eye(3) + sin * u_x + (1 - cos) * u_o_u
-    return r_matrix
 
 
 # =============================================================================
