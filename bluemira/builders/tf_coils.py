@@ -78,7 +78,10 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         idx = np.where(points[0] > self.params.R_0.value)[0]
         return points[:, idx]
 
-    def update_parameterisation(self, x):
+    def update_cage(self, x):
+        """
+        Update the magnetostatic solver
+        """
         super().update_parameterisation(x)
         points = self.parameterisation.create_array(200)
         self.cage = HelmholtzCage(
@@ -89,7 +92,10 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         self.cage.set_current(current)
 
     def calculate_ripple(self, x):
-        self.update_parameterisation(x)
+        """
+        Calculate the ripple on the target points for a given variable vector
+        """
+        self.update_cage(x)
         ripple = self.cage.ripple(*self.ripple_points)
         print(max(ripple))
         self.ripple_values = ripple
@@ -149,7 +155,7 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
             ax = kwargs.get("ax", plt.gca())
 
         plot_2d(
-            self.separatrix.create_shape(),
+            self.separatrix,
             ax=ax,
             show=False,
             wire_options={"color": "red", "linewidth": "0.5"},
@@ -272,7 +278,6 @@ if __name__ == "__main__":
     # Sorry for the script... I needed to check if this was working
     from bluemira.geometry.parameterisations import PrincetonD
     from bluemira.equilibria.shapes import JohnerLCFS
-    from bluemira.utilities.optimiser import Optimiser
     from bluemira.base.parameter import ParameterFrame
 
     parameterisation = PrincetonD(
@@ -315,7 +320,8 @@ if __name__ == "__main__":
         }
     ).create_shape()
 
-    # Need to pass around lots of information between different parts of the build procedure
+    # Need to pass around lots of information between different parts of the build
+    # procedure.
     # This is just the bare minimum TF optimisation, we don't have much in the way of
     # configuration yet, and we're missing geometry constraints from some arbitrary keep
     # out zone. Also the KOZ constraint should be enforced on the plasma-facing casing
@@ -324,11 +330,14 @@ if __name__ == "__main__":
     # Starting to worry we're making things too configurable:
     #   - what about different magnetostatics solvers
     #   - different discretisations if we use BiotSavart
-    #   - different separatrix shapes need to be checked at different areas for peak ripple..
+    #   - different separatrix shapes need to be checked at different areas for peak
+    #     ripple..
 
     # Keeping ultra-configurable classes is going to slow us down.
-    # Might be simpler just to have a SystemBuilder that people subclass or write replacements for, I don't know.
+    # Might be simpler just to have a SystemBuilder that people subclass or write
+    # replacements for, I don't know.
 
-    # I fear the full build config just for the TF coil WP design optimisation will be absolutely massive.
+    # I fear the full build config just for the TF coil WP design optimisation will be
+    # absolutely massive.
     problem = TFWPOptimisationProblem(parameterisation, optimiser, params, separatrix)
     problem.solve()
