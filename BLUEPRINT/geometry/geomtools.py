@@ -24,14 +24,16 @@ A collection of geometry utility functions
 """
 import numba as nb
 import numpy as np
-from numpy.linalg import LinAlgError
 from collections.abc import Iterable
 from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
+
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.geometry._deprecated_tools import get_intersect
+
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 
@@ -336,72 +338,6 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
     z = np.array([-det * dx + np.abs(dy) * t, -det * dx - np.abs(dy) * t]) / dr2
     if delta < 1e-10:  # tangency
         return [x[0]], [z[0]]
-    return x, z
-
-
-def get_intersect(loop1, loop2):
-    """
-    Calculates the intersection points between two Loops. Will return unique
-    list of x, z intersections (no duplicates in x-z space)
-
-    Parameters
-    ----------
-    loop1: Loop
-        The Loops between which intersection points should be calculated
-    loop2: Loop
-        The Loops between which intersection points should be calculated
-
-    Returns
-    -------
-    xi: np.array(N_itersection)
-        The x coordinates of the intersection points
-    zi: np.array(N_itersection)
-        The z coordinates of the intersection points#
-
-    Note
-    ----
-    D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
-    """  # noqa (W505)
-    x1, y1 = loop1.d2
-    x2, y2 = loop2.d2
-
-    def inner_inter(x_1, x_2):
-        n1, n2 = x_1.shape[0] - 1, x_2.shape[0] - 1
-        xx1 = np.c_[x_1[:-1], x_1[1:]]
-        xx2 = np.c_[x_2[:-1], x_2[1:]]
-        return (
-            np.less_equal(
-                np.tile(xx1.min(axis=1), (n2, 1)).T, np.tile(xx2.max(axis=1), (n1, 1))
-            ),
-            np.greater_equal(
-                np.tile(xx1.max(axis=1), (n2, 1)).T, np.tile(xx2.min(axis=1), (n1, 1))
-            ),
-        )
-
-    x_x = inner_inter(x1, x2)
-    z_z = inner_inter(y1, y2)
-    m, k = np.nonzero(x_x[0] & x_x[1] & z_z[0] & z_z[1])
-    n = len(m)
-    a_m, xz, b_m = np.zeros((4, 4, n)), np.zeros((4, n)), np.zeros((4, n))
-    a_m[0:2, 2, :] = -1
-    a_m[2:4, 3, :] = -1
-    a_m[0::2, 0, :] = np.diff(np.c_[x1, y1], axis=0)[m, :].T
-    a_m[1::2, 1, :] = np.diff(np.c_[x2, y2], axis=0)[k, :].T
-    b_m[0, :] = -x1[m].ravel()
-    b_m[1, :] = -x2[k].ravel()
-    b_m[2, :] = -y1[m].ravel()
-    b_m[3, :] = -y2[k].ravel()
-    for i in range(n):
-        try:
-            xz[:, i] = np.linalg.solve(a_m[:, :, i], b_m[:, i])
-        except LinAlgError:
-            # Parallel segments. Will raise numpy RuntimeWarnings
-            xz[0, i] = np.nan
-    in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)
-    xz = xz[2:, in_range].T
-    x, z = xz[:, 0], xz[:, 1]
-    if len(x) > 0:
-        x, z = np.unique([x, z], axis=1)
     return x, z
 
 

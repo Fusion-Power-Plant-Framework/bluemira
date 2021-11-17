@@ -25,6 +25,8 @@ import os
 import pickle  # noqa (S403)
 import pytest
 
+from bluemira.geometry._deprecated_tools import get_intersect
+
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.geombase import Plane
@@ -36,7 +38,6 @@ from BLUEPRINT.geometry.geomtools import (
     distance_between_points,
     circle_seg,
     circle_arc,
-    get_intersect,
     join_intersect,
     loop_plane_intersect,
     check_linesegment,
@@ -60,28 +61,6 @@ TEST = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
 
 
 class TestIntersections:
-    def test_get_intersect(self):
-        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], z=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
-        shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
-        intersect = np.array(get_intersect(loop1, loop2))
-        correct = np.array(shouldbe).T
-        assert np.allclose(intersect, correct)
-
-        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
-        shouldbe = [[1.5, 1], [2.5, 1.5], [2.5, 5]]
-        intersect = np.array(get_intersect(loop1, loop2))
-        correct = np.array(shouldbe).T
-        assert np.allclose(intersect, correct)
-
-        loop1 = Loop(z=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(z=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
-        shouldbe = [[1.5, 1][::-1], [2.5, 1.5][::-1], [2.5, 5][::-1]]
-        intersect = np.array(get_intersect(loop1, loop2))
-        correct = np.array(shouldbe).T
-        assert np.allclose(intersect, correct)
-
     @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_join_intersect(self):
         loop1 = Loop(x=[0, 0.5, 1, 2, 3, 5, 4.5, 4, 0], z=[1, 1, 1, 1, 2, 4, 4.5, 5, 5])
