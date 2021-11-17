@@ -184,7 +184,7 @@ tfv_config = ParameterFrame([
     ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'N/A', None, 'Input'],
     ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'N/A', 'Pump which pumps down the fuelling lines', 'Input'],
     ['eta_f', 'Fuelling efficiency', 0.5, 'N/A', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Input'],
-    ['I_miv', 'Maximum in-vessel T inventory', max_ivc_inventory, 'kg', None, None],
+    ['I_miv', 'Maximum in-vessel T inventory', max_ivc_inventory, 'kg', None, 'Input'],
     ['I_tfv_min', 'Minimum TFV inventory', m_cryodistillation, 'kg', 'Without which e.g. cryodistillation columns are not effective', "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
     ['I_tfv_max', 'Maximum TFV inventory', m_cryodistillation + 0.2, 'kg', "Account for T sequestration inside the T plant", "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
     ['I_mbb', 'Maximum BB T inventory', max_bb_inventory, 'kg', None, 'Input'],

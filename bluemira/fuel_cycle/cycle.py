@@ -85,19 +85,18 @@ class EUDEMOFuelCycleModel:
 
     # fmt: off
     default_params = [
-        ['TBR', 'Tritium breeding ratio', 1.05, 'N/A', None, 'Input'],
-        ['f_b', 'Burn-up fraction', 0.015, 'N/A', None, 'Input'],
+        ['TBR', 'Tritium breeding ratio', 1.05, 'N/A', None, 'Default'],
+        ['f_b', 'Burn-up fraction', 0.015, 'N/A', None, 'Default'],
         ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s',
          'To maintain detachment - no chance of fusion from gas injection',
          'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['A_global', 'Load factor', 0.3, 'N/A', None, 'Silent input'],
-        ['r_learn', 'Learning rate', 1, 'N/A', None, 'Silent input'],
+        ['A_global', 'Load factor', 0.3, 'N/A', None, 'Default'],
+        ['r_learn', 'Learning rate', 1, 'N/A', None, 'Default'],
         ['t_pump', 'Time in DIR loop', 100, 's',
          'Time between exit from plasma and entry into plasma through DIR loop',
          'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['t_exh', 'Time in INDIR loop', 3600, 's', 'Time between exit from plasma and entry into TFV systems INDIR',
-         None],
-        ['t_ters', 'Time from BB exit to TFV system', 5 * 3600, 's', None, None],
+        ['t_exh', 'Time in INDIR loop', 3600, 's', 'Time between exit from plasma and entry into TFV systems INDIR', 'Default'],
+        ['t_ters', 'Time from BB exit to TFV system', 5 * 3600, 's', None, 'Default'],
         ['t_freeze', 'Time taken to freeze pellets', 1800, 's', None,
          'Discussions with Chris Day and Yannick Hörstenmeyer'],
         ['f_dir', 'Fraction of flow through DIR loop', 0.9, 'N/A', None,
@@ -124,7 +123,9 @@ class EUDEMOFuelCycleModel:
     def __init__(self, config, inputs):
         # Handle parameters
         self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(config)
+        self.params.update_kw_parameters(
+            config, source=f"{self.__class__.__name__} input"
+        )
 
         # Handle calculation information
         self.verbose = inputs.get("verbose", False)
