@@ -21,8 +21,6 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-import os
-import pickle  # noqa (S403)
 import pytest
 
 from BLUEPRINT.base.file import get_BP_path
@@ -36,11 +34,8 @@ from BLUEPRINT.geometry.geomtools import (
     distance_between_points,
     circle_seg,
     circle_arc,
-    join_intersect,
     loop_plane_intersect,
     on_polygon,
-    in_polygon,
-    polygon_in_polygon,
     rotate_matrix,
     project_point_axis,
     bounding_box,
@@ -51,7 +46,6 @@ from BLUEPRINT.geometry.geomtools import (
     make_box_xz,
     index_of_point_on_loop,
 )
-import tests
 
 
 TEST = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
@@ -461,7 +455,3 @@ def test_idx_pt_on_loop(inputs):
         else:
             index = index_of_point_on_loop(box, point_check, before)
             assert index == index_expect
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
