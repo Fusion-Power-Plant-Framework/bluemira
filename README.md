@@ -11,9 +11,18 @@ typical conceptual fusion reactor design activities.
 
 ``Bluemira`` is composed of various modules: 
 
-* **base**: the software backbone of the ``bluemira`` framework
-* TBD
-* **utilities**: collection of utility toolboxes for file IO, plotting, databases, 
+* `balance_of_plant`: power balance solver and tools
+* `base`: the software backbone of the ``bluemira`` framework
+* `codes` **[WIP]**: interfaces to external codes (both API and file PI)
+* `display`: plotting and display module
+* `equilibria`: equilibrium solvers and objects
+* `fuel_cycle`: fuel cycle model
+* `geometry`: the geometry "engine" of the ``bluemira`` framework
+* `magnetostatics`: magnetostatics solvers
+* `materials`: materials module
+* `radiation_transport` **[WIP]**: radiation and advection transport solvers
+* `structural` **[WIP]**: beam finite element structural solver
+* `utilities`: collection of utility toolboxes for file IO, databases, 
   machine learning, and misc.
 
 ## Publications [](#Publications)
