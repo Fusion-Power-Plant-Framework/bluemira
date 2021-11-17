@@ -115,30 +115,6 @@ class TestCircleLine:
         assert none is None
 
 
-class TestDistance:
-    def test_2d(self):
-        d = distance_between_points([0, 0], [1, 1])
-        assert d == np.sqrt(2)
-
-    def test_3d(self):
-        d = distance_between_points([0, 0, 0], [1, 1, 1])
-        assert d == np.sqrt(3)
-
-    def test_fail(self):
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0], [1, 1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0, 0], [1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0, 0, 0], [1, 1, 1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0], [1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0], [1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0], [1])
-
-
 class TestArea:
     def test_area(self):
         """

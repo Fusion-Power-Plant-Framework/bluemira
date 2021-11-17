@@ -119,7 +119,14 @@ def check_linesegment(point_a, point_b, point_c):
     check: bool
         True: if C on A--B, else False
     """
-    a_c, a_b = point_c - point_a, point_b - point_a
+    # Do some protection of numba against integers and lists
+    a_c = np.array(
+        [float(point_c[0]) - float(point_a[0]), float(point_c[1]) - float(point_a[1])]
+    )
+    a_b = np.array(
+        [float(point_b[0]) - float(point_a[0]), float(point_b[1]) - float(point_a[1])]
+    )
+
     distance = np.sqrt(np.sum(a_b ** 2))
     # Numba doesn't like doing cross-products of things with size 2
     cross = cross2d(a_b, a_c)

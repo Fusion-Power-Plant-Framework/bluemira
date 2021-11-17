@@ -40,39 +40,11 @@ from bluemira.geometry._deprecated_tools import (
     join_intersect,  # noqa
     in_polygon,
     on_polygon,  # noqa
+    distance_between_points,
+    close_coordinates,  # noqa
     get_intersect,
 )
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.constants import CROSS_P_TOL, DOT_P_TOL
-
-
-def close_coordinates(x, y, z):
-    """
-    Close an ordered set of coordinates.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coordinates
-    z: np.array
-        The z coordinates
-
-    Returns
-    -------
-    x: np.array
-        The closed x coordinates
-    y: np.array
-        The closed y coordinates
-    z: np.array
-        The closed z coordinates
-    """
-    if distance_between_points([x[0], y[0], z[0]], [x[-1], y[-1], z[-1]]) > EPS:
-        x = np.append(x, x[0])
-        y = np.append(y, y[0])
-        z = np.append(z, z[0])
-    return x, y, z
 
 
 def get_normal_vector(x, y, z):
@@ -360,6 +332,7 @@ def index_of_point_on_loop(loop, point_on_loop, before=True):
     """
     # Combine coords into single array, skipping the last if it's a closed loop
     coords = np.array(get_points_of_loop(loop))
+    point_on_loop = np.array(point_on_loop)
 
     # Get the number of points in the loop
     n_points = coords.shape[0]
@@ -1198,31 +1171,6 @@ def theta_sort(x, z, origin="lfs", **kwargs):
     if not anti:
         x, z = x[::-1], z[::-1]
     return x, z
-
-
-def distance_between_points(p1, p2):
-    """
-    Calculates the distance between two points
-
-    Parameters
-    ----------
-    p1: (float, float)
-        The coordinates of the first point
-    p2: (float, float)
-        The coordinates of the second point
-
-    Returns
-    -------
-    d: float
-        The distance between the two points [m]
-    """
-    if len(p1) != len(p2):
-        raise GeometryError("Need two points of the same number of coordinates.")
-
-    if (len(p1) not in [2, 3]) or (len(p2) not in [2, 3]):
-        raise GeometryError("Need 2- or 3-D sized points.")
-
-    return np.sqrt(sum([(p2[i] - p1[i]) ** 2 for i in range(len(p2))]))
 
 
 def get_angle_between_points(p0, p1, p2):
