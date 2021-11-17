@@ -24,14 +24,24 @@ A collection of geometry utility functions
 """
 import numba as nb
 import numpy as np
-from numpy.linalg import LinAlgError
 from collections.abc import Iterable
 from pyquaternion import Quaternion
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
+
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+
+# Port over without modifying imports
+from bluemira.geometry._deprecated_tools import (
+    check_linesegment,
+    loop_plane_intersect,  # noqa
+    join_intersect,  # noqa
+    in_polygon,
+    on_polygon,  # noqa
+    get_intersect,
+)
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 
@@ -233,45 +243,6 @@ def grid_2d_contour(loop):
     return np.array(x_new), np.array(z_new)
 
 
-def loop_plane_intersect(loop, plane):
-    """
-    Calculates the intersection of a loop with a plane
-
-    Parameters
-    ----------
-    loop: BLUEPRINT Loop object
-        The loop to calculate the intersection on
-    plane: BLUEPRINT Plane object
-        The plan to calculate the intersection with
-
-    Returns
-    -------
-    inter: np.array(3, n_intersections) or None
-        The xyz coordinates of the intersections with the loop. Returns None if
-        there are no intersections detected
-    """
-    out = _loop_plane_intersect(loop.xyz.T[:-1], plane.p1, plane.n_hat)
-    if not out:
-        return None
-    else:
-        return np.unique(out, axis=0)  # Drop occasional duplicates
-
-
-@nb.jit(cache=True, nopython=True)
-def _loop_plane_intersect(array, p1, vec2):
-    # JIT compiled utility of the above
-    out = []
-    for i in range(len(array)):
-        vec1 = array[i + 1] - array[i]
-        dot = np.dot(vec1, vec2)
-        if abs(dot) > DOT_P_TOL:
-            w = array[i] - p1
-            fac = -(np.dot(vec2, w)) / dot
-            if (fac >= 0) and (fac <= 1):
-                out.append(array[i] + fac * vec1)
-    return out
-
-
 def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
     """
     Fast and avoids Loops (pure circle)
@@ -337,104 +308,6 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
     if delta < 1e-10:  # tangency
         return [x[0]], [z[0]]
     return x, z
-
-
-def get_intersect(loop1, loop2):
-    """
-    Calculates the intersection points between two Loops. Will return unique
-    list of x, z intersections (no duplicates in x-z space)
-
-    Parameters
-    ----------
-    loop1: Loop
-        The Loops between which intersection points should be calculated
-    loop2: Loop
-        The Loops between which intersection points should be calculated
-
-    Returns
-    -------
-    xi: np.array(N_itersection)
-        The x coordinates of the intersection points
-    zi: np.array(N_itersection)
-        The z coordinates of the intersection points#
-
-    Note
-    ----
-    D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
-    """  # noqa (W505)
-    x1, y1 = loop1.d2
-    x2, y2 = loop2.d2
-
-    def inner_inter(x_1, x_2):
-        n1, n2 = x_1.shape[0] - 1, x_2.shape[0] - 1
-        xx1 = np.c_[x_1[:-1], x_1[1:]]
-        xx2 = np.c_[x_2[:-1], x_2[1:]]
-        return (
-            np.less_equal(
-                np.tile(xx1.min(axis=1), (n2, 1)).T, np.tile(xx2.max(axis=1), (n1, 1))
-            ),
-            np.greater_equal(
-                np.tile(xx1.max(axis=1), (n2, 1)).T, np.tile(xx2.min(axis=1), (n1, 1))
-            ),
-        )
-
-    x_x = inner_inter(x1, x2)
-    z_z = inner_inter(y1, y2)
-    m, k = np.nonzero(x_x[0] & x_x[1] & z_z[0] & z_z[1])
-    n = len(m)
-    a_m, xz, b_m = np.zeros((4, 4, n)), np.zeros((4, n)), np.zeros((4, n))
-    a_m[0:2, 2, :] = -1
-    a_m[2:4, 3, :] = -1
-    a_m[0::2, 0, :] = np.diff(np.c_[x1, y1], axis=0)[m, :].T
-    a_m[1::2, 1, :] = np.diff(np.c_[x2, y2], axis=0)[k, :].T
-    b_m[0, :] = -x1[m].ravel()
-    b_m[1, :] = -x2[k].ravel()
-    b_m[2, :] = -y1[m].ravel()
-    b_m[3, :] = -y2[k].ravel()
-    for i in range(n):
-        try:
-            xz[:, i] = np.linalg.solve(a_m[:, :, i], b_m[:, i])
-        except LinAlgError:
-            # Parallel segments. Will raise numpy RuntimeWarnings
-            xz[0, i] = np.nan
-    in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)
-    xz = xz[2:, in_range].T
-    x, z = xz[:, 0], xz[:, 1]
-    if len(x) > 0:
-        x, z = np.unique([x, z], axis=1)
-    return x, z
-
-
-@nb.jit(cache=True, forceobj=True)
-def check_linesegment(point_a, point_b, point_c):
-    """
-    Check that point C is on the line between points A and B
-
-    Parameters
-    ----------
-    point_a, point_b: [float, float]*2
-        The line segment points
-    point_c: [float, float]
-        The point which to check is on A--B
-
-    Returns
-    -------
-    check: bool
-        True: if C on A--B, else False
-    """
-    point_a, point_b, point_c = np.array(point_a), np.array(point_b), np.array(point_c)
-    a_c, a_b = point_c - point_a, point_b - point_a
-    distance = distance_between_points(point_a, point_b)
-    if np.abs(np.cross(a_b, a_c)) > CROSS_P_TOL * distance:
-        return False
-    k_ac = np.dot(a_b, a_c)
-    k_ab = np.dot(a_b, a_b)
-    if k_ac < 0:
-        return False
-    elif k_ac > k_ab:
-        return False
-    else:
-        return True
 
 
 def get_points_of_loop(loop):
@@ -622,82 +495,6 @@ def check_ccw(x, z):
     for n in range(len(x) - 1):
         a += (x[n + 1] - x[n]) * (z[n + 1] + z[n])
     return a < 0
-
-
-@nb.jit(cache=True, forceobj=True)
-def on_polygon(x, z, poly):
-    """
-    Determines if a point (x, z) is on the perimeter of a closed 2-D polygon
-
-    Parameters
-    ----------
-    x, z: float, float
-        Point coordinates
-    poly: np.array(2, N)
-        The array of polygon point coordinates
-
-    Returns
-    -------
-    on_edge: bool
-        Whether or not the point is on the perimeter of the polygon
-    """
-    on_edge = False
-    for i, (point_a, point_b) in enumerate(zip(poly[:-1], poly[1:])):
-        c = check_linesegment(point_a, point_b, [x, z])
-
-        if c is True:
-            return True
-    return on_edge
-
-
-@nb.jit(cache=True, nopython=True)
-def in_polygon(x, z, poly, include_edges=False):
-    """
-    Determines if a point (x, z) is inside a 2-D polygon
-
-    Parameters
-    ----------
-    x, z: float, float
-        Point coordinates
-    poly: np.array(2, N)
-        The array of polygon point coordinates
-    include_edges: bool
-        Whether or not to return True if a point is on the perimeter of the
-        polygon
-
-    Returns
-    -------
-    inside: bool
-        Whether or not the point is in the polygon
-    """
-    n = len(poly)
-    inside = False
-    x1, z1, x_inter = 0, 0, 0
-    x0, z0 = poly[0]
-    for i in range(n + 1):
-        x1, z1 = poly[i % n]
-
-        if x == x1 and z == z1:
-            return include_edges
-
-        if z > min(z0, z1):
-            if z <= max(z0, z1):
-                if x <= max(x0, x1):
-
-                    if z0 != z1:
-                        x_inter = (z - z0) * (x1 - x0) / (z1 - z0) + x0
-                        if x == x_inter:
-                            return include_edges
-                    if x0 == x1 or x <= x_inter:
-
-                        inside = not inside  # Beautiful
-        elif z == min(z0, z1):
-            if z0 == z1:
-                if (x <= max(x0, x1)) and (x >= min(x0, x1)):
-                    return include_edges
-
-        x0, z0 = x1, z1
-    return inside
 
 
 @nb.jit(cache=True, nopython=True)
