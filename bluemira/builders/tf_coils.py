@@ -41,7 +41,26 @@ from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 
 class TFWPOptimisationProblem(GeometryOptimisationProblem):
     """
-    A simple geometry optimisation problem
+    Toroidal field coil winding pack shape optimisation problem
+
+    Parameters
+    ----------
+    parameterisation: GeometryParameterisation
+        Geometry parameterisation for the winding pack current centreline
+    optimiser: Optimiser
+        Optimiser to use to solve the optimisation problem
+    params: ParameterFrame
+        Parameters required to solve the optimisation problem
+    separatrix: BluemiraWire
+        Separatrix shape at which the TF ripple is to be constrained
+
+    Notes
+    -----
+    x_* = minimise: winding_pack_length
+          subject to:
+              ripple|separatrix <= TF_ripple_limit
+
+    The geometry parameterisation is updated in place
     """
 
     def __init__(self, parameterisation, optimiser, params, separatrix):
@@ -51,11 +70,11 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         self.ripple_points = self._make_ripple_points(separatrix)
         self.ripple_values = None
         self.optimiser.add_ineq_constraints(
-            self.f_constrain_ripple, 1e-3 * np.ones(len(ripple_points[0]))
+            self.f_constrain_ripple, 1e-3 * np.ones(len(self.ripple_points[0]))
         )
 
     def _make_ripple_points(self, separatrix):
-        points = separatrix.create_array(n_points=100)
+        points = separatrix.discretize(ndiscr=100).T
         idx = np.where(points[0] > self.params.R_0.value)[0]
         return points[:, idx]
 
@@ -77,6 +96,9 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         return ripple - self.params.TF_ripple_limit
 
     def f_constrain_ripple(self, constraint, x, grad):
+        """
+        Toroidal field ripple constraint function
+        """
         constraint[:] = self.calculate_ripple(x)
 
         if grad.size > 0:
@@ -96,13 +118,7 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
 
     def f_objective(self, x, grad):
         """
-        Signature for an objective function.
-
-        If we use a gradient-based optimisation algorithm and we don't how to calculate
-        the gradient, we can approximate it numerically.
-
-        Note that this is not particularly robust in some cases... Probably best to
-        calculate the gradients analytically, or use a gradient-free algorithm.
+        Length minimisation objective
         """
         length = self.calculate_length(x)
 
@@ -115,7 +131,7 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         return length
 
     # I just need to see... I worry about the proliferation of Plotters
-    def plot_loops(self, ax=None, **kwargs):
+    def plot_ripple(self, ax=None, **kwargs):
         """
         Plot the ripple along the separatrix loop.
 
@@ -124,11 +140,6 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         ax: Axes, optional
             The optional Axes to plot onto, by default None.
             If None then the current Axes will be used.
-
-        Returns
-        -------
-        sm: ScalarMappable
-            The scalar mappable to set the colorbar in the ripple plot
         """
         import matplotlib.pyplot as plt
         import matplotlib
@@ -137,7 +148,6 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         if ax is None:
             ax = kwargs.get("ax", plt.gca())
 
-        # FFS I can't stack plot calls by default?!
         plot_2d(
             self.separatrix.create_shape(),
             ax=ax,
@@ -293,7 +303,6 @@ if __name__ == "__main__":
         ]
     )
 
-    # Aaand this is why Loops where made..
     separatrix = JohnerLCFS(
         {
             "r_0": {"value": 9},
@@ -302,17 +311,22 @@ if __name__ == "__main__":
             "kappa_u": {"value": 1.65},
             "kappa_l": {"value": 1.8},
         }
-    )
-    points = separatrix.create_array(n_points=100)
-    idx = np.where(points[0] > 9)[0]
-    ripple_points = points[:, idx]
+    ).create_shape()
 
     # Need to pass around lots of information between different parts of the build procedure
+    # This is just the bare minimum TF optimisation, we don't have much in the way of
+    # configuration yet, and we're missing geometry constraints from some arbitrary keep
+    # out zone. Also the KOZ constraint should be enforced on the plasma-facing casing
+    # geometry, which needs to be built off the winding pack. Gonna get messy again :D
+
     # Starting to worry we're making things too configurable:
     #   - what about different magnetostatics solvers
     #   - different discretisations if we use BiotSavart
     #   - different separatrix shapes need to be checked at different areas for peak ripple..
+
+    # Keeping ultra-configurable classes is going to slow us down.
     # Might be simpler just to have a SystemBuilder that people subclass or write replacements for, I don't know.
+
     # I fear the full build config just for the TF coil WP design optimisation will be absolutely massive.
     problem = TFWPOptimisationProblem(parameterisation, optimiser, params, separatrix)
     problem.solve()
