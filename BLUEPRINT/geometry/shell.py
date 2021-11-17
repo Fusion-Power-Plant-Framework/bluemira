@@ -30,6 +30,9 @@ from shapely.geos import TopologicalError
 from matplotlib.patches import PathPatch
 from sectionproperties.pre.sections import CustomSection
 from sectionproperties.analysis.cross_section import CrossSection
+
+from bluemira.geometry._deprecated_tools import get_intersect
+
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.utilities.plottools import pathify, BPPathPatch3D, Plot3D
 from BLUEPRINT.geometry.boolean import boolean_2d_difference
@@ -41,7 +44,6 @@ from BLUEPRINT.geometry.geomtools import (
     bounding_box,
     get_control_point,
     clean_loop_points,
-    get_intersect,
 )
 
 
