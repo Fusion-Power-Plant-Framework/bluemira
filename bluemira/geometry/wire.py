@@ -121,7 +121,7 @@ class BluemiraWire(BluemiraGeo):
     def close(self) -> None:
         """
         Close the shape with a line segment between shape's end and start point.
-        This function modify the object boundary.
+        This function modifies the object boundary.
         """
         if not self.is_closed():
             closure = wire_closure(self._shape)

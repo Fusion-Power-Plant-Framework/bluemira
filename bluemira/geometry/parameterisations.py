@@ -265,7 +265,6 @@ class PrincetonD(GeometryParameterisation):
 
         xo = np.sqrt(x1 * x2)
         k = 0.5 * np.log(x2 / x1)
-        # npoints = int(npoints // 2)
         theta = np.linspace(-0.5 * np.pi, 1.5 * np.pi, npoints)
         s = np.zeros(npoints, dtype="complex128")
         n = 0
