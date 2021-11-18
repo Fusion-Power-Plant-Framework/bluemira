@@ -19,6 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.face import BluemiraFace
+
+import bluemira.geometry.tools as tools
+
 from bluemira.geometry.tools import (
     make_polygon,
     make_ellipse,
@@ -103,3 +108,304 @@ class TestGeometry:
         # Wire.Length and Edge.length giving a result slightly different
         # but enough to make the following assert fail. To be investigated.
         # assert pytest.approx(bm_ellipse.length) == expected_length
+
+    def test_copy_deepcopy(self):
+        points = self.square_points
+        points.append(self.square_points[0])
+        wire1 = make_polygon(points[0:4], label="wire1")
+        wire2 = make_polygon(points[3:], label="wire2")
+        wire = BluemiraWire([wire1, wire2], label="wire")
+        wire_copy = wire.copy()
+        wire_deepcopy = wire.deepcopy()
+
+        assert wire_copy.label == wire.label
+        assert wire_deepcopy.label == wire.label
+        assert wire.length == (wire1.length + wire2.length)
+        assert wire.length == wire_copy.length
+        assert wire.length == wire_deepcopy.length
+        w1_len = wire1.length
+        w2_len = wire2.length
+        w_len = wire.length
+
+        wire.scale(2)
+        assert wire.length == 2 * w_len
+        assert wire.length == wire_copy.length
+        assert w_len == wire_deepcopy.length
+        assert wire1.length == 2 * w1_len
+        assert wire2.length == 2 * w2_len
+
+        wire_copy = wire.copy("wire_copy")
+        wire_deepcopy = wire.deepcopy("wire_deepcopy")
+
+        assert wire_copy.label == "wire_copy"
+        assert wire_deepcopy.label == "wire_deepcopy"
+
+    params_for_fuse_wires = [
+        pytest.param(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+            ],
+            (2, False),
+            id="coincident",
+            marks=pytest.mark.xfail(reason="coincident wires"),
+        ),
+        pytest.param(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
+                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            (4, True),
+            id="closed",
+        ),
+        pytest.param(
+            [
+                make_polygon(
+                    [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
+                ),
+                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            (4, True),
+            id="overlap",
+            marks=pytest.mark.xfail(reason="wire partially overlap"),
+        ),
+        pytest.param(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0], [-1, 1, 0]], label="wire1"),
+                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            (4, True),
+            id="intersection",
+            marks=pytest.mark.xfail(reason="wires internal intersection"),
+        ),
+    ]
+
+    @pytest.mark.parametrize("test_input, expected", params_for_fuse_wires)
+    def test_fuse_wires(self, test_input, expected):
+        wire_fuse = tools.boolean_fuse(test_input)
+        assert (wire_fuse.length, wire_fuse.is_closed()) == expected
+
+    params_for_fuse_faces = [
+        pytest.param(
+            [
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire1",
+                        closed=True,
+                    )
+                ),
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire2",
+                        closed=True,
+                    )
+                ),
+            ],
+            (4, 1),
+            id="coincident",
+        ),
+        pytest.param(
+            [
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire1",
+                        closed=True,
+                    )
+                ),
+                BluemiraFace(
+                    make_polygon(
+                        [[1, 0, 0], [2, 0, 0], [2, 1, 0], [0, 1, 0]],
+                        label="wire2",
+                        closed=True,
+                    )
+                ),
+            ],
+            (6, 2),
+            id="1-edge-coincident",
+        ),
+        pytest.param(
+            [
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire1",
+                        closed=True,
+                    )
+                ),
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]],
+                        label="wire2",
+                        closed=True,
+                    )
+                ),
+            ],
+            (6, 2),
+            id="1-vertex-coincident",
+            marks=pytest.mark.xfail(reason="Only one vertex intersection"),
+        ),
+        pytest.param(
+            [
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire1",
+                        closed=True,
+                    )
+                ),
+                BluemiraFace(
+                    make_polygon(
+                        [[0.5, 0.5, 0], [1.5, 0.5, 0], [1.5, 1.5, 0], [0.5, 1.5, 0]],
+                        label="wire2",
+                        closed=True,
+                    )
+                ),
+            ],
+            (6, 1.75),
+            id="semi intersection",
+        ),
+    ]
+
+    @pytest.mark.parametrize("test_input, expected", params_for_fuse_faces)
+    def test_fuse_faces(self, test_input, expected):
+        face_fuse = tools.boolean_fuse(test_input)
+        assert (
+            face_fuse.length,
+            face_fuse.area,
+        ) == expected
+
+    params_for_cut_wires = [
+        pytest.param(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+            ],
+            ([]),
+            id="coincident",
+        ),
+        pytest.param(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
+                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            [(2, False)],
+            id="contact at start and end",
+        ),
+        pytest.param(
+            [
+                make_polygon(
+                    [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
+                ),
+                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            [(2, False)],
+            id="overlap",
+        ),
+        pytest.param(
+            [
+                make_polygon([[0, 0, 0], [1, 0, 0], [1, 2, 0]], label="wire1"),
+                make_polygon([[2, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+            ],
+            [(2, False), (1, False)],
+            id="intersection",
+        ),
+    ]
+
+    @pytest.mark.parametrize("test_input, expected", params_for_cut_wires)
+    def test_cut_wires(self, test_input, expected):
+        wire_cut = tools.boolean_cut(test_input[0], test_input[1:])
+        output = [(w.length, w.is_closed()) for w in wire_cut]
+        assert output == expected
+
+    params_for_cut_faces = [
+        pytest.param(
+            [
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire1",
+                        closed=True,
+                    )
+                ),
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire2",
+                        closed=True,
+                    )
+                ),
+            ],
+            [],
+            id="coincident",
+        ),
+        pytest.param(
+            [
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire1",
+                        closed=True,
+                    )
+                ),
+                BluemiraFace(
+                    make_polygon(
+                        [[1, 0, 0], [2, 0, 0], [2, 1, 0], [1, 1, 0]],
+                        label="wire2",
+                        closed=True,
+                    )
+                ),
+            ],
+            [(4, 1)],
+            id="1-edge-coincident",
+        ),
+        pytest.param(
+            [
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire1",
+                        closed=True,
+                    )
+                ),
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]],
+                        label="wire2",
+                        closed=True,
+                    )
+                ),
+            ],
+            [(4, 1)],
+            id="1-vertex-coincident",
+            # marks=pytest.mark.xfail(reason="Only one vertex intersection"),
+        ),
+        pytest.param(
+            [
+                BluemiraFace(
+                    make_polygon(
+                        [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                        label="wire1",
+                        closed=True,
+                    )
+                ),
+                BluemiraFace(
+                    make_polygon(
+                        [[0.5, 0.5, 0], [1.5, 0.5, 0], [1.5, 1.5, 0], [0.5, 1.5, 0]],
+                        label="wire2",
+                        closed=True,
+                    )
+                ),
+            ],
+            [(4, 0.75)],
+            id="semi intersection",
+        ),
+    ]
+
+    @pytest.mark.parametrize("test_input, expected", params_for_cut_faces)
+    def test_cut_faces(self, test_input, expected):
+        face_cut = tools.boolean_cut(test_input[0], test_input[1:])
+        output = [(f.length, f.area) for f in face_cut]
+        assert output == expected

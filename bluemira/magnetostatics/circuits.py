@@ -3,7 +3,7 @@
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I. Maione, S. McIntosh, J. Morris,
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
 #                    D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@ from bluemira.geometry._deprecated_tools import (
     get_angle_between_vectors,
     rotation_matrix,
     get_normal_vector,
-    close_coordinates,
 )
 from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.baseclass import SourceGroup
@@ -40,7 +39,7 @@ __all__ = ["ArbitraryPlanarRectangularXSCircuit", "HelmholtzCage"]
 
 class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
     """
-    An arbitrary, planar, closed current loop of constant rectangular cross-section
+    An arbitrary, planar current loop of constant rectangular cross-section
     and uniform current density.
 
     Parameters
@@ -61,9 +60,8 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
     current: float
 
     def __init__(self, shape, breadth, depth, current):
-        shape = process_loop_array(shape)
-        normal = get_normal_vector(*shape.T)
-        self.shape = np.array(close_coordinates(*shape.T)).T
+        self.shape = process_loop_array(shape)
+        normal = get_normal_vector(*self.shape.T)
 
         # Set up geometry, calculating all trapezoial prism sources
         self.d_l = np.diff(self.shape, axis=0)

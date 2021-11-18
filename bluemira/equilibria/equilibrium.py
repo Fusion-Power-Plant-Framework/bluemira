@@ -32,7 +32,10 @@ from scipy.optimize import minimize
 import tabulate
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
+from bluemira.base.look_and_feel import (
+    bluemira_print_flush,
+    bluemira_warn,
+)
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
@@ -261,6 +264,7 @@ class MHDState:
         header="bluemira_equilibria",
         directory=None,
         filetype="json",
+        **kwargs,
     ):
         """
         Writes the Equilibrium Object to an eqdsk file
@@ -282,7 +286,7 @@ class MHDState:
 
         self.filename = filename  # Conveniente
         eqdsk = EQDSKInterface()
-        eqdsk.write(filename, data, formatt=filetype)
+        eqdsk.write(filename, data, formatt=filetype, **kwargs)
 
 
 class Breakdown(MHDState):
@@ -363,7 +367,12 @@ class Breakdown(MHDState):
         return d
 
     def to_eqdsk(
-        self, filename, header="bluemira_equilibria", directory=None, filetype="json"
+        self,
+        filename,
+        header="bluemira_equilibria",
+        directory=None,
+        filetype="json",
+        **kwargs,
     ):
         """
         Writes the Equilibrium Object to an eqdsk file
@@ -371,7 +380,7 @@ class Breakdown(MHDState):
         data = self.to_dict()
         data["xcentre"] = 0
         data["bcentre"] = 0
-        super().to_eqdsk(data, filename, header, directory, filetype)
+        super().to_eqdsk(data, filename, header, directory, filetype, **kwargs)
 
     def set_breakdown_point(self, x_bd, z_bd):
         """
@@ -736,6 +745,7 @@ class Equilibrium(MHDState):
         directory=None,
         filetype="json",
         qpsi_calcmode=0,
+        **kwargs,
     ):
         """
         Writes the Equilibrium Object to an eqdsk file
@@ -744,7 +754,12 @@ class Equilibrium(MHDState):
             qpsi_calcmode = 2
 
         super().to_eqdsk(
-            self.to_dict(qpsi_calcmode), filename, header, directory, filetype
+            self.to_dict(qpsi_calcmode),
+            filename,
+            header,
+            directory,
+            filetype,
+            **kwargs,
         )
 
     def __getstate__(self):
@@ -1259,9 +1274,13 @@ class Equilibrium(MHDState):
 
         Returns
         -------
-        flux surface: Loop
+        flux surface: List[Loop]
         """
-        # NOTE: You should use find.py::find_flux_surface_through_point
+        # NOTE: You should use find.py::find_flux_surface_through_point, this is just
+        # wrong, but is still used in BLUEPRINT.systems.firstwall.py
+        bluemira_warn(
+            "This function does not do what it should do. You should not use " "it."
+        )
         psi = self.psi(x, z)
         psi_n = calc_psi_norm(psi, *self.get_OX_psis())
         loops = find_flux_surfs(self.x, self.z, self.psi(), psi_n)

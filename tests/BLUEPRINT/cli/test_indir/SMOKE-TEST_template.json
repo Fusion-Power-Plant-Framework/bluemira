@@ -615,22 +615,6 @@
     "source": "Input",
     "mapping": null
   },
-  "dr_far_omp": {
-    "name": "fs thickness far SOL",
-    "value": 0.005,
-    "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "dr_near_omp": {
-    "name": "fs thickness near SOL",
-    "value": 0.001,
-    "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
   "e_nbi": {
     "name": "Neutral beam energy",
     "value": 1000,
@@ -721,14 +705,6 @@
     "source": "Input",
     "mapping": null
   },
-  "f_inner_target": {
-    "name": "Power fraction",
-    "value": 0.25,
-    "unit": "N/A",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
   "f_lfs_lower_target": {
     "name": "Power fraction lfs lower",
     "value": 0.5,
@@ -759,18 +735,10 @@
       }
     }
   },
-  "f_outer_target": {
-    "name": "Power fraction",
-    "value": 0.75,
-    "unit": "N/A",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
     "value": 25,
-    "unit": "\u00c3\u201a\u00c2\u00b0",
+    "unit": "\u00b0",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -787,22 +755,6 @@
     "name": "Minimum FW module length",
     "value": 0.75,
     "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "fw_dpsi_n_far": {
-    "name": "Step size of psi in far SOL",
-    "value": 0.1,
-    "unit": "N/A",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "fw_dpsi_n_near": {
-    "name": "Step size of psi in near SOL",
-    "value": 0.1,
-    "unit": "N/A",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -831,14 +783,6 @@
     "source": "Input",
     "mapping": null
   },
-  "fw_lambda_q_far": {
-    "name": "Lambda q far SOL",
-    "value": 0.05,
-    "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
   "fw_lambda_q_far_imp": {
     "name": "Lambda_q far SOL imp",
     "value": 0.1,
@@ -850,14 +794,6 @@
   "fw_lambda_q_far_omp": {
     "name": "Lambda_q far SOL omp",
     "value": 0.1,
-    "unit": "m",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "fw_lambda_q_near": {
-    "name": "Lambda q near SOL",
-    "value": 0.05,
     "unit": "m",
     "description": null,
     "source": "Input",
@@ -1155,6 +1091,14 @@
       }
     }
   },
+  "h_tf_min_in": {
+    "name": "Plasma side TF coil min height",
+    "value": -6.5,
+    "unit": "m",
+    "description": null,
+    "source": "PROCESS",
+    "mapping": null
+  },
   "hf_limit": {
     "name": "heat flux material limit",
     "value": 0.5,
@@ -1368,22 +1312,6 @@
     "value": 1,
     "unit": "MA",
     "description": "Maximum launcher current drive in a port",
-    "source": "Input",
-    "mapping": null
-  },
-  "p_rate_imp": {
-    "name": "power sharing imp",
-    "value": 0.1,
-    "unit": "%",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "p_rate_omp": {
-    "name": "power sharing omp",
-    "value": 0.9,
-    "unit": "%",
-    "description": null,
     "source": "Input",
     "mapping": null
   },
@@ -2166,7 +2094,7 @@
     "mapping": {
       "PROCESS": {
         "name": "tfcth",
-        "read": false,
+        "read": true,
         "write": false
       }
     }

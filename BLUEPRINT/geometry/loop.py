@@ -62,7 +62,8 @@ from BLUEPRINT.geometry.constants import VERY_BIG
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.utilities.plottools import pathify, BPPathPatch3D, Plot3D
-from BLUEPRINT.utilities.tools import is_num, furthest_perp_point
+from BLUEPRINT.utilities.tools import furthest_perp_point
+from bluemira.utilities.tools import is_num
 
 
 class Loop(GeomBase):
@@ -93,7 +94,10 @@ class Loop(GeomBase):
     the third coordinate with np.zeros(N)
     """
 
+    warning_printed = False
+
     def __init__(self, x=None, y=None, z=None, enforce_ccw=True):
+        self._print_warning()
         self.x = x
         self.y = y
         self.z = z
@@ -109,6 +113,13 @@ class Loop(GeomBase):
 
         self.inner = None
         self.outer = None
+
+    def _print_warning(self):
+        if not Loop.warning_printed:
+            bluemira_warn(
+                type(self).__module__ + "." + type(self).__name__ + " is deprecated."
+            )
+            Loop.warning_printed = True
 
     @classmethod
     def from_dict(cls, xyz_dict):

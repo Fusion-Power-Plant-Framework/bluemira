@@ -31,17 +31,19 @@ from bluemira.utilities.opt_variables import (
 
 class TestBoundedVariable:
     def test_initialisation(self):
-        v1 = BoundedVariable("a", 2, 0, 3)
+        v1 = BoundedVariable("a", 2, 0, 3, descr="test")
         assert v1.name == "a"
         assert v1.value == 2
         assert v1.lower_bound == 0
         assert v1.upper_bound == 3
+        assert v1.description == "test"
 
         v2 = BoundedVariable("b", 0, -1, 1)
         assert v2.name == "b"
         assert v2.value == 0
         assert v2.lower_bound == -1
         assert v2.upper_bound == 1
+        assert v2.description is None
 
         with pytest.raises(OptVariablesError):
             v3 = BoundedVariable("a", 2, 2.5, 3)
@@ -84,6 +86,9 @@ class TestOptVariables:
         v2 = BoundedVariable("b", 0, -1, 1)
         v3 = BoundedVariable("c", -1, -10, 10)
         cls.vars = OptVariables([v1, v2, v3])
+        v1 = BoundedVariable("a", 2, 0, 3)
+        v2 = BoundedVariable("b", 0, -1, 1)
+        v3 = BoundedVariable("c", -1, -10, 10)
         cls.vars_frozen = OptVariables([v1, v2, v3], frozen=True)
 
     def test_init(self):
@@ -120,6 +125,12 @@ class TestOptVariables:
             self.vars_frozen.add_variable(BoundedVariable("new", 0, 0, 0))
         with pytest.raises(OptVariablesError):
             self.vars_frozen.remove_variable("a")
+
+    def test_adjust(self):
+        self.vars.adjust_variable("b", fixed=True)
+        self.vars_frozen.adjust_variable("b", fixed=True)
+        assert self.vars["b"].fixed
+        assert self.vars_frozen["b"].fixed
 
 
 if __name__ == "__main__":

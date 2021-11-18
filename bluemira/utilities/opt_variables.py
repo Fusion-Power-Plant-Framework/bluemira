@@ -25,6 +25,9 @@ Optimisation variable class.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from operator import attrgetter
+from pandas import DataFrame
+from tabulate import tabulate
 
 from bluemira.utilities.error import OptVariablesError
 from bluemira.base.constants import BLUEMIRA_PAL_MAP
@@ -88,11 +91,13 @@ class BoundedVariable:
         Upper bound of the variable
     fixed: bool
         Whether or not the variable is to be held constant
+    descr: str
+        Description of the variable
     """
 
-    __slots__ = ("name", "lower_bound", "upper_bound", "fixed", "_value")
+    __slots__ = ("name", "_value", "lower_bound", "upper_bound", "fixed", "_description")
 
-    def __init__(self, name, value, lower_bound, upper_bound, fixed=False):
+    def __init__(self, name, value, lower_bound, upper_bound, fixed=False, descr=None):
         self._validate_bounds(lower_bound, upper_bound)
         self._validate_value(value, lower_bound, upper_bound)
         self.name = name
@@ -102,6 +107,7 @@ class BoundedVariable:
         self.fixed = False  # Required to set value initially
         self.value = value
         self.fixed = fixed
+        self._description = descr
 
     @property
     def value(self):
@@ -120,6 +126,13 @@ class BoundedVariable:
 
         self._validate_value(value, self.lower_bound, self.upper_bound)
         self._value = value
+
+    @property
+    def description(self):
+        """
+        The description of the variable.
+        """
+        return self._description
 
     def fix(self, value: float):
         """
@@ -176,7 +189,27 @@ class BoundedVariable:
     @staticmethod
     def _validate_value(value, lower_bound, upper_bound):
         if not lower_bound <= value <= upper_bound:
-            raise OptVariablesError("Variable value is out of its bounds.")
+            raise OptVariablesError(f"Variable value {value} is out of bounds.")
+
+    def __repr__(self) -> str:
+        """
+        Representation of Bounded variable
+        """
+        lower_bound, upper_bound, fixed = self.lower_bound, self.upper_bound, self.fixed
+        return f"{self.__class__.__name__}({self.name}, {self.value}, {lower_bound=}, {upper_bound=}, {fixed=})"
+
+    def __str__(self) -> str:
+        """
+        Pretty representation of Bounded variable
+        """
+        bound = (
+            f" Bounds: ({self.lower_bound}, {self.upper_bound})"
+            if not self.fixed
+            else ""
+        )
+        descr = f' "{self.description}"' if self.description is not None else ""
+
+        return f"{self.name} = {self.value}{bound}{descr}"
 
 
 class OptVariables:
@@ -231,7 +264,9 @@ class OptVariables:
 
         del self._var_dict[name]
 
-    def adjust_variable(self, name, value=None, lower_bound=None, upper_bound=None):
+    def adjust_variable(
+        self, name, value=None, lower_bound=None, upper_bound=None, fixed=False
+    ):
         """
         Adjust a variable in the set.
 
@@ -245,9 +280,43 @@ class OptVariables:
             Value of the lower bound to set
         upper_bound: Optional[float]
             Value of the upper to set
+        fixed: bool
+            Whether or not the variable is to be held constant
         """
         self._check_presence(name)
-        self._var_dict[name].adjust(value, lower_bound, upper_bound)
+
+        if fixed:
+            self._var_dict[name].adjust(lower_bound=lower_bound, upper_bound=upper_bound)
+            self.fix_variable(name, value)
+
+        else:
+            self._var_dict[name].adjust(value, lower_bound, upper_bound)
+
+    def adjust_variables(self, var_dict={}):
+        """
+        Adjust multiple variables in the set.
+
+        Parameters
+        ----------
+        var_dict: dict
+            Dictionary with which to update the set, of the form
+            {"var_name": {"value": v, "lower_bound": lb, "upper_bound": ub}, ...}
+        """
+        for k, v in var_dict.items():
+
+            args = [
+                v.get("value", None),
+                v.get("lower_bound", None),
+                v.get("upper_bound", None),
+                v.get("fixed", None),
+            ]
+            if all([i is None for i in args]):
+                raise OptVariablesError(
+                    "When adjusting variables in a OptVariables instance, the dictionary"
+                    " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
+                )
+
+            self.adjust_variable(k, *args)
 
     def fix_variable(self, name, value=None):
         """
@@ -298,6 +367,13 @@ class OptVariables:
             variable.value = value
 
     @property
+    def names(self):
+        """
+        All variable names of the variable set.
+        """
+        return [v for v in self._var_dict.keys()]
+
+    @property
     def values(self):
         """
         All un-normalised values of the variable set (including fixed variable values).
@@ -317,7 +393,7 @@ class OptVariables:
 
     def _check_presence(self, name):
         if name not in self._var_dict.keys():
-            raise OptVariablesError(f"Variable {name} not in OptVariables.")
+            raise OptVariablesError(f"Variable {name} not in OptVariables instance.")
 
     def __getitem__(self, name):
         """
@@ -335,6 +411,94 @@ class OptVariables:
         """
         self._check_presence(name)
         return self._var_dict[name]
+
+    def _to_records(self):
+        return sorted(
+            [
+                attrgetter(*BoundedVariable.__slots__)(self._var_dict[key])
+                for key in self._var_dict.keys()
+            ]
+        )
+
+    @staticmethod
+    def float_format(num):
+        """
+        Format a float
+        """
+        if type(num) is float:
+            return f"{num:.4g}"
+        else:
+            return num
+
+    def format_values(self):
+        """
+        Format values in the underlying DataFrame
+        """
+        db = self._get_db()
+        return db["Value"].apply(self.float_format)
+
+    def _get_db(self):
+        columns = [
+            "Name",
+            "Value",
+            "Lower Bound",
+            "Upper Bound",
+            "Fixed",
+            "Description",
+        ]
+        db = DataFrame.from_records(self._to_records(), columns=columns)
+        return db
+
+    def tabulator(self, keys=None, db=None, tablefmt="fancy_grid") -> str:
+        """
+        Tabulate the underlying DataFrame of the ParameterFrame
+
+        Parameters
+        ----------
+        keys: list
+            database column keys
+        db: DataFrame
+            database to tabulate
+        tablefmt: str (default="fancy_grid")
+            The format of the table - see
+            https://github.com/astanin/python-tabulate#table-format
+
+        Returns
+        -------
+        tabulated: str
+            The tabulated DataFrame
+        """
+        db = self._get_db() if db is None else db
+        if keys is None:
+            columns = list(db.columns)
+        else:
+            db = db[keys]
+            columns = keys
+        return tabulate(
+            db,
+            headers=columns,
+            tablefmt=tablefmt,
+            showindex=False,
+            numalign="right",
+        )
+
+    def __str__(self) -> str:
+        """
+        Pretty prints a representation of the OptVariables inside the console
+        """
+        fdb = self._get_db()
+        fdb["Value"] = self.format_values()
+        return self.tabulator(keys=None, db=fdb)
+
+    def __repr__(self) -> str:
+        """
+        Prints a representation of the OptVariables inside the console
+        """
+        return (
+            f"{self.__class__.__name__}(\n    "
+            + "\n    ".join([repr(var) for var in self._var_dict.values()])
+            + "\n)"
+        )
 
     def plot(self):
         """

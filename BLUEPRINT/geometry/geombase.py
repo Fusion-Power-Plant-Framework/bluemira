@@ -29,7 +29,7 @@ import json
 import os
 from BLUEPRINT.base.error import GeometryError
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.utilities.tools import NumpyJSONEncoder
+from bluemira.utilities.tools import NumpyJSONEncoder
 from BLUEPRINT.geometry.constants import TOLERANCE
 
 # =============================================================================

@@ -25,12 +25,14 @@ Plotting utilities for ReactorSystem objects
 from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
+
 from BLUEPRINT.geometry.geomtools import qrotate
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
 from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.syscodes.postPROCESS import plot_PROCESS
 from BLUEPRINT.utilities.colortools import color_kwargs
+
+import bluemira.codes as codes
 
 DEFAULTS = {"linewidth": 0.3, "edgecolor": "k", "alpha": 1}
 
@@ -180,7 +182,7 @@ class ReactorPlotter:
         """
         # TODO: POSTprocess.py is archaic... need to refactor heavily and bring
         # into the fold...
-        plot_PROCESS(self.reactor.__PROCESS__.filename, width=width)
+        codes.plot_PROCESS(self.reactor.__PROCESS__.filename, width=width)
 
     def plot_xz(self, x=None, z=None, show_eq=False, force=False):
         """

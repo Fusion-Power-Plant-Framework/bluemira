@@ -35,10 +35,9 @@ import tarfile
 from typing import Optional
 
 from BLUEPRINT.base.file import KEYWORD
-from BLUEPRINT.base.file import get_BP_root
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.utilities.tools import get_module
-from BLUEPRINT.utilities.tools import CommentJSONDecoder
+from bluemira.utilities.tools import get_module, CommentJSONDecoder
 
 try:
     from functools import cached_property
@@ -77,6 +76,7 @@ class InputManager:
     build_tweaks: str
     indir: str
     reactornamein: str
+    datadir: str
     outdir: str
     reactornameout: str
 
@@ -169,7 +169,9 @@ class InputManager:
         """
         The root reference data path, excluding the reactor subdirectory for the run
         """
-        return self._try_get_path_from_config("reference_data_root", "data/BLUEPRINT")
+        return self._try_get_path_from_config(
+            "reference_data_root", "data/BLUEPRINT", dir=self.datadir
+        )
 
     @cached_property
     def reference_path(self) -> str:
@@ -187,7 +189,7 @@ class InputManager:
             if key in self.build_config_dict:
                 path = self.build_config_dict[key]
             else:
-                path = os.path.join(get_BP_root(), default_value)
+                path = os.path.join(get_bluemira_root(), default_value)
                 click.echo(
                     "Warning: outdir not specified in command line and no "
                     f"{key} found in {self.build_config}. Reverting to "
@@ -195,7 +197,7 @@ class InputManager:
                 )
 
         if KEYWORD in path:
-            path = path.replace(KEYWORD, get_BP_root())
+            path = path.replace(KEYWORD, get_bluemira_root())
 
         return path
 
@@ -383,6 +385,15 @@ def get_reactor_class(reactor_string):
     help="Specifies a reactor name used as a prefix to each input filename.",
 )
 @click.option(
+    "-d",
+    "--datadir",
+    type=click.Path(writable=True),
+    default=None,
+    help="Specifies the directory in which any input reference data is stored. Note \
+    that these inputs must be stored in a subdirectory within the directory provided, \
+    corresponding to the specified reactor name at reactors/{reactor name}.",
+)
+@click.option(
     "-o",
     "--outdir",
     type=click.Path(writable=True),
@@ -460,6 +471,7 @@ def cli(
     build_tweaks,
     indir,
     reactornamein,
+    datadir,
     outdir,
     reactornameout,
     verbose,
@@ -494,6 +506,7 @@ def cli(
         build_tweaks=build_tweaks,
         indir=indir,
         reactornamein=reactornamein,
+        datadir=datadir,
         outdir=outdir,
         reactornameout=reactornameout,
     )
@@ -507,7 +520,11 @@ def cli(
     outputs.copy_files(inputs)
 
     # Update generated_data_root to value given in CLI options.
-    inputs.build_config_dict["generated_data_root"] = inputs.output_root_path
+    inputs.build_config_dict["generated_data_root"] = str(inputs.output_root_path)
+
+    # Update generated_data_root to value given in CLI options.
+    inputs.build_config_dict["reference_data_root"] = str(inputs.reference_root_path)
+
     dump_json(inputs.build_config_dict, outputs.build_config)
 
     # Update reactor name and make a copy of reference data to a subdirectory using the

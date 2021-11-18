@@ -52,7 +52,7 @@ class ReactorCAD(CADModel):
     """
 
     def __init__(self, reactor, **kwargs):
-        super().__init__(self)
+        super().__init__()
         self.n_TF = reactor.params.n_TF
         self.slice_flag = kwargs.get("slice_flag", False)
 

@@ -32,7 +32,7 @@ import tempfile
 import traceback
 
 from BLUEPRINT.base.file import KEYWORD
-from BLUEPRINT.base.file import get_BP_root
+from bluemira.base.file import get_bluemira_root
 from BLUEPRINT.blueprint_cli import cli, get_reactor_class
 from BLUEPRINT.reactor import ConfigurableReactor
 
@@ -42,8 +42,8 @@ from tests.BLUEPRINT.test_reactor import config
 from tests.BLUEPRINT.test_reactor import build_config
 from tests.BLUEPRINT.test_reactor import build_tweaks
 
-INDIR = os.path.join(get_BP_root(), "tests", "BLUEPRINT", "cli", "test_indir")
-OUTDIR = os.path.join(get_BP_root(), "tests", "BLUEPRINT", "cli", "test_outdir")
+INDIR = os.path.join(get_bluemira_root(), "tests", "BLUEPRINT", "cli", "test_indir")
+OUTDIR = os.path.join(get_bluemira_root(), "tests", "BLUEPRINT", "cli", "test_outdir")
 NEWNAME = "CLI-TEST"
 
 # Initialise testing directories.
@@ -303,7 +303,7 @@ def test_cli_reactornameout(
     # Note: this is done to avoid a FileExists error from previous tests.
     temp_reactor = copy.deepcopy(R)
     source = os.path.join(
-        get_BP_root(),
+        get_bluemira_root(),
         "tests",
         "BLUEPRINT",
         "test_data",
@@ -387,7 +387,7 @@ def test_cli_bproot_keyword(
 
     # Set temp outdir and ensure directory does not already exist.
     outdir_flag = os.path.join(KEYWORD, "tests", "BLUEPRINT", "cli", "temp_outdir")
-    outdir_path = outdir_flag.replace(KEYWORD, get_BP_root())
+    outdir_path = outdir_flag.replace(KEYWORD, get_bluemira_root())
     if os.path.exists(outdir_path):
         shutil.rmtree(outdir_path)
 
@@ -497,3 +497,33 @@ def test_cli_invalid_inputs(tempdir):
     ]
     result = runner.invoke(cli, run_flags)
     assert result.exit_code == 1, traceback.print_exception(*result.exc_info)
+
+
+@mock_mode
+def test_datadir(
+    mock_rclass, mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, tempdir
+):
+    runner = CliRunner()
+
+    temp_datadir = tempfile.mkdtemp(dir=OUTDIR)
+    shutil.copytree(
+        os.sep.join([get_bluemira_root(), "data", "BLUEPRINT"]),
+        temp_datadir,
+        dirs_exist_ok=True,
+    )
+
+    try:
+        flags = [
+            "-i",
+            os.sep.join([get_bluemira_root(), "examples", "BLUEPRINT", "cli", "indir"]),
+            "-ri",
+            "EU-DEMO",
+            "-d",
+            temp_datadir,
+            "-o",
+            tempdir,
+        ]
+        result = runner.invoke(cli, flags)
+    finally:
+        shutil.rmtree(temp_datadir)
+    assert result.exit_code == 0, traceback.print_exception(*result.exc_info)

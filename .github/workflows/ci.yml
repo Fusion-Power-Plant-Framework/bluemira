@@ -74,11 +74,6 @@ jobs:
         flake8 --count
         black --check .
 
-    - name: Build Documentation mirapy
-      shell: bash -l {0}
-      run: |
-        sphinx-build -W documentation/mirapy/source documentation/mirapy/build
-
     - name: Build Documentation BLUEPRINT
       shell: bash -l {0}
       run: |
@@ -88,11 +83,6 @@ jobs:
       shell: bash -l {0}
       run: |
         sphinx-build -W documentation/source documentation/build
-
-    - name: Run pytest mirapy
-      shell: bash -l {0}
-      run: |
-        pytest --cov=mirapy --cov-report html:htmlcov_mirapy tests/mirapy
 
     - name: Run pytest BLUEPRINT
       shell: bash -l {0}

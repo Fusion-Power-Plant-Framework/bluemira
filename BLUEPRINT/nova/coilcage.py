@@ -30,7 +30,7 @@ import matplotlib
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.base.constants import MU_0
 from BLUEPRINT.base.error import NovaError
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from BLUEPRINT.utilities.plottools import Plot3D
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.loop import Loop

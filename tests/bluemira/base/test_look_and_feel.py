@@ -87,9 +87,9 @@ def capture_output(caplog, func, *inputs):
 @pytest.mark.parametrize(
     "method, text, colour, default_text",
     [
-        (bluemira_critical, "boom", "red", "CRITICAL:"),
+        (bluemira_critical, "boom", "darkred", "CRITICAL:"),
         (bluemira_error, "oops", "red", "ERROR:"),
-        (bluemira_warn, "bad", "red", "WARNING:"),
+        (bluemira_warn, "bad", "orange", "WARNING:"),
         (bluemira_print, "good", "blue", ""),
         (bluemira_debug, "check", "green", ""),
     ],

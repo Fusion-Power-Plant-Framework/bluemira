@@ -48,6 +48,7 @@ __all__ = [
     "JrelConvergence",
     "PicardLiAbsIterator",
     "PicardAbsIterator",
+    "PicardAbsCoilsetIterator",
     "PicardDeltaIterator",
     "PicardLiDeltaIterator",
 ]
@@ -430,6 +431,44 @@ class CurrentOptimiser:
         return self._optimise_currents(psib, update_size)
 
 
+class CoilsetPropertiesOptimiser:
+    """
+    Mixin class for performing optimisation of currents
+    """
+
+    def _optimise_currents(self, psib=None, update_size=True):
+        """
+        Finds optimal currents for the coilset
+
+        Parameters
+        ----------
+        psib: List[float], optional
+            The boundary psi values, by default None.
+        update_size: bool, optional
+            If True then update the coilset size, by default True.
+        """
+        self.constraints(self.eq, I_not_dI=True)
+        try:
+            coilset = self.optimiser(self.eq, self.constraints, psib)
+            self.store.append(coilset)
+        except ExternalOptError:
+            coilset = self.store[-1]
+        self.coilset = coilset
+
+    def _initial_optimise_currents(self, psib=None, update_size=True):
+        """
+        Finds optimal currents for the coilset for optimiser initialisation
+
+        Parameters
+        ----------
+        psib: List[float], optional
+            The boundary psi values, by default None.
+        update_size: bool, optional
+            If True then update the coilset size, by default True.
+        """
+        return self._optimise_currents(psib, update_size)
+
+
 class CurrentGradientOptimiser:
     """
     Mixin class for performing optimisation of current gradients
@@ -496,7 +535,7 @@ class PicardBaseIterator(ABC):
     figure_folder: str (default = None)
         The path where figures will be saved. If the input value is None (e.g. default)
         then this will be reinterpreted as the path data/plots/equilibria under the
-        BLUEPRINT root folder, if that path is available.
+        bluemira root folder, if that path is available.
     """
 
     def __init__(
@@ -762,6 +801,10 @@ class PicardLiDeltaIterator(CurrentGradientOptimiser, PicardBaseIterator):
         if self.i < self.miniter:  # free internal plasma control
             self.eq.solve(self.profiles, psi=self.psi)
         else:  # constrain plasma li
+            # This is still required because the l_i requires an updated Bp field
+            # which changes with moving coils
+            # TODO: Remove Li iterators altogether, and get the profiles from fixed
+            # boundary equilibria, without optimising profiles at each G-S iteration...
             self.coilset.mesh_coils(d_coil=0.4)
             self.eq._remap_greens()
             self.eq.solve_li(self.profiles, psi=self.psi)
@@ -784,8 +827,26 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         """
         Solve for this iteration.
         """
-        self.coilset.mesh_coils(d_coil=0.4)
-        self.eq._remap_greens()
+        self.eq.solve(self.profiles, psi=self.psi)
+
+
+class PicardAbsCoilsetIterator(CoilsetPropertiesOptimiser, PicardBaseIterator):
+    """
+    Picard solver for unconstrained plasma profiles (li) using I iteration.
+    Best used for constrained coil optimisation
+    """
+
+    @property
+    def current_optimiser_kwargs(self):
+        """
+        Get the kwargs for the current optimiser.
+        """
+        return {"psib": None, "update_size": True}
+
+    def _solve(self):
+        """
+        Solve for this iteration.
+        """
         self.eq.solve(self.profiles, psi=self.psi)
 
 
@@ -809,6 +870,10 @@ class PicardLiAbsIterator(CurrentOptimiser, PicardBaseIterator):
         if self.i < self.miniter:  # free internal plasma control
             self.eq.solve(self.profiles, psi=self.psi)
         else:  # constrain plasma li
+            # This is still required because the l_i requires an updated Bp field
+            # which changes with moving coils
+            # TODO: Remove Li iterators altogether, and get the profiles from fixed
+            # boundary equilibria, without optimising profiles at each G-S iteration...
             self.coilset.mesh_coils(d_coil=0.4)
             self.eq._remap_greens()
             self.eq.solve_li(self.profiles, psi=self.psi)

@@ -23,8 +23,7 @@
 Configuration classes
 """
 from bluemira.base.parameter import ParameterFrame, ParameterMapping
-
-from BLUEPRINT.base.config_schema import ConfigurationSchema
+from bluemira.base.config_schema import ConfigurationSchema
 
 
 class Configuration(ConfigurationSchema, ParameterFrame):
@@ -111,28 +110,18 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],
         ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
         ['fw_dL_max', 'Maximum FW module length', 2, 'm', None, 'Input'],
-        ['fw_a_max', 'Maximum angle between FW modules', 25, 'Ã‚Â°', None, 'Input'],
+        ['fw_a_max', 'Maximum angle between FW modules', 25, '°', None, 'Input'],
         ['fw_p_sol_near', 'near Scrape off layer power', 50, 'MW', None, 'Input'],
         ['fw_p_sol_far', 'far Scrape off layer power', 50, 'MW', None, 'Input'],
         ['hf_limit', 'heat flux material limit', 0.5, 'MW/m^2', None, 'Input'],
-        # ad hoc SN variables
-        ['fw_lambda_q_near', 'Lambda q near SOL', 0.05, 'm', None, 'Input'],
-        ['fw_lambda_q_far', 'Lambda q far SOL', 0.05, 'm', None, 'Input'],
-        ['f_outer_target', 'Power fraction', 0.75, 'N/A', None, 'Input'],
-        ['f_inner_target', 'Power fraction', 0.25, 'N/A', None, 'Input'],
-        # ad hoc DN variables
-        ['fw_dpsi_n_near', 'Step size of psi in near SOL', 0.1, 'N/A', None, 'Input'],
-        ['fw_dpsi_n_far', 'Step size of psi in far SOL', 0.1, 'N/A', None, 'Input'],
+
+        # SN/DN variables for heat flux transport
         ['fw_dx_omp', 'Initial offset from LCFS omp', 0.2, 'm', None, 'Input'],
         ['fw_dx_imp', 'Initial offset from LCFS imp', 0.05, 'm', None, 'Input'],
-        ['p_rate_omp', 'power sharing omp', 0.9, '%', None, 'Input'],
-        ['p_rate_imp', 'power sharing imp', 0.1, '%', None, 'Input'],
         ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_imp', 'Lambda_q far SOL imp', 0.1, 'm', None, 'Input'],
-        ['dr_near_omp', 'fs thickness near SOL', 0.001, 'm', None, 'Input'],
-        ['dr_far_omp', 'fs thickness far SOL', 0.005, 'm', None, 'Input'],
         ['f_lfs_lower_target', 'Power fraction lfs lower', 0.5, 'N/A', None, 'Input'],
         ['f_lfs_upper_target', 'Power fraction lfs upper', 0.5, 'N/A', None, 'Input'],
         ['f_hfs_lower_target', 'Power fraction hfs lower', 0.5, 'N/A', None, 'Input'],
@@ -210,7 +199,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
 
         # TF coils
-        ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfcth", False, False)}],
+        ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfcth", True, False)}],
         ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfthko", False, False)}],
         ['tk_tf_nose', 'TF coil inboard nose thickness', 0.6, 'm', None, 'Input', {"PROCESS": ParameterMapping("thkcas", True, False)}],
         ['tk_tf_wp', 'TF coil winding pack thickness', 0.5, 'm', 'Excluding insulation', 'PROCESS', {"PROCESS": ParameterMapping("dr_tf_wp", True, False)}],
@@ -227,6 +216,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["sigma_tf_max", "Maximum von Mises stress in the TF coil nose", 550e6, "Pa", None, "Input", {"PROCESS": ParameterMapping("alstrtf", False, False)}],
         ['h_cp_top', 'Height of the TF coil inboard Tapered section end', 6., 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("h_cp_top", False, False)}],
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 6.5, 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("hmax", False, False)}],
+        ['h_tf_min_in', 'Plasma side TF coil min height', -6.5, 'm', None, 'PROCESS'],
         ['B_tf_peak', 'Peak field inside the TF coil winding pack', 12, 'T', None, 'PROCESS'],
         ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
         ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],

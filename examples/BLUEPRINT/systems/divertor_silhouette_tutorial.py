@@ -39,7 +39,7 @@ import os
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.file import get_BP_root
+from BLUEPRINT.base.file import get_bluemira_root
 from BLUEPRINT.geometry.geomtools import unique
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.nova.firstwall import FirstWallProfile
@@ -93,7 +93,7 @@ params = ParameterFrame(params)
 
 # %%
 eq_filename = os.path.join(
-    get_BP_root(), "data", "BLUEPRINT", "eqdsk", "step_v7_format.geqdsk"
+    get_bluemira_root(), "data", "BLUEPRINT", "eqdsk", "step_v7_format.geqdsk"
 )
 sf = StreamFlow(eq_filename)
 

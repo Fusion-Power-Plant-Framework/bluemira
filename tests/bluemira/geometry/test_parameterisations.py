@@ -26,8 +26,13 @@ from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
-    PrincetonD,
     GeometryParameterisation,
+    PrincetonD,
+    TripleArc,
+    SextupleArc,
+    PictureFrame,
+    PolySpline,
+    TaperedPictureFrame,
 )
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry._deprecated_tools import get_perimeter
@@ -46,7 +51,7 @@ class TestGeometryParameterisation:
                     ],
                     frozen=True,
                 )
-                super().__init__("test", variables)
+                super().__init__(variables)
 
             def create_shape(self, **kwargs):
                 return BluemiraWire(
@@ -61,6 +66,7 @@ class TestGeometryParameterisation:
                 )
 
         t = TestPara()
+        assert t.name == "TestPara"
 
 
 class TestPrincetonD:
@@ -99,3 +105,107 @@ class TestPrincetonD:
 
         with pytest.raises(OptVariablesError):
             p.variables.remove_variable("x1")
+
+    def test_instantiation_fixed(self):
+        p = PrincetonD(
+            {"x1": {"value": 5, "fixed": True}, "x2": {"value": 14, "fixed": False}}
+        )
+        assert p.variables["x1"].fixed
+        assert not p.variables["x2"].fixed
+
+
+class TestPictureFrame:
+    def test_length(self):
+        p = PictureFrame(
+            {
+                "x1": {"value": 4},
+                "x2": {"value": 16},
+                "z1": {"value": 8},
+                "z2": {"value": -8},
+                "ri": {"value": 1, "upper_bound": 1},
+                "ro": {"value": 1},
+            }
+        )
+        wire = p.create_shape()
+        length = 2 * (np.pi + 10 + 14)
+        assert np.isclose(wire.length, length)
+
+    def test_no_corners(self):
+        p = PictureFrame()
+        p.adjust_variable("x1", value=4)
+        p.adjust_variable("x2", value=16)
+        p.adjust_variable("z1", value=8)
+        p.adjust_variable("z2", value=-8)
+        p.adjust_variable("ri", value=0, lower_bound=0)
+        p.adjust_variable("ro", value=0, lower_bound=0)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
+        length = 2 * (12 + 16)
+        assert np.isclose(wire.length, length)
+
+
+class TestTripleArc:
+    def test_circle(self):
+        p = TripleArc()
+        p.adjust_variable("x1", value=4)
+        p.adjust_variable("z1", value=0)
+        p.adjust_variable("sl", value=0, lower_bound=0)
+        p.adjust_variable("f1", value=3)
+        p.adjust_variable("f2", value=3)
+        p.adjust_variable("a1", value=45)
+        p.adjust_variable("a2", value=45)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 6
+        length = 2 * np.pi * 3
+        assert np.isclose(wire.length, length)
+
+
+class TestPolySpline:
+    def test_segments(self):
+        p = PolySpline()
+        p.adjust_variable("flat", value=0)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 5
+
+        p.adjust_variable("flat", value=1)
+
+        wire = p.create_shape()
+        assert len(wire._boundary) == 6
+
+
+class TestTaperedPictureFrame:
+    def test_segments(self):
+        p = TaperedPictureFrame()
+        wire = p.create_shape()
+        assert len(wire._boundary) == 4
+        p.adjust_variable("r", value=0)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 2
+
+
+class TestSextupleArc:
+    def test_segments(self):
+        p = SextupleArc()
+        wire = p.create_shape()
+        assert len(wire._boundary) == 7
+
+    def test_circle(self):
+        p = SextupleArc(
+            {
+                "x1": {"value": 4},
+                "z1": {"value": 0},
+                "r1": {"value": 4},
+                "r2": {"value": 4},
+                "r3": {"value": 4},
+                "r4": {"value": 4},
+                "r5": {"value": 4},
+                "a1": {"value": 60, "upper_bound": 60},
+                "a2": {"value": 60, "upper_bound": 60},
+                "a3": {"value": 60, "upper_bound": 60},
+                "a4": {"value": 60, "upper_bound": 60},
+                "a5": {"value": 60, "upper_bound": 60},
+            }
+        )
+        wire = p.create_shape()
+
+        assert np.isclose(wire.length, 2 * np.pi * 4)

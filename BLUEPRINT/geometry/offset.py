@@ -34,7 +34,7 @@ from pyclipper import (
 )
 from BLUEPRINT.base.error import GeometryError
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from BLUEPRINT.geometry.geomtools import order, normal
 from BLUEPRINT.geometry.geomtools import normal_vector, side_vector, vector_intersect
 from BLUEPRINT.geometry.boolean import PyclipperMixin, loop_to_pyclippath

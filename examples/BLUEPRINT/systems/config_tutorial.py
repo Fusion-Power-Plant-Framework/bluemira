@@ -33,7 +33,7 @@ Some examples on updating and extending Configurations
 from bluemira.base.parameter import Parameter, ParameterFrame
 
 from BLUEPRINT.base.config_schema import ConfigurationSchema
-from BLUEPRINT.base.file import get_BP_root
+from BLUEPRINT.base.file import get_bluemira_root
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import Configuration
 
@@ -219,10 +219,10 @@ verbose_json = core_c.to_json(verbose=True)
 
 # %%
 core_c.to_json(
-    output_path=f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/core_c_concise_out.json"
+    output_path=f"{get_bluemira_root()}/examples/BLUEPRINT/systems/config_data/core_c_concise_out.json"
 )
 core_c.to_json(
-    output_path=f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/core_c_verbose_out.json",
+    output_path=f"{get_bluemira_root()}/examples/BLUEPRINT/systems/config_data/core_c_verbose_out.json",
     verbose=True,
 )
 
@@ -250,7 +250,7 @@ class MyVerboseReactor(Reactor):
     build_config: dict
     build_tweaks: dict
     default_params = Configuration.from_json(
-        f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/verbose_in.json"
+        f"{get_bluemira_root()}/examples/BLUEPRINT/systems/config_data/verbose_in.json"
     ).to_records()
 
 
@@ -284,7 +284,7 @@ class MyConciseReactor(Reactor):
 
 # Make a reactor that loads all the configuration values from a file
 r_concise = MyConciseReactor(
-    f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/concise_in.json",
+    f"{get_bluemira_root()}/examples/BLUEPRINT/systems/config_data/concise_in.json",
     build_config,
     build_tweaks,
 )
@@ -298,7 +298,7 @@ r_concise = MyConciseReactor(
 
 # %%
 r_partial = MyConciseReactor(
-    f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/partial_in.json",
+    f"{get_bluemira_root()}/examples/BLUEPRINT/systems/config_data/partial_in.json",
     build_config,
     build_tweaks,
 )
@@ -310,7 +310,7 @@ r_partial = MyConciseReactor(
 
 # %%
 r_partial.params.to_json(
-    f"{get_BP_root()}/examples/BLUEPRINT/systems/config_data/partial_full_out.json"
+    f"{get_bluemira_root()}/examples/BLUEPRINT/systems/config_data/partial_full_out.json"
 )
 
 # %%[markdown]

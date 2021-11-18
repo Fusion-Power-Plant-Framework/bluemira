@@ -21,109 +21,18 @@
 
 import pytest
 import numpy as np
-import os
-import json
-from io import StringIO
 from collections import OrderedDict
-from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.utilities.tools import (
-    is_num,
     PowerLawScaling,
     nested_dict_search,
     expand_nested_list,
     _split_rule,  # noqa
     _apply_rule,  # noqa
     _apply_rules,  # noqa
-    NumpyJSONEncoder,
-    CommentJSONDecoder,
-    clip,
     maximum,
     ellipse,
-    compare_dicts,
-    levi_civita_tensor,
-    asciistr,
-    norm,
-    dot,
-    cross,
 )
 from BLUEPRINT.geometry.geomtools import polyarea
-
-
-class TestLeviCivitaTensor:
-    def test_lct_creation(self):
-        d1 = np.array(1)
-        d2 = np.array([[0, 1], [-1, 0]])
-        d3 = np.zeros((3, 3, 3))
-        d3[0, 1, 2] = d3[1, 2, 0] = d3[2, 0, 1] = 1
-        d3[0, 2, 1] = d3[2, 1, 0] = d3[1, 0, 2] = -1
-        d4 = np.zeros((4, 4, 4, 4))
-
-        min1 = (
-            np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
-            np.array([1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2]),
-            np.array([3, 1, 2, 2, 3, 0, 3, 0, 1, 1, 2, 0]),
-            np.array([2, 3, 1, 3, 0, 2, 1, 3, 0, 2, 0, 1]),
-        )
-        plus1 = (
-            np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
-            np.array([1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2]),
-            np.array([2, 3, 1, 3, 0, 2, 1, 3, 0, 2, 0, 1]),
-            np.array([3, 1, 2, 2, 3, 0, 3, 0, 1, 1, 2, 0]),
-        )
-
-        d4[min1] = -1
-        d4[plus1] = 1
-
-        for i, arr in enumerate([d1, d2, d3, d4], start=1):
-            np.testing.assert_equal(levi_civita_tensor(i), arr)
-
-
-class TestNumpyJSONEncoder:
-    def test_childclass(self):
-        fp = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
-        fn = os.sep.join([fp, "testJSONEncoder"])
-        d = {"x": np.array([1, 2, 3.4, 4]), "y": [1, 3], "z": 3, "a": "aryhfdhsdf"}
-        with open(fn, "w") as file:
-            json.dump(d, file, cls=NumpyJSONEncoder)
-        with open(fn, "r") as file:
-            dd = json.load(file)
-        for k, v in d.items():
-            for kk, vv in dd.items():
-                if k == kk:
-                    if isinstance(v, np.ndarray):
-                        assert v.tolist() == vv
-                    else:
-                        assert v == vv
-
-
-class TestCommentJSONDecoder:
-    def test_decoder(self):
-        loaded = json.load(
-            StringIO(
-                """{
-                "reference_data_root": "",
-                "generated_data_root": "",
-                "plot_flag": {"abgc": false},
-                "process_mode": "run input",
-                "process_indat": "IN.DAT",
-                "plasma_mode": "mock",  //Thisis a comment @#$%^&*()_+|'
-                // hellloo
-                }
-            """
-            ),
-            cls=CommentJSONDecoder,
-        )
-
-        result = {
-            "reference_data_root": "",
-            "generated_data_root": "",
-            "plot_flag": {"abgc": False},
-            "process_mode": "run input",
-            "process_indat": "IN.DAT",
-            "plasma_mode": "mock",
-        }
-
-        assert loaded == result
 
 
 class TestPowerLaw:
@@ -152,18 +61,6 @@ class TestPowerLaw:
             ]
         )
         assert np.allclose(result, shouldbe), f"{result} != {shouldbe}"
-
-
-class Testisnum:
-    def test_isnum(self):
-        vals = [0, 34.0, 0.0, -0.0, 34e183, 28e-182, np.pi]
-        for v in vals:
-            assert is_num(v) is True
-
-    def test_false(self):
-        vals = [True, False, np.nan]
-        for v in vals:
-            assert is_num(v) is False
 
 
 coil = OrderedDict(
@@ -337,32 +234,6 @@ class TestNestedList:
         assert expand_nested_list(a, a, a) == res * 3
 
 
-class TestClip:
-    def test_clip_array(self):
-        test_array = [0.1234, 1.0, 0.3, 1, 0.0, 0.756354, 1e-8, 0]
-        test_array = np.array(test_array)
-        test_array = clip(test_array, 1e-8, 1 - 1e-8)
-        expected_array = [0.1234, 1 - 1e-8, 0.3, 1 - 1e-8, 1e-8, 0.756354, 1e-8, 1e-8]
-        expected_array = np.array(expected_array)
-        assert np.allclose(test_array, expected_array)
-
-    def test_clip_float(self):
-        test_float = 0.1234
-        test_float = clip(test_float, 1e-8, 1 - 1e-8)
-        expected_float = 0.1234
-        assert np.allclose(test_float, expected_float)
-
-        test_float = 0.0
-        test_float = clip(test_float, 1e-8, 1 - 1e-8)
-        expected_float = 1e-8
-        assert np.allclose(test_float, expected_float)
-
-        test_float = 1.0
-        test_float = clip(test_float, 1e-8, 1 - 1e-8)
-        expected_float = 1 - 1e-8
-        assert np.allclose(test_float, expected_float)
-
-
 class TestMaximum:
     def test_maximum_array(self):
         test_array = [0.1234, 1.0, 0.3, 1, 0.0, 0.756354, 1e-8, 0]
@@ -389,79 +260,6 @@ class TestMaximum:
         assert np.allclose(test_float, expected_float)
 
 
-class TestAsciiStr:
-    def test_asciistr(self):
-        alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        for i in range(52):
-            assert asciistr(i + 1) == alphabet[: i + 1]
-
-        with pytest.raises(ValueError):
-            asciistr(53)
-
-
-class TestEinsumNorm:
-    def test_norm(self):
-        val = np.random.rand(999, 3)
-        np.testing.assert_allclose(norm(val, axis=1), np.linalg.norm(val, axis=1))
-        np.testing.assert_allclose(norm(val, axis=0), np.linalg.norm(val, axis=0))
-
-    def test_raise(self):
-        val = np.random.rand(999, 3)
-
-        with pytest.raises(ValueError):
-            norm(val, axis=3)
-
-
-class TestEinsumDot:
-    def test_dot(self):
-        val3 = np.random.rand(999, 3, 3)
-        val2 = np.random.rand(999, 3)
-        val = np.random.rand(3)
-
-        # ab, bc -> ac
-        np.testing.assert_allclose(dot(val2, val2.T), np.dot(val2, val2.T))
-
-        # abc, acd -> abd
-        dv = dot(val3, val3)
-        for no, i in enumerate(val3):
-            np.testing.assert_allclose(dv[no], np.dot(i, i))
-
-        # abc, c -> ab
-        np.testing.assert_allclose(dot(val3, val), np.dot(val3, val))
-
-        # a, abc -> ac | ab, abc -> ac | abc, bc -> ac -- undefined behaviour
-        for (a, b) in [(val, val3.T), (val2, val3), (val3, val3[1:])]:
-            with pytest.raises(ValueError):
-                dot(a, b)
-
-        # ab, b -> a
-        np.testing.assert_allclose(dot(val2, val), np.dot(val2, val))
-
-        # a, ab -> b
-        np.testing.assert_allclose(dot(val, val2.T), np.dot(val, val2.T))
-
-        # 'a, a -> ...'
-        np.testing.assert_allclose(dot(val, val), np.dot(val, val))
-
-
-class TestEinsumCross:
-    def test_cross(self):
-        val3 = np.random.rand(999, 3)
-        val2 = np.random.rand(999, 2)
-        val = np.random.rand(999)
-
-        for i, v in enumerate([val2, val3], start=2):
-            np.testing.assert_allclose(cross(v, v), np.cross(v, v))
-
-        np.testing.assert_allclose(cross(val, val), val ** 2)
-
-    def test_raises(self):
-        val = np.random.rand(5, 4)
-
-        with pytest.raises(ValueError):
-            cross(val, val)
-
-
 class TestEllipse:
     def test_ellipse_area(self):
         a = 5
@@ -469,75 +267,6 @@ class TestEllipse:
         x, y = ellipse(a, b, n=200)
         area = polyarea(x, y)
         assert np.isclose(area, np.pi * a * b, 3)
-
-
-class TestCompareDicts:
-    def test_equal(self):
-        a = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
-        b = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
-        assert compare_dicts(a, b, almost_equal=False, verbose=False)
-        c = {"a": 1.111111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
-        assert compare_dicts(a, c, almost_equal=False, verbose=False) is False
-        c = {
-            "a": 1.11111111,
-            "b": np.array([1.00001, 2.09, 2.3000000000001]),
-            "c": "test",
-        }
-        assert compare_dicts(a, c, almost_equal=False, verbose=False) is False
-        c = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "ttest"}
-        assert compare_dicts(a, c, almost_equal=False, verbose=False) is False
-        c = {
-            "a": 1.11111111,
-            "b": np.array([1, 2.09, 2.3000000000001]),
-            "c": "test",
-            "extra_key": 1,
-        }
-        assert compare_dicts(a, c, almost_equal=False, verbose=False) is False
-
-        # This will work, because it is an array of length 1
-        c = {
-            "a": np.array([1.11111111]),
-            "b": np.array([1, 2.09, 2.3000000000001]),
-            "c": "test",
-        }
-        assert compare_dicts(a, c, almost_equal=False, verbose=False)
-
-    def test_almost_equal(self):
-        a = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
-        b = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
-        assert compare_dicts(a, b, almost_equal=True, verbose=False)
-        c = {"a": 1.111111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "test"}
-        assert compare_dicts(a, c, almost_equal=True, verbose=False)
-        c = {
-            "a": 1.11111111,
-            "b": np.array([1.00001, 2.09, 2.3000000000001]),
-            "c": "test",
-        }
-        assert compare_dicts(a, c, almost_equal=True, verbose=False)
-        c = {"a": 1.11111111, "b": np.array([1, 2.09, 2.3000000000001]), "c": "ttest"}
-        assert compare_dicts(a, c, almost_equal=True, verbose=False) is False
-        c = {
-            "a": 1.11111111,
-            "b": np.array([1, 2.09, 2.3000000000001]),
-            "c": "test",
-            "extra_key": 1,
-        }
-        assert compare_dicts(a, c, almost_equal=True, verbose=False) is False
-
-        # This will work, because it is an array of length 1
-        c = {
-            "a": np.array([1.11111111]),
-            "b": np.array([1, 2.09, 2.3000000000001]),
-            "c": "test",
-        }
-        assert compare_dicts(a, c, almost_equal=True, verbose=False)
-
-        c = {
-            "a": np.array([1.111111111]),
-            "b": np.array([1, 2.09, 2.3000000000001]),
-            "c": "test",
-        }
-        assert compare_dicts(a, c, almost_equal=True, verbose=False)
 
 
 if __name__ == "__main__":

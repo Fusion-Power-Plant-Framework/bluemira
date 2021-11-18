@@ -43,10 +43,6 @@ class BluemiraSolid(BluemiraGeo):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
 
-    def _check_boundary(self, objs):
-        """Check if objects in objs are of the correct type for this class"""
-        return super()._check_boundary(objs)
-
     def _create_solid(self):
         """Creation of the solid"""
         new_shell = self.boundary[0]._shape
@@ -60,12 +56,12 @@ class BluemiraSolid(BluemiraGeo):
         return self._create_solid()
 
     @classmethod
-    def _create(cls, obj: Part.Solid):
+    def _create(cls, obj: Part.Solid, label=""):
         if isinstance(obj, Part.Solid):
             shells = obj.Shells
             if len(shells) == 1:
                 bmshell = BluemiraShell(shells[0])
-                bmsolid = BluemiraSolid(bmshell)
+                bmsolid = BluemiraSolid(bmshell, label=label)
                 return bmsolid
             else:
                 raise DisjointedSolid("Disjointed solids are not accepted.")

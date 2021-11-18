@@ -8,6 +8,7 @@
   "TF_type": "S",
   "wp_shape": "N",
   "TF_objective": "L",
+  "conductivity": "SC",
   "VV_parameterisation": "S",
   "FW_parameterisation": "S",
   "BB_segmentation": "radial",

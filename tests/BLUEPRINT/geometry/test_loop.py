@@ -30,7 +30,7 @@ from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.utilities.plottools import Plot3D
-from BLUEPRINT.geometry.geomtools import get_intersect
+from bluemira.geometry._deprecated_tools import get_intersect
 
 import tests
 

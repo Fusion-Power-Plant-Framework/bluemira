@@ -23,7 +23,7 @@ A typical spherical tokamak fusion power reactor.
 """
 import os
 
-from BLUEPRINT.base.file import make_BP_path, get_BP_root
+from BLUEPRINT.base.file import make_BP_path, get_bluemira_root
 from bluemira.base.look_and_feel import plot_defaults, print_banner
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import Spherical
@@ -67,11 +67,11 @@ build_config = {
     "plot_flag": False,
     "process_mode": "mock",
     "process_indat": os.path.join(
-        get_BP_root(), "examples", "BLUEPRINT", "data", "syscodes", "ST_IN.DAT"
+        get_bluemira_root(), "examples", "data", "codes", "process", "ST_IN.DAT"
     ),
     "plasma_mode": "read",
     "plasma_filepath": os.path.join(
-        get_BP_root(), "data", "BLUEPRINT", "eqdsk", "step_v7_format.geqdsk"
+        get_bluemira_root(), "data", "BLUEPRINT", "eqdsk", "step_v7_format.geqdsk"
     ),
     "reconstruct_jtor": True,
     "tf_mode": "run",
@@ -86,6 +86,8 @@ build_config = {
     "HCD_method": "power",
     # TF coil config
     "TF_type": "P",
+    "wp_shape": "N",
+    "conductivity": "SC",
     # Equilibrium modes
     "rm_shuffle": False,
     "force": False,

@@ -12,11 +12,9 @@ Modules
    base
    beams
    cad
-   costs
    geometry
    materials
    neutronics
    nova
-   syscodes
    systems
    utilities
