@@ -36,11 +36,14 @@ p = JohnerLCFS()
 # %%
 
 from bluemira.equilibria.shapes import JohnerLCFS
-#import bluemira.display as display
+import bluemira.display as display
 from bluemira.mesh import meshing
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.plane import BluemiraPlane
 import bluemira.mesh.msh2xdmf as msh2xdmf
 import dolfin
+import matplotlib.pyplot as plt
 # %%[markdown]
 
 # Creation of a simple geometry
@@ -50,9 +53,37 @@ import dolfin
 p = JohnerLCFS()
 lcfs = p.create_shape(label="LCFS")
 lcfs.mesh_options = {'lcar': 0.3, 'physical_group': 'LCFS'}
-face = BluemiraFace(lcfs, label="plasma_surface")
-face.mesh_options = {"lcar": 0.1, "physical_group": "surface"}
-#display.plot_2d(face)
+plasma_face = BluemiraFace(lcfs, label="plasma_surface")
+plasma_face.mesh_options = {"lcar": 0.5, "physical_group": "plasma"}
+
+# create an external boundary. Just for semplicity I just scale the JohnerLCFS curve
+p_ext = JohnerLCFS()
+sol_ext_boundary = p_ext.create_shape()
+bari = sol_ext_boundary.center_of_mass
+sol_ext_boundary.scale(1.2)
+new_bari = sol_ext_boundary.center_of_mass
+diff = bari - new_bari
+v = (diff[0], diff[1], diff[2])
+sol_ext_boundary.translate(v)
+display.plot_2d(sol_ext_boundary)
+
+sol = BluemiraFace([sol_ext_boundary, lcfs.deepcopy()])
+sol.mesh_options = {"lcar": 0.5, "physical_group": "sol"}
+
+f, ax = plt.subplots()
+fplotter = display.plotter.FacePlotter(plane="xz")
+fplotter.options.show_points = False
+ax = fplotter.plot_2d(plasma_face, ax=ax, show=False)
+fplotter.options.face_options= {'c':'red'}
+ax = fplotter.plot_2d(sol, ax=ax, show=False)
+plt.show()
+
+
+plane = BluemiraPlane(axis=[1,0,0], angle=90)
+plasma_face.change_plane(plane)
+sol.change_plane(plane)
+
+compound = BluemiraShell([plasma_face, sol])
 
 # %%[markdown]
 
@@ -60,7 +91,7 @@ face.mesh_options = {"lcar": 0.1, "physical_group": "surface"}
 
 # %%
 m = meshing.Mesh()
-buffer = m(face)
+buffer = m(compound)
 print(m.get_gmsh_dict(buffer))
 
 # %%[markdown]
