@@ -153,7 +153,7 @@ In all of the above cases you can use the :py:attr:`value` attribute to access t
 The ParameterMapping class
 --------------------------
 
-ParameterMapping is used to create a connection between ``bluemira`` parameters and parameters on any external program. At its most basic level it is a key-value mapping between two variable names. On top of the mapping configuration of how the parameter flows between the external program is achieved by the :py:attr:`send` and :py:attr:`recv` attributes.
+ParameterMapping is used to create a connection between ``bluemira`` parameters and parameters on any external program. At its most basic level it is a key-value mapping between two variable names. On top of the mapping, how the parameter value flows between ``bluemira`` and the external program is modified by the :py:attr:`send` and :py:attr:`recv` attributes.
 
 :py:attr:`send`
     true - set bluemira parameter value as input to external code
