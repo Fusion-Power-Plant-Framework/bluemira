@@ -30,8 +30,6 @@ from typing import List
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 
-import bluemira.geometry._freecadapi as _freecadapi
-
 from bluemira.geometry._freecadapi import (
     discretize_by_edges,
     discretize,
@@ -39,6 +37,8 @@ from bluemira.geometry._freecadapi import (
     scale_shape,
     translate_shape,
     apiWire,
+    change_plane,
+    rotate_shape,
 )
 
 # import mathematical library
@@ -50,9 +50,6 @@ from bluemira.geometry.error import NotClosedWire, MixedOrientationWireError
 
 class BluemiraWire(BluemiraGeo):
     """Bluemira Wire class."""
-
-    # # Necessary only if there are changes to the base attrs dictionary
-    # attrs = {**BluemiraGeo.attrs}
 
     def __init__(self, boundary, label: str = ""):
         boundary_classes = [self.__class__, apiWire]
@@ -176,10 +173,34 @@ class BluemiraWire(BluemiraGeo):
             else:
                 o.translate(vector)
 
+    def rotate(
+        self,
+        base: tuple = (0.0, 0.0, 0.0),
+        direction: tuple = (0.0, 0.0, 1.0),
+        degree: float = 180,
+    ):
+        """
+        Rotate this shape.
+
+        Parameters
+        ----------
+        base: tuple (x,y,z)
+            Origin location of the rotation
+        direction: tuple (x,y,z)
+            The direction vector
+        degree: float
+            rotation angle
+        """
+        for o in self.boundary:
+            if isinstance(o, apiWire):
+                rotate_shape(o, base, direction, degree)
+            else:
+                o.rotate(base, direction, degree)
+
     def change_plane(self, plane):
         """Apply a plane transformation to the wire"""
         for o in self.boundary:
             if isinstance(o, apiWire):
-                _freecadapi.change_plane(o, plane._shape)
+                change_plane(o, plane._shape)
             else:
                 o.change_plane(plane)

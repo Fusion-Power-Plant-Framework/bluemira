@@ -19,20 +19,23 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
+from scipy.special import ellipe
+import math
+import pytest
+
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
-
-import bluemira.geometry.tools as tools
-
 from bluemira.geometry.tools import (
     make_polygon,
     make_ellipse,
     make_circle,
     make_circle_arc_3P,
+    boolean_cut,
+    boolean_fuse,
+    extrude_shape,
+    circular_pattern,
 )
-from scipy.special import ellipe
-import math
-import pytest
 
 
 class TestGeometry:
@@ -182,7 +185,7 @@ class TestGeometry:
 
     @pytest.mark.parametrize("test_input, expected", params_for_fuse_wires)
     def test_fuse_wires(self, test_input, expected):
-        wire_fuse = tools.boolean_fuse(test_input)
+        wire_fuse = boolean_fuse(test_input)
         assert (wire_fuse.length, wire_fuse.is_closed()) == expected
 
     params_for_fuse_faces = [
@@ -271,7 +274,7 @@ class TestGeometry:
 
     @pytest.mark.parametrize("test_input, expected", params_for_fuse_faces)
     def test_fuse_faces(self, test_input, expected):
-        face_fuse = tools.boolean_fuse(test_input)
+        face_fuse = boolean_fuse(test_input)
         assert (
             face_fuse.length,
             face_fuse.area,
@@ -316,7 +319,7 @@ class TestGeometry:
 
     @pytest.mark.parametrize("test_input, expected", params_for_cut_wires)
     def test_cut_wires(self, test_input, expected):
-        wire_cut = tools.boolean_cut(test_input[0], test_input[1:])
+        wire_cut = boolean_cut(test_input[0], test_input[1:])
         output = [(w.length, w.is_closed()) for w in wire_cut]
         assert output == expected
 
@@ -406,6 +409,144 @@ class TestGeometry:
 
     @pytest.mark.parametrize("test_input, expected", params_for_cut_faces)
     def test_cut_faces(self, test_input, expected):
-        face_cut = tools.boolean_cut(test_input[0], test_input[1:])
+        face_cut = boolean_cut(test_input[0], test_input[1:])
         output = [(f.length, f.area) for f in face_cut]
         assert output == expected
+
+
+class TestShapeTransformations:
+    @classmethod
+    def setup_class(cls):
+        cls.wire = make_polygon(
+            [
+                (4.0, -0.5, 0.0),
+                (5.0, -0.5, 0.0),
+                (5.0, 0.5, 0.0),
+                (4.0, 0.5, 0.0),
+            ],
+            closed=True,
+            label="test_wire",
+        )
+
+        cls.face = BluemiraFace(cls.wire.deepcopy(), label="test_face")
+        cls.solid = extrude_shape(cls.face.deepcopy(), (0, 0, 1), label="test_solid")
+
+    @staticmethod
+    def _centroids_close(new_centroid, centroid, vector):
+        return np.allclose(new_centroid, np.array(centroid) + np.array(vector))
+
+    def test_rotate_wire(self):
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        degree = 180
+        length = self.wire.length
+        orientation = self.wire._orientation
+        centroid = np.array(self.wire.center_of_mass)
+        self.wire.rotate(base, direction, degree)
+        assert self.wire.length == length
+        assert self.wire.label == "test_wire"
+        assert self.wire._orientation == orientation
+        assert self._centroids_close(
+            self.wire.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
+        )
+
+    def test_rotate_face(self):
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        degree = 180
+        area = self.face.area
+        orientation = self.face._orientation
+        centroid = np.array(self.face.center_of_mass)
+        self.face.rotate(base, direction, degree)
+        assert np.isclose(self.face.area, area)
+        assert self.face.label == "test_face"
+        assert self.face.boundary[0].label == "test_wire"
+        assert self.face._orientation == orientation
+        assert self._centroids_close(
+            self.face.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
+        )
+
+    def test_rotate_solid(self):
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        degree = 180
+        volume = self.solid.volume
+        orientation = self.solid._orientation
+        centroid = np.array(self.solid.center_of_mass)
+        self.solid.rotate(base, direction, degree)
+        assert np.isclose(self.solid.volume, volume)
+        assert self.solid.label == "test_solid"
+        assert self.solid._orientation == orientation
+        assert self._centroids_close(
+            self.solid.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
+        )
+
+    def test_translate_wire(self):
+        dx = 1.0
+        dy = 2.0
+        dz = 3.0
+        vector = (dx, dy, dz)
+        centroid = self.wire.center_of_mass
+        self.wire.translate(vector)
+        assert self._centroids_close(self.wire.center_of_mass, centroid, vector)
+        assert self.wire.label == "test_wire"
+
+    def test_translate_face(self):
+        dx = 1.0
+        dy = 2.0
+        dz = 3.0
+        vector = (dx, dy, dz)
+        centroid = self.face.center_of_mass
+        self.face.translate(vector)
+        assert self._centroids_close(self.face.center_of_mass, centroid, vector)
+        assert self.face.label == "test_face"
+        assert self.face.boundary[0].label == "test_wire"
+
+    def test_translate_solid(self):
+        dx = 1.0
+        dy = 2.0
+        dz = 3.0
+        vector = (dx, dy, dz)
+        centroid = self.solid.center_of_mass
+        self.solid.translate(vector)
+        assert self._centroids_close(self.solid.center_of_mass, centroid, vector)
+
+    def test_scale_wire(self):
+        scale_factor = 3
+        length = self.wire.length
+        self.wire.scale(scale_factor)
+        assert np.isclose(self.wire.length, scale_factor * length)
+        assert self.wire.label == "test_wire"
+
+    def test_scale_face(self):
+        scale_factor = 3
+        area = self.face.area
+        self.face.scale(scale_factor)
+        assert np.isclose(self.face.area, scale_factor ** 2 * area)
+        assert self.face.label == "test_face"
+        assert self.face.boundary[0].label == "test_wire"
+
+    def test_scale_solid(self):
+        scale_factor = 3
+        volume = self.solid.volume
+        self.solid.scale(scale_factor)
+        assert np.isclose(self.solid.volume, scale_factor ** 3 * volume)
+        assert self.solid.label == "test_solid"
+
+
+def test_circular_pattern():
+    wire = make_polygon(
+        [
+            (4.0, -0.5, 0.0),
+            (5.0, -0.5, 0.0),
+            (5.0, 0.5, 0.0),
+            (4.0, 0.5, 0.0),
+        ],
+        closed=True,
+    )
+    face = BluemiraFace(wire)
+    solid = extrude_shape(face, (0, 0, 1))
+    shapes = circular_pattern(solid, degree=360, n_shapes=5)
+    assert len(shapes) == 5
+    for s in shapes:
+        assert np.isclose(solid.volume, s.volume)
