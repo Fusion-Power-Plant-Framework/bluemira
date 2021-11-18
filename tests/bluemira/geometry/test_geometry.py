@@ -428,47 +428,58 @@ class TestShapeTransformations:
             label="test_wire",
         )
 
-        # Keep track of deliberate centroid changes
-        cls.centroid_2d = np.array([4.5, 0, 0])
-
         cls.face = BluemiraFace(cls.wire.deepcopy(), label="test_face")
         cls.solid = extrude_shape(cls.face.deepcopy(), (0, 0, 1), label="test_solid")
-
-        # Keep track of deliberate centroid changes
-        cls.centroid_2d = np.array([4.5, 0, 0])
-        cls.centroid_3d = cls.centroid_2d + np.array([0, 0, 0.5])
 
     @staticmethod
     def _centroids_close(new_centroid, centroid, vector):
         return np.allclose(new_centroid, np.array(centroid) + np.array(vector))
 
-    def test_scale_wire(self):
-        scale_factor = 3
+    def test_rotate_wire(self):
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        degree = 180
         length = self.wire.length
-        self.wire.scale(scale_factor)
-        assert self.wire.length == scale_factor * length
+        orientation = self.wire._orientation
+        centroid = np.array(self.wire.center_of_mass)
+        self.wire.rotate(base, direction, degree)
+        assert self.wire.length == length
         assert self.wire.label == "test_wire"
-        # assert self._centroids_close(self.wire.center_of_mass,
-        # self.centroid_2d, np.zeros(3))
+        assert self.wire._orientation == orientation
+        assert self._centroids_close(
+            self.wire.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
+        )
 
-    def test_scale_face(self):
-        scale_factor = 3
+    def test_rotate_face(self):
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        degree = 180
         area = self.face.area
-        self.face.scale(scale_factor)
-        assert self.face.area == scale_factor ** 2 * area
+        orientation = self.face._orientation
+        centroid = np.array(self.face.center_of_mass)
+        self.face.rotate(base, direction, degree)
+        assert np.isclose(self.face.area, area)
         assert self.face.label == "test_face"
         assert self.face.boundary[0].label == "test_wire"
-        # assert self._centroids_close(self.face.center_of_mass,
-        # self.centroid_2d, np.zeros(3))
+        assert self.face._orientation == orientation
+        assert self._centroids_close(
+            self.face.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
+        )
 
-    def test_scale_solid(self):
-        scale_factor = 3
+    def test_rotate_solid(self):
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        degree = 180
         volume = self.solid.volume
-        self.solid.scale(scale_factor)
-        assert np.isclose(self.solid.volume, scale_factor ** 3 * volume)
+        orientation = self.solid._orientation
+        centroid = np.array(self.solid.center_of_mass)
+        self.solid.rotate(base, direction, degree)
+        assert np.isclose(self.solid.volume, volume)
         assert self.solid.label == "test_solid"
-        # assert self._centroids_close(self.solid.center_of_mass,
-        # self.centroid_3d, np.zeros(3))
+        assert self.solid._orientation == orientation
+        assert self._centroids_close(
+            self.solid.center_of_mass, centroid, np.array([-2 * centroid[0], 0, 0])
+        )
 
     def test_translate_wire(self):
         dx = 1.0
@@ -500,40 +511,27 @@ class TestShapeTransformations:
         self.solid.translate(vector)
         assert self._centroids_close(self.solid.center_of_mass, centroid, vector)
 
-    def test_rotate_wire(self):
-        base = (0, 0, 0)
-        direction = (0, 0, 1)
-        degree = 180
-        vector = ()
+    def test_scale_wire(self):
+        scale_factor = 3
         length = self.wire.length
-        orientation = self.wire._orientation
-        self.wire.rotate(base, direction, degree)
-        assert self.wire.length == length
+        self.wire.scale(scale_factor)
+        assert np.isclose(self.wire.length, scale_factor * length)
         assert self.wire.label == "test_wire"
-        assert self.wire._orientation == orientation
 
-    def test_rotate_face(self):
-        base = (0, 0, 0)
-        direction = (0, 0, 1)
-        degree = 180
+    def test_scale_face(self):
+        scale_factor = 3
         area = self.face.area
-        orientation = self.face._orientation
-        self.face.rotate(base, direction, degree)
-        assert np.isclose(self.face.area, area)
+        self.face.scale(scale_factor)
+        assert np.isclose(self.face.area, scale_factor ** 2 * area)
         assert self.face.label == "test_face"
         assert self.face.boundary[0].label == "test_wire"
-        assert self.face._orientation == orientation
 
-    def test_rotate_solid(self):
-        base = (0, 0, 0)
-        direction = (0, 0, 1)
-        degree = 180
+    def test_scale_solid(self):
+        scale_factor = 3
         volume = self.solid.volume
-        orientation = self.solid._orientation
-        self.solid.rotate(base, direction, degree)
-        assert np.isclose(self.solid.volume, volume)
+        self.solid.scale(scale_factor)
+        assert np.isclose(self.solid.volume, scale_factor ** 3 * volume)
         assert self.solid.label == "test_solid"
-        assert self.solid._orientation == orientation
 
 
 def test_circular_pattern():
@@ -548,7 +546,7 @@ def test_circular_pattern():
     )
     face = BluemiraFace(wire)
     solid = extrude_shape(face, (0, 0, 1))
-    shapes = circular_pattern(solid, degre=360, n_shapes=5)
+    shapes = circular_pattern(solid, degree=360, n_shapes=5)
     assert len(shapes) == 5
     for s in shapes:
         assert np.isclose(solid.volume, s.volume)
