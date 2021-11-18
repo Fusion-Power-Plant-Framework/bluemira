@@ -175,6 +175,18 @@ class BluemiraWire(BluemiraGeo):
         direction: tuple = (0.0, 0.0, 1.0),
         degree: float = 180,
     ):
+        """
+        Rotate this shape.
+
+        Parameters
+        ----------
+        base: tuple (x,y,z)
+            Origin location of the rotation
+        direction: tuple (x,y,z)
+            The direction vector
+        degree: float
+            rotation angle
+        """
         for o in self.boundary:
             if isinstance(o, apiWire):
                 rotate_shape(o, base, direction, degree)

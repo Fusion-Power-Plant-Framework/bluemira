@@ -702,7 +702,7 @@ def rotate_shape(
         Origin location of the rotation
     direction: tuple (x,y,z)
         The direction vector
-    degree: double
+    degree: float
         rotation angle
 
     Returns

@@ -198,6 +198,15 @@ class BluemiraGeo(ABC):
     def rotate(self, base, direction, degree) -> None:
         """
         Rotate this shape.
+
+        Parameters
+        ----------
+        base: tuple (x,y,z)
+            Origin location of the rotation
+        direction: tuple (x,y,z)
+            The direction vector
+        degree: float
+            rotation angle
         """
         for o in self.boundary:
             o.rotate(base, direction, degree)
