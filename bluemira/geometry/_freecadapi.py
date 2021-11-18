@@ -643,16 +643,6 @@ def save_as_STEP(shapes, filename="test", scale=1):
         # a copy of the compound is made to avoid modification of the original shapes.
         compound = compound.copy().scale(scale)
 
-    # doc = FreeCAD.newDocument()
-    # obj = FreeCAD.ActiveDocument.addObject("App::DocumentObject", "Test")
-    #
-    # freecad_comp = FreeCAD.ActiveDocument.addObject("Part::Feature")
-    #
-    # # link the solid to the object
-    # freecad_comp.Shape = compound
-    #
-    # Part.export([freecad_comp], filename)
-
     compound.exportStep(filename)
 
 

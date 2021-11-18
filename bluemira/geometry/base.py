@@ -54,20 +54,6 @@ class BluemiraGeo(ABC):
         list of allowed class types for shape's boundary
     """
 
-    # # Obsolete
-    # # a set of property and methods that are inherited from FreeCAD objects
-    # props = {
-    #     'length': 'Length',
-    #     'area': 'Area',
-    #     'volume': 'Volume',
-    #     'center_of_mass': 'CenterOfMass'
-    # }
-    # metds = {
-    #     'is_null': 'isNull',
-    #     'is_closed': 'isClosed'
-    # }
-    # attrs = {**props, **metds}
-
     def __init__(
         self,
         boundary,
@@ -208,6 +194,13 @@ class BluemiraGeo(ABC):
         """
         for o in self.boundary:
             o.translate(vector)
+
+    def rotate(self, base, direction, degree) -> None:
+        """
+        Rotate this shape.
+        """
+        for o in self.boundary:
+            o.rotate(base, direction, degree)
 
     def change_plane(self, plane) -> None:
         """Apply a plane transformation to the wire"""
