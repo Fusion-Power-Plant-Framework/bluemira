@@ -19,22 +19,49 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-class TransportSolver:
-    """
-    Transport solver class
-    """
+"""
+Module containing the base Component class.
+"""
 
-    def __init__(self, solver, *args, **kwargs):
-        self.solver = solver
+from bluemira.base.components import (
+    Component,
+    MagneticComponent
+)
+from typing import Any
 
-    def get_pprime(self):
-        """
-        Get pprime
-        """
-        return self.solver.get_profile("pprime")
+class Plasma(MagneticComponent):
 
-    def get_ffprime(self):
-        """
-        Get ffprime
-        """
-        return self.solver.get_profile("ffprime")
+    def __init__(
+        self,
+        name: str,
+        shape: Any,
+        material: Any = None,
+        conductor: Any = None,
+        mhd_solver: Any = None,
+        gs_solver: Any = None,
+        parent: Component = None,
+        children: Component = None,
+    ):
+        super().__init__(name, material, conductor, parent, children)
+        self._mhd_solver = mhd_solver
+        self._gs_solver = gs_solver
+
+        def set_mhd_solver(self,solver):
+            self._mhd_solver = solver
+
+        def set_gs_solver(self,solver):
+            self._gs_solver = solver
+
+        def _pprime(self):
+            return self._mhd_solver.get_pprime()
+
+        def _ffprime(self):
+            return self._mhd_solver.get_ffprime()
+
+        def curr_density(self):
+            """Toroidal plasma current density"""
+
+
+
+
+

@@ -19,22 +19,31 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-class TransportSolver:
-    """
-    Transport solver class
-    """
+import dolfin
+import numpy
 
-    def __init__(self, solver, *args, **kwargs):
-        self.solver = solver
+def func_to_dolfinFunction(self , f, V):
+    f = dolfin.Function(V)
+    p = V.ufl_element().degree()
+    mesh = V.mesh()
+    points  = mesh.coordinates()
+    # psi = u.compute_vertex_values()
+    # psi = psi[:,numpy.newaxis]
+    # x = numpy.concatenate((points,psi), 1)
+    # print(points)
+    data = numpy.array([f(point) for point in points])
+    # print("data = {}".format(data))
 
-    def get_pprime(self):
-        """
-        Get pprime
-        """
-        return self.solver.get_profile("pprime")
-
-    def get_ffprime(self):
-        """
-        Get ffprime
-        """
-        return self.solver.get_profile("ffprime")
+    if p > 1:
+        # generate a 1-degree function space
+        V1 = dolfin.FunctionSpace(mesh ,'CG' ,1)
+        f1 = dolfin.Function(V1)
+        d2v = dolfin.dof_to_vertex_map(V1)
+        new_data = [data[d2v[i]] for i in range(mesh.num_vertices())]
+        f1.vector().set_local(new_data)
+        f = dolfin.interpolate(f1 ,V)
+    else:
+        d2v = dolfin.dof_to_vertex_map(V)
+        new_data = [data[d2v[i]] for i in range(mesh.num_vertices())]
+        f.vector().set_local(new_data)
+    return f
