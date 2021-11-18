@@ -21,32 +21,18 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-import os
-import pickle  # noqa (S403)
 import pytest
-
-from bluemira.geometry._deprecated_tools import get_intersect
 
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import (
     inloop,
     circle_line_intersect,
     loop_volume,
-    distance_between_points,
     circle_seg,
     circle_arc,
-    join_intersect,
-    loop_plane_intersect,
-    check_linesegment,
-    on_polygon,
-    in_polygon,
-    polygon_in_polygon,
-    rotate_matrix,
     project_point_axis,
-    bounding_box,
     polyarea,
     loop_surface,
     lineq,
@@ -54,131 +40,9 @@ from BLUEPRINT.geometry.geomtools import (
     make_box_xz,
     index_of_point_on_loop,
 )
-import tests
 
 
 TEST = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
-
-
-class TestIntersections:
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
-    def test_join_intersect(self):
-        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 5, 4.5, 4, 0], z=[1, 1, 1, 1, 2, 4, 4.5, 5, 5])
-        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], z=[4, -4, -4, -4, 5])
-        join_intersect(loop1, loop2)
-        f, ax = plt.subplots()
-        loop1.plot(ax, fill=False, edgecolor="k", points=True)
-        loop2.plot(ax, fill=False, edgecolor="r", points=True)
-        plt.show()
-        assert np.allclose(loop1[3], [1.5, 0, 1])
-        assert np.allclose(loop1[5], [2.5, 0, 1.5])
-        assert np.allclose(loop1[10], [2.5, 0, 5])
-
-        loop1 = Loop(x=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(x=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
-        join_intersect(loop1, loop2)
-        f, ax = plt.subplots()
-        loop1.plot(ax, fill=False, edgecolor="k", points=True)
-        loop2.plot(ax, fill=False, edgecolor="r", points=True)
-        plt.show()
-        assert np.allclose(loop1[3], [1.5, 1, 0])
-        assert np.allclose(loop1[5], [2.5, 1.5, 0])
-        assert np.allclose(loop1[8], [2.5, 5, 0])
-
-        loop1 = Loop(z=[0, 0.5, 1, 2, 3, 4, 0], y=[1, 1, 1, 1, 2, 5, 5])
-        loop2 = Loop(z=[1.5, 1.5, 2.5, 2.5, 2.5], y=[4, -4, -4, -4, 5])
-        join_intersect(loop1, loop2)
-        f, ax = plt.subplots()
-        loop1.plot(ax, fill=False, edgecolor="k", points=True)
-        loop2.plot(ax, fill=False, edgecolor="r", points=True)
-        plt.show()
-        assert np.allclose(loop1[1], [0, 5, 2.5])
-        assert np.allclose(loop1[4], [0, 1.5, 2.5])
-        assert np.allclose(loop1[6], [0, 1, 1.5])
-
-    def test_join_intersect_arg1(self):
-        tf = Loop.from_file(os.sep.join([TEST, "test_TF_intersect.json"]))
-        lp = Loop.from_file(os.sep.join([TEST, "test_LP_intersect.json"]))
-        eq = Loop.from_file(os.sep.join([TEST, "test_EQ_intersect.json"]))
-        up = Loop.from_file(os.sep.join([TEST, "test_UP_intersect.json"]))
-        if not tests.PLOTTING:
-            f, ax = plt.subplots()
-            for loop in [tf, up, eq, lp]:
-                loop.plot(ax, fill=False)
-
-        args = []
-        intx, intz = [], []
-        for loop in [lp, eq, up]:
-            i = get_intersect(tf, loop)
-            a = join_intersect(tf, loop, get_arg=True)
-            args.extend(a)
-            intx.extend(i[0])
-            intz.extend(i[1])
-        if not tests.PLOTTING:
-            for loop in [tf, up, eq, lp]:
-                loop.plot(ax, fill=False, points=True)
-            ax.plot(*tf.d2.T[args].T, "s", marker="o", color="r")
-            ax.plot(intx, intz, "s", marker="^", color="k")
-        assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
-        assert np.allclose(np.sort(intx), np.sort(tf.x[args]))
-        assert np.allclose(np.sort(intz), np.sort(tf.z[args]))
-
-    def test_join_intersect_arg2(self):
-        tf = Loop.from_file(os.sep.join([TEST, "test_TF_intersect2.json"]))
-        lp = Loop.from_file(os.sep.join([TEST, "test_LP_intersect2.json"]))
-        eq = Loop.from_file(os.sep.join([TEST, "test_EQ_intersect2.json"]))
-        up = Loop.from_file(os.sep.join([TEST, "test_UP_intersect2.json"]))
-        if not tests.PLOTTING:
-            f, ax = plt.subplots()
-            for loop in [tf, up, eq, lp]:
-                loop.plot(ax, fill=False)
-
-        args = []
-        intx, intz = [], []
-        for loop in [lp, eq, up]:
-            i = get_intersect(tf, loop)
-            a = join_intersect(tf, loop, get_arg=True)
-            args.extend(a)
-            intx.extend(i[0])
-            intz.extend(i[1])
-        if not tests.PLOTTING:
-            ax.plot(*tf.d2.T[args].T, "s", marker="o", color="r")
-            ax.plot(intx, intz, "s", marker="^", color="k")
-        assert len(intx) == len(args), f"{len(intx)} != {len(args)}"
-        assert np.allclose(np.sort(intx), np.sort(tf.x[args])), f"{intx} != {tf.x[args]}"
-        assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
-
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
-    def test_join_intersect_fail(self):
-        tf = Loop.from_file(os.sep.join([TEST, "test_TF_intersect3.json"]))
-        lp = Loop.from_file(os.sep.join([TEST, "test_UP_intersect3.json"]))
-        join_intersect(tf, lp, get_arg=True)
-        f, ax = plt.subplots()
-        tf.plot(ax, points=True)
-        plt.show()
-
-    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
-    def test_plasma_div(self):
-        if "R" in globals():
-            f, ax = plt.subplots()
-            reactor = globals()["R"]
-            div = reactor.DIV.geom["2D profile"]
-            separatrix = reactor.PL.get_sep()
-            div.plot(ax, fill=True)
-            separatrix.plot(ax, fill=False)
-
-            x_inter, z_inter = get_intersect(separatrix, div)
-            for x, z in zip(x_inter, z_inter):
-                ax.plot(x, z, "s", marker="o", color="r")
-            args = join_intersect(separatrix, div, get_arg=True)
-            for arg in args:
-                ax.plot(*separatrix.d2.T[arg], "s", marker="^", color="b")
-
-
-# =============================================================================
-#     def test_clip_loop(self):
-#         S = Loop.from_file(os.sep.join([TEST, ]))
-# =============================================================================
 
 
 class TestInLoop:
@@ -245,62 +109,6 @@ class TestCircleLine:
         assert none is None
 
 
-class TestDistance:
-    def test_2d(self):
-        d = distance_between_points([0, 0], [1, 1])
-        assert d == np.sqrt(2)
-
-    def test_3d(self):
-        d = distance_between_points([0, 0, 0], [1, 1, 1])
-        assert d == np.sqrt(3)
-
-    def test_fail(self):
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0], [1, 1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0, 0], [1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0, 0, 0], [1, 1, 1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0], [1, 1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0, 0], [1])
-        with pytest.raises(GeometryError):
-            distance_between_points([0], [1])
-
-
-class TestCheckLineSegment:
-    def test_true(self):
-        a = [0, 0]
-        b = [1, 0]
-        c = [0.5, 0]
-        assert check_linesegment(a, b, c) is True
-        a = [0, 0]
-        b = [0.001, 0]
-        c = [0.0005, 0]
-        assert check_linesegment(a, b, c) is True
-
-        a = [0, 0]
-        b = [1, 0]
-        c = [1, 0]
-        assert check_linesegment(a, b, c) is True
-        a = [0, 0]
-        b = [0.001, 0]
-        c = [0, 0]
-        assert check_linesegment(a, b, c) is True
-
-    def test_false(self):
-        a = [0, 0]
-        b = [1, 0]
-        c = [5, 0]
-        assert check_linesegment(a, b, c) is False
-
-        a = [0, 0]
-        b = [0.001, 0]
-        c = [0.005, 0]
-        assert check_linesegment(a, b, c) is False
-
-
 class TestArea:
     def test_area(self):
         """
@@ -356,13 +164,12 @@ class TestCircleArcSeg:
         x, y = circle_arc([5.5, -0.5], [0.5, 0], angle=90)
         assert x[0] == 5.5
         assert y[0] == -0.5
-        d = distance_between_points([5.5, -0.5], [0.5, 0])
         assert round(abs(x[-1] - 1), 7) == 0
         assert round(abs(y[-1] - 5), 7) == 0
+
         x, y = circle_arc([-5.5, -0.5], [0.5, 0], angle=90)
         assert round(abs(x[0] - -5.5), 7) == 0
         assert round(abs(y[0] - -0.5), 7) == 0
-        d = distance_between_points([5.5, -0.5], [0.5, 0])
         assert round(abs(x[-1] - 1), 7) == 0
         assert round(abs(y[-1] - -6), 7) == 0
 
@@ -379,243 +186,6 @@ class TestPointAxisProjection:
 
         result = project_point_axis([4, 4, 0], [0, 1, 0])
         assert np.allclose(result, [0, 4, 0])
-
-
-class TestBoundingBox:
-    def test_null(self):
-        x, y, z = np.zeros(100), np.zeros(100), np.zeros(100)
-        xb, yb, zb = bounding_box(x, y, z)
-        assert np.all(xb == 0)
-        assert np.all(yb == 0)
-        assert np.all(zb == 0)
-
-    def test_random(self):
-        x, y, z = np.random.rand(100), np.random.rand(100), np.random.rand(100)
-        args = np.random.randint(0, 100, 8)
-        x[args] = np.array([-2, -2, -2, -2, 2, 2, 2, 2])
-        y[args] = np.array([-2, -2, 2, 2, 2, -2, -2, 2])
-        z[args] = np.array([-2, 2, -2, 2, -2, 2, -2, 2])
-        xb, yb, zb = bounding_box(x, y, z)
-
-        assert np.allclose(xb, np.array([-2, -2, -2, -2, 2, 2, 2, 2]))
-        assert np.allclose(yb, np.array([-2, -2, 2, 2, -2, -2, 2, 2]))
-        assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
-
-
-class TestOnPolygon:
-    def test_simple(self):
-        loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
-        for p in loop.d2.T:
-            assert on_polygon(p[0], p[1], loop.d2.T) is True
-
-        fails = [[4, 4], [5, 5], [0.1, 0.1]]
-        for fail in fails:
-            assert on_polygon(*fail, loop.d2.T) is False
-
-
-class TestLoopPlane:
-    def test_simple(self):
-        loop = Loop(x=[0, 1, 2, 2, 0, 0], z=[-1, -1, -1, 1, 1, -1])
-        plane = Plane([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
-        e = np.array([[0, 0, 0], [2, 0, 0]])
-        assert np.allclose(intersect, e)
-
-    def test_complex(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            z=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-        )
-        plane = Plane([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
-        assert len(intersect) == 2
-        f, ax = plt.subplots()
-        loop.plot(ax)
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
-        plane = Plane([0, 0, 2.7], [1, 0, 2.7], [0, 1, 2.7])  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
-        assert len(intersect) == 4
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
-
-        plane = Plane([0, 0, 4], [1, 0, 4], [0, 1, 4])  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
-        assert len(intersect) == 1
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
-
-        plane = Plane([0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005])  # x-y offset
-        intersect = loop_plane_intersect(loop, plane)
-        assert intersect is None
-
-    def test_other_dims(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            y=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-        )
-        plane = Plane([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
-        assert len(intersect) == 2
-        f, ax = plt.subplots()
-        loop.plot(ax)
-        for i in intersect:
-            ax.plot(i[0], i[2], marker="o", color="r")
-
-        plane = Plane([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
-        intersect = loop_plane_intersect(loop, plane)
-        assert intersect is None
-
-    def test_xyzplane(self):
-        loop = Loop(
-            x=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-            y=[-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-        )
-        loop.translate([-2, 0, 0])
-        plane = Plane([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
-        intersect = loop_plane_intersect(loop, plane)
-        f, ax = plt.subplots()
-        loop.plot(ax)
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-            ax.plot(i[0], i[2], marker="o", color="r")
-
-    def test_flat_intersect(self):
-        # test that a shared segment with plane only gives two intersects
-        loop = Loop(x=[0, 2, 2, 0, 0], z=[-1, -1, 1, 1, -1])
-        plane = Plane([0, 0, 1], [0, 1, 1], [1, 0, 1])
-        inter = loop_plane_intersect(loop, plane)
-        assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
-
-
-class TestInPolygon:
-    def test_simple(self):
-        loop = Loop(x=[-2, 2, 2, -2, -2, -2], z=[-2, -2, 2, 2, 1.5, -2])
-        in_points = [
-            [-1, -1],
-            [-1, 0],
-            [-1, 1],
-            [0, -1],
-            [0, 0],
-            [0, 1],
-            [1, -1],
-            [1, 0],
-            [1, 1],
-        ]
-
-        out_points = [
-            [-3, -3],
-            [-3, 0],
-            [-3, 3],
-            [0, -3],
-            [3, 3],
-            [3, -3],
-            [2.00000009, 0],
-            [-2.0000000001, -1.999999999999],
-        ]
-
-        on_points = [
-            [-2, -2],
-            [2, -2],
-            [2, 2],
-            [-2, 0],
-            [2, 0],
-            [0, -2],
-            [0, 2],
-            [-2, 2],
-        ]
-
-        if tests.PLOTTING:
-            plt.close("all")
-            f, ax = plt.subplots()
-            loop.plot(ax, edgecolor="k")
-            for point in in_points:
-                check = in_polygon(*point, loop.d2.T)
-                c = "b" if check else "r"
-                ax.plot(*point, marker="s", color=c)
-            for point in on_points:
-                check = in_polygon(*point, loop.d2.T)
-                c = "b" if check else "r"
-                ax.plot(*point, marker="o", color=c)
-            for point in out_points:
-                check = in_polygon(*point, loop.d2.T)
-                c = "b" if check else "r"
-                ax.plot(*point, marker="*", color=c)
-
-            plt.show()
-
-        # Test single and arrays
-        for p in in_points:
-            assert in_polygon(*p, loop.d2.T), p
-        assert np.all(polygon_in_polygon(np.array(in_points), loop.d2.T))
-
-        for p in on_points:
-            assert in_polygon(*p, loop.d2.T, include_edges=True), p
-        assert np.all(
-            polygon_in_polygon(np.array(on_points), loop.d2.T, include_edges=True)
-        )
-
-        for p in on_points:
-            assert not in_polygon(*p, loop.d2.T), p
-
-        assert np.all(~polygon_in_polygon(np.array(on_points), loop.d2.T))
-
-        for p in out_points:
-            assert not in_polygon(*p, loop.d2.T), p
-        assert np.all(~polygon_in_polygon(np.array(out_points), loop.d2.T))
-
-    def test_big(self):
-        filename = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
-        filename += "/in_polygon_test.pkl"
-        with open(filename, "rb") as file:
-            data = pickle.load(file)  # noqa (S301)
-
-        x = data["X"]
-        z = data["Z"]
-
-        if tests.PLOTTING:
-            f, ax = plt.subplots()
-
-        n, m = x.shape
-        mask = np.zeros((n, m))
-        for i in range(n):
-            for j in range(m):
-                if in_polygon(x[i, j], z[i, j], data["LCFS"].d2.T):
-                    mask[i, j] = 1
-        if tests.PLOTTING:
-            data["LCFS"].plot(ax, fill=False, edgecolor="k")
-            ax.contourf(data["X"], data["Z"], mask, levels=[0, 0.5, 1])
-            plt.show()
-
-        hits = np.count_nonzero(mask)
-        assert hits == 1171, hits  # Recursion test
-
-
-class TestRotationMatrix:
-    def test_axes(self):
-        axes = ["x", "y", "z"]
-        axes2 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-
-        for a1, a2 in zip(axes, axes2):
-            r_1 = rotate_matrix(np.pi / 6, a1)
-            r_2 = rotate_matrix(np.pi / 6, a2)
-            assert np.allclose(r_1, r_2), a1
-
-        axes = ["fail", "somthing", "1"]
-        for axis in axes:
-            with pytest.raises(GeometryError):
-                rotate_matrix(30, axis)
-
-    def test_ccw(self):
-        p1 = [9, 0, 0]
-
-        r_matrix = rotate_matrix(np.pi / 2, axis="z")
-        p2 = r_matrix @ p1
-
-        assert np.isclose(p2[1], 9), p2
 
 
 class TestLineEq:
@@ -731,7 +301,3 @@ def test_idx_pt_on_loop(inputs):
         else:
             index = index_of_point_on_loop(box, point_check, before)
             assert index == index_expect
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

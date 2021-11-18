@@ -48,6 +48,7 @@ from bluemira.geometry._deprecated_tools import (
     make_mixed_face,
     convert_coordinates_to_wire,
     convert_coordinates_to_face,
+    distance_between_points,
 )
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.base import BluemiraGeo
@@ -67,10 +68,10 @@ class TestPerimeter:
 
 class TestCheckLineSegment:
     def test_true(self):
-        a = [0.0, 0.0]
-        b = [1.0, 0.0]
+        a = [0, 0]
+        b = [1, 0]
         c = [0.5, 0.0]
-        assert check_linesegment(np.array(a), np.array(b), np.array(c)) is True
+        assert check_linesegment(a, np.array(b), c) is True
         a = [0.0, 0.0]
         b = [0.001, 0.0]
         c = [0.0005, 0.0]
@@ -811,6 +812,30 @@ class TestCoordsConversion:
         loop: Loop = Loop.from_file(fn)
         wire, converted_wire = method(self, *loop.xyz)
         assert wire.area == converted_wire.area
+
+
+class TestDistance:
+    def test_2d(self):
+        d = distance_between_points([0, 0], [1, 1])
+        assert d == np.sqrt(2)
+
+    def test_3d(self):
+        d = distance_between_points([0, 0, 0], [1, 1, 1])
+        assert d == np.sqrt(3)
+
+    def test_fail(self):
+        with pytest.raises(GeometryError):
+            distance_between_points([0, 0], [1, 1, 1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0, 0, 0], [1, 1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0, 0, 0, 0], [1, 1, 1, 1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0], [1, 1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0, 0], [1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0], [1])
 
 
 if __name__ == "__main__":
