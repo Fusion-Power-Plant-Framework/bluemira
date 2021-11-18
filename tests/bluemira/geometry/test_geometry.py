@@ -34,6 +34,7 @@ from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
     extrude_shape,
+    circular_pattern,
 )
 
 
@@ -447,7 +448,8 @@ class TestShapeTransformations:
         self.wire.scale(scale_factor)
         assert self.wire.length == scale_factor * length
         assert self.wire.label == "test_wire"
-        # assert self._centroids_close(self.wire.center_of_mass, self.centroid_2d, np.zeros(3))
+        # assert self._centroids_close(self.wire.center_of_mass,
+        # self.centroid_2d, np.zeros(3))
 
     def test_scale_face(self):
         scale_factor = 3
@@ -456,7 +458,8 @@ class TestShapeTransformations:
         assert self.face.area == scale_factor ** 2 * area
         assert self.face.label == "test_face"
         assert self.face.boundary[0].label == "test_wire"
-        # assert self._centroids_close(self.face.center_of_mass, self.centroid_2d, np.zeros(3))
+        # assert self._centroids_close(self.face.center_of_mass,
+        # self.centroid_2d, np.zeros(3))
 
     def test_scale_solid(self):
         scale_factor = 3
@@ -464,7 +467,8 @@ class TestShapeTransformations:
         self.solid.scale(scale_factor)
         assert np.isclose(self.solid.volume, scale_factor ** 3 * volume)
         assert self.solid.label == "test_solid"
-        # assert self._centroids_close(self.solid.center_of_mass, self.centroid_3d, np.zeros(3))
+        # assert self._centroids_close(self.solid.center_of_mass,
+        # self.centroid_3d, np.zeros(3))
 
     def test_translate_wire(self):
         dx = 1.0
@@ -530,3 +534,21 @@ class TestShapeTransformations:
         assert np.isclose(self.solid.volume, volume)
         assert self.solid.label == "test_solid"
         assert self.solid._orientation == orientation
+
+
+def test_circular_pattern():
+    wire = make_polygon(
+        [
+            (4.0, -0.5, 0.0),
+            (5.0, -0.5, 0.0),
+            (5.0, 0.5, 0.0),
+            (4.0, 0.5, 0.0),
+        ],
+        closed=True,
+    )
+    face = BluemiraFace(wire)
+    solid = extrude_shape(face, (0, 0, 1))
+    shapes = circular_pattern(solid, degre=360, n_shapes=5)
+    assert len(shapes) == 5
+    for s in shapes:
+        assert np.isclose(solid.volume, s.volume)

@@ -387,6 +387,40 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     return _freecadapi.dist_to_shape(shape1, shape2)
 
 
+def circular_pattern(
+    shape, origin=(0, 0, 0), direction=(0, 0, 1), degree=360, n_shapes=10
+):
+    """
+    Make a equally spaced circular pattern of shapes.
+
+    Parameters
+    ----------
+    shape: BluemiraGeo
+        Shape to pattern
+    origin: Iterable(3)
+        Origin vector of the circular pattern
+    direction: Iterable(3)
+        Direction vector of the circular pattern
+    degree: float
+        Angle range of the patterning
+    n_shapes: int
+        Number of shapes to pattern
+
+    Returns
+    -------
+    shapes: List[BluemiraGeo]
+        List of patterned shapes, the first element is the original shape
+    """
+    angle = degree / n_shapes
+
+    shapes = [shape]
+    for i in range(1, n_shapes):
+        new_shape = shape.deepcopy()
+        new_shape.rotate(origin, direction, i * angle)
+        shapes.append(new_shape)
+    return shapes
+
+
 # # =============================================================================
 # # Save functions
 # # =============================================================================
