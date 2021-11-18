@@ -37,7 +37,7 @@ from .error import GeometryError
 import numpy as np
 
 # import typing
-from typing import Union
+from typing import Union, Iterable
 
 
 def convert(apiobj, label=""):
@@ -83,9 +83,12 @@ def make_polygon(
 
 
 def make_bspline(
-    points: Union[list, np.ndarray], label: str = "", closed: bool = False
+    points: Union[list, np.ndarray],
+    label: str = "",
+    closed: bool = False,
 ) -> BluemiraWire:
-    """Make a bspline from a set of points.
+    """
+    Make a bspline from a set of points.
 
     Parameters
     ----------
@@ -361,6 +364,40 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
     bmshell = BluemiraShell(bmfaces)
     bmsolid = BluemiraSolid(bmshell, label)
     return bmsolid
+
+
+def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
+    """
+    Sweep a profile along a path.
+
+    Parameters
+    ----------
+    profiles: BluemiraWire
+        Profile to sweep
+    path: BluemiraWire
+        Path along which to sweep the profiles
+    solid: bool
+        Whether or not to create a Solid
+    frenet: bool
+        If true, the orientation of the profile(s) is calculated based on local curvature
+        and tangency. For planar paths, should not make a difference.
+
+    Returns
+    -------
+    swept: Union[BluemiraSolid, BluemiraShell]
+        Swept geometry object
+    """
+    if not isinstance(profiles, Iterable):
+        profiles = [profiles]
+
+    profile_shapes = [p._shape for p in profiles]
+
+    result = _freecadapi.sweep_shape(profile_shapes, path._shape, solid, frenet)
+
+    if solid:
+        return BluemiraSolid._create(result, label=label)
+    else:
+        return BluemiraShell._create(result, label=label)
 
 
 def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):

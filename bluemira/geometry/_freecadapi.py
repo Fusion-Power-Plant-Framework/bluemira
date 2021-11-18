@@ -44,7 +44,7 @@ import numpy as np
 import math
 
 # import typing
-from typing import List, Optional, Union, Dict
+from typing import List, Optional, Iterable, Union, Dict
 
 # import errors and warnings
 from bluemira.geometry.error import FreeCADError
@@ -60,6 +60,7 @@ apiWire = Part.Wire  # noqa (N816)
 apiFace = Part.Face  # noqa (N816)
 apiShell = Part.Shell  # noqa (N816)
 apiSolid = Part.Solid  # noqa (N816)
+apiShape = Part.Shape  # noqa (N816)
 
 
 # ======================================================================================
@@ -197,7 +198,9 @@ def make_bezier(points: Union[list, np.ndarray], closed: bool = False) -> Part.W
 
 
 def make_bspline(
-    points: Union[list, np.ndarray], closed: bool = False, **kwargs
+    points: Union[list, np.ndarray],
+    closed: bool = False,
+    **kwargs,
 ) -> Part.Wire:
     """
     Make a bezier curve from a set of points.
@@ -210,20 +213,24 @@ def make_bspline(
     closed: bool, default = False
         if True, the first and last points will be connected in order to form a
         closed shape.
-    Parameters: (optional)
+
+    Other Parameters
+    ----------------
         knot sequence
 
     Returns
     -------
-    wire: Part.Wire
+    wire: apiWire
         a FreeCAD wire that contains the bezier curve
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
+    # TODO: Add support for start and end tangencies.. I tried but I don't think FreeCAD
+    # wraps OCC enough here.
     pntslist = [Base.Vector(x) for x in points]
     bsc = Part.BSplineCurve()
     bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
-    wire = Part.Wire(bsc.toShape())
+    wire = apiWire(bsc.toShape())
     return wire
 
 
@@ -369,8 +376,8 @@ def _wire_is_straight(wire):
 
 
 def offset_wire(
-    wire: Part.Wire, thickness: float, join: str = "intersect", open_wire: bool = True
-) -> Part.Wire:
+    wire: apiWire, thickness: float, join: str = "intersect", open_wire: bool = True
+) -> apiWire:
     """
     Make an offset from a wire.
 
@@ -409,12 +416,11 @@ def offset_wire(
         )
 
     if wire.isClosed() and open_wire:
-        bluemira_warn(f"Offsetting a closed wire with {open_wire=}. Disabling this.")
         open_wire = False
 
-    shape = Part.Shape(wire)
+    shape = apiShape(wire)
     try:
-        wire = Part.Wire(shape.makeOffset2D(thickness, f_join, False, open_wire))
+        wire = apiWire(shape.makeOffset2D(thickness, f_join, False, open_wire))
     except Base.FreeCADError as error:
         msg = "\n".join(
             [
@@ -464,6 +470,11 @@ def is_null(obj):
 def is_closed(obj):
     """True if obj is closed"""
     return _get_api_attr(obj, "isClosed")()
+
+
+def is_valid(obj):
+    """True if obj is valid"""
+    return _get_api_attr(obj, "isValid")()
 
 
 def bounding_box(obj):
@@ -770,6 +781,114 @@ def extrude_shape(shape, vec: tuple):
     """
     vec = Base.Vector(vec)
     return shape.extrude(vec)
+
+
+def _edges_tangent(edge_1, edge_2):
+    """
+    Check if two adjacent edges are tangent to one another.
+    """
+    angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
+        edge_2.tangentAt(edge_2.FirstParameter)
+    )
+    return np.isclose(
+        angle,
+        0.0,
+        rtol=1e-4,
+        atol=1e-4,
+    )
+
+
+def _wire_edges_tangent(wire):
+    """
+    Check that all consecutive edges in a wire are tangent
+    """
+    if len(wire.Edges) <= 1:
+        return True
+
+    else:
+        edges_tangent = []
+        for i in range(len(wire.Edges) - 1):
+            edge_1 = wire.Edges[i]
+            edge_2 = wire.Edges[i + 1]
+            edges_tangent.append(_edges_tangent(edge_1, edge_2))
+
+    if wire.isClosed():
+        # Check last and first edge tangency
+        edges_tangent.append(_edges_tangent(wire.Edges[-1], wire.Edges[0]))
+
+    return all(edges_tangent)
+
+
+def _split_wire(wire):
+    """
+    Split a wire into two parts.
+    """
+    edges = wire.OrderedEdges
+    if len(edges) == 1:
+        # Only one edge in the wire, which we need to split
+        edge = edges[0]
+        p_start, p_end = edge.ParameterRange
+        p_mid = 0.5 * (p_end - p_start)
+        edges_1 = edge.Curve.toShape(p_start, p_mid)
+        edges_2 = edge.Curve.toShape(p_mid, p_end)
+
+    else:
+        # We can just sub-divide the wire by its edges
+        n_split = int(len(edges) / 2)
+        edges_1, edges_2 = edges[:n_split], edges[n_split:]
+
+    return apiWire(edges_1), apiWire(edges_2)
+
+
+def sweep_shape(profiles, path, solid=True, frenet=True):
+    """
+    Sweep a a set of profiles along a path.
+
+    Parameters
+    ----------
+    profiles: Iterable[apiWire]
+        Set of profiles to sweep
+    path: apiWire
+        Path along which to sweep the profiles
+    solid: bool
+        Whether or not to create a Solid
+    frenet: bool
+        If true, the orientation of the profile(s) is calculated based on local curvature
+        and tangency. For planar paths, should not make a difference.
+
+    Returns
+    -------
+    swept: Union[Part.Solid, Part.Shell]
+        Swept geometry object
+    """
+    if not isinstance(profiles, Iterable):
+        profiles = [profiles]
+
+    closures = [p.isClosed() for p in profiles]
+    all_closed = sum(closures) == len(closures)
+    none_closed = sum(closures) == 0
+
+    if not all_closed and not none_closed:
+        raise FreeCADError("You cannot mix open and closed profiles when sweeping.")
+
+    if none_closed and solid:
+        bluemira_warn(
+            "You cannot sweep open profiles and expect a Solid result. Disabling this."
+        )
+        solid = False
+
+    if not _wire_edges_tangent(path):
+        raise FreeCADError(
+            "Sweep path contains edges that are not consecutively tangent. This will produce unexpected results."
+        )
+
+    result = path.makePipeShell(profiles, True, frenet)
+
+    solid_result = apiSolid(result)
+    if solid:
+        return solid_result
+    else:
+        return solid_result.Shells[0]
 
 
 def make_compound(shapes):
