@@ -146,6 +146,25 @@ this comes down to internal use of :py:func:`__repr__` for example
 :py:func:`__repr__` shouldn't be used for type checking anyway but occasionally is
 internally in python.
 
+Another situation is when passing parameters into a low level library such as a function wrapped with Numba. At this time it may work but behaviour in a function wrapped with Numba has had some odd side effects. A solution could be using Numba's low level api however we are awaiting Numba v1 before implementation.
+
+In all of the above cases you can use the :py:attr:`value` attribute to access the raw value of the parameter.
+
+The ParameterMapping class
+--------------------------
+
+ParameterMapping is used to create a connection between ``bluemira`` parameters and parameters on any external program. At its most basic level it is a key-value mapping between two variable names. On top of the mapping configuration of how the parameter flows between the external program is achieved by the :py:attr:`send` and :py:attr:`recv` attributes.
+
+:py:attr:`send`
+    true - set bluemira parameter value as input to external code
+
+    false - use default value as input to external code
+
+:py:attr:`recv`
+    true - set external code result to the new value of the bluemira parameter
+
+    false - keep the original bluemira parameter value ignoring the external value
+
 The ParameterFrame class
 ------------------------
 
