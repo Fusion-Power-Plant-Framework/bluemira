@@ -154,8 +154,10 @@ def plot_cage_results(cage, xz_fields, xy_fields):
 
     #  We need to use 2 colorbars because of 3-D projection shenanigans in matplotlib
     f = plt.gcf()
-    f.colorbar(cm, shrink=0.46)
-    f.colorbar(cm2, shrink=0.46)
+    cb0 = f.colorbar(cm, shrink=0.46)
+    cb = f.colorbar(cm2, shrink=0.46)
+    cb0.ax.set_title("$B$ [T]")
+    cb.ax.set_title("$B$ [T]")
     cage.plot(ax=ax)
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")

@@ -447,7 +447,7 @@ def fit_sink_data(x, y, method="sqrt", plot=True):
 
 
 @nb.jit(nopython=True, cache=True)
-def delay_decay(t, m_t_flow, t_delay):
+def delay_decay(t, m_t_flow, tt_delay):
     """
     Time-shift a tritium flow with a delay and account for radioactive decay.
 
@@ -465,7 +465,7 @@ def delay_decay(t, m_t_flow, t_delay):
     flow: np.array
         The delayed flow
     """
-    t_delay = t_delay * S_TO_YR
+    t_delay = tt_delay * S_TO_YR
     shift = np.argmin(np.abs(t - t_delay))
     flow = np.zeros(shift)
     deldec = np.exp(-T_LAMBDA * t_delay)
