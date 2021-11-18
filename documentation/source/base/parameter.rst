@@ -26,7 +26,7 @@ Parameters provide the value as well as a set of supporting metadata, including:
     ...     unit="m",
     ...     description="The tokamak major radius",
     ...     source="Input",
-    ...     mapping={"PROCESS": ParameterMapping("rmajor", read=True, write=False)},
+    ...     mapping={"PROCESS": ParameterMapping("rmajor", recv=True, send=False)},
     ... )
     >>> print(r_0)
 
@@ -146,6 +146,25 @@ this comes down to internal use of :py:func:`__repr__` for example
 :py:func:`__repr__` shouldn't be used for type checking anyway but occasionally is
 internally in python.
 
+Another situation is when passing parameters into a low level library such as a function wrapped with Numba. At this time it may work but behaviour in a function wrapped with Numba has had some odd side effects. A solution could be using Numba's low level api however we are awaiting Numba v1 before implementation.
+
+In all of the above cases you can use the :py:attr:`value` attribute to access the raw value of the parameter.
+
+The ParameterMapping class
+--------------------------
+
+ParameterMapping is used to create a connection between ``bluemira`` parameters and parameters on any external program. At its most basic level it is a key-value mapping between two variable names. On top of the mapping, how the parameter value flows between ``bluemira`` and the external program is modified by the :py:attr:`send` and :py:attr:`recv` attributes.
+
+:py:attr:`send`
+    true - set bluemira parameter value as input to external code
+
+    false - use default value as input to external code
+
+:py:attr:`recv`
+    true - set external code result to the new value of the bluemira parameter
+
+    false - keep the original bluemira parameter value ignoring the external value
+
 The ParameterFrame class
 ------------------------
 
@@ -237,7 +256,7 @@ As an analysis progresses, various values within the ParameterFrame will be upda
 different sources. This is handled in bulk by updating Parameters based on their keyword
 name, which can be done either directly or via an external json source.
 
-.. note:: 
+.. note::
 
     Keywords must match the current Parameters contained within the ParameterFrame in
     order to update the corresponding value.
