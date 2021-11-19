@@ -309,6 +309,7 @@ def revolve_shape(
     base: tuple = (0.0, 0.0, 0.0),
     direction: tuple = (0.0, 0.0, 1.0),
     degree: float = 180,
+    label: str = "",
 ):
     """
     Apply the revolve (base, dir, degree) to this shape
@@ -329,17 +330,12 @@ def revolve_shape(
     shape: BluemiraSolid
         the revolved shape.
     """
-    solid = cadapi.revolve_shape(shape._shape, base, direction, degree)
-    faces = solid.Faces
-    bmfaces = []
-    for face in faces:
-        bmfaces.append(BluemiraFace._create(face))
-    bmshell = BluemiraShell(bmfaces)
-    bmsolid = BluemiraSolid(bmshell)
-    return bmsolid
+    return BluemiraSolid._create(
+        cadapi.revolve_shape(shape._shape, base, direction, degree), label
+    )
 
 
-def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
+def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
     """
     Apply the extrusion along vec to this shape
 
@@ -349,7 +345,7 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
         The shape to be extruded
     vec: tuple (x,y,z)
         The vector along which to extrude
-    label: str, default = None
+    label: str, default = ""
         label of the output shape
 
     Returns
@@ -357,17 +353,10 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
     shape: BluemiraSolid
         The extruded shape.
     """
-    if label is None:
+    if not label:
         label = shape.label
 
-    solid = cadapi.extrude_shape(shape._shape, vec)
-    faces = solid.Faces
-    bmfaces = []
-    for face in faces:
-        bmfaces.append(BluemiraFace._create(face))
-    bmshell = BluemiraShell(bmfaces)
-    bmsolid = BluemiraSolid(bmshell, label)
-    return bmsolid
+    return BluemiraSolid._create(cadapi.extrude_shape(shape._shape, vec), label)
 
 
 def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
