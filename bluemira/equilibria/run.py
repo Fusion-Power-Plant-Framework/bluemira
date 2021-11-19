@@ -63,8 +63,6 @@ from bluemira.equilibria.solve import (
     PicardLiDeltaIterator,
     PicardLiAbsIterator,
     PicardAbsCoilsetIterator,
-    PicardDeltaIterator,
-    PicardAbsIterator,
     EquilibriumConverger,
 )
 from bluemira.equilibria.grid import Grid
