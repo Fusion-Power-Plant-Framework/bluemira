@@ -124,34 +124,6 @@ class EquilibriumOptimiser:
         return deepcopy(self)
 
 
-class Norm2Tikhonov(EquilibriumOptimiser):
-    """
-    Unconstrained norm-2 optimisation with Tikhonov regularisation
-    Returns x*
-    """
-
-    def __init__(self, gamma=1e-12):
-        self.gamma = gamma
-
-    def optimise(self):
-        """
-        Optimise the prescribed problem.
-        """
-        self.x = tikhonov(self.A, self.b, self.gamma)
-        self.calc_error()
-        return self.x
-
-    def calc_error(self):
-        """
-        Calculate the RSS and RMS errors.
-        """
-        x = self.x.reshape(-1, 1)
-        b = self.b.reshape(len(self.b), 1)
-        err = np.dot(self.A, x) - b
-        self.rms_error = np.sqrt(np.mean(err ** 2 + (self.gamma * self.x) ** 2))
-        self.rss_error = np.sum(err ** 2) + np.sum((self.gamma * self.x) ** 2)
-
-
 class PositionOptimiser:
     """
     Coil position optimiser a la McIntosh
@@ -1266,11 +1238,11 @@ class CoilsetOptimiserBase:
         return self.optimise()
 
 
-class UnconstrainedCurrentOptimiser(CoilsetOptimiserBase):
+class Norm2Tikhonov(CoilsetOptimiserBase):
     """
     Unconstrained norm-2 optimisation with Tikhonov regularisation
 
-    Intended to replace Norm2Tikhonov as a Coilset optimiser.
+    Returns x*
     """
 
     def __init__(self, coilset, gamma=1e-12):
@@ -1290,125 +1262,16 @@ class UnconstrainedCurrentOptimiser(CoilsetOptimiserBase):
         weights[i] = w[i] = sqrt(W[i,i]).
         """
         # Scale the control matrix and constraint vector by weights.
-        self.constraints(self.eq, I_not_dI=False)
         self.w = self.constraints.w
         self.A = self.w[:, np.newaxis] * self.constraints.A
         self.b = self.w * self.constraints.b
 
         # Optimise currents using analytic expression for optimum.
-        current_adjustment = tikhonov(self.A, self.b, self.gamma)
-
-        self.coilset.adjust_currents(current_adjustment)
-        return self.coilset
-
-
-class BoundedCurrentOptimiser(CoilsetOptimiserBase):
-    """
-    NLOpt based optimiser for coil currents subject to maximum current bounds.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        Coilset used to get coil current limits and number of coils.
-    max_currents float or np.array(len(coilset._ccoils)) (default = None)
-        Maximum allowed current for each independent coil current in coilset [A].
-        If specified as a float, the float will set the maximum allowed current
-        for all coils.
-    gamma: float (default = 1e-8)
-        Tikhonov regularisation parameter in units of [A⁻¹].
-    opt_args: dict
-        Dictionary containing arguments to pass to NLOpt optimiser.
-        Defaults to using LD_SLSQP.
-    """
-
-    def __init__(
-        self,
-        coilset,
-        max_currents=None,
-        gamma=1e-8,
-        opt_args={
-            "algorithm_name": "SLSQP",
-            "opt_conditions": {
-                "xtol_rel": 1e-4,
-                "xtol_abs": 1e-4,
-                "ftol_rel": 1e-4,
-                "ftol_abs": 1e-4,
-                "max_eval": 100,
-            },
-            "opt_parameters": {},
-        },
-    ):
-        # noqa (N803)
-        super().__init__(coilset)
-
-        self.max_currents = max_currents
-        self.gamma = gamma
-        self.opt_args = opt_args
-
-        # Set up optimiser
-        bounds = self.get_current_bounds(self.max_currents)
-        dimension = len(bounds[0])
-        self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
-        )
-
-    def optimise(self):
-        """
-        Optimiser handle. Used in __call__
-
-        Returns np.ndarray of optimised currents
-        in each coil [A].
-        """
-        # Get initial currents.
-        initial_currents = self.coilset.get_control_currents() / self.scale
-        initial_currents = np.clip(
-            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
-        )
-
-        # Set up data needed in FoM evaluation.
-        # Scale the control matrix and constraint vector by weights.
-        self.constraints(self.eq, I_not_dI=True)
-        self.w = self.constraints.w
-        self.A = self.w[:, np.newaxis] * self.constraints.A
-        self.b = self.w * self.constraints.b
-
-        # Optimise
-        currents = self.opt.optimise(initial_currents)
+        currents = tikhonov(self.A, self.b, self.gamma) / self.scale
 
         coilset_state = np.concatenate((self.x0, self.z0, currents))
         self.set_coilset_state(coilset_state)
         return self.coilset
-
-    def f_min_objective(self, vector, grad):
-        """
-        Objective function for nlopt optimisation (minimisation),
-        consisting of a least-squares objective with Tikhonov
-        regularisation term, which updates the gradient in-place.
-
-        Parameters
-        ----------
-        vector: np.array(n_C)
-            State vector of the array of coil currents.
-        grad: np.array
-            Local gradient of objective function used by LD NLOPT algorithms.
-            Updated in-place.
-
-        Returns
-        -------
-        fom: Value of objective function (figure of merit).
-        """
-        vector = vector * self.scale
-        fom, err = regularised_lsq_fom(vector, self.A, self.b, self.gamma)
-        if grad.size > 0:
-            jac = 2 * self.A.T @ self.A @ vector / np.float(len(self.b))
-            jac -= 2 * self.A.T @ self.b / np.float(len(self.b))
-            jac += 2 * self.gamma * self.gamma * vector
-            grad[:] = self.scale * jac
-        if not fom > 0:
-            raise EquilibriaError(
-                "Optimiser least-squares objective function less than zero or nan."
-            )
-        return fom
 
 
 class BoundedCurrentOptimiser(CoilsetOptimiserBase):
