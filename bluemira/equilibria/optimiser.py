@@ -1178,9 +1178,9 @@ class CoilsetOptimiserBase:
         bounds = np.array([lower_bounds, upper_bounds])
         return bounds
 
-    def update_current_constraint(self, max_currents):
+    def get_current_bounds(self, max_currents):
         """
-        Updates the current vector bounds. Must be called prior to optimise.
+        Gets the current vector bounds. Must be called prior to optimise.
 
         Parameters
         ----------
@@ -1191,8 +1191,9 @@ class CoilsetOptimiserBase:
 
         Returns
         -------
-        i_max: float or np.ndarray
-            Maximum magnitude(s) of currents allowed in each coil.
+        current_bounds: (np.narray, np.narray)
+            Tuple of arrays containing lowe and upper bounds for currents
+            permitted in each control coil.
         """
         i_max = np.inf * np.ones(len(self.I0))
 
@@ -1208,7 +1209,43 @@ class CoilsetOptimiserBase:
                     "equal to the number of control coils present."
                 )
 
-        return i_max
+        current_bounds = (
+            -i_max * np.ones(len(self.I0)),
+            i_max * np.ones(len(self.I0)),
+        )
+        self.I0 = np.clip(self.I0, current_bounds[0], current_bounds[1])
+        return current_bounds
+
+    def set_up_optimiser(
+        self, opt_args, dimension, bounds, objective_func, constraints=None
+    ):
+        """
+        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
+        constraint & objective functions.
+
+        Parameters
+        ----------
+        dimension: int
+            Number of independent coil currents to optimise.
+            Should be equal to eq.coilset._ccoils when called.
+
+        Returns
+        -------
+        opt: nlopt.opt
+            NLOpt optimiser to be used for optimisation.
+        """
+        # Initialise NLOpt optimiser, with optimisation strategy and length
+        # of state vector
+        opt = Optimiser(**opt_args, n_variables=dimension)
+
+        # Set up objective function for optimiser
+        opt.set_objective_function(objective_func)
+
+        # TODO Apply constraints
+        # Set state vector bounds (current limits)
+        opt.set_lower_bounds(bounds[0])
+        opt.set_upper_bounds(bounds[1])
+        return opt
 
     def __call__(self, eq, constraints, psi_bndry=None):
         """
@@ -1282,43 +1319,16 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         # noqa (N803)
         super().__init__(coilset)
 
-        self.I_max = self.update_current_constraint(max_currents)
-
+        self.max_currents = max_currents
         self.gamma = gamma
-
         self.opt_args = opt_args
 
         # Set up optimiser
-        self.opt = self.set_up_optimiser(len(self.I0))
-
-    def set_up_optimiser(self, dimension):
-        """
-        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
-        constraint & objective functions.
-
-        Parameters
-        ----------
-        dimension: int
-            Number of independent coil currents to optimise.
-            Should be equal to eq.coilset._ccoils when called.
-
-        Returns
-        -------
-        opt: nlopt.opt
-            NLOpt optimiser to be used for optimisation.
-        """
-        # Initialise NLOpt optimiser, with optimisation strategy and length
-        # of state vector
-        opt = Optimiser(**self.opt_args, n_variables=dimension)
-
-        # Set up objective function for optimiser
-        opt.set_objective_function(self.f_min_objective)
-
-        # Set state vector bounds (current limits)
-        opt.set_lower_bounds(-self.I_max)
-        opt.set_upper_bounds(self.I_max)
-
-        return opt
+        bounds = self.get_current_bounds(self.max_currents)
+        dimension = len(bounds[0])
+        self.opt = self.set_up_optimiser(
+            opt_args, dimension, bounds, self.f_min_objective
+        )
 
     def optimise(self):
         """
@@ -1327,8 +1337,8 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         Returns np.ndarray of optimised currents
         in each coil [A].
         """
-        # Get initial currents, and trim to within current bounds.
-        initial_currents = np.clip(self.I0, -self.I_max, self.I_max)
+        # Get initial currents.
+        initial_currents = self.I0
 
         # Set up data needed in FoM evaluation.
         # Scale the control matrix and constraint vector by weights.
@@ -1428,13 +1438,8 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         self.region_mapper = RegionMapper(pfregions)
 
-        if max_currents is not None:
-            self.I_max = self.update_current_constraint(max_currents)
-        else:
-            self.I_max = np.inf
-
+        self.max_currents = max_currents
         self.gamma = gamma
-
         self.opt_args = opt_args
 
         # Set up optimiser
@@ -1466,11 +1471,8 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         _, lower_lmap_bounds, upper_lmap_bounds = self.region_mapper.get_Lmap(
             self.coilset
         )
+        current_bounds = self.get_current_bounds(self.max_currents)
 
-        current_bounds = (
-            -self.I_max * np.ones(len(self.I0)),
-            self.I_max * np.ones(len(self.I0)),
-        )
         lower_bounds = np.concatenate((lower_lmap_bounds, current_bounds[0]))
         upper_bounds = np.concatenate((upper_lmap_bounds, current_bounds[1]))
 
