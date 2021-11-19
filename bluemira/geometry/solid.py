@@ -63,6 +63,7 @@ class BluemiraSolid(BluemiraGeo):
             if len(shells) == 1:
                 bmshell = BluemiraShell._create(shells[0])
                 bmsolid = cls(bmshell, label=label)
+
                 bmsolid._orientation = orientation
                 return bmsolid
 

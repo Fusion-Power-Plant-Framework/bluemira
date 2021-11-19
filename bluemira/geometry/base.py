@@ -36,7 +36,7 @@ from . import _freecadapi
 import copy
 
 
-class _Orientation(enum.Enum):
+class _Orientation:
     FORWARD = "Forward"
     REVERSED = "Reversed"
 
@@ -69,24 +69,6 @@ class BluemiraGeo(ABC):
     def _converter(func):
         """Function used in __getattr__ to modify the added functions"""
         return func
-
-    # Obsolete.
-    # It was used to getattr from the primitive object, but it was replaced
-    # with specific implementation into the respective api. However it could be still
-    # useful (for this reason is just commented).
-    # def __getattr__(self, key):
-    #     """
-    #     Transfer the key getattr to shape object.
-    #     """
-    #     if key in type(self).attrs:
-    #         output = getattr(self._shape, type(self).attrs[key])
-    #         if callable(output):
-    #             return self.__class__._converter(output)
-    #         else:
-    #             return output
-    #     else:
-    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
-    #             self).__name__), key))
 
     def _check_boundary(self, objs):
         """Check if objects objs can be used as boundaries"""
@@ -246,3 +228,21 @@ class BluemiraGeo(ABC):
         else:
             geo_copy.label = self.label
         return geo_copy
+
+    # Obsolete.
+    # It was used to getattr from the primitive object, but it was replaced
+    # with specific implementation into the respective api. However it could be still
+    # useful (for this reason is just commented).
+    # def __getattr__(self, key):
+    #     """
+    #     Transfer the key getattr to shape object.
+    #     """
+    #     if key in type(self).attrs:
+    #         output = getattr(self._shape, type(self).attrs[key])
+    #         if callable(output):
+    #             return self.__class__._converter(output)
+    #         else:
+    #             return output
+    #     else:
+    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
+    #             self).__name__), key))
