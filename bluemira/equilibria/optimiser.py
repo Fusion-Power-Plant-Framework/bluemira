@@ -1570,6 +1570,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # Create region map
         self.region_mapper = RegionMapper(pfregions)
 
+        # Store inputs
         self.max_currents = max_currents
         self.gamma = gamma
         self.opt_args = opt_args
@@ -1581,13 +1582,13 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             opt_args, dimension, bounds, self.f_min_objective
         )
 
-    def set_up_optimiser(self, dimension):
+    def get_mapped_state_bounds(self, region_mapper, max_currents):
+        """
+        Get coilset state bounds after position mapping.
         """
         # Get mapped position bounds from RegionMapper
-        _, lower_lmap_bounds, upper_lmap_bounds = self.region_mapper.get_Lmap(
-            self.coilset
-        )
-        current_bounds = self.get_current_bounds(self.max_currents)
+        _, lower_lmap_bounds, upper_lmap_bounds = region_mapper.get_Lmap(self.coilset)
+        current_bounds = self.get_current_bounds(max_currents)
 
         lower_bounds = np.concatenate((lower_lmap_bounds, current_bounds[0]))
         upper_bounds = np.concatenate((upper_lmap_bounds, current_bounds[1]))
