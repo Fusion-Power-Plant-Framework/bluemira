@@ -413,6 +413,17 @@ class TestGeometry:
         output = [(f.length, f.area) for f in face_cut]
         assert output == expected
 
+    @staticmethod
+    def _compare_fc_bm(fc_shape, bm_shape):
+        faces = bm_shape.boundary[0].boundary
+        fc_faces = fc_shape.Shells[0].Faces
+        for f, fc in zip(faces, fc_faces):
+            assert f.area == fc.Area
+            assert f._orientation == fc.Orientation
+            for w, fw in zip(f.boundary, fc.Wires):
+                assert w.length == fw.Length
+                assert w._orientation == fw.Orientation
+
     def test_cut_solids(self):
         face = BluemiraFace(
             make_polygon(
@@ -435,6 +446,11 @@ class TestGeometry:
 
         results = boolean_cut(solid2, solid)
         assert len(results) == 2
+        fc_result = cadapi.boolean_cut(solid2._shape, solid._shape)
+        assert result.is_valid()
+        assert fc_result.isValid()
+        for fc_shape, bm_shape in zip(fc_result, result):
+            self._compare_fc_bm(fc_shape, bm_shape)
 
     def test_fuse_solids(self):
         face = BluemiraFace(
@@ -456,7 +472,10 @@ class TestGeometry:
         )
         solid2 = extrude_shape(face2, (0, 0, 1))
         result = boolean_fuse([solid, solid2])
+        fc_result = cadapi.boolean_fuse([solid._shape, solid2._shape])
         assert result.is_valid()
+        assert fc_result.isValid()
+        self._compare_fc_bm(fc_result, result)
 
 
 class TestShapeTransformations:
