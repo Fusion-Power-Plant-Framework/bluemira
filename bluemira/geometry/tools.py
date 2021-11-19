@@ -25,7 +25,6 @@ Useful functions for bluemira geometries.
 # import from freecadapi
 from bluemira.geometry.base import BluemiraGeo
 
-# from bluemira.geometry.compound import BluemiraCompound
 from . import _freecadapi as cadapi
 
 # import bluemira geometries
