@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+import pytest
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon, offset_wire
@@ -61,7 +62,8 @@ class TestBluemiraFace:
             assert not face.is_null()
             assert face.is_valid()
             assert np.isclose(
-                face.area, BluemiraFace(face_list[0]).area - BluemiraFace(face_list[1]).area)
+                face.area,
+                BluemiraFace(face_list[0]).area - BluemiraFace(face_list[1]).area,
             )
 
     def test_two_offsets(self):
