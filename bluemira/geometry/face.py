@@ -32,7 +32,7 @@ import freecad  # noqa: F401
 import Part
 
 # import from bluemira
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.base import _Orientation, BluemiraGeo
 from bluemira.geometry.wire import BluemiraWire
 import bluemira.geometry._freecadapi as _freecadapi
 
@@ -99,6 +99,9 @@ class BluemiraFace(BluemiraGeo):
 
         if len(self.boundary) > 1:
             fholes = [Part.Face(h._shape) for h in self.boundary[1:]]
+            for fhole in fholes:
+                if fhole.Orientation != _Orientation.FORWARD:
+                    fhole.reverse()
             face = face.cut(fholes)
             if len(face.Faces) == 1:
                 face = face.Faces[0]
