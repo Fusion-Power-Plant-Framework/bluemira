@@ -1095,9 +1095,9 @@ class FirstWall(ReactorSystem):
         ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
         ["psi_norm", "Normalised flux value of strike-point contours",
          1, "N/A", None, "Input"],
-        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
-        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],
-        ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
+        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwith", True, True)}],
+        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwoth", True, True)}],
+        ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwoth", True, True)}],
         ['tk_div_cass', 'Minimum thickness between inner divertor profile and cassette', 0.3, 'm', None, 'Input'],
         ['tk_div_cass_in', 'Additional radial thickness on inboard side relative to to inner strike point', 0.1, 'm', None, 'Input'],
     ]
