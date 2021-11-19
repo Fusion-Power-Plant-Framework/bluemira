@@ -1614,7 +1614,6 @@ class FirstWallSN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        # ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
         ["fw_dx", "Minimum distance of FW to separatrix", 0.3, "m", None, "Input"],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "N/A", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
