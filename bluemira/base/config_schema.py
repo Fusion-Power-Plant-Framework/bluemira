@@ -108,8 +108,6 @@ class ConfigurationSchema:
     hf_limit: Parameter
 
     # SN/DN variables for heat flux transport
-    fw_dpsi_n_near: Parameter
-    fw_dpsi_n_far: Parameter
     fw_dx_omp: Parameter
     fw_dx_imp: Parameter
     fw_lambda_q_near_omp: Parameter
