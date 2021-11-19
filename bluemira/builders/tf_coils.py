@@ -284,8 +284,8 @@ class BuildTFWindingPack:  # (ActualFuckingComponent)
         x = self.wp_centreline.discretize(100).T[0]
         x_centreline_in = min(x)
         dx = x_centreline_in - x_in
-        outer = offset_wire(self.wp_centreline, -dx)
-        inner = offset_wire(self.wp_centreline, dx)
+        outer = offset_wire(self.wp_centreline, -dx, join="arc")
+        inner = offset_wire(self.wp_centreline, dx, join="arc")
         # Why do we have two labels, and why do we return target if it is an input?
         return PhysicalComponent(label, BluemiraFace([outer, inner], label))
 
