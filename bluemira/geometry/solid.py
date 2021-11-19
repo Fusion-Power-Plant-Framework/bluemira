@@ -46,7 +46,6 @@ class BluemiraSolid(BluemiraGeo):
         """Creation of the solid"""
         new_shell = self.boundary[0]._shape
         return self._check_reverse(cadapi.apiSolid(new_shell))
-        return cadapi.apiSolid(new_shell)
 
     @property
     def _shape(self):
@@ -57,8 +56,7 @@ class BluemiraSolid(BluemiraGeo):
     def _create(cls, obj: cadapi.apiSolid, label=""):
         if isinstance(obj, cadapi.apiSolid):
             orientation = obj.Orientation
-            if orientation != "Forward":
-                raise ValueError
+
             shells = obj.Shells
             if len(shells) == 1:
                 bmshell = BluemiraShell._create(shells[0])

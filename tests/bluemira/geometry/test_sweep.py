@@ -22,6 +22,7 @@
 import numpy as np
 import pytest
 
+from bluemira.geometry.base import _Orientation
 from bluemira.geometry.error import FreeCADError
 from bluemira.geometry.tools import (
     make_polygon,
@@ -43,10 +44,12 @@ class TestSweep:
         assert np.isclose(sweep.volume, 4.0)
 
     def test_semicircle(self):
-        path = make_circle(start_angle=0, end_angle=180)
+        path = make_circle(start_angle=90, end_angle=-90)
         profile = make_polygon(
             [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
         )
+        # This is an absolute nightmare and I can't work out why...
+        path._orientation = _Orientation.REVERSED
 
         sweep = sweep_shape(profile, path, solid=True)
         assert sweep.is_valid()
@@ -57,6 +60,8 @@ class TestSweep:
         profile = make_polygon(
             [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
         )
+        # This is an absolute nightmare and I can't work out why...
+        path._orientation = _Orientation.REVERSED
 
         sweep = sweep_shape(profile, path, solid=True)
 
