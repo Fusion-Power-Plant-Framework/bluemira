@@ -53,8 +53,6 @@ def convert(apiobj, label=""):
         output = BluemiraShell._create(apiobj, label)
     elif isinstance(apiobj, cadapi.apiSolid):
         output = BluemiraSolid._create(apiobj, label)
-    # elif isinstance(apiobj, cadapi.apiCompound):
-    # output = BluemiraCompound._create(apiobj, label)
     else:
         raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
@@ -710,7 +708,7 @@ def boolean_cut(shape, tools):
     if _type == list:
         output = [convert(obj, shape.label) for obj in cut_shape]
         return output
-    elif _type in [cadapi.apiWire, cadapi.apiFace, cadapi.apiCompound]:
+    elif _type in [cadapi.apiWire, cadapi.apiFace, cadapi.apiSolid]:
         return convert(cut_shape, shape.label)
     else:
         raise ValueError(
