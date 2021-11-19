@@ -226,10 +226,10 @@ class TestCoilsetOptimiser:
         )
 
         cls.coilset = CoilSet([coil2, circuit])
-        cls.pfregions = cls.create_rectangular_pfregions(cls.coilset)
+        cls.pfregions = cls.create_rectangular_pfregions(cls, cls.coilset)
         cls.optimiser = CoilsetOptimiser(cls.coilset, cls.pfregions)
 
-    def create_rectangular_pfregions(coilset):
+    def create_rectangular_pfregions(cls, coilset):
         max_coil_shifts = {
             "x_shifts_lower": -2.0,
             "x_shifts_upper": 1.0,
