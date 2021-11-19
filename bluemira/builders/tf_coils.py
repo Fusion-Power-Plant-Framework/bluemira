@@ -262,7 +262,13 @@ class MakeOptimisedTFWindingPack(ParameterisedShapeBuilder):
         )
 
 
-from bluemira.geometry.tools import sweep_shape, make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    sweep_shape,
+    make_polygon,
+    offset_wire,
+    circular_pattern,
+    boolean_cut,
+)
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.constants import MU_0
 
@@ -272,27 +278,81 @@ class BuildTFWindingPack:  # (ActualFuckingComponent)
     A class to build TF coil winding pack geometry
     """
 
+    name = "TFWindingPack"
+
     def __init__(self, wp_centreline, wp_cross_section):
         self.wp_centreline = wp_centreline
         self.wp_cross_section = wp_cross_section
 
+    def build_xy(self):
+        pass
+
     def build_xz(self):
-        label = "xz"
         # Christ... this is only robust because we know the shape isn't nuts
         x = self.wp_cross_section.discretize(100).T[0]
         x_in = min(x)
         x = self.wp_centreline.discretize(100).T[0]
         x_centreline_in = min(x)
         dx = x_centreline_in - x_in
-        outer = offset_wire(self.wp_centreline, -dx, join="arc")
-        inner = offset_wire(self.wp_centreline, dx, join="arc")
+        outer = offset_wire(self.wp_centreline, dx, join="arc")
+        inner = offset_wire(self.wp_centreline, -dx, join="arc")
         # Why do we have two labels, and why do we return target if it is an input?
-        return PhysicalComponent(label, BluemiraFace([outer, inner], label))
+        return PhysicalComponent(self.name, BluemiraFace([outer, inner], self.name))
 
     def build_xyz(self):
-        label = "xyz"
-        solid = sweep_shape(self.wp_cross_section, self.wp_centreline, label=label)
-        return PhysicalComponent(label, solid)
+        solid = sweep_shape(self.wp_cross_section, self.wp_centreline, label=self.name)
+        return PhysicalComponent(self.name, solid)
+
+
+class BuildTFInsulation:
+    name = "TFWPInsulation"
+
+    def __init__(self, wp_solid, wp_centreline, wp_cross_section, insulation_thickness):
+        self.wp_solid = wp_solid
+        self.wp_centreline = wp_centreline
+        self.wp_cross_section = wp_cross_section
+        self.tk_insulation = insulation_thickness
+
+    def build_xz(self):
+        x = self.wp_centreline.discretize(100).T[0]
+        x_centreline_in = min(x)
+
+        x_wp = self.wp_cross_section.discretize(100).T[0]
+        x_in_wp = min(x_wp)
+        x_out_wp = max(x_wp)
+        dx_wp = x_centreline_in - x_in_wp
+
+        ins_xs = offset_wire(self.wp_cross_section, self.tk_insulation)
+        x = ins_xs.discretize(100).T[0]
+        x_in_ins = min(x)
+        x_out_ins = max(x)
+
+        dx_ins = x_centreline_in - x_in_ins
+        outer = offset_wire(self.wp_centreline, dx_ins, join="arc")
+        inner = offset_wire(self.wp_centreline, dx_wp, join="arc")
+
+        outer_face = BluemiraFace([outer, inner])
+
+        outer = offset_wire(self.wp_centreline, -dx_wp, join="arc")
+        inner = offset_wire(self.wp_centreline, -dx_ins, join="arc")
+        inner_face = BluemiraFace([outer, inner])
+        # Why do we have two labels, and why do we return target if it is an input?
+        return [
+            PhysicalComponent(self.name, outer_face, self.name),
+            PhysicalComponent(self.name, inner_face, self.name),
+        ]
+
+    def build_xyz(self):
+        ins_xs = offset_wire(self.wp_cross_section, self.tk_insulation)
+
+        solid = sweep_shape(ins_xs, self.wp_centreline)
+        # This doesnt frigging work
+        ins_solid = boolean_cut(solid, self.wp_solid)
+        return PhysicalComponent(self.name, ins_solid)
+
+
+class BuildTFCasing:
+    pass
 
 
 class BuildTFCoils(Builder):
@@ -328,7 +388,18 @@ class ToroidalFieldSystem:
         builder = BuildTFWindingPack(self.wp_parameterisation.create_shape(), wp_xs)
         builder.build()
 
+        builder = BuildTFInsulation(
+            self.wp_parameterisation.create_shape(), wp_xs, self.params.tk_tf_ins
+        )
+
+        builder = BuildTFCasing()
+        builder.build()
+
+    def optimise(self):
+        pass
+
     def calculate_wp_current(self):
+        # Back of the envelope
         bm = -self.params.B_0 * self.params.R_0
         current = abs(2 * np.pi * bm / (self.params.n_TF * MU_0))
         self.params.add_parameter(
@@ -360,6 +431,7 @@ if __name__ == "__main__":
     x_wp_centroid = 4.0
     dx_wp = 0.5
     dy_wp = 0.6
+    tk_ins = 0.3
     # Offset wire is sadly very unstable...
     wp_centreline = TripleArc({"x1": {"value": x_wp_centroid}}).create_shape()
     wp_xs = make_polygon(
@@ -378,8 +450,21 @@ if __name__ == "__main__":
     inner = offset_wire(wp_centreline, dx_wp)
     xz_shape = builder.build_xz()
     xyz_shape = builder.build_xyz()
-    # xz_shape.plot_2d()
-    # xyz_shape.show_cad()
+    xz_shape.plot_2d()
+    xyz_shape.show_cad()
+
+    builder = BuildTFInsulation(xyz_shape, wp_centreline, wp_xs, tk_ins)
+    xz_ins_shape = builder.build_xz()
+
+    xz_shapes = [xz_shape]
+
+    xz_shapes.extend(xz_ins_shape)
+
+    import matplotlib.pyplot as plt
+
+    f, ax = plt.subplots()
+    for shape in xz_shapes:
+        shape.plot_2d(ax=ax, show=False)
 
     # # Sorry for the script... I needed to check if this was working
     # from bluemira.geometry.parameterisations import PrincetonD
