@@ -25,6 +25,9 @@ The home of Parameter and ParameterFrame objects
 These objects contain the definitions for the configuration of physical parameters in a
 bluemira analysis.
 """
+
+from __future__ import annotations
+
 import copy
 from dataclasses import dataclass
 import json
@@ -32,7 +35,7 @@ import os
 import gc
 from pandas import DataFrame
 from tabulate import tabulate
-from typing import Any, Dict, List, Union
+from typing import Dict, List, Union
 import wrapt
 import numpy as np
 from functools import wraps
@@ -42,6 +45,11 @@ from bluemira.base.look_and_feel import bluemira_warn
 
 
 __all__ = ["Parameter", "ParameterFrame", "ParameterMapping"]
+
+RecordList = List[List[Union[int, str, float]]]
+"""
+Type for parameters when represented as a record list.
+"""
 
 
 @dataclass
@@ -505,7 +513,7 @@ class ParameterFrame:
 
     Parameters
     ----------
-    record_list: List[List[Any]]
+    record_list: RecordList
         The list of records from which to build a ParameterFrame of Parameters
     with_defaults: bool
         initialise with the default parameters as a base, values will be
@@ -564,14 +572,14 @@ class ParameterFrame:
         cls.__defaults_set = True
 
     @classmethod
-    def set_template_parameters(cls, params: List[List[Any]]):
+    def set_template_parameters(cls, params: RecordList):
         """
         Fills the template parameters from the minimal content of the provided parameter
         records list.
 
         Parameters
         ----------
-        params: List[List[Any]]
+        params: RecordList
             The parameter record list to use to populate the template.
         """
         for param in params:
