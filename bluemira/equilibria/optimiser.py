@@ -1261,15 +1261,15 @@ class Norm2Tikhonov(CoilsetOptimiserBase):
         weights[i] = w[i] = sqrt(W[i,i]).
         """
         # Scale the control matrix and constraint vector by weights.
+        self.constraints(self.eq, I_not_dI=False)
         self.w = self.constraints.w
         self.A = self.w[:, np.newaxis] * self.constraints.A
         self.b = self.w * self.constraints.b
 
         # Optimise currents using analytic expression for optimum.
-        currents = tikhonov(self.A, self.b, self.gamma) / self.scale
+        current_adjustment = tikhonov(self.A, self.b, self.gamma)
 
-        coilset_state = np.concatenate((self.x0, self.z0, currents))
-        self.set_coilset_state(coilset_state)
+        self.coilset.adjust_currents(current_adjustment)
         return self.coilset
 
 
@@ -1335,6 +1335,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
 
         # Set up data needed in FoM evaluation.
         # Scale the control matrix and constraint vector by weights.
+        self.constraints(self.eq, I_not_dI=True, fixed_coils=True)
         self.w = self.constraints.w
         self.A = self.w[:, np.newaxis] * self.constraints.A
         self.b = self.w * self.constraints.b

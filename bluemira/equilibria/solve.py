@@ -447,7 +447,6 @@ class CoilsetPropertiesOptimiser:
         update_size: bool, optional
             If True then update the coilset size, by default True.
         """
-        self.constraints(self.eq, I_not_dI=True)
         try:
             coilset = self.optimiser(self.eq, self.constraints, psib)
             self.store.append(coilset)
