@@ -1436,49 +1436,33 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # noqa (N803)
         super().__init__(coilset)
 
+        # Create region map
         self.region_mapper = RegionMapper(pfregions)
 
+        # Store inputs
         self.max_currents = max_currents
         self.gamma = gamma
         self.opt_args = opt_args
 
         # Set up optimiser
-        self.opt = self.set_up_optimiser(len(self.initial_state))
-
-    def set_up_optimiser(self, dimension):
-        """
-        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
-        constraint & objective functions.
-
-        Parameters
-        ----------
-        dimension: int
-            Number of independent coil currents to optimise.
-            Should be equal to eq.coilset._ccoils when called.
-
-        Returns
-        -------
-        opt: nlopt.opt
-            NLOpt optimiser to be used for optimisation.
-        """
-        # Initialise NLOpt optimiser, with optimisation strategy and length
-        # of state vector
-        opt = Optimiser(**self.opt_args, n_variables=dimension)
-        # Set up objective function for optimiser
-        opt.set_objective_function(self.f_min_objective)
-
-        # Get mapped position bounds from RegionMapper
-        _, lower_lmap_bounds, upper_lmap_bounds = self.region_mapper.get_Lmap(
-            self.coilset
+        bounds = self.get_mapped_state_bounds(self.region_mapper, self.max_currents)
+        dimension = len(bounds[0])
+        self.opt = self.set_up_optimiser(
+            opt_args, dimension, bounds, self.f_min_objective
         )
-        current_bounds = self.get_current_bounds(self.max_currents)
+
+    def get_mapped_state_bounds(self, region_mapper, max_currents):
+        """
+        Get coilset state bounds after position mapping.
+        """
+        # Get mapped position bounds from RegionMapper
+        _, lower_lmap_bounds, upper_lmap_bounds = region_mapper.get_Lmap(self.coilset)
+        current_bounds = self.get_current_bounds(max_currents)
 
         lower_bounds = np.concatenate((lower_lmap_bounds, current_bounds[0]))
         upper_bounds = np.concatenate((upper_lmap_bounds, current_bounds[1]))
-
-        opt.set_lower_bounds(lower_bounds)
-        opt.set_upper_bounds(upper_bounds)
-        return opt
+        bounds = (lower_bounds, upper_bounds)
+        return bounds
 
     def optimise(self):
         """
@@ -1622,42 +1606,16 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         super().__init__(sub_opt.coilset)
 
         self.region_mapper = RegionMapper(pfregions)
-        self.initial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
+        self.opt_args = opt_args
 
         # Set up optimiser
-        self.opt_args = opt_args
-        self.opt = self.set_up_optimiser(len(self.initial_mapped_positions))
-        self.sub_opt = sub_opt
-
-    def set_up_optimiser(self, dimension):
-        """
-        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
-        constraint & objective functions.
-
-        Parameters
-        ----------
-        dimension: int
-            Number of independent coil coordinates to optimise.
-            Should be equal to the number of independent position coordinates
-            of the control coils when called.
-
-        Returns
-        -------
-        opt: nlopt.opt
-            NLOpt optimiser to be used for optimisation.
-        """
-        # Initialise NLOpt optimiser, with optimisation strategy and length
-        # of state vector
-        opt = Optimiser(**self.opt_args, n_variables=dimension)
-        # Set up objective function for optimiser
-        opt.set_objective_function(self.f_min_objective)
-
-        # Get mapped position bounds from RegionMapper
         _, lower_bounds, upper_bounds = self.region_mapper.get_Lmap(self.coilset)
-
-        opt.set_lower_bounds(lower_bounds)
-        opt.set_upper_bounds(upper_bounds)
-        return opt
+        bounds = (lower_bounds, upper_bounds)
+        dimension = len(bounds[0])
+        self.opt = self.set_up_optimiser(
+            opt_args, dimension, bounds, self.f_min_objective
+        )
+        self.sub_opt = sub_opt
 
     def optimise(self):
         """
@@ -1667,7 +1625,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         """
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset)
-        x_vals, z_vals, self.currents = np.array_split(initial_state, substates)
+        _, _, self.currents = np.array_split(initial_state, substates)
         intial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
 
         # Optimise
@@ -1734,19 +1692,9 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
         # Update target
         self.eq._remap_greens()
-
         self.constraints(self.eq, I_not_dI=True, fixed_coils=False)
-        self.A = self.constraints.A
-        self.b = self.constraints.b
-        self.w = self.constraints.w
-        self.A = self.w[:, np.newaxis] * self.A
-        self.b *= self.w
 
         # Calculate objective function
-        self.currents = self.sub_opt(self.eq, self.constraints) / self.scale
+        self.sub_opt(self.eq, self.constraints)
         fom = self.sub_opt.opt.optimum_value
-
-        # Update coilset state with optimised currents
-        coilset_state = np.concatenate((positions, self.currents))
-        self.set_coilset_state(coilset_state)
         return fom
