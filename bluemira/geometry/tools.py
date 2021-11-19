@@ -24,7 +24,8 @@ Useful functions for bluemira geometries.
 """
 # import from freecadapi
 from bluemira.geometry.base import BluemiraGeo
-from . import _freecadapi
+from bluemira.geometry.compound import BluemiraCompound
+from . import _freecadapi as cadapi
 
 # import bluemira geometries
 from .wire import BluemiraWire
@@ -43,14 +44,16 @@ from typing import Union, Iterable
 
 def convert(apiobj, label=""):
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
-    if isinstance(apiobj, _freecadapi.apiWire):
+    if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
-    elif isinstance(apiobj, _freecadapi.apiFace):
+    elif isinstance(apiobj, cadapi.apiFace):
         output = BluemiraFace._create(apiobj, label)
-    elif isinstance(apiobj, _freecadapi.apiShell):
+    elif isinstance(apiobj, cadapi.apiShell):
         output = BluemiraShell._create(apiobj, label)
-    elif isinstance(apiobj, _freecadapi.apiSolid):
+    elif isinstance(apiobj, cadapi.apiSolid):
         output = BluemiraSolid._create(apiobj, label)
+    elif isinstance(apiobj, cadapi.apiCompound):
+        output = BluemiraCompound._create(apiobj, label)
     else:
         raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
@@ -80,7 +83,7 @@ def make_polygon(
     wire: BluemiraWire
         a bluemira wire that contains the polygon
     """
-    return BluemiraWire(_freecadapi.make_polygon(points, closed), label=label)
+    return BluemiraWire(cadapi.make_polygon(points, closed), label=label)
 
 
 def make_bspline(
@@ -107,7 +110,7 @@ def make_bspline(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
-    return BluemiraWire(_freecadapi.make_bspline(points, closed), label=label)
+    return BluemiraWire(cadapi.make_bspline(points, closed), label=label)
 
 
 def make_bezier(
@@ -131,7 +134,7 @@ def make_bezier(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
-    return BluemiraWire(_freecadapi.make_bezier(points, closed), label=label)
+    return BluemiraWire(cadapi.make_bezier(points, closed), label=label)
 
 
 def make_circle(
@@ -167,7 +170,7 @@ def make_circle(
     wire: BluemiraWire
         bluemira wire that contains the arc or circle
     """
-    output = _freecadapi.make_circle(radius, center, start_angle, end_angle, axis)
+    output = cadapi.make_circle(radius, center, start_angle, end_angle, axis)
     return BluemiraWire(output, label=label)
 
 
@@ -190,7 +193,7 @@ def make_circle_arc_3P(p1, p2, p3, label: str = ""):  # noqa: N802
         bluemira wire that contains the arc or circle
     """
     # TODO: check what happens when the 3 points are in a line
-    output = _freecadapi.make_circle_arc_3P(p1, p2, p3)
+    output = cadapi.make_circle_arc_3P(p1, p2, p3)
     return BluemiraWire(output, label=label)
 
 
@@ -232,7 +235,7 @@ def make_ellipse(
     wire: BluemiraWire:
          Bluemira wire that contains the arc or ellipse
     """
-    output = _freecadapi.make_ellipse(
+    output = cadapi.make_ellipse(
         center,
         major_radius,
         minor_radius,
@@ -261,7 +264,7 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
             Closure wire
     """
     wire = bmwire._shape
-    closure = BluemiraWire(_freecadapi.wire_closure(wire), label=label)
+    closure = BluemiraWire(cadapi.wire_closure(wire), label=label)
     return closure
 
 
@@ -294,7 +297,7 @@ def offset_wire(
         Offset wire
     """
     return BluemiraWire(
-        _freecadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
+        cadapi.offset_wire(wire._shape, thickness, join, open_wire), label=label
     )
 
 
@@ -326,7 +329,7 @@ def revolve_shape(
     shape: BluemiraSolid
         the revolved shape.
     """
-    solid = _freecadapi.revolve_shape(shape._shape, base, direction, degree)
+    solid = cadapi.revolve_shape(shape._shape, base, direction, degree)
     faces = solid.Faces
     bmfaces = []
     for face in faces:
@@ -357,7 +360,7 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label=None) -> BluemiraSolid:
     if label is None:
         label = shape.label
 
-    solid = _freecadapi.extrude_shape(shape._shape, vec)
+    solid = cadapi.extrude_shape(shape._shape, vec)
     faces = solid.Faces
     bmfaces = []
     for face in faces:
@@ -393,7 +396,7 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
 
     profile_shapes = [p._shape for p in profiles]
 
-    result = _freecadapi.sweep_shape(profile_shapes, path._shape, solid, frenet)
+    result = cadapi.sweep_shape(profile_shapes, path._shape, solid, frenet)
 
     if solid:
         return BluemiraSolid._create(result, label=label)
@@ -422,7 +425,7 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     """
     shape1 = geo1._shape
     shape2 = geo2._shape
-    return _freecadapi.dist_to_shape(shape1, shape2)
+    return cadapi.dist_to_shape(shape1, shape2)
 
 
 def circular_pattern(
@@ -482,7 +485,7 @@ def save_as_STEP(shapes, filename="test", scale=1):
         shapes = [shapes]
 
     freecad_shapes = [s._shape for s in shapes]
-    _freecadapi.save_as_STEP(freecad_shapes, filename, scale)
+    cadapi.save_as_STEP(freecad_shapes, filename, scale)
 
 
 # ======================================================================================
@@ -671,9 +674,9 @@ def boolean_fuse(shapes, label=""):
         raise ValueError(f"All instances in {shapes} must be of the same type.")
     api_shapes = [s._shape for s in shapes]
     try:
-        merged_shape = _freecadapi.boolean_fuse(api_shapes)
+        merged_shape = cadapi.boolean_fuse(api_shapes)
         _type = type(merged_shape)
-        if _type in [_freecadapi.apiWire, _freecadapi.apiFace]:
+        if _type in [cadapi.apiWire, cadapi.apiFace]:
             return convert(merged_shape, label)
         else:
             raise ValueError(
@@ -708,13 +711,13 @@ def boolean_cut(shape, tools):
     if not isinstance(tools, list):
         tools = [tools]
     apitools = [t._shape for t in tools]
-    cut_shape = _freecadapi.boolean_cut(apishape, apitools)
+    cut_shape = cadapi.boolean_cut(apishape, apitools)
 
     _type = type(cut_shape)
     if _type == list:
         output = [convert(obj, shape.label) for obj in cut_shape]
         return output
-    elif _type in [_freecadapi.apiWire, _freecadapi.apiFace]:
+    elif _type in [cadapi.apiWire, cadapi.apiFace, cadapi.apiCompound]:
         return convert(cut_shape, shape.label)
     else:
         raise ValueError(

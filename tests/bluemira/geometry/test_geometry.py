@@ -422,8 +422,17 @@ class TestGeometry:
             )
         )
 
-        solid = extrude_shape(face, (0, 0, 1))
-        solid2 = extrude_shape(face, (0, 0, 2))
+        solid = extrude_shape(face, (0, 0, 5))
+
+        face2 = BluemiraFace(
+            make_polygon(
+                [[-1, 0, 1], [2, 0, 1], [2, 1, 1], [-1, 1, 1]],
+                label="wire2",
+                closed=True,
+            )
+        )
+        solid2 = extrude_shape(face2, (0, 0, 1))
+
         result = boolean_cut(solid2, solid)
         assert np.isclose(result.volume, solid.volume)
 

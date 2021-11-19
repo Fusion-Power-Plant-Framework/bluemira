@@ -1010,7 +1010,7 @@ def boolean_cut(shape, tools, split=True):
     elif _type == Part.Shell:
         output = cut_shape.Shells
     elif _type == Part.Solid:
-        output = cut_shape.Solid
+        output = cut_shape.Solids
     else:
         raise ValueError(f"Cut function not implemented for {_type} objects.")
     return output
