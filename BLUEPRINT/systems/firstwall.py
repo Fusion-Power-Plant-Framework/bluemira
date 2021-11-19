@@ -1773,8 +1773,8 @@ class FirstWallDN(FirstWall):
     # fmt: off
     default_params = FirstWall.base_default_params + [
         ["fw_psi_init", "Initial psi norm value", 1, "N/A", None, "Input"],
-        ["fw_dx_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
-        ["fw_dx_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
+        ["fw_init_gap_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
+        ["fw_init_gap_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
         ["fw_p_sol_near", "near Scrape off layer power", 90, "MW", None, "Input"],
         ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
@@ -1852,7 +1852,7 @@ class FirstWallDN(FirstWall):
         fw_loop: Loop
             Here the first wall is without divertor. The wall is cut at the X-point
         """
-        dx_loop_lfs = self.lcfs.offset(self.params.fw_dx_omp)
+        dx_loop_lfs = self.lcfs.offset(self.params.fw_init_gap_omp)
         clip_lfs = np.where(
             dx_loop_lfs.x > self.points["x_point"]["x"],
         )
@@ -1861,7 +1861,7 @@ class FirstWallDN(FirstWall):
             z=dx_loop_lfs.z[clip_lfs],
         )
 
-        dx_loop_hfs = self.lcfs.offset(self.params.fw_dx_imp)
+        dx_loop_hfs = self.lcfs.offset(self.params.fw_init_gap_imp)
         clip_hfs = np.where(
             dx_loop_hfs.x < self.points["x_point"]["x"],
         )
@@ -1945,7 +1945,7 @@ class FirstWallDN(FirstWall):
                 elif loop_plane_intersect(loop, self.mid_plane)[0][0] < self.points[
                     "o_point"
                 ]["x"] and loop_plane_intersect(loop, self.mid_plane)[0][0] > (
-                    self.x_imp_lcfs - self.params.fw_dx_imp
+                    self.x_imp_lcfs - self.params.fw_init_gap_imp
                 ):
                     clip_vertical = np.where(loop.x < self.points["x_point"]["x"])
 
