@@ -663,7 +663,7 @@ def boolean_fuse(shapes, label=""):
         return convert(merged_shape, label)
 
     except Exception as e:
-        raise GeometryError(f"Booled fuse operation failed. {e}")
+        raise GeometryError(f"Boolean fuse operation failed: {e}")
 
 
 def boolean_cut(shape, tools):
