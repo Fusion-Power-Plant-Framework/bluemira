@@ -23,9 +23,9 @@
 Built-in build steps for making a parameterised plasma
 """
 
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Type
 
-from bluemira.base.builder import BuildResult
+from bluemira.base.builder import BuildResult, BuildConfig
 from bluemira.base.components import PhysicalComponent
 import bluemira.geometry as geo
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -48,7 +48,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
     _targets: Dict[str, str]
     _segment_angle: float
 
-    def _extract_config(self, build_config: Dict[str, Union[float, int, str]]):
+    def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
         self._targets = build_config["targets"]

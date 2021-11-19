@@ -23,13 +23,20 @@
 Interfaces for builder and build steps classes
 """
 
+from __future__ import annotations
+
 import abc
-from typing import Any, Dict, List, Literal, NamedTuple
+from typing import Dict, List, Literal, NamedTuple, Union
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
+
+BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
+"""
+Type alias for representing nested build configuration information.
+"""
 
 
 class BuildResult(NamedTuple):
@@ -51,7 +58,7 @@ class Builder(abc.ABC):
     _required_config: List[str] = []
     _params: ParameterFrame
 
-    def __init__(self, params, build_config: Dict[str, Any], **kwargs):
+    def __init__(self, params, build_config: BuildConfig, **kwargs):
         self._name = build_config["name"]
 
         self._validate_config(build_config)
@@ -135,7 +142,7 @@ class Builder(abc.ABC):
                 missing += [req]
         return missing
 
-    def _validate_config(self, build_config):
+    def _validate_config(self, build_config: BuildConfig):
         missing_config = self._validate_requirement(build_config, "config")
 
         if missing_config != []:
@@ -157,5 +164,5 @@ class Builder(abc.ABC):
         self._validate_params(params)
         self._params.update_kw_parameters(params)
 
-    def _extract_config(self, build_config: Dict[str, Any]):
+    def _extract_config(self, build_config: BuildConfig):
         pass

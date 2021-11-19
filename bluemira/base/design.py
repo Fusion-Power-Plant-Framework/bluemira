@@ -23,9 +23,9 @@
 Module containing the bluemira Design class.
 """
 
-from typing import Dict, List, Type, Union
+from typing import List, Type
 
-from bluemira.base.builder import Builder
+from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.components import ComponentManager
 from bluemira.base.config import Configuration
 from bluemira.utilities.tools import get_module
@@ -41,7 +41,7 @@ class Design:
 
     _required_params: List[str] = ["Name"]
     _params: Configuration
-    _build_config: Dict[str, Dict[str, Union[float, int, str]]]
+    _build_config: BuildConfig
     _builders: List[Builder]
     _component_manager: ComponentManager
 

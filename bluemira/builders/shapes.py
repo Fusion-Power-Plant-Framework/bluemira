@@ -23,9 +23,9 @@
 Built-in build steps for making shapes
 """
 
-from typing import Any, Dict, List, Type, Union
+from typing import Dict, List, Type
 
-from ..base.builder import Builder, BuildResult
+from ..base.builder import BuildConfig, Builder, BuildResult
 from ..base.components import PhysicalComponent
 from ..geometry.optimisation import GeometryOptimisationProblem
 from ..geometry.parameterisations import GeometryParameterisation
@@ -43,7 +43,7 @@ class ParameterisedShapeBuilder(Builder):
     _param_class: Type[GeometryParameterisation]
     _variables_map: Dict[str, str]
 
-    def _extract_config(self, build_config: Dict[str, Any]):
+    def _extract_config(self, build_config: BuildConfig):
         def _get_param_class(param_class: str) -> Type[GeometryParameterisation]:
             module = "bluemira.geometry.parameterisations"
             class_name = param_class
@@ -106,7 +106,7 @@ class MakeParameterisedShape(ParameterisedShapeBuilder):
 
     _target: str
 
-    def _extract_config(self, build_config: Dict[str, Any]):
+    def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
         self._target: str = build_config["target"]
@@ -165,7 +165,7 @@ class MakeOptimisedShape(MakeParameterisedShape):
             self.optimise()
         return self.build()
 
-    def _extract_config(self, build_config: Dict[str, Union[float, int, str]]):
+    def _extract_config(self, build_config: BuildConfig):
         def get_problem_class(class_path: str) -> Type[GeometryOptimisationProblem]:
             if "::" in class_path:
                 module, class_name = class_path.split("::")
