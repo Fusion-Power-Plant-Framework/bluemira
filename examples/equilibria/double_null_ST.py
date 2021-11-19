@@ -257,11 +257,10 @@ def init_equilibrium(grid, coilset, constraint_set):
         li=None,
     )
     constraint_set(eq)
-    optimiser = Norm2Tikhonov(gamma=1e-7)
-    currents = optimiser(eq, constraint_set)
+    optimiser = Norm2Tikhonov(coilset_temp, gamma=1e-7)
+    coilset_temp = optimiser(eq, constraint_set)
 
-    coilset_temp.set_control_currents(currents)
-    coilset.set_control_currents(currents)
+    coilset.set_control_currents(coilset_temp.get_control_currents())
 
     psi = coilset_temp.psi(grid.x, grid.z).copy()
 
@@ -299,9 +298,9 @@ def pre_optimise(eq, profile, constraint_set):
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = Norm2Tikhonov(gamma=1e-8)  # This is still a bit of a magic number..
+    optimiser = Norm2Tikhonov(eq.coilset, gamma=1e-8)
 
-    program = PicardDeltaIterator(
+    program = PicardAbsCoilsetIterator(
         eq,
         profile,  # jetto
         constraint_set,
@@ -329,7 +328,7 @@ def set_coilset_optimiser(
     """
     pfregions = init_pfregions(coilset)
     if optimiser_name in ["Norm2Tikhonov"]:
-        optimiser = Norm2Tikhonov(**optimisation_options)
+        optimiser = Norm2Tikhonov(coilset, **optimisation_options)
     elif optimiser_name in ["BoundedCurrentOptimiser"]:
         optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
     elif optimiser_name in ["CoilsetOptimiser"]:
@@ -360,6 +359,7 @@ def set_iterator(eq, profile, constraint_set, optimiser):
         "BoundedCurrentOptimiser",
         "CoilsetOptimiser",
         "NestedCoilsetOptimiser",
+        "Norm2Tikhonov",
     ]:
         program = PicardAbsCoilsetIterator(*iterator_args, **iterator_kwargs)
     else:

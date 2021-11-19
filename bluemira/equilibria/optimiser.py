@@ -123,35 +123,6 @@ class EquilibriumOptimiser:
         return deepcopy(self)
 
 
-class Norm2Tikhonov(EquilibriumOptimiser):
-    """
-    Unconstrained norm-2 optimisation with Tikhonov regularisation
-
-    Returns x*
-    """
-
-    def __init__(self, gamma=1e-12):
-        self.gamma = gamma
-
-    def optimise(self):
-        """
-        Optimise the prescribed problem.
-        """
-        self.x = tikhonov(self.A, self.b, self.gamma)
-        self.calc_error()
-        return self.x
-
-    def calc_error(self):
-        """
-        Calculate the RSS and RMS errors.
-        """
-        x = self.x.reshape(-1, 1)
-        b = self.b.reshape(len(self.b), 1)
-        err = np.dot(self.A, x) - b
-        self.rms_error = np.sqrt(np.mean(err ** 2 + (self.gamma * self.x) ** 2))
-        self.rss_error = np.sum(err ** 2) + np.sum((self.gamma * self.x) ** 2)
-
-
 class PositionOptimiser:
     """
     Coil position optimiser a la McIntosh
@@ -1090,6 +1061,9 @@ class CoilsetOptimiserBase:
     Base class for optimisers acting on data stored in Coilsets,
     such as coil currents and coil positions.
 
+    Child classes must provide the following methods:
+        .optimise(self) ==> return: self.coilset
+
     Parameters
     ----------
     coilset: CoilSet
@@ -1257,15 +1231,26 @@ class CoilsetOptimiserBase:
             The Constraints to apply to the equilibrium. NOTE: these only
             include linearised constraints. Quadratic and/or non-linear
             constraints must be provided in the sub-classes
+        """
+        self.eq = eq
+        self.constraints = constraints
+        return self.optimise()
 
-        Attributes
-        ----------
-        A: np.array(N, M)
-            Response matrix
-        b: np.array(N)
-            Constraint vector
 
-        \t:math:`\\mathbf{A}\\mathbf{x}-\\mathbf{b}=\\mathbf{b_{plasma}}`
+class Norm2Tikhonov(CoilsetOptimiserBase):
+    """
+    Unconstrained norm-2 optimisation with Tikhonov regularisation
+
+    Returns x*
+    """
+
+    def __init__(self, coilset, gamma=1e-12):
+        super().__init__(coilset)
+        self.gamma = gamma
+
+    def optimise(self):
+        """
+        Optimise the prescribed problem.
 
         Notes
         -----
@@ -1275,9 +1260,17 @@ class CoilsetOptimiserBase:
         function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
         weights[i] = w[i] = sqrt(W[i,i]).
         """
-        self.eq = eq
-        self.constraints = constraints
-        return self.optimise()
+        # Scale the control matrix and constraint vector by weights.
+        self.w = self.constraints.w
+        self.A = self.w[:, np.newaxis] * self.constraints.A
+        self.b = self.w * self.constraints.b
+
+        # Optimise currents using analytic expression for optimum.
+        currents = tikhonov(self.A, self.b, self.gamma) / self.scale
+
+        coilset_state = np.concatenate((self.x0, self.z0, currents))
+        self.set_coilset_state(coilset_state)
+        return self.coilset
 
 
 class BoundedCurrentOptimiser(CoilsetOptimiserBase):
