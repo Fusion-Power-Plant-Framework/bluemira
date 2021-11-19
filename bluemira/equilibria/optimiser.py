@@ -1181,9 +1181,9 @@ class CoilsetOptimiserBase:
         bounds = np.array([lower_bounds, upper_bounds])
         return bounds
 
-    def get_current_bounds(self, max_currents):
+    def update_current_constraint(self, max_currents):
         """
-        Gets the current vector bounds. Must be called prior to optimise.
+        Updates the current vector bounds. Must be called prior to optimise.
 
         Parameters
         ----------
@@ -1191,88 +1191,27 @@ class CoilsetOptimiserBase:
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
             maximum allowed current magnitude for all coils.
-            If the coils have current density limits that are more restrictive than these
-            coil currents, the smaller current limit of the two will be used for each
-            coil.
 
         Returns
         -------
-        current_bounds: (np.narray, np.narray)
-            Tuple of arrays containing lower and upper bounds for currents
-            permitted in each control coil.
+        i_max: float or np.ndarray
+            Maximum magnitude(s) of currents allowed in each coil.
         """
-        n_control_currents = len(self.coilset.get_control_currents())
-        scaled_input_current_limits = np.inf * np.ones(n_control_currents)
+        i_max = np.inf * np.ones(len(self.I0))
 
         if max_currents is not None:
-            input_current_limits = np.asarray(max_currents)
-            input_size = np.size(np.asarray(input_current_limits))
-            if input_size == 1 or input_size == n_control_currents:
-                scaled_input_current_limits = input_current_limits / self.scale
+            control_current_limits = np.asarray(max_currents)
+            if np.size(control_current_limits) == 1 or np.size(
+                control_current_limits
+            ) == np.size(self.I0):
+                i_max = control_current_limits / self.scale
             else:
                 raise EquilibriaError(
                     "Length of max_currents array provided to optimiser is not"
-                    "equal to the number of control currents present."
+                    "equal to the number of control coils present."
                 )
 
-        # Get the current limits from coil current densities
-        coilset_current_limits = self.coilset.get_max_currents(0.0)
-        if len(coilset_current_limits) != n_control_currents:
-            raise EquilibriaError(
-                "Length of array containing coilset current limits"
-                "is not equal to the number of control currents in optimiser."
-            )
-
-        # Limit the control current magnitude by the smaller of the two limits
-        control_current_limits = np.minimum(
-            scaled_input_current_limits, coilset_current_limits
-        )
-        current_bounds = (-control_current_limits, control_current_limits)
-
-        return current_bounds
-
-    def set_up_optimiser(self, opt_args, dimension, bounds, objective_func):
-        """
-        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
-        constraint & objective functions.
-
-        Parameters
-        ----------
-        dimension: int
-            Number of independent coil currents to optimise.
-            Should be equal to eq.coilset._ccoils when called.
-
-        Returns
-        -------
-        opt: nlopt.opt
-            NLOpt optimiser to be used for optimisation.
-        """
-        # Initialise NLOpt optimiser, with optimisation strategy and length
-        # of state vector
-        opt = Optimiser(**opt_args, n_variables=dimension)
-
-        # Set up objective function for optimiser
-        opt.set_objective_function(objective_func)
-
-        # Apply constraints
-        self.set_up_constraints(opt)
-
-        # Set state vector bounds (current limits)
-        opt.set_lower_bounds(bounds[0])
-        opt.set_upper_bounds(bounds[1])
-        return opt
-
-    def set_up_constraints(self, opt):
-        """
-        Updates the optimiser in-place to apply problem constraints.
-        To be overidden by child classes to apply specific constraints.
-
-        Parameters
-        ----------
-        opt: Optimiser
-            Optimiser to apply constraints to. Updated in-place.
-        """
-        return opt
+        return i_max
 
     def __call__(self, eq, constraints, psi_bndry=None):
         """
@@ -1435,6 +1374,138 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         return fom
 
 
+class BoundedCurrentOptimiser(CoilsetOptimiserBase):
+    """
+    NLOpt based optimiser for coil currents subject to maximum current bounds.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset used to get coil current limits and number of coils.
+    max_currents float or np.array(len(coilset._ccoils)) (default = None)
+        Maximum allowed current for each independent coil current in coilset [A].
+        If specified as a float, the float will set the maximum allowed current
+        for all coils.
+    gamma: float (default = 1e-8)
+        Tikhonov regularisation parameter in units of [A⁻¹].
+    opt_args: dict
+        Dictionary containing arguments to pass to NLOpt optimiser.
+        Defaults to using LD_SLSQP.
+    """
+
+    def __init__(
+        self,
+        coilset,
+        max_currents=None,
+        gamma=1e-8,
+        opt_args={
+            "algorithm_name": "SLSQP",
+            "opt_conditions": {
+                "xtol_rel": 1e-4,
+                "xtol_abs": 1e-4,
+                "ftol_rel": 1e-4,
+                "ftol_abs": 1e-4,
+                "max_eval": 100,
+            },
+            "opt_parameters": {},
+        },
+    ):
+        # noqa (N803)
+        super().__init__(coilset)
+
+        self.I_max = self.update_current_constraint(max_currents)
+
+        self.gamma = gamma
+
+        self.opt_args = opt_args
+
+        # Set up optimiser
+        self.opt = self.set_up_optimiser(len(self.I0))
+
+    def set_up_optimiser(self, dimension):
+        """
+        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
+        constraint & objective functions.
+
+        Parameters
+        ----------
+        dimension: int
+            Number of independent coil currents to optimise.
+            Should be equal to eq.coilset._ccoils when called.
+
+        Returns
+        -------
+        opt: nlopt.opt
+            NLOpt optimiser to be used for optimisation.
+        """
+        # Initialise NLOpt optimiser, with optimisation strategy and length
+        # of state vector
+        opt = Optimiser(**self.opt_args, n_variables=dimension)
+
+        # Set up objective function for optimiser
+        opt.set_objective_function(self.f_min_objective)
+
+        # Set state vector bounds (current limits)
+        opt.set_lower_bounds(-self.I_max)
+        opt.set_upper_bounds(self.I_max)
+
+        return opt
+
+    def optimise(self):
+        """
+        Optimiser handle. Used in __call__
+
+        Returns np.ndarray of optimised currents
+        in each coil [A].
+        """
+        # Get initial currents, and trim to within current bounds.
+        initial_currents = np.clip(self.I0, -self.I_max, self.I_max)
+
+        # Set up data needed in FoM evaluation.
+        # Scale the control matrix and constraint vector by weights.
+        self.w = self.constraints.w
+        self.A = self.w[:, np.newaxis] * self.constraints.A
+        self.b = self.w * self.constraints.b
+
+        # Optimise
+        currents = self.opt.optimise(initial_currents)
+
+        coilset_state = np.concatenate((self.x0, self.z0, currents))
+        self.set_coilset_state(coilset_state)
+        return self.coilset
+
+    def f_min_objective(self, vector, grad):
+        """
+        Objective function for nlopt optimisation (minimisation),
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+        grad: np.array
+            Local gradient of objective function used by LD NLOPT algorithms.
+            Updated in-place.
+
+        Returns
+        -------
+        fom: Value of objective function (figure of merit).
+        """
+        vector = vector * self.scale
+        fom, err = regularised_lsq_fom(vector, self.A, self.b, self.gamma)
+        if grad.size > 0:
+            jac = 2 * self.A.T @ self.A @ vector / np.float(len(self.b))
+            jac -= 2 * self.A.T @ self.b / np.float(len(self.b))
+            jac += 2 * self.gamma * self.gamma * vector
+            grad[:] = self.scale * jac
+        if not fom > 0:
+            raise EquilibriaError(
+                "Optimiser least-squares objective function less than zero or nan."
+            )
+        return fom
+
+
 class CoilsetOptimiser(CoilsetOptimiserBase):
     """
     NLOpt based optimiser for coilsets (currents and positions)
@@ -1501,9 +1572,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             opt_args, dimension, bounds, self.f_min_objective
         )
 
-    def get_mapped_state_bounds(self, region_mapper, max_currents):
-        """
-        Get coilset state bounds after position mapping.
+    def set_up_optimiser(self, dimension):
         """
         # Get mapped position bounds from RegionMapper
         _, lower_lmap_bounds, upper_lmap_bounds = region_mapper.get_Lmap(self.coilset)
