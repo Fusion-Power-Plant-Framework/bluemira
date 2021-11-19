@@ -247,9 +247,6 @@ class TestCoilsetOptimiser:
 
         cls.optimiser = CoilsetOptimiser(cls.coilset, cls.pfregions)
 
-    def create_rectangular_pfregions(self, coilset):
-        return pfregions
-
     def test_modify_coilset(self):
         # Read
         coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
