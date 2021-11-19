@@ -262,18 +262,6 @@ class TestFirstWallDN:
         min_z = round(tar_out[0][1], 5)
         # min_z = round(max_z - 2.25,5)
 
-        # TODO: I don't understand this test, and I suspect it is because the flux
-        # loops are incorrect.
-        # # Check the bounds
-        # div_x_max = np.max(div.x)
-        # div_x_min = np.min(div.x)
-        # div_z_max = np.max(div.z)
-        # div_z_min = np.min(div.z)
-        # assert div_x_max == max_x
-        # assert div_x_min == min_x
-        # assert div_z_max == max_z
-        # assert div_z_min == min_z
-
     # Test build for different combinations of thicknesses
     @pytest.mark.parametrize("tk_in", [0.1])
     @pytest.mark.parametrize("tk_out_diff", [0.0, 0.05, -0.05])

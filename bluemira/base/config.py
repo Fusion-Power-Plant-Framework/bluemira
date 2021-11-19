@@ -117,10 +117,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_imp', 'Lambda_q far SOL imp', 0.1, 'm', None, 'Input'],
-        ['f_lfs_lower_target', 'Power fraction lfs lower', 0.5, 'N/A', None, 'Input'],
-        ['f_lfs_upper_target', 'Power fraction lfs upper', 0.5, 'N/A', None, 'Input'],
-        ['f_hfs_lower_target', 'Power fraction hfs lower', 0.5, 'N/A', None, 'Input'],
-        ['f_hfs_upper_target', 'Power fraction hfs upper', 0.5, 'N/A', None, 'Input'],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.5, "N/A", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.5, "N/A", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.5, "N/A", None, "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.5, "N/A", None, "Input"],
 
         # Divertor profile
         ['div_L2D_ib', 'Inboard divertor leg length', 1.1, 'm', None, 'Input'],
