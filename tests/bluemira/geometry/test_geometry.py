@@ -24,6 +24,7 @@ from scipy.special import ellipe
 import math
 import pytest
 
+import bluemira.geometry._freecadapi as cadapi
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -447,9 +448,10 @@ class TestGeometry:
         results = boolean_cut(solid2, solid)
         assert len(results) == 2
         fc_result = cadapi.boolean_cut(solid2._shape, solid._shape)
-        assert result.is_valid()
-        assert fc_result.isValid()
-        for fc_shape, bm_shape in zip(fc_result, result):
+
+        for fc_shape, bm_shape in zip(fc_result, results):
+            fc_shape.isValid()
+            bm_shape.is_valid()
             self._compare_fc_bm(fc_shape, bm_shape)
 
     def test_fuse_solids(self):
@@ -614,40 +616,3 @@ def test_circular_pattern():
     assert len(shapes) == 5
     for s in shapes:
         assert np.isclose(solid.volume, s.volume)
-
-
-if __name__ == "__main__":
-    import bluemira.geometry._freecadapi as cadapi
-
-    face = BluemiraFace(
-        make_polygon(
-            [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-            label="wire1",
-            closed=True,
-        )
-    )
-
-    solid = extrude_shape(face, (0, 0, 5))
-
-    face2 = BluemiraFace(
-        make_polygon(
-            [[-1, 0, 1], [2, 0, 1], [2, 1, 1], [-1, 1, 1]],
-            label="wire2",
-            closed=True,
-        )
-    )
-    solid2 = extrude_shape(face2, (0, 0, 1))
-
-    result = boolean_fuse([solid, solid2])
-
-    fc_result = cadapi.boolean_fuse([solid._shape, solid2._shape])
-
-    fc_faces = fc_result.Shells[0].Faces
-    faces = result.boundary[0].boundary
-
-    for f, fc in zip(faces, fc_faces):
-        assert f.area == fc.Area
-        assert f._orientation == fc.Orientation
-        for w, fw in zip(f.boundary, fc.Wires):
-            assert w.length == fw.Length
-            assert w._orientation == fw.Orientation
