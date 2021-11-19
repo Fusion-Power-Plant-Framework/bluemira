@@ -413,6 +413,35 @@ class TestGeometry:
         output = [(f.length, f.area) for f in face_cut]
         assert output == expected
 
+    def test_cut_solids(self):
+        face = BluemiraFace(
+            make_polygon(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                label="wire1",
+                closed=True,
+            )
+        )
+
+        solid = extrude_shape(face, (0, 0, 1))
+        solid2 = extrude_shape(face, (0, 0, 2))
+        result = boolean_cut(solid2, solid)
+        assert np.isclose(result.volume, solid.volume)
+
+    def test_fuse_solids(self):
+        face = BluemiraFace(
+            make_polygon(
+                [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+                label="wire1",
+                closed=True,
+            )
+        )
+
+        solid = extrude_shape(face, (0, 0, 1))
+        solid2 = solid.deepcopy()
+        solid2.translate([0.5, 0, 0])
+        result = boolean_fuse([solid, solid2])
+        assert result.is_valid()
+
 
 class TestShapeTransformations:
     @classmethod

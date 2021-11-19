@@ -61,7 +61,7 @@ apiFace = Part.Face  # noqa (N816)
 apiShell = Part.Shell  # noqa (N816)
 apiSolid = Part.Solid  # noqa (N816)
 apiShape = Part.Shape  # noqa (N816)
-
+apiCompound = Part.Compound  # noqa (N816)
 
 # ======================================================================================
 # Array, List, Vector, Point manipulation
@@ -143,6 +143,35 @@ def vertex_to_numpy(vertexes):
 # ======================================================================================
 # Geometry creation
 # ======================================================================================
+
+
+def make_solid(shell: apiShell):
+    """Make a solid from a shell."""
+    return Part.makeSolid(shell)
+
+
+def make_shell(faces: List[apiFace]):
+    """Make a shell from faces."""
+    return Part.makeShell(faces)
+
+
+def make_compound(shapes):
+    """
+    Make an FreeCAD compound object out of many shapes
+
+    Parameters
+    ----------
+    shapes: list of FreeCAD shape objects
+        A set of objects to be compounded
+
+    Returns
+    -------
+    compound: FreeCAD compound object
+        A compounded set of shapes
+    """
+    return Part.makeCompound(shapes)
+
+
 def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
     """
     Make a polygon from a set of points.
@@ -879,24 +908,6 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
         return solid_result
     else:
         return solid_result.Shells[0]
-
-
-def make_compound(shapes):
-    """
-    Make an FreeCAD compound object out of many shapes
-
-    Parameters
-    ----------
-    shapes: list of FreeCAD shape objects
-        A set of objects to be compounded
-
-    Returns
-    -------
-    compound: FreeCAD compound object
-        A compounded set of shapes
-    """
-    compound = Part.makeCompound(shapes)
-    return compound
 
 
 # ======================================================================================

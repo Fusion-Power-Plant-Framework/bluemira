@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import math
 import numpy as np
-import bluemira.geometry._freecadapi as _freecadapi
+import bluemira.geometry._freecadapi as cadapi
 
 
 class BluemiraPlane:
@@ -36,13 +36,13 @@ class BluemiraPlane:
     def __init__(
         self, base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0], angle=0.0, label: str = ""
     ):
-        self._shape = _freecadapi.make_plane(base, axis, angle)
+        self._shape = cadapi.make_plane(base, axis, angle)
         self.label = label
 
     @property
     def base(self):
         """Plane's base vector"""
-        return _freecadapi.vector_to_list(self._shape.Base)
+        return cadapi.vector_to_list(self._shape.Base)
 
     @base.setter
     def base(self, value):
@@ -53,7 +53,7 @@ class BluemiraPlane:
         ----------
         value: Iterable
         """
-        self._shape.Base = _freecadapi.Base.Vector(value)
+        self._shape.Base = cadapi.Base.Vector(value)
 
     @property
     def axis(self):
@@ -69,7 +69,7 @@ class BluemiraPlane:
         ----------
         value: Iterable
         """
-        self._shape.Axis = _freecadapi.Base.Vector(value)
+        self._shape.Axis = cadapi.Base.Vector(value)
 
     @property
     def angle(self):
@@ -94,7 +94,7 @@ class BluemiraPlane:
 
     def move(self, vector):
         """Moves the Plane along the given vector"""
-        _freecadapi.move_plane(self._shape, vector)
+        cadapi.move_plane(self._shape, vector)
 
     def __repr__(self):  # noqa D105
         new = []

@@ -27,14 +27,10 @@ from __future__ import annotations
 
 from typing import List
 
-# import from freecad
-import freecad  # noqa: F401
-import Part
-
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.wire import BluemiraWire
-import bluemira.geometry._freecadapi as _freecadapi
+import bluemira.geometry._freecadapi as cadapi
 
 # import from error
 from bluemira.geometry.error import NotClosedWire, DisjointedFace
@@ -45,9 +41,6 @@ import numpy as np
 class BluemiraFace(BluemiraGeo):
     """Bluemira Face class."""
 
-    #    metds = {'is_closed': 'isClosed', 'scale': 'scale'}
-    #    attrs = {**BluemiraGeo.attrs, **metds}
-
     def __init__(self, boundary, label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
@@ -57,9 +50,9 @@ class BluemiraFace(BluemiraGeo):
     def _converter(func):
         def wrapper(*args, **kwargs):
             output = func(*args, **kwargs)
-            if isinstance(output, Part.Wire):
+            if isinstance(output, cadapi.apiWire):
                 output = BluemiraWire(output)
-            if isinstance(output, Part.Face):
+            if isinstance(output, cadapi.apiFace):
                 output = BluemiraFace._create(output)
             return output
 
@@ -95,10 +88,10 @@ class BluemiraFace(BluemiraGeo):
     def _create_face(self):
         """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
-        face = Part.Face(external._shape)
+        face = cadapi.apiFace(external._shape)
 
         if len(self.boundary) > 1:
-            fholes = [Part.Face(h._shape) for h in self.boundary[1:]]
+            fholes = [cadapi.apiFace(h._shape) for h in self.boundary[1:]]
             face = face.cut(fholes)
             if len(face.Faces) == 1:
                 face = face.Faces[0]
@@ -108,24 +101,24 @@ class BluemiraFace(BluemiraGeo):
         return self._check_reverse(face)
 
     @property
-    def _shape(self) -> Part.Face:
+    def _shape(self) -> cadapi.apiFace:
         """Part.Face: shape of the object as a primitive face"""
         return self._create_face()
 
     @property
-    def _wires(self) -> List[Part.Wire]:
+    def _wires(self) -> List[cadapi.apiWire]:
         """list(Part.Wire): list of wires of which the shape consists of."""
         wires = []
         for o in self.boundary:
-            if isinstance(o, Part.Wire):
+            if isinstance(o, cadapi.apiWire):
                 wires += o.Wires
             else:
                 wires += o._wires
         return wires
 
     @classmethod
-    def _create(cls, obj: Part.Face, label="") -> BluemiraFace:
-        if isinstance(obj, Part.Face):
+    def _create(cls, obj: cadapi.apiFace, label="") -> BluemiraFace:
+        if isinstance(obj, cadapi.apiFace):
             orientation = obj.Orientation
             bmwires = []
             for w in obj.Wires:
@@ -158,7 +151,7 @@ class BluemiraFace(BluemiraGeo):
         points = []
         for w in self._shape.Wires:
             if byedges:
-                points.append(_freecadapi.discretize_by_edges(w, ndiscr=ndiscr, dl=dl))
+                points.append(cadapi.discretize_by_edges(w, ndiscr=ndiscr, dl=dl))
             else:
-                points.append(_freecadapi.discretize(w, ndiscr=ndiscr, dl=dl))
+                points.append(cadapi.discretize(w, ndiscr=ndiscr, dl=dl))
         return points

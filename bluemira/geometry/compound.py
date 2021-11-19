@@ -20,49 +20,42 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Wrapper for FreeCAD Part.Face objects
+Wrapper for FreeCAD Part.Compound objects
 """
-
-from __future__ import annotations
-
-# import from freecad
+from bluemira.geometry.error import GeometryError
 import bluemira.geometry._freecadapi as cadapi
 
-# import from bluemira
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.solid import BluemiraSolid
 
 
-class BluemiraShell(BluemiraGeo):
-    """Bluemira Shell class."""
+class BluemiraCompound(BluemiraGeo):
+    """BluemiraCompound class"""
 
     def __init__(self, boundary, label: str = ""):
-        boundary_classes = [BluemiraFace]
+        boundary_classes = [BluemiraSolid]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_shell(self):
-        """Creation of the shell"""
-        faces = [f._shape for f in self.boundary]
-        shell = cadapi.make_shell(faces)
-
-        return self._check_reverse(shell)
+    def _create_compound(self):
+        solids = [f._shape for f in self.boundary]
+        return cadapi.make_compound(solids)
 
     @property
     def _shape(self):
-        """Part.Shell: shape of the object as a primitive shell"""
-        return self._create_shell()
+        """Part.Solid: shape of the object as a single solid"""
+        return self._create_compound()
 
     @classmethod
-    def _create(cls, obj: cadapi.apiShell, label=""):
-        if isinstance(obj, cadapi.apiShell):
-            orientation = obj.Orientation
-            faces = obj.Faces
-            bmfaces = []
-            for face in faces:
-                bmfaces.append(BluemiraFace._create(face))
-            bmshell = BluemiraShell(bmfaces, label=label)
-            bmshell._orientation = orientation
-            return bmshell
-        raise TypeError(
-            f"Only Part.Shell objects can be used to create a {cls} instance"
-        )
+    def _create(cls, obj: cadapi.apiCompound, label=""):
+        if not isinstance(obj, cadapi.apiCompound):
+            raise TypeError(
+                f"Only Part.Compound objects can be used to create a {cls} instance"
+            )
+
+        solids = obj.Solids
+        if not solids:
+            raise GeometryError(
+                "BluemiraCompound can only be made from solid compounds."
+            )
+
+        return cls(solids, label=label)

@@ -26,8 +26,7 @@ Wrapper for FreeCAD Part.Face objects
 from __future__ import annotations
 
 # import from freecad
-import freecad  # noqa: F401
-import Part
+import bluemira.geometry._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
@@ -48,7 +47,7 @@ class BluemiraSolid(BluemiraGeo):
         new_shell = self.boundary[0]._shape
         # for o in self.boundary[1:]:
         #     new_shell = new_shell.fuse(o._shape)
-        return Part.makeSolid(new_shell)
+        return cadapi.make_solid(new_shell)
 
     @property
     def _shape(self):
@@ -56,8 +55,8 @@ class BluemiraSolid(BluemiraGeo):
         return self._create_solid()
 
     @classmethod
-    def _create(cls, obj: Part.Solid, label=""):
-        if isinstance(obj, Part.Solid):
+    def _create(cls, obj: cadapi.apiSolid, label=""):
+        if isinstance(obj, cadapi.apiSolid):
             shells = obj.Shells
             if len(shells) == 1:
                 bmshell = BluemiraShell._create(shells[0])
