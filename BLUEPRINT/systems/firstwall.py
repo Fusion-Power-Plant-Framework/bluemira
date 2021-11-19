@@ -1788,8 +1788,6 @@ class FirstWallDN(FirstWall):
         # ["dr_far_omp", "fs thickness far SOL", 0.005, "m", None, "Input"],
         # These seem to be inconsistent with the above, or at least could be set as such
         # Do not appear to be used anyway
-        # ["fw_dpsi_n_near", "Step size of psi in near SOL", 0.1, "N/A", None, "Input"],
-        # ["fw_dpsi_n_far", "Step size of psi in far SOL", 0.1, "N/A", None, "Input"],
 
         ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "N/A", None, "Input"],
         ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "N/A", None, "Input"],
