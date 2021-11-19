@@ -42,7 +42,6 @@ from bluemira.equilibria.optimiser import (
 )
 from bluemira.equilibria.solve import (
     PicardDeltaIterator,
-    PicardAbsIterator,
     PicardAbsCoilsetIterator,
 )
 from bluemira.geometry._deprecated_loop import Loop
@@ -357,9 +356,11 @@ def set_iterator(eq, profile, constraint_set, optimiser):
     iterator_args = (eq, profile, constraint_set, optimiser)
     iterator_kwargs = {"plot": True, "gif": False, "relaxation": 0.3, "maxiter": 400}
 
-    if optimiser_name == "BoundedCurrentOptimiser":
-        program = PicardAbsIterator(*iterator_args, **iterator_kwargs)
-    elif optimiser_name in ["CoilsetOptimiser", "NestedCoilsetOptimiser"]:
+    if optimiser_name in [
+        "BoundedCurrentOptimiser",
+        "CoilsetOptimiser",
+        "NestedCoilsetOptimiser",
+    ]:
         program = PicardAbsCoilsetIterator(*iterator_args, **iterator_kwargs)
     else:
         program = PicardDeltaIterator(*iterator_args, **iterator_kwargs)
