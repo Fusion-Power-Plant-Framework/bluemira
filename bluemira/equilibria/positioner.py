@@ -627,13 +627,13 @@ class RegionMapper:
 
     def get_Lmap(self, coilset):
         """
-        Calculates initial L vector and sets lb and ub constraints on L vector.
+        Get 1D array of mapped position coordinates from coil positions
+        in a provided coilset, along with mapped position bounds.
 
         Parameters
         ----------
         coilset: CoilSet object
             A coilset object to map
-
         """
         self._coilset = coilset
 
@@ -654,19 +654,36 @@ class RegionMapper:
             np.ones_like(self.l_map),
         )
 
-    def set_L_from_Lmap(self, l_map):
-        self.l_values = l_map.reshape(-1, 2)
+    def set_Lmap(self, l_map):
+        """
+        Sets the mapped positions from a provided 1D array.
+        """
+        if np.size(l_map) == 2 * self.no_regions:
+            self.l_map = l_map
+            self.l_values = l_map.reshape(-1, 2)
+        else:
+            raise EquilibriaError(
+                "Provided l_map does not contain exactly one pair of mapped"
+                "coordinates for each region in RegionMapper"
+            )
 
-    def coilset_xz_to_L(self, coilset):
-        for i, region in enumerate(self.regions.keys()):
-            coil = coilset[self._name_converter(region)]
-            self.l_values[i] = self.xz_to_L(region, coil.x, coil.z)
-        return tools.clip(self.l_values, 0, 1).flatten()
+    def get_xz_arrays(self):
+        """
+        Get arrays containing x and z coordinates for all coils from the position
+        map.
 
-    def coilset_L_to_xz(self, coilset):
+        Returns
+        -------
+        x: np.array
+            Array containing radial positions of all coils in mapped regions,
+            enumerated by region index in self.regions.
+        z: np.array
+            Array containing vertical positions of all coils in mapped regions,
+            enumerated by region index in self.regions.
+
+        """
         x, z = np.zeros(len(self.l_values)), np.zeros(len(self.l_values))
         for i, region in enumerate(self.regions.keys()):
-            coil = coilset[self._name_converter(region)]
             x[i], z[i] = self.L_to_xz(region, self.l_values[i])
         return x, z
 

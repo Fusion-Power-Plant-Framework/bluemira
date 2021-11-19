@@ -1669,6 +1669,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Set up objective function for optimiser
         opt.set_objective_function(self.f_min_objective)
 
+        # Get mapped position bounds from RegionMapper
         _, lower_bounds, upper_bounds = self.region_mapper.get_Lmap(self.coilset)
 
         opt.set_lower_bounds(lower_bounds)
@@ -1684,7 +1685,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset)
         x_vals, z_vals, self.currents = np.array_split(initial_state, substates)
-        intial_mapped_positions = self.region_mapper.coilset_xz_to_L(self.coilset)
+        intial_mapped_positions = self.region_mapper.get_Lmap(self.coilset)[0]
 
         # Optimise
         self.iter = 0
@@ -1742,8 +1743,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         -------
         fom: Value of objective function (figure of merit).
         """
-        self.region_mapper.set_L_from_Lmap(vector)
-        x_vals, z_vals = self.region_mapper.coilset_L_to_xz(self.coilset)
+        self.region_mapper.set_Lmap(vector)
+        x_vals, z_vals = self.region_mapper.get_xz_arrays()
         positions = np.concatenate((x_vals, z_vals))
         coilset_state = np.concatenate((positions, self.currents))
         self.set_coilset_state(coilset_state)
