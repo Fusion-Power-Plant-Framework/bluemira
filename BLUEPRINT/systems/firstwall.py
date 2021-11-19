@@ -1770,7 +1770,6 @@ class FirstWallDN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        ["fw_psi_init", "Initial psi norm value", 1, "N/A", None, "Input"],
         ['tk_sol_ib', 'Inboard SOL thickness', 0.225, 'm', None, 'Input', {"PROCESS": ParameterMapping("scrapli", True, False)}],
         ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input', {"PROCESS": ParameterMapping("scraplo", True, False)}],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
