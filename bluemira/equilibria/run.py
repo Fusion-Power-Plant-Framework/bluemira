@@ -62,6 +62,7 @@ from bluemira.equilibria.optimiser import (
 from bluemira.equilibria.solve import (
     PicardLiDeltaIterator,
     PicardLiAbsIterator,
+    PicardAbsCoilsetIterator,
     PicardDeltaIterator,
     PicardAbsIterator,
     EquilibriumConverger,
@@ -221,12 +222,12 @@ class EquilibriumProblem:
             if self.li is not None:
                 iterator = PicardLiDeltaIterator(*args, **kwargs)
             else:
-                iterator = PicardDeltaIterator(*args, **kwargs)
+                iterator = PicardAbsCoilsetIterator(*args, **kwargs)
         else:
             if self.li is not None:
                 iterator = PicardLiAbsIterator(*args, **kwargs)
             else:
-                iterator = PicardAbsIterator(*args, **kwargs)
+                iterator = PicardAbsCoilsetIterator(*args, **kwargs)
         iterator()
         self.coilset.adjust_sizes()
         self.eq._remap_greens()
@@ -867,7 +868,7 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
         # Default optimiser
         # Performs an initial Tikhonov unconstrained optimisation routine, to
         # reach a reference equilibrium state, ignoring flux swing
-        self.optimiser = Norm2Tikhonov(gamma=1e-7)
+        self.optimiser = Norm2Tikhonov(self.coilset, gamma=1e-7)
         # Store target values
         self.R_0 = R_0
         self.kappa = kappa

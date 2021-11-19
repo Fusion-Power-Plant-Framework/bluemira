@@ -82,8 +82,9 @@ class TestWeightedConstraints:
             constraint_set(eq)
 
             # Test that weights have been applied
-            optimiser = Norm2Tikhonov(gamma=1e-8)
+            optimiser = Norm2Tikhonov(eq.coilset, gamma=1e-8)
             optimiser(eq, constraint_set)
+
             assert np.allclose(optimiser.b, weights * constraint_set.b)
             for (i, weight) in enumerate(weights):
                 assert np.allclose(
