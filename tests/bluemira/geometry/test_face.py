@@ -35,7 +35,7 @@ class TestBluemiraFace:
     @classmethod
     def setup_class(cls):
         polygon = make_polygon(
-            [[4, -1, 0], [5, -1, 0], [5, 1, 0], [4, 1, 0]],
+            [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
             closed=True,
         )
         princeton = PrincetonD().create_shape(n_points=80)
@@ -70,3 +70,12 @@ class TestBluemiraFace:
             assert np.isclose(
                 face.area, -BluemiraFace(wire_inner).area + BluemiraFace(shape).area
             )
+
+    def test_two_offsets(self):
+        for shape in self.shapes:
+            outer = offset_wire(shape, 0.5, join="arc")
+            inner = offset_wire(shape, -0.5, join="arc")
+            face = BluemiraFace([outer, inner])
+            assert not face.is_null()
+            assert face.is_valid()
+            assert face.area > 0.0
