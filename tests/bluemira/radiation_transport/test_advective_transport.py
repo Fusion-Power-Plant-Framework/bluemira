@@ -76,8 +76,9 @@ class TestChargedParticleRecursionSN:
 
         # fmt: off
         cls.params = ParameterFrame([
-            ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
-            ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
+            ["p_sol", "power crossing the separatrix", 100, "MW", None, "Input"]
+            ["p_sol_rate_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
+            ["p_sol_rate_far", "far scrape-off layer power rate", 0.50, "N/A", None, "Input"],
             ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.05, "m", None, "Input"],
             ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
             ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "N/A", None, "Input"],
@@ -128,7 +129,7 @@ class TestChargedParticleRecursionSN:
         dz_hfs = z_hfs[:-1] - z_hfs[1:]
         d_hfs = np.hypot(dx_hfs, dz_hfs)
         q_hfs = sum(hf_hfs[:-1] * d_hfs * (x_hfs[:-1] + 0.5 * abs(dx_hfs)))
-        true_total = self.params["fw_p_sol_near"] + self.params["fw_p_sol_far"]
+        true_total = self.params["p_sol"]
         assert np.isclose(q_lfs + q_hfs, true_total, rtol=2e-2)
 
     def test_geometry_handling(self):
@@ -160,8 +161,9 @@ class TestChargedParticleRecursionDN:
 
         # fmt: off
         cls.params = ParameterFrame([
-            ["fw_p_sol_near", "near scrape-off layer power", 90, "MW", None, "Input"],
-            ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
+            ["p_sol", "power crossing the separatrix", 140, "MW", None, "Input"]
+            ["p_sol_rate_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
+            ["p_sol_rate_far", "far scrape-off layer power rate", 0.35, "N/A", None, "Input"],
             ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
             ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.1, "m", None, "Input"],
             ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
