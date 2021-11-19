@@ -328,9 +328,7 @@ def revolve_shape(
     shape: BluemiraSolid
         the revolved shape.
     """
-    return BluemiraSolid._create(
-        cadapi.revolve_shape(shape._shape, base, direction, degree), label
-    )
+    return convert(cadapi.revolve_shape(shape._shape, base, direction, degree), label)
 
 
 def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
@@ -354,7 +352,7 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
     if not label:
         label = shape.label
 
-    return BluemiraSolid._create(cadapi.extrude_shape(shape._shape, vec), label)
+    return convert(cadapi.extrude_shape(shape._shape, vec), label)
 
 
 def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
@@ -385,10 +383,7 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
 
     result = cadapi.sweep_shape(profile_shapes, path._shape, solid, frenet)
 
-    if solid:
-        return BluemiraSolid._create(result, label=label)
-    else:
-        return BluemiraShell._create(result, label=label)
+    return convert(result, label=label)
 
 
 def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
@@ -653,24 +648,22 @@ def boolean_fuse(shapes, label=""):
     """
     if not isinstance(shapes, list):
         raise ValueError(f"{shapes} is not a list.")
+
     if len(shapes) < 2:
         raise ValueError("At least 2 shapes must be given")
+
     # check that all the shapes are of the same time
     _type = type(shapes[0])
     if not all(isinstance(s, _type) for s in shapes):
         raise ValueError(f"All instances in {shapes} must be of the same type.")
+
     api_shapes = [s._shape for s in shapes]
     try:
         merged_shape = cadapi.boolean_fuse(api_shapes)
-        _type = type(merged_shape)
-        if _type in [cadapi.apiWire, cadapi.apiFace, cadapi.apiSolid]:
-            return convert(merged_shape, label)
-        else:
-            raise ValueError(
-                f"Fuse function still not implemented for {_type} instances."
-            )
+        return convert(merged_shape, label)
+
     except Exception as e:
-        raise GeometryError(f"Fuse operation fails. {e}")
+        raise GeometryError(f"Booled fuse operation failed. {e}")
 
 
 def boolean_cut(shape, tools):
@@ -700,13 +693,7 @@ def boolean_cut(shape, tools):
     apitools = [t._shape for t in tools]
     cut_shape = cadapi.boolean_cut(apishape, apitools)
 
-    _type = type(cut_shape)
-    if _type == list:
-        output = [convert(obj, shape.label) for obj in cut_shape]
-        return output
-    elif _type in [cadapi.apiWire, cadapi.apiFace, cadapi.apiSolid]:
-        return convert(cut_shape, shape.label)
-    else:
-        raise ValueError(
-            f"cut function still not implemented for " f"{_type} instances."
-        )
+    if isinstance(cut_shape, Iterable):
+        return [convert(obj, shape.label) for obj in cut_shape]
+
+    return convert(cut_shape, shape.label)
