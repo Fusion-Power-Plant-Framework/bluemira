@@ -1378,17 +1378,14 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
     ----------
     coilset: CoilSet
         Coilset used to get coil current limits and number of coils.
+    pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
+        Dictionary of loops that specify convex hull regions inside which
+        each PF control coil position is to be optimised.
+        The loop objects must be 2d in x,z in units of [m].
     max_currents: float or np.array(len(coilset._ccoils)) (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    max_coil_shifts: dict
-        (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
-        "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
-        Dict specifying maximum tolerable shifts for each coil from its initial
-        position during optimisation [m]. Shifts are specified as either
-        np.ndarray with the shift for each coil specified,
-        or as a float to apply to all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
     opt_args: dict
@@ -1609,13 +1606,10 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         Optimiser to use for the optimisation of coil currents at each trial
         set of coil positions. sub_opt.coilset must exist, and will be
         modified during the optimisation.
-    max_coil_shifts: dict
-        (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
-        "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
-        Dict specifying maximum tolerable shifts for each coil from its initial
-        position during optimisation [m]. Shifts are specified as either
-        np.ndarray with the shift for each coil specified,
-        or as a float to apply to all coils.
+    pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
+        Dictionary of loops that specify convex hull regions inside which
+        each PF control coil position is to be optimised.
+        The loop objects must be 2d in x,z in units of [m].
     opt_args: dict
         Dictionary containing arguments to pass to NLOpt optimiser
         used in position optimisation.
