@@ -97,15 +97,16 @@ class GradShafranovLagrange:
         
         #======================================================================
         # define the function space and bilinear forms
-        
-        self.V = dolfin.FunctionSpace(self.mesh,'CG',p) # the solution function space
+
+        # the solution function space
+        self.V = dolfin.FunctionSpace(self.mesh, 'CG', p)
         
         # define trial and test functions
         self.u = dolfin.TrialFunction(self.V)
         self.v = dolfin.TestFunction(self.V)               
 
         # Define r
-        r = dolfin.Expression('x[0]', degree = p)
+        r = dolfin.Expression('x[0]', degree=p)
         
         self.a = 1/(2.*dolfin.pi*4*dolfin.pi*1e-7)*(1/r*dolfin.dot(dolfin.grad(self.u),dolfin.grad(self.v)))*dolfin.dx
         
@@ -141,14 +142,14 @@ class GradShafranovLagrange:
         
         """        
         if neumannBCFunction is None:
-            neumannBCFunction = dolfin.Expression('0.0', degree = 2)
+            neumannBCFunction = dolfin.Expression('0.0', degree=2)
         
         # define the right hand side         
         self.L = g*self.v*dolfin.dx - neumannBCFunction*self.v*dolfin.ds
         
         # define the Dirichlet boundary conditions
         if dirichletBCFunction is None:
-            dirichletBCFunction = dolfin.Expression('0.0', degree = 2)
+            dirichletBCFunction = dolfin.Expression('0.0', degree=2)
             dirichletBC = dolfin.DirichletBC(self.V, dirichletBCFunction, 'on_boundary')
         else:
             dirichletBC = dolfin.DirichletBC(self.V, dirichletBCFunction, self.boundaries, dirichlet_marker) # dirichlet_marker is the identification of Dirichlet BC in the mesh

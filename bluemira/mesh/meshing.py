@@ -31,6 +31,9 @@ from .error import MeshOptionsError
 
 import copy
 import pprint
+import locale
+# locale import is to prevent wrong decimal separator when printing the mesh
+# (see locale.setlocale(locale.LC_ALL, 'en_US.UTF-8') in method _save_mesh)
 
 from typing import Dict, Union
 
@@ -506,7 +509,9 @@ class _freecadGmsh:
 
     @staticmethod
     def _save_mesh(meshfile="Mesh.geo_unrolled"):
+
         # ... and save it to disk
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
         gmsh.write(meshfile)
 
     @staticmethod
