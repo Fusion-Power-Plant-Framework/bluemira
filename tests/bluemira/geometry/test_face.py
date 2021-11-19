@@ -51,24 +51,17 @@ class TestBluemiraFace:
             assert not face.is_null()
             assert face.area > 0.0
 
-    def test_two_complicated(self):
+    @pytest.mark.parametrize("offset", [0.5, -0.5])
+    def test_two_complicated(self, offset):
+        direction = int(offset / abs(offset))
         for shape in self.shapes:
-            wire_outer = offset_wire(shape, 0.5, join="arc")
-            face = BluemiraFace([wire_outer, shape])
+            wire = offset_wire(shape, 0.5, join="arc")
+            face_list = [wire, shape][::direction]
+            face = BluemiraFace(face_list)
             assert not face.is_null()
             assert face.is_valid()
             assert np.isclose(
-                face.area, BluemiraFace(wire_outer).area - BluemiraFace(shape).area
-            )
-
-    def test_two_complicated2(self):
-        for shape in self.shapes:
-            wire_inner = offset_wire(shape, -0.5, join="arc")
-            face = BluemiraFace([shape, wire_inner])
-            assert not face.is_null()
-            assert face.is_valid()
-            assert np.isclose(
-                face.area, -BluemiraFace(wire_inner).area + BluemiraFace(shape).area
+                face.area, BluemiraFace(face_list[0]).area - BluemiraFace(face_list[1]).area)
             )
 
     def test_two_offsets(self):
