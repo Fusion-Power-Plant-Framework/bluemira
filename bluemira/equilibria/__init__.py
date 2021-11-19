@@ -51,6 +51,6 @@ from .solve import (
     PicardDeltaIterator,
     PicardLiAbsIterator,
     PicardLiDeltaIterator,
-    PicardAbsCoilsetIterator,
+    PicardCoilsetIterator,
 )
 from .run import AbInitioEquilibriumProblem

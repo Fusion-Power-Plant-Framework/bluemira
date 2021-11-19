@@ -42,7 +42,7 @@ from bluemira.equilibria.optimiser import (
 )
 from bluemira.equilibria.solve import (
     PicardDeltaIterator,
-    PicardAbsCoilsetIterator,
+    PicardCoilsetIterator,
 )
 from bluemira.geometry._deprecated_loop import Loop
 
@@ -300,7 +300,7 @@ def pre_optimise(eq, profile, constraint_set):
     """
     optimiser = Norm2Tikhonov(eq.coilset, gamma=1e-8)
 
-    program = PicardAbsCoilsetIterator(
+    program = PicardCoilsetIterator(
         eq,
         profile,  # jetto
         constraint_set,
@@ -361,7 +361,7 @@ def set_iterator(eq, profile, constraint_set, optimiser):
         "NestedCoilsetOptimiser",
         "Norm2Tikhonov",
     ]:
-        program = PicardAbsCoilsetIterator(*iterator_args, **iterator_kwargs)
+        program = PicardCoilsetIterator(*iterator_args, **iterator_kwargs)
     else:
         program = PicardDeltaIterator(*iterator_args, **iterator_kwargs)
 
