@@ -106,7 +106,6 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['f_cd_ohm', 'Ohmic current drive fraction', 0.1, 'N/A', None, 'Input'],
 
         # First wall profile
-        ['fw_dx', 'Minimum distance of FW to separatrix', 0.225, 'm', None, 'Input'],
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],
         ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
         ['fw_dL_max', 'Maximum FW module length', 2, 'm', None, 'Input'],
@@ -114,8 +113,6 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['hf_limit', 'heat flux material limit', 0.5, 'MW/m^2', None, 'Input'],
 
         # SN/DN variables for heat flux transport
-        ['fw_dx_omp', 'Initial offset from LCFS omp', 0.2, 'm', None, 'Input'],
-        ['fw_dx_imp', 'Initial offset from LCFS imp', 0.05, 'm', None, 'Input'],
         ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.003, 'm', None, 'Input'],

@@ -26,6 +26,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Type
 
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
 from bluemira.base.parameter import ParameterFrame
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
@@ -1614,7 +1615,7 @@ class FirstWallSN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        ["fw_dx", "Minimum distance of FW to separatrix", 0.3, "m", None, "Input"],
+        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input', {"PROCESS": ParameterMapping("scraplo", True, False)}],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "N/A", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
@@ -1670,7 +1671,7 @@ class FirstWallSN(FirstWall):
         fw_loop: Loop
             Here the first wall is without divertor. The wall is cut at the X-point
         """
-        dx_loop = self.lcfs.offset(self.params.fw_dx)
+        dx_loop = self.lcfs.offset(self.params.tk_sol_ob)
         psi_n_loop = self.equilibrium.get_flux_surface(
             self.params.fw_psi_n,
         )
@@ -1770,8 +1771,8 @@ class FirstWallDN(FirstWall):
     # fmt: off
     default_params = FirstWall.base_default_params + [
         ["fw_psi_init", "Initial psi norm value", 1, "N/A", None, "Input"],
-        ["fw_dx_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
-        ["fw_dx_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
+        ['tk_sol_ib', 'Inboard SOL thickness', 0.225, 'm', None, 'Input', {"PROCESS": ParameterMapping("scrapli", True, False)}],
+        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input', {"PROCESS": ParameterMapping("scraplo", True, False)}],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda_q near SOL omp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda_q far SOL omp", 0.1, "m", None, "Input"],
@@ -1847,7 +1848,7 @@ class FirstWallDN(FirstWall):
         fw_loop: Loop
             Here the first wall is without divertor. The wall is cut at the X-point
         """
-        dx_loop_lfs = self.lcfs.offset(self.params.fw_dx_omp)
+        dx_loop_lfs = self.lcfs.offset(self.params.tk_sol_ob)
         clip_lfs = np.where(
             dx_loop_lfs.x > self.points["x_point"]["x"],
         )
@@ -1856,7 +1857,7 @@ class FirstWallDN(FirstWall):
             z=dx_loop_lfs.z[clip_lfs],
         )
 
-        dx_loop_hfs = self.lcfs.offset(self.params.fw_dx_imp)
+        dx_loop_hfs = self.lcfs.offset(self.params.tk_sol_ib)
         clip_hfs = np.where(
             dx_loop_hfs.x < self.points["x_point"]["x"],
         )
@@ -1940,7 +1941,7 @@ class FirstWallDN(FirstWall):
                 elif loop_plane_intersect(loop, self.mid_plane)[0][0] < self.points[
                     "o_point"
                 ]["x"] and loop_plane_intersect(loop, self.mid_plane)[0][0] > (
-                    self.x_imp_lcfs - self.params.fw_dx_imp
+                    self.x_imp_lcfs - self.params.tk_sol_ib
                 ):
                     clip_vertical = np.where(loop.x < self.points["x_point"]["x"])
 
