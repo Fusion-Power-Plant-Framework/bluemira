@@ -1508,7 +1508,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # Get initial state and apply region mapping to coil positions.
         initial_state, _ = self.read_coilset_state(self.coilset)
         _, _, initial_currents = np.array_split(initial_state, self.substates)
-        initial_mapped_positions = self.region_mapper.get_Lmap(self.coilset)[0]
+        initial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
         initial_mapped_state = np.concatenate(
             (initial_mapped_positions, initial_currents)
         )
@@ -1641,7 +1641,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         super().__init__(sub_opt.coilset)
 
         self.region_mapper = RegionMapper(pfregions)
-        self.initial_mapped_positions = self.region_mapper.get_Lmap(self.coilset)[0]
+        self.initial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
 
         # Set up optimiser
         self.opt_args = opt_args
@@ -1687,7 +1687,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset)
         x_vals, z_vals, self.currents = np.array_split(initial_state, substates)
-        intial_mapped_positions = self.region_mapper.get_Lmap(self.coilset)[0]
+        intial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
 
         # Optimise
         self.iter = 0
