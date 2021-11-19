@@ -433,8 +433,8 @@ class TestGeometry:
         )
         solid2 = extrude_shape(face2, (0, 0, 1))
 
-        result = boolean_cut(solid2, solid)
-        assert np.isclose(result.volume, solid.volume)
+        results = boolean_cut(solid2, solid)
+        assert len(results) == 2
 
     def test_fuse_solids(self):
         face = BluemiraFace(
@@ -445,9 +445,16 @@ class TestGeometry:
             )
         )
 
-        solid = extrude_shape(face, (0, 0, 1))
-        solid2 = solid.deepcopy()
-        solid2.translate([0.5, 0, 0])
+        solid = extrude_shape(face, (0, 0, 5))
+
+        face2 = BluemiraFace(
+            make_polygon(
+                [[-1, 0, 1], [2, 0, 1], [2, 1, 1], [-1, 1, 1]],
+                label="wire2",
+                closed=True,
+            )
+        )
+        solid2 = extrude_shape(face2, (0, 0, 1))
         result = boolean_fuse([solid, solid2])
         assert result.is_valid()
 

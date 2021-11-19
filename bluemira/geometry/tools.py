@@ -676,8 +676,11 @@ def boolean_fuse(shapes, label=""):
     try:
         merged_shape = cadapi.boolean_fuse(api_shapes)
         _type = type(merged_shape)
-        if _type in [cadapi.apiWire, cadapi.apiFace]:
-            return convert(merged_shape, label)
+        if _type in [cadapi.apiWire, cadapi.apiFace, cadapi.apiSolid]:
+            orientation = merged_shape.Orientation
+            result = convert(merged_shape, label)
+            result._orientation = orientation
+            return result
         else:
             raise ValueError(
                 f"Fuse function still not implemented for {_type} instances."

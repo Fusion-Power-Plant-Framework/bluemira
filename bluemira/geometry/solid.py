@@ -45,8 +45,6 @@ class BluemiraSolid(BluemiraGeo):
     def _create_solid(self):
         """Creation of the solid"""
         new_shell = self.boundary[0]._shape
-        # for o in self.boundary[1:]:
-        #     new_shell = new_shell.fuse(o._shape)
         return cadapi.make_solid(new_shell)
 
     @property
@@ -57,10 +55,15 @@ class BluemiraSolid(BluemiraGeo):
     @classmethod
     def _create(cls, obj: cadapi.apiSolid, label=""):
         if isinstance(obj, cadapi.apiSolid):
+            orientation = obj.Orientation
+            if orientation != "Forward":
+                raise ValueError
             shells = obj.Shells
             if len(shells) == 1:
                 bmshell = BluemiraShell._create(shells[0])
-                return cls(bmshell, label=label)
+                bmsolid = cls(bmshell, label=label)
+                bmsolid._orientation = orientation
+                return bmsolid
 
             else:
                 raise DisjointedSolid("Disjointed solids are not accepted.")

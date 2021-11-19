@@ -73,7 +73,6 @@ class BluemiraWire(BluemiraGeo):
                 f"Cannot make a BluemiraWire from wires of mixed orientations: {orientations}"
             )
         self._orientation = orientations[0]
-        return orientations
 
     @staticmethod
     def _converter(func):

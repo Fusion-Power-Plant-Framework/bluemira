@@ -935,12 +935,15 @@ def boolean_fuse(shapes):
     """
     if not isinstance(shapes, list):
         raise ValueError(f"{shapes} is not a list.")
+
     if len(shapes) < 2:
         raise ValueError("At least 2 shapes must be given")
+
     # check that all the shapes are of the same time
     _type = type(shapes[0])
     if not all(isinstance(s, _type) for s in shapes):
         raise ValueError(f"All instances in {shapes} must be of the same type.")
+
     try:
         if _type == Part.Wire:
             merged_shape = BOPTools.SplitAPI.booleanFragments(shapes, "Split")
@@ -954,15 +957,25 @@ def boolean_fuse(shapes):
                 merged_shape = merged_shape.fuse(merged_shape.Wires)
                 merged_shape = Part.Wire(merged_shape.Wires)
                 return merged_shape
+
         elif _type == Part.Face:
             merged_shape = shapes[0].fuse(shapes[1:])
             merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Faces) > 1:
                 raise FreeCADError(
-                    f"Fuse boolean operation on {shapes} gives more that one face."
+                    f"Boolean fuse operation on {shapes} gives more than one face."
                 )
-            else:
-                return merged_shape.Faces[0]
+            return merged_shape.Faces[0]
+
+        elif _type == Part.Solid:
+            merged_shape = shapes[0].fuse(shapes[1:])
+            merged_shape = merged_shape.removeSplitter()
+            if len(merged_shape.Solids) > 1:
+                raise FreeCADError(
+                    f"Boolean fuse operation on {shapes} gives more than one solid."
+                )
+            return merged_shape.Solids[0]
+
         else:
             raise ValueError(
                 f"Fuse function still not implemented for {_type} instances."
