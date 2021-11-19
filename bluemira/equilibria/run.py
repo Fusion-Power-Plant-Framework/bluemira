@@ -62,7 +62,7 @@ from bluemira.equilibria.optimiser import (
 from bluemira.equilibria.solve import (
     PicardLiDeltaIterator,
     PicardLiAbsIterator,
-    PicardAbsCoilsetIterator,
+    PicardCoilsetIterator,
     EquilibriumConverger,
 )
 from bluemira.equilibria.grid import Grid
@@ -220,12 +220,12 @@ class EquilibriumProblem:
             if self.li is not None:
                 iterator = PicardLiDeltaIterator(*args, **kwargs)
             else:
-                iterator = PicardAbsCoilsetIterator(*args, **kwargs)
+                iterator = PicardCoilsetIterator(*args, **kwargs)
         else:
             if self.li is not None:
                 iterator = PicardLiAbsIterator(*args, **kwargs)
             else:
-                iterator = PicardAbsCoilsetIterator(*args, **kwargs)
+                iterator = PicardCoilsetIterator(*args, **kwargs)
         iterator()
         self.coilset.adjust_sizes()
         self.eq._remap_greens()
