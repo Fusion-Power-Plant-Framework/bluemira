@@ -124,6 +124,34 @@ class EquilibriumOptimiser:
         return deepcopy(self)
 
 
+class Norm2Tikhonov(EquilibriumOptimiser):
+    """
+    Unconstrained norm-2 optimisation with Tikhonov regularisation
+    Returns x*
+    """
+
+    def __init__(self, gamma=1e-12):
+        self.gamma = gamma
+
+    def optimise(self):
+        """
+        Optimise the prescribed problem.
+        """
+        self.x = tikhonov(self.A, self.b, self.gamma)
+        self.calc_error()
+        return self.x
+
+    def calc_error(self):
+        """
+        Calculate the RSS and RMS errors.
+        """
+        x = self.x.reshape(-1, 1)
+        b = self.b.reshape(len(self.b), 1)
+        err = np.dot(self.A, x) - b
+        self.rms_error = np.sqrt(np.mean(err ** 2 + (self.gamma * self.x) ** 2))
+        self.rss_error = np.sum(err ** 2) + np.sum((self.gamma * self.x) ** 2)
+
+
 class PositionOptimiser:
     """
     Coil position optimiser a la McIntosh
@@ -1238,11 +1266,11 @@ class CoilsetOptimiserBase:
         return self.optimise()
 
 
-class Norm2Tikhonov(CoilsetOptimiserBase):
+class UnconstrainedCurrentOptimiser(CoilsetOptimiserBase):
     """
     Unconstrained norm-2 optimisation with Tikhonov regularisation
 
-    Returns x*
+    Intended to replace Norm2Tikhonov as a Coilset optimiser.
     """
 
     def __init__(self, coilset, gamma=1e-12):

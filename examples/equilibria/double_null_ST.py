@@ -258,7 +258,7 @@ def init_equilibrium(grid, coilset, constraint_set):
         li=None,
     )
     constraint_set(eq)
-    optimiser = Norm2Tikhonov(coilset_temp, gamma=1e-7)
+    optimiser = UnconstrainedCurrentOptimiser(coilset_temp, gamma=1e-7)
     coilset_temp = optimiser(eq, constraint_set)
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
@@ -299,7 +299,7 @@ def pre_optimise(eq, profile, constraint_set):
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = Norm2Tikhonov(eq.coilset, gamma=1e-8)
+    optimiser = UnconstrainedCurrentOptimiser(eq.coilset, gamma=1e-8)
 
     program = PicardCoilsetIterator(
         eq,
@@ -329,7 +329,9 @@ def set_coilset_optimiser(
     """
     pfregions = init_pfregions(coilset)
     if optimiser_name in ["Norm2Tikhonov"]:
-        optimiser = Norm2Tikhonov(coilset, **optimisation_options)
+        optimiser = Norm2Tikhonov(**optimisation_options)
+    if optimiser_name in ["UnconstrainedCurrentOptimiser"]:
+        optimiser = UnconstrainedCurrentOptimiser(coilset, **optimisation_options)
     elif optimiser_name in ["BoundedCurrentOptimiser"]:
         optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
     elif optimiser_name in ["CoilsetOptimiser"]:
@@ -360,7 +362,7 @@ def set_iterator(eq, profile, constraint_set, optimiser):
         "BoundedCurrentOptimiser",
         "CoilsetOptimiser",
         "NestedCoilsetOptimiser",
-        "Norm2Tikhonov",
+        "UnconstrainedCurrentOptimiser",
     ]:
         program = PicardCoilsetIterator(*iterator_args, **iterator_kwargs)
     else:
