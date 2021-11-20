@@ -365,7 +365,7 @@ class TestCoilSet:
             current=1e6,
             dx=0.25,
             dz=0.5,
-            j_max=1e7,
+            j_max=10.0,
             b_max=100,
             ctype="PF",
             name="PF_2",
@@ -373,7 +373,7 @@ class TestCoilSet:
         circuit = SymmetricCircuit(coil)
 
         coil2 = Coil(
-            x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5e6, b_max=50, name="PF_1"
+            x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1"
         )
 
         cls.coilset = CoilSet([coil2, circuit])
@@ -400,8 +400,8 @@ class TestCoilSet:
         assert np.isclose(self.coilset["PF_1"].dz, 0.5)
         assert np.isclose(self.coilset["PF_2"].dz, 0.5)
 
-        assert np.isclose(self.coilset["PF_1"].j_max, 5e6)
-        assert np.isclose(self.coilset["PF_2"].j_max, 1e7)
+        assert np.isclose(self.coilset["PF_1"].j_max, 5.0)
+        assert np.isclose(self.coilset["PF_2"].j_max, 10.0)
 
         assert np.isclose(self.coilset["PF_1"].b_max, 50)
         assert np.isclose(self.coilset["PF_2"].b_max, 100)
@@ -428,6 +428,17 @@ class TestCoilSet:
         self.coilset.set_control_currents(set_currents)
         currents = self.coilset.get_control_currents()
         assert np.allclose(set_currents, currents)
+
+    def test_material_assignment(self):
+        test_j_max = 7.0
+        test_b_max = 24.0
+        self.coilset.assign_coil_materials("PF", j_max=test_j_max, b_max=test_b_max)
+        assert len(self.coilset.get_max_currents(0.0)) == len(
+            self.coilset.coils.values()
+        )
+        for coil in self.coilset.coils.values():
+            assert np.isclose(coil.j_max, test_j_max)
+            assert np.isclose(coil.b_max, test_b_max)
 
 
 class TestCoilSetSymmetry:
