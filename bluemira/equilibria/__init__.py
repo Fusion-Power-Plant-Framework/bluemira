@@ -39,6 +39,7 @@ from .shapes import flux_surface_johner, flux_surface_cunningham, flux_surface_m
 from .optimiser import (
     Norm2Tikhonov,
     FBIOptimiser,
+    UnconstrainedCurrentOptimiser,
     BoundedCurrentOptimiser,
     PositionOptimiser,
     CoilsetOptimiser,
