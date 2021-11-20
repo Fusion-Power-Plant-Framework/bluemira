@@ -433,9 +433,9 @@ class TestCoilSet:
         test_j_max = 7.0
         test_b_max = 24.0
         self.coilset.assign_coil_materials("PF", j_max=test_j_max, b_max=test_b_max)
-        assert len(self.coilset.get_max_currents(0.0)) == len(
-            self.coilset.coils.values()
-        )
+        n_indep_coils = len(self.coilset.coils.values())
+        assert len(self.coilset.get_max_currents(0.0)) == n_indep_coils
+        assert len(self.coilset.get_max_fields()) == n_indep_coils
         for coil in self.coilset.coils.values():
             assert np.isclose(coil.j_max, test_j_max)
             assert np.isclose(coil.b_max, test_b_max)
