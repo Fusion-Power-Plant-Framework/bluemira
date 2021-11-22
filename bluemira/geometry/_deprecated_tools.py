@@ -31,7 +31,6 @@ from numba.np.extensions import cross2d
 from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
 from typing import Iterable
-import bluemira
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
