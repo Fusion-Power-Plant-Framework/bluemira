@@ -451,7 +451,7 @@ if __name__ == "__main__":
             "NestedCoilsetOptimiser",
         ],
         type=str,
-        default=None,
+        default="UnconstrainedCurrentOptimiser",
     )
     parser.add_argument(
         "--pre_optimise",
