@@ -226,6 +226,7 @@ class TestCoilsetOptimiser:
         )
 
         cls.coilset = CoilSet([coil2, circuit])
+
         max_coil_shifts = {
             "x_shifts_lower": -2.0,
             "x_shifts_upper": 1.0,
