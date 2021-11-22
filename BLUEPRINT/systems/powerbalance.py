@@ -34,10 +34,10 @@ from bluemira.base.constants import (
     HE3_MOLAR_MASS,
 )
 from bluemira.balance_of_plant.plotting import SuperSankey
+from bluemira.utilities.tools import to_kelvin
 
 from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.palettes import B_PAL_MAP
-from BLUEPRINT.utilities.tools import tokelvin
 
 
 def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
@@ -127,7 +127,7 @@ def He_pumping(  # noqa (N802)
     \t:math:`f_{pump}=\\dfrac{dP}{dTc_P\\rho_{av}}`
     """  # noqa (W505)
     d_temp = t_out - t_in
-    t_bb_inlet = tokelvin(t_in)
+    t_bb_inlet = to_kelvin(t_in)
     # Modèle gaz idéal monoatomique - small compression ratios
     t_comp_inlet = t_bb_inlet / ((pressure_in / (pressure_in - d_pressure)) ** (2 / 5))
     # Ivo not sure why can't refind it - probably right but very little
@@ -156,7 +156,7 @@ def superheated_rankine(blanket_power, div_power, bb_outlet_temp):
     Used for He-cooled blankets. Not applicable to H2O temperatures.
     """
     d_t_turb = 20  # Turbine inlet delta-T to BB_out [K]
-    t_turb = tokelvin(bb_outlet_temp - d_t_turb)
+    t_turb = to_kelvin(bb_outlet_temp - d_t_turb)
     if t_turb < 657 or t_turb > 915:
         bluemira_warn("BoP turbine inlet temperature outside range of validity.")
     f_lgh = div_power / (blanket_power + div_power)

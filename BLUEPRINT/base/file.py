@@ -25,7 +25,13 @@ File I/O functions and some path operations
 import os
 from pathlib import Path
 
-from bluemira.base.file import _get_relpath, get_bluemira_root
+from bluemira.base.file import (
+    _get_relpath,
+    get_bluemira_root,
+    get_bluemira_path,
+    try_get_bluemira_path,
+    make_bluemira_path,
+)
 
 KEYWORD = "!BP_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
@@ -68,79 +74,27 @@ def get_BP_path(path="", subfolder="BLUEPRINT"):
     """
     Returns a BLUEPRINT path of a module subfolder. Defaults to root folder
 
-    Parameters
-    ----------
-    path: str
-        The desired path from which to create a full path
-    subfolder: str (default = 'BLUEPRINT')
-        The subfolder (from the BLUEPRINT root) in which to create a path
-        Defaults to the source code folder, but can be e.g. 'tests', or 'data'
-
-    Returns
-    -------
-    path: str
-        The full path to the desired `path` in the subfolder specified
+    see the bluemira equivalent for docs
     """
-    root = get_bluemira_root()
-    if "egg" in root:
-        return f"/{subfolder}"
-
-    path = path.replace("/", os.sep)
-    bpath = _get_relpath(root, subfolder)
-    return _get_relpath(bpath, path)
+    return get_bluemira_path(path, subfolder)
 
 
 def try_get_BP_path(path="", subfolder="BLUEPRINT", allow_missing=True):
     """
     Try to get the BLUEPRINT path of a module subfolder.
 
-    If the path doesn't exist then optionally carry on regardless or raise an error.
-
-    Parameters
-    ----------
-    path: str
-        The desired path from which to create a full path
-    subfolder: str (default = 'BLUEPRINT')
-        The subfolder (from the BLUEPRINT root) in which to create a path
-        Defaults to the source code folder, but can be e.g. 'tests', or 'data'
-
-    Returns
-    -------
-    path: Optional[str]
-        The full path to the desired `path` in the subfolder specified, or None if the
-        requested path doesn't exist.
-
-    Raises
-    ------
-    ValueError
-        If the requested path doesn't exist and the `allow_missing` flag is False.
+    see the bluemira equivalent for docs
     """
-    try:
-        return get_BP_path(path, subfolder)
-    except ValueError as error:
-        if allow_missing:
-            return None
-        else:
-            raise error
+    return try_get_bluemira_path(path, subfolder, allow_missing)
 
 
 def make_BP_path(path="", subfolder="BLUEPRINT"):
     """
     Creates a new folder in the path, provided one does not already exist
+
+    see the bluemira equivalent for docs
     """
-    root = get_bluemira_root()
-    if "egg" in root:
-        root = "/"
-    path = path.replace("/", os.sep)
-    bpath = _get_relpath(root, subfolder)
-    if bpath in path:
-        path = path[len(bpath) :]  # Remove leading edge rootpath
-    try:
-        return _get_relpath(bpath, path)
-    except ValueError:
-        os.makedirs(os.sep.join([bpath, path]))
-        # make_BP_path(path)  # Recursao nao funcione..
-        return _get_relpath(bpath, path)
+    return make_bluemira_path(path, subfolder)
 
 
 class FileManager:
