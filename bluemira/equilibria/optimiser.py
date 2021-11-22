@@ -1191,32 +1191,44 @@ class CoilsetOptimiserBase:
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
             maximum allowed current magnitude for all coils.
+            If the coils have current density limits that are more restrictive than these
+            coil currents, the smaller current limit of the two will be used for each
+            coil.
 
         Returns
         -------
         current_bounds: (np.narray, np.narray)
-            Tuple of arrays containing lowe and upper bounds for currents
+            Tuple of arrays containing lower and upper bounds for currents
             permitted in each control coil.
         """
-        i_max = np.inf * np.ones(len(self.I0))
+        n_control_currents = len(self.coilset.get_control_currents())
+        scaled_input_current_limits = np.inf * np.ones(n_control_currents)
 
         if max_currents is not None:
-            control_current_limits = np.asarray(max_currents)
-            if np.size(control_current_limits) == 1 or np.size(
-                control_current_limits
-            ) == np.size(self.I0):
-                i_max = control_current_limits / self.scale
+            input_current_limits = np.asarray(max_currents)
+            input_size = np.size(np.asarray(input_current_limits))
+            if input_size == 1 or input_size == n_control_currents:
+                scaled_input_current_limits = input_current_limits / self.scale
             else:
                 raise EquilibriaError(
                     "Length of max_currents array provided to optimiser is not"
-                    "equal to the number of control coils present."
+                    "equal to the number of control currents present."
                 )
 
-        current_bounds = (
-            -i_max * np.ones(len(self.I0)),
-            i_max * np.ones(len(self.I0)),
+        # Get the current limits from coil current densities
+        coilset_current_limits = self.coilset.get_max_currents(0.0)
+        if len(coilset_current_limits) != n_control_currents:
+            raise EquilibriaError(
+                "Length of array containing coilset current limits"
+                "is not equal to the number of control currents in optimiser."
+            )
+
+        # Limit the control current magnitude by the smaller of the two limits
+        control_current_limits = np.minimum(
+            scaled_input_current_limits, coilset_current_limits
         )
-        self.I0 = np.clip(self.I0, current_bounds[0], current_bounds[1])
+        current_bounds = (-control_current_limits, control_current_limits)
+
         return current_bounds
 
     def set_up_optimiser(
