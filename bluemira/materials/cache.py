@@ -169,9 +169,3 @@ class MaterialCache:
                 "exists in the cache."
             )
         self._material_dict[mat_name] = mat
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

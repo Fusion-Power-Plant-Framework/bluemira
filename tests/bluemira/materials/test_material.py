@@ -32,50 +32,50 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     from neutronics_material_maker.utils import make_serpent_material
 
-from BLUEPRINT.utilities.tools import is_num, kgm3togcm3, tokelvin
-from BLUEPRINT.materials import materials_cache
+from bluemira.utilities.tools import is_num, kgm3_to_gcm3, to_kelvin
 
 import tests
+from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
 
 
 class TestProperty:
-    tungsten = materials_cache.get_material("Tungsten")
-    SS_316 = materials_cache.get_material("SS316-LN")
-    copper = materials_cache.get_material("Pure Cu")
-    cucrzr = materials_cache.get_material("CuCrZr")
+    tungsten = MATERIAL_CACHE.get_material("Tungsten")
+    SS_316 = MATERIAL_CACHE.get_material("SS316-LN")
+    copper = MATERIAL_CACHE.get_material("Pure Cu")
+    cucrzr = MATERIAL_CACHE.get_material("CuCrZr")
 
     def test_array_limits(self):
-        a = self.tungsten.k(tokelvin([20, 30, 400, 1000, 1000]))
+        a = self.tungsten.k(to_kelvin([20, 30, 400, 1000, 1000]))
         with pytest.raises(ValueError):
-            a = self.tungsten.k(tokelvin([20, 30, 400, 1000, 1001]))
+            a = self.tungsten.k(to_kelvin([20, 30, 400, 1000, 1001]))
         with pytest.raises(ValueError):
-            a = self.tungsten.k(tokelvin([19, 30, 400, 1000, 1000]))
+            a = self.tungsten.k(to_kelvin([19, 30, 400, 1000, 1000]))
         with pytest.raises(ValueError):
-            a = self.tungsten.k(tokelvin([19, 30, 400, 1000, 1001]))
+            a = self.tungsten.k(to_kelvin([19, 30, 400, 1000, 1001]))
         del a
 
     def test_interp(self):
         self.SS_316.rho([300])
         self.SS_316.rho(300)
-        assert self.SS_316.rho(tokelvin(20)) == 7930
-        assert self.SS_316.rho(tokelvin(300)) == 7815
+        assert self.SS_316.rho(to_kelvin(20)) == 7930
+        assert self.SS_316.rho(to_kelvin(300)) == 7815
         a = self.SS_316.rho([300, 400, 500])
         b = self.SS_316.rho(np.array([300, 400, 500]))
         assert (a - b).all() == 0
 
-    def test_curho(self):
-        assert self.copper.rho(tokelvin(20)) == 8940  # Eq check
+    def test_cu_rho(self):
+        assert self.copper.rho(to_kelvin(20)) == 8940  # Eq check
 
-    def test_cucrzrrho(self):
-        assert self.cucrzr.rho(tokelvin(20)) == 8900  # Eq check
+    def test_cucrzr_rho(self):
+        assert self.cucrzr.rho(to_kelvin(20)) == 8900  # Eq check
 
 
 class TestMaterials:
-    beryllium = materials_cache.get_material("Beryllium")
-    SS_316 = materials_cache.get_material("SS316-LN")
-    nb_3_sn = materials_cache.get_material("Nb3Sn - WST")
-    nb_3_sn_2 = materials_cache.get_material("Nb3Sn - EUTF4")
-    nbti = materials_cache.get_material("NbTi")
+    beryllium = MATERIAL_CACHE.get_material("Beryllium")
+    SS_316 = MATERIAL_CACHE.get_material("SS316-LN")
+    nb_3_sn = MATERIAL_CACHE.get_material("Nb3Sn - WST")
+    nb_3_sn_2 = MATERIAL_CACHE.get_material("Nb3Sn - EUTF4")
+    nbti = MATERIAL_CACHE.get_material("NbTi")
     plot = tests.PLOTTING
 
     def test_density_load(self):
@@ -90,7 +90,7 @@ class TestMaterials:
         s = s.splitlines()[0]
         # Check serpent header updated with correct density
         assert float(s.split(" ")[2]) == pytest.approx(
-            kgm3togcm3(self.beryllium.density)
+            kgm3_to_gcm3(self.beryllium.density)
         )
 
     def test_t_tmp(self):
@@ -106,16 +106,16 @@ class TestMaterials:
 
     def test_superconductor_plot(self):
         if self.plot:
-            bmin, bmax = 3, 16
-            tmin, tmax = 2, 6
+            b_min, b_max = 3, 16
+            t_min, t_max = 2, 6
             eps = -0.66
-            self.nb_3_sn.plot(bmin, bmax, tmin, tmax, eps)
-            self.nb_3_sn_2.plot(bmin, bmax, tmin, tmax, eps)
-            self.nbti.plot(bmin, bmax, tmin, tmax)
+            self.nb_3_sn.plot(b_min, b_max, t_min, t_max, eps)
+            self.nb_3_sn_2.plot(b_min, b_max, t_min, t_max, eps)
+            self.nbti.plot(b_min, b_max, t_min, t_max)
 
 
 class TestLiquids:
-    water = materials_cache.get_material("H2O")
+    water = MATERIAL_CACHE.get_material("H2O")
 
     def test_temp_pressure(self):
         assert self.water.temperature == 293.15
@@ -127,7 +127,7 @@ class TestLiquids:
         self.water.temperature, self.water.pressure = 500, 200000
         s = make_serpent_material(self.water)
         s = s.splitlines()[0]
-        assert float(s.split(" ")[2]) == pytest.approx(kgm3togcm3(self.water.density))
+        assert float(s.split(" ")[2]) == pytest.approx(kgm3_to_gcm3(self.water.density))
 
 
 if __name__ == "__main__":

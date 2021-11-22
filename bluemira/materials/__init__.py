@@ -19,25 +19,34 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+
 """
-Constants for use in the materials package.
+Module-level functionality for materials.
 """
 
-T_DEFAULT = 293.15  # Default temperature for all liquids [K]
-P_DEFAULT = 101325  # Default pressure for all liquids [Pa]
+from .cache import MaterialCache
+from .material import (
+    BePebbleBed,
+    Liquid,
+    MassFractionMaterial,
+    NbSnSuperconductor,
+    NbTiSuperconductor,
+    Plasma,
+    UnitCellCompound,
+    Void,
+)
+from .mixtures import HomogenisedMixture
 
 
-# Sigh.. cba to fix
-MATERIAL_BEAM_MAP = {
-    "rho": "rho",
-    "mu": "nu",
-    "CTE": "alpha",
-    "E": "E",
-    "Sy": "sigma_y",
-}
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
+__all__ = [
+    "BePebbleBed",
+    "HomogenisedMixture",
+    "Liquid",
+    "MassFractionMaterial",
+    "MaterialCache",
+    "NbSnSuperconductor",
+    "NbTiSuperconductor",
+    "Plasma",
+    "UnitCellCompound",
+    "Void",
+]

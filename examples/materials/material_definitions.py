@@ -24,19 +24,19 @@ An example of how to generate materials
 """
 
 # %%
-from BLUEPRINT.materials.cache import MaterialCache
+from bluemira.materials import MaterialCache
 
 # %%[markdown]
 # # Material Definitions
 #
 # Materials play an important role in reactor design, be that via neutronics properties,
 # structural properties, or thermal properties. This example gives an overview of how
-# to define and use materials within BLUEPRINT.
+# to define and use materials within bluemira.
 #
 # ## Defining Materials
 #
 # Materials will usually be defined via JSON files, such as the default definitions
-# [provided with BLUEPRINT](../../data/materials). Whe defining your own materials for
+# [provided with bluemira](../../data/materials). Whe defining your own materials for
 # your studies you can either take the JSON approach, or for preliminary analysis you can
 # define materials using dictionaries as shown below.
 
@@ -53,15 +53,15 @@ material_dict = {
         # Let's try an equation with some temperature bounds
         "youngs_modulus": {
             "value": "polynomial.Polynomial([1, 2e-5, 3e-7])(temperature_in_C)",
-            "temp_min_celcius": 0.0,
-            "temp_max_celcius": 100.0,
+            "temp_min_celsius": 0.0,
+            "temp_max_celsius": 100.0,
             "reference": "I made it up.",
         },
         # Let's try a linear interpolated property from some data
         "coefficient_thermal_expansion": {
             "value": "interp(temperature_in_C, [20, 100, 200, 400], [10.3, 3.3, 2.2, 1.1])",
-            "temp_min_celcius": 20.0,
-            "temp_max_celcius": 400.0,
+            "temp_min_celsius": 20.0,
+            "temp_max_celsius": 400.0,
         },
     },
     "Cream": {
@@ -87,7 +87,7 @@ mixture_dict = {
 # %%[markdown]
 # ## The Materials Cache
 #
-# BLUEPRINT materials are managed by a defining a `MaterialCache` instance. This allows
+# Bluemira materials are managed by a defining a `MaterialCache` instance. This allows
 # material objects to be created from dictionaries or JSON files. Below gives an example
 # of how to create materials in a cache for the dictionary definitions we have defined
 # above.

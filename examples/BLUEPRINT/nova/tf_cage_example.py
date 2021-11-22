@@ -24,10 +24,15 @@ An example file to perform a simple beam FE analysis on a coil cage
 # %%
 from IPython import get_ipython
 import matplotlib.pyplot as plt
+import os
+
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
-from bluemira.base.look_and_feel import plot_defaults
 from BLUEPRINT.nova.structuralsolver import StructuralSolver
+
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import plot_defaults
+from bluemira.materials import MaterialCache
 
 try:
     get_ipython().run_line_magic("matplotlib", "qt")
@@ -63,7 +68,7 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "generated_data/BLUEPRINT",
+    "generated_data_root": "!BP_ROOT!/generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "plasma_mode": "run",
@@ -71,6 +76,7 @@ build_config = {
     # TF coil config
     "TF_type": "S",
     "TF_objective": "L",
+    "GS_type": "ITER",
     # FW and VV config
     "VV_parameterisation": "S",
     "FW_parameterisation": "S",
@@ -97,6 +103,16 @@ class SingleNullReactor(Reactor):
     build_tweaks: dict
     default_params = SingleNull().to_records()
 
+
+# %%[markdown]
+# We'll need to know some information about materials, so let's build a cache of known
+# material properties
+
+# %%
+material_data_path = get_bluemira_path("materials", subfolder="data")
+material_cache = MaterialCache()
+material_cache.load_from_file(os.sep.join([material_data_path, "materials.json"]))
+material_cache.load_from_file(os.sep.join([material_data_path, "mixtures.json"]))
 
 # %%[markdown]
 
@@ -152,7 +168,7 @@ R.ATEC.plot_xz(ax)
 # the TF cage response.
 
 all_equilibria = [snapshot.eq for snapshot in R.EQ.snapshots.values()]
-SS = StructuralSolver(R.ATEC, R.TF.cage, all_equilibria)
+SS = StructuralSolver(R.ATEC, R.TF.cage, all_equilibria, material_cache)
 
 # You can take a look at the FE model (without loads)
 SS.model.plot()

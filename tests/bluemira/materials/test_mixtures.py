@@ -23,13 +23,14 @@ import pytest
 # =============================================================================
 # Material mixture utility classes
 # =============================================================================
-from BLUEPRINT.materials.constants import MATERIAL_BEAM_MAP
-from BLUEPRINT.materials import materials_cache
+from bluemira.materials.constants import MATERIAL_BEAM_MAP
+
+from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
 
 
 class TestMatDict:
     def test_wp(self):
-        tf = materials_cache.get_material("Toroidal_Field_Coil_2015")
+        tf = MATERIAL_CACHE.get_material("Toroidal_Field_Coil_2015")
         mat_dict = tf.make_mat_dict(294)
 
         for key in MATERIAL_BEAM_MAP.values():

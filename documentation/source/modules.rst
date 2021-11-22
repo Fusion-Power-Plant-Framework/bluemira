@@ -13,6 +13,7 @@ Bluemira Modules
     fuel_cycle/fuel_cycle
     geometry/geometry
     magnetostatics/magnetostatics
+    materials/materials
     radiation_transport/radiation_transport
     utilities/utilities
 
