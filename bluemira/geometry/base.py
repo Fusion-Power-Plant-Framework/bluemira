@@ -25,6 +25,8 @@ Base classes and functionality for the bluemira geometry module.
 
 from __future__ import annotations
 
+import enum
+
 # import for abstract class
 from abc import ABC, abstractmethod
 
@@ -34,7 +36,7 @@ from . import _freecadapi
 import copy
 
 
-class _Orientation:
+class _Orientation(enum.Enum):
     FORWARD = "Forward"
     REVERSED = "Reversed"
 
@@ -61,7 +63,7 @@ class BluemiraGeo(ABC):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
-        self._orientation = _Orientation.FORWARD
+        self._orientation = _Orientation.FORWARD.value
 
     @staticmethod
     def _converter(func):
