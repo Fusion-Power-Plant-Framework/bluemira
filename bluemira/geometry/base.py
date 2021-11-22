@@ -146,7 +146,7 @@ class BluemiraGeo(ABC):
 
     @property
     def bounding_box(self):
-        """Checks if the shape is closed"""
+        """The bounding box of the shape"""
         x_min, y_min, z_min, x_max, y_max, z_max = _freecadapi.bounding_box(self._shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
