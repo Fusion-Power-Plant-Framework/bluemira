@@ -73,6 +73,12 @@ class BluemiraGeo(ABC):
     def _orientation(self, value):
         self.__orientation = _Orientation(value)
 
+    def _check_reverse(self, obj):
+        if self._orientation != _Orientation(obj.Orientation):
+            obj.reverse()
+            self._orientation = _Orientation(obj.Orientation)
+        return obj
+
     @staticmethod
     def _converter(func):
         """Function used in __getattr__ to modify the added functions"""
@@ -99,12 +105,6 @@ class BluemiraGeo(ABC):
     @boundary.setter
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
-
-    def _check_reverse(self, obj):
-        if self._orientation != _Orientation(obj.Orientation):
-            obj.reverse()
-            self._orientation = _Orientation(obj.Orientation)
-        return obj
 
     @property
     @abstractmethod
