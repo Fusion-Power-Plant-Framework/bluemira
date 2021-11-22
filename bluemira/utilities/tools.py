@@ -682,6 +682,11 @@ def _loadfromspec(name):
     return module
 
 
+# ======================================================================================
+# Materials related conversion functions
+# ======================================================================================
+
+
 def to_kelvin(
     temp_in_celsius: Union[float, np.array, List[float]]
 ) -> Union[float, np.array]:
