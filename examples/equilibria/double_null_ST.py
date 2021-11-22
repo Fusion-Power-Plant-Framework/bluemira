@@ -427,8 +427,8 @@ def run(args):
 
     # Perform a fast initial unconstrained optimisation to create a
     # self consistent initial state
-    # if args.pre_optimise is True:
-    #     pre_optimise(eq, profile, constraint_set)
+    if args.pre_optimise is True:
+        pre_optimise(eq, profile, constraint_set)
     if optimiser_name is not None:
         options = default_optimiser_options(optimiser_name)
         optimiser = set_coilset_optimiser(eq.coilset, **options)
