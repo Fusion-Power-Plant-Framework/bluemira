@@ -1378,17 +1378,14 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
     ----------
     coilset: CoilSet
         Coilset used to get coil current limits and number of coils.
+    pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
+        Dictionary of loops that specify convex hull regions inside which
+        each PF control coil position is to be optimised.
+        The loop objects must be 2d in x,z in units of [m].
     max_currents: float or np.array(len(coilset._ccoils)) (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    max_coil_shifts: dict
-        (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
-        "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
-        Dict specifying maximum tolerable shifts for each coil from its initial
-        position during optimisation [m]. Shifts are specified as either
-        np.ndarray with the shift for each coil specified,
-        or as a float to apply to all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
     opt_args: dict
@@ -1407,13 +1404,8 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
     def __init__(
         self,
         coilset,
+        pfregions,
         max_currents=None,
-        max_coil_shifts={
-            "x_shifts_lower": -1.0,
-            "x_shifts_upper": 1.0,
-            "z_shifts_lower": -1.0,
-            "z_shifts_upper": 1.0,
-        },
         gamma=1e-8,
         opt_args={
             "algorithm_name": "SBPLX",
@@ -1427,11 +1419,13 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # noqa (N803)
         super().__init__(coilset)
 
+        self.region_mapper = RegionMapper(pfregions)
+
         if max_currents is not None:
             self.I_max = self.update_current_constraint(max_currents)
         else:
             self.I_max = np.inf
-        self.max_coil_shifts = max_coil_shifts
+
         self.gamma = gamma
 
         self.opt_args = opt_args
@@ -1489,22 +1483,20 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         # Set up objective function for optimiser
         opt.set_objective_function(self.f_min_objective)
 
-        # Set state vector bounds (current and centroid position limits)
-        x_bounds = (
-            self.x0 + self.max_coil_shifts["x_shifts_lower"],
-            self.x0 + self.max_coil_shifts["x_shifts_upper"],
+        # Get mapped position bounds from RegionMapper
+        _, lower_lmap_bounds, upper_lmap_bounds = self.region_mapper.get_Lmap(
+            self.coilset
         )
-        z_bounds = (
-            self.z0 + self.max_coil_shifts["z_shifts_lower"],
-            self.z0 + self.max_coil_shifts["z_shifts_upper"],
-        )
+
         current_bounds = (
             -self.I_max * np.ones(len(self.I0)),
             self.I_max * np.ones(len(self.I0)),
         )
-        bounds = self.get_state_bounds(x_bounds, z_bounds, current_bounds)
-        opt.set_lower_bounds(bounds[0])
-        opt.set_upper_bounds(bounds[1])
+        lower_bounds = np.concatenate((lower_lmap_bounds, current_bounds[0]))
+        upper_bounds = np.concatenate((upper_lmap_bounds, current_bounds[1]))
+
+        opt.set_lower_bounds(lower_bounds)
+        opt.set_upper_bounds(upper_bounds)
         return opt
 
     def optimise(self):
@@ -1513,12 +1505,17 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
 
         Returns np.ndarray of optimised currents in each coil [A].
         """
-        # Get initial currents, and trim to within current bounds.
+        # Get initial state and apply region mapping to coil positions.
         initial_state, _ = self.read_coilset_state(self.coilset)
+        _, _, initial_currents = np.array_split(initial_state, self.substates)
+        initial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
+        initial_mapped_state = np.concatenate(
+            (initial_mapped_positions, initial_currents)
+        )
 
         # Optimise
         self.iter = 0
-        state = self.opt.optimise(initial_state)
+        state = self.opt.optimise(initial_mapped_state)
 
         # Call objective function final time on optimised state
         # to set coilset.
@@ -1573,7 +1570,13 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         -------
         fom: Value of objective function (figure of merit).
         """
-        self.set_coilset_state(vector)
+        mapped_x, mapped_z, currents = np.array_split(vector, self.substates)
+        mapped_positions = np.concatenate((mapped_x, mapped_z))
+        self.region_mapper.set_Lmap(mapped_positions)
+        x_vals, z_vals = self.region_mapper.get_xz_arrays()
+        coilset_state = np.concatenate((x_vals, z_vals, currents))
+
+        self.set_coilset_state(coilset_state)
 
         # Update target
         self.eq._remap_greens()
@@ -1586,9 +1589,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         self.b *= self.w
 
         # Calculate objective function
-        x_arr, z_arr, current_arr = np.array_split(vector, self.substates)
-        current_arr = current_arr * self.scale
-        fom, err = regularised_lsq_fom(current_arr, self.A, self.b, self.gamma)
+        fom, err = regularised_lsq_fom(currents * self.scale, self.A, self.b, self.gamma)
         return fom
 
 
@@ -1605,13 +1606,10 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         Optimiser to use for the optimisation of coil currents at each trial
         set of coil positions. sub_opt.coilset must exist, and will be
         modified during the optimisation.
-    max_coil_shifts: dict
-        (default {"x_shifts_lower": -1.0, "x_shifts_upper": 1.0,
-        "z_shifts_lower": -1.0, "z_shifts_upper": 1.0})
-        Dict specifying maximum tolerable shifts for each coil from its initial
-        position during optimisation [m]. Shifts are specified as either
-        np.ndarray with the shift for each coil specified,
-        or as a float to apply to all coils.
+    pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
+        Dictionary of loops that specify convex hull regions inside which
+        each PF control coil position is to be optimised.
+        The loop objects must be 2d in x,z in units of [m].
     opt_args: dict
         Dictionary containing arguments to pass to NLOpt optimiser
         used in position optimisation.
@@ -1629,12 +1627,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
     def __init__(
         self,
         sub_opt,
-        max_coil_shifts={
-            "x_shifts_lower": -1.0,
-            "x_shifts_upper": 1.0,
-            "z_shifts_lower": -1.0,
-            "z_shifts_upper": 1.0,
-        },
+        pfregions,
         opt_args={
             "algorithm_name": "SBPLX",
             "opt_conditions": {
@@ -1647,12 +1640,12 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # noqa (N803)
         super().__init__(sub_opt.coilset)
 
-        self.max_coil_shifts = max_coil_shifts
-        self.initial_positions = np.concatenate((self.x0, self.z0))
+        self.region_mapper = RegionMapper(pfregions)
+        self.initial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
 
         # Set up optimiser
         self.opt_args = opt_args
-        self.opt = self.set_up_optimiser(len(self.initial_positions))
+        self.opt = self.set_up_optimiser(len(self.initial_mapped_positions))
         self.sub_opt = sub_opt
 
     def set_up_optimiser(self, dimension):
@@ -1678,17 +1671,8 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Set up objective function for optimiser
         opt.set_objective_function(self.f_min_objective)
 
-        # Set state vector bounds (centroid position limits)
-        x_bounds = (
-            self.x0 + self.max_coil_shifts["x_shifts_lower"],
-            self.x0 + self.max_coil_shifts["x_shifts_upper"],
-        )
-        z_bounds = (
-            self.z0 + self.max_coil_shifts["z_shifts_lower"],
-            self.z0 + self.max_coil_shifts["z_shifts_upper"],
-        )
-        lower_bounds = np.concatenate((x_bounds[0], z_bounds[0]))
-        upper_bounds = np.concatenate((x_bounds[1], z_bounds[1]))
+        # Get mapped position bounds from RegionMapper
+        _, lower_bounds, upper_bounds = self.region_mapper.get_Lmap(self.coilset)
 
         opt.set_lower_bounds(lower_bounds)
         opt.set_upper_bounds(upper_bounds)
@@ -1703,10 +1687,11 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset)
         x_vals, z_vals, self.currents = np.array_split(initial_state, substates)
-        initial_positions = np.concatenate((x_vals, z_vals))
+        intial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
+
         # Optimise
         self.iter = 0
-        positions = self.opt.optimise(initial_positions)
+        positions = self.opt.optimise(intial_mapped_positions)
 
         # Call objective function final time on optimised state
         # to set coilset.
@@ -1760,7 +1745,10 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         -------
         fom: Value of objective function (figure of merit).
         """
-        coilset_state = np.concatenate((vector, self.currents))
+        self.region_mapper.set_Lmap(vector)
+        x_vals, z_vals = self.region_mapper.get_xz_arrays()
+        positions = np.concatenate((x_vals, z_vals))
+        coilset_state = np.concatenate((positions, self.currents))
         self.set_coilset_state(coilset_state)
 
         # Update target
@@ -1778,6 +1766,6 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         fom = self.sub_opt.opt.optimum_value
 
         # Update coilset state with optimised currents
-        coilset_state = np.concatenate((vector, self.currents))
+        coilset_state = np.concatenate((positions, self.currents))
         self.set_coilset_state(coilset_state)
         return fom

@@ -226,7 +226,26 @@ class TestCoilsetOptimiser:
         )
 
         cls.coilset = CoilSet([coil2, circuit])
-        cls.optimiser = CoilsetOptimiser(cls.coilset)
+
+        max_coil_shifts = {
+            "x_shifts_lower": -2.0,
+            "x_shifts_upper": 1.0,
+            "z_shifts_lower": -1.0,
+            "z_shifts_upper": 5.0,
+        }
+
+        cls.pfregions = {}
+        for coil in cls.coilset._ccoils:
+            xu = coil.x + max_coil_shifts["x_shifts_upper"]
+            xl = coil.x + max_coil_shifts["x_shifts_lower"]
+            zu = coil.z + max_coil_shifts["z_shifts_upper"]
+            zl = coil.z + max_coil_shifts["z_shifts_lower"]
+
+            rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
+
+            cls.pfregions[coil.name] = rect
+
+        cls.optimiser = CoilsetOptimiser(cls.coilset, cls.pfregions)
 
     def test_modify_coilset(self):
         # Read
