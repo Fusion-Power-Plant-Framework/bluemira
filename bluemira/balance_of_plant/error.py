@@ -20,35 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Generic plot utilities, figure and gif operations
+Error classes for the balance_of_plant module
 """
 
-import pytest
-from BLUEPRINT.utilities.plottools import mathify, gsymbolify
+from bluemira.base.error import BluemiraError
 
 
-class TestMathify:
-    def test_single(self):
-        result = mathify("PF_1")
-        assert result == "$PF_{1}$"
+class BalanceOfPlantError(BluemiraError):
+    """
+    Base error for the balance_of_plant module.
+    """
 
-        result = mathify("I_m_p")
-        assert result == "$I_{m_{p}}$"
-
-
-class TestGsymbolify:
-    def test_lowercase(self):
-        string = gsymbolify("beta")
-        assert string == "\\beta"
-
-    def test_uppercase(self):
-        string = gsymbolify("Beta")
-        assert string == "\\Beta"
-
-    def test_nothing(self):
-        string = gsymbolify("nothing")
-        assert string == "nothing"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+    pass
