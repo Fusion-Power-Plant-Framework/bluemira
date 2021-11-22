@@ -29,9 +29,7 @@ from collections import OrderedDict
 from collections.abc import Mapping, Iterable
 from typing import List, Union
 
-from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-from bluemira.utilities.tools import is_num
 
 
 CROSS_P_TOL = 1e-14  # Cross product tolerance
@@ -316,88 +314,6 @@ def perc_change(v2, v1ref, verbose=False):
     return perc
 
 
-# materials functions
-def tokelvin(temp_in_celsius):
-    """
-    Convert a temperature in Celsius to Kelvin.
-
-    Parameters
-    ----------
-    temp_in_celsius: Union[float, np.array, List[float]]
-        The temperature to convert [°C]
-
-    Returns
-    -------
-    temp_in_kelvin: Union[float, np.array]
-        The temperature [K]
-    """
-    if (is_num(temp_in_celsius) and temp_in_celsius < ABS_ZERO_C) or np.any(
-        np.less(temp_in_celsius, ABS_ZERO_C)
-    ):
-        raise ValueError("Negative temperature in K specified.")
-    return array_or_num(list_array(temp_in_celsius) - ABS_ZERO_C)
-
-
-def tocelsius(temp_in_kelvin):
-    """
-    Convert a temperature in Celsius to Kelvin.
-
-    Parameters
-    ----------
-    temp_in_kelvin: Union[float, np.array, List[float]]
-        The temperature to convert [K]
-
-    Returns
-    -------
-    temp_in_celsius: Union[float, np.array]
-        The temperature [°C]
-    """
-    if (is_num(temp_in_kelvin) and temp_in_kelvin < ABS_ZERO_K) or np.any(
-        np.less(temp_in_kelvin, ABS_ZERO_K)
-    ):
-        raise ValueError("Negative temperature in K specified.")
-    return array_or_num(list_array(temp_in_kelvin) + ABS_ZERO_C)
-
-
-def kgm3togcm3(density):
-    """
-    Convert a density in kg/m3 to g/cm3
-
-    Parameters
-    ----------
-    density : Union[float, np.array, List[float]]
-        The density [kg/m3]
-
-    Returns
-    -------
-    density_gcm3 : Union[float, np.array]
-        The density [g/cm3]
-    """
-    if density is not None:
-        return array_or_num(list_array(density) / 1000.0)
-
-
-def gcm3tokgm3(density):
-    """
-    Convert a density in g/cm3 to kg/m3
-
-    Parameters
-    ----------
-    density : Union[float, np.array, List[float]]
-        The density [g/cm3]
-
-    Returns
-    -------
-    density_kgm3 : Union[float, np.array]
-        The density [kg/m3]
-    """
-    if density is not None:
-        return array_or_num(list_array(density) * 1000.0)
-
-
-##########################
-
-
 def print_format_table():
     """
     Prints table of formatted text format options.
@@ -480,67 +396,6 @@ def maximum(val, val_min):
     else:
         val = val_min if val < val_min else val
     return val
-
-
-def list_array(list_):
-    """
-    Always returns a numpy array
-    Can handle int, float, list, np.ndarray
-
-    Parameters
-    ----------
-    list_ : Any
-        The value to convert into a numpy array.
-
-    Returns
-    -------
-    result : np.ndarray
-        The value as a numpy array.
-
-    Raises
-    ------
-    TypeError
-        If the value cannot be converted to a numpy array.
-    """
-    if isinstance(list_, list):
-        return np.array(list_)
-    elif isinstance(list_, np.ndarray):
-        try:  # This catches the odd np.array(8) instead of np.array([8])
-            len(list_)
-            return list_
-        except TypeError:
-            return np.array([list_])
-    elif is_num(list_):
-        return np.array([list_])
-    else:
-        raise TypeError("Could not convert input type to list_array to a np.array.")
-
-
-def array_or_num(array):
-    """
-    Always returns a numpy array or a float
-
-    Parameters
-    ----------
-    array : Any
-        The value to convert into a numpy array or number.
-
-    Returns
-    -------
-    result : Union[np.ndarray, float]
-        The value as a numpy array or number.
-
-    Raises
-    ------
-    TypeError
-        If the value cannot be converted to a numpy or number.
-    """
-    if is_num(array):
-        return float(array)
-    elif isinstance(array, np.ndarray):
-        return array
-    else:
-        raise TypeError
 
 
 if __name__ == "__main__":
