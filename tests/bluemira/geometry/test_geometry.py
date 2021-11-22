@@ -420,10 +420,10 @@ class TestGeometry:
         fc_faces = fc_shape.Shells[0].Faces
         for f, fc in zip(faces, fc_faces):
             assert f.area == fc.Area
-            assert f._orientation == fc.Orientation
+            assert f._orientation.value == fc.Orientation
             for w, fw in zip(f.boundary, fc.Wires):
                 assert w.length == fw.Length
-                assert w._orientation == fw.Orientation
+                assert w._orientation.value == fw.Orientation
 
     def test_cut_solids(self):
         face = BluemiraFace(
