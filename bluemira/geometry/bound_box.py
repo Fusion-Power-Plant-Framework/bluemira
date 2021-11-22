@@ -55,6 +55,9 @@ class BoundingBox:
     z_max: float
 
     def __post_init__(self):
+        """
+        Perform some silent sanity checks.
+        """
         if self.x_min > self.x_max:
             self.x_min, self.x_max = self.x_max, self.x_min
         if self.y_min > self.y_max:
