@@ -380,12 +380,12 @@ def default_optimiser_options(optimiser_name):
         options["optimisation_options"] = {"gamma": 1e-8}
     elif optimiser_name in ["BoundedCurrentOptimiser"]:
         options["optimisation_options"] = {
-            "max_currents": 2.0e7,
+            "max_currents": 3.0e7,
             "gamma": 1e-8,
         }
     elif optimiser_name in ["CoilsetOptimiser"]:
         options["optimisation_options"] = {
-            "max_currents": 2.0e7,
+            "max_currents": 3.0e7,
             "gamma": 1e-8,
             "opt_args": {
                 "algorithm_name": "SBPLX",
@@ -408,7 +408,7 @@ def default_optimiser_options(optimiser_name):
             },
         }
         options["suboptimiser_name"] = "BoundedCurrentOptimiser"
-        options["suboptimisation_options"] = {"max_currents": 2.0e7, "gamma": 1e-8}
+        options["suboptimisation_options"] = {"max_currents": 3.0e7, "gamma": 1e-8}
     else:
         print("Coilset optimiser name not supported for this example")
     return options
@@ -427,8 +427,8 @@ def run(args):
 
     # Perform a fast initial unconstrained optimisation to create a
     # self consistent initial state
-    if args.pre_optimise is True:
-        pre_optimise(eq, profile, constraint_set)
+    # if args.pre_optimise is True:
+    #     pre_optimise(eq, profile, constraint_set)
     if optimiser_name is not None:
         options = default_optimiser_options(optimiser_name)
         optimiser = set_coilset_optimiser(eq.coilset, **options)

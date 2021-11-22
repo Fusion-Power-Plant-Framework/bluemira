@@ -1360,11 +1360,14 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         in each coil [A].
         """
         # Get initial currents.
-        initial_currents = self.I0
+        initial_currents = self.coilset.get_control_currents() / self.scale
+        initial_currents = np.clip(
+            initial_currents, self.opt.lower_bounds, self.opt.upper_bounds
+        )
 
         # Set up data needed in FoM evaluation.
         # Scale the control matrix and constraint vector by weights.
-        self.constraints(self.eq, I_not_dI=True, fixed_coils=True)
+        self.constraints(self.eq, I_not_dI=True)
         self.w = self.constraints.w
         self.A = self.w[:, np.newaxis] * self.constraints.A
         self.b = self.w * self.constraints.b
