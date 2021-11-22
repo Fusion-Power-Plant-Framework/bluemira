@@ -35,9 +35,6 @@ from itertools import permutations
 from json import JSONDecoder, JSONEncoder
 from json.encoder import _make_iterencode
 from os import listdir
-import re
-from functools import partial
-from itertools import permutations
 from typing import Any, List, Union
 from unittest.mock import patch
 
