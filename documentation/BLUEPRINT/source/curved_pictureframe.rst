@@ -10,10 +10,10 @@ coils with either one or both of the top and bottom legs domed. This is mainly t
 room for a long-legged divertor, while keeping the PF coils as close as possible to the 
 plasma. 
 
-.. figure:: ../images/geometry/tapered_pictureframe_parameterisation.JPG
+.. figure:: ../images/CP_coils_params.png
     
 
-    CP Coil Parameterisation
+    Fig. 1: CP Coil Parameterisation
 
 
 The  list of inputs parameters follows the pattern from the Tapered picture frame  coils, 
@@ -72,6 +72,11 @@ therefore construct these arcs from the given inputs. The maths for this is desc
 Parameterising a Circle from a Chord Length   
 -------------------------------------------
 
+.. figure:: ../images/chord-arc.PNG
+    
+
+    Fig. 2: Chord Parameters
+
 The Chord height and length can be evaluated from the input parameters
     :math:`\alpha =tan^(-1)⁡(0.5*w/h)`
 With the angle swept by the arc calculated as:
@@ -92,7 +97,10 @@ This, alone, would result in a sharp corner between the straight portion at the 
 of the top/bottom leg and the curved section  as show in Fig. xa. A second curve must be defined to 
 smooth out this corner , resulting in a smooth curve like in Fig xb.
   
-Figure 2
+.. figure:: ../images/transitioning_curve.PNG
+    
+
+    Fig. 3: Base Arc (a) Arc with transitioning (b)
 
 Smoothing Curve
 To  define the smoothing curve a tangency condition is defined between the end point of the transitioning 
