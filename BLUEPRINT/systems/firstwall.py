@@ -27,7 +27,6 @@ import matplotlib.pyplot as plt
 from typing import Type
 
 from bluemira.base.parameter import ParameterFrame, ParameterMapping
-from bluemira.base.parameter import ParameterFrame
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
 from bluemira.geometry._deprecated_loop import Loop
@@ -1095,9 +1094,9 @@ class FirstWall(ReactorSystem):
         ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
         ["psi_norm", "Normalised flux value of strike-point contours",
          1, "N/A", None, "Input"],
-        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwith", True, True)}],
-        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwoth", True, True)}],
-        ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwoth", True, True)}],
+        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
+        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],
+        ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
         ['tk_div_cass', 'Minimum thickness between inner divertor profile and cassette', 0.3, 'm', None, 'Input'],
         ['tk_div_cass_in', 'Additional radial thickness on inboard side relative to to inner strike point', 0.1, 'm', None, 'Input'],
     ]
@@ -1615,7 +1614,7 @@ class FirstWallSN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input', {"PROCESS": ParameterMapping("scraplo", True, False)}],
+        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "N/A", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
@@ -1770,8 +1769,8 @@ class FirstWallDN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        ['tk_sol_ib', 'Inboard SOL thickness', 0.225, 'm', None, 'Input', {"PROCESS": ParameterMapping("scrapli", True, False)}],
-        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input', {"PROCESS": ParameterMapping("scraplo", True, False)}],
+        ['tk_sol_ib', 'Inboard SOL thickness', 0.225, 'm', None, 'Input'],
+        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda_q near SOL omp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda_q far SOL omp", 0.1, "m", None, "Input"],

@@ -46,8 +46,7 @@ params = ParameterFrame(
     # fmt: off
     [
         ["p_sol", "power crossing the separatrix", 140, "MW", None, "Input"],
-        ["p_sol_rate_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
-        ["p_sol_rate_far", "far scrape-off layer power rate", 0.35, "N/A", None, "Input"],
+        ["f_p_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.1, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],

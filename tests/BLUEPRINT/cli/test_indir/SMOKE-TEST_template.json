@@ -3156,15 +3156,7 @@
     "source": "Input",
     "mapping": null
   },
-  "p_sol_rate_far": {
-    "name": "far Scrape off layer power rate",
-    "value": 0.50,
-    "unit": "N/A",
-    "description": null,
-    "source": "Input",
-    "mapping": null
-  },
-  "p_sol_rate_near": {
+  "f_p_near": {
     "name": "near Scrape off layer power rate",
     "value": 0.50,
     "unit": "N/A",

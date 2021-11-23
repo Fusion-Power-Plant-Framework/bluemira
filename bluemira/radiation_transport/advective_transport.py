@@ -50,8 +50,7 @@ class ChargedParticleSolver:
     # fmt: off
     default_params = [
         ["p_sol", "power crossing the separatrix", 100, "MW", None, "Input"],
-        ["p_sol_rate_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
-        ["p_sol_rate_far", "far scrape-off layer power rate", 0.50, "N/A", None, "Input"],
+        ["f_p_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
@@ -434,8 +433,8 @@ class ChargedParticleSolver:
         """
         Calculate the parallel power at the midplane.
         """
-        p_sol_near = self.params.p_sol * self.params.p_sol_rate_near
-        p_sol_far = self.params.p_sol * self.params.p_sol_rate_far
+        p_sol_near = self.params.p_sol * self.params.f_p_near
+        p_sol_far = self.params.p_sol * (1 - self.params.f_p_near)
         if outboard:
             lq_near = self.params.fw_lambda_q_near_omp
             lq_far = self.params.fw_lambda_q_far_omp
