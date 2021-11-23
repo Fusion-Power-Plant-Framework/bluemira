@@ -32,6 +32,7 @@ from abc import ABC, abstractmethod
 
 # import freecad api
 from . import _freecadapi
+from bluemira.geometry.bound_box import BoundingBox
 
 import copy
 
@@ -145,8 +146,9 @@ class BluemiraGeo(ABC):
 
     @property
     def bounding_box(self):
-        """Checks if the shape is closed"""
-        return _freecadapi.bounding_box(self._shape)
+        """The bounding box of the shape"""
+        x_min, y_min, z_min, x_max, y_max, z_max = _freecadapi.bounding_box(self._shape)
+        return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
     def is_null(self):
         """Checks if the shape is null."""

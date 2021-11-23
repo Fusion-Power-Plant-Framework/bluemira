@@ -39,6 +39,7 @@ from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.bound_box import BoundingBox
 
 
 # =============================================================================
@@ -728,16 +729,7 @@ def bounding_box(x, y, z):
     z_b: np.array(8)
         The z coordinates of the bounding box rectangular cuboid
     """
-    xmax, xmin = np.max(x), np.min(x)
-    ymax, ymin = np.max(y), np.min(y)
-    zmax, zmin = np.max(z), np.min(z)
-
-    size = max([xmax - xmin, ymax - ymin, zmax - zmin])
-
-    x_b = 0.5 * size * np.array([-1, -1, -1, -1, 1, 1, 1, 1]) + 0.5 * (xmax + xmin)
-    y_b = 0.5 * size * np.array([-1, -1, 1, 1, -1, -1, 1, 1]) + 0.5 * (ymax + ymin)
-    z_b = 0.5 * size * np.array([-1, 1, -1, 1, -1, 1, -1, 1]) + 0.5 * (zmax + zmin)
-    return x_b, y_b, z_b
+    return BoundingBox.from_xyz(x, y, z).get_box_arrays()
 
 
 def vector_lengthnorm(x, y, z):
