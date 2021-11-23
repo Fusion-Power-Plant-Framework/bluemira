@@ -40,6 +40,7 @@ from bluemira.equilibria.optimiser import (
     BoundedCurrentOptimiser,
     CoilsetOptimiser,
     NestedCoilsetOptimiser,
+    ConnectionLengthOptimiser,
 )
 from bluemira.equilibria.solve import (
     PicardDeltaIterator,
@@ -235,7 +236,7 @@ def init_pfregions(coilset):
     return pfregions
 
 
-def init_equilibrium(grid, coilset, constraint_set):
+def init_equilibrium(grid, coilset, constraint_set, profile):
     """
     Create an initial guess for the Equilibrium state.
     Temporarily add a simple plasma coil to get a good starting guess for psi.
@@ -254,6 +255,7 @@ def init_equilibrium(grid, coilset, constraint_set):
         force_symmetry=True,
         limiter=None,
         psi=None,
+        profiles=profile,
         Ip=0,
         li=None,
     )
@@ -272,6 +274,7 @@ def init_equilibrium(grid, coilset, constraint_set):
         force_symmetry=True,
         vcontrol=None,
         psi=psi,
+        profiles=profile,
         Ip=Ip,
         li=None,
     )
@@ -334,6 +337,8 @@ def set_coilset_optimiser(
         optimiser = UnconstrainedCurrentOptimiser(coilset, **optimisation_options)
     elif optimiser_name in ["BoundedCurrentOptimiser"]:
         optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
+    elif optimiser_name in ["ConnectionLengthOptimiser"]:
+        optimiser = ConnectionLengthOptimiser(coilset, **optimisation_options)
     elif optimiser_name in ["CoilsetOptimiser"]:
         optimiser = CoilsetOptimiser(
             coilset, pfregions=pfregions, **optimisation_options
@@ -359,6 +364,7 @@ def set_iterator(eq, profile, constraint_set, optimiser):
     iterator_kwargs = {"plot": True, "gif": False, "relaxation": 0.3, "maxiter": 400}
 
     if optimiser_name in [
+        "ConnectionLengthOptimiser",
         "BoundedCurrentOptimiser",
         "CoilsetOptimiser",
         "NestedCoilsetOptimiser",
@@ -378,7 +384,7 @@ def default_optimiser_options(optimiser_name):
     options = {"optimiser_name": optimiser_name}
     if optimiser_name in ["Norm2Tikhonov", "UnconstrainedCurrentOptimiser"]:
         options["optimisation_options"] = {"gamma": 1e-8}
-    elif optimiser_name in ["BoundedCurrentOptimiser"]:
+    elif optimiser_name in ["BoundedCurrentOptimiser", "ConnectionLengthOptimiser"]:
         options["optimisation_options"] = {
             "max_currents": 3.0e7,
             "gamma": 1e-8,
@@ -423,7 +429,7 @@ def run(args):
     profile = init_profile()
     constraint_set = init_constraints()
     coilset = init_coilset()
-    eq = init_equilibrium(grid, coilset, constraint_set)
+    eq = init_equilibrium(grid, coilset, constraint_set, profile)
 
     # Perform a fast initial unconstrained optimisation to create a
     # self consistent initial state
@@ -449,6 +455,7 @@ if __name__ == "__main__":
             "BoundedCurrentOptimiser",
             "CoilsetOptimiser",
             "NestedCoilsetOptimiser",
+            "ConnectionLengthOptimiser",
         ],
         type=str,
         default="UnconstrainedCurrentOptimiser",

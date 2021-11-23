@@ -45,6 +45,7 @@ from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 
 __all__ = [
     "FBIOptimiser",
@@ -1231,9 +1232,7 @@ class CoilsetOptimiserBase:
 
         return current_bounds
 
-    def set_up_optimiser(
-        self, opt_args, dimension, bounds, objective_func, constraints=None
-    ):
+    def set_up_optimiser(self, opt_args, dimension, bounds, objective_func):
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
@@ -1256,10 +1255,19 @@ class CoilsetOptimiserBase:
         # Set up objective function for optimiser
         opt.set_objective_function(objective_func)
 
-        # TODO Apply constraints
+        # Apply constraints
+        self.set_up_constraints(opt)
+
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
+        return opt
+
+    def set_up_constraints(self, opt):
+        """
+        Updates the optimiser in-place to apply problem constraints.
+        To be overidden by child classes to apply specific constraints.
+        """
         return opt
 
     def __call__(self, eq, constraints, psi_bndry=None):
@@ -1385,6 +1393,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         self.b = self.w * self.constraints.b
 
         # Optimise
+        self.iter = 0
         currents = self.opt.optimise(initial_currents)
 
         coilset_state = np.concatenate((self.x0, self.z0, currents))
@@ -1735,4 +1744,121 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         # Calculate objective function
         self.sub_opt(self.eq, self.constraints)
         fom = self.sub_opt.opt.optimum_value
+        return fom
+
+
+class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
+    # def f_constraint(constraint, vector, grad):
+    #     constraint = super().f_min_objective(vector, grad)
+    #     return constraint
+
+    # def set_up_constraints(self, opt):
+    #     """
+    #     Set up constraints to be held during optimisation.
+    #     """
+    #     tolerance = 100.0
+    #     opt.add_ineq_constraint(self.f_constraint, tolerance)
+    #     return opt
+
+    def f_min_objective(self, vector, grad):
+        """
+        Objective function for nlopt optimisation (minimisation),
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+        grad: np.array
+            Local gradient of objective function used by LD NLOPT algorithms.
+            Updated in-place.
+
+        Returns
+        -------
+        fom: Value of objective function (figure of merit).
+        """
+        self.iter += 1
+        fom = self.get_state_figure_of_merit(vector)
+        if grad.size > 0:
+            grad[:] = self.opt.approx_derivative(
+                self.get_state_figure_of_merit,
+                vector,
+                f0=fom,
+            )
+        bluemira_print_flush(
+            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {fom:.2e}"
+        )
+        return fom
+
+    def get_state_figure_of_merit(self, vector):
+        """
+        Calculates figure of merit from objective function,
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+
+        Returns
+        -------
+        self.rms: Value of objective function (figure of merit).
+        """
+        vector = vector * self.scale
+        for i, coil in enumerate(self.coilset.coils.values()):
+            coil.set_current(vector[i])
+
+        # # Update target
+        o_points, x_points = self.eq.get_OX_points()
+
+        self.z0 = 0.0
+        # separatrix = self.eq.get_separatrix()
+        # self.x0 = np.amax(separatrix[0].x)
+
+        try:
+            separatrix = self.eq.get_separatrix()
+            # self.x0 = np.amax(separatrix[0].x)
+            self.x0, self.z0 = self.eq.get_midplane(
+                separatrix[0].x, separatrix[0].z, x_points[0].psi
+            )
+        except:
+            self.x0 = 100.0
+        print(self.x0)
+
+        # # rss = -calculate_connection_length_fs(
+        # #     self.eq, self.x0+0.05, self.z0, forward=True, first_wall=None
+        # # )/100.0
+        # if self.x0 > 8.0:
+        #     try:
+        #         rss = (
+        #             -calculate_connection_length_flt(
+        #                 self.eq,
+        #                 self.x0,
+        #                 self.z0,
+        #                 forward=True,
+        #                 first_wall=None,
+        #                 n_turns_max=50,
+        #             )
+        #             / 100.0
+        #         )
+        #     except:
+        #         rss = 1.0
+        # else:
+        #     rss = 1.0
+
+        # Calculate objective function
+        fom = (
+            -calculate_connection_length_flt(
+                self.eq,
+                self.x0,
+                self.z0,
+                forward=True,
+                first_wall=None,
+                n_turns_max=50,
+            )
+            / 100.0
+        )
+        vector = vector / self.scale
         return fom
