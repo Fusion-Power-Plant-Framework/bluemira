@@ -1,4 +1,4 @@
-Tapered TF coils
+Curved TF coils
 ================
 
 This document refers to the ``CurvedPictureFrame`` or ``CP`` coil type in ``tfcoils.py``.  
@@ -24,43 +24,43 @@ closer to the inboard coils and reduce the radial size of the overall reactor.
 Superconducting SC coils have a flat inboard leg, reflected in the variable values below. 
 
 The parameters can be mapped to BLUEPRINT input variables as follows:
-    *  ` x_in: r_tf_inboard_out + tk_tf_ob_casing (Resistive Coils)`
+    *  ``x_in: r_tf_inboard_out + tk_tf_ob_casing (Resistive Coils)``
   
             *	(radial position of winding pack plasma facing side of inboard leg + casing thickness)
 
-        *	`r_tf_in + tk_tf_inboard` (Superconducting Coils)
+        *	``r_tf_in + tk_tf_inboard`` (Superconducting Coils)
 
             *	(radial position of start of inboard leg + inboard leg full thickness)
 
-    *	`x_mid: r_cp_top + tk_tf_ob_casing` (Resistive coils)
+    *	``x_mid``: ``r_cp_top + tk_tf_ob_casing`` (Resistive coils)
 
         *	(radius of top of taper + casing thickness)
 
-        *	`x_mid = x_in` (Superconducting Coils)
+        *	``x_mid`` = ``x_in`` (Superconducting Coils)
 
-    *	`x_curve_start = r_tf_curve`
+    *	``x_curve_start`` = ``r_tf_curve``
 
-    *	`z_in = h_cp_top` (Resistive)
+    *	``z_in`` = ``h_cp_top`` (Resistive)
 
             *	(height of top of tapered section)
 
         *	= 0 (Superconducting)
 
-    *	`z_mid_up` = Keep Out Zone (KOZ) max height
+    *	``z_mid_up`` = Keep Out Zone (KOZ) max height
 
-    *	`z_mid_down` = KOZ min height
+    *	``z_mid_down`` = KOZ min height
 
-    *	`z_top` = `h_tf_max_in`
+    *	``z_top`` = ``h_tf_max_in``
 
             *	(max height of coil)
 
-    *	`z_bottom` = `h_tf_min_in
-`
+    *	``z_bottom`` = ``h_tf_min_in``
+
             *	(min height of coil)
 
-    *	`r_c` = 0.5 (hard coded)
+    *	``r_c`` = 0.5 (hard coded)
 
-    *	`x_out` = floating (for optimiser) 
+    *	``x_out`` = floating (for optimiser) 
 
 Note that that these represent the innermost (or closest to plasma centre) x-z loop in accordance 
 with the TF coil build procedure, and therefore may not represent the ‘true’ coil dimensions. For 
@@ -78,20 +78,31 @@ Parameterising a Circle from a Chord Length
     Fig. 2: Chord Parameters
 
 The Chord height and length can be evaluated from the input parameters
-    :math: \\alpha =tan^{-1}⁡(0.5*w/h)`
+
+.. math:: 
+
+    \alpha = tan^{-1}⁡ (0.5 w/h)
+
 With the angle swept by the arc calculated as:
-    :math: \\theta = 2(\\pi - 2\\alpha)`
+
+.. math:: 
+    
+    \theta = 2 (\pi - 2 \alpha)
+
 And the radius:
-    :math: r = 0.5*w / sin⁡(\\theta/2)
+
+.. math::
+    
+    r = 0.5 w/sin ⁡(\theta/2)
 
 Top/Bottom Leg Domes:
 
 For the top and bottom legs, first a ‘basic’ arc is defined as above, with the chord height and width 
 defined below as:
 
-    h = `z_top - z_mid`
+    h = ``z_top - z_mid``
 
-    w = `x_out - x_curve_start`
+    w = ``x_out - x_curve_start``
 
 This, alone, would result in a sharp corner between the straight portion at the inboard side of the 
 of the top/bottom leg and the curved section  as show in Fig. xa. A second curve must be defined to 
@@ -109,8 +120,14 @@ so that it starts at ‘A’ instead of its original point, with the transitioni
 space. The radius of the joint curve must be set as an input.
 
 The Joint Curve and Final Dome arc swept angles can therefore be defined:
-    :math: \\theta_j = cos^{-1}⁡((`r_leg`  cos⁡(0.5\\theta_{leg_basic} )  + `r_j`)/(`r_leg`+ `r_j` ))
-    :math: \\theta_leg_final = \\alpha_leg  - (\\theta_{leg_basic}/2   -\\theta_j )
+
+.. math::
+
+    \theta_j = cos^{-1} ⁡[(r_{leg} cos⁡ (0.5 \theta_{leg-basic} ) + r_j)/(r_{leg} + r_j )]
+
+.. math::
+
+    \theta_{leg-final} = \alpha_{leg} - (\theta_{leg-basic}/2 - \theta_j )
 
 The above parameters define the CP coil loop. The innermost loop is then offset and built in accordance with 
 the TF coil build procedures.
