@@ -46,6 +46,11 @@ from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_tools import (
+    loop_plane_intersect,
+)
+from bluemira.geometry._deprecated_loop import Loop
 
 __all__ = [
     "FBIOptimiser",
@@ -1809,51 +1814,52 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
         coilset_state = np.concatenate((self.x0, self.z0, vector))
         self.set_coilset_state(coilset_state)
 
+        try:
+            self.zomp = 0.0
+            self.xomp = self._get_sep_out_intersection(outboard=True)
+            print(self.xomp)
+
+            fom = (
+                -calculate_connection_length_flt(
+                    self.eq,
+                    self.xomp,
+                    self.zomp,
+                    forward=True,
+                    first_wall=None,
+                    n_turns_max=50,
+                )
+                / 100.0
+            )
+        except:
+            fom = 10.0
+
+        return fom
+
+    def _get_sep_out_intersection(self, outboard=True):
+        """
+        Find the middle and maximum outboard mid-plane psi norm values
+        """
+        # Pre-processing
+        o_points, _ = self.eq.get_OX_points()
+        o_point = o_points[0]
+        z = o_point.z
+        yz_plane = Plane([0, 0, z], [1, 0, z], [1, 1, z])
         separatrix = self.eq.get_separatrix()
 
-        self.xomp = np.amax(separatrix[0].x)
-        self.zomp = 0.0
-        # try:
-        #     separatrix = self.eq.get_separatrix()
-        #     # self.x0 = np.amax(separatrix[0].x)
-        #     self.x0, self.z0 = self.eq.get_midplane(
-        #         separatrix[0].x, separatrix[0].z, x_points[0].psi
-        #     )
-        # except:
-        #     self.x0 = 100.0
-        print(self.xomp)
-
-        # rss = -calculate_connection_length_fs(
-        #     self.eq, self.x0+0.05, self.z0, forward=True, first_wall=None
-        # )/100.0
-        if self.xomp > 6.0:
-            try:
-                fom = (
-                    -calculate_connection_length_flt(
-                        self.eq,
-                        self.xomp,
-                        self.zomp,
-                        forward=True,
-                        first_wall=None,
-                        n_turns_max=50,
-                    )
-                    / 100.0
-                )
-            except:
-                fom = 1.0
+        if not isinstance(separatrix, Loop):
+            sep1_intersections = loop_plane_intersect(separatrix[0], yz_plane)
+            sep2_intersections = loop_plane_intersect(separatrix[1], yz_plane)
+            sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
+            sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
+            x_sep1_mp = sep1_intersections.T[0][sep1_arg]
+            x_sep2_mp = sep2_intersections.T[0][sep2_arg]
+            if outboard:
+                x_sep_mp = x_sep1_mp if x_sep1_mp > x_sep2_mp else x_sep2_mp
+            else:
+                x_sep_mp = x_sep1_mp if x_sep1_mp < x_sep2_mp else x_sep2_mp
         else:
-            fom = 1.0
+            sep_intersections = loop_plane_intersect(separatrix, yz_plane)
+            sep_arg = np.argmin(np.abs(sep_intersections.T[0] - o_point.x))
+            x_sep_mp = sep_intersections.T[0][sep_arg]
 
-        # # Calculate objective function
-        # fom = (
-        #     -calculate_connection_length_flt(
-        #         self.eq,
-        #         self.xomp,
-        #         self.zomp,
-        #         forward=True,
-        #         first_wall=None,
-        #         n_turns_max=50,
-        #     )
-        #     / 100.0
-        # )
-        return fom
+        return x_sep_mp
