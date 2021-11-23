@@ -77,15 +77,6 @@ class BluemiraGeo(ABC):
         if self._orientation != _Orientation(obj.Orientation):
             obj.reverse()
             self._orientation = _Orientation(obj.Orientation)
-            new_subshapes = []
-            for bound, subobj in zip(self.boundary, obj.SubShapes):
-                if hasattr(bound, "_orientation") and bound._orientation != _Orientation(
-                    subobj.Orientation
-                ):
-                    new_subobj = copy.deepcopy(subobj)
-                    new_subobj.reverse()
-                    new_subshapes.append((subobj, new_subobj))
-            obj = obj.replaceShape(new_subshapes)
         return obj
 
     @staticmethod
