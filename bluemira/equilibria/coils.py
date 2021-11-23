@@ -220,12 +220,13 @@ class CoilSizer:
         Returns
         -------
         max_current: float
-            Maximum current for the coil
+            Maximum current for the coil. If the current density
+            is not specified, this will be set to np.inf.
 
         Raises
         ------
         EquilibriaError:
-            If the coil size is not fixed or no current density is specified
+            If the coil size is not fixed.
         """
         self.update(coil)
         if not self.flag_sizefix:
@@ -234,11 +235,11 @@ class CoilSizer:
             )
 
         if self.j_max is None:
-            raise EquilibriaError(
-                "Cannot get the maximum current of a coil of unspecified current density."
-            )
+            max_current = np.inf
+        else:
+            max_current = get_max_current(self.dx, self.dz, self.j_max)
 
-        return get_max_current(self.dx, self.dz, self.j_max)
+        return max_current
 
     def _make_size(self, current=None):
         """
@@ -1968,8 +1969,9 @@ class CoilSet(CoilGroup):
         """
         Returns the arrays of the coil centre coordinates
         """
-        x, z = np.zeros(self.n_coils), np.zeros(self.n_coils)
-        for i, coil in enumerate(self.coils.values()):
+        coil_values = self.coils.values()
+        x, z = np.zeros(len(coil_values)), np.zeros(len(coil_values))
+        for i, coil in enumerate(coil_values):
             x[i] = float(coil.x)
             z[i] = float(coil.z)
         return x, z
@@ -2027,7 +2029,8 @@ class CoilSet(CoilGroup):
         -------
         max_currents: np.array(n_C)
         """
-        max_currents = max_pf_current * np.ones(self.n_coils)
+        n_currents = len(self.coils.values())
+        max_currents = max_pf_current * np.ones(n_currents)
         pf_names = self.get_PF_names()
         for i, name in enumerate(pf_names):
             if self.coils[name].flag_sizefix:

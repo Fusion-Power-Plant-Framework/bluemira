@@ -50,17 +50,27 @@ class ParameterMapping:
     """
     Simple class containing information on mapping of a bluemira parameter to one in
     external software.
+
+    Parameters
+    ----------
+    name: str
+       name of mapped parameter
+    recv: bool
+        recieve data from mapped parameter (to overwrite bluemira parameter)
+    send: bool
+        send data to mapped parameter (from bluemira parameter)
+
     """
 
     name: str
-    read: bool = True
-    write: bool = True
+    recv: bool = True
+    send: bool = True
 
     def to_dict(self):
         """
         Convert this object to a dictionary with attributes as values.
         """
-        return {"name": self.name, "read": self.read, "write": self.write}
+        return {"name": self.name, "recv": self.recv, "send": self.send}
 
     def __str__(self):
         """
@@ -1166,7 +1176,7 @@ class ParameterFrame:
         Callback to convert suitable JSON objects (dictionaries) into
         ParameterMapping objects.
         """
-        if {"name", "read", "write"} == set(dct.keys()):
+        if {"name", "send", "recv"} == set(dct.keys()):
             return ParameterMapping(**dct)
         return dct
 

@@ -42,6 +42,14 @@ class NotClosedWire(BluemiraError):
     pass
 
 
+class MixedOrientationWireError(BluemiraError):
+    """
+    Mixed Orientation Wire Error
+    """
+
+    pass
+
+
 class DisjointedFace(BluemiraError):
     """
     Disjointed Face Error
@@ -61,6 +69,14 @@ class DisjointedSolid(BluemiraError):
 class GeometryParameterisationError(GeometryError):
     """
     Error class for parametric shapes.
+    """
+
+    pass
+
+
+class FreeCADError(BluemiraError):
+    """
+    Error class for use in the geometry module
     """
 
     pass

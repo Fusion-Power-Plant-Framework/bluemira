@@ -106,24 +106,16 @@ class ConfigurationSchema:
     fw_p_sol_near: Parameter
     fw_p_sol_far: Parameter
     hf_limit: Parameter
-    # ad hoc SN variables
-    fw_lambda_q_near: Parameter
-    fw_lambda_q_far: Parameter
-    f_outer_target: Parameter
-    f_inner_target: Parameter
-    # ad hoc DN variables
+
+    # SN/DN variables for heat flux transport
     fw_dpsi_n_near: Parameter
     fw_dpsi_n_far: Parameter
     fw_dx_omp: Parameter
     fw_dx_imp: Parameter
-    p_rate_omp: Parameter
-    p_rate_imp: Parameter
     fw_lambda_q_near_omp: Parameter
     fw_lambda_q_far_omp: Parameter
     fw_lambda_q_near_imp: Parameter
     fw_lambda_q_far_imp: Parameter
-    dr_near_omp: Parameter
-    dr_far_omp: Parameter
     f_lfs_lower_target: Parameter
     f_lfs_upper_target: Parameter
     f_hfs_lower_target: Parameter
@@ -219,6 +211,8 @@ class ConfigurationSchema:
     r_tf_outboard_corner: Parameter
     r_tf_inboard_corner: Parameter
     r_tf_curve: Parameter
+    h_tf_max_in: Parameter
+    h_tf_min_in: Parameter
 
     # Coil structures
     x_g_support: Parameter

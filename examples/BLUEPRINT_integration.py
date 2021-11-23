@@ -38,14 +38,12 @@ from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
 
-import bluemira.base as bm
-from bluemira.base.components import GroupingComponent
+from bluemira.base.components import GroupingComponent, PhysicalComponent, ComponentError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry._deprecated_tools import (
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
 )
-from bluemira.utilities.plot_tools import plot_component
 
 
 class ConversionMethod(enum.Enum):
@@ -70,9 +68,9 @@ class BluemiraReactor(Reactor):
         super().__init__(config, build_config, build_tweaks)
 
         self.component_trees = {
-            "xy": bm.GroupingComponent(self.params.Name),
-            "xz": bm.GroupingComponent(self.params.Name),
-            "xyz": bm.GroupingComponent(self.params.Name),
+            "xy": GroupingComponent(self.params.Name),
+            "xz": GroupingComponent(self.params.Name),
+            "xyz": GroupingComponent(self.params.Name),
         }
 
     def _convert_loop(
@@ -87,7 +85,7 @@ class BluemiraReactor(Reactor):
         tree.
         """
         face = convert_coordinates_to_face(*geom.xyz, method=method.value)
-        component = bm.PhysicalComponent(geom_name, face)
+        component = PhysicalComponent(geom_name, face)
         tree.add_child(component)
 
     def _convert_multiloop(
@@ -125,7 +123,7 @@ class BluemiraReactor(Reactor):
         inner = convert_coordinates_to_wire(*geom.inner.xyz, method=method.value)
         outer = convert_coordinates_to_wire(*geom.outer.xyz, method=method.value)
         face = BluemiraFace([outer, inner])
-        component = bm.PhysicalComponent(geom_name, face)
+        component = PhysicalComponent(geom_name, face)
         tree.add_child(component)
 
     def _convert_multishell(
@@ -169,7 +167,7 @@ class BluemiraReactor(Reactor):
         elif isinstance(geom, MultiShell):
             self._convert_multishell(tree, geom, geom_name, method)
         else:
-            raise bm.components.ComponentError(
+            raise ComponentError(
                 f"Attempt to convert unknown geometry type {type(geom)}."
             )
 
@@ -353,7 +351,7 @@ class BluemiraReactor(Reactor):
             z = np.append(coil.z_corner, coil.z_corner[0])
             wire = convert_coordinates_to_wire(x, y, z)
             face = BluemiraFace(wire)
-            component = bm.PhysicalComponent(name, face)
+            component = PhysicalComponent(name, face)
             pf_comp.add_child(component)
 
 
@@ -433,8 +431,8 @@ if __name__ == "__main__":
     reactor = BluemiraReactor(config, build_config, build_tweaks)
     reactor.build()
 
-    plot_component(reactor.component_trees["xz"])
-    plot_component(reactor.component_trees["xy"])
+    reactor.component_trees["xz"].plot_2d(plane="xz")
+    reactor.component_trees["xy"].plot_2d(plane="xy")
 
     print(reactor.component_trees["xz"].tree())
     print(reactor.component_trees["xy"].tree())

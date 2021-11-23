@@ -35,7 +35,7 @@ PROCESS_OBS_VAR = {
 }
 
 FRAME_LIST = [
-    # [var, name, value, unit, description, source{name, read, write}]
+    # [var, name, value, unit, description, source{name, recv, send}]
     ["a", None, 0, None, None, None],
     ["b", None, 1, None, None, None, None],
     ["c", None, 2, None, None, None, {"PROCESS": ParameterMapping("cp", False, False)}],

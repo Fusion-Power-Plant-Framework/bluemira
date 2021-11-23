@@ -446,7 +446,6 @@ class TestResistiveCurvedPictureframeTF:
             ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
             ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
             ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
-            ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
             ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
             ['h_tf_min_in', 'Plasma side TF coil min height', -12.0, 'm', None, 'PROCESS'],
         ]
@@ -488,9 +487,9 @@ class TestResistiveCurvedPictureframeTF:
         vol_leg_casing = get_properties(CAD.component["shapes"][3])["Volume"]
 
         true_vol_b_cyl = 0.4249
-        true_vol_leg_conductor = 19.3274
-        true_vol_cp_conductor = 2.5586
-        true_vol_leg_casing = 12.9689
+        true_vol_leg_conductor = 19.3506
+        true_vol_cp_conductor = 3.2414
+        true_vol_leg_casing = 14.4323
 
         assert np.isclose(vol_b_cyl, true_vol_b_cyl, rtol=1e-3)
         assert np.isclose(vol_leg_conductor, true_vol_leg_conductor, rtol=1e-2)

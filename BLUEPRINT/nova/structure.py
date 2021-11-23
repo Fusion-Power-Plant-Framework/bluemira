@@ -28,7 +28,8 @@ from copy import deepcopy
 from typing import Type
 from scipy.optimize import minimize_scalar, minimize
 from scipy.optimize import fmin_slsqp
-from BLUEPRINT.geometry.geomtools import normal
+
+from bluemira.geometry._deprecated_tools import get_intersect
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.systems.baseclass import ReactorSystem
 from bluemira.base.parameter import ParameterFrame
@@ -36,7 +37,7 @@ from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import (
-    get_intersect,
+    normal,
     length,
     xz_interp,
     distance_between_points,

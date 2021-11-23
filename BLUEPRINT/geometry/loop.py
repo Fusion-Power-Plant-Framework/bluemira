@@ -62,7 +62,8 @@ from BLUEPRINT.geometry.constants import VERY_BIG
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.utilities.plottools import pathify, BPPathPatch3D, Plot3D
-from BLUEPRINT.utilities.tools import is_num, furthest_perp_point
+from BLUEPRINT.utilities.tools import furthest_perp_point
+from bluemira.utilities.tools import is_num
 
 
 class Loop(GeomBase):

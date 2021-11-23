@@ -102,7 +102,7 @@ class TestMisc:
         assert os.path.isdir(get_bluemira_root())
 
     def test_BP_path(self):  # noqa (N802)
-        folders = ["systems", "materials", "geometry", "nova"]
+        folders = ["systems", "geometry", "nova"]
         for p in folders:
             assert os.path.isdir(get_BP_path(p))
         fails = ["wrongwrong", "nopenope"]

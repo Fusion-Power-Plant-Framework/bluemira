@@ -31,9 +31,9 @@ Some examples on updating and extending Configurations
 
 # %%
 from bluemira.base.parameter import Parameter, ParameterFrame
+from bluemira.base.file import get_bluemira_root
+from bluemira.base.config_schema import ConfigurationSchema
 
-from BLUEPRINT.base.config_schema import ConfigurationSchema
-from BLUEPRINT.base.file import get_bluemira_root
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import Configuration
 

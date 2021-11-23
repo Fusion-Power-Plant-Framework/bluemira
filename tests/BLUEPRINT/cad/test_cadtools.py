@@ -30,7 +30,7 @@ from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.offset import offset_clipper
-from BLUEPRINT.utilities.tools import compare_dicts
+from bluemira.utilities.tools import compare_dicts
 from BLUEPRINT.cad.cadtools import (
     make_box,
     make_wire,

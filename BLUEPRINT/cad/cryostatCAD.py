@@ -45,8 +45,7 @@ class CryostatCAD(PlugChopper, ComponentCAD):
     """
 
     def __init__(self, cryostat, **kwargs):
-        ComponentCAD.__init__(
-            self,
+        super().__init__(
             "Cryostat",
             cryostat.geom,
             cryostat.params.n_TF,

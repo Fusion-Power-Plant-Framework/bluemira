@@ -33,8 +33,7 @@ class NBIoCAD(ComponentCAD):
     """
 
     def __init__(self, neutral_beam, **kwargs):
-        ComponentCAD.__init__(
-            self,
+        super().__init__(
             "Neutral neam injector",
             neutral_beam.geom,
             neutral_beam.n,
@@ -62,8 +61,7 @@ class ECDoCAD(ComponentCAD):
     """
 
     def __init__(self, e_cyclotron, **kwargs):
-        ComponentCAD.__init__(
-            self,
+        super().__init__(
             "Electron cyclotron",
             e_cyclotron.geom,
             e_cyclotron.n,

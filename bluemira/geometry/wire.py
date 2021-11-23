@@ -27,10 +27,6 @@ from __future__ import annotations
 
 from typing import List
 
-# import from freecad
-import freecad  # noqa: F401
-import Part
-
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 
@@ -40,71 +36,75 @@ from bluemira.geometry._freecadapi import (
     wire_closure,
     scale_shape,
     translate_shape,
+    apiWire,
+    change_plane,
+    rotate_shape,
 )
 
 # import mathematical library
 import numpy
 
 # import from error
-from bluemira.geometry.error import NotClosedWire
+from bluemira.geometry.error import NotClosedWire, MixedOrientationWireError
 
 
 class BluemiraWire(BluemiraGeo):
     """Bluemira Wire class."""
 
-    # # Necessary only if there are changes to the base attrs dictionary
-    # attrs = {**BluemiraGeo.attrs}
-
     def __init__(self, boundary, label: str = ""):
-        boundary_classes = [self.__class__, Part.Wire]
+        boundary_classes = [self.__class__, apiWire]
         super().__init__(boundary, label, boundary_classes)
+        self._check_orientations()
 
         # connection variable with BLUEPRINT Loop
         self._bp_loop = None
+
+    def _check_orientations(self):
+        orientations = []
+        for boundary in self.boundary:
+            if isinstance(boundary, apiWire):
+                orient = boundary.Orientation
+            elif isinstance(boundary, self.__class__):
+                orient = boundary._shape.Orientation
+            orientations.append(orient)
+
+        if orientations.count(orientations[0]) != len(orientations):
+            raise MixedOrientationWireError(
+                f"Cannot make a BluemiraWire from wires of mixed orientations: {orientations}"
+            )
+        self._orientation = orientations[0]
+        return orientations
 
     @staticmethod
     def _converter(func):
         def wrapper(*args, **kwargs):
             output = func(*args, **kwargs)
-            if isinstance(output, Part.Wire):
+            if isinstance(output, apiWire):
                 output = BluemiraWire(output)
             return output
 
         return wrapper
 
-    def _check_boundary(self, objs):
-        """Check if objects objs can be used as boundaries"""
-        if not hasattr(objs, "__len__"):
-            objs = [objs]
-        check = False
-        for c in self._boundary_classes:
-            check = check or (all(isinstance(o, c) for o in objs))
-            if check:
-                return objs
-        raise TypeError(
-            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
-        )
+    @property
+    def _shape(self) -> apiWire:
+        """apiWire: shape of the object as a single wire"""
+        return self._check_reverse(apiWire(self._wires))
 
     @property
-    def _shape(self) -> Part.Wire:
-        """Part.Wire: shape of the object as a single wire"""
-        return Part.Wire(self._wires)
-
-    @property
-    def _wires(self) -> List[Part.Wire]:
-        """list(Part.Wire): list of wires of which the shape consists of."""
+    def _wires(self) -> List[apiWire]:
+        """list(apiWire): list of wires of which the shape consists of."""
         wires = []
         for o in self.boundary:
-            if isinstance(o, Part.Wire):
+            if isinstance(o, apiWire):
                 for w in o.Wires:
-                    wires += [Part.Wire(w.OrderedEdges)]
+                    wires += [apiWire(w.OrderedEdges)]
             else:
                 wires += o._wires
         return wires
 
     def get_single_wire(self) -> BluemiraWire:
         """Get a single wire representing the object"""
-        return BluemiraWire(Part.Wire(self._wires))
+        return BluemiraWire(self._shape)
 
     def __add__(self, other):
         """Add two wires"""
@@ -116,12 +116,13 @@ class BluemiraWire(BluemiraGeo):
         return output
 
     def close(self) -> None:
-        """Close the shape with a line segment between shape's end and start point.
-        This function modify the object boundary.
+        """
+        Close the shape with a line segment between shape's end and start point.
+        This function modifies the object boundary.
         """
         if not self.is_closed():
             closure = wire_closure(self._shape)
-            if isinstance(self.boundary[0], Part.Wire):
+            if isinstance(self.boundary[0], apiWire):
                 self.boundary.append(closure)
             else:
                 self.boundary.append(BluemiraWire(closure))
@@ -133,7 +134,8 @@ class BluemiraWire(BluemiraGeo):
     def discretize(
         self, ndiscr: int = 100, byedges: bool = False, dl: float = None
     ) -> numpy.ndarray:
-        """Discretize the wire in ndiscr equidistant points or with a reference dl
+        """
+        Discretize the wire in ndiscr equidistant points or with a reference dl
         segment step.
         If byedges is True, each edges is discretized separately using an approximated
         distance (wire.Length/ndiscr) or the specified dl.
@@ -150,21 +152,55 @@ class BluemiraWire(BluemiraGeo):
         return points
 
     def scale(self, factor) -> None:
-        """Apply scaling with factor to this object. This function modifies the self
+        """
+        Apply scaling with factor to this object. This function modifies the self
         object.
         """
         for o in self.boundary:
-            if isinstance(o, Part.Wire):
+            if isinstance(o, apiWire):
                 scale_shape(o, factor)
             else:
                 o.scale(factor)
 
     def translate(self, vector) -> None:
-        """Translate this shape with the vector. This function modifies the self
+        """
+        Translate this shape with the vector. This function modifies the self
         object.
         """
         for o in self.boundary:
-            if isinstance(o, Part.Wire):
+            if isinstance(o, apiWire):
                 translate_shape(o, vector)
             else:
                 o.translate(vector)
+
+    def rotate(
+        self,
+        base: tuple = (0.0, 0.0, 0.0),
+        direction: tuple = (0.0, 0.0, 1.0),
+        degree: float = 180,
+    ):
+        """
+        Rotate this shape.
+
+        Parameters
+        ----------
+        base: tuple (x,y,z)
+            Origin location of the rotation
+        direction: tuple (x,y,z)
+            The direction vector
+        degree: float
+            rotation angle
+        """
+        for o in self.boundary:
+            if isinstance(o, apiWire):
+                rotate_shape(o, base, direction, degree)
+            else:
+                o.rotate(base, direction, degree)
+
+    def change_plane(self, plane):
+        """Apply a plane transformation to the wire"""
+        for o in self.boundary:
+            if isinstance(o, apiWire):
+                change_plane(o, plane._shape)
+            else:
+                o.change_plane(plane)

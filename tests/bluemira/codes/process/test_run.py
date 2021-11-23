@@ -100,25 +100,25 @@ class TestRun:
         with pytest.raises(KeyError):
             self.run_PROCESS("FAKE")
 
-    def test_read_mapping(self):
+    def test_recv_mapping(self):
         """
         Test that parameters with a PROCESS mapping are read correctly.
         """
         with patch("bluemira.codes.process.run.Run._mock"):
             runner = self.run_PROCESS("MOCK")
 
-        # Test that PROCESS params with read = False are not read.
-        assert "cp" not in runner.read_mapping
-        assert "dp" not in runner.read_mapping
+        # Test that PROCESS params with recv = False are not read.
+        assert "cp" not in runner.recv_mapping
+        assert "dp" not in runner.recv_mapping
 
-        # Test that PROCESS params with read = True are read correctly.
-        assert runner.read_mapping["ep"] == "e"
-        assert runner.read_mapping["fp"] == "f"
+        # Test that PROCESS params with recv = True are read correctly.
+        assert runner.recv_mapping["ep"] == "e"
+        assert runner.recv_mapping["fp"] == "f"
 
-        # Test that non-PROCESS params with read = True are not read.
+        # Test that non-PROCESS params with recv = True are not read.
         param = self.test_reactor.params.get_param("g")
-        assert "PROCESS" not in param.mapping and param.mapping["FAKE_CODE"].read is True
-        assert "gp" not in runner.read_mapping
+        assert "PROCESS" not in param.mapping and param.mapping["FAKE_CODE"].recv is True
+        assert "gp" not in runner.recv_mapping
 
     @patch("bluemira.codes.process.run.Run._load_PROCESS")
     @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
@@ -162,7 +162,7 @@ class TestRun:
         # Check the right amount of calls were made to add_parameter.
         assert mock_add_parameter.call_count == 2
 
-        # Check that the dummy values with write = True were written.
+        # Check that the dummy values with send = True were written.
         mock_add_parameter.assert_any_call("dp", 3)
         mock_add_parameter.assert_any_call("fp", 5)
 
@@ -181,7 +181,7 @@ class TestRun:
         self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
     ):
         """
-        Test in Rerun mode, that parameters with a PROCESS mapping and mapping.write set
+        Test in Rerun mode, that parameters with a PROCESS mapping and mapping.send set
         as True are called be written to IN.DAT and that the correct functions are called
         during the run.
         """
@@ -192,11 +192,11 @@ class TestRun:
         number_of_expected_calls = 0
         for param in self.test_reactor.params.get_parameter_list():
             if param.mapping is not None and "PROCESS" in param.mapping:
-                if param.mapping["PROCESS"].write:
+                if param.mapping["PROCESS"].send:
                     number_of_expected_calls += 1
         assert mock_add_parameter.call_count == number_of_expected_calls
 
-        # Check that the dummy values with write = True were written.
+        # Check that the dummy values with send = True were written.
         mock_add_parameter.assert_any_call("dp", 3)
         mock_add_parameter.assert_any_call("fp", 5)
 

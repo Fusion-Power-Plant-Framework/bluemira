@@ -10,7 +10,7 @@ ignore =
     # Backslashes in docstrings used for documentation
     D301,
     # First line should end with a period (ignored because...)
-    D400, 
+    D400,
     # Imperative moods are a pain in the ass
     D401,
     # whitespace before ':' (ignored because black does this)
@@ -22,14 +22,14 @@ ignore =
     # The input method in Python 2 will read from standard input.. we don't use 2
     S322,
     # Standard pseudo-random generators are not suitable for security/cryptographic purposes. We don't do this
-    S311,    
+    S311,
 
 per-file-ignores =
     tests/*:
      	# Use of assert detected. The enclosed code will be removed when compiling
 	    # to optimised byte code. (ignored because of pytest)
         S101,
-	    # Sometimes the tests just run code without using local variables 
+	    # Sometimes the tests just run code without using local variables
         F841,
         # We don't require documentation in tests
         D100,
@@ -52,7 +52,7 @@ per-file-ignores =
         # Allow unused imports in __init__.py, so we can expose at parent module level
         F401,
         F403,
-        
+
 
 exclude =
     # No need to traverse our git directory
@@ -88,7 +88,7 @@ pep8-naming = True
 
 # Agreed exceptions to naming conventions - see CONTRIBUTING.md
 
-ignore_names = 
+ignore_names =
     *PROCESS*,
     *PLASMOD*,
     *CAD*,
@@ -156,6 +156,7 @@ ignore_names =
     *to_L*,
     *L_to_zdz*,
     get_Lmap,
+    set_Lmap,
     *LFS*,
     *HFS*,
     *_OX_*,

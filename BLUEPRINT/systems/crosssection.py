@@ -45,7 +45,7 @@ from BLUEPRINT.geometry.offset import offset_smc, max_steps
 from BLUEPRINT.geometry.parameterisations import PolySpline, PictureFrame
 from BLUEPRINT.geometry.shape import Shape
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
-from BLUEPRINT.utilities.tools import innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 
 
 class ReactorCrossSection(ReactorSystem):

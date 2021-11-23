@@ -25,10 +25,9 @@ Tests for utilities for external code integration
 
 import pytest
 
-from bluemira.base import ParameterFrame
-from bluemira.base.parameter import ParameterMapping
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
 
-from bluemira.codes.utilities import get_read_mapping, get_write_mapping
+from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
 
 
 class TestMappings:
@@ -41,7 +40,7 @@ class TestMappings:
                 "m",
                 None,
                 "Input",
-                {"codeA": ParameterMapping("aParam", read=True, write=False)},
+                {"codeA": ParameterMapping("aParam", recv=True, send=False)},
             ],
             [
                 "the_param",
@@ -50,7 +49,7 @@ class TestMappings:
                 "m",
                 None,
                 "Input",
-                {"codeB": ParameterMapping("ParamB", read=False, write=True)},
+                {"codeB": ParameterMapping("ParamB", recv=False, send=True)},
             ],
             [
                 "other_param",
@@ -59,7 +58,7 @@ class TestMappings:
                 "m",
                 None,
                 "Input",
-                {"CodeC": ParameterMapping("PaRaM", read=True, write=True)},
+                {"CodeC": ParameterMapping("PaRaM", recv=True, send=True)},
             ],
             [
                 "another_param",
@@ -68,7 +67,7 @@ class TestMappings:
                 "N/A",
                 None,
                 "Input",
-                {"CodeC": ParameterMapping("pArAm", read=True, write=True)},
+                {"CodeC": ParameterMapping("pArAm", recv=True, send=True)},
             ],
             [
                 "last_param",
@@ -77,13 +76,13 @@ class TestMappings:
                 "m",
                 None,
                 "Input",
-                {"codeB": ParameterMapping("ParamD", read=False, write=False)},
+                {"codeB": ParameterMapping("ParamD", recv=False, send=False)},
             ],
         ]
     )
 
     @pytest.mark.parametrize(
-        "code,read_all,expected",
+        "code,recv_all,expected",
         [
             ("codeA", False, {"aParam": "a_param"}),
             ("codeA", True, {"aParam": "a_param"}),
@@ -93,12 +92,12 @@ class TestMappings:
             ("CodeC", True, {"PaRaM": "other_param", "pArAm": "another_param"}),
         ],
     )
-    def test_get_read_mapping(self, code, read_all, expected):
-        mapping = get_read_mapping(self.params, code, read_all=read_all)
+    def test_get_recv_mapping(self, code, recv_all, expected):
+        mapping = get_recv_mapping(self.params, code, recv_all=recv_all)
         assert mapping == expected
 
     @pytest.mark.parametrize(
-        "code,write_all,expected",
+        "code,send_all,expected",
         [
             ("codeA", False, {}),
             ("codeA", True, {"aParam": "a_param"}),
@@ -108,6 +107,6 @@ class TestMappings:
             ("CodeC", True, {"PaRaM": "other_param", "pArAm": "another_param"}),
         ],
     )
-    def test_get_write_mapping(self, code, write_all, expected):
-        mapping = get_write_mapping(self.params, code, write_all=write_all)
+    def test_get_send_mapping(self, code, send_all, expected):
+        mapping = get_send_mapping(self.params, code, send_all=send_all)
         assert mapping == expected

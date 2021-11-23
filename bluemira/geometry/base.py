@@ -25,6 +25,8 @@ Base classes and functionality for the bluemira geometry module.
 
 from __future__ import annotations
 
+import enum
+
 # import for abstract class
 from abc import ABC, abstractmethod
 
@@ -32,6 +34,11 @@ from abc import ABC, abstractmethod
 from . import _freecadapi
 
 import copy
+
+
+class _Orientation(enum.Enum):
+    FORWARD = "Forward"
+    REVERSED = "Reversed"
 
 
 class BluemiraGeo(ABC):
@@ -47,20 +54,6 @@ class BluemiraGeo(ABC):
         list of allowed class types for shape's boundary
     """
 
-    # # Obsolete
-    # # a set of property and methods that are inherited from FreeCAD objects
-    # props = {
-    #     'length': 'Length',
-    #     'area': 'Area',
-    #     'volume': 'Volume',
-    #     'center_of_mass': 'CenterOfMass'
-    # }
-    # metds = {
-    #     'is_null': 'isNull',
-    #     'is_closed': 'isClosed'
-    # }
-    # attrs = {**props, **metds}
-
     def __init__(
         self,
         boundary,
@@ -70,6 +63,7 @@ class BluemiraGeo(ABC):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
+        self._orientation = _Orientation.FORWARD
 
     @staticmethod
     def _converter(func):
@@ -116,6 +110,12 @@ class BluemiraGeo(ABC):
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
 
+    def _check_reverse(self, obj):
+        if self._orientation != obj.Orientation:
+            obj.reverse()
+            self._orientation = obj.Orientation
+        return obj
+
     @property
     @abstractmethod
     def _shape(self):
@@ -156,8 +156,13 @@ class BluemiraGeo(ABC):
         """Checks if the shape is closed"""
         return _freecadapi.is_closed(self._shape)
 
+    def is_valid(self):
+        """Checks if the shape is valid"""
+        return _freecadapi.is_valid(self._shape)
+
     def search(self, label: str):
-        """Search for a shape with the specified label
+        """
+        Search for a shape with the specified label
 
         Parameters
         ----------
@@ -179,18 +184,41 @@ class BluemiraGeo(ABC):
         return output
 
     def scale(self, factor) -> None:
-        """Apply scaling with factor to this object. This function modifies the self
+        """
+        Apply scaling with factor to this object. This function modifies the self
         object.
         """
         for o in self.boundary:
             o.scale(factor)
 
     def translate(self, vector) -> None:
-        """Translate this shape with the vector. This function modifies the self
+        """
+        Translate this shape with the vector. This function modifies the self
         object.
         """
         for o in self.boundary:
             o.translate(vector)
+
+    def rotate(self, base, direction, degree) -> None:
+        """
+        Rotate this shape.
+
+        Parameters
+        ----------
+        base: tuple (x,y,z)
+            Origin location of the rotation
+        direction: tuple (x,y,z)
+            The direction vector
+        degree: float
+            rotation angle
+        """
+        for o in self.boundary:
+            o.rotate(base, direction, degree)
+
+    def change_plane(self, plane) -> None:
+        """Apply a plane transformation to the wire"""
+        for o in self.boundary:
+            o.change_plane(plane)
 
     def __repr__(self):  # noqa D105
         new = []

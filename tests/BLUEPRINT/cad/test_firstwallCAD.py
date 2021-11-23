@@ -62,6 +62,7 @@ class TestFirstWallCAD:
     @classmethod
     def setup_class(cls):
         cls.firstwall = load_firstwall_sn()
+        cls.firstwall.build()
 
     # Test to call the default build method
     def test_default_build(self):
@@ -83,6 +84,7 @@ class TestFirstWallCAD_DN:
     @classmethod
     def setup_class(cls):
         cls.firstwall = load_firstwall_dn()
+        cls.firstwall.build()
 
     # Test to verifiy the volume of the extruded fw shell
     def test_default_build_double_null(self):

@@ -272,7 +272,7 @@ def colourise(string, width=73, color="blue", end=None, flush=False):
 
 def bluemira_critical(string):
     """
-    Standard template for BLUEPRINT critical errors.
+    Standard template for bluemira critical errors.
     """
     return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
 
@@ -367,7 +367,10 @@ class BluemiraClock:
         self.rate = print_rate
         self.elapsed = " elapsed"
         self.left = " left"
-        self.width = width - len(self.elapsed) - len(self.left) - n_iter * 2 - 4 - 2 * 9
+
+        self.width = (
+            width - len(self.elapsed) - len(self.left) - 2 * (9 + len(str(n_iter))) - 17
+        )
 
         # Constructors
         self.i = 0
@@ -397,21 +400,18 @@ class BluemiraClock:
         self.i += 1
         if self.i % self.rate == 0 and self.i > 0:
             elapsed = time.time() - self.t_start
-            remain = int((self.n_iter - self.i) / self.i * elapsed)
-            prog_str = f"| \r{self.i:1d}/{self.n_iter:1d}"
+            remain = elapsed * (self.n_iter - self.i) / self.i
+            prog_str = f"{self.i:1d}/{self.n_iter:1d}"
 
             str_elapsed = str(datetime.timedelta(seconds=int(elapsed)))
-            str_left = str(datetime.timedelta(seconds=remain))
+            str_left = str(datetime.timedelta(seconds=int(remain)))
             prog_str += f" {str_elapsed:0>8}s{self.elapsed}"
             prog_str += f" {str_left:0>8}s{self.left}"
             prog_str += f" {1e2 * self.i / self.n_iter:1.1f}%"
-            nh = int(self.i / self.n_iter * self.width)
+            nh = int((self.i / self.n_iter) * self.width)
             prog_str += " |" + nh * "#" + (self.width - nh) * "-" + "|"
 
-            sys.stdout.write(
-                "\r" + _bm_print_singleflush(f"{self.i}/{self.n_iter} {prog_str}")
-            )
-            sys.stdout.flush()
+            bluemira_print_flush(prog_str)
 
         if self.i == self.n_iter:
             print("\n")

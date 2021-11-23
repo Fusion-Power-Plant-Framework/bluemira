@@ -48,6 +48,7 @@ from bluemira.geometry._deprecated_tools import (
     make_mixed_face,
     convert_coordinates_to_wire,
     convert_coordinates_to_face,
+    distance_between_points,
 )
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.base import BluemiraGeo
@@ -67,10 +68,10 @@ class TestPerimeter:
 
 class TestCheckLineSegment:
     def test_true(self):
-        a = [0.0, 0.0]
-        b = [1.0, 0.0]
+        a = [0, 0]
+        b = [1, 0]
         c = [0.5, 0.0]
-        assert check_linesegment(np.array(a), np.array(b), np.array(c)) is True
+        assert check_linesegment(a, np.array(b), c) is True
         a = [0.0, 0.0]
         b = [0.001, 0.0]
         c = [0.0005, 0.0]
@@ -588,12 +589,13 @@ class TestMixedFaces:
         comparison in an output-friendly way.
         """
         error = False
+        kwargs = {"atol": 1e-8, "rtol": 1e-5}
         keys, expected, actual = [], [], []
         for key, value in true_props.items():
             comp_method = np.allclose if isinstance(value, tuple) else np.isclose
             result = getattr(part, key, None)
             assert result is not None, f"Attribute {key} not defined on part {part}."
-            if not comp_method(value, result):
+            if not comp_method(value, result, **kwargs):
                 error = True
                 keys.append(key)
                 expected.append(value)
@@ -609,9 +611,9 @@ class TestMixedFaces:
                 100,
                 {
                     "center_of_mass": (
-                        3.50441,
+                        3.50440,
                         4.17634,
-                        1.17872,
+                        1.17870,
                     ),
                     "volume": 106.080,
                     "area": 348.296,
@@ -622,12 +624,12 @@ class TestMixedFaces:
                 15,
                 {
                     "center_of_mass": (
-                        11.5832,
-                        1.52466,
-                        -0.186014,
+                        11.583014,
+                        1.524777,
+                        -0.186182,
                     ),
-                    "volume": 43.0179,
-                    "area": 121.559,
+                    "volume": 43.0233,
+                    "area": 121.5713,
                 },
             ),
         ],
@@ -675,12 +677,12 @@ class TestMixedFaces:
                 (0, 2, 0),
                 {
                     "center_of_mass": (
-                        8.03267,
-                        0.990025,
+                        8.03265,
+                        0.9900,
                         -6.44432,
                     ),
-                    "volume": 4.58975,
-                    "area": 29.1873,
+                    "volume": 4.58959,
+                    "area": 29.1868,
                 },
             ),
         ],
@@ -810,6 +812,30 @@ class TestCoordsConversion:
         loop: Loop = Loop.from_file(fn)
         wire, converted_wire = method(self, *loop.xyz)
         assert wire.area == converted_wire.area
+
+
+class TestDistance:
+    def test_2d(self):
+        d = distance_between_points([0, 0], [1, 1])
+        assert d == np.sqrt(2)
+
+    def test_3d(self):
+        d = distance_between_points([0, 0, 0], [1, 1, 1])
+        assert d == np.sqrt(3)
+
+    def test_fail(self):
+        with pytest.raises(GeometryError):
+            distance_between_points([0, 0], [1, 1, 1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0, 0, 0], [1, 1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0, 0, 0, 0], [1, 1, 1, 1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0], [1, 1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0, 0], [1])
+        with pytest.raises(GeometryError):
+            distance_between_points([0], [1])
 
 
 if __name__ == "__main__":

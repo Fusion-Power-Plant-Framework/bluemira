@@ -78,7 +78,7 @@ class FirstWallCAD(ComponentCAD):
 
         self.n_TF = firstwall.params.n_TF
 
-        ComponentCAD.__init__(self, "Reactor first wall", palette=BLUE["FW"], **kwargs)
+        super().__init__("Reactor first wall", palette=BLUE["FW"], **kwargs)
 
     def build(self, **kwargs):
         """

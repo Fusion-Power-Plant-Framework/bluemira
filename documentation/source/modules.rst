@@ -6,6 +6,7 @@ Bluemira Modules
     :caption: Contents:
     :hidden:
  
+    balance_of_plant/balance_of_plant
     base/base
     codes
     components
@@ -13,6 +14,7 @@ Bluemira Modules
     fuel_cycle/fuel_cycle
     geometry/geometry
     magnetostatics/magnetostatics
+    materials/materials
     radiation_transport/radiation_transport
     utilities/utilities
 

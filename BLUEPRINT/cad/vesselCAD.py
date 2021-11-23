@@ -55,8 +55,7 @@ class VesselCAD(OnionCAD, ComponentCAD):
             palette = [vessel.color]
         else:
             palette = sns.color_palette([BLUE["VV"]])
-        ComponentCAD.__init__(
-            self,
+        super().__init__(
             "Reactor vacuum vessel",
             vessel.geom,
             vessel.params.n_TF,
@@ -189,8 +188,7 @@ class SegmentedVesselCAD(OnionCAD, ComponentCAD):
             palette = [vessel.color]
         else:
             palette = sns.color_palette([BLUE["VV"]])
-        ComponentCAD.__init__(
-            self,
+        super().__init__(
             "Reactor vacuum vessel",
             vessel.geom,
             vessel.params.n_TF,

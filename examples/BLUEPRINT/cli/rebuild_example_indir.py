@@ -23,7 +23,7 @@
 A script to rebuild the example CLI inputs. Builds an EU-DEMO-like single null tokamak
 fusion power reactor and saves the input JSON files to rebuild using the CLI.
 """
-from BLUEPRINT.base.file import get_bluemira_root
+from bluemira.base.file import get_bluemira_root
 from examples.EUDEMO import SingleNullReactor
 from examples.EUDEMO import config
 from examples.EUDEMO import build_config
