@@ -216,7 +216,7 @@ class EquilibriumProblem:
             A deep-copied Equilibrium object representing the state of affairs
             from the solve operation.
         """
-        args = (self.eq, self.profiles, self.constraints, self.optimiser)
+        args = (self.eq, self.profiles, self.constraints, selfop.timiser)
         kwargs = {"relaxation": 0.1, "plot": plot, "gif": gif}
         if not constrained:
             if self.li is not None:

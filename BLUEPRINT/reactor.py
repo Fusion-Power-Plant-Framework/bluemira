@@ -68,6 +68,11 @@ from BLUEPRINT.systems import (
     ThermalShield,
 )
 from BLUEPRINT.systems.maintenance import RMMetrics
+from BLUEPRINT.systems.optimisation_callbacks import (
+    TF_optimiser,
+    EQ_optimiser,
+    ATEC_optimiser,
+)
 from BLUEPRINT.systems.plotting import ReactorPlotter
 from BLUEPRINT.systems.physicstoolbox import (
     normalise_beta,
@@ -94,7 +99,6 @@ from BLUEPRINT.cad.cadtools import check_STL_folder
 from BLUEPRINT.nova.stream import StreamFlow
 from BLUEPRINT.nova.structure import CoilArchitect
 from BLUEPRINT.nova.firstwall import FirstWallProfile
-from BLUEPRINT.nova.optimiser import StructuralOptimiser
 
 # Neutronics imports
 from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
@@ -161,7 +165,6 @@ class Reactor(ReactorSystem):
     # Construction and calculation class declarations
     EQ: Type[AbInitioEquilibriumProblem]
     RB: Type[ReactorCrossSection]
-    SO: Type[StructuralOptimiser]
     CAD: Type[ReactorCAD]
     n_CAD: Type[ReactorCAD]
 
@@ -183,6 +186,14 @@ class Reactor(ReactorSystem):
         self.prepare_params(config)
 
         self.nmodel = None
+
+        # Set callbacks to use for optimisation of subsystems
+        self.callbacks = {
+            "TF": TF_optimiser,
+            "EQ": EQ_optimiser,
+            # The following wasn't used at the time of refactoring
+            # "ATEC": ATEC_optimiser,
+        }
 
         # Final configurational defaults
         self.date = datetime.datetime.now().isoformat()
@@ -448,6 +459,7 @@ class Reactor(ReactorSystem):
 
         a.coilset.assign_coil_materials("PF", j_max=j_pf, b_max=b_pf)
         a.coilset.assign_coil_materials("CS", j_max=j_cs, b_max=b_cs)
+        # CTM: Is this doing optimisations? I don't think so, but not sure...
         a.solve(plot=self.plot_flag)
         print("")  # stdout flusher
 
@@ -742,7 +754,8 @@ class Reactor(ReactorSystem):
                 f"|   subject to: {self.params.TF_ripple_limit} % ripple"
             )
 
-            self.TF.optimise()
+            self.TF.build(self.callbacks.get("TF"))
+        # CTM: Should we just be relying on this mode instead?
         elif self.build_config["tf_mode"] == "read":
             bluemira_print(
                 f'Loading {self.build_config["TF_type"]}-type TF coil shape' "."
@@ -761,39 +774,15 @@ class Reactor(ReactorSystem):
         """
         Design and optimise the reactor poloidal field system.
         """
-        eta_pf_imax = 1.4  # Maximum current scaling for PF coil
-        if self.params.PF_material == "NbTi":
-            jmax = NBTI_J_MAX
-        elif self.params.PF_material == "Nb3Sn":
-            jmax = NB3SN_J_MAX
-        else:
-            raise ValueError("Ainda nao!")
-
-        offset = self.params.g_tf_pf + np.sqrt(eta_pf_imax * self.params.I_p / jmax) / 2
-        tf_loop = self.TF.get_TF_track(offset)
-        exclusions = self.define_port_exclusions()
-
-        bluemira_print(
-            "Designing plasma equilibria and PF coil system.\n"
-            "|   optimising: positions and currents\n"
-            "|   subject to: F, B, I, L, and plasma shape constraints"
-        )
-        t = time()
-        self.EQ.optimise_positions(
-            max_PF_current=eta_pf_imax * self.params.I_p * 1e6,
-            PF_Fz_max=self.params.F_pf_zmax * 1e6,
-            CS_Fz_sum=self.params.F_cs_ztotmax * 1e6,
-            CS_Fz_sep=self.params.F_cs_sepmax * 1e6,
-            tau_flattop=self.params.tau_flattop,
-            v_burn=self.params.v_burn,
-            psi_bd=None,  # Will calculate BD flux
-            pfcoiltrack=tf_loop,
-            pf_exclusions=exclusions,
-            CS=False,
-            plot=self.plot_flag,
-            gif=False,
-        )
-        bluemira_print(f"optimisation time: {time()-t:.2f} s")
+        callback = self.callbacks.get("EQ")
+        if callback is not None:
+            callback(
+                self.EQ,
+                self.TF,
+                self.params,
+                self.define_port_exclusions(),
+                self.plot_flag,
+            )
 
         for name, snap in self.EQ.snapshots.items():
             if name != "Breakdown":
@@ -823,18 +812,9 @@ class Reactor(ReactorSystem):
         self.ATEC = CoilArchitectClass(self.params, to_atec)
 
         self.ATEC.build()
-
-    def optimise_coil_cage(self):
-        """
-        Optimise the TF coil casing. WIP.
-        """
-        bluemira_print("Optimising coil structures.")
-        self.SO = StructuralOptimiser(
-            self.ATEC, self.TF.cage, [s.eq for s in self.EQ.snapshots.values()]
-        )
-        t = time()
-        self.SO.optimise()
-        bluemira_print(f"Optimisation time: {time()-t:.2f} s")
+        callback = self.callbacks.get("ATEC")
+        if callback is not None:
+            callback(self.ATEC, self.TF, self.EQ)
 
     def define_port_exclusions(self):
         """
