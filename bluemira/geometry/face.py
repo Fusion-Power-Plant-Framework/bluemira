@@ -85,10 +85,10 @@ class BluemiraFace(BluemiraGeo):
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
-    def _create_face(self):
+    def _create_face(self, check_reverse=True):
         """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
-        face = cadapi.apiFace(external._shape)
+        face = cadapi.apiFace(external._create_wire(check_reverse=False))
 
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h._shape) for h in self.boundary[1:]]
@@ -98,7 +98,10 @@ class BluemiraFace(BluemiraGeo):
             else:
                 raise DisjointedFace("Any or more than one face has been created.")
 
-        return self._check_reverse(face)
+        if check_reverse:
+            return self._check_reverse(face)
+        else:
+            return face
 
     @property
     def _shape(self) -> cadapi.apiFace:

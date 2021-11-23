@@ -42,10 +42,15 @@ class BluemiraSolid(BluemiraGeo):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_solid(self):
+    def _create_solid(self, check_reverse=True):
         """Creation of the solid"""
-        new_shell = self.boundary[0]._shape
-        return self._check_reverse(cadapi.apiSolid(new_shell))
+        new_shell = self.boundary[0]._create_shell(check_reverse=False)
+        solid = cadapi.apiSolid(new_shell)
+
+        if check_reverse:
+            return self._check_reverse(cadapi.apiSolid(new_shell))
+        else:
+            return solid
 
     @property
     def _shape(self):
