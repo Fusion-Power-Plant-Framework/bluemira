@@ -39,6 +39,7 @@ from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.file import get_BP_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
+from BLUEPRINT.systems.optimisation_callbacks import TF_optimiser
 from bluemira.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.cadtools import get_properties
 from bluemira.base.look_and_feel import bluemira_error
@@ -113,7 +114,7 @@ class TestTFCoil:
 
         tf = ToroidalFieldCoils(self.parameters, self.to_tf)
         tic = time.time()
-        tf.optimise()
+        tf.build(TF_optimiser)
         tock = time.time() - tic
 
         if tests.PLOTTING:
@@ -197,7 +198,7 @@ class TestTaperedPictureFrameTF:
     def test_tapered_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        tf1.optimise()
+        tf1.build(TF_optimiser)
 
         # Test CAD Model
 
@@ -296,7 +297,7 @@ class TestSCPictureFrameTF:
     def test_pictureframe_SC_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        tf1.optimise()
+        tf1.build(TF_optimiser)
 
         # Test CAD Model
 
@@ -382,7 +383,7 @@ class TestCurvedPictureframeTF:
     def test_curved_pictureframe_SC_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        tf1.optimise()
+        tf1.build(TF_optimiser)
 
         # Test CAD Model
 
@@ -476,7 +477,7 @@ class TestResistiveCurvedPictureframeTF:
     def test_curved_pictureframe_R_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        tf1.optimise()
+        tf1.build(TF_optimiser)
 
         # Test CAD Model
 
