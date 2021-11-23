@@ -425,7 +425,8 @@ class TestGeometry:
                 assert w.length == fw.Length
                 assert w._orientation.value == fw.Orientation
 
-    def test_cut_solids(self):
+    @pytest.mark.parametrize("direction", [1, -1])
+    def test_cut_solids(self, direction):
         face = BluemiraFace(
             make_polygon(
                 [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
@@ -443,18 +444,20 @@ class TestGeometry:
                 closed=True,
             )
         )
-        solid2 = extrude_shape(face2, (0, 0, 1))
+        solid2 = extrude_shape(face2, (0, 0, direction))
 
         results = boolean_cut(solid2, solid)
-        assert len(results) == 2
         fc_result = cadapi.boolean_cut(solid2._shape, solid._shape)
+        assert len(results) == len(fc_result) == 2
 
         for fc_shape, bm_shape in zip(fc_result, results):
             fc_shape.isValid()
             bm_shape.is_valid()
             self._compare_fc_bm(fc_shape, bm_shape)
+            assert bm_shape.volume < solid2.volume
 
-    def test_fuse_solids(self):
+    @pytest.mark.parametrize("direction", [1, -1])
+    def test_fuse_solids(self, direction):
         face = BluemiraFace(
             make_polygon(
                 [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
@@ -463,7 +466,7 @@ class TestGeometry:
             )
         )
 
-        solid = extrude_shape(face, (0, 0, 5))
+        solid = extrude_shape(face, (0, 0, direction * 5))
 
         face2 = BluemiraFace(
             make_polygon(
@@ -472,12 +475,14 @@ class TestGeometry:
                 closed=True,
             )
         )
-        solid2 = extrude_shape(face2, (0, 0, 1))
+        solid2 = extrude_shape(face2, (0, 0, direction))
         result = boolean_fuse([solid, solid2])
         fc_result = cadapi.boolean_fuse([solid._shape, solid2._shape])
         assert result.is_valid()
         assert fc_result.isValid()
         self._compare_fc_bm(fc_result, result)
+        assert result.volume > solid.volume
+        assert result.volume > solid2.volume
 
 
 class TestShapeTransformations:
