@@ -26,7 +26,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame, ParameterMapping
+from bluemira.base.parameter import ParameterFrame
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
 from bluemira.geometry._deprecated_loop import Loop
