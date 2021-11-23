@@ -1748,17 +1748,17 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
 
 class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
-    # def f_constraint(constraint, vector, grad):
-    #     constraint = super().f_min_objective(vector, grad)
-    #     return constraint
+    def f_constraint(self, constraint, vector, grad):
+        constraint[:] = super().f_min_objective(vector, grad)
+        return constraint
 
-    # def set_up_constraints(self, opt):
-    #     """
-    #     Set up constraints to be held during optimisation.
-    #     """
-    #     tolerance = 100.0
-    #     opt.add_ineq_constraint(self.f_constraint, tolerance)
-    #     return opt
+    def set_up_constraints(self, opt):
+        """
+        Set up constraints to be held during optimisation.
+        """
+        tolerance = np.array([10.0])
+        opt.add_ineq_constraints(self.f_constraint, tolerance)
+        return opt
 
     def f_min_objective(self, vector, grad):
         """
@@ -1806,59 +1806,54 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
         -------
         self.rms: Value of objective function (figure of merit).
         """
-        vector = vector * self.scale
-        for i, coil in enumerate(self.coilset.coils.values()):
-            coil.set_current(vector[i])
+        coilset_state = np.concatenate((self.x0, self.z0, vector))
+        self.set_coilset_state(coilset_state)
 
-        # # Update target
-        o_points, x_points = self.eq.get_OX_points()
+        separatrix = self.eq.get_separatrix()
 
-        self.z0 = 0.0
-        # separatrix = self.eq.get_separatrix()
-        # self.x0 = np.amax(separatrix[0].x)
+        self.xomp = np.amax(separatrix[0].x)
+        self.zomp = 0.0
+        # try:
+        #     separatrix = self.eq.get_separatrix()
+        #     # self.x0 = np.amax(separatrix[0].x)
+        #     self.x0, self.z0 = self.eq.get_midplane(
+        #         separatrix[0].x, separatrix[0].z, x_points[0].psi
+        #     )
+        # except:
+        #     self.x0 = 100.0
+        print(self.xomp)
 
-        try:
-            separatrix = self.eq.get_separatrix()
-            # self.x0 = np.amax(separatrix[0].x)
-            self.x0, self.z0 = self.eq.get_midplane(
-                separatrix[0].x, separatrix[0].z, x_points[0].psi
-            )
-        except:
-            self.x0 = 100.0
-        print(self.x0)
+        # rss = -calculate_connection_length_fs(
+        #     self.eq, self.x0+0.05, self.z0, forward=True, first_wall=None
+        # )/100.0
+        if self.xomp > 6.0:
+            try:
+                fom = (
+                    -calculate_connection_length_flt(
+                        self.eq,
+                        self.xomp,
+                        self.zomp,
+                        forward=True,
+                        first_wall=None,
+                        n_turns_max=50,
+                    )
+                    / 100.0
+                )
+            except:
+                fom = 1.0
+        else:
+            fom = 1.0
 
-        # # rss = -calculate_connection_length_fs(
-        # #     self.eq, self.x0+0.05, self.z0, forward=True, first_wall=None
-        # # )/100.0
-        # if self.x0 > 8.0:
-        #     try:
-        #         rss = (
-        #             -calculate_connection_length_flt(
-        #                 self.eq,
-        #                 self.x0,
-        #                 self.z0,
-        #                 forward=True,
-        #                 first_wall=None,
-        #                 n_turns_max=50,
-        #             )
-        #             / 100.0
-        #         )
-        #     except:
-        #         rss = 1.0
-        # else:
-        #     rss = 1.0
-
-        # Calculate objective function
-        fom = (
-            -calculate_connection_length_flt(
-                self.eq,
-                self.x0,
-                self.z0,
-                forward=True,
-                first_wall=None,
-                n_turns_max=50,
-            )
-            / 100.0
-        )
-        vector = vector / self.scale
+        # # Calculate objective function
+        # fom = (
+        #     -calculate_connection_length_flt(
+        #         self.eq,
+        #         self.xomp,
+        #         self.zomp,
+        #         forward=True,
+        #         first_wall=None,
+        #         n_turns_max=50,
+        #     )
+        #     / 100.0
+        # )
         return fom

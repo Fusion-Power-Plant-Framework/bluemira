@@ -361,7 +361,7 @@ def set_iterator(eq, profile, constraint_set, optimiser):
     """
     optimiser_name = type(optimiser).__name__
     iterator_args = (eq, profile, constraint_set, optimiser)
-    iterator_kwargs = {"plot": True, "gif": False, "relaxation": 0.3, "maxiter": 400}
+    iterator_kwargs = {"plot": False, "gif": False, "relaxation": 0.3, "maxiter": 400}
 
     if optimiser_name in [
         "ConnectionLengthOptimiser",
