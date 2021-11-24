@@ -1231,9 +1231,7 @@ class CoilsetOptimiserBase:
 
         return current_bounds
 
-    def set_up_optimiser(
-        self, opt_args, dimension, bounds, objective_func, constraints=None
-    ):
+    def set_up_optimiser(self, opt_args, dimension, bounds, objective_func):
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
@@ -1256,10 +1254,24 @@ class CoilsetOptimiserBase:
         # Set up objective function for optimiser
         opt.set_objective_function(objective_func)
 
-        # TODO Apply constraints
+        # Apply constraints
+        self.set_up_constraints(opt)
+
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
+        return opt
+
+    def set_up_constraints(self, opt):
+        """
+        Updates the optimiser in-place to apply problem constraints.
+        To be overidden by child classes to apply specific constraints.
+
+        Parameters
+        ----------
+        opt: Optimiser
+            Optimiser to apply constraints to. Updated in-place.
+        """
         return opt
 
     def __call__(self, eq, constraints, psi_bndry=None):
