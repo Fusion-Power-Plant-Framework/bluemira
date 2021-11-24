@@ -79,33 +79,34 @@ class TestMakeParameterisedShape:
         )
 
 
+class MinimiseLength(GeometryOptimisationProblem):
+    """
+    A simple geometry optimisation problem that minimises length without constraints.
+    """
+
+    def calculate_length(self, x):
+        """
+        Calculate the length of the GeometryParameterisation
+        """
+        self.update_parameterisation(x)
+        return self.parameterisation.create_shape().length
+
+    def f_objective(self, x, grad):
+        """
+        Objective function is the length of the parameterised shape.
+        """
+        length = self.calculate_length(x)
+
+        if grad.size > 0:
+            # Only called if a gradient-based optimiser is used
+            grad[:] = self.optimiser.approx_derivative(
+                self.calculate_length, x, f0=length
+            )
+
+        return length
+
+
 class TestMakeOptimisedShape:
-    class MinimiseLength(GeometryOptimisationProblem):
-        """
-        A simple geometry optimisation problem that minimises length without constraints.
-        """
-
-        def calculate_length(self, x):
-            """
-            Calculate the length of the GeometryParameterisation
-            """
-            self.update_parameterisation(x)
-            return self.parameterisation.create_shape().length
-
-        def f_objective(self, x, grad):
-            """
-            Objective function is the length of the parameterised shape.
-            """
-            length = self.calculate_length(x)
-
-            if grad.size > 0:
-                # Only called if a gradient-based optimiser is used
-                grad[:] = self.optimiser.approx_derivative(
-                    self.calculate_length, x, f0=length
-                )
-
-            return length
-
     def test_builder(self):
         params = {
             "r_tf_in_centre": (5.0, "Input"),
@@ -125,7 +126,7 @@ class TestMakeOptimisedShape:
                 },
                 "dz": 0.0,
             },
-            "problem_class": TestMakeOptimisedShape.MinimiseLength,
+            "problem_class": "tests.bluemira.builders.test_shapes::MinimiseLength",
             "target": "TF Coils/xz/Shape",
         }
         builder = MakeOptimisedShape(params, build_config)
