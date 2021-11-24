@@ -1,0 +1,1036 @@
+{
+  "Name": "Cambridge",
+  "plasma_type": "SN",
+  "reactor_type": "Normal",
+  "op_mode": "Pulsed",
+  "P_el_net": {
+    "value": 500,
+    "mapping": {
+      "PROCESS": {
+        "name": "pnetelin",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "P_el_net_process": {
+    "value": null,
+    "mapping": {
+      "PROCESS": {
+        "name": "pnetelmw",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "tau_flattop": {
+    "value": 7200,
+    "mapping": {
+      "PROCESS": {
+        "name": "tburn",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "blanket_type": "HCPB",
+  "n_TF": {
+    "value": 16,
+    "mapping": {
+      "PROCESS": {
+        "name": "n_tf",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "n_PF": 6,
+  "n_CS": 5,
+  "TF_ripple_limit": {
+    "value": 0.6,
+    "mapping": {
+      "PROCESS": {
+        "name": "ripmax",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "Av": 0.3,
+  "A": {
+    "value": 3.1,
+    "mapping": {
+      "PROCESS": {
+        "name": "aspect",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "R_0": {
+    "value": 9,
+    "mapping": {
+      "PROCESS": {
+        "name": "rmajor",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "B_0": {
+    "value": 6,
+    "mapping": {
+      "PROCESS": {
+        "name": "bt",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "q_95": {
+    "value": 3.5,
+    "mapping": {
+      "PROCESS": {
+        "name": "q95",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "kappa_95": {
+    "value": 1.6,
+    "mapping": {
+      "PROCESS": {
+        "name": "kappa95",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "kappa": {
+    "value": 1.792,
+    "mapping": {
+      "PROCESS": {
+        "name": "kappa",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "delta_95": {
+    "value": 0.333,
+    "mapping": {
+      "PROCESS": {
+        "name": "triang95",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "delta": {
+    "value": 0.5,
+    "mapping": {
+      "PROCESS": {
+        "name": "triang",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "T_e": {
+    "value": 13,
+    "mapping": {
+      "PROCESS": {
+        "name": "te",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "Z_eff": {
+    "value": 2.2,
+    "mapping": {
+      "PROCESS": {
+        "name": "zeff",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "res_plasma": 0,
+  "V_p": {
+    "value": 2400,
+    "mapping": {
+      "PROCESS": {
+        "name": "vol",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "l_i": {
+    "value": 0.8,
+    "mapping": {
+      "PROCESS": {
+        "name": "rli",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "I_p": {
+    "value": 19,
+    "mapping": {
+      "PROCESS": {
+        "name": "plascur/1d6",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_fus": {
+    "value": 2000,
+    "mapping": {
+      "PROCESS": {
+        "name": "powfmw",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_fus_DT": {
+    "value": 1995,
+    "mapping": {
+      "PROCESS": {
+        "name": "pdt",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_fus_DD": {
+    "value": 5,
+    "mapping": {
+      "PROCESS": {
+        "name": "pdd",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "f_DD_fus": 0.0025,
+  "H_star": {
+    "value": 1,
+    "mapping": {
+      "PROCESS": {
+        "name": "hfact",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_sep": {
+    "value": 150,
+    "mapping": {
+      "PROCESS": {
+        "name": "pdivt",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_rad_core": {
+    "value": 0,
+    "mapping": {
+      "PROCESS": {
+        "name": "pcoreradmw",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_rad_edge": {
+    "value": 400,
+    "mapping": {
+      "PROCESS": {
+        "name": "pedgeradmw",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_rad": {
+    "value": 400,
+    "mapping": {
+      "PROCESS": {
+        "name": "pradmw",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_line": {
+    "value": 30,
+    "mapping": {
+      "PROCESS": {
+        "name": "plinepv*vol",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_sync": {
+    "value": 50,
+    "mapping": {
+      "PROCESS": {
+        "name": "psyncpv*vol",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_brehms": {
+    "value": 80,
+    "mapping": {
+      "PROCESS": {
+        "name": "pbrempv*vol",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "f_bs": {
+    "value": 0.5,
+    "mapping": {
+      "PROCESS": {
+        "name": "bootipf",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "beta_N": 2.7,
+  "beta_p": {
+    "value": 0.04,
+    "mapping": {
+      "PROCESS": {
+        "name": "betap",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "beta": {
+    "value": 0.04,
+    "mapping": {
+      "PROCESS": {
+        "name": "beta",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "tau_e": {
+    "value": 3,
+    "mapping": {
+      "PROCESS": {
+        "name": "taueff",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "v_burn": {
+    "value": 0.05,
+    "mapping": {
+      "PROCESS": {
+        "name": "vburn",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "shaf_shift": 0.5,
+  "C_Ejima": {
+    "value": 0.4,
+    "mapping": {
+      "PROCESS": {
+        "name": "gamma",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "m_s_limit": 0.3,
+  "f_ni": {
+    "value": 0.1,
+    "mapping": {
+      "PROCESS": {
+        "name": "faccd",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "e_nbi": {
+    "value": 1000,
+    "mapping": {
+      "PROCESS": {
+        "name": "enbeam",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "P_hcd_ss": {
+    "value": 50,
+    "mapping": {
+      "PROCESS": {
+        "name": "pinjalw",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "q_control": 50,
+  "g_cd_nb": {
+    "value": 0.4,
+    "description": "Check units!"
+  },
+  "eta_nb": {
+    "value": 0.3,
+    "description": "Check units!",
+    "mapping": {
+      "PROCESS": {
+        "name": "etanbi",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "p_nb": {
+    "value": 1,
+    "description": "Maximum launcher current drive in a port"
+  },
+  "g_cd_ec": {
+    "value": 0.15,
+    "description": "Check units!"
+  },
+  "eta_ec": {
+    "value": 0.35,
+    "description": "Check units!"
+  },
+  "p_ec": {
+    "value": 10,
+    "description": "Maximum launcher power per sector"
+  },
+  "f_cd_aux": 0.1,
+  "f_cd_ohm": 0.1,
+  "fw_dx": 0.225,
+  "fw_psi_n": 1.07,
+  "fw_dL_min": 0.75,
+  "fw_dL_max": 2,
+  "fw_a_max": 25,
+  "fw_p_sol_near": 50,
+  "fw_p_sol_far": 50,
+  "hf_limit": 0.5,
+  "fw_dx_omp": 0.2,
+  "fw_dx_imp": 0.05,
+  "fw_lambda_q_near_omp": 0.003,
+  "fw_lambda_q_far_omp": 0.1,
+  "fw_lambda_q_near_imp": 0.003,
+  "fw_lambda_q_far_imp": 0.1,
+  "f_lfs_lower_target": 0.5,
+  "f_lfs_upper_target": 0.5,
+  "f_hfs_lower_target": 0.5,
+  "f_hfs_upper_target": 0.5,
+  "div_L2D_ib": 1.1,
+  "div_L2D_ob": 1.45,
+  "div_graze_angle": 1.5,
+  "div_psi_o": 0.5,
+  "div_Ltarg": 0.5,
+  "div_open": false,
+  "g_vv_div_add": 0,
+  "LPangle": -30,
+  "n_div_cassettes": 3,
+  "psi_norm": 1,
+  "xpt_outer_gap": 2,
+  "xpt_inner_gap": 0.4,
+  "tk_outer_target_sol": 0.7,
+  "tk_outer_target_pfr": 0.3,
+  "tk_inner_target_sol": 0.3,
+  "tk_inner_target_pfr": 0.5,
+  "outer_strike_h": 2,
+  "inner_strike_h": 1,
+  "outer_strike_r": 10.3,
+  "inner_strike_r": 8,
+  "theta_outer_target": 20,
+  "theta_inner_target": 20,
+  "xpt_height": 0.35,
+  "tk_div_cass": 0.3,
+  "tk_div_cass_in": 0.1,
+  "bb_e_mult": {
+    "value": 1.35,
+    "mapping": {
+      "PROCESS": {
+        "name": "emult",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "bb_min_angle": {
+    "value": 70,
+    "description": "Sharpest cut of a module possible"
+  },
+  "tk_r_ib_bz": 0.309,
+  "tk_r_ib_manifold": 0.114,
+  "tk_r_ib_bss": 0.577,
+  "tk_r_ob_bz": 0.431,
+  "tk_r_ob_manifold": 0.071,
+  "tk_r_ob_bss": 0.498,
+  "g_bb_fw": 0.05,
+  "tk_bb_bz": 1.0,
+  "tk_bb_man": 0.2,
+  "tk_bb_ib": {
+    "value": 0.8,
+    "mapping": {
+      "PROCESS": {
+        "name": "blnkith",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_bb_ob": {
+    "value": 1.1,
+    "mapping": {
+      "PROCESS": {
+        "name": "blnkoth",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_bb_fw": 0.052,
+  "tk_bb_arm": 0.002,
+  "tk_sh_in": {
+    "value": 0.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "shldith",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_sh_out": {
+    "value": 0.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "shldoth",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_sh_top": {
+    "value": 0.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "shldtth",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_sh_bot": {
+    "value": 0.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "shldlth",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_vv_in": {
+    "value": 0.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "d_vv_in",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_vv_out": {
+    "value": 0.8,
+    "mapping": {
+      "PROCESS": {
+        "name": "d_vv_out",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_vv_top": {
+    "value": 0.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "d_vv_top",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_vv_bot": {
+    "value": 0.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "d_vv_bot",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_sol_ib": {
+    "value": 0.225,
+    "mapping": {
+      "PROCESS": {
+        "name": "scrapli",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_sol_ob": {
+    "value": 0.225,
+    "mapping": {
+      "PROCESS": {
+        "name": "scraplo",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_div": 0.4,
+  "tk_ts": {
+    "value": 0.05,
+    "mapping": {
+      "PROCESS": {
+        "name": "thshield",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_ib_ts": 0.05,
+  "tk_ob_ts": 0.05,
+  "tk_cr_vv": {
+    "value": 0.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "ddwex",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_rs": 2.5,
+  "tk_fw_in": 0.052,
+  "tk_fw_out": 0.052,
+  "tk_fw_div": 0.052,
+  "tk_tf_inboard": {
+    "value": 1,
+    "mapping": {
+      "PROCESS": {
+        "name": "tfcth",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "tk_tf_outboard": {
+    "value": 1,
+    "mapping": {
+      "PROCESS": {
+        "name": "tfthko",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "tk_tf_nose": {
+    "value": 0.6,
+    "mapping": {
+      "PROCESS": {
+        "name": "thkcas",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "tk_tf_wp": {
+    "value": 0.5,
+    "description": "Excluding insulation",
+    "mapping": {
+      "PROCESS": {
+        "name": "dr_tf_wp",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "tk_tf_front_ib": {
+    "value": 0.04,
+    "mapping": {
+      "PROCESS": {
+        "name": "casthi",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_tf_ins": 0.08,
+  "tk_tf_insgap": {
+    "value": 0.1,
+    "description": "Backfilled with epoxy resin (impregnation)"
+  },
+  "tk_tf_side": {
+    "value": 0.1,
+    "mapping": {
+      "PROCESS": {
+        "name": "casths",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_tf_ob_casing": 0.02,
+  "tk_tf_case_out_in": 0.35,
+  "tk_tf_case_out_out": 0.4,
+  "tf_wp_width": {
+    "value": 0.76,
+    "description": "Including insulation"
+  },
+  "tf_wp_depth": {
+    "value": 1.05,
+    "description": "Including insulation",
+    "mapping": {
+      "PROCESS": {
+        "name": "wwp1",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "tk_cs": {
+    "value": 0.8,
+    "mapping": {
+      "PROCESS": {
+        "name": "ohcth",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "sigma_tf_max": {
+    "value": 550000000.0,
+    "mapping": {
+      "PROCESS": {
+        "name": "alstrtf",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "h_cp_top": {
+    "value": 6.0,
+    "mapping": {
+      "PROCESS": {
+        "name": "h_cp_top",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "h_tf_max_in": {
+    "value": 6.5,
+    "mapping": {
+      "PROCESS": {
+        "name": "hmax",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "h_tf_min_in": -6.5,
+  "B_tf_peak": 12,
+  "tf_taper_frac": 0.5,
+  "r_tf_outboard_corner": 0.8,
+  "r_tf_inboard_corner": 0.0,
+  "r_tf_curve": 3.0,
+  "x_g_support": 13,
+  "w_g_support": 0.75,
+  "tk_oic": 0.3,
+  "tk_pf_support": 0.15,
+  "gs_z_offset": -1,
+  "h_cs_seat": 2,
+  "min_OIS_length": 0.5,
+  "r_cp_top": {
+    "value": 0.8934,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_cp_top",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_cs_in": {
+    "value": 2.2,
+    "mapping": {
+      "PROCESS": {
+        "name": "bore",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_tf_in": {
+    "value": 3.2,
+    "mapping": {
+      "PROCESS": {
+        "name": "rtfin",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_tf_inboard_out": {
+    "value": 0.6265,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_tf_inboard_out",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "r_tf_in_centre": {
+    "value": 3.7,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_tf_inboard_mid",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_ts_ib_in": {
+    "value": 4.3,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_ts_ib_in",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_vv_ib_in": {
+    "value": 5.1,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_vv_ib_in",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_fw_ib_in": {
+    "value": 5.8,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_fw_ib_in",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_fw_ob_in": {
+    "value": 12.1,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_fw_ob_in",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_vv_ob_in": {
+    "value": 14.5,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_vv_ob_in",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_tf_out_centre": {
+    "value": 16.2,
+    "mapping": {
+      "PROCESS": {
+        "name": "r_tf_outboard_mid",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_ts_joint": 2.0,
+  "r_vv_joint": 2.0,
+  "g_cs_mod": 0.1,
+  "g_vv_ts": {
+    "value": 0.05,
+    "mapping": {
+      "PROCESS": {
+        "name": "gapds",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "g_ib_vv_ts": 0.05,
+  "g_ob_vv_ts": 0.05,
+  "g_cs_tf": {
+    "value": 0.05,
+    "mapping": {
+      "PROCESS": {
+        "name": "gapoh",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "g_ts_tf": {
+    "value": 0.05,
+    "mapping": {
+      "PROCESS": {
+        "name": "tftsgap",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "g_ib_ts_tf": 0.05,
+  "g_ob_ts_tf": 0.05,
+  "g_vv_bb": {
+    "value": 0.02,
+    "mapping": {
+      "PROCESS": {
+        "name": "vvblgap",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "g_tf_pf": 0.15,
+  "g_ts_pf": 0.075,
+  "g_ts_tf_topbot": 0.11,
+  "g_cr_ts": 0.3,
+  "g_cr_vv": 0.2,
+  "g_cr_rs": {
+    "value": 0.5,
+    "description": "Distance away from edge of cryostat VV in all directions"
+  },
+  "c_rm": {
+    "value": 0.02,
+    "description": "Distance between IVCs"
+  },
+  "o_p_rs": 0.25,
+  "o_p_cr": 0.1,
+  "vv_dtk": 0.2,
+  "vv_stk": 0.06,
+  "vvpfrac": {
+    "value": 0.04,
+    "description": "simpleneutrons needs a correction for VV n absorbtion"
+  },
+  "blk_1_dpa": {
+    "value": 20,
+    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+  },
+  "blk_2_dpa": {
+    "value": 50,
+    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+  },
+  "div_dpa": {
+    "value": 5,
+    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+  },
+  "vv_dpa": {
+    "value": 3.25,
+    "description": "RCC-Mx or whatever it is called"
+  },
+  "tf_fluence": {
+    "value": 3.2e+21,
+    "description": "http://ieeexplore.ieee.org/document/6374236/"
+  },
+  "F_pf_zmax": 450,
+  "F_cs_ztotmax": 350,
+  "F_cs_sepmax": 300,
+  "CS_material": "Nb3Sn",
+  "PF_material": "NbTi",
+  "n_cr_lab": 2,
+  "cr_l_d": 0.2,
+  "tk_cryo_ts": 0.1,
+  "r_cryo_ts": 8,
+  "z_cryo_ts": 8,
+  "n_rs_lab": 4,
+  "rs_l_d": {
+    "value": 0.6,
+    "description": "Thickness of a radiation shield penetration neutron labyrinth"
+  },
+  "rs_l_gap": {
+    "value": 0.02,
+    "description": "Gap between plug and radiation shield"
+  },
+  "n_DT_reactions": {
+    "value": 7.1e+20,
+    "description": "At full power"
+  },
+  "n_DD_reactions": {
+    "value": 8.5e+18,
+    "description": "At full power"
+  },
+  "a_min": {
+    "value": 0.1,
+    "description": "Otherwise nobody pays"
+  },
+  "a_max": {
+    "value": 0.5,
+    "description": "Can be violated"
+  },
+  "m_gas": {
+    "value": 50,
+    "description": "To maintain detachment - no chance of fusion from gas injection"
+  },
+  "bmd": {
+    "value": 150,
+    "description": "Full replacement intervention duration"
+  },
+  "dmd": {
+    "value": 90,
+    "description": "Full replacement intervention duration"
+  },
+  "RMTFI": {
+    "value": 1,
+    "description": "Default value. Should not really be 1"
+  },
+  "g_ccs_vv_inboard": 0.05,
+  "g_ccs_vv_add": 0.0,
+  "g_ccs_fw": 0.05,
+  "g_ccs_div": 0.05,
+  "tk_ccs_min": 0.1,
+  "r_ccs": 2.5
+}
