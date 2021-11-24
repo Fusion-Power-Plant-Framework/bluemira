@@ -28,7 +28,7 @@ import pickle  # noqa (S403)
 import pytest
 import numpy as np
 import matplotlib.pyplot as plt
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
@@ -109,7 +109,7 @@ class TestBooleanSimple:
 class TestBooleanOpen:
     @pytest.mark.longrun
     def test_openclip(self):
-        fp = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+        fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "loopcut_data.pkl"])
         with open(fn, "rb") as f:
             data = pickle.load(f)  # noqa (S301)
@@ -217,7 +217,7 @@ class TestBooleanShell:
 class TestCleanloop:
     @pytest.mark.longrun
     def test_hanging_chad(self):
-        fp = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+        fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "classic_hanging_chad.json"])
         loop = Loop.from_file(fn)
         f, ax = plt.subplots()

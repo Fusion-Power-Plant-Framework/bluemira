@@ -26,7 +26,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.file import make_BP_path, get_BP_path
+from bluemira.base.file import make_bluemira_path, get_bluemira_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.geombase import JSONReaderWriter
 from BLUEPRINT.geometry.parameterisations import (
@@ -121,10 +121,12 @@ class Shape(JSONReaderWriter):
 
         if read_write:
             if read_directory is None:
-                read_directory = get_BP_path("geometry_data", subfolder="data/BLUEPRINT")
+                read_directory = get_bluemira_path(
+                    "geometry_data", subfolder="data/BLUEPRINT"
+                )
             if write_directory is None:
-                make_BP_path("generated_data/BLUEPRINT", subfolder="")
-                write_directory = make_BP_path(
+                make_bluemira_path("generated_data/BLUEPRINT", subfolder="")
+                write_directory = make_bluemira_path(
                     "geometry_data", subfolder="generated_data/BLUEPRINT"
                 )
             self.read_filename = os.sep.join([read_directory, name + ".json"])

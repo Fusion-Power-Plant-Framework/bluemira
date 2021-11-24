@@ -1,5 +1,5 @@
 {
-  "generated_data_root": "!BP_ROOT!/generated_data",
+  "generated_data_root": "!BM_ROOT!/generated_data",
   "plot_flag": false,
   "process_mode": "mock",
   "plasma_mode": "run",

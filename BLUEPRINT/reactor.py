@@ -35,12 +35,11 @@ from types import ModuleType
 from typing import Type, Union
 
 # Framework imports
-from bluemira.base.file import get_files_by_ext
+from bluemira.base.file import BM_ROOT, get_files_by_ext, FileManager
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.base import BLUE
-from BLUEPRINT.base.file import FileManager
 from BLUEPRINT.base.error import GeometryError
 
 # Utility imports
@@ -194,10 +193,10 @@ class Reactor(ReactorSystem):
         reactor_name = self.params.get("Name", "DEFAULT_REACTOR")
 
         reference_data_root = build_config.get(
-            "reference_data_root", "!BP_ROOT!/data/BLUEPRINT"
+            "reference_data_root", f"{BM_ROOT}/data/BLUEPRINT"
         )
         generated_data_root = build_config.get(
-            "generated_data_root", "!BP_ROOT!/data/BLUEPRINT"
+            "generated_data_root", f"{BM_ROOT}/data/BLUEPRINT"
         )
         self.file_manager = FileManager(
             reactor_name=reactor_name,

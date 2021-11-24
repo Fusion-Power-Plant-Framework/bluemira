@@ -31,7 +31,7 @@ from matplotlib.patches import Patch, PathPatch
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp1d
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 
 
@@ -76,7 +76,7 @@ def savefig(f, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
     """
     if save is True:
         if folder is None:
-            folder = get_BP_path("plots", subfolder="data/BLUEPRINT")
+            folder = get_bluemira_path("plots", subfolder="data/BLUEPRINT")
         name = os.sep.join([folder, name]) + "." + formatt
         if os.path.isfile(name):
             os.remove(name)  # f.savefig will otherwise not overwrite
