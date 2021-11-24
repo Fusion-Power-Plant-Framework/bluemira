@@ -382,24 +382,20 @@ class DivertorBuilder:
         # Pick some flux loops to use to locate strike points and shape the
         # divertor legs
         flux_loops = self.pick_flux_loops()
+        outer_div_loop, inner_div_loop = self.get_outer_inner_loops(flux_loops)
 
         # Find the strike points
         inner_strike, outer_strike = self.find_strike_points(flux_loops)
 
         # Make the outer leg
         outer_leg_x, outer_leg_z = self.make_outer_leg(
-            div_top_right, outer_strike, middle_point, flux_loops[0]
+            div_top_right, outer_strike, middle_point, outer_div_loop
         )
 
         # Make the inner leg
-        if len(flux_loops) == 1:
-            inner_leg_x, inner_leg_z = self.make_inner_leg(
-                div_top_left, inner_strike, middle_point, flux_loops[0]
-            )
-        else:
-            inner_leg_x, inner_leg_z = self.make_inner_leg(
-                div_top_left, inner_strike, middle_point, flux_loops[1]
-            )
+        inner_leg_x, inner_leg_z = self.make_inner_leg(
+            div_top_left, inner_strike, middle_point, inner_div_loop
+        )
 
         # Divertor x-coords
         x_div = np.append(inner_leg_x, outer_leg_x)
@@ -809,21 +805,21 @@ class DivertorBuilder:
         # Some shorthands
         x_x_point = self.points["x_point"]["x"]
 
-        outer_loop, inner_loop = self.get_outer_inner_loops(flux_loops)
+        outer_div_loop, inner_div_loop = self.get_outer_inner_loops(flux_loops)
 
         # Get the inner intersection with the separatrix
         inner_strike_x = self.params.inner_strike_r.value
         x_norm = 0
         # Does it make sense to compare x with x-norm??
         inner_strike_z = get_intersection_point(
-            inner_strike_x, x_norm, inner_loop, x_x_point, inner=True
+            inner_strike_x, x_norm, inner_div_loop, x_x_point, inner=True
         )[2]
 
         # Get the outer intersection with the separatrix
         outer_strike_x = self.params.outer_strike_r.value
         # Does it make sense to compare x with x-norm??
         outer_strike_z = get_intersection_point(
-            outer_strike_x, x_norm, outer_loop, x_x_point, inner=False
+            outer_strike_x, x_norm, outer_div_loop, x_x_point, inner=False
         )[2]
 
         inner_strike = [inner_strike_x, inner_strike_z]
@@ -1001,10 +997,28 @@ class DivertorBuilder:
         # SN case: just one loop
         if self.inputs.get("SN", False):
             outer_loop = inner_loop = flux_loops[0]
+
         else:
             outer_loop = flux_loops[0]
             inner_loop = flux_loops[1]
-        return outer_loop, inner_loop
+
+        out_div_loop_ind = np.where(
+            (outer_loop.x > self.points["x_point"]["x"])
+            & (outer_loop.z < self.points["x_point"]["z_low"])
+        )
+        outer_div_loop = Loop(
+            outer_loop.x[out_div_loop_ind], z=outer_loop.z[out_div_loop_ind]
+        )
+
+        in_div_loop_ind = np.where(
+            (inner_loop.x < self.points["x_point"]["x"])
+            & (inner_loop.z < self.points["x_point"]["z_low"])
+        )
+        inner_div_loop = Loop(
+            inner_loop.x[in_div_loop_ind], z=inner_loop.z[in_div_loop_ind]
+        )
+
+        return outer_div_loop, inner_div_loop
 
     def set_lfs_point(self, point):
         """
