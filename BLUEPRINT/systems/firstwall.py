@@ -433,11 +433,11 @@ class DivertorBuilder:
 
         Returns
         -------
-        target_internal_point: [float, float]
-            x and z coordinates of the internal end point of target.
+        target_pfr_end: [float, float]
+            x and z coordinates of the pfr end point of target.
             Meaning private flux region (PRF) side
-        target_external_point: [float, float]
-            x and z coordinates of the external end point of target.
+        target_sol_end: [float, float]
+            x and z coordinates of the sol end point of target.
             Meaning scrape-off layer (SOL) side
 
         The divertor target is a straight line
@@ -516,10 +516,7 @@ class DivertorBuilder:
         tangent = get_tangent_vector(outer_strike, flux_loop)
 
         # Get the outer target points
-        (
-            outer_target_internal_point,
-            outer_target_external_point,
-        ) = self.make_divertor_target(
+        (outer_target_pfr_end, outer_target_sol_end,) = self.make_divertor_target(
             outer_strike,
             tangent,
             vertical_target=self.inputs["div_vertical_outer_target"],
@@ -531,58 +528,54 @@ class DivertorBuilder:
         degree_in = self.outer_leg_pfr_polyfit_degree
         degree_out = self.outer_leg_sol_polyfit_degree
         (
-            outer_leg_external_guide_line,
-            outer_leg_internal_guide_line,
+            outer_leg_sol_guide_line,
+            outer_leg_pfr_guide_line,
         ) = self.get_guide_lines(flux_loop)
 
         # Select the top and bottom limits for the guide lines
         z_x_point = self.points["x_point"]["z_low"]
-        outer_leg_external_top_limit = [div_top_right, z_x_point]
-        outer_leg_external_bottom_limit = outer_target_external_point
+        outer_leg_sol_top_limit = [div_top_right, z_x_point]
+        outer_leg_sol_bottom_limit = outer_target_sol_end
 
-        outer_leg_internal_top_limit = middle_point
-        outer_leg_internal_bottom_limit = outer_target_internal_point
+        outer_leg_pfr_top_limit = middle_point
+        outer_leg_pfr_bottom_limit = outer_target_pfr_end
 
         # Make the guide lines
-        external_guide_line = make_guide_line(
-            outer_leg_external_guide_line,
-            outer_leg_external_top_limit,
-            outer_leg_external_bottom_limit,
+        sol_guide_line = make_guide_line(
+            outer_leg_sol_guide_line,
+            outer_leg_sol_top_limit,
+            outer_leg_sol_bottom_limit,
         )
 
-        internal_guide_line = make_guide_line(
-            outer_leg_internal_guide_line,
-            outer_leg_internal_top_limit,
-            outer_leg_internal_bottom_limit,
+        pfr_guide_line = make_guide_line(
+            outer_leg_pfr_guide_line,
+            outer_leg_pfr_top_limit,
+            outer_leg_pfr_bottom_limit,
         )
 
         # Modify the clipped flux line curve (guide line) to start
         # at the middle and end at the internal point of the outer target
-        (outer_leg_internal_line_x, outer_leg_internal_line_z,) = reshape_curve(
-            internal_guide_line.x,
-            internal_guide_line.z,
+        (outer_leg_pfr_line_x, outer_leg_pfr_line_z,) = reshape_curve(
+            pfr_guide_line.x,
+            pfr_guide_line.z,
             [middle_point[0], middle_point[1]],
-            outer_target_internal_point,
+            outer_target_pfr_end,
             degree_in,
         )
 
         # Modify the clipped flux line curve to start at the top point of the
         # outer target and end at the external point
-        (outer_leg_external_line_x, outer_leg_external_line_z,) = reshape_curve(
-            external_guide_line.x,
-            external_guide_line.z,
+        (outer_leg_sol_line_x, outer_leg_sol_line_z,) = reshape_curve(
+            sol_guide_line.x,
+            sol_guide_line.z,
             [div_top_right, z_x_point],
-            outer_target_external_point,
+            outer_target_sol_end,
             degree_out,
         )
 
         # Connect the inner and outer parts of the outer leg
-        outer_leg_x = np.append(
-            outer_leg_internal_line_x, outer_leg_external_line_x[::-1]
-        )
-        outer_leg_z = np.append(
-            outer_leg_internal_line_z, outer_leg_external_line_z[::-1]
-        )
+        outer_leg_x = np.append(outer_leg_pfr_line_x, outer_leg_sol_line_x[::-1])
+        outer_leg_z = np.append(outer_leg_pfr_line_z, outer_leg_sol_line_z[::-1])
 
         # Return coordinate arrays
         return (outer_leg_x, outer_leg_z)
@@ -613,10 +606,7 @@ class DivertorBuilder:
         degree = self.inner_leg_polyfit_degree
 
         # Get the outer target points
-        (
-            inner_target_internal_point,
-            inner_target_external_point,
-        ) = self.make_divertor_target(
+        (inner_target_pfr_end, inner_target_sol_end,) = self.make_divertor_target(
             inner_strike,
             tangent,
             vertical_target=self.inputs["div_vertical_inner_target"],
@@ -626,21 +616,11 @@ class DivertorBuilder:
         # Select those points along the given flux line below the X point
         inner_leg_central_guide_line = flux_loop
         z_x_point = self.points["x_point"]["z_low"]
-        top_clip_inner_leg_central_guide_line = np.where(
-            inner_leg_central_guide_line.z < z_x_point,
-        )
-
-        # Create a new Loop from the points selected along the given flux line
-        inner_leg_central_guide_line = Loop(
-            x=inner_leg_central_guide_line.x[top_clip_inner_leg_central_guide_line],
-            y=None,
-            z=inner_leg_central_guide_line.z[top_clip_inner_leg_central_guide_line],
-        )
 
         # Select those points along the top-clipped flux line above the
-        # inner target internal point height
+        # inner target pfr point height
         bottom_clip_inner_leg_central_guide_line = np.where(
-            inner_leg_central_guide_line.z > inner_target_internal_point[1],
+            inner_leg_central_guide_line.z > inner_target_pfr_end[1],
         )
 
         # Create a new Loop from the points selected along the flux line
@@ -652,31 +632,27 @@ class DivertorBuilder:
 
         # Modify the clipped flux line curve to start at the middle and end
         # at the internal point of the outer target
-        (inner_leg_internal_line_x, inner_leg_internal_line_z,) = reshape_curve(
+        (inner_leg_pfr_line_x, inner_leg_pfr_line_z,) = reshape_curve(
             inner_leg_central_guide_line.x,
             inner_leg_central_guide_line.z,
             [middle_point[0], middle_point[1]],
-            inner_target_internal_point,
+            inner_target_pfr_end,
             degree,
         )
 
         # Modify the clipped flux line curve to start at the top point of the
         # outer target and end at the external point
-        (inner_leg_external_line_x, inner_leg_external_line_z,) = reshape_curve(
+        (inner_leg_sol_line_x, inner_leg_sol_line_z,) = reshape_curve(
             inner_leg_central_guide_line.x,
             inner_leg_central_guide_line.z,
             [div_top_left, z_x_point],
-            inner_target_external_point,
+            inner_target_sol_end,
             degree,
         )
 
         # Connect the inner and outer parts of the outer leg
-        inner_leg_x = np.append(
-            inner_leg_external_line_x, inner_leg_internal_line_x[::-1]
-        )
-        inner_leg_z = np.append(
-            inner_leg_external_line_z, inner_leg_internal_line_z[::-1]
-        )
+        inner_leg_x = np.append(inner_leg_sol_line_x, inner_leg_pfr_line_x[::-1])
+        inner_leg_z = np.append(inner_leg_sol_line_z, inner_leg_pfr_line_z[::-1])
 
         # Return coordinate arrays
         return (inner_leg_x, inner_leg_z)
