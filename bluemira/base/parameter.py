@@ -79,6 +79,13 @@ class ParameterMapping:
         """
         return {"name": self.name, "recv": self.recv, "send": self.send}
 
+    @classmethod
+    def from_dict(cls, the_dict) -> "ParameterMapping":
+        """
+        Create a ParameterMapping using a dictionary with attributes as values.
+        """
+        return cls(**the_dict)
+
     def __str__(self):
         """
         Create a string representation of of this object which is more compact than that
@@ -897,6 +904,9 @@ class ParameterFrame:
             if desc is not None:
                 self.__dict__[key].description = desc
             if mapping is not None:
+                for code, val in mapping.items():
+                    if isinstance(val, dict):
+                        mapping[code] = ParameterMapping.from_dict(val)
                 self.__dict__[key].mapping = mapping
 
     def items(self):
