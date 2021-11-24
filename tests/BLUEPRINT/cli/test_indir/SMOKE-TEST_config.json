@@ -27,10 +27,6 @@
     "value": 1.6627442659949148,
     "source": "Initial Estimation"
   },
-  "reactor_type": {
-    "value": "Normal",
-    "source": "Input"
-  },
   "tau_flattop": {
     "value": 3600,
     "source": "Input"

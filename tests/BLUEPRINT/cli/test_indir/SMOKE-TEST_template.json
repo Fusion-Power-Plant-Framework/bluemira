@@ -1565,7 +1565,7 @@
   },
   "reactor_type": {
     "name": "Type of reactor",
-    "value": "SN",
+    "value": "Normal",
     "unit": "N/A",
     "description": null,
     "source": "Input",
