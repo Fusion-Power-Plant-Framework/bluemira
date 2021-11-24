@@ -23,11 +23,12 @@
 Module containing the bluemira Design class.
 """
 
-from typing import List, Type
+from typing import Dict, List, Type
 
 from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.components import ComponentManager
 from bluemira.base.config import Configuration
+from bluemira.base.error import BuilderError
 from bluemira.utilities.tools import get_module
 
 
@@ -42,7 +43,7 @@ class Design:
     _required_params: List[str] = ["Name"]
     _params: Configuration
     _build_config: BuildConfig
-    _builders: List[Builder]
+    _builders: Dict[str, Builder]
     _component_manager: ComponentManager
 
     def __init__(self, params, build_config):
@@ -71,13 +72,29 @@ class Design:
         Runs through the Builders associated with this Design. Components and
         Parameters are transferred onto the Design after each step.
         """
-        for builder in self._builders:
+        for builder in self._builders.values():
             build_result = builder(self._params)
             for result in build_result:
                 self._component_manager.insert_at_path(result.target, result.component)
             self._params.update_kw_parameters(
                 builder._params.to_dict(), source=builder.name
             )
+
+    def get_builder(self, builder_name: str) -> Builder:
+        """
+        Get the builder with the corresponding builder_name.
+
+        Parameters
+        ----------
+        builder_name: str
+            The name of the builder to get.
+
+        Returns
+        -------
+        builder: Builder
+            The builder corresponding to the provided name.
+        """
+        return self._builders[builder_name]
 
     def _extract_builders(self, params):
         """
@@ -92,10 +109,13 @@ class Design:
                 module, class_name = class_name.split("::")
             return getattr(get_module(module), class_name)
 
-        self._builders = []
+        self._builders = {}
         for key, val in self._build_config.items():
             class_name = val.pop("class")
             val["name"] = key
             builder_class = _get_builder_class(class_name)
-            self._builders += [builder_class(params, val)]
-            self._required_params += self._builders[-1]._required_params
+            if key not in self._builders:
+                self._builders[key] = builder_class(params, val)
+            else:
+                raise BuilderError(f"Builder {key} already exists in {self}.")
+            self._required_params += self._builders[key]._required_params
