@@ -31,6 +31,7 @@ import bluemira.geometry as geo
 from bluemira.geometry.parameterisations import GeometryParameterisation
 
 from bluemira.builders.shapes import ParameterisedShapeBuilder
+from bluemira.geometry.wire import BluemiraWire
 
 
 class MakeParameterisedPlasma(ParameterisedShapeBuilder):
@@ -38,20 +39,34 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
     A class that builds a plasma based on a parameterised shape
     """
 
-    _required_config = ParameterisedShapeBuilder._required_params + [
-        "targets",
-    ]
+    _required_config = ParameterisedShapeBuilder._required_params + ["targets"]
 
     _param_class: Type[GeometryParameterisation]
     _variables_map: Dict[str, str]
     _targets: Dict[str, str]
     _segment_angle: float
+    _boundary: BluemiraWire
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
         self._targets = build_config["targets"]
         self._segment_angle = build_config.get("segment_angle", 360.0)
+
+    def reinitialise(self, params, **kwargs):
+        """
+        Create the GeometryParameterisation from the provided param_class and
+        variables_map and extract the resulting shape as the plasma boundary.
+
+        Parameters
+        ----------
+        params: Dict[str, Any]
+            The parameterisation containing at least the required params for this
+            Builder.
+        """
+        super().reinitialise(params, **kwargs)
+
+        self._boundary = self._shape.create_shape()
 
     def build(self, **kwargs) -> List[BuildResult]:
         """
@@ -63,103 +78,85 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
         result_components = []
         for target, func in self._targets.items():
-            result_components.append(
-                getattr(self, func)(self._shape.create_shape(), target, **kwargs)
-            )
+            label = target.split("/")[-1]
+            component: PhysicalComponent = getattr(self, func)(label=label, **kwargs)
+            result_components.append(BuildResult(target, component))
 
         return result_components
 
-    def build_xz(self, boundary: geo.wire.BluemiraWire, target: str) -> BuildResult:
+    def build_xz(self, *, label: str = "", **kwargs) -> PhysicalComponent:
         """
         Build a PhysicalComponent with a BluemiraFace using the provided plasma boundary
         in the xz plane.
 
         Parameters
         ----------
-        boundary: BluemiraWire
-            The plasma boundary.
-        target: str
-            The target path in which to insert the component on output.
+        label: str
+            The label to apply to the resulting component, by default "".
 
         Returns
         -------
-        result: BuildResult
-            The resulting target path and component.
+        result: PhysicalComponent
+            The resulting component.
         """
-        label = target.split("/")[-1]
-        return BuildResult(
-            target=target,
-            component=PhysicalComponent(label, geo.face.BluemiraFace(boundary, label)),
-        )
+        # TODO: Specify a palette so that the plotting options are set up here.
+        return PhysicalComponent(label, geo.face.BluemiraFace(self._boundary, label))
 
-    def build_xy(self, boundary: geo.wire.BluemiraWire, target: str) -> BuildResult:
+    def build_xy(self, *, label: str = "", **kwargs) -> PhysicalComponent:
         """
-        Build a PhysicalComponent with a BluemiraFace using the provided plasma boundary
-        in the xy plane.
+        Build a PhysicalComponent with a BluemiraFace using the plasma boundary in the
+        xy plane.
 
         The projection onto the xy plane is taken as the ring bound by the maximum and
         minimum values of the boundary in the radial direction.
 
         Parameters
         ----------
-        boundary: BluemiraWire
-            The plasma boundary.
-        target: str
-            The target path in which to insert the component on output.
-
+        label: str
+            The label to apply to the resulting component, by default "".
 
         Returns
         -------
-        result: BuildResult
-            The resulting target path and component.
+        result: PhysicalComponent
+            The resulting component.
         """
-        label = target.split("/")[-1]
+        # TODO: Specify a palette so that the plotting options are set up here.
+        inner = geo.tools.make_circle(self._boundary.bounding_box.x_min, axis=[0, 1, 0])
+        outer = geo.tools.make_circle(self._boundary.bounding_box.x_max, axis=[0, 1, 0])
 
-        inner = geo.tools.make_circle(boundary.bounding_box.x_min, axis=[0, 1, 0])
-        outer = geo.tools.make_circle(boundary.bounding_box.x_max, axis=[0, 1, 0])
-
-        return BuildResult(
-            target=target,
-            component=PhysicalComponent(
-                label, geo.face.BluemiraFace([outer, inner], label)
-            ),
-        )
+        return PhysicalComponent(label, geo.face.BluemiraFace([outer, inner], label))
 
     def build_xyz(
         self,
-        boundary: geo.wire.BluemiraWire,
-        target: str,
         *,
+        label: str = "",
         segment_angle: Optional[float] = None,
-    ) -> BuildResult:
+        **kwargs,
+    ) -> PhysicalComponent:
         """
-        Build a PhysicalComponent with a BluemiraShell using the provided plasma boundary
-        in 3D.
+        Build a PhysicalComponent with a BluemiraShell using the plasma boundary in 3D.
 
         The 3D shell is created by revolving the boundary through the provided segment
         angle.
 
         Parameters
         ----------
-        boundary: BluemiraWire
-            The plasma boundary.
-        target: str
-            The target path in which to insert the component on output.
+        label: str
+            The label to apply to the resulting component, by default "".
         segment_angle: float
-            The around which to revolve the 3D geometry.
+            The angle [°] around which to revolve the 3D geometry.
 
         Returns
         -------
-        result: BuildResult
-            The resulting target path and component.
+        result: PhysicalComponent
+            The resulting component.
         """
-        label = target.split("/")[-1]
-
+        # TODO: Specify a palette so that the CAD display options are set up here.
         if segment_angle is None:
             segment_angle = self._segment_angle
 
         shell = geo.tools.revolve_shape(
-            boundary, direction=(0, 0, 1), degree=segment_angle
+            self._boundary, direction=(0, 0, 1), degree=segment_angle
         )
 
-        return BuildResult(target=target, component=PhysicalComponent(label, shell))
+        return PhysicalComponent(label, shell)

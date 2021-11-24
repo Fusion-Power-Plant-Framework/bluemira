@@ -23,6 +23,8 @@
 A basic tutorial for configuring and running a design with a parameterised plasma.
 """
 
+from bluemira.builders.plasma import MakeParameterisedPlasma
+
 from bluemira.base.design import Design
 
 
@@ -39,7 +41,6 @@ build_config = {
             "Plasma/xy/LCFS": "build_xy",
             "Plasma/xyz/LCFS": "build_xyz",
         },
-        "segment_angle": 270.0,
     },
 }
 params = {
@@ -59,3 +60,8 @@ component = design.component_manager.get_by_path("Plasma/xyz/LCFS")
 component.display_cad_options.color = color
 component.display_cad_options.transparency = 0.2
 component.show_cad()
+
+plasma_builder: MakeParameterisedPlasma = design.get_builder("Plasma")
+plasma = plasma_builder.build_xyz(segment_angle=270.0)
+plasma.display_cad_options.color = color
+plasma.show_cad()
