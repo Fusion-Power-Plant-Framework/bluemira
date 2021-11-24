@@ -525,6 +525,7 @@ class ParameterFrame:
     __defaults_setting = False
     __defaults_set = False
     __template_params = {}
+    __template_set = False
 
     def __init__(self, record_list=None, *, with_defaults=False):
         if with_defaults:
@@ -563,6 +564,8 @@ class ParameterFrame:
             cls.__setattr = cls.__setattr__
             cls.__setattr__ = sv_set
 
+            cls.set_template_parameters(params)
+
             cls.__defaults_setting = False
         else:
             raise ParameterError(
@@ -582,11 +585,13 @@ class ParameterFrame:
         params: RecordList
             The parameter record list to use to populate the template.
         """
-        for param in params:
-            cls.__template_params[param[0]] = {
-                "name": param[1],
-                "unit": param[3],
-            }
+        if not cls.__template_set:
+            for param in params:
+                cls.__template_params[param[0]] = {
+                    "name": param[1],
+                    "unit": param[3],
+                }
+            cls.__template_set = True
 
     @classmethod
     def __setattr(cls, *args, **kwargs):
@@ -608,12 +613,12 @@ class ParameterFrame:
             The ParameterFrame including the minimal content for the requested parameter
             variable names.
         """
-        if not hasattr(cls, "__template_params") or cls.__template_params != {}:
+        if not cls.__template_set:
             from bluemira.base.config import Configuration
 
             cls.set_template_parameters(Configuration.params)
 
-        params = ParameterFrame()
+        params = cls()
         for var in param_vars:
             if var not in cls.__template_params:
                 raise ParameterError(
