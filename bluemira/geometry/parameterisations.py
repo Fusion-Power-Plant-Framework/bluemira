@@ -133,7 +133,7 @@ class GeometryParameterisation(abc.ABC):
         )
 
     @abc.abstractmethod
-    def create_shape(self, label="", **kwargs):
+    def create_shape(self, label="", **kwargs) -> BluemiraWire:
         """
         Make a CAD representation of the geometry.
 
