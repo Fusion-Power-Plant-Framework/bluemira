@@ -153,4 +153,4 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
             boundary, direction=(0, 0, 1), degree=self._segment_angle
         )
 
-        return (target, PhysicalComponent(label, shell))
+        return BuildResult(target, PhysicalComponent(label, shell))
