@@ -23,7 +23,7 @@
 Built-in build steps for making a parameterised plasma
 """
 
-from typing import Dict, List, Type
+from typing import Dict, List, Optional, Type
 
 from bluemira.base.builder import BuildResult, BuildConfig
 from bluemira.base.components import PhysicalComponent
@@ -40,7 +40,6 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
     _required_config = ParameterisedShapeBuilder._required_params + [
         "targets",
-        "segment_angle",
     ]
 
     _param_class: Type[GeometryParameterisation]
@@ -52,7 +51,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         super()._extract_config(build_config)
 
         self._targets = build_config["targets"]
-        self._segment_angle = build_config["segment_angle"]
+        self._segment_angle = build_config.get("segment_angle", 360.0)
 
     def build(self, **kwargs) -> List[BuildResult]:
         """
@@ -65,7 +64,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         result_components = []
         for target, func in self._targets.items():
             result_components.append(
-                getattr(self, func)(self._shape.create_shape(), target)
+                getattr(self, func)(self._shape.create_shape(), target, **kwargs)
             )
 
         return result_components
@@ -116,8 +115,8 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         """
         label = target.split("/")[-1]
 
-        inner = geo.tools.make_circle(boundary.bounding_box[0], axis=[0, 1, 0])
-        outer = geo.tools.make_circle(boundary.bounding_box[3], axis=[0, 1, 0])
+        inner = geo.tools.make_circle(boundary.bounding_box.x_min, axis=[0, 1, 0])
+        outer = geo.tools.make_circle(boundary.bounding_box.x_max, axis=[0, 1, 0])
 
         return BuildResult(
             target=target,
@@ -126,7 +125,13 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
             ),
         )
 
-    def build_xyz(self, boundary: geo.wire.BluemiraWire, target: str) -> BuildResult:
+    def build_xyz(
+        self,
+        boundary: geo.wire.BluemiraWire,
+        target: str,
+        *,
+        segment_angle: Optional[float] = None,
+    ) -> BuildResult:
         """
         Build a PhysicalComponent with a BluemiraShell using the provided plasma boundary
         in 3D.
@@ -140,7 +145,8 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
             The plasma boundary.
         target: str
             The target path in which to insert the component on output.
-
+        segment_angle: float
+            The around which to revolve the 3D geometry.
 
         Returns
         -------
@@ -149,8 +155,11 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         """
         label = target.split("/")[-1]
 
+        if segment_angle is None:
+            segment_angle = self._segment_angle
+
         shell = geo.tools.revolve_shape(
-            boundary, direction=(0, 0, 1), degree=self._segment_angle
+            boundary, direction=(0, 0, 1), degree=segment_angle
         )
 
         return BuildResult(target=target, component=PhysicalComponent(label, shell))
