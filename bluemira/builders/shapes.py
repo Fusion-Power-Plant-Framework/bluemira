@@ -30,7 +30,7 @@ from ..base.components import PhysicalComponent
 from ..geometry.optimisation import GeometryOptimisationProblem
 from ..geometry.parameterisations import GeometryParameterisation
 from ..utilities.optimiser import Optimiser
-from ..utilities.tools import get_module
+from ..utilities.tools import get_class_from_module
 
 
 class ParameterisedShapeBuilder(Builder):
@@ -44,14 +44,10 @@ class ParameterisedShapeBuilder(Builder):
     _variables_map: Dict[str, str]
 
     def _extract_config(self, build_config: BuildConfig):
-        def _get_param_class(param_class: str) -> Type[GeometryParameterisation]:
-            module = "bluemira.geometry.parameterisations"
-            class_name = param_class
-            if "::" in class_name:
-                module, class_name = class_name.split("::")
-            return getattr(get_module(module), class_name)
-
-        self._param_class = _get_param_class(build_config["param_class"])
+        self._param_class: Type[GeometryParameterisation] = get_class_from_module(
+            build_config["param_class"],
+            default_module="bluemira.geometry.parameterisations",
+        )
         self._variables_map: Dict[str, str] = build_config["variables_map"]
         self._extract_required_params()
 
@@ -166,24 +162,11 @@ class MakeOptimisedShape(MakeParameterisedShape):
         return self.build()
 
     def _extract_config(self, build_config: BuildConfig):
-        def get_problem_class(class_path: str) -> Type[GeometryOptimisationProblem]:
-            if "::" in class_path:
-                module, class_name = class_path.split("::")
-            else:
-                class_path_split = class_path.split(".")
-                module, class_name = (
-                    ".".join(class_path_split[:-1]),
-                    class_path_split[-1],
-                )
-            return getattr(get_module(module), class_name)
-
         super()._extract_config(build_config)
 
         problem_class = build_config["problem_class"]
-        self._problem_class = (
-            get_problem_class(problem_class)
-            if isinstance(problem_class, str)
-            else problem_class
+        self._problem_class: Type[GeometryOptimisationProblem] = get_class_from_module(
+            problem_class
         )
         self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
         self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})

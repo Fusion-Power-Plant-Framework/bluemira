@@ -29,7 +29,7 @@ from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.components import ComponentManager
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
-from bluemira.utilities.tools import get_module
+from bluemira.utilities.tools import get_class_from_module
 
 
 class Design:
@@ -101,19 +101,13 @@ class Design:
         Extracts the builders from the config, which must be an ordered dictionary
         mapping the name of the builder to the corresponding options.
         """
-
-        def _get_builder_class(builder_class: str) -> Type[Builder]:
-            module = "bluemira.builders"
-            class_name = builder_class
-            if "::" in class_name:
-                module, class_name = class_name.split("::")
-            return getattr(get_module(module), class_name)
-
         self._builders = {}
         for key, val in self._build_config.items():
             class_name = val.pop("class")
             val["name"] = key
-            builder_class = _get_builder_class(class_name)
+            builder_class: Type[Builder] = get_class_from_module(
+                class_name, default_module="bluemira.builders"
+            )
             if key not in self._builders:
                 self._builders[key] = builder_class(params, val)
             else:
