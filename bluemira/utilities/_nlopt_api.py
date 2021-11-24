@@ -457,7 +457,7 @@ class NLOPTOptimiser:
             self.optimum_value = self._opt.last_optimum_value()
             self.n_evals = self._opt.get_numevals()
             process_NLOPT_result(self._opt)
-            raise ExternalOptError(error)
+            raise ExternalOptError(str(error))
 
         except KeyboardInterrupt:
             self.optimum_value = self._opt.last_optimum_value()
