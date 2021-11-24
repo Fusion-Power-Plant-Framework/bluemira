@@ -452,12 +452,12 @@ class NLOPTOptimiser:
             self.optimum_value = self._opt.last_optimum_value()
             x_star = np.round(self._f_objective.last_x, 6)
 
-        except RuntimeError:
+        except RuntimeError as error:
             # Usually "more than iter SQP iterations"
             self.optimum_value = self._opt.last_optimum_value()
             self.n_evals = self._opt.get_numevals()
             process_NLOPT_result(self._opt)
-            raise ExternalOptError("Usually more than iter SQP iterations")
+            raise ExternalOptError(error)
 
         except KeyboardInterrupt:
             self.optimum_value = self._opt.last_optimum_value()
