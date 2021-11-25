@@ -22,6 +22,8 @@
 """
 Testing routines for different TF coil optimisations
 """
+
+from copy import copy
 import os
 import time
 from BLUEPRINT.geometry.geomtools import make_box_xz
@@ -188,6 +190,24 @@ class TestTaperedPictureFrameTF:
         }
         cls.lcfs = lcfs
         cls.ko_zone = ko_zone
+
+    @pytest.mark.skipif(
+        not (
+            hasattr(OCC, "PYTHONOCC_VERSION_MAJOR") and OCC.PYTHONOCC_VERSION_MAJOR >= 7
+        ),
+        reason="OCC volume bug",
+    )
+    def test_without_callback(self, tempdir):
+        self.to_tf["write_folder"] = tempdir
+        tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
+        tf1.build(TF_optimiser)
+        tf1_state = tf1.__getstate__()
+        tf2 = ToroidalFieldCoils(self.parameters, self.to_tf)
+        tf2.build()
+        assert tf1_state != tf2.__getstate__()
+        tf3 = copy(tf1)
+        tf3.build()
+        np.testing.assert_equal(tf1_state, tf3.__getstate__())
 
     @pytest.mark.skipif(
         not (
