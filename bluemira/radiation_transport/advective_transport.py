@@ -49,8 +49,8 @@ class ChargedParticleSolver:
 
     # fmt: off
     default_params = [
-        ["p_sol", "power crossing the separatrix", 100, "MW", None, "Input"],
-        ["f_p_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
+        ['P_sep', 'Separatrix power', 150, 'MW', None, 'PLASMOD'],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
@@ -310,7 +310,7 @@ class ChargedParticleSolver:
 
         # Correct power (energy conservation)
         q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * self.dx_mp * x_omp)
-        f_correct_power = self.params.p_sol / q_omp_int
+        f_correct_power = self.params.P_sep / q_omp_int
         return (
             np.append(x_lfs_inter, x_hfs_inter),
             np.append(z_lfs_inter, z_hfs_inter),
@@ -396,7 +396,7 @@ class ChargedParticleSolver:
         q_omp_int = 2 * np.pi * np.sum(q_par_omp * Bp_omp / B_omp * self.dx_mp * x_omp)
         q_imp_int = 2 * np.pi * np.sum(q_par_imp * Bp_imp / B_imp * self.dx_mp * x_imp)
 
-        total_power = self.params.p_sol
+        total_power = self.params.P_sep
         f_outboard = self.params.f_lfs_lower_target + self.params.f_lfs_upper_target
         f_inboard = self.params.f_hfs_lower_target + self.params.f_hfs_upper_target
         f_correct_lfs_down = (
@@ -433,8 +433,8 @@ class ChargedParticleSolver:
         """
         Calculate the parallel power at the midplane.
         """
-        p_sol_near = self.params.p_sol * self.params.f_p_near
-        p_sol_far = self.params.p_sol * (1 - self.params.f_p_near)
+        p_sol_near = self.params.P_sep * self.params.f_p_sol_near
+        p_sol_far = self.params.P_sep * (1 - self.params.f_p_sol_near)
         if outboard:
             lq_near = self.params.fw_lambda_q_near_omp
             lq_far = self.params.fw_lambda_q_far_omp

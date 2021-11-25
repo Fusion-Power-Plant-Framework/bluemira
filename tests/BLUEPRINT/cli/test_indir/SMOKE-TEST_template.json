@@ -3148,15 +3148,15 @@
     "source": "Input",
     "mapping": null
   },
-  "p_sol": {
-    "name": "power crossing the separatrix",
+  "P_sep": {
+    "name": "Separatrix power",
     "value": 100,
     "unit": "MW",
     "description": null,
     "source": "Input",
     "mapping": null
   },
-  "f_p_near": {
+  "f_p_sol_near": {
     "name": "near Scrape off layer power rate",
     "value": 0.50,
     "unit": "N/A",
