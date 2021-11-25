@@ -63,7 +63,7 @@ class ParameterMapping:
     name: str
        name of mapped parameter
     recv: bool
-        recieve data from mapped parameter (to overwrite bluemira parameter)
+        receive data from mapped parameter (to overwrite bluemira parameter)
     send: bool
         send data to mapped parameter (from bluemira parameter)
 
@@ -911,7 +911,7 @@ class ParameterFrame:
         """
         return self.__dict__.keys()
 
-    def get_parameter_list(self):
+    def get_parameter_list(self) -> List[Parameter]:
         """
         Get a list of Parameters for the ParameterFrame
 
