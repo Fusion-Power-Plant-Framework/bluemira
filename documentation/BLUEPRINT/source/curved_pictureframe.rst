@@ -13,7 +13,7 @@ plasma.
 .. figure:: ../images/CP_coils_params.png
     
 
-    Fig. 1: CP Coil Parameterisation
+    CP Coil Parameterisation
 
 
 The  list of inputs parameters follows the pattern from the Tapered picture frame  coils, 
@@ -75,7 +75,7 @@ Parameterising a Circle from a Chord Length
 .. figure:: ../images/chord_arc.PNG
     
 
-    Fig. 2: Chord Parameters
+    Chord Parameters
 
 The Chord height and length can be evaluated from the input parameters
 
@@ -111,7 +111,7 @@ smooth out this corner , resulting in a smooth curve like in Fig xb.
 .. figure:: ../images/transitioning_curve.PNG
     
 
-    Fig. 3: Base Arc (a) Arc with transitioning (b)
+    Base Arc (a) Arc with transitioning (b)
 
 Smoothing Curve
 To  define the smoothing curve a tangency condition is defined between the end point of the transitioning 
