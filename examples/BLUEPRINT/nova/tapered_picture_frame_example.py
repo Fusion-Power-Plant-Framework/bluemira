@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.file import make_BP_path
+from bluemira.base.file import make_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from bluemira.equilibria.shapes import flux_surface_manickam
@@ -62,8 +62,8 @@ params = [
 
 parameters = ParameterFrame(params)
 
-read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
-write_path = make_BP_path("TP_Coil", subfolder="generated_data/BLUEPRINT")
+read_path = make_bluemira_path("Geometry", subfolder="data/BLUEPRINT")
+write_path = make_bluemira_path("TP_Coil", subfolder="generated_data/BLUEPRINT")
 
 lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
 lcfs.close()

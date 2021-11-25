@@ -26,7 +26,7 @@ import pickle  # noqa (S403)
 import numpy as np
 import OCC
 from unittest.mock import patch
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.offset import offset_clipper
@@ -54,7 +54,7 @@ from BLUEPRINT.cad.cadtools import (
     boolean_fuse,
 )
 
-TESTS = get_BP_path("BLUEPRINT/cad/test_data", subfolder="tests")
+TESTS = get_bluemira_path("BLUEPRINT/cad/test_data", subfolder="tests")
 
 
 class TestOrientedBox:

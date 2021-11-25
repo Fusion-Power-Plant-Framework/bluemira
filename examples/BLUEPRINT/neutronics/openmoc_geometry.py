@@ -35,7 +35,7 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.look_and_feel import bluemira_print
 
 # BLUEPRINT imports
-from BLUEPRINT.base.file import FileManager
+from bluemira.base.file import FileManager
 from BLUEPRINT.neutronics.openmoc_geometry_tools import (
     create_system_cells,
     PlaneHelper,
@@ -50,7 +50,7 @@ from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from BLUEPRINT.systems.vessel import VacuumVessel
 
 # Get the configuration from EUDEMO
-from tests.test_reactor import config, build_config
+from tests.BLUEPRINT.test_reactor import config, build_config
 
 
 #####################

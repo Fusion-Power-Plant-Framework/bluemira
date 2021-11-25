@@ -25,7 +25,7 @@ import os
 from random import uniform
 from itertools import cycle
 from matplotlib import pyplot as plt
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.geombase import Plane
@@ -34,7 +34,7 @@ from bluemira.geometry._deprecated_tools import get_intersect
 
 import tests
 
-TEST = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+TEST = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
 
 
 class TestLoop:

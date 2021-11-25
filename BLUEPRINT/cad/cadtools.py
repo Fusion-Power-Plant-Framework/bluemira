@@ -183,7 +183,7 @@ import trimesh
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import get_dl, get_angle_between_points
 from BLUEPRINT.base.error import CADError
-from BLUEPRINT.base.file import file_name_maker
+from bluemira.base.file import file_name_maker
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import expand_nested_list
 from BLUEPRINT.utilities.plottools import Plot3D

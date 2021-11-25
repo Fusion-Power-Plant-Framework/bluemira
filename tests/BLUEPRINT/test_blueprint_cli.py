@@ -31,8 +31,7 @@ import shutil
 import tempfile
 import traceback
 
-from BLUEPRINT.base.file import KEYWORD
-from bluemira.base.file import get_bluemira_root
+from bluemira.base.file import get_bluemira_root, BM_ROOT
 from BLUEPRINT.blueprint_cli import cli, get_reactor_class
 from BLUEPRINT.reactor import ConfigurableReactor
 
@@ -386,8 +385,8 @@ def test_cli_bproot_keyword(
     runner = CliRunner()
 
     # Set temp outdir and ensure directory does not already exist.
-    outdir_flag = os.path.join(KEYWORD, "tests", "BLUEPRINT", "cli", "temp_outdir")
-    outdir_path = outdir_flag.replace(KEYWORD, get_bluemira_root())
+    outdir_flag = os.path.join(BM_ROOT, "tests", "BLUEPRINT", "cli", "temp_outdir")
+    outdir_path = outdir_flag.replace(BM_ROOT, get_bluemira_root())
     if os.path.exists(outdir_path):
         shutil.rmtree(outdir_path)
 

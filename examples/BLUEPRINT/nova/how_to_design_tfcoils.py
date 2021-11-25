@@ -33,10 +33,10 @@ the console one by one.
 import os
 import matplotlib.pyplot as plt
 
+from bluemira.base.file import make_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_print
 
-from BLUEPRINT.base.file import make_BP_path
 from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
@@ -83,8 +83,8 @@ parameters = ParameterFrame(params)
 # ripple.
 
 # %%
-read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
-write_path = make_BP_path("Geometry", subfolder="generated_data/BLUEPRINT")
+read_path = make_bluemira_path("Geometry", subfolder="data/BLUEPRINT")
+write_path = make_bluemira_path("Geometry", subfolder="generated_data/BLUEPRINT")
 name = os.sep.join([read_path, "LCFS.json"])
 lcfs = Loop.from_file(name)
 

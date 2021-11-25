@@ -25,9 +25,12 @@
 import pickle  # noqa (S403)
 import pytest
 from matplotlib import pyplot as plt
+
+from bluemira.base.file import BM_ROOT
 from bluemira.utilities.tools import set_random_seed
 from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
+
 import tests
 
 
@@ -59,8 +62,8 @@ config = {
 }
 
 build_config = {
-    "reference_data_root": "!BP_ROOT!/tests/BLUEPRINT/test_data",
-    "generated_data_root": "!BP_ROOT!/tests/BLUEPRINT/test_generated_data",
+    "reference_data_root": f"{BM_ROOT}/tests/BLUEPRINT/test_data",
+    "generated_data_root": f"{BM_ROOT}/tests/BLUEPRINT/test_generated_data",
     "plot_flag": tests.PLOTTING,
     "process_mode": "mock",  # Tests don't require PROCESS to be installed
     "plasma_mode": "run",

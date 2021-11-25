@@ -34,7 +34,7 @@ import sys
 import tarfile
 from typing import Optional
 
-from BLUEPRINT.base.file import KEYWORD
+from bluemira.base.file import BM_ROOT
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.utilities.tools import get_module, CommentJSONDecoder
@@ -196,8 +196,8 @@ class InputManager:
                     f"default path {path}."
                 )
 
-        if KEYWORD in path:
-            path = path.replace(KEYWORD, get_bluemira_root())
+        if BM_ROOT in path:
+            path = path.replace(BM_ROOT, get_bluemira_root())
 
         return path
 

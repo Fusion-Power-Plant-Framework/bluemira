@@ -24,7 +24,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.nova.coilcage import HelmholtzCage
 from bluemira.geometry._deprecated_tools import innocent_smoothie
@@ -32,7 +32,7 @@ import tests
 
 
 def test_pattern():
-    path = get_BP_path("BLUEPRINT/nova/test_data", subfolder="tests")
+    path = get_bluemira_path("BLUEPRINT/nova/test_data", subfolder="tests")
     filename = os.sep.join([path, "tf_centreline_reference.json"])
     tf_centreline = Loop.from_file(filename)
     filename = os.sep.join([path, "lcfs_reference.json"])
@@ -87,7 +87,7 @@ class TestCariddiBenchmark:
 
     @classmethod
     def setup_class(cls):
-        root = get_BP_path("BLUEPRINT/nova/test_data", subfolder="tests")
+        root = get_bluemira_path("BLUEPRINT/nova/test_data", subfolder="tests")
         width = 0.64
         depth = 1.15
         B_0 = 5.77

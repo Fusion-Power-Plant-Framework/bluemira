@@ -30,7 +30,7 @@ from BLUEPRINT.reactor import Reactor
 from BLUEPRINT.systems.config import SingleNull
 from BLUEPRINT.nova.structuralsolver import StructuralSolver
 
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import BM_ROOT, get_bluemira_path
 from bluemira.base.look_and_feel import plot_defaults
 from bluemira.materials import MaterialCache
 
@@ -68,7 +68,7 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "!BP_ROOT!/generated_data/BLUEPRINT",
+    "generated_data_root": f"{BM_ROOT}/generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "plasma_mode": "run",
