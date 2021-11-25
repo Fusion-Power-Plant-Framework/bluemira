@@ -102,6 +102,7 @@ class ConfigurationSchema:
     fw_dL_min: Parameter  # noqa(N815) - mixed case to match PROCESS
     fw_dL_max: Parameter  # noqa(N815) - mixed case to match PROCESS
     fw_a_max: Parameter
+    f_p_sol_near: Parameter
     hf_limit: Parameter
 
     # SN/DN variables for heat flux transport

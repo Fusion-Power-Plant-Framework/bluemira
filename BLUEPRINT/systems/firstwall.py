@@ -1616,6 +1616,8 @@ class FirstWallSN(FirstWall):
     default_params = FirstWall.base_default_params + [
         ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "N/A", None, "Input"],
+        ['P_sep', 'Separatrix power', 150, 'MW', None, 'PLASMOD'],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
         ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "N/A", None, "Input"],

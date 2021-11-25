@@ -110,6 +110,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
         ['fw_dL_max', 'Maximum FW module length', 2, 'm', None, 'Input'],
         ['fw_a_max', 'Maximum angle between FW modules', 25, '°', None, 'Input'],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
         ['hf_limit', 'heat flux material limit', 0.5, 'MW/m^2', None, 'Input'],
 
         # SN/DN variables for heat flux transport
