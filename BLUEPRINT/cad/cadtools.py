@@ -25,7 +25,6 @@ CAD functions and operations
 # High level imports
 import os
 from itertools import zip_longest
-from collections.abc import Iterable
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -189,6 +188,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import expand_nested_list
 from BLUEPRINT.utilities.plottools import Plot3D
 from BLUEPRINT.cad.display import QtDisplayer
+from bluemira.utilities.tools import flatten_iterable
 
 
 MINIMUM_MESH_VOL = 1e-5
@@ -1244,14 +1244,7 @@ class MixedFaceMaker:
             if b is not None:
                 edges.append(b)
 
-        def flatten_list(v_list):
-            for val in v_list:
-                if isinstance(val, Iterable):
-                    yield from flatten_list(val)
-                else:
-                    yield val
-
-        self.edges = list(flatten_list(edges))
+        self.edges = list(flatten_iterable(edges))
         self._debugger = loop_order
 
     def make_subwire(self):

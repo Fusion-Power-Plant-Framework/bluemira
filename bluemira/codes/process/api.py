@@ -27,6 +27,7 @@ import os
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.utilities.tools import flatten_iterable
 
 PROCESS_ENABLED = True
 
@@ -75,7 +76,6 @@ if PROCESS_ENABLED:
     try:
         from process.io.obsolete_vars import OBS_VARS
     except (ModuleNotFoundError, FileNotFoundError):
-        OBS_VARS = dict()
         bluemira_warn(
             "The OBS_VAR dict is not installed in your PROCESS installed version"
         )
@@ -125,9 +125,8 @@ def update_obsolete_vars(process_map_name: str) -> str:
         PROCESS variable names valid for the install (if OBS_VAR is updated
         correctly)
     """
-    process_name = process_map_name
-    while process_name in OBS_VARS:
-        process_name = OBS_VARS[process_name]
+    process_name = _nested_check(process_map_name)
+
     if not process_name == process_map_name:
         bluemira_print(
             f"Obsolete {process_map_name} PROCESS mapping name."
@@ -136,14 +135,19 @@ def update_obsolete_vars(process_map_name: str) -> str:
     return process_name
 
 
-def _convert(dictionary, key):
-    if key in dictionary.keys():
-        return dictionary[key]
-    return key
+def _nested_check(process_name):
+    while process_name in OBS_VARS:
+        process_name = OBS_VARS[process_name]
+        if isinstance(process_name, list):
+            names = []
+            for p in process_name:
+                names += [_nested_check(p)]
+            return list(flatten_iterable(names))
+    return process_name
 
 
 def _pconvert(dictionary, key):
-    key_name = _convert(dictionary, key)
+    key_name = dictionary.get(key, key)
     if key_name is None:
         raise ValueError(f'Define a parameter conversion for "{key}"')
     return key_name
@@ -154,11 +158,11 @@ def convert_unit_p_to_b(s):
     Conversion from PROCESS units to bluemira units
     Handles text formatting only
     """
-    return _convert(PTOBUNITS, s)
+    return PTOBUNITS.get(s, s)
 
 
 def convert_unit_b_to_p(s):
     """
     Conversion from bluemira units to PROCESS units
     """
-    return _convert(BTOPUNITS, s)
+    return BTOPUNITS.get(s, s)
