@@ -193,7 +193,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwith", False, True)}],
         ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwoth", False, True)}],
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
-        
+
         # TF coils
         ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfcth", True, False)}],
         ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', {"PROCESS": ParameterMapping("tfthko", False, False)}],
@@ -240,8 +240,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['r_fw_ob_in', 'Outboard first wall inner radius', 12.1, 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("r_fw_ob_in", True, False)}],
         ['r_vv_ob_in', 'Outboard vessel inner radius', 14.5, 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("r_vv_ob_in", True, False)}],
         ['r_tf_out_centre', 'Outboard TF leg centre radius', 16.2, 'N/A', None, 'PROCESS', {"PROCESS": ParameterMapping("r_tf_outboard_mid", True, False)}],
-        ['r_ts_joint', 'Radius of inboard/outboard TS joint', 2. , 'm', None, 'Input'],
-        ['r_vv_joint', 'Radius of inboard/outboard VV joint', 2. , 'm', None, 'Input'],
+        ['r_ts_joint', 'Radius of inboard/outboard TS joint', 2., 'm', None, 'Input'],
+        ['r_vv_joint', 'Radius of inboard/outboard VV joint', 2., 'm', None, 'Input'],
 
         # Gaps and clearances
         ['g_cs_mod', 'Gap between CS modules', 0.1, 'm', None, 'Input'],
