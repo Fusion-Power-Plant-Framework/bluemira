@@ -41,9 +41,12 @@ for param in Configuration.params:
                 key: value.to_dict() for key, value in param[6].items()
             }
 
+params["Name"] = "EUDEMO"
+
 with open("/home/dshort/code/bluemira/bluemira/builders/EUDEMO/params.json", "w") as fh:
     json.dump(params, fh, indent=2)
 
 build_config = {
-    "process_mode": "run",
+    "generated_data_root": "!BP_ROOT!/generated_data",
+    "process_mode": "read",
 }

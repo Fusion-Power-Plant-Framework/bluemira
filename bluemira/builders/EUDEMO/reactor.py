@@ -29,6 +29,7 @@ from typing import Dict, Optional, Union
 
 from bluemira.base.builder import BuildConfig
 from bluemira.base.config import Configuration
+from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.constants import (
     NBTI_J_MAX,
     NBTI_B_MAX,
@@ -113,9 +114,18 @@ class EUDEMO(Reactor):
         # self.build_tf_coils()
 
     def run_systems_code(self):
+        """
+        Run the systems code module in the requested run mode.
+        """
         bluemira_print("Running systems code.")
 
-        run_systems_code(self)
+        PROCESS_output: ParameterFrame = run_systems_code(
+            self._params,
+            self._build_config,
+            self._file_manager.generated_data_dirs["systems_code"],
+            self._file_manager.reference_data_dirs["systems_code"],
+        )
+        self._params.update_kw_parameters(PROCESS_output.to_dict())
 
     def create_equilibrium(self, qpsi_calcmode=0):
         """
