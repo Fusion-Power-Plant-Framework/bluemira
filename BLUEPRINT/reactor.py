@@ -333,29 +333,6 @@ class Reactor(ReactorSystem):
         """
         profiles = {}
 
-        if self.build_config["process_mode"] != "mock":
-            variables = [
-                "I_p",
-                "P_fus",
-                "P_fus_DT",
-                "P_fus_DD",
-                "H_star",
-                "P_rad_core",
-                "P_rad_edge",
-                "P_rad",
-                "P_line",
-                "P_sync",
-                "P_brehms",
-                "f_bs",
-                "tau_e",
-                "P_sep",
-                "beta",
-                "v_burn",
-            ]
-            values = self.__PROCESS__.extract_outputs(variables)  # Is this still needed?
-            param_dict = dict(zip(variables, values))
-            self.add_parameters(param_dict, "PROCESS")
-
         derived_params = {
             "f_DD_fus": self.params.P_fus_DD / self.params.P_fus,
             "beta_n": normalise_beta(
