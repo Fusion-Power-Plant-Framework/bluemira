@@ -72,6 +72,7 @@ from BLUEPRINT.systems.optimisation_callbacks import (
     TF_optimiser,
     EQ_optimiser,
     ATEC_optimiser,
+    FW_optimiser,
 )
 from BLUEPRINT.systems.plotting import ReactorPlotter
 from BLUEPRINT.systems.physicstoolbox import (
@@ -193,6 +194,7 @@ class Reactor(ReactorSystem):
             "EQ": EQ_optimiser,
             # The following wasn't used at the time of refactoring
             # "ATEC": ATEC_optimiser,
+            "FW": FW_optimiser,
         }
 
         # Final configurational defaults

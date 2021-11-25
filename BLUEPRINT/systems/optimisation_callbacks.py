@@ -63,3 +63,35 @@ def ATEC_optimiser(ATEC, TF, EQ):
     t = time()
     SO.optimise()
     bluemira_print(f"Optimisation time: {time()-t:.2f} s")
+
+
+def FW_optimiser(FW, hf_limit, n_iteration_max):
+    """
+    Optimises the initial preliminary first wall profile in terms of heat flux.
+    The divertor will be attached to this profile.
+
+    Parameters
+    ----------
+    FW: FirstWall
+        The first wall system being optimised.
+
+    n_iteration_max: integer
+        Max number of iterations after which the optimiser is stopped.
+    hf_limit: float
+        Heat flux limit for the optimisation.
+    """
+    # NOTE: Not an optimisation
+    FW.initial_profile = FW.make_preliminary_profile()
+    profile = FW.initial_profile
+    for _ in range(n_iteration_max):
+        x_wall, z_wall, hf_wall = FW.hf_firstwall_params(profile)
+
+        for x_hf, z_hf, hf in zip(x_wall, z_wall, hf_wall):
+            if hf > hf_limit:
+                profile = FW.modify_fw_profile(profile, x_hf, z_hf)
+
+        heat_flux_max = max(hf_wall)
+        print(heat_flux_max)
+        FW.optimised_profile = profile
+        if heat_flux_max < hf_limit:
+            break
