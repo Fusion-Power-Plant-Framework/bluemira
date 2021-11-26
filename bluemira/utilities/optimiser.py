@@ -226,10 +226,6 @@ class Optimiser(NLOPTOptimiser):
         tolerances = np.array(tolerances)
 
         if not np.all(c_values < tolerances):
-            from bluemira.base.look_and_feel import bluemira_warn
-            from pprint import pformat
-
-            bluemira_warn(
-                "Some constraints have not been adequately satisfied.\n"
-                f"{pformat(c_values)} !< {pformat(tolerances)}"
+            raise InternalOptError(
+                "Some constraints have not been adequately satisfied."
             )

@@ -198,7 +198,7 @@ parameterisation_4 = PrincetonD()
 cobyla_optimiser2 = Optimiser(
     "COBYLA",
     opt_conditions={
-        "ftol_rel": 1e-6,
+        "ftol_rel": 1e-7,
         "xtol_rel": 1e-12,
         "xtol_abs": 1e-12,
         "max_eval": 1000,
