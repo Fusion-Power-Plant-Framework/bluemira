@@ -24,26 +24,23 @@ PROCESS run functions
 """
 
 from __future__ import annotations
-
+import subprocess  # noqa (S404)
 from enum import Enum, auto
 import json
 import os
-import subprocess  # noqa (S404)
 import string
 from typing import Dict, List, Optional
 
 import bluemira.base as bm_base
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
-
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
-from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
-from bluemira.codes.process.api import (
-    DEFAULT_INDAT,
-    update_obsolete_vars,
-)
+from bluemira.codes.process.api import DEFAULT_INDAT, update_obsolete_vars
+from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.setup import PROCESSInputWriter
 from bluemira.codes.process.teardown import BMFile
-from bluemira.codes.process.constants import NAME as PROCESS
+from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
+from bluemira.equilibria.physics import normalise_beta
+from bluemira.codes.interface import FileProgramInterface
 
 
 class RunMode(Enum):
@@ -79,7 +76,7 @@ class RunMode(Enum):
         return func(*args, **kwargs)
 
 
-class Run:
+class Run(FileProgramInterface):
     """
     PROCESS Run functions. Runs, loads or mocks PROCESS to generate the reactor's radial
     build as an input for the bluemira run.
@@ -402,4 +399,4 @@ class Run:
             raise CodesError(message)
 
     def _run_subprocess(self):
-        subprocess.run("process", cwd=self._run_dir)  # noqa (S603)
+        super()._run_subprocess("process")

@@ -26,7 +26,7 @@ PROCESS api
 import os
 
 from bluemira.base.file import get_bluemira_root
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable
 
 PROCESS_ENABLED = True
@@ -64,8 +64,8 @@ PROCESS_DICT = dict()
 # Import PROCESS objects, override the above dummy objects if PROCESS installed.
 # Note: noqa used to ignore "redefinition of unused variable" errors.
 try:
-    from process.io.mfile import MFile  # noqa: F811,F401
     from process.io.in_dat import InDat  # noqa: F811,F40
+    from process.io.mfile import MFile  # noqa: F811,F401
     from process.io.python_fortran_dicts import get_dicts  # noqa: F811
 except (ModuleNotFoundError, FileNotFoundError):
     PROCESS_ENABLED = False

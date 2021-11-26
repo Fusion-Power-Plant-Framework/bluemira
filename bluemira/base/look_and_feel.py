@@ -324,6 +324,27 @@ def _bm_print_singleflush(string, width=73, color="blue"):
     return _print_color(text, color)
 
 
+def _bluemira_flush(func, string):
+    """
+    Print a coloured, boxed line to the console and flushes it. Useful for
+    updating information.
+
+    Parameters
+    ----------
+    func: logging function
+        function to log with
+    string: str
+        The string to colour flush print
+    """
+    original_terminator = logging.StreamHandler.terminator
+    logging.StreamHandler.terminator = ""
+    logging.FileHandler.terminator = original_terminator
+    try:
+        func("\r" + _bm_print_singleflush(string))
+    finally:
+        logging.StreamHandler.terminator = original_terminator
+
+
 def bluemira_print_flush(string):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
@@ -334,13 +355,20 @@ def bluemira_print_flush(string):
     string: str
         The string to colour flush print
     """
-    original_terminator = logging.StreamHandler.terminator
-    logging.StreamHandler.terminator = ""
-    logging.FileHandler.terminator = original_terminator
-    try:
-        LOGGER.info("\r" + _bm_print_singleflush(string))
-    finally:
-        logging.StreamHandler.terminator = original_terminator
+    _bluemira_flush(LOGGER.info, string)
+
+
+def bluemira_error_flush(string):
+    """
+    Print a coloured, boxed line to the console and flushes it. Useful for
+    updating information.
+
+    Parameters
+    ----------
+    string: str
+        The string to colour flush print
+    """
+    _bluemira_flush(LOGGER.error, string)
 
 
 class BluemiraClock:

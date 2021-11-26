@@ -23,26 +23,25 @@
 API for the transport code PLASMOD and related functions
 """
 
+import copy
+import csv
 import os
+import pprint
+import subprocess
 import sys
+from typing import Dict, Union
 
 import numpy as np
 
-from typing import Union, Dict
-import copy
-
-import csv
-import pprint
-
-from ..external_code import ExternalCode
+from bluemira.codes.interface import FileProgramInterface
+from bluemira.codes.plasmod.constants import NAME as PLASMOD
 
 # Absolute path to plasmod excutable
-PLASMOD_PATH = ""
+PLASMOD_PATH = "../../../../plasmod_bluemira"
 
 # Todo: both INPUTS and OUTPUTS must to be completed.
 # DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
 DEFAULT_PLASMOD_INPUTS = {
-
     ############################
     # list geometry properties
     ############################
@@ -66,7 +65,6 @@ DEFAULT_PLASMOD_INPUTS = {
     "R0": 9.0,
     # [m3] constrained plasma volume (set zero to disable volume constraining)
     "V_in": 0,
-
     ############################
     # list numerics properties
     #############################
@@ -83,8 +81,7 @@ DEFAULT_PLASMOD_INPUTS = {
     # [-] max number of iteration
     "test": 10000,
     # [-] max iteration error between transport/equilibrium iterations
-    "tol": 1E-10,
-
+    "tol": 1e-10,
     ############################
     # list transport & confinement properties
     #############################
@@ -114,7 +111,6 @@ DEFAULT_PLASMOD_INPUTS = {
     "Teped_inp": 5.5,
     # [keV] electrons/ions temperature at separatrix
     "Tesep": 0.1,
-
     ############################
     # list composition properties
     #############################
@@ -122,7 +118,6 @@ DEFAULT_PLASMOD_INPUTS = {
     "cwol": 0.0,
     # [-] fuel mix D/T
     "fuelmix": 0.5,
-
     ############################
     # list control & transport settings
     #############################
@@ -165,11 +160,11 @@ DEFAULT_PLASMOD_INPUTS = {
     # [m*MA/MW] Normalized CD efficiency
     "nbcdeff": 0.3,
     # [MW] max allowed power for control (fusion power, H-mode)
-    "Pheat_max": 100.,
+    "Pheat_max": 100.0,
     # [MW] required fusion power.
     # 0. - ignored
     # > 0 - Auxiliary heating is calculated to match Pfus_req
-    "Pfus_req": 0.,
+    "Pfus_req": 0.0,
     # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
     # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
     "PsepBt_qAR_max": 9.2,
@@ -181,10 +176,10 @@ DEFAULT_PLASMOD_INPUTS = {
     # if Psep/R0 > Psep_R0_max seed Xenon
     "Psep_R0_max": 17.5,
     # [MW] fixed auxiliary heating power required for control
-    "q_control": 50.,
+    "q_control": 50.0,
     # [MW/m2] max divertor heat flux -->
     # if qdivt > qdivt_max -> seed argon
-    "qdivt_max": 10.,
+    "qdivt_max": 10.0,
     # [-]  normalized mean location of NBI power for
     # controlling loop voltage or f_ni
     "x_cd_nbi": 0.0,
@@ -197,14 +192,13 @@ DEFAULT_PLASMOD_INPUTS = {
     # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
     "x_heat_nbi": 0.0,
     # [V] target loop voltage (if lower than -1e-3, ignored)
-    "v_loop_in": -1.e-6
+    "v_loop_in": -1.0e-6,
 }
 
 #
 
 
 DEFAULT_PLASMOD_OUTPUTS = {
-
     ############################
     # list scalar outputs
     #############################
@@ -314,7 +308,6 @@ DEFAULT_PLASMOD_OUTPUTS = {
     "_Wth": [],
     # [-] plasma effective charge
     "_Zeff": [],
-
     ############################
     # list profiles
     #############################
@@ -455,7 +448,7 @@ class Outputs(PlasmodParameters):
 
 def write_input_file(params: Union[PlasmodParameters, dict], filename: str):
     """Write a set of PlasmodParameters into a file"""
-
+    print(filename)
     # open input file
     fid = open(filename, "w")
 
@@ -513,26 +506,28 @@ def read_output_files(output_file):
     return output
 
 
-class PlasmodSolver(ExternalCode):
+class PlasmodSolver(FileProgramInterface):
     """Plasmod solver class"""
 
     def __init__(
-            self,
-            runmode="BATCH",
-            input_params=None,
-            input_file="plasmod_input.dat",
-            output_file="outputs.dat",
-            profiles_file="profiles.dat",
+        self,
+        runmode="BATCH",
+        params=None,
+        input_file="plasmod_input.dat",
+        output_file="outputs.dat",
+        profiles_file="profiles.dat",
     ):
         # todo: add a path variable where files are stored
-        if input_params is None:
+        if params is None:
             self._parameters = Inputs()
-        elif isinstance(input_params, Inputs):
-            self._parameters = input_params
-        elif isinstance(input_params, Dict):
-            self._parameters = Inputs(**input_params)
+        elif isinstance(params, Inputs):
+            self._parameters = params
+        elif isinstance(params, Dict):
+            self._parameters = Inputs(**params)
         self._out_params = Outputs()
-        super().__init__(runmode, input_file, output_file, profiles_file)
+        super().__init__(
+            runmode, params, PLASMOD, input_file, output_file, profiles_file
+        )
 
     def get_ffprime(self):
         return self._out_params._ffprime
@@ -549,7 +544,7 @@ class PlasmodSolver(ExternalCode):
     def get_x(self):
         return self._out_params._x
 
-    class Setup(ExternalCode.Setup):
+    class Setup(FileProgramInterface.Setup):
         """Setup class for Plasmod"""
 
         def __init__(self, outer, input_file, output_file, profiles_file):
@@ -566,26 +561,31 @@ class PlasmodSolver(ExternalCode):
             """Mock setup function"""
             print(self.outer._parameters)
 
-    class Run(ExternalCode.Run):
+    class Run(FileProgramInterface.Run):
         def _batch(self, *args, **kwargs):
             print("run batch")
             write_input_file(self.outer._parameters, self.outer.setup_obj.input_file)
-            os.system(
-                f"{PLASMOD_PATH}/plasmod.o '{self.outer.setup_obj.input_file}' '"
-                f"{self.outer.setup_obj.output_file}' '"
-                f"{self.outer.setup_obj.profiles_file}'"
+            self.run_dir = "./"  # HACK FOR NOW
+            FileProgramInterface._run_subprocess(
+                self,
+                [
+                    f"{PLASMOD_PATH}/plasmod.o",
+                    f"{self.outer.setup_obj.input_file}",
+                    f"{self.outer.setup_obj.output_file}",
+                    f"{self.outer.setup_obj.profiles_file}",
+                ],
             )
 
         def _mock(self, *args, **kwargs):
             print("run mock")
             write_input_file(self.outer._parameters, self.outer.setup_obj.input_file)
             print(
-                f"{PLASMOD_PATH}/plasmod.o '{self.outer.setup_obj.input_file}' '"
-                f"{self.outer.setup_obj.output_file}' '"
-                f"{self.outer.setup_obj.profiles_file}'"
+                f"{PLASMOD_PATH}/plasmod.o {self.outer.setup_obj.input_file} "
+                f"{self.outer.setup_obj.output_file} "
+                f"{self.outer.setup_obj.profiles_file}"
             )
 
-    class Teardown(ExternalCode.Teardown):
+    class Teardown(FileProgramInterface.Teardown):
         def _batch(self, *args, **kwargs):
             output = read_output_files(self.outer.setup_obj.output_file)
             self.outer._out_params.modify(**output)
