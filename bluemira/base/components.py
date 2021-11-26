@@ -23,10 +23,12 @@
 Module containing the base Component class.
 """
 
+from __future__ import annotations
+
 import anytree
 from anytree import NodeMixin, RenderTree
 import copy
-from typing import Any, List, Optional, Type, Union
+from typing import Any, List, Optional, Union
 
 from bluemira.display.plotter import Plottable
 from bluemira.display.displayer import DisplayableCAD
@@ -58,24 +60,14 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def __init__(
         self,
         name: str,
-        parent: Optional["Component"] = None,
-        children: Optional[List["Component"]] = None,
+        parent: Optional[Component] = None,
+        children: Optional[List[Component]] = None,
     ):
         super().__init__()
         self.name = name
         self.parent = parent
         if children:
             self.children = children
-
-    def __new__(cls, *args, **kwargs) -> Type["Component"]:
-        """
-        Constructor for Component class.
-        """
-        if cls is Component:
-            raise ComponentError(
-                "Component cannot be initialised directly - use a subclass."
-            )
-        return super().__new__(cls)
 
     def __repr__(self) -> str:
         """
@@ -91,7 +83,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component(
         self, name: str, first: bool = True, full_tree: bool = False
-    ) -> Union["Component", List["Component"]]:
+    ) -> Union["Component", List[Component]]:
         """
         Find the components with the specified name.
 
@@ -139,12 +131,6 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             The copy of the Component
         """
         return copy.deepcopy(self)
-
-
-class GroupingComponent(Component):
-    """
-    A Component that groups other Components.
-    """
 
     def add_child(self, child: Component):
         """
@@ -262,7 +248,7 @@ class ComponentManager:
     _tree: Component
 
     def __init__(self, name: str):
-        self._tree = GroupingComponent(name)
+        self._tree = Component(name)
 
     @property
     def name(self) -> str:
@@ -304,7 +290,7 @@ class ComponentManager:
         component: Component
             The component to insert into the tree at the provided path.
         fill_tree: bool
-            If True then the tree will be filled with GroupingComponents for any missing
+            If True then the tree will be filled with Components for any missing
             nodes in the path. If False then a ComponentError will be raised if there
             are missing nodes in the path. By default True.
         """
@@ -321,7 +307,7 @@ class ComponentManager:
                         parent = self._tree.root
                     else:
                         parent = self.get_by_path("/".join(path[:idx]))
-                    tree = GroupingComponent(node, parent=parent)
+                    tree = Component(node, parent=parent)
                 else:
                     raise ComponentError(f"Component at path {'/'.join(path)} not found")
         component.parent = tree

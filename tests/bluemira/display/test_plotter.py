@@ -25,7 +25,7 @@ Tests for the plotter module.
 
 import numpy as np
 
-from bluemira.base.components import GroupingComponent, PhysicalComponent
+from bluemira.base.components import Component, PhysicalComponent
 import bluemira.geometry as geo
 
 from bluemira.display import plotter
@@ -162,7 +162,7 @@ class TestComponentPlotter:
         face1 = geo.face.BluemiraFace(wire1)
         face2 = geo.face.BluemiraFace(wire2)
 
-        self.group = GroupingComponent("Parent")
+        self.group = Component("Parent")
         self.child1 = PhysicalComponent("Child1", shape=face1, parent=self.group)
         self.child2 = PhysicalComponent("Child2", shape=face2, parent=self.group)
 
