@@ -29,6 +29,7 @@ from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_print, print_banner
 from bluemira.utilities.tools import get_class_from_module
 
 
@@ -46,6 +47,7 @@ class Design:
     _builders: Dict[str, Builder]
 
     def __init__(self, params, build_config):
+        print_banner()
         self._build_config = build_config
         self._extract_builders(params)
         self._params = Configuration.from_template(self._required_params)
@@ -68,6 +70,7 @@ class Design:
         component: Component
             The Component tree resulting from the various build stages in the Design.
         """
+        bluemira_print(f"Running Design: {self._params.Name.value}")
         component = Component(self._params.Name)
         for builder in self._builders.values():
             component.add_child(builder(self._params))

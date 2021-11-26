@@ -36,32 +36,28 @@ build_config = {
             "r_0": "R_0",
             "a": "A",
         },
-        "targets": {
-            "Plasma/xz/LCFS": "build_xz",
-            "Plasma/xy/LCFS": "build_xy",
-            "Plasma/xyz/LCFS": "build_xyz",
-        },
     },
 }
 params = {
+    "Name": "A Plasma Design",
     "R_0": (9.0, "Input"),
     "A": (3.5, "Input"),
 }
 design = Design(params, build_config)
-design.run()
+result = design.run()
 
 color = (0.80078431, 0.54, 0.80078431)
 for dims in ["xz", "xy"]:
-    component = design.component_manager.get_by_path(f"Plasma/{dims}/LCFS")
-    component.plot_options.face_options["color"] = color
-    component.plot_2d()
+    lcfs = result.get_component("Plasma").get_component(dims).get_component("LCFS")
+    lcfs.plot_options.face_options["color"] = color
+    lcfs.plot_2d()
 
-component = design.component_manager.get_by_path("Plasma/xyz/LCFS")
-component.display_cad_options.color = color
-component.display_cad_options.transparency = 0.2
-component.show_cad()
+lcfs = result.get_component("Plasma").get_component("xyz").get_component("LCFS")
+lcfs.display_cad_options.color = color
+lcfs.display_cad_options.transparency = 0.2
+lcfs.show_cad()
 
 plasma_builder: MakeParameterisedPlasma = design.get_builder("Plasma")
-plasma = plasma_builder.build_xyz(segment_angle=270.0)
-plasma.display_cad_options.color = color
-plasma.show_cad()
+lcfs = plasma_builder.build_xyz(segment_angle=270.0)
+lcfs.display_cad_options.color = color
+lcfs.show_cad()
