@@ -24,10 +24,12 @@ Built-in build steps for making a parameterised plasma
 """
 
 from typing import Any, Dict, List, Tuple, Type, Union
+from matplotlib.pyplot import show
 import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.display.displayer import show_cad
 import bluemira.geometry as geo
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
@@ -465,6 +467,9 @@ if __name__ == "__main__":
     f, ax = plt.subplots()
     for shape in xz_shapes:
         shape.plot_2d(ax=ax, show=False)
+
+    shapes = circular_pattern(xyz_shape.shape, n_shapes=16)
+    show_cad(shapes)
 
     # # Sorry for the script... I needed to check if this was working
     # from bluemira.geometry.parameterisations import PrincetonD
