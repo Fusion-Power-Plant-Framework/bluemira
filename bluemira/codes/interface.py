@@ -22,11 +22,12 @@
 """
 The bluemira external code wrapper
 """
-from enum import Enum, auto
 import subprocess
+from enum import Enum, auto
+
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.utilities import LogPipe, get_recv_mapping, get_send_mapping
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 
 __all__ = ["FileProgramInterface", "ApplicationProgramInterface"]
 

@@ -29,8 +29,8 @@ import subprocess
 import threading
 from typing import Dict, Literal
 
+from bluemira.base.look_and_feel import bluemira_error_flush, bluemira_print_flush
 from bluemira.codes import error as code_err
-from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_error_flush
 
 
 def _get_mapping(
@@ -137,7 +137,7 @@ class LogPipe(threading.Thread):
             loglevel
         ]
         self.fd_read, self.fd_write = os.pipe()
-        self.pipe = os.fdopen(self.fd_read)
+        self.pipe = os.fdopen(self.fd_read, encoding="utf-8", errors="ignore")
         self.start()
 
     def fileno(self):
