@@ -315,7 +315,11 @@ class TripleArc(GeometryParameterisation):
                     "x1", 4.486, lower_bound=4, upper_bound=5, descr="Inner limb radius"
                 ),
                 BoundedVariable(
-                    "z1", 0, lower_bound=-1, upper_bound=1, descr="Inboard limb height"
+                    "dz",
+                    0,
+                    lower_bound=-1,
+                    upper_bound=1,
+                    descr="Vertical offset from z=0",
                 ),
                 BoundedVariable(
                     "sl", 6.428, lower_bound=5, upper_bound=10, descr="Straight length"
@@ -360,7 +364,7 @@ class TripleArc(GeometryParameterisation):
                 x = list(x)
                 x.insert(i, x_fixed[i])
 
-        x1, z1, sl, f1, f2, a1, a2 = x
+        x1, dz, sl, f1, f2, a1, a2 = x
 
         constraint[0] = a1 + a2 - 180
 
@@ -388,9 +392,9 @@ class TripleArc(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        x1, z1, sl, f1, f2, a1, a2 = self.variables.values
+        x1, dz, sl, f1, f2, a1, a2 = self.variables.values
         a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
-        z0 = z1
+
         z1 = 0.5 * sl
         # Upper half
         p1 = [x1, 0, z1]
@@ -448,7 +452,7 @@ class TripleArc(GeometryParameterisation):
             wires.append(straight_segment)
 
         wire = BluemiraWire(wires, label=label)
-        wire.translate((0, 0, z0))
+        wire.translate((0, 0, dz))
         return wire
 
 
