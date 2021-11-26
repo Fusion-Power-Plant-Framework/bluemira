@@ -27,12 +27,13 @@ from bluemira.geometry.parameterisations import TripleArc, PrincetonD
 
 
 class TestOptimisationProblem(GeometryOptimisationProblem):
-    def __init__(self, parameterisation, optimiser):
+    def __init__(self, parameterisation, optimiser, constrain_shape=True):
         super().__init__(parameterisation, optimiser)
-        self.optimiser.add_ineq_constraints(
-            self.parameterisation.shape_ineq_constraints,
-            1e-9 * np.ones(self.parameterisation.n_ineq_constraints),
-        )
+        if constrain_shape:
+            self.optimiser.add_ineq_constraints(
+                self.parameterisation.shape_ineq_constraints,
+                1e-6 * np.ones(self.parameterisation.n_ineq_constraints),
+            )
 
     def calculate_length(self, x):
         self.update_parameterisation(x)
@@ -53,6 +54,48 @@ class TestGeometryOptimisationProblem:
     def setup_class(cls):
         parameterisation = TripleArc(
             {
+                "x1": {"value": 3.2, "lower_bound": 3.0, "fixed": False},
+                "dz": {"value": -0.5, "upper_bound": -0.3},
+            }
+        )
+        optimiser = Optimiser(
+            "SLSQP",
+            opt_conditions={
+                "max_eval": 1000,
+            },
+        )
+        problem = TestOptimisationProblem(
+            parameterisation, optimiser, constrain_shape=False
+        )
+
+        problem.solve()
+        cls.ref_length = parameterisation.create_shape().length
+
+    def test_dummy_constraint(self):
+        parameterisation = TripleArc(
+            {
+                "x1": {"value": 3.2, "lower_bound": 3.0, "fixed": False},
+                "dz": {"value": -0.5, "upper_bound": -0.3},
+            }
+        )
+        optimiser = Optimiser(
+            "SLSQP",
+            opt_conditions={
+                "max_eval": 1000,
+            },
+        )
+        problem = TestOptimisationProblem(parameterisation, optimiser)
+
+        assert problem.parameterisation.variables.n_free_variables == 7
+        assert problem.parameterisation.variables._fixed_variable_indices == []
+
+        problem.solve()
+        length = parameterisation.create_shape().length
+        assert np.isclose(length, self.ref_length)
+
+    def test_fixed_var(self):
+        parameterisation = TripleArc(
+            {
                 "x1": {"value": 3.2, "fixed": True},
                 "dz": {"value": -0.5, "upper_bound": -0.3},
             }
@@ -60,14 +103,12 @@ class TestGeometryOptimisationProblem:
         optimiser = Optimiser(
             "SLSQP",
             opt_conditions={
-                "max_eval": 100,
+                "max_eval": 1000,
             },
         )
-        cls.problem = TestOptimisationProblem(parameterisation, optimiser)
+        problem = TestOptimisationProblem(parameterisation, optimiser)
 
-    def test_setup(self):
-        assert self.problem.parameterisation.variables.n_free_variables == 6
-        assert self.problem.parameterisation.variables._fixed_variable_indices == [0]
+        assert problem.parameterisation.variables.n_free_variables == 6
+        assert problem.parameterisation.variables._fixed_variable_indices == [0]
 
-    def test_problem(self):
-        self.problem.solve()
+        problem.solve()

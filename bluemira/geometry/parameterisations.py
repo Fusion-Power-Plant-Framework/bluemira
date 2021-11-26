@@ -111,15 +111,43 @@ class GeometryParameterisation(abc.ABC):
         Inequality constraint function for the variable vector of the geometry
         parameterisation. This is used when internal consistency between different
         un-fixed variables is required.
-
-        If not overridden, this will return a mathematically useless constraint that
-        should not interfere with optimisers.
         """
-        constraint[0] = -1
+        if self.n_ineq_constraints < 1:
+            raise GeometryParameterisationError(
+                f"Cannot apply shape_ineq_constraints to {self.__class__.__name__}: it"
+                "has no inequality constraints."
+            )
 
-        if grad.size > 0:
-            grad[0, :] = np.zeros(len(x))
-        return constraint
+    def process_x_norm_fixed(self, x_norm):
+        """
+        Utility for processing a set of free, normalised variables, and folding the fixed
+        un-normalised variables back into a single list of all actual values.
+
+        Parameters
+        ----------
+        x_norm: np.ndarray
+            Normalised vector of variable values
+
+        Returns
+        -------
+        n_fixed: int
+            Number of fixed variables
+        fixed_idx: List[int]
+            List of fixed variable indices
+        x_actual: list
+            List of ordered actual (un-normalised) values
+        """
+        fixed_idx = self.variables._fixed_variable_indices
+        n_fixed = len(fixed_idx)
+
+        # Note that we are dealing with normalised values when coming from the optimiser
+        x_actual = list(self.variables.get_values_from_norm(x_norm))
+
+        if fixed_idx:
+            x_fixed = self.variables.values
+            for i in fixed_idx:
+                x_actual.insert(i, x_fixed[i])
+        return n_fixed, fixed_idx, x_actual
 
     def create_array(self, n_points=200, by_edges=True, d_l=None):
         """
@@ -352,26 +380,14 @@ class TripleArc(GeometryParameterisation):
         super().__init__(variables)
         self.n_ineq_constraints = 1
 
-    def shape_ineq_constraints(self, constraint, x, grad):
+    def shape_ineq_constraints(self, constraint, x_norm, grad):
         """
         Inequality constraint function for the variable vector of the geometry
         parameterisation.
         """
-        n_variables = len(x)
-        fixed_idx = self.variables._fixed_variable_indices
-        n_fixed = len(fixed_idx)
+        n_fixed, fixed_idx, x_actual = self.process_x_norm_fixed(x_norm)
 
-        if n_fixed == n_variables:
-            # You never know...
-            return super().shape_ineq_constraints(constraint, x, grad)
-
-        if fixed_idx:
-            x_fixed = self.variables.values
-            for i in fixed_idx:
-                x = list(x)
-                x.insert(i, x_fixed[i])
-
-        x1, dz, sl, f1, f2, a1, a2 = x
+        x1, dz, sl, f1, f2, a1, a2 = x_actual
 
         constraint[0] = a1 + a2 - 180
 
@@ -379,7 +395,7 @@ class TripleArc(GeometryParameterisation):
         idx_a2 = self.variables.names.index("a2") - n_fixed
 
         if grad.size > 0:
-            g = np.zeros(n_variables)
+            g = np.zeros(len(x_norm))
             if idx_a1 not in fixed_idx:
                 g[idx_a1] = 1
             if idx_a2 not in fixed_idx:
