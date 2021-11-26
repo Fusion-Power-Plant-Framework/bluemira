@@ -139,15 +139,10 @@ class GeometryParameterisation(abc.ABC):
 
         Returns
         -------
-        n_fixed: int
-            Number of fixed variables
-        fixed_idx: List[int]
-            List of fixed variable indices
         x_actual: list
             List of ordered actual (un-normalised) values
         """
         fixed_idx = self.variables._fixed_variable_indices
-        n_fixed = len(fixed_idx)
 
         # Note that we are dealing with normalised values when coming from the optimiser
         x_actual = list(self.variables.get_values_from_norm(x_norm))
@@ -156,7 +151,7 @@ class GeometryParameterisation(abc.ABC):
             x_fixed = self.variables.values
             for i in fixed_idx:
                 x_actual.insert(i, x_fixed[i])
-        return n_fixed, fixed_idx, x_actual
+        return x_actual
 
     def _get_x_norm_index(self, name: str):
         """
@@ -309,7 +304,7 @@ class PrincetonD(GeometryParameterisation):
         grad: np.ndarray
             Gradient matrix of the constraint (assign in place)
         """
-        n_fixed, fixed_idx, x_actual = self._process_x_norm_fixed(x_norm)
+        x_actual = self._process_x_norm_fixed(x_norm)
 
         x1, x2, _ = x_actual
 
@@ -463,20 +458,20 @@ class TripleArc(GeometryParameterisation):
         grad: np.ndarray
             Gradient matrix of the constraint (assign in place)
         """
-        n_fixed, fixed_idx, x_actual = self._process_x_norm_fixed(x_norm)
+        x_actual = self._process_x_norm_fixed(x_norm)
 
         _, _, _, _, _, a1, a2 = x_actual
 
         constraint[0] = a1 + a2 - 180
 
-        idx_a1 = self.variables.names.index("a1") - n_fixed
-        idx_a2 = self.variables.names.index("a2") - n_fixed
+        idx_a1 = self._get_x_norm_index("a1")
+        idx_a2 = self._get_x_norm_index("a2")
 
         if grad.size > 0:
             g = np.zeros(len(x_norm))
-            if idx_a1 not in fixed_idx:
+            if not self.variables["a1"].fixed:
                 g[idx_a1] = 1
-            if idx_a2 not in fixed_idx:
+            if not self.variables["a2"].fixed:
                 g[idx_a2] = 1
             grad[0, :] = g
 
