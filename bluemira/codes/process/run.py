@@ -34,13 +34,13 @@ from typing import Dict, List, Optional
 import bluemira.base as bm_base
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
+from bluemira.codes.interface import FileProgramInterface
 from bluemira.codes.process.api import DEFAULT_INDAT, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.setup import PROCESSInputWriter
 from bluemira.codes.process.teardown import BMFile
 from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
 from bluemira.equilibria.physics import normalise_beta
-from bluemira.codes.interface import FileProgramInterface
 
 
 class RunMode(Enum):
