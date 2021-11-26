@@ -25,6 +25,7 @@ Geometry parameterisations
 
 import abc
 import numpy as np
+from copy import deepcopy
 from scipy.special import iv as bessel
 
 from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
@@ -303,7 +304,7 @@ class TripleArc(GeometryParameterisation):
                     "z1", 0, lower_bound=-1, upper_bound=1, descr="Inboard limb height"
                 ),
                 BoundedVariable(
-                    "sl", 6.428, lower_bound=5, upper_bound=10, descr="Straight length"
+                    "sl", 6.428, lower_bound=3, upper_bound=10, descr="Straight length"
                 ),
                 BoundedVariable(
                     "f1", 3, lower_bound=2, upper_bound=12, descr="rs == f1*z small"
@@ -331,6 +332,27 @@ class TripleArc(GeometryParameterisation):
         variables.adjust_variables(var_dict)
         super().__init__(variables)
 
+    def shape_constraints(self, constraint, x, grad):
+        n_variables = len(x)
+        fixed_idx = self.variables._fixed_variable_indices
+
+        if fixed_idx:
+            x_fixed = self.variables.values
+            for i in fixed_idx:
+                x = list(x)
+                x.insert(i, x_fixed[i])
+
+        x1, z1, sl, f1, f2, a1, a2 = x
+
+        constraint[0] = a1 + a2 - 180
+
+        if grad.size > 0:
+            g = np.zeros(n_variables)
+            g[:-2] = 1
+            grad[0, :] = g
+
+        return constraint
+
     def create_shape(self, label=""):
         """
         Make a CAD representation of the triple arc.
@@ -348,7 +370,7 @@ class TripleArc(GeometryParameterisation):
         x1, z1, sl, f1, f2, a1, a2 = self.variables.values
         a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
         z0 = z1
-        z1 = z1 + sl
+        z1 = 0.5 * sl
         # Upper half
         p1 = [x1, 0, z1]
         atot = a1 + a2
@@ -367,7 +389,7 @@ class TripleArc(GeometryParameterisation):
             0,
             p2[2] + f2 * (np.sin(atot) - np.sin(a1)),
         ]
-        rl = (p3[2] - z0) / np.sin(np.pi - atot)
+        rl = p3[2] / np.sin(np.pi - atot)
 
         a35 = 0.5 * atot
         p35 = [
@@ -404,7 +426,9 @@ class TripleArc(GeometryParameterisation):
             )
             wires.append(straight_segment)
 
-        return BluemiraWire(wires, label=label)
+        wire = BluemiraWire(wires, label=label)
+        wire.translate((0, 0, z0))
+        return wire
 
 
 class SextupleArc(GeometryParameterisation):
