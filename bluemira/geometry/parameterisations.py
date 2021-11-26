@@ -127,7 +127,7 @@ class GeometryParameterisation(abc.ABC):
                 "has no inequality constraints."
             )
 
-    def process_x_norm_fixed(self, x_norm):
+    def _process_x_norm_fixed(self, x_norm):
         """
         Utility for processing a set of free, normalised variables, and folding the fixed
         un-normalised variables back into a single list of all actual values.
@@ -157,6 +157,32 @@ class GeometryParameterisation(abc.ABC):
             for i in fixed_idx:
                 x_actual.insert(i, x_fixed[i])
         return n_fixed, fixed_idx, x_actual
+
+    def _get_x_norm_index(self, name: str):
+        """
+        Get the index of a variable name in the modified-length x_norm vector
+
+        Parameters
+        ----------
+        name: str
+            Variable name for which to get the index
+
+        Returns
+        -------
+        idx_x_norm: int
+            Index of the variable name in the modified-length x_norm vector
+        """
+        fixed_idx = self.variables._fixed_variable_indices
+        idx_actual = self.variables.names.index(name)
+
+        if not fixed_idx:
+            return idx_actual
+
+        count = 0
+        for idx_fx in fixed_idx:
+            if idx_actual > idx_fx:
+                count += 1
+        return idx_actual - count
 
     def create_array(self, n_points=200, by_edges=True, d_l=None):
         """
@@ -236,6 +262,7 @@ class PrincetonD(GeometryParameterisation):
         variables.adjust_variables(var_dict)
 
         super().__init__(variables)
+        self.n_ineq_constraints = 1
 
     def create_shape(self, label="", n_points=2000):
         """
@@ -267,6 +294,39 @@ class PrincetonD(GeometryParameterisation):
         # TODO: Enforce tangency of this bspline... causing issues with offsetting
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
+
+    def shape_ineq_constraints(self, constraint, x_norm, grad):
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation.
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Contraint vector (assign in place)
+        x: np.ndarray
+            Normalised vector of free variables
+        grad: np.ndarray
+            Gradient matrix of the constraint (assign in place)
+        """
+        n_fixed, fixed_idx, x_actual = self._process_x_norm_fixed(x_norm)
+
+        x1, x2, _ = x_actual
+
+        constraint[0] = x1 - x2
+
+        idx_x1 = self._get_x_norm_index("x1")
+        idx_x2 = self._get_x_norm_index("x2")
+
+        if grad.size > 0:
+            g = np.zeros(len(x_norm))
+            if not self.variables["x1"].fixed:
+                g[idx_x1] = 1
+            if not self.variables["x2"].fixed:
+                g[idx_x2] = -1
+            grad[0, :] = g
+
+        return constraint
 
     @staticmethod
     def _princeton_d(x1, x2, dz, npoints=2000):
@@ -403,7 +463,7 @@ class TripleArc(GeometryParameterisation):
         grad: np.ndarray
             Gradient matrix of the constraint (assign in place)
         """
-        n_fixed, fixed_idx, x_actual = self.process_x_norm_fixed(x_norm)
+        n_fixed, fixed_idx, x_actual = self._process_x_norm_fixed(x_norm)
 
         _, _, _, _, _, a1, a2 = x_actual
 
