@@ -61,7 +61,7 @@ class GeometryParameterisation(abc.ABC):
     variables with initial values, and override the create_shape method.
     """
 
-    __slots__ = ("name", "variables")
+    __slots__ = ("name", "variables", "n_ineq_constraints")
 
     def __init__(self, variables):
         """
@@ -72,6 +72,7 @@ class GeometryParameterisation(abc.ABC):
         """
         self.name = self.__class__.__name__
         self.variables = variables
+        self.n_ineq_constraints = 0
         super().__init__()
 
     def adjust_variable(self, name, value=None, lower_bound=None, upper_bound=None):
@@ -349,6 +350,7 @@ class TripleArc(GeometryParameterisation):
         )
         variables.adjust_variables(var_dict)
         super().__init__(variables)
+        self.n_ineq_constraints = 1
 
     def shape_ineq_constraints(self, constraint, x, grad):
         """
@@ -357,6 +359,11 @@ class TripleArc(GeometryParameterisation):
         """
         n_variables = len(x)
         fixed_idx = self.variables._fixed_variable_indices
+        n_fixed = len(fixed_idx)
+
+        if n_fixed == n_variables:
+            # You never know...
+            return super().shape_ineq_constraints(constraint, x, grad)
 
         if fixed_idx:
             x_fixed = self.variables.values
@@ -368,12 +375,15 @@ class TripleArc(GeometryParameterisation):
 
         constraint[0] = a1 + a2 - 180
 
+        idx_a1 = self.variables.names.index("a1") - n_fixed
+        idx_a2 = self.variables.names.index("a2") - n_fixed
+
         if grad.size > 0:
             g = np.zeros(n_variables)
-            if 6 not in fixed_idx:
-                g[6] = 1
-            if 7 not in fixed_idx:
-                g[7] = 1
+            if idx_a1 not in fixed_idx:
+                g[idx_a1] = 1
+            if idx_a2 not in fixed_idx:
+                g[idx_a2] = 1
             grad[0, :] = g
 
         return constraint

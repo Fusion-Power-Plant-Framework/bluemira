@@ -19,5 +19,55 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
 
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.utilities.optimiser import Optimiser
 from bluemira.geometry.parameterisations import TripleArc, PrincetonD
+
+
+class TestOptimisationProblem(GeometryOptimisationProblem):
+    def __init__(self, parameterisation, optimiser):
+        super().__init__(parameterisation, optimiser)
+        self.optimiser.add_ineq_constraints(
+            self.parameterisation.shape_ineq_constraints,
+            1e-9 * np.ones(self.parameterisation.n_ineq_constraints),
+        )
+
+    def calculate_length(self, x):
+        self.update_parameterisation(x)
+        return self.parameterisation.create_shape().length
+
+    def f_objective(self, x, grad):
+        value = self.calculate_length(x)
+
+        if grad.size > 0:
+            grad[:] = self.optimiser.approx_derivative(
+                self.calculate_length, x, f0=value
+            )
+        return value
+
+
+class TestGeometryOptimisationProblem:
+    @classmethod
+    def setup_class(cls):
+        parameterisation = TripleArc(
+            {
+                "x1": {"value": 3.2, "fixed": True},
+                "dz": {"value": -0.5, "upper_bound": -0.3},
+            }
+        )
+        optimiser = Optimiser(
+            "SLSQP",
+            opt_conditions={
+                "max_eval": 100,
+            },
+        )
+        cls.problem = TestOptimisationProblem(parameterisation, optimiser)
+
+    def test_setup(self):
+        assert self.problem.parameterisation.variables.n_free_variables == 6
+        assert self.problem.parameterisation.variables._fixed_variable_indices == [0]
+
+    def test_problem(self):
+        self.problem.solve()
