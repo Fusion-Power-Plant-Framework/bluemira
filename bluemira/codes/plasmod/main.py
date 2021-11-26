@@ -1,32 +1,36 @@
 # This is a sample Python script.
 
-from PlasmodSolver import Plasmod
 import os
 from io import StringIO
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-if __name__ == '__main__':
+from bluemira.codes.plasmod.plasmodapi import PlasmodSolver as Plasmod
 
-    input_file = 'DEMO_2017.inp'
-    output_file = 'DEMO_2017.out'
-    profile_file = 'DEMO_2017.prof'
+if __name__ == "__main__":
+
+    input_file = "DEMO_2017.inp"
+    output_file = "DEMO_2017.out"
+    profile_file = "DEMO_2017.prof"
 
     # path to plasmod executable (to be placed in a private repository)
-    plasmod_path = '../../../../plasmod_bluemira'
+    plasmod_path = "../../../../plasmod_bluemira"
 
     plasmodObj = Plasmod(
-        'name', 'plasmod_instance',
-        'R0',   8.973,
-        'tol',  1e-6)
+        params={"R0": 8.973, "tol": 1e-6},
+        input_file=input_file,
+        output_file=output_file,
+        profiles_file=profile_file,
+    )
 
-    plasmodObj.write_input_file(input_file)
+    # plasmodObj.write_input_file(input_file)
+    plasmodObj.run()
 
     # run command
-    #plasmodObj.run(plasmod_path, input_file, output_file, profile_file)
+    # plasmodObj.run(plasmod_path, input_file, output_file, profile_file)
 
     plasmodObj.read_output_files(output_file, profile_file)
-
 
     # display some scalars
     print("Plasma current [MA]:", plasmodObj.plasma_current())
@@ -41,14 +45,14 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     ax.plot(X, pprime)
 
-    ax.set(xlabel='X (-)', ylabel='pprime (Pa/Wb)')
+    ax.set(xlabel="X (-)", ylabel="pprime (Pa/Wb)")
     ax.grid()
     plt.show()
 
     fig, ax = plt.subplots()
     ax.plot(X, FFprime)
 
-    ax.set(xlabel='X (-)', ylabel='FFprime (T)')
+    ax.set(xlabel="X (-)", ylabel="FFprime (T)")
     ax.grid()
     plt.show()
 

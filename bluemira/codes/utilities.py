@@ -24,9 +24,13 @@ Utility functions for interacting with external codes
 """
 
 
+import os
+import subprocess
+import threading
 from typing import Dict, Literal
 
-from . import error as code_err
+from bluemira.codes import error as code_err
+from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_error_flush
 
 
 def _get_mapping(
@@ -114,3 +118,45 @@ def get_send_mapping(params, code_name, send_all=False):
         names (value) to use for sending.
     """
     return _get_mapping(params, code_name, "send", send_all)
+
+
+class LogPipe(threading.Thread):
+    def __init__(self, loglevel):
+        """
+        Setup the object with a loglevel and start a thread for logging
+
+        Parameters
+        ----------
+        loglevel: str
+            print or error flush printing
+
+        """
+        super().__init__(daemon=False)
+
+        self.logfunc = {"print": bluemira_print_flush, "error": bluemira_error_flush}[
+            loglevel
+        ]
+        self.fd_read, self.fd_write = os.pipe()
+        self.pipe = os.fdopen(self.fd_read)
+        self.start()
+
+    def fileno(self):
+        """
+        Return the write file descriptor of the pipe
+        """
+        return self.fdWrite
+
+    def run(self):
+        """
+        Run the thread and pipe it all into the logger.
+        """
+        for line in iter(self.pipe.readline, ""):
+            self.logfunc(line.strip("\n"))
+
+        self.pipe.close()
+
+    def close(self):
+        """
+        Close the write end of the pipe.
+        """
+        os.close(self.fd_write)

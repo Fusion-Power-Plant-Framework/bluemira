@@ -24,23 +24,25 @@ PROCESS teardown functions
 """
 import os
 import re
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import numpy as np
 from collections import namedtuple
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
 
 import bluemira.base as bm_base
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import is_num
-
+from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import (
     PROCESS_DICT,
-    update_obsolete_vars,
-    convert_unit_p_to_b,
     MFile,
+    convert_unit_p_to_b,
+    update_obsolete_vars,
 )
 from bluemira.codes.process.constants import NAME as PROCESS
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.utilities.tools import is_num
 
 
 class BMFile(MFile):

@@ -28,9 +28,8 @@ from __future__ import annotations
 from typing import Optional
 
 import bluemira.base as bm_base
-
-from bluemira.codes.error import CodesError
 from bluemira.codes import process
+from bluemira.codes.error import CodesError
 
 
 def run_systems_code(
