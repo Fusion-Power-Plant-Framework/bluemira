@@ -144,7 +144,7 @@ class LogPipe(threading.Thread):
         """
         Return the write file descriptor of the pipe
         """
-        return self.fdWrite
+        return self.fd_write
 
     def run(self):
         """

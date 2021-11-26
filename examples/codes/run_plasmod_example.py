@@ -27,10 +27,17 @@ import matplotlib.pyplot as plt
 
 plasmodapi.PLASMOD_PATH = "~/bwSyncShare/plasmod_bluemira"
 
-new_params = {"A": 3.1, "Bt": 5.3, "R0": 8.93, "q95": 3.23, "Pfus_req": 2000, "i_modeltype": 111}
+new_params = {
+    "A": 3.1,
+    "Bt": 5.3,
+    "R0": 8.93,
+    "q95": 3.23,
+    "Pfus_req": 2000,
+    "i_modeltype": 111,
+}
 
-plasmod_solver = plasmodapi.PlasmodSolver(input_params=new_params)
-plasmod_solver.set_runmode('BATCH')
+plasmod_solver = plasmodapi.PlasmodSolver(params=new_params)
+plasmod_solver.set_runmode("BATCH")
 plasmod_solver.run()
 
 ffprime = plasmod_solver.get_ffprime()
@@ -38,7 +45,7 @@ Te = plasmod_solver.get_te()
 x = plasmod_solver.get_x()
 fig, ax = plt.subplots()
 ax.plot(x, Te)
-ax.set(xlabel='x (-)', ylabel='T_e (keV)')
+ax.set(xlabel="x (-)", ylabel="T_e (keV)")
 ax.grid()
 plt.show()
 
