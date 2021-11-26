@@ -31,6 +31,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD, TripleArc
+from bluemira.equilibria.shapes import JohnerLCFS
 
 
 class TestSweep:
@@ -158,3 +159,23 @@ class TestRevolve:
         shape = revolve_shape(face, degree=360)
         assert np.isclose(shape.volume, 2 * np.pi)
         assert shape.is_valid()
+
+    def test_johner_semi(self):
+        wire = JohnerLCFS().create_shape()
+        face = BluemiraFace(wire)
+        shape = revolve_shape(wire, degree=180)
+        assert shape.is_valid()
+        true_volume = np.pi * face.center_of_mass[0] * face.area
+        shape = revolve_shape(face, degree=180)
+        assert shape.is_valid()
+        assert np.isclose(shape.volume, true_volume)
+
+    def test_johner_full(self):
+        wire = JohnerLCFS().create_shape()
+        face = BluemiraFace(wire)
+        shape = revolve_shape(wire, degree=360)
+        assert shape.is_valid()
+        true_volume = 2 * np.pi * face.center_of_mass[0] * face.area
+        shape = revolve_shape(face, degree=360)
+        assert shape.is_valid()
+        assert np.isclose(shape.volume, true_volume)
