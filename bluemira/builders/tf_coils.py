@@ -24,7 +24,6 @@ Built-in build steps for making a parameterised plasma
 """
 
 from typing import Any, Dict, List, Tuple, Type, Union
-from matplotlib.pyplot import show
 import numpy as np
 
 from bluemira.base.builder import Builder
@@ -40,6 +39,7 @@ from bluemira.utilities.tools import get_module
 from bluemira.builders.shapes import ParameterisedShapeBuilder
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
+from bluemira.geometry.tools import signed_distance_2D_polygon
 
 
 class TFWPOptimisationProblem(GeometryOptimisationProblem):
@@ -59,22 +59,51 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
 
     Notes
     -----
-    x_* = minimise: winding_pack_length
+    x^* = minimise: winding_pack_length
           subject to:
-              ripple|separatrix <= TF_ripple_limit
+              ripple|separatrix < TF_ripple_limit
+              SDF(wp_shape, keep_out_zone) \\prereq 0
 
     The geometry parameterisation is updated in place
     """
 
-    def __init__(self, parameterisation, optimiser, params, separatrix):
+    def __init__(
+        self,
+        parameterisation,
+        optimiser,
+        params,
+        separatrix,
+        keep_out_zone=None,
+        n_koz_points=100,
+    ):
         super().__init__(parameterisation, optimiser)
         self.params = params
         self.separatrix = separatrix
+        self.keep_out_zone = keep_out_zone
+
         self.ripple_points = self._make_ripple_points(separatrix)
         self.ripple_values = None
+
         self.optimiser.add_ineq_constraints(
             self.f_constrain_ripple, 1e-3 * np.ones(len(self.ripple_points[0]))
         )
+
+        self.optimiser.add_ineq_constraints(
+            parameterisation.shape_constraints, np.zeros(1)
+        )
+
+        if self.keep_out_zone:
+            self.n_koz_points = n_koz_points
+            self.koz_points = self._make_koz_points(keep_out_zone)
+
+            self.optimiser.add_ineq_constraints(
+                self.f_constrain_koz, 1e-3 * np.ones(n_koz_points)
+            )
+
+    def _make_koz_points(self, keep_out_zone):
+        return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200)[
+            :, [0, 2]
+        ]
 
     def _make_ripple_points(self, separatrix):
         points = separatrix.discretize(ndiscr=100).T
@@ -86,7 +115,9 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         Update the magnetostatic solver
         """
         super().update_parameterisation(x)
-        points = self.parameterisation.create_array(200)
+        wire = self.parameterisation.create_shape()
+        points = wire.discretize(byedges=True, dl=wire.length / 200).T
+
         self.cage = HelmholtzCage(
             BiotSavartFilament(points.T, radius=1, current=1), self.params.n_TF.value
         )
@@ -116,6 +147,24 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
                 self.calculate_ripple, x, constraint
             )
 
+        return constraint
+
+    def calculate_signed_distance(self, x):
+        self.update_cage(x)
+        shape = self.parameterisation.create_shape()
+        s = shape.discretize(ndiscr=self.n_koz_points)[:, [0, 2]]
+        return signed_distance_2D_polygon(s, self.koz_points)
+
+    def f_constrain_koz(self, constraint, x, grad):
+        """
+        Geometry constraint function
+        """
+        constraint[:] = self.calculate_signed_distance(x)
+
+        if grad.size > 0:
+            grad[:] = self.optimiser.approx_derivative(
+                self.calculate_signed_distance, x, constraint
+            )
         return constraint
 
     def calculate_length(self, x):
@@ -163,7 +212,20 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
             show=False,
             wire_options={"color": "red", "linewidth": "0.5"},
         )
-        plot_2d(self.parameterisation.create_shape(), ax=ax, show=False)
+        plot_2d(
+            self.parameterisation.create_shape(),
+            ax=ax,
+            show=False,
+            wire_options={"color": "blue", "linewidth": 1.0},
+        )
+
+        if self.keep_out_zone:
+            plot_2d(
+                self.keep_out_zone,
+                ax=ax,
+                show=False,
+                wire_options={"color": "k", "linewidth": 0.5},
+            )
 
         # Yet again... CCW default one of the main motivations of Loop
         xpl, zpl = self.ripple_points[0, :][::-1], self.ripple_points[2, :][::-1]
@@ -184,7 +246,8 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
             headlength=0,
             width=0.02,
         )
-        return sm
+        color_bar = plt.gcf().colorbar(sm)
+        color_bar.ax.set_ylabel("Toroidal field ripple [%]")
 
 
 class MakeOptimisedTFWindingPack(ParameterisedShapeBuilder):
@@ -427,113 +490,237 @@ class ToroidalFieldSystem:
 
 
 if __name__ == "__main__":
-    from bluemira.geometry.parameterisations import PrincetonD, TripleArc
-    from bluemira.geometry.tools import make_polygon
 
-    x_wp_centroid = 4.0
-    dx_wp = 0.5
-    dy_wp = 0.6
-    tk_ins = 0.3
-    # Offset wire is sadly very unstable...
-    wp_centreline = TripleArc({"x1": {"value": x_wp_centroid}}).create_shape()
+    from bluemira.geometry.parameterisations import PrincetonD, TripleArc, PolySpline
+    from bluemira.equilibria.shapes import JohnerLCFS
+    from bluemira.base.parameter import ParameterFrame
+
+    x_tf_wp_center = 3.2
+    parameterisation = PrincetonD(
+        {
+            "x1": {"value": x_tf_wp_center, "fixed": True},
+            "x2": {"lower_bound": 10, "value": 14, "upper_bound": 18},
+            "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5, "fixed": True},
+        }
+    )
+
+    parameterisation = TripleArc(
+        {
+            "x1": {"value": x_tf_wp_center, "fixed": True},
+            "z1": {"value": -2, "lower_bound": -2, "fixed": True},
+        }
+    )
+
+    # parameterisation = PolySpline(
+    #     {
+    #         "x1": {
+    #             "value": x_tf_wp_center,
+    #             "lower_bound": 3.999,
+    #             "upper_bound": 4.001,
+    #             "fixed": True,
+    #         },
+    #         "x2": {"value": 16, "lower_bound": 13, "upper_bound": 20},
+    #         "z2": {"value": 0, "lower_bound": -0.9, "upper_bound": 0.9},
+    #         "height": {"value": 18, "lower_bound": 10, "upper_bound": 20},
+    #         "top": {"value": 0.5, "lower_bound": 0.05, "upper_bound": 1},
+    #         "upper": {"value": 0.7, "lower_bound": 0.2, "upper_bound": 1},
+    #         "tilt": {"value": 0, "fixed": True},
+    #         "flat": {"value": 0, "fixed": True},
+    #         # "f1": {"value": 4, "lower_bound": 4},
+    #         # "f2": {"value": 4, "lower_bound": 4},
+    #     }
+    # )
+
+    optimiser = Optimiser(
+        "SLSQP",
+        opt_conditions={
+            "ftol_rel": 1e-3,
+            "xtol_rel": 1e-12,
+            "xtol_abs": 1e-12,
+            "max_eval": 1000,
+        },
+    )
+
+    # I just don't know where to get these any more
+    params = ParameterFrame(
+        [
+            ["R_0", "Major radius", 9, "m", None, "Input", None],
+            ["z_0", "Vertical height at major radius", 0, "m", None, "Input", None],
+            ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
+            ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
+            ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
+        ]
+    )
+
+    separatrix = JohnerLCFS(
+        {
+            "r_0": {"value": 9},
+            "z_0": {"value": 0},
+            "a": {"value": 9 / 3.1},
+            "kappa_u": {"value": 1.65},
+            "kappa_l": {"value": 1.8},
+        }
+    ).create_shape()
+
+    from bluemira.geometry.tools import offset_wire
+
+    koz = offset_wire(separatrix, 2.0, join="arc")
+
+    problem = TFWPOptimisationProblem(
+        parameterisation, optimiser, params, separatrix, koz
+    )
+    problem.solve()
+
+    centreline = parameterisation.create_shape()
+    x_c = 4
+    d_xc = 0.25
+    d_yc = 0.6
     wp_xs = make_polygon(
         [
-            [x_wp_centroid - dx_wp, -dy_wp, 0],
-            [x_wp_centroid + dx_wp, -dy_wp, 0],
-            [x_wp_centroid + dx_wp, dy_wp, 0],
-            [x_wp_centroid - dx_wp, dy_wp, 0],
+            [x_c - d_xc, -d_yc, 0],
+            [x_c + d_xc, -d_yc, 0],
+            [x_c + d_xc, d_yc, 0],
+            [x_c - d_xc, d_yc, 0],
         ],
         closed=True,
     )
 
-    builder = BuildTFWindingPack(wp_centreline, wp_xs)
+    from bluemira.geometry.tools import sweep_shape, circular_pattern, revolve_shape
+    from bluemira.display import show_cad
+    from bluemira.geometry.parameterisations import PictureFrame
+    from bluemira.geometry.face import BluemiraFace
+    from bluemira.display.displayer import DisplayCADOptions
 
-    outer = offset_wire(wp_centreline, -dx_wp)
-    inner = offset_wire(wp_centreline, dx_wp)
-    xz_shape = builder.build_xz()
-    xyz_shape = builder.build_xyz()
-    xz_shape.plot_2d()
-    xyz_shape.show_cad()
+    tf_wp = sweep_shape(wp_xs, centreline)
+    shapes = circular_pattern(tf_wp, n_shapes=16)
+    options = 16 * [DisplayCADOptions(color=(0.2, 0.3, 0.4))]
+    plasma = revolve_shape(BluemiraFace(separatrix), degree=360)
+    shapes.append(plasma)
+    options.append(DisplayCADOptions(color=(1.0, 0.2, 0.5), transparency=0.5))
 
-    builder = BuildTFInsulation(xyz_shape, wp_centreline, wp_xs, tk_ins)
-    xz_ins_shape = builder.build_xz()
+    pf1 = PictureFrame(
+        {
+            "x1": {"value": 6, "lower_bound": 6, "upper_bound": 6},
+            "x2": {"value": 7, "lower_bound": 7, "upper_bound": 7},
+            "z1": {"value": -6, "lower_bound": -6, "upper_bound": -6},
+            "z2": {"value": -7, "lower_bound": -7, "upper_bound": -7},
+            "ri": {"value": 0.0, "lower_bound": 0.0},
+            "ro": {"value": 0.0, "lower_bound": 0.0},
+        }
+    ).create_shape()
+    pf1 = BluemiraFace(pf1)
+    pf1 = revolve_shape(pf1, degree=359)
+    shapes.append(pf1)
+    options.append(DisplayCADOptions(color=(0.2, 0.2, 0.6)))
 
-    xz_shapes = [xz_shape]
+    show_cad(shapes, options)
+    # from bluemira.geometry.parameterisations import PrincetonD, TripleArc
+    # from bluemira.geometry.tools import make_polygon
 
-    xz_shapes.extend(xz_ins_shape)
-
-    import matplotlib.pyplot as plt
-
-    f, ax = plt.subplots()
-    for shape in xz_shapes:
-        shape.plot_2d(ax=ax, show=False)
-
-    shapes = circular_pattern(xyz_shape.shape, n_shapes=16)
-    show_cad(shapes)
-
-    # # Sorry for the script... I needed to check if this was working
-    # from bluemira.geometry.parameterisations import PrincetonD
-    # from bluemira.equilibria.shapes import JohnerLCFS
-    # from bluemira.base.parameter import ParameterFrame
-
-    # parameterisation = PrincetonD(
-    #     {
-    #         "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
-    #         "x2": {"lower_bound": 10, "value": 14, "upper_bound": 18},
-    #         "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5},
-    #     }
-    # )
-    # parameterisation.fix_variable("x1", 4)
-    # parameterisation.fix_variable("dz", 0)
-    # optimiser = Optimiser(
-    #     "SLSQP",
-    #     opt_conditions={
-    #         "ftol_rel": 1e-3,
-    #         "xtol_rel": 1e-12,
-    #         "xtol_abs": 1e-12,
-    #         "max_eval": 1000,
-    #     },
-    # )
-
-    # # I just don't know where to get these any more
-    # params = ParameterFrame(
+    # x_wp_centroid = 4.0
+    # dx_wp = 0.5
+    # dy_wp = 0.6
+    # tk_ins = 0.3
+    # # Offset wire is sadly very unstable...
+    # wp_centreline = TripleArc({"x1": {"value": x_wp_centroid}}).create_shape()
+    # wp_xs = make_polygon(
     #     [
-    #         ["R_0", "Major radius", 9, "m", None, "Input", None],
-    #         ["z_0", "Vertical height at major radius", 0, "m", None, "Input", None],
-    #         ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
-    #         ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
-    #         ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
-    #     ]
+    #         [x_wp_centroid - dx_wp, -dy_wp, 0],
+    #         [x_wp_centroid + dx_wp, -dy_wp, 0],
+    #         [x_wp_centroid + dx_wp, dy_wp, 0],
+    #         [x_wp_centroid - dx_wp, dy_wp, 0],
+    #     ],
+    #     closed=True,
     # )
 
-    # separatrix = JohnerLCFS(
-    #     {
-    #         "r_0": {"value": 9},
-    #         "z_0": {"value": 0},
-    #         "a": {"value": 9 / 3.1},
-    #         "kappa_u": {"value": 1.65},
-    #         "kappa_l": {"value": 1.8},
-    #     }
-    # ).create_shape()
+    # builder = BuildTFWindingPack(wp_centreline, wp_xs)
 
-    # # Need to pass around lots of information between different parts of the build
-    # # procedure.
-    # # This is just the bare minimum TF optimisation, we don't have much in the way of
-    # # configuration yet, and we're missing geometry constraints from some arbitrary keep
-    # # out zone. Also the KOZ constraint should be enforced on the plasma-facing casing
-    # # geometry, which needs to be built off the winding pack. Gonna get messy again :D
+    # outer = offset_wire(wp_centreline, -dx_wp)
+    # inner = offset_wire(wp_centreline, dx_wp)
+    # xz_shape = builder.build_xz()
+    # xyz_shape = builder.build_xyz()
+    # xz_shape.plot_2d()
+    # xyz_shape.show_cad()
 
-    # # Starting to worry we're making things too configurable:
-    # #   - what about different magnetostatics solvers
-    # #   - different discretisations if we use BiotSavart
-    # #   - different separatrix shapes need to be checked at different areas for peak
-    # #     ripple..
+    # builder = BuildTFInsulation(xyz_shape, wp_centreline, wp_xs, tk_ins)
+    # xz_ins_shape = builder.build_xz()
 
-    # # Keeping ultra-configurable classes is going to slow us down.
-    # # Might be simpler just to have a SystemBuilder that people subclass or write
-    # # replacements for, I don't know.
+    # xz_shapes = [xz_shape]
 
-    # # I fear the full build config just for the TF coil WP design optimisation will be
-    # # absolutely massive.
-    # problem = TFWPOptimisationProblem(parameterisation, optimiser, params, separatrix)
-    # problem.solve()
+    # xz_shapes.extend(xz_ins_shape)
+
+    # import matplotlib.pyplot as plt
+
+    # f, ax = plt.subplots()
+    # for shape in xz_shapes:
+    #     shape.plot_2d(ax=ax, show=False)
+
+    # shapes = circular_pattern(xyz_shape.shape, n_shapes=16)
+    # show_cad(shapes)
+
+    # # # Sorry for the script... I needed to check if this was working
+    # # from bluemira.geometry.parameterisations import PrincetonD
+    # # from bluemira.equilibria.shapes import JohnerLCFS
+    # # from bluemira.base.parameter import ParameterFrame
+
+    # # parameterisation = PrincetonD(
+    # #     {
+    # #         "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
+    # #         "x2": {"lower_bound": 10, "value": 14, "upper_bound": 18},
+    # #         "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5},
+    # #     }
+    # # )
+    # # parameterisation.fix_variable("x1", 4)
+    # # parameterisation.fix_variable("dz", 0)
+    # # optimiser = Optimiser(
+    # #     "SLSQP",
+    # #     opt_conditions={
+    # #         "ftol_rel": 1e-3,
+    # #         "xtol_rel": 1e-12,
+    # #         "xtol_abs": 1e-12,
+    # #         "max_eval": 1000,
+    # #     },
+    # # )
+
+    # # # I just don't know where to get these any more
+    # # params = ParameterFrame(
+    # #     [
+    # #         ["R_0", "Major radius", 9, "m", None, "Input", None],
+    # #         ["z_0", "Vertical height at major radius", 0, "m", None, "Input", None],
+    # #         ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
+    # #         ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
+    # #         ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
+    # #     ]
+    # # )
+
+    # # separatrix = JohnerLCFS(
+    # #     {
+    # #         "r_0": {"value": 9},
+    # #         "z_0": {"value": 0},
+    # #         "a": {"value": 9 / 3.1},
+    # #         "kappa_u": {"value": 1.65},
+    # #         "kappa_l": {"value": 1.8},
+    # #     }
+    # # ).create_shape()
+
+    # # # Need to pass around lots of information between different parts of the build
+    # # # procedure.
+    # # # This is just the bare minimum TF optimisation, we don't have much in the way of
+    # # # configuration yet, and we're missing geometry constraints from some arbitrary keep
+    # # # out zone. Also the KOZ constraint should be enforced on the plasma-facing casing
+    # # # geometry, which needs to be built off the winding pack. Gonna get messy again :D
+
+    # # # Starting to worry we're making things too configurable:
+    # # #   - what about different magnetostatics solvers
+    # # #   - different discretisations if we use BiotSavart
+    # # #   - different separatrix shapes need to be checked at different areas for peak
+    # # #     ripple..
+
+    # # # Keeping ultra-configurable classes is going to slow us down.
+    # # # Might be simpler just to have a SystemBuilder that people subclass or write
+    # # # replacements for, I don't know.
+
+    # # # I fear the full build config just for the TF coil WP design optimisation will be
+    # # # absolutely massive.
+    # # problem = TFWPOptimisationProblem(parameterisation, optimiser, params, separatrix)
+    # # problem.solve()
