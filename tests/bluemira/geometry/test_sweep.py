@@ -26,8 +26,10 @@ from bluemira.geometry.error import FreeCADError
 from bluemira.geometry.tools import (
     make_polygon,
     make_circle,
+    revolve_shape,
     sweep_shape,
 )
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 
 
@@ -130,3 +132,29 @@ class TestSweep:
         sweep = sweep_shape(profile, path, solid=False)
 
         assert sweep.is_valid()
+
+
+class TestRevolve:
+    def test_semi_circle(self):
+        wire = make_polygon(
+            [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
+        )
+        shape = revolve_shape(wire, degree=180)
+        assert np.isclose(shape.area, 4 * np.pi)
+        assert shape.is_valid()
+        face = BluemiraFace(wire)
+        shape = revolve_shape(face, degree=180)
+        assert np.isclose(shape.volume, np.pi)
+        assert shape.is_valid()
+
+    def test_circle(self):
+        wire = make_polygon(
+            [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
+        )
+        shape = revolve_shape(wire, degree=360)
+        assert np.isclose(shape.area, 8 * np.pi)
+        assert shape.is_valid()
+        face = BluemiraFace(wire)
+        shape = revolve_shape(face, degree=360)
+        assert np.isclose(shape.volume, 2 * np.pi)
+        assert shape.is_valid()

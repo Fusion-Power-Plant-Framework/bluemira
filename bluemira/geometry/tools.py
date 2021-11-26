@@ -22,24 +22,21 @@
 """
 Useful functions for bluemira geometries.
 """
-# import from freecadapi
+
+import numpy as np
+import numba as nb
+from copy import deepcopy
+from typing import Union, Iterable
+
+
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.base import BluemiraGeo
-
 from . import _freecadapi as cadapi
-
-# import bluemira geometries
 from .wire import BluemiraWire
 from .face import BluemiraFace
 from .shell import BluemiraShell
 from .solid import BluemiraSolid
 from .error import GeometryError
-
-# import mathematical modules
-import numpy as np
-import numba as nb
-
-# import typing
-from typing import Union, Iterable
 
 
 def convert(apiobj, label=""):
@@ -325,9 +322,32 @@ def revolve_shape(
 
     Returns
     -------
-    shape: BluemiraSolid
+    shape: Union[BluemiraShell, BluemiraSolid]
         the revolved shape.
     """
+    if degree > 360:
+        bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
+        degree = 360
+
+    if degree == 360:
+        # We split into two separate revolutions of 180 degree and fuse them
+        if isinstance(shape, BluemiraWire):
+            shape = BluemiraFace(shape)._shape
+            flag_shell = True
+        else:
+            shape = shape._shape
+            flag_shell = False
+
+        shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
+        shape_2 = deepcopy(shape_1)
+        shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=180)
+        result = cadapi.boolean_fuse([shape_1, shape_2])
+
+        if flag_shell:
+            result = result.Shells[0]
+
+        return convert(result, label)
+
     return convert(cadapi.revolve_shape(shape._shape, base, direction, degree), label)
 
 
