@@ -55,7 +55,7 @@ class RunMode(Enum):
         """
         Call function of object with lowercase name of
         enum
-
+        
         Parameters
         ----------
         obj: instance
@@ -197,7 +197,6 @@ class Teardown(Task):
         """
         TODO?
         """
-        pass
 
 
 class FileProgramInterface:

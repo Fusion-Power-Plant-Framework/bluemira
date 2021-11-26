@@ -553,3 +553,4 @@ def user_banner():
         f"User       : {getuser()}",
         f"Platform   : {get_platform()}",
     ]
+
