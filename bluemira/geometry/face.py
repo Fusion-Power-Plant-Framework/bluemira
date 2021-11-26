@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import List
 
 # import from bluemira
-from bluemira.geometry.base import _Orientation, BluemiraGeo
+from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.wire import BluemiraWire
 import bluemira.geometry._freecadapi as cadapi
 
