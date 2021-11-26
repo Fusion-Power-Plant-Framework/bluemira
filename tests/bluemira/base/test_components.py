@@ -22,7 +22,6 @@
 import pytest
 
 from bluemira.base.components import (
-    ComponentManager,
     Component,
     PhysicalComponent,
     MagneticComponent,
@@ -175,60 +174,6 @@ class TestMagneticComponent:
     def test_conductor(self):
         component = MagneticComponent("Dummy", shape="A shape", conductor="A conductor")
         assert component.conductor == "A conductor"
-
-
-class TestComponentManager:
-    """
-    Tests for the ComponentManager class.
-    """
-
-    def test_set_name(self):
-        name = "Test"
-        manager = ComponentManager(name)
-        assert manager.name == name
-
-    def test_insert_get_path_fresh_tree(self):
-        component_name = "Shape"
-        component = PhysicalComponent(component_name, "A Shape")
-        path = "TF Coils/xz"
-        name = "Test"
-        manager = ComponentManager(name)
-        manager.insert_at_path(path, component)
-        in_tree = manager.get_by_path("/".join([path, component_name]))
-        assert in_tree == component
-
-    def test_insert_get_path_existing_tree(self):
-        component_name = "Shape"
-        component = PhysicalComponent(component_name, "A Shape")
-        tf_coils = "TF Coils"
-        dims = "xz"
-        name = "Test"
-        manager = ComponentManager(name)
-        manager.insert_at_path("/", Component(tf_coils), fill_tree=False)
-        manager.insert_at_path(tf_coils, Component(dims), fill_tree=False)
-        manager.insert_at_path(f"{tf_coils}/{dims}", component, fill_tree=False)
-        in_tree = manager.get_by_path("/".join([tf_coils, dims, component_name]))
-        assert in_tree == component
-
-    def test_insert_get_path_missing_tree(self):
-        component_name = "Shape"
-        component = PhysicalComponent(component_name, "A Shape")
-        tf_coils = "TF Coils"
-        dims = "xz"
-        name = "Test"
-        manager = ComponentManager(name)
-        with pytest.raises(ComponentError, match=f"{tf_coils}"):
-            manager.insert_at_path(f"{tf_coils}/{dims}", component, fill_tree=False)
-
-    def test_insert_get_path_name_in_path(self):
-        component_name = "Shape"
-        component = PhysicalComponent(component_name, "A Shape")
-        path = "TF Coils/xz/Shape"
-        name = "Test"
-        manager = ComponentManager(name)
-        manager.insert_at_path(path, component)
-        in_tree = manager.get_by_path("/".join([path, component_name]))
-        assert in_tree == component
 
 
 if __name__ == "__main__":

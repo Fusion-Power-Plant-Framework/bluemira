@@ -30,7 +30,6 @@ from .components import (
     Component,
     PhysicalComponent,
     MagneticComponent,
-    ComponentManager,
 )
 from .design import Design
 from .parameter import *
