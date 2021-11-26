@@ -88,9 +88,9 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
             self.f_constrain_ripple, 1e-3 * np.ones(len(self.ripple_points[0]))
         )
 
-        self.optimiser.add_ineq_constraints(
-            parameterisation.shape_constraints, np.zeros(1)
-        )
+        # self.optimiser.add_ineq_constraints(
+        #     parameterisation.shape_constraints, np.zeros(1)
+        # )
 
         if self.keep_out_zone:
             self.n_koz_points = n_koz_points
@@ -107,8 +107,8 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
 
     def _make_ripple_points(self, separatrix):
         points = separatrix.discretize(ndiscr=100).T
-        idx = np.where(points[0] > self.params.R_0.value)[0]
-        return points[:, idx]
+        # idx = np.where(points[0] > self.params.R_0.value)[0]
+        return points  # [:, idx]
 
     def update_cage(self, x):
         """
@@ -507,7 +507,7 @@ if __name__ == "__main__":
     parameterisation = TripleArc(
         {
             "x1": {"value": x_tf_wp_center, "fixed": True},
-            "z1": {"value": -2, "lower_bound": -2, "fixed": True},
+            "z1": {"value": 0, "lower_bound": -2, "fixed": True},
         }
     )
 
