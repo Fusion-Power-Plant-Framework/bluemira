@@ -27,13 +27,8 @@ from bluemira.geometry.parameterisations import TripleArc, PrincetonD
 
 
 class TestOptimisationProblem(GeometryOptimisationProblem):
-    def __init__(self, parameterisation, optimiser, constrain_shape=True):
+    def __init__(self, parameterisation, optimiser):
         super().__init__(parameterisation, optimiser)
-        if constrain_shape:
-            self.optimiser.add_ineq_constraints(
-                self.parameterisation.shape_ineq_constraints,
-                1e-6 * np.ones(self.parameterisation.n_ineq_constraints),
-            )
 
     def calculate_length(self, x):
         self.update_parameterisation(x)
@@ -54,35 +49,45 @@ class TestGeometryOptimisationProblem:
     def setup_class(cls):
         parameterisation = TripleArc(
             {
-                "x1": {"value": 3.2, "lower_bound": 3.0, "fixed": False},
+                "x1": {
+                    "value": 3.2,
+                    "lower_bound": 3.0,
+                    "upper_bound": 3.2,
+                    "fixed": False,
+                },
                 "dz": {"value": -0.5, "upper_bound": -0.3},
             }
         )
+        cls.opt_conditions = {
+            "max_eval": 1000,
+            "ftol_rel": 1e-6,
+            "xtol_rel": 1e-12,
+            "xtol_abs": 1e-12,
+        }
         optimiser = Optimiser(
             "SLSQP",
-            opt_conditions={
-                "max_eval": 1000,
-            },
+            opt_conditions=cls.opt_conditions,
         )
-        problem = TestOptimisationProblem(
-            parameterisation, optimiser, constrain_shape=False
-        )
+        problem = TestOptimisationProblem(parameterisation, optimiser)
 
         problem.solve()
         cls.ref_length = parameterisation.create_shape().length
 
-    def test_dummy_constraint(self):
+    def test_repetition(self):
         parameterisation = TripleArc(
             {
-                "x1": {"value": 3.2, "lower_bound": 3.0, "fixed": False},
+                "x1": {
+                    "value": 3.2,
+                    "lower_bound": 3.0,
+                    "upper_bound": 3.2,
+                    "fixed": False,
+                },
                 "dz": {"value": -0.5, "upper_bound": -0.3},
             }
         )
         optimiser = Optimiser(
             "SLSQP",
-            opt_conditions={
-                "max_eval": 1000,
-            },
+            opt_conditions=self.opt_conditions,
         )
         problem = TestOptimisationProblem(parameterisation, optimiser)
 
@@ -96,15 +101,18 @@ class TestGeometryOptimisationProblem:
     def test_fixed_var(self):
         parameterisation = TripleArc(
             {
-                "x1": {"value": 3.2, "fixed": True},
+                "x1": {
+                    "value": 3.2,
+                    "lower_bound": 3.0,
+                    "upper_bound": 3.2,
+                    "fixed": True,
+                },
                 "dz": {"value": -0.5, "upper_bound": -0.3},
             }
         )
         optimiser = Optimiser(
             "SLSQP",
-            opt_conditions={
-                "max_eval": 1000,
-            },
+            opt_conditions=self.opt_conditions,
         )
         problem = TestOptimisationProblem(parameterisation, optimiser)
 
@@ -112,3 +120,31 @@ class TestGeometryOptimisationProblem:
         assert problem.parameterisation.variables._fixed_variable_indices == [0]
 
         problem.solve()
+        length = parameterisation.create_shape().length
+        assert np.isclose(length, self.ref_length)
+
+    def test_fixed_var_con(self):
+        parameterisation = TripleArc(
+            {
+                "x1": {
+                    "value": 3.2,
+                    "lower_bound": 3.0,
+                    "upper_bound": 3.2,
+                    "fixed": True,
+                },
+                "dz": {"value": -0.5, "upper_bound": -0.3},
+                "a1": {"value": 100, "fixed": True},
+            }
+        )
+        optimiser = Optimiser(
+            "SLSQP",
+            opt_conditions=self.opt_conditions,
+        )
+        problem = TestOptimisationProblem(parameterisation, optimiser)
+
+        assert problem.parameterisation.variables.n_free_variables == 5
+        assert problem.parameterisation.variables._fixed_variable_indices == [0, 5]
+
+        problem.solve()
+
+        assert problem.parameterisation.variables["a1"].value == 100

@@ -51,7 +51,7 @@ class GeometryOptimisationProblem(abc.ABC):
         self.optimiser.set_objective_function(self.f_objective)
 
         n_shape_ineq_cons = self.parameterisation.n_ineq_constraints
-        if n_shape_ineq_cons > 1:
+        if n_shape_ineq_cons > 0:
             self.optimiser.add_ineq_constraints(
                 self.parameterisation.shape_ineq_constraints, np.zeros(n_shape_ineq_cons)
             )

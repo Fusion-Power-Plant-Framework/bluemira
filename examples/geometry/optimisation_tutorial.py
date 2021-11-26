@@ -182,7 +182,7 @@ problem.solve()
 # tolerances)... but we don't!
 
 print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
-print(f"Length: {parameterisation_3.create_shape().length}")
+print(f"Length with SLSQP: {parameterisation_3.create_shape().length}")
 print(f"n_evals: {problem.optimiser.n_evals}")
 
 # This is because we're using numerical gradients and jacobians for our objective and
