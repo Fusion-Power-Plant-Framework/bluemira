@@ -111,6 +111,15 @@ class GeometryParameterisation(abc.ABC):
         Inequality constraint function for the variable vector of the geometry
         parameterisation. This is used when internal consistency between different
         un-fixed variables is required.
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Contraint vector (assign in place)
+        x: np.ndarray
+            Normalised vector of free variables
+        grad: np.ndarray
+            Gradient matrix of the constraint (assign in place)
         """
         if self.n_ineq_constraints < 1:
             raise GeometryParameterisationError(
@@ -384,10 +393,19 @@ class TripleArc(GeometryParameterisation):
         """
         Inequality constraint function for the variable vector of the geometry
         parameterisation.
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Contraint vector (assign in place)
+        x: np.ndarray
+            Normalised vector of free variables
+        grad: np.ndarray
+            Gradient matrix of the constraint (assign in place)
         """
         n_fixed, fixed_idx, x_actual = self.process_x_norm_fixed(x_norm)
 
-        x1, dz, sl, f1, f2, a1, a2 = x_actual
+        _, _, _, _, _, a1, a2 = x_actual
 
         constraint[0] = a1 + a2 - 180
 
