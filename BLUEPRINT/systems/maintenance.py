@@ -35,7 +35,7 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.constants import GRAVITY
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
@@ -69,7 +69,7 @@ class RMMetrics(ReactorSystem):
             self.normalise(self.ref)
 
     def get_AHPw(self):
-        surdir = get_BP_path("Data/RemoteMaintenance")
+        surdir = get_bluemira_path("Data/RemoteMaintenance")
         file = "RMTFI_Comparison_Rev_I.xlsx"
         fp = surdir + "/" + file
 
@@ -236,7 +236,7 @@ class RMMetrics(ReactorSystem):
 
 class RMDB:
     def __init__(self):
-        datadir = get_BP_path("Data/RemoteMaintenance")
+        datadir = get_bluemira_path("Data/RemoteMaintenance")
         file = "RMDBdata"
         self.filename = datadir + "/" + file + ".json"
         self.load_RMDB()
@@ -310,7 +310,7 @@ class BuildRMDB:
         return
 
     def write(self, fname):
-        datadir = get_BP_path("Data")
+        datadir = get_bluemira_path("Data")
         self.filename = datadir + "/" + fname + ".json"
         bluemira_print("Writing {0}".format(self.filename))
         self.RMDB.to_json(self.filename, orient="columns")

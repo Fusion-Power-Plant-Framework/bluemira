@@ -250,40 +250,6 @@ class PlotOptions(DisplayOptions):
         self._options["byedges"] = val
 
 
-def _bounding_box(x, y, z):
-    """
-    Calculates a bounding box for a set of 3-D coordinates
-
-    Parameters
-    ----------
-    x: np.array(N)
-        The x coordinates
-    y: np.array(N)
-        The y coordinates
-    z: np.array(N)
-        The z coordinates
-
-    Returns
-    -------
-    x_b: np.array(8)
-        The x coordinates of the bounding box rectangular cuboid
-    y_b: np.array(8)
-        The y coordinates of the bounding box rectangular cuboid
-    z_b: np.array(8)
-        The z coordinates of the bounding box rectangular cuboid
-    """
-    xmax, xmin = np.max(x), np.min(x)
-    ymax, ymin = np.max(y), np.min(y)
-    zmax, zmin = np.max(z), np.min(z)
-
-    size = max([xmax - xmin, ymax - ymin, zmax - zmin])
-
-    x_b = 0.5 * size * np.array([-1, -1, -1, -1, 1, 1, 1, 1]) + 0.5 * (xmax + xmin)
-    y_b = 0.5 * size * np.array([-1, -1, 1, 1, -1, -1, 1, 1]) + 0.5 * (ymax + ymin)
-    z_b = 0.5 * size * np.array([-1, 1, -1, 1, -1, 1, -1, 1]) + 0.5 * (zmax + zmin)
-    return x_b, y_b, z_b
-
-
 # Note: when plotting points, it can happen that markers are not centred properly as
 # described in https://github.com/matplotlib/matplotlib/issues/11836
 class BasePlotter(ABC):
@@ -368,7 +334,9 @@ class BasePlotter(ABC):
 
     def _set_aspect_3d(self):
         # This was the only way I found to get 3-D plots to look right in matplotlib
-        x_bb, y_bb, z_bb = _bounding_box(*self._data.T)
+        x_bb, y_bb, z_bb = geo.bound_box.BoundingBox.from_xyz(
+            *self._data.T
+        ).get_box_arrays()
         for x, y, z in zip(x_bb, y_bb, z_bb):
             self.ax.plot([x], [y], [z], color="w")
 

@@ -30,7 +30,6 @@ import numba as nb
 from numba.np.extensions import cross2d
 from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
-from typing import Iterable
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -39,6 +38,8 @@ from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.bound_box import BoundingBox
+from bluemira.utilities.tools import flatten_iterable
 
 
 # =============================================================================
@@ -728,16 +729,7 @@ def bounding_box(x, y, z):
     z_b: np.array(8)
         The z coordinates of the bounding box rectangular cuboid
     """
-    xmax, xmin = np.max(x), np.min(x)
-    ymax, ymin = np.max(y), np.min(y)
-    zmax, zmin = np.max(z), np.min(z)
-
-    size = max([xmax - xmin, ymax - ymin, zmax - zmin])
-
-    x_b = 0.5 * size * np.array([-1, -1, -1, -1, 1, 1, 1, 1]) + 0.5 * (xmax + xmin)
-    y_b = 0.5 * size * np.array([-1, -1, 1, 1, -1, -1, 1, 1]) + 0.5 * (ymax + ymin)
-    z_b = 0.5 * size * np.array([-1, 1, -1, 1, -1, 1, -1, 1]) + 0.5 * (zmax + zmin)
-    return x_b, y_b, z_b
+    return BoundingBox.from_xyz(x, y, z).get_box_arrays()
 
 
 def vector_lengthnorm(x, y, z):
@@ -2289,14 +2281,7 @@ class MixedFaceMaker:
             if b is not None:
                 wires.append(b)
 
-        def flatten_list(v_list):
-            for val in v_list:
-                if isinstance(val, Iterable):
-                    yield from flatten_list(val)
-                else:
-                    yield val
-
-        self.wires = list(flatten_list(wires))
+        self.wires = list(flatten_iterable(wires))
         self._debugger = coords_order
 
     def _make_wire(self):

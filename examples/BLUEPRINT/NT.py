@@ -28,13 +28,13 @@ from BLUEPRINT.systems.config import SingleNull
 
 # Structural imports
 import os
-from BLUEPRINT.base.file import make_BP_path
+from bluemira.base.file import BM_ROOT, make_bluemira_path
 from bluemira.base.look_and_feel import plot_defaults
 
 
 plot_defaults()
 KEY_TO_PLOT = False
-PLOTFOLDER = make_BP_path("plots", subfolder="data/BLUEPRINT")
+PLOTFOLDER = make_bluemira_path("plots", subfolder="data/BLUEPRINT")
 
 if os.path.isdir(PLOTFOLDER) is False:
     KEY_TO_PLOT = False
@@ -75,7 +75,7 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "!BP_ROOT!/generated_data/BLUEPRINT",
+    "generated_data_root": f"{BM_ROOT}/generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "plasma_mode": "run",
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     if LOAD:
         filename = (
-            make_BP_path(f"reactors/{REACTORNAME}", subfolder="data/BLUEPRINT")
+            make_bluemira_path(f"reactors/{REACTORNAME}", subfolder="data/BLUEPRINT")
             + "/"
             + REACTORNAME
             + ".pkl"

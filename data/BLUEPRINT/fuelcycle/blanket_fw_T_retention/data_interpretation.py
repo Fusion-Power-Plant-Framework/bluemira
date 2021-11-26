@@ -27,15 +27,18 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 import json
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.fuelcycle.tfvutils import convert_flux_to_flow
-from BLUEPRINT.fuelcycle.blocks import TCycleComponent
-from BLUEPRINT.fuelcycle.tfvutils import fit_sink_data, piecewise_sqrt_threshold
+from bluemira.fuel_cycle.tools import (
+    convert_flux_to_flow,
+    fit_sink_data,
+    piecewise_sqrt_threshold,
+)
+from bluemira.fuel_cycle.blocks import FuelCycleComponent
 
 plot_defaults()
 
-PATH = get_BP_path("fuelcycle/blanket_fw_T_retention", subfolder="data/BLUEPRINT")
+PATH = get_bluemira_path("fuelcycle/blanket_fw_T_retention", subfolder="data/BLUEPRINT")
 
 # Get all the data files
 files = []
@@ -116,7 +119,7 @@ for k, v in data.items():
     m_flow = convert_flux_to_flow(flux, 1400)
     m = m_flow * np.ones(1000)
 
-    component = TCycleComponent(
+    component = FuelCycleComponent(
         label, t, v["p_opt"][0], v["p_opt"][2], retention_model="sqrt_bathtub"
     )
     component.add_in_flow(m)

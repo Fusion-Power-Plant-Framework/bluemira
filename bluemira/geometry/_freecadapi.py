@@ -61,7 +61,7 @@ apiFace = Part.Face  # noqa (N816)
 apiShell = Part.Shell  # noqa (N816)
 apiSolid = Part.Solid  # noqa (N816)
 apiShape = Part.Shape  # noqa (N816)
-
+apiCompound = Part.Compound  # noqa (N816)
 
 # ======================================================================================
 # Array, List, Vector, Point manipulation
@@ -143,6 +143,35 @@ def vertex_to_numpy(vertexes):
 # ======================================================================================
 # Geometry creation
 # ======================================================================================
+
+
+def make_solid(shell: apiShell):
+    """Make a solid from a shell."""
+    return Part.makeSolid(shell)
+
+
+def make_shell(faces: List[apiFace]):
+    """Make a shell from faces."""
+    return Part.makeShell(faces)
+
+
+def make_compound(shapes):
+    """
+    Make an FreeCAD compound object out of many shapes
+
+    Parameters
+    ----------
+    shapes: list of FreeCAD shape objects
+        A set of objects to be compounded
+
+    Returns
+    -------
+    compound: FreeCAD compound object
+        A compounded set of shapes
+    """
+    return Part.makeCompound(shapes)
+
+
 def make_polygon(points: Union[list, np.ndarray], closed: bool = False) -> Part.Wire:
     """
     Make a polygon from a set of points.
@@ -479,9 +508,6 @@ def is_valid(obj):
 
 def bounding_box(obj):
     """Object's bounding box"""
-    # FreeCAD BoundBox is a FreeCAD object. For the moment there is not a
-    # complementary object in bluemira. Thus, this method will just return
-    # (XMin, YMin, Zmin, XMax, YMax, ZMax)
     box = _get_api_attr(obj, "BoundBox")
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
@@ -881,24 +907,6 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
         return solid_result.Shells[0]
 
 
-def make_compound(shapes):
-    """
-    Make an FreeCAD compound object out of many shapes
-
-    Parameters
-    ----------
-    shapes: list of FreeCAD shape objects
-        A set of objects to be compounded
-
-    Returns
-    -------
-    compound: FreeCAD compound object
-        A compounded set of shapes
-    """
-    compound = Part.makeCompound(shapes)
-    return compound
-
-
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
@@ -924,12 +932,15 @@ def boolean_fuse(shapes):
     """
     if not isinstance(shapes, list):
         raise ValueError(f"{shapes} is not a list.")
+
     if len(shapes) < 2:
         raise ValueError("At least 2 shapes must be given")
+
     # check that all the shapes are of the same time
     _type = type(shapes[0])
     if not all(isinstance(s, _type) for s in shapes):
         raise ValueError(f"All instances in {shapes} must be of the same type.")
+
     try:
         if _type == Part.Wire:
             merged_shape = BOPTools.SplitAPI.booleanFragments(shapes, "Split")
@@ -943,15 +954,25 @@ def boolean_fuse(shapes):
                 merged_shape = merged_shape.fuse(merged_shape.Wires)
                 merged_shape = Part.Wire(merged_shape.Wires)
                 return merged_shape
+
         elif _type == Part.Face:
             merged_shape = shapes[0].fuse(shapes[1:])
             merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Faces) > 1:
                 raise FreeCADError(
-                    f"Fuse boolean operation on {shapes} gives more that one face."
+                    f"Boolean fuse operation on {shapes} gives more than one face."
                 )
-            else:
-                return merged_shape.Faces[0]
+            return merged_shape.Faces[0]
+
+        elif _type == Part.Solid:
+            merged_shape = shapes[0].fuse(shapes[1:])
+            merged_shape = merged_shape.removeSplitter()
+            if len(merged_shape.Solids) > 1:
+                raise FreeCADError(
+                    f"Boolean fuse operation on {shapes} gives more than one solid."
+                )
+            return merged_shape.Solids[0]
+
         else:
             raise ValueError(
                 f"Fuse function still not implemented for {_type} instances."
@@ -999,7 +1020,7 @@ def boolean_cut(shape, tools, split=True):
     elif _type == Part.Shell:
         output = cut_shape.Shells
     elif _type == Part.Solid:
-        output = cut_shape.Solid
+        output = cut_shape.Solids
     else:
         raise ValueError(f"Cut function not implemented for {_type} objects.")
     return output

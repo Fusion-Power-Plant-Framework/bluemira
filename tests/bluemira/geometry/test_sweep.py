@@ -43,11 +43,10 @@ class TestSweep:
         assert np.isclose(sweep.volume, 4.0)
 
     def test_semicircle(self):
-        path = make_circle(start_angle=0, end_angle=180)
+        path = make_circle(start_angle=90, end_angle=-90)
         profile = make_polygon(
             [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
         )
-
         sweep = sweep_shape(profile, path, solid=True)
         assert sweep.is_valid()
         assert np.isclose(sweep.volume, np.pi)
@@ -57,7 +56,6 @@ class TestSweep:
         profile = make_polygon(
             [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
         )
-
         sweep = sweep_shape(profile, path, solid=True)
 
         assert sweep.is_valid()

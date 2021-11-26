@@ -30,7 +30,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.offset import offset, offset_clipper
@@ -324,7 +324,7 @@ class TestClipperOffset:
             ax.set_aspect("equal")
 
     def test_blanket_offset(self):
-        fp = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+        fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "bb_offset_test.pkl"])
         with open(fn, "rb") as file:
             d = pickle.load(file)  # noqa (S301)

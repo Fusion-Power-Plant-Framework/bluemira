@@ -59,10 +59,31 @@ class BMFile(MFile):
         super().__init__(filename=filename)
         self.defs = self.unitsplit(PROCESS_DICT["DICT_DESCRIPTIONS"])
         self.ptob_mapping = parameter_mapping
-        self.btop_mapping = {val: key for key, val in parameter_mapping.items()}
-        for key, val in self.btop_mapping.items():
-            self.btop_mapping[key] = update_obsolete_vars(val)
+        self.btop_mapping = self.new_mappings(
+            {val: key for key, val in parameter_mapping.items()}
+        )
+
         self.read()
+
+    @staticmethod
+    def new_mappings(old_mappings):
+        """
+        Convert old PROCESS mappings to new ones
+
+        Parameters
+        ----------
+        old_mappings: dict
+            dictionary of parameter mappings
+
+        Returns
+        -------
+        new_mappings: dict
+            dictionary of new parameter mappings
+        """
+        new_mappings = {}
+        for key, val in old_mappings.items():
+            new_mappings[key] = update_obsolete_vars(val)
+        return new_mappings
 
     @staticmethod
     def linesplit(line):
@@ -171,12 +192,14 @@ class BMFile(MFile):
             # Handle single variable request
             outputs = [outputs]
         for var in outputs:
-            found = False
-            for frame in self.params.values():
-                if var in frame.keys():
-                    out.append(frame[var])
-                    found = True
-                    break  # only keep one!
+            if isinstance(var, list):
+                for v in var:
+                    found = self._find_var_in_frame(var, out)
+                    if found:
+                        break
+            else:
+                found = self._find_var_in_frame(var, out)
+
             if not found:
                 out.append(0.0)
                 bluemira_warn(
@@ -185,6 +208,30 @@ class BMFile(MFile):
                     "not found in PROCESS output. Value set to 0.0."
                 )
         return out
+
+    def _find_var_in_frame(self, var, out):
+        """
+        Find variable value in parameter frame
+
+        Parameters
+        ----------
+        var:str
+            variable
+        out: list
+            output list
+
+        Returns
+        -------
+        bool
+            if variable found
+        """
+        found = False
+        for frame in self.params.values():
+            if var in frame.keys():
+                out.append(frame[var])
+                found = True
+                break  # only keep one!
+        return found
 
 
 def boxr(ri, ro, w, off=0):

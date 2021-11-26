@@ -21,7 +21,7 @@
 
 import os
 import numpy as np
-from BLUEPRINT.base.file import get_BP_path, make_BP_path
+from bluemira.base.file import get_bluemira_path, make_bluemira_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.shape import Shape, fit_shape_to_loop
 from BLUEPRINT.geometry.loop import Loop
@@ -63,7 +63,7 @@ class TestShape:
             )
 
     def test_write(self):
-        write_directory = make_BP_path(
+        write_directory = make_bluemira_path(
             "BLUEPRINT/geometry/test_generated_data", subfolder="tests"
         )
         shp = Shape(
@@ -81,8 +81,10 @@ class TestShape:
         os.remove(shp.write_filename)
 
     def test_readwrite(self):
-        read_directory = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
-        write_directory = make_BP_path(
+        read_directory = get_bluemira_path(
+            "BLUEPRINT/geometry/test_data", subfolder="tests"
+        )
+        write_directory = make_bluemira_path(
             "BLUEPRINT/geometry/test_generated_data", subfolder="tests"
         )
         shp = Shape(

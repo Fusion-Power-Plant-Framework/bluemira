@@ -21,7 +21,7 @@
 
 import pytest
 
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.systems.config import Configuration
 
 from bluemira.codes.process.api import PROCESS_ENABLED
@@ -30,7 +30,7 @@ from bluemira.codes.process import teardown
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
 class TestMFileReader:
-    fp = get_BP_path("bluemira/codes/test_data", subfolder="tests")
+    fp = get_bluemira_path("bluemira/codes/test_data", subfolder="tests")
 
     @classmethod
     def setup_class(cls):

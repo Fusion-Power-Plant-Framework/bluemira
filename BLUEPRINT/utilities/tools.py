@@ -26,11 +26,11 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import re
 from collections import OrderedDict
-from collections.abc import Mapping, Iterable
+from collections.abc import Mapping
 from typing import List, Union
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-
+from bluemira.utilities.tools import flatten_iterable
 
 CROSS_P_TOL = 1e-14  # Cross product tolerance
 
@@ -162,14 +162,7 @@ def expand_nested_list(*lists):
     expanded: list
         The fully flattened list of iterables
     """
-    expanded = []
-    for obj in lists:
-        if isinstance(obj, Iterable):
-            for o in obj:
-                expanded.extend(expand_nested_list(o))
-        else:
-            expanded.append(obj)
-    return expanded
+    return list(flatten_iterable(lists))
 
 
 def map_nested_dict(obj, function):
