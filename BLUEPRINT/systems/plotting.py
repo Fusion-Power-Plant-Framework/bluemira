@@ -25,6 +25,7 @@ Plotting utilities for ReactorSystem objects
 from itertools import cycle
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 from BLUEPRINT.geometry.geomtools import qrotate
 from bluemira.base.look_and_feel import bluemira_warn
@@ -182,7 +183,12 @@ class ReactorPlotter:
         """
         # TODO: POSTprocess.py is archaic... need to refactor heavily and bring
         # into the fold...
-        codes.plot_PROCESS(self.reactor.__PROCESS__.filename, width=width)
+        codes.plot_PROCESS(
+            os.sep.join(
+                self.file_manager.generated_data_dirs["systems_code"], "OUT.DAT"
+            ),
+            width=width,
+        )
 
     def plot_xz(self, x=None, z=None, show_eq=False, force=False):
         """

@@ -316,9 +316,6 @@ class Reactor(ReactorSystem):
         Pickling utility. Need to get rid of C objects prior to pickling.
         """
         d = super().__getstate__()
-        # BMFile can't be pickled so after unpickling run_PROCESS must be
-        # called
-        d.pop("__PROCESS__", None)
         # ReactorCAD can't be pickled so after unpickling build_cad must be
         # called
         d.pop("CAD", None)
