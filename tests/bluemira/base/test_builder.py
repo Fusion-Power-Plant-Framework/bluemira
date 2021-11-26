@@ -21,14 +21,13 @@
 
 import pytest
 
-from typing import List
-
-from bluemira.base.builder import Builder, BuildResult
+from bluemira.base.builder import Builder
+from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
 
 
 class NoParamBuilder(Builder):
-    def build(self, **kwargs) -> List[BuildResult]:
+    def build(self, **kwargs) -> Component:
         return super().build(**kwargs)
 
     def reinitialise(self, params, **kwargs) -> None:
@@ -42,7 +41,7 @@ class ABuilder(Builder):
         "n_TF",
     ]
 
-    def build(self, **kwargs) -> List[BuildResult]:
+    def build(self, **kwargs) -> Component:
         return super().build(**kwargs)
 
     def reinitialise(self, params, **kwargs) -> None:

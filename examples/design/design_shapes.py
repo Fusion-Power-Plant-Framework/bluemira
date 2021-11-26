@@ -23,8 +23,6 @@
 A basic tutorial for configuring and running a design with parameterised shapes.
 """
 
-import matplotlib.pyplot as plt
-
 from bluemira.base.design import Design
 
 
@@ -36,7 +34,7 @@ build_config = {
             "r_0": "R_0",
             "a": "A",
         },
-        "target": "Plasma/xz/Shape",
+        "label": "Shape",
     },
     "TF Coils": {
         "class": "MakeParameterisedShape",
@@ -49,7 +47,7 @@ build_config = {
             },
             "dz": 0.0,
         },
-        "target": "TF Coils/xz/Shape",
+        "label": "Shape",
     },
 }
 params = {
@@ -59,12 +57,5 @@ params = {
     "r_tf_out_centre": (15.0, "Input"),
 }
 design = Design(params, build_config)
-design.run()
-
-_, ax = plt.subplots()
-for build in build_config.values():
-    component = design.component_manager.get_by_path(build["target"])
-    shape = component.shape.discretize()
-    ax.plot(*shape.T[0::2])
-ax.set_aspect("equal")
-plt.show()
+component = design.run()
+component.plot_2d()

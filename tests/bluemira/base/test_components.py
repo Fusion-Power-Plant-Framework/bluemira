@@ -35,10 +35,6 @@ class TestComponentClass:
     Tests for the base Component functionality.
     """
 
-    def test_no_direct_initialisation(self):
-        with pytest.raises(ComponentError):
-            Component("Dummy")
-
     def test_tree(self):
         target_tree = """Parent (Component)
 └── Child (Component)

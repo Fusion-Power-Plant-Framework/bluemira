@@ -23,8 +23,6 @@
 Tests for the design module.
 """
 
-import matplotlib.pyplot as plt
-
 from bluemira.base.design import Design
 
 import tests
@@ -40,7 +38,7 @@ class TestDesign:
                     "r_0": "R_0",
                     "a": "A",
                 },
-                "target": "xz/Plasma/Shape",
+                "label": "Shape",
             },
             "TF Coils": {
                 "class": "MakeParameterisedShape",
@@ -53,7 +51,7 @@ class TestDesign:
                     },
                     "dz": 0.0,
                 },
-                "target": "xz/TF Coils/Shape",
+                "label": "Shape",
             },
         }
         params = {
@@ -63,13 +61,17 @@ class TestDesign:
             "r_tf_out_centre": (15.0, "Input"),
         }
         design = Design(params, build_config)
-        design.run()
+        component = design.run()
+
+        assert component is not None
+
+        assert [child.name for child in component.children] == ["Plasma", "TF Coils"]
+
+        plasma_component = component.get_component("Plasma")
+        assert [child.name for child in plasma_component.children] == ["Shape"]
+
+        tf_coils_component = component.get_component("TF Coils")
+        assert [child.name for child in tf_coils_component.children] == ["Shape"]
 
         if tests.PLOTTING:
-            _, ax = plt.subplots()
-            for build in build_config.values():
-                component = design.component_manager.get_by_path(build["target"])
-                shape = component.shape.discretize()
-                ax.plot(*shape.T[0::2])
-            ax.set_aspect("equal")
-            plt.show()
+            component.plot_2d()

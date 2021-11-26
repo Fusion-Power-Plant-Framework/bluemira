@@ -23,10 +23,10 @@
 Built-in build steps for making shapes
 """
 
-from typing import Dict, List, Type
+from typing import Dict, Type
 
-from ..base.builder import BuildConfig, Builder, BuildResult
-from ..base.components import PhysicalComponent
+from ..base.builder import BuildConfig, Builder
+from ..base.components import Component, PhysicalComponent
 from ..geometry.optimisation import GeometryOptimisationProblem
 from ..geometry.parameterisations import GeometryParameterisation
 from ..utilities.optimiser import Optimiser
@@ -70,7 +70,7 @@ class ParameterisedShapeBuilder(Builder):
             shape_params[key] = val
         return shape_params
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def reinitialise(self, params, **kwargs):
         """
         Create the GeometryParameterisation from the provided param_class and
         variables_map.
@@ -98,35 +98,32 @@ class MakeParameterisedShape(ParameterisedShapeBuilder):
     A builder that constructs a Component using a parameterised shape.
     """
 
-    _required_config = ParameterisedShapeBuilder._required_config + ["target"]
+    _required_config = ParameterisedShapeBuilder._required_config + ["label"]
 
-    _target: str
+    _label: str
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
-        self._target: str = build_config["target"]
+        self._label: str = build_config["label"]
 
-    def build(self, **kwargs) -> List[BuildResult]:
+    def build(self, **kwargs) -> Component:
         """
         Build the components from parameterised shapes using the provided configuration
         and parameterisation.
 
         Returns
         -------
-        build_results: List[BuildResult]
-            The Components built by this builder, including the target paths. For this
-            Builder the results will contain one item.
+        component: Component
+            The Component built by this builder.
         """
-        super().build(**kwargs)
+        component = super().build(**kwargs)
 
-        target = self._target.split("/")
-        return [
-            BuildResult(
-                target="/".join(target),
-                component=PhysicalComponent(target[-1], self._shape.create_shape()),
-            )
-        ]
+        component.add_child(
+            PhysicalComponent(self._label, self._shape.create_shape(label=self._label))
+        )
+
+        return component
 
 
 class MakeOptimisedShape(MakeParameterisedShape):
@@ -138,7 +135,7 @@ class MakeOptimisedShape(MakeParameterisedShape):
 
     _problem_class: Type[GeometryOptimisationProblem]
 
-    def __call__(self, params, optimise=True, **kwargs):
+    def __call__(self, params, optimise=True, **kwargs) -> Component:
         """
         Perform the full build process, including reinitialisation and optimisation,
         using the provided parameters.
@@ -150,11 +147,6 @@ class MakeOptimisedShape(MakeParameterisedShape):
             Builder.
         optimise: bool
             If True then the build will include optimisation, by default True.
-
-        Returns
-        -------
-        build_results: List[BuildResult]
-            The Components build by this builder, including the target paths.
         """
         self.reinitialise(params)
         if optimise:

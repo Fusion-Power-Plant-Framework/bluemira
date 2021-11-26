@@ -23,6 +23,7 @@
 Tests for plasma builders
 """
 
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.plasma import MakeParameterisedPlasma
 
 import tests
@@ -42,35 +43,30 @@ class TestMakeParameterisedPlasma:
                 "r_0": "R_0",
                 "a": "A",
             },
-            "targets": {
-                "Plasma/xz/LCFS": "build_xz",
-                "Plasma/xy/LCFS": "build_xy",
-                "Plasma/xyz/LCFS": "build_xyz",
-            },
             "segment_angle": 270.0,
         }
         builder = MakeParameterisedPlasma(params, build_config)
-        outputs = builder(params)
-        assert outputs is not None
-        assert isinstance(outputs, list)
-        assert len(outputs) == 3
+        component = builder(params)
+        assert component is not None
+        assert isinstance(component, Component)
+        assert len(component.children) == 3
 
-        for idx, target in enumerate(build_config["targets"]):
-            target_split = target.split("/")
-            target_path = "/".join(target_split)
-            component_name = target_split[-1]
+        dims = ["xz", "xy", "xyz"]
+        child: Component
+        for child, dim in zip(component.children, dims):
+            assert child.name == dim
 
-            assert outputs[idx][0] == target_path
+            assert len(child.children) == 1
 
-            component = outputs[idx][1]
-            assert component.name == component_name
+            lcfs: PhysicalComponent = child.get_component("LCFS")
+            assert lcfs is not None
 
             if tests.PLOTTING:
                 color = (0.80078431, 0.54, 0.80078431)
-                if "xyz" in target:
-                    component.display_cad_options.color = color
-                    component.display_cad_options.transparency = 0.2
-                    component.show_cad()
+                if dim == "xyz":
+                    lcfs.display_cad_options.color = color
+                    lcfs.display_cad_options.transparency = 0.2
+                    lcfs.show_cad()
                 else:
-                    component.plot_options.face_options["color"] = color
-                    component.plot_2d()
+                    lcfs.plot_options.face_options["color"] = color
+                    lcfs.plot_2d()

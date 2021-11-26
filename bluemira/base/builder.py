@@ -26,9 +26,9 @@ Interfaces for builder and build steps classes
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Literal, NamedTuple, Union
+from typing import Dict, List, Literal, Union
 
-from bluemira.base.components import PhysicalComponent
+from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
@@ -37,15 +37,6 @@ BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
 """
 Type alias for representing nested build configuration information.
 """
-
-
-class BuildResult(NamedTuple):
-    """
-    The result of a bluemira build is the component and it's corresponding target path.
-    """
-
-    target: str
-    component: PhysicalComponent
 
 
 class Builder(abc.ABC):
@@ -66,7 +57,7 @@ class Builder(abc.ABC):
         self._params = ParameterFrame.from_template(self._required_params)
         self.reinitialise(params)
 
-    def __call__(self, params, **kwargs) -> List[BuildResult]:
+    def __call__(self, params, **kwargs) -> Component:
         """
         Perform the full build process, including reinitialisation, using the provided
         parameters.
@@ -79,8 +70,8 @@ class Builder(abc.ABC):
 
         Returns
         -------
-        build_results: List[BuildResult]
-            The Components build by this builder, including the target paths.
+        component: Component
+            The Component build by this builder.
         """
         self.reinitialise(params)
         return self.build()
@@ -100,17 +91,15 @@ class Builder(abc.ABC):
         self._reset_params(params)
 
     @abc.abstractmethod
-    def build(self, **kwargs) -> List[BuildResult]:
+    def build(self, **kwargs):
         """
-        Runs this Builder's build process to generate the required Components.
+        Runs this Builder's build process to populate the required Components.
 
-        Returns
-        -------
-        build_results: List[BuildResult]
-            The Components build by this builder, including the target paths.
+        The result of the build is stored in the Builder's component property.
         """
         bluemira_print(f"Building {self.name}")
-        return [()]
+
+        return Component(self._name)
 
     @property
     def name(self) -> str:

@@ -121,7 +121,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         return found_components
 
-    def copy(self):
+    def copy(self) -> Component:
         """
         Provides a deep copy of the Component
 
@@ -132,7 +132,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         return copy.deepcopy(self)
 
-    def add_child(self, child: Component):
+    def add_child(self, child: Component) -> Component:
         """
         Add a single child to this node
 
@@ -140,10 +140,17 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         ----------
         child: Component
             The child to be added
+
+        Returns
+        -------
+        self: Component
+            This component.
         """
         if child in self.children:
             raise ComponentError(f"Component {child} is already a child of {self}")
         self.children = list(self.children) + [child]
+
+        return self
 
     def add_children(self, children: List[Component]):
         """
@@ -153,6 +160,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         ----------
         children: List[Component]
             The children to be added
+
+        Returns
+        -------
+        self: Component
+            This component.
         """
         duplicates = []
         for child in children:
@@ -163,6 +175,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
                 f"Components {duplicates} are already a children of {self}"
             )
         self.children = list(self.children) + children
+
+        return self
 
 
 class PhysicalComponent(Component):

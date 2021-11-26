@@ -25,8 +25,8 @@ Tests for shape builders
 
 import pytest
 
-import matplotlib.pyplot as plt
 import numpy as np
+from bluemira.base.components import PhysicalComponent
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 
@@ -42,7 +42,7 @@ class TestMakeParameterisedShape:
             "r_tf_out_centre": (9.0, "Input"),
         }
         build_config = {
-            "name": "TF Shape",
+            "name": "TF Coils",
             "param_class": "PrincetonD",
             "variables_map": {
                 "x1": "r_tf_in_centre",
@@ -52,31 +52,31 @@ class TestMakeParameterisedShape:
                 },
                 "dz": 0.0,
             },
-            "target": "TF Coils/xz/Shape",
+            "label": "Shape",
         }
         builder = MakeParameterisedShape(params, build_config)
-        build_results = builder(params)
-        assert build_results is not None
+        component = builder(params)
 
-        target_split = build_config["target"].split("/")
-        target_path = "/".join(target_split)
-        component_name = target_split[-1]
+        assert component is not None
 
-        if tests.PLOTTING:
-            shape = build_results[0].component.shape.discretize()
-            plt.plot(*shape.T[0::2])
-            plt.gca().set_aspect("equal")
-            plt.show()
+        name = build_config["name"]
+        label = build_config["label"]
 
-        assert build_results[0].target == target_path
-        assert build_results[0].component.name == component_name
+        assert component.name == name
 
-        discr = build_results[0].component.shape.discretize()
+        child: PhysicalComponent = component.get_component("Shape")
+        assert child is not None
+        assert child.shape.label == label
+
+        discr = child.shape.discretize()
         assert min(discr.T[0]) == pytest.approx(params["r_tf_in_centre"][0], abs=1e-3)
         assert max(discr.T[0]) == pytest.approx(params["r_tf_out_centre"][0], abs=1e-3)
         assert np.average(discr.T[1]) == pytest.approx(
             build_config["variables_map"]["dz"], abs=1e-3
         )
+
+        if tests.PLOTTING:
+            component.plot_2d()
 
 
 class MinimiseLength(GeometryOptimisationProblem):
@@ -113,7 +113,7 @@ class TestMakeOptimisedShape:
             "r_tf_out_centre": (9.0, "Input"),
         }
         build_config = {
-            "name": "TF Shape",
+            "name": "TF Coils",
             "param_class": "PrincetonD",
             "variables_map": {
                 "x1": {
@@ -127,26 +127,23 @@ class TestMakeOptimisedShape:
                 "dz": 0.0,
             },
             "problem_class": "tests.bluemira.builders.test_shapes::MinimiseLength",
-            "target": "TF Coils/xz/Shape",
+            "label": "Shape",
         }
         builder = MakeOptimisedShape(params, build_config)
-        build_results = builder(params)
-        assert build_results is not None
+        component = builder(params)
 
-        target_split = build_config["target"].split("/")
-        target_path = "/".join(target_split)
-        component_name = target_split[-1]
+        assert component is not None
 
-        if tests.PLOTTING:
-            shape = build_results[0].component.shape.discretize()
-            plt.plot(*shape.T[0::2])
-            plt.gca().set_aspect("equal")
-            plt.show()
+        name = build_config["name"]
+        label = build_config["label"]
 
-        assert build_results[0].target == target_path
-        assert build_results[0].component.name == component_name
+        assert component.name == name
 
-        discr = build_results[0].component.shape.discretize()
+        child: PhysicalComponent = component.get_component("Shape")
+        assert child is not None
+        assert child.shape.label == label
+
+        discr = child.shape.discretize()
         assert min(discr.T[0]) == pytest.approx(
             build_config["variables_map"]["x1"]["upper_bound"], abs=1e-3
         )
@@ -156,3 +153,6 @@ class TestMakeOptimisedShape:
         assert np.average(discr.T[1]) == pytest.approx(
             build_config["variables_map"]["dz"], abs=1e-3
         )
+
+        if tests.PLOTTING:
+            component.plot_2d()

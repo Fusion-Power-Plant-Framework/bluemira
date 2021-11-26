@@ -26,7 +26,7 @@ Module containing the bluemira Design class.
 from typing import Dict, List, Type
 
 from bluemira.base.builder import Builder, BuildConfig
-from bluemira.base.components import ComponentManager
+from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.utilities.tools import get_class_from_module
@@ -44,21 +44,12 @@ class Design:
     _params: Configuration
     _build_config: BuildConfig
     _builders: Dict[str, Builder]
-    _component_manager: ComponentManager
 
     def __init__(self, params, build_config):
         self._build_config = build_config
         self._extract_builders(params)
         self._params = Configuration.from_template(self._required_params)
         self._params.update_kw_parameters(params)
-        self._component_manager = ComponentManager(self.params.Name)
-
-    @property
-    def component_manager(self) -> ComponentManager:
-        """
-        The ComponentManager associated with this Design.
-        """
-        return self._component_manager
 
     @property
     def params(self) -> Configuration:
@@ -67,18 +58,23 @@ class Design:
         """
         return self._params
 
-    def run(self):
+    def run(self) -> Component:
         """
         Runs through the Builders associated with this Design. Components and
         Parameters are transferred onto the Design after each step.
+
+        Returns
+        -------
+        component: Component
+            The Component tree resulting from the various build stages in the Design.
         """
+        component = Component(self._params.Name)
         for builder in self._builders.values():
-            build_result = builder(self._params)
-            for result in build_result:
-                self._component_manager.insert_at_path(result.target, result.component)
+            component.add_child(builder(self._params))
             self._params.update_kw_parameters(
                 builder._params.to_dict(), source=builder.name
             )
+        return component
 
     def get_builder(self, builder_name: str) -> Builder:
         """
