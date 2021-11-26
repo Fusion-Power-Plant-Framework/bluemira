@@ -388,6 +388,17 @@ class OptVariables:
         return len(self._opt_vars)
 
     @property
+    def _fixed_variable_indices(self) -> list:
+        """
+        Indices of fixed variables in the set.
+        """
+        indices = []
+        for i, v in enumerate(self._var_dict.values()):
+            if v.fixed:
+                indices.append(i)
+        return indices
+
+    @property
     def _opt_vars(self):
         return [v.name for v in self._var_dict.values() if not v.fixed]
 
