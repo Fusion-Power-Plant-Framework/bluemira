@@ -68,6 +68,7 @@ build_config = {
     # TF coil config
     "TF_type": "S",
     "wp_shape": "N",
+    "conductivity": "SC",
     "TF_objective": "L",
     # FW and VV config
     "VV_parameterisation": "S",

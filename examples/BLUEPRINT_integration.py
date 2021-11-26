@@ -45,6 +45,7 @@ from bluemira.geometry._deprecated_tools import (
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
 )
+from bluemira.geometry._deprecated_loop import Loop as BMLoop
 
 
 class ConversionMethod(enum.Enum):
@@ -77,7 +78,7 @@ class BluemiraReactor(Reactor):
     def _convert_loop(
         self,
         tree: Component,
-        geom: Loop,
+        geom: Union[Loop, BMLoop],
         geom_name: str,
         method: ConversionMethod = ConversionMethod.MIXED,
     ):
@@ -159,7 +160,7 @@ class BluemiraReactor(Reactor):
         Convert the provided geometry into a Component with the provided name and add it
         to the tree.
         """
-        if isinstance(geom, Loop):
+        if isinstance(geom, (Loop, BMLoop)):
             self._convert_loop(tree, geom, geom_name, method)
         elif isinstance(geom, MultiLoop):
             self._convert_multiloop(tree, geom, geom_name, method)
