@@ -24,12 +24,10 @@ Created on Fri Aug  2 20:29:07 2019
 @author: matti
 """
 
-import os
 import pytest
+
 from BLUEPRINT.utilities.colortools import map_palette
 from BLUEPRINT.base.palettes import LONDON
-from BLUEPRINT.base.file import get_BP_path
-from bluemira.base.file import get_bluemira_root
 from bluemira.base.look_and_feel import (
     bluemira_warn,
     bluemira_print,
@@ -95,20 +93,6 @@ class TestColors:
     def test_bluemira_print(self):
         print("\n")
         bluemira_print("test normal blue")
-
-
-class TestMisc:
-    def test_BP_root(self):  # noqa (N802)
-        assert os.path.isdir(get_bluemira_root())
-
-    def test_BP_path(self):  # noqa (N802)
-        folders = ["systems", "materials", "geometry", "nova"]
-        for p in folders:
-            assert os.path.isdir(get_BP_path(p))
-        fails = ["wrongwrong", "nopenope"]
-        for f in fails:
-            with pytest.raises(ValueError):
-                get_BP_path(f)
 
 
 if __name__ == "__main__":

@@ -24,21 +24,27 @@ A collection of miscellaneous tools.
 """
 
 import numpy as np
+import nlopt
 import operator
+import re
+import string
+from collections.abc import Iterable
+from functools import partial
 from importlib import util as imp_u, import_module as imp
+from itertools import permutations
 from json import JSONDecoder, JSONEncoder
 from json.encoder import _make_iterencode
-import string
-import nlopt
 from os import listdir
-import re
-from functools import partial
-from itertools import permutations
+from typing import Any, List, Union
 from unittest.mock import patch
 
-from bluemira.base.constants import E_I, E_IJ, E_IJK
+from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.base.parameter import Parameter
+
+# =====================================================
+# JSON utilities
+# =====================================================
 
 
 class CommentJSONDecoder(JSONDecoder):
@@ -123,51 +129,6 @@ def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
     return _make_iterencode(
         markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
     )
-
-
-def is_num(thing):
-    """
-    Determine whether or not the input is a number.
-
-    Parameters
-    ----------
-    thing: unknown type
-        The input which we need to determine is a number or not
-
-    Returns
-    -------
-    num: bool
-        Whether or not the input is a number
-    """
-    if thing is True or thing is False:
-        return False
-    if thing is np.nan:
-        return False
-    try:
-        float(thing)
-        return True
-    except (ValueError, TypeError):
-        return False
-
-
-def abs_rel_difference(v2, v1_ref):
-    """
-    Calculate the absolute relative difference between a new value and an old
-    reference value.
-
-    Parameters
-    ----------
-    v2: float
-        The new value to compare to the old
-    v1_ref: float
-        The old reference value
-
-    Returns
-    -------
-    delta: float
-        The absolute relative difference between v2 and v1ref
-    """
-    return abs((v2 - v1_ref) / v1_ref)
 
 
 # =====================================================
@@ -375,6 +336,55 @@ norm = wrap.norm
 dot = wrap.dot
 cross = wrap.cross
 
+# =====================================================
+# Misc utilities
+# =====================================================
+
+
+def is_num(thing):
+    """
+    Determine whether or not the input is a number.
+
+    Parameters
+    ----------
+    thing: unknown type
+        The input which we need to determine is a number or not
+
+    Returns
+    -------
+    num: bool
+        Whether or not the input is a number
+    """
+    if thing is True or thing is False:
+        return False
+    if thing is np.nan:
+        return False
+    try:
+        float(thing)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def abs_rel_difference(v2, v1_ref):
+    """
+    Calculate the absolute relative difference between a new value and an old
+    reference value.
+
+    Parameters
+    ----------
+    v2: float
+        The new value to compare to the old
+    v1_ref: float
+        The old reference value
+
+    Returns
+    -------
+    delta: float
+        The absolute relative difference between v2 and v1ref
+    """
+    return abs((v2 - v1_ref) / v1_ref)
+
 
 def set_random_seed(seed_number: int):
     """
@@ -510,6 +520,28 @@ def clip(val, val_min, val_max):
     return val
 
 
+def flatten_iterable(iters):
+    """
+    Expands a nested iterable structure, flattening it into one iterable
+
+    Parameters
+    ----------
+    lists: set of Iterables
+        The object(s) to de-nest
+
+    Yields
+    ------
+        elements of iterable
+    """
+    for _iter in iters:
+        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes)):
+            print(_iter)
+            for _it in flatten_iterable(_iter):
+                yield _it
+        else:
+            yield _iter
+
+
 # ======================================================================================
 # Coordinate system transformations
 # ======================================================================================
@@ -568,6 +600,11 @@ def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
     x = x_ref + r * np.cos(phi)
     z = z_ref + r * np.sin(phi)
     return x, z
+
+
+# ======================================================================================
+# Dynamic module loading
+# ======================================================================================
 
 
 def get_module(name):
@@ -643,3 +680,151 @@ def _loadfromspec(name):
         raise ImportError("File '{}' is not a module".format(mod_files[0]))
 
     return module
+
+
+# ======================================================================================
+# Materials related conversion functions
+# ======================================================================================
+
+
+def to_kelvin(
+    temp_in_celsius: Union[float, np.array, List[float]]
+) -> Union[float, np.array]:
+    """
+    Convert a temperature in Celsius to Kelvin.
+
+    Parameters
+    ----------
+    temp_in_celsius: Union[float, np.array, List[float]]
+        The temperature to convert [°C]
+
+    Returns
+    -------
+    temp_in_kelvin: Union[float, np.array]
+        The temperature [K]
+    """
+    if (is_num(temp_in_celsius) and temp_in_celsius < ABS_ZERO_C) or np.any(
+        np.less(temp_in_celsius, ABS_ZERO_C)
+    ):
+        raise ValueError("Negative temperature in K specified.")
+    return array_or_num(list_array(temp_in_celsius) - ABS_ZERO_C)
+
+
+def to_celsius(
+    temp_in_kelvin: Union[float, np.array, List[float]]
+) -> Union[float, np.array]:
+    """
+    Convert a temperature in Celsius to Kelvin.
+
+    Parameters
+    ----------
+    temp_in_kelvin: Union[float, np.array, List[float]]
+        The temperature to convert [K]
+
+    Returns
+    -------
+    temp_in_celsius: Union[float, np.array]
+        The temperature [°C]
+    """
+    if (is_num(temp_in_kelvin) and temp_in_kelvin < ABS_ZERO_K) or np.any(
+        np.less(temp_in_kelvin, ABS_ZERO_K)
+    ):
+        raise ValueError("Negative temperature in K specified.")
+    return array_or_num(list_array(temp_in_kelvin) + ABS_ZERO_C)
+
+
+def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+    """
+    Convert a density in kg/m3 to g/cm3
+
+    Parameters
+    ----------
+    density : Union[float, np.array, List[float]]
+        The density [kg/m3]
+
+    Returns
+    -------
+    density_gcm3 : Union[float, np.array]
+        The density [g/cm3]
+    """
+    if density is not None:
+        return array_or_num(list_array(density) / 1000.0)
+
+
+def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+    """
+    Convert a density in g/cm3 to kg/m3
+
+    Parameters
+    ----------
+    density : Union[float, np.array, List[float]]
+        The density [g/cm3]
+
+    Returns
+    -------
+    density_kgm3 : Union[float, np.array]
+        The density [kg/m3]
+    """
+    if density is not None:
+        return array_or_num(list_array(density) * 1000.0)
+
+
+def list_array(list_: Any) -> np.ndarray:
+    """
+    Always returns a numpy array
+    Can handle int, float, list, np.ndarray
+
+    Parameters
+    ----------
+    list_ : Any
+        The value to convert into a numpy array.
+
+    Returns
+    -------
+    result : np.ndarray
+        The value as a numpy array.
+
+    Raises
+    ------
+    TypeError
+        If the value cannot be converted to a numpy array.
+    """
+    if isinstance(list_, list):
+        return np.array(list_)
+    elif isinstance(list_, np.ndarray):
+        try:  # This catches the odd np.array(8) instead of np.array([8])
+            len(list_)
+            return list_
+        except TypeError:
+            return np.array([list_])
+    elif is_num(list_):
+        return np.array([list_])
+    else:
+        raise TypeError("Could not convert input type to list_array to a np.array.")
+
+
+def array_or_num(array: Any) -> Union[np.ndarray, float]:
+    """
+    Always returns a numpy array or a float
+
+    Parameters
+    ----------
+    array : Any
+        The value to convert into a numpy array or number.
+
+    Returns
+    -------
+    result : Union[np.ndarray, float]
+        The value as a numpy array or number.
+
+    Raises
+    ------
+    TypeError
+        If the value cannot be converted to a numpy or number.
+    """
+    if is_num(array):
+        return float(array)
+    elif isinstance(array, np.ndarray):
+        return array
+    else:
+        raise TypeError

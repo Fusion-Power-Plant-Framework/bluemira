@@ -36,7 +36,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import bluemira_print
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
@@ -52,7 +52,7 @@ plt.close("all")
 # %%[markdown]
 # ## BACKGROUND
 #
-# Geometry matters. It is not plasmsa physics, but it is not trivial.
+# Geometry matters. It is not plasma physics, but it is not trivial.
 # It is the source of most errors in BLUEPRINT, because of the number of
 # funny edge and corner cases, and because when you parameterise lots of
 # different things in very different ways there is a combinatorial explosion of
@@ -234,7 +234,7 @@ dictionary = {"x": [1, 2, 3], "y": 4.4573, "z": [0, 0, 2]}
 # assume that it is on e.g. x-z plane, at an offset of y from the 0-x-z plane.
 
 # %%
-dloop = Loop.from_dict(dictionary)
+dict_loop = Loop.from_dict(dictionary)
 
 # %%[markdown]
 # ### Instantiating a loop from a numpy array
@@ -248,15 +248,15 @@ coordinates = np.array(
     ]
 )
 
-aloop = Loop.from_array(coordinates)
+array_loop = Loop.from_array(coordinates)
 
 # %%[markdown]
 # When plotting Loops, it is also nice sometimes to specify the matplotlib
 # Axes object onto which they are plotted.
 f, ax = plt.subplots()
 
-aloop.plot(ax)
-ax.set_title("aloop from a numpy array")
+array_loop.plot(ax)
+ax.set_title("A loop from a numpy array")
 
 # %%[markdown]
 # ### Instantiating a loop from a file
@@ -268,7 +268,7 @@ ax.set_title("aloop from a numpy array")
 # First we need to get the folder where some Loops are stored:
 
 # %%
-path = get_BP_path("BLUEPRINT/cad/test_data", subfolder="tests")
+path = get_bluemira_path("BLUEPRINT/cad/test_data", subfolder="tests")
 
 print(path)
 
@@ -299,7 +299,7 @@ plasma_loop.translate([4, 0, 0])
 plasma_loop.plot(ax, edgecolor="r", facecolor="pink")
 
 # %%[markdown]
-# The plasma_loop has been permanantly moved. What if we want a copy?
+# The plasma_loop has been permanently moved. What if we want a copy?
 
 # %%
 plasma_loop2 = plasma_loop.translate([4, 0, 0], update=False)

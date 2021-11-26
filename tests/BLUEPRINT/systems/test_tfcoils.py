@@ -36,7 +36,7 @@ import OCC
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from bluemira.equilibria.shapes import flux_surface_manickam
@@ -79,7 +79,7 @@ class TestTFCoil:
 
         cls.parameters = ParameterFrame(params)
 
-        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
+        read_path = get_bluemira_path("Geometry", subfolder="data/BLUEPRINT")
         # Load a target plasma separatrix
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
@@ -165,7 +165,7 @@ class TestTaperedPictureFrameTF:
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
-        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
+        read_path = get_bluemira_path("Geometry", subfolder="data/BLUEPRINT")
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
         name = os.sep.join([read_path, "KOZ_PF_test1.json"])
@@ -270,7 +270,7 @@ class TestSCPictureFrameTF:
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
-        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
+        read_path = get_bluemira_path("Geometry", subfolder="data/BLUEPRINT")
         lcfs = flux_surface_manickam(3.639, 0, 2.183, 2.8, 0.543, n=40)
         lcfs.close()
         name = os.sep.join([read_path, "KOZ_PF_test1.json"])
@@ -357,7 +357,7 @@ class TestCurvedPictureframeTF:
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
-        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
+        read_path = get_bluemira_path("Geometry", subfolder="data/BLUEPRINT")
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
         ko_zone = make_box_xz(1, 9, -9, 9)
@@ -451,7 +451,7 @@ class TestResistiveCurvedPictureframeTF:
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
-        read_path = get_BP_path("Geometry", subfolder="data/BLUEPRINT")
+        read_path = get_bluemira_path("Geometry", subfolder="data/BLUEPRINT")
         lcfs = flux_surface_manickam(3.42, 0, 2.137, 2.9, 0.55, n=40)
         lcfs.close()
         ko_zone = make_box_xz(1, 9, -9, 9)

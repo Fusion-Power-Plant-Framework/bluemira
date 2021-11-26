@@ -29,6 +29,8 @@ from BLUEPRINT.geometry.shell import MultiShell
 from BLUEPRINT.reactor import Reactor
 from bluemira.base.config import SingleNull
 
+from bluemira.base.file import BM_ROOT
+
 from examples.BLUEPRINT_integration import BluemiraReactor
 
 
@@ -57,8 +59,8 @@ config = {
 }
 
 build_config = {
-    "reference_data_root": "!BP_ROOT!/tests/bluemira/test_data",
-    "generated_data_root": "!BP_ROOT!/tests/bluemira/test_generated_data",
+    "reference_data_root": f"{BM_ROOT}/tests/bluemira/test_data",
+    "generated_data_root": f"{BM_ROOT}/tests/bluemira/test_generated_data",
     "plot_flag": tests.PLOTTING,
     "process_mode": "mock",  # Tests don't require PROCESS to be installed
     "plasma_mode": "run",

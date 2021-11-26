@@ -18,23 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
 
-# =============================================================================
-# Material mixture utility classes
-# =============================================================================
-from BLUEPRINT.materials.constants import MATERIAL_BEAM_MAP
-from BLUEPRINT.materials import materials_cache
-
-
-class TestMatDict:
-    def test_wp(self):
-        tf = materials_cache.get_material("Toroidal_Field_Coil_2015")
-        mat_dict = tf.make_mat_dict(294)
-
-        for key in MATERIAL_BEAM_MAP.values():
-            assert key in mat_dict
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+"""
+Bluemira balance_of_plot module
+"""

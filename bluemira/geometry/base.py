@@ -32,6 +32,7 @@ from abc import ABC, abstractmethod
 
 # import freecad api
 from . import _freecadapi
+from bluemira.geometry.bound_box import BoundingBox
 
 import copy
 
@@ -63,30 +64,26 @@ class BluemiraGeo(ABC):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
-        self._orientation = _Orientation.FORWARD
+        self.__orientation = _Orientation("Forward")
+
+    @property
+    def _orientation(self):
+        return self.__orientation
+
+    @_orientation.setter
+    def _orientation(self, value):
+        self.__orientation = _Orientation(value)
+
+    def _check_reverse(self, obj):
+        if self._orientation != _Orientation(obj.Orientation):
+            obj.reverse()
+            self._orientation = _Orientation(obj.Orientation)
+        return obj
 
     @staticmethod
     def _converter(func):
         """Function used in __getattr__ to modify the added functions"""
         return func
-
-    # Obsolete.
-    # It was used to getattr from the primitive object, but it was replaced
-    # with specific implementation into the respective api. However it could be still
-    # useful (for this reason is just commented).
-    # def __getattr__(self, key):
-    #     """
-    #     Transfer the key getattr to shape object.
-    #     """
-    #     if key in type(self).attrs:
-    #         output = getattr(self._shape, type(self).attrs[key])
-    #         if callable(output):
-    #             return self.__class__._converter(output)
-    #         else:
-    #             return output
-    #     else:
-    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
-    #             self).__name__), key))
 
     def _check_boundary(self, objs):
         """Check if objects objs can be used as boundaries"""
@@ -109,12 +106,6 @@ class BluemiraGeo(ABC):
     @boundary.setter
     def boundary(self, objs):
         self._boundary = self._check_boundary(objs)
-
-    def _check_reverse(self, obj):
-        if self._orientation != obj.Orientation:
-            obj.reverse()
-            self._orientation = obj.Orientation
-        return obj
 
     @property
     @abstractmethod
@@ -145,8 +136,9 @@ class BluemiraGeo(ABC):
 
     @property
     def bounding_box(self):
-        """Checks if the shape is closed"""
-        return _freecadapi.bounding_box(self._shape)
+        """The bounding box of the shape"""
+        x_min, y_min, z_min, x_max, y_max, z_max = _freecadapi.bounding_box(self._shape)
+        return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
     def is_null(self):
         """Checks if the shape is null."""
@@ -246,3 +238,21 @@ class BluemiraGeo(ABC):
         else:
             geo_copy.label = self.label
         return geo_copy
+
+    # Obsolete.
+    # It was used to getattr from the primitive object, but it was replaced
+    # with specific implementation into the respective api. However it could be still
+    # useful (for this reason is just commented).
+    # def __getattr__(self, key):
+    #     """
+    #     Transfer the key getattr to shape object.
+    #     """
+    #     if key in type(self).attrs:
+    #         output = getattr(self._shape, type(self).attrs[key])
+    #         if callable(output):
+    #             return self.__class__._converter(output)
+    #         else:
+    #             return output
+    #     else:
+    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
+    #             self).__name__), key))

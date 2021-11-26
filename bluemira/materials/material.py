@@ -36,20 +36,25 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import neutronics_material_maker as nmm
 
-from BLUEPRINT.base.error import MaterialsError
-from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.materials.constants import T_DEFAULT, P_DEFAULT
-from BLUEPRINT.utilities.tools import (
-    gcm3tokgm3,
-    tocelsius,
-    tokelvin,
+from ..base.look_and_feel import bluemira_warn
+from ..utilities.tools import (
+    gcm3_to_kgm3,
+    to_celsius,
+    to_kelvin,
     list_array,
     array_or_num,
 )
 from bluemira.utilities.tools import is_num
 
+from .constants import T_DEFAULT, P_DEFAULT
+from .error import MaterialsError
+
 # Set any custom symbols for use in asteval
-asteval_user_symbols = {"PropsSI": PropsSI, "tocelcius": tocelsius, "tokelvin": tokelvin}
+asteval_user_symbols = {
+    "PropsSI": PropsSI,
+    "to_celsius": to_celsius,
+    "to_kelvin": to_kelvin,
+}
 
 
 def matproperty(t_min, t_max):
@@ -66,12 +71,12 @@ def matproperty(t_min, t_max):
             if not (temperatures <= t_max).all():
                 raise ValueError(
                     "Material property not valid outside of tempe"
-                    f"rature range: {temperatures} > Tmax = {t_max}"
+                    f"rature range: {temperatures} > T_max = {t_max}"
                 )
             if not (temperatures >= t_min).all():
                 raise ValueError(
                     "Material property not valid outside of tempe"
-                    f"rature range: {temperatures} < Tmin = {t_min}"
+                    f"rature range: {temperatures} < T_min = {t_min}"
                 )
             temperatures = array_or_num(temperatures)
             return f(args[0], temperatures, **kwargs)
@@ -113,14 +118,14 @@ class MaterialProperty:
         otherwise it will define a constant value.
     temp_max_kelvin: float
         The maximum temperature [K] at which the property is valid. If not provided
-        and no temp_max_celcius then all temperatures above 0K are valid.
+        and no temp_max_celsius then all temperatures above 0K are valid.
     temp_min_kelvin: float
         The maximum temperature [K] at which the property is valid. If not
-        provided and no temp_min_celcius then properties will be valid down to 0K.
-    temp_max_celcius: float
+        provided and no temp_min_celsius then properties will be valid down to 0K.
+    temp_max_celsius: float
         The maximum temperature [°C] at which the property is valid. If not provided
         and no temp_max_kelvin then all temperatures above 0K are valid.
-    temp_min_celcius: float
+    temp_min_celsius: float
         The optional maximum temperature [°C] at which the property is valid. If not
         provided and no temp_min_kelvin then properties will be valid down to 0K.
     reference: str
@@ -132,12 +137,12 @@ class MaterialProperty:
         value,
         temp_max_kelvin=None,
         temp_min_kelvin=None,
-        temp_max_celcius=None,
-        temp_min_celcius=None,
+        temp_max_celsius=None,
+        temp_min_celsius=None,
         reference=None,
     ):
         if (temp_max_kelvin is not None or temp_min_kelvin is not None) and (
-            temp_max_celcius is not None or temp_min_celcius is not None
+            temp_max_celsius is not None or temp_min_celsius is not None
         ):
             raise MaterialsError(
                 "Material property temperature ranges must be set by either K or C, not both."
@@ -149,14 +154,14 @@ class MaterialProperty:
         self.temp_max = None
         if temp_max_kelvin is not None:
             self.temp_max = temp_max_kelvin
-        elif temp_max_celcius is not None:
-            self.temp_max = tokelvin(temp_max_celcius)
+        elif temp_max_celsius is not None:
+            self.temp_max = to_kelvin(temp_max_celsius)
 
         self.temp_min = None
         if temp_min_kelvin is not None:
             self.temp_min = temp_min_kelvin
-        elif temp_min_celcius is not None:
-            self.temp_min = tokelvin(temp_min_celcius)
+        elif temp_min_celsius is not None:
+            self.temp_min = to_kelvin(temp_min_celsius)
 
     def __call__(self, temperature, pressure=None, eps_vol=None):
         """
@@ -182,7 +187,7 @@ class MaterialProperty:
             self._validate_temperature(temperature)
             aeval.symtable["temperature"] = temperature
             aeval.symtable["temperature_in_K"] = temperature
-            aeval.symtable["temperature_in_C"] = tocelsius(temperature)
+            aeval.symtable["temperature_in_C"] = to_celsius(temperature)
 
             if pressure is not None:
                 aeval.symtable["pressure"] = pressure
@@ -268,13 +273,13 @@ class MaterialProperty:
             if (temperatures < self.temp_min).any():
                 raise ValueError(
                     "Material property not valid outside of temperature range: "
-                    f"{temperatures} < Tmin = {self.temp_min}"
+                    f"{temperatures} < T_min = {self.temp_min}"
                 )
         if self.temp_max is not None:
             if (temperatures > self.temp_max).any():
                 raise ValueError(
                     "Material property not valid outside of temperature range: "
-                    f"{temperature} > Tmax = {self.temp_max}"
+                    f"{temperature} > T_max = {self.temp_max}"
                 )
 
 
@@ -422,7 +427,7 @@ class Void(SerialisedMaterial, nmm.Material):
             elements={"H": 1},
             percent_type="ao",
             temperature_in_K=temperature_in_K,
-            temperature_in_C=tocelsius(temperature_in_K),
+            temperature_in_C=to_celsius(temperature_in_K),
             zaid_suffix=zaid_suffix,
             material_id=material_id,
         )
@@ -620,7 +625,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
             density_unit=density_unit,
             percent_type="wo",
             temperature_in_K=temperature_in_K,
-            temperature_in_C=tocelsius(temperature_in_K),
+            temperature_in_C=to_celsius(temperature_in_K),
             zaid_suffix=zaid_suffix,
             material_id=material_id,
         )
@@ -711,7 +716,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         density = _try_calc_property(self, "density_prop", temperature)
 
         if self.density_unit in ["g/cm3", "g/cc"]:
-            density = gcm3tokgm3(density)
+            density = gcm3_to_kgm3(density)
 
         return density
 
@@ -791,23 +796,23 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         except NotImplementedError:
             pass
         self.temperature_in_K = value
-        self.temperature_in_C = tocelsius(value)
+        self.temperature_in_C = to_celsius(value)
 
 
 class Superconductor:
     """
-    Presently gratutious use of multiple inheritance to convey plot function
+    Presently gratuitous use of multiple inheritance to convey plot function
     and avoid repetition. In future perhaps also a useful thing.
     """
 
-    def plot(self, bmin, bmax, tmin, tmax, eps=None, n=101, m=100):
+    def plot(self, b_min, b_max, t_min, t_max, eps=None, n=101, m=100):
         """
         Plots superconducting surface parameterisation
         strain `eps` only used for Nb3Sn
         """
         jc = np.zeros([m, n])
-        fields = np.linspace(bmin, bmax, n)
-        temperatures = np.linspace(tmin, tmax, m)
+        fields = np.linspace(b_min, b_max, n)
+        temperatures = np.linspace(t_min, t_max, m)
         for j, b in enumerate(fields):
             for i, t in enumerate(temperatures):
                 args = (b, t, eps) if eps else (b, t)
@@ -828,10 +833,9 @@ class Superconductor:
     @staticmethod
     def _handle_ij(number):
         """
-        Takes the real part of the imagniary number that results from
-        exponing a negative number with a fraction
+        Takes the real part of the imaginary number that results from the exponation of a
+        negative number with a fraction.
         """
-        # return np.sqrt(number.real**2+number.imag**2)
         return number.real
 
 
@@ -1065,7 +1069,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         b = self.b(B, temperature, eps)
         t = self.reduced_t(temperature, eps)
         # Ensure physical current density with max (j, 0)
-        # Limits of paramterisation likely to be encountered sooner
+        # Limits of parametrisation likely to be encountered sooner
         return max(
             (
                 self.c
@@ -1174,7 +1178,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
             density_unit=density_unit,
             percent_type="ao",
             temperature_in_K=temperature_in_K,
-            temperature_in_C=tocelsius(temperature_in_K),
+            temperature_in_C=to_celsius(temperature_in_K),
             pressure_in_Pa=pressure_in_Pa,
             zaid_suffix=zaid_suffix,
             material_id=material_id,
@@ -1204,7 +1208,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
         density = _try_calc_property(self, "density_prop", temperature, pressure)
 
         if self.density_unit in ["g/cm3", "g/cc"]:
-            density = gcm3tokgm3(density)
+            density = gcm3_to_kgm3(density)
 
         return density
 
@@ -1328,7 +1332,7 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
     ):
         self.is_enrichable = True
         try:
-            import openmc  # noqa(F401)
+            import openmc  # type: ignore # noqa(F401)
         except ImportError:
             self.is_enrichable = False
         if enrichment is not None:
@@ -1344,7 +1348,7 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
             atoms_per_unit_cell=atoms_per_unit_cell,
             percent_type="ao",
             temperature_in_K=temperature_in_K,
-            temperature_in_C=tocelsius(temperature_in_K),
+            temperature_in_C=to_celsius(temperature_in_K),
             packing_fraction=packing_fraction,
             enrichment=enrichment if self.is_enrichable else None,
             enrichment_target="Li6" if self.is_enrichable else None,
@@ -1385,14 +1389,14 @@ class BePebbleBed(UnitCellCompound):
     Beryllium Pebble Bed.
     """
 
-    @matproperty(t_min=tokelvin(25), t_max=tokelvin(800))
+    @matproperty(t_min=to_kelvin(25), t_max=to_kelvin(800))
     def CTE(self, temperature, eps_vol=0):  # noqa (N802)
         """
         https://www.sciencedirect.com/science/article/pii/S0920379602001655
         """
-        # NOTE: Effect of inelastic volumetric strains [%] not neglible
+        # NOTE: Effect of inelastic volumetric strains [%] not negligible
         # esp_vol calculated roughly as f(T), as per 2M2BH9
-        temperature = tocelsius(temperature)
+        temperature = to_celsius(temperature)
         if eps_vol == 0:
 
             def calc_eps_vol(temp):
@@ -1448,7 +1452,7 @@ class Plasma(SerialisedMaterial, nmm.Material):
     ):
         temperature_in_C = None  # noqa(N806)
         if temperature_in_K is not None:
-            temperature_in_C = tocelsius(temperature_in_K)  # noqa(N806)
+            temperature_in_C = to_celsius(temperature_in_K)  # noqa(N806)
 
         density_val = None
         if isinstance(density.value, (int, float)):
@@ -1485,9 +1489,3 @@ class Plasma(SerialisedMaterial, nmm.Material):
         Poisson's ratio.
         """
         return 0
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

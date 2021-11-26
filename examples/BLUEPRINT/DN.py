@@ -24,8 +24,8 @@ A typical double null tokamak fusion power reactor.
 import matplotlib.pyplot as plt
 
 from BLUEPRINT.reactor import Reactor
-from bluemira.base.config import SingleNull
-from BLUEPRINT.base.file import make_BP_path
+from BLUEPRINT.systems.config import SingleNull
+from bluemira.base.file import BM_ROOT, make_bluemira_path
 from bluemira.base.look_and_feel import plot_defaults
 
 
@@ -62,7 +62,7 @@ config = {
 }
 
 build_config = {
-    "generated_data_root": "!BP_ROOT!/generated_data/BLUEPRINT",
+    "generated_data_root": f"{BM_ROOT}/generated_data/BLUEPRINT",
     "plot_flag": False,
     "process_mode": "mock",
     "plasma_mode": "run",
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
     if LOAD:
         filename = (
-            make_BP_path(f"reactors/{REACTORNAME}", subfolder="data/BLUEPRINT")
+            make_bluemira_path(f"reactors/{REACTORNAME}", subfolder="data/BLUEPRINT")
             + "/"
             + REACTORNAME
             + ".pkl"

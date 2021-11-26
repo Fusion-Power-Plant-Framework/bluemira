@@ -24,12 +24,7 @@ Generic plot utilities, figure and gif operations
 """
 
 import pytest
-import os
-import filecmp
-import matplotlib.pyplot as plt
-from BLUEPRINT.base.file import get_BP_path
-from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.utilities.plottools import mathify, gsymbolify, SuperSankey
+from BLUEPRINT.utilities.plottools import mathify, gsymbolify
 
 
 class TestMathify:
@@ -53,59 +48,6 @@ class TestGsymbolify:
     def test_nothing(self):
         string = gsymbolify("nothing")
         assert string == "nothing"
-
-
-class TestSuperSankey:
-    def test_sankey_ring(self):
-        plot_defaults(True)
-
-        scale = 0.001
-        gap = 0.25
-        trunk_length = 0.0007 / scale
-        l_standard = 0.0006 / scale  # standard arrow length
-        l_medium = 0.001 / scale  # medium arrow length
-        sankey = SuperSankey(scale=scale, gap=gap)
-        sankey.add(
-            "1",
-            [1000, 500, -1500],
-            orientations=[0, -1, 0],
-            pathlengths=[l_medium, l_standard, l_medium],
-        )
-        sankey.add(
-            "2",
-            [1500, -1500],
-            orientations=[0, -1],
-            prior=0,
-            connect=(2, 0),
-            pathlengths=[l_medium, l_standard],
-        )
-        sankey.add(
-            "3",
-            [1500, -1000, -500],
-            orientations=[0, 0, -1],
-            prior=1,
-            connect=(1, 0),
-            pathlengths=[l_medium, l_standard, l_medium],
-        )
-        sankey.add(
-            "4",
-            [500, -500],
-            orientations=[0, -1],
-            prior=2,
-            future=0,
-            pathlengths=[l_medium, l_standard],
-            connect=[(2, 0), (1, 1)],
-        )
-
-        sankey.finish()
-        figure = plt.gcf()
-
-        path = get_BP_path("BLUEPRINT/utilities/test_data", subfolder="tests")
-        name_new = os.sep.join([path, "sankey_test_new.png"])
-        figure.savefig(name_new)
-        name_old = os.sep.join([path, "sankey_test.png"])
-
-        assert filecmp.cmp(name_new, name_old, shallow=False)
 
 
 if __name__ == "__main__":

@@ -26,8 +26,7 @@ Wrapper for FreeCAD Part.Face objects
 from __future__ import annotations
 
 # import from freecad
-import freecad  # noqa: F401
-import Part
+import bluemira.geometry._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
@@ -41,12 +40,15 @@ class BluemiraShell(BluemiraGeo):
         boundary_classes = [BluemiraFace]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_shell(self):
+    def _create_shell(self, check_reverse=True):
         """Creation of the shell"""
-        faces = [f._shape for f in self.boundary]
-        shell = Part.makeShell(faces)
+        faces = [f._create_face(check_reverse=True) for f in self.boundary]
+        shell = cadapi.apiShell(faces)
 
-        return self._check_reverse(shell)
+        if check_reverse:
+            return self._check_reverse(shell)
+        else:
+            return shell
 
     @property
     def _shape(self):
@@ -54,8 +56,8 @@ class BluemiraShell(BluemiraGeo):
         return self._create_shell()
 
     @classmethod
-    def _create(cls, obj: Part.Shell, label=""):
-        if isinstance(obj, Part.Shell):
+    def _create(cls, obj: cadapi.apiShell, label=""):
+        if isinstance(obj, cadapi.apiShell):
             orientation = obj.Orientation
             faces = obj.Faces
             bmfaces = []

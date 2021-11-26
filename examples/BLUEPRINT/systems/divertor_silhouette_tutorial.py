@@ -38,8 +38,8 @@ import numpy as np
 import os
 
 from bluemira.base.parameter import ParameterFrame
+from bluemira.base.file import get_bluemira_root
 
-from BLUEPRINT.base.file import get_bluemira_root
 from BLUEPRINT.geometry.geomtools import unique
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.nova.firstwall import FirstWallProfile

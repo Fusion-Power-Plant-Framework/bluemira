@@ -45,6 +45,7 @@ from bluemira.equilibria.solve import (
     PicardAbsIterator,
     PicardAbsCoilsetIterator,
 )
+from bluemira.geometry._deprecated_loop import Loop
 
 # Clean up and make plots look good
 plt.close("all")
@@ -210,6 +211,30 @@ def init_coilset():
     return coilset
 
 
+def init_pfregions(coilset):
+    """
+    Initialises regions in which coil position optimisation will be limited to.
+    """
+    max_coil_shifts = {
+        "x_shifts_lower": -1.0,
+        "x_shifts_upper": 1.0,
+        "z_shifts_lower": -1.0,
+        "z_shifts_upper": 1.0,
+    }
+
+    pfregions = {}
+    for coil in coilset._ccoils:
+        xu = coil.x + max_coil_shifts["x_shifts_upper"]
+        xl = coil.x + max_coil_shifts["x_shifts_lower"]
+        zu = coil.z + max_coil_shifts["z_shifts_upper"]
+        zl = coil.z + max_coil_shifts["z_shifts_lower"]
+
+        rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
+
+        pfregions[coil.name] = rect
+    return pfregions
+
+
 def init_equilibrium(grid, coilset, constraint_set):
     """
     Create an initial guess for the Equilibrium state.
@@ -303,19 +328,24 @@ def set_coilset_optimiser(
     """
     Create the optimiser to be used to optimise the coilset.
     """
+    pfregions = init_pfregions(coilset)
     if optimiser_name in ["Norm2Tikhonov"]:
         optimiser = Norm2Tikhonov(**optimisation_options)
     elif optimiser_name in ["BoundedCurrentOptimiser"]:
         optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
     elif optimiser_name in ["CoilsetOptimiser"]:
-        optimiser = CoilsetOptimiser(coilset, **optimisation_options)
+        optimiser = CoilsetOptimiser(
+            coilset, pfregions=pfregions, **optimisation_options
+        )
     elif optimiser_name in ["NestedCoilsetOptimiser"]:
         sub_optimiser = set_coilset_optimiser(
             coilset,
             optimiser_name=suboptimiser_name,
             optimisation_options=suboptimisation_options,
         )
-        optimiser = NestedCoilsetOptimiser(sub_optimiser, **optimisation_options)
+        optimiser = NestedCoilsetOptimiser(
+            sub_optimiser, pfregions=pfregions, **optimisation_options
+        )
     return optimiser
 
 
@@ -353,12 +383,6 @@ def default_optimiser_options(optimiser_name):
         options["optimisation_options"] = {
             "max_currents": 2.0e7,
             "gamma": 1e-8,
-            "max_coil_shifts": {
-                "x_shifts_lower": -1.0,
-                "x_shifts_upper": 1.0,
-                "z_shifts_lower": -1.0,
-                "z_shifts_upper": 1.0,
-            },
             "opt_args": {
                 "algorithm_name": "SBPLX",
                 "opt_conditions": {
@@ -370,12 +394,6 @@ def default_optimiser_options(optimiser_name):
         }
     elif optimiser_name in ["NestedCoilsetOptimiser"]:
         options["optimisation_options"] = {
-            "max_coil_shifts": {
-                "x_shifts_lower": -1.0,
-                "x_shifts_upper": 1.0,
-                "z_shifts_lower": -1.0,
-                "z_shifts_upper": 1.0,
-            },
             "opt_args": {
                 "algorithm_name": "SBPLX",
                 "opt_conditions": {

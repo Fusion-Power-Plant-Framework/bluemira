@@ -22,7 +22,7 @@
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.config import Configuration
+from BLUEPRINT.systems.config import Configuration
 
 from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process import teardown

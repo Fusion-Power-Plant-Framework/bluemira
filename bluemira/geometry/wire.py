@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import List
 
 # import from bluemira
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.base import BluemiraGeo, _Orientation
 
 from bluemira.geometry._freecadapi import (
     discretize_by_edges,
@@ -73,7 +73,6 @@ class BluemiraWire(BluemiraGeo):
                 f"Cannot make a BluemiraWire from wires of mixed orientations: {orientations}"
             )
         self._orientation = orientations[0]
-        return orientations
 
     @staticmethod
     def _converter(func):
@@ -88,7 +87,14 @@ class BluemiraWire(BluemiraGeo):
     @property
     def _shape(self) -> apiWire:
         """apiWire: shape of the object as a single wire"""
-        return self._check_reverse(apiWire(self._wires))
+        return self._create_wire()
+
+    def _create_wire(self, check_reverse=True):
+        wire = apiWire(self._wires)
+        if check_reverse:
+            return self._check_reverse(wire)
+        else:
+            return wire
 
     @property
     def _wires(self) -> List[apiWire]:
@@ -97,7 +103,14 @@ class BluemiraWire(BluemiraGeo):
         for o in self.boundary:
             if isinstance(o, apiWire):
                 for w in o.Wires:
-                    wires += [apiWire(w.OrderedEdges)]
+                    wire = apiWire(w.OrderedEdges)
+                    if self._orientation != _Orientation(wire.Orientation):
+                        edges = []
+                        for edge in wire.OrderedEdges:
+                            edge.reverse()
+                            edges.append(edge)
+                        wire = apiWire(edges)
+                    wires += [wire]
             else:
                 wires += o._wires
         return wires

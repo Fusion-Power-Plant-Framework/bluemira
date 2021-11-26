@@ -23,7 +23,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import pytest
 
-from BLUEPRINT.base.file import get_BP_path
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import (
@@ -42,7 +42,7 @@ from BLUEPRINT.geometry.geomtools import (
 )
 
 
-TEST = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+TEST = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
 
 
 class TestInLoop:

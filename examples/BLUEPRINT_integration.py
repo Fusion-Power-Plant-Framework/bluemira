@@ -38,7 +38,7 @@ from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.reactor import Reactor
 
 from bluemira.base.components import GroupingComponent, PhysicalComponent, ComponentError
-from bluemira.base.config import SingleNull
+from bluemira.base.file import BM_ROOT
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry._deprecated_tools import (
     convert_coordinates_to_face,
@@ -403,7 +403,7 @@ if __name__ == "__main__":
     }
 
     build_config = {
-        "generated_data_root": "!BP_ROOT!/generated_data",
+        "generated_data_root": f"{BM_ROOT}/generated_data",
         "plot_flag": False,
         "process_mode": "mock",
         "plasma_mode": "run",

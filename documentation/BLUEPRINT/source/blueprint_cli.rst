@@ -120,7 +120,7 @@ The following options are available when running the BLUEPRINT CLI:
 
         .. note::
         
-                The keyword ``!BP_ROOT!`` may be used, to be replaced with the path to
+                The keyword ``!BM_ROOT!`` may be used, to be replaced with the path to
                 the local BLUEPRINT directory (e.g. ``~/code/BLUEPRINT``).
 
 -ro, --reactornameout TEXT

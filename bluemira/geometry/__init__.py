@@ -31,6 +31,5 @@ from . import solid
 from . import constants
 from . import error
 from . import tools
-
-# from . import plotting
 from . import plane
+from . import bound_box

@@ -20,24 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Constants for use in the materials package.
+Error classes for the balance_of_plant module
 """
 
-T_DEFAULT = 293.15  # Default temperature for all liquids [K]
-P_DEFAULT = 101325  # Default pressure for all liquids [Pa]
+from bluemira.base.error import BluemiraError
 
 
-# Sigh.. cba to fix
-MATERIAL_BEAM_MAP = {
-    "rho": "rho",
-    "mu": "nu",
-    "CTE": "alpha",
-    "E": "E",
-    "Sy": "sigma_y",
-}
+class BalanceOfPlantError(BluemiraError):
+    """
+    Base error for the balance_of_plant module.
+    """
 
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
+    pass

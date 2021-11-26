@@ -32,7 +32,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_print, plot_defaults
 
 from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.file import get_BP_path, try_get_BP_path
+from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import (
@@ -62,7 +62,7 @@ class TBRData:
         self.iy = None
         self.datadir = datadir
         if self.datadir is None:
-            self.datadir = get_BP_path("neutronics", subfolder="data/BLUEPRINT")
+            self.datadir = get_bluemira_path("neutronics", subfolder="data/BLUEPRINT")
         self.filename = blanket_type + TBR_DATA_ROOT
         self.get_raw_TBR_data()
         self.deescalate_data()
@@ -220,7 +220,7 @@ class BlanketCoverage(ReactorSystem):
         self.plug_loops = []
         self.max_TBR = self.inputs["max_TBR"]
         datadir = inputs.get(
-            "datadir", try_get_BP_path("neutronics", subfolder="data/BLUEPRINT")
+            "datadir", try_get_bluemira_path("neutronics", subfolder="data/BLUEPRINT")
         )
         self.data = TBRData(self.params.blanket_type, datadir=datadir)
 
