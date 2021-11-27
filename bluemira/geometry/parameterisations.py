@@ -314,12 +314,11 @@ class PrincetonD(GeometryParameterisation):
         idx_x2 = self._get_x_norm_index("x2")
 
         if grad.size > 0:
-            g = np.zeros(len(x_norm))
+            grad[:] = np.zeros(len(x_norm))
             if not self.variables["x1"].fixed:
-                g[idx_x1] = 1
+                grad[0, idx_x1] = 1
             if not self.variables["x2"].fixed:
-                g[idx_x2] = -1
-            grad[0, :] = g
+                grad[0, idx_x2] = -1
 
         return constraint
 

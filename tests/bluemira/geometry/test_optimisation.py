@@ -23,13 +23,10 @@ import numpy as np
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.utilities.optimiser import Optimiser
-from bluemira.geometry.parameterisations import TripleArc, PrincetonD
+from bluemira.geometry.parameterisations import TripleArc
 
 
 class TestOptimisationProblem(GeometryOptimisationProblem):
-    def __init__(self, parameterisation, optimiser):
-        super().__init__(parameterisation, optimiser)
-
     def calculate_length(self, x):
         self.update_parameterisation(x)
         return self.parameterisation.create_shape().length
@@ -69,7 +66,7 @@ class TestGeometryOptimisationProblem:
             opt_conditions=cls.opt_conditions,
         )
         problem = TestOptimisationProblem(parameterisation, optimiser)
-
+        problem.apply_shape_constraints()
         problem.solve()
         cls.ref_length = parameterisation.create_shape().length
 
@@ -90,7 +87,7 @@ class TestGeometryOptimisationProblem:
             opt_conditions=self.opt_conditions,
         )
         problem = TestOptimisationProblem(parameterisation, optimiser)
-
+        problem.apply_shape_constraints()
         assert problem.parameterisation.variables.n_free_variables == 7
         assert problem.parameterisation.variables._fixed_variable_indices == []
 
@@ -115,7 +112,7 @@ class TestGeometryOptimisationProblem:
             opt_conditions=self.opt_conditions,
         )
         problem = TestOptimisationProblem(parameterisation, optimiser)
-
+        problem.apply_shape_constraints()
         assert problem.parameterisation.variables.n_free_variables == 6
         assert problem.parameterisation.variables._fixed_variable_indices == [0]
 

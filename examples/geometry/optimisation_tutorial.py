@@ -233,4 +233,4 @@ print(f"n_evals: {problem.optimiser.n_evals}")
 # problem intelligently, using well-behaved objective and constraint functions, and smart
 # bounds. Trying out different optimisers doesn't hurt. There's a trade-off between speed
 # and accuracy. If you can't work out the analytical gradients, numerical gradients are a
-# questionable approach, but do work well (fast) on some problems.
+# questionable approach, but can work well (fast) on some problems.
