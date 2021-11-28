@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import anytree
 from anytree import NodeMixin, RenderTree
-import copy
 from typing import Any, List, Optional, Union
 
 from bluemira.display.plotter import Plottable
@@ -120,17 +119,6 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             return found_components[0]
 
         return found_components
-
-    def copy(self) -> Component:
-        """
-        Provides a deep copy of the Component
-
-        Returns
-        -------
-        copy: Component
-            The copy of the Component
-        """
-        return copy.deepcopy(self)
 
     def add_child(self, child: Component) -> Component:
         """

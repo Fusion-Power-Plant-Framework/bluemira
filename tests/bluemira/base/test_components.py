@@ -97,18 +97,6 @@ class TestComponentClass:
         component = grandchild.get_component("Banana")
         assert component is None
 
-    def test_copy(self):
-        parent = Component("Parent")
-        child = Component("Child", parent=parent)
-        grandchild = Component("Grandchild", parent=child)
-
-        component = child.copy()
-        assert component is not child
-        assert component.parent is not parent
-        assert component.name == child.name
-        assert component.parent.name == parent.name
-        assert all([child_.name == grandchild.name for child_ in child.children])
-
     def test_add_child(self):
         parent = Component("Parent")
         child = Component("Child")
