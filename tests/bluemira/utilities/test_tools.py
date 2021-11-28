@@ -35,6 +35,7 @@ from bluemira.utilities.tools import (
     cross,
     dot,
     get_module,
+    get_class_from_module,
     is_num,
     levi_civita_tensor,
     norm,
@@ -310,13 +311,14 @@ def test_polar_cartesian():
 
 
 class TestGetModule:
-    def test_getmodule(self):
-        test_mod = "bluemira.utilities.tools"
-        test_mod_loc = get_bluemira_path("utilities") + "/tools.py"
+    test_mod = "bluemira.utilities.tools"
+    test_mod_loc = get_bluemira_path("utilities") + "/tools.py"
+    test_class_name = "CommentJSONDecoder"
 
-        for mod in [test_mod, test_mod_loc]:
+    def test_getmodule(self):
+        for mod in [self.test_mod, self.test_mod_loc]:
             module = get_module(mod)
-            assert module.__name__.rsplit(".", 1)[-1] == test_mod.rsplit(".", 1)[-1]
+            assert module.__name__.rsplit(".", 1)[-1] == self.test_mod.rsplit(".", 1)[-1]
 
     def test_getmodule_failures(self):
 
@@ -331,6 +333,30 @@ class TestGetModule:
         # Not a python module
         with pytest.raises(ImportError):
             get_module(get_bluemira_path() + "../README.md")
+
+    def test_get_class(self):
+        for mod in [self.test_mod, self.test_mod_loc]:
+            the_class = get_class_from_module(f"{mod}::{self.test_class_name}")
+            assert the_class.__name__ == self.test_class_name
+
+    def test_get_class_default(self):
+        class_name = "CommentJSONDecoder"
+        for mod in [self.test_mod, self.test_mod_loc]:
+            the_class = get_class_from_module(class_name, default_module=mod)
+            assert the_class.__name__ == class_name
+
+    def test_get_class_default_override(self):
+        class_name = "CommentJSONDecoder"
+        for mod in [self.test_mod, self.test_mod_loc]:
+            the_class = get_class_from_module(
+                f"{mod}::{self.test_class_name}", default_module="a_module"
+            )
+            assert the_class.__name__ == class_name
+
+    def test_get_class_failure(self):
+        # Class not in module
+        with pytest.raises(ImportError):
+            get_class_from_module("Spam", default_module=self.test_mod)
 
 
 if __name__ == "__main__":

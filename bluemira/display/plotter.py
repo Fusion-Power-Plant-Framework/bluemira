@@ -569,15 +569,17 @@ class ComponentPlotter(BasePlotter):
 
     def _populate_data(self, comp):
         self._cplotters = []
-        if comp.is_leaf:
-            plotter = _get_plotter_class(comp.shape)(self.options)
-            plotter._populate_data(comp.shape)
-            self._cplotters.append(plotter)
-        else:
-            for child in comp.children:
-                plotter = _get_plotter_class(child.shape)(self.options)
-                plotter._populate_data(child.shape)
+
+        def _populate_plotters(comp):
+            if comp.is_leaf:
+                plotter = _get_plotter_class(comp.shape)(self.options)
+                plotter._populate_data(comp.shape)
                 self._cplotters.append(plotter)
+            else:
+                for child in comp.children:
+                    _populate_plotters(child)
+
+        _populate_plotters(comp)
 
     def _make_plot_2d(self):
         for plotter in self._cplotters:

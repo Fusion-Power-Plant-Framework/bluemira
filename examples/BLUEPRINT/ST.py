@@ -26,7 +26,7 @@ import os
 from bluemira.base.file import BM_ROOT, get_bluemira_root, make_bluemira_path
 from bluemira.base.look_and_feel import plot_defaults, print_banner
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import Spherical
+from bluemira.base.config import Spherical
 
 plot_defaults()
 KEY_TO_PLOT = False

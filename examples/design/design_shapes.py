@@ -19,34 +19,43 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
+"""
+A basic tutorial for configuring and running a design with parameterised shapes.
+"""
 
-from bluemira.base.file import get_bluemira_path
-from bluemira.base.config import Configuration
-
-from bluemira.codes.process.api import PROCESS_ENABLED
-from bluemira.codes.process import teardown
+from bluemira.base.design import Design
 
 
-@pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
-class TestMFileReader:
-    fp = get_bluemira_path("bluemira/codes/test_data", subfolder="tests")
-
-    @classmethod
-    def setup_class(cls):
-        mapping = {
-            p[-1]["PROCESS"].name: p[0]
-            for p in Configuration.params
-            if len(p) == 7 and "PROCESS" in p[-1]
-        }
-        cls.bmfile = teardown.BMFile(cls.fp, mapping)
-        return cls
-
-    def test_extraction(self):
-        inp = [p[0] for p in Configuration.params if len(p) == 7 and "PROCESS" in p[-1]]
-        out = self.bmfile.extract_outputs(inp)
-        assert len(inp) == len(out)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+build_config = {
+    "Plasma": {
+        "class": "MakeParameterisedShape",
+        "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
+        "variables_map": {
+            "r_0": "R_0",
+            "a": "A",
+        },
+        "label": "Shape",
+    },
+    "TF Coils": {
+        "class": "MakeParameterisedShape",
+        "param_class": "PrincetonD",
+        "variables_map": {
+            "x1": "r_tf_in_centre",
+            "x2": {
+                "value": "r_tf_out_centre",
+                "lower_bound": 8.0,
+            },
+            "dz": 0.0,
+        },
+        "label": "Shape",
+    },
+}
+params = {
+    "R_0": (9.0, "Input"),
+    "A": (3.5, "Input"),
+    "r_tf_in_centre": (5.0, "Input"),
+    "r_tf_out_centre": (15.0, "Input"),
+}
+design = Design(params, build_config)
+component = design.run()
+component.plot_2d()

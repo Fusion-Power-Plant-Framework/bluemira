@@ -28,7 +28,7 @@ from bluemira.base.config_schema import ConfigurationSchema
 
 class Configuration(ConfigurationSchema, ParameterFrame):
     """
-    The base object for all variable names and metadata in BLUEPRINT.
+    The base object for all variable names and metadata in bluemira.
     Variables specified here should be physical in some way, and not represent
     how the code is being run.
     Defaults are also specified here, and overidden later.
@@ -379,9 +379,3 @@ class DoubleNull(Configuration):
 
     def __init__(self, custom_params=new_values):
         super().__init__(custom_params)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

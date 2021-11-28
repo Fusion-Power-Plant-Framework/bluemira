@@ -18,35 +18,3 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
-import pytest
-
-from bluemira.base.file import get_bluemira_path
-from bluemira.base.config import Configuration
-
-from bluemira.codes.process.api import PROCESS_ENABLED
-from bluemira.codes.process import teardown
-
-
-@pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
-class TestMFileReader:
-    fp = get_bluemira_path("bluemira/codes/test_data", subfolder="tests")
-
-    @classmethod
-    def setup_class(cls):
-        mapping = {
-            p[-1]["PROCESS"].name: p[0]
-            for p in Configuration.params
-            if len(p) == 7 and "PROCESS" in p[-1]
-        }
-        cls.bmfile = teardown.BMFile(cls.fp, mapping)
-        return cls
-
-    def test_extraction(self):
-        inp = [p[0] for p in Configuration.params if len(p) == 7 and "PROCESS" in p[-1]]
-        out = self.bmfile.extract_outputs(inp)
-        assert len(inp) == len(out)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])

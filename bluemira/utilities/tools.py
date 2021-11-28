@@ -35,7 +35,8 @@ from itertools import permutations
 from json import JSONDecoder, JSONEncoder
 from json.encoder import _make_iterencode
 from os import listdir
-from typing import Any, List, Union
+from typing import Any, List, Type, Union
+from types import ModuleType
 from unittest.mock import patch
 
 from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
@@ -607,30 +608,29 @@ def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
 # ======================================================================================
 
 
-def get_module(name):
+def get_module(name: str) -> ModuleType:
     """
     Load module dynamically.
 
     Parameters
     ----------
-    name: string
+    name: str
         Filename or python path (a.b.c) of module to import
 
     Returns
     -------
-    output: module
+    output: ModuleType
         Loaded module
-
     """
     try:
         module = imp(name)
     except ImportError:
         module = _loadfromspec(name)
-    bluemira_debug(f"Loaded {module.__name__}")
+    bluemira_debug(f"Loaded module {module.__name__}")
     return module
 
 
-def _loadfromspec(name):
+def _loadfromspec(name: str) -> ModuleType:
     """
     Load module from filename.
 
@@ -680,6 +680,39 @@ def _loadfromspec(name):
         raise ImportError("File '{}' is not a module".format(mod_files[0]))
 
     return module
+
+
+def get_class_from_module(name: str, default_module: str = "") -> Type:
+    """
+    Load a class from a module dynamically.
+
+    Parameters
+    ----------
+    name: str
+        Filename or python path (a.b.c) of module to import, with specific class to load
+        appended following :: e.g. my_package.my_module::my_class. If the default_module
+        is provided then only the class name (e.g. my_class) needs to be provided.
+    default_module: str
+        The default module to search for the class, by default "". If provided then if
+        name does not contain a module path then this the default module will be used to
+        search for the class. Can be overridden if the name provides a module path.
+
+    Returns
+    -------
+    output: Type
+        Loaded class
+    """
+    module = default_module
+    class_name = name
+    if "::" in class_name:
+        module, class_name = class_name.split("::")
+    try:
+        output = getattr(get_module(module), class_name)
+    except AttributeError:
+        raise ImportError(f"Unable to load class {class_name} - not in module {module}")
+
+    bluemira_debug(f"Loaded class {output.__name__}")
+    return output
 
 
 # ======================================================================================

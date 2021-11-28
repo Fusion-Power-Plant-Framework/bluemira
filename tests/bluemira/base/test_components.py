@@ -23,7 +23,6 @@ import pytest
 
 from bluemira.base.components import (
     Component,
-    GroupingComponent,
     PhysicalComponent,
     MagneticComponent,
 )
@@ -35,44 +34,40 @@ class TestComponentClass:
     Tests for the base Component functionality.
     """
 
-    def test_no_direct_initialisation(self):
-        with pytest.raises(ComponentError):
-            Component("Dummy")
-
     def test_tree(self):
-        target_tree = """Parent (GroupingComponent)
-└── Child (GroupingComponent)
-    └── Grandchild (GroupingComponent)"""
+        target_tree = """Parent (Component)
+└── Child (Component)
+    └── Grandchild (Component)"""
 
-        child = GroupingComponent("Child")
-        parent = GroupingComponent("Parent", children=[child])
-        grandchild = GroupingComponent("Grandchild", parent=child)
+        child = Component("Child")
+        parent = Component("Parent", children=[child])
+        grandchild = Component("Grandchild", parent=child)
         assert parent.tree() == target_tree
 
-        root: GroupingComponent = grandchild.root
+        root: Component = grandchild.root
         assert root.tree() == target_tree
 
     def test_get_component_full_tree(self):
-        parent = GroupingComponent("Parent")
-        child1 = GroupingComponent("Child1", parent=parent)
-        child2 = GroupingComponent("Child2", parent=parent)
-        grandchild = GroupingComponent("Grandchild", parent=child1)
+        parent = Component("Parent")
+        child1 = Component("Child1", parent=parent)
+        child2 = Component("Child2", parent=parent)
+        grandchild = Component("Grandchild", parent=child1)
 
         assert grandchild.get_component("Child2", full_tree=True) is child2
 
     def test_get_component_from_node(self):
-        parent = GroupingComponent("Parent")
-        child1 = GroupingComponent("Child1", parent=parent)
-        child2 = GroupingComponent("Child2", parent=parent)
-        grandchild = GroupingComponent("Grandchild", parent=child1)
+        parent = Component("Parent")
+        child1 = Component("Child1", parent=parent)
+        child2 = Component("Child2", parent=parent)
+        grandchild = Component("Grandchild", parent=child1)
 
         assert grandchild.get_component("Child2") is None
 
     def test_get_component_multiple_full_tree(self):
-        parent = GroupingComponent("Parent")
-        child1 = GroupingComponent("Child", parent=parent)
-        child2 = GroupingComponent("Child", parent=parent)
-        grandchild = GroupingComponent("Grandchild", parent=child1)
+        parent = Component("Parent")
+        child1 = Component("Child", parent=parent)
+        child2 = Component("Child", parent=parent)
+        grandchild = Component("Grandchild", parent=child1)
 
         components = grandchild.get_component("Child", first=False, full_tree=True)
         assert len(components) == 2
@@ -80,11 +75,11 @@ class TestComponentClass:
         assert components[0].parent == components[1].parent
 
     def test_get_component_multiple_from_node(self):
-        parent = GroupingComponent("Parent")
-        child1 = GroupingComponent("Child", parent=parent)
-        child2 = GroupingComponent("Child", parent=parent)
-        grandchild1 = GroupingComponent("Grandchild", parent=child1)
-        grandchild2 = GroupingComponent("Grandchild", parent=child2)
+        parent = Component("Parent")
+        child1 = Component("Child", parent=parent)
+        child2 = Component("Child", parent=parent)
+        grandchild1 = Component("Grandchild", parent=child1)
+        grandchild2 = Component("Grandchild", parent=child2)
 
         components = child1.get_component("Grandchild", first=False)
         assert len(components) == 1
@@ -95,51 +90,39 @@ class TestComponentClass:
         assert components[0] is grandchild2
 
     def test_get_component_missing(self):
-        parent = GroupingComponent("Parent")
-        child = GroupingComponent("Child", parent=parent)
-        grandchild = GroupingComponent("Grandchild", parent=child)
+        parent = Component("Parent")
+        child = Component("Child", parent=parent)
+        grandchild = Component("Grandchild", parent=child)
 
         component = grandchild.get_component("Banana")
         assert component is None
 
-    def test_copy(self):
-        parent = GroupingComponent("Parent")
-        child = GroupingComponent("Child", parent=parent)
-        grandchild = GroupingComponent("Grandchild", parent=child)
-
-        component = child.copy()
-        assert component is not child
-        assert component.parent is not parent
-        assert component.name == child.name
-        assert component.parent.name == parent.name
-        assert all([child_.name == grandchild.name for child_ in child.children])
-
     def test_add_child(self):
-        parent = GroupingComponent("Parent")
-        child = GroupingComponent("Child")
+        parent = Component("Parent")
+        child = Component("Child")
 
         parent.add_child(child)
         assert parent.children == (child,)
 
     def test_fail_add_duplicate_child(self):
-        parent = GroupingComponent("Parent")
-        child = GroupingComponent("Child", parent=parent)
+        parent = Component("Parent")
+        child = Component("Child", parent=parent)
 
         with pytest.raises(ComponentError):
             parent.add_child(child)
 
     def test_add_children(self):
-        parent = GroupingComponent("Parent")
-        child1 = GroupingComponent("Child1")
-        child2 = GroupingComponent("Child2")
+        parent = Component("Parent")
+        child1 = Component("Child1")
+        child2 = Component("Child2")
 
         parent.add_children([child1, child2])
         assert parent.children == (child1, child2)
 
     def test_fail_add_duplicate_children(self):
-        parent = GroupingComponent("Parent")
-        child1 = GroupingComponent("Child1", parent=parent)
-        child2 = GroupingComponent("Child2")
+        parent = Component("Parent")
+        child1 = Component("Child1", parent=parent)
+        child2 = Component("Child2")
 
         with pytest.raises(ComponentError):
             parent.add_children([child1, child2])

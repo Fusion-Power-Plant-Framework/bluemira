@@ -36,15 +36,16 @@ from BLUEPRINT.geometry.geombase import GeomBase
 from BLUEPRINT.geometry.shell import Shell, MultiShell
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
 
-from bluemira.base.components import GroupingComponent, PhysicalComponent, ComponentError
+from bluemira.base.components import Component, PhysicalComponent, ComponentError
+from bluemira.base.config import SingleNull
 from bluemira.base.file import BM_ROOT
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry._deprecated_tools import (
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
 )
+from bluemira.geometry._deprecated_loop import Loop as BMLoop
 
 
 class ConversionMethod(enum.Enum):
@@ -69,15 +70,15 @@ class BluemiraReactor(Reactor):
         super().__init__(config, build_config, build_tweaks)
 
         self.component_trees = {
-            "xy": GroupingComponent(self.params.Name),
-            "xz": GroupingComponent(self.params.Name),
-            "xyz": GroupingComponent(self.params.Name),
+            "xy": Component(self.params.Name),
+            "xz": Component(self.params.Name),
+            "xyz": Component(self.params.Name),
         }
 
     def _convert_loop(
         self,
-        tree: GroupingComponent,
-        geom: Loop,
+        tree: Component,
+        geom: Union[Loop, BMLoop],
         geom_name: str,
         method: ConversionMethod = ConversionMethod.MIXED,
     ):
@@ -91,28 +92,28 @@ class BluemiraReactor(Reactor):
 
     def _convert_multiloop(
         self,
-        tree: GroupingComponent,
+        tree: Component,
         geom: MultiLoop,
         geom_name: str,
         method: ConversionMethod = ConversionMethod.MIXED,
     ):
         """
-        Convert a MultiLoop into a GroupingComponent with the provided name and add it to
+        Convert a MultiLoop into a Component with the provided name and add it to
         the tree.
 
-        The resulting GroupingComponent is the parent of a set of PhysicalComponents
+        The resulting Component is the parent of a set of PhysicalComponents
         representing each Loop.
         """
         component_tree = tree.get_component(geom_name)
         if component_tree is None:
-            component_tree = GroupingComponent(geom_name, parent=tree)
+            component_tree = Component(geom_name, parent=tree)
 
         for idx, loop in enumerate(geom.loops):
             self._convert_loop(component_tree, loop, f"{geom_name} {idx}", method)
 
     def _convert_shell(
         self,
-        tree: GroupingComponent,
+        tree: Component,
         geom: Shell,
         geom_name: str,
         method: ConversionMethod = ConversionMethod.MIXED,
@@ -129,28 +130,28 @@ class BluemiraReactor(Reactor):
 
     def _convert_multishell(
         self,
-        tree: GroupingComponent,
+        tree: Component,
         geom: MultiShell,
         geom_name: str,
         method: ConversionMethod = ConversionMethod.MIXED,
     ):
         """
-        Convert a MultiShell into a GroupingComponent with the provided name and add it
+        Convert a MultiShell into a Component with the provided name and add it
         to the tree.
 
-        The resulting GroupingComponent is the parent of a set of PhysicalComponents
+        The resulting Component is the parent of a set of PhysicalComponents
         representing each Shell.
         """
         component_tree = tree.get_component(geom_name)
         if component_tree is None:
-            component_tree = GroupingComponent(geom_name, parent=tree)
+            component_tree = Component(geom_name, parent=tree)
 
         for idx, shell in enumerate(geom.shells):
             self._convert_shell(component_tree, shell, f"{geom_name} {idx}", method)
 
     def _convert_geometry(
         self,
-        tree: GroupingComponent,
+        tree: Component,
         geom: GeomBase,
         geom_name: str,
         method: ConversionMethod = ConversionMethod.MIXED,
@@ -159,7 +160,7 @@ class BluemiraReactor(Reactor):
         Convert the provided geometry into a Component with the provided name and add it
         to the tree.
         """
-        if isinstance(geom, Loop):
+        if isinstance(geom, (Loop, BMLoop)):
             self._convert_loop(tree, geom, geom_name, method)
         elif isinstance(geom, MultiLoop):
             self._convert_multiloop(tree, geom, geom_name, method)
@@ -184,7 +185,7 @@ class BluemiraReactor(Reactor):
         Convert a BLUEPRINT ReactorSystem into a bluemira Component assigned to the tree
         representing the xy build.
         """
-        system_comp = GroupingComponent(system_name, parent=self.component_trees["xy"])
+        system_comp = Component(system_name, parent=self.component_trees["xy"])
         system._generate_xy_plot_loops()
         for geom_name in system.xy_plot_loop_names:
             conversion = method
@@ -206,7 +207,7 @@ class BluemiraReactor(Reactor):
         Convert a BLUEPRINT ReactorSystem into a bluemira Component assigned to the tree
         representing the xz build.
         """
-        system_comp = GroupingComponent(system_name, parent=self.component_trees["xz"])
+        system_comp = Component(system_name, parent=self.component_trees["xz"])
         system._generate_xz_plot_loops()
         for geom_name in system.xz_plot_loop_names:
             conversion = method
@@ -342,7 +343,7 @@ class BluemiraReactor(Reactor):
         """
         super().build_PF_system()
 
-        pf_comp = GroupingComponent("PF Coils", parent=self.component_trees["xz"])
+        pf_comp = Component("PF Coils", parent=self.component_trees["xz"])
 
         name: str
         coil: Coil

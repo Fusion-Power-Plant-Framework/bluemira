@@ -27,9 +27,9 @@ import matplotlib.pyplot as plt
 import os
 
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
 from BLUEPRINT.nova.structuralsolver import StructuralSolver
 
+from bluemira.base.config import SingleNull
 from bluemira.base.file import BM_ROOT, get_bluemira_path
 from bluemira.base.look_and_feel import plot_defaults
 from bluemira.materials import MaterialCache

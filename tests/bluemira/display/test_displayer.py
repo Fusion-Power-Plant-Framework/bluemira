@@ -30,7 +30,7 @@ import contextlib
 import numpy as np
 
 from bluemira.base.components import (
-    GroupingComponent,
+    Component,
     PhysicalComponent,
 )
 from bluemira.geometry.tools import make_polygon, extrude_shape
@@ -112,7 +112,7 @@ class TestComponentDisplayer:
         wire1 = make_polygon(square_points, closed=True)
         wire2 = make_polygon(square_points + 1.0, closed=True)
 
-        group = GroupingComponent("Parent")
+        group = Component("Parent")
         child1 = PhysicalComponent(
             "Child1",
             shape=wire1,

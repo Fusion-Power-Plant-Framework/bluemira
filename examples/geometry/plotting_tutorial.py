@@ -26,7 +26,7 @@ Plotting module examples
 import matplotlib.pyplot as plt
 
 import bluemira.geometry.tools
-from bluemira.base.components import PhysicalComponent, GroupingComponent
+from bluemira.base.components import Component, PhysicalComponent
 
 import bluemira.display as display
 
@@ -372,13 +372,13 @@ ax.set_title("test component plot")
 plt.show(block=True)
 
 # %%[markdown]
-# ## GroupingComponent Plot
+# ## Component Plot
 #
-# Creates a `GroupingComponent` and plots it in the xz plane using matplotlib defaults.
+# Creates a `Component` and plots it in the xz plane using matplotlib defaults.
 # Here we override some defaults and make our custom set of plot options.
 
 # %%
-group = GroupingComponent("Components")
+group = Component("Components")
 my_group_options = group.plot_options.as_dict()
 my_group_options["wire_options"] = {}
 my_group_options["face_options"] = {"color": "red"}
@@ -428,7 +428,7 @@ display.show_cad(face)
 group.show_cad()
 
 # %%[markdown]
-# We can also change the appeare of individual components inside the group
+# We can also change the appearance of individual components inside the group
 
 # %%
 c1.display_cad_options.modify(**{"color": (0.1, 0.1, 0.1)})
