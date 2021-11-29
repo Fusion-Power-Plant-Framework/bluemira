@@ -29,6 +29,7 @@ from unittest.mock import patch
 from bluemira.base.builder import BuildConfig
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process import run, PROCESS_ENABLED
+from bluemira.codes.process.run import ProcessSolver
 
 from tests.bluemira.codes.process import (
     FRAME_LIST,
@@ -274,10 +275,10 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run._run_subprocess")
-    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver._load_PROCESS")
+    @patch("bluemira.codes.process.run.ProcessSolver._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver._run_subprocess")
+    @patch("bluemira.codes.process.run.ProcessSolver._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_read(self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load):
@@ -294,10 +295,10 @@ class TestRun:
         assert mock_load.call_count == 1
         assert mock_add_parameter.call_count == 0
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run._run_subprocess")
-    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver._load_PROCESS")
+    @patch("bluemira.codes.process.run.ProcessSolver._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver._run_subprocess")
+    @patch("bluemira.codes.process.run.ProcessSolver._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_readall(

@@ -34,7 +34,7 @@ from typing import Dict, List, Optional
 import bluemira.base as bm_base
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface import FileProgramInterface
+import bluemira.codes.interface as interface
 from bluemira.codes.process.api import DEFAULT_INDAT, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.setup import PROCESSInputWriter
@@ -43,7 +43,7 @@ from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
 from bluemira.equilibria.physics import normalise_beta
 
 
-class RunMode(Enum):
+class RunMode(interface.RunMode):
     """
     Enum class to pass args and kwargs to the PROCESS functions corresponding to the
     chosen PROCESS runmode (Run, Runinput, Read, Readall, or Mock).
@@ -55,28 +55,31 @@ class RunMode(Enum):
     READALL = auto()
     MOCK = auto()
 
-    def __call__(self, obj, *args, **kwargs):
-        """
-        Call function of object with lowercase name of enum
 
-        Parameters
-        ----------
-        obj: instance
-            instance of class the function will come from
-        *args
-           args of function
-        **kwargs
-           kwargs of function
+class Run(interface.Run):
+    def _run(self):
+        self.parent.run_PROCESS(use_bp_inputs=True)
 
-        Returns
-        -------
-        function result
-        """
-        func = getattr(obj, f"_{self.name.lower()}")
-        return func(*args, **kwargs)
+    def _runinput(self):
+        self.parent.run_PROCESS(use_bp_inputs=False)
+
+    def _read(self):
+        self.parent.get_PROCESS_run(
+            path=self.parent.reactor.file_manager.reference_data_dirs["systems_code"],
+            recv_all=False,
+        )
+
+    def _readall(self):
+        self.parent.get_PROCESS_run(
+            path=self.parent.reactor.file_manager.reference_data_dirs["systems_code"],
+            recv_all=True,
+        )
+
+    def _mock(self):
+        self.parent.mock_PROCESS_run()
 
 
-class Run(FileProgramInterface):
+class ProcessSolver(interface.FileProgramInterface):
     """
     PROCESS Run functions. Runs, loads or mocks PROCESS to generate the reactor's radial
     build as an input for the bluemira run.
@@ -127,6 +130,11 @@ class Run(FileProgramInterface):
     _recv_mapping: Dict[str, str]
     _send_mapping: Dict[str, str]
 
+    _setup = None
+    _run = Run
+    _teardown = None
+    _runmode = RunMode
+
     output_files: List[str] = [
         "OUT.DAT",
         "MFILE.DAT",
@@ -165,6 +173,10 @@ class Run(FileProgramInterface):
 
         self._runmode(self)  # Run PROCESS in the given run mode
 
+        super().__init__(build_config, self..params, PROCESS)
+
+        self.run()  # Run PROCESS in the given run mode
+
     @property
     def params(self) -> bm_base.ParameterFrame:
         """
@@ -182,21 +194,6 @@ class Run(FileProgramInterface):
             .translate(str.maketrans("", "", string.whitespace))
         )
         self._runmode = RunMode[mode]
-
-    def _run(self):
-        self.run_PROCESS(use_bp_inputs=True)
-
-    def _runinput(self):
-        self.run_PROCESS(use_bp_inputs=False)
-
-    def _read(self):
-        self.get_PROCESS_run(path=self._read_dir, recv_all=False)
-
-    def _readall(self):
-        self.get_PROCESS_run(path=self._read_dir, recv_all=True)
-
-    def _mock(self):
-        self.mock_PROCESS_run()
 
     def run_PROCESS(self, use_bp_inputs=True):
         """
@@ -399,4 +396,4 @@ class Run(FileProgramInterface):
             raise CodesError(message)
 
     def _run_subprocess(self):
-        super()._run_subprocess("process")
+        self.run_obj._run_subprocess("process")

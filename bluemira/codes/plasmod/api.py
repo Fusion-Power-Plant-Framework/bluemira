@@ -30,11 +30,14 @@ import pprint
 import subprocess
 import sys
 from typing import Dict, Union
+from enum import auto
 
 import numpy as np
 
-from bluemira.codes.interface import FileProgramInterface
+from bluemira.base.look_and_feel import bluemira_print, bluemira_debug
+import bluemira.codes.interface as interface
 from bluemira.codes.plasmod.constants import NAME as PLASMOD
+from bluemira.codes.plasmod.mapping import Profiles
 
 # Absolute path to plasmod excutable
 PLASMOD_PATH = "../../../../plasmod_bluemira"
@@ -489,29 +492,124 @@ def print_parameter_list(params: Union[PlasmodParameters, dict], fid=sys.stdout)
         raise ValueError("Wrong input")
 
 
-def read_output_files(output_file):
-    """Read the Plasmod output parameters from the output file"""
-    output = {}
-    with open(output_file, "r") as fd:
-        reader = csv.reader(fd, delimiter="\t")
-        for row in reader:
-            arr = row[0].split()
-            output_key = "_" + arr[0]
-            output_value = arr[1:]
-            if len(output_value) > 1:
-                output[output_key] = np.array(arr[1:])
-                output[output_key] = output[output_key].astype(np.float)
-            else:
-                output[output_key] = float(arr[1])
-    return output
+class RunMode(interface.RunMode):
+    RUN = auto()
+    MOCK = auto()
 
 
-class PlasmodSolver(FileProgramInterface):
+class Setup(interface.Setup):
+    """Setup class for Plasmod"""
+
+    def __init__(self, parent, input_file, output_file, profiles_file):
+        super().__init__(parent)
+        self.input_file = input_file
+        self.output_file = output_file
+        self.profiles_file = profiles_file
+
+    def _run(self, *args, **kwargs):
+        """batch setup function"""
+        print(self.parent._parameters)
+        write_input_file(self.parent._parameters, self.parent.setup_obj.input_file)
+
+    def _mock(self, *args, **kwargs):
+        """Mock setup function"""
+        print(self.parent._parameters)
+
+
+class Run(interface.Run):
+    def _run(self, *args, **kwargs):
+        print("run batch")
+        super()._run_subprocess(
+            [
+                f"{PLASMOD_PATH}/plasmod.o",
+                f"{self.parent.setup_obj.input_file}",
+                f"{self.parent.setup_obj.output_file}",
+                f"{self.parent.setup_obj.profiles_file}",
+            ]
+        )
+
+    def _mock(self, *args, **kwargs):
+        print("run mock")
+        write_input_file(self.parent._parameters, self.parent.setup_obj.input_file)
+        print(
+            f"{PLASMOD_PATH}/plasmod.o {self.parent.setup_obj.input_file} "
+            f"{self.parent.setup_obj.output_file} "
+            f"{self.parent.setup_obj.profiles_file}"
+        )
+
+
+class Teardown(interface.Teardown):
+    def _run(self, *args, **kwargs):
+        output = self.read_output_files(self.parent.setup_obj.output_file)
+        self.parent._out_params.modify(**output)
+        self._check_return_value()
+        output = self.read_output_files(self.parent.setup_obj.profiles_file)
+        self.parent._out_params.modify(**output)
+        print_parameter_list(self.parent._out_params)
+
+    def _mock(self, *args, **kwargs):
+        output = self.ead_output_files(self.parent.setup_obj.output_file)
+        self.parent._out_params.modify(**output)
+        output = self.read_output_files(self.parent.setup_obj.profiles_file)
+        self.parent._out_params.modify(**output)
+        print_parameter_list(self.parent._out_params)
+
+    @staticmethod
+    def read_output_files(output_file):
+        """Read the Plasmod output parameters from the output file"""
+        output = {}
+        with open(output_file, "r") as fd:
+            reader = csv.reader(fd, delimiter="\t")
+            for row in reader:
+                arr = row[0].split()
+                output_key = "_" + arr[0]
+                output_value = arr[1:]
+                if len(output_value) > 1:
+                    output[output_key] = np.array(arr[1:], dtype=np.float)
+                else:
+                    output[output_key] = float(arr[1])
+        return output
+
+    def _check_return_value(self):
+        # [-] exit flag
+        #  1: PLASMOD converged successfully
+        # -1: Max number of iterations achieved
+        # (equilibrium oscillating, pressure too high, reduce H)
+        # 0: transport solver crashed (abnormal parameters
+        # or too large dtmin and/or dtmin
+        # -2: Equilibrium solver crashed: too high pressure
+        exit_flag = self.parent._out_params._i_flag
+        if exit_flag != 1:
+            if exit_flag == -2:
+                raise CodesError(
+                    "PLASMOD error" "Equilibrium solver crashed: too high pressure"
+                )
+            elif exit_flag == -1:
+                raise CodesError(
+                    "PLASMOD error"
+                    "Max number of iterations reached"
+                    "equilibrium oscillating probably as a result of the pressure being too high"
+                    "reducing H may help"
+                )
+            elif not exit_flag:
+                raise CodesError(
+                    "PLASMOD error" "Abnormal paramters, possibly dtmax/dtmin too large"
+                )
+        else:
+            bluemira_debug("PLASMOD converged successfully")
+
+
+class PlasmodSolver(interface.FileProgramInterface):
     """Plasmod solver class"""
+
+    _setup = Setup
+    _run = Run
+    _teardown = Teardown
+    _runmode = RunMode
 
     def __init__(
         self,
-        runmode="BATCH",
+        runmode="run",
         params=None,
         input_file="plasmod_input.dat",
         output_file="outputs.dat",
@@ -529,73 +627,11 @@ class PlasmodSolver(FileProgramInterface):
             runmode, params, PLASMOD, input_file, output_file, profiles_file
         )
 
-    def get_ffprime(self):
-        return self._out_params._ffprime
+    def get_profile(self, profile):
+        return getattr(self._out_params, Profiles(profile).name)
 
-    def get_ppprime(self):
-        return self._out_params._ppprime
-
-    def get_te(self):
-        return self._out_params._Tepr
-
-    def get_ti(self):
-        return self._out_params._Tipr
-
-    def get_x(self):
-        return self._out_params._x
-
-    class Setup(FileProgramInterface.Setup):
-        """Setup class for Plasmod"""
-
-        def __init__(self, outer, input_file, output_file, profiles_file):
-            super().__init__(outer)
-            self.input_file = input_file
-            self.output_file = output_file
-            self.profiles_file = profiles_file
-
-        def _batch(self, *args, **kwargs):
-            """batch setup function"""
-            print(self.outer._parameters)
-
-        def _mock(self, *args, **kwargs):
-            """Mock setup function"""
-            print(self.outer._parameters)
-
-    class Run(FileProgramInterface.Run):
-        def _batch(self, *args, **kwargs):
-            print("run batch")
-            write_input_file(self.outer._parameters, self.outer.setup_obj.input_file)
-            self.run_dir = "./"  # HACK FOR NOW
-            FileProgramInterface._run_subprocess(
-                self,
-                [
-                    f"{PLASMOD_PATH}/plasmod.o",
-                    f"{self.outer.setup_obj.input_file}",
-                    f"{self.outer.setup_obj.output_file}",
-                    f"{self.outer.setup_obj.profiles_file}",
-                ],
-            )
-
-        def _mock(self, *args, **kwargs):
-            print("run mock")
-            write_input_file(self.outer._parameters, self.outer.setup_obj.input_file)
-            print(
-                f"{PLASMOD_PATH}/plasmod.o {self.outer.setup_obj.input_file} "
-                f"{self.outer.setup_obj.output_file} "
-                f"{self.outer.setup_obj.profiles_file}"
-            )
-
-    class Teardown(FileProgramInterface.Teardown):
-        def _batch(self, *args, **kwargs):
-            output = read_output_files(self.outer.setup_obj.output_file)
-            self.outer._out_params.modify(**output)
-            output = read_output_files(self.outer.setup_obj.profiles_file)
-            self.outer._out_params.modify(**output)
-            print_parameter_list(self.outer._out_params)
-
-        def _mock(self, *args, **kwargs):
-            output = read_output_files(self.outer.setup_obj.output_file)
-            self.outer._out_params.modify(**output)
-            output = read_output_files(self.outer.setup_obj.profiles_file)
-            self.outer._out_params.modify(**output)
-            print_parameter_list(self.outer._out_params)
+    def get_profiles(self, profiles):
+        profiles_dict = {}
+        for profile in profiles:
+            profiles_dict[profile] = get_profile(profile)
+        return profiles_dict[profile]

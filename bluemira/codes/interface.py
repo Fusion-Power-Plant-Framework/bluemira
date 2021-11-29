@@ -23,6 +23,7 @@
 The bluemira external code wrapper
 """
 import subprocess
+import string
 from enum import Enum, auto
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
@@ -34,10 +35,6 @@ __all__ = ["FileProgramInterface", "ApplicationProgramInterface"]
 
 class RunMode(Enum):
     """Defines the possible runmode"""
-
-    PROMINENCE = auto()
-    BATCH = auto()
-    MOCK = auto()
 
     def __call__(self, obj, *args, **kwargs):
         """
@@ -56,8 +53,9 @@ class RunMode(Enum):
         -------
         function result
         """
-        func = getattr(obj, f"_{self.name.lower()}")
-        return func(*args, **kwargs)
+        if obj is not None:
+            func = getattr(obj, f"_{self.name.lower()}")
+            return func(*args, **kwargs)
 
 
 class Task:
@@ -67,66 +65,90 @@ class Task:
 
     # todo: ensure a correspondence between the specified runmode and the implemented
     #  functions (if possible).
+    run_dir = "./"
 
-    def runner(self):
+    def _run_subprocess(self, command, **kwargs):
+        stdout = LogPipe("print")
+        stderr = LogPipe("error")
+
+        kwargs["cwd"] = kwargs.get("cwd", self.run_dir)
+        kwargs.pop("shell", None)  # Protect against user input
+
+        with subprocess.Popen(
+            command, stdout=stdout, stderr=stderr, **kwargs
+        ) as s:  # noqa (S603)
+            stdout.close()
+            stderr.close()
+
+        if s.returncode:
+            raise CodesError(f"{NAME} exited with a non zero exit code")
+
+
+class Setup(Task):
+    """A class that specified the code setup"""
+
+    def __init__(self, parent, *args, **kwargs):
+        self.parent = parent
+
+    def set_parameters(self):
+        pass
+
+
+class Run(Task):
+    """A class that specified the code run process"""
+
+    def __init__(self, parent, *args, **kwargs):
+        self.parent = parent
+
+
+class Teardown(Task):
+    """A class that for the teardown"""
+
+    def __init__(self, parent, *args, **kwargs):
+        self.parent = parent
+
+    def get_parameters(self):
         pass
 
 
 class FileProgramInterface:
     """An external code wrapper"""
 
+    _setup = Setup
+    _run = Run
+    _teardown = Teardown
+    _runmode = RunMode
+
     def __init__(self, runmode, params, NAME, *args, **kwargs):
         # self.parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
         # self.recv_mapping = get_recv_mapping(params, NAME)
         # self.send_mapping = get_send_mapping(params, NAME)
-        self.runmode = None
-        self.set_runmode(runmode)
-        self.setup_obj = self.Setup(self, *args, **kwargs)
-        self.run_obj = self.Run(self, *args, **kwargs)
-        self.teardown_obj = self.Teardown(self, *args, **kwargs)
+        if self._runmode is not RunMode:
+            self.set_runner(runmode)
+        else:
+            raise CodesError("Please define a RunMode child lass")
 
-    def set_parameters(self):
-        pass
+        if self._setup is not None:
+            self.setup_obj = self._setup(self, *args, **kwargs)
+        else:
+            self.setup_obj = self._setup
 
-    def get_parameters(self):
+        if self._run is not None:
+            self.run_obj = self._run(self, *args, **kwargs)
+        else:
+            self.run_obj = self._run
 
-        pass
+        if self._teardown is not None:
+            self.teardown_obj = self._teardown(self, *args, **kwargs)
+        else:
+            self.teardown_obj = self._teardown
 
-    def set_runmode(self, runmode):
+    def set_runner(self, runmode):
         """Set the runmode"""
-        self.runmode = RunMode[runmode]
+        mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
+        self.runner = self._runmode[mode]
 
     def run(self):
-        self.runmode(self.setup_obj)
-        self.runmode(self.run_obj)
-        self.runmode(self.teardown_obj)
-
-    class Setup(Task):
-        """A class that specified the code setup"""
-
-        def __init__(self, outer, *args, **kwargs):
-            self.outer = outer
-
-    class Run(Task):
-        """A class that specified the code run process"""
-
-        def __init__(self, outer, *args, **kwargs):
-            self.outer = outer
-
-    class Teardown(Task):
-        """A class that for the teardown"""
-
-        def __init__(self, outer, *args, **kwargs):
-            self.outer = outer
-
-    def _run_subprocess(self, command, **kwargs):
-        stdout = LogPipe("print")
-        stderr = LogPipe("error")
-        kwargs["cwd"] = kwargs.get("cwd", self.run_dir)
-        with subprocess.Popen(
-            command, stdout=stdout, stderr=stderr, **kwargs
-        ) as s:  # noqa (S603)
-            stdout.close()
-            stderr.close()
-            if s.returncode:
-                raise CodesError(f"{NAME} exited with a non zero exit code")
+        self.runner(self.setup_obj)
+        self.runner(self.run_obj)
+        self.runner(self.teardown_obj)
