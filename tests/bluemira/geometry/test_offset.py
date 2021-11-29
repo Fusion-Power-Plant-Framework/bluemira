@@ -62,9 +62,10 @@ class TestOffset:
             self.tri_wire,
         ]
 
-    def test_simple(self):
+    @pytest.mark.parametrize("join", ["intersect", "arc"])
+    def test_simple(self, join):
         for wire in self.all_wires:
-            new_wire = offset_wire(wire, 0.0, label="new")
+            new_wire = offset_wire(wire, 0.0, label="new", join=join)
             assert np.isclose(wire.length, new_wire.length)
             assert new_wire.label == "new"
 
@@ -73,13 +74,28 @@ class TestOffset:
             assert np.isclose(wire.length, new_wire.length)
             assert new_wire.label == "new"
 
-    def test_orientation(self):
+    @pytest.mark.xfail
+    def test_bad_princeton(self):
+        # TODO: This is a more fundamental issue that I have yet to get to the bottom of
+        p = PrincetonD(
+            {
+                "x1": {"value": 4},
+                "x2": {"value": 14},
+                "dz": {"value": 0},
+            }
+        )
+        wire = p.create_shape()
+        offset = offset_wire(wire, -0.5, join="intersect")
+        assert offset.is_valid()
+
+    @pytest.mark.parametrize("join", ["intersect", "arc"])
+    def test_orientation(self, join):
         for wire in self.all_wires:
-            new_wire = offset_wire(wire, 1.0)
+            new_wire = offset_wire(wire, 1.0, join=join)
             assert new_wire.length > wire.length
 
         for wire in self.all_wires:
-            new_wire = offset_wire(wire, -0.15)
+            new_wire = offset_wire(wire, -0.15, join=join)
             assert new_wire.length < wire.length
 
     def test_1_offset(self):
