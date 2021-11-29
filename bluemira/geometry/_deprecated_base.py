@@ -32,7 +32,7 @@ from copy import deepcopy
 from typing import Union
 from collections.abc import Iterable
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import NumpyJSONEncoder
+from bluemira.utilities.tools import json_writer
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
 
@@ -58,15 +58,14 @@ class GeomBase(abc.ABC):
         """
         pass
 
-    def to_json(self, filename):
+    def to_json(self, filename, **kwargs):
         """
         Exports a JSON of a geometry object
         """
         d = self.as_dict()
         filename = os.path.splitext(filename)[0]
         filename += ".json"
-        with open(filename, "w") as f:
-            json.dump(d, f, cls=NumpyJSONEncoder)
+        json_writer(d, filename)
 
     @classmethod
     def load(cls, filename):

@@ -32,8 +32,9 @@ from collections.abc import Iterable
 from functools import partial
 from importlib import util as imp_u, import_module as imp
 from itertools import permutations
-from json import JSONDecoder, JSONEncoder
+from json import JSONDecoder, JSONEncoder, dump
 from json.encoder import _make_iterencode
+from pathlib import Path
 from os import listdir
 from typing import Any, List, Type, Union
 from types import ModuleType
@@ -130,6 +131,32 @@ def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
     return _make_iterencode(
         markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
     )
+
+
+def json_writer(data, file, cls=NumpyJSONEncoder, **kwargs):
+    """
+    Write json in the bluemria style
+
+    Parameters
+    ----------
+    data: dict
+        dictionary to write to json
+    filename: str
+        filename to write to
+    cls: JsonEncoder
+        json encoder child class
+    kwargs: dict
+        all further kwargs passed to the json writer
+
+    """
+    if isinstance(file, Path):
+        file = str(file)
+    if isinstance(file, str):
+        with open(file, "w") as f_handle:
+            return json_writer(data, f_handle)
+    if "indent" not in kwargs:
+        kwargs["indent"] = 4
+    dump(data, file, cls=NumpyJSONEncoder, **kwargs)
 
 
 # =====================================================
