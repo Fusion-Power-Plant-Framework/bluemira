@@ -272,6 +272,3 @@ class Solver(interface.FileProgramInterface):
             bluemira_warn(message)
             raise CodesError(message)
 
-    def _run_subprocess(self):
-        super()._run_subprocess("process")
->>>>>>> 611075da (🎨 WIP: initial parameter interfacing and logging capture)
