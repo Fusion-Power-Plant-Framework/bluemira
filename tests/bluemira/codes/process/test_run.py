@@ -20,14 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+import os
+import pathlib
+import shutil
+import tempfile
+from typing import Dict
 from unittest.mock import patch
 
-from tests.BLUEPRINT.test_reactor import (
-    config,
-    build_config,
-)
-
-from bluemira.base.file import FileManager
+from bluemira.base.builder import BuildConfig
+from bluemira.base.file import get_bluemira_root
 from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process import run
@@ -35,17 +36,50 @@ from bluemira.codes.process import run
 from tests.bluemira.codes.process.test_api import FRAME_LIST, PROCESSTestConfiguration
 
 
+INDIR = os.path.join(
+    get_bluemira_root(), "tests", "bluemira", "codes", "process", "test_data"
+)
+OUTDIR = os.path.join(
+    get_bluemira_root(), "tests", "bluemira", "codes", "process", "test_generated_data"
+)
+
+
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
 class TestRun:
+    config = {
+        "Name": ("SMOKE-TEST", "Input"),
+        "P_el_net": (580, "Input"),
+        "tau_flattop": (3600, "Input"),
+        "plasma_type": ("SN", "Input"),
+        "reactor_type": ("Normal", "Input"),
+        "CS_material": ("Nb3Sn", "Input"),
+        "PF_material": ("NbTi", "Input"),
+        "A": (3.1, "Input"),
+        "n_CS": (5, "Input"),
+        "n_PF": (6, "Input"),
+        "f_ni": (0.1, "Input"),
+        "fw_psi_n": (1.06, "Input"),
+        "tk_ts": (0.05, "Input"),
+        "tk_vv_in": (0.3, "Input"),
+        "tk_sh_in": (0.3, "Input"),
+        "tk_tf_side": (0.1, "Input"),
+        "tk_bb_ib": (0.7, "Input"),
+        "tk_sol_ib": (0.225, "Input"),
+        "LPangle": (-15, "Input"),
+    }
+
+    build_config: Dict[str, BuildConfig]
+
     def setup_method(self):
-        self.params = PROCESSTestConfiguration(config)
-        self.build_config = build_config
-        self.file_manager = FileManager(
-            self.params.Name.value,
-            self.build_config["reference_data_root"],
-            self.build_config["generated_data_root"],
-        )
-        self.file_manager.build_dirs()
+        self.params = PROCESSTestConfiguration(self.config)
+        self.build_config = {}
+        if not pathlib.Path(OUTDIR).exists():
+            pathlib.Path(OUTDIR).mkdir()
+        self.run_dir = tempfile.mkdtemp(dir=OUTDIR)
+        self.read_dir = INDIR
+
+    def teardown_method(self):
+        shutil.rmtree(self.run_dir)
 
     def set_runmode(self, runmode):
         self.build_config["process_mode"] = runmode
@@ -58,8 +92,8 @@ class TestRun:
         return run.Run(
             self.params,
             self.build_config,
-            self.file_manager.generated_data_dirs["systems_code"],
-            self.file_manager.reference_data_dirs["systems_code"],
+            self.run_dir,
+            self.read_dir,
             **kwargs,
         )
 
@@ -134,9 +168,16 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.run.Run.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     def test_runinput(
-        self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
+        self,
+        mock_add_parameter,
+        mock_read_mfile,
+        mock_clear,
+        mock_run,
+        mock_check,
+        mock_load,
     ):
         """
         Test in Run mode, that the correct functions are called during the run and that
@@ -149,6 +190,7 @@ class TestRun:
         assert mock_add_parameter.call_count == 0
 
         # Check that correct run calls were made.
+        assert mock_read_mfile.call_count == 1
         assert mock_clear.call_count == 1
         assert mock_run.call_count == 1
         assert mock_check.call_count == 1
@@ -158,9 +200,16 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.run.Run.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     def test_run_with_params_to_update(
-        self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
+        self,
+        mock_add_parameter,
+        mock_read_mfile,
+        mock_clear,
+        mock_run,
+        mock_check,
+        mock_load,
     ):
         """
         Test in Rerun mode, that only parameters specified in params_to_update are called
@@ -179,6 +228,7 @@ class TestRun:
         mock_add_parameter.assert_any_call("fp", 5)
 
         # Check that correct run calls were made.
+        assert mock_read_mfile.call_count == 1
         assert mock_clear.call_count == 1
         assert mock_run.call_count == 1
         assert mock_check.call_count == 1
@@ -188,9 +238,16 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
+    @patch("bluemira.codes.process.run.Run.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     def test_run_without_params_to_update(
-        self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
+        self,
+        mock_add_parameter,
+        mock_read_mfile,
+        mock_clear,
+        mock_run,
+        mock_check,
+        mock_load,
     ):
         """
         Test in Rerun mode, that parameters with a PROCESS mapping and mapping.send set
@@ -215,6 +272,7 @@ class TestRun:
         mock_add_parameter.assert_any_call("fp", 5)
 
         # Check that correct run calls were made.
+        assert mock_read_mfile.call_count == 1
         assert mock_clear.call_count == 1
         assert mock_run.call_count == 1
         assert mock_check.call_count == 1

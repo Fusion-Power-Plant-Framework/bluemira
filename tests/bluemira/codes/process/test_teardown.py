@@ -30,7 +30,7 @@ from bluemira.codes.process import teardown
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
 class TestMFileReader:
-    fp = get_bluemira_path("bluemira/codes/test_data", subfolder="tests")
+    fp = get_bluemira_path("bluemira/codes/process/test_data", subfolder="tests")
 
     @classmethod
     def setup_class(cls):
