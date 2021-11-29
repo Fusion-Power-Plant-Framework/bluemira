@@ -34,3 +34,11 @@ class CodesError(base_err.BluemiraError):
     """
 
     pass
+
+
+class FreeCADError(base_err.BluemiraError):
+    """
+    Error class for use in the geometry module
+    """
+
+    pass

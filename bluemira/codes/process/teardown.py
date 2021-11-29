@@ -32,7 +32,6 @@ from collections import namedtuple
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.tools import is_num
 from bluemira.codes.process.api import (
     PROCESS_DICT,
@@ -296,6 +295,8 @@ def plot_radial_build(run, width=1.0):
     Input: Dictionary of PROCESS output
     Output: Plots
     """
+    from bluemira.geometry._deprecated_loop import Loop
+
     R_0 = run["R_0"]
 
     col = {

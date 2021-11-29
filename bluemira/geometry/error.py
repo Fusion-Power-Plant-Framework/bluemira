@@ -72,11 +72,3 @@ class GeometryParameterisationError(GeometryError):
     """
 
     pass
-
-
-class FreeCADError(BluemiraError):
-    """
-    Error class for use in the geometry module
-    """
-
-    pass
