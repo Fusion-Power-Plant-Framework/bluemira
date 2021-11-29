@@ -173,7 +173,7 @@ class ProcessSolver(interface.FileProgramInterface):
 
         self._runmode(self)  # Run PROCESS in the given run mode
 
-        super().__init__(build_config, self..params, PROCESS)
+        super().__init__(build_config, self.params, PROCESS)
 
         self.run()  # Run PROCESS in the given run mode
 

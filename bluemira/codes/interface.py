@@ -65,7 +65,9 @@ class Task:
 
     # todo: ensure a correspondence between the specified runmode and the implemented
     #  functions (if possible).
-    run_dir = "./"
+    def __init__(self, parent):
+        self.parent = parent
+        self.run_dir = parent.run_dir
 
     def _run_subprocess(self, command, **kwargs):
         stdout = LogPipe("print")
@@ -88,7 +90,7 @@ class Setup(Task):
     """A class that specified the code setup"""
 
     def __init__(self, parent, *args, **kwargs):
-        self.parent = parent
+        super().__init__(parent)
 
     def set_parameters(self):
         pass
@@ -98,14 +100,14 @@ class Run(Task):
     """A class that specified the code run process"""
 
     def __init__(self, parent, *args, **kwargs):
-        self.parent = parent
+        super().__init__(parent)
 
 
 class Teardown(Task):
     """A class that for the teardown"""
 
     def __init__(self, parent, *args, **kwargs):
-        self.parent = parent
+        super().__init__(parent)
 
     def get_parameters(self):
         pass
@@ -119,10 +121,15 @@ class FileProgramInterface:
     _teardown = Teardown
     _runmode = RunMode
 
-    def __init__(self, runmode, params, NAME, *args, **kwargs):
-        # self.parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
-        # self.recv_mapping = get_recv_mapping(params, NAME)
-        # self.send_mapping = get_send_mapping(params, NAME)
+    def __init__(self, runmode, params, NAME, *args, run_dir=None, **kwargs):
+        if NAME != "PLASMOD":  # TODO FIX
+            self.parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
+            self.recv_mapping = get_recv_mapping(params, NAME)
+            self.send_mapping = get_send_mapping(params, NAME)
+
+        if not hasattr(self, "run_dir") and run_dir is None:
+            self.run_dir = "./"
+
         if self._runmode is not RunMode:
             self.set_runner(runmode)
         else:
