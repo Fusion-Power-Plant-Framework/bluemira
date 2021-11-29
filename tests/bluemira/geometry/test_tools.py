@@ -124,20 +124,20 @@ class TestWirePlaneIntersect:
             assert on_polygon(i[0], i[2], loop.d2.T)
 
         xy_plane = BluemiraPlane(base=[0, 0, 2.7], axis=[0, 1, 0])
-        intersect = wire_plane_intersect(loop, xy_plane)
+        intersect = wire_plane_intersect(wire, xy_plane)
         assert len(intersect) == 4
 
         for i in intersect:
             assert on_polygon(i[0], i[2], loop.d2.T)
 
         plane = Plane([0, 0, 4], [1, 0, 4], [0, 1, 4])  # x-y offset
-        intersect = wire_plane_intersect(loop, plane)
+        intersect = wire_plane_intersect(wire, plane)
         assert len(intersect) == 1
         for i in intersect:
             assert on_polygon(i[0], i[2], loop.d2.T)
 
         plane = Plane([0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005])  # x-y offset
-        intersect = wire_plane_intersect(loop, plane)
+        intersect = wire_plane_intersect(wire, plane)
         assert intersect is None
 
     def test_other_dims(self):

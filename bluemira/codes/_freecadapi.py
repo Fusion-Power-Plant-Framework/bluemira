@@ -651,6 +651,43 @@ def dist_to_shape(shape1, shape2):
     return dist, vectors
 
 
+def wire_plane_intersect(wire, plane):
+    """
+    Calculate the intersection of a wire with a plane.
+
+    Parameters
+    ----------
+    wire: apiWire
+        The loop to calculate the intersection on
+    plane: apiPlacement
+        The plane to calculate the intersection with
+
+    Returns
+    -------
+    inter: Union[np.array(3, n_intersections), None]
+        The xyz coordinates of the intersections with the wire. Returns None if
+        there are no intersections detected
+    """
+    face = apiFace(plane)
+
+    if not _wire_is_planar(wire):
+        bluemira_warn(
+            "You are intersecting a non-planar wire with a plane, cannot "
+            "guarantee return type will be correct."
+        )
+
+    if wire.isCoplanar(face):
+        raise FreeCADError(
+            "Cannot intersect this wire with this plane: they are coplanar."
+        )
+
+    vertexes = wire.section([face]).Vertexes
+    if vertexes:
+        return vertex_to_numpy(vertexes)
+
+    return None
+
+
 # ======================================================================================
 # Save functions
 # ======================================================================================
@@ -1070,6 +1107,28 @@ def make_plane(base, axis, angle):
     axis = Base.Vector(axis)
 
     return Base.Placement(base, axis, angle)
+
+
+def make_plane_3P(point_1, point_2, point_3):
+    """
+    Make a FreeCAD Placement from three points.
+
+    Parameters
+    ----------
+    point_1: Iterable
+        First point
+    point_2: Iterable
+        Second Point
+    point_3: Iterable
+        Third point
+
+    Returns
+    -------
+    plane: Base.Placement
+        The "plane"
+    """
+    plane = Part.Plane(Base.Vector(point_1), Base.Vector(point_2), Base.Vector(point_3))
+    return Base.Placement(plane.Position, plane.Rotation)
 
 
 def move_plane(plane, vector):

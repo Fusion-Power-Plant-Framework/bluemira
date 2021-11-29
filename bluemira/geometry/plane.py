@@ -25,13 +25,25 @@ Wrapper for FreeCAD Plane (Placement) objects
 
 from __future__ import annotations
 
-import math
 import numpy as np
 import bluemira.codes._freecadapi as cadapi
 
 
 class BluemiraPlane:
-    """Bluemira Plane class."""
+    """
+    Bluemira Plane class.
+
+    Parameters
+    ----------
+    base: Iterable
+        Base vector of the plane
+    axis: Iterable
+        Axis vector of the plane
+    angle: float
+        Angle of the plane
+    label: str
+        Label of the plane
+    """
 
     def __init__(
         self, base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0], angle=0.0, label: str = ""
@@ -41,11 +53,23 @@ class BluemiraPlane:
 
     @classmethod
     def from_3_points(cls, point_1, point_2, point_3, label: str = ""):
+        """
+        Instantiate a BluemiraPlane from three points.
 
-        base = [0, 0, 0]
-        axis = [0, 0, 1]
-        angle = 0
-        return cls(base, axis, angle, label=label)
+        Parameters
+        ----------
+        point_1: Iterable
+            First point
+        point_2: Iterable
+            Second Point
+        point_3: Iterable
+            Third point
+        label: str
+            Label of the plane
+        """
+        cls._shape = cadapi.make_plane_3P(point_1, point_2, point_3)
+        cls.label = label
+        return cls
 
     @property
     def base(self):
@@ -81,8 +105,8 @@ class BluemiraPlane:
 
     @property
     def angle(self):
-        """Plane's rotation matrix"""
-        return math.degrees(self._shape.Rotation.Angle)
+        """Plane's angle"""
+        return np.rad2deg(self._shape.Rotation.Angle)
 
     @angle.setter
     def angle(self, value):

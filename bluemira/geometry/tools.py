@@ -447,6 +447,7 @@ def wire_plane_intersect(wire, plane):
         The xyz coordinates of the intersections with the wire. Returns None if
         there are no intersections detected
     """
+    return cadapi.wire_plane_intersect(wire._shape, plane._shape)
 
 
 def circular_pattern(
