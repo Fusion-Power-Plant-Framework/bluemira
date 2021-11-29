@@ -129,7 +129,7 @@ DEFAULT_PLASMOD_INPUTS = {
     # [-] plasma aspect ratio
     "A": "A",
     # [T] Toroidal field at plasma center
-    "BM_INP": "Bt",
+    "B_0": "Bt",
     # [-] plasma edge triangularity (used only for first iteration,
     # then iterated to constrain delta95)
     "delta": "deltaX",
@@ -143,7 +143,7 @@ DEFAULT_PLASMOD_INPUTS = {
     # [-] safety factor at 95% flux surface
     "q_95": "q95",
     # [m] plasma major radius
-    "BM_INP": "R0",
+    "R_0": "R0",
     # [m3] constrained plasma volume (set zero to disable volume constraining)
     "V_p": "V_in",
     ############################

@@ -150,7 +150,7 @@ class FileProgramInterface:
         else:
             self.teardown_obj = self._teardown
 
-    def set_runner(self, runmode):
+    def set_runmode(self, runmode):
         """Set the runmode"""
         mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
         self.runner = self._runmode[mode]
