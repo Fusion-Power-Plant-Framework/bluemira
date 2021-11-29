@@ -28,6 +28,7 @@ from bluemira.geometry.tools import (
     make_circle,
     revolve_shape,
     sweep_shape,
+    offset_wire,
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD, TripleArc
@@ -179,3 +180,24 @@ class TestRevolve:
         shape = revolve_shape(face, degree=360)
         assert shape.is_valid()
         assert np.isclose(shape.volume, true_volume)
+
+    def test_revolve_hollow(self):
+        x_c = 10
+        d_xc = 1.0
+        d_zc = 1.0
+        inner = make_polygon(
+            [
+                [x_c - d_xc, 0, -d_zc],
+                [x_c + d_xc, 0, -d_zc],
+                [x_c + d_xc, 0, d_zc],
+                [x_c - d_xc, 0, d_zc],
+            ],
+            closed=True,
+        )
+        outer = offset_wire(inner, 1.0, join="intersect")
+        face = BluemiraFace([outer, inner])
+        solid = revolve_shape(face, degree=360)
+
+        true_volume = 2 * np.pi * x_c * (4 ** 2 - 2 ** 2)
+        assert solid.is_valid()
+        assert np.isclose(solid.volume, true_volume)
