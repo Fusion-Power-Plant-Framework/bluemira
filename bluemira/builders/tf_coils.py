@@ -338,7 +338,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.constants import MU_0
 
 
-class BuildTFWindingPack:  # (ActualFuckingComponent)
+class BuildTFWindingPack:
     """
     A class to build TF coil winding pack geometry
     """
@@ -353,15 +353,11 @@ class BuildTFWindingPack:  # (ActualFuckingComponent)
         pass
 
     def build_xz(self):
-        # Christ... this is only robust because we know the shape isn't nuts
-        x = self.wp_cross_section.discretize(100).T[0]
-        x_in = min(x)
-        x = self.wp_centreline.discretize(100).T[0]
-        x_centreline_in = min(x)
-        dx = x_centreline_in - x_in
-        outer = offset_wire(self.wp_centreline, dx, join="arc")
-        inner = offset_wire(self.wp_centreline, -dx, join="arc")
-        # Why do we have two labels, and why do we return target if it is an input?
+        x_min = self.wp_cross_section.bounding_box.x_min
+        x_centreline_in = self.wp_centreline.bounding_box.x_min
+        dx = abs(x_min - x_centreline_in)
+        outer = offset_wire(self.wp_centreline, dx)
+        inner = offset_wire(self.wp_centreline, -dx)
         return PhysicalComponent(self.name, BluemiraFace([outer, inner], self.name))
 
     def build_xyz(self):
@@ -379,29 +375,24 @@ class BuildTFInsulation:
         self.tk_insulation = insulation_thickness
 
     def build_xz(self):
-        x = self.wp_centreline.discretize(100).T[0]
-        x_centreline_in = min(x)
+        x_centreline_in = self.wp_centreline.bounding_box.x_min
 
-        x_wp = self.wp_cross_section.discretize(100).T[0]
-        x_in_wp = min(x_wp)
-        x_out_wp = max(x_wp)
+        x_in_wp = self.wp_cross_section.bounding_box.x_min
+
         dx_wp = x_centreline_in - x_in_wp
 
         ins_xs = offset_wire(self.wp_cross_section, self.tk_insulation)
-        x = ins_xs.discretize(100).T[0]
-        x_in_ins = min(x)
-        x_out_ins = max(x)
+        x_in_ins = ins_xs.bounding_box.x_min
 
         dx_ins = x_centreline_in - x_in_ins
-        outer = offset_wire(self.wp_centreline, dx_ins, join="arc")
-        inner = offset_wire(self.wp_centreline, dx_wp, join="arc")
+        outer = offset_wire(self.wp_centreline, dx_ins)
+        inner = offset_wire(self.wp_centreline, dx_wp)
 
         outer_face = BluemiraFace([outer, inner])
 
-        outer = offset_wire(self.wp_centreline, -dx_wp, join="arc")
-        inner = offset_wire(self.wp_centreline, -dx_ins, join="arc")
+        outer = offset_wire(self.wp_centreline, -dx_wp)
+        inner = offset_wire(self.wp_centreline, -dx_ins)
         inner_face = BluemiraFace([outer, inner])
-        # Why do we have two labels, and why do we return target if it is an input?
         return [
             PhysicalComponent(self.name, outer_face, self.name),
             PhysicalComponent(self.name, inner_face, self.name),
@@ -491,9 +482,13 @@ class ToroidalFieldSystem:
 
 if __name__ == "__main__":
 
-    from bluemira.geometry.parameterisations import PrincetonD, TripleArc, PolySpline
+    from bluemira.geometry.parameterisations import PrincetonD, TripleArc, PictureFrame
+    from bluemira.geometry.face import BluemiraFace
     from bluemira.equilibria.shapes import JohnerLCFS
     from bluemira.base.parameter import ParameterFrame
+    from bluemira.geometry.tools import sweep_shape, circular_pattern, revolve_shape
+    from bluemira.display import show_cad
+    from bluemira.display.displayer import DisplayCADOptions
 
     x_tf_wp_center = 3.2
     parameterisation = PrincetonD(
@@ -510,26 +505,6 @@ if __name__ == "__main__":
             "z1": {"value": 0, "lower_bound": -2, "fixed": True},
         }
     )
-
-    # parameterisation = PolySpline(
-    #     {
-    #         "x1": {
-    #             "value": x_tf_wp_center,
-    #             "lower_bound": 3.999,
-    #             "upper_bound": 4.001,
-    #             "fixed": True,
-    #         },
-    #         "x2": {"value": 16, "lower_bound": 13, "upper_bound": 20},
-    #         "z2": {"value": 0, "lower_bound": -0.9, "upper_bound": 0.9},
-    #         "height": {"value": 18, "lower_bound": 10, "upper_bound": 20},
-    #         "top": {"value": 0.5, "lower_bound": 0.05, "upper_bound": 1},
-    #         "upper": {"value": 0.7, "lower_bound": 0.2, "upper_bound": 1},
-    #         "tilt": {"value": 0, "fixed": True},
-    #         "flat": {"value": 0, "fixed": True},
-    #         # "f1": {"value": 4, "lower_bound": 4},
-    #         # "f2": {"value": 4, "lower_bound": 4},
-    #     }
-    # )
 
     optimiser = Optimiser(
         "SLSQP",
@@ -575,6 +550,7 @@ if __name__ == "__main__":
     x_c = 4
     d_xc = 0.25
     d_yc = 0.6
+    tk_ins = 0.05
     wp_xs = make_polygon(
         [
             [x_c - d_xc, -d_yc, 0],
@@ -584,12 +560,6 @@ if __name__ == "__main__":
         ],
         closed=True,
     )
-
-    from bluemira.geometry.tools import sweep_shape, circular_pattern, revolve_shape
-    from bluemira.display import show_cad
-    from bluemira.geometry.parameterisations import PictureFrame
-    from bluemira.geometry.face import BluemiraFace
-    from bluemira.display.displayer import DisplayCADOptions
 
     tf_wp = sweep_shape(wp_xs, centreline)
     shapes = circular_pattern(tf_wp, n_shapes=16)
@@ -614,113 +584,32 @@ if __name__ == "__main__":
     options.append(DisplayCADOptions(color=(0.2, 0.2, 0.6)))
 
     show_cad(shapes, options)
-    # from bluemira.geometry.parameterisations import PrincetonD, TripleArc
-    # from bluemira.geometry.tools import make_polygon
 
-    # x_wp_centroid = 4.0
-    # dx_wp = 0.5
-    # dy_wp = 0.6
-    # tk_ins = 0.3
-    # # Offset wire is sadly very unstable...
-    # wp_centreline = TripleArc({"x1": {"value": x_wp_centroid}}).create_shape()
-    # wp_xs = make_polygon(
-    #     [
-    #         [x_wp_centroid - dx_wp, -dy_wp, 0],
-    #         [x_wp_centroid + dx_wp, -dy_wp, 0],
-    #         [x_wp_centroid + dx_wp, dy_wp, 0],
-    #         [x_wp_centroid - dx_wp, dy_wp, 0],
-    #     ],
-    #     closed=True,
-    # )
+    wp_centreline = parameterisation.create_shape()
 
-    # builder = BuildTFWindingPack(wp_centreline, wp_xs)
+    # Move XS
+    x_wp = wp_centreline.bounding_box.x_min
+    x_xs = wp_xs.center_of_mass[0]
+    dx = x_wp - x_xs
+    wp_xs.translate((dx, 0, 0))
 
-    # outer = offset_wire(wp_centreline, -dx_wp)
-    # inner = offset_wire(wp_centreline, dx_wp)
-    # xz_shape = builder.build_xz()
-    # xyz_shape = builder.build_xyz()
-    # xz_shape.plot_2d()
-    # xyz_shape.show_cad()
+    builder = BuildTFWindingPack(wp_centreline, wp_xs)
+    xz_comp = builder.build_xz()
+    xyz_shape = builder.build_xyz().shape
+    # xz.plot_2d()
 
-    # builder = BuildTFInsulation(xyz_shape, wp_centreline, wp_xs, tk_ins)
-    # xz_ins_shape = builder.build_xz()
+    builder = BuildTFInsulation(xyz_shape, wp_centreline, wp_xs, tk_ins)
+    xz_ins_comp = builder.build_xz()
 
-    # xz_shapes = [xz_shape]
+    xz_comps = [xz_comp]
 
-    # xz_shapes.extend(xz_ins_shape)
+    xz_comps.extend(xz_ins_comp)
 
-    # import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
 
-    # f, ax = plt.subplots()
-    # for shape in xz_shapes:
-    #     shape.plot_2d(ax=ax, show=False)
+    f, ax = plt.subplots()
+    for shape in xz_comps:
+        shape.plot_2d(ax=ax, show=False)
 
     # shapes = circular_pattern(xyz_shape.shape, n_shapes=16)
     # show_cad(shapes)
-
-    # # # Sorry for the script... I needed to check if this was working
-    # # from bluemira.geometry.parameterisations import PrincetonD
-    # # from bluemira.equilibria.shapes import JohnerLCFS
-    # # from bluemira.base.parameter import ParameterFrame
-
-    # # parameterisation = PrincetonD(
-    # #     {
-    # #         "x1": {"lower_bound": 2, "value": 4, "upper_bound": 6},
-    # #         "x2": {"lower_bound": 10, "value": 14, "upper_bound": 18},
-    # #         "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5},
-    # #     }
-    # # )
-    # # parameterisation.fix_variable("x1", 4)
-    # # parameterisation.fix_variable("dz", 0)
-    # # optimiser = Optimiser(
-    # #     "SLSQP",
-    # #     opt_conditions={
-    # #         "ftol_rel": 1e-3,
-    # #         "xtol_rel": 1e-12,
-    # #         "xtol_abs": 1e-12,
-    # #         "max_eval": 1000,
-    # #     },
-    # # )
-
-    # # # I just don't know where to get these any more
-    # # params = ParameterFrame(
-    # #     [
-    # #         ["R_0", "Major radius", 9, "m", None, "Input", None],
-    # #         ["z_0", "Vertical height at major radius", 0, "m", None, "Input", None],
-    # #         ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
-    # #         ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
-    # #         ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
-    # #     ]
-    # # )
-
-    # # separatrix = JohnerLCFS(
-    # #     {
-    # #         "r_0": {"value": 9},
-    # #         "z_0": {"value": 0},
-    # #         "a": {"value": 9 / 3.1},
-    # #         "kappa_u": {"value": 1.65},
-    # #         "kappa_l": {"value": 1.8},
-    # #     }
-    # # ).create_shape()
-
-    # # # Need to pass around lots of information between different parts of the build
-    # # # procedure.
-    # # # This is just the bare minimum TF optimisation, we don't have much in the way of
-    # # # configuration yet, and we're missing geometry constraints from some arbitrary keep
-    # # # out zone. Also the KOZ constraint should be enforced on the plasma-facing casing
-    # # # geometry, which needs to be built off the winding pack. Gonna get messy again :D
-
-    # # # Starting to worry we're making things too configurable:
-    # # #   - what about different magnetostatics solvers
-    # # #   - different discretisations if we use BiotSavart
-    # # #   - different separatrix shapes need to be checked at different areas for peak
-    # # #     ripple..
-
-    # # # Keeping ultra-configurable classes is going to slow us down.
-    # # # Might be simpler just to have a SystemBuilder that people subclass or write
-    # # # replacements for, I don't know.
-
-    # # # I fear the full build config just for the TF coil WP design optimisation will be
-    # # # absolutely massive.
-    # # problem = TFWPOptimisationProblem(parameterisation, optimiser, params, separatrix)
-    # # problem.solve()
