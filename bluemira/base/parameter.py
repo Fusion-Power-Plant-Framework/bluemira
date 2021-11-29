@@ -521,17 +521,24 @@ class ParameterFrame:
 
     """
 
+    params = []
+
     __default_params = {}
     __defaults_setting = False
     __defaults_set = False
-    __template_params = {}
-    __template_set = False
+    _template_params = {}
 
     def __init__(self, record_list=None, *, with_defaults=False):
         if with_defaults:
             self._reinit()
         if record_list is not None:
             self.add_parameters(record_list)
+
+    def __init_subclass__(cls) -> None:
+        """
+        Initialise the template parameters when sub-classing from ParameterFrame.
+        """
+        cls.set_template_parameters(cls.params)
 
     @classmethod
     def set_default_parameters(cls, params):
@@ -585,13 +592,11 @@ class ParameterFrame:
         params: RecordList
             The parameter record list to use to populate the template.
         """
-        if not cls.__template_set:
-            for param in params:
-                cls.__template_params[param[0]] = {
-                    "name": param[1],
-                    "unit": param[3],
-                }
-            cls.__template_set = True
+        for param in params:
+            cls._template_params[param[0]] = {
+                "name": param[1],
+                "unit": param[3],
+            }
 
     @classmethod
     def __setattr(cls, *args, **kwargs):
@@ -613,20 +618,15 @@ class ParameterFrame:
             The ParameterFrame including the minimal content for the requested parameter
             variable names.
         """
-        if not cls.__template_set:
-            from bluemira.base.config import Configuration
-
-            cls.set_template_parameters(Configuration.params)
-
-        params = cls()
+        params = ParameterFrame()
         for var in param_vars:
-            if var not in cls.__template_params:
+            if var not in cls._template_params:
                 raise ParameterError(
                     f"Parameter with short name {var} is not known as a template "
                     f"parameter for class {cls.__name__}."
                 )
-            name = cls.__template_params[var]["name"]
-            unit = cls.__template_params[var]["unit"]
+            name = cls._template_params[var]["name"]
+            unit = cls._template_params[var]["unit"]
             params.add_parameter(var=var, name=name, unit=unit)
 
         return params
