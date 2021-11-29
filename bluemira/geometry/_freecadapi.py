@@ -51,6 +51,7 @@ from bluemira.geometry.error import FreeCADError
 from bluemira.base.look_and_feel import bluemira_warn
 
 from bluemira.base.constants import EPS
+from bluemira.geometry.constants import MINIMUM_LENGTH
 
 # import visualisation
 from pivy import coin, quarter
@@ -458,6 +459,8 @@ def offset_wire(
             ]
         )
         raise FreeCADError(msg)
+
+    fix_wire(wire)
     return wire
 
 
@@ -1024,6 +1027,27 @@ def boolean_cut(shape, tools, split=True):
     else:
         raise ValueError(f"Cut function not implemented for {_type} objects.")
     return output
+
+
+# ======================================================================================
+# Geometry healing
+# ======================================================================================
+
+
+def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
+    """
+    Fix a wire by removing any small edges and joining the remaining edges.
+
+    Parameters
+    ----------
+    wire: apiWire
+        Wire to fix
+    precision: float
+        General precision with which to work
+    min_length: float
+        Minimum edge length
+    """
+    wire.fix(precision, min_length, min_length)
 
 
 # ======================================================================================
