@@ -158,7 +158,7 @@ class Run:
             self._template_indat = build_config.get("process_indat", DEFAULT_INDAT)
 
         self._parameter_mapping = get_recv_mapping(params, PROCESS, recv_all=True)
-        self._params = ParameterFrame.from_template(self._parameter_mapping.values())
+        self._params = type(params).from_template(self._parameter_mapping.values())
         self._params.update_kw_parameters(params.to_dict(verbose=True))
         self._recv_mapping = get_recv_mapping(params, PROCESS)
         self._send_mapping = get_send_mapping(params, PROCESS)
