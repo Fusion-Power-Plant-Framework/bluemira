@@ -23,10 +23,11 @@
 Static API to optimisation library
 """
 import numpy as np
+from pprint import pformat
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # noqa
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities._nlopt_api import NLOPTOptimiser
-from bluemira.utilities.error import InternalOptError
 
 
 __all__ = ["approx_derivative", "Optimiser"]
@@ -226,6 +227,7 @@ class Optimiser(NLOPTOptimiser):
         tolerances = np.array(tolerances)
 
         if not np.all(c_values < tolerances):
-            raise InternalOptError(
-                "Some constraints have not been adequately satisfied."
+            bluemira_warn(
+                "Some constraints have not been adequately satisfied.\n"
+                f"{pformat(c_values)} !< {pformat(tolerances)}"
             )
