@@ -29,8 +29,8 @@ import subprocess
 import threading
 from typing import Dict, Literal
 
-from bluemira.base.look_and_feel import bluemira_error_flush, bluemira_print_flush
-from bluemira.codes import error as code_err
+from bluemira.base.look_and_feel import bluemira_error_clean, bluemira_print_clean
+from bluemira.codes.error import CodesError
 
 
 def _get_mapping(
@@ -58,7 +58,7 @@ def _get_mapping(
         names (value).
     """
     if send_recv not in ["send", "recv"]:
-        raise code_err.CodesError("Mapping must be obtained for either send or recv.")
+        raise CodesError("Mapping must be obtained for either send or recv.")
 
     mapping = {}
     for key in params.keys():
@@ -135,7 +135,7 @@ class LogPipe(threading.Thread):
         """
         super().__init__(daemon=True)
 
-        self.logfunc = {"print": bluemira_print_flush, "error": bluemira_error_flush}[
+        self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[
             loglevel
         ]
         self.fd_read, self.fd_write = os.pipe()
@@ -153,7 +153,7 @@ class LogPipe(threading.Thread):
         Run the thread and pipe it all into the logger.
         """
         for line in iter(self.pipe.readline, ""):
-            self.logfunc(line.strip("\n"))
+            self.logfunc(line)
 
         self.pipe.close()
 

@@ -514,11 +514,12 @@ class Setup(interface.Setup):
     def _mock(self, *args, **kwargs):
         """Mock setup function"""
         print(self.parent._parameters)
+        write_input_file(self.parent._parameters, self.parent.setup_obj.input_file)
 
 
 class Run(interface.Run):
     def _run(self, *args, **kwargs):
-        print("run batch")
+        bluemira_debug("Mode: run")
         super()._run_subprocess(
             [
                 f"{PLASMOD_PATH}/plasmod.o",
@@ -529,8 +530,7 @@ class Run(interface.Run):
         )
 
     def _mock(self, *args, **kwargs):
-        print("run mock")
-        write_input_file(self.parent._parameters, self.parent.setup_obj.input_file)
+        bluemira_debug("Mode: mock")
         print(
             f"{PLASMOD_PATH}/plasmod.o {self.parent.setup_obj.input_file} "
             f"{self.parent.setup_obj.output_file} "
