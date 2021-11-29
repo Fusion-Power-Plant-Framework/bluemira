@@ -19,41 +19,49 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
 import pytest
 from unittest.mock import patch
 
-from bluemira.base.file import get_bluemira_root
-from tests.bluemira.codes.process.test_api import FRAME_LIST
 from tests.BLUEPRINT.test_reactor import (
     config,
     build_config,
-    build_tweaks,
-    SmokeTestSingleNullReactor,
 )
 
+from bluemira.base.file import FileManager
 from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process import run
+
+from tests.bluemira.codes.process.test_api import FRAME_LIST, PROCESSTestConfiguration
 
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
 class TestRun:
-    test_reactor = SmokeTestSingleNullReactor(config, build_config, build_tweaks)
-    test_reactor.add_parameters(FRAME_LIST)
-    test_dir = os.path.join(
-        get_bluemira_root(), "tests", "bluemira", "codes", "test_data"
-    )
-    test_indat = os.path.join(test_dir, "IN.DAT")
+    def setup_method(self):
+        self.params = PROCESSTestConfiguration(config)
+        self.build_config = build_config
+        self.file_manager = FileManager(
+            self.params.Name.value,
+            self.build_config["reference_data_root"],
+            self.build_config["generated_data_root"],
+        )
+        self.file_manager.build_dirs()
 
     def set_runmode(self, runmode):
-        self.test_reactor.build_config["process_mode"] = runmode
+        self.build_config["process_mode"] = runmode
 
     def run_PROCESS(self, runmode, **kwargs):
         """
         Set runmode in test reactor and run PROCESS.
         """
         self.set_runmode(runmode)
-        return run.Run(self.test_reactor, run_dir=self.test_dir, **kwargs)
+        return run.Run(
+            self.params,
+            self.build_config,
+            self.file_manager.generated_data_dirs["systems_code"],
+            self.file_manager.reference_data_dirs["systems_code"],
+            **kwargs,
+        )
 
     @pytest.mark.parametrize(
         "runmode",
@@ -104,21 +112,23 @@ class TestRun:
         """
         Test that parameters with a PROCESS mapping are read correctly.
         """
+        self.params.add_parameters(FRAME_LIST)
+
         with patch("bluemira.codes.process.run.Run._mock"):
             runner = self.run_PROCESS("MOCK")
 
         # Test that PROCESS params with recv = False are not read.
-        assert "cp" not in runner.recv_mapping
-        assert "dp" not in runner.recv_mapping
+        assert "cp" not in runner._recv_mapping
+        assert "dp" not in runner._recv_mapping
 
         # Test that PROCESS params with recv = True are read correctly.
-        assert runner.recv_mapping["ep"] == "e"
-        assert runner.recv_mapping["fp"] == "f"
+        assert runner._recv_mapping["ep"] == "e"
+        assert runner._recv_mapping["fp"] == "f"
 
         # Test that non-PROCESS params with recv = True are not read.
-        param = self.test_reactor.params.get_param("g")
+        param = self.params.get_param("g")
         assert "PROCESS" not in param.mapping and param.mapping["FAKE_CODE"].recv is True
-        assert "gp" not in runner.recv_mapping
+        assert "gp" not in runner._recv_mapping
 
     @patch("bluemira.codes.process.run.Run._load_PROCESS")
     @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
@@ -156,7 +166,9 @@ class TestRun:
         Test in Rerun mode, that only parameters specified in params_to_update are called
         to be written to IN.DAT and that the correct functions are called during the run.
         """
-        self.test_reactor.build_config["params_to_update"] = ["d", "f"]
+        self.params.add_parameters(FRAME_LIST)
+
+        self.build_config["params_to_update"] = ["d", "f"]
         self.run_PROCESS("RUN")
 
         # Check the right amount of calls were made to add_parameter.
@@ -185,12 +197,14 @@ class TestRun:
         as True are called be written to IN.DAT and that the correct functions are called
         during the run.
         """
-        self.test_reactor.build_config["params_to_update"] = None
+        self.params.add_parameters(FRAME_LIST)
+
+        self.build_config["params_to_update"] = None
         self.run_PROCESS("RUN")
 
         # Check the right amount of calls were made to add_parameter.
         number_of_expected_calls = 0
-        for param in self.test_reactor.params.get_parameter_list():
+        for param in self.params.get_parameter_list():
             if param.mapping is not None and "PROCESS" in param.mapping:
                 if param.mapping["PROCESS"].send:
                     number_of_expected_calls += 1
@@ -246,16 +260,21 @@ class TestRun:
         assert mock_load.call_count == 1
         assert mock_add_parameter.call_count == 0
 
-    @patch("tests.BLUEPRINT.test_reactor.SmokeTestSingleNullReactor.add_parameter")
-    def test_mock(self, mock_add_parameter):
+    def test_mock(self):
         """
         Test that the right amount of calls are made to the reactor's add_parameter
         function during a mock run.
         """
-        self.run_PROCESS("MOCK")
+        run = self.run_PROCESS("MOCK")
 
-        # Check the right amount of calls were made to add_parameter.
-        assert mock_add_parameter.call_count == 3
+        bad_recv = []
+        for name in run._recv_mapping.values():
+            if run.params.get_param(name).source != f"{PROCESS} (Mock)":
+                bad_recv.append(name)
+
+        assert (
+            len(bad_recv) == 0
+        ), "Parameters were marked as recv in PROCESS mapping but were not mapped back into bluemira."
 
 
 if __name__ == "__main__":
