@@ -24,7 +24,7 @@ from scipy.special import ellipe
 import math
 import pytest
 
-import bluemira.geometry._freecadapi as cadapi
+import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (

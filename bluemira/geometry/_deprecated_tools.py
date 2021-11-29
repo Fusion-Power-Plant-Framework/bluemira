@@ -33,7 +33,7 @@ from pyquaternion import Quaternion
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry import _freecadapi
+from bluemira.codes import _freecadapi
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace

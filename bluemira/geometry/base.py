@@ -31,7 +31,7 @@ import enum
 from abc import ABC, abstractmethod
 
 # import freecad api
-from . import _freecadapi
+from bluemira.codes import _freecadapi
 from bluemira.geometry.bound_box import BoundingBox
 
 import copy

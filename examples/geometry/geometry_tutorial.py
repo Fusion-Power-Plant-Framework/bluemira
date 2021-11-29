@@ -24,6 +24,7 @@ Some examples of using bluemira geometry objects.
 """
 
 import bluemira.geometry as geo
+from bluemira.codes import _freecadapi
 from operator import itemgetter
 
 # Note: this tutorial shall to be translated into a set of pytests
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
     bmwire = geo.tools.make_polygon(pntslist)
     # # Same result using _freecadapi
-    # wire = geo._freecadapi.make_polygon(pntslist)
+    # wire = _freecadapi.make_polygon(pntslist)
     # print(f"Freecad wire: {wire}, length: {wire.Length}, isClosed: {wire.isClosed()}")
     # bmwire = geo.wire.BluemiraWire(wire, "bmwire")
     print(bmwire)
@@ -75,12 +76,12 @@ if __name__ == "__main__":
     print("6. Test Save as STEP file.")
     shapes = [bmwire._shape, bmface._shape]
     print(shapes)
-    geo._freecadapi.save_as_STEP(shapes)
+    _freecadapi.save_as_STEP(shapes)
 
     print("7. Test BluemiraWire.close")
     print("7.1 when boundary is list(Part.Wire)")
     pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
-    wire = geo._freecadapi.make_polygon(pntslist, closed=False)
+    wire = _freecadapi.make_polygon(pntslist, closed=False)
     bmwire_nc = geo.wire.BluemiraWire(wire)
     print(bmwire_nc)
     bmwire_nc.close()
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     pntslist = [(1.0, 1.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 0.0), (1.0, 0.0, 0.0)]
     bmwire_nc = geo.tools.make_bspline(pntslist, closed=False)
     # # Same result using _freecadapi
-    # wire = geo._freecadapi.make_bspline(pntslist, closed=False)
+    # wire = _freecadapi.make_bspline(pntslist, closed=False)
     # bmwire_nc = geo.wire.BluemiraWire(wire)
     print(bmwire_nc)
     geo.tools.save_as_STEP([bmwire_nc], "test_bspline")

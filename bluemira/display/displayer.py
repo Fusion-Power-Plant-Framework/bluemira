@@ -29,7 +29,7 @@ import copy
 from typing import List, Optional, Tuple, Union
 
 import bluemira.geometry as geo
-from bluemira.geometry import _freecadapi
+from bluemira.codes import _freecadapi
 
 from .error import DisplayError
 from .plotter import DisplayOptions
