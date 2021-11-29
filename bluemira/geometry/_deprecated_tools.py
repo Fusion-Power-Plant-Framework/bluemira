@@ -33,7 +33,7 @@ from pyquaternion import Quaternion
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes import _freecadapi
+from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -1809,7 +1809,7 @@ def make_wire(x, y, z, label="", spline=False):
     wire: BluemiraWire
         The BluemiraWire bound by the coordinates
     """
-    wire_func = _freecadapi.make_bspline if spline else _freecadapi.make_polygon
+    wire_func = cadapi.make_bspline if spline else cadapi.make_polygon
     return BluemiraWire(wire_func(np.array([x, y, z]).T), label=label)
 
 
