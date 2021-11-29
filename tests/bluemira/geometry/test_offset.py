@@ -93,10 +93,12 @@ class TestOffset:
         for wire in self.all_wires:
             new_wire = offset_wire(wire, 1.0, join=join)
             assert new_wire.length > wire.length
+            new_wire.discretize(ndiscr=1000, byedges=True)
 
         for wire in self.all_wires:
             new_wire = offset_wire(wire, -0.15, join=join)
             assert new_wire.length < wire.length
+            new_wire.discretize(ndiscr=1000, byedges=True)
 
     def test_1_offset(self):
         o_rect = offset_wire(self.rect_wire, 0.25, join="intersect")
