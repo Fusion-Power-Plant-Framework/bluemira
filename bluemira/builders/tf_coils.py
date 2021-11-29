@@ -374,6 +374,11 @@ class BuildTFInsulation:
         self.wp_cross_section = wp_cross_section
         self.tk_insulation = insulation_thickness
 
+    def build_xy(self):
+        outer_wire = offset_wire(self.wp_cross_section, self.tk_insulation)
+        face = BluemiraFace([outer_wire, self.wp_cross_section])
+        return PhysicalComponent(self.name, face)
+
     def build_xz(self):
         x_centreline_in = self.wp_centreline.bounding_box.x_min
 
@@ -394,8 +399,8 @@ class BuildTFInsulation:
         inner = offset_wire(self.wp_centreline, -dx_ins)
         inner_face = BluemiraFace([outer, inner])
         return [
-            PhysicalComponent(self.name, outer_face, self.name),
-            PhysicalComponent(self.name, inner_face, self.name),
+            PhysicalComponent(self.name, outer_face),
+            PhysicalComponent(self.name, inner_face),
         ]
 
     def build_xyz(self):
@@ -408,7 +413,46 @@ class BuildTFInsulation:
 
 
 class BuildTFCasing:
-    pass
+    name = "TFCasing"
+
+    def __init__(
+        self,
+        ins_solid,
+        wp_centreline,
+        ins_cross_section,
+        n_TF,
+        tk_tf_nose,
+        tk_tf_front_ib,
+    ):
+        self.ins_solid = ins_solid
+        self.ins_cross_section = ins_cross_section
+        self.wp_centreline = wp_centreline
+        self.n_TF = n_TF
+        self.tk_tf_nose = tk_tf_nose
+        self.tk_tf_front_ib = tk_tf_front_ib
+
+    def build_xy(self):
+        x_ins_in = self.ins_cross_section.bounding_box.x_min
+        x_ins_out = self.ins_cross_section.bounding_box.x_max
+
+        x_in = x_ins_in - self.tk_tf_nose
+        x_out = x_ins_out + self.tk_tf_front_ib
+        half_angle = np.pi / self.n_TF
+        y_in = x_in * np.sin(half_angle)
+        y_out = x_out * np.sin(half_angle)
+        outer_wire = make_polygon(
+            [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
+            closed=True,
+        )
+
+        face = BluemiraFace([outer_wire, self.ins_cross_section.boundary[0]])
+        return PhysicalComponent(self.name, face)
+
+    def build_xz(self):
+        pass
+
+    def build_xyz(self):
+        pass
 
 
 class BuildTFCoils(Builder):
@@ -549,7 +593,7 @@ if __name__ == "__main__":
     centreline = parameterisation.create_shape()
     x_c = 4
     d_xc = 0.25
-    d_yc = 0.6
+    d_yc = 0.4
     tk_ins = 0.05
     wp_xs = make_polygon(
         [
@@ -568,21 +612,6 @@ if __name__ == "__main__":
     shapes.append(plasma)
     options.append(DisplayCADOptions(color=(1.0, 0.2, 0.5), transparency=0.5))
 
-    pf1 = PictureFrame(
-        {
-            "x1": {"value": 6, "lower_bound": 6, "upper_bound": 6},
-            "x2": {"value": 7, "lower_bound": 7, "upper_bound": 7},
-            "z1": {"value": -6, "lower_bound": -6, "upper_bound": -6},
-            "z2": {"value": -7, "lower_bound": -7, "upper_bound": -7},
-            "ri": {"value": 0.0, "lower_bound": 0.0},
-            "ro": {"value": 0.0, "lower_bound": 0.0},
-        }
-    ).create_shape()
-    pf1 = BluemiraFace(pf1)
-    pf1 = revolve_shape(pf1, degree=359)
-    shapes.append(pf1)
-    options.append(DisplayCADOptions(color=(0.2, 0.2, 0.6)))
-
     show_cad(shapes, options)
 
     wp_centreline = parameterisation.create_shape()
@@ -600,6 +629,10 @@ if __name__ == "__main__":
 
     builder = BuildTFInsulation(xyz_shape, wp_centreline, wp_xs, tk_ins)
     xz_ins_comp = builder.build_xz()
+    xy_ins_shape = builder.build_xy().shape
+    # xyz_ins_shape = builder.build_xyz().shape
+    builder = BuildTFCasing(None, wp_centreline, xy_ins_shape, 16, 0.4, 0.1)
+    xy_casing = builder.build_xy()
 
     xz_comps = [xz_comp]
 
