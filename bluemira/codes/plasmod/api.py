@@ -25,17 +25,16 @@ API for the transport code PLASMOD and related functions
 
 import copy
 import csv
-import os
 import pprint
-import subprocess
 import sys
-from typing import Dict, Union
 from enum import auto
+from typing import Dict, Union
 
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_print, bluemira_debug
 import bluemira.codes.interface as interface
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import NAME as PLASMOD
 from bluemira.codes.plasmod.mapping import Profiles
 
@@ -651,5 +650,5 @@ class PlasmodSolver(interface.FileProgramInterface):
     def get_profiles(self, profiles):
         profiles_dict = {}
         for profile in profiles:
-            profiles_dict[profile] = get_profile(profile)
+            profiles_dict[profile] = self.get_profile(profile)
         return profiles_dict[profile]
