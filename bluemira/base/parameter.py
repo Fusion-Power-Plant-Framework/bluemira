@@ -722,7 +722,7 @@ class ParameterFrame:
         """
         Reinitialise class with defaults.
         """
-        self.__dict__ = self.__default_params.copy()
+        self.__dict__ = copy.deepcopy(self.__default_params)
 
     def to_records(self):
         """
