@@ -263,7 +263,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['g_cr_ts', 'Gap between the Cryostat and CTS', 0.3, 'm', None, 'Input'],
         ['g_cr_vv', 'Gap between Cryostat and VV ports', 0.2, 'm', None, 'Input'],
         ['g_cr_rs', 'Cryostat VV offset to radiation shield', 0.5, 'm', 'Distance away from edge of cryostat VV in all directions', 'Input'],
-        ['c_rm', 'Remote maintenance clearance', 0.02, 'm', 'Distance between IVCs', None],
+        ['c_rm', 'Remote maintenance clearance', 0.02, 'm', 'Distance between IVCs', 'Input'],
 
         # Offsets
         ['o_p_rs', 'Port offset from VV to RS', 0.25, 'm', None, 'Input'],
