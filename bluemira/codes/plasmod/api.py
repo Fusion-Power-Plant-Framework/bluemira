@@ -39,9 +39,6 @@ import bluemira.codes.interface as interface
 from bluemira.codes.plasmod.constants import NAME as PLASMOD
 from bluemira.codes.plasmod.mapping import Profiles
 
-# Absolute path to plasmod excutable
-PLASMOD_PATH = "../../../../plasmod_bluemira"
-
 # Todo: both INPUTS and OUTPUTS must to be completed.
 # DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
 DEFAULT_PLASMOD_INPUTS = {
@@ -500,7 +497,7 @@ class RunMode(interface.RunMode):
 class Setup(interface.Setup):
     """Setup class for Plasmod"""
 
-    def __init__(self, parent, input_file, output_file, profiles_file):
+    def __init__(self, parent, input_file, output_file, profiles_file, **kwargs):
         super().__init__(parent)
         self.input_file = input_file
         self.output_file = output_file
@@ -518,21 +515,35 @@ class Setup(interface.Setup):
 
 
 class Run(interface.Run):
+    _plasmod_binary = "transporz"  # Who knows why its not called plasmod
+
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent)
+        self._plasmod_binary = kwargs.pop("binary", self._plasmod_binary)
+
+    @property
+    def binary(self):
+        return self._plasmod_binary
+
+    @binary.setter
+    def binary(self, _binary):
+        self._plasmod_binary = _binary
+
     def _run(self, *args, **kwargs):
         bluemira_debug("Mode: run")
         super()._run_subprocess(
             [
-                f"{PLASMOD_PATH}/plasmod.o",
-                f"{self.parent.setup_obj.input_file}",
-                f"{self.parent.setup_obj.output_file}",
-                f"{self.parent.setup_obj.profiles_file}",
+                self._plasmod_binary,
+                self.parent.setup_obj.input_file,
+                self.parent.setup_obj.output_file,
+                self.parent.setup_obj.profiles_file,
             ]
         )
 
     def _mock(self, *args, **kwargs):
         bluemira_debug("Mode: mock")
         print(
-            f"{PLASMOD_PATH}/plasmod.o {self.parent.setup_obj.input_file} "
+            f"{self._plasmod_binary} {self.parent.setup_obj.input_file} "
             f"{self.parent.setup_obj.output_file} "
             f"{self.parent.setup_obj.profiles_file}"
         )
@@ -614,6 +625,7 @@ class PlasmodSolver(interface.FileProgramInterface):
         input_file="plasmod_input.dat",
         output_file="outputs.dat",
         profiles_file="profiles.dat",
+        binary="transporz",
     ):
         # todo: add a path variable where files are stored
         if params is None:
@@ -624,7 +636,13 @@ class PlasmodSolver(interface.FileProgramInterface):
             self._parameters = Inputs(**params)
         self._out_params = Outputs()
         super().__init__(
-            runmode, params, PLASMOD, input_file, output_file, profiles_file
+            runmode,
+            params,
+            PLASMOD,
+            input_file=input_file,
+            output_file=output_file,
+            profiles_file=profiles_file,
+            binary=binary,
         )
 
     def get_profile(self, profile):

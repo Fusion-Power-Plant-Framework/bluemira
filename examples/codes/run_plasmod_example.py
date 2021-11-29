@@ -25,7 +25,7 @@ Test for plasmod run
 from bluemira.codes.plasmod import api
 import matplotlib.pyplot as plt
 
-api.PLASMOD_PATH = "~/bwSyncShare/plasmod_bluemira"
+PLASMOD_PATH = "../plasmod_bluemira"
 
 new_params = {
     "A": 3.1,
@@ -36,8 +36,8 @@ new_params = {
     "i_modeltype": 111,
 }
 
-plasmod_solver = api.PlasmodSolver(params=new_params)
-plasmod_solver.set_runner("run")
+plasmod_solver = api.PlasmodSolver(params=new_params, binary=f"{PLASMOD_PATH}/plasmod.o")
+plasmod_solver.set_runmode("run")
 plasmod_solver.run()
 
 ffprime = plasmod_solver.get_profile("ffprime")
