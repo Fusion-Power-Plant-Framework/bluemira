@@ -430,6 +430,25 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     return cadapi.dist_to_shape(shape1, shape2)
 
 
+def wire_plane_intersect(wire, plane):
+    """
+    Calculate the intersection of a wire with a plane.
+
+    Parameters
+    ----------
+    wire: BluemiraWire
+        The loop to calculate the intersection on
+    plane: BluemiraPlane
+        The plane to calculate the intersection with
+
+    Returns
+    -------
+    inter: np.array(3, n_intersections) or None
+        The xyz coordinates of the intersections with the wire. Returns None if
+        there are no intersections detected
+    """
+
+
 def circular_pattern(
     shape, origin=(0, 0, 0), direction=(0, 0, 1), degree=360, n_shapes=10
 ):

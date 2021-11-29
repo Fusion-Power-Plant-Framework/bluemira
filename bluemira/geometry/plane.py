@@ -39,6 +39,14 @@ class BluemiraPlane:
         self._shape = cadapi.make_plane(base, axis, angle)
         self.label = label
 
+    @classmethod
+    def from_3_points(cls, point_1, point_2, point_3, label: str = ""):
+
+        base = [0, 0, 0]
+        axis = [0, 0, 1]
+        angle = 0
+        return cls(base, axis, angle, label=label)
+
     @property
     def base(self):
         """Plane's base vector"""
