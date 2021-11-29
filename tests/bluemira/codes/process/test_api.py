@@ -23,7 +23,9 @@ from unittest.mock import patch
 
 import pytest
 
-from bluemira.base.parameter import ParameterFrame, ParameterMapping
+from bluemira.base.config_schema import ConfigurationSchema
+from bluemira.base.config import SingleNull
+from bluemira.base.parameter import Parameter, ParameterMapping
 
 from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process import api
@@ -44,7 +46,20 @@ FRAME_LIST = [
     ["f", None, 5, None, None, None, {"PROCESS": ParameterMapping("fp", True, True)}],
     ["g", None, 6, None, None, None, {"FAKE_CODE": ParameterMapping("gp", True, True)}],
 ]
-FRAME = ParameterFrame(FRAME_LIST)
+
+
+class PROCESSTestSchema(ConfigurationSchema):
+    a: Parameter
+    b: Parameter
+    c: Parameter
+    d: Parameter
+    e: Parameter
+    f: Parameter
+    g: Parameter
+
+
+class PROCESSTestConfiguration(SingleNull):
+    params = SingleNull.params + FRAME_LIST
 
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
