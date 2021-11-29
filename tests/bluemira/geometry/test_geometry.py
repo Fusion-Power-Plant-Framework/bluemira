@@ -36,6 +36,8 @@ from bluemira.geometry.tools import (
     boolean_fuse,
     extrude_shape,
     circular_pattern,
+    revolve_shape,
+    offset_wire,
 )
 
 
@@ -455,6 +457,50 @@ class TestGeometry:
             bm_shape.is_valid()
             self._compare_fc_bm(fc_shape, bm_shape)
             assert bm_shape.volume < solid2.volume
+
+    def test_cut_hollow(self):
+        x_c = 10
+        d_xc = 1.0
+        d_zc = 1.0
+        inner = make_polygon(
+            [
+                [x_c - d_xc, 0, -d_zc],
+                [x_c + d_xc, 0, -d_zc],
+                [x_c + d_xc, 0, d_zc],
+                [x_c - d_xc, 0, d_zc],
+            ],
+            closed=True,
+        )
+        outer = offset_wire(inner, 1.0, join="intersect")
+        face = BluemiraFace(outer)
+        solid = revolve_shape(face, degree=360)
+
+        face_2 = BluemiraFace(inner)
+        solid_2 = revolve_shape(face_2, degree=360)
+        solid = boolean_cut(solid, solid_2)[0]
+
+        true_volume = 2 * np.pi * x_c * (4 ** 2 - 2 ** 2)
+        assert solid.is_valid()
+        assert np.isclose(solid.volume, true_volume)
+
+    @pytest.mark.xfail
+    def test_cut_hollow_circle(self):
+        # TODO: More fun to be had with circles...
+        x_c = 10
+        radius = 1
+        circle = make_circle(radius=radius, center=[10, 0, 0], axis=[0, 1, 0])
+        face = BluemiraFace(circle)
+        solid = revolve_shape(face, degree=360)
+
+        circle_2 = make_circle(radius=0.5 * radius, center=[10, 0, 0], axis=[0, 1, 0])
+        face_2 = BluemiraFace(circle_2)
+        solid_2 = revolve_shape(face_2, degree=360)
+
+        solid = boolean_cut(solid, solid_2)[0]
+
+        true_volume = 2 * np.pi * x_c * (np.pi * (radius ** 2 - (0.5 * radius) ** 2))
+        assert solid.is_valid()
+        assert np.isclose(solid.volume, true_volume)
 
     @pytest.mark.parametrize("direction", [1, -1])
     def test_fuse_solids(self, direction):
