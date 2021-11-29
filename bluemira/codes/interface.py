@@ -121,7 +121,12 @@ class FileProgramInterface:
     _teardown = Teardown
     _runmode = RunMode
 
-    def __init__(self, runmode, params, NAME, *args, run_dir=None, **kwargs):
+    def __init__(
+        self, runmode, params, NAME, *args, run_dir=None, default_mappings=None, **kwargs
+    ):
+        if default_mappings is not None:
+            find_mappings(NAME, params, default_mappings)
+
         if NAME != "PLASMOD":  # TODO FIX
             self.parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
             self.recv_mapping = get_recv_mapping(params, NAME)

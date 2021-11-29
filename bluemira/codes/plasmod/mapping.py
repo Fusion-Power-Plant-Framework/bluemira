@@ -1,5 +1,7 @@
 from enum import Enum
 
+from bluemira.base.parameter import ParameterMapping
+
 
 class ImpurityModel(Enum):
     # [-] impurity model selector:
@@ -122,7 +124,7 @@ class Profiles(Enum):
 # Link all BM parameters
 # Link all plasmod outputs
 
-DEFAULT_PLASMOD_INPUTS = {
+PLASMOD_INPUTS = {
     ############################
     # list geometry properties
     ############################
@@ -257,7 +259,7 @@ DEFAULT_PLASMOD_INPUTS = {
 #
 
 
-DEFAULT_PLASMOD_OUTPUTS = {
+PLASMOD_OUTPUTS = {
     ############################
     # list scalar outputs
     #############################
@@ -360,3 +362,16 @@ DEFAULT_PLASMOD_OUTPUTS = {
     # [-] plasma effective charge
     "BM_OUT": "_Zeff",
 }
+
+
+def set_default_mappings():
+    mappings = {}
+    send = True
+    recv = False
+    for puts in [PLASMOD_INPUTS, PLASMOD_OUTPUTS]:
+        for bm_key, pl_key in puts.items():
+            mappings[bm_key] = ParameterMapping(pl_key, send=send, recv=recv)
+        send = not send
+        recv = not recv
+
+    return mappings
