@@ -125,13 +125,15 @@ class LogPipe(threading.Thread):
         """
         Setup the object with a loglevel and start a thread for logging
 
+        https://codereview.stackexchange.com/questions/6567/redirecting-subprocesses-output-stdout-and-stderr-to-the-logging-module
+
         Parameters
         ----------
         loglevel: str
             print or error flush printing
 
         """
-        super().__init__(daemon=False)
+        super().__init__(daemon=True)
 
         self.logfunc = {"print": bluemira_print_flush, "error": bluemira_error_flush}[
             loglevel

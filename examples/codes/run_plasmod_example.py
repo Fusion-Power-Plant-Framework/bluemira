@@ -22,10 +22,10 @@
 """
 Test for plasmod run
 """
-from bluemira.codes.plasmod import plasmodapi
+from bluemira.codes.plasmod import api
 import matplotlib.pyplot as plt
 
-plasmodapi.PLASMOD_PATH = "~/bwSyncShare/plasmod_bluemira"
+api.PLASMOD_PATH = "~/bwSyncShare/plasmod_bluemira"
 
 new_params = {
     "A": 3.1,
@@ -36,13 +36,13 @@ new_params = {
     "i_modeltype": 111,
 }
 
-plasmod_solver = plasmodapi.PlasmodSolver(params=new_params)
-plasmod_solver.set_runmode("BATCH")
+plasmod_solver = api.PlasmodSolver(params=new_params)
+plasmod_solver.set_runner("run")
 plasmod_solver.run()
 
-ffprime = plasmod_solver.get_ffprime()
-Te = plasmod_solver.get_te()
-x = plasmod_solver.get_x()
+ffprime = plasmod_solver.get_profile("ffprime")
+Te = plasmod_solver.get_profile("Te")
+x = plasmod_solver.get_profile("x")
 fig, ax = plt.subplots()
 ax.plot(x, Te)
 ax.set(xlabel="x (-)", ylabel="T_e (keV)")
