@@ -332,7 +332,7 @@ class Parameter(wrapt.ObjectProxy):
         """
         self._source = val
 
-        if self.source_history[-1] is None:
+        if len(self.source_history) > 0 and self.source_history[-1] is None:
             self._source_history[-1] = self._source
         else:
             self._update_history()
