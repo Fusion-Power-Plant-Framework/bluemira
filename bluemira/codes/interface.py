@@ -24,7 +24,7 @@ The bluemira external code wrapper
 """
 import subprocess
 import string
-from enum import Enum, auto
+from enum import Enum
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
