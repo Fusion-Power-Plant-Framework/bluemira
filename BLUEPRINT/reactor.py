@@ -1489,7 +1489,7 @@ class Reactor(ReactorSystem):
         reactor.file_manager.build_dirs(create_reference_data_paths=True)
         return reactor
 
-    def config_to_json(self, output_path: Union[str, Path]):
+    def config_to_json(self, output_path: Union[str, Path], **kwargs):
         """
         Saves reactor default parameters, parameter diff, build config, and build tweaks
         to JSON in the format usable by the Configurable Reactor class.
@@ -1520,15 +1520,19 @@ class Reactor(ReactorSystem):
             output_path=output_path.joinpath(self.params.Name + "_config.json")
         )
 
+        indent = kwargs.pop("indent", 2)
+
         json_writer(
             self.build_config,
             output_path.joinpath(self.params.Name + "_build_config.json"),
-            indent=2,
+            indent=indent,
+            **kwargs,
         )
         json_writer(
             self.build_tweaks,
             output_path.joinpath(self.params.Name + "_build_tweaks.json"),
-            indent=2,
+            indent=indent,
+            **kwargs,
         )
 
 

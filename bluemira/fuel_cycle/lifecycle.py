@@ -451,13 +451,13 @@ class LifeCycle:
             )
         )
 
-    def write(self, filename):
+    def write(self, filename, **kwargs):
         """
         Save a Timeline to a JSON file.
         """
         bluemira_print(f"Writing {filename}")
         data = self.T.to_dict()
-        json_writer(data, filename)
+        json_writer(data, filename, **kwargs)
 
     def read(self, filename):
         """

@@ -58,7 +58,7 @@ class JSONReaderWriter:
             else:
                 return self.write_filename
         else:
-            return kwargs["write_filename"]
+            return kwargs.pop("write_filename")
 
     def load(self, **kwargs):
         """
@@ -76,7 +76,7 @@ class JSONReaderWriter:
         Writes the class to a JSON file
         """
         filename = self._find_write_name(**kwargs)
-        json_writer(clsdict, filename)
+        json_writer(clsdict, filename, **kwargs)
         if not os.path.isfile(filename):
             raise GeometryError(f"Failed writing file {filename}")
 
@@ -94,14 +94,14 @@ class GeomBase:
         with open(filename + ".pkl", "wb") as file:
             pickle.dump(cls, file)
 
-    def to_json(self, filename):
+    def to_json(self, filename, **kwargs):
         """
         Exports a JSON of a geometry object
         """
         d = self.as_dict()
         filename = os.path.splitext(filename)[0]
         filename += ".json"
-        json_writer(d, filename)
+        json_writer(d, filename, **kwargs)
 
     @classmethod
     def load(cls, filename):

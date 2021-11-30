@@ -226,7 +226,7 @@ class EQDSKInterface:
         return self.to_dict()
 
     def _write_json(self, file, data, **kwargs):
-        json_writer(data, file)
+        json_writer(data, file, **kwargs)
 
     def _read_eqdsk(self, file):
         if isinstance(file, str):

@@ -65,7 +65,7 @@ class GeomBase(abc.ABC):
         d = self.as_dict()
         filename = os.path.splitext(filename)[0]
         filename += ".json"
-        json_writer(d, filename)
+        json_writer(d, filename, **kwargs)
 
     @classmethod
     def load(cls, filename):
