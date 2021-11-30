@@ -25,8 +25,7 @@ Supporting functions for the bluemira geometry module.
 
 from __future__ import annotations
 
-import freecad
-from numpy.lib.function_base import place
+import freecad  # noqa (F401)
 import Part
 import FreeCAD
 from FreeCAD import Base
@@ -1131,7 +1130,7 @@ def make_plane(base, axis, angle):
     return Base.Placement(base, axis, angle)
 
 
-def make_plane_3P(point_1, point_2, point_3):
+def make_plane_3P(point_1, point_2, point_3):  # noqa: N802
     """
     Make a FreeCAD Placement from three points.
 
