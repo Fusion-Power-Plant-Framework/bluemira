@@ -47,6 +47,6 @@ with open("/home/dshort/code/bluemira/bluemira/builders/EUDEMO/params.json", "w"
     json.dump(params, fh, indent=2)
 
 build_config = {
-    "generated_data_root": "!BP_ROOT!/generated_data",
-    "process_mode": "read",
+    "generated_data_root": "!BM_ROOT!/generated_data",
+    "process_mode": "mock",
 }

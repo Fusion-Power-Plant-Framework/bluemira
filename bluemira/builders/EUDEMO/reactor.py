@@ -36,7 +36,7 @@ from bluemira.equilibria.constants import (
     NB3SN_J_MAX,
     NB3SN_B_MAX,
 )
-from BLUEPRINT.base.file import FileManager, KEYWORD
+from bluemira.base.file import FileManager, BM_ROOT
 from bluemira.base.look_and_feel import bluemira_print, print_banner
 from bluemira.codes import run_systems_code
 from bluemira.equilibria import AbInitioEquilibriumProblem
@@ -75,10 +75,10 @@ class Reactor(abc.ABC):
 
     def _extract_build_config(self, build_config: BuildConfig):
         self._reference_data_root: str = build_config.get(
-            "reference_data_root", f"{KEYWORD}/data"
+            "reference_data_root", f"{BM_ROOT}/data"
         )
         self._generated_data_root: str = build_config.get(
-            "generated_data_root", f"{KEYWORD}/data"
+            "generated_data_root", f"{BM_ROOT}/data"
         )
         self._plot_flag: bool = build_config.get("plot_flag", False)
 
