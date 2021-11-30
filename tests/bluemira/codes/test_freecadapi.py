@@ -27,7 +27,7 @@ import Part
 from FreeCAD import Base
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.constants import D_TOLERANCE, DOT_P_TOL
+from bluemira.geometry.constants import D_TOLERANCE
 
 
 class TestFreecadapi:
