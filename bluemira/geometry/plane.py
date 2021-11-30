@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import numpy as np
 import bluemira.codes._freecadapi as cadapi
+from bluemira.geometry.error import GeometryError
 
 
 class BluemiraPlane:
@@ -72,9 +73,19 @@ class BluemiraPlane:
         label: str
             Label of the plane
         """
-        cls._shape = cadapi.make_plane_3P(point_1, point_2, point_3)
-        cls.label = label
-        return cls
+        p1 = np.array(point_1)
+        p2 = np.array(point_2)
+        p3 = np.array(point_3)
+        v1, v2 = p3 - p1, p2 - p1
+        v3 = np.cross(v2, v1)
+        if np.all(v3 == 0):
+            raise GeometryError("Cannot make a make from co-linear points.")
+
+        normal = v3 / np.sqrt(v3.dot(v3))
+        return cls(point_1, normal, 0.0, label=label)
+        # constructor = cls(label=label)
+        # constructor._shape = cadapi.make_plane_3P(point_1, point_2, point_3)
+        # return constructor
 
     @property
     def base(self):
