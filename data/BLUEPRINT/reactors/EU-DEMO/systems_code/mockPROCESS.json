@@ -47,7 +47,7 @@
     "r_tf_in_centre": 3.649,
     "r_tf_out_centre": 15.954,
     "tk_ts": 0.05,
-    "P_el_net": 500.0,
+    "P_el_net_process": 580.0,
     "P_fus": 1932.0,
     "P_fus_DT": 1929.8,
     "P_fus_DD": 2.2734,
