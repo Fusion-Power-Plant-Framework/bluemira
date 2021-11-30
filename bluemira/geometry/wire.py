@@ -30,7 +30,7 @@ from typing import List
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 
-from bluemira.geometry._freecadapi import (
+from bluemira.codes._freecadapi import (
     discretize_by_edges,
     discretize,
     wire_closure,

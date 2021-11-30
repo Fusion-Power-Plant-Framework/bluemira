@@ -27,7 +27,7 @@ from pprint import pformat
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # noqa
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities._nlopt_api import NLOPTOptimiser
+from bluemira.codes._nlopt_api import NLOPTOptimiser
 
 
 __all__ = ["approx_derivative", "Optimiser"]

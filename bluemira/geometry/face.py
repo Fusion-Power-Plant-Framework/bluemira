@@ -30,7 +30,7 @@ from typing import List
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.wire import BluemiraWire
-import bluemira.geometry._freecadapi as cadapi
+import bluemira.codes._freecadapi as cadapi
 
 # import from error
 from bluemira.geometry.error import NotClosedWire, DisjointedFace

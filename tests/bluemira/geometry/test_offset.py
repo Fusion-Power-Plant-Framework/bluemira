@@ -22,7 +22,7 @@
 import numpy as np
 import pytest
 
-from bluemira.geometry.error import FreeCADError
+from bluemira.codes.error import FreeCADError
 from bluemira.geometry.tools import make_polygon, offset_wire
 from bluemira.geometry.parameterisations import (
     PrincetonD,

@@ -47,7 +47,7 @@ import math
 from typing import List, Optional, Iterable, Union, Dict
 
 # import errors and warnings
-from bluemira.geometry.error import FreeCADError
+from bluemira.codes.error import FreeCADError
 from bluemira.base.look_and_feel import bluemira_warn
 
 from bluemira.base.constants import EPS

@@ -31,7 +31,6 @@ import string
 
 from bluemira.codes.error import CodesError
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
-from bluemira.equilibria.physics import normalise_beta
 from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
 from bluemira.codes.process.api import (
     DEFAULT_INDAT,
@@ -245,6 +244,7 @@ class Run:
         Mock PROCESS. To be used in tests and examples only!
         """
         bluemira_print("Mocking PROCESS systems code run")
+        from bluemira.equilibria.physics import normalise_beta
 
         # Create mock PROCESS file.
         path = self.reactor.file_manager.reference_data_dirs["systems_code"]

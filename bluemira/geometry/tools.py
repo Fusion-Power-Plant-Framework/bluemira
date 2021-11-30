@@ -31,7 +31,7 @@ from typing import Union, Iterable
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.base import BluemiraGeo
-from . import _freecadapi as cadapi
+from bluemira.codes import _freecadapi as cadapi
 from .wire import BluemiraWire
 from .face import BluemiraFace
 from .shell import BluemiraShell

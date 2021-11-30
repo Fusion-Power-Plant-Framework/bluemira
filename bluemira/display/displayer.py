@@ -29,7 +29,7 @@ import copy
 from typing import List, Optional, Tuple, Union
 
 import bluemira.geometry as geo
-from bluemira.geometry import _freecadapi
+from bluemira.codes import _freecadapi as cadapi
 
 from .error import DisplayError
 from .plotter import DisplayOptions
@@ -155,7 +155,7 @@ def show_cad(
     shapes = [part._shape for part in parts]
     freecad_options = [o.as_dict() for o in new_options]
 
-    _freecadapi.show_cad(shapes, freecad_options)
+    cadapi.show_cad(shapes, freecad_options)
 
 
 class BaseDisplayer(ABC):

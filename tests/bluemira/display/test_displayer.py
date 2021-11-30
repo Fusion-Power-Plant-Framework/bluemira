@@ -122,10 +122,10 @@ class TestComponentDisplayer:
         child2 = PhysicalComponent("Child2", shape=wire2, parent=group)
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.geometry._freecadapi.QApplication", PatchQApp
+            "bluemira.codes._freecadapi.QApplication", PatchQApp
         ):
             with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.geometry._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
+                "bluemira.codes._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
             ):
                 child1.show_cad()
                 group.show_cad()
@@ -153,10 +153,10 @@ class TestGeometryDisplayer:
         box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
 
         with contextlib.nullcontext() if tests.PLOTTING else patch(
-            "bluemira.geometry._freecadapi.QApplication", PatchQApp
+            "bluemira.codes._freecadapi.QApplication", PatchQApp
         ):
             with contextlib.nullcontext() if tests.PLOTTING else patch(
-                "bluemira.geometry._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
+                "bluemira.codes._freecadapi.quarter.QuarterWidget", PatchQuarterWidget
             ):
                 displayer.show_cad(wire1)
                 displayer.show_cad(
