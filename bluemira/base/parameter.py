@@ -1231,7 +1231,9 @@ class ParameterFrame:
                 return obj.to_dict()
             return json.JSONEncoder.default(self, obj)
 
-    def to_json(self, output_path=None, verbose=False, return_output=False) -> str:
+    def to_json(
+        self, output_path=None, verbose=False, return_output=False, sort_keys=False
+    ) -> str:
         """
         Convert the ParameterFrame to a JSON representation.
 
@@ -1244,15 +1246,18 @@ class ParameterFrame:
         return_output: bool
             If an output path is specified, then if True returns the JSON output,
             by default False.
+        sort_keys: bool
+            If True then the output will be alphanumerically sorted by the parameter
+            keys.
 
         Returns
         -------
         the_json: Union[str, None]
             The JSON representation of the Parameter.
         """
-        the_json = json.dumps(
-            self.to_dict(verbose), indent=2, cls=self.ParameterMappingEncoder
-        )
+        the_dict = self.to_dict(verbose)
+        the_dict = dict(sorted(the_dict.items())) if sort_keys else the_dict
+        the_json = json.dumps(the_dict, indent=2, cls=self.ParameterMappingEncoder)
         if output_path is not None:
             with open(output_path, "w") as fh:
                 fh.write(the_json)
