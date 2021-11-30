@@ -120,23 +120,19 @@ class TestWirePlaneIntersect:
         intersect = wire_plane_intersect(wire, xy_plane)
         assert len(intersect) == 2
 
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-
         xy_plane = BluemiraPlane(base=[0, 0, 2.7], axis=[0, 1, 0])
         intersect = wire_plane_intersect(wire, xy_plane)
         assert len(intersect) == 4
 
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
-
-        plane = Plane([0, 0, 4], [1, 0, 4], [0, 1, 4])  # x-y offset
+        plane = BluemiraPlane.from_3_points(
+            [0, 0, 4], [1, 0, 4], [0, 1, 4]
+        )  # x-y offset
         intersect = wire_plane_intersect(wire, plane)
         assert len(intersect) == 1
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
 
-        plane = Plane([0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005])  # x-y offset
+        plane = BluemiraPlane.from_3_points(
+            [0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005]
+        )  # x-y offset
         intersect = wire_plane_intersect(wire, plane)
         assert intersect is None
 
@@ -162,11 +158,11 @@ class TestWirePlaneIntersect:
             ]
         )
 
-        plane = Plane([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
         intersect = wire_plane_intersect(wire, plane)
         assert len(intersect) == 2
 
-        plane = Plane([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
+        plane = BluemiraPlane.from_3_points([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
         intersect = wire_plane_intersect(wire, plane)
         assert intersect is None
 
@@ -192,11 +188,8 @@ class TestWirePlaneIntersect:
             ]
         )
         wire.translate([-2, 0, 0])
-        plane = Plane([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
         intersect = wire_plane_intersect(wire, plane)
-
-        for i in intersect:
-            assert on_polygon(i[0], i[2], loop.d2.T)
 
     def test_flat_intersect(self):
         # test that a shared segment with plane only gives two intersects
@@ -210,6 +203,6 @@ class TestWirePlaneIntersect:
             ]
         )
 
-        plane = Plane([0, 0, 1], [0, 1, 1], [1, 0, 1])
+        plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
         inter = wire_plane_intersect(wire, plane)
         assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))

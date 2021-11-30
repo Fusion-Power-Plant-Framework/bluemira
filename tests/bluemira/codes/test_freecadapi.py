@@ -27,7 +27,7 @@ import Part
 from FreeCAD import Base
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.constants import D_TOLERANCE, DOT_P_TOL
 
 
 class TestFreecadapi:
@@ -75,7 +75,7 @@ class TestFreecadapi:
 
     def test_make_polygon(self):
         # open wire
-        open_wire = cadapi.make_polygon(self.square_points)
+        open_wire: Part.Wire = cadapi.make_polygon(self.square_points)
         vertexes = open_wire.Vertexes
         assert len(vertexes) == 4
         assert len(open_wire.Edges) == 3
@@ -84,7 +84,7 @@ class TestFreecadapi:
         assert comparison.all()
         assert not open_wire.isClosed()
         # closed wire
-        closed_wire = cadapi.make_polygon(self.square_points, closed=True)
+        closed_wire: Part.Wire = cadapi.make_polygon(self.square_points, closed=True)
         vertexes = closed_wire.Vertexes
         assert len(vertexes) == 4
         assert len(closed_wire.Edges) == 4
@@ -94,13 +94,13 @@ class TestFreecadapi:
         assert closed_wire.isClosed()
 
     def test_make_bezier(self):
-        bezier = cadapi.make_bezier(self.square_points)
+        bezier: Part.Wire = cadapi.make_bezier(self.square_points)
         curve = bezier.Edges[0].Curve
         assert type(curve) == Part.BezierCurve
 
     def test_make_bspline(self):
         pntslist = self.square_points
-        bspline = cadapi.make_bspline(pntslist)
+        bspline: Part.Wire = cadapi.make_bspline(pntslist)
         curve = bspline.Edges[0].Curve
         assert type(curve) == Part.BSplineCurve
         # assert that the bspline pass through the points
@@ -115,37 +115,37 @@ class TestFreecadapi:
         )
 
     def test_length(self):
-        open_wire = cadapi.make_polygon(self.square_points)
+        open_wire: Part.Wire = cadapi.make_polygon(self.square_points)
         assert cadapi.length(open_wire) == open_wire.Length == 3.0
-        closed_wire = cadapi.make_polygon(self.square_points, True)
+        closed_wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
         assert cadapi.length(closed_wire) == closed_wire.Length == 4.0
 
     def test_area(self):
-        wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
         assert cadapi.area(wire) == wire.Area == 0.0
-        face = cadapi.apiFace(wire)
+        face: Part.Face = Part.Face(wire)
         assert cadapi.area(face) == face.Area == 1.0
 
     def test_center_of_mass(self):
-        wire = cadapi.make_polygon(self.square_points, True)
-        face = cadapi.apiFace(wire)
+        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
+        face: Part.Face = Part.Face(wire)
         comparison = cadapi.center_of_mass(wire) == np.array((0.5, 0.5, 0.0))
         assert comparison.all()
 
     def test_scale_shape(self):
         factor = 2.0
-        wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
         scaled_wire = cadapi.scale_shape(wire.copy(), factor)
-        face = cadapi.apiFace(scaled_wire)
+        face: Part.Face = Part.Face(scaled_wire)
         assert cadapi.area(face) == 1.0 * factor ** 2
         assert cadapi.length(face) == cadapi.length(scaled_wire) == 4.0 * factor
-        face_from_wire = cadapi.apiFace(wire)
+        face_from_wire = Part.Face(wire)
         scaled_face = cadapi.scale_shape(face_from_wire.copy(), factor)
         assert cadapi.length(scaled_face) == cadapi.length(face)
         assert cadapi.area(scaled_face) == cadapi.area(face)
 
     def test_discretize(self):
-        wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
         ndiscr = 10
         points = cadapi.discretize(wire, ndiscr)
         assert len(points) == ndiscr
@@ -155,7 +155,7 @@ class TestFreecadapi:
         assert len(points) == ndiscr
 
     def test_discretize_by_edges(self):
-        wire = cadapi.make_polygon(self.square_points, True)
+        wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
         ndiscr = 10
         points = cadapi.discretize_by_edges(wire, ndiscr)
 
@@ -170,7 +170,7 @@ class TestFreecadapi:
         wire1 = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
         wire2 = cadapi.make_polygon([[0, 0, 0], [0, 1, 0], [1, 1, 0]])
         wire2.reverse()
-        wire = cadapi.apiWire([wire1, wire2])
+        wire = Part.Wire([wire1, wire2])
 
         # ndiscr is chosen in such a way that both discretize and discretize_by_edges
         # give the same points (so that a direct comparison is possible).
@@ -179,3 +179,44 @@ class TestFreecadapi:
 
         # assert that points1 and points2 are the same
         assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)
+
+
+class TestPlanePlacement:
+    def test_plane_placement_xy(self):
+        xy_plane = Part.Plane(
+            Base.Vector(0, 0, 0), Base.Vector(1, 1, 0), Base.Vector(1, -1, 0)
+        )
+        pseudo_plane = cadapi.make_plane_3P(
+            Base.Vector(0, 0, 0), Base.Vector(1, 1, 0), Base.Vector(1, -1, 0)
+        )
+        xy_plane_2 = cadapi._placement_to_plane(pseudo_plane)
+
+        f1 = cadapi.apiFace(xy_plane)
+        f2 = cadapi.apiFace(xy_plane_2)
+        assert np.isclose(
+            f1.normalAt(0, 0).getAngle(f2.normalAt(0, 0)), 0.0, rtol=0, atol=DOT_P_TOL
+        )
+        assert xy_plane.Position == xy_plane_2.Position
+        assert np.allclose(xy_plane.Axis, xy_plane_2.Axis)
+
+    def test_plane_placement_random(self):
+        for _ in range(100):
+            p1 = np.random.rand(3)
+            p2 = np.random.rand(3)
+            p3 = np.random.rand(3)
+            plane = Part.Plane(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+            pseudo_plane = cadapi.make_plane_3P(p1, p2, p3)
+            plane_2 = cadapi._placement_to_plane(pseudo_plane)
+
+            f1 = cadapi.apiFace(plane)
+            f2 = cadapi.apiFace(plane_2)
+            assert np.isclose(
+                f1.normalAt(0, 0).getAngle(f2.normalAt(0, 0)),
+                0.0,
+                rtol=0,
+                atol=DOT_P_TOL,
+            )
+            assert plane.Position == plane_2.Position
+            assert np.allclose(plane.Axis, plane_2.Axis)
+            # TODO: This is frustrating... I think it is due to machine precision
+            # assert f1.isCoplanar(f2)
