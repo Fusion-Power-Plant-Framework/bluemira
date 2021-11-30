@@ -563,7 +563,6 @@ def flatten_iterable(iters):
     """
     for _iter in iters:
         if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes)):
-            print(_iter)
             for _it in flatten_iterable(_iter):
                 yield _it
         else:
