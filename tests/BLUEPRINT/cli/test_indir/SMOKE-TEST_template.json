@@ -512,7 +512,7 @@
     "value": 0.02,
     "unit": "m",
     "description": "Distance between IVCs",
-    "source": null,
+    "source": "Input",
     "mapping": null
   },
   "cr_l_d": {

@@ -244,8 +244,7 @@ class Reactor(ReactorSystem):
         # Run 0-1D systems code modules
         self.run_systems_code()
 
-        if self.build_config["process_mode"] != "mock":
-            self.build_0D_plasma()
+        self.build_0D_plasma()
 
         # Calculate or load preliminary plasma MHD equilibrium
         if self.build_config["plasma_mode"] == "run":
@@ -285,7 +284,13 @@ class Reactor(ReactorSystem):
         """
         Runs, reads, or mocks the systems code according to the build config dictionary.
         """
-        run_systems_code(self)
+        PROCESS_output: ParameterFrame = run_systems_code(
+            self.params,
+            self.build_config,
+            self.file_manager.generated_data_dirs["systems_code"],
+            self.file_manager.reference_data_dirs["systems_code"],
+        )
+        self.params.update_kw_parameters(PROCESS_output.to_dict())
 
     def estimate_kappa_95(self):
         """
@@ -311,9 +316,6 @@ class Reactor(ReactorSystem):
         Pickling utility. Need to get rid of C objects prior to pickling.
         """
         d = super().__getstate__()
-        # BMFile can't be pickled so after unpickling run_PROCESS must be
-        # called
-        d.pop("__PROCESS__", None)
         # ReactorCAD can't be pickled so after unpickling build_cad must be
         # called
         d.pop("CAD", None)
@@ -328,58 +330,21 @@ class Reactor(ReactorSystem):
         """
         profiles = {}
 
-        variables = [
-            "I_p",
-            "P_fus",
-            "P_fus_DT",
-            "P_fus_DD",
-            "H_star",
-            "P_rad_core",
-            "P_rad_edge",
-            "P_rad",
-            "P_line",
-            "P_sync",
-            "P_brehms",
-            "f_bs",
-            "tau_e",
-            "P_sep",
-            "beta",
-            "v_burn",
-        ]
-        values = self.__PROCESS__.extract_outputs(variables)
-        param_dict = dict(zip(variables, values))
-        self.add_parameters(param_dict)
-        beta_n = normalise_beta(
-            self.params.beta,
-            self.params.R_0 / self.params.A,
-            self.params.B_0,
-            self.params.I_p,
-        )
-        self.add_parameters({"beta_N": beta_n})
+        derived_params = {
+            "f_DD_fus": self.params.P_fus_DD / self.params.P_fus,
+            "beta_n": normalise_beta(
+                self.params.beta,
+                self.params.R_0 / self.params.A,
+                self.params.B_0,
+                self.params.I_p,
+            ),
+            "n_DT_reactions": n_DT_reactions(self.params.P_fus_DT),
+            "n_DD_reactions": n_DD_reactions(self.params.P_fus_DD),
+        }
+        self.add_parameters(derived_params, "Derived")
 
-        self.calc_reaction_rates()
-        self.PL = Plasma(self.params, profiles, self.build_config["plasma_mode"])
-
-    def calc_reaction_rates(self):
-        """
-        Calculate the fusion reaction rates.
-        """
-        self.add_parameter(
-            "n_DT_reactions",
-            "Number of D-T reactions per second",
-            n_DT_reactions(self.params.P_fus_DT),
-            "1/s",
-            "At full power",
-            "Derived",
-        )
-        self.add_parameter(
-            "n_DD_reactions",
-            "Number of D-D reactions per second",
-            n_DD_reactions(self.params.P_fus_DD),
-            "1/s",
-            "At full power",
-            "Derived",
-        )
+        PlasmaClass = self.get_subsystem_class("PL")
+        self.PL = PlasmaClass(self.params, profiles, self.build_config["plasma_mode"])
 
     def create_equilibrium(self, qpsi_calcmode=0):
         """

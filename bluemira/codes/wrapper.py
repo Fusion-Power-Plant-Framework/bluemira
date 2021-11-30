@@ -23,11 +23,24 @@
 Bluemira External Codes Wrapper
 """
 
+from __future__ import annotations
+
+from typing import Optional
+
+import bluemira.base as bm_base
+
 from bluemira.codes.error import CodesError
 from bluemira.codes import process
 
 
-def run_systems_code(reactor, params_to_update=None):
+def run_systems_code(
+    params: bm_base.ParameterFrame,
+    build_config: bm_base.BuildConfig,
+    run_dir: str,
+    read_dir: Optional[str] = None,
+    template_indat=None,
+    params_to_update=None,
+) -> bm_base.ParameterFrame:
     """
     Runs, reads or mocks PROCESS according to the build configuration dictionary.
 
@@ -67,8 +80,11 @@ def run_systems_code(reactor, params_to_update=None):
     CodesError
         If PROCESS is not being mocked and is not installed.
     """
-    process_mode = reactor.build_config["process_mode"]
+    process_mode = build_config["process_mode"]
     if (not process.PROCESS_ENABLED) and (process_mode.lower() != "mock"):
         raise CodesError("PROCESS not (properly) installed")
 
-    process.Run(reactor, params_to_update)
+    runner = process.Run(
+        params, build_config, run_dir, read_dir, template_indat, params_to_update
+    )
+    return runner.params

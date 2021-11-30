@@ -23,14 +23,19 @@
 PROCESS run functions
 """
 
+from __future__ import annotations
+
 from enum import Enum, auto
 import json
 import os
 import subprocess  # noqa (S404)
 import string
+from typing import Dict, List, Optional
+
+import bluemira.base as bm_base
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 
 from bluemira.codes.error import CodesError
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
 from bluemira.codes.process.api import (
     DEFAULT_INDAT,
@@ -116,60 +121,70 @@ class Run:
         testing purposes.
     """
 
+    _params: bm_base.ParameterFrame
+    _run_dir: str
+    _read_dir: str
+    _template_indat: str
+    _params_to_update: List[str]
+    _parameter_mapping: Dict[str, str]
+    _recv_mapping: Dict[str, str]
+    _send_mapping: Dict[str, str]
+
+    output_files: List[str] = [
+        "OUT.DAT",
+        "MFILE.DAT",
+        "OPT.DAT",
+        "SIG_TF.DAT",
+    ]
+
     def __init__(
         self,
-        reactor,
-        run_dir=None,
-        template_indat=None,
-        params_to_update=None,
+        params: bm_base.ParameterFrame,
+        build_config: bm_base.BuildConfig,
+        run_dir: str,
+        read_dir: Optional[str] = None,
+        template_indat: Optional[str] = None,
+        params_to_update: Optional[List[str]] = None,
     ):
-        self.reactor = reactor
-        self.param_list = self.reactor.params.get_parameter_list()
+        self._run_dir = run_dir
+        self._read_dir = read_dir
 
         if params_to_update is not None:
-            self.params_to_update = params_to_update
+            self._params_to_update = params_to_update
         else:
-            self.params_to_update = self.reactor.build_config.get(
-                "params_to_update", None
-            )
-
-        if run_dir is not None:
-            self.run_dir = run_dir
-        else:
-            self.run_dir = self.reactor.file_manager.generated_data_dirs["systems_code"]
+            self._params_to_update = build_config.get("params_to_update", None)
 
         if template_indat is not None:
-            self.template_indat = template_indat
+            self._template_indat = template_indat
         else:
-            self.template_indat = self.reactor.build_config.get(
-                "process_indat", DEFAULT_INDAT
-            )
+            self._template_indat = build_config.get("process_indat", DEFAULT_INDAT)
 
-        self.parameter_mapping = get_recv_mapping(
-            self.reactor.params, PROCESS, recv_all=True
-        )
-        self.recv_mapping = get_recv_mapping(self.reactor.params, PROCESS)
-        self.send_mapping = get_send_mapping(self.reactor.params, PROCESS)
-        self.set_runmode()
-        self.output_files = [
-            "OUT.DAT",
-            "MFILE.DAT",
-            "OPT.DAT",
-            "SIG_TF.DAT",
-        ]
+        self._parameter_mapping = get_recv_mapping(params, PROCESS, recv_all=True)
+        self._params = type(params).from_template(self._parameter_mapping.values())
+        self._params.update_kw_parameters(params.to_dict(verbose=True))
+        self._recv_mapping = get_recv_mapping(params, PROCESS)
+        self._send_mapping = get_send_mapping(params, PROCESS)
+        self._set_runmode(build_config)
 
-        self.runmode(self)  # Run PROCESS in the given run mode
+        self._runmode(self)  # Run PROCESS in the given run mode
 
-    def set_runmode(self):
+    @property
+    def params(self) -> bm_base.ParameterFrame:
+        """
+        The ParameterFrame corresponding to this run.
+        """
+        return self._params
+
+    def _set_runmode(self, build_config: bm_base.BuildConfig):
         """
         Set PROCESS runmode according to the "process_mode" parameter in build_config.
         """
         mode = (
-            self.reactor.build_config["process_mode"]
+            build_config["process_mode"]
             .upper()
             .translate(str.maketrans("", "", string.whitespace))
         )
-        self.runmode = RunMode[mode]
+        self._runmode = RunMode[mode]
 
     def _run(self):
         self.run_PROCESS(use_bp_inputs=True)
@@ -178,16 +193,10 @@ class Run:
         self.run_PROCESS(use_bp_inputs=False)
 
     def _read(self):
-        self.get_PROCESS_run(
-            path=self.reactor.file_manager.reference_data_dirs["systems_code"],
-            recv_all=False,
-        )
+        self.get_PROCESS_run(path=self._read_dir, recv_all=False)
 
     def _readall(self):
-        self.get_PROCESS_run(
-            path=self.reactor.file_manager.reference_data_dirs["systems_code"],
-            recv_all=True,
-        )
+        self.get_PROCESS_run(path=self._read_dir, recv_all=True)
 
     def _mock(self):
         self.mock_PROCESS_run()
@@ -203,7 +212,7 @@ class Run:
             within a bluemira run. If False, runs PROCESS without modifying inputs.
             Default, True
         """
-        bluemira_print("Running PROCESS systems code")
+        bluemira_print(f"Running {PROCESS} systems code")
 
         # Write the IN.DAT file and store in the main PROCESS folder
         # Note that if use_bp_inputs is True, bluemira outputs with
@@ -226,58 +235,24 @@ class Run:
         bluemira_print("Loading PROCESS systems code run.")
 
         # Load the PROCESS MFile & read selected output
-        params_to_recv = self.parameter_mapping if recv_all else self.recv_mapping
+        params_to_recv = self._parameter_mapping if recv_all else self._recv_mapping
         self._load_PROCESS(BMFile(path, params_to_recv), recv_all)
-
-        # Add DD fusion fraction
-        self.reactor.add_parameter(
-            "f_DD_fus",
-            "Fraction of DD fusion",
-            self.reactor.params.P_fus_DD / self.reactor.params.P_fus,
-            "N/A",
-            "At full power",
-            "Derived",
-        )
 
     def mock_PROCESS_run(self):
         """
         Mock PROCESS. To be used in tests and examples only!
         """
         bluemira_print("Mocking PROCESS systems code run")
-        from bluemira.equilibria.physics import normalise_beta
 
         # Create mock PROCESS file.
-        path = self.reactor.file_manager.reference_data_dirs["systems_code"]
+        path = self._read_dir
         filename = os.sep.join([path, "mockPROCESS.json"])
         with open(filename, "r") as fh:
             process = json.load(fh)
 
-        # Set mock PROCESS parameters.
-        self.reactor.add_parameters(process, source="Input")
-        self.reactor.add_parameter(
-            "f_DD_fus",
-            "Fraction of DD fusion",
-            self.reactor.params.P_fus_DD / self.reactor.params.P_fus,
-            "N/A",
-            "At full power",
-            "Derived",
-        )
+        self._params.update_kw_parameters(process, source=f"{PROCESS} (Mock)")
 
-        beta_n = normalise_beta(
-            self.reactor.params.beta,
-            self.reactor.params.R_0 / self.reactor.params.A,
-            self.reactor.params.B_0,
-            self.reactor.params.I_p,
-        )
-
-        self.reactor.add_parameters({"beta_N": beta_n})
-        self.reactor.calc_reaction_rates()
-        PlasmaClass = self.reactor.get_subsystem_class("PL")
-        self.reactor.PL = PlasmaClass(
-            self.reactor.params, {}, self.reactor.build_config["plasma_mode"]
-        )
-
-    def _load_PROCESS(self, bm_file, recv_all=False):
+    def _load_PROCESS(self, bm_file: BMFile, recv_all: bool = False):
         """
         Loads a PROCESS output file (MFILE.DAT) and extract some or all its output data
 
@@ -286,16 +261,16 @@ class Run:
             bm_file: BMFile
                 PROCESS output file (MFILE.DAT) to load
             recv_all: bool, optional
-                True - Read all PROCESS output mapped by BTOPVARS,
-                False - reads only a subset of the PROCESS output.
+                True - Read all PROCESS output with a mapping,
+                False - reads only PROCESS output with a mapping and recv = True.
                 Default, False
         """
-        self.reactor.__PROCESS__ = bm_file
-
         # Load all PROCESS vars mapped with a bluemira input
-        var = self.parameter_mapping.values() if recv_all else self.recv_mapping.values()
-        param = self.reactor.__PROCESS__.extract_outputs(var)
-        self.reactor.add_parameters(dict(zip(var, param)), source=PROCESS)
+        var = (
+            self._parameter_mapping.values() if recv_all else self._recv_mapping.values()
+        )
+        param = bm_file.extract_outputs(var)
+        self._params.update_kw_parameters(dict(zip(var, param)), source=PROCESS)
 
     def prepare_bp_inputs(self, use_bp_inputs=True):
         """
@@ -311,15 +286,14 @@ class Run:
             Default, True
         """
         # Skip if True but no list provided
-        if use_bp_inputs is True and self.params_to_update is None:
+        if use_bp_inputs is True and self._params_to_update is None:
             return
         # Update send values to True or False
-        for param in self.param_list:
-            if param.mapping is not None and PROCESS in param.mapping:
-                mapping = param.mapping[PROCESS]
-                if mapping.name in self.parameter_mapping:
-                    bp_name = self.parameter_mapping[mapping.name]
-                    mapping.send = use_bp_inputs and bp_name in self.params_to_update
+        for param in self._params.get_parameter_list():
+            bp_name = self._parameter_mapping[param.mapping[PROCESS].name]
+            param.mapping[PROCESS].send = (
+                use_bp_inputs and bp_name in self._params_to_update
+            )
 
     def write_indat(self, use_bp_inputs=True):
         """
@@ -333,25 +307,24 @@ class Run:
             Default, True
         """
         # Load defaults in bluemira folder
-        writer = PROCESSInputWriter(template_indat=self.template_indat)
+        writer = PROCESSInputWriter(template_indat=self._template_indat)
         if writer.data == {}:
             raise CodesError(
-                f"Unable to read template IN.DAT file at {self.template_indat}"
+                f"Unable to read template IN.DAT file at {self._template_indat}"
             )
 
         if use_bp_inputs is True:
-            for param in self.param_list:  # Overwrite variables
-                if param.mapping is not None and PROCESS in param.mapping:
-                    mapping = param.mapping[PROCESS]
-                    if mapping.send:
-                        new_mapping = update_obsolete_vars(mapping.name)
-                        if isinstance(new_mapping, list):
-                            for mapping in new_mapping:
-                                writer.add_parameter(mapping, param.value)
-                        else:
-                            writer.add_parameter(new_mapping, param.value)
+            for param in self._params.get_parameter_list():
+                mapping = param.mapping[PROCESS]
+                if mapping.send:
+                    new_mapping = update_obsolete_vars(mapping.name)
+                    if isinstance(new_mapping, list):
+                        for mapping in new_mapping:
+                            writer.add_parameter(mapping, param.value)
+                    else:
+                        writer.add_parameter(new_mapping, param.value)
 
-        filename = os.path.join(self.run_dir, "IN.DAT")
+        filename = os.path.join(self._run_dir, "IN.DAT")
         writer.write_in_dat(output_filename=filename)
 
     def read_mfile(self):
@@ -363,7 +336,7 @@ class Run:
         mfile: BMFile
             The object representation of the output MFILE.DAT.
         """
-        m_file = BMFile(self.run_dir, self.parameter_mapping)
+        m_file = BMFile(self._run_dir, self._parameter_mapping)
         self._check_feasible_solution(m_file)
         return m_file
 
@@ -372,7 +345,7 @@ class Run:
         Clear the output files from PROCESS run directory.
         """
         for filename in self.output_files:
-            filepath = os.sep.join([self.run_dir, filename])
+            filepath = os.sep.join([self._run_dir, filename])
             if os.path.exists(filepath):
                 os.remove(filepath)
 
@@ -386,20 +359,20 @@ class Run:
             If any resulting output files don't exist or are empty.
         """
         for filename in self.output_files:
-            filepath = os.sep.join([self.run_dir, filename])
+            filepath = os.sep.join([self._run_dir, filename])
             if os.path.exists(filepath):
                 with open(filepath) as fh:
                     if len(fh.readlines()) == 0:
                         message = (
                             f"PROCESS generated an empty {filename} "
-                            f"file in {self.run_dir} - check PROCESS logs."
+                            f"file in {self._run_dir} - check PROCESS logs."
                         )
                         bluemira_warn(message)
                         raise CodesError(message)
             else:
                 message = (
                     f"PROCESS run did not generate the {filename} "
-                    f"file in {self.run_dir} - check PROCESS logs."
+                    f"file in {self._run_dir} - check PROCESS logs."
                 )
                 bluemira_warn(message)
                 raise CodesError(message)
@@ -429,4 +402,4 @@ class Run:
             raise CodesError(message)
 
     def _run_subprocess(self):
-        subprocess.run("process", cwd=self.run_dir)  # noqa (S603)
+        subprocess.run("process", cwd=self._run_dir)  # noqa (S603)
