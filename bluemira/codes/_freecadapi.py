@@ -668,8 +668,19 @@ def wire_plane_intersect(wire, plane):
         The xyz coordinates of the intersections with the wire. Returns None if
         there are no intersections detected
     """
-    plane = _placement_to_plane(plane)
-    face = apiFace(plane)
+    some_plane = Part.Plane()
+    big = 1e6
+    # Default is x-y
+    face = apiFace(
+        make_polygon(
+            [[-big, -big, 0], [big, -big, 0], [big, big, 0], [-big, big, 0]], closed=True
+        )
+    )
+
+    change_plane(face, plane)
+    # face.Placement = plane
+    # plane = _placement_to_plane(plane)
+    # face = apiFace(plane)
 
     if not _wire_is_planar(wire):
         bluemira_warn(
@@ -677,14 +688,15 @@ def wire_plane_intersect(wire, plane):
             "guarantee return type will be correct."
         )
 
-    if wire.isCoplanar(face):
-        raise FreeCADError(
-            "Cannot intersect this wire with this plane: they are coplanar."
-        )
+    # if wire.isCoplanar(face):
+    #     raise FreeCADError(
+    #         "Cannot intersect this wire with this plane: they are coplanar."
+    #     )
 
     vertexes = wire.section([face]).Vertexes
     if vertexes:
-        return vertex_to_numpy(vertexes)
+        # return vertex_to_numpy(vertexes)
+        return np.array([[v.X, v.Y, v.Z] for v in vertexes])
 
     return None
 
@@ -1093,7 +1105,7 @@ def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
 # ======================================================================================
 
 # BluemiraPlane wraps Base.Placement not Part.Plane. These conversions become useful..
-# They are probably a bit broken...
+# They are probably a bit broken... cos this stuff is a mess in FreeCAD
 def _placement_to_plane(placement):
     """
     Convert a FreeCAD Base.Placement to FreeCAD Part.Plane
@@ -1109,6 +1121,7 @@ def _plane_to_placement(plane):
     """
     placement = Base.Placement(plane.Position, plane.Axis, 0)
     placement.Rotation = plane.Rotation
+    placement.Rotation.Axis = plane.Rotation.Axis
     return placement
 
 

@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+from bluemira.geometry.base import BluemiraGeo
 
 from bluemira.geometry.tools import (
     signed_distance,
@@ -90,9 +91,11 @@ class TestWirePlaneIntersect:
             [[0, 0, -1], [1, 0, -1], [2, 0, -1], [2, 0, 1], [0, 0, 1], [0, 0, -1]]
         )
 
-        xy_plane = BluemiraPlane(axis=[0, 1, 0])
+        xy_plane = BluemiraPlane(axis=[0, 0, 1])
         intersect = wire_plane_intersect(loop, xy_plane)
         e = np.array([[0, 0, 0], [2, 0, 0]])
+        e.sort(axis=0)
+        intersect.sort(axis=0)
         assert np.allclose(intersect, e)
 
     def test_complex(self):
@@ -116,7 +119,7 @@ class TestWirePlaneIntersect:
                 [0.0, 0.0, -1.0],
             ]
         )
-        xy_plane = BluemiraPlane(axis=[0, 1, 0])
+        xy_plane = BluemiraPlane(axis=[0, 0, 1])
         intersect = wire_plane_intersect(wire, xy_plane)
         assert len(intersect) == 2
 
@@ -158,11 +161,12 @@ class TestWirePlaneIntersect:
             ]
         )
 
-        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-z
+        plane = BluemiraPlane(axis=[0, 1, 0])
         intersect = wire_plane_intersect(wire, plane)
         assert len(intersect) == 2
 
-        plane = BluemiraPlane.from_3_points([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
+        plane = BluemiraPlane.from_3_points([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-z
         intersect = wire_plane_intersect(wire, plane)
         assert intersect is None
 
@@ -187,7 +191,7 @@ class TestWirePlaneIntersect:
                 [0.0, -1.0, 0.0],
             ]
         )
-        wire.translate([-2, 0, 0])
+        wire.translate((-2, 0, 0))
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
         intersect = wire_plane_intersect(wire, plane)
 
@@ -205,4 +209,7 @@ class TestWirePlaneIntersect:
 
         plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
         inter = wire_plane_intersect(wire, plane)
-        assert np.allclose(inter, np.array([[0, 0, 1], [2, 0, 1]]))
+        true = np.array([[0, 0, 1], [2, 0, 1]])
+        true.sort(axis=0)
+        inter.sort(axis=0)
+        assert np.allclose(inter, true)
