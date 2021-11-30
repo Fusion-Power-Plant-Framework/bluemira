@@ -30,7 +30,7 @@ from typing import Type
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.constants import S_TO_YR, YR_TO_S
-from bluemira.utilities.tools import abs_rel_difference, is_num
+from bluemira.utilities.tools import abs_rel_difference, is_num, json_writer
 from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.fuel_cycle.timeline_tools import (
     LearningStrategy,
@@ -451,14 +451,13 @@ class LifeCycle:
             )
         )
 
-    def write(self, filename):
+    def write(self, filename, **kwargs):
         """
         Save a Timeline to a JSON file.
         """
         bluemira_print(f"Writing {filename}")
         data = self.T.to_dict()
-        with open(filename, "w") as f_h:
-            json.dump(data, f_h, indent=4)
+        json_writer(data, filename, **kwargs)
 
     def read(self, filename):
         """

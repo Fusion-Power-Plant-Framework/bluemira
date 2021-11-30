@@ -47,7 +47,7 @@ from BLUEPRINT.geometry.loop import Loop, point_loop_cast
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 from BLUEPRINT.utilities.colortools import force_rgb
-from bluemira.utilities.tools import CommentJSONDecoder
+from bluemira.utilities.tools import CommentJSONDecoder, json_writer
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (
@@ -1489,7 +1489,7 @@ class Reactor(ReactorSystem):
         reactor.file_manager.build_dirs(create_reference_data_paths=True)
         return reactor
 
-    def config_to_json(self, output_path: Union[str, Path]):
+    def config_to_json(self, output_path: Union[str, Path], **kwargs):
         """
         Saves reactor default parameters, parameter diff, build config, and build tweaks
         to JSON in the format usable by the Configurable Reactor class.
@@ -1520,15 +1520,20 @@ class Reactor(ReactorSystem):
             output_path=output_path.joinpath(self.params.Name + "_config.json")
         )
 
-        with open(
-            output_path.joinpath(self.params.Name + "_build_config.json"), "w"
-        ) as fh:
-            json.dump(self.build_config, fh, indent=2)
+        indent = kwargs.pop("indent", 2)
 
-        with open(
-            output_path.joinpath(self.params.Name + "_build_tweaks.json"), "w"
-        ) as fh:
-            json.dump(self.build_tweaks, fh, indent=2)
+        json_writer(
+            self.build_config,
+            output_path.joinpath(self.params.Name + "_build_config.json"),
+            indent=indent,
+            **kwargs,
+        )
+        json_writer(
+            self.build_tweaks,
+            output_path.joinpath(self.params.Name + "_build_tweaks.json"),
+            indent=indent,
+            **kwargs,
+        )
 
 
 _registry_name = "BLUEPRINT.reactor._registry"

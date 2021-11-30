@@ -29,7 +29,7 @@ import json
 import os
 from BLUEPRINT.base.error import GeometryError
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import NumpyJSONEncoder
+from bluemira.utilities.tools import json_writer
 from BLUEPRINT.geometry.constants import TOLERANCE
 
 # =============================================================================
@@ -58,7 +58,7 @@ class JSONReaderWriter:
             else:
                 return self.write_filename
         else:
-            return kwargs["write_filename"]
+            return kwargs.pop("write_filename")
 
     def load(self, **kwargs):
         """
@@ -76,8 +76,7 @@ class JSONReaderWriter:
         Writes the class to a JSON file
         """
         filename = self._find_write_name(**kwargs)
-        with open(filename, "w") as output:
-            json.dump(clsdict, output, indent=4, cls=NumpyJSONEncoder)
+        json_writer(clsdict, filename, **kwargs)
         if not os.path.isfile(filename):
             raise GeometryError(f"Failed writing file {filename}")
 
@@ -95,15 +94,14 @@ class GeomBase:
         with open(filename + ".pkl", "wb") as file:
             pickle.dump(cls, file)
 
-    def to_json(self, filename):
+    def to_json(self, filename, **kwargs):
         """
         Exports a JSON of a geometry object
         """
         d = self.as_dict()
         filename = os.path.splitext(filename)[0]
         filename += ".json"
-        with open(filename, "w") as f:
-            json.dump(d, f, cls=NumpyJSONEncoder)
+        json_writer(d, filename, **kwargs)
 
     @classmethod
     def load(cls, filename):

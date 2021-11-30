@@ -30,7 +30,7 @@ import time
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import is_num, NumpyJSONEncoder
+from bluemira.utilities.tools import is_num, json_writer
 
 __all__ = ["EQDSKInterface"]
 
@@ -226,12 +226,7 @@ class EQDSKInterface:
         return self.to_dict()
 
     def _write_json(self, file, data, **kwargs):
-        if isinstance(file, str):
-            with open(file, "w") as f_handle:
-                return self._write_json(f_handle, data)
-        if "indent" not in kwargs:
-            kwargs["indent"] = 4
-        json.dump(data, file, cls=NumpyJSONEncoder, **kwargs)
+        json_writer(data, file, **kwargs)
 
     def _read_eqdsk(self, file):
         if isinstance(file, str):
