@@ -1092,6 +1092,26 @@ def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
 # ======================================================================================
 # Plane manipulations
 # ======================================================================================
+
+# BluemiraPlane wraps Base.Placement not Part.Plane. These conversions become useful..
+def _placement_to_plane(placement):
+    """
+    Convert a FreeCAD Base.Placement to FreeCAD Part.Plane
+    """
+    plane = Part.Plane(placement.Base, Base.Vector(0.0, 0.0, 1.0))
+    plane.rotate(placement)
+    return plane
+
+
+def _plane_to_placement(plane):
+    """
+    Convert a FreeCAD Part.Plane to FreeCAD Base.Placement
+    """
+    placement = Base.Placement(plane.Position, plane.Axis, 0)
+    placement.Rotation = plane.Rotation
+    return placement
+
+
 def make_plane(base, axis, angle):
     """
     Make a FreeCAD Placement
@@ -1109,18 +1129,6 @@ def make_plane(base, axis, angle):
     axis = Base.Vector(axis)
 
     return Base.Placement(base, axis, angle)
-
-
-def _placement_to_plane(placement):
-    plane = Part.Plane(placement.Base, Base.Vector(0, 0, 1))
-    plane.rotate(placement)
-    return plane
-
-
-def _plane_to_placement(plane):
-    placement = Base.Placement(plane.Position, plane.Axis, 0)
-    placement.Rotation = plane.Rotation
-    return placement
 
 
 def make_plane_3P(point_1, point_2, point_3):
@@ -1143,25 +1151,6 @@ def make_plane_3P(point_1, point_2, point_3):
     """
     plane = Part.Plane(Base.Vector(point_1), Base.Vector(point_2), Base.Vector(point_3))
     return _plane_to_placement(plane)
-
-
-def test_fucking_plane_from_3_points():
-    for i in range(100):
-        p1 = np.random.rand(3)
-        p2 = np.random.rand(3)
-        p3 = np.random.rand(3)
-        plane = Part.Plane(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
-        pseudo_plane = make_plane_3P(p1, p2, p3)
-        plane_2 = _placement_to_plane(pseudo_plane)
-
-        f1 = apiFace(plane)
-        f2 = apiFace(plane_2)
-        print(i)
-        print(f1.normalAt(0, 0).getAngle(f2.normalAt(0, 0)))
-        print(plane.Position.distanceToPoint(plane_2.Position))
-        assert plane.Position == plane_2.Position
-        assert np.allclose(plane.Axis, plane_2.Axis)
-        print(f1.isCoplanar(f2))
 
 
 def move_plane(plane, vector):

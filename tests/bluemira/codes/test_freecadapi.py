@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-import numpy
+import numpy as np
 
 import freecad  # noqa: F401
 import Part
@@ -28,6 +28,7 @@ from FreeCAD import Base
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.base.constants import EPS
 
 
 class TestFreecadapi:
@@ -49,7 +50,7 @@ class TestFreecadapi:
             arr = cadapi.point_to_numpy(self.square_points)
 
     def test_single_vector_to_numpy(self):
-        input = numpy.array((1.0, 0.5, 2.0))
+        input = np.array((1.0, 0.5, 2.0))
         vector = Base.Vector(input)
         arr = cadapi.vector_to_numpy(vector)
         comparison = arr == input
@@ -58,19 +59,19 @@ class TestFreecadapi:
     def test_vector_to_numpy(self):
         vectors = [Base.Vector(v) for v in self.square_points]
         arr = cadapi.vector_to_numpy(vectors)
-        comparison = arr == numpy.array(self.square_points)
+        comparison = arr == np.array(self.square_points)
         assert comparison.all()
 
     def test_point_to_numpy(self):
         vectors = [Part.Point(Base.Vector(v)) for v in self.square_points]
         arr = cadapi.point_to_numpy(vectors)
-        comparison = arr == numpy.array(self.square_points)
+        comparison = arr == np.array(self.square_points)
         assert comparison.all()
 
     def test_vertex_to_numpy(self):
         vertexes = [Part.Vertex(Base.Vector(v)) for v in self.square_points]
         arr = cadapi.vertex_to_numpy(vertexes)
-        comparison = arr == numpy.array(self.square_points)
+        comparison = arr == np.array(self.square_points)
         assert comparison.all()
 
     def test_make_polygon(self):
@@ -80,7 +81,7 @@ class TestFreecadapi:
         assert len(vertexes) == 4
         assert len(open_wire.Edges) == 3
         arr = cadapi.vertex_to_numpy(vertexes)
-        comparison = arr == numpy.array(self.square_points)
+        comparison = arr == np.array(self.square_points)
         assert comparison.all()
         assert not open_wire.isClosed()
         # closed wire
@@ -89,7 +90,7 @@ class TestFreecadapi:
         assert len(vertexes) == 4
         assert len(closed_wire.Edges) == 4
         arr = cadapi.vertex_to_numpy(vertexes)
-        comparison = arr == numpy.array(self.square_points)
+        comparison = arr == np.array(self.square_points)
         assert comparison.all()
         assert closed_wire.isClosed()
 
@@ -110,8 +111,8 @@ class TestFreecadapi:
         test_points = cadapi.vector_to_list([curve.value(par) for par in params])
         # assert that the points on the curve are equal (within a tolerance) to the
         # points used to generate the bspline
-        assert numpy.allclose(
-            numpy.array(test_points) - numpy.array(pntslist), 0, atol=D_TOLERANCE
+        assert np.allclose(
+            np.array(test_points) - np.array(pntslist), 0, atol=D_TOLERANCE
         )
 
     def test_length(self):
@@ -129,7 +130,7 @@ class TestFreecadapi:
     def test_center_of_mass(self):
         wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
         face: Part.Face = Part.Face(wire)
-        comparison = cadapi.center_of_mass(wire) == numpy.array((0.5, 0.5, 0.0))
+        comparison = cadapi.center_of_mass(wire) == np.array((0.5, 0.5, 0.0))
         assert comparison.all()
 
     def test_scale_shape(self):
@@ -164,7 +165,7 @@ class TestFreecadapi:
 
         dl = 0.4
         points2 = cadapi.discretize_by_edges(wire, ndiscr=100, dl=dl)
-        assert numpy.allclose(points1 - points2, 0, atol=D_TOLERANCE)
+        assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)
 
     def test_discretize_vs_discretize_by_edges(self):
         wire1 = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
@@ -178,4 +179,24 @@ class TestFreecadapi:
         points2 = cadapi.discretize_by_edges(wire, ndiscr=4)
 
         # assert that points1 and points2 are the same
-        assert numpy.allclose(points1 - points2, 0, atol=D_TOLERANCE)
+        assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)
+
+
+def test_plane_placement():
+    for _ in range(100):
+        p1 = np.random.rand(3)
+        p2 = np.random.rand(3)
+        p3 = np.random.rand(3)
+        plane = Part.Plane(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+        pseudo_plane = cadapi.make_plane_3P(p1, p2, p3)
+        plane_2 = cadapi._placement_to_plane(pseudo_plane)
+
+        f1 = cadapi.apiFace(plane)
+        f2 = cadapi.apiFace(plane_2)
+        assert np.isclose(
+            f1.normalAt(0, 0).getAngle(f2.normalAt(0, 0)), 0.0, rtol=0, atol=EPS
+        )
+        assert plane.Position == plane_2.Position
+        assert np.allclose(plane.Axis, plane_2.Axis)
+        # TODO: This is frustrating... I think it is due to machine precision
+        # assert f1.isCoplanar(f2)

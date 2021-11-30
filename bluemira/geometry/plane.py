@@ -43,6 +43,11 @@ class BluemiraPlane:
         Angle of the plane
     label: str
         Label of the plane
+
+    Notes
+    -----
+    The BluemiraPlane wraps a Placement, and not a Plane. The reasons for this will
+    become clear in future. Placements and Planes should be interchangeable.
     """
 
     def __init__(
