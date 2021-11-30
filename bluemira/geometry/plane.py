@@ -79,7 +79,7 @@ class BluemiraPlane:
         v1, v2 = p3 - p1, p2 - p1
         v3 = np.cross(v2, v1)
         if np.all(v3 == 0):
-            raise GeometryError("Cannot make a make from co-linear points.")
+            raise GeometryError("Cannot make a BluemiraPlane from co-linear points.")
 
         normal = v3 / np.sqrt(v3.dot(v3))
         return cls(point_1, normal, 0.0, label=label)

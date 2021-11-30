@@ -19,12 +19,59 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
+import pytest
+
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.plane import BluemiraPlane
 
 
 class TestPlane:
-    def test_instantiation(self):
+    def test_instantiation_xy(self):
         xy_plane = BluemiraPlane([0, 0, 0], [0, 0, 1], 0.0)
         xy_plane_2 = BluemiraPlane.from_3_points([0, 0, 0], [1, -1, 0], [1, 1, 0])
         assert xy_plane.axis == xy_plane_2.axis
         assert xy_plane.base == xy_plane_2.base
+        assert xy_plane.angle == xy_plane_2.angle
+
+    def test_instantiation_xz(self):
+        xz_plane = BluemiraPlane([0, 0, 0], [0, -1, 0], 0.0)
+        xz_plane_2 = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, -1], [1, 0, 1])
+        assert xz_plane.axis == xz_plane_2.axis
+        assert xz_plane.base == xz_plane_2.base
+        assert xz_plane.angle == xz_plane_2.angle
+
+    def test_instantiation_yz(self):
+        yz_plane = BluemiraPlane([0, 0, 0], [1, 0, 0], 0.0)
+        yz_plane_2 = BluemiraPlane.from_3_points([0, 0, 0], [0, 1, -1], [0, 1, 1])
+        assert yz_plane.axis == yz_plane_2.axis
+        assert yz_plane.base == yz_plane_2.base
+        assert yz_plane.angle == yz_plane_2.angle
+
+    def test_instantiation_xyz(self):
+        xyz_plane = BluemiraPlane([0, 0, 0], [1, 1, 1], 0.0)
+        xyz_plane_2 = BluemiraPlane.from_3_points([0, 0, 0], [1, -1, 0], [1, 0, -1])
+        assert np.allclose(xyz_plane.axis, xyz_plane_2.axis)
+        assert xyz_plane.base == xyz_plane_2.base
+        assert xyz_plane.angle == xyz_plane_2.angle
+
+    def test_colinear(self):
+        bad_sets = [
+            [[0, 0, 0], [1, 0, 0], [2, 0, 0]],  # co-linear
+            [[0, 0, 0], [0, 0, 0], [0, 0, 0]],  # all the same zero
+            [[0, 0, 1], [0, 0, 0], [0, 0, -1]],  # co-linear bad order
+            [[0, 0, 0], [0, 0, 0], [0, 0, 1]],  # two the same #1
+            [[0, 0, 1], [0, 0, 0], [0, 0, 0]],  # two the same #2
+            [
+                [
+                    1,
+                    1,
+                    1,
+                ],
+                [1, 1, 1],
+                [1, 1, 1],
+            ],  # all the same non-zero
+        ]
+        for bad in bad_sets:
+            with pytest.raises(GeometryError):
+                BluemiraPlane.from_3_points(*bad)
