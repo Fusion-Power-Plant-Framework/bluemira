@@ -1,10 +1,109 @@
 {
-  "Name": "EUDEMO",
-  "plasma_type": "SN",
-  "reactor_type": "Normal",
-  "op_mode": "Pulsed",
+  "A": {
+    "value": 3.1,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "aspect",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "Av": {
+    "value": 0.3,
+    "source": "Input"
+  },
+  "B_0": {
+    "value": 6,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "bt",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "B_tf_peak": {
+    "value": 12,
+    "source": "PROCESS"
+  },
+  "CS_material": {
+    "value": "Nb3Sn",
+    "source": "Input"
+  },
+  "C_Ejima": {
+    "value": 0.3,
+    "source": "Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982)",
+    "mapping": {
+      "PROCESS": {
+        "name": "gamma",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "F_cs_sepmax": {
+    "value": 300,
+    "source": "Input"
+  },
+  "F_cs_ztotmax": {
+    "value": 350,
+    "source": "Input"
+  },
+  "F_pf_zmax": {
+    "value": 450,
+    "source": "Input"
+  },
+  "H_star": {
+    "value": 1,
+    "source": "PLASMOD",
+    "mapping": {
+      "PROCESS": {
+        "name": "hfact",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "I_p": {
+    "value": 19,
+    "source": "PLASMOD",
+    "mapping": {
+      "PROCESS": {
+        "name": "plascur/1d6",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "LPangle": {
+    "value": -15,
+    "source": "Input"
+  },
+  "Name": {
+    "value": "EU-DEMO",
+    "source": "Input"
+  },
+  "PF_material": {
+    "value": "NbTi",
+    "source": "Input"
+  },
+  "P_brehms": {
+    "value": 80,
+    "source": "PLASMOD",
+    "mapping": {
+      "PROCESS": {
+        "name": "pbrempv*vol",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
   "P_el_net": {
     "value": 500,
+    "source": "Input",
     "mapping": {
       "PROCESS": {
         "name": "pnetelin",
@@ -15,6 +114,7 @@
   },
   "P_el_net_process": {
     "value": null,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
         "name": "pnetelmw",
@@ -23,173 +123,9 @@
       }
     }
   },
-  "tau_flattop": {
-    "value": 7200,
-    "mapping": {
-      "PROCESS": {
-        "name": "tburn",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "blanket_type": "HCPB",
-  "n_TF": {
-    "value": 16,
-    "mapping": {
-      "PROCESS": {
-        "name": "n_tf",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "n_PF": 6,
-  "n_CS": 5,
-  "TF_ripple_limit": {
-    "value": 0.6,
-    "mapping": {
-      "PROCESS": {
-        "name": "ripmax",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "Av": 0.3,
-  "A": {
-    "value": 3.1,
-    "mapping": {
-      "PROCESS": {
-        "name": "aspect",
-        "recv": true,
-        "send": true
-      }
-    }
-  },
-  "R_0": {
-    "value": 9,
-    "mapping": {
-      "PROCESS": {
-        "name": "rmajor",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "B_0": {
-    "value": 6,
-    "mapping": {
-      "PROCESS": {
-        "name": "bt",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "q_95": {
-    "value": 3.5,
-    "mapping": {
-      "PROCESS": {
-        "name": "q95",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "kappa_95": {
-    "value": 1.6,
-    "mapping": {
-      "PROCESS": {
-        "name": "kappa95",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "kappa": {
-    "value": 1.792,
-    "mapping": {
-      "PROCESS": {
-        "name": "kappa",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "delta_95": {
-    "value": 0.333,
-    "mapping": {
-      "PROCESS": {
-        "name": "triang95",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "delta": {
-    "value": 0.5,
-    "mapping": {
-      "PROCESS": {
-        "name": "triang",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "T_e": {
-    "value": 13,
-    "mapping": {
-      "PROCESS": {
-        "name": "te",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "Z_eff": {
-    "value": 2.2,
-    "mapping": {
-      "PROCESS": {
-        "name": "zeff",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "res_plasma": 0,
-  "V_p": {
-    "value": 2400,
-    "mapping": {
-      "PROCESS": {
-        "name": "vol",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "l_i": {
-    "value": 0.8,
-    "mapping": {
-      "PROCESS": {
-        "name": "rli",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "I_p": {
-    "value": 19,
-    "mapping": {
-      "PROCESS": {
-        "name": "plascur/1d6",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
   "P_fus": {
     "value": 2000,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
         "name": "powfmw",
@@ -198,18 +134,9 @@
       }
     }
   },
-  "P_fus_DT": {
-    "value": 1995,
-    "mapping": {
-      "PROCESS": {
-        "name": "pdt",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
   "P_fus_DD": {
     "value": 5,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
         "name": "pdd",
@@ -218,22 +145,45 @@
       }
     }
   },
-  "f_DD_fus": 0.0025,
-  "H_star": {
-    "value": 1,
+  "P_fus_DT": {
+    "value": 1995,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
-        "name": "hfact",
+        "name": "pdt",
         "recv": true,
         "send": false
       }
     }
   },
-  "P_sep": {
-    "value": 150,
+  "P_hcd_ss": {
+    "value": 50,
+    "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pdivt",
+        "name": "pinjalw",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "P_line": {
+    "value": 30,
+    "source": "PLASMOD",
+    "mapping": {
+      "PROCESS": {
+        "name": "plinepv*vol",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_rad": {
+    "value": 400,
+    "source": "PLASMOD",
+    "mapping": {
+      "PROCESS": {
+        "name": "pradmw",
         "recv": true,
         "send": false
       }
@@ -241,6 +191,7 @@
   },
   "P_rad_core": {
     "value": 0,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
         "name": "pcoreradmw",
@@ -251,6 +202,7 @@
   },
   "P_rad_edge": {
     "value": 400,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
         "name": "pedgeradmw",
@@ -259,21 +211,12 @@
       }
     }
   },
-  "P_rad": {
-    "value": 400,
+  "P_sep": {
+    "value": 150,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
-        "name": "pradmw",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "P_line": {
-    "value": 30,
-    "mapping": {
-      "PROCESS": {
-        "name": "plinepv*vol",
+        "name": "pdivt",
         "recv": true,
         "send": false
       }
@@ -281,6 +224,7 @@
   },
   "P_sync": {
     "value": 50,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
         "name": "psyncpv*vol",
@@ -289,188 +233,79 @@
       }
     }
   },
-  "P_brehms": {
-    "value": 80,
-    "mapping": {
-      "PROCESS": {
-        "name": "pbrempv*vol",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "f_bs": {
-    "value": 0.5,
-    "mapping": {
-      "PROCESS": {
-        "name": "bootipf",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "beta_N": 2.7,
-  "beta_p": {
-    "value": 0.04,
-    "mapping": {
-      "PROCESS": {
-        "name": "betap",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "beta": {
-    "value": 0.04,
-    "mapping": {
-      "PROCESS": {
-        "name": "beta",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "tau_e": {
-    "value": 3,
-    "mapping": {
-      "PROCESS": {
-        "name": "taueff",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "v_burn": {
-    "value": 0.05,
-    "mapping": {
-      "PROCESS": {
-        "name": "vburn",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "shaf_shift": 0.5,
-  "C_Ejima": {
-    "value": 0.4,
-    "mapping": {
-      "PROCESS": {
-        "name": "gamma",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "m_s_limit": 0.3,
-  "f_ni": {
-    "value": 0.1,
-    "mapping": {
-      "PROCESS": {
-        "name": "faccd",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "e_nbi": {
-    "value": 1000,
-    "mapping": {
-      "PROCESS": {
-        "name": "enbeam",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "P_hcd_ss": {
-    "value": 50,
-    "mapping": {
-      "PROCESS": {
-        "name": "pinjalw",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "q_control": 50,
-  "g_cd_nb": {
-    "value": 0.4,
-    "description": "Check units!"
-  },
-  "eta_nb": {
-    "value": 0.3,
-    "description": "Check units!",
-    "mapping": {
-      "PROCESS": {
-        "name": "etanbi",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "p_nb": {
+  "RMTFI": {
     "value": 1,
-    "description": "Maximum launcher current drive in a port"
+    "source": "Input",
+    "description": "Default value. Should not really be 1"
   },
-  "g_cd_ec": {
-    "value": 0.15,
-    "description": "Check units!"
+  "R_0": {
+    "value": 9,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "rmajor",
+        "recv": true,
+        "send": false
+      }
+    }
   },
-  "eta_ec": {
-    "value": 0.35,
-    "description": "Check units!"
+  "TF_ripple_limit": {
+    "value": 0.6,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "ripmax",
+        "recv": false,
+        "send": true
+      }
+    }
   },
-  "p_ec": {
-    "value": 10,
-    "description": "Maximum launcher power per sector"
+  "T_e": {
+    "value": 13,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "te",
+        "recv": false,
+        "send": false
+      }
+    }
   },
-  "f_cd_aux": 0.1,
-  "f_cd_ohm": 0.1,
-  "fw_dx": 0.225,
-  "fw_psi_n": 1.07,
-  "fw_dL_min": 0.75,
-  "fw_dL_max": 2,
-  "fw_a_max": 25,
-  "fw_p_sol_near": 50,
-  "fw_p_sol_far": 50,
-  "hf_limit": 0.5,
-  "fw_dx_omp": 0.2,
-  "fw_dx_imp": 0.05,
-  "fw_lambda_q_near_omp": 0.003,
-  "fw_lambda_q_far_omp": 0.1,
-  "fw_lambda_q_near_imp": 0.003,
-  "fw_lambda_q_far_imp": 0.1,
-  "f_lfs_lower_target": 0.5,
-  "f_lfs_upper_target": 0.5,
-  "f_hfs_lower_target": 0.5,
-  "f_hfs_upper_target": 0.5,
-  "div_L2D_ib": 1.1,
-  "div_L2D_ob": 1.45,
-  "div_graze_angle": 1.5,
-  "div_psi_o": 0.5,
-  "div_Ltarg": 0.5,
-  "div_open": false,
-  "g_vv_div_add": 0,
-  "LPangle": -30,
-  "n_div_cassettes": 3,
-  "psi_norm": 1,
-  "xpt_outer_gap": 2,
-  "xpt_inner_gap": 0.4,
-  "tk_outer_target_sol": 0.7,
-  "tk_outer_target_pfr": 0.3,
-  "tk_inner_target_sol": 0.3,
-  "tk_inner_target_pfr": 0.5,
-  "outer_strike_h": 2,
-  "inner_strike_h": 1,
-  "outer_strike_r": 10.3,
-  "inner_strike_r": 8,
-  "theta_outer_target": 20,
-  "theta_inner_target": 20,
-  "xpt_height": 0.35,
-  "tk_div_cass": 0.3,
-  "tk_div_cass_in": 0.1,
+  "V_p": {
+    "value": 2400,
+    "source": "Calculated",
+    "mapping": {
+      "PROCESS": {
+        "name": "vol",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "Z_eff": {
+    "value": 2.2,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "zeff",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "a_max": {
+    "value": 0.5,
+    "source": "Input",
+    "description": "Can be violated"
+  },
+  "a_min": {
+    "value": 0.1,
+    "source": "Input",
+    "description": "Otherwise nobody pays"
+  },
   "bb_e_mult": {
     "value": 1.35,
+    "source": "HCPB classic",
     "mapping": {
       "PROCESS": {
         "name": "emult",
@@ -481,272 +316,379 @@
   },
   "bb_min_angle": {
     "value": 70,
+    "source": "Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany",
     "description": "Sharpest cut of a module possible"
   },
-  "tk_r_ib_bz": 0.309,
-  "tk_r_ib_manifold": 0.114,
-  "tk_r_ib_bss": 0.577,
-  "tk_r_ob_bz": 0.431,
-  "tk_r_ob_manifold": 0.071,
-  "tk_r_ob_bss": 0.498,
-  "g_bb_fw": 0.05,
-  "tk_bb_bz": 1.0,
-  "tk_bb_man": 0.2,
-  "tk_bb_ib": {
-    "value": 0.8,
-    "mapping": {
-      "PROCESS": {
-        "name": "blnkith",
-        "recv": true,
-        "send": true
-      }
-    }
-  },
-  "tk_bb_ob": {
-    "value": 1.1,
-    "mapping": {
-      "PROCESS": {
-        "name": "blnkoth",
-        "recv": true,
-        "send": true
-      }
-    }
-  },
-  "tk_bb_fw": 0.052,
-  "tk_bb_arm": 0.002,
-  "tk_sh_in": {
-    "value": 0.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "shldith",
-        "recv": true,
-        "send": true
-      }
-    }
-  },
-  "tk_sh_out": {
-    "value": 0.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "shldoth",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_sh_top": {
-    "value": 0.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "shldtth",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_sh_bot": {
-    "value": 0.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "shldlth",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_vv_in": {
-    "value": 0.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "d_vv_in",
-        "recv": true,
-        "send": true
-      }
-    }
-  },
-  "tk_vv_out": {
-    "value": 0.8,
-    "mapping": {
-      "PROCESS": {
-        "name": "d_vv_out",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_vv_top": {
-    "value": 0.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "d_vv_top",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_vv_bot": {
-    "value": 0.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "d_vv_bot",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_sol_ib": {
-    "value": 0.225,
-    "mapping": {
-      "PROCESS": {
-        "name": "scrapli",
-        "recv": true,
-        "send": true
-      }
-    }
-  },
-  "tk_sol_ob": {
-    "value": 0.225,
-    "mapping": {
-      "PROCESS": {
-        "name": "scraplo",
-        "recv": true,
-        "send": true
-      }
-    }
-  },
-  "tk_div": 0.4,
-  "tk_ts": {
-    "value": 0.05,
-    "mapping": {
-      "PROCESS": {
-        "name": "thshield",
-        "recv": true,
-        "send": true
-      }
-    }
-  },
-  "tk_ib_ts": 0.05,
-  "tk_ob_ts": 0.05,
-  "tk_cr_vv": {
-    "value": 0.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "ddwex",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_rs": 2.5,
-  "tk_fw_in": 0.052,
-  "tk_fw_out": 0.052,
-  "tk_fw_div": 0.052,
-  "tk_tf_inboard": {
-    "value": 1,
-    "mapping": {
-      "PROCESS": {
-        "name": "tfcth",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "tk_tf_outboard": {
-    "value": 1,
-    "mapping": {
-      "PROCESS": {
-        "name": "tfthko",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "tk_tf_nose": {
-    "value": 0.6,
-    "mapping": {
-      "PROCESS": {
-        "name": "thkcas",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "tk_tf_wp": {
-    "value": 0.5,
-    "description": "Excluding insulation",
-    "mapping": {
-      "PROCESS": {
-        "name": "dr_tf_wp",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "tk_tf_front_ib": {
+  "beta": {
     "value": 0.04,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
-        "name": "casthi",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_tf_ins": 0.08,
-  "tk_tf_insgap": {
-    "value": 0.1,
-    "description": "Backfilled with epoxy resin (impregnation)"
-  },
-  "tk_tf_side": {
-    "value": 0.1,
-    "mapping": {
-      "PROCESS": {
-        "name": "casths",
-        "recv": false,
-        "send": true
-      }
-    }
-  },
-  "tk_tf_ob_casing": 0.02,
-  "tk_tf_case_out_in": 0.35,
-  "tk_tf_case_out_out": 0.4,
-  "tf_wp_width": {
-    "value": 0.76,
-    "description": "Including insulation"
-  },
-  "tf_wp_depth": {
-    "value": 1.05,
-    "description": "Including insulation",
-    "mapping": {
-      "PROCESS": {
-        "name": "wwp1",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "tk_cs": {
-    "value": 0.8,
-    "mapping": {
-      "PROCESS": {
-        "name": "ohcth",
+        "name": "beta",
         "recv": true,
         "send": false
       }
     }
   },
-  "sigma_tf_max": {
-    "value": 550000000.0,
+  "beta_N": {
+    "value": 2.7,
+    "source": "PLASMOD"
+  },
+  "beta_p": {
+    "value": 0.04,
+    "source": "PLASMOD",
     "mapping": {
       "PROCESS": {
-        "name": "alstrtf",
+        "name": "betap",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "blanket_type": {
+    "value": "HCPB",
+    "source": "Input"
+  },
+  "blk_1_dpa": {
+    "value": 20,
+    "source": "Input",
+    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+  },
+  "blk_2_dpa": {
+    "value": 50,
+    "source": "Input",
+    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+  },
+  "bmd": {
+    "value": 150,
+    "source": "Input",
+    "description": "Full replacement intervention duration"
+  },
+  "c_rm": {
+    "value": 0.02,
+    "source": "Input",
+    "description": "Distance between IVCs"
+  },
+  "cr_l_d": {
+    "value": 0.2,
+    "source": "Input"
+  },
+  "delta": {
+    "value": 0.5,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "triang",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "delta_95": {
+    "value": 0.333,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "triang95",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "div_L2D_ib": {
+    "value": 1.1,
+    "source": "Input"
+  },
+  "div_L2D_ob": {
+    "value": 1.45,
+    "source": "Input"
+  },
+  "div_Ltarg": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "div_dpa": {
+    "value": 5,
+    "source": "Input",
+    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+  },
+  "div_graze_angle": {
+    "value": 1.5,
+    "source": "Input"
+  },
+  "div_open": {
+    "value": false,
+    "source": "Input"
+  },
+  "div_psi_o": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "dmd": {
+    "value": 90,
+    "source": "Input",
+    "description": "Full replacement intervention duration"
+  },
+  "e_nbi": {
+    "value": 1000,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "enbeam",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "eta_ec": {
+    "value": 0.35,
+    "source": "Input",
+    "description": "Check units!"
+  },
+  "eta_nb": {
+    "value": 0.4,
+    "source": "Input",
+    "description": "Check units!",
+    "mapping": {
+      "PROCESS": {
+        "name": "etanbi",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "f_DD_fus": {
+    "value": 0.0025,
+    "source": "PLASMOD"
+  },
+  "f_bs": {
+    "value": 0.5,
+    "source": "PLASMOD",
+    "mapping": {
+      "PROCESS": {
+        "name": "bootipf",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "f_cd_aux": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "f_cd_ohm": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "f_hfs_lower_target": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "f_hfs_upper_target": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "f_lfs_lower_target": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "f_lfs_upper_target": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "f_ni": {
+    "value": 0.1,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "faccd",
         "recv": false,
         "send": false
       }
     }
+  },
+  "fw_a_max": {
+    "value": 25,
+    "source": "Input"
+  },
+  "fw_dL_max": {
+    "value": 2,
+    "source": "Input"
+  },
+  "fw_dL_min": {
+    "value": 0.75,
+    "source": "Input"
+  },
+  "fw_dx": {
+    "value": 0.225,
+    "source": "Input"
+  },
+  "fw_dx_imp": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "fw_dx_omp": {
+    "value": 0.2,
+    "source": "Input"
+  },
+  "fw_lambda_q_far_imp": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "fw_lambda_q_far_omp": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "fw_lambda_q_near_imp": {
+    "value": 0.003,
+    "source": "Input"
+  },
+  "fw_lambda_q_near_omp": {
+    "value": 0.003,
+    "source": "Input"
+  },
+  "fw_p_sol_far": {
+    "value": 50,
+    "source": "Input"
+  },
+  "fw_p_sol_near": {
+    "value": 50,
+    "source": "Input"
+  },
+  "fw_psi_n": {
+    "value": 1.06,
+    "source": "Input"
+  },
+  "g_bb_fw": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_ccs_div": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_ccs_fw": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_ccs_vv_add": {
+    "value": 0.0,
+    "source": "Input"
+  },
+  "g_ccs_vv_inboard": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_cd_ec": {
+    "value": 0.15,
+    "source": "Input",
+    "description": "Check units!"
+  },
+  "g_cd_nb": {
+    "value": 0.4,
+    "source": "Input",
+    "description": "Check units!"
+  },
+  "g_cr_rs": {
+    "value": 0.5,
+    "source": "Input",
+    "description": "Distance away from edge of cryostat VV in all directions"
+  },
+  "g_cr_ts": {
+    "value": 0.3,
+    "source": "Input"
+  },
+  "g_cr_vv": {
+    "value": 0.2,
+    "source": "Input"
+  },
+  "g_cs_mod": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "g_cs_tf": {
+    "value": 0.05,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "gapoh",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "g_ib_ts_tf": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_ib_vv_ts": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_ob_ts_tf": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_ob_vv_ts": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_tf_pf": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "g_ts_pf": {
+    "value": 0.075,
+    "source": "Input"
+  },
+  "g_ts_tf": {
+    "value": 0.05,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tftsgap",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "g_ts_tf_topbot": {
+    "value": 0.11,
+    "source": "Input"
+  },
+  "g_vv_bb": {
+    "value": 0.02,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "vvblgap",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "g_vv_div_add": {
+    "value": 0,
+    "source": "Input"
+  },
+  "g_vv_ts": {
+    "value": 0.05,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "gapds",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "gs_z_offset": {
+    "value": -1,
+    "source": "Input"
   },
   "h_cp_top": {
     "value": 6.0,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
         "name": "h_cp_top",
@@ -755,8 +697,13 @@
       }
     }
   },
+  "h_cs_seat": {
+    "value": 2,
+    "source": "Input"
+  },
   "h_tf_max_in": {
     "value": 6.5,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
         "name": "hmax",
@@ -765,21 +712,169 @@
       }
     }
   },
-  "h_tf_min_in": -6.5,
-  "B_tf_peak": 12,
-  "tf_taper_frac": 0.5,
-  "r_tf_outboard_corner": 0.8,
-  "r_tf_inboard_corner": 0.0,
-  "r_tf_curve": 3.0,
-  "x_g_support": 13,
-  "w_g_support": 0.75,
-  "tk_oic": 0.3,
-  "tk_pf_support": 0.15,
-  "gs_z_offset": -1,
-  "h_cs_seat": 2,
-  "min_OIS_length": 0.5,
+  "h_tf_min_in": {
+    "value": -6.5,
+    "source": "PROCESS"
+  },
+  "hf_limit": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "inner_strike_h": {
+    "value": 1,
+    "source": "Input"
+  },
+  "inner_strike_r": {
+    "value": 8,
+    "source": "Input"
+  },
+  "kappa": {
+    "value": 1.792,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "kappa",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "kappa_95": {
+    "value": 1.6,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "kappa95",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "l_i": {
+    "value": 0.8,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "rli",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "m_gas": {
+    "value": 50,
+    "source": "Discussions with Chris Day and Yannick H\u00f6rstenmeyer",
+    "description": "To maintain detachment - no chance of fusion from gas injection"
+  },
+  "m_s_limit": {
+    "value": 0.3,
+    "source": "Input"
+  },
+  "min_OIS_length": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "n_CS": {
+    "value": 5,
+    "source": "Input"
+  },
+  "n_DD_reactions": {
+    "value": 8.5e+18,
+    "source": "Input",
+    "description": "At full power"
+  },
+  "n_DT_reactions": {
+    "value": 7.1e+20,
+    "source": "Input",
+    "description": "At full power"
+  },
+  "n_PF": {
+    "value": 6,
+    "source": "Input"
+  },
+  "n_TF": {
+    "value": 18,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "n_tf",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "n_cr_lab": {
+    "value": 2,
+    "source": "Input"
+  },
+  "n_div_cassettes": {
+    "value": 3,
+    "source": "Common decision"
+  },
+  "n_rs_lab": {
+    "value": 4,
+    "source": "Input"
+  },
+  "o_p_cr": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "o_p_rs": {
+    "value": 0.25,
+    "source": "Input"
+  },
+  "op_mode": {
+    "value": "Pulsed",
+    "source": "Input"
+  },
+  "outer_strike_h": {
+    "value": 2,
+    "source": "Input"
+  },
+  "outer_strike_r": {
+    "value": 10.3,
+    "source": "Input"
+  },
+  "p_ec": {
+    "value": 10,
+    "source": "Input",
+    "description": "Maximum launcher power per sector"
+  },
+  "p_nb": {
+    "value": 1,
+    "source": "Input",
+    "description": "Maximum launcher current drive in a port"
+  },
+  "plasma_type": {
+    "value": "SN",
+    "source": "Input"
+  },
+  "psi_norm": {
+    "value": 1,
+    "source": "Input"
+  },
+  "q_95": {
+    "value": 3.5,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "q95",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "q_control": {
+    "value": 50,
+    "source": "Input"
+  },
+  "r_ccs": {
+    "value": 2.5,
+    "source": "Input"
+  },
   "r_cp_top": {
     "value": 0.8934,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
         "name": "r_cp_top",
@@ -788,8 +883,13 @@
       }
     }
   },
+  "r_cryo_ts": {
+    "value": 8,
+    "source": "Input"
+  },
   "r_cs_in": {
     "value": 2.2,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
         "name": "bore",
@@ -798,58 +898,9 @@
       }
     }
   },
-  "r_tf_in": {
-    "value": 3.2,
-    "mapping": {
-      "PROCESS": {
-        "name": "rtfin",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "r_tf_inboard_out": {
-    "value": 0.6265,
-    "mapping": {
-      "PROCESS": {
-        "name": "r_tf_inboard_out",
-        "recv": false,
-        "send": false
-      }
-    }
-  },
-  "r_tf_in_centre": {
-    "value": 3.7,
-    "mapping": {
-      "PROCESS": {
-        "name": "r_tf_inboard_mid",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "r_ts_ib_in": {
-    "value": 4.3,
-    "mapping": {
-      "PROCESS": {
-        "name": "r_ts_ib_in",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
-  "r_vv_ib_in": {
-    "value": 5.1,
-    "mapping": {
-      "PROCESS": {
-        "name": "r_vv_ib_in",
-        "recv": true,
-        "send": false
-      }
-    }
-  },
   "r_fw_ib_in": {
     "value": 5.8,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
         "name": "r_fw_ib_in",
@@ -860,6 +911,7 @@
   },
   "r_fw_ob_in": {
     "value": 12.1,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
         "name": "r_fw_ob_in",
@@ -868,18 +920,50 @@
       }
     }
   },
-  "r_vv_ob_in": {
-    "value": 14.5,
+  "r_tf_curve": {
+    "value": 3.0,
+    "source": "Input"
+  },
+  "r_tf_in": {
+    "value": 3.2,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
-        "name": "r_vv_ob_in",
+        "name": "rtfin",
         "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_tf_in_centre": {
+    "value": 3.7,
+    "source": "PROCESS",
+    "mapping": {
+      "PROCESS": {
+        "name": "r_tf_inboard_mid",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "r_tf_inboard_corner": {
+    "value": 0.0,
+    "source": "Input"
+  },
+  "r_tf_inboard_out": {
+    "value": 0.6265,
+    "source": "PROCESS",
+    "mapping": {
+      "PROCESS": {
+        "name": "r_tf_inboard_out",
+        "recv": false,
         "send": false
       }
     }
   },
   "r_tf_out_centre": {
     "value": 16.2,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
         "name": "r_tf_outboard_mid",
@@ -888,149 +972,552 @@
       }
     }
   },
-  "r_ts_joint": 2.0,
-  "r_vv_joint": 2.0,
-  "g_cs_mod": 0.1,
-  "g_vv_ts": {
-    "value": 0.05,
+  "r_tf_outboard_corner": {
+    "value": 0.8,
+    "source": "Input"
+  },
+  "r_ts_ib_in": {
+    "value": 4.3,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
-        "name": "gapds",
+        "name": "r_ts_ib_in",
         "recv": true,
         "send": false
       }
     }
   },
-  "g_ib_vv_ts": 0.05,
-  "g_ob_vv_ts": 0.05,
-  "g_cs_tf": {
-    "value": 0.05,
+  "r_ts_joint": {
+    "value": 2.0,
+    "source": "Input"
+  },
+  "r_vv_ib_in": {
+    "value": 5.1,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
-        "name": "gapoh",
+        "name": "r_vv_ib_in",
         "recv": true,
-        "send": true
+        "send": false
       }
     }
   },
-  "g_ts_tf": {
-    "value": 0.05,
+  "r_vv_joint": {
+    "value": 2.0,
+    "source": "Input"
+  },
+  "r_vv_ob_in": {
+    "value": 14.5,
+    "source": "PROCESS",
     "mapping": {
       "PROCESS": {
-        "name": "tftsgap",
+        "name": "r_vv_ob_in",
         "recv": true,
-        "send": true
+        "send": false
       }
     }
   },
-  "g_ib_ts_tf": 0.05,
-  "g_ob_ts_tf": 0.05,
-  "g_vv_bb": {
-    "value": 0.02,
-    "mapping": {
-      "PROCESS": {
-        "name": "vvblgap",
-        "recv": true,
-        "send": true
-      }
-    }
+  "reactor_type": {
+    "value": "Normal",
+    "source": "Input"
   },
-  "g_tf_pf": 0.15,
-  "g_ts_pf": 0.075,
-  "g_ts_tf_topbot": 0.11,
-  "g_cr_ts": 0.3,
-  "g_cr_vv": 0.2,
-  "g_cr_rs": {
-    "value": 0.5,
-    "description": "Distance away from edge of cryostat VV in all directions"
+  "res_plasma": {
+    "value": 0,
+    "source": "Calculated"
   },
-  "c_rm": {
-    "value": 0.02,
-    "description": "Distance between IVCs"
-  },
-  "o_p_rs": 0.25,
-  "o_p_cr": 0.1,
-  "vv_dtk": 0.2,
-  "vv_stk": 0.06,
-  "vvpfrac": {
-    "value": 0.04,
-    "description": "simpleneutrons needs a correction for VV n absorbtion"
-  },
-  "blk_1_dpa": {
-    "value": 20,
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
-  },
-  "blk_2_dpa": {
-    "value": 50,
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
-  },
-  "div_dpa": {
-    "value": 5,
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
-  },
-  "vv_dpa": {
-    "value": 3.25,
-    "description": "RCC-Mx or whatever it is called"
-  },
-  "tf_fluence": {
-    "value": 3.2e+21,
-    "description": "http://ieeexplore.ieee.org/document/6374236/"
-  },
-  "F_pf_zmax": 450,
-  "F_cs_ztotmax": 350,
-  "F_cs_sepmax": 300,
-  "CS_material": "Nb3Sn",
-  "PF_material": "NbTi",
-  "n_cr_lab": 2,
-  "cr_l_d": 0.2,
-  "tk_cryo_ts": 0.1,
-  "r_cryo_ts": 8,
-  "z_cryo_ts": 8,
-  "n_rs_lab": 4,
   "rs_l_d": {
     "value": 0.6,
+    "source": "Input",
     "description": "Thickness of a radiation shield penetration neutron labyrinth"
   },
   "rs_l_gap": {
     "value": 0.02,
+    "source": "Input",
     "description": "Gap between plug and radiation shield"
   },
-  "n_DT_reactions": {
-    "value": 7.1e+20,
-    "description": "At full power"
-  },
-  "n_DD_reactions": {
-    "value": 8.5e+18,
-    "description": "At full power"
-  },
-  "a_min": {
-    "value": 0.1,
-    "description": "Otherwise nobody pays"
-  },
-  "a_max": {
+  "shaf_shift": {
     "value": 0.5,
-    "description": "Can be violated"
+    "source": "equilibria"
   },
-  "m_gas": {
-    "value": 50,
-    "description": "To maintain detachment - no chance of fusion from gas injection"
+  "sigma_tf_max": {
+    "value": 550000000.0,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "alstrtf",
+        "recv": false,
+        "send": false
+      }
+    }
   },
-  "bmd": {
-    "value": 150,
-    "description": "Full replacement intervention duration"
+  "tau_e": {
+    "value": 3,
+    "source": "PLASMOD",
+    "mapping": {
+      "PROCESS": {
+        "name": "taueff",
+        "recv": true,
+        "send": false
+      }
+    }
   },
-  "dmd": {
-    "value": 90,
-    "description": "Full replacement intervention duration"
+  "tau_flattop": {
+    "value": 6900,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tburn",
+        "recv": false,
+        "send": false
+      }
+    }
   },
-  "RMTFI": {
+  "tf_fluence": {
+    "value": 3.2e+21,
+    "source": "Input",
+    "description": "http://ieeexplore.ieee.org/document/6374236/"
+  },
+  "tf_taper_frac": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "tf_wp_depth": {
+    "value": 1.05,
+    "source": "PROCESS",
+    "description": "Including insulation",
+    "mapping": {
+      "PROCESS": {
+        "name": "wwp1",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "tf_wp_width": {
+    "value": 0.76,
+    "source": "PROCESS",
+    "description": "Including insulation"
+  },
+  "theta_inner_target": {
+    "value": 20,
+    "source": "Input"
+  },
+  "theta_outer_target": {
+    "value": 20,
+    "source": "Input"
+  },
+  "tk_bb_arm": {
+    "value": 0.002,
+    "source": "Input"
+  },
+  "tk_bb_bz": {
+    "value": 1.0,
+    "source": "Input"
+  },
+  "tk_bb_fw": {
+    "value": 0.052,
+    "source": "Input"
+  },
+  "tk_bb_ib": {
+    "value": 0.755,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "blnkith",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_bb_man": {
+    "value": 0.2,
+    "source": "Input"
+  },
+  "tk_bb_ob": {
+    "value": 1.275,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "blnkoth",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_ccs_min": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "tk_cr_vv": {
+    "value": 0.3,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "ddwex",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_cryo_ts": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "tk_cs": {
+    "value": 0.8,
+    "source": "PROCESS",
+    "mapping": {
+      "PROCESS": {
+        "name": "ohcth",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "tk_div": {
+    "value": 0.4,
+    "source": "Input"
+  },
+  "tk_div_cass": {
+    "value": 0.3,
+    "source": "Input"
+  },
+  "tk_div_cass_in": {
+    "value": 0.1,
+    "source": "Input"
+  },
+  "tk_fw_div": {
+    "value": 0.052,
+    "source": "Input"
+  },
+  "tk_fw_in": {
+    "value": 0.052,
+    "source": "Input"
+  },
+  "tk_fw_out": {
+    "value": 0.052,
+    "source": "Input"
+  },
+  "tk_ib_ts": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "tk_inner_target_pfr": {
+    "value": 0.5,
+    "source": "Input"
+  },
+  "tk_inner_target_sol": {
+    "value": 0.3,
+    "source": "Input"
+  },
+  "tk_ob_ts": {
+    "value": 0.05,
+    "source": "Input"
+  },
+  "tk_oic": {
+    "value": 0.3,
+    "source": "Input"
+  },
+  "tk_outer_target_pfr": {
+    "value": 0.3,
+    "source": "Input"
+  },
+  "tk_outer_target_sol": {
+    "value": 0.7,
+    "source": "Input"
+  },
+  "tk_pf_support": {
+    "value": 0.15,
+    "source": "Input"
+  },
+  "tk_r_ib_bss": {
+    "value": 0.577,
+    "source": "HCPB 2015 design description document"
+  },
+  "tk_r_ib_bz": {
+    "value": 0.309,
+    "source": "HCPB 2015 design description document"
+  },
+  "tk_r_ib_manifold": {
+    "value": 0.114,
+    "source": "HCPB 2015 design description document"
+  },
+  "tk_r_ob_bss": {
+    "value": 0.498,
+    "source": "HCPB 2015 design description document"
+  },
+  "tk_r_ob_bz": {
+    "value": 0.431,
+    "source": "HCPB 2015 design description document"
+  },
+  "tk_r_ob_manifold": {
+    "value": 0.071,
+    "source": "HCPB 2015 design description document"
+  },
+  "tk_rs": {
+    "value": 2.5,
+    "source": "Input"
+  },
+  "tk_sh_bot": {
+    "value": 0.3,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "shldlth",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_sh_in": {
+    "value": 0.3,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "shldith",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_sh_out": {
+    "value": 0.3,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "shldoth",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_sh_top": {
+    "value": 0.3,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "shldtth",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_sol_ib": {
+    "value": 0.225,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "scrapli",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_sol_ob": {
+    "value": 0.225,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "scraplo",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_tf_case_out_in": {
+    "value": 0.35,
+    "source": "Input"
+  },
+  "tk_tf_case_out_out": {
+    "value": 0.4,
+    "source": "Input"
+  },
+  "tk_tf_front_ib": {
+    "value": 0.05,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "casthi",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_tf_inboard": {
     "value": 1,
-    "description": "Default value. Should not really be 1"
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tfcth",
+        "recv": true,
+        "send": false
+      }
+    }
   },
-  "g_ccs_vv_inboard": 0.05,
-  "g_ccs_vv_add": 0.0,
-  "g_ccs_fw": 0.05,
-  "g_ccs_div": 0.05,
-  "tk_ccs_min": 0.1,
-  "r_ccs": 2.5
+  "tk_tf_ins": {
+    "value": 0.08,
+    "source": "Input"
+  },
+  "tk_tf_insgap": {
+    "value": 0.1,
+    "source": "Input",
+    "description": "Backfilled with epoxy resin (impregnation)"
+  },
+  "tk_tf_nose": {
+    "value": 0.6,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "thkcas",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "tk_tf_ob_casing": {
+    "value": 0.02,
+    "source": "PROCESS"
+  },
+  "tk_tf_outboard": {
+    "value": 1,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "tfthko",
+        "recv": false,
+        "send": false
+      }
+    }
+  },
+  "tk_tf_side": {
+    "value": 0.1,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "casths",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_tf_wp": {
+    "value": 0.5,
+    "source": "PROCESS",
+    "description": "Excluding insulation",
+    "mapping": {
+      "PROCESS": {
+        "name": "dr_tf_wp",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "tk_ts": {
+    "value": 0.05,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "thshield",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_vv_bot": {
+    "value": 0.3,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "d_vv_bot",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_vv_in": {
+    "value": 0.3,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "d_vv_in",
+        "recv": true,
+        "send": true
+      }
+    }
+  },
+  "tk_vv_out": {
+    "value": 0.8,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "d_vv_out",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "tk_vv_top": {
+    "value": 0.3,
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "d_vv_top",
+        "recv": false,
+        "send": true
+      }
+    }
+  },
+  "v_burn": {
+    "value": 0.05,
+    "source": "PROCESS",
+    "mapping": {
+      "PROCESS": {
+        "name": "vburn",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "vv_dpa": {
+    "value": 3.25,
+    "source": "Input",
+    "description": "RCC-Mx or whatever it is called"
+  },
+  "vv_dtk": {
+    "value": 0.2,
+    "source": "Input"
+  },
+  "vv_stk": {
+    "value": 0.06,
+    "source": "Input"
+  },
+  "vvpfrac": {
+    "value": 0.04,
+    "source": "Bachmanns only value",
+    "description": "simpleneutrons needs a correction for VV n absorbtion"
+  },
+  "w_g_support": {
+    "value": 1.5,
+    "source": "Input"
+  },
+  "x_g_support": {
+    "value": 13,
+    "source": "Input"
+  },
+  "xpt_height": {
+    "value": 0.35,
+    "source": "Input"
+  },
+  "xpt_inner_gap": {
+    "value": 0.4,
+    "source": "Input"
+  },
+  "xpt_outer_gap": {
+    "value": 2,
+    "source": "Input"
+  },
+  "z_cryo_ts": {
+    "value": 8,
+    "source": "Input"
+  }
 }

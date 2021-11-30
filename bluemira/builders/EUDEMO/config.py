@@ -29,19 +29,30 @@ from bluemira.base.config import Configuration
 
 params = {}
 for param in Configuration.params:
-    if param[4] is None and len(param) == 6:
-        params[param[0]] = param[2]
-    else:
-        params[param[0]] = {}
-        params[param[0]]["value"] = param[2]
-        if param[4] is not None:
-            params[param[0]]["description"] = param[4]
-        if len(param) == 7:
-            params[param[0]]["mapping"] = {
-                key: value.to_dict() for key, value in param[6].items()
-            }
+    params[param[0]] = {}
+    params[param[0]]["value"] = param[2]
+    params[param[0]]["source"] = param[5]
+    if param[4] is not None:
+        params[param[0]]["description"] = param[4]
+    if len(param) == 7:
+        params[param[0]]["mapping"] = {
+            key: value.to_dict() for key, value in param[6].items()
+        }
 
-params["Name"] = "EUDEMO"
+params = dict(sorted(params.items()))
+
+params["Name"]["value"] = "EU-DEMO"
+params["tau_flattop"]["value"] = 6900
+params["n_TF"]["value"] = 18
+params["fw_psi_n"]["value"] = 1.06
+params["tk_tf_front_ib"]["value"] = 0.05
+params["tk_bb_ib"]["value"] = 0.755
+params["tk_bb_ob"]["value"] = 1.275
+params["g_tf_pf"]["value"] = 0.05
+params["C_Ejima"]["value"] = 0.3
+params["eta_nb"]["value"] = 0.4
+params["LPangle"]["value"] = -15
+params["w_g_support"]["value"] = 1.5
 
 with open("/home/dshort/code/bluemira/bluemira/builders/EUDEMO/params.json", "w") as fh:
     json.dump(params, fh, indent=2)
