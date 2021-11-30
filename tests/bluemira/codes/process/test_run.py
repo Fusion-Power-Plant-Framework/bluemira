@@ -29,6 +29,7 @@ from unittest.mock import patch
 
 from bluemira.base.builder import BuildConfig
 from bluemira.base.file import get_bluemira_root
+from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process import run
 
@@ -43,6 +44,7 @@ OUTDIR = os.path.join(
 )
 
 
+@pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
 class TestRun:
     config = {
         "Name": ("SMOKE-TEST", "Input"),
