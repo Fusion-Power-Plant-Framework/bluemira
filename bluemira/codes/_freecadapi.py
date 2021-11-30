@@ -25,7 +25,8 @@ Supporting functions for the bluemira geometry module.
 
 from __future__ import annotations
 
-import freecad  # noqa: F401
+import freecad
+from numpy.lib.function_base import place
 import Part
 import FreeCAD
 from FreeCAD import Base
@@ -668,6 +669,7 @@ def wire_plane_intersect(wire, plane):
         The xyz coordinates of the intersections with the wire. Returns None if
         there are no intersections detected
     """
+    plane = _placement_to_plane(plane)
     face = apiFace(plane)
 
     if not _wire_is_planar(wire):
@@ -1109,6 +1111,18 @@ def make_plane(base, axis, angle):
     return Base.Placement(base, axis, angle)
 
 
+def _placement_to_plane(placement):
+    plane = Part.Plane(placement.Base, Base.Vector(0, 0, 1))
+    plane.rotate(placement)
+    return plane
+
+
+def _plane_to_placement(plane):
+    placement = Base.Placement(plane.Position, plane.Axis, 0)
+    placement.Rotation = plane.Rotation
+    return placement
+
+
 def make_plane_3P(point_1, point_2, point_3):
     """
     Make a FreeCAD Placement from three points.
@@ -1128,7 +1142,26 @@ def make_plane_3P(point_1, point_2, point_3):
         The "plane"
     """
     plane = Part.Plane(Base.Vector(point_1), Base.Vector(point_2), Base.Vector(point_3))
-    return Base.Placement(plane.Position, plane.Rotation)
+    return _plane_to_placement(plane)
+
+
+def test_fucking_plane_from_3_points():
+    for i in range(100):
+        p1 = np.random.rand(3)
+        p2 = np.random.rand(3)
+        p3 = np.random.rand(3)
+        plane = Part.Plane(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
+        pseudo_plane = make_plane_3P(p1, p2, p3)
+        plane_2 = _placement_to_plane(pseudo_plane)
+
+        f1 = apiFace(plane)
+        f2 = apiFace(plane_2)
+        print(i)
+        print(f1.normalAt(0, 0).getAngle(f2.normalAt(0, 0)))
+        print(plane.Position.distanceToPoint(plane_2.Position))
+        assert plane.Position == plane_2.Position
+        assert np.allclose(plane.Axis, plane_2.Axis)
+        print(f1.isCoplanar(f2))
 
 
 def move_plane(plane, vector):
