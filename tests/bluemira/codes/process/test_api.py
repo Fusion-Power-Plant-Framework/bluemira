@@ -23,11 +23,6 @@ from unittest.mock import patch
 
 import pytest
 
-from bluemira.base.config_schema import ConfigurationSchema
-from bluemira.base.config import SingleNull
-from bluemira.base.parameter import Parameter, ParameterMapping
-
-from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process import api
 
 PROCESS_OBS_VAR = {
@@ -36,33 +31,7 @@ PROCESS_OBS_VAR = {
     "garden": "shrubbery",
 }
 
-FRAME_LIST = [
-    # [var, name, value, unit, description, source{name, recv, send}]
-    ["a", None, 0, None, None, None],
-    ["b", None, 1, None, None, None, None],
-    ["c", None, 2, None, None, None, {"PROCESS": ParameterMapping("cp", False, False)}],
-    ["d", None, 3, None, None, None, {"PROCESS": ParameterMapping("dp", False, True)}],
-    ["e", None, 4, None, None, None, {"PROCESS": ParameterMapping("ep", True, False)}],
-    ["f", None, 5, None, None, None, {"PROCESS": ParameterMapping("fp", True, True)}],
-    ["g", None, 6, None, None, None, {"FAKE_CODE": ParameterMapping("gp", True, True)}],
-]
 
-
-class PROCESSTestSchema(ConfigurationSchema):
-    a: Parameter
-    b: Parameter
-    c: Parameter
-    d: Parameter
-    e: Parameter
-    f: Parameter
-    g: Parameter
-
-
-class PROCESSTestConfiguration(SingleNull):
-    params = SingleNull.params + FRAME_LIST
-
-
-@pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
 @patch("bluemira.codes.process.api.OBS_VARS", PROCESS_OBS_VAR)
 def test_update_obsolete_vars():
     str1 = api.update_obsolete_vars("ni")

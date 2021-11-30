@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-import os
 import pathlib
 import shutil
 import tempfile
@@ -28,23 +27,17 @@ from typing import Dict
 from unittest.mock import patch
 
 from bluemira.base.builder import BuildConfig
-from bluemira.base.file import get_bluemira_root
-from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process.constants import NAME as PROCESS
-from bluemira.codes.process import run
+from bluemira.codes.process import run, PROCESS_ENABLED
 
-from tests.bluemira.codes.process.test_api import FRAME_LIST, PROCESSTestConfiguration
-
-
-INDIR = os.path.join(
-    get_bluemira_root(), "tests", "bluemira", "codes", "process", "test_data"
-)
-OUTDIR = os.path.join(
-    get_bluemira_root(), "tests", "bluemira", "codes", "process", "test_generated_data"
+from tests.bluemira.codes.process import (
+    FRAME_LIST,
+    INDIR,
+    OUTDIR,
+    PROCESSTestConfiguration,
 )
 
 
-@pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
 class TestRun:
     config = {
         "Name": ("SMOKE-TEST", "Input"),
@@ -170,6 +163,7 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.run.Run.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_runinput(
         self,
         mock_add_parameter,
@@ -202,6 +196,7 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.run.Run.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_run_with_params_to_update(
         self,
         mock_add_parameter,
@@ -240,6 +235,7 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.run.Run.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_run_without_params_to_update(
         self,
         mock_add_parameter,
@@ -283,6 +279,7 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_read(self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load):
         """
         Test in Read mode, that the correct calls are made and in particular that
@@ -302,6 +299,7 @@ class TestRun:
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
+    @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_readall(
         self, mock_add_parameter, mock_clear, mock_run, mock_check, mock_load
     ):

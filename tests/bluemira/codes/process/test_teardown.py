@@ -21,17 +21,16 @@
 
 import pytest
 
-from bluemira.base.file import get_bluemira_path
 from bluemira.base.config import Configuration
 
 from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process import teardown
 
+from tests.bluemira.codes.process import INDIR
+
 
 @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
 class TestMFileReader:
-    fp = get_bluemira_path("bluemira/codes/process/test_data", subfolder="tests")
-
     @classmethod
     def setup_class(cls):
         mapping = {
@@ -39,7 +38,7 @@ class TestMFileReader:
             for p in Configuration.params
             if len(p) == 7 and "PROCESS" in p[-1]
         }
-        cls.bmfile = teardown.BMFile(cls.fp, mapping)
+        cls.bmfile = teardown.BMFile(INDIR, mapping)
         return cls
 
     def test_extraction(self):
