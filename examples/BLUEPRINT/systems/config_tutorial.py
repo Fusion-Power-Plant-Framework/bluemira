@@ -111,8 +111,8 @@ class MyConfiguration(Configuration):
 
     new_params = {"P_el_net": 450, "Name": "My reactor"}
 
-    def __init__(self, default_params=Configuration.params, custom_params=new_params):
-        super().__init__(default_params, custom_params)
+    def __init__(self, custom_params=new_params):
+        super().__init__(custom_params)
 
 
 my_config = MyConfiguration()
@@ -234,7 +234,7 @@ core_c.to_json(
 #
 # *  Verbose configurations allow the full configuration to be defined, along with
 #    metadata;
-# *  Concise configurations allow values to be set on defined paramters.
+# *  Concise configurations allow values to be set on defined parameters.
 #
 #
 # Let's take a look at loading a verbose configuration first.
@@ -361,9 +361,11 @@ class MyExtendedConfiguration(MyExtendedConfigurationSchema, ParameterFrame):
     """
 
     # Add our new parameter and default value to the list of default parameters
-    params = Configuration.params + [["my_new_parameter", "Super Awesome Config!", 42]]
+    params = Configuration.params + [
+        ["my_new_parameter", "Super Awesome Config!", 42, "N/A", None, "Input"]
+    ]
 
-    new_params = {"R_0": 6}
+    new_params = {"R_0": (6, "New Input")}
 
     def __init__(self, default_params=params, custom_params=new_params):
         super().__init__(default_params)
