@@ -48,7 +48,7 @@ __all__ = [
     "JrelConvergence",
     "PicardLiAbsIterator",
     "PicardAbsIterator",
-    "PicardAbsCoilsetIterator",
+    "PicardCoilsetIterator",
     "PicardDeltaIterator",
     "PicardLiDeltaIterator",
 ]
@@ -447,7 +447,6 @@ class CoilsetPropertiesOptimiser:
         update_size: bool, optional
             If True then update the coilset size, by default True.
         """
-        self.constraints(self.eq, I_not_dI=True)
         try:
             coilset = self.optimiser(self.eq, self.constraints, psib)
             self.store.append(coilset)
@@ -830,7 +829,7 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         self.eq.solve(self.profiles, psi=self.psi)
 
 
-class PicardAbsCoilsetIterator(CoilsetPropertiesOptimiser, PicardBaseIterator):
+class PicardCoilsetIterator(CoilsetPropertiesOptimiser, PicardBaseIterator):
     """
     Picard solver for unconstrained plasma profiles (li) using I iteration.
     Best used for constrained coil optimisation
