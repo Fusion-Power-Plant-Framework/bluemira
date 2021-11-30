@@ -40,7 +40,6 @@ class EUDEMO(Reactor):
         Run the EU-DEMO reactor build process. Performs the following tasks:
 
         - Run the (PROCESS) systems code
-        - Create a free-boundary equilibrium
         """
         super().run()
 
