@@ -23,17 +23,19 @@
 PROCESS run functions
 """
 
+from __future__ import annotations
+
 from enum import Enum, auto
 import json
 import os
 import subprocess  # noqa (S404)
 import string
 from typing import Dict, List, Optional
-from bluemira.base.parameter import ParameterFrame
+
+import bluemira.base as bm_base
+from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 
 from bluemira.codes.error import CodesError
-from bluemira.base.builder import BuildConfig
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
 from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
 from bluemira.codes.process.api import (
     DEFAULT_INDAT,
@@ -119,7 +121,7 @@ class Run:
         testing purposes.
     """
 
-    _params: ParameterFrame
+    _params: bm_base.ParameterFrame
     _run_dir: str
     _read_dir: str
     _template_indat: str
@@ -137,8 +139,8 @@ class Run:
 
     def __init__(
         self,
-        params: ParameterFrame,
-        build_config: BuildConfig,
+        params: bm_base.ParameterFrame,
+        build_config: bm_base.BuildConfig,
         run_dir: str,
         read_dir: Optional[str] = None,
         template_indat: Optional[str] = None,
@@ -167,13 +169,13 @@ class Run:
         self._runmode(self)  # Run PROCESS in the given run mode
 
     @property
-    def params(self) -> ParameterFrame:
+    def params(self) -> bm_base.ParameterFrame:
         """
         The ParameterFrame corresponding to this run.
         """
         return self._params
 
-    def _set_runmode(self, build_config: BuildConfig):
+    def _set_runmode(self, build_config: bm_base.BuildConfig):
         """
         Set PROCESS runmode according to the "process_mode" parameter in build_config.
         """
@@ -241,7 +243,6 @@ class Run:
         Mock PROCESS. To be used in tests and examples only!
         """
         bluemira_print("Mocking PROCESS systems code run")
-        from bluemira.equilibria.physics import normalise_beta
 
         # Create mock PROCESS file.
         path = self._read_dir

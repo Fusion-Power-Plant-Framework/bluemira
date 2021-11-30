@@ -23,22 +23,24 @@
 Bluemira External Codes Wrapper
 """
 
+from __future__ import annotations
+
 from typing import Optional
 
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.builder import BuildConfig
+import bluemira.base as bm_base
+
 from bluemira.codes.error import CodesError
 from bluemira.codes import process
 
 
 def run_systems_code(
-    params: ParameterFrame,
-    build_config: BuildConfig,
+    params: bm_base.ParameterFrame,
+    build_config: bm_base.BuildConfig,
     run_dir: str,
     read_dir: Optional[str] = None,
     template_indat=None,
     params_to_update=None,
-) -> ParameterFrame:
+) -> bm_base.ParameterFrame:
     """
     Runs, reads or mocks PROCESS according to the build configuration dictionary.
 

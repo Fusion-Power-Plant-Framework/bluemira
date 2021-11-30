@@ -33,6 +33,10 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
 
+
+__all__ = ["Builder", "BuildConfig"]
+
+
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
 """
 Type alias for representing nested build configuration information.

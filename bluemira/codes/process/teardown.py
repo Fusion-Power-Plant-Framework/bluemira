@@ -29,10 +29,11 @@ import matplotlib.patches as patches
 import numpy as np
 from collections import namedtuple
 
-from bluemira.base.parameter import ParameterFrame
+import bluemira.base as bm_base
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import is_num
+
+from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import (
     PROCESS_DICT,
     update_obsolete_vars,
@@ -122,7 +123,7 @@ class BMFile(MFile):
                 desc = key + ": PROCESS variable description not found"
                 unit = "N/A"
             param.append([key, desc, val, unit, None, PROCESS])
-        return ParameterFrame(param)
+        return bm_base.ParameterFrame(param)
 
     def read(self):
         """

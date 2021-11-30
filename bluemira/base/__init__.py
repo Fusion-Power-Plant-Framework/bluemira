@@ -23,14 +23,14 @@
 Base classes and functionality for the bluemira code.
 """
 
+from .builder import *
+from .parameter import *
+
 """
-from .analysis import Analysis
-from .builder import Builder
 from .components import (
     Component,
     PhysicalComponent,
     MagneticComponent,
 )
 from .design import Design
-from .parameter import *
 """
