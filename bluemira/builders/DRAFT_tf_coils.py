@@ -26,14 +26,16 @@ Built-in build steps for making a parameterised plasma
 from typing import Tuple, Type, Union, Dict, List, Any
 import numpy as np
 from copy import deepcopy
+import matplotlib.pyplot as plt
+import matplotlib
 
 from bluemira.base.parameter import ParameterFrame
-from bluemira.base.constants import MU_0
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.display.displayer import show_cad
+from bluemira.display import plot_2d
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.utilities.optimiser import Optimiser
@@ -43,6 +45,8 @@ from bluemira.builders.shapes import ParameterisedShapeBuilder
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.geometry.tools import (
+    extrude_shape,
+    revolve_shape,
     sweep_shape,
     make_polygon,
     offset_wire,
@@ -89,8 +93,8 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         keep_out_zone=None,
         rip_con_tol=1e-3,
         koz_con_tol=1e-3,
-        nx=2,
-        ny=2,
+        nx=1,
+        ny=1,
         n_koz_points=100,
     ):
         super().__init__(parameterisation, optimiser)
@@ -272,10 +276,6 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
             The optional Axes to plot onto, by default None.
             If None then the current Axes will be used.
         """
-        import matplotlib.pyplot as plt
-        import matplotlib
-        from bluemira.display import plot_2d
-
         if ax is None:
             ax = kwargs.get("ax", plt.gca())
 
@@ -394,10 +394,7 @@ class MakeOptimisedTFWindingPack(ParameterisedShapeBuilder):
         Build the boundary as a wire at the requested target.
         """
         label = target.split("/")[-1]
-        return (
-            target,
-            PhysicalComponent(label, BluemiraWire(boundary, label)),
-        )
+        return PhysicalComponent(label, BluemiraWire(boundary, label))
 
 
 class BuildTFWindingPack:
@@ -412,7 +409,13 @@ class BuildTFWindingPack:
         self.wp_cross_section = wp_cross_section
 
     def build_xy(self):
-        pass
+        # Should normally be gotten with wire_plane_intersect
+        x_out = self.wp_centreline.bounding_box.x_max
+
+        return [
+            PhysicalComponent(),
+            PhysicalComponent(),
+        ]
 
     def build_xz(self):
         x_min = self.wp_cross_section.bounding_box.x_min
@@ -439,9 +442,17 @@ class BuildTFInsulation:
         self.tk_insulation = insulation_thickness
 
     def build_xy(self):
-        outer_wire = offset_wire(self.wp_cross_section, self.tk_insulation)
-        face = BluemiraFace([outer_wire, self.wp_cross_section])
-        return PhysicalComponent(self.name, face)
+        outer_wire = offset_wire(self.wp_cross_section.boundary[0], self.tk_insulation)
+        face = BluemiraFace([outer_wire, self.wp_cross_section.boundary[0]])
+
+        # Should normally be gotten with wire_plane_intersect
+        x_out = self.wp_centreline.bounding_box.x_max
+        outer_face = deepcopy(face)
+        outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
+        return [
+            PhysicalComponent(self.name, face),
+            PhysicalComponent(self.name, outer_face),
+        ]
 
     def build_xz(self):
         x_centreline_in = self.wp_centreline.bounding_box.x_min
@@ -450,7 +461,7 @@ class BuildTFInsulation:
 
         dx_wp = x_centreline_in - x_in_wp
 
-        ins_xs = offset_wire(self.wp_cross_section, self.tk_insulation)
+        ins_xs = offset_wire(self.wp_cross_section.boundary[0], self.tk_insulation)
         x_in_ins = ins_xs.bounding_box.x_min
 
         dx_ins = x_centreline_in - x_in_ins
@@ -468,11 +479,10 @@ class BuildTFInsulation:
         ]
 
     def build_xyz(self):
-        ins_xs = offset_wire(self.wp_cross_section, self.tk_insulation)
+        ins_xs = offset_wire(self.wp_cross_section.boundary[0], self.tk_insulation)
 
         solid = sweep_shape(ins_xs, self.wp_centreline)
-        # This doesnt frigging work
-        ins_solid = boolean_cut(solid, self.wp_solid)
+        ins_solid = boolean_cut(solid, self.wp_solid)[0]
         return PhysicalComponent(self.name, ins_solid)
 
 
@@ -489,9 +499,9 @@ class BuildTFCasing:
         tk_tf_front_ib,
         tk_tf_side,
     ):
-        self.ins_solid = ins_solid
-        self.ins_cross_section = ins_cross_section
-        self.wp_centreline = wp_centreline
+        self.ins_solid = deepcopy(ins_solid)
+        self.ins_cross_section = deepcopy(ins_cross_section)
+        self.wp_centreline = deepcopy(wp_centreline)
         self.n_TF = n_TF
         self.tk_tf_nose = tk_tf_nose
         self.tk_tf_front_ib = tk_tf_front_ib
@@ -510,25 +520,36 @@ class BuildTFCasing:
             [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
             closed=True,
         )
-        inner_face = BluemiraFace([outer_wire, self.ins_cross_section.boundary[0]])
+        inner_face = BluemiraFace(
+            [outer_wire, deepcopy(self.ins_cross_section.boundary[0])]
+        )
 
-        # Should normally be gotten with wire_plane_intersect
-        x_out = self.wp_centreline.bounding_box.x_max
+        bb = self.ins_cross_section.bounding_box
+        dx_ins = 0.5 * (bb.x_max - bb.x_min)
+        dy_ins = 0.5 * (bb.y_max - bb.y_min)
+
         # Split the total radial thickness equally on the outboard
         tk_total = self.tk_tf_front_ib + self.tk_tf_nose
         tk = 0.5 * tk_total
+
+        dx_out = dx_ins + tk
+        dy_out = dy_ins + self.tk_tf_side
         outer_wire = make_polygon(
             [
-                [x_out - tk, -self.tk_tf_side, 0],
-                [x_out + tk, -self.tk_tf_side, 0],
-                [x_out + tk, self.tk_tf_side, 0],
-                [x_out - tk, self.tk_tf_side, 0],
+                [-dx_out, -dy_out, 0],
+                [dx_out, -dy_out, 0],
+                [dx_out, dy_out, 0],
+                [-dx_out, dy_out, 0],
             ],
             closed=True,
         )
-        outer_ins = self.ins_cross_section.deepcopy()
-        outer_ins.translate((x_out - outer_ins.center_of_mass[0], 0, 0))
 
+        outer_ins = deepcopy(self.ins_cross_section.boundary[0])
+
+        # Should normally be gotten with wire_plane_intersect
+        x_out = self.wp_centreline.bounding_box.x_max
+        outer_wire.translate((x_out - outer_wire.center_of_mass[0], 0, 0))
+        outer_ins.translate((x_out - outer_ins.center_of_mass[0], 0, 0))
         outer_face = BluemiraFace([outer_wire, outer_ins])
         return [
             PhysicalComponent(self.name, inner_face),
@@ -539,7 +560,15 @@ class BuildTFCasing:
         pass
 
     def build_xyz(self):
-        pass
+        inner_xs, outer_xs = self.build_xy()
+        inner_xs = inner_xs.shape.boundary[0]
+        outer_xs = outer_xs.shape.boundary[0]
+
+        solid = sweep_shape([inner_xs, outer_xs], self.wp_centreline)
+        outer_ins_solid = BluemiraSolid(self.ins_solid.boundary[0])
+        solid = boolean_cut(solid, outer_ins_solid)[0]
+
+        return PhysicalComponent(self.name, solid)
 
 
 class BuildTFCoils(Builder):
@@ -547,7 +576,7 @@ class BuildTFCoils(Builder):
     A class to build TF coils in the same way as BLUEPRINT.
     """
 
-    _required_config = Builder._required_config + ["targets"]
+    _required_config = Builder._required_config
     _required_params = [
         "R_0",
         "B_0",
@@ -561,96 +590,114 @@ class BuildTFCoils(Builder):
     def __init__(self, params, build_config: Dict[str, Any], **kwargs):
         super().__init__(params, build_config, **kwargs)
 
-
-class ToroidalFieldSystem:
-    def __init__(self, params, wp_parameterisation):
-        self.params = params
-        self.wp_parameterisation = wp_parameterisation
-
-    def build(self):
-        # TODO: I see that nobody ever got to the bottom of the PROCESS insulation story
-        r_wp_centroid = self.params.r_tf_in + self.params.tk_tf_wp
-        self.wp_parameterisation.adjust_variable("x1", r_wp_centroid)
-        wp_xs = self.make_wp_cross_section(r_wp_centroid)
-        builder = BuildTFWindingPack(self.wp_parameterisation.create_shape(), wp_xs)
-        builder.build()
-
-        builder = BuildTFInsulation(
-            self.wp_parameterisation.create_shape(), wp_xs, self.params.tk_tf_ins
-        )
-
-        builder = BuildTFCasing()
-        builder.build()
+    def reinitialise(self):
+        pass
 
     def optimise(self):
         pass
 
-    def calculate_wp_current(self):
-        # Back of the envelope
-        bm = -self.params.B_0 * self.params.R_0
-        current = abs(2 * np.pi * bm / (self.params.n_TF * MU_0))
-        self.params.add_parameter(
-            "I_tf", "TF coil current", current, "A", None, "bluemira"
-        )
-
-    def make_wp_cross_section(self, r_wp_centroid):
-        r_wp_in = r_wp_centroid - 0.5 * self.params.tk_tf_wp
-        r_wp_out = r_wp_centroid + 0.5 * self.params.tk_tf_wp
-        y_down = -0.5 * self.params.tf_wp_depth
-        y_up = -y_down
-        return BluemiraFace(
-            make_polygon(
-                [
-                    [r_wp_in, y_down, 0],
-                    [r_wp_out, y_down, 0],
-                    [r_wp_out, y_up, 0],
-                    [r_wp_in, y_up, 0],
-                ],
-                closed=True,
-            )
-        )
+    def build(self):
+        pass
 
 
 if __name__ == "__main__":
 
-    from bluemira.geometry.parameterisations import PrincetonD, TripleArc, PictureFrame
+    from bluemira.geometry.parameterisations import PrincetonD
     from bluemira.geometry.face import BluemiraFace
     from bluemira.equilibria.shapes import JohnerLCFS
-    from bluemira.base.parameter import ParameterFrame
-    from bluemira.geometry.tools import sweep_shape, circular_pattern, revolve_shape
+    from bluemira.geometry.tools import circular_pattern
     from bluemira.display import show_cad
     from bluemira.display.displayer import DisplayCADOptions
+    from bluemira.base.constants import BLUEMIRA_PALETTE
 
-    x_tf_wp_center = 3.2
+    params = ParameterFrame(
+        [
+            ["R_0", "Major radius", 9, "m", None, None, "Input"],
+            ["z_0", "Vertical height at major radius", 0, "m", None, "Input", None],
+            ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
+            ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
+            ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
+            [
+                "r_tf_in",
+                "Inboard radius of the TF coil inboard leg",
+                3.2,
+                "m",
+                None,
+                "PROCESS",
+            ],
+            ["tk_tf_nose", "TF coil inboard nose thickness", 0.6, "m", None, "Input"],
+            [
+                "tk_tf_front_ib",
+                "TF coil inboard steel front plasma-facing",
+                0.04,
+                "m",
+                None,
+                "Input",
+            ],
+            [
+                "tk_tf_side",
+                "TF coil inboard case minimum side wall thickness",
+                0.1,
+                "m",
+                None,
+                "Input",
+            ],
+            [
+                "tk_tf_ins",
+                "TF coil ground insulation thickness",
+                0.08,
+                "m",
+                None,
+                "Input",
+            ],
+            # This isn't treated at the moment...
+            [
+                "tk_tf_insgap",
+                "TF coil WP insertion gap",
+                0.1,
+                "m",
+                "Backfilled with epoxy resin (impregnation)",
+                "Input",
+            ],
+            # Dubious WP depth from PROCESS (I used to tweak this when building the TF coils)
+            [
+                "tf_wp_width",
+                "TF coil winding pack radial width",
+                0.76,
+                "m",
+                "Including insulation",
+                "PROCESS",
+            ],
+            [
+                "tf_wp_depth",
+                "TF coil winding pack depth (in y)",
+                1.05,
+                "m",
+                "Including insulation",
+                "PROCESS",
+            ],
+        ]
+    )
     parameterisation = PrincetonD(
         {
-            "x1": {"value": x_tf_wp_center, "fixed": True},
+            "x1": {"value": params.r_tf_in.value, "fixed": True},
+            # We should really be improving the bounds here; lots of ersatz techniques
+            # for good estimates come to mind here
             "x2": {"lower_bound": 10, "value": 14, "upper_bound": 18},
             "dz": {"lower_bound": -0.5, "value": 0, "upper_bound": 0.5, "fixed": True},
         }
     )
 
+    # This can be used but you probably need to switch on the parameterisation constraints
+    # see #466
+
+    # from bluemira.geometry.parameterisations import TripleArc
     # parameterisation = TripleArc(
     #     {
     #         "x1": {"value": x_tf_wp_center, "fixed": True},
     #         "z1": {"value": 0, "lower_bound": -2, "fixed": True},
     #     }
     # )
-
-    x_c = x_tf_wp_center
-    d_xc = 0.25
-    d_yc = 0.4
-    tk_ins = 0.05
-    wp_xs = make_polygon(
-        [
-            [x_c - d_xc, -d_yc, 0],
-            [x_c + d_xc, -d_yc, 0],
-            [x_c + d_xc, d_yc, 0],
-            [x_c - d_xc, d_yc, 0],
-        ],
-        closed=True,
-    )
-    wp_xs = BluemiraFace(wp_xs, "TF WP x-y cross-section")
 
     optimiser = Optimiser(
         "SLSQP",
@@ -662,17 +709,24 @@ if __name__ == "__main__":
         },
     )
 
-    # I just don't know where to get these any more
-    params = ParameterFrame(
+    # Here we just make a face for the WP cross-section, I used to do this within the
+    # TFSystem, because the PROCESS values didn't always match up with what EU-DEMO
+    # wanted. Long story. May be fixed now.
+    x_c = params.r_tf_in.value
+    d_xc = 0.5 * params.tf_wp_width.value
+    d_yc = 0.5 * params.tf_wp_depth.value
+    wp_xs = make_polygon(
         [
-            ["R_0", "Major radius", 9, "m", None, "Input", None],
-            ["z_0", "Vertical height at major radius", 0, "m", None, "Input", None],
-            ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
-            ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
-            ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
-        ]
+            [x_c - d_xc, -d_yc, 0],
+            [x_c + d_xc, -d_yc, 0],
+            [x_c + d_xc, d_yc, 0],
+            [x_c - d_xc, d_yc, 0],
+        ],
+        closed=True,
     )
+    wp_xs = BluemiraFace(wp_xs, "TF WP x-y cross-section")
 
+    # Arbitrary: Normally this would come from plasma
     separatrix = JohnerLCFS(
         {
             "r_0": {"value": 9},
@@ -683,49 +737,74 @@ if __name__ == "__main__":
         }
     ).create_shape()
 
-    from bluemira.geometry.tools import offset_wire
-
+    # Arbitrary: Normally this would come from somewhere in the Reactor
     koz = offset_wire(separatrix, 2.0, join="arc")
 
+    # Design
     problem = TFWPOptimisationProblem(
         parameterisation, optimiser, params, wp_xs, separatrix, koz
     )
     problem.solve()
 
-    centreline = parameterisation.create_shape()
-
-    tf_wp = sweep_shape(wp_xs, centreline)
-    shapes = circular_pattern(tf_wp, n_shapes=16)
-    options = 16 * [DisplayCADOptions(color=(0.2, 0.3, 0.4))]
-    plasma = revolve_shape(BluemiraFace(separatrix), degree=360)
-    shapes.append(plasma)
-    options.append(DisplayCADOptions(color=(1.0, 0.2, 0.5), transparency=0.5))
-
-    show_cad(shapes, options)
-
     wp_centreline = parameterisation.create_shape()
 
+    # Build
     builder = BuildTFWindingPack(wp_centreline, wp_xs)
-    xz_comp = builder.build_xz()
-    xyz_shape = builder.build_xyz().shape
-    # xz.plot_2d()
+    xz_wp_comp = builder.build_xz()
+    xyz_wp_shape = builder.build_xyz().shape
 
-    builder = BuildTFInsulation(xyz_shape, wp_centreline, wp_xs, tk_ins)
+    builder = BuildTFInsulation(
+        xyz_wp_shape, wp_centreline, wp_xs, params.tk_tf_ins.value
+    )
     xz_ins_comp = builder.build_xz()
-    xy_ins_shape = builder.build_xy().shape
-    # xyz_ins_shape = builder.build_xyz().shape
-    builder = BuildTFCasing(None, wp_centreline, xy_ins_shape, 16, 0.4, 0.1, 0.1)
-    xy_casing = builder.build_xy()
+    xy_ins_shape = builder.build_xy()[0].shape
+    xyz_ins_shape = builder.build_xyz().shape
 
-    xz_comps = [xz_comp]
+    builder = BuildTFCasing(
+        xyz_ins_shape,
+        wp_centreline,
+        xy_ins_shape,
+        params.n_TF.value,
+        params.tk_tf_nose.value,
+        params.tk_tf_front_ib.value,
+        params.tk_tf_side.value,
+    )
+    xy_casing = builder.build_xy()
+    xyz_casing_shape = builder.build_xyz().shape
+
+    xz_comps = [xz_wp_comp]
 
     xz_comps.extend(xz_ins_comp)
 
-    import matplotlib.pyplot as plt
+    # Visualise
 
     f, ax = plt.subplots()
     for shape in xz_comps:
         shape.plot_2d(ax=ax, show=False)
 
-    # shapes = circular_pattern(xyz_shape.shape, n_shapes=16)
-    # show_cad(shapes)
+    shapes = [xyz_wp_shape, xyz_ins_shape, xyz_casing_shape]
+
+    # Can't make a plane, can't section, this ensues
+    plane = BluemiraFace(
+        make_polygon(
+            [[-100, 0, -100], [100, 0, -100], [100, 0, 100], [-100, 0, 100]], closed=True
+        )
+    )
+    cut_box = extrude_shape(plane, (0, -10, 0))
+
+    half_shapes = [boolean_cut(shape, cut_box)[0] for shape in shapes]
+
+    shapes = circular_pattern(xyz_casing_shape, n_shapes=params.n_TF.value)[1:9]
+
+    all_shapes = half_shapes + shapes
+    options = [
+        DisplayCADOptions(color=BLUEMIRA_PALETTE[6]),
+        DisplayCADOptions(color=BLUEMIRA_PALETTE[1]),
+        DisplayCADOptions(color=BLUEMIRA_PALETTE[0]),
+    ]
+    options.extend([DisplayCADOptions(color=BLUEMIRA_PALETTE[0])] * len(shapes))
+
+    plasma = revolve_shape(BluemiraFace(separatrix))
+    all_shapes.append(plasma)
+    options.append(DisplayCADOptions(color=BLUEMIRA_PALETTE[7], transparency=0.5))
+    show_cad(all_shapes, options=options)
