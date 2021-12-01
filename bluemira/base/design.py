@@ -166,10 +166,10 @@ class Design(DesignABC):
 class Reactor(DesignABC):
     """
     The Reactor class allows a Design to be implemented directly in the code. This can
-    simply some of logic when compared with the configurable Design class, in particular
-    when passing around Component information. As such, individual Reactor instances must
-    implement their own `run` method. The Reactor class also provides managed output via
-    a FileManager to aid the persistence of input and output data.
+    simplify some of logic when compared with the configurable Design class, in
+    particularwhen passing around Component information. As such, individual Reactor
+    instances must implement their own `run` method. The Reactor class also provides
+    managed output via a FileManager to aid the persistence of input and output data.
     """
 
     _required_params: List[str] = list(Configuration().keys())
