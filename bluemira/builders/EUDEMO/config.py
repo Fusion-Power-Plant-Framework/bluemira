@@ -26,11 +26,15 @@ Configuration derivation and storage for EU-DEMO build
 import json
 
 from bluemira.base.config import Configuration
+from bluemira.base.error import ParameterError
+from bluemira.base.file import get_bluemira_root
 
 params = {}
 for param in Configuration.params:
     params[param[0]] = {}
+    params[param[0]]["name"] = param[1]
     params[param[0]]["value"] = param[2]
+    params[param[0]]["unit"] = param[3]
     params[param[0]]["source"] = param[5]
     if param[4] is not None:
         params[param[0]]["description"] = param[4]
@@ -41,23 +45,38 @@ for param in Configuration.params:
 
 params = dict(sorted(params.items()))
 
-params["Name"]["value"] = "EU-DEMO"
-params["tau_flattop"]["value"] = 6900
-params["n_TF"]["value"] = 18
-params["fw_psi_n"]["value"] = 1.06
-params["tk_tf_front_ib"]["value"] = 0.05
-params["tk_bb_ib"]["value"] = 0.755
-params["tk_bb_ob"]["value"] = 1.275
-params["g_tf_pf"]["value"] = 0.05
-params["C_Ejima"]["value"] = 0.3
-params["eta_nb"]["value"] = 0.4
-params["LPangle"]["value"] = -15
-params["w_g_support"]["value"] = 1.5
+with open(f"{get_bluemira_root()}/bluemira/builders/EUDEMO/template.json", "w") as fh:
+    json.dump(params, fh, indent=2, ensure_ascii=False)
 
-with open("/home/dshort/code/bluemira/bluemira/builders/EUDEMO/params.json", "w") as fh:
-    json.dump(params, fh, indent=2)
+config = {
+    "Name": "EU-DEMO",
+    "tau_flattop": 6900,
+    "n_TF": 18,
+    "fw_psi_n": 1.06,
+    "tk_tf_front_ib": 0.05,
+    "tk_bb_ib": 0.755,
+    "tk_bb_ob": 1.275,
+    "g_tf_pf": 0.05,
+    "C_Ejima": 0.3,
+    "eta_nb": 0.4,
+    "LPangle": -15,
+    "w_g_support": 1.5,
+}
+
+for key, val in config.items():
+    if isinstance(val, dict):
+        for attr, attr_val in val.items():
+            if attr in ["name", "unit"]:
+                raise ParameterError(f"Cannot set {attr} in parameter configuration.")
+            params[key][attr] = attr_val
+    else:
+        params[key]["value"] = val
+
+with open(f"{get_bluemira_root()}/bluemira/builders/EUDEMO/params.json", "w") as fh:
+    json.dump(config, fh, indent=2, ensure_ascii=False)
 
 build_config = {
+    "reference_data_root": "!BM_ROOT!/data",
     "generated_data_root": "!BM_ROOT!/generated_data",
     "process_mode": "mock",
 }
