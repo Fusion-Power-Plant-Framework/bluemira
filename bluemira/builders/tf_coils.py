@@ -189,9 +189,9 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         return length
 
     # I just need to see... I worry about the proliferation of Plotters
-    def plot_ripple(self, ax=None, **kwargs):
+    def plot(self, ax=None, **kwargs):
         """
-        Plot the ripple along the separatrix loop.
+        Plot the optimisation problem.
 
         Parameters
         ----------
@@ -423,6 +423,7 @@ class BuildTFCasing:
         n_TF,
         tk_tf_nose,
         tk_tf_front_ib,
+        tk_tf_side,
     ):
         self.ins_solid = ins_solid
         self.ins_cross_section = ins_cross_section
@@ -430,6 +431,7 @@ class BuildTFCasing:
         self.n_TF = n_TF
         self.tk_tf_nose = tk_tf_nose
         self.tk_tf_front_ib = tk_tf_front_ib
+        self.tk_tf_side = tk_tf_side
 
     def build_xy(self):
         x_ins_in = self.ins_cross_section.bounding_box.x_min
@@ -444,9 +446,30 @@ class BuildTFCasing:
             [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
             closed=True,
         )
+        inner_face = BluemiraFace([outer_wire, self.ins_cross_section.boundary[0]])
 
-        face = BluemiraFace([outer_wire, self.ins_cross_section.boundary[0]])
-        return PhysicalComponent(self.name, face)
+        # Should normally be gotten with wire_plane_intersect
+        x_out = self.wp_centreline.bounding_box.x_max
+        # Split the total radial thickness equally on the outboard
+        tk_total = self.tk_tf_front_ib + self.tk_tf_nose
+        tk = 0.5 * tk_total
+        outer_wire = make_polygon(
+            [
+                [x_out - tk, -self.tk_tf_side, 0],
+                [x_out + tk, -self.tk_tf_side, 0],
+                [x_out + tk, self.tk_tf_side, 0],
+                [x_out - tk, self.tk_tf_side, 0],
+            ],
+            closed=True,
+        )
+        outer_ins = self.ins_cross_section.deepcopy()
+        outer_ins.translate((x_out - outer_ins.center_of_mass[0], 0, 0))
+
+        outer_face = BluemiraFace([outer_wire, outer_ins])
+        return [
+            PhysicalComponent(self.name, inner_face),
+            PhysicalComponent(self.name, outer_face),
+        ]
 
     def build_xz(self):
         pass
@@ -631,7 +654,7 @@ if __name__ == "__main__":
     xz_ins_comp = builder.build_xz()
     xy_ins_shape = builder.build_xy().shape
     # xyz_ins_shape = builder.build_xyz().shape
-    builder = BuildTFCasing(None, wp_centreline, xy_ins_shape, 16, 0.4, 0.1)
+    builder = BuildTFCasing(None, wp_centreline, xy_ins_shape, 16, 0.4, 0.1, 0.1)
     xy_casing = builder.build_xy()
 
     xz_comps = [xz_comp]
