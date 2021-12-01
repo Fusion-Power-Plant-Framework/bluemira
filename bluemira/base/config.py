@@ -40,10 +40,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
     params = [
         ['Name', 'Reactor name', 'Cambridge', 'N/A', None, 'Input'],
         ['plasma_type', 'Type of plasma', 'SN', 'N/A', None, 'Input'],
-        ['reactor_type', 'Type of reactor', 'SN', 'N/A', None, 'Input'],  # Yes, believe it or not..
+        ['reactor_type', 'Type of reactor', 'Normal', 'N/A', None, 'Input'],
         ['op_mode', 'Mode of operation', 'Pulsed', 'N/A', None, 'Input'],
 
-        # FIXME: Which of these should be read, and which written?
+        # Reactor
         ['P_el_net', 'Net electrical power output', 500, 'MW', None, 'Input', {"PROCESS": ParameterMapping("pnetelin", False, True)}],
         ['P_el_net_process', 'Net electrical power output as provided by PROCESS', None, 'MW', None, 'PROCESS', {"PROCESS": ParameterMapping("pnetelmw", True, False)}],
         ['tau_flattop', 'Flat-top duration', 2 * 3600, 's', None, 'Input', {"PROCESS": ParameterMapping("tburn", False, False)}],
