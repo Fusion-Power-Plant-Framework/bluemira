@@ -95,7 +95,7 @@ class Builder(abc.ABC):
         self._reset_params(params)
 
     @abc.abstractmethod
-    def build(self, **kwargs):
+    def build(self, **kwargs) -> Component:
         """
         Runs this Builder's build process to populate the required Components.
 
