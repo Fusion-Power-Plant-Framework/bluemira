@@ -29,7 +29,11 @@ import subprocess
 import threading
 from typing import Dict, Literal
 
-from bluemira.base.look_and_feel import bluemira_error_clean, bluemira_print_clean
+from bluemira.base.look_and_feel import (
+    bluemira_error_clean,
+    bluemira_print_clean,
+    _bluemira_clean_flush,
+)
 from bluemira.codes.error import CodesError
 
 
@@ -145,6 +149,7 @@ class LogPipe(threading.Thread):
         self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[
             loglevel
         ]
+        self.logfunc_flush = _bluemira_clean_flush
         self.fd_read, self.fd_write = os.pipe()
         self.pipe = os.fdopen(self.fd_read, encoding="utf-8", errors="ignore")
         self.start()
@@ -160,7 +165,10 @@ class LogPipe(threading.Thread):
         Run the thread and pipe it all into the logger.
         """
         for line in iter(self.pipe.readline, ""):
-            self.logfunc(line)
+            if line.startswith("==>"):
+                self.logfunc_flush(line.strip("\n"))
+            else:
+                self.logfunc(line)
 
         self.pipe.close()
 

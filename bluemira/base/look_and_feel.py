@@ -336,16 +336,25 @@ def bluemira_print_flush(string):
     string: str
         The string to colour flush print
     """
-    original_terminator = logging.StreamHandler.terminator
-    logging.StreamHandler.terminator = ""
-    logging.FileHandler.terminator = original_terminator
-    try:
-        LOGGER.info("\r" + _bm_print_singleflush(string))
-    finally:
-        logging.StreamHandler.terminator = original_terminator
+    _bluemira_clean_flush(LOGGER.info, _bm_print_singleflush(string))
 
 
-def _bluemira_clean(func, string):
+def _bluemira_clean_flush(string):
+    """
+    Print a coloured, boxed line to the console and flushes it. Useful for
+    updating information.
+
+    Parameters
+    ----------
+    func: logging function
+        function to log with
+    string: str
+        The string to colour flush print
+    """
+    _bluemira_clean(LOGGER.info, "\r" + string, fhterm=logging.StreamHandler.terminator)
+
+
+def _bluemira_clean(func, string, *, fhterm=""):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information.
@@ -357,7 +366,7 @@ def _bluemira_clean(func, string):
     """
     original_terminator = logging.StreamHandler.terminator
     logging.StreamHandler.terminator = ""
-    logging.FileHandler.terminator = ""
+    logging.FileHandler.terminator = fhterm
     try:
         func(string)
     finally:
