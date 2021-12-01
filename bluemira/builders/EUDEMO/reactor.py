@@ -27,6 +27,7 @@ from bluemira.base.components import Component
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
@@ -46,10 +47,11 @@ class EUDEMOReactor(Reactor):
         component = super().run()
 
         self.run_systems_code()
+        component.add_child(self.build_plasma())
 
         return component
 
-    def run_systems_code(self):
+    def run_systems_code(self, **kwargs):
         """
         Run the systems code module in the requested run mode.
         """
@@ -62,3 +64,16 @@ class EUDEMOReactor(Reactor):
             self._file_manager.reference_data_dirs["systems_code"],
         )
         self._params.update_kw_parameters(output.to_dict())
+
+    def build_plasma(self, **kwargs):
+        """
+        Run the plasma build using the requested equilibrium problem.
+        """
+        name = "Plasma"
+
+        plasma_config = {
+            "name": name,
+            "plot_flag": self._build_config.get("plot_flag", False),
+        }
+
+        return super()._build_stage(PlasmaBuilder, plasma_config)

@@ -30,6 +30,7 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.parameter import ParameterError
 
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
+from bluemira.builders.EUDEMO.plasma import PlasmaComponent
 
 from bluemira.codes import plot_PROCESS
 
@@ -98,10 +99,31 @@ with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w
 
 # Create the Reactor and run the design.
 
+# Uncomment this to mock the plasma run and use a parameterised boundary.
+# (No equilibrium will be produced in this case)
+
+# build_config["callbacks"] = {"Plasma": "mock_equilibrium_callback"}
+
 reactor = EUDEMOReactor(params, build_config)
-reactor.run()
+component = reactor.run()
 
 # Display the PROCESS radial build.
 
 if build_config["process_mode"] == "run":
     plot_PROCESS(reactor.file_manager.generated_data_dirs["systems_code"])
+
+# Write out equilibrium, if it's been created.
+
+directory = reactor.file_manager.generated_data_dirs["equilibria"]
+plasma: PlasmaComponent = component.get_component("Plasma")
+if plasma.equilibrium is not None:
+    plasma.equilibrium.to_eqdsk(
+        reactor.params["Name"] + "_eqref",
+        directory=reactor.file_manager.generated_data_dirs["equilibria"],
+    )
+
+# Display the components.
+
+plasma.get_component("xz").plot_2d()
+plasma.get_component("xy").plot_2d()
+plasma.get_component("xyz").show_cad()
