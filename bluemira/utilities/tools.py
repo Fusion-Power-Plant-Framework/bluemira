@@ -156,7 +156,7 @@ def json_writer(data, file, cls=NumpyJSONEncoder, **kwargs):
             return json_writer(data, f_handle, **kwargs)
     if "indent" not in kwargs:
         kwargs["indent"] = 4
-    dump(data, file, cls=NumpyJSONEncoder, **kwargs)
+    dump(data, file, cls=cls, **kwargs)
 
 
 # =====================================================
