@@ -50,7 +50,6 @@ from bluemira.geometry.tools import (
     sweep_shape,
     make_polygon,
     offset_wire,
-    circular_pattern,
     boolean_cut,
     signed_distance_2D_polygon,
 )
@@ -557,9 +556,15 @@ class BuildTFCasing:
         ]
 
     def build_xz(self):
+        # Normally I'd do a variable thickness offset and actually build the xyz from
+        # that. We can't do variable thickness offsets with primitives.. (yet, I suppose)
+
+        # We could just section the xyz, but we can't do that yet either.
         pass
 
     def build_xyz(self):
+        # Normally I'd do lots more here to get to a proper casing
+        # This is just a proof-of-principle
         inner_xs, outer_xs = self.build_xy()
         inner_xs = inner_xs.shape.boundary[0]
         outer_xs = outer_xs.shape.boundary[0]
@@ -572,9 +577,6 @@ class BuildTFCasing:
 
 
 class BuildTFCoils(Builder):
-    """
-    A class to build TF coils in the same way as BLUEPRINT.
-    """
 
     _required_config = Builder._required_config
     _required_params = [
@@ -603,13 +605,13 @@ class BuildTFCoils(Builder):
 if __name__ == "__main__":
 
     from bluemira.geometry.parameterisations import PrincetonD
-    from bluemira.geometry.face import BluemiraFace
     from bluemira.equilibria.shapes import JohnerLCFS
     from bluemira.geometry.tools import circular_pattern
     from bluemira.display import show_cad
     from bluemira.display.displayer import DisplayCADOptions
     from bluemira.base.constants import BLUEMIRA_PALETTE
 
+    # fmt: off
     params = ParameterFrame(
         [
             ["R_0", "Major radius", 9, "m", None, None, "Input"],
@@ -617,67 +619,20 @@ if __name__ == "__main__":
             ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
             ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
             ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
-            [
-                "r_tf_in",
-                "Inboard radius of the TF coil inboard leg",
-                3.2,
-                "m",
-                None,
-                "PROCESS",
-            ],
+            ["r_tf_in","Inboard radius of the TF coil inboard leg", 3.2, "m", None, "PROCESS"],
             ["tk_tf_nose", "TF coil inboard nose thickness", 0.6, "m", None, "Input"],
-            [
-                "tk_tf_front_ib",
-                "TF coil inboard steel front plasma-facing",
-                0.04,
-                "m",
-                None,
-                "Input",
-            ],
-            [
-                "tk_tf_side",
-                "TF coil inboard case minimum side wall thickness",
-                0.1,
-                "m",
-                None,
-                "Input",
-            ],
-            [
-                "tk_tf_ins",
-                "TF coil ground insulation thickness",
-                0.08,
-                "m",
-                None,
-                "Input",
-            ],
+            ["tk_tf_front_ib", "TF coil inboard steel front plasma-facing", 0.04, "m", None, "Input"],
+            ["tk_tf_side", "TF coil inboard case minimum side wall thickness", 0.1, "m", None, "Input"],
+            ["tk_tf_ins", "TF coil ground insulation thickness", 0.08, "m", None, "Input"],
             # This isn't treated at the moment...
-            [
-                "tk_tf_insgap",
-                "TF coil WP insertion gap",
-                0.1,
-                "m",
-                "Backfilled with epoxy resin (impregnation)",
-                "Input",
-            ],
+            ["tk_tf_insgap", "TF coil WP insertion gap", 0.1, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
             # Dubious WP depth from PROCESS (I used to tweak this when building the TF coils)
-            [
-                "tf_wp_width",
-                "TF coil winding pack radial width",
-                0.76,
-                "m",
-                "Including insulation",
-                "PROCESS",
-            ],
-            [
-                "tf_wp_depth",
-                "TF coil winding pack depth (in y)",
-                1.05,
-                "m",
-                "Including insulation",
-                "PROCESS",
-            ],
+            ["tf_wp_width", "TF coil winding pack radial width", 0.76, "m", "Including insulation", "PROCESS"],
+            ["tf_wp_depth", "TF coil winding pack depth (in y)", 1.05, "m", "Including insulation", "PROCESS"],
         ]
     )
+    # fmt: on
+
     parameterisation = PrincetonD(
         {
             "x1": {"value": params.r_tf_in.value, "fixed": True},
