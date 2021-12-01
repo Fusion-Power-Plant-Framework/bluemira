@@ -33,6 +33,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import plot_2d
+from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.solid import BluemiraSolid
@@ -137,8 +138,12 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         Make a set of points at which to check the ripple
         """
         points = separatrix.discretize(ndiscr=100).T
-        # idx = np.where(points[0] > self.params.R_0.value)[0]
-        return points  # [:, idx]
+        # Real argument to making the points the inputs... but then the plot would look
+        # sad! :D
+        # Can speed this up a lot if you know about your problem... I.e. with a princeton
+        # D I could only check one point and get it right faster.
+        idx = np.where(points[0] > self.params.R_0.value)[0]
+        return points[:, idx]
 
     def _make_single_circuit(self, wire):
         """
@@ -409,11 +414,16 @@ class BuildTFWindingPack:
 
     def build_xy(self):
         # Should normally be gotten with wire_plane_intersect
+        # (it's not OK to assume that the maximum x value occurs on the midplane)
         x_out = self.wp_centreline.bounding_box.x_max
 
+        xs = deepcopy(self.wp_cross_section)
+        xs2 = deepcopy(xs)
+        xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
+
         return [
-            PhysicalComponent(),
-            PhysicalComponent(),
+            PhysicalComponent(self.name, xs),
+            PhysicalComponent(self.name, xs2),
         ]
 
     def build_xz(self):
@@ -528,6 +538,7 @@ class BuildTFCasing:
         dy_ins = 0.5 * (bb.y_max - bb.y_min)
 
         # Split the total radial thickness equally on the outboard
+        # This could be done with input params too..
         tk_total = self.tk_tf_front_ib + self.tk_tf_nose
         tk = 0.5 * tk_total
 
@@ -628,7 +639,7 @@ if __name__ == "__main__":
             ["tk_tf_insgap", "TF coil WP insertion gap", 0.1, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
             # Dubious WP depth from PROCESS (I used to tweak this when building the TF coils)
             ["tf_wp_width", "TF coil winding pack radial width", 0.76, "m", "Including insulation", "PROCESS"],
-            ["tf_wp_depth", "TF coil winding pack depth (in y)", 1.05, "m", "Including insulation", "PROCESS"],
+            ["tf_wp_depth", "TF coil winding pack depth (in y)", 0.8, "m", "Including insulation", "PROCESS"],
         ]
     )
     # fmt: on
@@ -696,22 +707,28 @@ if __name__ == "__main__":
     koz = offset_wire(separatrix, 2.0, join="arc")
 
     # Design
+    I_CARE_ABOUT_DESIGN = True
     problem = TFWPOptimisationProblem(
         parameterisation, optimiser, params, wp_xs, separatrix, koz
     )
-    problem.solve()
+    if I_CARE_ABOUT_DESIGN:
+        problem.solve()
+    else:
+        I_AM_JUST_A_CAD_MONKEY = True
 
     wp_centreline = parameterisation.create_shape()
 
     # Build
     builder = BuildTFWindingPack(wp_centreline, wp_xs)
     xz_wp_comp = builder.build_xz()
+    xy_wp_comp = builder.build_xy()
     xyz_wp_shape = builder.build_xyz().shape
 
     builder = BuildTFInsulation(
         xyz_wp_shape, wp_centreline, wp_xs, params.tk_tf_ins.value
     )
     xz_ins_comp = builder.build_xz()
+    xy_ins_comp = builder.build_xy()
     xy_ins_shape = builder.build_xy()[0].shape
     xyz_ins_shape = builder.build_xyz().shape
 
@@ -724,19 +741,47 @@ if __name__ == "__main__":
         params.tk_tf_front_ib.value,
         params.tk_tf_side.value,
     )
-    xy_casing = builder.build_xy()
+    xy_casing_comp = builder.build_xy()
     xyz_casing_shape = builder.build_xyz().shape
 
-    xz_comps = [xz_wp_comp]
-
+    xz_comps = deepcopy([xz_wp_comp])
     xz_comps.extend(xz_ins_comp)
 
     # Visualise
 
-    f, ax = plt.subplots()
-    for shape in xz_comps:
-        shape.plot_2d(ax=ax, show=False)
+    # Optimisation problem
+    if I_CARE_ABOUT_DESIGN:
+        problem.plot()
 
+    # x-y
+    xy_comps = deepcopy(xy_wp_comp)
+    xy_comps.extend(xy_ins_comp)
+    xy_comps.extend(xy_casing_comp)
+
+    f, ax = plt.subplots()
+    colors = (
+        [BLUEMIRA_PALETTE[6]] * len(xy_wp_comp)
+        + [BLUEMIRA_PALETTE[1]] * len(xy_ins_comp)
+        + [BLUEMIRA_PALETTE[0]] * len(xy_casing_comp)
+    )
+    for comp, color in zip(xy_comps, colors):
+        plot_2d(
+            comp,
+            ax=ax,
+            show=False,
+            plane="xy",
+            options=PlotOptions(face_options={"color": color}),
+        )
+
+    # x-z
+    colors = [BLUEMIRA_PALETTE[6]] + [BLUEMIRA_PALETTE[1]] * len(xz_ins_comp)
+    f, ax = plt.subplots()
+    for comp, color in zip(xz_comps, colors):
+        plot_2d(
+            comp, ax=ax, show=False, options=PlotOptions(face_options={"color": color})
+        )
+
+    # x-y-z
     shapes = [xyz_wp_shape, xyz_ins_shape, xyz_casing_shape]
 
     # Can't make a plane, can't section, this ensues
