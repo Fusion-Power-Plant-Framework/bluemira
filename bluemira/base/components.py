@@ -32,6 +32,8 @@ from typing import Any, List, Optional, Union
 from bluemira.display.plotter import Plottable
 from bluemira.display.displayer import DisplayableCAD
 
+import bluemira.geometry as geo
+
 from .error import ComponentError
 
 
@@ -175,7 +177,7 @@ class PhysicalComponent(Component):
     def __init__(
         self,
         name: str,
-        shape: Any,
+        shape: geo.base.BluemiraGeo,
         material: Any = None,
         parent: Component = None,
         children: Component = None,
@@ -185,14 +187,14 @@ class PhysicalComponent(Component):
         self.material = material
 
     @property
-    def shape(self):
+    def shape(self) -> geo.base.BluemiraGeo:
         """
         The geometric shape of the Component.
         """
         return self._shape
 
     @shape.setter
-    def shape(self, value):
+    def shape(self, value: geo.base.BluemiraGeo):
         self._shape = value
 
     @property
@@ -215,7 +217,7 @@ class MagneticComponent(PhysicalComponent):
     def __init__(
         self,
         name: str,
-        shape: Any,
+        shape: geo.base.BluemiraGeo,
         material: Any = None,
         conductor: Any = None,
         parent: Component = None,
