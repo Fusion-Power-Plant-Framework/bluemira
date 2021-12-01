@@ -29,7 +29,7 @@ from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.parameter import ParameterError
 
-from bluemira.builders.EUDEMO.reactor import EUDEMO
+from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 
 from bluemira.codes import plot_PROCESS
 
@@ -98,7 +98,7 @@ with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w
 
 # Create the Reactor and run the design.
 
-reactor = EUDEMO(params, build_config)
+reactor = EUDEMOReactor(params, build_config)
 reactor.run()
 
 # Display the PROCESS radial build.

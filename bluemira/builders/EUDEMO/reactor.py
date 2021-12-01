@@ -30,7 +30,7 @@ from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
 
-class EUDEMO(Reactor):
+class EUDEMOReactor(Reactor):
     """
     The EU-DEMO Reactor object encapsulates the logic for performing an EU-DEMO tokamak
     design.
