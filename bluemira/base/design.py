@@ -208,6 +208,16 @@ class Reactor(DesignABC):
             "generated_data_root", f"{BM_ROOT}/generated_data"
         )
         self._plot_flag: bool = self._build_config.get("plot_flag", False)
+        self._callbacks: Dict[str, str] = self._build_config.get("callbacks", {})
+
+    def _build_stage(self, builder_class: Type[Builder], build_config) -> Component:
+        name = build_config["name"]
+
+        self._builders[name] = builder_class(self._params.to_dict(), build_config)
+        component = self._builders[name](self._params, self._callbacks.get(name, None))
+
+        self._params.update_kw_parameters(self._builders[name]._params.to_dict())
+        return component
 
     @property
     def file_manager(self):
