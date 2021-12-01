@@ -37,7 +37,7 @@ new_params = {
 }
 
 plasmod_solver = api.PlasmodSolver(params=new_params, binary=f"{PLASMOD_PATH}/plasmod.o")
-plasmod_solver.set_runmode("run")
+plasmod_solver._set_runmode("run")
 plasmod_solver.run()
 
 ffprime = plasmod_solver.get_profile("ffprime")
