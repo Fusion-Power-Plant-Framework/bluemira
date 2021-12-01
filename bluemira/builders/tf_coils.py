@@ -23,13 +23,16 @@
 Built-in build steps for making a parameterised plasma
 """
 
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Tuple, Type, Union, Dict, List, Any
 import numpy as np
+from copy import deepcopy
 
+from bluemira.base.parameter import ParameterFrame
+from bluemira.base.constants import MU_0
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display.displayer import show_cad
-import bluemira.geometry as geo
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -39,7 +42,14 @@ from bluemira.utilities.tools import get_module
 from bluemira.builders.shapes import ParameterisedShapeBuilder
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-from bluemira.geometry.tools import signed_distance_2D_polygon
+from bluemira.geometry.tools import (
+    sweep_shape,
+    make_polygon,
+    offset_wire,
+    circular_pattern,
+    boolean_cut,
+    signed_distance_2D_polygon,
+)
 
 
 class TFWPOptimisationProblem(GeometryOptimisationProblem):
@@ -77,6 +87,8 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         wp_cross_section,
         separatrix,
         keep_out_zone=None,
+        rip_con_tol=1e-3,
+        koz_con_tol=1e-3,
         nx=2,
         ny=2,
         n_koz_points=100,
@@ -91,7 +103,7 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         self.ripple_values = None
 
         self.optimiser.add_ineq_constraints(
-            self.f_constrain_ripple, 1e-3 * np.ones(len(self.ripple_points[0]))
+            self.f_constrain_ripple, rip_con_tol * np.ones(len(self.ripple_points[0]))
         )
 
         # self.optimiser.add_ineq_constraints(
@@ -103,47 +115,51 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
             self.koz_points = self._make_koz_points(keep_out_zone)
 
             self.optimiser.add_ineq_constraints(
-                self.f_constrain_koz, 1e-3 * np.ones(n_koz_points)
+                self.f_constrain_koz, koz_con_tol * np.ones(n_koz_points)
             )
 
         self.nx = nx
         self.ny = ny
 
     def _make_koz_points(self, keep_out_zone):
+        """
+        Make a set of points at which to evaluate the KOZ constraint
+        """
         return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200)[
             :, [0, 2]
         ]
 
     def _make_ripple_points(self, separatrix):
+        """
+        Make a set of points at which to check the ripple
+        """
         points = separatrix.discretize(ndiscr=100).T
         # idx = np.where(points[0] > self.params.R_0.value)[0]
         return points  # [:, idx]
 
-    def _update_single_circuit(self, wire):
+    def _make_single_circuit(self, wire):
+        """
+        Make a single BioSavart Filament for a single TF coil
+        """
         bb = self.wp_cross_section.bounding_box
         dx_xs = 0.5 * (bb.x_max - bb.x_min)
         dy_xs = 0.5 * (bb.y_max - bb.y_min)
 
+        dx_wp, dy_wp = [0], [0]  # default to coil centreline
         if self.nx > 1:
             dx_wp = np.linspace(
                 dx_xs * (1 / self.nx - 1), dx_xs * (1 - 1 / self.nx), self.nx
             )
-        else:
-            dx_wp = [0]  # coil centreline
 
         if self.ny > 1:
             dy_wp = np.linspace(
                 dy_xs * (1 / self.ny - 1), dy_xs * (1 - 1 / self.ny), self.ny
             )
-        else:
-            dy_wp = [0]  # coil centreline
 
         current_wires = []
         for dx in dx_wp:
             c_wire = offset_wire(wire, dx)
             for dy in dy_wp:
-                from copy import deepcopy
-
                 c_w = deepcopy(c_wire)
                 c_w.translate((0, dy, 0))
                 current_wires.append(c_w)
@@ -152,7 +168,7 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
             w.discretize(byedges=True, dl=wire.length / 200) for w in current_wires
         ]
 
-        # We need all arrays to be CCW
+        # We need all arrays to be CCW, this will hopefully go away with a fix for #482
         from bluemira.geometry._deprecated_tools import check_ccw
 
         for c in current_arrays:
@@ -172,7 +188,7 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         """
         super().update_parameterisation(x)
         wire = self.parameterisation.create_shape()
-        circuit = self._update_single_circuit(wire)
+        circuit = self._make_single_circuit(wire)
 
         self.cage = HelmholtzCage(circuit, self.params.n_TF.value)
         field = self.cage.field(self.params.R_0, 0, self.params.z_0)
@@ -205,6 +221,9 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
         return constraint
 
     def calculate_signed_distance(self, x):
+        """
+        Calculate the signed distances from the parameterised shape to the keep-out zone.
+        """
         self.update_cage(x)
         shape = self.parameterisation.create_shape()
         s = shape.discretize(ndiscr=self.n_koz_points)[:, [0, 2]]
@@ -212,7 +231,7 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
 
     def f_constrain_koz(self, constraint, x, grad):
         """
-        Geometry constraint function
+        Geometry constraint function to the keep-out-zone
         """
         constraint[:] = self.calculate_signed_distance(x)
 
@@ -243,7 +262,6 @@ class TFWPOptimisationProblem(GeometryOptimisationProblem):
 
         return length
 
-    # I just need to see... I worry about the proliferation of Plotters
     def plot(self, ax=None, **kwargs):
         """
         Plot the optimisation problem.
@@ -371,26 +389,15 @@ class MakeOptimisedTFWindingPack(ParameterisedShapeBuilder):
         problem.solve()
         return shape.create_shape()
 
-    def build_xz(self, boundary: geo.wire.BluemiraWire, target: str):
+    def build_xz(self, boundary: BluemiraWire, target: str):
         """
         Build the boundary as a wire at the requested target.
         """
         label = target.split("/")[-1]
         return (
             target,
-            PhysicalComponent(label, geo.wire.BluemiraWire(boundary, label)),
+            PhysicalComponent(label, BluemiraWire(boundary, label)),
         )
-
-
-from bluemira.geometry.tools import (
-    sweep_shape,
-    make_polygon,
-    offset_wire,
-    circular_pattern,
-    boolean_cut,
-)
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.constants import MU_0
 
 
 class BuildTFWindingPack:
