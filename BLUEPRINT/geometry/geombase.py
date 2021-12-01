@@ -22,14 +22,16 @@
 """
 Geometry base objects - to be improved!
 """
-import numpy as np
-from copy import deepcopy
-import pickle  # noqa (S403)
 import json
 import os
-from BLUEPRINT.base.error import GeometryError
+import pickle  # noqa (S403)
+from copy import deepcopy
+
+import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import json_writer
+from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.constants import TOLERANCE
 
 # =============================================================================
@@ -76,9 +78,10 @@ class JSONReaderWriter:
         Writes the class to a JSON file
         """
         filename = self._find_write_name(**kwargs)
-        json_writer(clsdict, filename, **kwargs)
+        _json = json_writer(clsdict, filename, **kwargs)
         if not os.path.isfile(filename):
             raise GeometryError(f"Failed writing file {filename}")
+        return _json
 
 
 class GeomBase:
@@ -101,7 +104,7 @@ class GeomBase:
         d = self.as_dict()
         filename = os.path.splitext(filename)[0]
         filename += ".json"
-        json_writer(d, filename, **kwargs)
+        return json_writer(d, filename, **kwargs)
 
     @classmethod
     def load(cls, filename):

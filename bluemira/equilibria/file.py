@@ -22,14 +22,15 @@
 """
 Input and output file interface. EQDSK and json. NOTE: jsons are better :)
 """
-import fortranformat as ff
 import json
-import numpy as np
 import os
 import time
 
-from bluemira.base.parameter import ParameterFrame
+import fortranformat as ff
+import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
 from bluemira.utilities.tools import is_num, json_writer
 
 __all__ = ["EQDSKInterface"]
@@ -226,7 +227,7 @@ class EQDSKInterface:
         return self.to_dict()
 
     def _write_json(self, file, data, **kwargs):
-        json_writer(data, file, **kwargs)
+        return json_writer(data, file, **kwargs)
 
     def _read_eqdsk(self, file):
         if isinstance(file, str):

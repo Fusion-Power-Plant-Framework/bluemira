@@ -23,26 +23,26 @@
 A collection of miscellaneous tools.
 """
 
-import numpy as np
-import nlopt
 import operator
 import re
 import string
 from collections.abc import Iterable
 from functools import partial
-from importlib import util as imp_u, import_module as imp
+from importlib import import_module as imp
+from importlib import util as imp_u
 from itertools import permutations
-from json import JSONDecoder, JSONEncoder, dump
+from json import JSONDecoder, JSONEncoder, dumps
 from json.encoder import _make_iterencode
-from pathlib import Path
 from os import listdir
-from typing import Any, List, Type, Union
 from types import ModuleType
+from typing import Any, List, Type, Union
 from unittest.mock import patch
+
+import nlopt
+import numpy as np
 
 from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
-from bluemira.base.parameter import Parameter
 
 # =====================================================
 # JSON utilities
@@ -98,6 +98,8 @@ class NumpyJSONEncoder(JSONEncoder):
         https://bugs.python.org/issue42434
         https://bugs.python.org/issue31466
         """
+        from bluemira.base.parameter import Parameter
+
         if isinstance(obj, Parameter):
             obj = obj.value
         return _floatstr(obj, *args, **kwargs)
@@ -133,9 +135,9 @@ def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
     )
 
 
-def json_writer(data, file, cls=NumpyJSONEncoder, **kwargs):
+def json_writer(data, file=None, return_output=False, *, cls=NumpyJSONEncoder, **kwargs):
     """
-    Write json in the bluemria style
+    Write json in the bluemria style.
 
     Parameters
     ----------
@@ -143,20 +145,29 @@ def json_writer(data, file, cls=NumpyJSONEncoder, **kwargs):
         dictionary to write to json
     filename: str
         filename to write to
+    return_output:bool
+        return the json as a string
     cls: JsonEncoder
         json encoder child class
     kwargs: dict
         all further kwargs passed to the json writer
 
     """
-    if isinstance(file, Path):
-        file = str(file)
-    if isinstance(file, str):
-        with open(file, "w") as f_handle:
-            return json_writer(data, f_handle, cls=cls, **kwargs)
+    if file is None and not return_output:
+        bluemira_warn("No json action to take")
+        return
+
     if "indent" not in kwargs:
         kwargs["indent"] = 4
-    dump(data, file, cls=cls, **kwargs)
+
+    the_json = dumps(data, cls=cls, **kwargs)
+
+    if file is not None:
+        with open(file, "w") as fh:
+            fh.write(the_json)
+
+    if return_output:
+        return the_json
 
 
 # =====================================================

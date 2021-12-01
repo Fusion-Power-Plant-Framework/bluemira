@@ -23,18 +23,20 @@
 Base class and Plane object for use with Loop.
 """
 
-import os
-import numpy as np
 import abc
 import json
+import os
 import pickle  # noqa (S403)
+from collections.abc import Iterable
 from copy import deepcopy
 from typing import Union
-from collections.abc import Iterable
+
+import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import json_writer
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
+from bluemira.utilities.tools import json_writer
 
 
 class GeomBase(abc.ABC):
@@ -65,7 +67,7 @@ class GeomBase(abc.ABC):
         d = self.as_dict()
         filename = os.path.splitext(filename)[0]
         filename += ".json"
-        json_writer(d, filename, **kwargs)
+        return json_writer(d, filename, **kwargs)
 
     @classmethod
     def load(cls, filename):
