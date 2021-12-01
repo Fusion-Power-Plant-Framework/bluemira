@@ -16,7 +16,7 @@ fi
 if [ ! -d process ]; then
   git clone git@git.ccfe.ac.uk:process/process.git
   cd process
-  git checkout develop-stable  # Do this while PROCESS are fixing memory issues
+  git checkout v2.2.0
   cd ..
 fi
 
