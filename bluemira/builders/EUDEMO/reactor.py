@@ -27,6 +27,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes import run_systems_code
+from bluemira.codes.process import NAME as PROCESS
 
 
 class EUDEMO(Reactor):
@@ -49,7 +50,7 @@ class EUDEMO(Reactor):
         """
         Run the systems code module in the requested run mode.
         """
-        bluemira_print("Running systems code.")
+        bluemira_print(f"Running: {PROCESS}")
 
         output: ParameterFrame = run_systems_code(
             self._params,
