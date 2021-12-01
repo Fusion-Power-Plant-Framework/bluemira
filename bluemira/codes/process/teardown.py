@@ -41,7 +41,6 @@ from bluemira.codes.process.api import (
     update_obsolete_vars,
 )
 from bluemira.codes.process.constants import NAME as PROCESS
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.tools import is_num
 
 

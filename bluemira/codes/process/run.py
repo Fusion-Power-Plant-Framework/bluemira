@@ -40,7 +40,6 @@ from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.setup import PROCESSInputWriter
 from bluemira.codes.process.teardown import BMFile
 from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
-from bluemira.equilibria.physics import normalise_beta
 
 
 class RunMode(interface.RunMode):
@@ -64,16 +63,10 @@ class Run(interface.Run):
         self.parent.run_PROCESS(use_bp_inputs=False)
 
     def _read(self):
-        self.parent.get_PROCESS_run(
-            path=self.parent.reactor.file_manager.reference_data_dirs["systems_code"],
-            recv_all=False,
-        )
+        self.parent.get_PROCESS_run(path=self.parent._read_dir, recv_all=False)
 
     def _readall(self):
-        self.parent.get_PROCESS_run(
-            path=self.parent.reactor.file_manager.reference_data_dirs["systems_code"],
-            recv_all=True,
-        )
+        self.parent.get_PROCESS_run(path=self.parent._read_dir, recv_all=True)
 
     def _mock(self):
         self.parent.mock_PROCESS_run()
@@ -154,46 +147,21 @@ class ProcessSolver(interface.FileProgramInterface):
         self._run_dir = run_dir
         self._read_dir = read_dir
 
-        if params_to_update is not None:
-            self._params_to_update = params_to_update
-        else:
-            self._params_to_update = build_config.get("params_to_update", None)
+        self._params_to_update = (
+            build_config.get("params_to_update", None)
+            if params_to_update is None
+            else params_to_update
+        )
 
-        if template_indat is not None:
-            self._template_indat = template_indat
-        else:
-            self._template_indat = build_config.get("process_indat", DEFAULT_INDAT)
+        self._template_indat = (
+            build_config.get("process_indat", DEFAULT_INDAT)
+            if template_indat is None
+            else template_indat
+        )
 
-        self._parameter_mapping = get_recv_mapping(params, PROCESS, recv_all=True)
-        self._params = type(params).from_template(self._parameter_mapping.values())
-        self._params.update_kw_parameters(params.to_dict(verbose=True))
-        self._recv_mapping = get_recv_mapping(params, PROCESS)
-        self._send_mapping = get_send_mapping(params, PROCESS)
-        self._set_runmode(build_config)
-
-        self._runmode(self)  # Run PROCESS in the given run mode
-
-        super().__init__(build_config, self.params, PROCESS)
+        super().__init__(PROCESS, params, build_config["process_mode"])
 
         self.run()  # Run PROCESS in the given run mode
-
-    @property
-    def params(self) -> bm_base.ParameterFrame:
-        """
-        The ParameterFrame corresponding to this run.
-        """
-        return self._params
-
-    def _set_runmode(self, build_config: bm_base.BuildConfig):
-        """
-        Set PROCESS runmode according to the "process_mode" parameter in build_config.
-        """
-        mode = (
-            build_config["process_mode"]
-            .upper()
-            .translate(str.maketrans("", "", string.whitespace))
-        )
-        self._runmode = RunMode[mode]
 
     def run_PROCESS(self, use_bp_inputs=True):
         """

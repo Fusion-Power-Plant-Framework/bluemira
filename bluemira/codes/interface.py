@@ -22,10 +22,13 @@
 """
 The bluemira external code wrapper
 """
+from __future__ import annotations
+
 import subprocess
 import string
 from enum import Enum
 
+import bluemira.base as bm_base
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.utilities import LogPipe, get_recv_mapping, get_send_mapping
@@ -67,13 +70,13 @@ class Task:
     #  functions (if possible).
     def __init__(self, parent):
         self.parent = parent
-        self.run_dir = parent.run_dir
+        self._run_dir = parent._run_dir
 
     def _run_subprocess(self, command, **kwargs):
         stdout = LogPipe("print")
         stderr = LogPipe("error")
 
-        kwargs["cwd"] = kwargs.get("cwd", self.run_dir)
+        kwargs["cwd"] = kwargs.get("cwd", self._run_dir)
         kwargs.pop("shell", None)  # Protect against user input
 
         with subprocess.Popen(
@@ -122,45 +125,53 @@ class FileProgramInterface:
     _runmode = RunMode
 
     def __init__(
-        self, runmode, params, NAME, *args, run_dir=None, default_mappings=None, **kwargs
+        self, NAME, params, runmode, *args, run_dir=None, default_mappings=None, **kwargs
     ):
         if default_mappings is not None:
             find_mappings(NAME, params, default_mappings)
 
         if NAME != "PLASMOD":  # TODO FIX
-            self.parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
-            self.recv_mapping = get_recv_mapping(params, NAME)
-            self.send_mapping = get_send_mapping(params, NAME)
+            self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
+            self._params = type(params).from_template(self._parameter_mapping.values())
+            self._params.update_kw_parameters(params.to_dict(verbose=True))
+            self._recv_mapping = get_recv_mapping(params, NAME)
+            self._send_mapping = get_send_mapping(params, NAME)
 
-        if not hasattr(self, "run_dir") and run_dir is None:
-            self.run_dir = "./"
+        if not hasattr(self, "_run_dir") and run_dir is None:
+            self._run_dir = "./"
 
         if self._runmode is not RunMode:
-            self.set_runner(runmode)
+            self._set_runmode(runmode)
         else:
             raise CodesError("Please define a RunMode child lass")
 
-        if self._setup is not None:
-            self.setup_obj = self._setup(self, *args, **kwargs)
-        else:
-            self.setup_obj = self._setup
+        self.setup_obj = (
+            self._setup if self._setup is None else self._setup(self, *args, **kwargs)
+        )
 
-        if self._run is not None:
-            self.run_obj = self._run(self, *args, **kwargs)
-        else:
-            self.run_obj = self._run
+        self.run_obj = (
+            self._run if self._run is None else self._run(self, *args, **kwargs)
+        )
 
-        if self._teardown is not None:
-            self.teardown_obj = self._teardown(self, *args, **kwargs)
-        else:
-            self.teardown_obj = self._teardown
+        self.teardown_obj = (
+            self._teardown
+            if self._teardown is None
+            else self._teardown(self, *args, **kwargs)
+        )
 
-    def set_runmode(self, runmode):
+    def _set_runmode(self, runmode):
         """Set the runmode"""
         mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
-        self.runner = self._runmode[mode]
+        self._runner = self._runmode[mode]
+
+    @property
+    def params(self) -> bm_base.ParameterFrame:
+        """
+        The ParameterFrame corresponding to this run.
+        """
+        return self._params
 
     def run(self):
-        self.runner(self.setup_obj)
-        self.runner(self.run_obj)
-        self.runner(self.teardown_obj)
+        self._runner(self.setup_obj)
+        self._runner(self.run_obj)
+        self._runner(self.teardown_obj)

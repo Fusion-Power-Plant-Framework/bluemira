@@ -83,7 +83,7 @@ class TestRun:
         Set runmode in test reactor and run PROCESS.
         """
         self.set_runmode(runmode)
-        return run.Run(
+        return run.ProcessSolver(
             self.params,
             self.build_config,
             self.run_dir,
@@ -158,11 +158,11 @@ class TestRun:
         assert "PROCESS" not in param.mapping and param.mapping["FAKE_CODE"].recv is True
         assert "gp" not in runner._recv_mapping
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run._run_subprocess")
-    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run.read_mfile")
+    @patch("bluemira.codes.process.run.ProcessSolver._load_PROCESS")
+    @patch("bluemira.codes.process.run.ProcessSolver._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver._run_subprocess")
+    @patch("bluemira.codes.process.run.ProcessSolver._clear_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_runinput(
@@ -191,11 +191,11 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run._run_subprocess")
-    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run.read_mfile")
+    @patch("bluemira.codes.process.run.ProcessSolver._load_PROCESS")
+    @patch("bluemira.codes.process.run.ProcessSolver._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver._run_subprocess")
+    @patch("bluemira.codes.process.run.ProcessSolver._clear_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_run_with_params_to_update(
@@ -230,11 +230,11 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run._run_subprocess")
-    @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run.read_mfile")
+    @patch("bluemira.codes.process.run.ProcessSolver._load_PROCESS")
+    @patch("bluemira.codes.process.run.ProcessSolver._check_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver._run_subprocess")
+    @patch("bluemira.codes.process.run.ProcessSolver._clear_PROCESS_output")
+    @patch("bluemira.codes.process.run.ProcessSolver.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_run_without_params_to_update(
