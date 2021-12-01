@@ -23,6 +23,7 @@
 Perform the EU-DEMO design.
 """
 
+from bluemira.base.components import Component
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
@@ -36,15 +37,17 @@ class EUDEMOReactor(Reactor):
     design.
     """
 
-    def run(self):
+    def run(self) -> Component:
         """
         Run the EU-DEMO reactor build process. Performs the following tasks:
 
         - Run the (PROCESS) systems code
         """
-        super().run()
+        component = super().run()
 
         self.run_systems_code()
+
+        return component
 
     def run_systems_code(self):
         """
