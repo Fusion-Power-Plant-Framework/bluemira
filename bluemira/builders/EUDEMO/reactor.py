@@ -58,10 +58,3 @@ class EUDEMO(Reactor):
             self._file_manager.reference_data_dirs["systems_code"],
         )
         self._params.update_kw_parameters(output.to_dict())
-
-
-if __name__ == "__main__":
-    from config import params, build_config
-
-    reactor = EUDEMO(params, build_config)
-    reactor.run()

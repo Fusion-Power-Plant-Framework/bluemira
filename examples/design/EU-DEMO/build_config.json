@@ -1,0 +1,5 @@
+{
+  "reference_data_root": "!BM_ROOT!/data",
+  "generated_data_root": "!BM_ROOT!/generated_data",
+  "process_mode": "mock"
+}

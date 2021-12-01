@@ -20,7 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Configuration derivation and storage for EU-DEMO build
+Configuration derivation and storage for EU-DEMO build.
+
+Ensures that parameters are kept in-step while legacy BLUEPRINT runs still exist.
 """
 
 import json
@@ -45,7 +47,7 @@ for param in Configuration.params:
 
 params = dict(sorted(params.items()))
 
-with open(f"{get_bluemira_root()}/bluemira/builders/EUDEMO/template.json", "w") as fh:
+with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/template.json", "w") as fh:
     json.dump(params, fh, indent=2, ensure_ascii=False)
 
 config = {
@@ -72,7 +74,7 @@ for key, val in config.items():
     else:
         params[key]["value"] = val
 
-with open(f"{get_bluemira_root()}/bluemira/builders/EUDEMO/params.json", "w") as fh:
+with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json", "w") as fh:
     json.dump(config, fh, indent=2, ensure_ascii=False)
 
 build_config = {
@@ -80,3 +82,6 @@ build_config = {
     "generated_data_root": "!BM_ROOT!/generated_data",
     "process_mode": "mock",
 }
+
+with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w") as fh:
+    json.dump(build_config, fh, indent=2, ensure_ascii=False)
