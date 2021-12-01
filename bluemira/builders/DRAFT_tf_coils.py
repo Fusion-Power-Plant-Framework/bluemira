@@ -28,6 +28,7 @@ import numpy as np
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import matplotlib
+from bluemira.base.look_and_feel import bluemira_warn
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.builder import Builder
@@ -622,6 +623,8 @@ if __name__ == "__main__":
     from bluemira.display.displayer import DisplayCADOptions
     from bluemira.base.constants import BLUEMIRA_PALETTE
 
+    # Flag to run optimisation problem
+    I_CARE_ABOUT_DESIGN = False
     # fmt: off
     params = ParameterFrame(
         [
@@ -630,7 +633,7 @@ if __name__ == "__main__":
             ["B_0", "Toroidal field at R_0", 6, "T", None, "Input", None],
             ["n_TF", "Number of TF coils", 16, "N/A", None, "Input", None],
             ["TF_ripple_limit", "TF coil ripple limit", 0.6, "%", None, "Input", None],
-            ["r_tf_in","Inboard radius of the TF coil inboard leg", 3.2, "m", None, "PROCESS"],
+            ["r_tf_in", "Inboard radius of the TF coil inboard leg", 3.2, "m", None, "PROCESS"],
             ["tk_tf_nose", "TF coil inboard nose thickness", 0.6, "m", None, "Input"],
             ["tk_tf_front_ib", "TF coil inboard steel front plasma-facing", 0.04, "m", None, "Input"],
             ["tk_tf_side", "TF coil inboard case minimum side wall thickness", 0.1, "m", None, "Input"],
@@ -707,14 +710,13 @@ if __name__ == "__main__":
     koz = offset_wire(separatrix, 2.0, join="arc")
 
     # Design
-    I_CARE_ABOUT_DESIGN = True
     problem = TFWPOptimisationProblem(
         parameterisation, optimiser, params, wp_xs, separatrix, koz
     )
     if I_CARE_ABOUT_DESIGN:
         problem.solve()
     else:
-        I_AM_JUST_A_CAD_MONKEY = True
+        bluemira_warn("I AM JUST A CAD MONKEY")  # :)
 
     wp_centreline = parameterisation.create_shape()
 
