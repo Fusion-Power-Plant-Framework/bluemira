@@ -23,9 +23,6 @@
 Perform the EU-DEMO reactor design.
 """
 
-import matplotlib.pyplot as plt
-import os
-
 from bluemira.builders.EUDEMO.config import params, build_config
 from bluemira.builders.EUDEMO.reactor import EUDEMO
 
@@ -39,7 +36,4 @@ reactor = EUDEMO(params, build_config)
 reactor.run()
 
 if build_config["process_mode"] == "run":
-    plot_PROCESS(
-        os.path.join(reactor.file_manager.generated_data_dirs["systems_code"], "OUT.DAT")
-    )
-    plt.show()
+    plot_PROCESS(reactor.file_manager.generated_data_dirs["systems_code"])

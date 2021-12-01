@@ -423,16 +423,30 @@ def process_RB_fromOUT(f):  # noqa (N802)
     return {"Radial Build": rb, "n_TF": n_TF, "R_0": R_0}
 
 
-def plot_PROCESS(filename, width=1.0):
+def plot_PROCESS(filename: str, width: float = 1.0, show: bool = True):
     """
     Plot PROCESS radial build.
 
     Parameters
     ----------
-    filename: string
-        OUT.DAT filename string
+    filename: str
+        OUT.DAT filename string, the corresponding MFILE.DAT path, or the directory
+        containing the PROCESS run results.
+    width: float
+        The relative width of the plot.
+    show: bool
+        If True then immediately display the plot, else delay displaying the plot until
+        the user shows it, by default True.
     """
-    if filename.endswith("MFILE.DAT"):
+    if os.path.isdir(filename):
+        filename = os.path.join(filename, "OUT.DAT")
+    elif filename.endswith("MFILE.DAT"):
         filename = filename.replace("MFILE.DAT", "OUT.DAT")
+
+    if not os.path.exists(filename):
+        raise CodesError(f"Could not find PROCESS OUT.DAT results at {filename}")
+
     radial_build = process_RB_fromOUT(filename)
     plot_radial_build(radial_build, width=width)
+    if show:
+        plt.show()
