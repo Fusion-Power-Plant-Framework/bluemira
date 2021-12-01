@@ -635,9 +635,9 @@ class PlasmodSolver(interface.FileProgramInterface):
             self._parameters = Inputs(**params)
         self._out_params = Outputs()
         super().__init__(
-            runmode,
-            params,
             PLASMOD,
+            params,
+            runmode,
             # default_mappings=set_default_mappings(),
             input_file=input_file,
             output_file=output_file,
