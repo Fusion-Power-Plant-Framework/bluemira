@@ -23,7 +23,7 @@
 A typical fuel cycle result for an EU-DEMO reference point
 """
 
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.base.parameter import ParameterFrame
 from bluemira.utilities.tools import set_random_seed
 from bluemira.fuel_cycle.lifecycle import LifeCycle

@@ -31,7 +31,7 @@ from BLUEPRINT.nova.structuralsolver import StructuralSolver
 
 from bluemira.base.config import SingleNull
 from bluemira.base.file import BM_ROOT, get_bluemira_path
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.materials import MaterialCache
 
 try:

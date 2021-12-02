@@ -30,7 +30,7 @@ import os
 from BLUEPRINT.geometry.geomtools import qrotate
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.palettes import BLUE
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from BLUEPRINT.utilities.colortools import color_kwargs
 
 import bluemira.codes as codes

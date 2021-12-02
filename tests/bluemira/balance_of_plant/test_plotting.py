@@ -24,7 +24,7 @@ import filecmp
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.balance_of_plant.plotting import SuperSankey
 
 

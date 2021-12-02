@@ -29,7 +29,7 @@ First wall example
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.boolean import (
