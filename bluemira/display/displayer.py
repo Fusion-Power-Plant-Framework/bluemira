@@ -27,6 +27,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import copy
 from typing import List, Optional, Tuple, Union
+import matplotlib.colors as colors
 
 import bluemira.geometry as geo
 from bluemira.codes import _freecadapi as cadapi
@@ -54,8 +55,8 @@ class DisplayCADOptions(DisplayOptions):
 
     Parameters
     ----------
-    color: Tuple[float, float, float]
-        The RBG colour to display the object, by default (0.5, 0.5, 0.5).
+    color: Union[str, Tuple[float, float, float]]
+        The colour to display the object, by default (0.5, 0.5, 0.5).
     transparency: float
         The transparency to display the object, by default 0.0.
     """
@@ -64,15 +65,26 @@ class DisplayCADOptions(DisplayOptions):
         self._options = get_default_options()
         self.modify(**kwargs)
 
+    def as_dict(self):
+        """
+        Returns the instance as a dictionary.
+        """
+        dict_ = super().as_dict()
+        if "color" in dict_:
+            dict_["color"] = self.color
+        return dict_
+
     @property
     def color(self) -> Tuple[float, float, float]:
         """
         The RBG colour to display the object.
         """
-        return self._options["color"]
+        # NOTE: We only convert to (R,G,B) at the last minute, so that the reprs are
+        # legible.
+        return colors.to_rgb(self._options["color"])
 
     @color.setter
-    def color(self, val: Tuple[float, float, float]):
+    def color(self, val: Union[str, Tuple[float, float, float]]):
         self._options["color"] = val
 
     @property
@@ -135,7 +147,7 @@ def show_cad(
 
     Parameters
     ----------
-    parts: Union[Part.Shape, List[Part.Shape]]
+    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]]
         The parts to display.
     options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.

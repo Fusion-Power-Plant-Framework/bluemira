@@ -428,11 +428,12 @@ display.show_cad(face)
 group.show_cad()
 
 # %%[markdown]
-# We can also change the appearance of individual components inside the group
+# We can also change the appearance of individual components inside the group.
+# Colours can be specified as an R-G-B tuple, string, or hex-string.
 
 # %%
-c1.display_cad_options.modify(**{"color": (0.1, 0.1, 0.1)})
-c2.display_cad_options.modify(**{"color": (0.3, 0.2, 0.6)})
-c3.display_cad_options.modify(**{"color": (0.2, 0.6, 0.1), "transparency": 0.5})
+c1.display_cad_options.modify(**{"color": (0.1, 0.2, 0.4)})
+c2.display_cad_options.modify(**{"color": "g"})
+c3.display_cad_options.modify(**{"color": "#FF3450", "transparency": 0.5})
 
 group.show_cad()

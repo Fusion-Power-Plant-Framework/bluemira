@@ -1113,15 +1113,9 @@ def change_plane(geo, plane):
     geo.Placement = new_placement
 
 
-default_display_options = {
-    "color": (0.5, 0.5, 0.5),
-    "transparency": 0.0,
-}
-
-
 def _colourise(
     node: coin.SoNode,
-    options: Dict = default_display_options,
+    options: Dict,
 ):
     if isinstance(node, coin.SoMaterial):
         rgb = options["color"]
@@ -1151,11 +1145,11 @@ def show_cad(
         parts = [parts]
 
     if options is None:
-        dict_options = {
-            "color": (0.5, 0.5, 0.5),
-            "transparency": 0.0,
-        }
+        from bluemira.display.displayer import get_default_options
+
+        dict_options = get_default_options()
         options = [dict_options] * len(parts)
+
     elif not isinstance(options, list):
         options = [options] * len(parts)
 

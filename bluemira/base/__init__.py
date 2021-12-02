@@ -23,7 +23,7 @@
 Base classes and functionality for the bluemira code.
 """
 
-from .builder import *
+# from .builder import *
 from .parameter import *
 
 """

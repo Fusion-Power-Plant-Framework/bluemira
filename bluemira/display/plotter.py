@@ -60,7 +60,7 @@ def get_default_options():
     output_dict = {}
     for k, v in DEFAULT_PLOT_OPTIONS.items():
         # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
-        # copy.deepcopy. For this reason, its deepcopy method must to be used in
+        # copy.deepcopy. For this reason, its deepcopy method must be used in
         # this case.
         if isinstance(v, geo.plane.BluemiraPlane):
             output_dict[k] = v.deepcopy()
