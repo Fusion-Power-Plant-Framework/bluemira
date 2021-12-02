@@ -44,6 +44,16 @@ class ColorPalette:
         self._palette = sns.color_palette(list(palette_map.values()))
 
     def __setitem__(self, idx_or_key: Union[int, str], value):
+        """
+        Set an item in the ColorPalette by index or key
+
+        Parameters
+        ----------
+        idx_or_key: Union[int, str]
+            Index or key of the ColorPalette
+        value: Union[ColorType, ColorPalette]
+            The value to set. Note that this can be another ColorPalette
+        """
         if isinstance(idx_or_key, int):
             self._palette[idx_or_key] = value
             key = list(self._dict)[idx_or_key]
@@ -55,6 +65,19 @@ class ColorPalette:
             self._palette[idx] = value
 
     def __getitem__(self, idx_or_key: Union[int, str]):
+        """
+        Get an item in the ColorPalette by index or key
+
+        Parameters
+        ----------
+        idx_or_key: Union[int, str]
+            Index or key of the ColorPalette
+
+        Returns
+        -------
+        value: Union[ColorType, ColorPalette]
+            The value. Note that this can be another ColorPalette
+        """
         if isinstance(idx_or_key, int):
             return self._palette[idx_or_key]
         elif isinstance(idx_or_key, str):
@@ -95,6 +118,9 @@ class ColorPalette:
         return html
 
     def __repr__(self):
+        """
+        Create a representation of the ColorPalette
+        """
         from IPython.core.interactiveshell import InteractiveShell
 
         if not InteractiveShell.initialized():
@@ -106,6 +132,9 @@ class ColorPalette:
         return ""
 
     def __len__(self):
+        """
+        Get the length of  the ColorPalette
+        """
         return len(self._dict)
 
 
