@@ -202,7 +202,7 @@ class BoundedVariable:
 
         if value > upper_bound:
             bluemira_warn(
-                f"BoundedVariable '{self.name}': value was set to below its upper bound. Adjusting bound."
+                f"BoundedVariable '{self.name}': value was set to above its upper bound. Adjusting bound."
             )
             self.upper_bound = value
 
