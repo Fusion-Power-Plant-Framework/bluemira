@@ -30,6 +30,15 @@ import matplotlib.colors as colors
 
 
 class ColorPalette:
+    """
+    Color palette object, wrapping some seaborn functionality.
+
+    Parameters
+    ----------
+    palette_map: Dict[str: Any]
+        Dictionary of color names to any object matplotlib will recognise as a color
+    """
+
     def __init__(self, palette_map):
         self._dict = palette_map
         self._palette = sns.color_palette(list(palette_map.values()))
@@ -52,6 +61,12 @@ class ColorPalette:
             return self._dict[idx_or_key]
 
     def _repr_html(self):
+        def html_rect(x, y, size, fill):
+            return (
+                f'<rect x="{x}" y="{y}" width="{size}" height="{size}" style="fill:{fill};'
+                'stroke-width:2;stroke:rgb(255,255,255)"/>'
+            )
+
         s = 55
         n = len(self)
 
@@ -71,16 +86,10 @@ class ColorPalette:
             if isinstance(c, ColorPalette):
                 for j, sc in enumerate(c):
                     sc = colors.to_hex(sc)
-                    html += (
-                        f'<rect x="{i * s}" y="{j * s}" width="{s}" height="{s}" style="fill:{sc};'
-                        'stroke-width:2;stroke:rgb(255,255,255)"/>'
-                    )
+                    html += html_rect(i * s, j * s, s, sc)
             else:
                 c = colors.to_hex(c)
-                html += (
-                    f'<rect x="{i * s}" y="0" width="{s}" height="{s}" style="fill:{c};'
-                    'stroke-width:2;stroke:rgb(255,255,255)"/>'
-                )
+                html += html_rect(i * s, 0, s, c)
 
         html += "</svg>"
         return html
@@ -142,7 +151,7 @@ def make_alpha_palette(color, n_colors, background_rgb="white"):
     """
     color_name = colors.to_hex(color)
     alphas = np.linspace(0, 1, n_colors + 1)[1:-1][::-1]
-    background_rgb = colors.to_rgb(color)
+    background_rgb = colors.to_rgb(background_rgb)
     color_values = [color] + [make_rgb_alpha(color, a, background_rgb) for a in alphas]
     palette_map = {f"{color_name}_{i}": color for i, color in enumerate(color_values)}
     return ColorPalette(palette_map)
