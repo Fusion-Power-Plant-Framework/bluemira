@@ -214,7 +214,23 @@ class Reactor(DesignABC):
         name = build_config["name"]
 
         self._builders[name] = builder_class(self._params.to_dict(), build_config)
-        component = self._builders[name](self._params, self._callbacks.get(name, None))
+
+        callback = self._callbacks.get(name, None)
+        callback_args = {}
+        if isinstance(callback, dict):
+            callback_args = callback.get("args", {})
+            if "func" not in callback:
+                raise BuilderError(
+                    "When defining a callback as a dictionary, the callback function "
+                    "must be specified in the func key, and any args in the optional "
+                    f"args key, got {callback}"
+                )
+            callback = callback["func"]
+        component = self._builders[name](
+            self._params,
+            callback,
+            **callback_args,
+        )
 
         self._params.update_kw_parameters(self._builders[name]._params.to_dict())
         return component

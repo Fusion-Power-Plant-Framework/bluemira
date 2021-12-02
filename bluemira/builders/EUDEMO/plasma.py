@@ -32,6 +32,7 @@ from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.base.constants import BLUEMIRA_PALETTE
+from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 
 from bluemira.equilibria.constants import (
@@ -80,6 +81,16 @@ class PlasmaComponent(Component):
 def run_equilibrium_callback(self: PlasmaBuilder, **kwargs):
     eq = create_equilibrium(self)
     analyse_equilibrium(self, eq)
+    self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
+    return eq
+
+
+def read_equilibrium_callback(self: PlasmaBuilder, **kwargs):
+    if "eqdsk_path" not in kwargs or kwargs["eqdsk_path"] is None:
+        raise BuilderError(
+            "Must supply eqdsk_path as a kwarg when using read_equilibrium_callback"
+        )
+    eq = read_equilibrium(self, kwargs["eqdsk_path"])
     self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
     return eq
 
@@ -150,8 +161,8 @@ class PlasmaBuilder(Builder):
             eq_callback = run_equilibrium_callback
 
         self.reinitialise(params, **kwargs)
-        eq = eq_callback(self)
-        return self.build(equilibrium=eq)
+        eq = eq_callback(self, **kwargs)
+        return self.build(equilibrium=eq, **kwargs)
 
     def reinitialise(self, params, **kwargs) -> None:
         super().reinitialise(params, **kwargs)
@@ -212,7 +223,16 @@ class PlasmaBuilder(Builder):
         return Component("xyz").add_child(component)
 
 
-def create_equilibrium(self: PlasmaBuilder, **kwargs):
+def read_equilibrium(self: PlasmaBuilder, eqdsk_path: str, **kwargs) -> Equilibrium:
+    """
+    Read a reference MHD equilibrium for the Reactor.
+    """
+    bluemira_print("Reading reference plasma MHD equilibrium.")
+
+    return Equilibrium.from_eqdsk(eqdsk_path)
+
+
+def create_equilibrium(self: PlasmaBuilder, **kwargs) -> Equilibrium:
     """
     Creates a reference MHD equilibrium for the Reactor.
     """
