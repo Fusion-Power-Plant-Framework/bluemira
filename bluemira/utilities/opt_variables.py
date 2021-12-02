@@ -207,14 +207,17 @@ class BoundedVariable:
             self.upper_bound = value
 
     @staticmethod
-    def _validate_bounds(lower_bound, upper_bound):
+    def _validate_bounds(self, lower_bound, upper_bound):
         if lower_bound > upper_bound:
-            raise OptVariablesError("Lower bound is higher than upper bound.")
+            raise OptVariablesError(
+                f"BoundedVariable '{self.name}': Lower bound is higher than upper bound."
+            )
 
-    @staticmethod
-    def _validate_value(value, lower_bound, upper_bound):
+    def _validate_value(self, value, lower_bound, upper_bound):
         if not lower_bound <= value <= upper_bound:
-            raise OptVariablesError(f"Variable value {value} is out of bounds.")
+            raise OptVariablesError(
+                f"BoundedVariable '{self.name}': value {value} is out of bounds."
+            )
 
     def __repr__(self) -> str:
         """
