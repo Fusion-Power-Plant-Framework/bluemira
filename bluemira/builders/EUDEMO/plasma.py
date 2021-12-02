@@ -237,6 +237,23 @@ def create_equilibrium(self: PlasmaBuilder, **kwargs) -> Equilibrium:
     """
     Creates a reference MHD equilibrium for the Reactor.
     """
+
+    def flatten_shape(x, z):
+        """
+        Flattens a shape by dragging the lowest and highest point to the minimum
+        radius point.
+        """
+        amin, amax = np.argmin(z), np.argmax(z)
+        xmin = np.min(x)
+        zmin, zmax = np.min(z), np.max(z)
+        xx = np.array(xmin)
+        xx = np.append(xx, x[amin:amax])
+        xx = np.append(xx, xmin)
+        zz = np.array(zmin)
+        zz = np.append(zz, z[amin:amax])
+        zz = np.append(zz, zmax)
+        return xx, zz
+
     bluemira_print("Generating reference plasma MHD equilibrium.")
 
     # First make an initial TF coil shape along which to auto-position
@@ -255,7 +272,8 @@ def create_equilibrium(self: PlasmaBuilder, **kwargs) -> Equilibrium:
 
     # TODO: Avoid converting to (deprecated) Loop
     # TODO: Agree on numpy array dimensionality
-    tf_boundary = Loop(*tf_boundary.discretize().T)
+    x, z = flatten_shape(*tf_boundary.discretize().T[[0, 2]])
+    tf_boundary = Loop(x=x, z=z)
 
     profile = None
 
