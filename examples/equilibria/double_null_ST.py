@@ -25,7 +25,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 import argparse
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.constraints import (

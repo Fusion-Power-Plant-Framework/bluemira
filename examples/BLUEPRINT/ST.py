@@ -24,7 +24,8 @@ A typical spherical tokamak fusion power reactor.
 import os
 
 from bluemira.base.file import BM_ROOT, get_bluemira_root, make_bluemira_path
-from bluemira.base.look_and_feel import plot_defaults, print_banner
+from bluemira.base.look_and_feel import print_banner
+from bluemira.display.auto_config import plot_defaults
 from BLUEPRINT.reactor import Reactor
 from bluemira.base.config import Spherical
 

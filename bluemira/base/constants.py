@@ -24,8 +24,6 @@ A collection of generic physical constants, conversions, and miscellaneous const
 """
 
 import numpy as np
-import seaborn as sns
-
 
 # =============================================================================
 # Physical constants
@@ -179,20 +177,3 @@ ANSI_COLOR = {
     "lightcyan": "\x1b[96m",
     "darkred": "\x1b[38;5;124m",
 }
-
-
-# This is specifically NOT the MATLAB color palette.
-BLUEMIRA_PAL_MAP = {
-    "blue": "#0072c2",
-    "orange": "#d85319",
-    "yellow": "#f0b120",
-    "purple": "#7d2f8e",
-    "green": "#75ac30",
-    "cyan": "#4cbdf0",
-    "red": "#a21430",
-    "pink": "#f77ec7",
-    "grey": "#a8a495",
-}
-
-
-BLUEMIRA_PALETTE = sns.color_palette(list(BLUEMIRA_PAL_MAP.values()))

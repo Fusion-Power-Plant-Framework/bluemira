@@ -26,7 +26,7 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 
 

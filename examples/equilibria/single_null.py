@@ -32,7 +32,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
 from bluemira.equilibria.profiles import DoublePowerFunc
