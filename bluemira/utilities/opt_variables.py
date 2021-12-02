@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 from operator import attrgetter
 from pandas import DataFrame
 from tabulate import tabulate
+from bluemira.base.look_and_feel import bluemira_warn
 
 from bluemira.utilities.error import OptVariablesError
 from bluemira.display.palettes import BLUEMIRA_PALETTE
@@ -147,7 +148,7 @@ class BoundedVariable:
         if value is not None:
             self._value = value
 
-    def adjust(self, value=None, lower_bound=None, upper_bound=None):
+    def adjust(self, value=None, lower_bound=None, upper_bound=None, strict_bounds=True):
         """
         Adjust the BoundedVariable.
 
@@ -161,17 +162,25 @@ class BoundedVariable:
             Value of the lower bound to set
         upper_bound: Optional[float]
             Value of the upper to set
+        strict_bounds: bool
+            If True, will raise errors if values are outside the bounds. If False, the
+            bounds are dynamically adjusted to match the value.
         """
         if self.fixed:
             raise OptVariablesError("Cannot adjust a fixed variable.")
+
         if lower_bound is not None:
             self.lower_bound = lower_bound
+
         if upper_bound is not None:
             self.upper_bound = upper_bound
 
         self._validate_bounds(self.lower_bound, self.upper_bound)
 
         if value is not None:
+            if not strict_bounds:
+                self._adjust_bounds(value, self.lower_bound, self.upper_bound)
+
             self.value = value
 
     @property
@@ -180,6 +189,22 @@ class BoundedVariable:
         The normalised value of the variable.
         """
         return normalise_value(self.value, self.lower_bound, self.upper_bound)
+
+    def _adjust_bounds(self, value, lower_bound, upper_bound):
+        """
+        Adjust the bounds to the value
+        """
+        if value < lower_bound:
+            bluemira_warn(
+                f"BoundedVariable '{self.name}': value was set to below its lower bound. Adjusting bound."
+            )
+            self.lower_bound = value
+
+        if value > upper_bound:
+            bluemira_warn(
+                f"BoundedVariable '{self.name}': value was set to below its upper bound. Adjusting bound."
+            )
+            self.upper_bound = value
 
     @staticmethod
     def _validate_bounds(lower_bound, upper_bound):
@@ -265,7 +290,13 @@ class OptVariables:
         del self._var_dict[name]
 
     def adjust_variable(
-        self, name, value=None, lower_bound=None, upper_bound=None, fixed=False
+        self,
+        name,
+        value=None,
+        lower_bound=None,
+        upper_bound=None,
+        fixed=False,
+        strict_bounds=True,
     ):
         """
         Adjust a variable in the set.
@@ -282,17 +313,26 @@ class OptVariables:
             Value of the upper to set
         fixed: bool
             Whether or not the variable is to be held constant
+        strict_bounds: bool
+            If True, will raise errors if values are outside the bounds. If False, the
+            bounds are dynamically adjusted to match the value.
         """
         self._check_presence(name)
 
         if fixed:
-            self._var_dict[name].adjust(lower_bound=lower_bound, upper_bound=upper_bound)
+            self._var_dict[name].adjust(
+                lower_bound=lower_bound,
+                upper_bound=upper_bound,
+                strict_bounds=strict_bounds,
+            )
             self.fix_variable(name, value)
 
         else:
-            self._var_dict[name].adjust(value, lower_bound, upper_bound)
+            self._var_dict[name].adjust(
+                value, lower_bound, upper_bound, strict_bounds=strict_bounds
+            )
 
-    def adjust_variables(self, var_dict={}):
+    def adjust_variables(self, var_dict={}, strict_bounds=True):
         """
         Adjust multiple variables in the set.
 
@@ -301,6 +341,9 @@ class OptVariables:
         var_dict: dict
             Dictionary with which to update the set, of the form
             {"var_name": {"value": v, "lower_bound": lb, "upper_bound": ub}, ...}
+        strict_bounds: bool
+            If True, will raise errors if values are outside the bounds. If False, the
+            bounds are dynamically adjusted to match the value.
         """
         for k, v in var_dict.items():
 
@@ -316,7 +359,7 @@ class OptVariables:
                     " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
                 )
 
-            self.adjust_variable(k, *args)
+            self.adjust_variable(k, *args, strict_bounds=strict_bounds)
 
     def fix_variable(self, name, value=None):
         """
