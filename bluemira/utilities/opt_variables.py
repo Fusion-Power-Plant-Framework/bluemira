@@ -99,9 +99,9 @@ class BoundedVariable:
     __slots__ = ("name", "_value", "lower_bound", "upper_bound", "fixed", "_description")
 
     def __init__(self, name, value, lower_bound, upper_bound, fixed=False, descr=None):
+        self.name = name
         self._validate_bounds(lower_bound, upper_bound)
         self._validate_value(value, lower_bound, upper_bound)
-        self.name = name
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self._value = None
@@ -206,11 +206,10 @@ class BoundedVariable:
             )
             self.upper_bound = value
 
-    @staticmethod
     def _validate_bounds(self, lower_bound, upper_bound):
         if lower_bound > upper_bound:
             raise OptVariablesError(
-                f"BoundedVariable '{self.name}': Lower bound is higher than upper bound."
+                f"BoundedVariable '{self.name}': lower bound is higher than upper bound."
             )
 
     def _validate_value(self, value, lower_bound, upper_bound):
