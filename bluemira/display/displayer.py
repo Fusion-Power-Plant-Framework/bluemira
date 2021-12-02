@@ -27,6 +27,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import copy
 from typing import List, Optional, Tuple, Union
+import matplotlib.colors as colors
 
 import bluemira.geometry as geo
 from bluemira.codes import _freecadapi as cadapi
@@ -69,10 +70,14 @@ class DisplayCADOptions(DisplayOptions):
         """
         The RBG colour to display the object.
         """
-        return self._options["color"]
+        color = self._options["color"]
+        print(color)
+        color = colors.to_rgb(color)
+        print(color)
+        return color
 
     @color.setter
-    def color(self, val: Tuple[float, float, float]):
+    def color(self, val: Union[str, Tuple[float, float, float]]):
         self._options["color"] = val
 
     @property
@@ -135,7 +140,7 @@ def show_cad(
 
     Parameters
     ----------
-    parts: Union[Part.Shape, List[Part.Shape]]
+    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]]
         The parts to display.
     options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.
