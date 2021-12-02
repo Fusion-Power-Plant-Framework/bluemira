@@ -122,9 +122,27 @@ def make_rgb_alpha(rgb, alpha, background_rgb=(1, 1, 1)):
     return [alpha * c1 + (1 - alpha) * c2 for (c1, c2) in zip(rgb, background_rgb)]
 
 
-def make_alpha_palette(color, n_colors, background_rgb=(1, 1, 1)):
+def make_alpha_palette(color, n_colors, background_rgb="white"):
+    """
+    Make a palette from a color by varying alpha.
+
+    Parameters
+    ----------
+    color: Any
+        Palette base color. Anything matplotlib will recognise as a color
+    n_colors: int
+        Numer of colors to make in the palette
+    background_rgb: Any
+        Background color. Anything matplotlib will recognise as a color
+
+    Returns
+    -------
+    palette: ColorPalette
+        Colour palette from the base color. The first color is the base color
+    """
     color_name = colors.to_hex(color)
     alphas = np.linspace(0, 1, n_colors + 1)[1:-1][::-1]
+    background_rgb = colors.to_rgb(color)
     color_values = [color] + [make_rgb_alpha(color, a, background_rgb) for a in alphas]
     palette_map = {f"{color_name}_{i}": color for i, color in enumerate(color_values)}
     return ColorPalette(palette_map)
