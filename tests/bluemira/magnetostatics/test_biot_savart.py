@@ -23,7 +23,7 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.magnetostatics.greens import (
