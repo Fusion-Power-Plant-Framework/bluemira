@@ -45,7 +45,10 @@ from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
+from bluemira.equilibria.flux_surfaces import (
+    calculate_connection_length_flt,
+    calculate_connection_length_fs,
+)
 from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_tools import (
     loop_plane_intersect,
@@ -1761,7 +1764,7 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
         """
         Set up constraints to be held during optimisation.
         """
-        tolerance = np.array([10.0])
+        tolerance = np.array([0.1])
         opt.add_ineq_constraints(self.f_constraint, tolerance)
         return opt
 
@@ -1816,17 +1819,12 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
 
         try:
             self.zomp = 0.0
-            self.xomp = self._get_sep_out_intersection(outboard=True)
+            self.xomp = self._get_sep_out_intersection(outboard=True) + 0.3
             print(self.xomp)
 
             fom = (
-                -calculate_connection_length_flt(
-                    self.eq,
-                    self.xomp,
-                    self.zomp,
-                    forward=True,
-                    first_wall=None,
-                    n_turns_max=50,
+                -calculate_connection_length_fs(
+                    self.eq, self.xomp, self.zomp, forward=True, first_wall=None
                 )
                 / 100.0
             )
