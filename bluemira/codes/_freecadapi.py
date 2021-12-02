@@ -701,6 +701,19 @@ def wire_plane_intersect(wire, plane):
     return None
 
 
+def closed_wire_plane_intersect(wire, **kwargs):
+    return face_plane_intersect(apiFace(wire), **kwargs)
+
+
+def face_plane_intersect(face, normal_plane=(0, 1, 0), shift=0):
+    intersects = list()
+
+    for i in face.slice(Base.Vector(*normal_plane), shift):
+        intersects.append(np.array([[v.X, v.Y, v.Z] for v in i.Vertexes]).T)
+
+    return None if intersects == [] else intersects
+
+
 # ======================================================================================
 # Save functions
 # ======================================================================================

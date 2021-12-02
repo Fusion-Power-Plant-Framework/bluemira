@@ -450,6 +450,12 @@ def wire_plane_intersect(wire, plane):
     return cadapi.wire_plane_intersect(wire._shape, plane._shape)
 
 
+def closed_wire_plane(wire, normal_plane=(0, 1, 0), shift=0):
+    return cadapi.closed_wire_plane_intersect(
+        wire._shape, normal_plane=normal_plane, shift=shift
+    )
+
+
 def circular_pattern(
     shape, origin=(0, 0, 0), direction=(0, 0, 1), degree=360, n_shapes=10
 ):

@@ -28,6 +28,7 @@ from bluemira.geometry.tools import (
     _signed_distance_2D,
     make_polygon,
     wire_plane_intersect,
+    closed_wire_plane,
 )
 from bluemira.geometry.plane import BluemiraPlane
 
@@ -160,15 +161,25 @@ class TestWirePlaneIntersect:
                 [0.0, -1.0, 0.0],
             ]
         )
+        shift = 0
+        for plane in [
+            BluemiraPlane.from_3_points(
+                [0, shift, 0], [1, shift, 0], [0, shift, 1]
+            ),  # x-z
+            BluemiraPlane(axis=[0, 1, 0]),
+        ]:
+            intersect = closed_wire_plane(wire, plane.axis, shift)
+            assert intersect[0].shape[1] == 2
 
-        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-z
-        plane = BluemiraPlane(axis=[0, 1, 0])
-        intersect = wire_plane_intersect(wire, plane)
-        assert len(intersect) == 2
-
-        plane = BluemiraPlane.from_3_points([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-z
-        intersect = wire_plane_intersect(wire, plane)
-        assert intersect is None
+        shift = 10
+        for plane in [
+            BluemiraPlane.from_3_points(
+                [0, shift, 0], [1, shift, 0], [0, shift, 1]
+            ),  # x-z
+            BluemiraPlane(axis=[0, 1, 0]),
+        ]:
+            intersect = closed_wire_plane(wire, plane.axis, shift)
+            assert intersect is None
 
     def test_xyzplane(self):
         wire = make_polygon(
