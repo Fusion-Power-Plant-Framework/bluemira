@@ -226,8 +226,9 @@ class Reactor(DesignABC):
                     f"args key, got {callback}"
                 )
             callback = callback["func"]
+
         component = self._builders[name](
-            self._params,
+            self._params.to_dict(),
             callback,
             **callback_args,
         )
