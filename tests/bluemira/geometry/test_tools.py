@@ -20,7 +20,8 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-from bluemira.geometry.base import BluemiraGeo
+
+# from bluemira.geometry.base import BluemiraGeo
 
 from bluemira.geometry.tools import (
     signed_distance,

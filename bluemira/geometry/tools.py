@@ -451,6 +451,9 @@ def wire_plane_intersect(wire, plane):
 
 
 def closed_wire_plane(wire, normal_plane=(0, 1, 0), shift=0):
+    """
+    Closed wire plane intersection
+    """
     return cadapi.closed_wire_plane_intersect(
         wire._shape, normal_plane=normal_plane, shift=shift
     )

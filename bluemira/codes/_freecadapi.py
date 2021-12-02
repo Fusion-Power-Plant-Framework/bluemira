@@ -668,7 +668,7 @@ def wire_plane_intersect(wire, plane):
         The xyz coordinates of the intersections with the wire. Returns None if
         there are no intersections detected
     """
-    some_plane = Part.Plane()
+    # some_plane = Part.Plane()
     big = 1e6
     # Default is x-y
     face = apiFace(
@@ -702,10 +702,16 @@ def wire_plane_intersect(wire, plane):
 
 
 def closed_wire_plane_intersect(wire, **kwargs):
+    """
+    Get the plane intersection points of a closed wire
+    """
     return face_plane_intersect(apiFace(wire), **kwargs)
 
 
 def face_plane_intersect(face, normal_plane=(0, 1, 0), shift=0):
+    """
+    Get the plane intersection points of a face or solid
+    """
     intersects = list()
 
     for i in face.slice(Base.Vector(*normal_plane), shift):
