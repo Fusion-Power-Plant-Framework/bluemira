@@ -65,21 +65,11 @@ class DisplayCADOptions(DisplayOptions):
         self._options = get_default_options()
         self.modify(**kwargs)
 
-    def modify(self, **kwargs):
-        """
-        Function to override plotting options.
-        """
-        super().modify(**kwargs)
-
-        if "color" in kwargs:
-            self.color = kwargs["color"]
-
     def as_dict(self):
         """
         Returns the instance as a dictionary.
         """
         dict_ = super().as_dict()
-        # NOTE: We only convert to R,G,B at the last minute, so that the reprs are legible
         if "color" in dict_:
             dict_["color"] = self.color
         return dict_
@@ -89,6 +79,8 @@ class DisplayCADOptions(DisplayOptions):
         """
         The RBG colour to display the object.
         """
+        # NOTE: We only convert to (R,G,B) at the last minute, so that the reprs are
+        # legible.
         return colors.to_rgb(self._options["color"])
 
     @color.setter
