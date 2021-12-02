@@ -26,7 +26,6 @@ from abc import abstractmethod, ABC
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 import mpl_toolkits.mplot3d as a3
 import pprint
 from typing import Optional, Union, List
@@ -91,8 +90,6 @@ class DisplayOptions:
             for k in kwargs:
                 if k in self._options:
                     self._options[k] = kwargs[k]
-            if "color" in kwargs:
-                self._options["color"] = colors.to_rgb(kwargs["color"])
 
     def __repr__(self):
         """

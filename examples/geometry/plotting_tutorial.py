@@ -397,7 +397,7 @@ display.plot_2d(group, **my_group_options)
 # %%
 wplotter.options.wire_options["color"] = "red"
 ax = wplotter.plot_2d(wface.boundary[0], show=False)
-fplotter.options.face_options["color"] = (1.0, 0.2, 0.5)
+fplotter.options.face_options["color"] = "green"
 fplotter.options.wire_options["color"] = "black"
 ax = fplotter.plot_2d(w1face, ax=ax, show=False)
 ax = c.plot_2d(ax=ax, show=False)

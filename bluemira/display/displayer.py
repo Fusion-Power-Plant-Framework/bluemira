@@ -55,8 +55,8 @@ class DisplayCADOptions(DisplayOptions):
 
     Parameters
     ----------
-    color: Tuple[float, float, float]
-        The RBG colour to display the object, by default (0.5, 0.5, 0.5).
+    color: Union[str, Tuple[float, float, float]]
+        The colour to display the object, by default (0.5, 0.5, 0.5).
     transparency: float
         The transparency to display the object, by default 0.0.
     """
@@ -65,16 +65,31 @@ class DisplayCADOptions(DisplayOptions):
         self._options = get_default_options()
         self.modify(**kwargs)
 
+    def modify(self, **kwargs):
+        """
+        Function to override plotting options.
+        """
+        super().modify(**kwargs)
+
+        if "color" in kwargs:
+            self.color = kwargs["color"]
+
+    def as_dict(self):
+        """
+        Returns the instance as a dictionary.
+        """
+        dict_ = super().as_dict()
+        # NOTE: We only convert to R,G,B at the last minute, so that the reprs are legible
+        if "color" in dict_:
+            dict_["color"] = self.color
+        return dict_
+
     @property
     def color(self) -> Tuple[float, float, float]:
         """
         The RBG colour to display the object.
         """
-        color = self._options["color"]
-        print(color)
-        color = colors.to_rgb(color)
-        print(color)
-        return color
+        return colors.to_rgb(self._options["color"])
 
     @color.setter
     def color(self, val: Union[str, Tuple[float, float, float]]):
