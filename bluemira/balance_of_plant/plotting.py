@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 from matplotlib.sankey import Sankey
 from scipy.optimize import minimize
 
-from bluemira.base.constants import BLUEMIRA_PAL_MAP
+from bluemira.display.palettes import BLUEMIRA_PALETTE
 
 
 class SuperSankey(Sankey):
@@ -301,7 +301,7 @@ class BalanceOfPlantPlotter:
             connect=None,
             trunklength=trunk_length,
             pathlengths=[l_m, l_s / 1.5, l_s, l_s],
-            facecolor=BLUEMIRA_PAL_MAP["blue"],
+            facecolor=BLUEMIRA_PALETTE["blue"],
         )
         # 1: H&CD (first block)
         self.sankey.add(
@@ -313,7 +313,7 @@ class BalanceOfPlantPlotter:
             connect=(1, 1),
             trunklength=trunk_length,
             pathlengths=[l_s, l_s / 1.5, l_s],
-            facecolor=BLUEMIRA_PAL_MAP["pink"],
+            facecolor=BLUEMIRA_PALETTE["pink"],
         )
         # 2: Neutrons
         self.sankey.add(
@@ -325,7 +325,7 @@ class BalanceOfPlantPlotter:
             connect=(2, 0),
             trunklength=trunk_length,
             pathlengths=[l_s, l_s, l_s, 3 * l_m, l_m],
-            facecolor=BLUEMIRA_PAL_MAP["orange"],
+            facecolor=BLUEMIRA_PALETTE["orange"],
         )
         # 3: Radiation and separatrix
         self.sankey.add(
@@ -337,7 +337,7 @@ class BalanceOfPlantPlotter:
             connect=(3, 0),
             trunklength=trunk_length,
             pathlengths=[l_s, l_s, l_s],
-            facecolor=BLUEMIRA_PAL_MAP["red"],
+            facecolor=BLUEMIRA_PALETTE["red"],
         )
         # 4: Blanket
         self.sankey.add(
@@ -349,7 +349,7 @@ class BalanceOfPlantPlotter:
             connect=(2, 0),
             trunklength=trunk_length,
             pathlengths=[l_s, l_s, l_s, l_s, l_s],
-            facecolor=BLUEMIRA_PAL_MAP["yellow"],
+            facecolor=BLUEMIRA_PALETTE["yellow"],
         )
         # 5: Divertor
         self.sankey.add(
@@ -361,7 +361,7 @@ class BalanceOfPlantPlotter:
             connect=(3, 0),
             trunklength=trunk_length,
             pathlengths=[l_m, l_s, l_s],
-            facecolor=BLUEMIRA_PAL_MAP["cyan"],
+            facecolor=BLUEMIRA_PALETTE["cyan"],
         )
         # 6: First wall
         self.sankey.add(
@@ -374,7 +374,7 @@ class BalanceOfPlantPlotter:
             connect=[(1, 0), (1, 2)],
             trunklength=trunk_length,
             pathlengths=[0, l_s, 0],
-            facecolor=BLUEMIRA_PAL_MAP["grey"],
+            facecolor=BLUEMIRA_PALETTE["grey"],
         )
         # 7: BoP
         self.sankey.add(
@@ -386,7 +386,7 @@ class BalanceOfPlantPlotter:
             connect=(4, 0),
             trunklength=trunk_length,
             pathlengths=[l_s, l_m, l_m, 0],
-            facecolor=BLUEMIRA_PAL_MAP["purple"],
+            facecolor=BLUEMIRA_PALETTE["purple"],
         )
         # 8: Electricity
         # Check if we have net electric power
@@ -427,7 +427,7 @@ class BalanceOfPlantPlotter:
                 3 * l_m,
                 l_s,
             ],
-            facecolor=BLUEMIRA_PAL_MAP["green"],
+            facecolor=BLUEMIRA_PALETTE["green"],
         )
         # 9: H&CD return leg
         self.sankey.add(
@@ -439,7 +439,7 @@ class BalanceOfPlantPlotter:
             connect=(5, 0),
             trunklength=trunk_length,
             pathlengths=[l_s / 2, 7 * l_m],
-            facecolor=BLUEMIRA_PAL_MAP["green"],
+            facecolor=BLUEMIRA_PALETTE["green"],
         )
         # 10: Divertor (second block)
         self.sankey.add(
@@ -452,7 +452,7 @@ class BalanceOfPlantPlotter:
             connect=[(2, 0), (1, 1)],
             trunklength=trunk_length,
             pathlengths=[0, 0],
-            facecolor=BLUEMIRA_PAL_MAP["cyan"],
+            facecolor=BLUEMIRA_PALETTE["cyan"],
         )
         # 11: H&CD return leg (second half)
         self.sankey.add(
@@ -465,7 +465,7 @@ class BalanceOfPlantPlotter:
             connect=[(1, 0), (0, 1)],
             trunklength=trunk_length,
             pathlengths=[0, 0],
-            facecolor=BLUEMIRA_PAL_MAP["green"],
+            facecolor=BLUEMIRA_PALETTE["green"],
         )
         # 12: Divertor back into BoP
         self.sankey.add(
@@ -478,7 +478,7 @@ class BalanceOfPlantPlotter:
             connect=[(2, 0), (1, 2)],
             trunklength=trunk_length,
             pathlengths=[0, l_s / 2, 0],
-            facecolor=BLUEMIRA_PAL_MAP["cyan"],
+            facecolor=BLUEMIRA_PALETTE["cyan"],
         )
         # 13: BB electrical pumping loss turn leg
         self.sankey.add(
@@ -490,7 +490,7 @@ class BalanceOfPlantPlotter:
             connect=(7, 0),
             trunklength=trunk_length,
             pathlengths=[l_s, l_s, l_m * 3],
-            facecolor=BLUEMIRA_PAL_MAP["green"],
+            facecolor=BLUEMIRA_PALETTE["green"],
         )
         # 14: BB electrical pumping return leg into blanket
         self.sankey.add(
@@ -503,7 +503,7 @@ class BalanceOfPlantPlotter:
             connect=[(2, 0), (2, 1)],
             trunklength=trunk_length,
             pathlengths=[0, 0],
-            facecolor=BLUEMIRA_PAL_MAP["green"],
+            facecolor=BLUEMIRA_PALETTE["green"],
         )
         # 15: Divertor electrical pumping loss turn leg
         self.sankey.add(
@@ -515,7 +515,7 @@ class BalanceOfPlantPlotter:
             connect=(6, 0),
             trunklength=trunk_length,
             pathlengths=[l_s, l_s / 2, l_m],
-            facecolor=BLUEMIRA_PAL_MAP["green"],
+            facecolor=BLUEMIRA_PALETTE["green"],
         )
         # 16: Divertor electrical pumping return into divertor
         self.sankey.add(
@@ -528,7 +528,7 @@ class BalanceOfPlantPlotter:
             connect=[(2, 0), (1, 1)],
             trunklength=trunk_length,
             pathlengths=[0, 0],
-            facecolor=BLUEMIRA_PAL_MAP["green"],
+            facecolor=BLUEMIRA_PALETTE["green"],
         )
 
     def _polish(self):

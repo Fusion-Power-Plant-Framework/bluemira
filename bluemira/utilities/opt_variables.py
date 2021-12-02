@@ -30,7 +30,7 @@ from pandas import DataFrame
 from tabulate import tabulate
 
 from bluemira.utilities.error import OptVariablesError
-from bluemira.base.constants import BLUEMIRA_PAL_MAP
+from bluemira.display.palettes import BLUEMIRA_PALETTE
 
 
 def normalise_value(value, lower_bound, upper_bound):
@@ -515,7 +515,7 @@ class OptVariables:
             v.normalised_value if not v.fixed else 0.5 for v in self._var_dict.values()
         ]
         colors = [
-            BLUEMIRA_PAL_MAP["red"] if v.fixed else BLUEMIRA_PAL_MAP["blue"]
+            BLUEMIRA_PALETTE["red"] if v.fixed else BLUEMIRA_PALETTE["blue"]
             for v in self._var_dict.values()
         ]
 

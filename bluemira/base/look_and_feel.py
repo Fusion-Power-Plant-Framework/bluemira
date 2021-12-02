@@ -33,7 +33,7 @@ import datetime
 import shutil
 import logging
 from bluemira import __version__
-from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR, BLUEMIRA_PALETTE
+from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
 from bluemira.base.file import get_bluemira_root, get_bluemira_path
 from bluemira.base.logs import logger_setup
 
