@@ -31,10 +31,10 @@ from typing import Callable, List, Optional
 from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
-from bluemira.base.constants import BLUEMIRA_PALETTE
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.constants import (
     NBTI_J_MAX,
     NBTI_B_MAX,
@@ -188,13 +188,13 @@ class PlasmaBuilder(Builder):
             sep_loop = equilibrium.get_separatrix()
             sep_wire = geo.tools.make_polygon(sep_loop.xyz.T, label="Separatrix")
             sep_component = PhysicalComponent("Separatrix", sep_wire)
-            sep_component.plot_options.wire_options["color"] = BLUEMIRA_PALETTE[6]
+            sep_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
             component.add_child(sep_component)
 
         lcfs_face = geo.face.BluemiraFace(self._boundary, label="LCFS")
         lcfs_component = PhysicalComponent("LCFS", lcfs_face)
-        lcfs_component.plot_options.wire_options["color"] = BLUEMIRA_PALETTE[6]
-        lcfs_component.plot_options.face_options["color"] = BLUEMIRA_PALETTE[7]
+        lcfs_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
+        lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
         component.add_child(lcfs_component)
 
         return component
@@ -205,8 +205,8 @@ class PlasmaBuilder(Builder):
 
         face = geo.face.BluemiraFace([outer, inner], label="LCFS")
         component = PhysicalComponent("LCFS", face)
-        component.plot_options.wire_options["color"] = BLUEMIRA_PALETTE[6]
-        component.plot_options.face_options["color"] = BLUEMIRA_PALETTE[7]
+        component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
+        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
         return Component("xy").add_child(component)
 
@@ -218,7 +218,7 @@ class PlasmaBuilder(Builder):
             self._boundary, direction=(0, 0, 1), degree=segment_angle
         )
         component = PhysicalComponent("LCFS", shell)
-        component.display_cad_options.color = BLUEMIRA_PALETTE[7]
+        component.display_cad_options.color = BLUE_PALETTE["PL"]
         component.display_cad_options.transparency = 0.5
 
         return Component("xyz").add_child(component)
