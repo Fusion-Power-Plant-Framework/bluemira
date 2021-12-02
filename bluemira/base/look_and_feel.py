@@ -24,8 +24,6 @@ Aesthetic and ambiance functions.
 """
 
 import os
-import sys
-import numpy as np
 import subprocess  # noqa (S404)
 import platform
 from getpass import getuser
@@ -33,10 +31,7 @@ from textwrap import wrap, dedent
 import time
 import datetime
 import shutil
-import functools
-import seaborn as sns
 import logging
-from PySide2 import QtWidgets
 from bluemira import __version__
 from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR, BLUEMIRA_PALETTE
 from bluemira.base.file import get_bluemira_root, get_bluemira_path
@@ -487,119 +482,3 @@ def user_banner():
         f"User       : {getuser()}",
         f"Platform   : {get_platform()}",
     ]
-
-
-# =============================================================================
-# Plotting defaults
-# =============================================================================
-
-
-@functools.lru_cache(1)
-def get_primary_screen_size():
-    """
-    Get the size in pixels of the primary screen.
-
-    Used for sizing figures to the screen for small screens.
-
-    Returns
-    -------
-    width: Union[int, None]
-        width of the primary screen in pixels. If there is no screen returns None
-    height: Union[int, None]
-        height of the primary screen in pixels. If there is no screen returns None
-    """
-    if sys.platform.startswith("linux") and os.getenv("DISPLAY") is None:
-        return None, None
-
-    # IPython detection (of sorts)
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        # if IPython isn't open then a QApplication is created to get screen size
-        app = QtWidgets.QApplication([])
-        rect = app.primaryScreen().availableGeometry()
-    else:
-        rect = app.primaryScreen().availableGeometry()
-
-    return rect.width(), rect.height()
-
-
-def get_figure_scale_factor(figsize):
-    """
-    Scale figure size to fit on small screens.
-
-    If the screen fits the figure the scale factor is 1.
-
-    Parameters
-    ----------
-    figsize: np.array(float, float)
-        matplotlib figsize width x height
-
-    Returns
-    -------
-    sf: float
-        scale factor to fit screen
-
-    """
-    screen_size = get_primary_screen_size()
-
-    if None in screen_size:
-        return 1
-
-    dpi = sns.mpl.rcParams["figure.dpi"]
-
-    dpi_size = figsize * dpi
-    dpi_size += 0.10 * dpi_size  # space for toolbar
-
-    sf = 1  # scale factor
-    for ds, ss in zip(dpi_size, screen_size):
-        if ds > ss:
-            scale_temp = ss / ds
-            if scale_temp < sf:
-                sf = scale_temp
-    return sf
-
-
-def plot_defaults(force=False):
-    """
-    Set a series of plotting defaults based on machine and user.
-
-    If bluemira plots are not to your tastes, do not work with your OS, or
-    don't fit your screen, please create a user profile for yourself/machine
-    here and adjust settings as needed.
-
-    Parameters
-    ----------
-    force: bool
-        force default figsize irrespective of screen size
-    """
-    figsize = np.array([18, 15])
-
-    sf = 1 if force else get_figure_scale_factor(figsize)
-
-    sns.set(
-        context="paper",
-        style="ticks",
-        font="DejaVu Sans",
-        font_scale=2.5 * sf,
-        color_codes=False,
-        rc={
-            "axes.labelweight": "normal",
-            "axes.titlesize": 20 * sf,
-            "figure.figsize": list(figsize * sf),
-            "lines.linewidth": 4 * sf,
-            "lines.markersize": 13 * sf,
-            "contour.negative_linestyle": "solid",
-        },
-    )
-    sns.set_style(
-        {
-            "xtick.direction": "in",
-            "ytick.direction": "in",
-            "xtick.major.size": 8 * sf,
-            "ytick.major.size": 8 * sf,
-            "xtick.minor.size": 4 * sf,
-            "ytick.minor.size": 4 * sf,
-            "xtick.color": "k",
-        }
-    )
-    sns.set_palette(BLUEMIRA_PALETTE)

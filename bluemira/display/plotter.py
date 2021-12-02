@@ -43,7 +43,7 @@ DEFAULT_PLOT_OPTIONS = {
     # matplotlib set of options to plot points, wires, and faces. If an empty dictionary
     # is specified, the default color plot of matplotlib is used.
     "point_options": {"s": 10, "facecolors": "red", "edgecolors": "black", "zorder": 30},
-    "wire_options": {"color": "black", "linewidth": "0.5", "zorder": 20},
+    "wire_options": {"color": "black", "linewidth": 0.5, "zorder": 20},
     "face_options": {"color": "blue", "zorder": 10},
     # projection plane
     "plane": "xz",
