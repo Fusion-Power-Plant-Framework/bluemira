@@ -24,6 +24,7 @@ Perform the EU-DEMO reactor design.
 """
 
 import json
+import os
 
 from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_root
@@ -103,6 +104,25 @@ with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w
 # (No equilibrium will be produced in this case)
 
 # build_config["callbacks"] = {"Plasma": "mock_equilibrium_callback"}
+
+# Uncomment this to read the plasma run from an existing eqdsk json file.
+# NOTE: The resulting equilibrium will vary from the original due to recalculation.
+
+build_config["callbacks"] = {
+    "Plasma": {
+        "func": "read_equilibrium_callback",
+        "args": {
+            "eqdsk_path": os.path.join(
+                get_bluemira_root(),
+                "data",
+                "reactors",
+                "EU-DEMO",
+                "equilibria",
+                "EU-DEMO_eqref.json",
+            )
+        },
+    }
+}
 
 reactor = EUDEMOReactor(params, build_config)
 component = reactor.run()
