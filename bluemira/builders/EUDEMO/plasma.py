@@ -91,6 +91,7 @@ def read_equilibrium_callback(self: PlasmaBuilder, **kwargs):
             "Must supply eqdsk_path as a kwarg when using read_equilibrium_callback"
         )
     eq = read_equilibrium(self, kwargs["eqdsk_path"])
+    analyse_equilibrium(self, eq)
     self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
     return eq
 
