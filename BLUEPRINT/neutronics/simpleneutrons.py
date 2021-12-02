@@ -29,7 +29,8 @@ import json
 from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
-from bluemira.base.look_and_feel import bluemira_print, plot_defaults
+from bluemira.base.look_and_feel import bluemira_print
+from bluemira.display.auto_config import plot_defaults
 
 from BLUEPRINT.systems.baseclass import ReactorSystem
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
