@@ -24,8 +24,6 @@ A collection of generic physical constants, conversions, and miscellaneous const
 """
 
 import numpy as np
-import seaborn as sns
-
 
 # =============================================================================
 # Physical constants

@@ -22,7 +22,7 @@
 """
 Color utilities
 """
-from matplotlib.colors import hex2color, to_rgba
+from matplotlib.colors import hex2color
 import matplotlib.colors as col
 import seaborn as sns
 import numpy as np
