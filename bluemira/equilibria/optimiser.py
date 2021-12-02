@@ -1757,15 +1757,16 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
 class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
     def f_constraint(self, constraint, vector, grad):
-        constraint[:] = super().f_min_objective(vector, grad)
+        constraint[:] = super().f_min_objective(vector, grad) - 1.0
         return constraint
 
     def set_up_constraints(self, opt):
         """
         Set up constraints to be held during optimisation.
         """
-        tolerance = np.array([0.1])
+        tolerance = np.array([1e-6])
         opt.add_ineq_constraints(self.f_constraint, tolerance)
+        opt._opt.set_initial_step(0.03)
         return opt
 
     def f_min_objective(self, vector, grad):
@@ -1819,7 +1820,7 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
 
         try:
             self.zomp = 0.0
-            self.xomp = self._get_sep_out_intersection(outboard=True) + 0.3
+            self.xomp = self._get_sep_out_intersection(outboard=True) + 0.001
             print(self.xomp)
 
             fom = (
