@@ -29,13 +29,13 @@ Some examples on updating and extending Configurations
 # The bluemira configuration controls the initial state of the physical parameters that
 # setup the bluemira run for a given reactor design.
 
+from bluemira.base.config import Configuration
+from bluemira.base.config_schema import ConfigurationSchema
+from bluemira.base.file import get_bluemira_root
+
 # %%
 from bluemira.base.parameter import Parameter, ParameterFrame
-from bluemira.base.file import get_bluemira_root
-from bluemira.base.config_schema import ConfigurationSchema
-
 from BLUEPRINT.reactor import Reactor
-from bluemira.base.config import Configuration
 
 c = Configuration()
 c.to_dict()
@@ -211,8 +211,8 @@ r_run4 = MyReactor(config_run4, build_config, build_tweaks)
 # it's metadata. The default verbosity level is concise.
 
 # %%
-concise_json = core_c.to_json()
-verbose_json = core_c.to_json(verbose=True)
+concise_json = core_c.to_json(return_output=True)
+verbose_json = core_c.to_json(verbose=True, return_output=True)
 
 # %%[markdown]
 # It is also possible to write the configuration to JSON files.

@@ -1,38 +1,38 @@
 {
-  "LPangle": {
-    "value": -15,
-    "source": "Input"
-  },
-  "Name": {
-    "value": "SMOKE-TEST",
-    "source": "Input"
-  },
-  "P_el_net": {
-    "value": 580,
-    "source": "Input"
-  },
-  "delta": {
-    "value": 0.49950000000000006,
-    "source": "Derived Inputs"
-  },
-  "fw_psi_n": {
-    "value": 1.06,
-    "source": "Input"
-  },
-  "kappa": {
-    "value": 1.8622735779143047,
-    "source": "Derived Inputs"
-  },
-  "kappa_95": {
-    "value": 1.6627442659949148,
-    "source": "Initial Estimation"
-  },
-  "tau_flattop": {
-    "value": 3600,
-    "source": "Input"
-  },
-  "tk_bb_ib": {
-    "value": 0.7,
-    "source": "Input"
-  }
+    "LPangle": {
+        "value": -15,
+        "source": "Input"
+    },
+    "Name": {
+        "value": "SMOKE-TEST",
+        "source": "Input"
+    },
+    "P_el_net": {
+        "value": 580,
+        "source": "Input"
+    },
+    "delta": {
+        "value": 0.49950000000000006,
+        "source": "Derived Inputs"
+    },
+    "fw_psi_n": {
+        "value": 1.06,
+        "source": "Input"
+    },
+    "kappa": {
+        "value": 1.8622735779143047,
+        "source": "Derived Inputs"
+    },
+    "kappa_95": {
+        "value": 1.6627442659949148,
+        "source": "Initial Estimation"
+    },
+    "tau_flattop": {
+        "value": 3600,
+        "source": "Input"
+    },
+    "tk_bb_ib": {
+        "value": 0.7,
+        "source": "Input"
+    }
 }

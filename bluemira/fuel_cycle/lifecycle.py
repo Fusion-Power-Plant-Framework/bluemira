@@ -21,21 +21,22 @@
 """
 Fusion power reactor lifecycle object.
 """
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 import json
 from typing import Type
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.lines import Line2D
+
+from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
-from bluemira.base.constants import S_TO_YR, YR_TO_S
-from bluemira.utilities.tools import abs_rel_difference, is_num, json_writer
 from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.fuel_cycle.timeline_tools import (
     LearningStrategy,
     OperationalAvailabilityStrategy,
 )
+from bluemira.utilities.tools import abs_rel_difference, is_num, json_writer
 
 __all__ = ["LifeCycle"]
 
@@ -457,7 +458,7 @@ class LifeCycle:
         """
         bluemira_print(f"Writing {filename}")
         data = self.T.to_dict()
-        json_writer(data, filename, **kwargs)
+        return json_writer(data, filename, **kwargs)
 
     def read(self, filename):
         """

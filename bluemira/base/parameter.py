@@ -29,20 +29,21 @@ bluemira analysis.
 from __future__ import annotations
 
 import copy
-from dataclasses import dataclass
+import gc
 import json
 import os
-import gc
+from dataclasses import dataclass
+from functools import wraps
+from typing import Dict, List, Union
+
+import numpy as np
+import wrapt
 from pandas import DataFrame
 from tabulate import tabulate
-from typing import Dict, List, Union
-import wrapt
-import numpy as np
-from functools import wraps
 
 from bluemira.base.error import ParameterError
 from bluemira.base.look_and_feel import bluemira_warn
-
+from bluemira.utilities.tools import json_writer
 
 __all__ = ["Parameter", "ParameterFrame", "ParameterMapping"]
 
@@ -1232,7 +1233,12 @@ class ParameterFrame:
             return json.JSONEncoder.default(self, obj)
 
     def to_json(
-        self, output_path=None, verbose=False, return_output=False, sort_keys=False
+        self,
+        output_path=None,
+        verbose=False,
+        return_output=False,
+        sort_keys=False,
+        **kwargs,
     ) -> str:
         """
         Convert the ParameterFrame to a JSON representation.
@@ -1249,6 +1255,8 @@ class ParameterFrame:
         sort_keys: bool
             If True then the output will be alphanumerically sorted by the parameter
             keys.
+        kwargs: dict
+            all further arguments are passed to the json function
 
         Returns
         -------
@@ -1257,14 +1265,15 @@ class ParameterFrame:
         """
         the_dict = self.to_dict(verbose)
         the_dict = dict(sorted(the_dict.items())) if sort_keys else the_dict
-        the_json = json.dumps(the_dict, indent=2, cls=self.ParameterMappingEncoder)
-        if output_path is not None:
-            with open(output_path, "w") as fh:
-                fh.write(the_json)
-            if return_output:
-                return the_json
-        else:
-            return the_json
+
+        kwargs.pop("cls", None)  # we need to set the cls for mapping encoding
+        return json_writer(
+            the_dict,
+            output_path,
+            return_output,
+            cls=self.ParameterMappingEncoder,
+            **kwargs,
+        )
 
     @staticmethod
     def parameter_mapping_hook(dct: Dict) -> ParameterMapping:

@@ -24,29 +24,29 @@ The home of base material objects. Use classes in here to make new materials.
 """
 
 import json
-import numpy as np
-import matplotlib.pyplot as plt
 import typing
 import warnings
 
 import asteval
+import matplotlib.pyplot as plt
+import numpy as np
 from CoolProp.CoolProp import PropsSI
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import neutronics_material_maker as nmm
 
+from bluemira.utilities.tools import is_num, json_writer
+
 from ..base.look_and_feel import bluemira_warn
 from ..utilities.tools import (
+    array_or_num,
     gcm3_to_kgm3,
+    list_array,
     to_celsius,
     to_kelvin,
-    list_array,
-    array_or_num,
 )
-from bluemira.utilities.tools import is_num
-
-from .constants import T_DEFAULT, P_DEFAULT
+from .constants import P_DEFAULT, T_DEFAULT
 from .error import MaterialsError
 
 # Set any custom symbols for use in asteval
@@ -330,9 +330,14 @@ class SerialisedMaterial:
                 mat_dict[attr_name] = attr_type.deserialise(mat_dict[attr_name])
         return cls(name, **mat_dict)
 
-    def to_json(self):
+    def to_json(self, **kwargs):
         """
         Get a JSON representation of the material.
+
+        Parameters
+        ----------
+        kwargs: dict
+            passed to json writer
 
         Returns
         -------
@@ -341,7 +346,7 @@ class SerialisedMaterial:
         """
         mat_dict = self.to_dict()
         mat_dict[self.name]["material_class"] = self.__class__.__name__
-        return json.dumps(mat_dict)
+        return json_writer(mat_dict, return_output=True, **kwargs)
 
     @classmethod
     def from_json(cls, data):
