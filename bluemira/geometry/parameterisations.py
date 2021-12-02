@@ -180,7 +180,7 @@ class PrincetonD(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
 
         super().__init__(variables)
 
@@ -328,7 +328,7 @@ class TripleArc(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -476,7 +476,7 @@ class SextupleArc(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     @staticmethod
@@ -684,7 +684,7 @@ class PolySpline(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -816,7 +816,7 @@ class PictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -957,7 +957,7 @@ class TaperedPictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
