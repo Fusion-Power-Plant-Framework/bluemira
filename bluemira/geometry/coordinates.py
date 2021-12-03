@@ -227,16 +227,25 @@ class Coordinates:
 
     @property
     def length(self) -> float:
+        """
+        Perimeter length of the coordinates.
+        """
         return get_perimeter_3d(*self._array)
 
     @property
     def area(self) -> float:
+        """
+        Enclosed area of the Coordinates. 0 if the Coordinates are open.
+        """
         if not self.closed:
             return 0.0
         return get_area_3d(*self._array)
 
     @property
     def center_of_mass(self) -> tuple:
+        """
+        Geometrical centroid of the Coordinates.
+        """
         # [sic] coordinates do not have a "mass", but named such for consistency with
         # other geometry objects.
         return tuple(get_centroid_3d(*self._array))
@@ -246,7 +255,7 @@ class Coordinates:
     # =============================================================================
 
     @property
-    def T(self):
+    def T(self):  # noqa(N802)
         """
         Transpose of the Coordinates
         """
@@ -283,9 +292,25 @@ class Coordinates:
             self._array = np.vstack((self._array.T, self._array[:, 0])).T
 
     def rotate(self, base, direction, degree):
+        """
+        Rotate the Coordinates.
+
+        Parameters
+        ----------
+        base: tuple (x,y,z)
+            Origin location of the rotation
+        direction: tuple (x,y,z)
+            The direction vector
+        degree: float
+            rotation angle
+        """
         pass
 
-    def translate(self, dx=0, dy=0, dz=0):
+    def translate(self, vector):
+        """
+        Translate this shape with the vector. This function modifies the self
+        object.
+        """
         pass
 
     # =============================================================================
