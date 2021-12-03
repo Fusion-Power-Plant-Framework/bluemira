@@ -23,19 +23,65 @@
 Built-in build steps for making a parameterised plasma
 """
 
-import numpy as np
-from typing import Dict, List, Tuple, Type, Union
+from __future__ import annotations
 
-from bluemira.base.components import Component, PhysicalComponent
+import numpy as np
+from typing import Dict, Optional, Union
+
+from bluemira.base.builder import BuildConfig
+from bluemira.base.components import PhysicalComponent
+from bluemira.base.config import Configuration
+from bluemira.base.look_and_feel import bluemira_debug
+
 import bluemira.geometry as geo
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-from bluemira.utilities.tools import get_module
 from bluemira.utilities.optimiser import Optimiser
 
 from bluemira.builders.shapes import ParameterisedShapeBuilder
+
+
+def tf_optimisation_callback(
+    self: ParameterisedShapeBuilder,
+    separatrix: Union[PhysicalComponent, geo.wire.BluemiraWire],
+    algorithm_name: str = "SLSQP",
+    opt_conditions: Optional[Dict[str, Union[int, float, str]]] = None,
+    opt_parameters: Optional[Dict[str, Union[int, float, str]]] = None,
+    keep_out_zone: geo.wire.BluemiraWire = None,
+    n_koz_points: int = 100,
+    **kwargs,
+):
+    if opt_conditions is None:
+        opt_conditions = {"max_eval": 100}
+    if opt_parameters is None:
+        opt_parameters = {}
+
+    optimiser = Optimiser(
+        algorithm_name,
+        self._shape.variables.n_free_variables,
+        opt_conditions,
+        opt_parameters,
+    )
+
+    if isinstance(separatrix, PhysicalComponent):
+        separatrix = separatrix._shape
+
+    opt_problem = RippleConstrainedLengthOpt(
+        self._shape,
+        optimiser,
+        self._params,
+        separatrix,
+        keep_out_zone=keep_out_zone,
+        n_koz_points=n_koz_points,
+    )
+    opt_problem.solve()
+
+    return {
+        "cage": opt_problem.cage,
+        "ripple_points": opt_problem.ripple_points,
+        "ripple_values": opt_problem.ripple_values,
+    }
 
 
 class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
@@ -84,10 +130,6 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             self.f_constrain_ripple, 1e-3 * np.ones(len(self.ripple_points[0]))
         )
 
-        # self.optimiser.add_ineq_constraints(
-        #     parameterisation.shape_constraints, np.zeros(1)
-        # )
-
         if self.keep_out_zone:
             self.n_koz_points = n_koz_points
             self.koz_points = self._make_koz_points(keep_out_zone)
@@ -127,7 +169,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         self.update_cage(x)
         ripple = self.cage.ripple(*self.ripple_points)
-        print(max(ripple))
+        print(f"Maximum ripple = {max(ripple)}")
         self.ripple_values = ripple
         return ripple - self.params.TF_ripple_limit
 
@@ -244,80 +286,3 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         )
         color_bar = plt.gcf().colorbar(sm)
         color_bar.ax.set_ylabel("Toroidal field ripple [%]")
-
-
-class MakeOptimisedTFWindingPack(ParameterisedShapeBuilder):
-    """
-    A class that optimises a TF winding pack based on a parameterised shape
-    """
-
-    _required_config = ParameterisedShapeBuilder._required_config + [
-        "targets",
-        "segment_angle",
-        "problem_class",
-    ]
-
-    _param_class: Type[GeometryParameterisation]
-    _variables_map: Dict[str, str]
-    _targets: Dict[str, str]
-    _problem_class: Type[GeometryOptimisationProblem]
-
-    def _extract_config(self, build_config: Dict[str, Union[float, int, str]]):
-        def get_problem_class(class_path: str) -> Type[GeometryOptimisationProblem]:
-            if "::" in class_path:
-                module, class_name = class_path.split("::")
-            else:
-                class_path_split = class_path.split(".")
-                module, class_name = (
-                    ".".join(class_path_split[:-1]),
-                    class_path_split[-1],
-                )
-            return getattr(get_module(module), class_name)
-
-        super()._extract_config(build_config)
-
-        self._targets = build_config["targets"]
-        self._segment_angle: float = build_config["segment_angle"]
-        self._problem_class = get_problem_class(build_config["problem_class"])
-        self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
-        self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})
-        self._opt_parameters = build_config.get("opt_parameters", {})
-
-    def build(self, params, **kwargs) -> List[Tuple[str, Component]]:
-        """
-        Build a TF using the requested targets and methods.
-        """
-        super().build(params, **kwargs)
-
-        boundary = self.optimise()
-
-        result_components = []
-        for target, func in self._targets.items():
-            result_components.append(getattr(self, func)(boundary, target))
-
-        return result_components
-
-    def optimise(self):
-        """
-        Optimise the shape using the provided parameterisation and optimiser.
-        """
-        shape = self.create_parameterisation()
-        optimiser = Optimiser(
-            self._algorithm_name,
-            shape.variables.n_free_variables,
-            self._opt_conditions,
-            self._opt_parameters,
-        )
-        problem = self._problem_class(shape, optimiser)
-        problem.solve()
-        return shape.create_shape()
-
-    def build_xz(self, boundary: geo.wire.BluemiraWire, target: str):
-        """
-        Build the boundary as a wire at the requested target.
-        """
-        label = target.split("/")[-1]
-        return (
-            target,
-            PhysicalComponent(label, geo.wire.BluemiraWire(boundary, label)),
-        )

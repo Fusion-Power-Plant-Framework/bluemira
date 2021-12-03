@@ -26,12 +26,13 @@ Interfaces for builder and build steps classes
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Literal, Union
+from typing import Any, Callable, Dict, List, Literal, Union
 
 from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
+from bluemira.utilities.tools import get_class_from_module
 
 
 __all__ = ["Builder", "BuildConfig"]
@@ -50,35 +51,82 @@ class Builder(abc.ABC):
     """
 
     _required_params: List[str] = []
-    _required_config: List[str] = []
+    _required_config: List[str] = ["name"]
     _params: ParameterFrame
 
-    def __init__(self, params, build_config: BuildConfig, **kwargs):
-        self._name = build_config["name"]
-
+    def __init__(
+        self,
+        params: Dict[str, Union[int, float, str]],
+        build_config: BuildConfig,
+        **kwargs,
+    ):
         self._validate_config(build_config)
         self._extract_config(build_config)
         self._params = ParameterFrame.from_template(self._required_params)
         self.reinitialise(params)
 
-    def __call__(self, params, **kwargs) -> Component:
+    def __call__(
+        self, params, component_tree=None, callback=None, callback_args=None, **kwargs
+    ) -> Component:
         """
-        Perform the full build process, including reinitialisation, using the provided
-        parameters.
+        Perform the full build process, including reinitialisation and optimisation,
+        using the provided parameters.
 
         Parameters
         ----------
         params: Dict[str, Any]
             The parameterisation containing at least the required params for this
             Builder.
-
-        Returns
-        -------
-        component: Component
-            The Component build by this builder.
+        component_tree: Optional[Component]
+            The Component containing any dependencies for this build.
+        callback: Optional[Union[str, callable]]
+            The optional callback to perform the design optimisation for this builder, by
+            default None.
+        callback_args: Optional[Dict[str, str]]
+        kwargs: dict
+            The optional keyword arguments to provide to the callback, by default {}.
         """
         self.reinitialise(params)
-        return self.build()
+
+        if callback is not None:
+            callback = self._process_callback(callback)
+            callback_args = self._process_callback_args(callback_args, component_tree)
+
+        callback_result = {}
+        if callback is not None and callable(callback):
+            callback_result = callback(self, **callback_args)
+
+        return self.build(component_tree, **callback_result)
+
+    def _process_callback(self, callback) -> Callable[[Dict[str, Any]], Dict[str, Any]]:
+        if isinstance(callback, str):
+            return get_class_from_module(callback)
+        elif callable(callback):
+            return callback
+        else:
+            raise BuilderError(
+                "Callback must be provided as either a string pointing to the function "
+                f"in the module to use, or the function itself, got {callback}"
+            )
+
+    def _process_callback_args(
+        self, callback_args: Dict[str, str], component_tree: Component
+    ):
+        if isinstance(callback_args, dict):
+            for key, val in callback_args.items():
+                arg_is_component = val.startswith("component(") and val.endswith(")")
+                if arg_is_component:
+                    callback_comp = component_tree
+                    comp_path = val.replace("component(", "").replace(")", "")
+                    for comp_name in comp_path.split("/"):
+                        callback_comp = callback_comp.get_component(comp_name)
+                    callback_args[key] = callback_comp
+        else:
+            raise BuilderError(
+                "Callback arguments must be provided as a dictionary, got "
+                f"{callback_args}"
+            )
+        return callback_args
 
     @abc.abstractmethod
     def reinitialise(self, params, **kwargs) -> None:
@@ -95,11 +143,19 @@ class Builder(abc.ABC):
         self._reset_params(params)
 
     @abc.abstractmethod
-    def build(self, **kwargs) -> Component:
+    def build(self, component_tree=None, **kwargs) -> Component:
         """
         Runs this Builder's build process to populate the required Components.
 
-        The result of the build is stored in the Builder's component property.
+        Parameters
+        ----------
+        component_tree: Optional[Component]
+            The Component containing any dependencies for this build.
+
+        Returns
+        -------
+        component: Component
+            The resulting component from this build.
         """
         bluemira_print(f"Building {self.name}")
 
@@ -113,7 +169,7 @@ class Builder(abc.ABC):
         return self._name
 
     @property
-    def required_parameters(self) -> List[str]:
+    def required_params(self) -> List[str]:
         """
         The variable names of the parameters that are needed to run this builder.
         """
@@ -158,4 +214,4 @@ class Builder(abc.ABC):
         self._params.update_kw_parameters(params)
 
     def _extract_config(self, build_config: BuildConfig):
-        pass
+        self._name = build_config["name"]

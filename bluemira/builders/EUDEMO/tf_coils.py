@@ -43,7 +43,12 @@ from bluemira.geometry.tools import (
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.constants import MU_0
 
+from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
+
+
+class BuildTFCoils(OptimisedShapeBuilder):
+    pass
 
 
 class BuildTFWindingPack:

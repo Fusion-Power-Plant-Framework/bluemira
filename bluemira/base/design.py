@@ -35,6 +35,9 @@ from bluemira.base.look_and_feel import bluemira_print, print_banner
 from bluemira.utilities.tools import get_class_from_module
 
 
+CallbackConfig = Dict[str, Union[str, Dict[str, Union[str, Dict[str, str]]]]]
+
+
 class DesignABC(abc.ABC):
     """
     The abstract Design class provides the framework for performing bluemira design
@@ -47,6 +50,7 @@ class DesignABC(abc.ABC):
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
+    _callbacks: CallbackConfig
 
     def __init__(
         self,
@@ -54,6 +58,7 @@ class DesignABC(abc.ABC):
         build_config: Dict[str, BuildConfig],
     ):
         print_banner()
+        self._builders = {}
         self._build_config = build_config
         self._extract_build_config(params)
         self._params = Configuration.from_template(self._required_params)
@@ -88,6 +93,29 @@ class DesignABC(abc.ABC):
         component = Component(self._params.Name)
         return component
 
+    def _build_stage(self, builder: Builder, component_tree: Component) -> Component:
+        callback = self._callbacks.get(builder.name, None)
+        callback_args = {}
+        if isinstance(callback, dict):
+            if "func" not in callback:
+                raise BuilderError(
+                    "When defining a callback as a dictionary, the callback function "
+                    "must be specified in the func key, and any args in the optional "
+                    f"args key, got {callback}"
+                )
+            callback_args = callback.get("args", {})
+            callback = callback["func"]
+
+        component = self._builders[builder.name](
+            self._params.to_dict(),
+            component_tree,
+            callback,
+            callback_args,
+        )
+
+        self._params.update_kw_parameters(self._builders[builder.name]._params.to_dict())
+        return component
+
     def get_builder(self, builder_name: str) -> Builder:
         """
         Get the builder with the corresponding builder_name.
@@ -104,13 +132,29 @@ class DesignABC(abc.ABC):
         """
         return self._builders[builder_name]
 
+    def register_builder(self, builder: Builder, builder_name: str):
+        """
+        Add the builder to the builder registry with key builder_name.
+
+        Parameters
+        ----------
+        builder: Builder
+            The Builder to be registered.
+        builder_name: str
+            The name to register the Builder under.
+        """
+        if builder_name in self._builders:
+            raise BuilderError(f"Builder already registered with name {builder_name}.")
+
+        self._builders[builder_name] = builder
+
     @abc.abstractmethod
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
         """
         Extracts the builders from the config, which must be an ordered dictionary
         mapping the name of the builder to the corresponding options.
         """
-        self._builders = {}
+        self._callbacks = self._build_config.get("callbacks", {})
 
 
 class Design(DesignABC):
@@ -137,11 +181,10 @@ class Design(DesignABC):
             The Component tree resulting from the various build stages in the Design.
         """
         component = super().run()
+
         for builder in self._builders.values():
-            component.add_child(builder(self._params))
-            self._params.update_kw_parameters(
-                builder._params.to_dict(), source=builder.name
-            )
+            component.add_child(self._build_stage(builder, component))
+
         return component
 
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
@@ -150,17 +193,20 @@ class Design(DesignABC):
         mapping the name of the builder to the corresponding options.
         """
         super()._extract_build_config(params)
+
         for key, val in self._build_config.items():
             class_name = val.pop("class")
-            val["name"] = key
             builder_class: Type[Builder] = get_class_from_module(
                 class_name, default_module="bluemira.builders"
             )
-            if key not in self._builders:
-                self._builders[key] = builder_class(params, val)
-            else:
-                raise BuilderError(f"Builder {key} already exists in {self}.")
-            self._required_params += self._builders[key]._required_params
+
+            val["name"] = key
+            self.register_builder(builder_class(params, val), key)
+
+            self._required_params += self.get_builder(key).required_params
+
+            if "callback" in val:
+                self._callbacks[key] = val["callback"]
 
 
 class Reactor(DesignABC):
@@ -208,33 +254,6 @@ class Reactor(DesignABC):
             "generated_data_root", f"{BM_ROOT}/generated_data"
         )
         self._plot_flag: bool = self._build_config.get("plot_flag", False)
-        self._callbacks: Dict[str, str] = self._build_config.get("callbacks", {})
-
-    def _build_stage(self, builder_class: Type[Builder], build_config) -> Component:
-        name = build_config["name"]
-
-        self._builders[name] = builder_class(self._params.to_dict(), build_config)
-
-        callback = self._callbacks.get(name, None)
-        callback_args = {}
-        if isinstance(callback, dict):
-            callback_args = callback.get("args", {})
-            if "func" not in callback:
-                raise BuilderError(
-                    "When defining a callback as a dictionary, the callback function "
-                    "must be specified in the func key, and any args in the optional "
-                    f"args key, got {callback}"
-                )
-            callback = callback["func"]
-
-        component = self._builders[name](
-            self._params.to_dict(),
-            callback,
-            **callback_args,
-        )
-
-        self._params.update_kw_parameters(self._builders[name]._params.to_dict())
-        return component
 
     @property
     def file_manager(self):

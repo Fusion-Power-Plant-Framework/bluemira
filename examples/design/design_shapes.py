@@ -28,7 +28,7 @@ from bluemira.base.design import Design
 
 build_config = {
     "Plasma": {
-        "class": "MakeParameterisedShape",
+        "class": "DesignParameterisedShape",
         "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
         "variables_map": {
             "r_0": "R_0",
@@ -37,24 +37,39 @@ build_config = {
         "label": "Shape",
     },
     "TF Coils": {
-        "class": "MakeParameterisedShape",
+        "class": "DesignParameterisedShape",
         "param_class": "PrincetonD",
         "variables_map": {
-            "x1": "r_tf_in_centre",
+            "x1": {
+                "value": "r_tf_in_centre",
+                "fixed": True,
+            },
             "x2": {
                 "value": "r_tf_out_centre",
                 "lower_bound": 8.0,
             },
-            "dz": 0.0,
+            "dz": {
+                "value": 0.0,
+                "fixed": True,
+            },
+        },
+        "additional_params": ["R_0", "z_0", "B_0", "n_TF", "TF_ripple_limit"],
+        "callback": {
+            "func": "bluemira.builders.tf_coils::tf_optimisation_callback",
+            "args": {"separatrix": "component(Plasma/Shape)"},
         },
         "label": "Shape",
     },
 }
 params = {
     "R_0": (9.0, "Input"),
+    "z_0": (0.0, "Input"),
     "A": (3.5, "Input"),
-    "r_tf_in_centre": (5.0, "Input"),
-    "r_tf_out_centre": (15.0, "Input"),
+    "B_0": (6.0, "Input"),
+    "n_TF": (16, "Input"),
+    "TF_ripple_limit": (0.6, "Input"),
+    "r_tf_in_centre": (3.2, "Input"),
+    "r_tf_out_centre": (14, "Input"),
 }
 design = Design(params, build_config)
 component = design.run()

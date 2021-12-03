@@ -28,6 +28,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
+from bluemira.builders.EUDEMO.tf_coils import BuildTFCoils
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
@@ -47,7 +48,8 @@ class EUDEMOReactor(Reactor):
         component = super().run()
 
         self.run_systems_code()
-        component.add_child(self.build_plasma())
+        component.add_child(self.build_plasma(component))
+        component.add_child(self.build_tf_coils(component))
 
         return component
 
@@ -65,7 +67,7 @@ class EUDEMOReactor(Reactor):
         )
         self._params.update_kw_parameters(output.to_dict())
 
-    def build_plasma(self, **kwargs):
+    def build_plasma(self, component, **kwargs):
         """
         Run the plasma build using the requested equilibrium problem.
         """
@@ -76,4 +78,23 @@ class EUDEMOReactor(Reactor):
             "plot_flag": self._build_config.get("plot_flag", False),
         }
 
-        return super()._build_stage(PlasmaBuilder, plasma_config)
+        builder = PlasmaBuilder(self._params.to_dict(), plasma_config)
+        self.register_builder(builder, name)
+
+        return super()._build_stage(builder, component)
+
+    def build_tf_coils(self, component, **kwargs):
+        """
+        Run the TF coil build using the requested design problem.
+        """
+        name = "TF Coils"
+
+        tf_coils_config = {
+            "name": name,
+            "plot_flag": self._build_config.get("plot_flag", False),
+        }
+
+        builder = BuildTFCoils(self._params.to_dict(), tf_coils_config)
+        self.register_builder(builder, name)
+
+        return super()._build_stage(builder, component)

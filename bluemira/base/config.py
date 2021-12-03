@@ -56,6 +56,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['A', 'Plasma aspect ratio', 3.1, 'N/A', None, 'Input', {"PROCESS": ParameterMapping("aspect", True, True)}],
         ['R_0', 'Major radius', 9, 'm', None, 'Input', {"PROCESS": ParameterMapping("rmajor", True, False)}],
         ['B_0', 'Toroidal field at R_0', 6, 'T', None, 'Input', {"PROCESS": ParameterMapping("bt", True, False)}],
+        ['z_0', 'Vertical offset of the magnetic axis', 0, 'm', None, 'Input'],
 
         # Plasma
         ['q_95', 'Plasma safety factor', 3.5, 'N/A', None, 'Input', {"PROCESS": ParameterMapping("q95", False, False)}],

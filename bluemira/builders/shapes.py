@@ -25,12 +25,10 @@ Built-in build steps for making shapes
 
 from typing import Dict, Type
 
-from ..base.builder import BuildConfig, Builder
-from ..base.components import Component, PhysicalComponent
-from ..geometry.optimisation import GeometryOptimisationProblem
-from ..geometry.parameterisations import GeometryParameterisation
-from ..utilities.optimiser import Optimiser
-from ..utilities.tools import get_class_from_module
+from bluemira.base.builder import BuildConfig, Builder
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.utilities.tools import get_class_from_module
 
 
 class ParameterisedShapeBuilder(Builder):
@@ -38,21 +36,23 @@ class ParameterisedShapeBuilder(Builder):
     Abstract builder class for building parameterised shapes.
     """
 
-    _required_config = ["param_class", "variables_map"]
+    _required_config = Builder._required_config + ["param_class", "variables_map"]
 
     _param_class: Type[GeometryParameterisation]
     _variables_map: Dict[str, str]
 
     def _extract_config(self, build_config: BuildConfig):
+        super()._extract_config(build_config)
+
         self._param_class: Type[GeometryParameterisation] = get_class_from_module(
             build_config["param_class"],
             default_module="bluemira.geometry.parameterisations",
         )
         self._variables_map: Dict[str, str] = build_config["variables_map"]
+        self._required_params = build_config.get("additional_params", [])
         self._extract_required_params()
 
     def _extract_required_params(self):
-        self._required_params = []
         for var in self._variables_map.values():
             if isinstance(var, dict) and isinstance(var["value"], str):
                 self._required_params += [var["value"]]
@@ -90,9 +90,10 @@ class ParameterisedShapeBuilder(Builder):
         self._shape = shape
 
 
-class MakeParameterisedShape(ParameterisedShapeBuilder):
+class DesignParameterisedShape(ParameterisedShapeBuilder):
     """
-    A builder that constructs a Component using a parameterised shape.
+    A builder that designs a Component using a parameterised shape and an optional
+    design optimisation callback.
     """
 
     _required_config = ParameterisedShapeBuilder._required_config + ["label"]
@@ -104,7 +105,7 @@ class MakeParameterisedShape(ParameterisedShapeBuilder):
 
         self._label: str = build_config["label"]
 
-    def build(self, **kwargs) -> Component:
+    def build(self, component_tree=None, **kwargs) -> Component:
         """
         Build the components from parameterised shapes using the provided configuration
         and parameterisation.
@@ -121,55 +122,3 @@ class MakeParameterisedShape(ParameterisedShapeBuilder):
         )
 
         return component
-
-
-class MakeOptimisedShape(MakeParameterisedShape):
-    """
-    A builder that constructs a Component using a parameterised shape.
-    """
-
-    _required_config = MakeParameterisedShape._required_config + ["problem_class"]
-
-    _problem_class: Type[GeometryOptimisationProblem]
-
-    def __call__(self, params, optimise=True, **kwargs) -> Component:
-        """
-        Perform the full build process, including reinitialisation and optimisation,
-        using the provided parameters.
-
-        Parameters
-        ----------
-        params: Dict[str, Any]
-            The parameterisation containing at least the required params for this
-            Builder.
-        optimise: bool
-            If True then the build will include optimisation, by default True.
-        """
-        self.reinitialise(params)
-        if optimise:
-            self.optimise()
-        return self.build()
-
-    def _extract_config(self, build_config: BuildConfig):
-        super()._extract_config(build_config)
-
-        problem_class = build_config["problem_class"]
-        self._problem_class: Type[GeometryOptimisationProblem] = get_class_from_module(
-            problem_class
-        )
-        self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
-        self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})
-        self._opt_parameters = build_config.get("opt_parameters", {})
-
-    def optimise(self):
-        """
-        Optimise the shape using the provided parameterisation and optimiser.
-        """
-        optimiser = Optimiser(
-            self._algorithm_name,
-            self._shape.variables.n_free_variables,
-            self._opt_conditions,
-            self._opt_parameters,
-        )
-        problem = self._problem_class(self._shape, optimiser)
-        problem.solve()
