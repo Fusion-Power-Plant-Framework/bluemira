@@ -25,10 +25,9 @@ PROCESS run functions
 
 from __future__ import annotations
 import subprocess  # noqa (S404)
-from enum import Enum, auto
+from enum import auto
 import json
 import os
-import string
 from typing import Dict, List, Optional
 
 import bluemira.base as bm_base
@@ -39,7 +38,6 @@ from bluemira.codes.process.api import DEFAULT_INDAT, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.setup import PROCESSInputWriter
 from bluemira.codes.process.teardown import BMFile
-from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
 
 
 class RunMode(interface.RunMode):
