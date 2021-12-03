@@ -42,7 +42,7 @@ class Coordinates:
 
     The following are enforced by default:
     * Shape of (3, N)
-    * Counter-clockwise direction
+    * Counter-clockwise direction [TBD]
 
     Parameters
     ----------
@@ -58,11 +58,12 @@ class Coordinates:
     # =============================================================================
     # Instantiation
     # =============================================================================
+
     def __init__(self, xyz_array, enforce_ccw=False):
         self._array = self._parse_input(xyz_array)
 
-        # if not self.ccw and enforce_ccw:
-        #     self.reverse()
+        if not self.ccw and enforce_ccw:
+            self.reverse()
 
     def _parse_input(self, xyz_array):
         if isinstance(xyz_array, np.ndarray):
@@ -167,26 +168,44 @@ class Coordinates:
 
     @property
     def x(self):
+        """
+        x coordinate vector
+        """
         return self._array[0]
 
     @property
     def y(self):
+        """
+        y coordinate vector
+        """
         return self._array[1]
 
     @property
     def z(self):
+        """
+        z coordinate vector
+        """
         return self._array[2]
 
     @property
     def xy(self):
+        """
+        x-y coordinate array
+        """
         return self._array[[0, 1], :]
 
     @property
     def xz(self):
+        """
+        x-z coordinate array
+        """
         return self._array[[0, 2], :]
 
     @property
     def yz(self):
+        """
+        y-z coordinate array
+        """
         return self._array[[1, 2], :]
 
     # =========================================================================
@@ -351,8 +370,14 @@ class Coordinates:
     # =============================================================================
 
     def __repr__(self):
+        """
+        Representation of the Coordinates.
+        """
         r = self._array.__repr__()
         return f"{self.__class__.__name__}{r[5:]}"
 
     def __getitem__(self, *args, **kwargs):
+        """
+        Array-like indexing and slicing.
+        """
         return self._array.__getitem__(*args, **kwargs)
