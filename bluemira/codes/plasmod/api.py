@@ -25,14 +25,16 @@ API for the transport code PLASMOD and related functions
 
 import copy
 import csv
+import json
 import pprint
 import sys
-from enum import auto
+from enum import Enum, auto
 from typing import Dict, Union
 
 import numpy as np
 
 import bluemira.codes.interface as interface
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import NAME as PLASMOD
@@ -45,358 +47,28 @@ from bluemira.codes.plasmod.mapping import (
     PedestalModel,
     SOLModel,
 )
+from bluemira.utilities.tools import CommentJSONDecoder
 
-# Todo: both INPUTS and OUTPUTS must to be completed.
+# Todo: both INPUTS and OUTPUTS must to be completed. Moved to json files
 # DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
-DEFAULT_PLASMOD_INPUTS = {
-    ############################
-    # list geometry properties
-    ############################
-    # [-] plasma aspect ratio
-    "A": 3.1,
-    # [T] Toroidal field at plasma center
-    "Bt": 5.8,
-    # [-] plasma edge triangularity (used only for first iteration,
-    # then iterated to constrain delta95)
-    "deltaX": 0.5,
-    # [-] plasma triangularity at 95 % flux
-    "delta95": 0.33,
-    # [-] plasma edge elongation (used only for first iteration,
-    # then iterated to constrain kappa95)
-    "kappaX": 1.8,
-    # [-] plasma elongation at 95 % flux
-    "kappa95": 1.65,
-    # [-] safety factor at 95% flux surface
-    "q95": 3.5,
-    # [m] plasma major radius
-    "R0": 9.0,
-    # [m3] constrained plasma volume (set zero to disable volume constraining)
-    "V_in": 0,
-    ############################
-    # list numerics properties
-    #############################
-    # [-] Newton differential
-    "dgy": 1e-5,
-    # [-] min time step between iterations
-    "dtmin": 1e-2,
-    # [-] max time step between iterations
-    "dtmax": 1e-2,
-    # [-] number of interpolated grid points
-    "nx": 41,
-    # [-] number of reduced grid points
-    "nxt": 5,
-    # [-] max number of iteration
-    "test": 10000,
-    # [-] max iteration error between transport/equilibrium iterations
-    "tol": 1e-10,
-    ############################
-    # list transport & confinement properties
-    #############################
-    # [-] Greenwald density fraction at pedestal
-    "f_gwped": 0.85,
-    # [-] Greenwald density fraction at separatrix
-    "f_gws": 0.5,
-    # [-] fraction of NBI power to ions
-    "fpion": 0.5,
-    # [-] tauparticle / tauE for D
-    "fp2e_d": 5.0,
-    # [-] tauparticle / tauE for T
-    "fp2e_t": 5.0,
-    # [-] tauparticle / tauE for He
-    "fp2e_he": 5.0,
-    # [-] tauparticle / tauE for Xe
-    "fp2e_xe": 5.0,
-    # [-] tauparticle / tauE for Ar
-    "fp2e_ar": 5.0,
-    # [-] input H-factor:if i_modeltype > 1 H factor calculated
-    "hfact_inp": 1.0,
-    # [-] normalized coordinate of pedestal density
-    "rho_n": 0.94,
-    # [-] normalized coordinate of pedestal temperature
-    "rho_T": 0.94,
-    # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
-    "Teped_inp": 5.5,
-    # [keV] electrons/ions temperature at separatrix
-    "Tesep": 0.1,
-    ############################
-    # list composition properties
-    #############################
-    # [-] Tungsten concentration
-    "cwol": 0.0,
-    # [-] fuel mix D/T
-    "fuelmix": 0.5,
-    ############################
-    # list control & transport settings
-    #############################
-    # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x for NBI heating (CD) to control Vloop or f_ni
-    "dx_cd_nbi": 0.2,
-    # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x for fixed NBI heating
-    "dx_control_nbi": 0.2,
-    # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x, for NBI heating to control fusion power
-    "dx_fus_nbi": 0.2,
-    # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x, for NBI heating to control H-mode
-    "dx_heat_nbi": 0.2,
-    # [-] required fraction of non inductive current, if 0, dont use CD
-    "f_ni": 0.0,
-    # [-] equilibrium model selector:
-    # 1 - EMEQ solves equilibrium with given q95, with sawteeth.
-    # 2 - EMEQ solves with given Ip, with sawteeth
-    "i_equiltype": 1,
-    # [-] impurity model selector:
-    # 0 - fixed concentration,
-    # 1 - concentration fixed at pedestal top, then fixed density.
-    "i_impmodel": 1,
-    # [-] selector for transport model: (see trmodel.f90)
-    # 1 - simple gyrobohm scaling with imposed H factor,
-    # 555 - H factor scaling from F. Palermo
-    # 111 - another model based on gyro-Bohm transport
-    # 2 - no reference in the source code
-    "i_modeltype": 1,
-    # [-] pedestal model selector:
-    # 1 - fixed pedestal temperature (Teped_in),
-    # 2 - Saarelma scaling
-    "i_pedestal": 1,
-    # [-] SOL model selector:
-    # 0 - fit based on Eich scaling
-    # 1 - Mattia Siccinio's model
-    "isiccir": 0,
-    # [m*MA/MW] Normalized CD efficiency
-    "nbcdeff": 0.3,
-    # [MW] max allowed power for control (fusion power, H-mode)
-    "Pheat_max": 100.0,
-    # [MW] required fusion power.
-    # 0. - ignored
-    # > 0 - Auxiliary heating is calculated to match Pfus_req
-    "Pfus_req": 0.0,
-    # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
-    # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
-    "PsepBt_qAR_max": 9.2,
-    # [-] max P_sep/P_LH. if Psep/PLH > Psep/PLH_max -> use Xe
-    "Psep_PLH_max": 50.0,
-    # [-] min P_sep/P_LH. if Psep/PLH < Psep/PLH_max -> use heating
-    "Psep_PLH_min": 1.1,
-    # [MW/m] Divertor challenging criterion Psep / R0
-    # if Psep/R0 > Psep_R0_max seed Xenon
-    "Psep_R0_max": 17.5,
-    # [MW] fixed auxiliary heating power required for control
-    "q_control": 50.0,
-    # [MW/m2] max divertor heat flux -->
-    # if qdivt > qdivt_max -> seed argon
-    "qdivt_max": 10.0,
-    # [-]  normalized mean location of NBI power for
-    # controlling loop voltage or f_ni
-    "x_cd_nbi": 0.0,
-    # [-]  normalized mean location of fixed NBI heating
-    "x_control_nbi": 0.0,
-    # [-]  normalized mean location of NBI heating for
-    # controlling fusion power (Pfus = Pfus_req)
-    "x_fus_nbi": 0.0,
-    # [-]  normalized mean location of aux. heating for
-    # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
-    "x_heat_nbi": 0.0,
-    # [V] target loop voltage (if lower than -1e-3, ignored)
-    "v_loop_in": -1.0e-6,
-}
-
-#
-
-
-DEFAULT_PLASMOD_OUTPUTS = {
-    ############################
-    # list scalar outputs
-    #############################
-    # [m²] plasma poloidal cross section area
-    "_area_pol": [],
-    # [m²] plasma toroidal surface
-    "_area_tor": [],
-    # [-] poloidal beta
-    "_beta_p": [],
-    # [-] normalized beta
-    "_beta_n": [],
-    # [-] toroidal beta
-    "_beta_t": [],
-    # [T] average poloidal field
-    "_Bpav": [],
-    # [-] Argon concentration (ratio nAr/ne)
-    "_c_ar": [],
-    # [-] Hydrogen concentration (ratio nH/ne)
-    "_c_h": [],
-    # [-] Helium concentration (ratio nH/ne)
-    "_c_he": [],
-    # [-] Xenon concentration (ratio nH/ne)
-    "_c_xe": [],
-    # [-] plasma edge triangularity
-    "_delta_e": [],
-    # [-] tolerance on kinetic profiles
-    "_etol": [],
-    # [-] plasma bootstrap current fraction
-    "_f_bs": [],
-    # [-] plasma current drive fraction
-    "_f_cd": [],
-    # [-] plasma current inductive fraction
-    "_f_ind": [],
-    # [-] H-factor
-    "_H": [],
-    # [-] exit flag
-    #  1: PLASMOD converged successfully
-    # -1: Max number of iterations achieved
-    # (equilibrium oscillating, pressure too high, reduce H)
-    # 0: transport solver crashed (abnormal parameters
-    # or too large dtmin and/or dtmin
-    # -2: Equilibrium solver crashed: too high pressure
-    "_i_flag": [],
-    # [MA] plasma current
-    "_Ip": [],
-    # [-] plasma edge elongation
-    "_kappa_e": [],
-    # [-] plasma internal inductance
-    "_li": [],
-    # [-] number of iterations
-    "_niter": [],
-    # [1E19/m3] electron/ion density at pedestal height
-    "_nped": [],
-    # [1E19/m3] electron/ion density at separatrix
-    "_nsep": [],
-    # [W] additional heating power
-    "_Padd": [],
-    # [W] alpha power
-    "_Palpha": [],
-    # [W] Bremsstrahlung radiation power
-    "_Pbrem": [],
-    # [W] Fusion power
-    "_Pfus": [],
-    # [W] DD fusion power
-    "_PfusDD": [],
-    # [W] DT fusion power
-    "_PfusDT": [],
-    # [m] plasma perimeter
-    "_perim": [],
-    # [W] Line radiation power
-    "_Pline": [],
-    # [W] LH transition power
-    "_PLH": [],
-    # [W] neutron fusion power
-    "_Pneut": [],
-    # [W] Ohimic heating power
-    "_Pohm": [],
-    # [W] total radiation power
-    "_Prad": [],
-    # [W] total power across plasma separatrix
-    "_Psep": [],
-    # [MW/m] Divertor challenging criterion Psep/R0
-    "_Psep_R0": [],
-    # [MW * T/ m] Divertor challenging criterion Psep * Bt /(q95 * a)
-    "_Psep_Bt_q95_A_R0": [],
-    # [W] Synchrotron radiation power
-    "_Psync": [],
-    # [W/m2] divertor heat flux
-    "_qdivt": [],
-    # [-] Edge safety factor
-    "_q_sep": [],
-    # [m] Plasma minor radius
-    "_rpminor": [],
-    # [Ohm] plasma resistance
-    "_rplas": [],
-    # [s] energy confinement time
-    "_tau_e": [],
-    # [keV] Ions/Electrons at pedestal
-    "_Teped": [],
-    # [-] tolerance on safety factor profile
-    "_toleq": [],
-    # [-] overall tolerance
-    "_tolfin": [],
-    # [V] plasma loop voltage
-    "_Vloop": [],
-    # [J] plasma thermal energy
-    "_Wth": [],
-    # [-] plasma effective charge
-    "_Zeff": [],
-    ############################
-    # list profiles
-    #############################
-    # [A/m²] Bootstrap parallel current density profile
-    "_cubb": [],
-    # [-] Triangularity profile
-    "_delta": [],
-    # [m³] Volume increment profile
-    "_dV": [],
-    # [(m*T) * (m*T) / Wb == T] FF' profile
-    "_ffprime": [],
-    # [m⁴] < |grad V|²> g1 metric coefficient's profile
-    "_g1": [],
-    # [m²] < |grad V|²/r²> g2 metric coefficient's profile
-    "_g2": [],
-    # [m⁻²] < 1/r²> g3 metric coefficient's profile
-    "_g3": [],
-    # [m*T] Poloidal current profile
-    "_ipol": [],
-    # [A/m²] Parallel current density profile
-    "_jpar": [],
-    # [A/m²] CD parallel current density profile
-    "_jcdr": [],
-    # [-] Elongation profile
-    "_kappa": [],
-    # [Pa/Wb] p' profile
-    "_pprime": [],
-    # [10¹⁹/m3] argon density profile
-    "_nar": [],
-    # [10¹⁹/m3] deuterium density profile
-    "_ndeut": [],
-    # [10¹⁹/m3] electron density profile
-    "_nepr": [],
-    # [10¹⁹/m3] fuel density profile
-    "_nfuel": [],
-    # [10¹⁹/m3] helium density profile
-    "_nhe": [],
-    # [10¹⁹/m³] ion density profile
-    "_nions": [],
-    # [10¹⁹/m3] tritium density profile
-    "_ntrit": [],
-    # [10¹⁹/m3] xenon density profile
-    "_nxe": [],
-    # [Wb] Toroidal flux profile
-    "_phi": [],
-    # [Pa] Plasma pressure profile
-    "_pressure": [],
-    # [Wb] Poloidal flux profile
-    "_psi": [],
-    # [W/m³] fusion power density profile (DT + DT)
-    "_qfus": [],
-    # [W/m³] neutron power density profile
-    "_qneut": [],
-    # [-] Safety factor profile
-    "_qprf": [],
-    # [W/m³] radiation power density profile
-    "_qrad": [],
-    # [m] Grad-Shafranov shift profile
-    "_shif": [],
-    # [keV] Electron temperature profile
-    "_Tepr": [],
-    # [keV] Ion temperature profile
-    "_Tipr": [],
-    # [-] normalized toroidal flux coordinate (Phi/Phi_b)
-    "_x": [],
-    # [m³] Volume profile
-    "_V": [],
-}
 
 
 def get_default_plasmod_inputs():
     """
     Returns a copy of the default plasmo inputs
     """
-    return copy.deepcopy(DEFAULT_PLASMOD_INPUTS)
+    path = get_bluemira_path("codes/plasmod")
+    with open(path + "/PLASMOD_DEFAULT_IN.json") as jfh:
+        return json.load(jfh, cls=CommentJSONDecoder)
 
 
 def get_default_plasmod_outputs():
     """
     Returns a copy of the defaults plasmod outputs.
     """
-    return copy.deepcopy(DEFAULT_PLASMOD_OUTPUTS)
+    path = get_bluemira_path("codes/plasmod")
+    with open(path + "/PLASMOD_DEFAULT_OUT.json") as jfh:
+        return json.load(jfh, cls=CommentJSONDecoder)
 
 
 class PlasmodParameters:
