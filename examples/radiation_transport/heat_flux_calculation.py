@@ -46,7 +46,7 @@ fw_shape = Loop.from_file(fw_name)
 params = ParameterFrame(
     # fmt: off
     [
-        ['P_sep', 'Separatrix power', 150, 'MW', None, 'PLASMOD'],
+        ["P_sep", "Separatrix power", 150, "MW", None, "PLASMOD"],
         ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.01, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
