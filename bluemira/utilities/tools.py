@@ -72,7 +72,7 @@ class CommentJSONDecoder(JSONDecoder):
         containing a JSON document).
         """
         s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
-        bluemira_debug(s)
+        bluemira_debug("Comment stripped JSON\n" + s)
         return super().decode(s, *args, **kwargs)
 
 
