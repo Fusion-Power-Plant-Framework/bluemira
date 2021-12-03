@@ -25,7 +25,7 @@ PROCESS api
 
 import os
 
-from bluemira.base.file import get_bluemira_root
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable
 
@@ -83,7 +83,7 @@ if PROCESS_ENABLED:
     PROCESS_DICT = get_dicts()
 
 DEFAULT_INDAT = os.path.join(
-    get_bluemira_root(), "bluemira", "codes", "process", "PROCESS_DEFAULT_IN.DAT"
+    get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
 )
 
 PTOBUNITS = {

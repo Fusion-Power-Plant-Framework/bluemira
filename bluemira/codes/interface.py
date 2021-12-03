@@ -174,7 +174,7 @@ class FileProgramInterface:
     def binary(self, _binary):
         self.run_obj._binary = _binary
 
-    def set_runmode(self, runmode):
+    def _set_runmode(self, runmode):
         """Set the runmode"""
         mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
         self._runner = self._runmode[mode]
