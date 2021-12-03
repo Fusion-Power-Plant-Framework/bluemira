@@ -19,64 +19,24 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-Errors for geometry module
-"""
+import numpy as np
 
-from bluemira.base.error import BluemiraError
-
-
-class GeometryError(BluemiraError):
-    """
-    Error class for use in the geometry module
-    """
-
-    pass
+from bluemira.geometry.error import CoordinatesError
+from bluemira.geometry.coordinates import Coordinates
 
 
-class NotClosedWire(BluemiraError):
-    """
-    Not Closed Wire Error
-    """
+class TestCoordinates:
+    def test_array_init(self):
+        xyz = np.array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 1, 2, 3]])
 
-    pass
+        c1 = Coordinates(xyz)
 
+        c2 = Coordinates(xyz.T)
 
-class MixedOrientationWireError(BluemiraError):
-    """
-    Mixed Orientation Wire Error
-    """
+        assert c1 == c2
 
-    pass
+    def test_dict_init(self):
+        pass
 
-
-class DisjointedFace(BluemiraError):
-    """
-    Disjointed Face Error
-    """
-
-    pass
-
-
-class DisjointedSolid(BluemiraError):
-    """
-    Disjointed Solid Error
-    """
-
-    pass
-
-
-class GeometryParameterisationError(GeometryError):
-    """
-    Error class for parametric shapes.
-    """
-
-    pass
-
-
-class CoordinatesError(GeometryError):
-    """
-    Error class for use in Coordinates
-    """
-
-    pass
+    def test_iterable_init(self):
+        pass
