@@ -148,7 +148,9 @@ class BoundedVariable:
         if value is not None:
             self._value = value
 
-    def adjust(self, value=None, lower_bound=None, upper_bound=None, strict_bounds=True):
+    def adjust(
+        self, value=None, lower_bound=None, upper_bound=None, *, strict_bounds=True
+    ):
         """
         Adjust the BoundedVariable.
 
@@ -298,6 +300,7 @@ class OptVariables:
         lower_bound=None,
         upper_bound=None,
         fixed=False,
+        *,
         strict_bounds=True,
     ):
         """
@@ -334,34 +337,35 @@ class OptVariables:
                 value, lower_bound, upper_bound, strict_bounds=strict_bounds
             )
 
-    def adjust_variables(self, var_dict={}, strict_bounds=True):
+    def adjust_variables(self, var_dict=None, *, strict_bounds=True):
         """
         Adjust multiple variables in the set.
 
         Parameters
         ----------
-        var_dict: dict
+        var_dict: Optional[dict]
             Dictionary with which to update the set, of the form
             {"var_name": {"value": v, "lower_bound": lb, "upper_bound": ub}, ...}
         strict_bounds: bool
             If True, will raise errors if values are outside the bounds. If False, the
             bounds are dynamically adjusted to match the value.
         """
-        for k, v in var_dict.items():
+        if var_dict:
+            for k, v in var_dict.items():
 
-            args = [
-                v.get("value", None),
-                v.get("lower_bound", None),
-                v.get("upper_bound", None),
-                v.get("fixed", None),
-            ]
-            if all([i is None for i in args]):
-                raise OptVariablesError(
-                    "When adjusting variables in a OptVariables instance, the dictionary"
-                    " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
-                )
+                args = [
+                    v.get("value", None),
+                    v.get("lower_bound", None),
+                    v.get("upper_bound", None),
+                    v.get("fixed", None),
+                ]
+                if all([i is None for i in args]):
+                    raise OptVariablesError(
+                        "When adjusting variables in a OptVariables instance, the dictionary"
+                        " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
+                    )
 
-            self.adjust_variable(k, *args, strict_bounds=strict_bounds)
+                self.adjust_variable(k, *args, strict_bounds=strict_bounds)
 
     def fix_variable(self, name, value=None):
         """
