@@ -1,11 +1,3 @@
----
-name: Pull Request
-about: Create a Pull Request to submit some changes
-title: ''
-assignees: ''
-
----
-
 ## Linked Issues
 
 Does this PR close or fix any Issues? Remember to create an Issue before starting work so that your fix / proposal can be addressed by the team.
