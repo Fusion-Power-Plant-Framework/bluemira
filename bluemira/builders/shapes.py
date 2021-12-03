@@ -63,10 +63,12 @@ class ParameterisedShapeBuilder(Builder):
         shape_params = {}
         for key, val in self._variables_map.items():
             if isinstance(val, str):
-                val = self._params.get(val)
+                val = {"value": self._params.get(val)}
             elif isinstance(val, dict):
                 if isinstance(val["value"], str):
                     val["value"] = self._params.get(val["value"])
+            else:
+                val = {"value": val}
             shape_params[key] = val
         return shape_params
 
@@ -84,12 +86,7 @@ class ParameterisedShapeBuilder(Builder):
         super().reinitialise(params, **kwargs)
 
         shape_params = self._derive_shape_params()
-        shape = self._param_class()
-        for key, val in shape_params.items():
-            if isinstance(val, dict):
-                shape.adjust_variable(key, **val)
-            else:
-                shape.adjust_variable(key, val)
+        shape = self._param_class(shape_params)
         self._shape = shape
 
 
