@@ -486,9 +486,8 @@ class DivertorBuilder:
             ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
 
         if swap_points:
-            tmp = pfr_target_end
-            pfr_target_end = sol_target_end
-            sol_target_end = tmp
+            pfr_target_end = -pfr_target_end
+            sol_target_end = -sol_target_end
 
         # Add the strike point to diffs to get the absolute positions
         # of the end points of the target
