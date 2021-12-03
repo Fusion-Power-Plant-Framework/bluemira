@@ -46,7 +46,6 @@ from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import (
-    calculate_connection_length_flt,
     calculate_connection_length_fs,
 )
 from bluemira.geometry._deprecated_base import Plane
@@ -1364,7 +1363,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
                 "ftol_abs": 1e-4,
                 "max_eval": 100,
             },
-            "opt_parameters": {},
+            "opt_parameters": {"initial_step": 0.03},
         },
     ):
         # noqa (N803)
@@ -1756,9 +1755,18 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         return fom
 
 
+# TO EXPOSE TO USER
+# Constraint values
+# Constraint tolerances
+# Initial step size
 class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
+    def __init__(self, coilset, sol_width=0.001, first_wall=None, **kwargs):
+        super().__init__(coilset, **kwargs)
+        self.sol_width = sol_width
+        self.first_wall = first_wall
+
     def f_constraint(self, constraint, vector, grad):
-        constraint[:] = super().f_min_objective(vector, grad) - 1.0
+        constraint[:] = super().f_min_objective(vector, grad) - 0.2
         return constraint
 
     def set_up_constraints(self, opt):
@@ -1767,7 +1775,6 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
         """
         tolerance = np.array([1e-6])
         opt.add_ineq_constraints(self.f_constraint, tolerance)
-        opt._opt.set_initial_step(0.03)
         return opt
 
     def f_min_objective(self, vector, grad):
@@ -1821,16 +1828,19 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
 
         try:
             self.zomp = 0.0
-            self.xomp = self._get_sep_out_intersection(outboard=True) + 0.05
-            print(self.xomp)
+            self.xomp = self._get_sep_out_intersection(outboard=True) + self.sol_width
 
             fom = (
                 -calculate_connection_length_fs(
-                    self.eq, self.xomp, self.zomp, forward=True, first_wall=None
+                    self.eq,
+                    self.xomp,
+                    self.zomp,
+                    forward=True,
+                    first_wall=self.first_wall,
                 )
                 / 100.0
             )
-        except:
+        except (ValueError, AttributeError):
             fom = 10.0
 
         return fom

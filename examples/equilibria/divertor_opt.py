@@ -407,7 +407,7 @@ def default_optimiser_options(optimiser_name):
                     "stop_val": -10.0,
                     "max_eval": 40,
                 },
-                "opt_parameters": {"initial_step_size": 0.03},
+                "opt_parameters": {"initial_step": 0.03},
             },
         }
     elif optimiser_name in ["CoilsetOptimiser"]:
