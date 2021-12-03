@@ -25,7 +25,6 @@ Utility functions for interacting with external codes
 
 
 import os
-import subprocess
 import threading
 from typing import Dict, Literal
 
