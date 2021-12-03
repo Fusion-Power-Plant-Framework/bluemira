@@ -36,7 +36,15 @@ import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import NAME as PLASMOD
-from bluemira.codes.plasmod.mapping import Profiles, set_default_mappings
+from bluemira.codes.plasmod.mapping import (
+    Profiles,
+    set_default_mappings,
+    ImpurityModel,
+    TransportModel,
+    EquilibriumModel,
+    PedestalModel,
+    SOLModel,
+)
 
 # Todo: both INPUTS and OUTPUTS must to be completed.
 # DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
@@ -478,10 +486,12 @@ def print_parameter_list(params: Union[PlasmodParameters, dict], fid=sys.stdout)
         print_parameter_list(params.as_dict(), fid)
     elif isinstance(params, dict):
         for k, v in params.items():
+            if isinstance(v, Enum):
+                print(f"{k} {v.value:d}", file=fid)
             if isinstance(v, int):
-                print(k + " %d" % v, file=fid)
-            if isinstance(v, float):
-                print(k + " % 5.4e" % v, file=fid)
+                print(f"{k} {v:d}", file=fid)
+            elif isinstance(v, float):
+                print(f"{k} {v:5.4e}", file=fid)
             else:
                 print(f"{k} {v}", file=fid)
     else:
@@ -514,25 +524,16 @@ class Setup(interface.Setup):
 
 
 class Run(interface.Run):
-    _plasmod_binary = "transporz"  # Who knows why its not called plasmod
+    _binary = "transporz"  # Who knows why its not called plasmod
 
     def __init__(self, parent, **kwargs):
-        super().__init__(parent)
-        self._plasmod_binary = kwargs.pop("binary", self._plasmod_binary)
-
-    @property
-    def binary(self):
-        return self._plasmod_binary
-
-    @binary.setter
-    def binary(self, _binary):
-        self._plasmod_binary = _binary
+        super().__init__(parent, kwargs.pop("binary", self._binary))
 
     def _run(self, *args, **kwargs):
         bluemira_debug("Mode: run")
         super()._run_subprocess(
             [
-                self._plasmod_binary,
+                self._binary,
                 self.parent.setup_obj.input_file,
                 self.parent.setup_obj.output_file,
                 self.parent.setup_obj.profiles_file,
@@ -542,7 +543,7 @@ class Run(interface.Run):
     def _mock(self, *args, **kwargs):
         bluemira_debug("Mode: mock")
         print(
-            f"{self._plasmod_binary} {self.parent.setup_obj.input_file} "
+            f"{self._binary} {self.parent.setup_obj.input_file} "
             f"{self.parent.setup_obj.output_file} "
             f"{self.parent.setup_obj.profiles_file}"
         )
@@ -592,21 +593,22 @@ class Teardown(interface.Teardown):
         if exit_flag != 1:
             if exit_flag == -2:
                 raise CodesError(
-                    "PLASMOD error" "Equilibrium solver crashed: too high pressure"
+                    f"{PLASMOD} error" "Equilibrium solver crashed: too high pressure"
                 )
             elif exit_flag == -1:
                 raise CodesError(
-                    "PLASMOD error"
+                    f"{PLASMOD} error"
                     "Max number of iterations reached"
                     "equilibrium oscillating probably as a result of the pressure being too high"
                     "reducing H may help"
                 )
             elif not exit_flag:
                 raise CodesError(
-                    "PLASMOD error" "Abnormal paramters, possibly dtmax/dtmin too large"
+                    f"{PLASMOD} error"
+                    "Abnormal paramters, possibly dtmax/dtmin too large"
                 )
         else:
-            bluemira_debug("PLASMOD converged successfully")
+            bluemira_debug(f"{PLASMOD} converged successfully")
 
 
 class PlasmodSolver(interface.FileProgramInterface):
@@ -621,6 +623,7 @@ class PlasmodSolver(interface.FileProgramInterface):
         self,
         runmode="run",
         params=None,
+        build_tweaks=None,
         input_file="plasmod_input.dat",
         output_file="outputs.dat",
         profiles_file="profiles.dat",
@@ -633,6 +636,7 @@ class PlasmodSolver(interface.FileProgramInterface):
             self._parameters = params
         elif isinstance(params, Dict):
             self._parameters = Inputs(**params)
+        self._check_models()
         self._out_params = Outputs()
         super().__init__(
             PLASMOD,
@@ -644,6 +648,13 @@ class PlasmodSolver(interface.FileProgramInterface):
             profiles_file=profiles_file,
             binary=binary,
         )
+
+    def _check_models(self):
+        self._parameters.i_impmodel = ImpurityModel(self._parameters.i_impmodel)
+        self._parameters.i_modeltype = TransportModel(self._parameters.i_modeltype)
+        self._parameters.i_equiltype = EquilibriumModel(self._parameters.i_equiltype)
+        self._parameters.i_pedestal = PedestalModel(self._parameters.i_pedestal)
+        self._parameters.isiccir = SOLModel(self._parameters.isiccir)
 
     def get_profile(self, profile):
         return getattr(self._out_params, Profiles(profile).name)

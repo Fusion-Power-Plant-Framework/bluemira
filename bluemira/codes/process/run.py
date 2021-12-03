@@ -56,6 +56,8 @@ class RunMode(interface.RunMode):
 
 
 class Run(interface.Run):
+    _binary = "process"
+
     def _run(self):
         self.parent.run_PROCESS(use_bp_inputs=True)
 
@@ -143,6 +145,7 @@ class ProcessSolver(interface.FileProgramInterface):
         read_dir: Optional[str] = None,
         template_indat: Optional[str] = None,
         params_to_update: Optional[List[str]] = None,
+        binary="process",
     ):
         self._run_dir = run_dir
         self._read_dir = read_dir
@@ -159,7 +162,12 @@ class ProcessSolver(interface.FileProgramInterface):
             else template_indat
         )
 
-        super().__init__(PROCESS, params, build_config["process_mode"])
+        super().__init__(
+            PROCESS,
+            params,
+            build_config["process_mode"],
+            binary=binary,
+        )
 
         self.run()  # Run PROCESS in the given run mode
 

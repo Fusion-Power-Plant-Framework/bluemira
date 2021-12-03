@@ -86,7 +86,7 @@ class Task:
             stderr.close()
 
         if s.returncode:
-            raise CodesError(f"{NAME} exited with a non zero exit code")
+            raise CodesError(f"{self.parent.NAME} exited with a non zero exit code")
 
 
 class Setup(Task):
@@ -102,8 +102,14 @@ class Setup(Task):
 class Run(Task):
     """A class that specified the code run process"""
 
-    def __init__(self, parent, *args, **kwargs):
+    _binary = None
+
+    def __init__(self, parent, binary=None, *args, **kwargs):
         super().__init__(parent)
+        if binary is not None:
+            self._binary = binary
+        if self._binary is None:
+            raise CodesError(f"Binary for {self.parent.NAME} not defined")
 
 
 class Teardown(Task):
@@ -127,6 +133,8 @@ class FileProgramInterface:
     def __init__(
         self, NAME, params, runmode, *args, run_dir=None, default_mappings=None, **kwargs
     ):
+        self.NAME = NAME
+
         if default_mappings is not None:
             find_mappings(NAME, params, default_mappings)
 
@@ -145,21 +153,28 @@ class FileProgramInterface:
         else:
             raise CodesError("Please define a RunMode child lass")
 
-        self.setup_obj = (
-            self._setup if self._setup is None else self._setup(self, *args, **kwargs)
-        )
+        if self._setup is None:
+            self._setup = Setup
 
-        self.run_obj = (
-            self._run if self._run is None else self._run(self, *args, **kwargs)
-        )
+        if self._run is None:
+            self._run = Run
 
-        self.teardown_obj = (
-            self._teardown
-            if self._teardown is None
-            else self._teardown(self, *args, **kwargs)
-        )
+        if self._teardown is None:
+            self._teardown = Teardown
 
-    def _set_runmode(self, runmode):
+        self.setup_obj = self._setup(self, *args, **kwargs)
+        self.run_obj = self._run(self, *args, **kwargs)
+        self.teardown_obj = self._teardown(self, *args, **kwargs)
+
+    @property
+    def binary(self):
+        return self.run_obj._binary
+
+    @binary.setter
+    def binary(self, _binary):
+        self.run_obj._binary = _binary
+
+    def set_runmode(self, runmode):
         """Set the runmode"""
         mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
         self._runner = self._runmode[mode]
