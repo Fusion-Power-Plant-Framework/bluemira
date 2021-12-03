@@ -465,8 +465,8 @@ def plane_intersect(obj, plane):
     list of intersections
 
     """
-    shift = np.linalg.norm(plane.base - np.array(plane.axis))
-
+    shift = np.linalg.norm(np.array(plane.base) - np.array(plane.axis))
+    print(shift, plane.axis)
     if isinstance(obj, BluemiraWire):
         func = "closed_wire_plane_intersect"
     else:

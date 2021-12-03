@@ -94,7 +94,7 @@ class TestWirePlaneIntersect:
         )
 
         xy_plane = BluemiraPlane(axis=[0, 0, 1])
-        intersect = wire_plane_intersect(loop, xy_plane)
+        intersect = plane_intersect(loop, xy_plane)
         e = np.array([[0, 0, 0], [2, 0, 0]])
         e.sort(axis=0)
         intersect.sort(axis=0)
@@ -122,23 +122,24 @@ class TestWirePlaneIntersect:
             ]
         )
         xy_plane = BluemiraPlane(axis=[0, 0, 1])
-        intersect = wire_plane_intersect(wire, xy_plane)
-        assert len(intersect) == 2
+        intersect = plane_intersect(wire, xy_plane)
+        assert intersect[0].shape[1] == 2
 
         xy_plane = BluemiraPlane(base=[0, 0, 2.7], axis=[0, 1, 0])
-        intersect = wire_plane_intersect(wire, xy_plane)
-        assert len(intersect) == 4
+        intersect = plane_intersect(wire, xy_plane)
+        print(intersect)
+        assert intersect[0].shape[1] == 4
 
         plane = BluemiraPlane.from_3_points(
             [0, 0, 4], [1, 0, 4], [0, 1, 4]
         )  # x-y offset
-        intersect = wire_plane_intersect(wire, plane)
-        assert len(intersect) == 1
+        intersect = plane_intersect(wire, plane)
+        assert intersect[0].shape[1] == 1
 
         plane = BluemiraPlane.from_3_points(
             [0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005]
         )  # x-y offset
-        intersect = wire_plane_intersect(wire, plane)
+        intersect = plane_intersect(wire, plane)
         assert intersect is None
 
     def test_other_dims(self):
@@ -169,7 +170,7 @@ class TestWirePlaneIntersect:
             ),  # x-z
             BluemiraPlane(axis=[0, 1, 0]),
         ]:
-            intersect = plane_intersect(wire, plane.axis, shift)
+            intersect = plane_intersect(wire, plane)
             assert intersect[0].shape[1] == 2
 
         shift = 10
@@ -177,9 +178,8 @@ class TestWirePlaneIntersect:
             BluemiraPlane.from_3_points(
                 [0, shift, 0], [1, shift, 0], [0, shift, 1]
             ),  # x-z
-            BluemiraPlane(axis=[0, 1, 0]),
         ]:
-            intersect = plane_intersect(wire, plane.axis, shift)
+            intersect = plane_intersect(wire, plane)
             assert intersect is None
 
     def test_xyzplane(self):
@@ -221,7 +221,7 @@ class TestWirePlaneIntersect:
         )
 
         plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
-        inter = wire_plane_intersect(wire, plane)
+        inter = plane_intersect(wire, plane)
         true = np.array([[0, 0, 1], [2, 0, 1]])
         true.sort(axis=0)
         inter.sort(axis=0)
