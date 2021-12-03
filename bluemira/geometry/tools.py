@@ -470,7 +470,7 @@ def plane_intersect(obj, plane):
     if isinstance(obj, BluemiraWire):
         func = "closed_wire_plane_intersect"
     else:
-        func = "face_plane_intersect"
+        func = "plane_intersect"
     return getattr(cadapi, func)(obj._shape, normal_plane=plane.axis, shift=shift)
 
 

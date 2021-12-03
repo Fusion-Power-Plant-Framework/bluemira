@@ -705,16 +705,16 @@ def closed_wire_plane_intersect(wire, **kwargs):
     """
     Get the plane intersection points of a closed wire
     """
-    return face_plane_intersect(apiFace(wire), **kwargs)
+    return plane_intersect(apiFace(wire), **kwargs)
 
 
-def face_plane_intersect(face, normal_plane=(0, 1, 0), shift=0):
+def plane_intersect(obj, normal_plane=(0, 1, 0), shift=0):
     """
     Get the plane intersection points of a face or solid
     """
     intersects = list()
 
-    for i in face.slice(Base.Vector(*normal_plane), shift):
+    for i in obj.slice(Base.Vector(*normal_plane), shift):
         intersects.append(np.array([[v.X, v.Y, v.Z] for v in i.Vertexes]).T)
 
     return None if intersects == [] else intersects
