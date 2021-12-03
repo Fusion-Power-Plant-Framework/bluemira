@@ -169,42 +169,42 @@ class Coordinates:
     @property
     def x(self):
         """
-        x coordinate vector
+        The x coordinate vector
         """
         return self._array[0]
 
     @property
     def y(self):
         """
-        y coordinate vector
+        The y coordinate vector
         """
         return self._array[1]
 
     @property
     def z(self):
         """
-        z coordinate vector
+        The z coordinate vector
         """
         return self._array[2]
 
     @property
     def xy(self):
         """
-        x-y coordinate array
+        The x-y coordinate array
         """
         return self._array[[0, 1], :]
 
     @property
     def xz(self):
         """
-        x-z coordinate array
+        The x-z coordinate array
         """
         return self._array[[0, 2], :]
 
     @property
     def yz(self):
         """
-        y-z coordinate array
+        The y-z coordinate array
         """
         return self._array[[1, 2], :]
 
