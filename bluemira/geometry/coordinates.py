@@ -29,6 +29,11 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import EPS
 from bluemira.geometry.error import CoordinatesError
+from bluemira.geometry._deprecated_tools import (
+    get_perimeter_3d,
+    get_area_3d,
+    get_centroid_3d,
+)
 
 
 class Coordinates:
@@ -41,6 +46,7 @@ class Coordinates:
 
     Parameters
     ----------
+    xyz_array: Union[np.ndarray, dict, Iterable[Iterable]]
 
     Notes
     -----
@@ -52,11 +58,11 @@ class Coordinates:
     # =============================================================================
     # Instantiation
     # =============================================================================
-    def __init__(self, xyz_array, enforce_ccw=True):
+    def __init__(self, xyz_array, enforce_ccw=False):
         self._array = self._parse_input(xyz_array)
 
-        # if not self._check_ccw() and enforce_ccw:
-        #    self.reverse()
+        # if not self.ccw and enforce_ccw:
+        #     self.reverse()
 
     def _parse_input(self, xyz_array):
         if isinstance(xyz_array, np.ndarray):
@@ -72,6 +78,13 @@ class Coordinates:
         return xyz_array
 
     def _parse_array(self, xyz_array):
+        try:
+            xyz_array = np.array(np.atleast_2d(xyz_array), dtype=np.float64)
+        except ValueError:
+            raise CoordinatesError(
+                "Cannot instantiate Coordinates with a ragged (3, N | M) array."
+            )
+
         shape = xyz_array.shape
         if len(shape) > 2:
             raise NotImplementedError
@@ -82,19 +95,30 @@ class Coordinates:
                 bluemira_warn(
                     "You are creating Coordinates with a (3, 3) array, defaulting to (3, N)."
                 )
-            return xyz_array
 
-        if m == 3:
-            return xyz_array.T
+        elif m == 3:
+            xyz_array = xyz_array.T
+
+        else:
+            raise CoordinatesError(
+                "Cannot instantiate Coordinates where either n or m != 3."
+            )
+
+        if not np.allclose([len(xyz_array[i]) for i in range(3)], len(xyz_array[0])):
+            raise CoordinatesError(
+                "Cannot instantiate Coordinates with a ragged (3, N | M) array."
+            )
+
+        return xyz_array
 
     def _parse_dict(self, xyz_dict):
         x = np.atleast_1d(xyz_dict.get("x", 0))
         y = np.atleast_1d(xyz_dict.get("y", 0))
         z = np.atleast_1d(xyz_dict.get("z", 0))
 
-        shape_lengths = [len(c.shape) for c in [x, y, z]]
+        shape_lengths = np.array([len(c.shape) for c in [x, y, z]])
 
-        if any(shape_lengths > 1):
+        if np.any(shape_lengths > 1):
             raise CoordinatesError(
                 "Cannot instantiate Coordinates from dict with coordinate vectors that are not 1-D."
             )
@@ -111,6 +135,7 @@ class Coordinates:
                 "Cannot instantiate Coordinate from dict with a ragged set of vectors."
             )
 
+        # Backfill single-value coordinates
         actual_length = usable_lengths[0]
         if len(x) == 1:
             x = x[0] * np.ones(actual_length)
@@ -122,20 +147,18 @@ class Coordinates:
         return np.array([x, y, z])
 
     def _parse_iterable(self, xyz_iterable):
-        xyz_array = np.array(xyz_iterable)
+        # We temporarily set the dtype to object to avoid a VisibleDeprecationWarning
+        xyz_array = np.array(xyz_iterable, dtype=object)
         return self._parse_array(xyz_array)
+
+    def _parse_dtype(self, xyz_array):
+        return np.array(xyz_array, dtype=np.float64)
 
     # =============================================================================
     # Checks
     # =============================================================================
 
-    def _check_dimension(self):
-        pass
-
     def _check_ccw(self):
-        pass
-
-    def _check_closed(self):
         pass
 
     # =============================================================================
@@ -153,6 +176,18 @@ class Coordinates:
     @property
     def z(self):
         return self._array[2]
+
+    @property
+    def xy(self):
+        return self._array[[0, 1], :]
+
+    @property
+    def xz(self):
+        return self._array[[0, 2], :]
+
+    @property
+    def yz(self):
+        return self._array[[1, 2], :]
 
     # =========================================================================
     # Conversions
@@ -174,16 +209,37 @@ class Coordinates:
     # =============================================================================
 
     @property
+    def closed(self) -> bool:
+        """
+        Whether or not this is a closed set of Coordinates.
+        """
+        if len(self) > 2:
+            if np.allclose(self[:, 0], self[:, -1], rtol=0, atol=EPS):
+                return True
+        return False
+
+    @property
+    def ccw(self) -> bool:
+        """
+        Whether or not the Coordinates are ordered in the counter-clockwise direction.
+        """
+        return True
+
+    @property
     def length(self) -> float:
-        pass
+        return get_perimeter_3d(*self._array)
 
     @property
     def area(self) -> float:
-        pass
+        if not self.closed:
+            return 0.0
+        return get_area_3d(*self._array)
 
     @property
     def center_of_mass(self) -> tuple:
-        pass
+        # [sic] coordinates do not have a "mass", but named such for consistency with
+        # other geometry objects.
+        return tuple(get_centroid_3d(*self._array))
 
     # =============================================================================
     # Array-like behaviour
@@ -207,13 +263,24 @@ class Coordinates:
     # Modification
     # =============================================================================
     def reverse(self):
-        pass
+        """
+        Reverse the direction of the Coordinates.
+        """
+        self._array = self._array[:, ::-1]
 
     def open(self):
-        pass
+        """
+        Open the Coordinates (if they are closed)
+        """
+        if self.closed:
+            self._array = self._array[:, :-1]
 
     def close(self):
-        pass
+        """
+        Close the Coordinates (if they are open)
+        """
+        if not self.closed:
+            self._array = np.vstack((self._array.T, self._array[:, 0])).T
 
     def rotate(self, base, direction, degree):
         pass
@@ -222,7 +289,7 @@ class Coordinates:
         pass
 
     # =============================================================================
-    # Dunders
+    # Dunders (with different behaviour to array)
     # =============================================================================
 
     def __eq__(self, other):
@@ -244,10 +311,23 @@ class Coordinates:
         Coordinates with identical coordinates but different orderings will not be
         counted as identical.
         """
-        if isinstance(other, self.__class):
-            return np.all(np.allclose(self._array, other._array), rtol=0, atol=EPS)
+        if isinstance(other, self.__class__):
+            return np.all(np.allclose(self._array, other._array, rtol=0, atol=EPS))
         return False
+
+    def __len__(self):
+        """
+        The number of points in the Coordinates.
+        """
+        return len(self._array[0])
+
+    # =============================================================================
+    # Array-like dunders
+    # =============================================================================
 
     def __repr__(self):
         r = self._array.__repr__()
         return f"{self.__class__.__name__}{r[5:]}"
+
+    def __getitem__(self, *args, **kwargs):
+        return self._array.__getitem__(*args, **kwargs)
