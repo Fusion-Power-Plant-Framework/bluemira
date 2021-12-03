@@ -1,8 +1,8 @@
 ---
-name: STEP bug report
-about: Create a report to help us improve - use this for issues relating to STEP design
+name: General bug report
+about: Create a report to help us improve
 title: ''
-labels: bug, STEP
+labels: bug
 assignees: ''
 
 ---

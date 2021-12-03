@@ -1,6 +1,6 @@
 ---
 name: STEP feature request
-about: Suggest an idea for this project
+about: Suggest an idea for this project - use this for requests relating to STEP design
 title: ''
 labels: STEP
 assignees: ''
