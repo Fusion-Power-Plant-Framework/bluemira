@@ -1,8 +1,7 @@
 ---
-name: EU-DEMO feature request
-about: Suggest an idea for this project - use this for requests relating to EU-DEMO design
+name: Feature request
+about: Suggest an idea for this project
 title: ''
-labels: EU-DEMO
 assignees: ''
 
 ---

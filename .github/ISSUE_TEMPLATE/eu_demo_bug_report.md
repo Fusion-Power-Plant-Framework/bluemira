@@ -1,6 +1,6 @@
 ---
 name: EU-DEMO bug report
-about: Create a report to help us improve
+about: Create a report to help us improve - use this for issues relating to EU-DEMO design
 title: ''
 labels: bug, EU-DEMO
 assignees: ''
