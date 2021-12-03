@@ -29,7 +29,7 @@ from bluemira.geometry.tools import (
     _signed_distance_2D,
     make_polygon,
     wire_plane_intersect,
-    closed_wire_plane,
+    plane_intersect,
 )
 from bluemira.geometry.plane import BluemiraPlane
 
@@ -169,7 +169,7 @@ class TestWirePlaneIntersect:
             ),  # x-z
             BluemiraPlane(axis=[0, 1, 0]),
         ]:
-            intersect = closed_wire_plane(wire, plane.axis, shift)
+            intersect = plane_intersect(wire, plane.axis, shift)
             assert intersect[0].shape[1] == 2
 
         shift = 10
@@ -179,7 +179,7 @@ class TestWirePlaneIntersect:
             ),  # x-z
             BluemiraPlane(axis=[0, 1, 0]),
         ]:
-            intersect = closed_wire_plane(wire, plane.axis, shift)
+            intersect = plane_intersect(wire, plane.axis, shift)
             assert intersect is None
 
     def test_xyzplane(self):
@@ -205,7 +205,8 @@ class TestWirePlaneIntersect:
         )
         wire.translate((-2, 0, 0))
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
-        intersect = wire_plane_intersect(wire, plane)
+        intersect = plane_intersect(wire, plane)
+        assert intersect[0].shape[1] == 2
 
     def test_flat_intersect(self):
         # test that a shared segment with plane only gives two intersects

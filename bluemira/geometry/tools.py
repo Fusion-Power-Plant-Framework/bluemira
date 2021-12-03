@@ -450,13 +450,28 @@ def wire_plane_intersect(wire, plane):
     return cadapi.wire_plane_intersect(wire._shape, plane._shape)
 
 
-def closed_wire_plane(wire, normal_plane=(0, 1, 0), shift=0):
+def plane_intersect(obj, plane):
     """
-    Closed wire plane intersection
+    Calculate the plane intersection points with an object
+
+    Parameters
+    ----------
+    obj: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
+        obj to intersect with a plane
+    plane: BluemiraPlane
+
+    Returns
+    -------
+    list of intersections
+
     """
-    return cadapi.closed_wire_plane_intersect(
-        wire._shape, normal_plane=normal_plane, shift=shift
-    )
+    shift = np.linalg.norm(plane.base - np.array(plane.axis))
+
+    if isinstance(obj, BluemiraWire):
+        func = "closed_wire_plane_intersect"
+    else:
+        func = "face_plane_intersect"
+    return getattr(cadapi, func)(obj._shape, normal_plane=plane.axis, shift=shift)
 
 
 def circular_pattern(
