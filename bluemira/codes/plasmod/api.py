@@ -185,7 +185,7 @@ class Setup(interface.Setup):
         self.profiles_file = profiles_file
 
     def _run(self, *args, **kwargs):
-        """batch setup function"""
+        """Run setup function"""
         print(self.parent._parameters)
         write_input_file(self.parent._parameters, self.parent.setup_obj.input_file)
 
