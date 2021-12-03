@@ -64,6 +64,7 @@ __all__ = [
     "CoilsetOptimiser",
     "NestedCoilsetOptimiser",
     "Norm2Tikhonov",
+    "ConnectionLengthOptimiser",
 ]
 
 
@@ -1820,7 +1821,7 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
 
         try:
             self.zomp = 0.0
-            self.xomp = self._get_sep_out_intersection(outboard=True) + 0.001
+            self.xomp = self._get_sep_out_intersection(outboard=True) + 0.05
             print(self.xomp)
 
             fom = (
