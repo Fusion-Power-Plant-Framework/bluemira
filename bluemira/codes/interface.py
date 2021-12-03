@@ -79,9 +79,9 @@ class Task:
         kwargs["cwd"] = kwargs.get("cwd", self._run_dir)
         kwargs.pop("shell", None)  # Protect against user input
 
-        with subprocess.Popen(
+        with subprocess.Popen(  # noqa (S603)
             command, stdout=stdout, stderr=stderr, **kwargs
-        ) as s:  # noqa (S603)
+        ) as s:
             stdout.close()
             stderr.close()
 
