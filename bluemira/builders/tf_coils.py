@@ -465,7 +465,7 @@ class BuildTFCasing:
         outer_ins = self.ins_cross_section.deepcopy()
         outer_ins.translate((x_out - outer_ins.center_of_mass[0], 0, 0))
 
-        outer_face = BluemiraFace([outer_wire, outer_ins])
+        outer_face = BluemiraFace([outer_ins.boundary[0], outer_wire])
         return [
             PhysicalComponent(self.name, inner_face),
             PhysicalComponent(self.name, outer_face),
