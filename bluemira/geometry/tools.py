@@ -462,7 +462,10 @@ def plane_intersect(obj, plane):
 
     Returns
     -------
-    list of intersections
+    Wire:
+        returns array of intersection points
+    Face, Solid, Shell:
+        list of intersections lines
 
     """
     shift = np.linalg.norm(np.array(plane.base) - np.array(plane.axis))

@@ -705,7 +705,9 @@ def closed_wire_plane_intersect(wire, **kwargs):
     """
     Get the plane intersection points of a closed wire
     """
-    return plane_intersect(apiFace(wire), **kwargs)
+    intersects = plane_intersect(apiFace(wire), **kwargs)
+    if intersects is not None:
+        return np.concatenate([arr.T for arr in intersects])
 
 
 def plane_intersect(obj, normal_plane=(0, 1, 0), shift=0):

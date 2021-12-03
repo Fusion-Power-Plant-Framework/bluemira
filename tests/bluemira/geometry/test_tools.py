@@ -123,18 +123,18 @@ class TestWirePlaneIntersect:
         )
         xy_plane = BluemiraPlane(axis=[0, 0, 1])
         intersect = plane_intersect(wire, xy_plane)
-        assert intersect[0].shape[1] == 2
+        assert intersect.shape[0] == 2
 
         xy_plane = BluemiraPlane(base=[0, 0, 2.7], axis=[0, 1, 0])
         intersect = plane_intersect(wire, xy_plane)
         print(intersect)
-        assert intersect[0].shape[1] == 4
+        assert intersect.shape[0] == 4
 
         plane = BluemiraPlane.from_3_points(
             [0, 0, 4], [1, 0, 4], [0, 1, 4]
         )  # x-y offset
         intersect = plane_intersect(wire, plane)
-        assert intersect[0].shape[1] == 1
+        assert intersect.shape[0] == 1
 
         plane = BluemiraPlane.from_3_points(
             [0, 0, 4.0005], [1, 0, 4.0005], [0, 1, 4.0005]
@@ -171,7 +171,7 @@ class TestWirePlaneIntersect:
             BluemiraPlane(axis=[0, 1, 0]),
         ]:
             intersect = plane_intersect(wire, plane)
-            assert intersect[0].shape[1] == 2
+            assert intersect.shape[0] == 2
 
         shift = 10
         for plane in [
@@ -206,7 +206,7 @@ class TestWirePlaneIntersect:
         wire.translate((-2, 0, 0))
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
         intersect = plane_intersect(wire, plane)
-        assert intersect[0].shape[1] == 2
+        assert intersect.shape[0] == 2
 
     def test_flat_intersect(self):
         # test that a shared segment with plane only gives two intersects
