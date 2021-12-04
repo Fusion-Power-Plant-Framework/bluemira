@@ -682,7 +682,7 @@ class Equilibrium(MHDState):
             psi_bndry = xpoints[0][2]
         else:
             psi_bndry = np.amin(psi)
-        psinorm = np.linspace(0, 1, n_x)  # No separatrix
+        psinorm = np.linspace(0, 1, n_x)
 
         if qpsi_calcmode is QpsiCalcMode.CALC:
             # This is too damn slow..
