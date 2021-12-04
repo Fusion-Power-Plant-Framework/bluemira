@@ -32,6 +32,7 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.profiles import DoublePowerFunc
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
+from bluemira.utilities.tools import compare_dicts
 
 
 class TestFields:
@@ -249,6 +250,24 @@ class TestEquilibrium:
             assert eq_q.call_count == 1
             assert "qpsi" in res
             assert np.all(res["qpsi"] == 0)  # array is all zeros
+
+
+class TestEqReadWrite:
+    def test_read_write(self):
+        data_path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+        file_name = "eqref_OOB.json"
+        file_path = os.sep.join([data_path, file_name])
+
+        new_file_name = "eqref_OOB_temp1.json"
+        new_file_path = os.sep.join([data_path, new_file_name])
+        eq = Equilibrium.from_eqdsk(file_path)
+        eq.to_eqdsk(new_file_path)
+        d1 = eq.to_dict()
+
+        eq2 = Equilibrium.from_eqdsk(new_file_path)
+        d2 = eq2.to_dict()
+        os.remove(new_file_path)
+        assert compare_dicts()
 
 
 if __name__ == "__main__":
