@@ -253,8 +253,7 @@ class TestEquilibrium:
 
 
 class TestEqReadWrite:
-    @pytest.mark.parametrize("qpsi_calcmode", [0, 1])
-    def test_read_write(self, qpsi_calcmode):
+    def test_read_write(self):
         data_path = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
         file_name = "eqref_OOB.json"
         file_path = os.sep.join([data_path, file_name])
@@ -262,13 +261,13 @@ class TestEqReadWrite:
         new_file_name = "eqref_OOB_temp1.json"
         new_file_path = os.sep.join([data_path, new_file_name])
         eq = Equilibrium.from_eqdsk(file_path)
-        eq.to_eqdsk(directory=data_path, filename=new_file_name)
-        d1 = eq.to_dict(qpsi_calcmode=qpsi_calcmode)
+        eq.to_eqdsk(new_file_path)
+        d1 = eq.to_dict()
 
         eq2 = Equilibrium.from_eqdsk(new_file_path)
-        d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode)
+        d2 = eq2.to_dict()
         os.remove(new_file_path)
-        assert compare_dicts(d1, d2)
+        assert compare_dicts()
 
 
 if __name__ == "__main__":
