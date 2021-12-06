@@ -52,6 +52,11 @@ DEFAULT_PLOT_OPTIONS = {
     "byedges": True,
 }
 
+UNIT_LABEL = "[m]"
+X_LABEL = f"x {UNIT_LABEL}"
+Y_LABEL = f"y {UNIT_LABEL}"
+Z_LABEL = f"z {UNIT_LABEL}"
+
 
 def get_default_options():
     """
@@ -332,6 +337,27 @@ class BasePlotter(ABC):
     def _set_aspect_2d(self):
         self.ax.set_aspect("equal")
 
+    def _set_label_2d(self):
+        # TODO: BluemiraPlane stuff.... I feel like the axis may not be the plane normal
+        # and this makes me very sad. The workaround here is by creating the planes from
+        # strs, but we're unlikely to recognise a user-input BluemiraPlane.
+        # Note that the angle argument gets used to rotate the data for reasons I still
+        # do not understand, hence why the axis here is not the plane normal..
+        axis = np.abs(self.options.plane.axis)
+        if np.allclose(axis, (1, 0, 0)):
+            self.ax.set_xlabel(X_LABEL)
+            self.ax.set_ylabel(Z_LABEL)
+        elif np.allclose(axis, (0, 0, 1)):
+            self.ax.set_xlabel(X_LABEL)
+            self.ax.set_ylabel(Y_LABEL)
+        elif np.allclose(axis, (0, 1, 0)):
+            self.ax.set_xlabel(Y_LABEL)
+            self.ax.set_ylabel(Z_LABEL)
+        else:
+            # Do not put x,y,z labels for planes we do not recognise
+            self.ax.set_xlabel(UNIT_LABEL)
+            self.ax.set_ylabel(UNIT_LABEL)
+
     def _set_aspect_3d(self):
         # This was the only way I found to get 3-D plots to look right in matplotlib
         x_bb, y_bb, z_bb = geo.bound_box.BoundingBox.from_xyz(
@@ -339,6 +365,12 @@ class BasePlotter(ABC):
         ).get_box_arrays()
         for x, y, z in zip(x_bb, y_bb, z_bb):
             self.ax.plot([x], [y], [z], color="w")
+
+    def _set_label_3d(self):
+        offset = "\n\n"  # To keep labels from interfering with the axes
+        self.ax.set_xlabel(offset + X_LABEL)
+        self.ax.set_ylabel(offset + Y_LABEL)
+        self.ax.set_zlabel(offset + Z_LABEL)
 
     def plot_2d(self, obj, ax=None, show: bool = True):
         """2D plotting method"""
@@ -351,6 +383,7 @@ class BasePlotter(ABC):
             self._populate_data(obj)
             self._make_plot_2d()
             self._set_aspect_2d()
+            self._set_label_2d()
 
             if show:
                 self.show()
@@ -390,6 +423,7 @@ class BasePlotter(ABC):
             self._populate_data(obj)
             self._make_plot_3d()
             self._set_aspect_3d()
+            self._set_label_3d()
 
             if show:
                 self.show()
