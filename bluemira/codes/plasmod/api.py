@@ -28,8 +28,9 @@ import csv
 import json
 import pprint
 import sys
+import os
 from enum import Enum, auto
-from typing import Dict, Union
+from typing import Dict, Union, Iterable
 
 import numpy as np
 
@@ -58,7 +59,7 @@ def get_default_plasmod_inputs():
     Returns a copy of the default plasmo inputs
     """
     path = get_bluemira_path("codes/plasmod")
-    with open(path + "/PLASMOD_DEFAULT_IN.json") as jfh:
+    with open(path + "/PLASMOD_DEFAULT_IN.json", "r") as jfh:
         return json.load(jfh, cls=CommentJSONDecoder)
 
 
@@ -67,7 +68,7 @@ def get_default_plasmod_outputs():
     Returns a copy of the defaults plasmod outputs.
     """
     path = get_bluemira_path("codes/plasmod")
-    with open(path + "/PLASMOD_DEFAULT_OUT.json") as jfh:
+    with open(path + "/PLASMOD_DEFAULT_OUT.json", "r") as jfh:
         return json.load(jfh, cls=CommentJSONDecoder)
 
 
@@ -116,6 +117,10 @@ class Inputs(PlasmodParameters):
         self._options = get_default_plasmod_inputs()
         super().__init__(**kwargs)
 
+    def items(self):
+        for k, v in self._options.items():
+            yield k, v
+
 
 class Outputs(PlasmodParameters):
     """Class for Plasmod outputs"""
@@ -123,51 +128,6 @@ class Outputs(PlasmodParameters):
     def __init__(self, **kwargs):
         self._options = get_default_plasmod_outputs()
         super().__init__(**kwargs)
-
-
-def write_input_file(params: Union[PlasmodParameters, dict], filename: str):
-    """Write a set of PlasmodParameters into a file"""
-    print(filename)
-    # open input file
-    fid = open(filename, "w")
-
-    # print all input parameters
-    print_parameter_list(params, fid)
-
-    # close file
-    fid.close()
-
-
-def print_parameter_list(params: Union[PlasmodParameters, dict], fid=sys.stdout):
-    """
-    Print a set of parameter to screen or into an open file
-
-    Parameters
-    ----------
-    params: Union[PlasmodParameters, dict]
-        set of parameters to be printed
-    fid:
-        object where to direct the output of print. Default sys.stdout (print to
-        screen)
-
-    Notes
-    -----
-    Used format: %d for integer, %5.4e for float, default format for other instances.
-    """
-    if isinstance(params, PlasmodParameters):
-        print_parameter_list(params.as_dict(), fid)
-    elif isinstance(params, dict):
-        for k, v in params.items():
-            if isinstance(v, Enum):
-                print(f"{k} {v.value:d}", file=fid)
-            if isinstance(v, int):
-                print(f"{k} {v:d}", file=fid)
-            elif isinstance(v, float):
-                print(f"{k} {v:5.4e}", file=fid)
-            else:
-                print(f"{k} {v}", file=fid)
-    else:
-        raise ValueError("Wrong input")
 
 
 class RunMode(interface.RunMode):
@@ -181,9 +141,28 @@ class Setup(interface.Setup):
     def __init__(self, parent, input_file, output_file, profiles_file, **kwargs):
         super().__init__(parent)
         self._check_models()
+        self.profiles_file = profiles_file
+        self.filepath = get_bluemira_path("codes/plasmod")
+        self.def_outfile = "PLASMOD_DEFAULT_OUT.json"
+        self.def_infile = "PLASMOD_DEFAULT_IN.json"
         self.input_file = input_file
         self.output_file = output_file
-        self.profiles_file = profiles_file
+
+    def _write(self, params, filename):
+
+        with open(filename, "w") as fid:
+            for k, v in params.items():
+                if isinstance(v, Enum):
+                    fid.write(f"{k} {v.value:d}\n")
+                elif isinstance(v, int):
+                    fid.write(f"{k} {v:d}\n")
+                elif isinstance(v, float):
+                    fid.write(f"{k} {v:5.4e}\n")
+                else:
+                    fid.write(f"{k} {v}\n")
+
+    def write_input(self):
+        self._write(self.parent.params, os.path.join(self.filepath, self.input_file))
 
     def _check_models(self):
         self.parent._params.i_impmodel = ImpurityModel(self.parent._params.i_impmodel)
@@ -195,12 +174,44 @@ class Setup(interface.Setup):
         self.parent._params.isiccir = SOLModel(self.parent._params.isiccir)
 
     def _run(self, *args, **kwargs):
-        """Run setup function"""
-        write_input_file(self.parent.params, self.parent.setup_obj.input_file)
+        """
+        Run plasmod setup
+        """
+        self.write_input()
 
     def _mock(self, *args, **kwargs):
-        """Mock setup function"""
-        write_input_file(self.parent.params, self.parent.setup_obj.input_file)
+        """
+        Mock plasmod setup
+        """
+        self.write_input()
+
+    def get_default_plasmod_outputs(self):
+        """
+        Returns a copy of the defaults plasmod outputs.
+        """
+        return self._load_default_from_json(
+            os.path.join(self.filepath, self.def_outfile)
+        )
+
+    def get_default_plasmod_inputs(self):
+        """
+        Returns a copy of the default plasmod inputs
+        """
+        return self._load_default_from_json(os.path.join(self.filepath, self.def_infile))
+
+    @staticmethod
+    def _load_default_from_json(filepath: str):
+        """
+        Load json file
+
+        Parameters
+        ----------
+        filepath: str
+            json file to load
+        """
+        bluemira_debug(filename)
+        with open(filepath) as jfh:
+            return json.load(jfh, cls=CommentJSONDecoder)
 
 
 class Run(interface.Run):
@@ -210,6 +221,9 @@ class Run(interface.Run):
         super().__init__(parent, kwargs.pop("binary", self._binary))
 
     def _run(self, *args, **kwargs):
+        """
+        Run plasmod run
+        """
         bluemira_debug("Mode: run")
         super()._run_subprocess(
             [
@@ -223,23 +237,41 @@ class Run(interface.Run):
 
 class Teardown(interface.Teardown):
     def _run(self, *args, **kwargs):
+        """
+        Run plasmod teardown
+        """
         output = self.read_output_files(self.parent.setup_obj.output_file)
         self.parent._out_params.modify(**output)
         self._check_return_value()
         output = self.read_output_files(self.parent.setup_obj.profiles_file)
         self.parent._out_params.modify(**output)
-        print_parameter_list(self.parent._out_params)
+        # print_parameter_list(self.parent._out_params)
 
     def _mock(self, *args, **kwargs):
+        """
+        Mock plasmod teardown
+        """
         output = self.read_output_files(self.parent.setup_obj.output_file)
         self.parent._out_params.modify(**output)
         output = self.read_output_files(self.parent.setup_obj.profiles_file)
         self.parent._out_params.modify(**output)
-        print_parameter_list(self.parent._out_params)
+        # print_parameter_list(self.parent._out_params)
 
     @staticmethod
-    def read_output_files(output_file):
-        """Read the Plasmod output parameters from the output file"""
+    def read_output_files(output_file: str):
+        """
+        Read the Plasmod output parameters from the output file
+
+        Parameters
+        ----------
+        output_file: str
+            Read a plasmod output filename
+
+        Returns
+        -------
+        output: dict
+
+        """
         output = {}
         with open(output_file, "r") as fd:
             reader = csv.reader(fd, delimiter="\t")
@@ -254,13 +286,17 @@ class Teardown(interface.Teardown):
         return output
 
     def _check_return_value(self):
-        # [-] exit flag
-        #  1: PLASMOD converged successfully
-        # -1: Max number of iterations achieved
-        # (equilibrium oscillating, pressure too high, reduce H)
-        # 0: transport solver crashed (abnormal parameters
-        # or too large dtmin and/or dtmin
-        # -2: Equilibrium solver crashed: too high pressure
+        """
+        Check the return value of plasmod
+
+         1: PLASMOD converged successfully
+        -1: Max number of iterations achieved
+            (equilibrium oscillating, pressure too high, reduce H)
+         0: transport solver crashed (abnormal parameters
+            or too large dtmin and/or dtmin
+        -2: Equilibrium solver crashed: too high pressure
+
+        """
         exit_flag = self.parent._out_params._i_flag
         if exit_flag != 1:
             if exit_flag == -2:
@@ -295,7 +331,7 @@ class Solver(interface.FileProgramInterface):
         self,
         runmode="run",
         params=None,
-        build_tweaks=None,
+        build_config=None,
         input_file="plasmod_input.dat",
         output_file="outputs.dat",
         profiles_file="profiles.dat",
@@ -320,11 +356,37 @@ class Solver(interface.FileProgramInterface):
             binary=binary,
         )
 
-    def get_profile(self, profile):
+    def get_profile(self, profile: str):
+        """
+        Get a single profile
+
+        Parameters
+        ----------
+        profile: str
+            A profile to get the data for
+
+        Returns
+        -------
+        A profile data
+
+        """
         return getattr(self._out_params, Profiles(profile).name)
 
-    def get_profiles(self, profiles):
+    def get_profiles(self, profiles: Iterable):
+        """
+        Get list of profiles
+
+        Parameters
+        ----------
+        profiles: Iterable
+            A list of profiles to get data for
+
+        Returns
+        -------
+        dictionary of the profiles request
+
+        """
         profiles_dict = {}
         for profile in profiles:
             profiles_dict[profile] = self.get_profile(profile)
-        return profiles_dict[profile]
+        return profiles_dict
