@@ -22,6 +22,7 @@
 """
 Constrained and unconstrained optimisation tools for coilset design
 """
+from re import S
 import numpy as np
 import nlopt
 from typing import Type
@@ -1758,24 +1759,35 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 # TO EXPOSE TO USER
 # Constraint values
 # Constraint tolerances
-# Initial step size
-class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
-    def __init__(self, coilset, sol_width=0.001, first_wall=None, **kwargs):
-        super().__init__(coilset, **kwargs)
-        self.sol_width = sol_width
-        self.first_wall = first_wall
+class OptimiserConstraint:
+    def __init__(self, tolerance=1e-6, constraint_type="inequality"):
+        self.tolerance = tolerance
+        self.constraint_type = constraint_type
 
     def f_constraint(self, constraint, vector, grad):
-        constraint[:] = super().f_min_objective(vector, grad) - 0.2
         return constraint
 
     def set_up_constraints(self, opt):
-        """
-        Set up constraints to be held during optimisation.
-        """
-        tolerance = np.array([1e-6])
-        opt.add_ineq_constraints(self.f_constraint, tolerance)
+        if self.constraint_type == "inequality":
+            opt.add_ineq_constraints(self.f_constraint, self.tolerance)
+        elif self.constraint_type == "equality":
+            opt.add_ineq_constraints(self.f_constraint, self.tolerance)
         return opt
+
+
+class TargetIsofluxConstraint(OptimiserConstraint):
+    def f_constraint(self, constraint, vector, grad):
+        constraint[:] = super().f_min_objective(vector, grad) - 0.2
+        # constraint[:] = test_objective(self, vector, grad) - 0.2
+        return constraint
+
+
+class ConnectionLengthOptimiser(BoundedCurrentOptimiser, TargetIsofluxConstraint):
+    def __init__(self, coilset, sol_width=0.001, first_wall=None, **kwargs):
+        super().__init__(coilset, **kwargs)
+
+        self.sol_width = sol_width
+        self.first_wall = first_wall
 
     def f_min_objective(self, vector, grad):
         """
@@ -1873,3 +1885,51 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
             x_sep_mp = sep_intersections.T[0][sep_arg]
 
         return x_sep_mp
+
+
+# OptimiserConstraintSet mixin - provides apply_constraints function and constraint functions
+# self available
+# class OptimiserConstraintSet:
+#     def f_constraint(self, constraint, vector, grad):
+#         constraint[:] = super().f_min_objective(vector, grad) - 0.2
+#         return constraint
+
+#     def set_up_constraints(self, opt):
+#         """
+#         Set up constraints to be held during optimisation.
+#         """
+#         opt = self.opt_constraints.apply_constraint(opt)
+#         # opt.add_ineq_constraints(self.f_constraint, tolerance)
+#         return opt
+
+
+def test_objective(self, vector, grad):
+    """
+    Objective function for nlopt optimisation (minimisation),
+    consisting of a least-squares objective with Tikhonov
+    regularisation term, which updates the gradient in-place.
+
+    Parameters
+    ----------
+    vector: np.array(n_C)
+        State vector of the array of coil currents.
+    grad: np.array
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
+
+    Returns
+    -------
+    fom: Value of objective function (figure of merit).
+    """
+    vector = vector * self.scale
+    fom, err = regularised_lsq_fom(vector, self.A, self.b, self.gamma)
+    if grad.size > 0:
+        jac = 2 * self.A.T @ self.A @ vector / np.float(len(self.b))
+        jac -= 2 * self.A.T @ self.b / np.float(len(self.b))
+        jac += 2 * self.gamma * self.gamma * vector
+        grad[:] = self.scale * jac
+    if not fom > 0:
+        raise EquilibriaError(
+            "Optimiser least-squares objective function less than zero or nan."
+        )
+    return fom
