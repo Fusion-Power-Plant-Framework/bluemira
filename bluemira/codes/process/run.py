@@ -25,7 +25,6 @@ PROCESS run functions
 
 from __future__ import annotations
 
-import json
 import os
 import subprocess  # noqa (S404)
 from enum import auto
@@ -33,9 +32,8 @@ from typing import Dict, List, Optional
 
 import bluemira.base as bm_base
 import bluemira.codes.interface as interface
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-from bluemira.codes.error import CodesError
-from bluemira.codes.process.api import DEFAULT_INDAT, update_obsolete_vars
+from bluemira.base.look_and_feel import bluemira_print
+from bluemira.codes.process.api import DEFAULT_INDAT
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.setup import Setup
 from bluemira.codes.process.teardown import Teardown

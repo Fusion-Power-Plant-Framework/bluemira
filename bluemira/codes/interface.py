@@ -25,11 +25,10 @@ The bluemira external code wrapper
 from __future__ import annotations
 
 import string
-import subprocess
+import subprocess  # noqa (S404)
 from enum import Enum
 
 import bluemira.base as bm_base
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.utilities import LogPipe, get_recv_mapping, get_send_mapping
 
