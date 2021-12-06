@@ -153,11 +153,16 @@ class GeometryParameterisation(abc.ABC):
 class PrincetonD(GeometryParameterisation):
     """
     Princeton D geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -180,7 +185,7 @@ class PrincetonD(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
 
         super().__init__(variables)
 
@@ -289,11 +294,16 @@ class PrincetonD(GeometryParameterisation):
 class TripleArc(GeometryParameterisation):
     """
     Triple-arc up-down symmetric geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -328,7 +338,7 @@ class TripleArc(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -410,11 +420,16 @@ class TripleArc(GeometryParameterisation):
 class SextupleArc(GeometryParameterisation):
     """
     Sextuple-arc up-down asymmetric geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -476,7 +491,7 @@ class SextupleArc(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     @staticmethod
@@ -565,11 +580,16 @@ class SextupleArc(GeometryParameterisation):
 class PolySpline(GeometryParameterisation):
     """
     Simon McIntosh's Poly-Bézier-spline geometry parameterisation (19 variables).
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -684,7 +704,7 @@ class PolySpline(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -784,11 +804,16 @@ class PolySpline(GeometryParameterisation):
 class PictureFrame(GeometryParameterisation):
     """
     Picture-frame geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -816,7 +841,7 @@ class PictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -910,11 +935,16 @@ class PictureFrame(GeometryParameterisation):
 class TaperedPictureFrame(GeometryParameterisation):
     """
     Tapered picture-frame geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -957,7 +987,7 @@ class TaperedPictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):

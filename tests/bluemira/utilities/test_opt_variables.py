@@ -132,6 +132,36 @@ class TestOptVariables:
         assert self.vars["b"].fixed
         assert self.vars_frozen["b"].fixed
 
+    def test_not_strict_bounds(self):
+        v1 = BoundedVariable("a", 2, 0, 3)
+        v2 = BoundedVariable("b", 0, -1, 1)
+        v3 = BoundedVariable("c", -1, -10, 10)
+        opt_vars = OptVariables([v1, v2, v3])
+
+        opt_vars.adjust_variables({"a": {"value": -2}}, strict_bounds=False)
+
+        assert opt_vars["a"].value == -2
+        assert opt_vars["a"].lower_bound == -2
+
+    def test_not_strict_bounds2(self):
+        v1 = BoundedVariable("a", 2, 0, 3)
+        v2 = BoundedVariable("b", 0, -1, 1)
+        v3 = BoundedVariable("c", -1, -10, 10)
+        opt_vars = OptVariables([v1, v2, v3])
+
+        opt_vars.adjust_variables(
+            {"a": {"value": -2, "lower_bound": -1, "upper_bound": 3}},
+            strict_bounds=False,
+        )
+        assert opt_vars["a"].value == -2
+        assert opt_vars["a"].lower_bound == -2
+
+        with pytest.raises(OptVariablesError):
+            opt_vars.adjust_variables(
+                {"a": {"value": -2, "lower_bound": -1, "upper_bound": -3}},
+                strict_bounds=False,
+            )
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
