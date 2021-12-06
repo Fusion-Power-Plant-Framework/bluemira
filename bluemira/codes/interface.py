@@ -30,7 +30,12 @@ from enum import Enum
 
 import bluemira.base as bm_base
 from bluemira.codes.error import CodesError
-from bluemira.codes.utilities import LogPipe, get_recv_mapping, get_send_mapping
+from bluemira.codes.utilities import (
+    LogPipe,
+    get_recv_mapping,
+    get_send_mapping,
+    find_mappings,
+)
 
 __all__ = ["FileProgramInterface", "ApplicationProgramInterface"]
 
