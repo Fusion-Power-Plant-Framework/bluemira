@@ -87,4 +87,4 @@ def run_systems_code(
         params, build_config, run_dir, read_dir, template_indat, params_to_update
     )
     solver.run()
-    return runner.params
+    return solver.params
