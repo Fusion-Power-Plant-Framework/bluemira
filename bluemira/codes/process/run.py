@@ -24,20 +24,21 @@ PROCESS run functions
 """
 
 from __future__ import annotations
-import subprocess  # noqa (S404)
-from enum import auto
+
 import json
 import os
+import subprocess  # noqa (S404)
+from enum import auto
 from typing import Dict, List, Optional
 
 import bluemira.base as bm_base
+import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
-import bluemira.codes.interface as interface
 from bluemira.codes.process.api import DEFAULT_INDAT, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS
-from bluemira.codes.process.setup import PROCESSInputWriter
-from bluemira.codes.process.teardown import BMFile
+from bluemira.codes.process.setup import Setup
+from bluemira.codes.process.teardown import Teardown
 
 
 class RunMode(interface.RunMode):
@@ -57,19 +58,39 @@ class Run(interface.Run):
     _binary = "process"
 
     def _run(self):
-        self.parent.run_PROCESS(use_bp_inputs=True)
+        self.run_PROCESS()
 
     def _runinput(self):
-        self.parent.run_PROCESS(use_bp_inputs=False)
+        self.run_PROCESS()
 
-    def _read(self):
-        self.parent.get_PROCESS_run(path=self.parent._read_dir, recv_all=False)
+    def run_PROCESS(self):
+        """
+        Run the systems code to get an initial reactor solution (radial build).
 
-    def _readall(self):
-        self.parent.get_PROCESS_run(path=self.parent._read_dir, recv_all=True)
+        Parameters
+        ----------
+        use_bp_inputs: bool, optional
+            Option to use bluemira values as PROCESS inputs. Used to re-run PROCESS
+            within a bluemira run. If False, runs PROCESS without modifying inputs.
+            Default, True
+        """
+        bluemira_print(f"Running {PROCESS} systems code")
 
-    def _mock(self):
-        self.parent.mock_PROCESS_run()
+        # Run PROCESS
+        self._clear_PROCESS_output()
+        self._run_subprocess()
+
+    def _clear_PROCESS_output(self):
+        """
+        Clear the output files from PROCESS run directory.
+        """
+        for filename in self.parent.output_files:
+            filepath = os.sep.join([self._run_dir, filename])
+            if os.path.exists(filepath):
+                os.remove(filepath)
+
+    def _run_subprocess(self):
+        super()._run_subprocess("process")
 
 
 class ProcessSolver(interface.FileProgramInterface):
@@ -123,9 +144,9 @@ class ProcessSolver(interface.FileProgramInterface):
     _recv_mapping: Dict[str, str]
     _send_mapping: Dict[str, str]
 
-    _setup = None
+    _setup = Setup
     _run = Run
-    _teardown = None
+    _teardown = Teardown
     _runmode = RunMode
 
     output_files: List[str] = [
@@ -145,7 +166,6 @@ class ProcessSolver(interface.FileProgramInterface):
         params_to_update: Optional[List[str]] = None,
         binary="process",
     ):
-        self._run_dir = run_dir
         self._read_dir = read_dir
 
         self._params_to_update = (
@@ -165,209 +185,7 @@ class ProcessSolver(interface.FileProgramInterface):
             params,
             build_config["process_mode"],
             binary=binary,
+            run_dir=run_dir,
         )
 
         self.run()  # Run PROCESS in the given run mode
-
-    def run_PROCESS(self, use_bp_inputs=True):
-        """
-        Run the systems code to get an initial reactor solution (radial build).
-
-        Parameters
-        ----------
-        use_bp_inputs: bool, optional
-            Option to use bluemira values as PROCESS inputs. Used to re-run PROCESS
-            within a bluemira run. If False, runs PROCESS without modifying inputs.
-            Default, True
-        """
-        bluemira_print(f"Running {PROCESS} systems code")
-
-        # Write the IN.DAT file and store in the main PROCESS folder
-        # Note that if use_bp_inputs is True, bluemira outputs with
-        # param.mapping.send == True will be written to IN.DAT.
-        self.prepare_bp_inputs()
-        self.write_indat(use_bp_inputs=use_bp_inputs)
-
-        # Run PROCESS
-        self._clear_PROCESS_output()
-        self._run_subprocess()
-        self._check_PROCESS_output()
-
-        # Load PROCESS results into bluemira
-        self._load_PROCESS(self.read_mfile(), recv_all=not use_bp_inputs)
-
-    def get_PROCESS_run(self, path, recv_all=False):
-        """
-        Loads an existing PROCESS file (read-only). Not to be used when running PROCESS.
-        """
-        bluemira_print("Loading PROCESS systems code run.")
-
-        # Load the PROCESS MFile & read selected output
-        params_to_recv = self._parameter_mapping if recv_all else self._recv_mapping
-        self._load_PROCESS(BMFile(path, params_to_recv), recv_all)
-
-    def mock_PROCESS_run(self):
-        """
-        Mock PROCESS. To be used in tests and examples only!
-        """
-        bluemira_print("Mocking PROCESS systems code run")
-
-        # Create mock PROCESS file.
-        path = self._read_dir
-        filename = os.sep.join([path, "mockPROCESS.json"])
-        with open(filename, "r") as fh:
-            process = json.load(fh)
-
-        self._params.update_kw_parameters(process, source=f"{PROCESS} (Mock)")
-
-    def _load_PROCESS(self, bm_file: BMFile, recv_all: bool = False):
-        """
-        Loads a PROCESS output file (MFILE.DAT) and extract some or all its output data
-
-        Parameters
-        ----------
-            bm_file: BMFile
-                PROCESS output file (MFILE.DAT) to load
-            recv_all: bool, optional
-                True - Read all PROCESS output with a mapping,
-                False - reads only PROCESS output with a mapping and recv = True.
-                Default, False
-        """
-        # Load all PROCESS vars mapped with a bluemira input
-        var = (
-            self._parameter_mapping.values() if recv_all else self._recv_mapping.values()
-        )
-        param = bm_file.extract_outputs(var)
-        self._params.update_kw_parameters(dict(zip(var, param)), source=PROCESS)
-
-    def prepare_bp_inputs(self, use_bp_inputs=True):
-        """
-        Update parameter mapping send values to True/False depending on use_bp_inputs.
-
-        Parameters
-        ----------
-        use_bp_inputs: bool, optional
-            Option to use bluemira values as PROCESS inputs. If True, sets the send
-            value for params in the params_to_update list to True and sets all others to
-            False. If True but no params_to_update list provided, makes no changes to
-            send values. If False, sets all send values to False.
-            Default, True
-        """
-        # Skip if True but no list provided
-        if use_bp_inputs is True and self._params_to_update is None:
-            return
-        # Update send values to True or False
-        for param in self._params.get_parameter_list():
-            bp_name = self._parameter_mapping[param.mapping[PROCESS].name]
-            param.mapping[PROCESS].send = (
-                use_bp_inputs and bp_name in self._params_to_update
-            )
-
-    def write_indat(self, use_bp_inputs=True):
-        """
-        Write the IN.DAT file and stores in the main PROCESS folder.
-
-        Parameters
-        ----------
-        use_bp_inputs: bool, optional
-            Option to use bluemira values as PROCESS inputs. Used to re-run PROCESS
-            within a bluemira run. If False, runs PROCESS without modifying inputs.
-            Default, True
-        """
-        # Load defaults in bluemira folder
-        writer = PROCESSInputWriter(template_indat=self._template_indat)
-        if writer.data == {}:
-            raise CodesError(
-                f"Unable to read template IN.DAT file at {self._template_indat}"
-            )
-
-        if use_bp_inputs is True:
-            for param in self._params.get_parameter_list():
-                mapping = param.mapping[PROCESS]
-                if mapping.send:
-                    new_mapping = update_obsolete_vars(mapping.name)
-                    if isinstance(new_mapping, list):
-                        for mapping in new_mapping:
-                            writer.add_parameter(mapping, param.value)
-                    else:
-                        writer.add_parameter(new_mapping, param.value)
-
-        filename = os.path.join(self._run_dir, "IN.DAT")
-        writer.write_in_dat(output_filename=filename)
-
-    def read_mfile(self):
-        """
-        Read the MFILE.DAT from the PROCESS run_dir.
-
-        Returns
-        -------
-        mfile: BMFile
-            The object representation of the output MFILE.DAT.
-        """
-        m_file = BMFile(self._run_dir, self._parameter_mapping)
-        self._check_feasible_solution(m_file)
-        return m_file
-
-    def _clear_PROCESS_output(self):
-        """
-        Clear the output files from PROCESS run directory.
-        """
-        for filename in self.output_files:
-            filepath = os.sep.join([self._run_dir, filename])
-            if os.path.exists(filepath):
-                os.remove(filepath)
-
-    def _check_PROCESS_output(self):
-        """
-        Check that PROCESS has produced valid (non-zero lined) output.
-
-        Raises
-        ------
-        CodesError
-            If any resulting output files don't exist or are empty.
-        """
-        for filename in self.output_files:
-            filepath = os.sep.join([self._run_dir, filename])
-            if os.path.exists(filepath):
-                with open(filepath) as fh:
-                    if len(fh.readlines()) == 0:
-                        message = (
-                            f"PROCESS generated an empty {filename} "
-                            f"file in {self._run_dir} - check PROCESS logs."
-                        )
-                        bluemira_warn(message)
-                        raise CodesError(message)
-            else:
-                message = (
-                    f"PROCESS run did not generate the {filename} "
-                    f"file in {self._run_dir} - check PROCESS logs."
-                )
-                bluemira_warn(message)
-                raise CodesError(message)
-
-    @staticmethod
-    def _check_feasible_solution(m_file):
-        """
-        Check that PROCESS found a feasible solution.
-
-        Parameters
-        ----------
-        m_file: BMFile
-            The PROCESS MFILE to check for a feasible solution
-
-        Raises
-        ------
-        CodesError
-            If a feasible solution was not found.
-        """
-        error_code = m_file.params["Numerics"]["ifail"]
-        if error_code != 1:
-            message = (
-                f"PROCESS did not find a feasible solution. ifail = {error_code}."
-                " Check PROCESS logs."
-            )
-            bluemira_warn(message)
-            raise CodesError(message)
-
-    def _run_subprocess(self):
-        self.run_obj._run_subprocess("process")

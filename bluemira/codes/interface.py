@@ -24,8 +24,8 @@ The bluemira external code wrapper
 """
 from __future__ import annotations
 
-import subprocess
 import string
+import subprocess
 from enum import Enum
 
 import bluemira.base as bm_base
@@ -56,8 +56,9 @@ class RunMode(Enum):
         -------
         function result
         """
-        if obj is not None:
-            func = getattr(obj, f"_{self.name.lower()}")
+        name = f"_{self.name.lower()}"
+        if hasattr(obj, name):
+            func = getattr(obj, name)
             return func(*args, **kwargs)
 
 
@@ -145,8 +146,8 @@ class FileProgramInterface:
             self._recv_mapping = get_recv_mapping(params, NAME)
             self._send_mapping = get_send_mapping(params, NAME)
 
-        if not hasattr(self, "_run_dir") and run_dir is None:
-            self._run_dir = "./"
+        if not hasattr(self, "__run_dir"):
+            self.__run_dir = "./" if run_dir is None else run_dir
 
         if self._runmode is not RunMode:
             self._set_runmode(runmode)
@@ -178,6 +179,19 @@ class FileProgramInterface:
         """Set the runmode"""
         mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
         self._runner = self._runmode[mode]
+
+    @property
+    def _run_dir(self):
+        return self.__run_dir
+
+    @_run_dir.setter
+    def _run_dir(self, directory):
+        self.__run_dir = directory
+        self._set_property("_run_dir", directory)
+
+    def _set_property(self, prop, val):
+        for obj in ["setup", "run", "teardown"]:
+            setattr(getattr(self, f"{obj}_obj"), prop, val)
 
     @property
     def params(self) -> bm_base.ParameterFrame:
