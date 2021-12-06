@@ -83,7 +83,8 @@ def run_systems_code(
     if (not process.PROCESS_ENABLED) and (process_mode.lower() != "mock"):
         raise CodesError("PROCESS not (properly) installed")
 
-    runner = process.ProcessSolver(
+    solver = process.Solver(
         params, build_config, run_dir, read_dir, template_indat, params_to_update
     )
+    solver.run()
     return runner.params

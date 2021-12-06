@@ -180,19 +180,27 @@ class Setup(interface.Setup):
 
     def __init__(self, parent, input_file, output_file, profiles_file, **kwargs):
         super().__init__(parent)
+        self._check_models()
         self.input_file = input_file
         self.output_file = output_file
         self.profiles_file = profiles_file
 
+    def _check_models(self):
+        self.parent._params.i_impmodel = ImpurityModel(self.parent._params.i_impmodel)
+        self.parent._params.i_modeltype = TransportModel(self.parent._params.i_modeltype)
+        self.parent._params.i_equiltype = EquilibriumModel(
+            self.parent._params.i_equiltype
+        )
+        self.parent._params.i_pedestal = PedestalModel(self.parent._params.i_pedestal)
+        self.parent._params.isiccir = SOLModel(self.parent._params.isiccir)
+
     def _run(self, *args, **kwargs):
         """Run setup function"""
-        print(self.parent._parameters)
-        write_input_file(self.parent._parameters, self.parent.setup_obj.input_file)
+        write_input_file(self.parent.params, self.parent.setup_obj.input_file)
 
     def _mock(self, *args, **kwargs):
         """Mock setup function"""
-        print(self.parent._parameters)
-        write_input_file(self.parent._parameters, self.parent.setup_obj.input_file)
+        write_input_file(self.parent.params, self.parent.setup_obj.input_file)
 
 
 class Run(interface.Run):
@@ -212,14 +220,6 @@ class Run(interface.Run):
             ]
         )
 
-    def _mock(self, *args, **kwargs):
-        bluemira_debug("Mode: mock")
-        print(
-            f"{self._binary} {self.parent.setup_obj.input_file} "
-            f"{self.parent.setup_obj.output_file} "
-            f"{self.parent.setup_obj.profiles_file}"
-        )
-
 
 class Teardown(interface.Teardown):
     def _run(self, *args, **kwargs):
@@ -231,7 +231,7 @@ class Teardown(interface.Teardown):
         print_parameter_list(self.parent._out_params)
 
     def _mock(self, *args, **kwargs):
-        output = self.ead_output_files(self.parent.setup_obj.output_file)
+        output = self.read_output_files(self.parent.setup_obj.output_file)
         self.parent._out_params.modify(**output)
         output = self.read_output_files(self.parent.setup_obj.profiles_file)
         self.parent._out_params.modify(**output)
@@ -283,7 +283,7 @@ class Teardown(interface.Teardown):
             bluemira_debug(f"{PLASMOD} converged successfully")
 
 
-class PlasmodSolver(interface.FileProgramInterface):
+class Solver(interface.FileProgramInterface):
     """Plasmod solver class"""
 
     _setup = Setup
@@ -303,16 +303,15 @@ class PlasmodSolver(interface.FileProgramInterface):
     ):
         # todo: add a path variable where files are stored
         if params is None:
-            self._parameters = Inputs()
+            self._params = Inputs()
         elif isinstance(params, Inputs):
-            self._parameters = params
+            self._params = params
         elif isinstance(params, Dict):
-            self._parameters = Inputs(**params)
-        self._check_models()
+            self._params = Inputs(**params)
         self._out_params = Outputs()
         super().__init__(
             PLASMOD,
-            params,
+            self.params,
             runmode,
             # default_mappings=set_default_mappings(),
             input_file=input_file,
@@ -320,13 +319,6 @@ class PlasmodSolver(interface.FileProgramInterface):
             profiles_file=profiles_file,
             binary=binary,
         )
-
-    def _check_models(self):
-        self._parameters.i_impmodel = ImpurityModel(self._parameters.i_impmodel)
-        self._parameters.i_modeltype = TransportModel(self._parameters.i_modeltype)
-        self._parameters.i_equiltype = EquilibriumModel(self._parameters.i_equiltype)
-        self._parameters.i_pedestal = PedestalModel(self._parameters.i_pedestal)
-        self._parameters.isiccir = SOLModel(self._parameters.isiccir)
 
     def get_profile(self, profile):
         return getattr(self._out_params, Profiles(profile).name)

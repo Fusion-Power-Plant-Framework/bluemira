@@ -91,7 +91,7 @@ class Run(interface.Run):
         super()._run_subprocess("process")
 
 
-class ProcessSolver(interface.FileProgramInterface):
+class Solver(interface.FileProgramInterface):
     """
     PROCESS Run functions. Runs, loads or mocks PROCESS to generate the reactor's radial
     build as an input for the bluemira run.
@@ -185,5 +185,3 @@ class ProcessSolver(interface.FileProgramInterface):
             binary=binary,
             run_dir=run_dir,
         )
-
-        self.run()  # Run PROCESS in the given run mode
