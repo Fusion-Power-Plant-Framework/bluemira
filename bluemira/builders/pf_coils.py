@@ -77,7 +77,9 @@ class PFCoilBuilder:
             ],
         )
 
-        return Component(self.coil.name, children=[wp, ins, casing])
+        component = Component(self.coil.name, children=[wp, ins, casing])
+        component.plot_options.plane = "xy"  # :/
+        return component
 
     def build_xz(self):
         x_in = self.coil.x - self.coil.dx
@@ -118,13 +120,63 @@ class PFCoilBuilder:
         return Component(self.coil.name, children=components)
 
 
+class PFCoilsetBuilder:
+    def __init__(self, coilset, r_corner, tk_insulation, tk_casing):
+        self.coilset = coilset
+        self.r_corner = r_corner
+        self.tk_insulation = tk_insulation
+        self.tk_casing = tk_casing
+        self.sub_components = []
+        for coil in self.coilset.coils.values():
+            sub_comp = PFCoilBuilder(
+                coil, self.r_corner, self.tk_insulation, self.tk_casing
+            )
+            self.sub_components.append(sub_comp)
+
+    def build_xy(self):
+        xy_comps = []
+        for comp in self.sub_components:
+            xy_comps.append(comp.build_xy())
+        component = Component("PF coils", children=xy_comps)
+        component.plot_options.plane = "xy"
+        return component
+
+    def build_xz(self):
+        xz_comps = []
+        for comp in self.sub_components:
+            xz_comps.append(comp.build_xz())
+        component = Component("PF coils", children=xz_comps)
+        return component
+
+    def build_xyz(self):
+        xyz_comps = []
+        for comp in self.sub_components:
+            xyz_comps.append(comp.build_xyz())
+        component = Component("PF coils", children=xyz_comps)
+        return component
+
+
 if __name__ == "__main__":
-    from bluemira.equilibria.coils import Coil
+    from bluemira.equilibria.coils import Coil, CoilSet
 
     coil = Coil(4, 4, 10e6, dx=0.5, dz=0.8, name="PF_1")
-
+    coil2 = Coil(10, 10, 1e5, dx=0.1, dz=0.5, name="PF_2")
+    coilset = CoilSet([coil, coil2])
     builder = PFCoilBuilder(coil, 0.05, 0.05, 0.1)
 
     c_xy = builder.build_xy()
     c_xz = builder.build_xz()
     c_xyz = builder.build_xyz()
+
+    c_xy.plot_2d()
+    c_xz.plot_2d()
+    c_xyz.show_cad()
+
+    builder = PFCoilsetBuilder(coilset, 0.05, 0.05, 0.1)
+    c_xy = builder.build_xy()
+    c_xz = builder.build_xz()
+    c_xyz = builder.build_xyz()
+
+    c_xy.plot_2d()
+    c_xz.plot_2d()
+    c_xyz.show_cad()
