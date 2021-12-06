@@ -22,7 +22,7 @@
 """
 Test for plasmod run
 """
-from bluemira.codes.plasmod import api
+import bluemira.codes.plasmod as plasmod
 import matplotlib.pyplot as plt
 
 PLASMOD_PATH = "../plasmod_bluemira"
@@ -36,7 +36,7 @@ new_params = {
     "i_modeltype": 111,
 }
 
-plasmod_solver = api.PlasmodSolver(params=new_params, binary=f"{PLASMOD_PATH}/plasmod.o")
+plasmod_solver = plasmod.Solver(params=new_params, binary=f"{PLASMOD_PATH}/plasmod.o")
 plasmod_solver._set_runmode("run")
 plasmod_solver.run()
 
