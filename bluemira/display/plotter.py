@@ -407,7 +407,7 @@ class BasePlotter(ABC):
         """
         pass
 
-    def plot_3d(self, obj, ax=None, show: bool = True, *args, **kwargs):
+    def plot_3d(self, obj, ax=None, show: bool = True):
         """3D plotting method"""
         self._check_obj(obj)
 
@@ -780,7 +780,7 @@ class Plottable:
         """
         return _get_plotter_class(self)(self._plot_options)
 
-    def plot_2d(self, ax=None, show: bool = True, *args, **kwargs) -> None:
+    def plot_2d(self, ax=None, show: bool = True) -> None:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -790,9 +790,9 @@ class Plottable:
         axes
             The axes that the plot has been displayed onto.
         """
-        return self._plotter.plot_2d(self, ax=ax, show=show, *args, **kwargs)
+        return self._plotter.plot_2d(self, ax=ax, show=show)
 
-    def plot_3d(self, ax=None, show: bool = True, *args, **kwargs) -> None:
+    def plot_3d(self, ax=None, show: bool = True) -> None:
         """
         Function to 3D plot a component.
 
@@ -801,4 +801,4 @@ class Plottable:
         axes
             The axes that the plot has been displayed onto.
         """
-        return self._plotter.plot_3d(self, ax=ax, show=show, *args, **kwargs)
+        return self._plotter.plot_3d(self, ax=ax, show=show)
