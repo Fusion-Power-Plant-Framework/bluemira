@@ -32,10 +32,6 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-import numpy as np
-
 import bluemira.base as bm_base
 import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
