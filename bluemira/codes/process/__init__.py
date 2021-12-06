@@ -25,7 +25,7 @@ Importer for PROCESS runner constants and functions
 
 from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process.constants import NAME
-from bluemira.codes.process.run import ProcessSolver as Run
+from bluemira.codes.process.run import ProcessSolver
 from bluemira.codes.process.teardown import plot_PROCESS
 
 __all__ = [

@@ -29,9 +29,9 @@ import threading
 from typing import Dict, Literal
 
 from bluemira.base.look_and_feel import (
+    _bluemira_clean_flush,
     bluemira_error_clean,
     bluemira_print_clean,
-    _bluemira_clean_flush,
 )
 from bluemira.codes.error import CodesError
 

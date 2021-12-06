@@ -39,13 +39,13 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import NAME as PLASMOD
 from bluemira.codes.plasmod.mapping import (
-    Profiles,
-    set_default_mappings,
-    ImpurityModel,
-    TransportModel,
     EquilibriumModel,
+    ImpurityModel,
     PedestalModel,
+    Profiles,
     SOLModel,
+    TransportModel,
+    set_default_mappings,
 )
 from bluemira.utilities.tools import CommentJSONDecoder
 
