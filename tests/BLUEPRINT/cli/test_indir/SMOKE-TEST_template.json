@@ -3148,7 +3148,7 @@
     "source": "Input",
     "mapping": null
   },
-  "P_sep": {
+  "P_sep_particle": {
     "name": "Separatrix power",
     "value": 100,
     "unit": "MW",
