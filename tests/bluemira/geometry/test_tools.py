@@ -125,7 +125,7 @@ class TestWirePlaneIntersect:
         intersect = plane_intersect(wire, xy_plane)
         assert intersect.shape[0] == 2
 
-        xy_plane = BluemiraPlane(base=[0, 0, 2.7], axis=[0, 1, 0])
+        xy_plane = BluemiraPlane(base=[0, 0, 2.7], axis=[0, 0, 1])
         intersect = plane_intersect(wire, xy_plane)
         print(intersect)
         assert intersect.shape[0] == 4

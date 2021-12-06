@@ -714,10 +714,23 @@ def plane_intersect(obj, normal_plane=(0, 1, 0), shift=0):
     """
     Get the plane intersection points of a face or solid
     """
-    intersects = list()
+    vertexes = list()
+    edges = list()
+    faces = list()
 
-    for i in obj.slice(Base.Vector(*normal_plane), shift):
-        intersects.append(np.array([[v.X, v.Y, v.Z] for v in i.Vertexes]).T)
+    intersect_obj = obj.slice(Base.Vector(*normal_plane), shift)
+
+    for i in intersect_obj:
+        vertexes.append(np.array([[v.X, v.Y, v.Z] for v in i.Vertexes]).T)
+        print(np.array([v.LastParameter for v in i.Edges]))
+        # edges.append(np.array([[v.X, v.Y, v.Z] for v in i.Edges]).T)
+        print(i.Faces)
+        # faces.append(np.array([[v.X, v.Y, v.Z] for v in i.faces]).T)
+
+    print(vertexes)
+    print(edges)
+    print(faces)
+    intersects = vertexes
 
     return None if intersects == [] else intersects
 
