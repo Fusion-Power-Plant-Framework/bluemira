@@ -1094,7 +1094,7 @@ class FirstWall(ReactorSystem):
         ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
         ["psi_norm", "Normalised flux value of strike-point contours",
          1, "N/A", None, "Input"],
-        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'PLASMOD'],
+        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
         ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
         ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
         ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],

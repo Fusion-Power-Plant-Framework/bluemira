@@ -49,7 +49,7 @@ class ChargedParticleSolver:
 
     # fmt: off
     default_params = [
-        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'PLASMOD'],
+        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
         ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
