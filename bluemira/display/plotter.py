@@ -33,6 +33,7 @@ from typing import Optional, Union, List
 import bluemira.geometry as geo
 
 from .error import DisplayError
+from .palettes import BLUE_PALETTE
 
 
 DEFAULT_PLOT_OPTIONS = {
@@ -759,6 +760,7 @@ class Plottable:
     def __init__(self):
         super().__init__()
         self._plot_options: PlotOptions = PlotOptions()
+        self._plot_options.face_options["color"] = next(BLUE_PALETTE)
 
     @property
     def plot_options(self) -> PlotOptions:

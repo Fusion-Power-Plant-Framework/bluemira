@@ -25,6 +25,7 @@ Colour palettes
 
 from typing import Union
 import numpy as np
+from itertools import cycle
 import seaborn as sns
 import matplotlib.colors as colors
 
@@ -41,7 +42,15 @@ class ColorPalette:
 
     def __init__(self, palette_map):
         self._dict = palette_map
-        self._palette = sns.color_palette(list(palette_map.values()))
+        color_list = list(palette_map.values())
+        self._palette = sns.color_palette(color_list)
+        self._cycle = cycle(color_list)
+
+    def __next__(self):
+        """
+        Get the next color in the ColorPalette
+        """
+        return next(self._cycle)
 
     def __setitem__(self, idx_or_key: Union[int, str], value):
         """

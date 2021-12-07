@@ -34,6 +34,7 @@ from bluemira.codes import _freecadapi as cadapi
 
 from .error import DisplayError
 from .plotter import DisplayOptions
+from .palettes import BLUE_PALETTE
 
 
 DEFAULT_DISPLAY_OPTIONS = {
@@ -227,6 +228,7 @@ class DisplayableCAD:
     def __init__(self):
         super().__init__()
         self._display_cad_options: DisplayCADOptions = DisplayCADOptions()
+        self._display_cad_options.color = next(BLUE_PALETTE)
 
     @property
     def display_cad_options(self) -> DisplayCADOptions:
