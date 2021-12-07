@@ -508,6 +508,8 @@ class BetaIpProfile(Profile):
         self._fvac = R_0 * B_0
         self.R_0 = R_0
         self._B_0 = B_0  # Store for eqdsk only
+        self.scale = 1.0
+
         if shape is None:
             self.shape = DoublePowerFunc([1, 0.8])
         else:
