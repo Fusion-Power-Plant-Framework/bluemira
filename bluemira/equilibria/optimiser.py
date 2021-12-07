@@ -102,6 +102,46 @@ class ObjectiveLibrary:
         return fom
 
 
+class ConstraintLibrary:
+    def objective_constraint(
+        self, constraint, vector, grad, objective_function, maximum_fom=1.0
+    ):
+        constraint[:] = objective_function(self, vector, grad) - maximum_fom
+        return constraint
+
+
+class OptimiserConstrainer:
+    def __init__(self, optimiser_constraints, *args, **kwargs):
+        self._optimiser_constraints = optimiser_constraints
+        super().__init__(*args, **kwargs)
+
+    def set_up_constraints(self, opt):
+        for _opt_constraint in self._optimiser_constraints:
+            f_constr_args = _opt_constraint._f_constraint_args
+            f_constr = lambda constraint, vector, grad: _opt_constraint._f_constraint(
+                self, constraint, vector, grad, *f_constr_args
+            )
+            if _opt_constraint._constraint_type == "inequality":
+                opt.add_ineq_constraints(f_constr, _opt_constraint._tolerance)
+            elif _opt_constraint._constraint_type == "equality":
+                opt.add_eq_constraints(f_constr, _opt_constraint._tolerance)
+        return opt
+
+
+class OptimiserConstraint:
+    def __init__(
+        self,
+        f_constraint,
+        f_constraint_args=(),
+        tolerance=np.array([1e-6]),
+        constraint_type="inequality",
+    ):
+        self._tolerance = tolerance
+        self._constraint_type = constraint_type
+        self._f_constraint = f_constraint
+        self._f_constraint_args = f_constraint_args
+
+
 class EquilibriumOptimiser:
     """
     Base class for optimisers used on equilibria, which provides a __call__
@@ -1306,12 +1346,12 @@ class CoilsetOptimiserBase:
         opt.set_upper_bounds(bounds[1])
         return opt
 
-    def set_up_constraints(self, opt):
-        """
-        Updates the optimiser in-place to apply problem constraints.
-        To be overidden by child classes to apply specific constraints.
-        """
-        return opt
+    # def set_up_constraints(self, opt):
+    #     """
+    #     Updates the optimiser in-place to apply problem constraints.
+    #     To be overidden by child classes to apply specific constraints.
+    #     """
+    #     return opt
 
     def __call__(self, eq, constraints, psi_bndry=None):
         """
@@ -1782,52 +1822,6 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         return fom
 
 
-# TO EXPOSE TO USER
-# Constraint values
-# Constraint tolerances
-class OptimiserConstrainer:
-    def __init__(self, optimiser_constraints, *args, **kwargs):
-        self._optimiser_constraints = optimiser_constraints
-        super().__init__(*args, **kwargs)
-
-    def set_up_constraints(self, opt):
-        for _opt_constraint in self._optimiser_constraints:
-            f_constr_args = _opt_constraint._f_constraint_args
-            f_constr = lambda constraint, vector, grad: _opt_constraint._f_constraint(
-                self, constraint, vector, grad, *f_constr_args
-            )
-            if _opt_constraint._constraint_type == "inequality":
-                opt.add_ineq_constraints(f_constr, _opt_constraint._tolerance)
-            elif _opt_constraint._constraint_type == "equality":
-                opt.add_eq_constraints(f_constr, _opt_constraint._tolerance)
-        return opt
-
-
-class OptimiserConstraint:
-    def __init__(
-        self,
-        f_constraint,
-        f_constraint_args=(),
-        tolerance=np.array([1e-6]),
-        constraint_type="inequality",
-    ):
-        self._tolerance = tolerance
-        self._constraint_type = constraint_type
-        self._f_constraint = f_constraint
-        self._f_constraint_args = f_constraint_args
-
-
-class ConstraintLibrary:
-    # def target_isoflux_constraint(self, constraint, vector, grad, *args, constant=0.2):
-    #         constraint[:] = ObjectiveLibrary.regularised_lsq_objective(self, vector, grad, *args) - constant
-    #         return constraint
-    def target_isoflux_constraint(self, constraint, vector, grad, maximum_fom=0.2):
-        constraint[:] = (
-            BoundedCurrentOptimiser.f_min_objective(self, vector, grad) - maximum_fom
-        )
-        return constraint
-
-
 class ConnectionLengthOptimiser(OptimiserConstrainer, BoundedCurrentOptimiser):
     def __init__(
         self,
@@ -1835,7 +1829,13 @@ class ConnectionLengthOptimiser(OptimiserConstrainer, BoundedCurrentOptimiser):
         sol_width=0.001,
         first_wall=None,
         optimiser_constraints=[
-            OptimiserConstraint(ConstraintLibrary.target_isoflux_constraint, (0.2,))
+            OptimiserConstraint(
+                ConstraintLibrary.objective_constraint,
+                (
+                    BoundedCurrentOptimiser.f_min_objective,
+                    0.2,
+                ),
+            )
         ],
         **kwargs,
     ):
