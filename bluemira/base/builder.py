@@ -216,7 +216,10 @@ class Builder(abc.ABC):
         self._params.update_kw_parameters(params)
 
     def _extract_config(self, build_config: BuildConfig):
-        has_runmode = "run_mode" in build_config or hasattr(self, "_default_run_mode")
+        has_runmode = (
+            "run_mode" in build_config
+            or getattr(self, "_default_run_mode", None) is not None
+        )
         if has_runmode:
             self._run_mode = self._set_runmode(build_config)
 
