@@ -19,6 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+The bluemira transport solver module
+"""
+
+
 class TransportSolver:
     """
     Transport solver class
@@ -37,4 +42,4 @@ class TransportSolver:
         """
         Get ffprime
         """
-        return self.solver.get_profile("ffprime")
+        return self.solver.get_profile("pprime")
