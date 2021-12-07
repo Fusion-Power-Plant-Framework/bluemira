@@ -27,6 +27,9 @@ from bluemira.base.design import Design
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 
 
+# Make an example optimisation problem to be solved in the design.
+
+
 class MaximiseLength(GeometryOptimisationProblem):
     """
     A simple geometry optimisation problem that minimises length without constraints.
@@ -56,6 +59,8 @@ class MaximiseLength(GeometryOptimisationProblem):
 
         return length
 
+
+# Set up the configuration for the design.
 
 build_config = {
     "Plasma": {
@@ -94,6 +99,18 @@ params = {
     "r_tf_in_centre": (5.0, "Input"),
     "r_tf_out_centre": (15.0, "Input"),
 }
+
+# Create our design object and run it to get the resulting component.
+
 design = Design(params, build_config)
 component = design.run()
+
+# Plot our resulting component.
+
 component.plot_2d()
+
+# Get the TF design problem and print out the resulting parameterisation
+
+tf_builder = design.get_builder("TF Coils")
+tf_design_problem: GeometryOptimisationProblem = tf_builder.design_problem
+print(tf_design_problem.parameterisation.variables)

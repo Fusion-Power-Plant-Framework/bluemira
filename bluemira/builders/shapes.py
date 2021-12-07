@@ -165,5 +165,5 @@ class MakeOptimisedShape(MakeParameterisedShape):
             self._opt_conditions,
             self._opt_parameters,
         )
-        problem = self._problem_class(self._shape, optimiser)
-        problem.solve()
+        self._design_problem = self._problem_class(self._shape, optimiser)
+        self._design_problem.solve()
