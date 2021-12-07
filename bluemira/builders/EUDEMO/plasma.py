@@ -182,7 +182,7 @@ class PlasmaBuilder(Builder):
         """
         Check that the boundary has been set.
         """
-        if getattr(self, "_boundary", None):
+        if getattr(self, "_boundary", None) is None:
             raise BuilderError(
                 "Boundary not set in Plasma build. "
                 "Ensure that one of run, read, or mock has been run before building."
