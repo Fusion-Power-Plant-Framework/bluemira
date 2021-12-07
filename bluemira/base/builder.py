@@ -114,7 +114,9 @@ class Builder(abc.ABC):
             The Component build by this builder.
         """
         self.reinitialise(params)
-        run_result = self._runmode(self, *args, **kwargs)
+        run_result = {}
+        if hasattr(self, "_runmode"):
+            run_result = self._runmode(self, *args, **kwargs)
         return self.build(**run_result)
 
     @abc.abstractmethod
