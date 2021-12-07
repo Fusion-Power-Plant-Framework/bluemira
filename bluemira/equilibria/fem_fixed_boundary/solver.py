@@ -25,9 +25,7 @@ Testing the fixed-boundary equilibrium solver.
 
 import tools
 from plasma import Plasma
-from bluemira.codes.plasmod.plasmodapi import (
-    PlasmodSolver
-)
+import bluemira.codes.plasmod as plasmod
 from dolfinSolver import GradShafranovLagrange
 from bluemira.mesh import meshing
 from bluemira.geometry.face import BluemiraFace
@@ -53,24 +51,29 @@ from bluemira.equilibria.find import find_flux_surf
 R0 = 8.938
 A = 3.1
 p = JohnerLCFS(
-    {"r_0":     {"value": R0},
-     "a":       {"value": R0/A},
-     "kappa_u": {"value": 1.70},
-     "kappa_l": {"value": 1.85},
-     "delta_u": {"value": 0.50},
-     "delta_l": {"value": 0.50}})
+    {
+        "r_0": {"value": R0},
+        "a": {"value": R0 / A},
+        "kappa_u": {"value": 1.70},
+        "kappa_l": {"value": 1.85},
+        "delta_u": {"value": 0.50},
+        "delta_l": {"value": 0.50},
+    }
+)
 lcfs = p.create_shape(label="LCFS")
-lcfs.mesh_options = {'lcar': 0.3, 'physical_group': 'LCFS'}
+lcfs.mesh_options = {"lcar": 0.3, "physical_group": "LCFS"}
 
 # plot shape
 my_options = display.plotter.get_default_options()
 print(my_options)
 f, ax = plt.subplots()
-ax.set_xlabel('r [m]')
-ax.set_ylabel('z [m]')
+ax.set_xlabel("r [m]")
+ax.set_ylabel("z [m]")
 ax.grid(True)
 ax.set_title("Plasma shape")
-display.plot_2d(lcfs, show=False, ax=ax, wire_options={'color': 'red', 'linestyle': 'dashed'})
+display.plot_2d(
+    lcfs, show=False, ax=ax, wire_options={"color": "red", "linestyle": "dashed"}
+)
 
 # Face
 plasma_face = BluemiraFace(lcfs, label="plasma_surface")
@@ -78,9 +81,9 @@ plasma_face.mesh_options = {"lcar": 0.5, "physical_group": "plasma"}
 
 # plot face
 fig, ax = plt.subplots()
-fplotter = FacePlotter(plane="xz", face_options={'color': 'red'})
-ax.set_xlabel('r [m]')
-ax.set_ylabel('z [m]')
+fplotter = FacePlotter(plane="xz", face_options={"color": "red"})
+ax.set_xlabel("r [m]")
+ax.set_ylabel("z [m]")
 ax.grid(True)
 fplotter.plot_2d(plasma_face, ax=ax, show=False)
 ax.set_title("Face plot without points (default)")
@@ -113,10 +116,10 @@ dolfin.plot(mesh)
 
 #%%[markdown] solve GSE for a constant current density distribution
 gs_solver = GradShafranovLagrange(mesh, p=2)
-Ip = 1.9E7
+Ip = 1.9e7
 Ap = plasma_face.area
-print("Average current density [A/m²] = " + str(Ip/Ap))
-g = dolfin.Expression(str(Ip/Ap), degree=2)
+print("Average current density [A/m²] = " + str(Ip / Ap))
+g = dolfin.Expression(str(Ip / Ap), degree=2)
 gs_solver.solve(g)
 psi = gs_solver.psi
 
@@ -138,11 +141,11 @@ points = [(R0, z_) for z_ in z]  # 2D points
 psi_line = np.array([psi(point) for point in points])
 
 fig, ax = plt.subplots()
-plt.plot(z, psi_line, 'ko-', linewidth=2)
+plt.plot(z, psi_line, "ko-", linewidth=2)
 ax.grid(True)
-ax.set_xlabel('$z$ [m]')
-ax.set_ylabel('$\Psi$ [Wb]')
-plt.title('$\Psi$ vs. $z$')
+ax.set_xlabel("$z$ [m]")
+ax.set_ylabel("$\Psi$ [Wb]")
+plt.title("$\Psi$ vs. $z$")
 plt.show()
 
 #%%[markdown] calculate max value --> axis
@@ -158,12 +161,12 @@ psi_v = psi.compute_vertex_values()
 # todo get flux surface contours for 2D FEM functions, e.g. trincontour plots
 
 
-#plt.close("all")
+# plt.close("all")
 
-'''
-mhd_solver = PlasmodSolver(...)
+"""
+mhd_solver = plasmod.Solver(...)
 plasmod_parameters = {}
-'''
+"""
 # plasma.set_mhd_solver = mhd_solver
 # plasma.set_gs_solver = gs_solver
 
@@ -174,7 +177,6 @@ plasmod_parameters = {}
 
 # implement the dolfinUpdate that adjust the current density
 # check the method in core.py for PlasmaFreeGS
-
 
 
 #
