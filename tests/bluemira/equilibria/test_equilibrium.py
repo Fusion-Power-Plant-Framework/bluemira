@@ -268,7 +268,7 @@ class TestEqReadWrite:
         eq2 = Equilibrium.from_eqdsk(new_file_path)
         d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode)
         os.remove(new_file_path)
-        assert compare_dicts(d1, d2)
+        assert compare_dicts(d1, d2, almost_equal=True)
 
 
 if __name__ == "__main__":
