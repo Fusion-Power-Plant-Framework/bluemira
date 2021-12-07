@@ -22,16 +22,23 @@
 """
 EU-DEMO build classes for TF Coils.
 """
-from typing import Optional, List
+from typing import Type, Optional, List
 from copy import deepcopy
+import numpy as np
 
 from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.builders.shapes import ParameterisedShapeBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
-from bluemira.geometry.tools import offset_wire, sweep_shape
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.tools import offset_wire, sweep_shape, make_polygon, boolean_cut
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.solid import BluemiraSolid
+from bluemira.utilities.optimiser import Optimiser
+from bluemira.display.palettes import BLUE_PALETTE
 
 
 class TFCoilsComponent(Component):
@@ -54,7 +61,7 @@ class TFCoilsComponent(Component):
         self._magnetics = magnetics
 
 
-class BuildTFWindingPack:
+class TFWindingPackBuilder(Builder):
     """
     A class to build TF coil winding pack geometry
     """
@@ -94,14 +101,238 @@ class BuildTFWindingPack:
         return PhysicalComponent(self.name, solid)
 
 
-class TFCoilsBuilder(Builder):
-    _required_params: List[str] = []
-    _required_config: List[str] = []
+class BuildTFInsulation(Builder):
+    name = "TFWPInsulation"
+
+    def __init__(self, wp_solid, wp_centreline, wp_cross_section, insulation_thickness):
+        self.wp_solid = wp_solid
+        self.wp_centreline = wp_centreline
+        self.wp_cross_section = wp_cross_section
+        self.tk_insulation = insulation_thickness
+
+    def build_xy(self):
+        outer_wire = offset_wire(self.wp_cross_section.boundary[0], self.tk_insulation)
+        face = BluemiraFace([outer_wire, self.wp_cross_section.boundary[0]])
+
+        # Should normally be gotten with wire_plane_intersect
+        x_out = self.wp_centreline.bounding_box.x_max
+        outer_face = deepcopy(face)
+        outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
+        return [
+            PhysicalComponent(self.name, face),
+            PhysicalComponent(self.name, outer_face),
+        ]
+
+    def build_xz(self):
+        x_centreline_in = self.wp_centreline.bounding_box.x_min
+
+        x_in_wp = self.wp_cross_section.bounding_box.x_min
+
+        dx_wp = x_centreline_in - x_in_wp
+
+        ins_xs = offset_wire(self.wp_cross_section.boundary[0], self.tk_insulation)
+        x_in_ins = ins_xs.bounding_box.x_min
+
+        dx_ins = x_centreline_in - x_in_ins
+        outer = offset_wire(self.wp_centreline, dx_ins)
+        inner = offset_wire(self.wp_centreline, dx_wp)
+
+        outer_face = BluemiraFace([outer, inner])
+
+        outer = offset_wire(self.wp_centreline, -dx_wp)
+        inner = offset_wire(self.wp_centreline, -dx_ins)
+        inner_face = BluemiraFace([outer, inner])
+        return [
+            PhysicalComponent(self.name, outer_face),
+            PhysicalComponent(self.name, inner_face),
+        ]
+
+    def build_xyz(self):
+        ins_xs = offset_wire(self.wp_cross_section.boundary[0], self.tk_insulation)
+
+        solid = sweep_shape(ins_xs, self.wp_centreline)
+        ins_solid = boolean_cut(solid, self.wp_solid)[0]
+        return PhysicalComponent(self.name, ins_solid)
+
+
+class BuildTFCasing(Builder):
+    name = "TFCasing"
+
+    def __init__(
+        self,
+        ins_solid,
+        wp_centreline,
+        ins_cross_section,
+        n_TF,
+        tk_tf_nose,
+        tk_tf_front_ib,
+        tk_tf_side,
+    ):
+        self.ins_solid = deepcopy(ins_solid)
+        self.ins_cross_section = deepcopy(ins_cross_section)
+        self.wp_centreline = deepcopy(wp_centreline)
+        self.n_TF = n_TF
+        self.tk_tf_nose = tk_tf_nose
+        self.tk_tf_front_ib = tk_tf_front_ib
+        self.tk_tf_side = tk_tf_side
+
+    def build_xy(self):
+        x_ins_in = self.ins_cross_section.bounding_box.x_min
+        x_ins_out = self.ins_cross_section.bounding_box.x_max
+
+        x_in = x_ins_in - self.tk_tf_nose
+        x_out = x_ins_out + self.tk_tf_front_ib
+        half_angle = np.pi / self.n_TF
+        y_in = x_in * np.sin(half_angle)
+        y_out = x_out * np.sin(half_angle)
+        outer_wire = make_polygon(
+            [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
+            closed=True,
+        )
+        inner_face = BluemiraFace(
+            [outer_wire, deepcopy(self.ins_cross_section.boundary[0])]
+        )
+
+        bb = self.ins_cross_section.bounding_box
+        dx_ins = 0.5 * (bb.x_max - bb.x_min)
+        dy_ins = 0.5 * (bb.y_max - bb.y_min)
+
+        # Split the total radial thickness equally on the outboard
+        # This could be done with input params too..
+        tk_total = self.tk_tf_front_ib + self.tk_tf_nose
+        tk = 0.5 * tk_total
+
+        dx_out = dx_ins + tk
+        dy_out = dy_ins + self.tk_tf_side
+        outer_wire = make_polygon(
+            [
+                [-dx_out, -dy_out, 0],
+                [dx_out, -dy_out, 0],
+                [dx_out, dy_out, 0],
+                [-dx_out, dy_out, 0],
+            ],
+            closed=True,
+        )
+
+        outer_ins = deepcopy(self.ins_cross_section.boundary[0])
+
+        # Should normally be gotten with wire_plane_intersect
+        x_out = self.wp_centreline.bounding_box.x_max
+        outer_wire.translate((x_out - outer_wire.center_of_mass[0], 0, 0))
+        outer_ins.translate((x_out - outer_ins.center_of_mass[0], 0, 0))
+        outer_face = BluemiraFace([outer_wire, outer_ins])
+        return [
+            PhysicalComponent(self.name, inner_face),
+            PhysicalComponent(self.name, outer_face),
+        ]
+
+    def build_xz(self):
+        # Normally I'd do a variable thickness offset and actually build the xyz from
+        # that. We can't do variable thickness offsets with primitives.. (yet, I suppose)
+
+        # We could just section the xyz, but we can't do that yet either.
+        pass
+
+    def build_xyz(self):
+        # Normally I'd do lots more here to get to a proper casing
+        # This is just a proof-of-principle
+        inner_xs, outer_xs = self.build_xy()
+        inner_xs = inner_xs.shape.boundary[0]
+        outer_xs = outer_xs.shape.boundary[0]
+
+        solid = sweep_shape([inner_xs, outer_xs], self.wp_centreline)
+        outer_ins_solid = BluemiraSolid(self.ins_solid.boundary[0])
+        solid = boolean_cut(solid, outer_ins_solid)[0]
+
+        return PhysicalComponent(self.name, solid)
+
+
+class TFCoilsBuilder(ParameterisedShapeBuilder):
+    _required_params: List[str] = [
+        "R_0",
+        "z_0",
+        "B_0",
+        "n_TF",
+        "TF_ripple_limit",
+        "r_tf_in",
+        "tk_tf_nose",
+        "tk_tf_front_ib",
+        "tk_tf_side",
+        "tk_tf_ins",
+        # This isn't treated at the moment...
+        "tk_tf_insgap",
+        # Dubious WP depth from PROCESS (I used to tweak this when building the TF coils)
+        "tf_wp_width",
+        "tf_wp_depth",
+    ]
+    _required_config = ParameterisedShapeBuilder._required_config + []
     _params: ParameterFrame
+    _centreline: BluemiraWire
 
     def __init__(self, params, build_config: BuildConfig, **kwargs):
         super().__init__(params, build_config, **kwargs)
-        self._sub_builders = [BuildTFWindingPack]
+
+        self.reinitialise(params)
+
+    def _extract_config(self, build_config: BuildConfig):
+        super()._extract_config(build_config)
+
+    def reinitialise(self, params, **kwargs) -> None:
+        """
+        Initialise the state of this builder ready for a new run.
+
+        Parameters
+        ----------
+        params: Dict[str, Any]
+            The parameterisation containing at least the required params for this
+            Builder.
+        """
+        bluemira_debug(f"Reinitialising {self.name}")
+        self._reset_params(params)
+
+        self._design_problem = None
+        self._centreline = self._param_class().create_shape()
+        self._wp_cross_section = self._make_wp_xs()
+        self._sub_builders = [TFWindingPackBuilder]
+
+    def _make_wp_xs(self):
+        x_c = self.params.r_tf_in.value
+        d_xc = 0.5 * self.params.tf_wp_width.value
+        d_yc = 0.5 * self.params.tf_wp_depth.value
+        wp_xs = make_polygon(
+            [
+                [x_c - d_xc, -d_yc, 0],
+                [x_c + d_xc, -d_yc, 0],
+                [x_c + d_xc, d_yc, 0],
+                [x_c - d_xc, d_yc, 0],
+            ],
+            closed=True,
+        )
+        return BluemiraFace(wp_xs, "TF WP x-y cross-section")
+
+    def run(self, separatrix, keep_out_zone=None, nx=1, ny=1):
+        self._design_problem = RippleConstrainedLengthOpt(
+            self._param_class(),
+            self._params,
+            self._wp_cross_section,
+            separatrix=separatrix,
+            keep_out_zone=keep_out_zone,
+            rip_con_tol=1e-3,
+            koz_con_tol=1e-3,
+            nx=nx,
+            ny=ny,
+            n_koz_points=100,
+        )
+        self._design_problem.solve()
+        self._centreline = self._design_problem.parameterisation.create_shape()
+
+    def read(self, variables):
+        parameterisation = self._param_class(variables)
+        self._centreline = parameterisation.create_shape()
+
+    def mock(self, variables):
+        parameterisation = self._param_class(variables)
+        self._centreline = parameterisation.create_shape()
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -118,12 +349,11 @@ class TFCoilsBuilder(Builder):
 
     def build(self, label: str = "TF Coils", **kwargs) -> Component:
         """
-        Build the components from parameterised shapes using the provided configuration
-        and parameterisation.
+        Build the TF Coils component.
 
         Returns
         -------
-        component: Component
+        component: TFCoilsComponent
             The Component built by this builder.
         """
         super().build(**kwargs)
@@ -139,6 +369,7 @@ class TFCoilsBuilder(Builder):
         component = Component("xz")
 
         for sub_builder in self._sub_builders:
+            sub_builder()
             sub_comp = sub_builder.build_xz()
             component.add_child(sub_comp)
 
