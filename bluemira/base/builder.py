@@ -32,7 +32,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 
 
@@ -116,7 +116,14 @@ class Builder(abc.ABC):
         self.reinitialise(params)
         run_result = {}
         if hasattr(self, "_runmode"):
-            run_result = self._runmode(self, *args, **kwargs)
+            run_result = self._runmode(self, *args, **kwargs) or {}
+            if not isinstance(run_result, dict):
+                bluemira_warn(
+                    "Result of builder runmode expected to be a dict or None. "
+                    f"Got {run_result} for builder {self.name} "
+                    "- defaulting to an empty dictionary."
+                )
+                run_result = {}
         return self.build(**run_result)
 
     @abc.abstractmethod

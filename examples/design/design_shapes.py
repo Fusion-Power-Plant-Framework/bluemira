@@ -24,6 +24,37 @@ A basic tutorial for configuring and running a design with parameterised shapes.
 """
 
 from bluemira.base.design import Design
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
+
+
+class MaximiseLength(GeometryOptimisationProblem):
+    """
+    A simple geometry optimisation problem that minimises length without constraints.
+    """
+
+    def calculate_length(self, x):
+        """
+        Calculate the length of the GeometryParameterisation.
+
+        Result is negative as we're maximising rather than minimising. Note that most
+        real life problems will minimise.
+        """
+        self.update_parameterisation(x)
+        return -self.parameterisation.create_shape().length
+
+    def f_objective(self, x, grad):
+        """
+        Objective function is the length of the parameterised shape.
+        """
+        length = self.calculate_length(x)
+
+        if grad.size > 0:
+            # Only called if a gradient-based optimiser is used
+            grad[:] = self.optimiser.approx_derivative(
+                self.calculate_length, x, f0=length
+            )
+
+        return length
 
 
 build_config = {
@@ -37,16 +68,23 @@ build_config = {
         "label": "Shape",
     },
     "TF Coils": {
-        "class": "MakeParameterisedShape",
+        "class": "MakeOptimisedShape",
         "param_class": "PrincetonD",
         "variables_map": {
-            "x1": "r_tf_in_centre",
+            "x1": {
+                "value": "r_tf_in_centre",
+                "fixed": True,
+            },
             "x2": {
                 "value": "r_tf_out_centre",
-                "lower_bound": 8.0,
+                "lower_bound": 14.0,
             },
-            "dz": 0.0,
+            "dz": {
+                "value": 0.0,
+                "fixed": True,
+            },
         },
+        "problem_class": MaximiseLength,
         "label": "Shape",
     },
 }

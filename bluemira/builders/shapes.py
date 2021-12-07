@@ -25,12 +25,12 @@ Built-in build steps for making shapes
 
 from typing import Dict, Type
 
-from ..base.builder import BuildConfig, Builder
-from ..base.components import Component, PhysicalComponent
-from ..geometry.optimisation import GeometryOptimisationProblem
-from ..geometry.parameterisations import GeometryParameterisation
-from ..utilities.optimiser import Optimiser
-from ..utilities.tools import get_class_from_module
+from bluemira.base.builder import BuildConfig, Builder, BuilderError
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.tools import get_class_from_module
 
 
 class ParameterisedShapeBuilder(Builder):
@@ -44,6 +44,8 @@ class ParameterisedShapeBuilder(Builder):
     _variables_map: Dict[str, str]
 
     def _extract_config(self, build_config: BuildConfig):
+        super()._extract_config(build_config=build_config)
+
         self._param_class: Type[GeometryParameterisation] = get_class_from_module(
             build_config["param_class"],
             default_module="bluemira.geometry.parameterisations",
@@ -64,9 +66,13 @@ class ParameterisedShapeBuilder(Builder):
         for key, val in self._variables_map.items():
             if isinstance(val, str):
                 val = self._params.get(val)
-            elif isinstance(val, dict):
+
+            if isinstance(val, dict):
                 if isinstance(val["value"], str):
                     val["value"] = self._params.get(val["value"])
+            else:
+                val = {"value": val}
+
             shape_params[key] = val
         return shape_params
 
@@ -84,12 +90,7 @@ class ParameterisedShapeBuilder(Builder):
         super().reinitialise(params, **kwargs)
 
         shape_params = self._derive_shape_params()
-        shape = self._param_class()
-        for key, val in shape_params.items():
-            if isinstance(val, dict):
-                shape.adjust_variable(key, **val)
-            else:
-                shape.adjust_variable(key, val)
+        shape = self._param_class(shape_params)
         self._shape = shape
 
 
@@ -135,36 +136,26 @@ class MakeOptimisedShape(MakeParameterisedShape):
 
     _problem_class: Type[GeometryOptimisationProblem]
 
-    def __call__(self, params, optimise=True, **kwargs) -> Component:
-        """
-        Perform the full build process, including reinitialisation and optimisation,
-        using the provided parameters.
-
-        Parameters
-        ----------
-        params: Dict[str, Any]
-            The parameterisation containing at least the required params for this
-            Builder.
-        optimise: bool
-            If True then the build will include optimisation, by default True.
-        """
-        self.reinitialise(params)
-        if optimise:
-            self.optimise()
-        return self.build()
+    _default_run_mode: str = "run"
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
         problem_class = build_config["problem_class"]
-        self._problem_class: Type[GeometryOptimisationProblem] = get_class_from_module(
-            problem_class
-        )
+        if isinstance(problem_class, str):
+            self._problem_class = get_class_from_module(problem_class)
+        elif isinstance(problem_class, type):
+            self._problem_class = problem_class
+        else:
+            raise BuilderError(
+                "problem_class must either be a str pointing to the class to be loaded "
+                f"or the class itself - got {problem_class}."
+            )
         self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
         self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})
         self._opt_parameters = build_config.get("opt_parameters", {})
 
-    def optimise(self):
+    def run(self):
         """
         Optimise the shape using the provided parameterisation and optimiser.
         """
