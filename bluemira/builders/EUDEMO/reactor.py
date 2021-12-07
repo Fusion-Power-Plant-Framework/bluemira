@@ -30,6 +30,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
+from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
@@ -50,6 +51,7 @@ class EUDEMOReactor(Reactor):
 
         self.run_systems_code()
         component.add_child(self.build_plasma())
+        component.add_child(self.build_TF_coils())
 
         return component
 
@@ -85,6 +87,20 @@ class EUDEMOReactor(Reactor):
         }
 
         builder = PlasmaBuilder(self._params.to_dict(), plasma_config)
+        self.register_builder(builder, name)
+
+        return super()._build_stage(name)
+
+    def build_TF_coils(self, **kwargs):
+        """
+        Run the TF coil build using the requested mode.
+        """
+        name = "TF Coils"
+        tf_config = {
+            "name": name,
+        }
+
+        builder = TFCoilsBuilder(self._params.to_dict(), tf_config)
         self.register_builder(builder, name)
 
         return super()._build_stage(name)
