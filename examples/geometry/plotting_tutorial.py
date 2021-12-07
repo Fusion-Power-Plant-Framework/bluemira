@@ -363,6 +363,9 @@ w1face = BluemiraFace(wire1)
 #
 # Creates a `PhysicalComponent` and plots it in the xz plane
 
+# Note that if no face colour is set, a colour from the default palette will be chosen
+# by default. This will not be the same every time.
+
 # %%
 c = PhysicalComponent("Comp", face)
 c.plot_options.plane = "xz"
@@ -422,8 +425,10 @@ print(f"component plotter options: {c.plot_options}")
 display.show_cad(face)
 
 # %%[markdown]
-# Fow what concern Components, the component function show_cad is used.
+# For what concern Components, the component function show_cad is used.
 
+# Note that if no colour is set, a colour from the default palette will be chosen
+# by default. This will not be the same every time.
 # %%
 group.show_cad()
 
