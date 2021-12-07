@@ -104,6 +104,46 @@ class DesignABC(abc.ABC):
         """
         return self._builders[builder_name]
 
+    def register_builder(self, builder: Builder, name: str):
+        """
+        Add this builder to the internal builder registry.
+
+        Parameters
+        ----------
+        builder: Builder
+            The builder to be registered.
+        name: str
+            The name to register this builder with.
+
+        Raises
+        ------
+        BuilderError
+            If name already exists in the registry.
+        """
+        if name not in self._builders:
+            self._builders[name] = builder
+        else:
+            raise BuilderError(f"Builder {name} already exists in {self}.")
+
+    def _build_stage(self, name: str):
+        """
+        Build the requested stage and update the design's parameters.
+
+        Parameters
+        ----------
+        name: str
+            The name of the stage to build.
+
+        Returns
+        -------
+        component: Component
+            The resulting component from the build.
+        """
+        component = self._builders[name](self._params.to_dict())
+        self._params.update_kw_parameters(self._builders[name].params.to_dict())
+
+        return component
+
     @abc.abstractmethod
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
         """
@@ -138,10 +178,7 @@ class Design(DesignABC):
         """
         component = super().run()
         for builder in self._builders.values():
-            component.add_child(builder(self._params))
-            self._params.update_kw_parameters(
-                builder._params.to_dict(), source=builder.name
-            )
+            component.add_child(self._build_stage(builder.name))
         return component
 
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
@@ -156,10 +193,7 @@ class Design(DesignABC):
             builder_class: Type[Builder] = get_class_from_module(
                 class_name, default_module="bluemira.builders"
             )
-            if key not in self._builders:
-                self._builders[key] = builder_class(params, val)
-            else:
-                raise BuilderError(f"Builder {key} already exists in {self}.")
+            self.register_builder(builder_class(params, val), key)
             self._required_params += self._builders[key]._required_params
 
 
@@ -208,33 +242,6 @@ class Reactor(DesignABC):
             "generated_data_root", f"{BM_ROOT}/generated_data"
         )
         self._plot_flag: bool = self._build_config.get("plot_flag", False)
-        self._callbacks: Dict[str, str] = self._build_config.get("callbacks", {})
-
-    def _build_stage(self, builder_class: Type[Builder], build_config) -> Component:
-        name = build_config["name"]
-
-        self._builders[name] = builder_class(self._params.to_dict(), build_config)
-
-        callback = self._callbacks.get(name, None)
-        callback_args = {}
-        if isinstance(callback, dict):
-            callback_args = callback.get("args", {})
-            if "func" not in callback:
-                raise BuilderError(
-                    "When defining a callback as a dictionary, the callback function "
-                    "must be specified in the func key, and any args in the optional "
-                    f"args key, got {callback}"
-                )
-            callback = callback["func"]
-
-        component = self._builders[name](
-            self._params.to_dict(),
-            callback,
-            **callback_args,
-        )
-
-        self._params.update_kw_parameters(self._builders[name]._params.to_dict())
-        return component
 
     @property
     def file_manager(self):

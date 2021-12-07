@@ -24,7 +24,7 @@ Perform the EU-DEMO reactor design.
 """
 
 import json
-import os  # noqa (F401)
+import matplotlib.pyplot as plt
 
 from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_root
@@ -32,6 +32,8 @@ from bluemira.base.parameter import ParameterError
 
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.plasma import PlasmaComponent
+
+from bluemira.equilibria.run import AbInitioEquilibriumProblem
 
 from bluemira.codes import plot_PROCESS
 
@@ -103,26 +105,11 @@ with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w
 # Uncomment this to mock the plasma run and use a parameterised boundary.
 # (No equilibrium will be produced in this case)
 
-# build_config["callbacks"] = {"Plasma": "mock_equilibrium_callback"}
+# build_config["plasma_mode"] = "mock"
 
-# Uncomment this to read the plasma run from an existing eqdsk json file.
-# NOTE: The resulting equilibrium will vary from the original due to recalculation.
+# Uncomment this to read the reference plasma equilibrium run from an existing file.
 
-# build_config["callbacks"] = {
-#     "Plasma": {
-#         "func": "read_equilibrium_callback",
-#         "args": {
-#             "eqdsk_path": os.path.join(
-#                 get_bluemira_root(),
-#                 "data",
-#                 "reactors",
-#                 "EU-DEMO",
-#                 "equilibria",
-#                 "EU-DEMO_eqref.json",
-#             )
-#         },
-#     }
-# }
+# build_config["plasma_mode"] = "read"
 
 reactor = EUDEMOReactor(params, build_config)
 component = reactor.run()
@@ -147,3 +134,20 @@ if plasma.equilibrium is not None:
 plasma.get_component("xz").plot_2d()
 plasma.get_component("xy").plot_2d()
 plasma.get_component("xyz").show_cad()
+
+# Display the summary of the equilibrium design problem solved by the Plasma builder.
+
+plasma_builder = reactor.get_builder("Plasma")
+if plasma_builder.runmode == "run":
+    eq_problem: AbInitioEquilibriumProblem = reactor.get_builder("Plasma").design_problem
+    _, ax = plt.subplots()
+    eq_problem.eq.plot(ax=ax)
+    eq_problem.constraints.plot(ax=ax)
+    eq_problem.coilset.plot(ax=ax)
+    plt.show()
+
+# Display the reference equilibrium
+
+if plasma.equilibrium is not None:
+    plasma.equilibrium.plot()
+    plt.show()

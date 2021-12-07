@@ -26,7 +26,9 @@ Interfaces for builder and build steps classes
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Literal, Union
+import enum
+import string
+from typing import Dict, List, Literal, Optional, Union
 
 from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
@@ -43,15 +45,49 @@ Type alias for representing nested build configuration information.
 """
 
 
+# TODO: Consolidate with RunMode in codes.
+class RunMode(enum.Enum):
+    """
+    Enum class to pass args and kwargs to the function corresponding to the chosen
+    PROCESS runmode (Run, Read, or Mock).
+    """
+
+    RUN = enum.auto()
+    READ = enum.auto()
+    MOCK = enum.auto()
+
+    def __call__(self, obj, *args, **kwargs):
+        """
+        Call function of object with lowercase name of enum
+
+        Parameters
+        ----------
+        obj: instance
+            instance of class the function will come from
+        *args
+           args of function
+        **kwargs
+           kwargs of function
+
+        Returns
+        -------
+        function result
+        """
+        func = getattr(obj, self.name.lower())
+        return func(*args, **kwargs)
+
+
 class Builder(abc.ABC):
     """
     The Builder classes in bluemira define the various steps that will take place to
     build components when a Design is run.
     """
 
+    _default_run_mode: Optional[str] = None
     _required_params: List[str] = []
     _required_config: List[str] = []
     _params: ParameterFrame
+    _design_problem = None
 
     def __init__(self, params, build_config: BuildConfig, **kwargs):
         self._name = build_config["name"]
@@ -61,7 +97,7 @@ class Builder(abc.ABC):
         self._params = ParameterFrame.from_template(self._required_params)
         self.reinitialise(params)
 
-    def __call__(self, params, **kwargs) -> Component:
+    def __call__(self, params, *args, **kwargs) -> Component:
         """
         Perform the full build process, including reinitialisation, using the provided
         parameters.
@@ -78,7 +114,8 @@ class Builder(abc.ABC):
             The Component build by this builder.
         """
         self.reinitialise(params)
-        return self.build()
+        run_result = self._runmode(self, *args, **kwargs)
+        return self.build(**run_result)
 
     @abc.abstractmethod
     def reinitialise(self, params, **kwargs) -> None:
@@ -113,6 +150,13 @@ class Builder(abc.ABC):
         return self._name
 
     @property
+    def params(self) -> ParameterFrame:
+        """
+        The parameterisation of this builder.
+        """
+        return self._params
+
+    @property
     def required_parameters(self) -> List[str]:
         """
         The variable names of the parameters that are needed to run this builder.
@@ -125,6 +169,20 @@ class Builder(abc.ABC):
         The names of the build configuration values that are needed to run this builder.
         """
         return self._required_config
+
+    @property
+    def runmode(self):
+        """
+        The name of the method that will be executed when calling this builder.
+        """
+        return self._runmode.name.lower()
+
+    @property
+    def design_problem(self):
+        """
+        The design problem solved by this builder, if any.
+        """
+        return self._design_problem
 
     def _validate_requirement(
         self, input, source: Literal["params", "config"]
@@ -158,4 +216,25 @@ class Builder(abc.ABC):
         self._params.update_kw_parameters(params)
 
     def _extract_config(self, build_config: BuildConfig):
-        pass
+        has_runmode = "run_mode" in build_config or hasattr(self, "_default_run_mode")
+        if has_runmode:
+            self._run_mode = self._set_runmode(build_config)
+
+    def _set_runmode(self, build_config: BuildConfig):
+        """
+        Set runmode according to the "run_mode" parameter in build_config or the default
+        run mode if not provided via build_config.
+        """
+        run_mode = build_config.get("run_mode", self._default_run_mode)
+
+        if not hasattr(self, run_mode.lower()):
+            raise NotImplementedError(
+                f"Builder {self.__class__.__name__} has no {run_mode.lower()} mode."
+            )
+
+        mode = (
+            build_config.get("run_mode", self._default_run_mode)
+            .upper()
+            .translate(str.maketrans("", "", string.whitespace))
+        )
+        self._runmode = RunMode[mode]

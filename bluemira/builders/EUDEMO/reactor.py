@@ -23,6 +23,8 @@
 Perform the EU-DEMO design.
 """
 
+import os
+
 from bluemira.base.components import Component
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
@@ -71,9 +73,18 @@ class EUDEMOReactor(Reactor):
         """
         name = "Plasma"
 
+        default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
+        default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
+        default_eqdsk_path = os.path.join(default_eqdsk_dir, default_eqdsk_name)
+
         plasma_config = {
             "name": name,
             "plot_flag": self._build_config.get("plot_flag", False),
+            "run_mode": self._build_config.get("plasma_mode", "run"),
+            "eqdsk_path": self._build_config.get("eqdsk_path", default_eqdsk_path),
         }
 
-        return super()._build_stage(PlasmaBuilder, plasma_config)
+        builder = PlasmaBuilder(self._params.to_dict(), plasma_config)
+        self.register_builder(builder, name)
+
+        return super()._build_stage(name)

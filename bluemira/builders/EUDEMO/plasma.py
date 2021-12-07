@@ -26,7 +26,7 @@ A builder for Plasma properties and geometry
 from __future__ import annotations
 
 import numpy as np
-from typing import Callable, List, Optional
+from typing import List, Optional
 
 from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
@@ -47,7 +47,6 @@ from bluemira.equilibria.shapes import JohnerLCFS
 import bluemira.geometry as geo
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.utilities.tools import get_class_from_module
 
 
 class PlasmaComponent(Component):
@@ -76,31 +75,6 @@ class PlasmaComponent(Component):
     @equilibrium.setter
     def equilibrium(self, val: Equilibrium):
         self._equilibrium = val
-
-
-def run_equilibrium_callback(self: PlasmaBuilder, **kwargs):
-    eq = create_equilibrium(self)
-    analyse_equilibrium(self, eq)
-    self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
-    return eq
-
-
-def read_equilibrium_callback(self: PlasmaBuilder, **kwargs):
-    if "eqdsk_path" not in kwargs or kwargs["eqdsk_path"] is None:
-        raise BuilderError(
-            "Must supply eqdsk_path as a kwarg when using read_equilibrium_callback"
-        )
-    eq = read_equilibrium(self, kwargs["eqdsk_path"])
-    analyse_equilibrium(self, eq)
-    self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
-    return eq
-
-
-def mock_equilibrium_callback(self: PlasmaBuilder, **kwargs):
-    shape = JohnerLCFS()
-    for var, param in {"r_0": "R_0", "a": "A"}.items():
-        shape.adjust_variable(var, self._params[param])
-    self._boundary = shape.create_shape()
 
 
 class PlasmaBuilder(Builder):
@@ -141,36 +115,225 @@ class PlasmaBuilder(Builder):
     _boundary: geo.wire.BluemiraWire
     _plot_flag: bool
     _segment_angle: float
+    _eqdsk_path: Optional[str] = None
+    _default_run_mode: str = "run"
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
+        if self._runmode.name.lower() == "read":
+            if build_config.get("eqdsk_path") is None:
+                raise BuilderError(
+                    "Must supply eqdsk_path in build_config when using 'read' mode."
+                )
+            self._eqdsk_path = build_config["eqdsk_path"]
+
         self._plot_flag = build_config.get("plot_flag", False)
         self._segment_angle = build_config.get("segment_angle", 360.0)
 
-    def __call__(
-        self,
-        params,
-        eq_callback: Optional[Callable[[PlasmaBuilder], Optional[Equilibrium]]] = None,
-        **kwargs,
-    ) -> Component:
-        if isinstance(eq_callback, str):
-            eq_callback = get_class_from_module(
-                eq_callback, default_module=__loader__.name
-            )
-        if eq_callback is None:
-            eq_callback = run_equilibrium_callback
-
-        self.reinitialise(params, **kwargs)
-        eq = eq_callback(self, **kwargs)
-        return self.build(equilibrium=eq, **kwargs)
-
     def reinitialise(self, params, **kwargs) -> None:
+        """
+        Reinitialise the parameters and boundary.
+
+        Parameters
+        ----------
+        params: dict
+            The new parameter values to initialise this builder against.
+        """
         super().reinitialise(params, **kwargs)
 
         self._boundary = None
 
-    def build(self, equilibrium=None, **kwargs) -> Component:
+    def run(self, **kwargs):
+        """
+        Run the plasma equilibrium design problem.
+        """
+        bluemira_print("Running Plasma equilibrium design problem")
+        eq = self._create_equilibrium()
+        self._analyse_equilibrium(eq)
+        self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
+        return {"equilibrium": eq}
+
+    def read(self, **kwargs):
+        """
+        Read the plasma equilibrium design problem.
+        """
+        bluemira_print("Reading Plasma equilibrium design problem")
+        eq = self._read_equilibrium()
+        self._analyse_equilibrium(eq)
+        self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
+        return {"equilibrium": eq}
+
+    def mock(self, **kwargs):
+        """
+        Mock the plasma equilibrium design problem using a Johner LCFS.
+        """
+        bluemira_print(
+            "Mocking Plasma equilibrium design problem "
+            "- no equilibrium will be produced."
+        )
+        shape = JohnerLCFS()
+        for var, param in {"r_0": "R_0", "a": "A"}.items():
+            shape.adjust_variable(var, self._params[param])
+        self._boundary = shape.create_shape()
+        return {"equilibrium": None}
+
+    def _ensure_boundary(self):
+        """
+        Check that the boundary has been set.
+        """
+        if getattr(self, "_boundary", None):
+            raise BuilderError(
+                "Boundary not set in Plasma build. "
+                "Ensure that one of run, read, or mock has been run before building."
+            )
+
+    def _read_equilibrium(self) -> Equilibrium:
+        """
+        Read a reference MHD equilibrium for the Plasma.
+        """
+        bluemira_print("Reading reference plasma MHD equilibrium.")
+
+        return Equilibrium.from_eqdsk(self._eqdsk_path)
+
+    def _create_equilibrium(self) -> Equilibrium:
+        """
+        Creates a reference MHD equilibrium for the Plasma.
+        """
+
+        def flatten_shape(x, z):
+            """
+            Flattens a shape by dragging the lowest and highest point to the minimum
+            radius point.
+            """
+            amin, amax = np.argmin(z), np.argmax(z)
+            xmin = np.min(x)
+            zmin, zmax = np.min(z), np.max(z)
+            xx = np.array(xmin)
+            xx = np.append(xx, x[amin:amax])
+            xx = np.append(xx, xmin)
+            zz = np.array(zmin)
+            zz = np.append(zz, z[amin:amax])
+            zz = np.append(zz, zmax)
+            return xx, zz
+
+        bluemira_print("Generating reference plasma MHD equilibrium.")
+
+        # First make an initial TF coil shape along which to auto-position
+        # some starting PF coil locations. We will design the TF later
+        rin, rout = self._params["r_tf_in_centre"], self._params["r_tf_out_centre"]
+
+        # TODO: Handle other TF coil parameterisations?
+        shape = PrincetonD()
+        for key, val in {"x1": rin, "x2": rout, "dz": 0}.items():
+            shape.adjust_variable(key, value=val)
+
+        tf_boundary = shape.create_shape()
+        if self._params.delta_95 < 0:  # Negative triangularity
+            tf_boundary.rotate(
+                tf_boundary.center_of_mass, direction=(0, 1, 0), degree=180
+            )
+        tf_boundary = geo.tools.offset_wire(tf_boundary, -0.5)
+
+        # TODO: Avoid converting to (deprecated) Loop
+        # TODO: Agree on numpy array dimensionality
+        x, z = flatten_shape(*tf_boundary.discretize().T[[0, 2]])
+        tf_boundary = Loop(x=x, z=z)
+
+        profile = None
+
+        self._design_problem = AbInitioEquilibriumProblem(
+            self._params.R_0.value,
+            self._params.B_0.value,
+            self._params.A.value,
+            self._params.I_p.value * 1e6,  # MA to A
+            self._params.beta_p.value / 1.3,  # TODO: beta_N vs beta_p here?
+            self._params.l_i.value,
+            # TODO: 100/95 problem
+            # TODO: This is a parameter patch... switch to strategy pattern
+            self._params.kappa_95.value,
+            1.2 * self._params.kappa_95.value,
+            self._params.delta_95.value,
+            1.2 * self._params.delta_95.value,
+            -20,
+            5,
+            60,
+            30,
+            self._params.div_L2D_ib.value,
+            self._params.div_L2D_ob.value,
+            self._params.r_cs_in.value + self._params.tk_cs.value / 2,
+            self._params.tk_cs.value / 2,
+            tf_boundary,
+            self._params.n_PF.value,
+            self._params.n_CS.value,
+            c_ejima=self._params.C_Ejima.value,
+            eqtype=self._params.plasma_type.value,
+            rtype=self._params.reactor_type.value,
+            profile=profile,
+        )
+
+        # TODO: Handle these through properties on actual materials.
+        if self._params.PF_material.value == "NbTi":
+            j_pf = NBTI_J_MAX
+            b_pf = NBTI_B_MAX
+        elif self._params.PF_material.value == "Nb3Sn":
+            j_pf = NB3SN_J_MAX
+            b_pf = NB3SN_B_MAX
+        else:
+            raise ValueError("Unrecognised material string")
+
+        if self._params.CS_material.value == "NbTi":
+            j_cs = NBTI_J_MAX
+            b_pf = NBTI_B_MAX
+        elif self._params.CS_material.value == "Nb3Sn":
+            j_cs = NB3SN_J_MAX
+            b_cs = NB3SN_B_MAX
+
+        self._design_problem.coilset.assign_coil_materials("PF", j_max=j_pf, b_max=b_pf)
+        self._design_problem.coilset.assign_coil_materials("CS", j_max=j_cs, b_max=b_cs)
+        self._design_problem.solve(plot=self._plot_flag)
+
+        return self._design_problem.eq
+
+    def _analyse_equilibrium(self, eq: Equilibrium):
+        """
+        Analyse an equilibrium and store important values in the Plasma parameters.
+        """
+        plasma_dict = eq.analyse_plasma()
+
+        dx_shaf = plasma_dict["dx_shaf"]
+        dz_shaf = plasma_dict["dz_shaf"]
+        shaf = np.hypot(dx_shaf, dz_shaf)
+
+        params = {
+            "I_p": plasma_dict["Ip"] / 1e6,
+            "q_95": plasma_dict["q_95"],
+            "beta_p": plasma_dict["beta_p"],
+            "l_i": plasma_dict["li"],
+            "delta_95": plasma_dict["delta_95"],
+            "kappa_95": plasma_dict["kappa_95"],
+            "delta": plasma_dict["delta"],
+            "kappa": plasma_dict["kappa"],
+            "shaf_shift": shaf,
+        }
+        self._params.update_kw_parameters(params, source="equilibria")
+
+    def build(
+        self, equilibrium: Optional[Equilibrium] = None, **kwargs
+    ) -> PlasmaComponent:
+        """
+        Build the plasma components.
+
+        Parameters
+        ----------
+        equilibrium: Optional[Equilibrium]
+            The equilibrium to be assigned to the top-level PlasmaComponent.
+
+        Returns
+        -------
+        plasma_component: Component
+            The PlasmaComponent produced by this build.
+        """
         super().build(**kwargs)
 
         component = PlasmaComponent(self._name, equilibrium=equilibrium)
@@ -181,7 +344,31 @@ class PlasmaBuilder(Builder):
 
         return component
 
-    def build_xz(self, equilibrium: Optional[Equilibrium] = None, **kwargs):
+    def build_xz(self, equilibrium: Optional[Equilibrium] = None, **kwargs) -> Component:
+        """
+        Build the xz representation of this plasma.
+
+        Generates the LCFS from the _boundary defined on the builder and includes the
+        separatrix from the equilibrium, if the equilibrium is provided.
+
+        Parameters
+        ----------
+        equilibrium: Optional[Equilibrium]
+            The equilibrium from which to extract the separatrix.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in the xz plane.
+
+        Raises
+        ------
+        BuilderError
+            If the _boundary has not been defined e.g. by running run, read, or mock
+            after reinitialisation.
+        """
+        self._ensure_boundary()
+
         component = Component("xz")
 
         if equilibrium is not None:
@@ -199,7 +386,26 @@ class PlasmaBuilder(Builder):
 
         return component
 
-    def build_xy(self, **kwargs):
+    def build_xy(self, **kwargs) -> Component:
+        """
+        Build the xy representation of this plasma.
+
+        Generates the LCFS from the _boundary defined on the builder as a ring bound by
+        the maximum and minimum radial extent of the boundary.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in the xy plane.
+
+        Raises
+        ------
+        BuilderError
+            If the _boundary has not been defined e.g. by running run, read, or mock
+            after reinitialisation.
+        """
+        self._ensure_boundary()
+
         inner = geo.tools.make_circle(self._boundary.bounding_box.x_min, axis=[0, 1, 0])
         outer = geo.tools.make_circle(self._boundary.bounding_box.x_max, axis=[0, 1, 0])
 
@@ -210,7 +416,26 @@ class PlasmaBuilder(Builder):
 
         return Component("xy").add_child(component)
 
-    def build_xyz(self, segment_angle: Optional[float] = None, **kwargs):
+    def build_xyz(self, segment_angle: Optional[float] = None, **kwargs) -> Component:
+        """
+        Build the 3D representation of this plasma.
+
+        Generates the LCFS from the _boundary defined on the builder by revolving around
+        the z axis.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in 3D (xyz).
+
+        Raises
+        ------
+        BuilderError
+            If the _boundary has not been defined e.g. by running run, read, or mock
+            after reinitialisation.
+        """
+        self._ensure_boundary()
+
         if segment_angle is None:
             segment_angle = self._segment_angle
 
@@ -222,136 +447,3 @@ class PlasmaBuilder(Builder):
         component.display_cad_options.transparency = 0.5
 
         return Component("xyz").add_child(component)
-
-
-def read_equilibrium(self: PlasmaBuilder, eqdsk_path: str, **kwargs) -> Equilibrium:
-    """
-    Read a reference MHD equilibrium for the Reactor.
-    """
-    bluemira_print("Reading reference plasma MHD equilibrium.")
-
-    return Equilibrium.from_eqdsk(eqdsk_path)
-
-
-def create_equilibrium(self: PlasmaBuilder, **kwargs) -> Equilibrium:
-    """
-    Creates a reference MHD equilibrium for the Reactor.
-    """
-
-    def flatten_shape(x, z):
-        """
-        Flattens a shape by dragging the lowest and highest point to the minimum
-        radius point.
-        """
-        amin, amax = np.argmin(z), np.argmax(z)
-        xmin = np.min(x)
-        zmin, zmax = np.min(z), np.max(z)
-        xx = np.array(xmin)
-        xx = np.append(xx, x[amin:amax])
-        xx = np.append(xx, xmin)
-        zz = np.array(zmin)
-        zz = np.append(zz, z[amin:amax])
-        zz = np.append(zz, zmax)
-        return xx, zz
-
-    bluemira_print("Generating reference plasma MHD equilibrium.")
-
-    # First make an initial TF coil shape along which to auto-position
-    # some starting PF coil locations. We will design the TF later
-    rin, rout = self._params["r_tf_in_centre"], self._params["r_tf_out_centre"]
-
-    # TODO: Handle other TF coil parameterisations?
-    shape = PrincetonD()
-    for key, val in {"x1": rin, "x2": rout, "dz": 0}.items():
-        shape.adjust_variable(key, value=val)
-
-    tf_boundary = shape.create_shape()
-    if self._params.delta_95 < 0:  # Negative triangularity
-        tf_boundary.rotate(tf_boundary.center_of_mass, direction=(0, 1, 0), degree=180)
-    tf_boundary = geo.tools.offset_wire(tf_boundary, -0.5)
-
-    # TODO: Avoid converting to (deprecated) Loop
-    # TODO: Agree on numpy array dimensionality
-    x, z = flatten_shape(*tf_boundary.discretize().T[[0, 2]])
-    tf_boundary = Loop(x=x, z=z)
-
-    profile = None
-
-    # TODO: Can we make it so that the equilibrium problem being used can be
-    # configured?
-    a = AbInitioEquilibriumProblem(
-        self._params.R_0.value,
-        self._params.B_0.value,
-        self._params.A.value,
-        self._params.I_p.value * 1e6,  # MA to A
-        self._params.beta_p.value / 1.3,  # TODO: beta_N vs beta_p here?
-        self._params.l_i.value,
-        # TODO: 100/95 problem
-        # TODO: This is a parameter patch... switch to strategy pattern
-        self._params.kappa_95.value,
-        1.2 * self._params.kappa_95.value,
-        self._params.delta_95.value,
-        1.2 * self._params.delta_95.value,
-        -20,
-        5,
-        60,
-        30,
-        self._params.div_L2D_ib.value,
-        self._params.div_L2D_ob.value,
-        self._params.r_cs_in.value + self._params.tk_cs.value / 2,
-        self._params.tk_cs.value / 2,
-        tf_boundary,
-        self._params.n_PF.value,
-        self._params.n_CS.value,
-        c_ejima=self._params.C_Ejima.value,
-        eqtype=self._params.plasma_type.value,
-        rtype=self._params.reactor_type.value,
-        profile=profile,
-    )
-
-    # TODO: Handle these through properties on actual materials.
-    if self._params.PF_material.value == "NbTi":
-        j_pf = NBTI_J_MAX
-        b_pf = NBTI_B_MAX
-    elif self._params.PF_material.value == "Nb3Sn":
-        j_pf = NB3SN_J_MAX
-        b_pf = NB3SN_B_MAX
-    else:
-        raise ValueError("Unrecognised material string")
-
-    if self._params.CS_material.value == "NbTi":
-        j_cs = NBTI_J_MAX
-        b_pf = NBTI_B_MAX
-    elif self._params.CS_material.value == "Nb3Sn":
-        j_cs = NB3SN_J_MAX
-        b_cs = NB3SN_B_MAX
-
-    a.coilset.assign_coil_materials("PF", j_max=j_pf, b_max=b_pf)
-    a.coilset.assign_coil_materials("CS", j_max=j_cs, b_max=b_cs)
-    a.solve(plot=self._plot_flag)
-
-    return a.eq
-
-
-def analyse_equilibrium(self: PlasmaBuilder, eq: Equilibrium):
-    """
-    Analyse an equilibrium and store important values in the Reactor parameters.
-    """
-    plasma_dict = eq.analyse_plasma()
-
-    dx_shaf = plasma_dict["dx_shaf"]
-    dz_shaf = plasma_dict["dz_shaf"]
-    shaf = np.hypot(dx_shaf, dz_shaf)
-
-    params = {
-        "I_p": plasma_dict["Ip"] / 1e6,
-        "q_95": plasma_dict["q_95"],
-        "beta_p": plasma_dict["beta_p"],
-        "l_i": plasma_dict["li"],
-        "delta_95": plasma_dict["delta_95"],
-        "kappa_95": plasma_dict["kappa_95"],
-        "delta": plasma_dict["delta"],
-        "kappa": plasma_dict["kappa"],
-        "shaf_shift": shaf,
-    }
-    self._params.update_kw_parameters(params, source="equilibria")
