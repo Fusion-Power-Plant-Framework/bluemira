@@ -624,6 +624,7 @@ class CustomProfile(Profile):
         self.R_0 = R_0
         self._B_0 = B_0
         self.Ip = Ip
+        self.scale = 1.0
 
         # Fit a shape function to the pprime profile (mostly for plotting)
         x = np.linspace(0, 1, 50)
@@ -661,8 +662,8 @@ class CustomProfile(Profile):
         if self.Ip is not None:
             # This is a simple way to prescribe the plasma current
             Ip = self.int2d(jtor)
-            scale = self.Ip / Ip
-            jtor *= scale
+            self.scale = self.Ip / Ip
+            jtor *= self.scale
         return jtor
 
     def pressure(self, psinorm):
