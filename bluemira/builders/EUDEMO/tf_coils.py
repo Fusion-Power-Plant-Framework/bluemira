@@ -101,7 +101,7 @@ class TFWindingPackBuilder(Builder):
         return PhysicalComponent(self.name, solid)
 
 
-class BuildTFInsulation(Builder):
+class TFInsulationBuilder(Builder):
     name = "TFWPInsulation"
 
     def __init__(self, wp_solid, wp_centreline, wp_cross_section, insulation_thickness):
@@ -155,8 +155,9 @@ class BuildTFInsulation(Builder):
         return PhysicalComponent(self.name, ins_solid)
 
 
-class BuildTFCasing(Builder):
+class TFCasingBuilder(Builder):
     name = "TFCasing"
+    _required_params: List[str] = []
 
     def __init__(
         self,
@@ -293,7 +294,7 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         self._design_problem = None
         self._centreline = self._param_class().create_shape()
         self._wp_cross_section = self._make_wp_xs()
-        self._sub_builders = [TFWindingPackBuilder]
+        self._sub_builders = [TFWindingPackBuilder, TFInsulationBuilder, TFCasingBuilder]
 
     def _make_wp_xs(self):
         x_c = self.params.r_tf_in.value
