@@ -98,20 +98,15 @@ class ConfigurationSchema:
     f_cd_ohm: Parameter
 
     # First wall profile
-    fw_dx: Parameter
     fw_psi_n: Parameter
     fw_dL_min: Parameter  # noqa(N815) - mixed case to match PROCESS
     fw_dL_max: Parameter  # noqa(N815) - mixed case to match PROCESS
     fw_a_max: Parameter
-    fw_p_sol_near: Parameter
-    fw_p_sol_far: Parameter
+    P_sep_particle: Parameter
+    f_p_sol_near: Parameter
     hf_limit: Parameter
 
     # SN/DN variables for heat flux transport
-    fw_dpsi_n_near: Parameter
-    fw_dpsi_n_far: Parameter
-    fw_dx_omp: Parameter
-    fw_dx_imp: Parameter
     fw_lambda_q_near_omp: Parameter
     fw_lambda_q_far_omp: Parameter
     fw_lambda_q_near_imp: Parameter

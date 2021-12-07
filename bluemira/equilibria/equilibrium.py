@@ -1279,7 +1279,7 @@ class Equilibrium(MHDState):
         # NOTE: You should use find.py::find_flux_surface_through_point, this is just
         # wrong, but is still used in BLUEPRINT.systems.firstwall.py
         bluemira_warn(
-            "This function does not do what it should do. You should not use " "it."
+            "This function does not do what it should do. You should not use it."
         )
         psi = self.psi(x, z)
         psi_n = calc_psi_norm(psi, *self.get_OX_psis())
