@@ -374,10 +374,6 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
     def build_xz(self, **kwargs):
         component = Component("xz")
 
-        for sub_builder in self._sub_builders:
-            sub_comp = sub_builder.build_xz()
-            component.add_child(sub_comp)
-
         return component
 
     def build_xy(self, **kwargs):
