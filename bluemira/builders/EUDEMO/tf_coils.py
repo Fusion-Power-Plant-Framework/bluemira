@@ -334,7 +334,6 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         return face, outer_face
 
     def run(self, separatrix, keep_out_zone=None, nx=1, ny=1):
-        parameterisation = self._param_class()
         optimiser = Optimiser(
             "SLSQP",
             opt_conditions={
@@ -401,27 +400,30 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         xs2 = deepcopy(xs)
         xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
 
+        ib_wp_comp = PhysicalComponent("inboard", xs)
+        ib_wp_comp.plot_options.color = BLUE_PALETTE["TF"][1]
+        ob_wp_comp = PhysicalComponent("outboard", xs2)
+        ob_wp_comp.plot_options.color = BLUE_PALETTE["TF"][1]
         winding_pack = Component(
             "Winding pack",
-            children=[
-                PhysicalComponent("inboard", xs),
-                PhysicalComponent("outboard", xs2),
-            ],
+            children=[ib_wp_comp, ob_wp_comp],
         )
-        winding_pack.plot_options.color = BLUE_PALETTE["TF"][1]
         component.add_child(winding_pack)
 
         # Insulation
         ins_inner_face, ins_outer_face = self._make_ins_xs()
 
+        ib_ins_comp = PhysicalComponent("inboard", ins_inner_face)
+        ib_ins_comp.plot_options.color = BLUE_PALETTE["TF"][2]
+        ob_ins_comp = PhysicalComponent("outboard", ins_outer_face)
+        ob_ins_comp.plot_options.color = BLUE_PALETTE["TF"][2]
         insulation = Component(
             "Insulation",
             children=[
-                PhysicalComponent("inboard", ins_inner_face),
-                PhysicalComponent("outboard", ins_outer_face),
+                ib_ins_comp,
+                ob_ins_comp,
             ],
         )
-        insulation.plot_options.color = BLUE_PALETTE["TF"][2]
         component.add_child(insulation)
 
         # Casing
@@ -465,21 +467,25 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
 
         outer_ins = deepcopy(ins_outer_face.boundary[0])
 
-        outer_wire.translate((x_out - outer_wire.center_of_mass[0], 0, 0))
-        ins_outer_face = BluemiraFace([outer_wire, outer_ins])
+        x_out = self._centreline.bounding_box.x_max
+        outer_wire.translate((x_out, 0, 0))
+        cas_outer_face = BluemiraFace([outer_wire, outer_ins])
+
+        ib_cas_comp = PhysicalComponent("inboard", inner_face)
+        ib_cas_comp.plot_options.color = BLUE_PALETTE["TF"][0]
+        ob_cas_comp = PhysicalComponent("outboard", cas_outer_face)
+        ob_cas_comp.plot_options.color = BLUE_PALETTE["TF"][0]
         casing = Component(
             "Casing",
-            children=[
-                PhysicalComponent("inboard", inner_face),
-                PhysicalComponent("outboard", ins_outer_face),
-            ],
+            children=[ib_cas_comp, ob_cas_comp],
         )
-        casing.plot_options.color = BLUE_PALETTE["TF"][0]
+
         component.add_child(casing)
 
-        plot_2d([winding_pack, insulation, casing], plane="xy")
         for child in component.children:  # :'(
             child.plot_options.plane = "xy"
+            for sub_child in child.children:
+                sub_child.plot_options.plane = "xy"
         component.plot_options.plane = "xy"
         return component
 
