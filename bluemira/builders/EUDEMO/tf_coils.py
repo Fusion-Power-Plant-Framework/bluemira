@@ -113,8 +113,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     def _make_wp_xs(self):
         x_c = self.params.r_tf_in_centre.value
         # PROCESS WP thickness includes insulation and insertion gap
-        d_xc = 0.5 * (self.params.tf_wp_width.value - self.params.tk_tf_ins)
-        d_yc = 0.5 * (self.params.tf_wp_depth.value - self.params.tk_tf_ins)
+        d_xc = 0.5 * (self.params.tf_wp_width - self.params.tk_tf_ins)
+        d_yc = 0.5 * (self.params.tf_wp_depth - self.params.tk_tf_ins)
         wp_xs = make_polygon(
             [
                 [x_c - d_xc, -d_yc, 0],
@@ -124,14 +124,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             ],
             closed=True,
         )
-        return BluemiraFace(wp_xs, "TF WP x-y cross-section")
+        return wp_xs
 
     def _make_ins_xs(self):
         x_out = self._centreline.bounding_box.x_max
-        ins_outer = offset_wire(
-            self._wp_cross_section.boundary[0], self._params.tk_tf_ins.value
-        )
-        face = BluemiraFace([ins_outer, self._wp_cross_section.boundary[0]])
+        ins_outer = offset_wire(self._wp_cross_section, self._params.tk_tf_ins.value)
+        face = BluemiraFace([ins_outer, self._wp_cross_section])
 
         outer_face = deepcopy(face)
         outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
@@ -231,7 +229,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Should normally be gotten with wire_plane_intersect
         # (it's not OK to assume that the maximum x value occurs on the midplane)
         x_out = self._centreline.bounding_box.x_max
-        xs = deepcopy(self._wp_cross_section)
+        xs = BluemiraFace(deepcopy(self._wp_cross_section))
         xs2 = deepcopy(xs)
         xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
 
@@ -293,7 +291,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component = Component("xyz")
 
         # Winding pack
-        wp_solid = sweep_shape(self._wp_cross_section.boundary[0], self._centreline)
+        wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
 
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
