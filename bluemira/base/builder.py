@@ -166,7 +166,7 @@ class Builder(abc.ABC):
         return self._params
 
     @property
-    def required_parameters(self) -> List[str]:
+    def required_params(self) -> List[str]:
         """
         The variable names of the parameters that are needed to run this builder.
         """
