@@ -237,7 +237,7 @@ class PlasmaBuilder(Builder):
 
         # TODO: Avoid converting to (deprecated) Loop
         # TODO: Agree on numpy array dimensionality
-        x, z = flatten_shape(*tf_boundary.discretize().T[[0, 2]])
+        x, z = flatten_shape(*tf_boundary.discretize(200, byedges=True).T[[0, 2]])
         tf_boundary = Loop(x=x, z=z)
 
         profile = None

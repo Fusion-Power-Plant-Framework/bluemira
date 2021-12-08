@@ -26,6 +26,7 @@ Tests for EU-DEMO build.
 import pytest
 
 import json
+import numpy as np
 import os
 
 from bluemira.base.file import get_bluemira_root
@@ -71,3 +72,20 @@ class TestEUDEMO:
         plasma_component: PlasmaComponent = self.component.get_component("Plasma")
         assert plasma_component is not None
         assert plasma_component.equilibrium is not None
+
+        reference_eq_dir = self.reactor.file_manager.reference_data_dirs["equilibria"]
+        reference_eq_name = f"{self.reactor.params.Name.value}_eqref.json"
+        reference_eq_path = os.path.join(reference_eq_dir, reference_eq_name)
+        reference_eq_vals = {}
+        with open(reference_eq_path, "r") as fh:
+            reference_eq_vals: dict = json.load(fh)
+        reference_eq_vals.pop("name")
+
+        eq_dict = plasma_component.equilibrium.to_dict()
+        bad_attrs = []
+        attr: str
+        for attr, ref_val in reference_eq_vals.items():
+            if not np.allclose(eq_dict[attr], ref_val):
+                bad_attrs.append(attr)
+
+        assert len(bad_attrs) == 0, f"Attrs didn't match reference: {bad_attrs}"
