@@ -32,6 +32,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.shapes import ParameterisedShapeBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
+from bluemira.display.plotter import plot_2d
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.tools import offset_wire, sweep_shape, make_polygon, boolean_cut
@@ -264,6 +265,7 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         "n_TF",
         "TF_ripple_limit",
         "r_tf_in",
+        "r_tf_in_centre",
         "tk_tf_nose",
         "tk_tf_front_ib",
         "tk_tf_side",
@@ -305,9 +307,10 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         self._wp_cross_section = self._make_wp_xs()
 
     def _make_wp_xs(self):
-        x_c = self.params.r_tf_in.value
-        d_xc = 0.5 * self.params.tf_wp_width.value
-        d_yc = 0.5 * self.params.tf_wp_depth.value
+        x_c = self.params.r_tf_in_centre.value
+        # PROCESS WP thickness includes insulation and insertion gap
+        d_xc = 0.5 * (self.params.tf_wp_width.value - self.params.tk_tf_ins)
+        d_yc = 0.5 * (self.params.tf_wp_depth.value - self.params.tk_tf_ins)
         wp_xs = make_polygon(
             [
                 [x_c - d_xc, -d_yc, 0],
@@ -331,6 +334,7 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         return face, outer_face
 
     def run(self, separatrix, keep_out_zone=None, nx=1, ny=1):
+        parameterisation = self._param_class()
         optimiser = Optimiser(
             "SLSQP",
             opt_conditions={
@@ -408,45 +412,47 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         component.add_child(winding_pack)
 
         # Insulation
-        face, outer_face = self._make_ins_xs()
+        ins_inner_face, ins_outer_face = self._make_ins_xs()
 
         insulation = Component(
             "Insulation",
             children=[
-                PhysicalComponent("inboard", face),
-                PhysicalComponent("outboard", outer_face),
+                PhysicalComponent("inboard", ins_inner_face),
+                PhysicalComponent("outboard", ins_outer_face),
             ],
         )
         insulation.plot_options.color = BLUE_PALETTE["TF"][2]
         component.add_child(insulation)
 
         # Casing
-        ins_outer = face.boundary[0]
-        ins_bb = ins_outer.bounding_box
+        ins_in_outer = ins_inner_face.boundary[0]
+        ins_bb = ins_in_outer.bounding_box
         x_ins_in = ins_bb.x_min
         x_ins_out = ins_bb.x_max
 
-        x_in = x_ins_in - self._params.tk_tf_nose.value
-        x_out = x_ins_out + self._params.tk_tf_front_ib.value
-        half_angle = np.pi / self._params.n_TF.value
-        y_in = x_in * np.sin(half_angle)
-        y_out = x_out * np.sin(half_angle)
+        x_in = self.params.r_tf_in
+        x_out = x_ins_out + self.params.tk_tf_front_ib.value
+        half_angle = np.pi / self.params.n_TF.value
+        y_in = x_in * np.tan(half_angle)
+        y_out = x_out * np.tan(half_angle)
         outer_wire = make_polygon(
             [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
             closed=True,
         )
-        inner_face = BluemiraFace([outer_wire, deepcopy(ins_outer)])
 
+        inner_face = BluemiraFace([outer_wire, deepcopy(ins_in_outer)])
+
+        ins_bb = ins_outer_face.bounding_box
         dx_ins = 0.5 * (ins_bb.x_max - ins_bb.x_min)
         dy_ins = 0.5 * (ins_bb.y_max - ins_bb.y_min)
 
         # Split the total radial thickness equally on the outboard
         # This could be done with input params too..
-        tk_total = self._params.tk_tf_front_ib.value + self._params.tk_tf_nose.value
+        tk_total = self.params.tk_tf_front_ib.value + self.params.tk_tf_nose.value
         tk = 0.5 * tk_total
 
         dx_out = dx_ins + tk
-        dy_out = dy_ins + self._params.tk_tf_side.value
+        dy_out = dy_ins + self.params.tk_tf_side.value
         outer_wire = make_polygon(
             [
                 [-dx_out, -dy_out, 0],
@@ -457,20 +463,24 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
             closed=True,
         )
 
-        outer_ins = deepcopy(ins_outer)
+        outer_ins = deepcopy(ins_outer_face.boundary[0])
 
         outer_wire.translate((x_out - outer_wire.center_of_mass[0], 0, 0))
-        outer_ins.translate((x_out - outer_ins.center_of_mass[0], 0, 0))
-        outer_face = BluemiraFace([outer_wire, outer_ins])
+        ins_outer_face = BluemiraFace([outer_wire, outer_ins])
         casing = Component(
             "Casing",
             children=[
                 PhysicalComponent("inboard", inner_face),
-                PhysicalComponent("outboard", outer_face),
+                PhysicalComponent("outboard", ins_outer_face),
             ],
         )
         casing.plot_options.color = BLUE_PALETTE["TF"][0]
         component.add_child(casing)
+
+        plot_2d([winding_pack, insulation, casing], plane="xy")
+        for child in component.children:  # :'(
+            child.plot_options.plane = "xy"
+        component.plot_options.plane = "xy"
         return component
 
     def build_xyz(self, **kwargs):
@@ -498,8 +508,8 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
         inner_xs, outer_xs = self._make_ins_xs()
-        inner_xs = inner_xs.shape.boundary[0]
-        outer_xs = outer_xs.shape.boundary[0]
+        inner_xs = inner_xs.boundary[0]
+        outer_xs = outer_xs.boundary[0]
 
         solid = sweep_shape([inner_xs, outer_xs], self._centreline)
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
