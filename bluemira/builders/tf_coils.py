@@ -28,6 +28,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import matplotlib
 
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.display import plot_2d
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.magnetostatics.circuits import HelmholtzCage
@@ -203,7 +204,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         self.update_cage(x)
         ripple = self.cage.ripple(*self.ripple_points)
-        print(max(ripple))
+        bluemira_debug(f"Max ripple: {max(ripple)}")
         self.ripple_values = ripple
         return ripple - self.params.TF_ripple_limit
 
