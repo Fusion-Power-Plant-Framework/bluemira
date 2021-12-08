@@ -136,9 +136,9 @@ if plasma.equilibrium is not None:
 
 # Display the components.
 
-plasma.get_component("xz").plot_2d()
-plasma.get_component("xy").plot_2d()
-plasma.get_component("xyz").show_cad()
+# plasma.get_component("xz").plot_2d()
+# plasma.get_component("xy").plot_2d()
+# plasma.get_component("xyz").show_cad()
 
 # Display the summary of the equilibrium design problem solved by the Plasma builder.
 
@@ -153,11 +153,13 @@ if plasma_builder.runmode == "run":
 
 # Display the reference equilibrium
 
-if plasma.equilibrium is not None:
-    plasma.equilibrium.plot()
-    plt.show()
+# if plasma.equilibrium is not None:
+#     plasma.equilibrium.plot()
+#     plt.show()
 
 
 tf_coils = component.get_component("TF Coils")
 xy = tf_coils.get_component("xy")
 xy.plot_2d()
+xyz = tf_coils.get_component("xyz")
+xyz.show_cad()
