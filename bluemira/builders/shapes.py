@@ -23,6 +23,7 @@
 Built-in build steps for making shapes
 """
 
+import copy
 from typing import Dict, Type
 
 from bluemira.base.builder import BuildConfig, Builder, BuilderError
@@ -54,7 +55,7 @@ class ParameterisedShapeBuilder(Builder):
         self._extract_required_params()
 
     def _extract_required_params(self):
-        self._required_params = []
+        self._required_params = copy.deepcopy(self._required_params)
         for var in self._variables_map.values():
             if isinstance(var, dict) and isinstance(var["value"], str):
                 self._required_params += [var["value"]]
