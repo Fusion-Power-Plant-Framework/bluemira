@@ -48,14 +48,7 @@ def principal_components(xyz_array):
     eigenvalues = eigenvalues[sort]
     eigenvectors = eigenvectors[:, sort]
 
-    if np.isclose(eigenvalues[-1], 0.0):
-        print("arary is planar?!")
-    return eigenvectors
-
-
-def fit_plane(xyz_array):
-    eigenvectors = principal_components(xyz_array)
-    return eigenvectors[:, -1]
+    return eigenvalues, eigenvectors
 
 
 class Coordinates:
@@ -83,6 +76,7 @@ class Coordinates:
 
     def __init__(self, xyz_array, enforce_ccw=False):
         self._array = self._parse_input(xyz_array)
+        self._set_plane_props()
 
         if not self.ccw and enforce_ccw:
             self.reverse()
@@ -183,6 +177,24 @@ class Coordinates:
 
     def _check_ccw(self):
         pass
+
+    def _set_plane_props(self):
+        eigenvalues, eigenvectors = principal_components(self._array)
+
+        if np.isclose(eigenvalues[-1], 0.0):
+            self._is_planar = True
+        else:
+            self._is_planar = False
+
+        self._normal_vector = eigenvectors[:, -1]
+
+    @property
+    def is_planar(self):
+        return self._is_planar
+
+    @property
+    def normal_vector(self):
+        return self._normal_vector
 
     # =============================================================================
     # Property access
