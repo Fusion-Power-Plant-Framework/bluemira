@@ -120,6 +120,16 @@ class EUDEMOReactor(Reactor):
                 "TF_problem_class",
                 "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
             ),
+            "opt_conditions": self._build_config.get(
+                "TF_opt_conditions",
+                {
+                    "ftol_rel": 1e-3,
+                    "xtol_rel": 1e-12,
+                    "xtol_abs": 1e-12,
+                    "max_eval": 1000,
+                },
+            ),
+            "opt_parameters": self._build_config.get("TF_opt_parameters", {}),
             "run_mode": self._build_config.get("TF_mode", "run"),
         }
 
