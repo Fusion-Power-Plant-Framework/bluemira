@@ -193,6 +193,24 @@ class Builder(abc.ABC):
         """
         return self._design_problem
 
+    def run(self, *args, **kwargs):
+        """
+        Optional abstract method to run a design problem while building.
+        """
+        raise NotImplementedError
+
+    def read(self, *args, **kwargs):
+        """
+        Optional abstract method to read the result of a design problem while building.
+        """
+        raise NotImplementedError
+
+    def mock(self, *args, **kwargs):
+        """
+        Optional abstract method to mock a design problem while building.
+        """
+        raise NotImplementedError
+
     def _validate_requirement(
         self, input, source: Literal["params", "config"]
     ) -> List[str]:
