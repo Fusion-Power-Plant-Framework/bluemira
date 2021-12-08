@@ -24,13 +24,14 @@ EU-DEMO build classes for TF Coils.
 """
 from typing import Type, Optional, List
 from copy import deepcopy
+from matplotlib.pyplot import plot
 import numpy as np
 
 from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.builders.shapes import ParameterisedShapeBuilder
+from bluemira.builders.shapes import ParameterisedShapeBuilder, MakeOptimisedShape
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -257,7 +258,7 @@ class TFCasingBuilder(Builder):
         return PhysicalComponent(self.name, solid)
 
 
-class TFCoilsBuilder(ParameterisedShapeBuilder):
+class TFCoilsBuilder(MakeOptimisedShape):
     _required_params: List[str] = [
         "R_0",
         "z_0",
@@ -299,11 +300,9 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
             The parameterisation containing at least the required params for this
             Builder.
         """
+        super().reinitialise(params, **kwargs)
         bluemira_debug(f"Reinitialising {self.name}")
         self._reset_params(params)
-
-        self._design_problem = None
-        self._centreline = self._param_class().create_shape()
         self._wp_cross_section = self._make_wp_xs()
 
     def _make_wp_xs(self):
@@ -333,31 +332,73 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
         return face, outer_face
 
+    def _make_cas_xs(self):
+        x_in = self.params.r_tf_in
+        # Insulation included in WP dith
+        x_out = (
+            x_in
+            + self.params.tk_tf_nose
+            + self.params.tf_wp_width
+            + self.params.tk_tf_front_ib
+        )
+        half_angle = np.pi / self.params.n_TF.value
+        y_in = x_in * np.tan(half_angle)
+        y_out = x_out * np.tan(half_angle)
+        inboard_wire = make_polygon(
+            [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
+            closed=True,
+        )
+
+        dx_ins = 0.5 * self.params.tf_wp_width.value
+        dy_ins = 0.5 * self.params.tf_wp_depth.value
+
+        # Split the total radial thickness equally on the outboard
+        # This could be done with input params too..
+        tk_total = self.params.tk_tf_front_ib.value + self.params.tk_tf_nose.value
+        tk = 0.5 * tk_total
+
+        dx_out = dx_ins + tk
+        dy_out = dy_ins + self.params.tk_tf_side.value
+        outboard_wire = make_polygon(
+            [
+                [-dx_out, -dy_out, 0],
+                [dx_out, -dy_out, 0],
+                [dx_out, dy_out, 0],
+                [-dx_out, dy_out, 0],
+            ],
+            closed=True,
+        )
+        x_out = self._centreline.bounding_box.x_max
+        outboard_wire.translate((x_out, 0, 0))
+        return inboard_wire, outboard_wire
+
     def run(self, separatrix, keep_out_zone=None, nx=1, ny=1):
-        optimiser = Optimiser(
-            "SLSQP",
-            opt_conditions={
-                "ftol_rel": 1e-3,
-                "xtol_rel": 1e-12,
-                "xtol_abs": 1e-12,
-                "max_eval": 1000,
-            },
-        )
-        self._design_problem = RippleConstrainedLengthOpt(
-            self._param_class(),
-            optimiser,
-            self._params,
-            self._wp_cross_section,
-            separatrix=separatrix,
-            keep_out_zone=keep_out_zone,
-            rip_con_tol=1e-3,
-            koz_con_tol=1e-3,
-            nx=nx,
-            ny=ny,
-            n_koz_points=100,
-        )
-        self._design_problem.solve()
+        super().run(separatrix=separatrix, keep_out_zone=keep_out_zone, nx=nx, ny=ny)
         self._centreline = self._design_problem.parameterisation.create_shape()
+        # optimiser = Optimiser(
+        #     self._algorithm_name,
+        #     self._shape.variables.n_free_variables,
+        #     self._opt_conditions,
+        #     self._opt_parameters,
+        # )
+        # self._design_problem = RippleConstrainedLengthOpt(self._shape, optimiser)
+        # self._design_problem.solve()
+
+        # paramet.fix_variable("x1", value=self.params.r_tf_in_centre)
+        # self._design_problem = RippleConstrainedLengthOpt(
+        #     paramet,
+        #     optimiser,
+        #     self._params,
+        #     self._wp_cross_section,
+        #     separatrix=separatrix,
+        #     keep_out_zone=keep_out_zone,
+        #     rip_con_tol=1e-3,
+        #     koz_con_tol=1e-3,
+        #     nx=nx,
+        #     ny=ny,
+        #     n_koz_points=100,
+        # )
+        # self._design_problem.solve()
 
     def read(self, variables):
         parameterisation = self._param_class(variables)
@@ -401,9 +442,9 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
 
         ib_wp_comp = PhysicalComponent("inboard", xs)
-        ib_wp_comp.plot_options.color = BLUE_PALETTE["TF"][1]
+        ib_wp_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         ob_wp_comp = PhysicalComponent("outboard", xs2)
-        ob_wp_comp.plot_options.color = BLUE_PALETTE["TF"][1]
+        ob_wp_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         winding_pack = Component(
             "Winding pack",
             children=[ib_wp_comp, ob_wp_comp],
@@ -414,9 +455,9 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         ins_inner_face, ins_outer_face = self._make_ins_xs()
 
         ib_ins_comp = PhysicalComponent("inboard", ins_inner_face)
-        ib_ins_comp.plot_options.color = BLUE_PALETTE["TF"][2]
+        ib_ins_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         ob_ins_comp = PhysicalComponent("outboard", ins_outer_face)
-        ob_ins_comp.plot_options.color = BLUE_PALETTE["TF"][2]
+        ob_ins_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         insulation = Component(
             "Insulation",
             children=[
@@ -427,54 +468,19 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         component.add_child(insulation)
 
         # Casing
-        ins_in_outer = ins_inner_face.boundary[0]
-        ins_bb = ins_in_outer.bounding_box
-        x_ins_in = ins_bb.x_min
-        x_ins_out = ins_bb.x_max
+        ib_cas_wire, ob_cas_wire = self._make_cas_xs()
 
-        x_in = self.params.r_tf_in
-        x_out = x_ins_out + self.params.tk_tf_front_ib.value
-        half_angle = np.pi / self.params.n_TF.value
-        y_in = x_in * np.tan(half_angle)
-        y_out = x_out * np.tan(half_angle)
-        outer_wire = make_polygon(
-            [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
-            closed=True,
+        cas_inner_face = BluemiraFace(
+            [ib_cas_wire, deepcopy(ins_inner_face.boundary[0])]
+        )
+        cas_outer_face = BluemiraFace(
+            [ob_cas_wire, deepcopy(ins_outer_face.boundary[0])]
         )
 
-        inner_face = BluemiraFace([outer_wire, deepcopy(ins_in_outer)])
-
-        ins_bb = ins_outer_face.bounding_box
-        dx_ins = 0.5 * (ins_bb.x_max - ins_bb.x_min)
-        dy_ins = 0.5 * (ins_bb.y_max - ins_bb.y_min)
-
-        # Split the total radial thickness equally on the outboard
-        # This could be done with input params too..
-        tk_total = self.params.tk_tf_front_ib.value + self.params.tk_tf_nose.value
-        tk = 0.5 * tk_total
-
-        dx_out = dx_ins + tk
-        dy_out = dy_ins + self.params.tk_tf_side.value
-        outer_wire = make_polygon(
-            [
-                [-dx_out, -dy_out, 0],
-                [dx_out, -dy_out, 0],
-                [dx_out, dy_out, 0],
-                [-dx_out, dy_out, 0],
-            ],
-            closed=True,
-        )
-
-        outer_ins = deepcopy(ins_outer_face.boundary[0])
-
-        x_out = self._centreline.bounding_box.x_max
-        outer_wire.translate((x_out, 0, 0))
-        cas_outer_face = BluemiraFace([outer_wire, outer_ins])
-
-        ib_cas_comp = PhysicalComponent("inboard", inner_face)
-        ib_cas_comp.plot_options.color = BLUE_PALETTE["TF"][0]
+        ib_cas_comp = PhysicalComponent("inboard", cas_inner_face)
+        ib_cas_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
         ob_cas_comp = PhysicalComponent("outboard", cas_outer_face)
-        ob_cas_comp.plot_options.color = BLUE_PALETTE["TF"][0]
+        ob_cas_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
         casing = Component(
             "Casing",
             children=[ib_cas_comp, ob_cas_comp],
@@ -493,6 +499,7 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         component = Component("xyz")
 
         # Winding pack
+        plot_2d(self._centreline, show=False)
         wp_solid = sweep_shape(self._wp_cross_section.boundary[0], self._centreline)
 
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
@@ -500,11 +507,11 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         component.add_child(winding_pack)
 
         # Insulation
-        ins_xs = offset_wire(
-            self._wp_cross_section.boundary[0], self._params.tk_tf_ins.value
-        )
+        inner_xs, _ = self._make_ins_xs()
+        inner_xs = inner_xs.boundary[0]
 
-        solid = sweep_shape(ins_xs, self._centreline)
+        solid = sweep_shape(inner_xs, deepcopy(self._centreline))
+        plot_2d(self._centreline, show=False)
         ins_solid = boolean_cut(solid, wp_solid)[0]
         insulation = PhysicalComponent("Insulation", ins_solid)
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
@@ -513,10 +520,8 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         # Casing
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
-        inner_xs, outer_xs = self._make_ins_xs()
-        inner_xs = inner_xs.boundary[0]
-        outer_xs = outer_xs.boundary[0]
-
+        inner_xs, outer_xs = self._make_cas_xs()
+        plot_2d(self._centreline)
         solid = sweep_shape([inner_xs, outer_xs], self._centreline)
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
         solid = boolean_cut(solid, outer_ins_solid)[0]
