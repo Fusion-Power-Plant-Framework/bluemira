@@ -216,6 +216,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
     def build_xz(self, **kwargs):
         component = Component("xz")
+
+        for child in component.children:  # :'(
+            child.plot_options.plane = "xz"
+            for sub_child in child.children:
+                sub_child.plot_options.plane = "xz"
+        component.plot_options.plane = "xz"
         return component
 
     def build_xy(self, **kwargs):
@@ -287,7 +293,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component = Component("xyz")
 
         # Winding pack
-        plot_2d(self._centreline, show=False)
         wp_solid = sweep_shape(self._wp_cross_section.boundary[0], self._centreline)
 
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
@@ -299,7 +304,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         inner_xs = inner_xs.boundary[0]
 
         solid = sweep_shape(inner_xs, deepcopy(self._centreline))
-        plot_2d(self._centreline, show=False)
         ins_solid = boolean_cut(solid, wp_solid)[0]
         insulation = PhysicalComponent("Insulation", ins_solid)
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
@@ -309,7 +313,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
         inner_xs, outer_xs = self._make_cas_xs()
-        plot_2d(self._centreline)
         solid = sweep_shape([inner_xs, outer_xs], self._centreline)
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
         solid = boolean_cut(solid, outer_ins_solid)[0]
