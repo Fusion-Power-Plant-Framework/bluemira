@@ -284,8 +284,6 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
     def __init__(self, params, build_config: BuildConfig, **kwargs):
         super().__init__(params, build_config, **kwargs)
 
-        self.reinitialise(params)
-
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
@@ -354,19 +352,6 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
     def mock(self, variables):
         parameterisation = self._param_class(variables)
         self._centreline = parameterisation.create_shape()
-
-    def reinitialise(self, params, **kwargs) -> None:
-        """
-        Initialise the state of this builder ready for a new run.
-
-        Parameters
-        ----------
-        params: Dict[str, Any]
-            The parameterisation containing at least the required params for this
-            Builder.
-        """
-        bluemira_debug(f"Reinitialising {self.name}")
-        self._reset_params(params)
 
     def build(self, label: str = "TF Coils", **kwargs) -> Component:
         """
