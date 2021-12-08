@@ -300,7 +300,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             Builder.
         """
         super().reinitialise(params, **kwargs)
-        bluemira_debug(f"Reinitialising {self.name}")
+
         self._reset_params(params)
         self._wp_cross_section = self._make_wp_xs()
 
@@ -403,16 +403,16 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         component = TFCoilsComponent(self.name)
 
-        component.add_child(self.build_xz(label=label))
-        component.add_child(self.build_xy(label=label))
-        component.add_child(self.build_xyz(label=label))
+        component.add_child(self.build_xz(component, label=label))
+        component.add_child(self.build_xy(component, label=label))
+        component.add_child(self.build_xyz(component, label=label))
         return component
 
-    def build_xz(self, **kwargs):
+    def build_xz(self, component_tree: Component, **kwargs):
         component = Component("xz")
         return component
 
-    def build_xy(self, **kwargs):
+    def build_xy(self, component_tree: Component, **kwargs):
         component = Component("xy")
 
         # Winding pack
@@ -477,7 +477,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.plot_options.plane = "xy"
         return component
 
-    def build_xyz(self, **kwargs):
+    def build_xyz(self, component_tree: Component, **kwargs):
         component = Component("xyz")
 
         # Winding pack
