@@ -230,7 +230,7 @@ class Builder(abc.ABC):
             or getattr(self, "_default_run_mode", None) is not None
         )
         if has_runmode:
-            self._run_mode = self._set_runmode(build_config)
+            self._set_runmode(build_config)
 
     def _set_runmode(self, build_config: BuildConfig):
         """
