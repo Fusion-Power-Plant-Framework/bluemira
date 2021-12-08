@@ -110,24 +110,6 @@ class ConstraintLibrary:
         return constraint
 
 
-class OptimiserConstrainer:
-    def __init__(self, optimiser_constraints, *args, **kwargs):
-        self._optimiser_constraints = optimiser_constraints
-        super().__init__(*args, **kwargs)
-
-    def set_up_constraints(self, opt):
-        for _opt_constraint in self._optimiser_constraints:
-            f_constr_args = _opt_constraint._f_constraint_args
-            f_constr = lambda constraint, vector, grad: _opt_constraint._f_constraint(
-                self, constraint, vector, grad, *f_constr_args
-            )
-            if _opt_constraint._constraint_type == "inequality":
-                opt.add_ineq_constraints(f_constr, _opt_constraint._tolerance)
-            elif _opt_constraint._constraint_type == "equality":
-                opt.add_eq_constraints(f_constr, _opt_constraint._tolerance)
-        return opt
-
-
 class OptimiserConstraint:
     def __init__(
         self,
@@ -1315,7 +1297,9 @@ class CoilsetOptimiserBase:
 
         return current_bounds
 
-    def set_up_optimiser(self, opt_args, dimension, bounds, objective_func):
+    def set_up_optimiser(
+        self, opt_args, dimension, bounds, objective_func, opt_constraints=[]
+    ):
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
@@ -1339,19 +1323,28 @@ class CoilsetOptimiserBase:
         opt.set_objective_function(objective_func)
 
         # Apply constraints
-        self.set_up_constraints(opt)
+        self.set_up_constraints(opt, opt_constraints)
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
         return opt
 
-    # def set_up_constraints(self, opt):
-    #     """
-    #     Updates the optimiser in-place to apply problem constraints.
-    #     To be overidden by child classes to apply specific constraints.
-    #     """
-    #     return opt
+    def set_up_constraints(self, opt, opt_constraints):
+        """
+        Updates the optimiser in-place to apply problem constraints.
+        To be overidden by child classes to apply specific constraints.
+        """
+        for _opt_constraint in opt_constraints:
+            f_constr_args = _opt_constraint._f_constraint_args
+            f_constr = lambda constraint, vector, grad: _opt_constraint._f_constraint(
+                self, constraint, vector, grad, *f_constr_args
+            )
+            if _opt_constraint._constraint_type == "inequality":
+                opt.add_ineq_constraints(f_constr, _opt_constraint._tolerance)
+            elif _opt_constraint._constraint_type == "equality":
+                opt.add_eq_constraints(f_constr, _opt_constraint._tolerance)
+        return opt
 
     def __call__(self, eq, constraints, psi_bndry=None):
         """
@@ -1440,6 +1433,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {"initial_step": 0.03},
         },
+        opt_constraints=[],
     ):
         # noqa (N803)
         super().__init__(coilset)
@@ -1452,7 +1446,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         bounds = self.get_current_bounds(self.max_currents)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
 
     def optimise(self):
@@ -1554,6 +1548,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {},
         },
+        opt_constraints=[],
     ):
         # noqa (N803)
         super().__init__(coilset)
@@ -1570,7 +1565,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         bounds = self.get_mapped_state_bounds(self.region_mapper, self.max_currents)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
 
     def get_mapped_state_bounds(self, region_mapper, max_currents):
@@ -1723,6 +1718,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {},
         },
+        opt_constraints=[],
     ):
         # noqa (N803)
         super().__init__(sub_opt.coilset)
@@ -1735,7 +1731,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         bounds = (lower_bounds, upper_bounds)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
         self.sub_opt = sub_opt
 
@@ -1822,13 +1818,13 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         return fom
 
 
-class ConnectionLengthOptimiser(OptimiserConstrainer, BoundedCurrentOptimiser):
+class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
     def __init__(
         self,
         coilset,
         sol_width=0.001,
         first_wall=None,
-        optimiser_constraints=[
+        opt_constraints=[
             OptimiserConstraint(
                 ConstraintLibrary.objective_constraint,
                 (
@@ -1839,9 +1835,7 @@ class ConnectionLengthOptimiser(OptimiserConstrainer, BoundedCurrentOptimiser):
         ],
         **kwargs,
     ):
-        super().__init__(
-            coilset=coilset, optimiser_constraints=optimiser_constraints, **kwargs
-        )
+        super().__init__(coilset=coilset, opt_constraints=opt_constraints, **kwargs)
         self.sol_width = sol_width
         self.first_wall = first_wall
 
