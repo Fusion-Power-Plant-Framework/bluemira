@@ -31,8 +31,7 @@ from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.builders.shapes import ParameterisedShapeBuilder, MakeOptimisedShape
-from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
+from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
@@ -258,7 +257,7 @@ class TFCasingBuilder(Builder):
         return PhysicalComponent(self.name, solid)
 
 
-class TFCoilsBuilder(MakeOptimisedShape):
+class TFCoilsBuilder(OptimisedShapeBuilder):
     _required_params: List[str] = [
         "R_0",
         "z_0",
@@ -277,7 +276,7 @@ class TFCoilsBuilder(MakeOptimisedShape):
         "tf_wp_width",
         "tf_wp_depth",
     ]
-    _required_config = ParameterisedShapeBuilder._required_config + []
+    _required_config = OptimisedShapeBuilder._required_config + []
     _params: ParameterFrame
     _param_class: Type[GeometryParameterisation]
     _default_run_mode: str = "run"
@@ -373,32 +372,15 @@ class TFCoilsBuilder(MakeOptimisedShape):
         return inboard_wire, outboard_wire
 
     def run(self, separatrix, keep_out_zone=None, nx=1, ny=1):
-        super().run(separatrix=separatrix, keep_out_zone=keep_out_zone, nx=nx, ny=ny)
+        super().run(
+            params=self._params,
+            wp_cross_section=self._wp_cross_section,
+            separatrix=separatrix,
+            keep_out_zone=keep_out_zone,
+            nx=nx,
+            ny=ny,
+        )
         self._centreline = self._design_problem.parameterisation.create_shape()
-        # optimiser = Optimiser(
-        #     self._algorithm_name,
-        #     self._shape.variables.n_free_variables,
-        #     self._opt_conditions,
-        #     self._opt_parameters,
-        # )
-        # self._design_problem = RippleConstrainedLengthOpt(self._shape, optimiser)
-        # self._design_problem.solve()
-
-        # paramet.fix_variable("x1", value=self.params.r_tf_in_centre)
-        # self._design_problem = RippleConstrainedLengthOpt(
-        #     paramet,
-        #     optimiser,
-        #     self._params,
-        #     self._wp_cross_section,
-        #     separatrix=separatrix,
-        #     keep_out_zone=keep_out_zone,
-        #     rip_con_tol=1e-3,
-        #     koz_con_tol=1e-3,
-        #     nx=nx,
-        #     ny=ny,
-        #     n_koz_points=100,
-        # )
-        # self._design_problem.solve()
 
     def read(self, variables):
         parameterisation = self._param_class(variables)

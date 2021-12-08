@@ -95,14 +95,59 @@ class ParameterisedShapeBuilder(Builder):
         self._shape = shape
 
 
-class MakeParameterisedShape(ParameterisedShapeBuilder):
+class OptimisedShapeBuilder(ParameterisedShapeBuilder):
     """
-    A builder that constructs a Component using a parameterised shape.
+    An abstract builder that optimises a parameterised shaped based on a design problem.
     """
 
-    _required_config = ParameterisedShapeBuilder._required_config + ["label"]
+    _required_config = ParameterisedShapeBuilder._required_config + ["problem_class"]
+    _problem_class: Type[GeometryOptimisationProblem]
+    _default_run_mode: str = "run"
+
+    def _extract_config(self, build_config: BuildConfig):
+        super()._extract_config(build_config)
+
+        problem_class = build_config["problem_class"]
+        if isinstance(problem_class, str):
+            self._problem_class = get_class_from_module(problem_class)
+        elif isinstance(problem_class, type):
+            self._problem_class = problem_class
+        else:
+            raise BuilderError(
+                "problem_class must either be a str pointing to the class to be loaded "
+                f"or the class itself - got {problem_class}."
+            )
+        self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
+        self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})
+        self._opt_parameters = build_config.get("opt_parameters", {})
+
+    def run(self, *args, **kwargs):
+        """
+        Optimise the shape using the provided parameterisation and optimiser.
+        """
+        optimiser = Optimiser(
+            self._algorithm_name,
+            self._shape.variables.n_free_variables,
+            self._opt_conditions,
+            self._opt_parameters,
+        )
+        self._design_problem = self._problem_class(
+            self._shape, optimiser, *args, **kwargs
+        )
+        self._design_problem.solve()
+
+
+class SimpleBuilderMixin:
+    """
+    A mixin class for building a single labelled component from an abstract Builder.
+    """
 
     _label: str
+
+    def __init__(self, *args, **kwargs):
+        self._required_config = copy.deepcopy(super()._required_config) + ["label"]
+
+        super().__init__(*args, **kwargs)
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
@@ -128,43 +173,18 @@ class MakeParameterisedShape(ParameterisedShapeBuilder):
         return component
 
 
-class MakeOptimisedShape(MakeParameterisedShape):
+class MakeParameterisedShape(SimpleBuilderMixin, ParameterisedShapeBuilder):
     """
     A builder that constructs a Component using a parameterised shape.
     """
 
-    _required_config = MakeParameterisedShape._required_config + ["problem_class"]
+    pass
 
-    _problem_class: Type[GeometryOptimisationProblem]
 
-    _default_run_mode: str = "run"
+class MakeOptimisedShape(SimpleBuilderMixin, OptimisedShapeBuilder):
+    """
+    A builder that constructs an optimised Component using a parameterised shape and
+    design problem.
+    """
 
-    def _extract_config(self, build_config: BuildConfig):
-        super()._extract_config(build_config)
-
-        problem_class = build_config["problem_class"]
-        if isinstance(problem_class, str):
-            self._problem_class = get_class_from_module(problem_class)
-        elif isinstance(problem_class, type):
-            self._problem_class = problem_class
-        else:
-            raise BuilderError(
-                "problem_class must either be a str pointing to the class to be loaded "
-                f"or the class itself - got {problem_class}."
-            )
-        self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
-        self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})
-        self._opt_parameters = build_config.get("opt_parameters", {})
-
-    def run(self):
-        """
-        Optimise the shape using the provided parameterisation and optimiser.
-        """
-        optimiser = Optimiser(
-            self._algorithm_name,
-            self._shape.variables.n_free_variables,
-            self._opt_conditions,
-            self._opt_parameters,
-        )
-        self._design_problem = self._problem_class(self._shape, optimiser)
-        self._design_problem.solve()
+    pass
