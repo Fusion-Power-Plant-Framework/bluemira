@@ -305,6 +305,9 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         self._design_problem = None
         self._centreline = self._param_class().create_shape()
         self._wp_cross_section = self._make_wp_xs()
+        self._wp_solid = None
+        self._ins_cross_section = None
+        self._ins_solid = None
         self._sub_builders = [
             TFWindingPackBuilder(self._params, {"name": "Winding pack"}),
             TFInsulationBuilder(self._params, {"name": "Insulation"}),
@@ -395,7 +398,6 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         component = Component("xz")
 
         for sub_builder in self._sub_builders:
-            sub_builder(self._params)
             sub_comp = sub_builder.build_xz()
             component.add_child(sub_comp)
 
