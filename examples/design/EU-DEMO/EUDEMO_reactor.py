@@ -66,7 +66,9 @@ config = {
     "tau_flattop": 6900,
     "n_TF": 18,
     "fw_psi_n": 1.06,
-    "tk_tf_front_ib": 0.05,
+    "tk_tf_front_ib": 0.04,
+    "tk_tf_side": 0.1,
+    "tk_tf_ins": 0.08,
     "tk_bb_ib": 0.755,
     "tk_bb_ob": 1.275,
     "g_tf_pf": 0.05,
@@ -112,7 +114,7 @@ with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w
 
 # Uncomment this to read the reference plasma equilibrium run from an existing file.
 
-# build_config["plasma_mode"] = "read"
+build_config["plasma_mode"] = "read"
 
 reactor = EUDEMOReactor(params, build_config)
 component = reactor.run()
@@ -154,3 +156,8 @@ if plasma_builder.runmode == "run":
 if plasma.equilibrium is not None:
     plasma.equilibrium.plot()
     plt.show()
+
+
+tf_coils = component.get_component("TF Coils")
+xy = tf_coils.get_component("xy")
+xy.plot_2d()
