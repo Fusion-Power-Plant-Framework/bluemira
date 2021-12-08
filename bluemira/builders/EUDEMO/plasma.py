@@ -406,15 +406,21 @@ class PlasmaBuilder(Builder):
         """
         self._ensure_boundary()
 
-        inner = geo.tools.make_circle(self._boundary.bounding_box.x_min, axis=[0, 1, 0])
-        outer = geo.tools.make_circle(self._boundary.bounding_box.x_max, axis=[0, 1, 0])
+        component = Component("xy")
+        component.plot_options.plane = "xy"
 
-        face = geo.face.BluemiraFace([outer, inner], label="LCFS")
-        component = PhysicalComponent("LCFS", face)
-        component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
-        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
+        inner = geo.tools.make_circle(self._boundary.bounding_box.x_min, axis=[0, 0, 1])
+        outer = geo.tools.make_circle(self._boundary.bounding_box.x_max, axis=[0, 0, 1])
 
-        return Component("xy").add_child(component)
+        lcfs_face = geo.face.BluemiraFace([outer, inner], label="LCFS")
+        lcfs_component = PhysicalComponent("LCFS", lcfs_face)
+        lcfs_component.plot_options.plane = "xy"
+        lcfs_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
+        lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
+
+        component.add_child(lcfs_component)
+
+        return component
 
     def build_xyz(self, segment_angle: Optional[float] = None, **kwargs) -> Component:
         """
