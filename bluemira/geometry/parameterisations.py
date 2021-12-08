@@ -1208,27 +1208,6 @@ class TaperedPictureFrame(GeometryParameterisation):
 
         wires = [make_polygon([p1, p2, p3, p4, p5, p6, p7, p8], label="inner_limb")]
 
-        if r != 0.0:
-            wires.append(
-                make_circle(
-                    r,
-                    c1,
-                    start_angle=270,
-                    end_angle=360,
-                    axis=axis,
-                    label="lower_corner",
-                )
-            )
-
-        wires.append(make_polygon([p9, p10], label="outer_limb"))
-
-        if r != 0.0:
-            wires.append(
-                make_circle(
-                    r, c2, start_angle=0, end_angle=90, axis=axis, label="upper_corner"
-                )
-            )
-
         return BluemiraWire(wires, label=label)
 
 
@@ -1269,9 +1248,7 @@ class CurvedPictureFrame(GeometryParameterisation):
         super().__init__(variables)
 
     @staticmethod
-    def _domed_leg(
-        x, x_out, x_curve_start, x_mid, z, z_top, z_mid, npoints, flip=False, r_c=0
-    ):
+    def _domed_leg(axis, x_out, x_curve_start, x_mid, z_top, z_mid, flip=False, r_c=0):
         """
         Makes smooth dome for CP coils
         """
@@ -1299,34 +1276,30 @@ class CurvedPictureFrame(GeometryParameterisation):
             z_mid_r_j,
         )
         theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
-        x_c_j, z_c_j = circle_seg(
-            r_j,
-            h=joint_curve_centre,
-            angle=-np.rad2deg(theta_j) if flip else np.rad2deg(theta_j),
-            start=90 if flip else -90,
-            npoints=int(npoints * 0.1),
+
+        out_wire = make_circle(
+            radius=r_j,
+            centre=joint_curve_centre,
+            start_angle=90 if flip else -90,
+            end_angle=90 - np.rad2deg(theta_j) if flip else np.rad2deg(theta_j) - 90,
+            axis=axis,
+            label="bottom_limb_joint" if flip else "top_limb_joint",
         )
         angle2 = np.rad2deg(theta_leg_final)
         start2 = 90 + np.rad2deg(theta_j)
-        x_c_l, z_c_l = circle_seg(
-            r_leg,
-            h=leg_centre,
-            angle=angle2 if flip else -angle2,
-            start=-start2 if flip else start2,
-            npoints=int(npoints * 0.2),
-        )
-        if flip:
-            x = np.append(x, np.flip(x_c_l))
-            z = np.append(z, np.flip(z_c_l))
-            x = np.append(x, np.flip(x_c_j))
-            z = np.append(z, np.flip(z_c_j))
-        else:
-            x = np.append(x, x_c_j)
-            z = np.append(z, z_c_j)
-            x = np.append(x, x_c_l)
-            z = np.append(z, z_c_l)
 
-        return x, z
+        out_wire.append(
+            make_circle(
+                radius=r_leg,
+                centre=leg_centre,
+                start=-start2 if flip else start2,
+                angle=angle2 if flip else -angle2,
+                axis=axis,
+                label="bottom_limb_dome" if flip else "top_limb_dome",
+            )
+        )
+
+        return out_wire
 
     def create_shape(self, label=""):
         """
@@ -1362,21 +1335,18 @@ class CurvedPictureFrame(GeometryParameterisation):
         # Top Curve
         if z_max_up - z_mid_up > 0.001:
             # If top leg is curved
-            x_leg_top, z_leg_top = CurvedPictureFrame._domed_leg(
-                x,
+            top_leg_curve = CurvedPictureFrame._domed_leg(
+                axis,
                 x_out,
                 x_curve_start,
                 x_mid,
-                z,
-                z_top,
-                z_mid,
-                npoints,
+                z_max_up,
+                z_mid_up,
                 flip=False,
                 r_c=0,
             )
 
-            wires.append(make_polygon([x_leg_top, 0, z_leg_top], label="top_limb_outb"))
-
+            wires = BluemiraWire([wires, top_leg_curve])
         else:
             # If top leg is flat
             wires.append(
@@ -1393,22 +1363,18 @@ class CurvedPictureFrame(GeometryParameterisation):
         # Bottom Curve
         if z_max_down + z_mid_down < -0.001:
             # If bottom leg is curved
-            x_leg_bot, z_leg_bot = CurvedPictureFrame._domed_leg(
-                x,
+            bot_leg_curve = CurvedPictureFrame._domed_leg(
+                axis,
                 x_out,
                 x_curve_start,
                 x_mid,
-                z,
-                z_top,
-                z_mid,
-                npoints,
-                flip=False,
+                z_max_down,
+                z_mid_down,
+                flip=True,
                 r_c=0,
             )
 
-            wires.append(
-                make_polygon([x_leg_bot, 0, z_leg_bot], label="bottom_limb_outb")
-            )
+            wires = BluemiraWire([wires, bot_leg_curve])
 
         else:
             # If bottom leg is flat
@@ -1423,9 +1389,10 @@ class CurvedPictureFrame(GeometryParameterisation):
                 )
             )
 
-        p1 = [x_mid, 0, z_mid_up]
-        p2 = [x_curve_start, 0, z_mid_up]
-        wires = [make_polygon([p1, p2], label="top_limb_inb")]
+        p3 = [x_curve_start, 0, z_mid_down]
+        p4 = [x_mid, 0, z_mid_down]
+        wires.append(make_polygon([p3, p4], label="bot_limb_inb"))
+
         p3 = [x2, 0, z2]
         p4 = [x1, 0, z1]
         p5 = [x1, 0, -z1]
