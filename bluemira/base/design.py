@@ -125,7 +125,7 @@ class DesignABC(abc.ABC):
         else:
             raise BuilderError(f"Builder {name} already exists in {self}.")
 
-    def _build_stage(self, name: str):
+    def _build_stage(self, name: str, **kwargs):
         """
         Build the requested stage and update the design's parameters.
 
@@ -139,7 +139,7 @@ class DesignABC(abc.ABC):
         component: Component
             The resulting component from the build.
         """
-        component = self._builders[name](self._params.to_dict())
+        component = self._builders[name](self._params.to_dict(), **kwargs)
         self._params.update_kw_parameters(self._builders[name].params.to_dict())
 
         return component
