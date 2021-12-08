@@ -1980,6 +1980,12 @@
     "unit": "m",
     "source": "Input"
   },
+  "z_0": {
+    "name": "Vertical offset of plasma centreline",
+    "value": 0,
+    "unit": "m",
+    "source": "Input"
+  },
   "z_cryo_ts": {
     "name": "Half height of outboard cryo TS",
     "value": 8,
