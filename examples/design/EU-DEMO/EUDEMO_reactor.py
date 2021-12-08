@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 
 from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_root
+from bluemira.base.logs import set_log_level
 from bluemira.base.parameter import ParameterError
 
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
@@ -38,6 +39,8 @@ from bluemira.equilibria.run import AbInitioEquilibriumProblem
 from bluemira.codes import plot_PROCESS
 
 # First define the configuration for the run.
+
+set_log_level("DEBUG")
 
 params = {}
 for param in Configuration.params:
