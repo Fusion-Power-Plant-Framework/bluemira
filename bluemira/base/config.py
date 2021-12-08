@@ -55,6 +55,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['Av', 'Reactor availability', 0.3, 'N/A', None, 'Input'],
         ['A', 'Plasma aspect ratio', 3.1, 'N/A', None, 'Input', {"PROCESS": ParameterMapping("aspect", True, True)}],
         ['R_0', 'Major radius', 9, 'm', None, 'Input', {"PROCESS": ParameterMapping("rmajor", True, False)}],
+        ['z_0', 'Vertical offset of plasma centreline', 0, 'm', None, 'Input'],
         ['B_0', 'Toroidal field at R_0', 6, 'T', None, 'Input', {"PROCESS": ParameterMapping("bt", True, False)}],
 
         # Plasma
