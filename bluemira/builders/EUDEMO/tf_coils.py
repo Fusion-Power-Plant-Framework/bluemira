@@ -319,6 +319,17 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         )
         return BluemiraFace(wp_xs, "TF WP x-y cross-section")
 
+    def _make_ins_xs(self):
+        x_out = self._centreline.bounding_box.x_max
+        ins_outer = offset_wire(
+            self._wp_cross_section.boundary[0], self._params.tk_tf_ins.value
+        )
+        face = BluemiraFace([ins_outer, self._wp_cross_section.boundary[0]])
+
+        outer_face = deepcopy(face)
+        outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
+        return face, outer_face
+
     def run(self, separatrix, keep_out_zone=None, nx=1, ny=1):
         optimiser = Optimiser(
             "SLSQP",
@@ -373,7 +384,6 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
 
     def build_xz(self, **kwargs):
         component = Component("xz")
-
         return component
 
     def build_xy(self, **kwargs):
@@ -398,13 +408,8 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         component.add_child(winding_pack)
 
         # Insulation
-        ins_outer = offset_wire(
-            self._wp_cross_section.boundary[0], self._params.tk_tf_ins.value
-        )
-        face = BluemiraFace([ins_outer, self._wp_cross_section.boundary[0]])
+        face, outer_face = self._make_ins_xs()
 
-        outer_face = deepcopy(face)
-        outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
         insulation = Component(
             "Insulation",
             children=[
@@ -416,6 +421,7 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         component.add_child(insulation)
 
         # Casing
+        ins_outer = face.boundary[0]
         ins_bb = ins_outer.bounding_box
         x_ins_in = ins_bb.x_min
         x_ins_out = ins_bb.x_max
@@ -470,4 +476,33 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
     def build_xyz(self, **kwargs):
         component = Component("xyz")
 
+        # Winding pack
+        wp_solid = sweep_shape(self._wp_cross_section.boundary[0], self._centreline)
+
+        winding_pack = PhysicalComponent("Winding pack", wp_solid)
+        component.add_child(winding_pack)
+
+        # Insulation
+        ins_xs = offset_wire(
+            self._wp_cross_section.boundary[0], self._params.tk_tf_ins.value
+        )
+
+        solid = sweep_shape(ins_xs, self._centreline)
+        ins_solid = boolean_cut(solid, wp_solid)[0]
+        insulation = PhysicalComponent("Insulation", ins_solid)
+        component.add_child(insulation)
+
+        # Casing
+        # Normally I'd do lots more here to get to a proper casing
+        # This is just a proof-of-principle
+        inner_xs, outer_xs = self._make_ins_xs()
+        inner_xs = inner_xs.shape.boundary[0]
+        outer_xs = outer_xs.shape.boundary[0]
+
+        solid = sweep_shape([inner_xs, outer_xs], self.wp_centreline)
+        outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
+        solid = boolean_cut(solid, outer_ins_solid)[0]
+
+        casing = PhysicalComponent("Casing", solid)
+        component.add_child(casing)
         return component
