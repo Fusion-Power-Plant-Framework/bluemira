@@ -480,6 +480,7 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         wp_solid = sweep_shape(self._wp_cross_section.boundary[0], self._centreline)
 
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
+        winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
         component.add_child(winding_pack)
 
         # Insulation
@@ -490,6 +491,7 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         solid = sweep_shape(ins_xs, self._centreline)
         ins_solid = boolean_cut(solid, wp_solid)[0]
         insulation = PhysicalComponent("Insulation", ins_solid)
+        insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
         component.add_child(insulation)
 
         # Casing
@@ -499,10 +501,11 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         inner_xs = inner_xs.shape.boundary[0]
         outer_xs = outer_xs.shape.boundary[0]
 
-        solid = sweep_shape([inner_xs, outer_xs], self.wp_centreline)
+        solid = sweep_shape([inner_xs, outer_xs], self._centreline)
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
         solid = boolean_cut(solid, outer_ins_solid)[0]
 
         casing = PhysicalComponent("Casing", solid)
+        casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
         component.add_child(casing)
         return component
