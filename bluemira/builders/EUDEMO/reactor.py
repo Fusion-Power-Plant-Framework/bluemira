@@ -25,7 +25,7 @@ Perform the EU-DEMO design.
 
 import os
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
@@ -51,7 +51,7 @@ class EUDEMOReactor(Reactor):
 
         self.run_systems_code()
         component.add_child(self.build_plasma())
-        component.add_child(self.build_TF_coils())
+        component.add_child(self.build_TF_coils(component))
 
         return component
 
@@ -91,7 +91,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage(name)
 
-    def build_TF_coils(self, **kwargs):
+    def build_TF_coils(self, component_tree: Component, **kwargs):
         """
         Run the TF coil build using the requested mode.
         """
@@ -119,7 +119,11 @@ class EUDEMOReactor(Reactor):
             "run_mode": self._build_config.get("TF_mode", "run"),
         }
 
+        plasma = component_tree.get_component("Plasma")
+        sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
+        sep_shape = sep_comp.shape
+
         builder = TFCoilsBuilder(self._params.to_dict(), tf_config)
         self.register_builder(builder, name)
 
-        return super()._build_stage(name)
+        return super()._build_stage(name, separatrix=sep_shape)
