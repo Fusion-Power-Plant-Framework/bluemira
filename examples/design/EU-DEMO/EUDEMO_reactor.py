@@ -56,7 +56,7 @@ for param in Configuration.params:
 params = dict(sorted(params.items()))
 
 with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/template.json", "w") as fh:
-    json.dump(params, fh, indent=2, ensure_ascii=False)
+    json.dump(params, fh, indent=2, ensure_ascii=True)
 
 config = {
     "Name": "EU-DEMO",

@@ -305,14 +305,6 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
         self._design_problem = None
         self._centreline = self._param_class().create_shape()
         self._wp_cross_section = self._make_wp_xs()
-        self._wp_solid = None
-        self._ins_cross_section = None
-        self._ins_solid = None
-        self._sub_builders = [
-            TFWindingPackBuilder(self._params, {"name": "Winding pack"}),
-            TFInsulationBuilder(self._params, {"name": "Insulation"}),
-            TFCasingBuilder(self._params, {"name": "Casing"}),
-        ]
 
     def _make_wp_xs(self):
         x_c = self.params.r_tf_in.value
@@ -406,6 +398,92 @@ class TFCoilsBuilder(ParameterisedShapeBuilder):
     def build_xy(self, **kwargs):
         component = Component("xy")
 
+        # Winding pack
+        # Should normally be gotten with wire_plane_intersect
+        # (it's not OK to assume that the maximum x value occurs on the midplane)
+        x_out = self._centreline.bounding_box.x_max
+        xs = deepcopy(self._wp_cross_section)
+        xs2 = deepcopy(xs)
+        xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
+
+        winding_pack = Component(
+            "Winding pack",
+            children=[
+                PhysicalComponent("inboard", xs),
+                PhysicalComponent("outboard", xs2),
+            ],
+        )
+        winding_pack.plot_options.color = BLUE_PALETTE["TF"][1]
+        component.add_child(winding_pack)
+
+        # Insulation
+        ins_outer = offset_wire(
+            self._wp_cross_section.boundary[0], self._params.tk_tf_ins.value
+        )
+        face = BluemiraFace([ins_outer, self._wp_cross_section.boundary[0]])
+
+        outer_face = deepcopy(face)
+        outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
+        insulation = Component(
+            "Insulation",
+            children=[
+                PhysicalComponent("inboard", face),
+                PhysicalComponent("outboard", outer_face),
+            ],
+        )
+        insulation.plot_options.color = BLUE_PALETTE["TF"][2]
+        component.add_child(insulation)
+
+        # Casing
+        ins_bb = ins_outer.bounding_box
+        x_ins_in = ins_bb.x_min
+        x_ins_out = ins_bb.x_max
+
+        x_in = x_ins_in - self._params.tk_tf_nose.value
+        x_out = x_ins_out + self._params.tk_tf_front_ib.value
+        half_angle = np.pi / self._params.n_TF.value
+        y_in = x_in * np.sin(half_angle)
+        y_out = x_out * np.sin(half_angle)
+        outer_wire = make_polygon(
+            [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
+            closed=True,
+        )
+        inner_face = BluemiraFace([outer_wire, deepcopy(ins_outer)])
+
+        dx_ins = 0.5 * (ins_bb.x_max - ins_bb.x_min)
+        dy_ins = 0.5 * (ins_bb.y_max - ins_bb.y_min)
+
+        # Split the total radial thickness equally on the outboard
+        # This could be done with input params too..
+        tk_total = self._params.tk_tf_front_ib.value + self._params.tk_tf_nose.value
+        tk = 0.5 * tk_total
+
+        dx_out = dx_ins + tk
+        dy_out = dy_ins + self._params.tk_tf_side.value
+        outer_wire = make_polygon(
+            [
+                [-dx_out, -dy_out, 0],
+                [dx_out, -dy_out, 0],
+                [dx_out, dy_out, 0],
+                [-dx_out, dy_out, 0],
+            ],
+            closed=True,
+        )
+
+        outer_ins = deepcopy(ins_outer)
+
+        outer_wire.translate((x_out - outer_wire.center_of_mass[0], 0, 0))
+        outer_ins.translate((x_out - outer_ins.center_of_mass[0], 0, 0))
+        outer_face = BluemiraFace([outer_wire, outer_ins])
+        casing = Component(
+            "Casing",
+            children=[
+                PhysicalComponent("inboard", inner_face),
+                PhysicalComponent("outboard", outer_face),
+            ],
+        )
+        casing.plot_options.color = BLUE_PALETTE["TF"][0]
+        component.add_child(casing)
         return component
 
     def build_xyz(self, **kwargs):
