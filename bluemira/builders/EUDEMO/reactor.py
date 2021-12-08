@@ -96,8 +96,26 @@ class EUDEMOReactor(Reactor):
         Run the TF coil build using the requested mode.
         """
         name = "TF Coils"
+        default_variables_map = {
+            "x1": {
+                "value": "r_tf_in_centre",
+                "fixed": True,
+            },
+            "x2": {
+                "value": "r_tf_out_centre",
+                "lower_bound": 14.0,
+            },
+            "dz": {
+                "value": 0.0,
+                "fixed": True,
+            },
+        }
         tf_config = {
             "name": name,
+            "param_class": self._build_config.get("TF_param_class", "PrincetonD"),
+            "variables_map": self._build_config.get(
+                "TF_variables_map", default_variables_map
+            ),
             "run_mode": self._build_config.get("TF_mode", "run"),
         }
 
