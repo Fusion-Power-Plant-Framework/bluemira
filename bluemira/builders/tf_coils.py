@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.error import BuilderError
 from bluemira.display import plot_2d
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.magnetostatics.circuits import HelmholtzCage
@@ -131,7 +132,13 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         Make a set of points at which to check the ripple
         """
-        points = separatrix.discretize(ndiscr=100).T
+        # TODO: Handle case where the face is made up of multiple wires
+        discr = separatrix.discretize(ndiscr=100)
+        if len(discr) > 1:
+            raise BuilderError(
+                "Ripple points on faces made from multiple wires not yet supported."
+            )
+        points = separatrix.discretize(ndiscr=100)[0].T
         # Real argument to making the points the inputs... but then the plot would look
         # sad! :D
         # Can speed this up a lot if you know about your problem... I.e. with a princeton
