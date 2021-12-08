@@ -23,8 +23,8 @@
 Testing the fixed-boundary equilibrium solver.
 """
 
-import tools
-from plasma import Plasma
+from bluemira.equilibria.fem_fixed_boundary.plasma import Plasma
+import bluemira.equilibria.fem_fixed_boundary.tools as tools
 import bluemira.codes.plasmod as plasmod
 from dolfinSolver import GradShafranovLagrange
 from bluemira.mesh import meshing
