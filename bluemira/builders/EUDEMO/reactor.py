@@ -98,6 +98,7 @@ class EUDEMOReactor(Reactor):
         name = "TF Coils"
         tf_config = {
             "name": name,
+            "run_mode": self._build_config.get("TF_mode", "run"),
         }
 
         builder = TFCoilsBuilder(self._params.to_dict(), tf_config)
