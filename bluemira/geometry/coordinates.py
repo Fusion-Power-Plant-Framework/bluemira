@@ -36,6 +36,28 @@ from bluemira.geometry._deprecated_tools import (
 )
 
 
+def principal_components(xyz_array):
+    mean = np.mean(xyz_array, axis=1)
+
+    xyz_shift = xyz_array - mean.reshape((3, 1))
+
+    cov = np.cov(xyz_shift)
+    eigenvalues, eigenvectors = np.linalg.eig(cov)
+
+    sort = eigenvalues.argsort()[::-1]
+    eigenvalues = eigenvalues[sort]
+    eigenvectors = eigenvectors[:, sort]
+
+    if np.isclose(eigenvalues[-1], 0.0):
+        print("arary is planar?!")
+    return eigenvectors
+
+
+def fit_plane(xyz_array):
+    eigenvectors = principal_components(xyz_array)
+    return eigenvectors[:, -1]
+
+
 class Coordinates:
     """
     Coordinates object for storing ordered sets of coordinates.
