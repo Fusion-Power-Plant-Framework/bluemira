@@ -116,6 +116,10 @@ class EUDEMOReactor(Reactor):
             "variables_map": self._build_config.get(
                 "TF_variables_map", default_variables_map
             ),
+            "problem_class": self._build_config.get(
+                "TF_problem_class",
+                "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
+            ),
             "run_mode": self._build_config.get("TF_mode", "run"),
         }
 
