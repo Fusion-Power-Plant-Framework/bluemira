@@ -22,8 +22,6 @@
 """
 Constrained and unconstrained optimisation tools for coilset design
 """
-from re import S
-from bluemira.utilities import optimiser
 import numpy as np
 import nlopt
 from typing import Type
@@ -40,8 +38,14 @@ from bluemira.utilities.plot_tools import save_figure
 from bluemira.utilities.opt_tools import (
     regularised_lsq_fom,
     tikhonov,
+    ObjectiveLibrary,
+    ConstraintLibrary,
 )
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.utilities.optimiser import (
+    Optimiser,
+    OptimiserConstraint,
+    approx_derivative,
+)
 from bluemira.codes._nlopt_api import process_NLOPT_result
 from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
@@ -67,61 +71,6 @@ __all__ = [
     "Norm2Tikhonov",
     "ConnectionLengthOptimiser",
 ]
-
-
-class ObjectiveLibrary:
-    def regularised_lsq_objective(self, vector, grad, scale, A, b, gamma):
-        """
-        Objective function for nlopt optimisation (minimisation),
-        consisting of a least-squares objective with Tikhonov
-        regularisation term, which updates the gradient in-place.
-
-        Parameters
-        ----------
-        vector: np.array(n_C)
-            State vector of the array of coil currents.
-        grad: np.array
-            Local gradient of objective function used by LD NLOPT algorithms.
-            Updated in-place.
-
-        Returns
-        -------
-        fom: Value of objective function (figure of merit).
-        """
-        vector = vector * scale
-        fom, err = regularised_lsq_fom(vector, A, b, gamma)
-        if grad.size > 0:
-            jac = 2 * A.T @ A @ vector / np.float(len(b))
-            jac -= 2 * A.T @ b / np.float(len(b))
-            jac += 2 * gamma * gamma * vector
-            grad[:] = scale * jac
-        if not fom > 0:
-            raise EquilibriaError(
-                "Optimiser least-squares objective function less than zero or nan."
-            )
-        return fom
-
-
-class ConstraintLibrary:
-    def objective_constraint(
-        self, constraint, vector, grad, objective_function, maximum_fom=1.0
-    ):
-        constraint[:] = objective_function(self, vector, grad) - maximum_fom
-        return constraint
-
-
-class OptimiserConstraint:
-    def __init__(
-        self,
-        f_constraint,
-        f_constraint_args=(),
-        tolerance=np.array([1e-6]),
-        constraint_type="inequality",
-    ):
-        self._tolerance = tolerance
-        self._constraint_type = constraint_type
-        self._f_constraint = f_constraint
-        self._f_constraint_args = f_constraint_args
 
 
 class EquilibriumOptimiser:
@@ -1323,27 +1272,46 @@ class CoilsetOptimiserBase:
         opt.set_objective_function(objective_func)
 
         # Apply constraints
-        self.set_up_constraints(opt, opt_constraints)
+        self.set_constraints(opt, opt_constraints)
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
         return opt
 
-    def set_up_constraints(self, opt, opt_constraints):
+    def set_constraints(self, opt, opt_constraints):
         """
         Updates the optimiser in-place to apply problem constraints.
         To be overidden by child classes to apply specific constraints.
+
+        Parameters
+        ----------
+        f_objective: callable
+            Objective function to minimise
         """
         for _opt_constraint in opt_constraints:
-            f_constr_args = _opt_constraint._f_constraint_args
-            f_constr = lambda constraint, vector, grad: _opt_constraint._f_constraint(
-                self, constraint, vector, grad, *f_constr_args
-            )
             if _opt_constraint._constraint_type == "inequality":
-                opt.add_ineq_constraints(f_constr, _opt_constraint._tolerance)
+                opt.add_ineq_constraints(
+                    lambda constraint, vector, grad: _opt_constraint._f_constraint(
+                        self,
+                        constraint,
+                        vector,
+                        grad,
+                        *_opt_constraint._f_constraint_args,
+                    ),
+                    _opt_constraint._tolerance,
+                )
             elif _opt_constraint._constraint_type == "equality":
-                opt.add_eq_constraints(f_constr, _opt_constraint._tolerance)
+                opt.add_eq_constraints(
+                    lambda constraint, vector, grad: _opt_constraint._f_constraint(
+                        self,
+                        constraint,
+                        vector,
+                        grad,
+                        *_opt_constraint._f_constraint_args,
+                    ),
+                    _opt_constraint._tolerance,
+                )
         return opt
 
     def __call__(self, eq, constraints, psi_bndry=None):

@@ -30,7 +30,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._nlopt_api import NLOPTOptimiser
 
 
-__all__ = ["approx_derivative", "Optimiser"]
+__all__ = ["approx_derivative", "Optimiser", "OptimiserConstraint"]
 
 
 def approx_derivative(
@@ -61,6 +61,20 @@ def approx_derivative(
     return _approx_derivative(
         func, x0, method=method, rel_step=rel_step, f0=f0, bounds=bounds, args=args
     )
+
+
+class OptimiserConstraint:
+    def __init__(
+        self,
+        f_constraint,
+        f_constraint_args=(),
+        tolerance=np.array([1e-6]),
+        constraint_type="inequality",
+    ):
+        self._tolerance = tolerance
+        self._constraint_type = constraint_type
+        self._f_constraint = f_constraint
+        self._f_constraint_args = f_constraint_args
 
 
 class Optimiser(NLOPTOptimiser):
