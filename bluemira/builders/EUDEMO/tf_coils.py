@@ -109,7 +109,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     _required_config = OptimisedShapeBuilder._required_config + []
     _params: ParameterFrame
     _param_class: Type[GeometryParameterisation]
-    _default_run_mode: str = "run"
+    _default_runmode: str = "run"
     _design_problem: Optional[GeometryOptimisationProblem] = None
     _centreline: BluemiraWire
 

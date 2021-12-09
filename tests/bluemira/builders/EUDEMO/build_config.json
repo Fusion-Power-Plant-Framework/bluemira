@@ -1,5 +1,7 @@
 {
   "reference_data_root": "!BM_ROOT!/tests/bluemira/test_data",
   "generated_data_root": "!BM_ROOT!/tests/bluemira/test_generated_data",
-  "process_mode": "mock"
+  "PROCESS": {
+    "runmode": "mock"
+  }
 }

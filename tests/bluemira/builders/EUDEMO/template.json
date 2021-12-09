@@ -103,7 +103,7 @@
   "LPangle": {
     "name": "Lower port inclination angle",
     "value": -30,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "Name": {
@@ -389,7 +389,7 @@
   "bb_min_angle": {
     "name": "Minimum module angle",
     "value": 70,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany",
     "description": "Sharpest cut of a module possible"
   },
@@ -519,7 +519,7 @@
   "div_graze_angle": {
     "name": "Divertor SOL grazing angle",
     "value": 1.5,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "div_open": {
@@ -646,7 +646,7 @@
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
     "value": 25,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "fw_dL_max": {
@@ -995,7 +995,7 @@
     "name": "Gas puff flow rate",
     "value": 50,
     "unit": "Pam^3/s",
-    "source": "Discussions with Chris Day and Yannick Hörstenmeyer",
+    "source": "Discussions with Chris Day and Yannick H\u00f6rstenmeyer",
     "description": "To maintain detachment - no chance of fusion from gas injection"
   },
   "m_s_limit": {
@@ -1977,6 +1977,12 @@
   "xpt_outer_gap": {
     "name": "Gap between x-point and outer wall",
     "value": 2,
+    "unit": "m",
+    "source": "Input"
+  },
+  "z_0": {
+    "name": "Vertical offset of plasma centreline",
+    "value": 0,
     "unit": "m",
     "source": "Input"
   },
