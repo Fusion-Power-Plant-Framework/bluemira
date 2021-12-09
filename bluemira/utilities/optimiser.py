@@ -73,7 +73,7 @@ class OptimiserConstraint:
     f_constraint: callable
         Constraint function to apply to problem.
         For NLOpt constraints, onstraint functions should be of the form
-        f_constraint(cls, constraint, x, grad, \*f_constraint_args)
+        f_constraint(cls, constraint, x, grad, f_constraint_args)
     f_constraint_args: tuple (default = ())
         Additional arguments to pass to NLOpt constraint function when called.
     tolerance: array
