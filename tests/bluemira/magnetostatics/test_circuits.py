@@ -102,7 +102,7 @@ def test_mixedsourcesolver():
 
     solver = SourceGroup([bar_1, bar_2, bar_3, bar_4, arc_1, arc_2, arc_3, arc_4])
 
-    nx, nz = 100, 100
+    nx, nz = 20, 20
     nx2, nz2 = nx // 2, nz // 2
     x = np.linspace(-4, 4, nx)
     z = np.linspace(-4, 4, nz)
