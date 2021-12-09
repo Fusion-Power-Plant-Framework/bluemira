@@ -64,6 +64,10 @@ class TFCoilsComponent(Component):
 
 
 class TFCoilsBuilder(OptimisedShapeBuilder):
+    """
+    Builder for the TF Coils.
+    """
+
     _required_params: List[str] = [
         "R_0",
         "z_0",
@@ -89,12 +93,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     _design_problem: Optional[GeometryOptimisationProblem] = None
     _centreline: BluemiraWire
 
-    def __init__(self, params, build_config: BuildConfig, **kwargs):
-        super().__init__(params, build_config, **kwargs)
-
-    def _extract_config(self, build_config: BuildConfig):
-        super()._extract_config(build_config)
-
     def reinitialise(self, params, **kwargs) -> None:
         """
         Initialise the state of this builder ready for a new run.
@@ -108,9 +106,13 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         super().reinitialise(params, **kwargs)
 
         self._reset_params(params)
+        self._centreline = None
         self._wp_cross_section = self._make_wp_xs()
 
     def _make_wp_xs(self):
+        """
+        Make the winding pack x-y cross-section wire
+        """
         x_c = self.params.r_tf_in_centre.value
         # PROCESS WP thickness includes insulation and insertion gap
         d_xc = 0.5 * (self.params.tf_wp_width - self.params.tk_tf_ins)
@@ -127,6 +129,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         return wp_xs
 
     def _make_ins_xs(self):
+        """
+        Make the insulation x-y cross-section faces
+        """
         x_out = self._centreline.bounding_box.x_max
         ins_outer = offset_wire(self._wp_cross_section, self._params.tk_tf_ins.value)
         face = BluemiraFace([ins_outer, self._wp_cross_section])
@@ -136,6 +141,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         return face, outer_face
 
     def _make_cas_xs(self):
+        """
+        Make the casing x-y cross-section wires
+        """
         x_in = self.params.r_tf_in
         # Insulation included in WP dith
         x_out = (
@@ -176,6 +184,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         return inboard_wire, outboard_wire
 
     def run(self, separatrix, keep_out_zone=None, nx=1, ny=1):
+        """
+        Run the specified design optimisation problem to generate the TF coil winding
+        pack current centreline.
+        """
         super().run(
             params=self._params,
             wp_cross_section=self._wp_cross_section,
@@ -186,13 +198,18 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         )
         self._centreline = self._design_problem.parameterisation.create_shape()
 
-    def read(self, variables):
+    def read(self, variables: dict):
+        """
+        Read in a variable dictionary to set up a specified GeometryParameterisation.
+        """
         parameterisation = self._param_class(variables)
         self._centreline = parameterisation.create_shape()
 
-    def mock(self, variables):
-        parameterisation = self._param_class(variables)
-        self._centreline = parameterisation.create_shape()
+    def mock(self, centreline):
+        """
+        Mock a design of TF coils using a specified current centreline.
+        """
+        self._centreline = centreline
 
     def build(self, label: str = "TF Coils", **kwargs) -> Component:
         """
@@ -207,12 +224,15 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         component = TFCoilsComponent(self.name)
 
-        component.add_child(self.build_xz(component, label=label))
-        component.add_child(self.build_xy(component, label=label))
-        component.add_child(self.build_xyz(component, label=label))
+        # component.add_child(self.build_xz())
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
         return component
 
-    def build_xz(self, component_tree: Component, **kwargs):
+    def build_xz(self):
+        """
+        Build the x-z components of the TF coils.
+        """
         component = Component("xz")
 
         # Winding pack
@@ -251,7 +271,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.plot_options.plane = "xz"
         return component
 
-    def build_xy(self, component_tree: Component, **kwargs):
+    def build_xy(self):
+        """
+        Build the x-y components of the TF coils.
+        """
         component = Component("xy")
 
         # Winding pack
@@ -314,7 +337,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.plot_options.plane = "xy"
         return component
 
-    def build_xyz(self, component_tree: Component, **kwargs):
+    def build_xyz(self):
+        """
+        Build the x-y-z components of the TF coils.
+        """
         component = Component("xyz")
 
         # Winding pack
@@ -344,16 +370,3 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
         component.add_child(casing)
         return component
-
-
-def break_test():
-    p = PrincetonD(
-        {
-            "x1": {"value": 3.649},
-            "x2": {"value": 15.933007419714876},
-            "dz": {"value": 0.0},
-        }
-    )
-    wire = p.create_shape()
-    o1 = offset_wire(wire, 0.3399999999620089)
-    o2 = offset_wire(o1, 0.08)
