@@ -393,15 +393,19 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         )
         joiner_bot = extrude_shape(BluemiraFace(joiner_bot), (0, 0, -z_min))
 
-        solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
-
         # Need to cut away the excess, but I need section_shape or something
-        # solid = boolean_cut(solid, cutter)[0]
+        cl = deepcopy(self._centreline)
+        cl.translate((0, -2 * self.params.tf_wp_depth, 0))
+        cl_face = BluemiraFace(cl)
+        cutter = extrude_shape(cl_face, (0, 4 * self.params.tf_wp_depth, 0))
+        joiner_top = boolean_cut(joiner_top, cutter)[0]
+        joiner_bot = boolean_cut(joiner_bot, cutter)[0]
 
+        case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
-        solid = boolean_cut(solid, outer_ins_solid)[0]
+        case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
 
-        casing = PhysicalComponent("Casing", solid)
+        casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
         component.add_child(casing)
         return component
