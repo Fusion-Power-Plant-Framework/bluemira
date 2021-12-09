@@ -25,6 +25,7 @@ EU-DEMO build classes for TF Coils.
 from typing import Type, Optional, List
 from copy import deepcopy
 import numpy as np
+from numpy.core.fromnumeric import shape
 
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
@@ -95,7 +96,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         "n_TF",
         "TF_ripple_limit",
         "r_tf_in",
-        "r_tf_in_centre",
         "tk_tf_nose",
         "tk_tf_front_ib",
         "tk_tf_side",
@@ -112,6 +112,25 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     _default_run_mode: str = "run"
     _design_problem: Optional[GeometryOptimisationProblem] = None
     _centreline: BluemiraWire
+
+    def _derive_shape_params(self):
+        shape_params = super()._derive_shape_params()
+        # PROCESS doesn't output the radius of the current centroid on the inboard
+        r_current_in_board = (
+            self.params.r_tf_in
+            + self.params.tk_tf_nose
+            + self.params.tk_tf_ins
+            + 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
+        )
+        self._params.add_parameter(
+            "r_tf_current_ib",
+            "Radius of the TF coil current centroid on the inboard",
+            r_current_in_board,
+            "m",
+            source="bluemira",
+        )
+        shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
+        return shape_params
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -408,7 +427,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         Make the winding pack x-y cross-section wire
         """
-        x_c = self.params.r_tf_in_centre.value
+        x_c = self.params.r_tf_current_ib
         # PROCESS WP thickness includes insulation and insertion gap
         d_xc = 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
         d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
