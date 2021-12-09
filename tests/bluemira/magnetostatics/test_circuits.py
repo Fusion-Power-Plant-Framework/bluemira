@@ -27,6 +27,7 @@ import json
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._deprecated_tools import make_circle_arc, innocent_smoothie
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
@@ -55,6 +56,18 @@ def test_analyticalsolvergrouper():
         field = solver.field(*point)  # random point :)
         field2 = a.field(*point) + a2.field(*point)
         assert np.all(field == field2)
+
+
+def test_sourcegroup_set_current():
+    circle = make_circle(radius=10).discretize(ndiscr=50)
+    dx_coil, dz_coil = 0.5, 0.75
+    a = ArbitraryPlanarRectangularXSCircuit(circle, dx_coil, dz_coil, current=1)
+    x, y, z = 4, 4, 4
+    response = a.field(x, y, z)
+    new_current = 1e6
+    a.set_current(new_current)
+    new_response = a.field(x, y, z)
+    assert np.allclose(new_response, new_current * response)
 
 
 def test_mixedsourcesolver():
