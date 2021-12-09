@@ -52,7 +52,7 @@ from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import (
-    calculate_connection_length_fs,
+    calculate_connection_length_flt,
 )
 from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_tools import (
@@ -1814,6 +1814,8 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
     first_wall: Loop (default: None)
         Loop object representing the first wall. If None, the edge of the
         Equilibrium grid will be used.
+    n_turns_max: Union[int, float]
+        Maximum number of toroidal turns to trace the field line
     **kwargs: Remaining BoundedCurrentOptimiser keyword arguments.
     """
 
@@ -1822,6 +1824,7 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
         coilset,
         sol_width=0.001,
         first_wall=None,
+        n_turns_max=50,
         opt_constraints=[
             OptimiserConstraint(
                 ConstraintLibrary.objective_constraint,
@@ -1836,6 +1839,7 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
         super().__init__(coilset=coilset, opt_constraints=opt_constraints, **kwargs)
         self.sol_width = sol_width
         self.first_wall = first_wall
+        self.n_turns_max = n_turns_max
 
     def f_min_objective(self, vector, grad):
         """
@@ -1891,12 +1895,13 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
             self.xomp = self._get_sep_out_intersection(outboard=True) + self.sol_width
 
             fom = (
-                -calculate_connection_length_fs(
+                -calculate_connection_length_flt(
                     self.eq,
                     self.xomp,
                     self.zomp,
                     forward=True,
                     first_wall=self.first_wall,
+                    n_turns_max=self.n_turns_max,
                 )
                 / 100.0
             )

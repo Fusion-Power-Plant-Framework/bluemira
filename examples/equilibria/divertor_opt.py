@@ -21,11 +21,11 @@
 """
 ST equilibrium attempt
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 import copy
-import argparse
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.constraints import (
@@ -35,17 +35,17 @@ from bluemira.equilibria.constraints import (
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimiser import (
-    Norm2Tikhonov,
     UnconstrainedCurrentOptimiser,
     BoundedCurrentOptimiser,
-    CoilsetOptimiser,
-    NestedCoilsetOptimiser,
     ConnectionLengthOptimiser,
 )
 from bluemira.equilibria.solve import (
-    PicardDeltaIterator,
     PicardCoilsetIterator,
     DudsonConvergence,
+)
+from bluemira.utilities.optimiser import OptimiserConstraint
+from bluemira.utilities.opt_tools import (
+    ConstraintLibrary,
 )
 from bluemira.geometry._deprecated_loop import Loop
 
@@ -163,9 +163,9 @@ def init_profile():
     return profile
 
 
-def init_constraints():
+def init_targets():
     """
-    Create the set of constraints for the FBE solver.
+    Create the set of isoflux targets for the FBE optimisation objective function.
     """
     x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
     z_lcfs = np.array([0, 4.19, 0, -4.19])
@@ -214,31 +214,7 @@ def init_coilset():
     return coilset
 
 
-def init_pfregions(coilset):
-    """
-    Initialises regions in which coil position optimisation will be limited to.
-    """
-    max_coil_shifts = {
-        "x_shifts_lower": -1.0,
-        "x_shifts_upper": 1.0,
-        "z_shifts_lower": -1.0,
-        "z_shifts_upper": 1.0,
-    }
-
-    pfregions = {}
-    for coil in coilset._ccoils:
-        xu = coil.x + max_coil_shifts["x_shifts_upper"]
-        xl = coil.x + max_coil_shifts["x_shifts_lower"]
-        zu = coil.z + max_coil_shifts["z_shifts_upper"]
-        zl = coil.z + max_coil_shifts["z_shifts_lower"]
-
-        rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
-
-        pfregions[coil.name] = rect
-    return pfregions
-
-
-def init_equilibrium(grid, coilset, constraint_set, profile):
+def init_equilibrium(grid, coilset, targets, profile):
     """
     Create an initial guess for the Equilibrium state.
     Temporarily add a simple plasma coil to get a good starting guess for psi.
@@ -261,9 +237,9 @@ def init_equilibrium(grid, coilset, constraint_set, profile):
         Ip=0,
         li=None,
     )
-    constraint_set(eq)
+    targets(eq)
     optimiser = UnconstrainedCurrentOptimiser(coilset_temp, gamma=1e-7)
-    coilset_temp = optimiser(eq, constraint_set)
+    coilset_temp = optimiser(eq, targets)
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
 
@@ -299,7 +275,7 @@ def optimise_fbe(program):
     return
 
 
-def pre_optimise(eq, profile, constraint_set):
+def pre_optimise(eq, profile, targets):
     """
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
@@ -309,7 +285,7 @@ def pre_optimise(eq, profile, constraint_set):
     program = PicardCoilsetIterator(
         eq,
         profile,  # jetto
-        constraint_set,
+        targets,
         optimiser,
         plot=True,
         gif=False,
@@ -322,47 +298,49 @@ def pre_optimise(eq, profile, constraint_set):
     return eq
 
 
+def init_opt_constraints():
+    """
+    Create iterable of OptimiserConstraint objects to apply
+    during the coilset optimisation.
+    """
+    constrain_core_isoflux_targets = OptimiserConstraint(
+        ConstraintLibrary.objective_constraint,
+        (BoundedCurrentOptimiser.f_min_objective, 0.2),
+    )
+    opt_constraints = [constrain_core_isoflux_targets]
+
+    return opt_constraints
+
+
 def set_coilset_optimiser(
     coilset,
-    optimiser_name,
-    optimisation_options,
-    suboptimiser_name="BoundedCurrentOptimiser",
-    suboptimisation_options=None,
 ):
     """
     Create the optimiser to be used to optimise the coilset.
     """
-    pfregions = init_pfregions(coilset)
-    if optimiser_name in ["Norm2Tikhonov"]:
-        optimiser = Norm2Tikhonov(**optimisation_options)
-    if optimiser_name in ["UnconstrainedCurrentOptimiser"]:
-        optimiser = UnconstrainedCurrentOptimiser(coilset, **optimisation_options)
-    elif optimiser_name in ["BoundedCurrentOptimiser"]:
-        optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
-    elif optimiser_name in ["ConnectionLengthOptimiser"]:
-        optimiser = ConnectionLengthOptimiser(coilset, **optimisation_options)
-    elif optimiser_name in ["CoilsetOptimiser"]:
-        optimiser = CoilsetOptimiser(
-            coilset, pfregions=pfregions, **optimisation_options
-        )
-    elif optimiser_name in ["NestedCoilsetOptimiser"]:
-        sub_optimiser = set_coilset_optimiser(
-            coilset,
-            optimiser_name=suboptimiser_name,
-            optimisation_options=suboptimisation_options,
-        )
-        optimiser = NestedCoilsetOptimiser(
-            sub_optimiser, pfregions=pfregions, **optimisation_options
-        )
+    opt_constraints = init_opt_constraints()
+    optimisation_options = {
+        "max_currents": 5.0e8,
+        "gamma": 1e-8,
+        "opt_args": {
+            "algorithm_name": "COBYLA",
+            "opt_conditions": {
+                "stop_val": -10.0,
+                "max_eval": 40,
+            },
+            "opt_parameters": {"initial_step": 0.01},
+        },
+        "opt_constraints": opt_constraints,
+    }
+    optimiser = ConnectionLengthOptimiser(coilset, **optimisation_options)
     return optimiser
 
 
-def set_iterator(eq, profile, constraint_set, optimiser):
+def set_iterator(eq, profile, targets, optimiser):
     """
     Create the iterator to be used to solve the FBE.
     """
-    optimiser_name = type(optimiser).__name__
-    iterator_args = (eq, profile, constraint_set, optimiser)
+    iterator_args = (eq, profile, targets, optimiser)
     iterator_kwargs = {
         "plot": False,
         "gif": False,
@@ -371,122 +349,30 @@ def set_iterator(eq, profile, constraint_set, optimiser):
         "convergence": DudsonConvergence(1e-4),
     }
 
-    if optimiser_name in [
-        "ConnectionLengthOptimiser",
-        "BoundedCurrentOptimiser",
-        "CoilsetOptimiser",
-        "NestedCoilsetOptimiser",
-        "UnconstrainedCurrentOptimiser",
-    ]:
-        program = PicardCoilsetIterator(*iterator_args, **iterator_kwargs)
-    else:
-        program = PicardDeltaIterator(*iterator_args, **iterator_kwargs)
-
+    program = PicardCoilsetIterator(*iterator_args, **iterator_kwargs)
     return program
 
 
-def default_optimiser_options(optimiser_name):
-    """
-    Specifies default optimiser options.
-    """
-    options = {"optimiser_name": optimiser_name}
-    if optimiser_name in ["Norm2Tikhonov", "UnconstrainedCurrentOptimiser"]:
-        options["optimisation_options"] = {"gamma": 1e-8}
-    elif optimiser_name in ["BoundedCurrentOptimiser"]:
-        options["optimisation_options"] = {
-            "max_currents": 3.0e7,
-            "gamma": 1e-8,
-        }
-    elif optimiser_name in ["ConnectionLengthOptimiser"]:
-        options["optimisation_options"] = {
-            "max_currents": 5.0e7,
-            "gamma": 1e-8,
-            "opt_args": {
-                "algorithm_name": "COBYLA",
-                "opt_conditions": {
-                    "stop_val": -10.0,
-                    "max_eval": 40,
-                },
-                "opt_parameters": {"initial_step": 0.03},
-            },
-        }
-    elif optimiser_name in ["CoilsetOptimiser"]:
-        options["optimisation_options"] = {
-            "max_currents": 3.0e7,
-            "gamma": 1e-8,
-            "opt_args": {
-                "algorithm_name": "SBPLX",
-                "opt_conditions": {
-                    "stop_val": 2.5e-2,
-                    "max_eval": 100,
-                },
-                "opt_parameters": {},
-            },
-        }
-    elif optimiser_name in ["NestedCoilsetOptimiser"]:
-        options["optimisation_options"] = {
-            "opt_args": {
-                "algorithm_name": "SBPLX",
-                "opt_conditions": {
-                    "stop_val": 2.5e-2,
-                    "max_eval": 100,
-                },
-                "opt_parameters": {},
-            },
-        }
-        options["suboptimiser_name"] = "BoundedCurrentOptimiser"
-        options["suboptimisation_options"] = {"max_currents": 3.0e7, "gamma": 1e-8}
-    else:
-        print("Coilset optimiser name not supported for this example")
-    return options
-
-
-def run(args):
+def run():
     """
     Main program to solve the specified FBE problem.
     """
-    optimiser_name = args.optimiser_name
     grid = init_grid()
     profile = init_profile()
-    targets, core_targets = init_constraints()
-    # targets = core_targets
+    targets, core_targets = init_targets()
     coilset = init_coilset()
     eq = init_equilibrium(grid, coilset, targets, profile)
 
     # Perform a fast initial unconstrained optimisation to create a
     # self consistent initial state
-    if args.pre_optimise is True:
-        pre_optimise(eq, profile, targets)
-    if optimiser_name is not None:
-        options = default_optimiser_options(optimiser_name)
-        optimiser = set_coilset_optimiser(eq.coilset, **options)
-        program = set_iterator(eq, profile, core_targets, optimiser)
-        optimise_fbe(program)
+    pre_optimise(eq, profile, targets)
+
+    optimiser = set_coilset_optimiser(eq.coilset)
+    program = set_iterator(eq, profile, core_targets, optimiser)
+    optimise_fbe(program)
     eq.plot()
     plt.show()
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--optimiser_name",
-        help="Name of optimiser to use",
-        choices=[
-            "Norm2Tikhonov",
-            "UnconstrainedCurrentOptimiser",
-            "BoundedCurrentOptimiser",
-            "CoilsetOptimiser",
-            "NestedCoilsetOptimiser",
-            "ConnectionLengthOptimiser",
-        ],
-        type=str,
-        default="UnconstrainedCurrentOptimiser",
-    )
-    parser.add_argument(
-        "--no-pre_optimise",
-        help="Flag controlling if state should not pre optimised using unconstrained optimisation before passing to the constrained optimiser",
-        dest="pre_optimise",
-        action="store_false",
-    )
-    args = parser.parse_args()
-    run(args)
+    run()
