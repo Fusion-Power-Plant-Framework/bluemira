@@ -24,7 +24,6 @@ from BLUEPRINT.systems.firstwall import FirstWallSN, FirstWallDN, get_tangent_ve
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import get_intersect
 import BLUEPRINT.geometry.loop as old_loop  # noqa (N813)
 from BLUEPRINT.geometry.shell import Shell
 
@@ -140,20 +139,6 @@ def check_firstwall(firstwall):
 
     inboard = firstwall.geom["Inboard wall"]
     outboard = firstwall.geom["Outboard wall"]
-
-    # Inboard / outboard intersect in SN case
-    if len(firstwall.divertor_loops) == 1:
-        int_x, int_z = get_intersect(inboard, outboard)
-        n_ints = len(int_x)
-        assert n_ints >= 1 and len(int_z) == n_ints
-
-    # Check intersections with the divertor
-    for div in firstwall.divertor_loops:
-        assert isinstance(div, (Loop, old_loop.Loop))
-        for sec_compare in [inboard, outboard]:
-            int_x, int_z = get_intersect(div, sec_compare)
-            n_ints = len(int_x)
-            assert n_ints >= 1 and len(int_z) == n_ints
 
     return True
 
