@@ -24,22 +24,19 @@ EU-DEMO build classes for TF Coils.
 """
 from typing import Type, Optional, List
 from copy import deepcopy
-from matplotlib.pyplot import plot
 import numpy as np
 
-from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.look_and_feel import bluemira_warn, bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.plotter import PlotOptions, plot_2d
-from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
+from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.tools import offset_wire, sweep_shape, make_polygon, boolean_cut
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.solid import BluemiraSolid
-from bluemira.utilities.optimiser import Optimiser
 from bluemira.display.palettes import BLUE_PALETTE
 
 

@@ -162,6 +162,7 @@ tf_coils = component.get_component("TF Coils")
 xy = tf_coils.get_component("xy")
 xy.plot_2d()
 xyz = tf_coils.get_component("xyz")
-xyz.show_cad()
+# xyz.show_cad()
 
 builder = reactor.get_builder("TF Coils")
+builder.design_problem.plot()
