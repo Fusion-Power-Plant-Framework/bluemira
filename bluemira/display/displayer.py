@@ -210,13 +210,16 @@ class ComponentDisplayer(BaseDisplayer):
         """
         self._shapes = []
         self._options = []
-        if comp.is_leaf:
-            self._shapes.append(comp.shape)
-            self._options.append(comp.display_cad_options)
-        else:
-            for child in comp.children:
-                self._shapes.append(child.shape)
-                self._options.append(child.display_cad_options)
+
+        def populate_data(comp):
+            if comp.is_leaf:
+                self._shapes.append(comp.shape)
+                self._options.append(comp.display_cad_options)
+            else:
+                for child in comp.children:
+                    populate_data(child)
+
+        populate_data(comp)
         show_cad(self._shapes, self._options, **kwargs)
 
 
