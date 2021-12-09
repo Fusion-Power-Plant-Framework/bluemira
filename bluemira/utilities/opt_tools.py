@@ -63,6 +63,17 @@ class ConstraintLibrary:
     def objective_constraint(
         self, constraint, vector, grad, objective_function, maximum_fom=1.0
     ):
+        """
+        Constraint function to constrain the maximum value of an NLOpt objective
+        function provided
+
+        Parameters
+        ----------
+        objective_function: callable
+            NLOpt objective function to use in constraint.
+        maximum_fom: float (default=1.0)
+            Value to constrain the objective function by during optimisation.
+        """
         constraint[:] = objective_function(self, vector, grad) - maximum_fom
         return constraint
 
