@@ -345,6 +345,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         idx = np.where(np.isclose(centreline_points[0], np.min(centreline_points[0])))[0]
         z_turn_top = np.max(centreline_points[2][idx])
         z_turn_bot = np.min(centreline_points[2][idx])
+        z_min_cl = np.min(centreline_points[2])
+        z_max_cl = np.max(centreline_points[2])
 
         inner_xs_rect_top = deepcopy(inner_xs_rect)
         inner_xs_rect_top.translate((0, 0, z_turn_top))
@@ -359,12 +361,16 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         bb = solid.bounding_box
         z_min = bb.z_min
         z_max = bb.z_max
+        f_guess = 0.8  # Because bounding box is unreliable
+        est_tk = 0.5 * self.params.tf_wp_width + f_guess * 0.5 * (
+            self.params.tk_tf_nose + self.params.tk_tf_front_ib
+        )
+        z_min = z_min_cl - est_tk
+        z_max = z_max_cl + est_tk
 
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
 
-        z_min_cl = np.min(centreline_points[2])
-        z_max_cl = np.max(centreline_points[2])
         # Join the straight leg to the curvy bits
         bb = inboard_casing.bounding_box
         x_min = bb.x_min
@@ -393,7 +399,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         )
         joiner_bot = extrude_shape(BluemiraFace(joiner_bot), (0, 0, -z_min))
 
-        # Need to cut away the excess, but I need section_shape or something
+        # Need to cut away the excess joiner extrusions
         cl = deepcopy(self._centreline)
         cl.translate((0, -2 * self.params.tf_wp_depth, 0))
         cl_face = BluemiraFace(cl)
