@@ -25,7 +25,6 @@ Flux surface attributes and first wall profile based on heat flux calculation
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Type
-
 from bluemira.base.parameter import ParameterFrame
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
@@ -49,6 +48,7 @@ from BLUEPRINT.geometry.offset import offset_clipper
 from BLUEPRINT.geometry.geomtools import (
     index_of_point_on_loop,
     make_box_xz,
+    clean_loop_points,
 )
 from BLUEPRINT.geometry.geombase import make_plane
 from BLUEPRINT.geometry.geomtools import rotate_vector_2d
@@ -875,7 +875,7 @@ class DivertorBuilder:
             flux_loops = self.separatrix
         return flux_loops
 
-    def make_divertor_cassette(self, divertor_loops):
+    def make_divertor_cassette(self, divertor_loops, outer_profile):
         """
         Given the divertor loops create the divertor cassette.
 
@@ -883,6 +883,8 @@ class DivertorBuilder:
         ----------
         divertor_loops : list
             List of Loop objects representing the divertor
+        outer_profile : Loop
+            Loop of the outer profile of first wall.
 
         Returns
         -------
@@ -978,15 +980,9 @@ class DivertorBuilder:
             # Find the overlap between the vv and the box
             cassette = boolean_2d_common_loop(div_box, vv)
 
-            # Subtract the divertor (get an inner and outer piece)
-            subtracted = boolean_2d_difference(cassette, div)
-            if not len(subtracted) == 2:
-                raise GeometryError("Unexpected number of loops")
-            # Select the outer one
-            if np.max(subtracted[0].x) > np.max(subtracted[1].x):
-                cassette = subtracted[0]
-            else:
-                cassette = subtracted[1]
+            # Subtract the first wall outer profile
+            subtracted = boolean_2d_difference(cassette, outer_profile)
+            cassette = subtracted[0]
 
             # Finally, simplify
             cassette = simplify_loop(cassette)
@@ -1094,6 +1090,8 @@ class FirstWall(ReactorSystem):
         ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
         ["psi_norm", "Normalised flux value of strike-point contours",
          1, "N/A", None, "Input"],
+        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
         ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
         ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
@@ -1357,11 +1355,6 @@ class FirstWall(ReactorSystem):
         inboard_wall = sections[-2]
         outboard_wall = sections[-1]
 
-        # For now, make the divertor cassette here (to be refactored)
-        self.divertor_cassettes = self.divertor_builder.make_divertor_cassette(
-            self.divertor_loops
-        )
-
         # Make a shell from the inner and outer profile
         fw_shell = Shell(inner=self.inner_profile, outer=outer_profile)
 
@@ -1371,6 +1364,11 @@ class FirstWall(ReactorSystem):
         self.geom["Inner profile"] = self.inner_profile
         self.geom["Inboard wall"] = inboard_wall
         self.geom["Outboard wall"] = outboard_wall
+
+        # For now, make the divertor cassette here (to be refactored)
+        self.divertor_cassettes = self.divertor_builder.make_divertor_cassette(
+            self.divertor_loops, self.geom["2D profile"].outer
+        )
 
         n_div = len(self.divertor_loops)
         n_cass = len(self.divertor_cassettes)
@@ -1441,12 +1439,18 @@ class FirstWall(ReactorSystem):
         # Remove the overlaps between the offset sections
         sections = get_non_overlapping(inboard, outboard, offset_divertor_loops, cutters)
 
-        # Subtract the inner profile from each component
-        for i, sec in enumerate(sections):
-            sections[i] = boolean_2d_difference_loop(sec, inner_wall)
-
         # Now find the union of our offset loops and the original profile
         outer_wall = self.attach_divertor(inner_wall, sections)
+
+        # Subtract the inner profile from each component
+        for ii, sec in enumerate(sections):
+            section = boolean_2d_difference_loop(sec, inner_wall)
+            # Remove duplicate points on the loop
+            clean_points = clean_loop_points(section, 1e-4)
+            clean_array = np.array(clean_points).T
+            clean_loop = Loop(x=clean_array[0], z=clean_array[1])
+            clean_loop.close()
+            sections[ii] = clean_loop
 
         # Return both the union and individual sections
         return outer_wall, sections
@@ -1614,11 +1618,8 @@ class FirstWallSN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        # ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
-        ["fw_dx", "Minimum distance of FW to separatrix", 0.3, "m", None, "Input"],
+        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "N/A", None, "Input"],
-        ["fw_p_sol_near", "near Scrape off layer power", 50, "MW", None, "Input"],
-        ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
         ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "N/A", None, "Input"],
@@ -1673,7 +1674,7 @@ class FirstWallSN(FirstWall):
         fw_loop: Loop
             Here the first wall is without divertor. The wall is cut at the X-point
         """
-        dx_loop = self.lcfs.offset(self.params.fw_dx)
+        dx_loop = self.lcfs.offset(self.params.tk_sol_ob)
         psi_n_loop = self.equilibrium.get_flux_surface(
             self.params.fw_psi_n,
         )
@@ -1772,12 +1773,9 @@ class FirstWallDN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        ["fw_psi_init", "Initial psi norm value", 1, "N/A", None, "Input"],
-        ["fw_dx_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
-        ["fw_dx_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
+        ['tk_sol_ib', 'Inboard SOL thickness', 0.225, 'm', None, 'Input'],
+        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
-        ["fw_p_sol_near", "near Scrape off layer power", 90, "MW", None, "Input"],
-        ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda_q near SOL omp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda_q far SOL omp", 0.1, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda_q near SOL imp", 0.003, "m", None, "Input"],
@@ -1788,8 +1786,6 @@ class FirstWallDN(FirstWall):
         # ["dr_far_omp", "fs thickness far SOL", 0.005, "m", None, "Input"],
         # These seem to be inconsistent with the above, or at least could be set as such
         # Do not appear to be used anyway
-        # ["fw_dpsi_n_near", "Step size of psi in near SOL", 0.1, "N/A", None, "Input"],
-        # ["fw_dpsi_n_far", "Step size of psi in far SOL", 0.1, "N/A", None, "Input"],
 
         ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "N/A", None, "Input"],
         ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "N/A", None, "Input"],
@@ -1854,7 +1850,7 @@ class FirstWallDN(FirstWall):
         fw_loop: Loop
             Here the first wall is without divertor. The wall is cut at the X-point
         """
-        dx_loop_lfs = self.lcfs.offset(self.params.fw_dx_omp)
+        dx_loop_lfs = self.lcfs.offset(self.params.tk_sol_ob)
         clip_lfs = np.where(
             dx_loop_lfs.x > self.points["x_point"]["x"],
         )
@@ -1863,7 +1859,7 @@ class FirstWallDN(FirstWall):
             z=dx_loop_lfs.z[clip_lfs],
         )
 
-        dx_loop_hfs = self.lcfs.offset(self.params.fw_dx_imp)
+        dx_loop_hfs = self.lcfs.offset(self.params.tk_sol_ib)
         clip_hfs = np.where(
             dx_loop_hfs.x < self.points["x_point"]["x"],
         )
@@ -1947,7 +1943,7 @@ class FirstWallDN(FirstWall):
                 elif loop_plane_intersect(loop, self.mid_plane)[0][0] < self.points[
                     "o_point"
                 ]["x"] and loop_plane_intersect(loop, self.mid_plane)[0][0] > (
-                    self.x_imp_lcfs - self.params.fw_dx_imp
+                    self.x_imp_lcfs - self.params.tk_sol_ib
                 ):
                     clip_vertical = np.where(loop.x < self.points["x_point"]["x"])
 

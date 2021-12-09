@@ -107,26 +107,23 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['f_cd_ohm', 'Ohmic current drive fraction', 0.1, 'N/A', None, 'Input'],
 
         # First wall profile
-        ['fw_dx', 'Minimum distance of FW to separatrix', 0.225, 'm', None, 'Input'],
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'N/A', None, 'Input'],
         ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],
         ['fw_dL_max', 'Maximum FW module length', 2, 'm', None, 'Input'],
         ['fw_a_max', 'Maximum angle between FW modules', 25, '°', None, 'Input'],
-        ['fw_p_sol_near', 'near Scrape off layer power', 50, 'MW', None, 'Input'],
-        ['fw_p_sol_far', 'far Scrape off layer power', 50, 'MW', None, 'Input'],
+        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
+        ['f_p_sol_near', 'near scrape-off layer power rate', 0.65, 'N/A', None, 'Input'],
         ['hf_limit', 'heat flux material limit', 0.5, 'MW/m^2', None, 'Input'],
 
         # SN/DN variables for heat flux transport
-        ['fw_dx_omp', 'Initial offset from LCFS omp', 0.2, 'm', None, 'Input'],
-        ['fw_dx_imp', 'Initial offset from LCFS imp', 0.05, 'm', None, 'Input'],
         ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.1, 'm', None, 'Input'],
         ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.003, 'm', None, 'Input'],
         ['fw_lambda_q_far_imp', 'Lambda_q far SOL imp', 0.1, 'm', None, 'Input'],
-        ['f_lfs_lower_target', 'Power fraction lfs lower', 0.5, 'N/A', None, 'Input'],
-        ['f_lfs_upper_target', 'Power fraction lfs upper', 0.5, 'N/A', None, 'Input'],
-        ['f_hfs_lower_target', 'Power fraction hfs lower', 0.5, 'N/A', None, 'Input'],
-        ['f_hfs_upper_target', 'Power fraction hfs upper', 0.5, 'N/A', None, 'Input'],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.5, "N/A", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.5, "N/A", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.5, "N/A", None, "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.5, "N/A", None, "Input"],
 
         # Divertor profile
         ['div_L2D_ib', 'Inboard divertor leg length', 1.1, 'm', None, 'Input'],
@@ -195,8 +192,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_ob_ts', 'Outboard TS thickness', 0.05, 'm', None, 'Input'],
         ['tk_cr_vv', 'Cryostat VV thickness', 0.3, 'm', None, 'Input', {"PROCESS": ParameterMapping("ddwex", False, True)}],
         ['tk_rs', 'Radiation shield thickness', 2.5, 'm', None, 'Input'],
-        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
-        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],
+        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwith", True, False)}],
+        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwoth", True, False)}],
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
 
         # TF coils
@@ -245,8 +242,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['r_fw_ob_in', 'Outboard first wall inner radius', 12.1, 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("r_fw_ob_in", True, False)}],
         ['r_vv_ob_in', 'Outboard vessel inner radius', 14.5, 'm', None, 'PROCESS', {"PROCESS": ParameterMapping("r_vv_ob_in", True, False)}],
         ['r_tf_out_centre', 'Outboard TF leg centre radius', 16.2, 'N/A', None, 'PROCESS', {"PROCESS": ParameterMapping("r_tf_outboard_mid", True, False)}],
-        ['r_ts_joint', 'Radius of inboard/outboard TS joint', 2. , 'm', None, 'Input'],
-        ['r_vv_joint', 'Radius of inboard/outboard VV joint', 2. , 'm', None, 'Input'],
+        ['r_ts_joint', 'Radius of inboard/outboard TS joint', 2., 'm', None, 'Input'],
+        ['r_vv_joint', 'Radius of inboard/outboard VV joint', 2., 'm', None, 'Input'],
 
         # Gaps and clearances
         ['g_cs_mod', 'Gap between CS modules', 0.1, 'm', None, 'Input'],
