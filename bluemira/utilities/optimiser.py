@@ -64,6 +64,24 @@ def approx_derivative(
 
 
 class OptimiserConstraint:
+    """
+    Data class to store information needed to apply a constraint
+    to an optimisation problem.
+
+    Parameters
+    ----------
+    f_constraint: callable
+        Constraint function to apply to problem.
+        For NLOpt constraints, onstraint functions should be of the form
+        f_constraint(cls, constraint, x, grad, *f_constraint_args)
+    f_constraint_args: tuple (default = ())
+        Additional arguments to pass to NLOpt constraint function when called.
+    tolerance: array
+        Array of tolerances to use when applying the optimisation constraint.
+    constraint_type: string (default: "inequality")
+        Type of constraint to apply, either "inequality" or "equality".
+    """
+
     def __init__(
         self,
         f_constraint,

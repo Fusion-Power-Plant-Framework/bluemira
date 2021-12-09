@@ -1255,14 +1255,22 @@ class CoilsetOptimiserBase:
 
         Parameters
         ----------
+        opt_args: dict
+            Arguments to be passed to Optimiser interface during creation.
         dimension: int
-            Number of independent coil currents to optimise.
-            Should be equal to eq.coilset._ccoils when called.
+            Number of independent variables in the state vector to be optimised.
+        bounds: tuple
+            Tuple containing lower and upper bounds on the state vector.
+        objective_func: callable
+            Objective function to be minimised during optimisation
+        opt_constraints: iterable (default = [])
+            Iterable of OptimiserConstraint objects containing optimisation
+            constraints held during optimisation.
 
         Returns
         -------
-        opt: nlopt.opt
-            NLOpt optimiser to be used for optimisation.
+        opt: Optimiser
+            Optimiser object to be used for optimisation.
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
@@ -1286,8 +1294,11 @@ class CoilsetOptimiserBase:
 
         Parameters
         ----------
-        f_objective: callable
-            Objective function to minimise
+        opt: Optimiser
+            Optimiser on which to apply the constraints. Updated in place.
+        opt_constraints: iterable
+            Iterable of OptimiserConstraint objects containing optimisation
+            constraints to be applied to the Optimiser.
         """
         for _opt_constraint in opt_constraints:
             if _opt_constraint._constraint_type == "inequality":
@@ -1787,6 +1798,24 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 
 
 class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
+    """
+    NLOpt based optimiser for the connection length calculated from a point on the
+    outboard edge of the SOL on the midplane to a provided first wall, subject to maximum current bounds.
+
+    A derivative free optimisation algorithm, such as COBYLA, is recommended.
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset used to get coil current limits and number of coils.
+    sol_width: float (default = 0.001)
+        Scrape off layer width [m]. Optimised connection length will be calculated from the
+        outboard edge of the SOL at the midplane.
+    first_wall: Loop (default: None)
+        Loop object representing the first wall. If None, the edge of the Equilibrium grid
+        will be used.
+    **kwargs: Remaining BoundedCurrentOptimiser keyword arguments.
+    """
+
     def __init__(
         self,
         coilset,
@@ -1851,7 +1880,7 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
 
         Returns
         -------
-        self.rms: Value of objective function (figure of merit).
+        fom: Value of objective function (figure of merit).
         """
         coilset_state = np.concatenate((self.x0, self.z0, vector))
         self.set_coilset_state(coilset_state)
