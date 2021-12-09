@@ -243,6 +243,24 @@ class Reactor(DesignABC):
         )
         self._plot_flag: bool = self._build_config.get("plot_flag", False)
 
+    def _process_design_stage_config(
+        self, name: str, default_config: BuildConfig = None
+    ) -> Dict[str, BuildConfig]:
+        config = {"name": name}
+
+        # Copy in top-level configuration
+        for key, val in self._build_config.items():
+            if not isinstance(val, dict):
+                config[key] = val
+
+        # Set the default configuration values
+        config.update(default_config)
+
+        # Set the specified configuration values
+        config.update(self._build_config.get(name, {}))
+
+        return config
+
     @property
     def file_manager(self):
         """
