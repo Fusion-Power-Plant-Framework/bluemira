@@ -33,7 +33,14 @@ from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.plotter import PlotOptions, plot_2d
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.geometry.tools import offset_wire, sweep_shape, make_polygon, boolean_cut
+from bluemira.geometry.tools import (
+    boolean_fuse,
+    extrude_shape,
+    offset_wire,
+    sweep_shape,
+    make_polygon,
+    boolean_cut,
+)
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.solid import BluemiraSolid
@@ -359,7 +366,73 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
         inner_xs, outer_xs = self._make_cas_xs()
-        solid = sweep_shape([inner_xs, outer_xs], self._centreline)
+        # Make inner xs into a rectangle
+        bb = inner_xs.bounding_box
+        x_min = bb.x_min
+        x_max = bb.x_max
+
+        half_angle = np.pi / self.params.n_TF.value
+        y_in = self.params.r_tf_in * np.sin(half_angle)
+        inner_xs_rect = make_polygon(
+            [[x_min, -y_in, 0], [x_max, -y_in, 0], [x_max, y_in, 0], [x_min, y_in, 0]],
+            closed=True,
+        )
+
+        # Sweep with a varying rectangular cross-section
+        centreline_points = self._centreline.discretize(byedges=True, ndiscr=2000).T
+        idx = np.where(np.isclose(centreline_points[0], np.min(centreline_points[0])))[0]
+        z_turn_top = np.max(centreline_points[2][idx])
+        z_turn_bot = np.min(centreline_points[2][idx])
+
+        inner_xs_rect_top = deepcopy(inner_xs_rect)
+        inner_xs_rect_top.translate((0, 0, z_turn_top))
+        inner_xs_rect_bot = deepcopy(inner_xs_rect)
+        inner_xs_rect_bot.translate((0, 0, z_turn_bot))
+        solid = sweep_shape(
+            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self._centreline
+        )
+
+        # Christ, need offset or bounding_box or section_shape, can't trust any atm.
+        # The bounding box of the solid is much bigger than I'd expect
+
+        z_min = np.min(centreline_points[2])
+        z_max = np.max(centreline_points[2])
+        inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
+        inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
+
+        # Join the straight leg to the curvy bits
+        bb = inboard_casing.bounding_box
+        x_min = bb.x_min
+        idx = np.where(np.isclose(centreline_points[2], z_max))[0]
+        x_turn_top = np.min(centreline_points[0][idx])
+        idx = np.where(np.isclose(centreline_points[2], z_min))[0]
+        x_turn_bot = np.min(centreline_points[0][idx])
+        joiner_top = make_polygon(
+            [
+                [x_min, -y_in, z_max],
+                [x_turn_top, -y_in, z_max],
+                [x_turn_top, y_in, z_max],
+                [x_min, y_in, z_max],
+            ],
+            closed=True,
+        )
+        joiner_top = extrude_shape(BluemiraFace(joiner_top), (0, 0, -z_max))
+        joiner_bot = make_polygon(
+            [
+                [x_min, -y_in, z_min],
+                [x_turn_bot, -y_in, z_min],
+                [x_turn_bot, y_in, z_min],
+                [x_min, y_in, z_min],
+            ],
+            closed=True,
+        )
+        joiner_bot = extrude_shape(BluemiraFace(joiner_bot), (0, 0, -z_min))
+
+        solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
+
+        # Need to cut away the excess, but I need section_shape or something
+        # solid = boolean_cut(solid, cutter)[0]
+
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
         solid = boolean_cut(solid, outer_ins_solid)[0]
 
