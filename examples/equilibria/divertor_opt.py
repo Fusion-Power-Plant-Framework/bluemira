@@ -47,7 +47,6 @@ from bluemira.utilities.optimiser import OptimiserConstraint
 from bluemira.utilities.opt_tools import (
     ConstraintLibrary,
 )
-from bluemira.geometry._deprecated_loop import Loop
 
 # Clean up and make plots look good
 plt.close("all")
