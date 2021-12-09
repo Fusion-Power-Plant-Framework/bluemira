@@ -93,7 +93,9 @@ with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json", "w") as 
 build_config = {
     "reference_data_root": "!BM_ROOT!/data",
     "generated_data_root": "!BM_ROOT!/generated_data",
-    "process_mode": "mock",
+    "process_mode": "read",  # ["run", "read", "mock"]
+    "plasma_mode": "read",  # ["run", "read", "mock"]
+    "TF_mode": "run",  # ["run", "read", "mock"]
 }
 
 with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w") as fh:
@@ -114,7 +116,7 @@ with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w
 
 # Uncomment this to read the reference plasma equilibrium run from an existing file.
 
-build_config["plasma_mode"] = "read"
+# build_config["plasma_mode"] = "read"
 
 reactor = EUDEMOReactor(params, build_config)
 component = reactor.run()

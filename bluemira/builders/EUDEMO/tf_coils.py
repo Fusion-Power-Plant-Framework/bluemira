@@ -112,8 +112,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         x_c = self.params.r_tf_in_centre.value
         # PROCESS WP thickness includes insulation and insertion gap
-        d_xc = 0.5 * (self.params.tf_wp_width - self.params.tk_tf_ins)
-        d_yc = 0.5 * (self.params.tf_wp_depth - self.params.tk_tf_ins)
+        d_xc = 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
+        d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
         wp_xs = make_polygon(
             [
                 [x_c - d_xc, -d_yc, 0],
@@ -142,7 +142,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-y cross-section wires
         """
         x_in = self.params.r_tf_in
-        # Insulation included in WP dith
+        # Insulation included in WP width
         x_out = (
             x_in
             + self.params.tk_tf_nose
@@ -150,8 +150,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             + self.params.tk_tf_front_ib
         )
         half_angle = np.pi / self.params.n_TF.value
-        y_in = x_in * np.tan(half_angle)
-        y_out = x_out * np.tan(half_angle)
+        y_in = x_in * np.sin(half_angle)
+        y_out = x_out * np.sin(half_angle)
         inboard_wire = make_polygon(
             [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
             closed=True,
