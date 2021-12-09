@@ -25,6 +25,7 @@ Perform the EU-DEMO reactor design.
 
 import json
 import matplotlib.pyplot as plt
+from bluemira.base.components import Component
 
 from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_root
@@ -177,6 +178,11 @@ xy = tf_coils.get_component("xy")
 xy.plot_2d()
 xyz = tf_coils.get_component("xyz")
 xyz.show_cad()
+dummy = Component(
+    "xyz view", children=[tf_coils.get_component("xyz"), plasma.get_component("xyz")]
+)
+dummy.show_cad()
 
 builder = reactor.get_builder("TF Coils")
 builder.design_problem.plot()
+plt.show()
