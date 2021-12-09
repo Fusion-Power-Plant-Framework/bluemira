@@ -135,7 +135,7 @@ class EUDEMOReactor(Reactor):
 
         plasma = component_tree.get_component("Plasma")
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
-        sep_shape = sep_comp.shape
+        sep_shape = sep_comp.shape.boundary[0]
 
         builder = TFCoilsBuilder(self._params.to_dict(), tf_config)
         self.register_builder(builder, name)
