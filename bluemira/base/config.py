@@ -191,8 +191,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_ob_ts', 'Outboard TS thickness', 0.05, 'm', None, 'Input'],
         ['tk_cr_vv', 'Cryostat VV thickness', 0.3, 'm', None, 'Input', {"PROCESS": ParameterMapping("ddwex", False, True)}],
         ['tk_rs', 'Radiation shield thickness', 2.5, 'm', None, 'Input'],
-        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwith", False, True)}],
-        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwoth", False, True)}],
+        ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwith", True, False)}],
+        ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input', {"PROCESS": ParameterMapping("fwoth", True, False)}],
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
 
         # TF coils
