@@ -46,9 +46,10 @@ def test_analyticalsolvergrouper():
     xl, yl = make_circle_arc(xc, 0, 0, n_points=10)
     loop = Loop(x=xl, y=yl)
     loop.translate([0, 0, zc], update=True)
-    a = ArbitraryPlanarRectangularXSCircuit(loop, dx_coil, dz_coil, current)
-    loop2 = loop.translate([0, 0, -2 * zc], update=False)
-    a2 = ArbitraryPlanarRectangularXSCircuit(loop2, dx_coil, dz_coil, current)
+    circle = make_circle(center=[0, 0, zc], radius=10).discretize(ndiscr=10)
+    a = ArbitraryPlanarRectangularXSCircuit(circle, dx_coil, dz_coil, current)
+    circle2 = make_circle(center=[0, 0, -zc], radius=10).discretize(ndiscr=10)
+    a2 = ArbitraryPlanarRectangularXSCircuit(circle2, dx_coil, dz_coil, current)
     solver = SourceGroup([a, a2])
 
     points = np.random.uniform(low=-10, high=10, size=(10, 3))
