@@ -58,7 +58,7 @@ class ConstraintLibrary:
                 \\end{bmatrix}
 
     The grad and constraint matrices must be assigned in place.
-    """
+    """  # noqa (W505)
 
     def objective_constraint(
         self, constraint, vector, grad, objective_function, maximum_fom=1.0
@@ -97,7 +97,7 @@ class ObjectiveLibrary:
     Note that the gradient of the objective function is of the form:
 
     :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
-    """
+    """  # noqa (W505)
 
     def regularised_lsq_objective(self, vector, grad, scale, A, b, gamma):
         """
