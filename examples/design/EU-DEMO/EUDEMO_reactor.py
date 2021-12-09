@@ -93,9 +93,15 @@ with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json", "w") as 
 build_config = {
     "reference_data_root": "!BM_ROOT!/data",
     "generated_data_root": "!BM_ROOT!/generated_data",
-    "process_mode": "read",  # ["run", "read", "mock"]
-    "plasma_mode": "read",  # ["run", "read", "mock"]
-    "TF_mode": "run",  # ["run", "read", "mock"]
+    "PROCESS": {
+        "runmode": "read",  # ["run", "read", "mock"]
+    },
+    "Plasma": {
+        "runmode": "read",  # ["run", "read", "mock"]
+    },
+    "TF Coils": {
+        "runmode": "run",  # ["run", "read", "mock"]
+    },
 }
 
 with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w") as fh:
@@ -123,7 +129,7 @@ component = reactor.run()
 
 # Display the PROCESS radial build.
 
-if build_config["process_mode"] == "run":
+if build_config["PROCESS"]["runmode"] == "run":
     plot_PROCESS(reactor.file_manager.generated_data_dirs["systems_code"])
 
 # Write out equilibrium, if it's been created.

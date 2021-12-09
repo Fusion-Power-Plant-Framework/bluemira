@@ -83,7 +83,7 @@ class Builder(abc.ABC):
     build components when a Design is run.
     """
 
-    _default_run_mode: Optional[str] = None
+    _default_runmode: Optional[str] = None
     _required_params: List[str] = []
     _required_config: List[str] = []
     _params: ParameterFrame
@@ -244,26 +244,26 @@ class Builder(abc.ABC):
 
     def _extract_config(self, build_config: BuildConfig):
         has_runmode = (
-            "run_mode" in build_config
-            or getattr(self, "_default_run_mode", None) is not None
+            "runmode" in build_config
+            or getattr(self, "_default_runmode", None) is not None
         )
         if has_runmode:
             self._set_runmode(build_config)
 
     def _set_runmode(self, build_config: BuildConfig):
         """
-        Set runmode according to the "run_mode" parameter in build_config or the default
+        Set runmode according to the "runmode" parameter in build_config or the default
         run mode if not provided via build_config.
         """
-        run_mode = build_config.get("run_mode", self._default_run_mode)
+        runmode = build_config.get("runmode", self._default_runmode)
 
-        if not hasattr(self, run_mode.lower()):
+        if not hasattr(self, runmode.lower()):
             raise NotImplementedError(
-                f"Builder {self.__class__.__name__} has no {run_mode.lower()} mode."
+                f"Builder {self.__class__.__name__} has no {runmode.lower()} mode."
             )
 
         mode = (
-            build_config.get("run_mode", self._default_run_mode)
+            build_config.get("runmode", self._default_runmode)
             .upper()
             .translate(str.maketrans("", "", string.whitespace))
         )
