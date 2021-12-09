@@ -274,6 +274,12 @@
       }
     }
   },
+  "P_sep_particle": {
+    "name": "Separatrix power",
+    "value": 150,
+    "unit": "MW",
+    "source": "Input"
+  },
   "P_sync": {
     "name": "Synchrotron radiation",
     "value": 50,
@@ -607,25 +613,25 @@
     "source": "Input"
   },
   "f_hfs_lower_target": {
-    "name": "Power fraction hfs lower",
+    "name": "Fraction of SOL power deposited on the HFS lower target",
     "value": 0.5,
     "unit": "N/A",
     "source": "Input"
   },
   "f_hfs_upper_target": {
-    "name": "Power fraction hfs upper",
+    "name": "Fraction of SOL power deposited on the HFS upper target (DN only)",
     "value": 0.5,
     "unit": "N/A",
     "source": "Input"
   },
   "f_lfs_lower_target": {
-    "name": "Power fraction lfs lower",
+    "name": "Fraction of SOL power deposited on the LFS lower target",
     "value": 0.5,
     "unit": "N/A",
     "source": "Input"
   },
   "f_lfs_upper_target": {
-    "name": "Power fraction lfs upper",
+    "name": "Fraction of SOL power deposited on the LFS upper target (DN only)",
     "value": 0.5,
     "unit": "N/A",
     "source": "Input"
@@ -643,6 +649,12 @@
       }
     }
   },
+  "f_p_sol_near": {
+    "name": "near scrape-off layer power rate",
+    "value": 0.65,
+    "unit": "N/A",
+    "source": "Input"
+  },
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
     "value": 25,
@@ -658,24 +670,6 @@
   "fw_dL_min": {
     "name": "Minimum FW module length",
     "value": 0.75,
-    "unit": "m",
-    "source": "Input"
-  },
-  "fw_dx": {
-    "name": "Minimum distance of FW to separatrix",
-    "value": 0.225,
-    "unit": "m",
-    "source": "Input"
-  },
-  "fw_dx_imp": {
-    "name": "Initial offset from LCFS imp",
-    "value": 0.05,
-    "unit": "m",
-    "source": "Input"
-  },
-  "fw_dx_omp": {
-    "name": "Initial offset from LCFS omp",
-    "value": 0.2,
     "unit": "m",
     "source": "Input"
   },
@@ -701,18 +695,6 @@
     "name": "Lambda_q near SOL omp",
     "value": 0.003,
     "unit": "m",
-    "source": "Input"
-  },
-  "fw_p_sol_far": {
-    "name": "far Scrape off layer power",
-    "value": 50,
-    "unit": "MW",
-    "source": "Input"
-  },
-  "fw_p_sol_near": {
-    "name": "near Scrape off layer power",
-    "value": 50,
-    "unit": "MW",
     "source": "Input"
   },
   "fw_psi_n": {
@@ -1560,13 +1542,27 @@
     "name": "Inboard first wall thickness",
     "value": 0.052,
     "unit": "m",
-    "source": "Input"
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "fwith",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "tk_fw_out": {
     "name": "Outboard first wall thickness",
     "value": 0.052,
     "unit": "m",
-    "source": "Input"
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "fwoth",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "tk_ib_ts": {
     "name": "Inboard TS thickness",
