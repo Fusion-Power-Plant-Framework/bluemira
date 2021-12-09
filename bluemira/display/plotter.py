@@ -607,7 +607,10 @@ class ComponentPlotter(BasePlotter):
 
         def _populate_plotters(comp):
             if comp.is_leaf:
-                plotter = _get_plotter_class(comp.shape)(self.options)
+                options = (
+                    self.options if comp.plot_options is None else comp.plot_options
+                )
+                plotter = _get_plotter_class(comp.shape)(options)
                 plotter._populate_data(comp.shape)
                 self._cplotters.append(plotter)
             else:

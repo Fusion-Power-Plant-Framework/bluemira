@@ -104,6 +104,46 @@ class DesignABC(abc.ABC):
         """
         return self._builders[builder_name]
 
+    def register_builder(self, builder: Builder, name: str):
+        """
+        Add this builder to the internal builder registry.
+
+        Parameters
+        ----------
+        builder: Builder
+            The builder to be registered.
+        name: str
+            The name to register this builder with.
+
+        Raises
+        ------
+        BuilderError
+            If name already exists in the registry.
+        """
+        if name not in self._builders:
+            self._builders[name] = builder
+        else:
+            raise BuilderError(f"Builder {name} already exists in {self}.")
+
+    def _build_stage(self, name: str):
+        """
+        Build the requested stage and update the design's parameters.
+
+        Parameters
+        ----------
+        name: str
+            The name of the stage to build.
+
+        Returns
+        -------
+        component: Component
+            The resulting component from the build.
+        """
+        component = self._builders[name](self._params.to_dict())
+        self._params.update_kw_parameters(self._builders[name].params.to_dict())
+
+        return component
+
     @abc.abstractmethod
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
         """
@@ -138,10 +178,7 @@ class Design(DesignABC):
         """
         component = super().run()
         for builder in self._builders.values():
-            component.add_child(builder(self._params))
-            self._params.update_kw_parameters(
-                builder._params.to_dict(), source=builder.name
-            )
+            component.add_child(self._build_stage(builder.name))
         return component
 
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
@@ -156,10 +193,7 @@ class Design(DesignABC):
             builder_class: Type[Builder] = get_class_from_module(
                 class_name, default_module="bluemira.builders"
             )
-            if key not in self._builders:
-                self._builders[key] = builder_class(params, val)
-            else:
-                raise BuilderError(f"Builder {key} already exists in {self}.")
+            self.register_builder(builder_class(params, val), key)
             self._required_params += self._builders[key]._required_params
 
 

@@ -24,4 +24,4 @@ Module containing built-in builders for bluemira
 """
 
 from bluemira.builders.plasma import MakeParameterisedPlasma
-from bluemira.builders.shapes import MakeParameterisedShape
+from bluemira.builders.shapes import MakeParameterisedShape, MakeOptimisedShape

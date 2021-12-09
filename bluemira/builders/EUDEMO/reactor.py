@@ -23,10 +23,13 @@
 Perform the EU-DEMO design.
 """
 
+import os
+
 from bluemira.base.components import Component
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
@@ -46,10 +49,11 @@ class EUDEMOReactor(Reactor):
         component = super().run()
 
         self.run_systems_code()
+        component.add_child(self.build_plasma())
 
         return component
 
-    def run_systems_code(self):
+    def run_systems_code(self, **kwargs):
         """
         Run the systems code module in the requested run mode.
         """
@@ -62,3 +66,25 @@ class EUDEMOReactor(Reactor):
             self._file_manager.reference_data_dirs["systems_code"],
         )
         self._params.update_kw_parameters(output.to_dict())
+
+    def build_plasma(self, **kwargs):
+        """
+        Run the plasma build using the requested equilibrium problem.
+        """
+        name = "Plasma"
+
+        default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
+        default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
+        default_eqdsk_path = os.path.join(default_eqdsk_dir, default_eqdsk_name)
+
+        plasma_config = {
+            "name": name,
+            "plot_flag": self._build_config.get("plot_flag", False),
+            "run_mode": self._build_config.get("plasma_mode", "run"),
+            "eqdsk_path": self._build_config.get("eqdsk_path", default_eqdsk_path),
+        }
+
+        builder = PlasmaBuilder(self._params.to_dict(), plasma_config)
+        self.register_builder(builder, name)
+
+        return super()._build_stage(name)
