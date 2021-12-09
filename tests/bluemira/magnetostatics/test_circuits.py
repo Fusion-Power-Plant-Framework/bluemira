@@ -25,8 +25,9 @@ import pytest
 import tests
 import json
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_tools import make_circle_arc, innocent_smoothie
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
@@ -42,12 +43,10 @@ def test_analyticalsolvergrouper():
     dx_coil, dz_coil = 0.5, 0.75
 
     # Build a corresponding arbitrary current loop
-    xl, yl = make_circle_arc(xc, 0, 0, n_points=10)
-    loop = Loop(x=xl, y=yl)
-    loop.translate([0, 0, zc], update=True)
-    a = ArbitraryPlanarRectangularXSCircuit(loop, dx_coil, dz_coil, current)
-    loop2 = loop.translate([0, 0, -2 * zc], update=False)
-    a2 = ArbitraryPlanarRectangularXSCircuit(loop2, dx_coil, dz_coil, current)
+    circle = make_circle(center=[0, 0, zc], radius=xc).discretize(ndiscr=10)
+    a = ArbitraryPlanarRectangularXSCircuit(circle, dx_coil, dz_coil, current)
+    circle2 = make_circle(center=[0, 0, -zc], radius=xc).discretize(ndiscr=10)
+    a2 = ArbitraryPlanarRectangularXSCircuit(circle2, dx_coil, dz_coil, current)
     solver = SourceGroup([a, a2])
 
     points = np.random.uniform(low=-10, high=10, size=(10, 3))
@@ -55,6 +54,25 @@ def test_analyticalsolvergrouper():
         field = solver.field(*point)  # random point :)
         field2 = a.field(*point) + a2.field(*point)
         assert np.all(field == field2)
+
+    field = solver.field(*points.T)
+    new_current = 2e6
+    solver.set_current(new_current)
+    field_new = solver.field(*points.T)
+
+    assert np.allclose(field_new, new_current / current * field)
+
+
+def test_sourcegroup_set_current():
+    circle = make_circle(radius=10).discretize(ndiscr=50)
+    dx_coil, dz_coil = 0.5, 0.75
+    a = ArbitraryPlanarRectangularXSCircuit(circle, dx_coil, dz_coil, current=1)
+    x, y, z = 4, 4, 4
+    response = a.field(x, y, z)
+    new_current = 1e6
+    a.set_current(new_current)
+    new_response = a.field(x, y, z)
+    assert np.allclose(new_response, new_current * response)
 
 
 def test_mixedsourcesolver():
@@ -89,7 +107,8 @@ def test_mixedsourcesolver():
 
     solver = SourceGroup([bar_1, bar_2, bar_3, bar_4, arc_1, arc_2, arc_3, arc_4])
 
-    nx, nz = 100, 100
+    nx, nz = 20, 20
+    nx2, nz2 = nx // 2, nz // 2
     x = np.linspace(-4, 4, nx)
     z = np.linspace(-4, 4, nz)
     xx, zz = np.meshgrid(x, z, indexing="ij")
@@ -98,13 +117,13 @@ def test_mixedsourcesolver():
 
     # Test symmetry of the field in four quadranrs (rotation by matrix manipulations :))
     # Bottom-left (reference)
-    bt_bl = Bt[:50, :50]
+    bt_bl = Bt[:nx2, :nz2]
     # Bottom-right
-    bt_br = Bt[50:, :50][::-1].T
+    bt_br = Bt[nx2:, :nz2][::-1].T
     # Top-right
-    bt_tr = Bt[50:, 50:][::-1].T[::-1]
+    bt_tr = Bt[nx2:, nz2:][::-1].T[::-1]
     # Top-left
-    bt_tl = Bt[:50, 50:].T[::-1]
+    bt_tl = Bt[:nx2, nz2:].T[::-1]
 
     assert np.allclose(bt_bl, bt_br)
     assert np.allclose(bt_bl, bt_tr)
