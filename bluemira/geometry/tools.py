@@ -26,7 +26,7 @@ Useful functions for bluemira geometries.
 import numpy as np
 import numba as nb
 from copy import deepcopy
-from typing import Union, Iterable
+from typing import List, Union, Iterable
 
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -432,7 +432,7 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
 
 def circular_pattern(
     shape, origin=(0, 0, 0), direction=(0, 0, 1), degree=360, n_shapes=10
-):
+) -> List[BluemiraGeo]:
     """
     Make a equally spaced circular pattern of shapes.
 
