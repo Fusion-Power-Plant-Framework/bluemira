@@ -701,6 +701,20 @@ def wire_plane_intersect(wire, plane):
     return None
 
 
+def open_wire_plane_intersect(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
+    circ = Part.Circle(
+        Base.Vector(*shift), Base.Vector(*normal_plane), BIG_NUMBER
+    ).toShape()
+    plane = apiFace(apiWire(circ))
+    intersect_obj = wire.section(plane)
+    intersects = [(np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes]).T)]
+
+    return (
+        np.concatenate([arr.T for arr in intersects]) if intersects[0].size > 0 else None
+    )
+    # return None if intersects == [] else intersects
+
+
 def closed_wire_plane_intersect(wire, **kwargs):
     """
     Get the plane intersection points of a closed wire

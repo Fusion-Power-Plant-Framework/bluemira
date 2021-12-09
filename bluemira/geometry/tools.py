@@ -470,8 +470,15 @@ def plane_intersect(obj, plane):
     """
     shift = np.dot(np.array(plane.base), np.array(plane.axis))
     if isinstance(obj, BluemiraWire):
-        func = "closed_wire_plane_intersect"
+        # if not obj.is_closed():
+        func = "open_wire_plane_intersect"
+        shift = plane.base
+        # func = "closed_wire_plane_intersect"
     else:
+        if not isinstance(obj, BluemiraFace):
+            bluemira_warn(
+                "The output sctructure of this function may not be as expected"
+            )
         func = "plane_intersect"
     return getattr(cadapi, func)(obj._shape, normal_plane=plane.axis, shift=shift)
 
