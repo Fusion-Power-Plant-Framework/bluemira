@@ -1211,41 +1211,10 @@ class TaperedPictureFrame(GeometryParameterisation):
         return BluemiraWire(wires, label=label)
 
 
-class CurvedPictureFrame(GeometryParameterisation):
+class CurvedPictureFrameMixin:
     """
-    Tapered picture-frame geometry parameterisation.
+    Mixin Class for Curved Pictureframe Coils
     """
-
-    __slots__ = ()
-
-    def __init__(self, var_dict={}):
-        variables = OptVariables(
-            [
-                # Inner limb radius
-                BoundedVariable("x_in", 0.4, lower_bound=0.3, upper_bound=0.5),
-                # Middle limb radius
-                BoundedVariable("x_mid", 1.1, lower_bound=1, upper_bound=1.3),
-                # Curve start radius
-                BoundedVariable("x_curve_start", 6.5, lower_bound=6, upper_bound=10),
-                # Outer limb radius
-                BoundedVariable("x_out", 0.5, lower_bound=0.4, upper_bound=0.8),
-                # Height at which to stop the taper angle
-                BoundedVariable("z_in", 6.5, lower_bound=6, upper_bound=8),
-                # Upper limb flat section height
-                BoundedVariable("z_mid_up", 7, lower_bound=6, upper_bound=9),
-                # Lower limb flat section height
-                BoundedVariable("z_mid_down", 7, lower_bound=6, upper_bound=9),
-                # Upper limb max height
-                BoundedVariable("z_max_up", 7, lower_bound=6, upper_bound=9),
-                # Lower limb max height
-                BoundedVariable("z_max_down", 7, lower_bound=6, upper_bound=9),
-                # Corner/transition joint radius
-                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=1),
-            ],
-            frozen=True,
-        )
-        variables.adjust_variables(var_dict)
-        super().__init__(variables)
 
     @staticmethod
     def _domed_leg(axis, x_out, x_curve_start, x_mid, z_top, z_mid, flip=False, r_c=0):
@@ -1301,6 +1270,169 @@ class CurvedPictureFrame(GeometryParameterisation):
 
         return out_wire
 
+
+class SCCurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved (Superconducting) picture-frame geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict={}):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_mid", 1.1, lower_bound=1, upper_bound=1.3),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 6.5, lower_bound=6, upper_bound=10),
+                # Outer limb radius
+                BoundedVariable("x_out", 0.5, lower_bound=0.4, upper_bound=0.8),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7, lower_bound=6, upper_bound=9),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", 7, lower_bound=6, upper_bound=9),
+                # Upper limb max height
+                BoundedVariable("z_max_up", 7, lower_bound=6, upper_bound=9),
+                # Lower limb max height
+                BoundedVariable("z_max_down", 7, lower_bound=6, upper_bound=9),
+                # Corner/transition joint radius
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=1),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        (
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_mid_up,
+            z_mid_down,
+            z_max_up,
+            z_max_down,
+            r_j,
+        ) = self.variables.values
+        axis = [0, -1, 0]
+        p1 = [x_mid, 0, z_mid_up]
+        p2 = [x_curve_start, 0, z_mid_up]
+        wires = [make_polygon([p1, p2], label="top_limb_inb")]
+
+        # Top Curve
+        if z_max_up - z_mid_up > 0.001:
+            # If top leg is curved
+            top_leg_curve = CurvedPictureFrameMixin._domed_leg(
+                axis,
+                x_out,
+                x_curve_start,
+                x_mid,
+                z_max_up,
+                z_mid_up,
+                flip=False,
+                r_c=0,
+            )
+
+            wires = BluemiraWire([wires, top_leg_curve])
+        else:
+            # If top leg is flat
+            wires.append(
+                make_circle(
+                    r_j,
+                    (x_out - r_j, z_mid_up - r_j),
+                    start_angle=90,
+                    end_angle=0,
+                    axis=axis,
+                    label="top_limb_outb",
+                )
+            )
+
+        # Bottom Curve
+        if z_max_down + z_mid_down < -0.001:
+            # If bottom leg is curved
+            bot_leg_curve = CurvedPictureFrameMixin._domed_leg(
+                axis,
+                x_out,
+                x_curve_start,
+                x_mid,
+                z_max_down,
+                z_mid_down,
+                flip=True,
+                r_c=0,
+            )
+
+            wires = BluemiraWire([wires, bot_leg_curve])
+
+        else:
+            # If bottom leg is flat
+            wires.append(
+                make_circle(
+                    r_j,
+                    (x_out - r_j, z_mid_down + r_j),
+                    start_angle=0,
+                    end_angle=-90,
+                    axis=axis,
+                    label="bottom_limb_outb",
+                )
+            )
+
+        p3 = [x_curve_start, 0, z_mid_down]
+        p4 = [x_mid, 0, z_mid_down]
+        wires.append(make_polygon([p3, p4], label="bot_limb_inb"))
+        wires.close()
+
+        return BluemiraWire(wires, label=label)
+
+
+class ResistiveCurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved (Superconducting) picture-frame geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict={}):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_in", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Middle limb radius
+                BoundedVariable("x_mid", 1.1, lower_bound=1, upper_bound=1.3),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 6.5, lower_bound=6, upper_bound=10),
+                # Outer limb radius
+                BoundedVariable("x_out", 0.5, lower_bound=0.4, upper_bound=0.8),
+                # Height at which to stop the taper angle
+                BoundedVariable("z_in", 6.5, lower_bound=6, upper_bound=8),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7, lower_bound=6, upper_bound=9),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", 7, lower_bound=6, upper_bound=9),
+                # Upper limb max height
+                BoundedVariable("z_max_up", 7, lower_bound=6, upper_bound=9),
+                # Lower limb max height
+                BoundedVariable("z_max_down", 7, lower_bound=6, upper_bound=9),
+                # Corner/transition joint radius
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=1),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
     def create_shape(self, label=""):
         """
         Make a CAD representation of the curved picture frame.
@@ -1335,7 +1467,7 @@ class CurvedPictureFrame(GeometryParameterisation):
         # Top Curve
         if z_max_up - z_mid_up > 0.001:
             # If top leg is curved
-            top_leg_curve = CurvedPictureFrame._domed_leg(
+            top_leg_curve = CurvedPictureFrameMixin._domed_leg(
                 axis,
                 x_out,
                 x_curve_start,
@@ -1363,7 +1495,7 @@ class CurvedPictureFrame(GeometryParameterisation):
         # Bottom Curve
         if z_max_down + z_mid_down < -0.001:
             # If bottom leg is curved
-            bot_leg_curve = CurvedPictureFrame._domed_leg(
+            bot_leg_curve = CurvedPictureFrameMixin._domed_leg(
                 axis,
                 x_out,
                 x_curve_start,
@@ -1393,18 +1525,24 @@ class CurvedPictureFrame(GeometryParameterisation):
         p4 = [x_mid, 0, z_mid_down]
         wires.append(make_polygon([p3, p4], label="bot_limb_inb"))
 
-        p3 = [x2, 0, z2]
-        p4 = [x1, 0, z1]
-        p5 = [x1, 0, -z1]
-        p6 = [x2, 0, -z2]
-        p7 = [x2, 0, -z3]
-        p8 = [x3 - r, 0, -z3]
-        c1 = [x3 - r, 0, -z3 + r]
-        p9 = [x3, 0, -z3 + r]
-        p10 = [x3, 0, z3 - r]
-        c2 = [x3 - r, 0, z3 - r]
+        # Curved taper radius
+        x_t = x_mid - x_in
+        alpha = np.arctan(z_in / (x_t))
+        theta_t = np.pi - 2 * alpha
+        r_taper = z_in / np.sin(theta_t)
 
-        wires = [make_polygon([p1, p2, p3, p4, p5, p6, p7, p8], label="inner_limb")]
+        # Curved taper angle
+        angle = np.rad2deg(np.arcsin(z_in / r_taper))
+        wires.append(
+            make_circle(
+                radius=r_taper,
+                centre=(x_in + r_taper, 0),
+                start_angle=180 + angle,
+                end_angle=180 - angle,
+                axis=axis,
+                label="inner_limb",
+            )
+        )
 
         if r != 0.0:
             wires.append(
