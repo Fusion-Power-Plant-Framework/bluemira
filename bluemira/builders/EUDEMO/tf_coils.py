@@ -356,18 +356,21 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # Christ, need offset or bounding_box or section_shape, can't trust any atm.
         # The bounding box of the solid is much bigger than I'd expect
+        bb = solid.bounding_box
+        z_min = bb.z_min
+        z_max = bb.z_max
 
-        z_min = np.min(centreline_points[2])
-        z_max = np.max(centreline_points[2])
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
 
+        z_min_cl = np.min(centreline_points[2])
+        z_max_cl = np.max(centreline_points[2])
         # Join the straight leg to the curvy bits
         bb = inboard_casing.bounding_box
         x_min = bb.x_min
-        idx = np.where(np.isclose(centreline_points[2], z_max))[0]
+        idx = np.where(np.isclose(centreline_points[2], z_max_cl))[0]
         x_turn_top = np.min(centreline_points[0][idx])
-        idx = np.where(np.isclose(centreline_points[2], z_min))[0]
+        idx = np.where(np.isclose(centreline_points[2], z_min_cl))[0]
         x_turn_bot = np.min(centreline_points[0][idx])
         joiner_top = make_polygon(
             [
