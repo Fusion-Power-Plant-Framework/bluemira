@@ -103,6 +103,7 @@ def test_mixedsourcesolver():
     solver = SourceGroup([bar_1, bar_2, bar_3, bar_4, arc_1, arc_2, arc_3, arc_4])
 
     nx, nz = 100, 100
+    nx2, nz2 = nx // 2, nz // 2
     x = np.linspace(-4, 4, nx)
     z = np.linspace(-4, 4, nz)
     xx, zz = np.meshgrid(x, z, indexing="ij")
@@ -111,13 +112,13 @@ def test_mixedsourcesolver():
 
     # Test symmetry of the field in four quadranrs (rotation by matrix manipulations :))
     # Bottom-left (reference)
-    bt_bl = Bt[:50, :50]
+    bt_bl = Bt[:nx2, :nz2]
     # Bottom-right
-    bt_br = Bt[50:, :50][::-1].T
+    bt_br = Bt[nx2:, :nz2][::-1].T
     # Top-right
-    bt_tr = Bt[50:, 50:][::-1].T[::-1]
+    bt_tr = Bt[nx2:, nz2:][::-1].T[::-1]
     # Top-left
-    bt_tl = Bt[:50, 50:].T[::-1]
+    bt_tl = Bt[:nx2, nz2:].T[::-1]
 
     assert np.allclose(bt_bl, bt_br)
     assert np.allclose(bt_bl, bt_tr)
