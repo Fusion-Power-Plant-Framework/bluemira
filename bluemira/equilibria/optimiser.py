@@ -1299,6 +1299,12 @@ class CoilsetOptimiserBase:
         opt_constraints: iterable
             Iterable of OptimiserConstraint objects containing optimisation
             constraints to be applied to the Optimiser.
+
+        Notes
+        -----
+        Lambda functions are used here to ensure the CoilsetOptimiser is passed
+        to the function, to allow any properties that are stored in the
+        CoilsetOptimiser to be accessed at runtime.
         """
         for _opt_constraint in opt_constraints:
             if _opt_constraint._constraint_type == "inequality":
