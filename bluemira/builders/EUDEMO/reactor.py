@@ -46,6 +46,8 @@ class EUDEMOReactor(Reactor):
         Run the EU-DEMO reactor build process. Performs the following tasks:
 
         - Run the (PROCESS) systems code
+        - Build the Plasma
+        - Build the TF Coils
         """
         component = super().run()
 
@@ -59,11 +61,22 @@ class EUDEMOReactor(Reactor):
         """
         Run the systems code module in the requested run mode.
         """
-        bluemira_print(f"Running: {PROCESS}")
+        name = PROCESS
+
+        bluemira_print(f"Running: {name}")
+
+        default_config = {"runmode": "run"}
+
+        config = self._process_design_stage_config(name, default_config)
+
+        # TODO: This is needed to support backward compatibility with the old
+        # process_mode configuration at the top level. Can be removed when the
+        # run_systems_code interface is updated to have a more general runmode value.
+        config["process_mode"] = config.pop("runmode")
 
         output: ParameterFrame = run_systems_code(
             self._params,
-            self._build_config,
+            config,
             self._file_manager.generated_data_dirs["systems_code"],
             self._file_manager.reference_data_dirs["systems_code"],
         )
@@ -79,23 +92,21 @@ class EUDEMOReactor(Reactor):
         default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
         default_eqdsk_path = os.path.join(default_eqdsk_dir, default_eqdsk_name)
 
-        plasma_config = {
-            "name": name,
-            "plot_flag": self._build_config.get("plot_flag", False),
-            "run_mode": self._build_config.get("plasma_mode", "run"),
-            "eqdsk_path": self._build_config.get("eqdsk_path", default_eqdsk_path),
-        }
+        default_config = {"runmode": "run", "eqdsk_path": default_eqdsk_path}
 
-        builder = PlasmaBuilder(self._params.to_dict(), plasma_config)
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = PlasmaBuilder(self._params.to_dict(), config)
         self.register_builder(builder, name)
 
         return super()._build_stage(name)
 
     def build_TF_coils(self, component_tree: Component, **kwargs):
         """
-        Run the TF coil build using the requested mode.
+        Run the TF Coils build using the requested mode.
         """
         name = "TF Coils"
+
         default_variables_map = {
             "x1": {
                 "value": "r_tf_in_centre",
@@ -110,34 +121,28 @@ class EUDEMOReactor(Reactor):
                 "fixed": True,
             },
         }
-        tf_config = {
-            "name": name,
-            "param_class": self._build_config.get("TF_param_class", "PrincetonD"),
-            "variables_map": self._build_config.get(
-                "TF_variables_map", default_variables_map
-            ),
-            "problem_class": self._build_config.get(
-                "TF_problem_class",
-                "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
-            ),
-            "opt_conditions": self._build_config.get(
-                "TF_opt_conditions",
-                {
-                    "ftol_rel": 1e-3,
-                    "xtol_rel": 1e-12,
-                    "xtol_abs": 1e-12,
-                    "max_eval": 1000,
-                },
-            ),
-            "opt_parameters": self._build_config.get("TF_opt_parameters", {}),
-            "run_mode": self._build_config.get("TF_mode", "run"),
+
+        default_config = {
+            "param_class": "PrincetonD",
+            "variables_map": default_variables_map,
+            "runmode": "run",
+            "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
+            "opt_conditions": {
+                "ftol_rel": 1e-3,
+                "xtol_rel": 1e-12,
+                "xtol_abs": 1e-12,
+                "max_eval": 1000,
+            },
+            "opt_parameters": {},
         }
+
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = TFCoilsBuilder(self._params.to_dict(), config)
+        self.register_builder(builder, name)
 
         plasma = component_tree.get_component("Plasma")
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
-
-        builder = TFCoilsBuilder(self._params.to_dict(), tf_config)
-        self.register_builder(builder, name)
 
         return super()._build_stage(name, separatrix=sep_shape)
