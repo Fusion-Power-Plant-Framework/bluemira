@@ -149,8 +149,21 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         # sad! :D
         # Can speed this up a lot if you know about your problem... I.e. with a princeton
         # D I could only check one point and get it right faster.
+
+        # return points
         idx = np.where(points[0] > self.params.R_0.value)[0]
-        return points[:, idx]
+        points = points[:, idx]
+
+        # Yet again... CCW default one of the main motivations of Loop
+        from bluemira.geometry._deprecated_tools import check_ccw
+
+        xpl, ypl, zpl = points
+        if not check_ccw(xpl, zpl):
+            xpl = xpl[::-1]
+            ypl = ypl[::-1]
+            zpl = zpl[::-1]
+        points = np.array([xpl, ypl, zpl])
+        return points
 
     def _make_single_circuit(self, wire):
         """
@@ -189,6 +202,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         for c in current_arrays:
             if not check_ccw(c[:, 0], c[:, 2]):
                 c[:, 0] = c[:, 0][::-1]
+                c[:, 1] = c[:, 1][::-1]
                 c[:, 2] = c[:, 2][::-1]
 
         radius = 0.5 * BluemiraFace(self.wp_cross_section).area / (self.nx * self.ny)
@@ -311,31 +325,18 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
                 wire_options={"color": "k", "linewidth": 0.5},
             )
 
-        # Yet again... CCW default one of the main motivations of Loop
-        from bluemira.geometry._deprecated_tools import check_ccw
-
-        xpl, zpl = self.ripple_points[0, :], self.ripple_points[2, :]
+        xpl, zpl = self.ripple_points[0], self.ripple_points[2]
         rv = self.ripple_values
-        if not check_ccw(xpl, zpl):
-            xpl = xpl[::-1]
-            zpl = zpl[::-1]
-            rv = rv[::-1]
 
-        dx, dz = rv * np.gradient(xpl), rv * np.gradient(zpl)
         norm = matplotlib.colors.Normalize()
         norm.autoscale(rv)
         cm = matplotlib.cm.viridis
         sm = matplotlib.cm.ScalarMappable(cmap=cm, norm=norm)
         sm.set_array([])
-        ax.quiver(
+        ax.scatter(
             xpl,
             zpl,
-            dz,
-            -dx,
             color=cm(norm(rv)),
-            headaxislength=0,
-            headlength=0,
-            width=0.02,
         )
         color_bar = plt.gcf().colorbar(sm)
         color_bar.ax.set_ylabel("Toroidal field ripple [%]")
