@@ -1441,14 +1441,14 @@ class FirstWall(ReactorSystem):
         outer_wall = self.attach_divertor(inner_wall, sections)
 
         # Subtract the inner profile from each component
-        for i, sec in enumerate(sections):
+        for ii, sec in enumerate(sections):
             section = boolean_2d_difference_loop(sec, inner_wall)
             # Remove duplicate points on the loop
             clean_points = clean_loop_points(section, 1e-4)
             clean_array = np.array(clean_points).T
             clean_loop = Loop(x=clean_array[0], z=clean_array[1])
             clean_loop.close()
-            sections[i] = clean_loop
+            sections[ii] = clean_loop
 
         # Return both the union and individual sections
         return outer_wall, sections
