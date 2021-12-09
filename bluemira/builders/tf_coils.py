@@ -231,7 +231,6 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         self.update_cage(x)
         ripple = self.cage.ripple(*self.ripple_points)
-        bluemira_debug(f"Max ripple: {max(ripple)}")
         self.ripple_values = ripple
         return ripple - self.params.TF_ripple_limit
 
@@ -246,7 +245,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             grad[:] = self.optimiser.approx_derivative(
                 self.calculate_ripple, x, constraint
             )
-
+        bluemira_debug(f"Max ripple: {max(constraint+self.params.TF_ripple_limit)}")
         return constraint
 
     def calculate_signed_distance(self, x):
