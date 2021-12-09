@@ -30,7 +30,6 @@ import json
 from typing import TextIO, Union
 
 import numpy as np
-from numpy.lib.function_base import append
 from scipy.special import iv as bessel
 
 from bluemira.geometry._deprecated_tools import distance_between_points
