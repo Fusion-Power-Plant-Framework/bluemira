@@ -102,7 +102,7 @@ class OptimisedShapeBuilder(ParameterisedShapeBuilder):
 
     _required_config = ParameterisedShapeBuilder._required_config + ["problem_class"]
     _problem_class: Type[GeometryOptimisationProblem]
-    _default_run_mode: str = "run"
+    _default_runmode: str = "run"
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)

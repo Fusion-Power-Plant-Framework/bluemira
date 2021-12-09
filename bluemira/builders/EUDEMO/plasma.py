@@ -116,7 +116,7 @@ class PlasmaBuilder(Builder):
     _plot_flag: bool
     _segment_angle: float
     _eqdsk_path: Optional[str] = None
-    _default_run_mode: str = "run"
+    _default_runmode: str = "run"
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
