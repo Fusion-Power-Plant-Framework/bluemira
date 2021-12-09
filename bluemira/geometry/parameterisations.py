@@ -1444,18 +1444,21 @@ class CurvedPictureFrameMixin:
     """
 
     @staticmethod
-    def _domed_leg(axis, x_out, x_curve_start, x_mid, z_top, z_mid, flip=False, r_c=0):
+    def _domed_leg(
+        axis, x_out, x_curve_start, x_mid, z_top, z_mid, flip=False, r_c=0, label=""
+    ):
         """
         Makes smooth dome for CP coils
         """
         # If top leg is domed
         # Define basic Top Curve (with no joint or corner transitions)
+        out_wire = []
         r_j = min(x_curve_start - x_mid, 0.8)
         alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
         theta_leg_basic = 2 * (np.pi - 2 * alpha)
         r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
         z_top_r_leg = z_top + r_leg if flip else z_top - r_leg
-        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), z_top_r_leg)
+        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), 0, z_top_r_leg)
 
         # Transitioning Curve
         sin_a = np.sin(theta_leg_basic / 2)
@@ -1469,17 +1472,20 @@ class CurvedPictureFrameMixin:
         z_mid_r_j = z_mid - r_j if flip else z_mid + r_j
         joint_curve_centre = (
             leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
+            0,
             z_mid_r_j,
         )
         theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
 
-        out_wire = make_circle(
-            radius=r_j,
-            centre=joint_curve_centre,
-            start_angle=90 if flip else -90,
-            end_angle=90 - np.rad2deg(theta_j) if flip else np.rad2deg(theta_j) - 90,
-            axis=axis,
-            label="bottom_limb_joint" if flip else "top_limb_joint",
+        out_wire.append(
+            make_circle(
+                radius=r_j,
+                center=joint_curve_centre,
+                start_angle=90 if flip else -90,
+                end_angle=90 - np.rad2deg(theta_j) if flip else np.rad2deg(theta_j) - 90,
+                axis=axis,
+                label="bottom_limb_joint" if flip else "top_limb_joint",
+            )
         )
         angle2 = np.rad2deg(theta_leg_final)
         start2 = 90 + np.rad2deg(theta_j)
@@ -1487,15 +1493,15 @@ class CurvedPictureFrameMixin:
         out_wire.append(
             make_circle(
                 radius=r_leg,
-                centre=leg_centre,
-                start=-start2 if flip else start2,
-                angle=angle2 if flip else -angle2,
+                center=leg_centre,
+                start_angle=-start2 if flip else start2,
+                end_angle=angle2 if flip else -angle2,
                 axis=axis,
                 label="bottom_limb_dome" if flip else "top_limb_dome",
             )
         )
 
-        return out_wire
+        return BluemiraWire(out_wire, label=label)
 
 
 class SCCurvedPictureFrame(GeometryParameterisation):
@@ -1573,13 +1579,13 @@ class SCCurvedPictureFrame(GeometryParameterisation):
                 r_c=0,
             )
 
-            wires = BluemiraWire([wires, top_leg_curve])
+            wires.append(top_leg_curve)
         else:
             # If top leg is flat
             wires.append(
                 make_circle(
                     r_j,
-                    (x_out - r_j, z_mid_up - r_j),
+                    (x_out - r_j, 0, z_mid_up - r_j),
                     start_angle=90,
                     end_angle=0,
                     axis=axis,
@@ -1601,14 +1607,14 @@ class SCCurvedPictureFrame(GeometryParameterisation):
                 r_c=0,
             )
 
-            wires = BluemiraWire([wires, bot_leg_curve])
+            wires.append(bot_leg_curve)
 
         else:
             # If bottom leg is flat
             wires.append(
                 make_circle(
                     r_j,
-                    (x_out - r_j, z_mid_down + r_j),
+                    (x_out - r_j, 0, z_mid_down + r_j),
                     start_angle=0,
                     end_angle=-90,
                     axis=axis,
@@ -1639,19 +1645,19 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
                 # Middle limb radius
                 BoundedVariable("x_mid", 1.1, lower_bound=1, upper_bound=1.3),
                 # Curve start radius
-                BoundedVariable("x_curve_start", 6.5, lower_bound=6, upper_bound=10),
+                BoundedVariable("x_curve_start", 2.5, lower_bound=1, upper_bound=3),
                 # Outer limb radius
                 BoundedVariable("x_out", 0.5, lower_bound=0.4, upper_bound=0.8),
                 # Height at which to stop the taper angle
-                BoundedVariable("z_in", 6.5, lower_bound=6, upper_bound=8),
+                BoundedVariable("z_in", 5.5, lower_bound=5, upper_bound=8),
                 # Upper limb flat section height
                 BoundedVariable("z_mid_up", 7, lower_bound=6, upper_bound=9),
                 # Lower limb flat section height
-                BoundedVariable("z_mid_down", 7, lower_bound=6, upper_bound=9),
+                BoundedVariable("z_mid_down", -7, lower_bound=-9, upper_bound=-6),
                 # Upper limb max height
-                BoundedVariable("z_max_up", 7, lower_bound=6, upper_bound=9),
+                BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
                 # Lower limb max height
-                BoundedVariable("z_max_down", 7, lower_bound=6, upper_bound=9),
+                BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
                 # Corner/transition joint radius
                 BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=1),
             ],
@@ -2480,7 +2486,7 @@ class CurvedPictureFrame(GeometryParameterisation):
         wires.append(
             make_circle(
                 radius=r_taper,
-                centre=(x_in + r_taper, 0),
+                center=(x_in + r_taper, 0, 0),
                 start_angle=180 + angle,
                 end_angle=180 - angle,
                 axis=axis,
