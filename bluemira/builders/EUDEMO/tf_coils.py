@@ -25,13 +25,10 @@ EU-DEMO build classes for TF Coils.
 from typing import Type, Optional, List
 from copy import deepcopy
 import numpy as np
-from numpy.core.fromnumeric import shape
 
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.shapes import OptimisedShapeBuilder
-from bluemira.display.plotter import PlotOptions, plot_2d
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.tools import (
@@ -53,6 +50,22 @@ from bluemira.magnetostatics.circuits import (
 
 
 class TFCoilsComponent(Component):
+    """
+    Toroidal field coils component, with a solver for the magnetic field from all of the
+    coils.
+
+    Parameters
+    ----------
+    name: str
+        Name of the component
+    parent: Optional[Component] = None
+        Parent component
+    children: Optional[List[Component]] = None
+        List of child components
+    field_solver: Optional[CurrentSource]
+        Magnetic field solver
+    """
+
     def __init__(
         self,
         name: str,
@@ -176,7 +189,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         self._centreline = centreline
 
-    def build(self, label: str = "TF Coils", **kwargs) -> Component:
+    def build(self, label: str = "TF Coils", **kwargs) -> TFCoilsComponent:
         """
         Build the TF Coils component.
 
@@ -195,7 +208,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.add_child(self.build_xyz())
         return component
 
-    def build_xz(self):
+    def build_xz(self) -> Component:
         """
         Build the x-z components of the TF coils.
         """
@@ -216,7 +229,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # Insulation
         ins_o_outer = offset_wire(wp_outer, self.params.tk_tf_ins.value)
-        # plot_2d([wp_outer, ins_o_outer], options=[PlotOptions(wire_options={"color": "r", "linewidth":0.1}), PlotOptions(wire_options={"color": "b", "linewidth":0.1})])
         ins_outer = PhysicalComponent("inner", BluemiraFace([ins_o_outer, wp_outer]))
         ins_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         ins_i_inner = offset_wire(wp_inner, -self.params.tk_tf_ins)
@@ -237,7 +249,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.plot_options.plane = "xz"
         return component
 
-    def build_xy(self):
+    def build_xy(self) -> Component:
         """
         Build the x-y components of the TF coils.
         """
@@ -303,7 +315,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.plot_options.plane = "xy"
         return component
 
-    def build_xyz(self):
+    def build_xyz(self) -> Component:
         """
         Build the x-y-z components of the TF coils.
         """
@@ -417,24 +429,20 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         return component
 
     def _make_field_solver(self):
+        """
+        Make a magnetostatics solver for the field from the TF coils.
+        """
         circuit = ArbitraryPlanarRectangularXSCircuit(
             self._centreline.discretize(byedges=True, ndiscr=100),
             breadth=0.5 * self.params.tf_wp_width - self.params.tk_tf_ins,
             depth=0.5 * self.params.tf_wp_depth - self.params.tk_tf_ins,
             current=1,
         )
-        cage = HelmholtzCage(circuit, self.params.n_TF.value)
-        field = cage.field(self.params.R_0, 0, self.params.z_0)
+        solver = HelmholtzCage(circuit, self.params.n_TF.value)
+        field = solver.field(self.params.R_0, 0, self.params.z_0)
         current = -self.params.B_0 / field[1]  # single coil amp-turns
-        # Ooops..
-        circuit = ArbitraryPlanarRectangularXSCircuit(
-            self._centreline.discretize(byedges=True, ndiscr=100),
-            breadth=0.5 * self.params.tf_wp_width - self.params.tk_tf_ins,
-            depth=0.5 * self.params.tf_wp_depth - self.params.tk_tf_ins,
-            current=current,
-        )
-        cage = HelmholtzCage(circuit, self.params.n_TF.value)
-        return cage
+        solver.set_current(current)
+        return solver
 
     def _make_wp_xs(self):
         """
