@@ -33,6 +33,7 @@ from bluemira.base.error import BuilderError
 from bluemira.display import plot_2d
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.geometry.tools import (
@@ -132,14 +133,18 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
     def _make_ripple_points(self, separatrix):
         """
         Make a set of points at which to check the ripple
+
+        Parameters
+        ----------
+        separatrix: BluemiraWire
+            The geometry on which to check the ripple
         """
         # TODO: Handle case where the face is made up of multiple wires
-        discr = separatrix.discretize(ndiscr=100)
-        if len(discr) > 1:
+        if not isinstance(separatrix, BluemiraWire):
             raise BuilderError(
                 "Ripple points on faces made from multiple wires not yet supported."
             )
-        points = separatrix.discretize(ndiscr=100)[0].T
+        points = separatrix.discretize(byedges=True, ndiscr=100).T
         # Real argument to making the points the inputs... but then the plot would look
         # sad! :D
         # Can speed this up a lot if you know about your problem... I.e. with a princeton
@@ -307,8 +312,15 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             )
 
         # Yet again... CCW default one of the main motivations of Loop
-        xpl, zpl = self.ripple_points[0, :][::-1], self.ripple_points[2, :][::-1]
-        rv = self.ripple_values[::-1]
+        from bluemira.geometry._deprecated_tools import check_ccw
+
+        xpl, zpl = self.ripple_points[0, :], self.ripple_points[2, :]
+        rv = self.ripple_values
+        if not check_ccw(xpl, zpl):
+            xpl = xpl[::-1]
+            zpl = zpl[::-1]
+            rv = rv[::-1]
+
         dx, dz = rv * np.gradient(xpl), rv * np.gradient(zpl)
         norm = matplotlib.colors.Normalize()
         norm.autoscale(rv)
