@@ -65,7 +65,7 @@ class EUDEMOReactor(Reactor):
 
         bluemira_print(f"Running: {name}")
 
-        default_config = {"runmode": "run"}
+        default_config = {"process_mode": "run"}
 
         config = self._process_design_stage_config(name, default_config)
 

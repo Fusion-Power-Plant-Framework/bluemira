@@ -101,6 +101,12 @@ build_config = {
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
+        # "param_class": "TripleArc",
+        # "variables_map": {
+        #     "x1": {
+        #         "value": "r_tf_in_centre",
+        #         "fixed": True,
+        #     }
     },
 }
 

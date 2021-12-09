@@ -2,10 +2,10 @@
   "reference_data_root": "!BM_ROOT!/data",
   "generated_data_root": "!BM_ROOT!/generated_data",
   "PROCESS": {
-    "runmode": "mock"
+    "runmode": "read"
   },
   "Plasma": {
-    "runmode": "run"
+    "runmode": "read"
   },
   "TF Coils": {
     "runmode": "run"
