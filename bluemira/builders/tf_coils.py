@@ -32,6 +32,7 @@ from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.error import BuilderError
 from bluemira.display import plot_2d
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.face import BluemiraFace
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.geometry.tools import (
@@ -185,7 +186,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
                 c[:, 0] = c[:, 0][::-1]
                 c[:, 2] = c[:, 2][::-1]
 
-        radius = 0.5 * self.wp_cross_section.area / (self.nx * self.ny)
+        radius = 0.5 * BluemiraFace(self.wp_cross_section).area / (self.nx * self.ny)
         filament = BiotSavartFilament(
             current_arrays, radius=radius, current=1 / (self.nx * self.ny)
         )

@@ -32,8 +32,8 @@ from bluemira.base.look_and_feel import bluemira_warn, bluemira_debug, bluemira_
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.shapes import OptimisedShapeBuilder
-from bluemira.display.plotter import plot_2d
-from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.display.plotter import PlotOptions, plot_2d
+from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.tools import offset_wire, sweep_shape, make_polygon, boolean_cut
 from bluemira.geometry.wire import BluemiraWire
@@ -215,6 +215,35 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     def build_xz(self, component_tree: Component, **kwargs):
         component = Component("xz")
 
+        # Winding pack
+        x_min = self._wp_cross_section.bounding_box.x_min
+        x_centreline_in = self._centreline.bounding_box.x_min
+        dx = abs(x_min - x_centreline_in)
+        wp_outer = offset_wire(self._centreline, dx)
+        wp_inner = offset_wire(self._centreline, -dx)
+
+        winding_pack = PhysicalComponent(
+            "Winding pack", BluemiraFace([wp_outer, wp_inner])
+        )
+        winding_pack.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
+        component.add_child(winding_pack)
+
+        # Insulation
+        ins_o_outer = offset_wire(wp_outer, self.params.tk_tf_ins.value)
+        # plot_2d([wp_outer, ins_o_outer], options=[PlotOptions(wire_options={"color": "r", "linewidth":0.1}), PlotOptions(wire_options={"color": "b", "linewidth":0.1})])
+        ins_outer = PhysicalComponent("inner", BluemiraFace([ins_o_outer, wp_outer]))
+        ins_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+        ins_i_inner = offset_wire(wp_inner, -self.params.tk_tf_ins)
+        ins_inner = PhysicalComponent(
+            "Insulation", BluemiraFace([wp_inner, ins_i_inner])
+        )
+        insulation = Component("Insulation", children=[ins_outer, ins_inner])
+        component.add_child(insulation)
+
+        # Casing
+        # TODO: Either via section of 3-D or some varied thickness offset that we can't
+        # really do with primitives
+
         for child in component.children:  # :'(
             child.plot_options.plane = "xz"
             for sub_child in child.children:
@@ -261,7 +290,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # Casing
         ib_cas_wire, ob_cas_wire = self._make_cas_xs()
-
         cas_inner_face = BluemiraFace(
             [ib_cas_wire, deepcopy(ins_inner_face.boundary[0])]
         )
@@ -277,7 +305,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             "Casing",
             children=[ib_cas_comp, ob_cas_comp],
         )
-
         component.add_child(casing)
 
         for child in component.children:  # :'(
@@ -292,7 +319,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # Winding pack
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
-
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
         component.add_child(winding_pack)
@@ -300,7 +326,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Insulation
         inner_xs, _ = self._make_ins_xs()
         inner_xs = inner_xs.boundary[0]
-
         solid = sweep_shape(inner_xs, deepcopy(self._centreline))
         ins_solid = boolean_cut(solid, wp_solid)[0]
         insulation = PhysicalComponent("Insulation", ins_solid)
@@ -319,3 +344,16 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
         component.add_child(casing)
         return component
+
+
+def break_test():
+    p = PrincetonD(
+        {
+            "x1": {"value": 3.649},
+            "x2": {"value": 15.933007419714876},
+            "dz": {"value": 0.0},
+        }
+    )
+    wire = p.create_shape()
+    o1 = offset_wire(wire, 0.3399999999620089)
+    o2 = offset_wire(o1, 0.08)
