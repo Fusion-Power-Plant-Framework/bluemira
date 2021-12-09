@@ -43,9 +43,9 @@ def test_analyticalsolvergrouper():
     dx_coil, dz_coil = 0.5, 0.75
 
     # Build a corresponding arbitrary current loop
-    circle = make_circle(center=[0, 0, zc], radius=10).discretize(ndiscr=10)
+    circle = make_circle(center=[0, 0, zc], radius=xc).discretize(ndiscr=10)
     a = ArbitraryPlanarRectangularXSCircuit(circle, dx_coil, dz_coil, current)
-    circle2 = make_circle(center=[0, 0, -zc], radius=10).discretize(ndiscr=10)
+    circle2 = make_circle(center=[0, 0, -zc], radius=xc).discretize(ndiscr=10)
     a2 = ArbitraryPlanarRectangularXSCircuit(circle2, dx_coil, dz_coil, current)
     solver = SourceGroup([a, a2])
 
@@ -54,6 +54,13 @@ def test_analyticalsolvergrouper():
         field = solver.field(*point)  # random point :)
         field2 = a.field(*point) + a2.field(*point)
         assert np.all(field == field2)
+
+    field = solver.field(*points.T)
+    new_current = 2e6
+    solver.set_current(new_current)
+    field_new = solver.field(*points.T)
+
+    assert np.allclose(field_new, new_current / current * field)
 
 
 def test_sourcegroup_set_current():
