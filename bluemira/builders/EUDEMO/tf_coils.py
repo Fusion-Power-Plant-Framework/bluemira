@@ -45,6 +45,10 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.magnetostatics.circuits import (
+    ArbitraryPlanarRectangularXSCircuit,
+    HelmholtzCage,
+)
 
 
 class TFCoilsComponent(Component):
@@ -53,18 +57,30 @@ class TFCoilsComponent(Component):
         name: str,
         parent: Optional[Component] = None,
         children: Optional[List[Component]] = None,
-        magnetics=None,
+        field_solver=None,
     ):
         super().__init__(name, parent=parent, children=children)
-        self._magnetics = magnetics
+        self._field_solver = field_solver
 
-    @property
-    def magnetics(self):
-        return self._magnetics
+    def field(self, x, y, z):
+        """
+        Calculate the magnetic field due to the TF coils at a set of points.
 
-    @magnetics.setter
-    def magnetics(self, magnetics):
-        self._magnetics = magnetics
+        Parameters
+        ----------
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the field
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the field
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the field
+
+        Returns
+        -------
+        field: np.array
+            The magnetic field vector {Bx, By, Bz} in [T]
+        """
+        return self._field_solver.field(x, y, z)
 
 
 class TFCoilsBuilder(OptimisedShapeBuilder):
@@ -113,80 +129,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         self._centreline = None
         self._wp_cross_section = self._make_wp_xs()
 
-    def _make_wp_xs(self):
-        """
-        Make the winding pack x-y cross-section wire
-        """
-        x_c = self.params.r_tf_in_centre.value
-        # PROCESS WP thickness includes insulation and insertion gap
-        d_xc = 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
-        d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
-        wp_xs = make_polygon(
-            [
-                [x_c - d_xc, -d_yc, 0],
-                [x_c + d_xc, -d_yc, 0],
-                [x_c + d_xc, d_yc, 0],
-                [x_c - d_xc, d_yc, 0],
-            ],
-            closed=True,
-        )
-        return wp_xs
-
-    def _make_ins_xs(self):
-        """
-        Make the insulation x-y cross-section faces
-        """
-        x_out = self._centreline.bounding_box.x_max
-        ins_outer = offset_wire(self._wp_cross_section, self._params.tk_tf_ins.value)
-        face = BluemiraFace([ins_outer, self._wp_cross_section])
-
-        outer_face = deepcopy(face)
-        outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
-        return face, outer_face
-
-    def _make_cas_xs(self):
-        """
-        Make the casing x-y cross-section wires
-        """
-        x_in = self.params.r_tf_in
-        # Insulation included in WP width
-        x_out = (
-            x_in
-            + self.params.tk_tf_nose
-            + self.params.tf_wp_width
-            + self.params.tk_tf_front_ib
-        )
-        half_angle = np.pi / self.params.n_TF.value
-        y_in = x_in * np.sin(half_angle)
-        y_out = x_out * np.sin(half_angle)
-        inboard_wire = make_polygon(
-            [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
-            closed=True,
-        )
-
-        dx_ins = 0.5 * self.params.tf_wp_width.value
-        dy_ins = 0.5 * self.params.tf_wp_depth.value
-
-        # Split the total radial thickness equally on the outboard
-        # This could be done with input params too..
-        tk_total = self.params.tk_tf_front_ib.value + self.params.tk_tf_nose.value
-        tk = 0.5 * tk_total
-
-        dx_out = dx_ins + tk
-        dy_out = dy_ins + self.params.tk_tf_side.value
-        outboard_wire = make_polygon(
-            [
-                [-dx_out, -dy_out, 0],
-                [dx_out, -dy_out, 0],
-                [dx_out, dy_out, 0],
-                [-dx_out, dy_out, 0],
-            ],
-            closed=True,
-        )
-        x_out = self._centreline.bounding_box.x_max
-        outboard_wire.translate((x_out, 0, 0))
-        return inboard_wire, outboard_wire
-
     def run(self, separatrix, keep_out_zone=None, nx=1, ny=1):
         """
         Run the specified design optimisation problem to generate the TF coil winding
@@ -226,7 +168,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         super().build(**kwargs)
 
-        component = TFCoilsComponent(self.name)
+        field_solver = self._make_field_solver()
+        component = TFCoilsComponent(self.name, field_solver=field_solver)
 
         # component.add_child(self.build_xz())
         component.add_child(self.build_xy())
@@ -440,3 +383,97 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
         component.add_child(casing)
         return component
+
+    def _make_field_solver(self):
+        circuit = ArbitraryPlanarRectangularXSCircuit(
+            self._centreline.discretize(byedges=True, ndiscr=100),
+            breadth=0.5 * self.params.tf_wp_width - self.params.tk_tf_ins,
+            depth=0.5 * self.params.tf_wp_depth - self.params.tk_tf_ins,
+            current=1,
+        )
+        cage = HelmholtzCage(circuit, self.params.n_TF.value)
+        field = cage.field(self.params.R_0, 0, self.params.z_0)
+        current = -self.params.B_0 / field[1]  # single coil amp-turns
+        # Ooops..
+        circuit = ArbitraryPlanarRectangularXSCircuit(
+            self._centreline.discretize(byedges=True, ndiscr=100),
+            breadth=0.5 * self.params.tf_wp_width - self.params.tk_tf_ins,
+            depth=0.5 * self.params.tf_wp_depth - self.params.tk_tf_ins,
+            current=current,
+        )
+        cage = HelmholtzCage(circuit, self.params.n_TF.value)
+        return cage
+
+    def _make_wp_xs(self):
+        """
+        Make the winding pack x-y cross-section wire
+        """
+        x_c = self.params.r_tf_in_centre.value
+        # PROCESS WP thickness includes insulation and insertion gap
+        d_xc = 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
+        d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
+        wp_xs = make_polygon(
+            [
+                [x_c - d_xc, -d_yc, 0],
+                [x_c + d_xc, -d_yc, 0],
+                [x_c + d_xc, d_yc, 0],
+                [x_c - d_xc, d_yc, 0],
+            ],
+            closed=True,
+        )
+        return wp_xs
+
+    def _make_ins_xs(self):
+        """
+        Make the insulation x-y cross-section faces
+        """
+        x_out = self._centreline.bounding_box.x_max
+        ins_outer = offset_wire(self._wp_cross_section, self._params.tk_tf_ins.value)
+        face = BluemiraFace([ins_outer, self._wp_cross_section])
+
+        outer_face = deepcopy(face)
+        outer_face.translate((x_out - outer_face.center_of_mass[0], 0, 0))
+        return face, outer_face
+
+    def _make_cas_xs(self):
+        """
+        Make the casing x-y cross-section wires
+        """
+        x_in = self.params.r_tf_in
+        # Insulation included in WP width
+        x_out = (
+            x_in
+            + self.params.tk_tf_nose
+            + self.params.tf_wp_width
+            + self.params.tk_tf_front_ib
+        )
+        half_angle = np.pi / self.params.n_TF.value
+        y_in = x_in * np.sin(half_angle)
+        y_out = x_out * np.sin(half_angle)
+        inboard_wire = make_polygon(
+            [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
+            closed=True,
+        )
+
+        dx_ins = 0.5 * self.params.tf_wp_width.value
+        dy_ins = 0.5 * self.params.tf_wp_depth.value
+
+        # Split the total radial thickness equally on the outboard
+        # This could be done with input params too..
+        tk_total = self.params.tk_tf_front_ib.value + self.params.tk_tf_nose.value
+        tk = 0.5 * tk_total
+
+        dx_out = dx_ins + tk
+        dy_out = dy_ins + self.params.tk_tf_side.value
+        outboard_wire = make_polygon(
+            [
+                [-dx_out, -dy_out, 0],
+                [dx_out, -dy_out, 0],
+                [dx_out, dy_out, 0],
+                [-dx_out, dy_out, 0],
+            ],
+            closed=True,
+        )
+        x_out = self._centreline.bounding_box.x_max
+        outboard_wire.translate((x_out, 0, 0))
+        return inboard_wire, outboard_wire
