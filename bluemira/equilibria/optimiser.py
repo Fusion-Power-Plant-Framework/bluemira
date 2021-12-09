@@ -1474,7 +1474,6 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         -------
         fom: Value of objective function (figure of merit).
         """
-
         return ObjectiveLibrary.regularised_lsq_objective(
             self, vector, grad, self.scale, self.A, self.b, self.gamma
         )
@@ -1800,19 +1799,21 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
 class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
     """
     NLOpt based optimiser for the connection length calculated from a point on the
-    outboard edge of the SOL on the midplane to a provided first wall, subject to maximum current bounds.
+    outboard edge of the SOL on the midplane to a provided first wall, subject to
+    maximum current bounds.
 
     A derivative free optimisation algorithm, such as COBYLA, is recommended.
+
     Parameters
     ----------
     coilset: CoilSet
         Coilset used to get coil current limits and number of coils.
     sol_width: float (default = 0.001)
-        Scrape off layer width [m]. Optimised connection length will be calculated from the
-        outboard edge of the SOL at the midplane.
+        Scrape off layer width [m]. Optimised connection length will be calculated
+        from the outboard edge of the SOL at the midplane.
     first_wall: Loop (default: None)
-        Loop object representing the first wall. If None, the edge of the Equilibrium grid
-        will be used.
+        Loop object representing the first wall. If None, the edge of the
+        Equilibrium grid will be used.
     **kwargs: Remaining BoundedCurrentOptimiser keyword arguments.
     """
 
