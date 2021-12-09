@@ -702,6 +702,9 @@ def wire_plane_intersect(wire, plane):
 
 
 def open_wire_plane_intersect(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
+    """
+    Get the plane intersection points of any wire (possibly anything, needs testing)
+    """
     circ = Part.Circle(
         Base.Vector(*shift), Base.Vector(*normal_plane), BIG_NUMBER
     ).toShape()

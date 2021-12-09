@@ -28,7 +28,7 @@ from bluemira.geometry.tools import (
     signed_distance_2D_polygon,
     _signed_distance_2D,
     make_polygon,
-    wire_plane_intersect,
+    # wire_plane_intersect,
     plane_intersect,
 )
 from bluemira.geometry.plane import BluemiraPlane
