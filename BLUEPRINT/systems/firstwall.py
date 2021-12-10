@@ -466,28 +466,19 @@ class DivertorBuilder:
 
         # if horizontal target
         if not vertical_target:
-            target_par = rotate_vector_2d(tangent, np.radians(theta_target * sign))
+            target_par = rotate_vector_2d(
+                tangent, np.radians(180 + (theta_target * sign))
+            )
         # if vertical target
         else:
-            target_par = rotate_vector_2d(tangent, np.radians(-theta_target * sign))
+            target_par = rotate_vector_2d(
+                tangent, np.radians(360 - (theta_target * sign))
+            )
 
         # Create relative vectors whose length will be the offset distance
         # from the strike point
         pfr_target_end = -target_par * target_length_pfr * sign
         sol_target_end = target_par * target_length_sol * sign
-
-        # Swap if we got the wrong way round
-        if outer_target:
-            swap_points = sol_target_end[0] < pfr_target_end[0]
-        # for the inner target
-        else:
-            swap_points = (
-                not vertical_target and sol_target_end[0] > pfr_target_end[0]
-            ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
-
-        if swap_points:
-            pfr_target_end = -pfr_target_end
-            sol_target_end = -sol_target_end
 
         # Add the strike point to diffs to get the absolute positions
         # of the end points of the target
