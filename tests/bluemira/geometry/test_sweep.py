@@ -107,7 +107,7 @@ class TestSweep:
         sweep = sweep_shape(profile, path)
 
         assert sweep.is_valid()
-        assert np.isclose(sweep.volume, 139.5618, rtol=1e-4)
+        assert np.isclose(sweep.volume, 95.61485, rtol=1e-4)
 
     def test_bad_profiles(self):
         path = make_polygon([[0, 0, 0], [0, 0, 10]])
