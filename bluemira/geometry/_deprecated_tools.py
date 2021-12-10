@@ -462,7 +462,9 @@ def get_perimeter_2d(x, y):
     perimeter: float
         The perimeter of the coordinates
     """
-    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+    dx = x[1:] - x[:-1]
+    dy = y[1:] - y[:-1]
+    return np.sum(np.sqrt(dx ** 2 + dy ** 2))
 
 
 @nb.jit(cache=True, nopython=True)
@@ -484,7 +486,10 @@ def get_perimeter_3d(x, y, z):
     perimeter: float
         The perimeter of the coordinates
     """
-    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2))
+    dx = x[1:] - x[:-1]
+    dy = y[1:] - y[:-1]
+    dz = z[1:] - z[:-1]
+    return np.sum(np.sqrt(dx ** 2 + dy ** 2 + dz ** 2))
 
 
 @xyz_process

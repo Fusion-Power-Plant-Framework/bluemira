@@ -430,7 +430,7 @@ class Coordinates:
         if not vector.size == 3:
             raise CoordinatesError("Translation vector must be of size 3.")
 
-        self._array += vector.T
+        self._array += vector.reshape(3, 1)
         self._set_plane_props()
 
     # =============================================================================

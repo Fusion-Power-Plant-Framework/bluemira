@@ -21,6 +21,7 @@
 
 import numpy as np
 import pytest
+from copy import deepcopy
 
 from bluemira.geometry.error import CoordinatesError
 from bluemira.geometry.coordinates import Coordinates
@@ -111,7 +112,27 @@ class TestCoordinates:
         xyz = np.array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 1, 2, 3]])
         x1, y1, z1 = xyz
         c1 = Coordinates(xyz)
-        x2, y2, z2 = c
+        x2, y2, z2 = c1
         assert np.alltrue(x1 == x2)
         assert np.alltrue(y1 == y2)
         assert np.alltrue(z1 == z2)
+
+    def test_translate(self):
+        a = np.random.rand(3, 123)
+        v = np.random.rand(3)
+        c = Coordinates(a)
+        c.translate(v)
+
+        assert np.allclose(a + v.reshape(3, 1), c)
+
+    def test_rotate(self):
+        a = np.random.rand(3, 123)
+        v = np.random.rand(3)
+        base = np.random.rand(3)
+        direction = np.random.rand(3)
+        degree = 360 * np.random.rand(1)
+        c = Coordinates(a)
+        c2 = deepcopy(c)
+        c.rotate(base, direction, degree)
+
+        assert np.isclose(c.length, c2.length)
