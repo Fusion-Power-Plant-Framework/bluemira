@@ -713,7 +713,7 @@ class Equilibrium(MHDState):
             "psibdry": psi_bndry,
             "cplasma": self._Ip,
             "psi": psi,
-            "fpol": self.fRBpol(psinorm) * profile_scale,
+            "fpol": self.fRBpol(psinorm),
             "ffprime": self.ffprime(psinorm) * profile_scale,
             "pprime": self.pprime(psinorm) * profile_scale,
             "pressure": self.pressure(psinorm) * profile_scale,
@@ -1215,7 +1215,7 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm)
+        return self._profiles.fRBpol(psinorm) * np.abs(self._profiles.scale)
 
     def fvac(self):
         """
