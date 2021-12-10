@@ -150,19 +150,40 @@ class TestCoordinates:
         v1 = c.normal_vector
         assert np.allclose(v1, [0, 1, 0])
         assert c.check_ccw()
+
         c.rotate(degree=90)
         v2 = c.normal_vector
-        assert np.allclose(v2, [1, 0, 0])
-        assert c.check_ccw()
+        assert np.allclose(abs(v2), [1, 0, 0])
+        assert c.check_ccw([-1, 0, 0])
+
         c.rotate(degree=90)
         v3 = c.normal_vector
-        assert np.allclose(v3, [0, -1, 0])
-        assert c.check_ccw()
+        assert np.allclose(abs(v3), [0, 1, 0])
+        assert c.check_ccw([0, -1, 0])
+
         c.rotate(degree=90)
         v4 = c.normal_vector
-        assert np.allclose(v4, [-1, 0, 0])
-        assert c.check_ccw()
+        assert np.allclose(abs(v4), [1, 0, 0])
+        assert c.check_ccw([1, 0, 0])
+
         c.rotate(degree=90)
         v5 = c.normal_vector
-        assert np.allclose(v5, [0, 1, 0])
-        assert c.check_ccw()
+        assert np.allclose(abs(v5), [0, 1, 0])
+        assert c.check_ccw([0, 1, 0])
+
+    def test_is_planar(self):
+        c = Coordinates(
+            np.array(
+                [
+                    [2, 3, 3, 2, 2],
+                    [0, 0, 0, 0, 0],
+                    [1, 1, 2, 2, 1],
+                ]
+            )
+        )
+        v = np.random.rand(3)
+        base = np.random.rand(3)
+        direction = np.random.rand(3)
+        degree = 360 * np.random.rand(1)
+        c.rotate(base, direction, degree)
+        assert c.is_planar
