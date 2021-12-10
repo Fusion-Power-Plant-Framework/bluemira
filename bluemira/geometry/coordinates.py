@@ -25,6 +25,7 @@ Utility for sets of coordinates
 
 from typing import Iterable
 import numpy as np
+from pyquaternion import Quaternion
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import EPS
@@ -51,6 +52,95 @@ def principal_components(xyz_array):
     return eigenvalues, eigenvectors
 
 
+def _parse_to_xyz_array(xyz_array):
+    if isinstance(xyz_array, np.ndarray):
+        xyz_array = _parse_array(xyz_array)
+    elif isinstance(xyz_array, dict):
+        xyz_array = _parse_dict(xyz_array)
+    elif isinstance(xyz_array, Iterable):
+        xyz_array = _parse_iterable(xyz_array)
+    else:
+        raise CoordinatesError(f"Cannot instantiate Coordinates with: {type(xyz_array)}")
+    return xyz_array
+
+
+def _parse_array(xyz_array):
+    try:
+        xyz_array = np.array(np.atleast_2d(xyz_array), dtype=np.float64)
+    except ValueError:
+        raise CoordinatesError(
+            "Cannot instantiate Coordinates with a ragged (3, N | M) array."
+        )
+
+    shape = xyz_array.shape
+    if len(shape) > 2:
+        raise NotImplementedError
+
+    n, m = shape
+    if n == 3:
+        if m == 3:
+            bluemira_warn(
+                "You are creating Coordinates with a (3, 3) array, defaulting to (3, N)."
+            )
+
+    elif m == 3:
+        xyz_array = xyz_array.T
+
+    else:
+        raise CoordinatesError(
+            "Cannot instantiate Coordinates where either n or m != 3."
+        )
+
+    if not np.allclose([len(xyz_array[i]) for i in range(3)], len(xyz_array[0])):
+        raise CoordinatesError(
+            "Cannot instantiate Coordinates with a ragged (3, N | M) array."
+        )
+
+    return xyz_array
+
+
+def _parse_dict(xyz_dict):
+    x = np.atleast_1d(xyz_dict.get("x", 0))
+    y = np.atleast_1d(xyz_dict.get("y", 0))
+    z = np.atleast_1d(xyz_dict.get("z", 0))
+
+    shape_lengths = np.array([len(c.shape) for c in [x, y, z]])
+
+    if np.any(shape_lengths > 1):
+        raise CoordinatesError(
+            "Cannot instantiate Coordinates from dict with coordinate vectors that are not 1-D."
+        )
+
+    lengths = [len(c) for c in [x, y, z]]
+
+    usable_lengths = []
+    for length in lengths:
+        if length != 1:
+            usable_lengths.append(length)
+
+    if not np.allclose(usable_lengths, usable_lengths[0]):
+        raise CoordinatesError(
+            "Cannot instantiate Coordinate from dict with a ragged set of vectors."
+        )
+
+    # Backfill single-value coordinates
+    actual_length = usable_lengths[0]
+    if len(x) == 1:
+        x = x[0] * np.ones(actual_length)
+    if len(y) == 1:
+        y = y[0] * np.ones(actual_length)
+    if len(z) == 1:
+        z = z[0] * np.ones(actual_length)
+
+    return np.array([x, y, z])
+
+
+def _parse_iterable(xyz_iterable):
+    # We temporarily set the dtype to object to avoid a VisibleDeprecationWarning
+    xyz_array = np.array(xyz_iterable, dtype=object)
+    return _parse_array(xyz_array)
+
+
 class Coordinates:
     """
     Coordinates object for storing ordered sets of coordinates.
@@ -75,101 +165,11 @@ class Coordinates:
     # =============================================================================
 
     def __init__(self, xyz_array, enforce_ccw=False):
-        self._array = self._parse_input(xyz_array)
+        self._array = _parse_to_xyz_array(xyz_array)
         self._set_plane_props()
 
         if not self.ccw and enforce_ccw:
             self.reverse()
-
-    def _parse_input(self, xyz_array):
-        if isinstance(xyz_array, np.ndarray):
-            xyz_array = self._parse_array(xyz_array)
-        elif isinstance(xyz_array, dict):
-            xyz_array = self._parse_dict(xyz_array)
-        elif isinstance(xyz_array, Iterable):
-            xyz_array = self._parse_iterable(xyz_array)
-        else:
-            raise CoordinatesError(
-                f"Cannot instantiate Coordinates with: {type(xyz_array)}"
-            )
-        return xyz_array
-
-    def _parse_array(self, xyz_array):
-        try:
-            xyz_array = np.array(np.atleast_2d(xyz_array), dtype=np.float64)
-        except ValueError:
-            raise CoordinatesError(
-                "Cannot instantiate Coordinates with a ragged (3, N | M) array."
-            )
-
-        shape = xyz_array.shape
-        if len(shape) > 2:
-            raise NotImplementedError
-
-        n, m = shape
-        if n == 3:
-            if m == 3:
-                bluemira_warn(
-                    "You are creating Coordinates with a (3, 3) array, defaulting to (3, N)."
-                )
-
-        elif m == 3:
-            xyz_array = xyz_array.T
-
-        else:
-            raise CoordinatesError(
-                "Cannot instantiate Coordinates where either n or m != 3."
-            )
-
-        if not np.allclose([len(xyz_array[i]) for i in range(3)], len(xyz_array[0])):
-            raise CoordinatesError(
-                "Cannot instantiate Coordinates with a ragged (3, N | M) array."
-            )
-
-        return xyz_array
-
-    def _parse_dict(self, xyz_dict):
-        x = np.atleast_1d(xyz_dict.get("x", 0))
-        y = np.atleast_1d(xyz_dict.get("y", 0))
-        z = np.atleast_1d(xyz_dict.get("z", 0))
-
-        shape_lengths = np.array([len(c.shape) for c in [x, y, z]])
-
-        if np.any(shape_lengths > 1):
-            raise CoordinatesError(
-                "Cannot instantiate Coordinates from dict with coordinate vectors that are not 1-D."
-            )
-
-        lengths = [len(c) for c in [x, y, z]]
-
-        usable_lengths = []
-        for length in lengths:
-            if length != 1:
-                usable_lengths.append(length)
-
-        if not np.allclose(usable_lengths, usable_lengths[0]):
-            raise CoordinatesError(
-                "Cannot instantiate Coordinate from dict with a ragged set of vectors."
-            )
-
-        # Backfill single-value coordinates
-        actual_length = usable_lengths[0]
-        if len(x) == 1:
-            x = x[0] * np.ones(actual_length)
-        if len(y) == 1:
-            y = y[0] * np.ones(actual_length)
-        if len(z) == 1:
-            z = z[0] * np.ones(actual_length)
-
-        return np.array([x, y, z])
-
-    def _parse_iterable(self, xyz_iterable):
-        # We temporarily set the dtype to object to avoid a VisibleDeprecationWarning
-        xyz_array = np.array(xyz_iterable, dtype=object)
-        return self._parse_array(xyz_array)
-
-    def _parse_dtype(self, xyz_array):
-        return np.array(xyz_array, dtype=np.float64)
 
     # =============================================================================
     # Checks
@@ -179,6 +179,9 @@ class Coordinates:
         pass
 
     def _set_plane_props(self):
+        """
+        Set the planar properties of the Coordinates.
+        """
         eigenvalues, eigenvectors = principal_components(self._array)
 
         if np.isclose(eigenvalues[-1], 0.0):
@@ -190,10 +193,16 @@ class Coordinates:
 
     @property
     def is_planar(self):
+        """
+        Whether or not the Coordinates are planar.
+        """
         return self._is_planar
 
     @property
     def normal_vector(self):
+        """
+        The normal vector of the best-fit plane of the Coordinates.
+        """
         return self._normal_vector
 
     # =============================================================================
@@ -241,6 +250,13 @@ class Coordinates:
         The y-z coordinate array
         """
         return self._array[[1, 2], :]
+
+    @property
+    def points(self):
+        """
+        The individual points of the Coordinates.
+        """
+        return self.T
 
     # =========================================================================
     # Conversions
@@ -292,6 +308,13 @@ class Coordinates:
         """
         if not self.closed:
             return 0.0
+
+        if not self.is_planar:
+            bluemira_warn(
+                "Cannot get the area of a non-planar set of Coordinates. Returning 0.0"
+            )
+            return 0.0
+
         return get_area_3d(*self._array)
 
     @property
@@ -355,16 +378,38 @@ class Coordinates:
         direction: tuple (x,y,z)
             The direction vector
         degree: float
-            rotation angle
+            rotation angle [degrees]
         """
-        pass
+        base = np.array(base)
+        if not base.size == 3:
+            raise CoordinatesError("Base vector must be of size 3.")
 
-    def translate(self, vector):
+        direction = np.array(direction)
+        if not direction.size == 3:
+            raise CoordinatesError("Direction vector must be of size 3.")
+        direction /= np.linalg.norm(direction)  # normalise rotation axis
+
+        points = self._array - base.T
+        quart = Quaternion(axis=direction, angle=np.deg2rad(degree))
+
+        new_array = np.array(self.shape)
+        for i, point in enumerate(points.T):
+            new_array[:, i] = quart.rotate(point)
+
+        self._array = new_array + base.T
+        self._set_plane_props()
+
+    def translate(self, vector: tuple = (0, 0, 0)):
         """
         Translate this shape with the vector. This function modifies the self
         object.
         """
-        pass
+        vector = np.array(vector)
+        if not vector.size == 3:
+            raise CoordinatesError("Translation vector must be of size 3.")
+
+        self._array += vector.T
+        self._set_plane_props()
 
     # =============================================================================
     # Dunders (with different behaviour to array)
@@ -397,7 +442,7 @@ class Coordinates:
         """
         The number of points in the Coordinates.
         """
-        return len(self._array[0])
+        return self.shape[1]
 
     # =============================================================================
     # Array-like dunders
