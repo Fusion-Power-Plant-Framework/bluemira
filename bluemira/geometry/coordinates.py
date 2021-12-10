@@ -411,7 +411,7 @@ class Coordinates:
         direction = np.array(direction, dtype=float)
         if not direction.size == 3:
             raise CoordinatesError("Direction vector must be of size 3.")
-        direction /= np.linalg.norm(direction)  # normalise rotation axis
+        direction /= np.linalg.norm(direction)
 
         points = self._array - base.reshape(3, 1)
         quart = Quaternion(axis=direction, angle=np.deg2rad(degree))
