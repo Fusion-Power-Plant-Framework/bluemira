@@ -42,6 +42,7 @@ from BLUEPRINT.cad.cadtools import (
 from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.utilities.colortools import force_rgb
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.utilities.tools import json_writer
 
 
 class CADModel:
@@ -262,8 +263,9 @@ class CADModel:
         if not filename.endswith(".json"):
             filename += ".json"
         bluemira_print(f"Writing {filename}")
-        with open(filename, "w") as handle:
-            json.dump(component_dict, handle, indent=4)
+        json_writer(component_dict, filename)
+        # with open(filename, "w") as handle:
+        #    json.dump(component_dict, handle, indent=4)
 
 
 class Patterner:
