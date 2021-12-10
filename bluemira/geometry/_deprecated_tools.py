@@ -608,7 +608,7 @@ def check_ccw_3d(x, y, z, normal):
     ccw: bool
         Whether or not the set is CCW about the normal vector
     """
-    return _get_signed_area(x, y, z, normal) > 0.0
+    return _get_signed_area(x, y, z, normal) < 0.0
 
 
 @xyz_process
