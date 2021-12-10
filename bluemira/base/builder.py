@@ -113,9 +113,11 @@ class Builder(abc.ABC):
         component: Component
             The Component build by this builder.
         """
+        bluemira_print(f"Reinitialising and running full build chain for {self.name}")
         self.reinitialise(params)
         run_result = {}
         if hasattr(self, "_runmode"):
+            bluemira_print(f"Designing {self.name} using runmode: {self.runmode}")
             run_result = self._runmode(self, *args, **kwargs) or {}
             if not isinstance(run_result, dict):
                 bluemira_warn(
