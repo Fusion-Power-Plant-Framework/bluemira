@@ -230,10 +230,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.add_child(winding_pack)
 
         # Insulation
-        ins_o_outer = offset_wire(wp_outer, self.params.tk_tf_ins.value)
+        ins_o_outer = offset_wire(wp_outer, self.params.tk_tf_ins.value, join="arc")
         ins_outer = PhysicalComponent("inner", BluemiraFace([ins_o_outer, wp_outer]))
         ins_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
-        ins_i_inner = offset_wire(wp_inner, -self.params.tk_tf_ins)
+        ins_i_inner = offset_wire(wp_inner, -self.params.tk_tf_ins, join="arc")
         ins_inner = PhysicalComponent(
             "Insulation", BluemiraFace([wp_inner, ins_i_inner])
         )
