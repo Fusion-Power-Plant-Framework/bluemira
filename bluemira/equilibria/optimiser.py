@@ -53,6 +53,7 @@ from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import (
     calculate_connection_length_flt,
+    calculate_connection_length_fs,
 )
 from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_tools import (
@@ -1460,6 +1461,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
 
         coilset_state = np.concatenate((self.x0, self.z0, currents))
         self.set_coilset_state(coilset_state)
+        print(self.opt.optimum_value)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -1820,8 +1822,10 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
     first_wall: Loop (default: None)
         Loop object representing the first wall. If None, the edge of the
         Equilibrium grid will be used.
-    n_turns_max: Union[int, float]
-        Maximum number of toroidal turns to trace the field line
+    n_turns_max: Union[int, float] (default = None)
+        Maximum number of toroidal turns to trace the field line.
+        If None, the parallel connection length from the starting point to the
+        first wall will be used in calculations instead.
     **kwargs: Remaining BoundedCurrentOptimiser keyword arguments.
     """
 
@@ -1830,7 +1834,7 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
         coilset,
         sol_width=0.001,
         first_wall=None,
-        n_turns_max=50,
+        n_turns_max=None,
         opt_constraints=[
             OptimiserConstraint(
                 ConstraintLibrary.objective_constraint,
@@ -1846,6 +1850,12 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
         self.sol_width = sol_width
         self.first_wall = first_wall
         self.n_turns_max = n_turns_max
+        if self.n_turns_max is None:
+            bluemira_warn(
+                "Number of toroidal turns not specified for ConnectionLengthOptimiser. "
+                "Parallel connection length over flux surface will be optimised instead "
+                "of connection length traced along field line."
+            )
 
     def f_min_objective(self, vector, grad):
         """
@@ -1900,17 +1910,29 @@ class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
             self.zomp = 0.0
             self.xomp = self._get_sep_out_intersection(outboard=True) + self.sol_width
 
-            fom = (
-                -calculate_connection_length_flt(
-                    self.eq,
-                    self.xomp,
-                    self.zomp,
-                    forward=True,
-                    first_wall=self.first_wall,
-                    n_turns_max=self.n_turns_max,
+            if self.n_turns_max is not None:
+                fom = (
+                    -calculate_connection_length_flt(
+                        self.eq,
+                        self.xomp,
+                        self.zomp,
+                        forward=True,
+                        first_wall=self.first_wall,
+                        n_turns_max=self.n_turns_max,
+                    )
+                    / (self.n_turns_max * 100.0)
                 )
-                / 100.0
-            )
+            else:
+                fom = (
+                    -calculate_connection_length_fs(
+                        self.eq,
+                        self.xomp,
+                        self.zomp,
+                        forward=True,
+                        first_wall=self.first_wall,
+                    )
+                    / 100.0
+                )
         except (ValueError, AttributeError):
             fom = 10.0
 

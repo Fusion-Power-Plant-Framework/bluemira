@@ -321,13 +321,14 @@ def set_coilset_optimiser(
     optimisation_options = {
         "max_currents": 5.0e8,
         "gamma": 1e-8,
+        "n_turns_max": 50,
         "opt_args": {
             "algorithm_name": "COBYLA",
             "opt_conditions": {
                 "stop_val": -10.0,
                 "max_eval": 40,
             },
-            "opt_parameters": {"initial_step": 0.01},
+            "opt_parameters": {"initial_step": 0.03},
         },
         "opt_constraints": opt_constraints,
     }
