@@ -38,8 +38,10 @@ from bluemira.geometry._deprecated_tools import (
 
 
 def principal_components(xyz_array):
+    """
+    Principal component analysis.
+    """
     mean = np.mean(xyz_array, axis=1)
-
     xyz_shift = xyz_array - mean.reshape((3, 1))
 
     cov = np.cov(xyz_shift)
@@ -48,7 +50,6 @@ def principal_components(xyz_array):
     sort = eigenvalues.argsort()[::-1]
     eigenvalues = eigenvalues[sort]
     eigenvectors = eigenvectors[:, sort]
-
     return eigenvalues, eigenvectors
 
 
@@ -159,7 +160,7 @@ class Coordinates:
     contexts. It should not be used for the creation of CAD geometries.
     """
 
-    __slots__ = ("_array",)
+    __slots__ = ("_array", "_is_planar", "_normal_vector")
     # =============================================================================
     # Instantiation
     # =============================================================================
@@ -254,9 +255,9 @@ class Coordinates:
     @property
     def points(self):
         """
-        The individual points of the Coordinates.
+        A list of the individual points of the Coordinates.
         """
-        return self.T
+        return list(self.T)
 
     # =========================================================================
     # Conversions
@@ -380,23 +381,24 @@ class Coordinates:
         degree: float
             rotation angle [degrees]
         """
-        base = np.array(base)
+        base = np.array(base, dtype=float)
         if not base.size == 3:
             raise CoordinatesError("Base vector must be of size 3.")
 
-        direction = np.array(direction)
+        direction = np.array(direction, dtype=float)
         if not direction.size == 3:
             raise CoordinatesError("Direction vector must be of size 3.")
         direction /= np.linalg.norm(direction)  # normalise rotation axis
 
-        points = self._array - base.T
+        points = self._array.T - base
         quart = Quaternion(axis=direction, angle=np.deg2rad(degree))
 
-        new_array = np.array(self.shape)
-        for i, point in enumerate(points.T):
-            new_array[:, i] = quart.rotate(point)
+        new_array = np.zeros(self.shape).T
+        for i, point in enumerate(points):
+            print(point)
+            new_array[i, :] = quart.rotate(point)
 
-        self._array = new_array + base.T
+        self._array = new_array.T + base.T
         self._set_plane_props()
 
     def translate(self, vector: tuple = (0, 0, 0)):
