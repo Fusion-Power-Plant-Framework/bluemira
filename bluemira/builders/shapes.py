@@ -28,6 +28,7 @@ from typing import Dict, Type
 
 from bluemira.base.builder import BuildConfig, Builder, BuilderError
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.utilities.optimiser import Optimiser
@@ -125,6 +126,13 @@ class OptimisedShapeBuilder(ParameterisedShapeBuilder):
         """
         Optimise the shape using the provided parameterisation and optimiser.
         """
+        bluemira_debug(
+            f"""Setting up design problem with:
+algorithm_name: {self._algorithm_name}
+n_variables: {self._shape.variables.n_free_variables}
+opt_conditions: {self._opt_conditions}
+opt_parameters: {self._opt_parameters}"""
+        )
         optimiser = Optimiser(
             self._algorithm_name,
             self._shape.variables.n_free_variables,
@@ -134,8 +142,15 @@ class OptimisedShapeBuilder(ParameterisedShapeBuilder):
         self._design_problem = self._problem_class(
             self._shape, optimiser, *args, **kwargs
         )
+
+        bluemira_print(
+            f"Solving design problem: {self._design_problem.__class__.__name__}"
+        )
         if self._shape.n_ineq_constraints > 0:
+            bluemira_debug("Applying shape constraints")
             self._design_problem.apply_shape_constraints()
+
+        bluemira_debug("Solving...")
         self._design_problem.solve()
 
 
