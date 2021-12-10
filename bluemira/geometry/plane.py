@@ -104,6 +104,10 @@ class BluemiraPlane:
         self._shape.Base = cadapi.Base.Vector(value)
 
     @property
+    def origin(self):
+        return self._origin
+
+    @property
     def axis(self):
         """Plane's rotation matrix"""
         return self._shape.Rotation.Axis
@@ -118,6 +122,10 @@ class BluemiraPlane:
         value: Iterable
         """
         self._shape.Axis = cadapi.Base.Vector(value)
+
+    @property
+    def normal_vector(self):
+        return self._normal_vector
 
     @property
     def angle(self):

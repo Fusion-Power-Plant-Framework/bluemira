@@ -651,57 +651,17 @@ def dist_to_shape(shape1, shape2):
     return dist, vectors
 
 
-def wire_plane_intersect(wire, plane):
-    """
-    Calculate the intersection of a wire with a plane.
+def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
 
-    Parameters
-    ----------
-    wire: apiWire
-        The loop to calculate the intersection on
-    plane: apiPlacement
-        The plane to calculate the intersection with
-
-    Returns
-    -------
-    inter: Union[np.array(3, n_intersections), None]
-        The xyz coordinates of the intersections with the wire. Returns None if
-        there are no intersections detected
-    """
-    # some_plane = Part.Plane()
-    big = 1e6
-    # Default is x-y
-    face = apiFace(
-        make_polygon(
-            [[-big, -big, 0], [big, -big, 0], [big, big, 0], [-big, big, 0]], closed=True
-        )
-    )
-
-    change_plane(face, plane)
-    # face.Placement = plane
-    # plane = _placement_to_plane(plane)
-    # face = apiFace(plane)
-
-    if not _wire_is_planar(wire):
-        bluemira_warn(
-            "You are intersecting a non-planar wire with a plane, cannot "
-            "guarantee return type will be correct."
-        )
-
-    # if wire.isCoplanar(face):
-    #     raise FreeCADError(
-    #         "Cannot intersect this wire with this plane: they are coplanar."
-    #     )
-
-    vertexes = wire.section([face]).Vertexes
-    if vertexes:
-        # return vertex_to_numpy(vertexes)
-        return np.array([[v.X, v.Y, v.Z] for v in vertexes])
-
-    return None
+    if isinstance(shape, apiShape):
+        return _slice_wire(shape, plane_axis, plane_origin)
+    else:
+        bluemira_warn("The output sctructure of this function may not be as expected")
+        shift = np.dot(np.array(plane_origin), np.array(plane_axis))
+        return _slice_solid(shape, plane_axis, shift)
 
 
-def open_wire_plane_intersect(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
+def _slice_wire(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
     """
     Get the plane intersection points of any wire (possibly anything, needs testing)
     """
@@ -710,46 +670,18 @@ def open_wire_plane_intersect(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
     ).toShape()
     plane = apiFace(apiWire(circ))
     intersect_obj = wire.section(plane)
-    intersects = [(np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes]).T)]
+    intersects = np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes])
 
-    return (
-        np.concatenate([arr.T for arr in intersects]) if intersects[0].size > 0 else None
-    )
-    # return None if intersects == [] else intersects
+    return intersects if intersects.size > 0 else None
 
 
-def closed_wire_plane_intersect(wire, **kwargs):
-    """
-    Get the plane intersection points of a closed wire
-    """
-    intersects = plane_intersect(apiFace(wire), **kwargs)
-    if intersects is not None:
-        return np.concatenate([arr.T for arr in intersects])
-
-
-def plane_intersect(obj, normal_plane=(0, 1, 0), shift=0):
+def _slice_solid(obj, normal_plane=(0, 1, 0), shift=0):
     """
     Get the plane intersection points of a face or solid
     """
-    vertexes = list()
-    edges = list()
-    faces = list()
-
     intersect_obj = obj.slice(Base.Vector(*normal_plane), shift)
-
-    for i in intersect_obj:
-        vertexes.append(np.array([[v.X, v.Y, v.Z] for v in i.Vertexes]).T)
-        print(np.array([v.LastParameter for v in i.Edges]))
-        # edges.append(np.array([[v.X, v.Y, v.Z] for v in i.Edges]).T)
-        print(i.Faces)
-        # faces.append(np.array([[v.X, v.Y, v.Z] for v in i.faces]).T)
-
-    print(vertexes)
-    print(edges)
-    print(faces)
-    intersects = vertexes
-
-    return None if intersects == [] else intersects
+    vertexes = [np.array([[v.X, v.Y, v.Z] for v in i.Vertexes]).T for i in intersect_obj]
+    return None if vertexes == [] else vertexes
 
 
 # ======================================================================================

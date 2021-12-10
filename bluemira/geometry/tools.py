@@ -430,27 +430,7 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     return cadapi.dist_to_shape(shape1, shape2)
 
 
-def wire_plane_intersect(wire, plane):
-    """
-    Calculate the intersection of a wire with a plane.
-
-    Parameters
-    ----------
-    wire: BluemiraWire
-        The loop to calculate the intersection on
-    plane: BluemiraPlane
-        The plane to calculate the intersection with
-
-    Returns
-    -------
-    inter: np.array(3, n_intersections) or None
-        The xyz coordinates of the intersections with the wire. Returns None if
-        there are no intersections detected
-    """
-    return cadapi.wire_plane_intersect(wire._shape, plane._shape)
-
-
-def plane_intersect(obj, plane):
+def slice_shape(shape: BluemiraGeo, plane):
     """
     Calculate the plane intersection points with an object
 
@@ -462,25 +442,13 @@ def plane_intersect(obj, plane):
 
     Returns
     -------
-    Wire:
+    Wire: Union[List[np.ndarray], None]
         returns array of intersection points
-    Face, Solid, Shell:
+    Face, Solid, Shell: Union[List[BluemiraWire], None]
         list of intersections lines
 
     """
-    shift = np.dot(np.array(plane.base), np.array(plane.axis))
-    if isinstance(obj, BluemiraWire):
-        # if not obj.is_closed():
-        func = "open_wire_plane_intersect"
-        shift = plane.base
-        # func = "closed_wire_plane_intersect"
-    else:
-        if not isinstance(obj, BluemiraFace):
-            bluemira_warn(
-                "The output sctructure of this function may not be as expected"
-            )
-        func = "plane_intersect"
-    return getattr(cadapi, func)(obj._shape, normal_plane=plane.axis, shift=shift)
+    return cadapi.slice_shape(shape._shape, plane.base, plane.axis)
 
 
 def circular_pattern(
