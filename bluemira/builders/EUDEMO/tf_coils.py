@@ -49,6 +49,7 @@ from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
+import bluemira.utilities.plot_tools as bm_plot_tools
 
 
 class TFCoilsComponent(Component):
@@ -245,11 +246,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # TODO: Either via section of 3-D or some varied thickness offset that we can't
         # really do with primitives
 
-        for child in component.children:  # :'(
-            child.plot_options.plane = "xz"
-            for sub_child in child.children:
-                sub_child.plot_options.plane = "xz"
-        component.plot_options.plane = "xz"
+        bm_plot_tools.set_component_plane(component, "xz")
+
         return component
 
     def _pattern_component(self, component: Component):
@@ -357,12 +355,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         sectors = self._pattern_component(casing)
         component.add_children(sectors, merge_trees=True)
 
-        def set_plane(comp: Component, plane: str):
-            comp.plot_options.plane = plane
-            for child in comp.children:
-                set_plane(child, plane)
-
-        set_plane(component, "xy")
+        bm_plot_tools.set_component_plane(component, "xy")
 
         return component
 
