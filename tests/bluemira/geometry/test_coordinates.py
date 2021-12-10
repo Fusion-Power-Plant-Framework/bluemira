@@ -136,3 +136,33 @@ class TestCoordinates:
         c.rotate(base, direction, degree)
 
         assert np.isclose(c.length, c2.length)
+
+    def test_rotate_90(self):
+        c = Coordinates(
+            np.array(
+                [
+                    [2, 3, 3, 2, 2],
+                    [0, 0, 0, 0, 0],
+                    [1, 1, 2, 2, 1],
+                ]
+            )
+        )
+        v1 = c.normal_vector
+        assert np.allclose(v1, [0, 1, 0])
+        assert c.check_ccw()
+        c.rotate(degree=90)
+        v2 = c.normal_vector
+        assert np.allclose(v2, [1, 0, 0])
+        assert c.check_ccw()
+        c.rotate(degree=90)
+        v3 = c.normal_vector
+        assert np.allclose(v3, [0, -1, 0])
+        assert c.check_ccw()
+        c.rotate(degree=90)
+        v4 = c.normal_vector
+        assert np.allclose(v4, [-1, 0, 0])
+        assert c.check_ccw()
+        c.rotate(degree=90)
+        v5 = c.normal_vector
+        assert np.allclose(v5, [0, 1, 0])
+        assert c.check_ccw()
