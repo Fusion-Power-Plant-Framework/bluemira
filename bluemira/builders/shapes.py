@@ -134,6 +134,8 @@ class OptimisedShapeBuilder(ParameterisedShapeBuilder):
         self._design_problem = self._problem_class(
             self._shape, optimiser, *args, **kwargs
         )
+        if self._shape.n_ineq_constraints > 0:
+            self._design_problem.apply_shape_constraints()
         self._design_problem.solve()
 
 
