@@ -333,7 +333,7 @@ class PrincetonD(GeometryParameterisation):
         x1: float
             The inboard centreline radius of the Princeton D
         x2: float
-            The outboard centrleine radius of the Princeton D
+            The outboard centreline radius of the Princeton D
         dz: float
             The vertical offset (from z=0)
         npoints: int (default = 2000)
@@ -958,7 +958,7 @@ class PictureFrame(GeometryParameterisation):
                     descr="Inboard corner radius",
                 ),
                 BoundedVariable(
-                    "ro", 2, lower_bound=1, upper_bound=5, descr="Outbord corner radius"
+                    "ro", 2, lower_bound=1, upper_bound=5, descr="Outboard corner radius"
                 ),
             ],
             frozen=True,
