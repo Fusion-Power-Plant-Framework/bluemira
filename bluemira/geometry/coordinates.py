@@ -390,15 +390,12 @@ class Coordinates:
             raise CoordinatesError("Direction vector must be of size 3.")
         direction /= np.linalg.norm(direction)  # normalise rotation axis
 
-        points = self._array.T - base
+        points = self._array - base.reshape(3, 1)
         quart = Quaternion(axis=direction, angle=np.deg2rad(degree))
+        r_matrix = quart.rotation_matrix
+        new_array = points.T @ r_matrix.T
+        self._array = new_array.T
 
-        new_array = np.zeros(self.shape).T
-        for i, point in enumerate(points):
-            print(point)
-            new_array[i, :] = quart.rotate(point)
-
-        self._array = new_array.T + base.T
         self._set_plane_props()
 
     def translate(self, vector: tuple = (0, 0, 0)):
