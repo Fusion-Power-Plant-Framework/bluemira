@@ -97,3 +97,21 @@ class TestCoordinates:
         xyz = ([0, 1, 2, 3, 4], [0, 1, 2, 3, 4], (0, 1, 2, 3))
         with pytest.raises(CoordinatesError):
             Coordinates(xyz)
+
+    def test_indexing(self):
+        xyz = np.array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 1, 2, 3]])
+        c1 = Coordinates(xyz)
+        assert np.alltrue(xyz[0] == c1[0])
+        assert np.alltrue(xyz[1] == c1[1])
+        assert np.alltrue(xyz[2] == c1[2])
+
+        assert np.allclose([3, 0, 3], c1[:, -1])
+
+    def test_unpacking(self):
+        xyz = np.array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 1, 2, 3]])
+        x1, y1, z1 = xyz
+        c1 = Coordinates(xyz)
+        x2, y2, z2 = c
+        assert np.alltrue(x1 == x2)
+        assert np.alltrue(y1 == y2)
+        assert np.alltrue(z1 == z2)

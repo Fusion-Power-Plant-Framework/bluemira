@@ -34,6 +34,7 @@ from bluemira.geometry._deprecated_tools import (
     get_perimeter_3d,
     get_area_3d,
     get_centroid_3d,
+    check_ccw_3d,
 )
 
 
@@ -54,6 +55,9 @@ def principal_components(xyz_array):
 
 
 def _parse_to_xyz_array(xyz_array):
+    """
+    Make a 3, N xyz array out of just about anything.
+    """
     if isinstance(xyz_array, np.ndarray):
         xyz_array = _parse_array(xyz_array)
     elif isinstance(xyz_array, dict):
@@ -169,15 +173,12 @@ class Coordinates:
         self._array = _parse_to_xyz_array(xyz_array)
         self._set_plane_props()
 
-        if not self.ccw and enforce_ccw:
-            self.reverse()
+        if enforce_ccw:
+            self.set_ccw()
 
     # =============================================================================
     # Checks
     # =============================================================================
-
-    def _check_ccw(self):
-        pass
 
     def _set_plane_props(self):
         """
@@ -205,6 +206,30 @@ class Coordinates:
         The normal vector of the best-fit plane of the Coordinates.
         """
         return self._normal_vector
+
+    def check_ccw(self, axis=None) -> bool:
+        """
+        Whether or not the Coordinates are ordered in the counter-clockwise direction
+        about a specified axis. If None is specified, the Coordinates normal vector will
+        be used.
+        """
+        if axis is None:
+            axis = self.normal_vector
+        else:
+            axis = np.array(axis, dtype=float)
+            if not axis.size == 3:
+                raise CoordinatesError("Base vector must be of size 3.")
+            axis /= np.linalg.norm(axis)
+
+        return check_ccw_3d(*self._array, axis)
+
+    def set_ccw(self, axis=None):
+        """
+        Set the Coordinates to be counter-clockwise about a specified axis. If None is
+        specified, the Coordinates normal vector will be used.
+        """
+        if not check_ccw_3d(axis=axis):
+            self.reverse()
 
     # =============================================================================
     # Property access
@@ -289,13 +314,6 @@ class Coordinates:
         return False
 
     @property
-    def ccw(self) -> bool:
-        """
-        Whether or not the Coordinates are ordered in the counter-clockwise direction.
-        """
-        return True
-
-    @property
     def length(self) -> float:
         """
         Perimeter length of the coordinates.
@@ -368,7 +386,9 @@ class Coordinates:
         if not self.closed:
             self._array = np.vstack((self._array.T, self._array[:, 0])).T
 
-    def rotate(self, base, direction, degree):
+    def rotate(
+        self, base: tuple = (0, 0, 0), direction: tuple = (0, 0, 1), degree: float = 0.0
+    ):
         """
         Rotate the Coordinates.
 
@@ -381,6 +401,9 @@ class Coordinates:
         degree: float
             rotation angle [degrees]
         """
+        if degree == 0.0:
+            return
+
         base = np.array(base, dtype=float)
         if not base.size == 3:
             raise CoordinatesError("Base vector must be of size 3.")
@@ -459,3 +482,9 @@ class Coordinates:
         Array-like indexing and slicing.
         """
         return self._array.__getitem__(*args, **kwargs)
+
+    def __iter__(self):
+        """
+        Array-like unpacking.
+        """
+        return self._array.__iter__()

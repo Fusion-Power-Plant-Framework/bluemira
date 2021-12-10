@@ -538,10 +538,26 @@ def get_area_2d(x, y):
 
 
 @nb.jit(cache=True, nopython=True)
+def _get_signed_area(x, y, z, normal):
+    """
+    Calculate the signed area of a set of x, y, z coordinate vectors.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+    """
+    m = np.zeros((3, len(x)))
+    m[0, :] = x
+    m[1, :] = y
+    m[2, :] = z
+    a = np.array([0.0, 0.0, 0.0])
+    for i in range(len(z)):
+        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
+    a *= 0.5
+    return np.dot(a, normal)
+
+
+@nb.jit(cache=True, nopython=True)
 def get_area_3d(x, y, z):
     """
-    Calculate the area inside a closed polygon with x, y coordinate vectors.
-    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+    Calculate the area inside a closed polygon.
 
     Parameters
     ----------
@@ -550,7 +566,7 @@ def get_area_3d(x, y, z):
     y: np.array
         The second set of coordinates [m]
     z: np.array
-        The third set of coordinates or None (for a 2-D polygon)
+        The third set of coordinates [m]
 
     Returns
     -------
@@ -562,15 +578,32 @@ def get_area_3d(x, y, z):
         return 0
 
     v3 = get_normal_vector(x, y, z)
-    m = np.zeros((3, len(x)))
-    m[0, :] = x
-    m[1, :] = y
-    m[2, :] = z
-    a = np.array([0.0, 0.0, 0.0])
-    for i in range(len(z)):
-        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
-    a *= 0.5
-    return abs(np.dot(a, v3))
+    area = _get_signed_area(x, y, z, v3)
+    return abs(area)
+
+
+@nb.jit(cache=True, nopython=True)
+def check_ccw_3d(x, y, z, normal):
+    """
+    Check if a set of coordinates is counter-clockwise w.r.t a normal vector.
+
+    Parameters
+    ----------
+    x: np.array
+        The first set of coordinates [m]
+    y: np.array
+        The second set of coordinates [m]
+    z: np.array
+        The third set of coordinates [m]
+    normal: np.array
+        The normal vector about which to check for CCW
+
+    Returns
+    -------
+    ccw: bool
+        Whether or not the set is CCW about the normal vector
+    """
+    return _get_signed_area(x, y, z, normal) > 0.0
 
 
 @xyz_process
