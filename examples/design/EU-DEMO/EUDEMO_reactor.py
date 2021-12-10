@@ -176,6 +176,8 @@ if plasma_builder.runmode == "run":
 tf_coils = component.get_component("TF Coils")
 xy = tf_coils.get_component("xy")
 xy.plot_2d()
+xz = tf_coils.get_component("xz")
+xz.plot_2d()
 xyz = tf_coils.get_component("xyz")
 xyz.show_cad()
 dummy = Component(

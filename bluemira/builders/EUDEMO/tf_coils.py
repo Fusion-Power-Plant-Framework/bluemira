@@ -205,7 +205,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         field_solver = self._make_field_solver()
         component = TFCoilsComponent(self.name, field_solver=field_solver)
 
-        # component.add_child(self.build_xz())
+        component.add_child(self.build_xz())
         component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
         return component
@@ -220,8 +220,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         x_min = self._wp_cross_section.bounding_box.x_min
         x_centreline_in = self._centreline.bounding_box.x_min
         dx = abs(x_min - x_centreline_in)
-        wp_outer = offset_wire(self._centreline, dx)
-        wp_inner = offset_wire(self._centreline, -dx)
+        wp_outer = offset_wire(self._centreline, dx, join="arc")
+        wp_inner = offset_wire(self._centreline, -dx, join="arc")
 
         winding_pack = PhysicalComponent(
             "Winding pack", BluemiraFace([wp_outer, wp_inner])
@@ -237,6 +237,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         ins_inner = PhysicalComponent(
             "Insulation", BluemiraFace([wp_inner, ins_i_inner])
         )
+        ins_inner.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         insulation = Component("Insulation", children=[ins_outer, ins_inner])
         component.add_child(insulation)
 
