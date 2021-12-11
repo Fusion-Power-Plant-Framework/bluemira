@@ -2,7 +2,7 @@
   "reference_data_root": "!BM_ROOT!/data",
   "generated_data_root": "!BM_ROOT!/generated_data",
   "PROCESS": {
-    "runmode": "read"
+    "runmode": "run"
   },
   "Plasma": {
     "runmode": "read"
@@ -24,6 +24,9 @@
         "lower_bound": 4
       }
     },
-    "algorithm_name": "COBYLA"
+    "algorithm_name": "COBYLA",
+    "n_rip_points": 50,
+    "nx": 2,
+    "ny": 2
   }
 }

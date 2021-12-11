@@ -129,8 +129,8 @@ class EUDEMOReactor(Reactor):
             "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
             "opt_conditions": {
                 "ftol_rel": 1e-3,
-                "xtol_rel": 1e-12,
-                "xtol_abs": 1e-12,
+                "xtol_rel": 1e-6,
+                "xtol_abs": 1e-6,
                 "max_eval": 1000,
             },
             "opt_parameters": {},
