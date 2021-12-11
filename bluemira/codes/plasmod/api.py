@@ -27,7 +27,6 @@ import copy
 import csv
 import json
 import pprint
-import sys
 import os
 from enum import Enum, auto
 from typing import Dict, Union, Iterable
@@ -139,7 +138,7 @@ class Setup(interface.Setup):
     """Setup class for Plasmod"""
 
     def __init__(self, parent, input_file, output_file, profiles_file, **kwargs):
-        super().__init__(parent)
+        super().__init__(parent, **kwargs)
         self._check_models()
         self.profiles_file = profiles_file
         self.filepath = get_bluemira_path("codes/plasmod")
@@ -165,13 +164,11 @@ class Setup(interface.Setup):
         self._write(self.parent.params, os.path.join(self.filepath, self.input_file))
 
     def _check_models(self):
-        self.parent._params.i_impmodel = ImpurityModel(self.parent._params.i_impmodel)
-        self.parent._params.i_modeltype = TransportModel(self.parent._params.i_modeltype)
-        self.parent._params.i_equiltype = EquilibriumModel(
-            self.parent._params.i_equiltype
-        )
-        self.parent._params.i_pedestal = PedestalModel(self.parent._params.i_pedestal)
-        self.parent._params.isiccir = SOLModel(self.parent._params.isiccir)
+        self.params.i_impmodel = ImpurityModel(self.params.i_impmodel)
+        self.params.i_modeltype = TransportModel(self.params.i_modeltype)
+        self.params.i_equiltype = EquilibriumModel(self._params.i_equiltype)
+        self.params.i_pedestal = PedestalModel(self.params.i_pedestal)
+        self.params.isiccir = SOLModel(self.params.isiccir)
 
     def _run(self, *args, **kwargs):
         """
@@ -209,7 +206,7 @@ class Setup(interface.Setup):
         filepath: str
             json file to load
         """
-        bluemira_debug(filename)
+        bluemira_debug(filepath)
         with open(filepath) as jfh:
             return json.load(jfh, cls=CommentJSONDecoder)
 
@@ -339,15 +336,15 @@ class Solver(interface.FileProgramInterface):
     ):
         # todo: add a path variable where files are stored
         if params is None:
-            self._params = Inputs()
+            params = Inputs()
         elif isinstance(params, Inputs):
-            self._params = params
+            params = params
         elif isinstance(params, Dict):
-            self._params = Inputs(**params)
+            params = Inputs(**params)
         self._out_params = Outputs()
         super().__init__(
             PLASMOD,
-            self.params,
+            params,
             runmode,
             # default_mappings=set_default_mappings(),
             input_file=input_file,
