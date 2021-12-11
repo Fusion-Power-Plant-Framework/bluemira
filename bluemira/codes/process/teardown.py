@@ -318,7 +318,7 @@ class Teardown(interface.Teardown):
         with open(filename, "r") as fh:
             process = json.load(fh)
 
-        self.parent._params.update_kw_parameters(process, source=f"{PROCESS} (Mock)")
+        self.parent.params.update_kw_parameters(process, source=f"{PROCESS} (Mock)")
 
     def _check_PROCESS_output(self):
         """

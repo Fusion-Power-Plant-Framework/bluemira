@@ -81,8 +81,8 @@ class Setup(interface.Setup):
         if use_bp_inputs is True and self.parent._params_to_update is None:
             return
         # Update send values to True or False
-        for param in self.parent._params.get_parameter_list():
-            bp_name = self.parent._parameter_mapping[param.mapping[PROCESS].name]
+        for param in self.params.get_parameter_list():
+            bp_name = self._parameter_mapping[param.mapping[PROCESS].name]
             param.mapping[PROCESS].send = (
                 use_bp_inputs and bp_name in self.parent._params_to_update
             )
@@ -106,7 +106,7 @@ class Setup(interface.Setup):
             )
 
         if use_bp_inputs is True:
-            for param in self.parent._params.get_parameter_list():
+            for param in self.params.get_parameter_list():
                 mapping = param.mapping[PROCESS]
                 if mapping.send:
                     new_mapping = update_obsolete_vars(mapping.name)

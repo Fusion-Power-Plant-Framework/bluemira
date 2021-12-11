@@ -27,8 +27,10 @@ from __future__ import annotations
 import string
 import subprocess  # noqa (S404)
 from enum import Enum
+from typing import Dict
 
 import bluemira.base as bm_base
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.utilities import (
     LogPipe,
@@ -97,11 +99,27 @@ class Task:
 class Setup(Task):
     """A class that specified the code setup"""
 
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, *args, params=None, **kwargs):
         super().__init__(parent)
+        self.set_parameters(params)
 
-    def set_parameters(self):
-        pass
+    def set_parameters(self, params):
+        NAME = self.parent.NAME
+        if NAME != "PLASMOD":  # TODO FIX
+            self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
+            self._params = type(params).from_template(self._parameter_mapping.values())
+            self._params.update_kw_parameters(params.to_dict(verbose=True))
+            self._recv_mapping = get_recv_mapping(params, NAME)
+            self._send_mapping = get_send_mapping(params, NAME)
+        else:
+            self._params = params
+
+    @property
+    def params(self) -> bm_base.ParameterFrame:
+        """
+        The ParameterFrame corresponding to this run.
+        """
+        return self._params
 
 
 class Run(Task):
@@ -143,33 +161,33 @@ class FileProgramInterface:
         if default_mappings is not None:
             find_mappings(NAME, params, default_mappings)
 
-        if NAME != "PLASMOD":  # TODO FIX
-            self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
-            self._params = type(params).from_template(self._parameter_mapping.values())
-            self._params.update_kw_parameters(params.to_dict(verbose=True))
-            self._recv_mapping = get_recv_mapping(params, NAME)
-            self._send_mapping = get_send_mapping(params, NAME)
-
         if not hasattr(self, "__run_dir"):
             self.__run_dir = "./" if run_dir is None else run_dir
 
-        if self._runmode is not RunMode:
+        if self._runmode is not RunMode and issubclass(self._runmode, RunMode):
             self._set_runmode(runmode)
         else:
             raise CodesError("Please define a RunMode child lass")
 
-        if self._setup is None:
-            self._setup = Setup
+        self._protect_tasks()
 
-        if self._run is None:
-            self._run = Run
-
-        if self._teardown is None:
-            self._teardown = Teardown
-
-        self.setup_obj = self._setup(self, *args, **kwargs)
+        self.setup_obj = self._setup(self, *args, params=params, **kwargs)
         self.run_obj = self._run(self, *args, **kwargs)
         self.teardown_obj = self._teardown(self, *args, **kwargs)
+
+    def _protect_tasks(self):
+        """
+        If tasks are not the a child class use the defaults.
+        """
+        for sub_name, parent in [
+            ["_setup", Setup],
+            ["_run", Run],
+            ["_teardown", Teardown],
+        ]:
+            sub = getattr(self, sub_name)
+            if not issubclass(sub, parent):
+                bluemira_warn("Using default {parent.__name__} task")
+                setattr(self, sub, parent)
 
     @property
     def binary(self):
@@ -202,7 +220,28 @@ class FileProgramInterface:
         """
         The ParameterFrame corresponding to this run.
         """
-        return self._params
+        return self.setup_obj.params
+
+    @property
+    def _parameter_mapping(self) -> Dict[str, str]:
+        """
+        The ParameterFrame corresponding to this run.
+        """
+        return self.setup_obj._parameter_mapping
+
+    @property
+    def _recv_mapping(self) -> Dict[str, str]:
+        """
+        The ParameterFrame corresponding to this run.
+        """
+        return self.setup_obj._recv_mapping
+
+    @property
+    def _send_mapping(self) -> Dict[str, str]:
+        """
+        The ParameterFrame corresponding to this run.
+        """
+        return self.setup_obj._send_mapping
 
     def run(self):
         self._runner(self.setup_obj)
