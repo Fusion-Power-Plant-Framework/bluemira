@@ -28,7 +28,6 @@ import numpy as np
 
 from bluemira.base.config import Configuration
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.geometry.parameterisations import GeometryParameterisation
