@@ -148,7 +148,7 @@ class TestTripleArc:
     def test_circle(self):
         p = TripleArc()
         p.adjust_variable("x1", value=4)
-        p.adjust_variable("z1", value=0)
+        p.adjust_variable("dz", value=0)
         p.adjust_variable("sl", value=0, lower_bound=0)
         p.adjust_variable("f1", value=3)
         p.adjust_variable("f2", value=3)

@@ -102,12 +102,13 @@ build_config = {
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
-        # "param_class": "TripleArc",
-        # "variables_map": {
-        #     "x1": {
-        #         "value": "r_tf_in_centre",
-        #         "fixed": True,
-        #     }
+        "param_class": "TripleArc",
+        "variables_map": {
+            "x1": {
+                "value": "r_tf_in_centre",
+                "fixed": True,
+            }
+        },
     },
 }
 
@@ -180,10 +181,20 @@ xz = tf_coils.get_component("xz")
 xz.plot_2d()
 xyz = tf_coils.get_component("xyz")
 xyz.show_cad()
-dummy = Component(
+
+# Make some plots combining the various components
+
+Component(
+    "xy view", children=[tf_coils.get_component("xy"), plasma.get_component("xy")]
+).plot_2d()
+Component(
+    "xz view", children=[tf_coils.get_component("xz"), plasma.get_component("xz")]
+).plot_2d()
+Component(
     "xyz view", children=[tf_coils.get_component("xyz"), plasma.get_component("xyz")]
-)
-dummy.show_cad()
+).show_cad()
+
+# Plot the TF coil design problem
 
 builder = reactor.get_builder("TF Coils")
 builder.design_problem.plot()

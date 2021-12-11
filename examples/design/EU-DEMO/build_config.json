@@ -8,6 +8,13 @@
     "runmode": "read"
   },
   "TF Coils": {
-    "runmode": "run"
+    "runmode": "run",
+    "param_class": "TripleArc",
+    "variables_map": {
+      "x1": {
+        "value": "r_tf_in_centre",
+        "fixed": true
+      }
+    }
   }
 }

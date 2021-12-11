@@ -29,12 +29,11 @@ import numpy as np
 from bluemira.base.config import Configuration
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.shapes import OptimisedShapeBuilder
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.tools import (
     boolean_fuse,
-    circular_pattern,
     extrude_shape,
     offset_wire,
     sweep_shape,
@@ -49,6 +48,7 @@ from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
+import bluemira.utilities.plot_tools as bm_plot_tools
 
 
 class TFCoilsComponent(Component):
@@ -245,55 +245,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # TODO: Either via section of 3-D or some varied thickness offset that we can't
         # really do with primitives
 
-        for child in component.children:  # :'(
-            child.plot_options.plane = "xz"
-            for sub_child in child.children:
-                sub_child.plot_options.plane = "xz"
-        component.plot_options.plane = "xz"
+        bm_plot_tools.set_component_plane(component, "xz")
+
         return component
-
-    def _pattern_component(self, component: Component):
-        sectors = [Component(f"Sector {idx}") for idx in range(self._params.n_TF.value)]
-
-        def assign_component_to_sector(
-            comp: Component, sector: Component, shape: BluemiraGeo = None
-        ):
-            idx = int(sector.name.replace("Sector ", ""))
-
-            if shape is not None and not shape.label:
-                shape.label = f"{comp.name} {idx}"
-
-            comp = deepcopy(comp)
-            comp.name = f"{comp.name} {idx}"
-
-            comp.children = []
-            orig_parent: Component = comp.parent
-            if orig_parent is not None:
-                comp.parent = sector.get_component(f"{orig_parent.name} {idx}")
-            if comp.parent is None:
-                comp.parent = sector
-
-            if isinstance(comp, PhysicalComponent):
-                comp.shape = shape
-
-        def assign_or_pattern(comp: Component):
-            if isinstance(comp, PhysicalComponent):
-                shapes = circular_pattern(comp.shape, n_shapes=self._params.n_TF.value)
-                for sector, shape in zip(sectors, shapes):
-                    assign_component_to_sector(comp, sector, shape)
-            else:
-                for sector in sectors:
-                    assign_component_to_sector(comp, sector)
-
-        def process_children(comp: Component):
-            for child in comp.children:
-                assign_or_pattern(child)
-                process_children(child)
-
-        assign_or_pattern(component)
-        process_children(component)
-
-        return sectors
 
     def build_xy(self) -> Component:
         """
@@ -317,7 +271,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             "Winding pack",
             children=[ib_wp_comp, ob_wp_comp],
         )
-        sectors = self._pattern_component(winding_pack)
+        sectors = circular_pattern_component(winding_pack, self._params.n_TF.value)
         component.add_children(sectors, merge_trees=True)
 
         # Insulation
@@ -334,7 +288,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
                 ob_ins_comp,
             ],
         )
-        sectors = self._pattern_component(insulation)
+        sectors = circular_pattern_component(insulation, self._params.n_TF.value)
         component.add_children(sectors, merge_trees=True)
 
         # Casing
@@ -354,15 +308,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             "Casing",
             children=[ib_cas_comp, ob_cas_comp],
         )
-        sectors = self._pattern_component(casing)
+        sectors = circular_pattern_component(casing, self._params.n_TF.value)
         component.add_children(sectors, merge_trees=True)
 
-        def set_plane(comp: Component, plane: str):
-            comp.plot_options.plane = plane
-            for child in comp.children:
-                set_plane(child, plane)
-
-        set_plane(component, "xy")
+        bm_plot_tools.set_component_plane(component, "xy")
 
         return component
 
@@ -376,7 +325,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
-        sectors = self._pattern_component(winding_pack)
+        sectors = circular_pattern_component(winding_pack, self._params.n_TF.value)
         component.add_children(sectors, merge_trees=True)
 
         # Insulation
@@ -386,7 +335,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         ins_solid = boolean_cut(solid, wp_solid)[0]
         insulation = PhysicalComponent("Insulation", ins_solid)
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        sectors = self._pattern_component(insulation)
+        sectors = circular_pattern_component(insulation, self._params.n_TF.value)
         component.add_children(sectors, merge_trees=True)
 
         # Casing
@@ -478,7 +427,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
-        sectors = self._pattern_component(casing)
+        sectors = circular_pattern_component(casing, self._params.n_TF.value)
         component.add_children(sectors, merge_trees=True)
 
         return component

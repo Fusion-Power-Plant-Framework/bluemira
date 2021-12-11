@@ -47,6 +47,7 @@ class ConfigurationSchema:
     Av: Parameter
     A: Parameter
     R_0: Parameter
+    z_0: Parameter
     B_0: Parameter
 
     # Plasma

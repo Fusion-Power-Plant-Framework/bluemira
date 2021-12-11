@@ -693,6 +693,9 @@ class Equilibrium(MHDState):
         lcfs = self.get_LCFS(psi)
         nbdry = lcfs.d2.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
+
+        profile_scale = np.abs(self._profiles.scale)
+
         result = {
             "nx": n_x,
             "nz": n_z,
@@ -711,9 +714,9 @@ class Equilibrium(MHDState):
             "cplasma": self._Ip,
             "psi": psi,
             "fpol": self.fRBpol(psinorm),
-            "ffprime": self.ffprime(psinorm),
-            "pprime": self.pprime(psinorm),
-            "pressure": self.pressure(psinorm),
+            "ffprime": self.ffprime(psinorm) * profile_scale,
+            "pprime": self.pprime(psinorm) * profile_scale,
+            "pressure": self.pressure(psinorm) * profile_scale,
             "pnorm": psinorm,
             "nbdry": nbdry,
             "xbdry": lcfs["x"],
@@ -1212,7 +1215,7 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm)
+        return self._profiles.fRBpol(psinorm) * np.abs(self._profiles.scale)
 
     def fvac(self):
         """

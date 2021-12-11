@@ -405,15 +405,36 @@ class OptVariables:
         x_norm: np.ndarray
             Array of normalised values
         """
+        true_values = self.get_values_from_norm(x_norm)
+        for name, value in zip(self._opt_vars, true_values):
+            variable = self._var_dict[name]
+            variable.value = value
+
+    def get_values_from_norm(self, x_norm):
+        """
+        Get actual values from a normalised vector.
+
+        Parameters
+        ----------
+        x_norm: np.ndarray
+            Array of normalised values
+
+        Returns
+        -------
+        x_true: np.ndarray
+            Array of actual values in units
+        """
         if len(x_norm) != self.n_free_variables:
             raise OptVariablesError(
                 f"Number of normalised variables {len(x_norm)} != {self.n_free_variables}."
             )
 
+        true_values = []
         for name, v_norm in zip(self._opt_vars, x_norm):
             variable = self._var_dict[name]
             value = denormalise_value(v_norm, variable.lower_bound, variable.upper_bound)
-            variable.value = value
+            true_values.append(value)
+        return true_values
 
     @property
     def names(self):
@@ -435,6 +456,17 @@ class OptVariables:
         Number of free variables in the set.
         """
         return len(self._opt_vars)
+
+    @property
+    def _fixed_variable_indices(self) -> list:
+        """
+        Indices of fixed variables in the set.
+        """
+        indices = []
+        for i, v in enumerate(self._var_dict.values()):
+            if v.fixed:
+                indices.append(i)
+        return indices
 
     @property
     def _opt_vars(self):

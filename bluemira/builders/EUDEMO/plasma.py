@@ -47,6 +47,7 @@ from bluemira.equilibria.shapes import JohnerLCFS
 import bluemira.geometry as geo
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.parameterisations import PrincetonD
+import bluemira.utilities.plot_tools as bm_plot_tools
 
 
 class PlasmaComponent(Component):
@@ -384,6 +385,8 @@ class PlasmaBuilder(Builder):
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
         component.add_child(lcfs_component)
 
+        bm_plot_tools.set_component_plane(component, "xz")
+
         return component
 
     def build_xy(self, **kwargs) -> Component:
@@ -407,18 +410,18 @@ class PlasmaBuilder(Builder):
         self._ensure_boundary()
 
         component = Component("xy")
-        component.plot_options.plane = "xy"
 
         inner = geo.tools.make_circle(self._boundary.bounding_box.x_min, axis=[0, 0, 1])
         outer = geo.tools.make_circle(self._boundary.bounding_box.x_max, axis=[0, 0, 1])
 
         lcfs_face = geo.face.BluemiraFace([outer, inner], label="LCFS")
         lcfs_component = PhysicalComponent("LCFS", lcfs_face)
-        lcfs_component.plot_options.plane = "xy"
         lcfs_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
         component.add_child(lcfs_component)
+
+        bm_plot_tools.set_component_plane(component, "xy")
 
         return component
 

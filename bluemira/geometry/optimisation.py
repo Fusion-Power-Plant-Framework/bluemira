@@ -25,6 +25,7 @@ Geometry optimisation classes and tools
 
 import abc
 import numpy as np
+from bluemira.base.look_and_feel import bluemira_warn
 
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.utilities.optimiser import Optimiser
@@ -49,6 +50,21 @@ class GeometryOptimisationProblem(abc.ABC):
         self.optimiser.set_lower_bounds(np.zeros(optimiser.n_variables))
         self.optimiser.set_upper_bounds(np.ones(optimiser.n_variables))
         self.optimiser.set_objective_function(self.f_objective)
+
+    def apply_shape_constraints(self):
+        """
+        Add shape constraints to the geometry parameterisation, if they exist.
+        """
+        n_shape_ineq_cons = self.parameterisation.n_ineq_constraints
+        if n_shape_ineq_cons > 0:
+            self.optimiser.add_ineq_constraints(
+                self.parameterisation.shape_ineq_constraints, np.zeros(n_shape_ineq_cons)
+            )
+        else:
+            bluemira_warn(
+                f"GeometryParameterisation {self.parameterisation.__class.__name__} does"
+                "not have any shape constraints."
+            )
 
     def update_parameterisation(self, x):
         """
