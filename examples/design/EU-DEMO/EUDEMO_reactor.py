@@ -107,8 +107,17 @@ build_config = {
             "x1": {
                 "value": "r_tf_in_centre",
                 "fixed": True,
-            }
+            },
+            "f1": {
+                "value": 4,
+                "lower_bound": 4,
+            },
+            "f2": {
+                "value": 4,
+                "lower_bound": 4,
+            },
         },
+        "algorithm_name": "COBYLA",
     },
 }
 
