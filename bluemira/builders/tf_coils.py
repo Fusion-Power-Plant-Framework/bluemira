@@ -91,6 +91,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         koz_con_tol=1e-3,
         nx=1,
         ny=1,
+        n_rip_points=100,
         n_koz_points=100,
     ):
         super().__init__(parameterisation, optimiser)
@@ -99,6 +100,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         self.wp_cross_section = wp_cross_section
         self.keep_out_zone = keep_out_zone
 
+        self.n_rip_points = n_rip_points
         self.ripple_points = self._make_ripple_points(separatrix)
         self.ripple_values = None
 
@@ -139,7 +141,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             raise BuilderError(
                 "Ripple points on faces made from multiple wires not yet supported."
             )
-        points = separatrix.discretize(byedges=True, ndiscr=100).T
+        points = separatrix.discretize(ndiscr=self.n_rip_points).T
         # Real argument to making the points the inputs... but then the plot would look
         # sad! :D
         # Can speed this up a lot if you know about your problem... I.e. with a princeton
