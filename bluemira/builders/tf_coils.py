@@ -106,11 +106,6 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             self.f_constrain_ripple, rip_con_tol * np.ones(len(self.ripple_points[0]))
         )
 
-        # Can add in once #466 is ready
-        # self.optimiser.add_ineq_constraints(
-        #     parameterisation.shape_constraints, np.zeros(1)
-        # )
-
         if self.keep_out_zone:
             self.n_koz_points = n_koz_points
             self.koz_points = self._make_koz_points(keep_out_zone)
@@ -150,9 +145,8 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         # Can speed this up a lot if you know about your problem... I.e. with a princeton
         # D I could only check one point and get it right faster.
 
-        # return points
-        idx = np.where(points[0] > self.params.R_0.value)[0]
-        points = points[:, idx]
+        # idx = np.where(points[0] > self.params.R_0.value)[0]
+        # points = points[:, idx]
 
         # Yet again... CCW default one of the main motivations of Loop
         from bluemira.geometry._deprecated_tools import check_ccw
