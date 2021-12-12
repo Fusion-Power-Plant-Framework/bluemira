@@ -23,15 +23,78 @@
 Builder for the PF coils
 """
 
-from bluemira.base.components import PhysicalComponent, Component
+from typing import List, Optional
 
+from bluemira.base.components import PhysicalComponent, Component
+from bluemira.base.builder import Builder, BuildConfig
+from bluemira.base.error import BuilderError, ComponentError
+from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry.tools import revolve_shape, make_circle, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
+import bluemira.utilities.plot_tools as bm_plot_tools
 
 
-class PFCoilBuilder:
+class PFCoilsComponent(Component):
+    """
+    Poloidal field coils component, with a solver for the magnetic field from all of the
+    PF coils.
+
+    Parameters
+    ----------
+    name: str
+        Name of the component
+    parent: Optional[Component] = None
+        Parent component
+    children: Optional[List[Component]] = None
+        List of child components
+    field_solver: Optional[CurrentSource]
+        Magnetic field solver
+    """
+
+    def __init__(
+        self,
+        name: str,
+        parent: Optional[Component] = None,
+        children: Optional[List[Component]] = None,
+        field_solver=None,
+    ):
+        super().__init__(name, parent=parent, children=children)
+        self._field_solver = field_solver
+
+    def field(self, x, y, z):
+        """
+        Calculate the magnetic field due to the TF coils at a set of points.
+        Parameters
+        ----------
+        x: Union[float, np.array]
+            The x coordinate(s) of the points at which to calculate the field
+        y: Union[float, np.array]
+            The y coordinate(s) of the points at which to calculate the field
+        z: Union[float, np.array]
+            The z coordinate(s) of the points at which to calculate the field
+        Returns
+        -------
+        field: np.array
+            The magnetic field vector {Bx, By, Bz} in [T]
+        """
+        # TODO: Implement PF rotation to 3-D Cartesian coordinates
+        return self._field_solver.field(x, y, z)
+
+
+class PFCoilBuilder(Builder):
+    """
+    Builder for a single PF coil
+    """
+
+    _required_params: List[str] = []
+    _required_config: List[str] = []
+    _params: ParameterFrame
+
+    def __init__(self, params, build_config: BuildConfig, **kwargs):
+        super().__init__(params, build_config)
+
     def __init__(self, coil, r_corner, tk_insulation, tk_casing):
         self.coil = coil
         self.r_corner = r_corner
@@ -120,35 +183,112 @@ class PFCoilBuilder:
         return Component(self.coil.name, children=components)
 
 
-class PFCoilsetBuilder:
-    def __init__(self, coilset, r_corner, tk_insulation, tk_casing):
-        self.coilset = coilset
-        self.r_corner = r_corner
-        self.tk_insulation = tk_insulation
-        self.tk_casing = tk_casing
+class PFCoilsetBuilder(Builder):
+    """
+    Builder for the PF Coils.
+    """
+
+    _required_params: List[str] = [
+        "tk_pf_insulation",
+        "tk_pf_casing",
+        "tk_cs_insulation",
+        "tk_cs_casing",
+        "r_pf_corner",
+        "r_cs_corner",
+    ]
+    _required_config: List[str] = []
+    _params: ParameterFrame
+
+    def _extract_config(self, build_config: BuildConfig):
+        super()._extract_config(build_config)
+
+        self._r_corner = build_config.get("r_corner", 0.0)
+
+    def reinitialise(self, params, **kwargs) -> None:
+        """
+        Initialise the state of this builder ready for a new run.
+        Parameters
+        ----------
+        params: Dict[str, Any]
+            The parameterisation containing at least the required params for this
+            Builder.
+        """
+        super().reinitialise(params, **kwargs)
+
+        self._reset_params(params)
+        self._coilset = None
+
+    def __init__(self, coilset, r_corner):
+
         self.sub_components = []
         for coil in self.coilset.coils.values():
-            sub_comp = PFCoilBuilder(
-                coil, self.r_corner, self.tk_insulation, self.tk_casing
-            )
+            if coil.ctype == "PF":
+                r_corner = self.params.r_pf_corner
+                tk_ins = self.params.tk_pf_insulation
+                tk_cas = self.params.tk_pf_casing
+            elif coil.ctype == "CS":
+                r_corner = self.params.r_cs_corner
+                tk_ins = self.params.tk_cs_insulation
+                tk_cas = self.params.tk_cs_casing
+            else:
+                raise BuilderError(f"Unrecognised coil type {coil.ctype}.")
+
+            sub_comp = PFCoilBuilder(coil, r_corner, tk_ins, tk_cas)
             self.sub_components.append(sub_comp)
 
+    def run(self, *args):
+        pass
+
+    def read(self, coil_dict):
+        pass
+
+    def mock(self, coilset):
+        self._coilset = coilset
+
+    def build(self, label: str = "PF Coils", **kwargs) -> PFCoilsComponent:
+        """
+        Build the PF Coils component.
+        Returns
+        -------
+        component: PFCoilsComponent
+            The Component built by this builder.
+        """
+        super().build(**kwargs)
+
+        field_solver = self._make_field_solver()
+        component = PFCoilsComponent(self.name, field_solver=field_solver)
+
+        component.add_child(self.build_xz())
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
+        return
+
     def build_xy(self):
+        """
+        Build the x-y components of the PF coils.
+        """
         xy_comps = []
         for comp in self.sub_components:
             xy_comps.append(comp.build_xy())
         component = Component("PF coils", children=xy_comps)
-        component.plot_options.plane = "xy"
+        bm_plot_tools.set_component_plane(component, "xy")
         return component
 
     def build_xz(self):
+        """
+        Build the x-z components of the PF coils.
+        """
         xz_comps = []
         for comp in self.sub_components:
             xz_comps.append(comp.build_xz())
         component = Component("PF coils", children=xz_comps)
+        bm_plot_tools.set_component_plane(component, "xz")
         return component
 
     def build_xyz(self):
+        """
+        Build the x-y-z components of the PF coils.
+        """
         xyz_comps = []
         for comp in self.sub_components:
             xyz_comps.append(comp.build_xyz())
