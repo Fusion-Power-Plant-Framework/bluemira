@@ -178,9 +178,10 @@ class Coordinates:
         """
         Set the planar properties of the Coordinates.
         """
-        if self.is_planar is None and self.normal_vector is None:
-            return
+        if self._is_planar is None and self._normal_vector is None:
+            self._update_plane_props()
 
+    def _update_plane_props(self):
         if len(self) > 3:
             eigenvalues, eigenvectors = principal_components(self._array)
 
@@ -219,6 +220,7 @@ class Coordinates:
         """
         if len(self) < 3:
             return False
+        self._set_plane_props()
 
         if axis is None:
             axis = self.normal_vector
@@ -430,7 +432,7 @@ class Coordinates:
         new_array = points.T @ r_matrix.T
         self._array = new_array.T
 
-        self._set_plane_props()
+        self._update_plane_props()
 
     def translate(self, vector: tuple = (0, 0, 0)):
         """
@@ -442,7 +444,7 @@ class Coordinates:
             raise CoordinatesError("Translation vector must be of size 3.")
 
         self._array += vector.reshape(3, 1)
-        self._set_plane_props()
+        self._update_plane_props()
 
     # =============================================================================
     # Dunders (with different behaviour to array)

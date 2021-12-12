@@ -38,7 +38,8 @@ def trace_torus_orbit(r_1, r_2, n_r_2_turns, n_points):
     r_2: float
       The radius of the particle orbit around the x-y circle
     n_r_2_turns: float
-      The number of orbits around the centreline when making one full turn of the x-y circle
+      The number of orbits around the centreline when making one full turn of the x-y
+      circle
     n_points: int
       The number of points to produce
 
@@ -217,9 +218,18 @@ class TestCoordinates:
         c.rotate(base, direction, degree)
         assert c.is_planar
 
+    def test_circle_ccw(self):
+        radius = 5
+        theta = np.linspace(0, 2 * np.pi, 100)
+        x = radius * np.cos(theta)
+        y = radius * np.sin(theta)
+        z = np.zeros(100)
+        c = Coordinates([x, y, z])
+        assert c.check_ccw()
+
     def test_complicated(self):
-        xyz = trace_torus_orbit(5, 1, 10, 1000)
+        xyz = trace_torus_orbit(5, 1, 10, 999)
         c = Coordinates(xyz)
 
-        assert c.closed
         assert not c.is_planar
+        assert c.check_ccw()
