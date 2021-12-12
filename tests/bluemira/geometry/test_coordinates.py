@@ -27,6 +27,35 @@ from bluemira.geometry.error import CoordinatesError
 from bluemira.geometry.coordinates import Coordinates
 
 
+def trace_torus_orbit(r_1, r_2, n_r_2_turns, n_points):
+    """
+    Trace the orbit of a particle travelling around an a torus.
+
+    Parameters
+    ----------
+    r_1: float
+      The radius of the x-y circle
+    r_2: float
+      The radius of the particle orbit around the x-y circle
+    n_r_2_turns: float
+      The number of orbits around the centreline when making one full turn of the x-y circle
+    n_points: int
+      The number of points to produce
+
+    Returns
+    -------
+    xyz_array: np.ndarray
+      Array of shape (3, n_points)
+    """
+    phi = np.linspace(0, 2 * np.pi, num=n_points)  # Major angle
+    theta = np.linspace(0, 2 * np.pi * n_r_2_turns, num=n_points)  # Minor angle
+    x = (r_1 + r_2 * np.cos(theta)) * np.cos(phi)
+    y = (r_1 + r_2 * np.cos(theta)) * np.sin(phi)
+    z = r_2 * np.sin(theta)
+    xyz_array = np.array([x, y, z])
+    return xyz_array
+
+
 class TestCoordinates:
     def test_array_init(self):
         xyz = np.array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 1, 2, 3]])
@@ -187,3 +216,10 @@ class TestCoordinates:
         degree = 360 * np.random.rand(1)
         c.rotate(base, direction, degree)
         assert c.is_planar
+
+    def test_complicated(self):
+        xyz = trace_torus_orbit(5, 1, 10, 1000)
+        c = Coordinates(xyz)
+
+        assert c.closed
+        assert not c.is_planar

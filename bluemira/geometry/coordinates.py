@@ -63,7 +63,9 @@ def _parse_to_xyz_array(xyz_array):
     elif isinstance(xyz_array, dict):
         xyz_array = _parse_dict(xyz_array)
     elif isinstance(xyz_array, Iterable):
-        xyz_array = _parse_iterable(xyz_array)
+        # We temporarily set the dtype to object to avoid a VisibleDeprecationWarning
+        xyz_array = np.array(xyz_array, dtype=object)
+        xyz_array = _parse_array(xyz_array)
     else:
         raise CoordinatesError(f"Cannot instantiate Coordinates with: {type(xyz_array)}")
     return xyz_array
@@ -140,19 +142,13 @@ def _parse_dict(xyz_dict):
     return np.array([x, y, z])
 
 
-def _parse_iterable(xyz_iterable):
-    # We temporarily set the dtype to object to avoid a VisibleDeprecationWarning
-    xyz_array = np.array(xyz_iterable, dtype=object)
-    return _parse_array(xyz_array)
-
-
 class Coordinates:
     """
     Coordinates object for storing ordered sets of coordinates.
 
-    The following are enforced by default:
-    * Shape of (3, N)
-    * Counter-clockwise direction [TBD]
+    An array shape of (3, N) is enforced.
+
+    Counter-clockwise direction can be set relative to a normal vector.
 
     Parameters
     ----------
@@ -169,12 +165,10 @@ class Coordinates:
     # Instantiation
     # =============================================================================
 
-    def __init__(self, xyz_array, enforce_ccw=False):
+    def __init__(self, xyz_array):
         self._array = _parse_to_xyz_array(xyz_array)
-        self._set_plane_props()
-
-        if enforce_ccw:
-            self.set_ccw()
+        self._is_planar = None
+        self._normal_vector = None
 
     # =============================================================================
     # Checks
@@ -184,20 +178,29 @@ class Coordinates:
         """
         Set the planar properties of the Coordinates.
         """
-        eigenvalues, eigenvectors = principal_components(self._array)
+        if self.is_planar is None and self.normal_vector is None:
+            return
 
-        if np.isclose(eigenvalues[-1], 0.0):
-            self._is_planar = True
+        if len(self) > 3:
+            eigenvalues, eigenvectors = principal_components(self._array)
+
+            if np.isclose(eigenvalues[-1], 0.0):
+                self._is_planar = True
+            else:
+                self._is_planar = False
+
+            self._normal_vector = eigenvectors[:, -1]
         else:
+            bluemira_warn("Cannot set planar properties on Coordinates with length < 3.")
             self._is_planar = False
-
-        self._normal_vector = eigenvectors[:, -1]
+            self._normal_vector = None
 
     @property
     def is_planar(self):
         """
         Whether or not the Coordinates are planar.
         """
+        self._set_plane_props()
         return self._is_planar
 
     @property
@@ -205,6 +208,7 @@ class Coordinates:
         """
         The normal vector of the best-fit plane of the Coordinates.
         """
+        self._set_plane_props()
         return self._normal_vector
 
     def check_ccw(self, axis=None) -> bool:
@@ -213,6 +217,9 @@ class Coordinates:
         about a specified axis. If None is specified, the Coordinates normal vector will
         be used.
         """
+        if len(self) < 3:
+            return False
+
         if axis is None:
             axis = self.normal_vector
         else:
@@ -228,7 +235,11 @@ class Coordinates:
         Set the Coordinates to be counter-clockwise about a specified axis. If None is
         specified, the Coordinates normal vector will be used.
         """
-        if not check_ccw_3d(axis=axis):
+        if len(self) < 3:
+            bluemira_warn("Cannot set Coordinates of length < 3 to CCW.")
+            return
+
+        if not self.check_ccw(axis=axis):
             self.reverse()
 
     # =============================================================================
