@@ -105,6 +105,7 @@ class BluemiraPlane:
 
     @property
     def origin(self):
+        """TODO"""
         return self._origin
 
     @property
@@ -125,6 +126,7 @@ class BluemiraPlane:
 
     @property
     def normal_vector(self):
+        """TODO"""
         return self._normal_vector
 
     @property

@@ -652,7 +652,20 @@ def dist_to_shape(shape1, shape2):
 
 
 def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
+    """
+    Slice a shape along a given plane
 
+    TODO improve face-sold-shell interface
+
+    Parameters
+    ----------
+    shape: apiShape
+        shape to slice
+    plane_origin: Iterable
+        normal plane origin
+    plane_axis: Iterable
+        normal plane axis
+    """
     if isinstance(shape, apiShape):
         return _slice_wire(shape, plane_axis, plane_origin)
     else:
