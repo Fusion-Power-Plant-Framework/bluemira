@@ -124,13 +124,13 @@ def get_send_mapping(params, code_name, send_all=False):
     return _get_mapping(params, code_name, "send", send_all)
 
 
-def set_default_mapping(
+def add_mapping(
     code_name: str,
     params: bm_base.ParameterFrame,
     mapping: Dict[str, bm_base.ParameterMapping],
 ):
     """
-    Sets the default mappings for a given code.
+    Adds mappings for a given code to a ParameterFrame.
     Modifies directly params but only if no mapping for that code exists
 
     Parameters

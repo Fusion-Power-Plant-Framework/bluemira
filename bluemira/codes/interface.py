@@ -36,7 +36,7 @@ from bluemira.codes.utilities import (
     LogPipe,
     get_recv_mapping,
     get_send_mapping,
-    set_default_mapping,
+    add_mapping,
 )
 
 __all__ = [
@@ -76,11 +76,15 @@ class RunMode(Enum):
 
 class Task:
     """
-    A class for any task integration
+    Task integration
+
+    Parameters
+    ----------
+    parent: obj
+        parent file interface object
+
     """
 
-    # todo: ensure a correspondence between the specified runmode and the implemented
-    #  functions (if possible).
     def __init__(self, parent):
         self.parent = parent
         self._run_dir = parent._run_dir
@@ -103,7 +107,17 @@ class Task:
 
 
 class Setup(Task):
-    """A class that specified the code setup"""
+    """
+    Generic Setup Task
+
+    Parameters
+    ----------
+    parent: obj
+        parent file interface object
+    params: ParameterFrame
+        ParameterFrame for interface
+
+    """
 
     def __init__(self, parent, *args, params=None, **kwargs):
         super().__init__(parent)
@@ -137,7 +151,16 @@ class Setup(Task):
 
 
 class Run(Task):
-    """A class that specified the code run process"""
+    """
+    Generic Run Task
+
+    Parameters
+    ----------
+    parent: obj
+        parent file interface object
+    binary: str
+        binary location
+    """
 
     _binary = None
 
@@ -150,7 +173,14 @@ class Run(Task):
 
 
 class Teardown(Task):
-    """A class that for the teardown"""
+    """
+    Generic Teardown Task
+
+    Parameters
+    ----------
+    parent: obj
+        parent file interface object
+    """
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
@@ -175,8 +205,8 @@ class FileProgramInterface:
     ):
         self.NAME = NAME
 
-        if mappings is not None:
-            set_default_mapping(NAME, params, mappings)
+        if NAME != "PLASMOD":  # TODO remove none protection
+            add_mapping(NAME, params, mappings)
 
         if not hasattr(self, "__run_dir"):
             self.__run_dir = "./" if run_dir is None else run_dir
