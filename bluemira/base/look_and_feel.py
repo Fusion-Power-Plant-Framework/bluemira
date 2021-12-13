@@ -388,6 +388,9 @@ def bluemira_print_clean(string):
 
 
 def bluemira_error_clean(string):
+    """
+    Clean error writer
+    """
     _bluemira_clean(LOGGER.error, _print_color(string, "red"))
 
 

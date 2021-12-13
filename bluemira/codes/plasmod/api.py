@@ -29,7 +29,7 @@ import json
 import os
 import pprint
 from enum import Enum, auto
-from typing import Dict, Iterable, Union
+from typing import Dict, Iterable
 
 import numpy as np
 
@@ -45,12 +45,13 @@ from bluemira.codes.plasmod.mapping import (
     Profiles,
     SOLModel,
     TransportModel,
-    set_default_mappings,
+    # create_mapping,
 )
 from bluemira.utilities.tools import CommentJSONDecoder
 
 # Todo: both INPUTS and OUTPUTS must to be completed. Moved to json files
-# DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as requested by Plasmod
+# DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as
+# requested by Plasmod
 
 
 def get_default_plasmod_inputs():
@@ -110,13 +111,18 @@ class PlasmodParameters:
 # input file and the reading of outputs from file. However, other strategies could be
 # applied to make use of a single PlasmodParameters instance.
 class Inputs(PlasmodParameters):
-    """Class for Plasmod inputs"""
+    """
+    Class for Plasmod inputs
+    """
 
     def __init__(self, **kwargs):
         self._options = get_default_plasmod_inputs()
         super().__init__(**kwargs)
 
     def items(self):
+        """
+        Items replicator
+        """
         for k, v in self._options.items():
             yield k, v
 
@@ -280,6 +286,10 @@ class Run(interface.Run):
 
 
 class Teardown(interface.Teardown):
+    """
+    Plasmod Teardown Task
+    """
+
     def _run(self, *args, **kwargs):
         """
         Run plasmod teardown
@@ -402,7 +412,7 @@ class Solver(interface.FileProgramInterface):
         self._out_params = Outputs()
         super().__init__(
             PLASMOD,
-            self._getInputs(params),
+            self._get_inputs(params),
             runmode,
             # default_mappings=set_default_mappings(),
             input_file=input_file,
@@ -412,7 +422,7 @@ class Solver(interface.FileProgramInterface):
         )
 
     @staticmethod
-    def _getInputs(params):
+    def _get_inputs(params):
         # TODO remove the need for this
         if params is None:
             params = Inputs()

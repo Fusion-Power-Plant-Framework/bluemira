@@ -39,7 +39,13 @@ from bluemira.codes.utilities import (
     set_default_mapping,
 )
 
-__all__ = ["FileProgramInterface", "ApplicationProgramInterface"]
+__all__ = [
+    "FileProgramInterface",
+    "RunMode",
+    "Setup",
+    "Run",
+    "Teardown",
+]  # "ApplicationProgramInterface"]
 
 
 class RunMode(Enum):
@@ -104,6 +110,14 @@ class Setup(Task):
         self.set_parameters(params)
 
     def set_parameters(self, params):
+        """
+        Set parameter mappings and add parameters to interface
+
+        Parameters
+        ----------
+        params: ParameterFrame
+
+        """
         NAME = self.parent.NAME
         if NAME != "PLASMOD":  # TODO FIX
             self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
@@ -142,6 +156,9 @@ class Teardown(Task):
         super().__init__(parent)
 
     def get_parameters(self):
+        """
+        TODO?
+        """
         pass
 
 
@@ -190,23 +207,53 @@ class FileProgramInterface:
 
     @property
     def binary(self):
+        """
+        Program binary name
+        """
         return self.run_obj._binary
 
     @binary.setter
-    def binary(self, _binary):
+    def binary(self, _binary: str):
+        """
+        Set program binary name
+
+        Parameters
+        ----------
+        _binary: str
+            binary name
+
+        """
         self.run_obj._binary = _binary
 
-    def _set_runmode(self, runmode):
-        """Set the runmode"""
+    def _set_runmode(self, runmode: str):
+        """
+        Set the runmode
+
+        Parameters
+        ----------
+        runmode: str
+            runmode to be set
+        """
         mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
         self._runner = self._runmode[mode]
 
     @property
     def _run_dir(self):
+        """
+        Run directory
+        """
         return self.__run_dir
 
     @_run_dir.setter
-    def _run_dir(self, directory):
+    def _run_dir(self, directory: str):
+        """
+        Set run directory
+
+        Parameters
+        ----------
+        directory: str
+            new directory
+        """
         self.__run_dir = directory
         self._set_property("_run_dir", directory)
 
@@ -243,6 +290,9 @@ class FileProgramInterface:
         return self.setup_obj._send_mapping
 
     def run(self):
+        """
+        Run the full program interface
+        """
         self._runner(self.setup_obj)
         self._runner(self.run_obj)
         self._runner(self.teardown_obj)

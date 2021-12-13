@@ -34,7 +34,6 @@ import numpy as np
 import bluemira.base as bm_base
 import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import (
     PROCESS_DICT,
@@ -238,6 +237,10 @@ class BMFile(MFile):
 
 
 class Teardown(interface.Teardown):
+    """
+    Teardown Task for process
+    """
+
     def _run(self):
         self._check_PROCESS_output()
 
