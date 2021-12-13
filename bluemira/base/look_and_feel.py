@@ -324,25 +324,24 @@ def _bm_print_singleflush(string, width=73, color="blue"):
     return _print_color(text, color)
 
 
-def bluemira_print_flush(string):
-    """
-    Print a coloured, boxed line to the console and flushes it. Useful for
-    updating information.
-
-    Parameters
-    ----------
-    func: logging function
-        function to log with
-    string: str
-        The string to colour flush print
-    """
-    _bluemira_clean_flush(LOGGER.info, _bm_print_singleflush(string))
-
-
 def _bluemira_clean_flush(string):
     """
-    Print a coloured, boxed line to the console and flushes it. Useful for
+    Print and flush string. Useful for
     updating information.
+
+    Parameters
+    ----------
+    string: str
+        The string to colour flush print
+    """
+    _terminator_handler(
+        LOGGER.info, "\r" + string, fhterm=logging.StreamHandler.terminator
+    )
+
+
+def _terminator_handler(func, string, *, fhterm=""):
+    """
+    Log string allowing modification to handler terminator
 
     Parameters
     ----------
@@ -350,19 +349,8 @@ def _bluemira_clean_flush(string):
         function to log with
     string: str
         The string to colour flush print
-    """
-    _bluemira_clean(LOGGER.info, "\r" + string, fhterm=logging.StreamHandler.terminator)
-
-
-def _bluemira_clean(func, string, *, fhterm=""):
-    """
-    Print a coloured, boxed line to the console and flushes it. Useful for
-    updating information.
-
-    Parameters
-    ----------
-    string: str
-        The string to colour flush print
+    fhterm: str
+        FileHandler Terminator
     """
     original_terminator = logging.StreamHandler.terminator
     logging.StreamHandler.terminator = ""
@@ -372,6 +360,19 @@ def _bluemira_clean(func, string, *, fhterm=""):
     finally:
         logging.StreamHandler.terminator = original_terminator
         logging.FileHandler.terminator = original_terminator
+
+
+def bluemira_print_flush(string):
+    """
+    Print a coloured, boxed line to the console and flushes it. Useful for
+    updating information.
+
+    Parameters
+    ----------
+    string: str
+        The string to colour flush print
+    """
+    _bluemira_clean_flush(_bm_print_singleflush(string))
 
 
 def bluemira_print_clean(string):
@@ -384,14 +385,14 @@ def bluemira_print_clean(string):
     string: str
         The string to colour flush print
     """
-    _bluemira_clean(LOGGER.info, string)
+    _terminator_handler(LOGGER.info, string)
 
 
 def bluemira_error_clean(string):
     """
     Clean error writer
     """
-    _bluemira_clean(LOGGER.error, _print_color(string, "red"))
+    _terminator_handler(LOGGER.error, _print_color(string, "red"))
 
 
 class BluemiraClock:
