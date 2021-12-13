@@ -118,6 +118,7 @@ class OptimisedShapeBuilder(ParameterisedShapeBuilder):
                 "problem_class must either be a str pointing to the class to be loaded "
                 f"or the class itself - got {problem_class}."
             )
+        self._problem_settings = build_config.get("problem_settings", {})
         self._algorithm_name = build_config.get("algorithm_name", "SLSQP")
         self._opt_conditions = build_config.get("opt_conditions", {"max_eval": 100})
         self._opt_parameters = build_config.get("opt_parameters", {})
@@ -139,8 +140,17 @@ opt_parameters: {self._opt_parameters}"""
             self._opt_conditions,
             self._opt_parameters,
         )
+
+        if self._problem_settings != {}:
+            bluemira_debug(
+                f"Applying non-default settings to problem: {self._problem_settings}"
+            )
         self._design_problem = self._problem_class(
-            self._shape, optimiser, *args, **kwargs
+            self._shape,
+            optimiser,
+            *args,
+            **kwargs,
+            **self._problem_settings,
         )
 
         bluemira_print(
