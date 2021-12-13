@@ -29,7 +29,6 @@ import copy
 from typing import Iterable, List, Optional, Tuple, Union
 import matplotlib.colors as colors
 
-import bluemira.base.components as bm_comp
 import bluemira.geometry as geo
 from bluemira.codes import _freecadapi as cadapi
 
@@ -202,7 +201,7 @@ class ComponentDisplayer(BaseDisplayer):
 
     def show_cad(
         self,
-        comps: Union[Iterable[bm_comp.Component], bm_comp.Component],
+        comps,
         **kwargs,
     ):
         """
@@ -213,6 +212,8 @@ class ComponentDisplayer(BaseDisplayer):
         comp: Union[Iterable[Component], Component]
             Component, or iterable of Components, to be displayed
         """
+        import bluemira.base.components as bm_comp
+
         self._shapes = []
         self._options = []
 
