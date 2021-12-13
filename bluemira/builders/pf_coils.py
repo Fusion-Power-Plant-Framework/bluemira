@@ -34,6 +34,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.equilibria.coils import CoilSet
+from bluemira.display.palettes import BLUE_PALETTE
 import bluemira.utilities.plot_tools as bm_plot_tools
 
 
@@ -89,55 +90,62 @@ class PFCoilBuilder:
     Builder for a single PF coil
     """
 
-    def __init__(self, coil, r_corner, tk_insulation, tk_casing):
+    def __init__(self, coil, r_corner, tk_insulation, tk_casing, ctype):
         self.coil = coil
         self.r_corner = r_corner
         self.tk_insulation = tk_insulation
         self.tk_casing = tk_casing
+        self.ctype = ctype
 
     def build_xy(self):
+        """
+        Build the x-y representation of a PF coil.
+        """
         r_in = self.coil.x - self.coil.dx
         r_out = self.coil.x + self.coil.dx
         c1 = make_circle(r_out)
         c2 = make_circle(r_in)
 
         wp = PhysicalComponent("winding pack", BluemiraFace([c1, c2]))
+        idx = 0 if self.ctype == "CS" else 1
+        wp.plot_options.face_options["color"] = BLUE_PALETTE["PF"][idx]
 
         r_in -= self.tk_insulation
         c3 = make_circle(r_in)
-        inner_ins = BluemiraFace([c2, c3])
+        inner_ins = PhysicalComponent("inner", BluemiraFace([c2, c3]))
+        inner_ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
 
         r_out += self.tk_insulation
         c4 = make_circle(r_out)
-        outer_ins = BluemiraFace([c4, c1])
+        outer_ins = PhysicalComponent("outer_ins", BluemiraFace([c4, c1]))
+        outer_ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
 
         ins = Component(
             name="ground insulation",
-            children=[
-                PhysicalComponent("inner", inner_ins),
-                PhysicalComponent("outer", outer_ins),
-            ],
+            children=[inner_ins, outer_ins],
         )
 
         r_in -= self.tk_casing
         c5 = make_circle(r_in)
-        inner_cas = BluemiraFace([c3, c5])
+        inner_cas = PhysicalComponent("inner", BluemiraFace([c3, c5]))
+        inner_cas.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
 
         r_out += self.tk_casing
         c6 = make_circle(r_out)
-        outer_cas = BluemiraFace([c6, c4])
+        outer_cas = PhysicalComponent("outer", BluemiraFace([c6, c4]))
+        outer_cas.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
         casing = Component(
             "casing",
-            children=[
-                PhysicalComponent("inner", inner_cas),
-                PhysicalComponent("outer", outer_cas),
-            ],
+            children=[inner_cas, outer_cas],
         )
 
         component = Component(self.coil.name, children=[wp, ins, casing])
         return component
 
     def build_xz(self):
+        """
+        Build the x-z representation of a PF coil.
+        """
         x_in = self.coil.x - self.coil.dx
         x_out = self.coil.x + self.coil.dx
         z_up = self.coil.z + self.coil.dz
@@ -154,23 +162,30 @@ class PFCoilBuilder:
             }
         ).create_shape()
         wp = PhysicalComponent("winding pack", BluemiraFace(shape))
+        idx = 0 if self.ctype == "CS" else 1
+        wp.plot_options.face_options["color"] = BLUE_PALETTE["PF"][idx]
 
         ins_shape = offset_wire(shape, self.tk_insulation)
 
         ins = PhysicalComponent("ground insulation", BluemiraFace([ins_shape, shape]))
-
+        ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
         cas_shape = offset_wire(ins_shape, self.tk_casing)
 
         casing = PhysicalComponent("casing", BluemiraFace([cas_shape, ins_shape]))
+        casing.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
         return Component(self.coil.name, children=[wp, ins, casing])
 
     def build_xyz(self):
+        """
+        Build the x-y-z representation of a PF coil.
+        """
         # I doubt this is floating-point safe to collisions...
         c_xz = self.build_xz()
         components = []
         for c in c_xz.children:
             shape = revolve_shape(c.shape, degree=360)
             c_xyz = PhysicalComponent(c.name, shape)
+            c_xyz.display_cad_options.color = c.plot_options.face_options["color"]
             components.append(c_xyz)
 
         return Component(self.coil.name, children=components)
@@ -217,12 +232,21 @@ class PFCoilsBuilder(Builder):
         self._coilset = None
 
     def run(self, *args):
+        """
+        Build PF coils from a design optimisation problem.
+        """
         pass
 
     def read(self, **kwargs):
+        """
+        Build PF coils from a equilibrium file.
+        """
         self._coilset = CoilSet.from_eqdsk(self._eqdsk_path)
 
     def mock(self, coilset):
+        """
+        Build PF coils from a CoilSet.
+        """
         self._coilset = coilset
 
     def build(self, label: str = "PF Coils", **kwargs) -> PFCoilsComponent:
@@ -248,7 +272,7 @@ class PFCoilsBuilder(Builder):
             else:
                 raise BuilderError(f"Unrecognised coil type {coil.ctype}.")
 
-            sub_comp = PFCoilBuilder(coil, r_corner, tk_ins, tk_cas)
+            sub_comp = PFCoilBuilder(coil, r_corner, tk_ins, tk_cas, coil.ctype)
             self.sub_components.append(sub_comp)
 
         field_solver = self._make_field_solver()
