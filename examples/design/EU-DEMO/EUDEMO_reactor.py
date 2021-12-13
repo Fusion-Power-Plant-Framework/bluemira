@@ -25,7 +25,6 @@ Perform the EU-DEMO reactor design.
 
 import json
 import matplotlib.pyplot as plt
-from bluemira.base.components import Component
 
 from bluemira.base.config import Configuration
 from bluemira.base.file import get_bluemira_root
@@ -34,6 +33,8 @@ from bluemira.base.parameter import ParameterError
 
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.plasma import PlasmaComponent
+
+from bluemira.display.displayer import ComponentDisplayer
 
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
 
@@ -198,15 +199,18 @@ xyz.show_cad()
 
 # Make some plots combining the various components
 
-Component(
-    "xy view", children=[tf_coils.get_component("xy"), plasma.get_component("xy")]
-).plot_2d()
-Component(
-    "xz view", children=[tf_coils.get_component("xz"), plasma.get_component("xz")]
-).plot_2d()
-Component(
-    "xyz view", children=[tf_coils.get_component("xyz"), plasma.get_component("xyz")]
-).show_cad()
+ax = tf_coils.get_component("xy").plot_2d(show=False)
+plasma.get_component("xy").plot_2d(ax=ax)
+
+ax = tf_coils.get_component("xz").plot_2d(show=False)
+plasma.get_component("xz").plot_2d(ax=ax)
+
+ComponentDisplayer().show_cad(
+    [
+        tf_coils.get_component("xyz"),
+        plasma.get_component("xyz"),
+    ]
+)
 
 # Plot the TF coil design problem
 
