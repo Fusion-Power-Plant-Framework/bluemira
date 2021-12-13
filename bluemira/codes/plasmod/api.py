@@ -240,8 +240,8 @@ class Teardown(interface.Teardown):
         output = self.read_output_files(self.parent.setup_obj.output_file)
         self.parent._out_params.modify(**output)
         self._check_return_value()
-        output = self.read_output_files(self.parent.setup_obj.profiles_file)
-        self.parent._out_params.modify(**output)
+        profiles = self.read_output_files(self.parent.setup_obj.profiles_file)
+        self.parent._out_params.modify(**profiles)
         # print_parameter_list(self.parent._out_params)
 
     def _mock(self, *args, **kwargs):
@@ -250,8 +250,8 @@ class Teardown(interface.Teardown):
         """
         output = self.read_output_files(self.parent.setup_obj.output_file)
         self.parent._out_params.modify(**output)
-        output = self.read_output_files(self.parent.setup_obj.profiles_file)
-        self.parent._out_params.modify(**output)
+        profiles = self.read_output_files(self.parent.setup_obj.profiles_file)
+        self.parent._out_params.modify(**profiles)
         # print_parameter_list(self.parent._out_params)
 
     @staticmethod
@@ -271,15 +271,13 @@ class Teardown(interface.Teardown):
         """
         output = {}
         with open(output_file, "r") as fd:
-            reader = csv.reader(fd, delimiter="\t")
-            for row in reader:
-                arr = row[0].split()
-                output_key = arr[0]
-                output_value = arr[1:]
-                if len(output_value) > 1:
-                    output[output_key] = np.array(arr[1:], dtype=np.float)
-                else:
-                    output[output_key] = float(arr[1])
+            for row in csv.reader(fd, delimiter="\t"):
+                output_key, *output_value = row[0].split()
+                output[output_key] = (
+                    np.array(output_value, dtype=np.float)
+                    if len(output_value) > 1
+                    else float(output_value[0])
+                )
         return output
 
     def _check_return_value(self):
@@ -295,25 +293,25 @@ class Teardown(interface.Teardown):
 
         """
         exit_flag = self.parent._out_params.i_flag
-        if exit_flag != 1:
-            if exit_flag == -2:
-                raise CodesError(
-                    f"{PLASMOD} error" "Equilibrium solver crashed: too high pressure"
-                )
-            elif exit_flag == -1:
-                raise CodesError(
-                    f"{PLASMOD} error"
-                    "Max number of iterations reached"
-                    "equilibrium oscillating probably as a result of the pressure being too high"
-                    "reducing H may help"
-                )
-            elif not exit_flag:
-                raise CodesError(
-                    f"{PLASMOD} error"
-                    "Abnormal paramters, possibly dtmax/dtmin too large"
-                )
-        else:
+        if exit_flag == 1:
             bluemira_debug(f"{PLASMOD} converged successfully")
+        elif exit_flag == -2:
+            raise CodesError(
+                f"{PLASMOD} error: Equilibrium solver crashed: too high pressure"
+            )
+        elif exit_flag == -1:
+            raise CodesError(
+                f"{PLASMOD} error: "
+                "Max number of iterations reached "
+                "equilibrium oscillating probably as a result of the pressure being too high "
+                "reducing H may help"
+            )
+        elif not exit_flag:
+            raise CodesError(
+                f"{PLASMOD} error: " "Abnormal paramters, possibly dtmax/dtmin too large"
+            )
+        else:
+            raise CodesError(f"{PLASMOD} error: " f"Unknown error code {exit_flag}")
 
 
 class Solver(interface.FileProgramInterface):

@@ -291,7 +291,7 @@ class Teardown(interface.Teardown):
             else self.parent._recv_mapping.values()
         )
         param = bm_file.extract_outputs(var)
-        self.parent._params.update_kw_parameters(dict(zip(var, param)), source=PROCESS)
+        self.parent.params.update_kw_parameters(dict(zip(var, param)), source=PROCESS)
 
     def read_mfile(self):
         """

@@ -23,3 +23,4 @@
 Importer for Plasmod runner constants and functions
 """
 from bluemira.codes.plasmod.api import Solver
+from bluemira.codes.plasmod.constants import NAME

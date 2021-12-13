@@ -184,10 +184,9 @@ class FileProgramInterface:
             ["_run", Run],
             ["_teardown", Teardown],
         ]:
-            sub = getattr(self, sub_name)
-            if not issubclass(sub, parent):
+            if not issubclass(getattr(self, sub_name), parent):
                 bluemira_warn("Using default {parent.__name__} task")
-                setattr(self, sub, parent)
+                setattr(self, sub_name, parent)
 
     @property
     def binary(self):
