@@ -21,8 +21,6 @@
 
 import pytest
 
-from bluemira.base.config import Configuration
-
 from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process import teardown
 from bluemira.codes.process.mapping import mappings

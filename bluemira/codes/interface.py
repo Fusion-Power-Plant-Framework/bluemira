@@ -36,7 +36,7 @@ from bluemira.codes.utilities import (
     LogPipe,
     get_recv_mapping,
     get_send_mapping,
-    get_mappings,
+    set_default_mapping,
 )
 
 __all__ = ["FileProgramInterface", "ApplicationProgramInterface"]
@@ -159,7 +159,7 @@ class FileProgramInterface:
         self.NAME = NAME
 
         if mappings is not None:
-            get_mappings(NAME, params, mappings)
+            set_default_mapping(NAME, params, mappings)
 
         if not hasattr(self, "__run_dir"):
             self.__run_dir = "./" if run_dir is None else run_dir

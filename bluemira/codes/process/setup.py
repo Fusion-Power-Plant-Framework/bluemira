@@ -54,9 +54,11 @@ class PROCESSInputWriter(InDat):
 
 class Setup(interface.Setup):
     def _run(self):
-        # Write the IN.DAT file and store in the main PROCESS folder
-        # Note that if use_bp_inputs is True, bluemira outputs with
-        # param.mapping.send == True will be written to IN.DAT.
+        """
+        Write the IN.DAT file and store in the main PROCESS folder
+        Note that if use_bp_inputs is True, bluemira outputs with
+        param.mapping.send == True will be written to IN.DAT.
+        """
         self.prepare_bp_inputs()
         self.write_indat(use_bp_inputs=True)
 

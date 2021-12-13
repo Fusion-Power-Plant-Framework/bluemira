@@ -136,6 +136,9 @@ def update_obsolete_vars(process_map_name: str) -> str:
 
 
 def _nested_check(process_name):
+    """
+    Recursively checks for obsolete variable names
+    """
     while process_name in OBS_VARS:
         process_name = OBS_VARS[process_name]
         if isinstance(process_name, list):
