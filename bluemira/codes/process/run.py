@@ -54,6 +54,10 @@ class RunMode(interface.RunMode):
 
 
 class Run(interface.Run):
+    """
+    Run task for process
+    """
+
     _binary = "process"
 
     def _run(self):

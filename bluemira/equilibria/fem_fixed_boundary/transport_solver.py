@@ -23,15 +23,23 @@
 The bluemira transport solver module
 """
 
+
 class TransportSolver:
-    """Transport solver class"""
+    """
+    Transport solver class
+    """
 
     def __init__(self, solver, *args, **kwargs):
         self.solver = solver
 
     def get_pprime(self):
-        return self.solver.pprime
+        """
+        Get pprime
+        """
+        return self.solver.get_profile("pprime")
 
-    def get_FFprime(self):
-        return self.solver.ffprime
-
+    def get_ffprime(self):
+        """
+        Get ffprime
+        """
+        return self.solver.get_profile("ffprime")

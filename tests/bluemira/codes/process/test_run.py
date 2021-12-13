@@ -29,7 +29,8 @@ from unittest.mock import patch
 from bluemira.base.builder import BuildConfig
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process import run, PROCESS_ENABLED
-from bluemira.codes.process.run import Solver
+
+# from bluemira.codes.process.run import Solver
 
 from tests.bluemira.codes.process import (
     FRAME_LIST,

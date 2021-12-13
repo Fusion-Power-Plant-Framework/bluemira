@@ -22,7 +22,7 @@
 """
 Configuration classes
 """
-from bluemira.base.parameter import ParameterFrame, ParameterMapping
+from bluemira.base.parameter import ParameterFrame
 from bluemira.base.config_schema import ConfigurationSchema
 
 

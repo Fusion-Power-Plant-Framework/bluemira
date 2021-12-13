@@ -153,18 +153,19 @@ def set_default_mapping(
 
 
 class LogPipe(threading.Thread):
+    """
+    Capture logs for subprocesses
+
+    https://codereview.stackexchange.com/questions/6567/redirecting-subprocesses-output-stdout-and-stderr-to-the-logging-module
+
+    Parameters
+    ----------
+    loglevel: str
+        print or error flush printing
+
+    """
+
     def __init__(self, loglevel):
-        """
-        Setup the object with a loglevel and start a thread for logging
-
-        https://codereview.stackexchange.com/questions/6567/redirecting-subprocesses-output-stdout-and-stderr-to-the-logging-module
-
-        Parameters
-        ----------
-        loglevel: str
-            print or error flush printing
-
-        """
         super().__init__(daemon=True)
 
         self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[

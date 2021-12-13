@@ -53,6 +53,10 @@ class PROCESSInputWriter(InDat):
 
 
 class Setup(interface.Setup):
+    """
+    Setup Task for process
+    """
+
     def _run(self):
         """
         Write the IN.DAT file and store in the main PROCESS folder
