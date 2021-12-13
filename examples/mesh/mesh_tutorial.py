@@ -83,4 +83,5 @@ if HAS_MSH2XDMF:
 # # If the mesh is made by 3D points, the plot with dolfin doesn't work
 # dolfin.plot(mesh)
 
-print(mesh.coordinates())
+if HAS_MSH2XDMF:
+    print(mesh.coordinates())
