@@ -55,6 +55,7 @@ class RunMode(Enum):
         """
         Call function of object with lowercase name of
         enum
+
         Parameters
         ----------
         obj: instance
