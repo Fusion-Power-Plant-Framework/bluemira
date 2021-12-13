@@ -25,13 +25,20 @@ Some examples of using bluemira mesh module.
 
 # %%
 
+import os
+
+from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.mesh import meshing
 from bluemira.geometry.face import BluemiraFace
 
 HAS_MSH2XDMF = False
 try:
-    import msh2xdmf
+    from bluemira.utilities.tools import get_module
+
+    msh2xdmf = get_module(
+        os.path.join(get_bluemira_root(), "..", "msh2xdmf", "msh2xdmf.py")
+    )
 
     HAS_MSH2XDMF = True
 except ImportError as err:
