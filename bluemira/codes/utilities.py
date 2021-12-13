@@ -28,6 +28,7 @@ import os
 import threading
 from typing import Dict, Literal
 
+import bluemira.base as bm_base
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
     bluemira_error_clean,
@@ -123,14 +124,32 @@ def get_send_mapping(params, code_name, send_all=False):
     return _get_mapping(params, code_name, "send", send_all)
 
 
-def get_mappings(code_name, params, mappings):
+def set_default_mapping(
+    code_name: str,
+    params: bm_base.ParameterFrame,
+    mapping: Dict[str, bm_base.ParameterMapping],
+):
+    """
+    Sets the default mappings for a given code.
+    Modifies directly params but only if no mapping for that code exists
+
+    Parameters
+    ----------
+    code_name: str
+        Name of code
+    params: ParameterFrame
+        ParameterFrame to modify
+    mapping: Dict[str, ParameterMapping]
+        mapping between bluemira and the code
+
+    """
     for key in params.keys():
         param = params.get_param(key)
-        if param.var in mappings:
+        if param.var in mapping:
             if param.mapping is None:
-                param.mapping = {code_name: mappings[param.var]}
+                param.mapping = {code_name: mapping[param.var]}
             elif code_name not in param.mapping:
-                param.mapping[code_name] = mappings[param.var]
+                param.mapping[code_name] = mapping[param.var]
 
 
 class LogPipe(threading.Thread):

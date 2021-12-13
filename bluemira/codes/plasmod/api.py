@@ -26,10 +26,10 @@ API for the transport code PLASMOD and related functions
 import copy
 import csv
 import json
-import pprint
 import os
+import pprint
 from enum import Enum, auto
-from typing import Dict, Union, Iterable
+from typing import Dict, Iterable, Union
 
 import numpy as np
 
@@ -130,12 +130,32 @@ class Outputs(PlasmodParameters):
 
 
 class RunMode(interface.RunMode):
+    """
+    RunModes for plasmod
+    """
+
     RUN = auto()
     MOCK = auto()
 
 
 class Setup(interface.Setup):
-    """Setup class for Plasmod"""
+    """
+    Setup class for Plasmod
+
+    Parameters
+    ----------
+    parent
+        Parent solver class instance
+    input_file: str
+        input file save location
+    output_file: str
+        output file save location
+    profiles_file: str
+        profiles file save location
+    kwargs: Dict
+        passed to parent setup task
+
+    """
 
     def __init__(self, parent, input_file, output_file, profiles_file, **kwargs):
         super().__init__(parent, **kwargs)
@@ -148,7 +168,16 @@ class Setup(interface.Setup):
         self.output_file = output_file
 
     def _write(self, params, filename):
+        """
+        Plasmod input file writer
 
+        Parameters
+        ----------
+        params: Dict
+            dictionary to write
+        filename: str
+            file location
+        """
         with open(filename, "w") as fid:
             for k, v in params.items():
                 if isinstance(v, Enum):
@@ -161,12 +190,18 @@ class Setup(interface.Setup):
                     fid.write(f"{k} {v}\n")
 
     def write_input(self):
+        """
+        Write input file
+        """
         self._write(self.parent.params, os.path.join(self.filepath, self.input_file))
 
     def _check_models(self):
+        """
+        Check selected plasmod models are known
+        """
         self.params.i_impmodel = ImpurityModel(self.params.i_impmodel)
         self.params.i_modeltype = TransportModel(self.params.i_modeltype)
-        self.params.i_equiltype = EquilibriumModel(self._params.i_equiltype)
+        self.params.i_equiltype = EquilibriumModel(self.params.i_equiltype)
         self.params.i_pedestal = PedestalModel(self.params.i_pedestal)
         self.params.isiccir = SOLModel(self.params.isiccir)
 
@@ -212,6 +247,18 @@ class Setup(interface.Setup):
 
 
 class Run(interface.Run):
+    """
+    Run class for plasmod
+
+    Parameters
+    ----------
+    parent
+        Parent solver class instance
+    kwargs: Dict
+        passed to parent setup task
+
+    """
+
     _binary = "transporz"  # Who knows why its not called plasmod
 
     def __init__(self, parent, **kwargs):
@@ -219,7 +266,7 @@ class Run(interface.Run):
 
     def _run(self, *args, **kwargs):
         """
-        Run plasmod run
+        Run plasmod runner
         """
         bluemira_debug("Mode: run")
         super()._run_subprocess(
@@ -315,7 +362,27 @@ class Teardown(interface.Teardown):
 
 
 class Solver(interface.FileProgramInterface):
-    """Plasmod solver class"""
+    """
+    Plasmod solver class
+
+    Parameters
+    ----------
+    runmode: str
+        Plasmod runmode
+    params: ParameterFrame
+        ParameterFrame for plasmod
+    build_config: Dict
+        build configuration dictionary
+    input_file: str
+        input file save location
+    output_file: str
+        output file save location
+    profiles_file: str
+        profiles file save location
+    binary: str
+        plasmod binary name
+
+    """
 
     _setup = Setup
     _run = Run

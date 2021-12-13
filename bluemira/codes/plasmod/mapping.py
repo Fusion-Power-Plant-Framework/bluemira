@@ -4,21 +4,31 @@ from bluemira.base.parameter import ParameterMapping
 
 
 class ImpurityModel(Enum):
-    # [-] impurity model selector:
-    # 0 - fixed concentration,
-    # 1 - concentration fixed at pedestal top, then fixed density.
-    # "i_impmodel"
+    """
+    Impurity Model selector
+
+    0 - fixed concentration,
+    1 - concentration fixed at pedestal top, then fixed density.
+
+    Plasmod variable name: "i_impmodel"
+    """
+
     FIXED = 0
     PED_FIXED = 1
 
 
 class TransportModel(Enum):
-    # [-] selector for transport model
-    # 1 - simple gyrobohm scaling with imposed H factor,
-    # 555 - H factor scaling from F. Palermo
-    # 111 - another model based on gyro-Bohm transport
-    # 2 - no reference in the source code
-    # "i_modeltype"
+    """
+    Transport Model Selector
+
+    1 - simple gyrobohm scaling with imposed H factor,
+    555 - H factor scaling from F. Palermo
+    111 - another model based on gyro-Bohm transport
+    2 - no reference in the source code
+
+    Plasmod variable name: "i_modeltype"
+    """
+
     GYROBOHM_1 = 1
     GYROBOHM_2 = 111
     UNKNOWN = 2
@@ -26,33 +36,52 @@ class TransportModel(Enum):
 
 
 class EquilibriumModel(Enum):
-    # [-] equilibrium model selector:
-    # 1 - EMEQ solves equilibrium with given q95, with sawteeth.
-    # 2 - EMEQ solves with given Ip, with sawteeth
-    # "i_equiltype"
+    """
+    Equilibrium Model Selector
+
+    ! - EMEQ solves equilibrium with given q95, with sawteeth.
+    2 - EMEQ solves with given Ip, with sawteeth
+
+    Plasmod variable name: "i_equiltype"
+    """
+
     q95_sawtooth = 1
     Ip_sawtooth = 2
 
 
 class PedestalModel(Enum):
-    # [-] pedestal model selector:
-    # 1 - fixed pedestal temperature (Teped_in),
-    # 2 - Saarelma scaling
-    # "i_pedestal"
+    """
+    Pedestal Model Selector
+
+    1 - fixed pedestal temperature (Teped_in),
+    2 - Saarelma scaling
+
+    Plasmod variable name: "i_pedestal"
+    """
+
     FIX_TEMP = 1
     SAARELMA = 2
 
 
 class SOLModel(Enum):
-    # [-] SOL model selector:
-    # 0 - fit based on Eich scaling
-    # 1 - Mattia Siccinio's model
-    # "isiccir"
+    """
+    SOL Model Selector:
+
+    0 - fit based on Eich scaling
+    1 - Mattia Siccinio's model
+
+    Plasmod variable name: "isiccir"
+    """
+
     EICH_FIT = 0
     SICCINIO = 1
 
 
 class Profiles(Enum):
+    """
+    Profile Selector
+    """
+
     # [A/m²] Bootstrap parallel current density profile
     cubb = "cubb"
     # [-] Triangularity profile
@@ -190,8 +219,6 @@ PLASMOD_INPUTS = {
     "BM_INP": "rho_n",
     # [-] normalized coordinate of pedestal temperature
     "BM_INP": "rho_T",
-    # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
-    "BM_INP": "Teped_inp",
     # [keV] electrons/ions temperature at separatrix
     "BM_INP": "Tesep",
     ############################
@@ -217,9 +244,9 @@ PLASMOD_INPUTS = {
     # normalized coordinate x, for NBI heating to control H-mode
     "BM_INP": "dx_heat_nbi",
     # [-] required fraction of non inductive current, if 0, dont use CD
-    "BM_INP": "f_ni",
+    "f_ni": "f_ni",
     # [m*MA/MW] Normalized CD efficiency
-    "BM_INP": "nbcdeff",
+    "BM_INP": "nbcdeff",  # tentative g_cd_nb but normalise wrt to what?
     # [MW] max allowed power for control (fusion power, H-mode)
     "BM_INP": "Pheat_max",
     # [MW] required fusion power.
@@ -237,7 +264,7 @@ PLASMOD_INPUTS = {
     # if Psep/R0 > Psep_R0_max seed Xenon
     "BM_INP": "Psep_R0_max",
     # [MW] fixed auxiliary heating power required for control
-    "BM_INP": "q_control",
+    "q_control": "q_control",
     # [MW/m2] max divertor heat flux -->
     # if qdivt > qdivt_max -> seed argon
     "BM_INP": "qdivt_max",
@@ -268,9 +295,9 @@ PLASMOD_OUTPUTS = {
     # [m²] plasma toroidal surface
     "BM_OUT": "area_tor",
     # [-] poloidal beta
-    "BM_OUT": "beta_p",
+    "beta_p": "beta_p",
     # [-] normalized beta
-    "BM_OUT": "beta_n",
+    "beta_N": "beta_n",
     # [-] toroidal beta
     "BM_OUT": "beta_t",
     # [T] average poloidal field
@@ -284,23 +311,23 @@ PLASMOD_OUTPUTS = {
     # [-] Xenon concentration (ratio nH/ne)
     "BM_OUT": "c_xe",
     # [-] plasma edge triangularity
-    "BM_OUT": "delta_e",
+    "delta": "delta_e",
     # [-] tolerance on kinetic profiles
     "BM_OUT": "etol",
     # [-] plasma bootstrap current fraction
-    "BM_OUT": "f_bs",
+    "f_bs": "f_bs",
     # [-] plasma current drive fraction
     "BM_OUT": "f_cd",
     # [-] plasma current inductive fraction
     "BM_OUT": "f_ind",
     # [-] H-factor
-    "BM_OUT": "H",
+    "BM_OUT": "H",  # H_star?
     # [MA] plasma current
-    "BM_OUT": "Ip",
+    "I_p": "Ip",
     # [-] plasma edge elongation
-    "BM_OUT": "kappa_e",
+    "kappa": "kappa_e",
     # [-] plasma internal inductance
-    "BM_OUT": "li",
+    "l_i": "li",
     # [-] number of iterations
     "BM_OUT": "niter",
     # [1E19/m3] electron/ion density at pedestal height
@@ -312,17 +339,17 @@ PLASMOD_OUTPUTS = {
     # [W] alpha power
     "BM_OUT": "Palpha",
     # [W] Bremsstrahlung radiation power
-    "BM_OUT": "Pbrem",
+    "P_brehms": "Pbrem",
     # [W] Fusion power
-    "BM_OUT": "Pfus",
+    "P_fus": "Pfus",
     # [W] DD fusion power
-    "BM_OUT": "PfusDD",
+    "P_fus_DD": "PfusDD",
     # [W] DT fusion power
-    "BM_OUT": "PfusDT",
+    "P_fus_DT": "PfusDT",
     # [m] plasma perimeter
     "BM_OUT": "perim",
     # [W] Line radiation power
-    "BM_OUT": "Pline",
+    "P_line": "Pline",
     # [W] LH transition power
     "BM_OUT": "PLH",
     # [W] neutron fusion power
@@ -330,15 +357,15 @@ PLASMOD_OUTPUTS = {
     # [W] Ohimic heating power
     "BM_OUT": "Pohm",
     # [W] total radiation power
-    "BM_OUT": "Prad",
+    "P_rad": "Prad",
     # [W] total power across plasma separatrix
-    "BM_OUT": "Psep",
+    "P_sep": "Psep",
     # [MW/m] Divertor challenging criterion Psep/R0
     "BM_OUT": "Psep_R0",
     # [MW * T/ m] Divertor challenging criterion Psep * Bt /(q95 * a)
     "BM_OUT": "Psep_Bt_q95_A_R0",
     # [W] Synchrotron radiation power
-    "BM_OUT": "Psync",
+    "P_sync": "Psync",
     # [W/m2] divertor heat flux
     "BM_OUT": "qdivt",
     # [-] Edge safety factor
@@ -346,11 +373,9 @@ PLASMOD_OUTPUTS = {
     # [m] Plasma minor radius
     "BM_OUT": "rpminor",
     # [Ohm] plasma resistance
-    "BM_OUT": "rplas",
+    "res_plasma": "rplas",
     # [s] energy confinement time
-    "BM_OUT": "tau_e",
-    # [keV] Ions/Electrons at pedestal
-    "BM_OUT": "Teped",
+    "tau_e": "tau_e",
     # [-] tolerance on safety factor profile
     "BM_OUT": "toleq",
     # [-] overall tolerance
@@ -360,18 +385,37 @@ PLASMOD_OUTPUTS = {
     # [J] plasma thermal energy
     "BM_OUT": "Wth",
     # [-] plasma effective charge
-    "BM_OUT": "Zeff",
+    "BM_OUT": "Zeff",  # Z_eff?
+}
+
+PLASMOD_INOUTS = {
+    # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
+    "BM_IO": "Teped",
+    # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
+    "BM_IO": "Teped_inp",
 }
 
 
-def set_default_mappings():
+def create_mapping():
+    """
+    Creates mappings for plasmod
+
+    Returns
+    -------
+    mappings: Dict
+        A mapping from bluemira names to a plasmod ParameterMapping
+
+    """
     mappings = {}
-    send = True
-    recv = False
-    for puts in [PLASMOD_INPUTS, PLASMOD_OUTPUTS]:
+    ins = {"send": True, "recv": False}
+    outs = {"send": False, "recv": True}
+    inouts = {"send": True, "recv": True}
+    for puts, sr in [
+        [PLASMOD_INPUTS, ins],
+        [PLASMOD_OUTPUTS, outs],
+        [PLASMOD_INOUTS, inouts],
+    ]:
         for bm_key, pl_key in puts.items():
-            mappings[bm_key] = ParameterMapping(pl_key, send=send, recv=recv)
-        send = not send
-        recv = not recv
+            mappings[bm_key] = ParameterMapping(pl_key, send=sr["send"], recv=sr["recv"])
 
     return mappings
