@@ -67,6 +67,7 @@ class PFCoilsComponent(Component):
     def field(self, x, y, z):
         """
         Calculate the magnetic field due to the TF coils at a set of points.
+
         Parameters
         ----------
         x: Union[float, np.array]
@@ -219,6 +220,7 @@ class PFCoilsBuilder(Builder):
     def reinitialise(self, params, **kwargs) -> None:
         """
         Initialise the state of this builder ready for a new run.
+
         Parameters
         ----------
         params: Dict[str, Any]
@@ -251,6 +253,7 @@ class PFCoilsBuilder(Builder):
     def build(self, label: str = "PF Coils", **kwargs) -> PFCoilsComponent:
         """
         Build the PF Coils component.
+
         Returns
         -------
         component: PFCoilsComponent
@@ -316,29 +319,3 @@ class PFCoilsBuilder(Builder):
 
     def _make_field_solver(self):
         return None
-
-
-if __name__ == "__main__":
-    from bluemira.equilibria.coils import Coil, CoilSet
-
-    coil = Coil(4, 4, 10e6, dx=0.5, dz=0.8, name="PF_1")
-    coil2 = Coil(10, 10, 1e5, dx=0.1, dz=0.5, name="PF_2")
-    coilset = CoilSet([coil, coil2])
-    builder = PFCoilBuilder(coil, 0.05, 0.05, 0.1)
-
-    c_xy = builder.build_xy()
-    c_xz = builder.build_xz()
-    c_xyz = builder.build_xyz()
-
-    c_xy.plot_2d()
-    c_xz.plot_2d()
-    c_xyz.show_cad()
-
-    builder = PFCoilsBuilder(coilset, 0.05, 0.05, 0.1)
-    c_xy = builder.build_xy()
-    c_xz = builder.build_xz()
-    c_xyz = builder.build_xyz()
-
-    c_xy.plot_2d()
-    c_xz.plot_2d()
-    c_xyz.show_cad()
