@@ -163,8 +163,8 @@ class Setup(interface.Setup):
 
     """
 
-    def __init__(self, parent, input_file, output_file, profiles_file, **kwargs):
-        super().__init__(parent, **kwargs)
+    def __init__(self, parent, input_file, output_file, profiles_file, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
         self._check_models()
         self.profiles_file = profiles_file
         self.filepath = get_bluemira_path("codes/plasmod")
@@ -211,13 +211,13 @@ class Setup(interface.Setup):
         self.params.i_pedestal = PedestalModel(self.params.i_pedestal)
         self.params.isiccir = SOLModel(self.params.isiccir)
 
-    def _run(self, *args, **kwargs):
+    def _run(self):
         """
         Run plasmod setup
         """
         self.write_input()
 
-    def _mock(self, *args, **kwargs):
+    def _mock(self):
         """
         Mock plasmod setup
         """
@@ -267,10 +267,10 @@ class Run(interface.Run):
 
     _binary = "transporz"  # Who knows why its not called plasmod
 
-    def __init__(self, parent, **kwargs):
-        super().__init__(parent, kwargs.pop("binary", self._binary))
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, kwargs.pop("binary", self._binary), *args, **kwargs)
 
-    def _run(self, *args, **kwargs):
+    def _run(self):
         """
         Run plasmod runner
         """
@@ -290,7 +290,7 @@ class Teardown(interface.Teardown):
     Plasmod Teardown Task
     """
 
-    def _run(self, *args, **kwargs):
+    def _run(self):
         """
         Run plasmod teardown
         """
@@ -301,7 +301,7 @@ class Teardown(interface.Teardown):
         self.parent._out_params.modify(**profiles)
         # print_parameter_list(self.parent._out_params)
 
-    def _mock(self, *args, **kwargs):
+    def _mock(self):
         """
         Mock plasmod teardown
         """

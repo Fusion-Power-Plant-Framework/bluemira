@@ -289,10 +289,10 @@ class FileProgramInterface:
         """
         return self.setup_obj._send_mapping
 
-    def run(self):
+    def run(self, *args, **kwargs):
         """
         Run the full program interface
         """
-        self._runner(self.setup_obj)
-        self._runner(self.run_obj)
-        self._runner(self.teardown_obj)
+        self._runner(self.setup_obj, *args, **kwargs)
+        self._runner(self.run_obj, *args, **kwargs)
+        self._runner(self.teardown_obj, *args, **kwargs)
