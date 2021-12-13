@@ -118,9 +118,11 @@ build_config = {
             },
         },
         "algorithm_name": "COBYLA",
-        "n_rip_points": 50,
-        "nx": 2,
-        "ny": 2,
+        "problem_settings": {
+            "n_rip_points": 50,
+            "nx": 2,
+            "ny": 2,
+        },
     },
 }
 

@@ -121,24 +121,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         "tf_wp_width",
         "tf_wp_depth",
     ]
-    _required_config = OptimisedShapeBuilder._required_config + [
-        "n_rip_points",
-        "nx",
-        "ny",
-    ]
+    _required_config = OptimisedShapeBuilder._required_config + []
     _params: Configuration
     _param_class: Type[GeometryParameterisation]
     _default_runmode: str = "run"
     _design_problem: Optional[GeometryOptimisationProblem] = None
     _centreline: BluemiraWire
-
-    def _extract_config(self, build_config):
-        super()._extract_config(build_config)
-        # Really, these are specific to the optimisation problem... and not to the the
-        # TFCoilsBuilder
-        self._n_rip_points = build_config.get("n_rip_points", 100)
-        self._nx = build_config.get("nx", 1)
-        self._ny = build_config.get("ny", 1)
 
     def _derive_shape_params(self):
         shape_params = super()._derive_shape_params()
@@ -185,9 +173,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             wp_cross_section=self._wp_cross_section,
             separatrix=separatrix,
             keep_out_zone=keep_out_zone,
-            nx=self._nx,
-            ny=self._ny,
-            n_rip_points=self._n_rip_points,
         )
         self._centreline = self._design_problem.parameterisation.create_shape()
 
