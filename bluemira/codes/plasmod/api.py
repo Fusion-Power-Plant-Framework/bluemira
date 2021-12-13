@@ -26,10 +26,10 @@ API for the transport code PLASMOD and related functions
 import copy
 import csv
 import json
-import os
 import pprint
 from enum import Enum, auto
-from typing import Dict, Iterable
+from pathlib import Path
+from typing import Dict, Iterable, Optional
 
 import numpy as np
 
@@ -45,7 +45,7 @@ from bluemira.codes.plasmod.mapping import (
     Profiles,
     SOLModel,
     TransportModel,
-    # create_mapping,
+    create_mapping,
 )
 from bluemira.utilities.tools import CommentJSONDecoder
 
@@ -163,15 +163,15 @@ class Setup(interface.Setup):
 
     """
 
-    def __init__(self, parent, input_file, output_file, profiles_file, *args, **kwargs):
+    def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self._check_models()
-        self.profiles_file = profiles_file
         self.filepath = get_bluemira_path("codes/plasmod")
-        self.def_outfile = "PLASMOD_DEFAULT_OUT.json"
-        self.def_infile = "PLASMOD_DEFAULT_IN.json"
-        self.input_file = input_file
-        self.output_file = output_file
+        self.def_outfile = Path(self.filepath, "PLASMOD_DEFAULT_OUT.json")
+        self.def_infile = Path(self.filepath, "PLASMOD_DEFAULT_IN.json")
+        self.input_file = "plasmod_input.dat"
+        self.output_file = "plasmod_outputs.dat"
+        self.profiles_file = "plasmod_profiles.dat"
 
     def _write(self, params, filename):
         """
@@ -199,7 +199,7 @@ class Setup(interface.Setup):
         """
         Write input file
         """
-        self._write(self.parent.params, os.path.join(self.filepath, self.input_file))
+        self._write(self.parent.params, Path(self._run_dir, self.input_file))
 
     def _check_models(self):
         """
@@ -227,15 +227,13 @@ class Setup(interface.Setup):
         """
         Returns a copy of the defaults plasmod outputs.
         """
-        return self._load_default_from_json(
-            os.path.join(self.filepath, self.def_outfile)
-        )
+        return self._load_default_from_json(self.def_outfile)
 
     def get_default_plasmod_inputs(self):
         """
         Returns a copy of the default plasmod inputs
         """
-        return self._load_default_from_json(os.path.join(self.filepath, self.def_infile))
+        return self._load_default_from_json(self.def_infile)
 
     @staticmethod
     def _load_default_from_json(filepath: str):
@@ -278,9 +276,9 @@ class Run(interface.Run):
         super()._run_subprocess(
             [
                 self._binary,
-                self.parent.setup_obj.input_file,
-                self.parent.setup_obj.output_file,
-                self.parent.setup_obj.profiles_file,
+                Path(self._run_dir, self.parent.setup_obj.input_file),
+                Path(self._run_dir, self.parent.setup_obj.output_file),
+                Path(self._run_dir, self.parent.setup_obj.profiles_file),
             ]
         )
 
@@ -294,25 +292,31 @@ class Teardown(interface.Teardown):
         """
         Run plasmod teardown
         """
-        output = self.read_output_files(self.parent.setup_obj.output_file)
+        output = self.read_output_files(
+            Path(self._run_dir, self.parent.setup_obj.output_file)
+        )
         self.parent._out_params.modify(**output)
-        self._check_return_value()
-        profiles = self.read_output_files(self.parent.setup_obj.profiles_file)
+        self._check_return_value(self.parent._out_params.i_flag)
+        profiles = self.read_output_files(
+            Path(self._run_dir, self.parent.setup_obj.profiles_file)
+        )
         self.parent._out_params.modify(**profiles)
-        # print_parameter_list(self.parent._out_params)
 
     def _mock(self):
         """
         Mock plasmod teardown
         """
-        output = self.read_output_files(self.parent.setup_obj.output_file)
+        output = self.read_output_files(
+            Path(self._run_dir, self.parent.setup_obj.output_file)
+        )
         self.parent._out_params.modify(**output)
-        profiles = self.read_output_files(self.parent.setup_obj.profiles_file)
+        profiles = self.read_output_files(
+            Path(self._run_dir, self.parent.setup_obj.profiles_file)
+        )
         self.parent._out_params.modify(**profiles)
-        # print_parameter_list(self.parent._out_params)
 
     @staticmethod
-    def read_output_files(output_file: str):
+    def read_output_files(output_file: str) -> Dict[str, [float, np.ndarray]]:
         """
         Read the Plasmod output parameters from the output file
 
@@ -337,7 +341,8 @@ class Teardown(interface.Teardown):
                 )
         return output
 
-    def _check_return_value(self):
+    @staticmethod
+    def _check_return_value(exit_flag: int):
         """
         Check the return value of plasmod
 
@@ -349,7 +354,6 @@ class Teardown(interface.Teardown):
         -2: Equilibrium solver crashed: too high pressure
 
         """
-        exit_flag = self.parent._out_params.i_flag
         if exit_flag == 1:
             bluemira_debug(f"{PLASMOD} converged successfully")
         elif exit_flag == -2:
@@ -401,24 +405,20 @@ class Solver(interface.FileProgramInterface):
 
     def __init__(
         self,
-        runmode="run",
         params=None,
-        build_config=None,
-        input_file="plasmod_input.dat",
-        output_file="outputs.dat",
-        profiles_file="profiles.dat",
-        binary="transporz",
+        # build_config=None,
+        runmode="run",
+        run_dir: Optional[str] = None,
+        binary: Optional[str] = "transporz",
     ):
         self._out_params = Outputs()
         super().__init__(
             PLASMOD,
             self._get_inputs(params),
-            runmode,
-            # default_mappings=set_default_mappings(),
-            input_file=input_file,
-            output_file=output_file,
-            profiles_file=profiles_file,
+            runmode,  # build_config.get("plasmod_mode", "run")
             binary=binary,
+            run_dir=run_dir,
+            mappings=create_mapping(),
         )
 
     @staticmethod
