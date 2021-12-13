@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+"""
+Core functionality for the bluemira mesh module.
+"""
+
 from __future__ import annotations
 
 # import mesher lib (gmsh)
@@ -41,6 +45,10 @@ DEFAULT_MESH_OPTIONS = {
     "lcar": None,
     "physical_group": None,
 }
+
+
+MESH_DATA = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1, "surface_tag": 2}
+SUPPORTED_GEOS = ["BluemiraWire", "BluemiraFace", "BluemiraShell"]
 
 
 def get_default_options():
@@ -130,12 +138,16 @@ class Meshable:
 
 
 class Mesh:
-    def __init__(
-        self, modelname="Mesh", terminal=1, meshfile=["Mesh.geo_unrolled", "Mesh.msh"]
-    ):
+    """
+    A class for supporting the creation of meshes and writing out those meshes to files.
+    """
+
+    def __init__(self, modelname="Mesh", terminal=1, meshfile=None):
         self.modelname = modelname
         self.terminal = terminal
-        self.meshfile = meshfile
+        self.meshfile = (
+            ["Mesh.geo_unrolled", "Mesh.msh"] if meshfile is None else meshfile
+        )
 
     def _check_meshfile(self, meshfile):
         """
@@ -154,6 +166,9 @@ class Mesh:
 
     @property
     def meshfile(self):
+        """
+        The path(s) to the file(s) containing the meshes.
+        """
         return self._meshfile
 
     @meshfile.setter
@@ -161,9 +176,12 @@ class Mesh:
         self._meshfile = self._check_meshfile(meshfile)
 
     def __call__(self, obj):
+        """
+        Generate the mesh and save it to file.
+        """
         if isinstance(obj, Meshable):
             # gmsh is inizialized
-            _freecadGmsh._initialize_mesh(self.terminal, self.modelname)
+            _FreeCADGmsh._initialize_mesh(self.terminal, self.modelname)
             # Mesh the object. A dictionary with the geometrical and internal
             # information that are used by gmsh is returned. In particular,
             # a gmsh key is added to any meshed entity.
@@ -179,14 +197,14 @@ class Mesh:
             self._apply_mesh_size(buffer)
 
             # generate the mesh
-            _freecadGmsh._generate_mesh()
+            _FreeCADGmsh._generate_mesh()
 
             # save the mesh file
             for file in self.meshfile:
-                _freecadGmsh._save_mesh(file)
+                _FreeCADGmsh._save_mesh(file)
 
             # close gmsh
-            _freecadGmsh._finalize_mesh()
+            _FreeCADGmsh._finalize_mesh()
         else:
             raise ValueError("Only Meshable objects can be meshed")
         return buffer
@@ -223,7 +241,7 @@ class Mesh:
         for k, v in buffer.items():
             if k in dict_dim.keys():
                 if "physical_group" in v.keys():
-                    _freecadGmsh.add_physical_group(
+                    _FreeCADGmsh.add_physical_group(
                         dict_dim[k],
                         self.get_gmsh_dict(buffer, "default")[other_dict[dict_dim[k]]],
                         v["physical_group"],
@@ -242,7 +260,7 @@ class Mesh:
         points_lcar2 = self.__create_dict_for_mesh_size(buffer)
         if len(points_lcar2) > 0:
             for p in points_lcar2:
-                _freecadGmsh._set_mesh_size([(0, p[0])], p[1])
+                _FreeCADGmsh._set_mesh_size([(0, p[0])], p[1])
 
     def __create_dict_for_mesh_size(self, buffer):
         """
@@ -279,10 +297,10 @@ class Mesh:
         """
         Apply the boolean fragment operation.
         """
-        all_ent, oo, oov = _freecadGmsh._fragment(
+        all_ent, oo, oov = _FreeCADGmsh._fragment(
             dim, all_ent, tools, remove_object, remove_tool
         )
-        Mesh.__iterate_gmsh_dict(buffer, _freecadGmsh._map_mesh_dict, all_ent, oov)
+        Mesh.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
 
     @staticmethod
     def _check_intersections(gmsh_dict):
@@ -291,7 +309,7 @@ class Mesh:
         """
         if len(gmsh_dict["curve_tag"]) > 0:
             gmsh_curve_tag = [(1, tag) for tag in gmsh_dict["curve_tag"]]
-            new_points = _freecadGmsh._get_boundary(gmsh_curve_tag)
+            new_points = _FreeCADGmsh._get_boundary(gmsh_curve_tag)
             new_points = list(set([tag[1] for tag in new_points]))
             gmsh_dict["points_tag"] = new_points
 
@@ -348,7 +366,7 @@ class Mesh:
                                 self.__convert_wire_to_gmsh(item)
                             else:
                                 for curve in bvalue:
-                                    curve_gmsh_dict = _freecadGmsh.create_gmsh_curve(
+                                    curve_gmsh_dict = _FreeCADGmsh.create_gmsh_curve(
                                         curve
                                     )
                                     value["gmsh"]["points_tag"] += curve_gmsh_dict[
@@ -441,58 +459,49 @@ class Mesh:
         gmsh_dict = {}
         output = None
 
-        data = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1, "surface_tag": 2}
-        for d in data:
+        for d in MESH_DATA:
             gmsh_dict[d] = []
 
-        if "BluemiraWire" in buffer:
-            boundary = buffer["BluemiraWire"]["boundary"]
-            if "gmsh" in buffer["BluemiraWire"]:
-                for d in data:
-                    if d in buffer["BluemiraWire"]["gmsh"]:
-                        gmsh_dict[d] += buffer["BluemiraWire"]["gmsh"][d]
-            for item in boundary:
-                for k, v1 in item.items():
-                    if k == "BluemiraWire":
-                        temp_dict = self.get_gmsh_dict(item)
-                        for d in data:
-                            gmsh_dict[d] += temp_dict[d]
+        def _extract_mesh_from_buffer(buffer, obj_name):
+            if obj_name not in buffer:
+                raise ValueError(f"No {obj_name} to mesh.")
 
-        if "BluemiraFace" in buffer:
-            boundary = buffer["BluemiraFace"]["boundary"]
-            if "gmsh" in buffer["BluemiraFace"]:
-                for d in data:
-                    if d in buffer["BluemiraFace"]["gmsh"]:
-                        gmsh_dict[d] += buffer["BluemiraFace"]["gmsh"][d]
-            for item in boundary:
-                temp_dict = self.get_gmsh_dict(item)
-                for d in data:
-                    gmsh_dict[d] += temp_dict[d]
+            boundary = buffer[obj_name]["boundary"]
+            if "gmsh" in buffer[obj_name]:
+                for d in MESH_DATA:
+                    if d in buffer[obj_name]["gmsh"]:
+                        gmsh_dict[d] += buffer[obj_name]["gmsh"][d]
 
-        if "BluemiraShell" in buffer:
-            boundary = buffer["BluemiraShell"]["boundary"]
-            if "gmsh" in buffer["BluemiraShell"]:
-                for d in data:
-                    if d in buffer["BluemiraShell"]["gmsh"]:
-                        gmsh_dict[d] += buffer["BluemiraShell"]["gmsh"][d]
             for item in boundary:
-                temp_dict = self.get_gmsh_dict(item)
-                for d in data:
-                    gmsh_dict[d] += temp_dict[d]
+                if obj_name == "BluemiraWire":
+                    for k in item:
+                        if k == obj_name:
+                            temp_dict = self.get_gmsh_dict(item)
+                            for d in MESH_DATA:
+                                gmsh_dict[d] += temp_dict[d]
+                else:
+                    temp_dict = self.get_gmsh_dict(item)
+                    for d in MESH_DATA:
+                        gmsh_dict[d] += temp_dict[d]
 
-        for d in data:
+        for geo_name in SUPPORTED_GEOS:
+            if geo_name in buffer:
+                _extract_mesh_from_buffer(buffer, geo_name)
+
+        for d in MESH_DATA:
             gmsh_dict[d] = list(dict.fromkeys(gmsh_dict[d]))
 
         if format == "default":
             output = gmsh_dict
-        if format == "gmsh":
+        elif format == "gmsh":
             output = {}
-            for d in data:
-                output[d] = [(data[d], tag) for tag in gmsh_dict[d]]
+            for d in MESH_DATA:
+                output[d] = [(MESH_DATA[d], tag) for tag in gmsh_dict[d]]
+
         return output
 
 
-class _freecadGmsh:
+class _FreeCADGmsh:
     @staticmethod
     def _initialize_mesh(terminal=1, modelname="Mesh"):
 
@@ -688,8 +697,8 @@ class _freecadGmsh:
         return new_gmsh_dict
 
     @staticmethod
-    def set_mesh_size(dimTags, size):
-        gmsh.model.occ.mesh.setSize(dimTags, size)
+    def set_mesh_size(dim_tags, size):
+        gmsh.model.occ.mesh.setSize(dim_tags, size)
         gmsh.model.occ.synchronize()
 
     @staticmethod
@@ -699,8 +708,8 @@ class _freecadGmsh:
             gmsh.model.setPhysicalName(dim, tag, name)
 
     @staticmethod
-    def _set_mesh_size(dimtags, size):
-        gmsh.model.mesh.setSize(dimtags, size)
+    def _set_mesh_size(dim_tags, size):
+        gmsh.model.mesh.setSize(dim_tags, size)
 
     @staticmethod
     def _get_boundary(dimtags, combined=False, recursive=False):
