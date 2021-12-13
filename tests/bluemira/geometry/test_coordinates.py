@@ -226,6 +226,13 @@ class TestCoordinates:
         z = np.zeros(100)
         c = Coordinates([x, y, z])
         assert c.check_ccw()
+        radius = 5
+        theta = np.linspace(0, 2 * np.pi, 100)
+        x = radius * np.cos(theta)
+        z = radius * np.sin(theta)
+        y = np.zeros(100)
+        c = Coordinates([x, y, z])
+        assert c.check_ccw(axis=[0, 1, 0])
 
     def test_complicated(self):
         xyz = trace_torus_orbit(5, 1, 10, 999)

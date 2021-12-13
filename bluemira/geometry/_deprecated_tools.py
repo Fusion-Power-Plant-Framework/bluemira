@@ -587,7 +587,6 @@ def get_area_3d(x, y, z):
     return abs(area)
 
 
-@nb.jit(cache=True, nopython=True)
 def check_ccw_3d(x, y, z, normal):
     """
     Check if a set of coordinates is counter-clockwise w.r.t a normal vector.
@@ -608,7 +607,25 @@ def check_ccw_3d(x, y, z, normal):
     ccw: bool
         Whether or not the set is CCW about the normal vector
     """
-    return _get_signed_area(x, y, z, normal) < 0.0
+    r = rotation_matrix_v1v2([0, 0, 1], normal)
+    x, y, z = (np.array([x, y, z]).T @ r).T
+    return _get_signed_area(x, y, z, normal) >= 0.0
+
+
+def check_ccw_3d2(x, y, z, normal):
+    normal /= np.linalg.norm(normal)
+    m = np.zeros((3, len(x)))
+    m[0, :] = x
+    m[1, :] = y
+    m[2, :] = z
+    dm = np.diff(m, axis=1)
+    norm_dm = np.linalg.norm(dm, axis=1)
+    # dmn = dm / norm_dm
+    a = np.zeros(3)
+    for i in range(len(x) - 1):
+        a += np.dot(normal, dm.T[i])
+
+    return a <= 0.0
 
 
 @xyz_process
