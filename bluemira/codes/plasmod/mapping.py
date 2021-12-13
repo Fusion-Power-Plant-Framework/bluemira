@@ -54,69 +54,69 @@ class SOLModel(Enum):
 
 class Profiles(Enum):
     # [A/m²] Bootstrap parallel current density profile
-    _cubb = "cubb"
+    cubb = "cubb"
     # [-] Triangularity profile
-    _delta = "delta"
+    delta = "delta"
     # [m³] Volume increment profile
-    _dV = "dV"
+    dV = "dV"
     # [(m*T) * (m*T) / Wb == T] FF' profile
-    _ffprime = "ffprime"
+    ffprime = "ffprime"
     # [m⁴] < |grad V|²> g1 metric coefficient's profile
-    _g1 = "g1"
+    g1 = "g1"
     # [m²] < |grad V|²/r²> g2 metric coefficient's profile
-    _g2 = "g2"
+    g2 = "g2"
     # [m⁻²] < 1/r²> g3 metric coefficient's profile
-    _g3 = "g3"
+    g3 = "g3"
     # [m*T] Poloidal current profile
-    _ipol = "i_pol"
+    ipol = "i_pol"
     # [A/m²] Parallel current density profile
-    _jpar = "jpar"
+    jpar = "jpar"
     # [A/m²] CD parallel current density profile
-    _jcdr = "jcdr"
+    jcdr = "jcdr"
     # [-] Elongation profile
-    _kappa = "kappa"
+    kappa = "kappa"
     # [Pa/Wb] p' profile
-    _pprime = "pprime"
+    pprime = "pprime"
     # [10¹⁹/m3] argon density profile
-    _nar = "n_Ar"
+    nar = "n_Ar"
     # [10¹⁹/m3] deuterium density profile
-    _ndeut = "n_D"
+    ndeut = "n_D"
     # [10¹⁹/m3] electron density profile
-    _nepr = "n_e"
+    nepr = "n_e"
     # [10¹⁹/m3] fuel density profile
-    _nfuel = "n_fuel"
+    nfuel = "n_fuel"
     # [10¹⁹/m3] helium density profile
-    _nhe = "n_He"
+    nhe = "n_He"
     # [10¹⁹/m³] ion density profile
-    _nions = "n_ion"
+    nions = "n_ion"
     # [10¹⁹/m3] tritium density profile
-    _ntrit = "n_T"
+    ntrit = "n_T"
     # [10¹⁹/m3] xenon density profile
-    _nxe = "n_Xe"
+    nxe = "n_Xe"
     # [Wb] Toroidal flux profile
-    _phi = "phi"
+    phi = "phi"
     # [Pa] Plasma pressure profile
-    _pressure = "pressure"
+    pressure = "pressure"
     # [Wb] Poloidal flux profile
-    _psi = "psi"
+    psi = "psi"
     # [W/m³] fusion power density profile (DT + DT)
-    _q_fus = "qfus"
+    q_fus = "qfus"
     # [W/m³] neutron power density profile
-    _qneut = "q_neut"
+    qneut = "q_neut"
     # [-] Safety factor profile
-    _qprf = "q"
+    qprf = "q"
     # [W/m³] radiation power density profile
-    _qrad = "qrad"
+    qrad = "qrad"
     # [m] Grad-Shafranov shift profile
-    _shif = "GS"
+    shif = "GS"
     # [keV] Electron temperature profile
-    _Tepr = "Te"
+    Tepr = "Te"
     # [keV] Ion temperature profile
-    _Tipr = "Ti"
+    Tipr = "Ti"
     # [-] normalized toroidal flux coordinate (Phi/Phi_b)
-    _x = "x"
+    x = "x"
     # [m³] Volume profile
-    _V = "V"
+    V = "V"
 
 
 # TODO

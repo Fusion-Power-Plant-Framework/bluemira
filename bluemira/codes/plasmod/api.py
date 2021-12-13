@@ -274,7 +274,7 @@ class Teardown(interface.Teardown):
             reader = csv.reader(fd, delimiter="\t")
             for row in reader:
                 arr = row[0].split()
-                output_key = "_" + arr[0]
+                output_key = arr[0]
                 output_value = arr[1:]
                 if len(output_value) > 1:
                     output[output_key] = np.array(arr[1:], dtype=np.float)
@@ -294,7 +294,7 @@ class Teardown(interface.Teardown):
         -2: Equilibrium solver crashed: too high pressure
 
         """
-        exit_flag = self.parent._out_params._i_flag
+        exit_flag = self.parent._out_params.i_flag
         if exit_flag != 1:
             if exit_flag == -2:
                 raise CodesError(
@@ -334,17 +334,10 @@ class Solver(interface.FileProgramInterface):
         profiles_file="profiles.dat",
         binary="transporz",
     ):
-        # todo: add a path variable where files are stored
-        if params is None:
-            params = Inputs()
-        elif isinstance(params, Inputs):
-            params = params
-        elif isinstance(params, Dict):
-            params = Inputs(**params)
         self._out_params = Outputs()
         super().__init__(
             PLASMOD,
-            params,
+            self._getInputs(params),
             runmode,
             # default_mappings=set_default_mappings(),
             input_file=input_file,
@@ -352,6 +345,17 @@ class Solver(interface.FileProgramInterface):
             profiles_file=profiles_file,
             binary=binary,
         )
+
+    @staticmethod
+    def _getInputs(params):
+        # TODO remove the need for this
+        if params is None:
+            params = Inputs()
+        elif isinstance(params, Inputs):
+            params = params
+        elif isinstance(params, Dict):
+            params = Inputs(**params)
+        return params
 
     def get_profile(self, profile: str):
         """

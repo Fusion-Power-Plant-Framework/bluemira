@@ -3,37 +3,37 @@
     // # list scalar outputs
     // #############################
     // # [m²] plasma poloidal cross section area
-    "_area_pol": [],
+    "area_pol": [],
     // # [m²] plasma toroidal surface
-    "_area_tor": [],
+    "area_tor": [],
     // # [-] poloidal beta
-    "_beta_p": [],
+    "beta_p": [],
     // # [-] normalized beta
-    "_beta_n": [],
+    "beta_n": [],
     // # [-] toroidal beta
-    "_beta_t": [],
+    "beta_t": [],
     // # [T] average poloidal field
-    "_Bpav": [],
+    "Bpav": [],
     // # [-] Argon concentration (ratio nAr/ne)
-    "_c_ar": [],
+    "c_ar": [],
     // # [-] Hydrogen concentration (ratio nH/ne)
-    "_c_h": [],
+    "c_h": [],
     // # [-] Helium concentration (ratio nH/ne)
-    "_c_he": [],
+    "c_he": [],
     // # [-] Xenon concentration (ratio nH/ne)
-    "_c_xe": [],
+    "c_xe": [],
     // # [-] plasma edge triangularity
-    "_delta_e": [],
+    "delta_e": [],
     // # [-] tolerance on kinetic profiles
-    "_etol": [],
+    "etol": [],
     // # [-] plasma bootstrap current fraction
-    "_f_bs": [],
+    "f_bs": [],
     // # [-] plasma current drive fraction
-    "_f_cd": [],
+    "f_cd": [],
     // # [-] plasma current inductive fraction
-    "_f_ind": [],
+    "f_ind": [],
     // # [-] H-factor
-    "_H": [],
+    "H": [],
     // # [-] exit flag
     // #  1: PLASMOD converged successfully
     // # -1: Max number of iterations achieved
@@ -41,138 +41,138 @@
     // # 0: transport solver crashed (abnormal parameters
     // # or too large dtmin and/or dtmin
     // # -2: Equilibrium solver crashed: too high pressure
-    "_i_flag": [],
+    "i_flag": [],
     // # [MA] plasma current
-    "_Ip": [],
+    "Ip": [],
     // # [-] plasma edge elongation
-    "_kappa_e": [],
+    "kappa_e": [],
     // # [-] plasma internal inductance
-    "_li": [],
+    "li": [],
     // # [-] number of iterations
-    "_niter": [],
+    "niter": [],
     // # [1E19/m3] electron/ion density at pedestal height
-    "_nped": [],
+    "nped": [],
     // # [1E19/m3] electron/ion density at separatrix
-    "_nsep": [],
+    "nsep": [],
     // # [W] additional heating power
-    "_Padd": [],
+    "Padd": [],
     // # [W] alpha power
-    "_Palpha": [],
+    "Palpha": [],
     // # [W] Bremsstrahlung radiation power
-    "_Pbrem": [],
+    "Pbrem": [],
     // # [W] Fusion power
-    "_Pfus": [],
+    "Pfus": [],
     // # [W] DD fusion power
-    "_PfusDD": [],
+    "PfusDD": [],
     // # [W] DT fusion power
-    "_PfusDT": [],
+    "PfusDT": [],
     // # [m] plasma perimeter
-    "_perim": [],
+    "perim": [],
     // # [W] Line radiation power
-    "_Pline": [],
+    "Pline": [],
     // # [W] LH transition power
-    "_PLH": [],
+    "PLH": [],
     // # [W] neutron fusion power
-    "_Pneut": [],
+    "Pneut": [],
     // # [W] Ohimic heating power
-    "_Pohm": [],
+    "Pohm": [],
     // # [W] total radiation power
-    "_Prad": [],
+    "Prad": [],
     // # [W] total power across plasma separatrix
-    "_Psep": [],
+    "Psep": [],
     // # [MW/m] Divertor challenging criterion Psep/R0
-    "_Psep_R0": [],
+    "Psep_R0": [],
     // # [MW * T/ m] Divertor challenging criterion Psep * Bt /(q95 * a)
-    "_Psep_Bt_q95_A_R0": [],
+    "Psep_Bt_q95_A_R0": [],
     // # [W] Synchrotron radiation power
-    "_Psync": [],
+    "Psync": [],
     // # [W/m2] divertor heat flux
-    "_qdivt": [],
+    "qdivt": [],
     // # [-] Edge safety factor
-    "_q_sep": [],
+    "q_sep": [],
     // # [m] Plasma minor radius
-    "_rpminor": [],
+    "rpminor": [],
     // # [Ohm] plasma resistance
-    "_rplas": [],
+    "rplas": [],
     // # [s] energy confinement time
-    "_tau_e": [],
+    "tau_e": [],
     // # [keV] Ions/Electrons at pedestal
-    "_Teped": [],
+    "Teped": [],
     // # [-] tolerance on safety factor profile
-    "_toleq": [],
+    "toleq": [],
     // # [-] overall tolerance
-    "_tolfin": [],
+    "tolfin": [],
     // # [V] plasma loop voltage
-    "_Vloop": [],
+    "Vloop": [],
     // # [J] plasma thermal energy
-    "_Wth": [],
+    "Wth": [],
     // # [-] plasma effective charge
-    "_Zeff": [],
+    "Zeff": [],
     // ############################
     // # list profiles
     // #############################
     // # [A/m²] Bootstrap parallel current density profile
-    "_cubb": [],
+    "cubb": [],
     // # [-] Triangularity profile
-    "_delta": [],
+    "delta": [],
     // # [m³] Volume increment profile
-    "_dV": [],
+    "dV": [],
     // # [(m*T) * (m*T) / Wb == T] FF' profile
-    "_ffprime": [],
+    "ffprime": [],
     // # [m⁴] < |grad V|²> g1 metric coefficient's profile
-    "_g1": [],
+    "g1": [],
     // # [m²] < |grad V|²/r²> g2 metric coefficient's profile
-    "_g2": [],
+    "g2": [],
     // # [m^-2] < 1/r²> g3 metric coefficient's profile
-    "_g3": [],
+    "g3": [],
     // # [m*T] Poloidal current profile
-    "_ipol": [],
+    "ipol": [],
     // # [A/m²] Parallel current density profile
-    "_jpar": [],
+    "jpar": [],
     // # [A/m²] CD parallel current density profile
-    "_jcdr": [],
+    "jcdr": [],
     // # [-] Elongation profile
-    "_kappa": [],
+    "kappa": [],
     // # [Pa/Wb] p' profile
-    "_pprime": [],
+    "pprime": [],
     // # [10¹⁹/m3] argon density profile
-    "_nar": [],
+    "nar": [],
     // # [10¹⁹/m3] deuterium density profile
-    "_ndeut": [],
+    "ndeut": [],
     // # [10¹⁹/m3] electron density profile
-    "_nepr": [],
+    "nepr": [],
     // # [10¹⁹/m3] fuel density profile
-    "_nfuel": [],
+    "nfuel": [],
     // # [10¹⁹/m3] helium density profile
-    "_nhe": [],
+    "nhe": [],
     // # [10¹⁹/m³] ion density profile
-    "_nions": [],
+    "nions": [],
     // # [10¹⁹/m3] tritium density profile
-    "_ntrit": [],
+    "ntrit": [],
     // # [10¹⁹/m3] xenon density profile
-    "_nxe": [],
+    "nxe": [],
     // # [Wb] Toroidal flux profile
-    "_phi": [],
+    "phi": [],
     // # [Pa] Plasma pressure profile
-    "_pressure": [],
+    "pressure": [],
     // # [Wb] Poloidal flux profile
-    "_psi": [],
+    "psi": [],
     // # [W/m³] fusion power density profile (DT + DT)
-    "_qfus": [],
+    "qfus": [],
     // # [W/m³] neutron power density profile
-    "_qneut": [],
+    "qneut": [],
     // # [-] Safety factor profile
-    "_qprf": [],
+    "qprf": [],
     // # [W/m³] radiation power density profile
-    "_qrad": [],
+    "qrad": [],
     // # [m] Grad-Shafranov shift profile
-    "_shif": [],
+    "shif": [],
     // # [keV] Electron temperature profile
-    "_Tepr": [],
+    "Tepr": [],
     // # [keV] Ion temperature profile
-    "_Tipr": [],
+    "Tipr": [],
     // # [-] normalized toroidal flux coordinate (Phi/Phi_b)
-    "_x": [],
+    "x": [],
     // # [m³] Volume profile
-    "_V": [],
+    "V": [],
 }
