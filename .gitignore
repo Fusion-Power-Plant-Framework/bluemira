@@ -139,6 +139,10 @@ dmypy.json
 *.step
 *.stp
 
+# Meshing
+*.msh
+*.geo_unrolled
+
 # Images
 *.png
 !documentation/**/images/*.png
