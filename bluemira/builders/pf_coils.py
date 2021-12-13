@@ -33,6 +33,7 @@ from bluemira.geometry.tools import revolve_shape, make_circle, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
+from bluemira.equilibria.coils import CoilSet
 import bluemira.utilities.plot_tools as bm_plot_tools
 
 
@@ -182,7 +183,7 @@ class PFCoilBuilder(Builder):
         return Component(self.coil.name, children=components)
 
 
-class PFCoilsetBuilder(Builder):
+class PFCoilsBuilder(Builder):
     """
     Builder for the PF Coils.
     """
@@ -197,6 +198,16 @@ class PFCoilsetBuilder(Builder):
     ]
     _required_config: List[str] = []
     _params: ParameterFrame
+
+    def _extract_config(self, build_config: BuildConfig):
+        super()._extract_config(build_config)
+
+        if self._runmode.name.lower() == "read":
+            if build_config.get("eqdsk_path") is None:
+                raise BuilderError(
+                    "Must supply eqdsk_path in build_config when using 'read' mode."
+                )
+            self._eqdsk_path = build_config["eqdsk_path"]
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -233,8 +244,8 @@ class PFCoilsetBuilder(Builder):
     def run(self, *args):
         pass
 
-    def read(self, coil_dict):
-        pass
+    def read(self, **kwargs):
+        self._coilset = CoilSet.from_eqdsk(self._eqdsk_path)
 
     def mock(self, coilset):
         self._coilset = coilset
@@ -306,7 +317,7 @@ if __name__ == "__main__":
     c_xz.plot_2d()
     c_xyz.show_cad()
 
-    builder = PFCoilsetBuilder(coilset, 0.05, 0.05, 0.1)
+    builder = PFCoilsBuilder(coilset, 0.05, 0.05, 0.1)
     c_xy = builder.build_xy()
     c_xz = builder.build_xz()
     c_xyz = builder.build_xyz()
