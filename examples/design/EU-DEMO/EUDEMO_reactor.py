@@ -208,12 +208,12 @@ plasma.get_component("xy").plot_2d(ax=ax)
 ax = tf_coils.get_component("xz").plot_2d(show=False)
 plasma.get_component("xz").plot_2d(ax=ax)
 
-# ComponentDisplayer().show_cad(
-#     [
-#         tf_coils.get_component("xyz"),
-#         plasma.get_component("xyz"),
-#     ]
-# )
+ComponentDisplayer().show_cad(
+    [
+        tf_coils.get_component("xyz"),
+        plasma.get_component("xyz"),
+    ]
+)
 
 # Plot the TF coil design problem
 

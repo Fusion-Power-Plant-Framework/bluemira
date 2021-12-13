@@ -84,17 +84,10 @@ class PFCoilsComponent(Component):
         return self._field_solver.field(x, y, z)
 
 
-class PFCoilBuilder(Builder):
+class PFCoilBuilder:
     """
     Builder for a single PF coil
     """
-
-    _required_params: List[str] = []
-    _required_config: List[str] = []
-    _params: ParameterFrame
-
-    def __init__(self, params, build_config: BuildConfig, **kwargs):
-        super().__init__(params, build_config)
 
     def __init__(self, coil, r_corner, tk_insulation, tk_casing):
         self.coil = coil
@@ -223,24 +216,6 @@ class PFCoilsBuilder(Builder):
         self._reset_params(params)
         self._coilset = None
 
-    def __init__(self, coilset, r_corner):
-
-        self.sub_components = []
-        for coil in self.coilset.coils.values():
-            if coil.ctype == "PF":
-                r_corner = self.params.r_pf_corner
-                tk_ins = self.params.tk_pf_insulation
-                tk_cas = self.params.tk_pf_casing
-            elif coil.ctype == "CS":
-                r_corner = self.params.r_cs_corner
-                tk_ins = self.params.tk_cs_insulation
-                tk_cas = self.params.tk_cs_casing
-            else:
-                raise BuilderError(f"Unrecognised coil type {coil.ctype}.")
-
-            sub_comp = PFCoilBuilder(coil, r_corner, tk_ins, tk_cas)
-            self.sub_components.append(sub_comp)
-
     def run(self, *args):
         pass
 
@@ -260,13 +235,29 @@ class PFCoilsBuilder(Builder):
         """
         super().build(**kwargs)
 
+        self.sub_components = []
+        for coil in self._coilset.coils.values():
+            if coil.ctype == "PF":
+                r_corner = self.params.r_pf_corner
+                tk_ins = self.params.tk_pf_insulation
+                tk_cas = self.params.tk_pf_casing
+            elif coil.ctype == "CS":
+                r_corner = self.params.r_cs_corner
+                tk_ins = self.params.tk_cs_insulation
+                tk_cas = self.params.tk_cs_casing
+            else:
+                raise BuilderError(f"Unrecognised coil type {coil.ctype}.")
+
+            sub_comp = PFCoilBuilder(coil, r_corner, tk_ins, tk_cas)
+            self.sub_components.append(sub_comp)
+
         field_solver = self._make_field_solver()
         component = PFCoilsComponent(self.name, field_solver=field_solver)
 
         component.add_child(self.build_xz())
         component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
-        return
+        return component
 
     def build_xy(self):
         """
@@ -299,6 +290,9 @@ class PFCoilsBuilder(Builder):
             xyz_comps.append(comp.build_xyz())
         component = Component("xyz", children=xyz_comps)
         return component
+
+    def _make_field_solver(self):
+        return None
 
 
 if __name__ == "__main__":

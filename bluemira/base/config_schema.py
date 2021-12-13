@@ -210,6 +210,14 @@ class ConfigurationSchema:
     h_tf_max_in: Parameter
     h_tf_min_in: Parameter
 
+    # PF coils
+    r_pf_corner: Parameter
+    tk_pf_insulation: Parameter
+    tk_pf_casing: Parameter
+    r_cs_corner: Parameter
+    tk_cs_insulation: Parameter
+    tk_cs_casing: Parameter
+
     # Coil structures
     x_g_support: Parameter
     w_g_support: Parameter
