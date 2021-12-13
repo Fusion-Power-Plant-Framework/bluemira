@@ -37,6 +37,7 @@ from bluemira.codes.process.api import DEFAULT_INDAT
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.setup import Setup
 from bluemira.codes.process.teardown import Teardown
+from bluemira.codes.process.mapping import mappings
 
 
 class RunMode(interface.RunMode):
@@ -184,4 +185,5 @@ class Solver(interface.FileProgramInterface):
             build_config["process_mode"],
             binary=binary,
             run_dir=run_dir,
+            mappings=mappings,
         )

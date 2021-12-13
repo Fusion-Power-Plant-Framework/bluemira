@@ -25,7 +25,7 @@ from bluemira.base.config import Configuration
 
 from bluemira.codes.process.api import PROCESS_ENABLED
 from bluemira.codes.process import teardown
-
+from bluemira.codes.process.mapping import mappings
 from tests.bluemira.codes.process import INDIR
 
 
@@ -33,11 +33,7 @@ from tests.bluemira.codes.process import INDIR
 class TestMFileReader:
     @classmethod
     def setup_class(cls):
-        mapping = {
-            p[-1]["PROCESS"].name: p[0]
-            for p in Configuration.params
-            if len(p) == 7 and "PROCESS" in p[-1]
-        }
+        mapping = {p_map.name: bm_key for bm_key, p_map in mappings.items()}
         cls.bmfile = teardown.BMFile(INDIR, mapping)
         return cls
 

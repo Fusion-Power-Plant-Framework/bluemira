@@ -123,11 +123,14 @@ def get_send_mapping(params, code_name, send_all=False):
     return _get_mapping(params, code_name, "send", send_all)
 
 
-def find_mappings(code_name, params, default_mappings):
+def get_mappings(code_name, params, mappings):
     for key in params.keys():
         param = params.get_param(key)
-        if code_name not in param.mapping and param.name in default_mappings:
-            param.mapping[code_name] = default_mappings[param.name]
+        if param.var in mappings:
+            if param.mapping is None:
+                param.mapping = {code_name: mappings[param.var]}
+            elif code_name not in param.mapping:
+                param.mapping[code_name] = mappings[param.var]
 
 
 class LogPipe(threading.Thread):
