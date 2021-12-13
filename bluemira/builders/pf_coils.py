@@ -141,7 +141,6 @@ class PFCoilBuilder(Builder):
         )
 
         component = Component(self.coil.name, children=[wp, ins, casing])
-        component.plot_options.plane = "xy"  # :/
         return component
 
     def build_xz(self):
@@ -198,11 +197,6 @@ class PFCoilsetBuilder(Builder):
     ]
     _required_config: List[str] = []
     _params: ParameterFrame
-
-    def _extract_config(self, build_config: BuildConfig):
-        super()._extract_config(build_config)
-
-        self._r_corner = build_config.get("r_corner", 0.0)
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -270,7 +264,7 @@ class PFCoilsetBuilder(Builder):
         xy_comps = []
         for comp in self.sub_components:
             xy_comps.append(comp.build_xy())
-        component = Component("PF coils", children=xy_comps)
+        component = Component("xy", children=xy_comps)
         bm_plot_tools.set_component_plane(component, "xy")
         return component
 
@@ -281,7 +275,7 @@ class PFCoilsetBuilder(Builder):
         xz_comps = []
         for comp in self.sub_components:
             xz_comps.append(comp.build_xz())
-        component = Component("PF coils", children=xz_comps)
+        component = Component("xz", children=xz_comps)
         bm_plot_tools.set_component_plane(component, "xz")
         return component
 
@@ -292,7 +286,7 @@ class PFCoilsetBuilder(Builder):
         xyz_comps = []
         for comp in self.sub_components:
             xyz_comps.append(comp.build_xyz())
-        component = Component("PF coils", children=xyz_comps)
+        component = Component("xyz", children=xyz_comps)
         return component
 
 
