@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import copy
-from typing import List, Optional, Tuple, Union
+from typing import List, Iterable, Optional, Tuple, Union
 import matplotlib.colors as colors
 
 import bluemira.geometry as geo
@@ -199,24 +199,54 @@ class ComponentDisplayer(BaseDisplayer):
     CAD displayer for Components
     """
 
-    def show_cad(self, comp, **kwargs):
+    def show_cad(
+        self,
+        comps,
+        name="",
+        **kwargs,
+    ):
         """
-        Display the CAD of a component
+        Display the CAD of a component, list of Components, or their children if they are
+        not a leaf node.
 
         Parameters
         ----------
-        comp:
-            Component to be displayed
+        comps: Union[Component, List[Component]]
+            Component or list of components to be displayed.
+        name: str
+            The name of the Components within the provided Component to be displayed, by
+            default "", in which case all child components will be displayed.
         """
+        import bluemira.base.components as bm_comp
+
         self._shapes = []
         self._options = []
-        if comp.is_leaf:
-            self._shapes.append(comp.shape)
-            self._options.append(comp.display_cad_options)
+
+        if not isinstance(comps, Iterable):
+            comps = [comps]
+
+        _comps: List[bm_comp.Component] = []
+        if name != "":
+            _comp: bm_comp.Component
+            for _comp in comps:
+                _comp = _comp.get_component(name, first=False)
+                if isinstance(_comp, Iterable):
+                    _comps += _comp
+                else:
+                    _comps += [_comp]
         else:
-            for child in comp.children:
-                self._shapes.append(child.shape)
-                self._options.append(child.display_cad_options)
+            _comps = comps
+
+        def populate_data(comp: bm_comp.Component):
+            if comp.is_leaf and isinstance(comp, bm_comp.PhysicalComponent):
+                self._shapes.append(comp.shape)
+                self._options.append(comp.display_cad_options)
+            else:
+                for child in comp.children:
+                    populate_data(child)
+
+        for _comp in _comps:
+            populate_data(_comp)
         show_cad(self._shapes, self._options, **kwargs)
 
 
