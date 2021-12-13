@@ -120,7 +120,7 @@ class Profiles(Enum):
 
 
 # TODO
-# define all build tweaks properly and work out best way to setup Model types
+# define all build tweaks properly
 # Link all BM parameters
 # Link all plasmod outputs
 
@@ -264,103 +264,103 @@ PLASMOD_OUTPUTS = {
     # list scalar outputs
     #############################
     # [m²] plasma poloidal cross section area
-    "BM_OUT": "_area_pol",
+    "BM_OUT": "area_pol",
     # [m²] plasma toroidal surface
-    "BM_OUT": "_area_tor",
+    "BM_OUT": "area_tor",
     # [-] poloidal beta
-    "BM_OUT": "_beta_p",
+    "BM_OUT": "beta_p",
     # [-] normalized beta
-    "BM_OUT": "_beta_n",
+    "BM_OUT": "beta_n",
     # [-] toroidal beta
-    "BM_OUT": "_beta_t",
+    "BM_OUT": "beta_t",
     # [T] average poloidal field
-    "BM_OUT": "_Bpav",
+    "BM_OUT": "Bpav",
     # [-] Argon concentration (ratio nAr/ne)
-    "BM_OUT": "_c_ar",
+    "BM_OUT": "c_ar",
     # [-] Hydrogen concentration (ratio nH/ne)
-    "BM_OUT": "_c_h",
+    "BM_OUT": "c_h",
     # [-] Helium concentration (ratio nH/ne)
-    "BM_OUT": "_c_he",
+    "BM_OUT": "c_he",
     # [-] Xenon concentration (ratio nH/ne)
-    "BM_OUT": "_c_xe",
+    "BM_OUT": "c_xe",
     # [-] plasma edge triangularity
-    "BM_OUT": "_delta_e",
+    "BM_OUT": "delta_e",
     # [-] tolerance on kinetic profiles
-    "BM_OUT": "_etol",
+    "BM_OUT": "etol",
     # [-] plasma bootstrap current fraction
-    "BM_OUT": "_f_bs",
+    "BM_OUT": "f_bs",
     # [-] plasma current drive fraction
-    "BM_OUT": "_f_cd",
+    "BM_OUT": "f_cd",
     # [-] plasma current inductive fraction
-    "BM_OUT": "_f_ind",
+    "BM_OUT": "f_ind",
     # [-] H-factor
-    "BM_OUT": "_H",
+    "BM_OUT": "H",
     # [MA] plasma current
-    "BM_OUT": "_Ip",
+    "BM_OUT": "Ip",
     # [-] plasma edge elongation
-    "BM_OUT": "_kappa_e",
+    "BM_OUT": "kappa_e",
     # [-] plasma internal inductance
-    "BM_OUT": "_li",
+    "BM_OUT": "li",
     # [-] number of iterations
-    "BM_OUT": "_niter",
+    "BM_OUT": "niter",
     # [1E19/m3] electron/ion density at pedestal height
-    "BM_OUT": "_nped",
+    "BM_OUT": "nped",
     # [1E19/m3] electron/ion density at separatrix
-    "BM_OUT": "_nsep",
+    "BM_OUT": "nsep",
     # [W] additional heating power
-    "BM_OUT": "_Padd",
+    "BM_OUT": "Padd",
     # [W] alpha power
-    "BM_OUT": "_Palpha",
+    "BM_OUT": "Palpha",
     # [W] Bremsstrahlung radiation power
-    "BM_OUT": "_Pbrem",
+    "BM_OUT": "Pbrem",
     # [W] Fusion power
-    "BM_OUT": "_Pfus",
+    "BM_OUT": "Pfus",
     # [W] DD fusion power
-    "BM_OUT": "_PfusDD",
+    "BM_OUT": "PfusDD",
     # [W] DT fusion power
-    "BM_OUT": "_PfusDT",
+    "BM_OUT": "PfusDT",
     # [m] plasma perimeter
-    "BM_OUT": "_perim",
+    "BM_OUT": "perim",
     # [W] Line radiation power
-    "BM_OUT": "_Pline",
+    "BM_OUT": "Pline",
     # [W] LH transition power
-    "BM_OUT": "_PLH",
+    "BM_OUT": "PLH",
     # [W] neutron fusion power
-    "BM_OUT": "_Pneut",
+    "BM_OUT": "Pneut",
     # [W] Ohimic heating power
-    "BM_OUT": "_Pohm",
+    "BM_OUT": "Pohm",
     # [W] total radiation power
-    "BM_OUT": "_Prad",
+    "BM_OUT": "Prad",
     # [W] total power across plasma separatrix
-    "BM_OUT": "_Psep",
+    "BM_OUT": "Psep",
     # [MW/m] Divertor challenging criterion Psep/R0
-    "BM_OUT": "_Psep_R0",
+    "BM_OUT": "Psep_R0",
     # [MW * T/ m] Divertor challenging criterion Psep * Bt /(q95 * a)
-    "BM_OUT": "_Psep_Bt_q95_A_R0",
+    "BM_OUT": "Psep_Bt_q95_A_R0",
     # [W] Synchrotron radiation power
-    "BM_OUT": "_Psync",
+    "BM_OUT": "Psync",
     # [W/m2] divertor heat flux
-    "BM_OUT": "_qdivt",
+    "BM_OUT": "qdivt",
     # [-] Edge safety factor
-    "BM_OUT": "_q_sep",
+    "BM_OUT": "q_sep",
     # [m] Plasma minor radius
-    "BM_OUT": "_rpminor",
+    "BM_OUT": "rpminor",
     # [Ohm] plasma resistance
-    "BM_OUT": "_rplas",
+    "BM_OUT": "rplas",
     # [s] energy confinement time
-    "BM_OUT": "_tau_e",
+    "BM_OUT": "tau_e",
     # [keV] Ions/Electrons at pedestal
-    "BM_OUT": "_Teped",
+    "BM_OUT": "Teped",
     # [-] tolerance on safety factor profile
-    "BM_OUT": "_toleq",
+    "BM_OUT": "toleq",
     # [-] overall tolerance
-    "BM_OUT": "_tolfin",
+    "BM_OUT": "tolfin",
     # [V] plasma loop voltage
-    "BM_OUT": "_Vloop",
+    "BM_OUT": "Vloop",
     # [J] plasma thermal energy
-    "BM_OUT": "_Wth",
+    "BM_OUT": "Wth",
     # [-] plasma effective charge
-    "BM_OUT": "_Zeff",
+    "BM_OUT": "Zeff",
 }
 
 
