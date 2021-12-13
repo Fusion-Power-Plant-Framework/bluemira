@@ -27,10 +27,9 @@ from typing import List, Optional
 
 from bluemira.base.components import PhysicalComponent, Component
 from bluemira.base.builder import Builder, BuildConfig
-from bluemira.base.error import BuilderError, ComponentError
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry.tools import revolve_shape, make_circle, offset_wire
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.equilibria.coils import CoilSet
