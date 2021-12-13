@@ -612,22 +612,6 @@ def check_ccw_3d(x, y, z, normal):
     return _get_signed_area(x, y, z, normal) >= 0.0
 
 
-def check_ccw_3d2(x, y, z, normal):
-    normal /= np.linalg.norm(normal)
-    m = np.zeros((3, len(x)))
-    m[0, :] = x
-    m[1, :] = y
-    m[2, :] = z
-    dm = np.diff(m, axis=1)
-    norm_dm = np.linalg.norm(dm, axis=1)
-    # dmn = dm / norm_dm
-    a = np.zeros(3)
-    for i in range(len(x) - 1):
-        a += np.dot(normal, dm.T[i])
-
-    return a <= 0.0
-
-
 @xyz_process
 def get_centroid(x, y, z=None):
     """
