@@ -142,6 +142,9 @@ dmypy.json
 # Meshing
 *.msh
 *.geo_unrolled
+*.ini
+*.h5
+*.xdmf
 
 # Images
 *.png
