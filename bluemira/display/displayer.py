@@ -26,9 +26,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import copy
-from typing import List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple, Union
 import matplotlib.colors as colors
 
+import bluemira.base.components as bm_comp
 import bluemira.geometry as geo
 from bluemira.codes import _freecadapi as cadapi
 
@@ -199,27 +200,35 @@ class ComponentDisplayer(BaseDisplayer):
     CAD displayer for Components
     """
 
-    def show_cad(self, comp, **kwargs):
+    def show_cad(
+        self,
+        comps: Union[Iterable[bm_comp.Component], bm_comp.Component],
+        **kwargs,
+    ):
         """
-        Display the CAD of a component
+        Display the CAD of a component or iterable of components
 
         Parameters
         ----------
-        comp:
-            Component to be displayed
+        comp: Union[Iterable[Component], Component]
+            Component, or iterable of Components, to be displayed
         """
         self._shapes = []
         self._options = []
 
-        def populate_data(comp):
-            if comp.is_leaf:
+        if not isinstance(comps, Iterable):
+            comps = [comps]
+
+        def populate_data(comp: bm_comp.Component):
+            if comp.is_leaf and isinstance(comp, bm_comp.PhysicalComponent):
                 self._shapes.append(comp.shape)
                 self._options.append(comp.display_cad_options)
             else:
                 for child in comp.children:
                     populate_data(child)
 
-        populate_data(comp)
+        for comp in comps:
+            populate_data(comp)
         show_cad(self._shapes, self._options, **kwargs)
 
 
