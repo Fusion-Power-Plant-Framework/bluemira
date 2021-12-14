@@ -243,6 +243,20 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     """
     Make a set of solenoid coils.
     """
+
+    def make_cs_coil(z_coil, dz_coil, i):
+        return Coil(
+            r_cs,
+            z_coil,
+            current=0,
+            dx=tk_cs,
+            dz=dz_coil,
+            control=True,
+            ctype="CS",
+            name=f"CS_{i+1}",
+            flag_sizefix=True,
+        )
+
     total_height = z_max - z_min
     tk_inscas = tk_cs_ins + tk_cs_cas
 
@@ -250,17 +264,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
     if n_CS == 1:
         # Single CS module solenoid
         module_height = total_height - 2 * tk_inscas
-        coil = Coil(
-            r_cs,
-            0.5 * total_height,
-            current=0,
-            dx=tk_cs,
-            dz=0.5 * module_height,
-            control=True,
-            ctype="CS",
-            name=f"CS_{1}",
-            flag_sizefix=True,
-        )
+        coil = make_cs_coil(0.5 * total_height, 0.5 * module_height, 0)
         coils.append(coil)
 
     elif n_CS % 2 == 0:
@@ -270,17 +274,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
         z_iter = z_max
         for i in range(n_CS):
             z_coil = z_iter - tk_inscas - dz_coil
-            coil = Coil(
-                r_cs,
-                z_coil,
-                current=0,
-                dx=tk_cs,
-                dz=dz_coil,
-                control=True,
-                ctype="CS",
-                name=f"CS_{i+1}",
-                flag_sizefix=True,
-            )
+            coil = make_cs_coil(z_coil, dz_coil, i)
             coils.append(coil)
             z_iter = z_coil - dz_coil - tk_inscas - g_cs
 
@@ -302,17 +296,7 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
                 dz_coil = 0.5 * module_height
                 z_coil = z_iter - tk_inscas - dz_coil
 
-            coil = Coil(
-                r_cs,
-                z_coil,
-                current=0,
-                dx=tk_cs,
-                dz=dz_coil,
-                control=True,
-                ctype="CS",
-                flag_sizefix=True,
-                name=f"CS_{i+1}",
-            )
+            coil = make_cs_coil(z_coil, dz_coil, i)
             coils.append(coil)
             z_iter = z_coil - dz_coil - tk_inscas - g_cs
 
