@@ -81,7 +81,6 @@ class PFCoilsComponent(Component):
         field: np.array
             The magnetic field vector {Bx, By, Bz} in [T]
         """
-        # TODO: Implement PF rotation to 3-D Cartesian coordinates
         return self._field_solver.field(x, y, z)
 
 
@@ -212,6 +211,9 @@ class PFCoilsBuilder(Builder):
         return component
 
     def _make_field_solver(self):
+        """
+        Make a magnetostatics solver for the field from the PF coils.
+        """
         sources = []
         for coil in self._coilset.coils.values():
             sources.append(
