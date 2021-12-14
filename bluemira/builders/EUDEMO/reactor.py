@@ -31,7 +31,7 @@ from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
-from bluemira.builders.pf_coils import PFCoilsBuilder
+from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
