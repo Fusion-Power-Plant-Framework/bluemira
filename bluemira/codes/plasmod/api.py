@@ -29,7 +29,7 @@ import json
 import pprint
 from enum import Enum, auto
 from pathlib import Path
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, Union
 
 import numpy as np
 
@@ -49,191 +49,68 @@ from bluemira.codes.plasmod.mapping import (
 )
 from bluemira.utilities.tools import CommentJSONDecoder
 
-# Todo: both INPUTS and OUTPUTS must to be completed. Moved to json files
-# DEFAULT_PLASMOD_INPUTS is the dictionary containing all the inputs as
-# requested by Plasmod
-
-
-def get_default_plasmod_inputs():
-    """
-    Returns a copy of the default plasmo inputs
-    """
-    path = get_bluemira_path("codes/plasmod")
-    with open(path + "/PLASMOD_DEFAULT_IN.json", "r") as jfh:
-        return json.load(jfh, cls=CommentJSONDecoder)
-
-
-def get_default_plasmod_outputs():
-    """
-    Returns a copy of the defaults plasmod outputs.
-    """
-    path = get_bluemira_path("codes/plasmod")
-    with open(path + "/PLASMOD_DEFAULT_OUT.json", "r") as jfh:
-        return json.load(jfh, cls=CommentJSONDecoder)
-
 
 class PlasmodParameters:
     """
-    A class to mandage plasmod parameters
+    A class to manage plasmod parameters
     """
 
+    filepath = get_bluemira_path("codes/plasmod")
+    def_outfile = Path(filepath, "PLASMOD_DEFAULT_OUT.json")
+    def_infile = Path(filepath, "PLASMOD_DEFAULT_IN.json")
     _options = None
 
-    def __init__(self, **kwargs):
-        self.modify(**kwargs)
-        for k, v in self._options.items():
-            setattr(self, k, v)
-
-    def as_dict(self):
+    def __getattribute__(self, attr):
         """
-        Returns the instance as a dictionary.
-        """
-        return copy.deepcopy(self._options)
+        Get attribute but look in _options if not found.
 
-    def modify(self, **kwargs):
-        """
-        Function to override parameters value.
-        """
-        if kwargs:
-            for k in kwargs:
-                if k in self._options:
-                    self._options[k] = kwargs[k]
-                    setattr(self, k, self._options[k])
-
-    def __repr__(self):
-        """
-        Representation string of the DisplayOptions.
-        """
-        return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
-
-
-# Plasmod Inputs and Outputs have been separated to make easier the writing of plasmod
-# input file and the reading of outputs from file. However, other strategies could be
-# applied to make use of a single PlasmodParameters instance.
-class Inputs(PlasmodParameters):
-    """
-    Class for Plasmod inputs
-    """
-
-    def __init__(self, **kwargs):
-        self._options = get_default_plasmod_inputs()
-        super().__init__(**kwargs)
-
-    def items(self):
-        """
-        Items replicator
-        """
-        for k, v in self._options.items():
-            yield k, v
-
-
-class Outputs(PlasmodParameters):
-    """Class for Plasmod outputs"""
-
-    def __init__(self, **kwargs):
-        self._options = get_default_plasmod_outputs()
-        super().__init__(**kwargs)
-
-
-class RunMode(interface.RunMode):
-    """
-    RunModes for plasmod
-    """
-
-    RUN = auto()
-    MOCK = auto()
-
-
-class Setup(interface.Setup):
-    """
-    Setup class for Plasmod
-
-    Parameters
-    ----------
-    parent
-        Parent solver class instance
-    input_file: str
-        input file save location
-    output_file: str
-        output file save location
-    profiles_file: str
-        profiles file save location
-    kwargs: Dict
-        passed to parent setup task
-
-    """
-
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-        self._check_models()
-        self.filepath = get_bluemira_path("codes/plasmod")
-        self.def_outfile = Path(self.filepath, "PLASMOD_DEFAULT_OUT.json")
-        self.def_infile = Path(self.filepath, "PLASMOD_DEFAULT_IN.json")
-        self.input_file = "plasmod_input.dat"
-        self.output_file = "plasmod_outputs.dat"
-        self.profiles_file = "plasmod_profiles.dat"
-
-    def _write(self, params, filename):
-        """
-        Plasmod input file writer
+        Avoids pollution of namespace but parameters still accessible
 
         Parameters
         ----------
-        params: Dict
-            dictionary to write
-        filename: str
-            file location
-        """
-        with open(filename, "w") as fid:
-            for k, v in params.items():
-                if isinstance(v, Enum):
-                    fid.write(f"{k} {v.value:d}\n")
-                elif isinstance(v, int):
-                    fid.write(f"{k} {v:d}\n")
-                elif isinstance(v, float):
-                    fid.write(f"{k} {v:5.4e}\n")
-                else:
-                    fid.write(f"{k} {v}\n")
+        attr: str
+            Attribute to get
 
-    def write_input(self):
-        """
-        Write input file
-        """
-        self._write(self.parent.params, Path(self._run_dir, self.input_file))
+        Returns
+        -------
+        requested attribute
 
-    def _check_models(self):
         """
-        Check selected plasmod models are known
-        """
-        self.params.i_impmodel = ImpurityModel(self.params.i_impmodel)
-        self.params.i_modeltype = TransportModel(self.params.i_modeltype)
-        self.params.i_equiltype = EquilibriumModel(self.params.i_equiltype)
-        self.params.i_pedestal = PedestalModel(self.params.i_pedestal)
-        self.params.isiccir = SOLModel(self.params.isiccir)
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError:
+            try:
+                return self._options[attr]
+            except KeyError as k:
+                raise AttributeError(k)
 
-    def _run(self):
+    def __setattr__(self, attr, value):
         """
-        Run plasmod setup
-        """
-        self.write_input()
+        Sets attribute if it already exists otherwise
+        add it to _options dictionary
 
-    def _mock(self):
-        """
-        Mock plasmod setup
-        """
-        self.write_input()
+        Parameters
+        ----------
+        attr: str
+            attribute name
+        value:
+            value to set for attribute
 
-    def get_default_plasmod_outputs(self):
         """
-        Returns a copy of the defaults plasmod outputs.
-        """
-        return self._load_default_from_json(self.def_outfile)
+        try:
+            super().__getattribute__(attr)
+            super().__setattr__(attr, value)
+        except AttributeError:
+            self._options[attr] = value
 
-    def get_default_plasmod_inputs(self):
+    def modify(self, new_options):
         """
-        Returns a copy of the default plasmod inputs
+        Function to override parameters value.
         """
-        return self._load_default_from_json(self.def_infile)
+        if new_options:
+            for n_o in new_options:
+                if n_o in self._options:
+                    self._options[n_o] = new_options[n_o]
 
     @staticmethod
     def _load_default_from_json(filepath: str):
@@ -245,78 +122,108 @@ class Setup(interface.Setup):
         filepath: str
             json file to load
         """
-        bluemira_debug(filepath)
+        bluemira_debug(str(filepath))
         with open(filepath) as jfh:
             return json.load(jfh, cls=CommentJSONDecoder)
 
-
-class Run(interface.Run):
-    """
-    Run class for plasmod
-
-    Parameters
-    ----------
-    parent
-        Parent solver class instance
-    kwargs: Dict
-        passed to parent setup task
-
-    """
-
-    _binary = "transporz"  # Who knows why its not called plasmod
-
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, kwargs.pop("binary", self._binary), *args, **kwargs)
-
-    def _run(self):
+    def as_dict(self):
         """
-        Run plasmod runner
+        Returns the instance as a dictionary.
         """
-        bluemira_debug("Mode: run")
-        super()._run_subprocess(
-            [
-                self._binary,
-                Path(self._run_dir, self.parent.setup_obj.input_file),
-                Path(self._run_dir, self.parent.setup_obj.output_file),
-                Path(self._run_dir, self.parent.setup_obj.profiles_file),
-            ]
-        )
+        return copy.deepcopy(self._options)
+
+    def __repr__(self):
+        """
+        Representation string of the DisplayOptions.
+        """
+        return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
 
 
-class Teardown(interface.Teardown):
+class Inputs(PlasmodParameters):
     """
-    Plasmod Teardown Task
+    Class for Plasmod inputs
     """
 
-    def _run(self):
-        """
-        Run plasmod teardown
-        """
-        output = self.read_output_files(
-            Path(self._run_dir, self.parent.setup_obj.output_file)
-        )
-        self.parent._out_params.modify(**output)
-        self._check_return_value(self.parent._out_params.i_flag)
-        profiles = self.read_output_files(
-            Path(self._run_dir, self.parent.setup_obj.profiles_file)
-        )
-        self.parent._out_params.modify(**profiles)
+    def __init__(self, new_inputs=None):
+        super().__init__()
 
-    def _mock(self):
+        self._options = self.get_default_plasmod_inputs()
+
+        self.modify(new_inputs)
+        self._check_models()
+
+    def _write(self, filename):
         """
-        Mock plasmod teardown
+        Plasmod input file writer
+
+        Parameters
+        ----------
+        params: Dict
+            dictionary to write
+        filename: str
+            file location
         """
-        output = self.read_output_files(
-            Path(self._run_dir, self.parent.setup_obj.output_file)
-        )
-        self.parent._out_params.modify(**output)
-        profiles = self.read_output_files(
-            Path(self._run_dir, self.parent.setup_obj.profiles_file)
-        )
-        self.parent._out_params.modify(**profiles)
+        with open(filename, "w") as fid:
+            for k, v in self._options.items():
+                if isinstance(v, Enum):
+                    fid.write(f"{k} {v.value:d}\n")
+                elif isinstance(v, int):
+                    fid.write(f"{k} {v:d}\n")
+                elif isinstance(v, float):
+                    fid.write(f"{k} {v:5.4e}\n")
+                else:
+                    fid.write(f"{k} {v}\n")
+
+    def _check_models(self):
+        """
+        Check selected plasmod models are known
+        """
+        self.i_impmodel = ImpurityModel(self.i_impmodel)
+        self.i_modeltype = TransportModel(self.i_modeltype)
+        self.i_equiltype = EquilibriumModel(self.i_equiltype)
+        self.i_pedestal = PedestalModel(self.i_pedestal)
+        self.isiccir = SOLModel(self.isiccir)
+
+    def get_default_plasmod_inputs(self):
+        """
+        Returns a copy of the default plasmod inputs
+        """
+        return self._load_default_from_json(self.def_infile)
+
+
+class Outputs(PlasmodParameters):
+    """Class for Plasmod outputs"""
+
+    def __init__(self):
+        super().__init__()
+        self._options = self.get_default_plasmod_outputs()
+
+    def get_default_plasmod_outputs(self):
+        """
+        Returns a copy of the defaults plasmod outputs.
+        """
+        return self._load_default_from_json(self.def_outfile)
+
+    def read_output_files(self, scalar_file, profile_file):
+        """
+        Read and process plasmod output files
+
+        Parameters
+        ----------
+        scalar_file: str
+            scalar filename
+        profile_file: str
+            profile filename
+
+        """
+        scalars = self.read_file(scalar_file)
+        self.modify(scalars)
+        self._check_return_value(self.i_flag)
+        profiles = self.read_file(profile_file)
+        self.modify(profiles)
 
     @staticmethod
-    def read_output_files(output_file: str) -> Dict[str, [float, np.ndarray]]:
+    def read_file(output_file: str) -> Dict[str, Union[float, np.ndarray]]:
         """
         Read the Plasmod output parameters from the output file
 
@@ -375,6 +282,148 @@ class Teardown(interface.Teardown):
             raise CodesError(f"{PLASMOD} error: " f"Unknown error code {exit_flag}")
 
 
+class RunMode(interface.RunMode):
+    """
+    RunModes for plasmod
+    """
+
+    RUN = auto()
+    MOCK = auto()
+
+
+class Setup(interface.Setup):
+    """
+    Setup class for Plasmod
+
+    Parameters
+    ----------
+    parent
+        Parent solver class instance
+    input_file: str
+        input file save location
+    output_file: str
+        output file save location
+    profiles_file: str
+        profiles file save location
+    kwargs: Dict
+        passed to parent setup task
+
+    """
+
+    def __init__(self, parent, *args, problem_settings=None, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+
+        self.prepare_inputs(problem_settings if problem_settings is not None else {})
+        self.input_file = "plasmod_input.dat"
+        self.output_file = "plasmod_outputs.dat"
+        self.profiles_file = "plasmod_profiles.dat"
+
+    def prepare_inputs(self, problem_settings):
+        """
+        Prepare inputs for plasmod
+
+        Parameters
+        ----------
+        problem_settings: dict
+            dictionary of extra arguments to override unmapped or default values
+        """
+        _inputs = {}
+        for pl_key, bm_key in self._send_mapping.items():
+            _inputs[pl_key] = self.params.get(bm_key)
+        self.io_manager = Inputs({**_inputs, **problem_settings})
+
+    def write_input(self):
+        """
+        Write input file
+        """
+        self.io_manager._write(Path(self._run_dir, self.input_file))
+
+    def _run(self):
+        """
+        Run plasmod setup
+        """
+        self.write_input()
+
+    def _mock(self):
+        """
+        Mock plasmod setup
+        """
+        self.write_input()
+
+
+class Run(interface.Run):
+    """
+    Run class for plasmod
+
+    Parameters
+    ----------
+    parent
+        Parent solver class instance
+    kwargs: Dict
+        passed to parent setup task
+
+    """
+
+    _binary = "transporz"  # Who knows why its not called plasmod
+
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, kwargs.pop("binary", self._binary), *args, **kwargs)
+
+    def _run(self):
+        """
+        Run plasmod runner
+        """
+        bluemira_debug("Mode: run")
+        super()._run_subprocess(
+            [
+                self._binary,
+                Path(self._run_dir, self.parent.setup_obj.input_file),
+                Path(self._run_dir, self.parent.setup_obj.output_file),
+                Path(self._run_dir, self.parent.setup_obj.profiles_file),
+            ]
+        )
+
+
+class Teardown(interface.Teardown):
+    """
+    Plasmod Teardown Task
+    """
+
+    def _run(self):
+        """
+        Run plasmod teardown
+        """
+        self.io_manager = Outputs()
+        self.io_manager.read_output_files(
+            Path(self._run_dir, self.parent.setup_obj.output_file),
+            Path(self._run_dir, self.parent.setup_obj.profiles_file),
+        )
+        self.prepare_outputs()
+
+    def _mock(self):
+        """
+        Mock plasmod teardown
+        """
+        self.io_manager = Outputs()
+        self.io_manager.read_output_files(
+            Path(self._run_dir, self.parent.setup_obj.output_file),
+            Path(self._run_dir, self.parent.setup_obj.profiles_file),
+        )
+        self.prepare_outputs()
+
+    def prepare_outputs(self):
+        """
+        Prepare outputs for ParameterFrame
+        """
+        self.parent.params.update_kw_parameters(
+            {
+                bm_key: getattr(self.io_manager, pl_key)
+                for pl_key, bm_key in self.parent._recv_mapping.items()
+            },
+            source=PLASMOD,
+        )
+
+
 class Solver(interface.FileProgramInterface):
     """
     Plasmod solver class
@@ -405,32 +454,39 @@ class Solver(interface.FileProgramInterface):
 
     def __init__(
         self,
-        params=None,
-        # build_config=None,
-        runmode="run",
+        params,
+        build_config=None,
         run_dir: Optional[str] = None,
         binary: Optional[str] = "transporz",
     ):
-        self._out_params = Outputs()
+        # self._out_params = Outputs()
         super().__init__(
             PLASMOD,
-            self._get_inputs(params),
-            runmode,  # build_config.get("plasmod_mode", "run")
+            params,
+            build_config.get("runmode", "run"),
             binary=binary,
             run_dir=run_dir,
             mappings=create_mapping(),
+            problem_settings=build_config.get("problem_settings", None),
         )
 
-    @staticmethod
-    def _get_inputs(params):
-        # TODO remove the need for this
-        if params is None:
-            params = Inputs()
-        elif isinstance(params, Inputs):
-            params = params
-        elif isinstance(params, Dict):
-            params = Inputs(**params)
-        return params
+    def get_scalar(self, scalar):
+        """
+        Get scalar values for unmapped variables.
+
+        Please use params for mapped variables
+
+        Parameters
+        ----------
+        scalar: str
+            scalar value to get
+
+        Returns
+        -------
+        scalar value
+
+        """
+        return getattr(self.teardown_obj.io_manager, scalar)
 
     def get_profile(self, profile: str):
         """
@@ -446,7 +502,7 @@ class Solver(interface.FileProgramInterface):
         A profile data
 
         """
-        return getattr(self._out_params, Profiles(profile).name)
+        return getattr(self.teardown_obj.io_manager, Profiles(profile).name)
 
     def get_profiles(self, profiles: Iterable):
         """

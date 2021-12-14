@@ -186,7 +186,7 @@ class Solver(interface.FileProgramInterface):
         super().__init__(
             PROCESS,
             params,
-            build_config["process_mode"],
+            build_config.get("runmode", "run"),
             binary=binary,
             run_dir=run_dir,
             mappings=mappings,
