@@ -24,6 +24,7 @@ EU-DEMO specific builder for PF coils
 """
 
 from typing import Optional, List
+import numpy as np
 
 from bluemira.base.components import Component
 from bluemira.base.parameter import ParameterFrame
@@ -31,6 +32,8 @@ from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.error import BuilderError
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import CoilSet
+from bluemira.magnetostatics.baseclass import SourceGroup
+from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 import bluemira.utilities.plot_tools as bm_plot_tools
 
 
@@ -209,4 +212,21 @@ class PFCoilsBuilder(Builder):
         return component
 
     def _make_field_solver(self):
-        return None
+        sources = []
+        for coil in self._coilset.coils.values():
+            sources.append(
+                CircularArcCurrentSource(
+                    [0, 0, coil.z],
+                    [1, 0, 0],
+                    [0, 1, 0],
+                    [0, 0, 1],
+                    coil.dx,
+                    coil.dz,
+                    coil.x,
+                    2 * np.pi,
+                    coil.current,
+                )
+            )
+
+        field_solver = SourceGroup(sources)
+        return field_solver
