@@ -463,7 +463,7 @@ class Solver(interface.FileProgramInterface):
         super().__init__(
             PLASMOD,
             params,
-            build_config.get("runmode", "run"),
+            build_config.get("mode", "run"),
             binary=binary,
             run_dir=run_dir,
             mappings=create_mapping(),
