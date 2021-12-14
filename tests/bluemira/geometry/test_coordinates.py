@@ -238,6 +238,8 @@ class TestCoordinates:
         assert c.check_ccw([0, 0, 1])
         c.reverse()
         assert not c.check_ccw(axis=[0, 0, 1])
+
+    def test_brainfuck(self):
         radius = 5
         theta = np.linspace(0, 2 * np.pi, 100)
         x = radius * np.cos(theta)

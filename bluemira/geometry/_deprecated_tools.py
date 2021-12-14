@@ -543,26 +543,10 @@ def get_area_2d(x, y):
 
 
 @nb.jit(cache=True, nopython=True)
-def _get_signed_area(x, y, z, normal):
-    """
-    Calculate the signed area of a set of x, y, z coordinate vectors.
-    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
-    """
-    m = np.zeros((3, len(x)))
-    m[0, :] = x
-    m[1, :] = y
-    m[2, :] = z
-    a = np.array([0.0, 0.0, 0.0])
-    for i in range(len(z)):
-        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
-    a *= 0.5
-    return np.dot(a, normal)
-
-
-@nb.jit(cache=True, nopython=True)
 def get_area_3d(x, y, z):
     """
     Calculate the area inside a closed polygon.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
 
     Parameters
     ----------
@@ -583,8 +567,15 @@ def get_area_3d(x, y, z):
         return 0
 
     v3 = get_normal_vector(x, y, z)
-    area = _get_signed_area(x, y, z, v3)
-    return abs(area)
+    m = np.zeros((3, len(x)))
+    m[0, :] = x
+    m[1, :] = y
+    m[2, :] = z
+    a = np.array([0.0, 0.0, 0.0])
+    for i in range(len(z)):
+        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
+    a *= 0.5
+    return abs(np.dot(a, v3))
 
 
 def check_ccw_3d(x, y, z, normal):
@@ -609,7 +600,25 @@ def check_ccw_3d(x, y, z, normal):
     """
     r = rotation_matrix_v1v2([0, 0, 1], normal)
     x, y, z = r @ np.array([x, y, z])
-    return _get_signed_area(x, y, z, normal) >= 0.0
+    a = _get_ccw_metric(x, y, z)
+    return np.dot(normal, a) >= 0.0
+
+
+@nb.jit(cache=True, nopython=True)
+def _get_ccw_metric(x, y, z):
+    """
+    Calculate the signed area of a set of x, y, z coordinate vectors.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+    """
+    m = np.zeros((3, len(x)))
+    # Translate all coordinates arbitrarily to dodge degenerate edge cases! :)
+    m[0, :] = x + 1.0
+    m[1, :] = y + 1.0
+    m[2, :] = z + 1.0
+    a = np.array([0.0, 0.0, 0.0])
+    for i in range(len(z)):
+        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
+    return a
 
 
 @xyz_process
