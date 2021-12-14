@@ -77,7 +77,7 @@ class TestRun:
         shutil.rmtree(self.run_dir)
 
     def set_runmode(self, runmode):
-        self.build_config["process_mode"] = runmode
+        self.build_config["mode"] = runmode
 
     def run_PROCESS(self, runmode, **kwargs):
         """

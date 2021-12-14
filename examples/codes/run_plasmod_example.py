@@ -39,7 +39,7 @@ build_config = {
         "Pfus_req": 2000,
         "i_modeltype": 111,
     },
-    "runmode": "run",
+    "mode": "run",
 }
 
 plasmod_solver = plasmod.Solver(
