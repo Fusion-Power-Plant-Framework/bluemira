@@ -7,6 +7,17 @@ typical conceptual fusion reactor design activities.
 ``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see 
 [publications](#Publications)).
 
+## Work in Progress!
+
+The `bluemira` team has been working hard since mid-2021 to combine ``BLUEPRINT`` and ``MIRA`` into a single reactor design framework. We took the opportunity to embark upon
+a significant refactor of both code bases, delivering improved functionality, code
+quality, and hopefully maintainability. This, along with some resourcing issues has
+caused our feature roadmap to slip. A lot of functionality that was present in  ``BLUEPRINT`` and ``MIRA`` is not yet available in `bluemira`.
+
+`Bluemira` is very much under active development, and will likely be subject to API
+changes in the near future. We apologise in advance for these. Please do get in touch
+before starting to use any modules, so we can warn you of changes to come.
+
 ## Modules
 
 ``Bluemira`` is composed of various modules: 
