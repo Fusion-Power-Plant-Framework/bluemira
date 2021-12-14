@@ -608,7 +608,7 @@ def check_ccw_3d(x, y, z, normal):
         Whether or not the set is CCW about the normal vector
     """
     r = rotation_matrix_v1v2([0, 0, 1], normal)
-    x, y, z = (np.array([x, y, z]).T @ r).T
+    x, y, z = r @ np.array([x, y, z])
     return _get_signed_area(x, y, z, normal) >= 0.0
 
 

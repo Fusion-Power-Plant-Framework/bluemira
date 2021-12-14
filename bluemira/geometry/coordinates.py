@@ -32,7 +32,6 @@ from bluemira.base.constants import EPS
 from bluemira.geometry.error import CoordinatesError
 from bluemira.geometry._deprecated_tools import (
     get_perimeter_3d,
-    get_area_3d,
     get_centroid_3d,
     check_ccw_3d,
 )
@@ -332,22 +331,6 @@ class Coordinates:
         Perimeter length of the coordinates.
         """
         return get_perimeter_3d(*self._array)
-
-    @property
-    def area(self) -> float:
-        """
-        Enclosed area of the Coordinates. 0 if the Coordinates are open.
-        """
-        if not self.closed:
-            return 0.0
-
-        if not self.is_planar:
-            bluemira_warn(
-                "Cannot get the area of a non-planar set of Coordinates. Returning 0.0"
-            )
-            return 0.0
-
-        return get_area_3d(*self._array)
 
     @property
     def center_of_mass(self) -> tuple:

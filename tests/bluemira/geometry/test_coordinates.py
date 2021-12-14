@@ -53,7 +53,9 @@ def trace_torus_orbit(r_1, r_2, n_r_2_turns, n_points):
     x = (r_1 + r_2 * np.cos(theta)) * np.cos(phi)
     y = (r_1 + r_2 * np.cos(theta)) * np.sin(phi)
     z = r_2 * np.sin(theta)
-    xyz_array = np.array([x, y, z])
+
+    direction = 1 if n_r_2_turns > 0.0 else -1
+    xyz_array = np.array([x[::direction], y[::direction], z[::direction]])
     return xyz_array
 
 
@@ -147,6 +149,14 @@ class TestCoordinates:
         assert np.alltrue(y1 == y2)
         assert np.alltrue(z1 == z2)
 
+    def test_reverse(self):
+        xyz = np.array([[0, 1, 2, 3], [0, 0, 0, 0], [0, 1, 2, 3]])
+        c = Coordinates(xyz)
+        c.reverse()
+        assert np.allclose(c.x, xyz[0][::-1])
+        assert np.allclose(c.y, xyz[1][::-1])
+        assert np.allclose(c.z, xyz[2][::-1])
+
     def test_translate(self):
         a = np.random.rand(3, 123)
         v = np.random.rand(3)
@@ -225,7 +235,9 @@ class TestCoordinates:
         y = radius * np.sin(theta)
         z = np.zeros(100)
         c = Coordinates([x, y, z])
-        assert c.check_ccw()
+        assert c.check_ccw([0, 0, 1])
+        c.reverse()
+        assert not c.check_ccw(axis=[0, 0, 1])
         radius = 5
         theta = np.linspace(0, 2 * np.pi, 100)
         x = radius * np.cos(theta)
@@ -233,10 +245,19 @@ class TestCoordinates:
         y = np.zeros(100)
         c = Coordinates([x, y, z])
         assert c.check_ccw(axis=[0, 1, 0])
+        c.reverse()
+        assert not c.check_ccw(axis=[0, 1, 0])
 
     def test_complicated(self):
         xyz = trace_torus_orbit(5, 1, 10, 999)
         c = Coordinates(xyz)
 
         assert not c.is_planar
+        assert c.check_ccw([0, 0, 1])
+
+        xyz = trace_torus_orbit(50, 1, -10, 1000)
+        c = Coordinates(xyz)
+        assert not c.is_planar
+        assert not c.check_ccw([0, 0, 1])
+        c.set_ccw([0, 0, 1])
         assert c.check_ccw()
