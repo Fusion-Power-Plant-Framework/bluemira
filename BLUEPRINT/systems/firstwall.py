@@ -510,6 +510,8 @@ class DivertorBuilder:
         """
         # Find the tangent to the approriate flux loop at the outer strike point
         tangent = get_tangent_vector(outer_strike, flux_loop)
+        if tangent[0] > 0:
+            tangent = -tangent
 
         # Get the outer target points
         (
