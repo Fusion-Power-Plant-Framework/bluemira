@@ -22,6 +22,7 @@
 """
 Test for plasmod run
 """
+from bluemira.base.config import Configuration
 import bluemira.codes.plasmod as plasmod
 import matplotlib.pyplot as plt
 
@@ -29,15 +30,24 @@ PLASMOD_PATH = "../plasmod_bluemira"
 
 new_params = {
     "A": 3.1,
-    "Bt": 5.3,
-    "R0": 8.93,
-    "q95": 3.23,
-    "Pfus_req": 2000,
-    "i_modeltype": 111,
+    "B_0": 5.3,
+    "R_0": 8.93,
+    "q_95": 3.23,
+}
+build_config = {
+    "problem settings": {
+        "Pfus_req": 2000,
+        "i_modeltype": 111,
+    },
+    "runmode": "run",
 }
 
-plasmod_solver = plasmod.Solver(params=new_params, binary=f"{PLASMOD_PATH}/plasmod.o")
-plasmod_solver._set_runmode("run")
+plasmod_solver = plasmod.Solver(
+    params=Configuration(new_params),
+    build_config=build_config,
+    binary=f"{PLASMOD_PATH}/plasmod.o",
+)
+# plasmod_solver._set_runmode("run")
 plasmod_solver.run()
 
 ffprime = plasmod_solver.get_profile("ffprime")
@@ -49,8 +59,8 @@ ax.set(xlabel="x (-)", ylabel="T_e (keV)")
 ax.grid()
 plt.show()
 
-print(f"Plasma current [MA]: {plasmod_solver._out_params.Ip}")
-print(f"Fusion power [MW]: {plasmod_solver._out_params.Pfus/1E6}")
-print(f"Additional heating power [MW]: {plasmod_solver._out_params.Padd/1E6}")
-print(f"Radiation power [MW]: {plasmod_solver._out_params.Prad/1E6}")
-print(f"Transport power across separatrix [MW]: {plasmod_solver._out_params.Psep/1E6}")
+print(f"Plasma current [MA]: {plasmod_solver.params.I_p.value}")
+print(f"Fusion power [MW]: {plasmod_solver.params.P_fus.value/1E6}")
+print(f"Additional heating power [MW]: {plasmod_solver.get_scalar('Padd')/1E6}")
+print(f"Radiation power [MW]: {plasmod_solver.get_scalar('Prad')/1E6}")
+print(f"Transport power across separatrix [MW]: {plasmod_solver.get_scalar('Psep')/1E6}")

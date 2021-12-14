@@ -134,14 +134,11 @@ class Setup(Task):
 
         """
         NAME = self.parent.NAME
-        if NAME != "PLASMOD":  # TODO FIX
-            self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
-            self._params = type(params).from_template(self._parameter_mapping.values())
-            self._params.update_kw_parameters(params.to_dict(verbose=True))
-            self._recv_mapping = get_recv_mapping(params, NAME)
-            self._send_mapping = get_send_mapping(params, NAME)
-        else:
-            self._params = params
+        self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
+        self._params = type(params).from_template(self._parameter_mapping.values())
+        self._params.update_kw_parameters(params.to_dict(verbose=True))
+        self._recv_mapping = get_recv_mapping(params, NAME)
+        self._send_mapping = get_send_mapping(params, NAME)
 
     @property
     def params(self) -> bm_base.ParameterFrame:
@@ -206,8 +203,7 @@ class FileProgramInterface:
     ):
         self.NAME = NAME
 
-        if NAME != "PLASMOD":  # TODO remove none protection
-            add_mapping(NAME, params, mappings)
+        add_mapping(NAME, params, mappings)
 
         if not hasattr(self, "__run_dir"):
             self.__run_dir = "./" if run_dir is None else run_dir

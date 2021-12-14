@@ -79,7 +79,10 @@ def run_systems_code(
     CodesError
         If PROCESS is not being mocked and is not installed.
     """
-    process_mode = build_config["process_mode"]
+    # Remove me, temp compatibility layer
+    build_config["runmode"] = build_config.get("runmode", build_config["process_mode"])
+    # #####################################
+    process_mode = build_config.get("runmode", "run")
     if (not process.PROCESS_ENABLED) and (process_mode.lower() != "mock"):
         raise CodesError("PROCESS not (properly) installed")
 
