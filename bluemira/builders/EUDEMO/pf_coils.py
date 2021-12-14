@@ -31,9 +31,14 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.base.builder import Builder, BuildConfig
 from bluemira.base.error import BuilderError
 from bluemira.builders.pf_coils import PFCoilBuilder
-from bluemira.equilibria.coils import CoilSet
+
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.coils import Coil, Solenoid, CoilSet
+from bluemira.equilibria.profiles import CustomProfile
+
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+
 import bluemira.utilities.plot_tools as bm_plot_tools
 
 
@@ -232,3 +237,136 @@ class PFCoilsBuilder(Builder):
 
         field_solver = SourceGroup(sources)
         return field_solver
+
+
+def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
+    """
+    Make a set of solenoid coils.
+    """
+    total_height = z_max - z_min
+    tk_inscas = tk_cs_ins + tk_cs_cas
+
+    coils = []
+    if n_CS == 1:
+        # Single CS module solenoid
+        module_height = total_height - 2 * tk_inscas
+        coil = Coil(
+            r_cs,
+            0.5 * total_height,
+            current=0,
+            dx=tk_cs,
+            dz=0.5 * module_height,
+            control=True,
+            ctype="CS",
+            name=f"CS_{1}",
+            flag_sizefix=True,
+        )
+        coils.append(coil)
+
+    elif n_CS % 2 == 0:
+        # Equally-spaced CS modules for even numbers of CS coils
+        module_height = (total_height - (n_CS - 1) * g_cs - n_CS * 2 * tk_inscas) / n_CS
+        dz_coil = 0.5 * module_height
+        z_iter = z_max
+        for i in range(n_CS):
+            z_coil = z_iter - tk_inscas - dz_coil
+            coil = Coil(
+                r_cs,
+                z_coil,
+                current=0,
+                dx=tk_cs,
+                dz=dz_coil,
+                control=True,
+                ctype="CS",
+                name=f"CS_{i+1}",
+                flag_sizefix=True,
+            )
+            coils.append(coil)
+            z_iter = z_coil - dz_coil - tk_inscas - g_cs
+
+    else:
+        # Odd numbers of modules -> Make a central module that is twice the size of the
+        # others.
+        module_height = (total_height - (n_CS - 1) * g_cs - n_CS * 2 * tk_inscas) / (
+            n_CS + 1
+        )
+        z_iter = z_max
+        for i in range(n_CS):
+            if i == n_CS // 2:
+                # Central module
+                dz_coil = module_height
+                z_coil = z_iter - tk_inscas - dz_coil
+
+            else:
+                # All other modules
+                dz_coil = 0.5 * module_height
+                z_coil = z_iter - tk_inscas - dz_coil
+
+            coil = Coil(
+                r_cs,
+                z_coil,
+                current=0,
+                dx=tk_cs,
+                dz=dz_coil,
+                control=True,
+                ctype="CS",
+                flag_sizefix=True,
+                name=f"CS_{i+1}",
+            )
+            coils.append(coil)
+            z_iter = z_coil - dz_coil - tk_inscas - g_cs
+
+    return coils
+
+
+def make_pf_coils(tf_boundary, n_PF):
+
+    coils = []
+
+    return coils
+
+
+def make_coilset(
+    tf_boundary,
+    r_cs,
+    tk_cs,
+    g_cs,
+    tk_cs_ins,
+    tk_cs_cas,
+    n_CS,
+    n_PF,
+    CS_jmax,
+    CS_bmax,
+    PF_jmax,
+    PF_bmax,
+):
+    bb = tf_boundary.bounding_box
+    z_min = bb.z_min
+    z_max = bb.z_max
+
+    pf_coils = make_pf_coils()
+    solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS)
+
+    coilset = CoilSet(pf_coils + solenoid)
+    coilset.assign_coil_materials("PF", jmax=PF_jmax, bmax=PF_bmax)
+    coilset.assign_coil_materials("CS", jmax=CS_jmax, bmax=CS_bmax)
+    return coilset
+
+
+def make_grid(lcfs_shape, f_x_scale, f_z_scale, nx, nz):
+    """
+    Make a grid centred and scaled around the centroid of LCFS shape
+    """
+    bb = lcfs_shape.bounding_box
+    dx = 0.5 * (bb.x_max - bb.x_min)
+    dz = 0.5 * (bb.z_max - bb.z_min)
+    x_c, _, z_c = lcfs_shape.center_of_mass
+    x_min = x_c - f_x_scale * dx
+    x_max = x_c + f_x_scale * dx
+    z_min = z_c - f_z_scale * dz
+    z_max = z_c + f_z_scale * dz
+    return Grid(x_min, x_max, z_min, z_max, nx=nx, nz=nz)
+
+
+def make_profiles(R_0, B_0, pprime, ffprime):
+    return CustomProfile(pprime, ffprime, R_0, B_0)
