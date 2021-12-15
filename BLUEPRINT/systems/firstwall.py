@@ -136,6 +136,11 @@ def get_tangent_vector(point_on_loop, loop):
 
     # Return normalised tangent vector
     tangent_norm = tangent / np.linalg.norm(tangent)
+
+    # Fixing the tangent vector direction to be concordant with the x-axis
+    if tangent_norm[0] > 0:
+        tangent_norm = -tangent_norm
+
     return tangent_norm
 
 
@@ -510,14 +515,9 @@ class DivertorBuilder:
         """
         # Find the tangent to the approriate flux loop at the outer strike point
         tangent = get_tangent_vector(outer_strike, flux_loop)
-        if tangent[0] > 0:
-            tangent = -tangent
 
         # Get the outer target points
-        (
-            outer_target_internal_point,
-            outer_target_external_point,
-        ) = self.make_divertor_target(
+        (outer_target_pfr_end, outer_target_sol_end) = self.make_divertor_target(
             outer_strike,
             tangent,
             vertical_target=self.inputs["div_vertical_outer_target"],
@@ -536,10 +536,10 @@ class DivertorBuilder:
         # Select the top and bottom limits for the guide lines
         z_x_point = self.points["x_point"]["z_low"]
         outer_leg_external_top_limit = [div_top_right, z_x_point]
-        outer_leg_external_bottom_limit = outer_target_external_point
+        outer_leg_external_bottom_limit = outer_target_sol_end
 
         outer_leg_internal_top_limit = middle_point
-        outer_leg_internal_bottom_limit = outer_target_internal_point
+        outer_leg_internal_bottom_limit = outer_target_pfr_end
 
         # Make the guide lines
         external_guide_line = make_guide_line(
@@ -560,7 +560,7 @@ class DivertorBuilder:
             internal_guide_line.x,
             internal_guide_line.z,
             [middle_point[0], middle_point[1]],
-            outer_target_internal_point,
+            outer_target_pfr_end,
             degree_in,
         )
 
@@ -570,7 +570,7 @@ class DivertorBuilder:
             external_guide_line.x,
             external_guide_line.z,
             [div_top_right, z_x_point],
-            outer_target_external_point,
+            outer_target_sol_end,
             degree_out,
         )
 
@@ -607,21 +607,17 @@ class DivertorBuilder:
         """
         # Find the tangent to the approriate flux loop at the outer strike point
         tangent = get_tangent_vector(inner_strike, flux_loop)
-        if tangent[0] > 0:
-            tangent = -tangent
-
-        degree = self.inner_leg_polyfit_degree
 
         # Get the outer target points
-        (
-            inner_target_internal_point,
-            inner_target_external_point,
-        ) = self.make_divertor_target(
+        (inner_target_pfr_end, inner_target_sol_end,) = self.make_divertor_target(
             inner_strike,
             tangent,
             vertical_target=self.inputs["div_vertical_inner_target"],
             outer_target=False,
         )
+
+        # Select the degree of the fitting polynomial
+        degree = self.inner_leg_polyfit_degree
 
         # Select those points along the given flux line below the X point
         inner_leg_central_guide_line = flux_loop
@@ -640,7 +636,7 @@ class DivertorBuilder:
         # Select those points along the top-clipped flux line above the
         # inner target internal point height
         bottom_clip_inner_leg_central_guide_line = np.where(
-            inner_leg_central_guide_line.z > inner_target_internal_point[1],
+            inner_leg_central_guide_line.z > inner_target_pfr_end[1],
         )
 
         # Create a new Loop from the points selected along the flux line
@@ -656,7 +652,7 @@ class DivertorBuilder:
             inner_leg_central_guide_line.x,
             inner_leg_central_guide_line.z,
             [middle_point[0], middle_point[1]],
-            inner_target_internal_point,
+            inner_target_pfr_end,
             degree,
         )
 
@@ -666,7 +662,7 @@ class DivertorBuilder:
             inner_leg_central_guide_line.x,
             inner_leg_central_guide_line.z,
             [div_top_left, z_x_point],
-            inner_target_external_point,
+            inner_target_sol_end,
             degree,
         )
 
