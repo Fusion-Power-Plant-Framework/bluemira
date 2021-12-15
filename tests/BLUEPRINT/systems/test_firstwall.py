@@ -189,7 +189,7 @@ class TestFirstWallDN:
             outer_target=True,
         )
         assert tar_out[0][0] > self.firstwall.points["x_point"]["x"]
-        assert tar_out[0][0] < tar_out[1][0]
+        assert tar_out[0][0] > tar_out[1][0]
 
     def test_make_divertor_inner_target(self):
         div_builder = self.firstwall.divertor_builder

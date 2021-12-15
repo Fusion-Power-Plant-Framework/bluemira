@@ -607,6 +607,8 @@ class DivertorBuilder:
         """
         # Find the tangent to the approriate flux loop at the outer strike point
         tangent = get_tangent_vector(inner_strike, flux_loop)
+        if tangent[0] > 0:
+            tangent = -tangent
 
         degree = self.inner_leg_polyfit_degree
 
