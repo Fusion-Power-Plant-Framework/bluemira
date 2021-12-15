@@ -225,3 +225,31 @@ class TestWirePlaneIntersect:
         true.sort(axis=0)
         inter.sort(axis=0)
         assert np.allclose(inter, true)
+
+    def test_weird_wire(self):
+        # test a wire that moves in 3 dimensions
+        wire = make_polygon(
+            [
+                [0.0, -1.0, 0.0],
+                [1.0, -2.0, 1.0],
+                [2.0, -3.0, 2.0],
+                [3.0, -4.0, 1.0],
+                [4.0, -5.0, 0.0],
+                [5.0, -6.0, -1.0],
+                [6.0, -7.0, -2.0],
+                [7.0, -8.0, -1.0],
+                [8.0, -4.0, 0.0],
+                [9.0, -2.0, 1.0],
+                [10.0, 3.0, 2.0],
+                [8.0, 2.0, 1.0],
+                [6.0, 4.0, 0.0],
+                [4.0, 2.0, -1.0],
+                [2.0, 0.0, -2.0],
+                [0.0, -1.0, 0.0],
+            ]
+        )
+
+        plane = BluemiraPlane.from_3_points([1, -2, -1], [6, 4, 0], [9, -2, 1])
+
+        intersect = slice_shape(wire, plane)
+        assert intersect.shape[0] == 4

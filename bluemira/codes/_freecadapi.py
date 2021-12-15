@@ -666,7 +666,7 @@ def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     plane_axis: Iterable
         normal plane axis
     """
-    if isinstance(shape, apiShape):
+    if isinstance(shape, apiWire):
         return _slice_wire(shape, plane_axis, plane_origin)
     else:
         bluemira_warn("The output sctructure of this function may not be as expected")
@@ -692,9 +692,8 @@ def _slice_solid(obj, normal_plane=(0, 1, 0), shift=0):
     """
     Get the plane intersection points of a face or solid
     """
-    intersect_obj = obj.slice(Base.Vector(*normal_plane), shift)
-    vertexes = [np.array([[v.X, v.Y, v.Z] for v in i.Vertexes]).T for i in intersect_obj]
-    return None if vertexes == [] else vertexes
+    wires = obj.slice(Base.Vector(*normal_plane), shift)
+    return None if wires == [] else wires
 
 
 # ======================================================================================
