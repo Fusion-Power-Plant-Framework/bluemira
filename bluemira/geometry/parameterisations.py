@@ -1477,29 +1477,40 @@ class CurvedPictureFrameMixin:
         )
         theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
 
+        p1 = [x_mid, 0, z_mid]
+        p2 = [leg_centre[0] - (r_leg + r_j) * np.sin(theta_j), 0, z_mid]
+
+        if not flip:
+            out_wire.append(make_polygon([p1, p2]))
+
         out_wire.append(
             make_circle(
                 radius=r_j,
                 center=joint_curve_centre,
-                start_angle=90 if flip else -90,
-                end_angle=90 - np.rad2deg(theta_j) if flip else np.rad2deg(theta_j) - 90,
+                start_angle=90 - np.rad2deg(theta_j) if flip else -90,
+                end_angle=90 if flip else np.rad2deg(theta_j) - 90,
                 axis=axis,
                 label="bottom_limb_joint" if flip else "top_limb_joint",
             )
         )
+
         angle2 = np.rad2deg(theta_leg_final)
         start2 = 90 + np.rad2deg(theta_j)
-
         out_wire.append(
             make_circle(
                 radius=r_leg,
                 center=leg_centre,
-                start_angle=-start2 if flip else start2,
-                end_angle=angle2 if flip else -angle2,
+                start_angle=-start2 if flip else start2 - angle2,
+                end_angle=angle2 - start2 if flip else start2,
                 axis=axis,
                 label="bottom_limb_dome" if flip else "top_limb_dome",
             )
         )
+
+        if flip:
+            out_wire.append(make_polygon([p2, p1]))
+
+        label = "bot_limb_dome" if flip else "top_limb_dome"
 
         return BluemiraWire(out_wire, label=label)
 
@@ -1515,21 +1526,21 @@ class SCCurvedPictureFrame(GeometryParameterisation):
         variables = OptVariables(
             [
                 # Inner limb radius
-                BoundedVariable("x_mid", 1.1, lower_bound=1, upper_bound=1.3),
+                BoundedVariable("x_mid", 0.4, lower_bound=0.3, upper_bound=0.5),
                 # Curve start radius
-                BoundedVariable("x_curve_start", 6.5, lower_bound=6, upper_bound=10),
+                BoundedVariable("x_curve_start", 2.5, lower_bound=2.4, upper_bound=2.6),
                 # Outer limb radius
-                BoundedVariable("x_out", 0.5, lower_bound=0.4, upper_bound=0.8),
+                BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
                 # Upper limb flat section height
-                BoundedVariable("z_mid_up", 7, lower_bound=6, upper_bound=9),
+                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
                 # Lower limb flat section height
-                BoundedVariable("z_mid_down", 7, lower_bound=6, upper_bound=9),
+                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
                 # Upper limb max height
-                BoundedVariable("z_max_up", 7, lower_bound=6, upper_bound=9),
+                BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
                 # Lower limb max height
-                BoundedVariable("z_max_down", 7, lower_bound=6, upper_bound=9),
+                BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
                 # Corner/transition joint radius
-                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=1),
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=0.8),
             ],
             frozen=True,
         )
@@ -1561,9 +1572,9 @@ class SCCurvedPictureFrame(GeometryParameterisation):
             r_j,
         ) = self.variables.values
         axis = [0, -1, 0]
-        p1 = [x_mid, 0, z_mid_up]
-        p2 = [x_curve_start, 0, z_mid_up]
-        wires = [make_polygon([p1, p2], label="top_limb_inb")]
+        p1 = [x_mid, 0, 0]
+        p2 = [x_mid, 0, z_mid_up]
+        wires = [make_polygon([p1, p2], label="inner_limb_flat_top")]
 
         # Top Curve
         if z_max_up - z_mid_up > 0.001:
@@ -1592,6 +1603,8 @@ class SCCurvedPictureFrame(GeometryParameterisation):
                     label="top_limb_outb",
                 )
             )
+
+        # Outer Leg
 
         # Bottom Curve
         if z_max_down + z_mid_down < -0.001:
@@ -1622,12 +1635,11 @@ class SCCurvedPictureFrame(GeometryParameterisation):
                 )
             )
 
-        p3 = [x_curve_start, 0, z_mid_down]
-        p4 = [x_mid, 0, z_mid_down]
+        p3 = [x_mid, 0, z_mid_down]
+        p4 = [x_mid, 0, 0]
         wires.append(make_polygon([p3, p4], label="bot_limb_inb"))
-        wires.close()
 
-        return BluemiraWire(wires, label=label)
+        return wires  # BluemiraWire(wires, label=label)
 
 
 class ResistiveCurvedPictureFrame(GeometryParameterisation):
@@ -1643,23 +1655,23 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
                 # Inner limb radius
                 BoundedVariable("x_in", 0.4, lower_bound=0.3, upper_bound=0.5),
                 # Middle limb radius
-                BoundedVariable("x_mid", 1.1, lower_bound=1, upper_bound=1.3),
+                BoundedVariable("x_mid", 1.55, lower_bound=1.5, upper_bound=1.6),
                 # Curve start radius
-                BoundedVariable("x_curve_start", 2.5, lower_bound=1, upper_bound=3),
+                BoundedVariable("x_curve_start", 2.5, lower_bound=2.4, upper_bound=2.6),
                 # Outer limb radius
-                BoundedVariable("x_out", 0.5, lower_bound=0.4, upper_bound=0.8),
+                BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
                 # Height at which to stop the taper angle
-                BoundedVariable("z_in", 5.5, lower_bound=5, upper_bound=8),
+                BoundedVariable("z_in", 0.5, lower_bound=0.4, upper_bound=0.8),
                 # Upper limb flat section height
-                BoundedVariable("z_mid_up", 7, lower_bound=6, upper_bound=9),
+                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
                 # Lower limb flat section height
-                BoundedVariable("z_mid_down", -7, lower_bound=-9, upper_bound=-6),
+                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
                 # Upper limb max height
                 BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
                 # Lower limb max height
                 BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
                 # Corner/transition joint radius
-                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=1),
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=0.8),
             ],
             frozen=True,
         )
@@ -2428,13 +2440,13 @@ class CurvedPictureFrame(GeometryParameterisation):
                 r_c=0,
             )
 
-            wires = BluemiraWire([wires, top_leg_curve])
+            wires.append(top_leg_curve)
         else:
             # If top leg is flat
             wires.append(
                 make_circle(
                     r_j,
-                    (x_out - r_j, z_mid_up - r_j),
+                    (x_out - r_j, 0, z_mid_up - r_j),
                     start_angle=90,
                     end_angle=0,
                     axis=axis,
@@ -2456,14 +2468,14 @@ class CurvedPictureFrame(GeometryParameterisation):
                 r_c=0,
             )
 
-            wires = BluemiraWire([wires, bot_leg_curve])
+            wires.append(bot_leg_curve)
 
         else:
             # If bottom leg is flat
             wires.append(
                 make_circle(
                     r_j,
-                    (x_out - r_j, z_mid_down + r_j),
+                    (x_out - r_j, 0, z_mid_down + r_j),
                     start_angle=0,
                     end_angle=-90,
                     axis=axis,
