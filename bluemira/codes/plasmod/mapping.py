@@ -339,11 +339,11 @@ PLASMOD_OUTPUTS = {
     # [W] Line radiation power
     "P_line": "Pline",
     # [W] LH transition power
-    # ##### "BM_OUT": "PLH",
+    "P_LH": "PLH",
     # [W] neutron fusion power
     # ##### "BM_OUT": "Pneut",
     # [W] Ohimic heating power
-    # ##### "BM_OUT": "Pohm",
+    "P_ohm": "Pohm",
     # [W] total radiation power
     "P_rad": "Prad",
     # [W] total power across plasma separatrix
@@ -369,11 +369,11 @@ PLASMOD_OUTPUTS = {
     # [-] overall tolerance
     # ##### "BM_OUT": "tolfin",
     # [V] plasma loop voltage
-    # ##### "BM_OUT": "Vloop",
+    "v_loop": "Vloop",
     # [J] plasma thermal energy
     # ##### "BM_OUT": "Wth",
     # [-] plasma effective charge
-    # ##### "BM_OUT": "Zeff",  # Z_eff?
+    "Z_eff": "Zeff",
 }
 
 PLASMOD_INOUTS = {
@@ -384,7 +384,9 @@ PLASMOD_INOUTS = {
     # [-] input H-factor:if i_modeltype > 1 H factor calculated
     # ##### "BM_INP": "hfact_inp",
     # [-] H-factor
-    # ##### "BM_OUT": "H",  # H_star?
+    # ##### "BM_OUT": "H",
+    # [-] H-factor (radiation corrected)
+    "H_star": "Hcorr"
 }
 
 
