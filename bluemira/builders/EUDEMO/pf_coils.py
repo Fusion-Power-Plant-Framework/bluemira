@@ -324,11 +324,14 @@ def make_coilset(
     PF_jmax,
     PF_bmax,
 ):
+    """
+    Make an initial EU-DEMO-like coilset.
+    """
     bb = tf_boundary.bounding_box
     z_min = bb.z_min
     z_max = bb.z_max
 
-    pf_coils = make_pf_coils()
+    pf_coils = make_pf_coils(tf_boundary, n_PF)
     solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS)
 
     coilset = CoilSet(pf_coils + solenoid)
@@ -354,3 +357,30 @@ def make_grid(lcfs_shape, f_x_scale, f_z_scale, nx, nz):
 
 def make_profiles(R_0, B_0, pprime, ffprime):
     return CustomProfile(pprime, ffprime, R_0, B_0)
+
+
+class CurrentOptimisationProblem:
+    def __init__(self, current_optimiser, mag_constraints):
+        self.optimiser = current_optimiser
+
+    def f_objective(self, x, grad):
+
+        if grad.size > 0:
+            # Hm.. not sure how 0 would work in practice: np.sign(0) -> 0
+            # Probably best to set this to 1.0
+            grad[:] = np.sign(x)
+
+        return np.sum(np.abs(x))
+
+
+class PositionOptimisationProblem:
+    def __init__(self, position_optimiser, pos_constraints):
+        pass
+
+
+class PFCoilOptimisationProblem:
+    def __init__(
+        self, current_optimiser, position_optimiser, params, tf_boundary, separatrix
+    ):
+
+        pass
