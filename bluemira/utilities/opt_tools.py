@@ -24,6 +24,111 @@ Optimisation utilities
 """
 
 import numpy as np
+from bluemira.utilities.error import InternalOptError
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.error import EquilibriaError
+
+
+class ConstraintLibrary:
+    """
+    Library class containing constraint functions to use in NLOpt constrained
+    optimisation problems.
+
+    Constraint functions must be of the form:
+
+    .. code-block:: python
+
+        def f_constraint(constraint, x, grad, args):
+            constraint[:] = my_constraint_calc(x)
+            if grad.size > 0:
+                grad[:] = my_gradient_calc(x)
+            return constraint
+
+    The constraint function convention is such that c <= 0 is sought. I.e. all constraint
+    values must be negative.
+
+    Note that the gradient (Jacobian) of the constraint function is of the form:
+
+    .. math::
+
+        \\nabla \\mathbf{c} = \\begin{bmatrix}
+                \\dfrac{\\partial c_{0}}{\\partial x_0} & \\dfrac{\\partial c_{0}}{\\partial x_1} & ... \n
+                \\dfrac{\\partial c_{1}}{\\partial x_0} & \\dfrac{\\partial c_{1}}{\\partial x_1} & ... \n
+                ... & ... & ... \n
+                \\end{bmatrix}
+
+    The grad and constraint matrices must be assigned in place.
+    """  # noqa (W505)
+
+    def objective_constraint(
+        self, constraint, vector, grad, objective_function, maximum_fom=1.0
+    ):
+        """
+        Constraint function to constrain the maximum value of an NLOpt objective
+        function provided
+
+        Parameters
+        ----------
+        objective_function: callable
+            NLOpt objective function to use in constraint.
+        maximum_fom: float (default=1.0)
+            Value to constrain the objective function by during optimisation.
+        """
+        constraint[:] = objective_function(self, vector, grad) - maximum_fom
+        return constraint
+
+
+class ObjectiveLibrary:
+    """
+    Library class containing objective functions to use in NLOpt constrained
+    optimisation problems.
+
+    Objective functions must be of the form:
+
+    .. code-block:: python
+
+        def f_objective(x, grad, args):
+            if grad.size > 0:
+                grad[:] = my_gradient_calc(x)
+            return my_objective_calc(x)
+
+    The objective function is minimised, so lower values are "better".
+
+    Note that the gradient of the objective function is of the form:
+
+    :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
+    """  # noqa (W505)
+
+    def regularised_lsq_objective(self, vector, grad, scale, A, b, gamma):
+        """
+        Objective function for nlopt optimisation (minimisation),
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+        grad: np.array
+            Local gradient of objective function used by LD NLOPT algorithms.
+            Updated in-place.
+
+        Returns
+        -------
+        fom: Value of objective function (figure of merit).
+        """
+        vector = vector * scale
+        fom, err = regularised_lsq_fom(vector, A, b, gamma)
+        if grad.size > 0:
+            jac = 2 * A.T @ A @ vector / np.float(len(b))
+            jac -= 2 * A.T @ b / np.float(len(b))
+            jac += 2 * gamma * gamma * vector
+            grad[:] = scale * jac
+        if not fom > 0:
+            raise EquilibriaError(
+                "Optimiser least-squares objective function less than zero or nan."
+            )
+        return fom
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import InternalOptError

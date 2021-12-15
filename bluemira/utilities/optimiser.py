@@ -30,7 +30,8 @@ from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # n
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._nlopt_api import NLOPTOptimiser
 
-__all__ = ["approx_derivative", "Optimiser"]
+
+__all__ = ["approx_derivative", "Optimiser", "OptimiserConstraint"]
 
 
 def approx_derivative(
@@ -61,6 +62,38 @@ def approx_derivative(
     return _approx_derivative(
         func, x0, method=method, rel_step=rel_step, f0=f0, bounds=bounds, args=args
     )
+
+
+class OptimiserConstraint:
+    """
+    Data class to store information needed to apply a constraint
+    to an optimisation problem.
+
+    Parameters
+    ----------
+    f_constraint: callable
+        Constraint function to apply to problem.
+        For NLOpt constraints, onstraint functions should be of the form
+        f_constraint(cls, constraint, x, grad, f_constraint_args)
+    f_constraint_args: tuple (default = ())
+        Additional arguments to pass to NLOpt constraint function when called.
+    tolerance: array
+        Array of tolerances to use when applying the optimisation constraint.
+    constraint_type: string (default: "inequality")
+        Type of constraint to apply, either "inequality" or "equality".
+    """
+
+    def __init__(
+        self,
+        f_constraint,
+        f_constraint_args=(),
+        tolerance=np.array([1e-6]),
+        constraint_type="inequality",
+    ):
+        self._tolerance = tolerance
+        self._constraint_type = constraint_type
+        self._f_constraint = f_constraint
+        self._f_constraint_args = f_constraint_args
 
 
 class Optimiser(NLOPTOptimiser):
@@ -108,8 +141,8 @@ class Optimiser(NLOPTOptimiser):
                 \\end{bmatrix}
 
 
-    The grad and constraint matrices must be assigned in place
-    """  # noqa :W505
+    The grad and constraint matrices must be assigned in place.
+    """  # noqa (W505)
 
     def optimise(self, x0=None):
         """

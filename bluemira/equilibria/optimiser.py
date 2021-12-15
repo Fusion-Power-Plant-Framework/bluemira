@@ -32,7 +32,14 @@ import tabulate
 from pandas import DataFrame
 
 from bluemira.base.file import try_get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
+from bluemira.equilibria.error import EquilibriaError
+from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.utilities.plot_tools import save_figure
+from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov, ObjectiveLibrary
+from bluemira.utilities.optimiser import (
+    Optimiser,
+    approx_derivative,
+)
 from bluemira.codes._nlopt_api import process_NLOPT_result
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
@@ -1219,21 +1226,31 @@ class CoilsetOptimiserBase:
 
         return current_bounds
 
-    def set_up_optimiser(self, opt_args, dimension, bounds, objective_func):
+    def set_up_optimiser(
+        self, opt_args, dimension, bounds, objective_func, opt_constraints=[]
+    ):
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
 
         Parameters
         ----------
+        opt_args: dict
+            Arguments to be passed to Optimiser interface during creation.
         dimension: int
-            Number of independent coil currents to optimise.
-            Should be equal to eq.coilset._ccoils when called.
+            Number of independent variables in the state vector to be optimised.
+        bounds: tuple
+            Tuple containing lower and upper bounds on the state vector.
+        objective_func: callable
+            Objective function to be minimised during optimisation
+        opt_constraints: iterable (default = [])
+            Iterable of OptimiserConstraint objects containing optimisation
+            constraints held during optimisation.
 
         Returns
         -------
-        opt: nlopt.opt
-            NLOpt optimiser to be used for optimisation.
+        opt: Optimiser
+            Optimiser object to be used for optimisation.
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
@@ -1243,14 +1260,14 @@ class CoilsetOptimiserBase:
         opt.set_objective_function(objective_func)
 
         # Apply constraints
-        self.set_up_constraints(opt)
+        self.set_constraints(opt, opt_constraints)
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
         return opt
 
-    def set_up_constraints(self, opt):
+    def set_constraints(self, opt, opt_constraints):
         """
         Updates the optimiser in-place to apply problem constraints.
         To be overidden by child classes to apply specific constraints.
@@ -1258,8 +1275,40 @@ class CoilsetOptimiserBase:
         Parameters
         ----------
         opt: Optimiser
-            Optimiser to apply constraints to. Updated in-place.
+            Optimiser on which to apply the constraints. Updated in place.
+        opt_constraints: iterable
+            Iterable of OptimiserConstraint objects containing optimisation
+            constraints to be applied to the Optimiser.
+
+        Notes
+        -----
+        Lambda functions are used here to ensure the CoilsetOptimiser is passed
+        to the function, to allow any properties that are stored in the
+        CoilsetOptimiser to be accessed at runtime.
         """
+        for _opt_constraint in opt_constraints:
+            if _opt_constraint._constraint_type == "inequality":
+                opt.add_ineq_constraints(
+                    lambda constraint, vector, grad: _opt_constraint._f_constraint(
+                        self,
+                        constraint,
+                        vector,
+                        grad,
+                        *_opt_constraint._f_constraint_args,
+                    ),
+                    _opt_constraint._tolerance,
+                )
+            elif _opt_constraint._constraint_type == "equality":
+                opt.add_eq_constraints(
+                    lambda constraint, vector, grad: _opt_constraint._f_constraint(
+                        self,
+                        constraint,
+                        vector,
+                        grad,
+                        *_opt_constraint._f_constraint_args,
+                    ),
+                    _opt_constraint._tolerance,
+                )
         return opt
 
     def __call__(self, eq, constraints, psi_bndry=None):
@@ -1331,6 +1380,9 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
     opt_args: dict
         Dictionary containing arguments to pass to NLOpt optimiser.
         Defaults to using LD_SLSQP.
+    opt_constraints: iterable (default = [])
+        Iterable of OptimiserConstraint objects containing optimisation
+        constraints held during optimisation.
     """
 
     def __init__(
@@ -1347,8 +1399,9 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
                 "ftol_abs": 1e-4,
                 "max_eval": 100,
             },
-            "opt_parameters": {},
+            "opt_parameters": {"initial_step": 0.03},
         },
+        opt_constraints=[],
     ):
         # noqa :N803
         super().__init__(coilset)
@@ -1361,7 +1414,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         bounds = self.get_current_bounds(self.max_currents)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
 
     def optimise(self):
@@ -1385,6 +1438,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         self.b = self.w * self.constraints.b
 
         # Optimise
+        self.iter = 0
         currents = self.opt.optimise(initial_currents)
 
         coilset_state = np.concatenate((self.x0, self.z0, currents))
@@ -1409,18 +1463,9 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         -------
         fom: Value of objective function (figure of merit).
         """
-        vector = vector * self.scale
-        fom, err = regularised_lsq_fom(vector, self.A, self.b, self.gamma)
-        if grad.size > 0:
-            jac = 2 * self.A.T @ self.A @ vector / np.float(len(self.b))
-            jac -= 2 * self.A.T @ self.b / np.float(len(self.b))
-            jac += 2 * self.gamma * self.gamma * vector
-            grad[:] = self.scale * jac
-        if not fom > 0:
-            raise EquilibriaError(
-                "Optimiser least-squares objective function less than zero or nan."
-            )
-        return fom
+        return ObjectiveLibrary.regularised_lsq_objective(
+            self, vector, grad, self.scale, self.A, self.b, self.gamma
+        )
 
 
 class CoilsetOptimiser(CoilsetOptimiserBase):
@@ -1447,6 +1492,9 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         Dictionary containing arguments to pass to NLOpt optimiser.
         Defaults to using LN_SBPLX, terminating when the figure of
         merit < stop_val = 1.0, or max_eval =100.
+    opt_constraints: iterable (default = [])
+        Iterable of OptimiserConstraint objects containing optimisation
+        constraints held during optimisation.
 
     Notes
     -----
@@ -1470,6 +1518,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {},
         },
+        opt_constraints=[],
     ):
         # noqa :N803
         super().__init__(coilset)
@@ -1486,7 +1535,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         bounds = self.get_mapped_state_bounds(self.region_mapper, self.max_currents)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
 
     def get_mapped_state_bounds(self, region_mapper, max_currents):
@@ -1618,6 +1667,9 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         used in position optimisation.
         Defaults to using LN_SBPLX, terminating when the figure of
         merit < stop_val = 1.0, or max_eval = 100.
+    opt_constraints: iterable (default = [])
+        Iterable of OptimiserConstraint objects containing optimisation
+        constraints held during optimisation.
 
     Notes
     -----
@@ -1639,6 +1691,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {},
         },
+        opt_constraints=[],
     ):
         # noqa :N803
         super().__init__(sub_opt.coilset)
@@ -1651,7 +1704,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         bounds = (lower_bounds, upper_bounds)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
         self.sub_opt = sub_opt
 
