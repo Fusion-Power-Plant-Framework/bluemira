@@ -77,6 +77,30 @@ class ConstraintLibrary:
         constraint[:] = objective_function(self, vector, grad) - maximum_fom
         return constraint
 
+    def current_midplane_constraint(
+        self, constraint, vector, grad, radius, inboard=True
+    ):
+        """
+        Constraint function to constrain the inboard or outboard midplane
+        of the plasma during optimisation.
+
+        Parameters
+        ----------
+        radius: float
+            Toroidal radius at which to constrain the plasma midplane.
+        inboard: bool (default=True)
+            Boolean controlling whether to constrain the inboard (if True) or
+            outboard (if False) side of the plasma midplane.
+        """
+        coilset_state = np.concatenate((self.x0, self.z0, vector))
+        self.set_coilset_state(coilset_state)
+        lcfs = self.eq.get_LCFS()
+        if inboard:
+            constraint[:] = radius - min(lcfs.x)
+        else:
+            constraint[:] = max(lcfs.x) - radius
+        return constraint
+
 
 class ObjectiveLibrary:
     """
