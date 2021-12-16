@@ -35,8 +35,6 @@ from bluemira.geometry._deprecated_tools import (
     in_polygon,
     loop_plane_intersect,
     polygon_in_polygon,
-    get_normal_vector,
-    get_perimeter,
     get_area,
     rotation_matrix,
     offset,
@@ -56,14 +54,6 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import revolve_shape, extrude_shape
 
 TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
-
-
-class TestPerimeter:
-    def test_simple(self):
-        # 2 x 2 square
-        x = [0, 2, 2, 0, 0]
-        y = [0, 0, 2, 2, 0]
-        assert get_perimeter(x, y) == 8.0
 
 
 class TestCheckLineSegment:
@@ -117,34 +107,6 @@ class TestBoundingBox:
         assert np.allclose(xb, np.array([-2, -2, -2, -2, 2, 2, 2, 2]))
         assert np.allclose(yb, np.array([-2, -2, 2, 2, -2, -2, 2, 2]))
         assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
-
-
-class TestGetNormal:
-    def test_simple(self):
-        x = np.array([0, 2, 2, 0, 0])
-        z = np.array([0, 0, 2, 2, 0])
-        y = np.zeros(5)
-        n_hat = get_normal_vector(x, y, z)
-        assert np.allclose(np.abs(n_hat), np.array([0, 1, 0]))
-
-    def test_edge(self):
-        x = np.array([1, 2, 3])
-        y = np.array([1, 2, 3])
-        z = np.array([1, 2, 4])
-        n_hat = get_normal_vector(x, y, z)
-        assert np.allclose(n_hat, 0.5 * np.array([np.sqrt(2), -np.sqrt(2), 0]))
-
-    def test_error(self):
-        fails = [
-            [[0, 1], [0, 1], [0, 1]],
-            [[0, 1, 2], [0, 1, 2], [0, 1]],
-            [[0, 0, 0], [1, 1, 1], [2, 2, 2]],
-        ]
-        for fail in fails:
-            with pytest.raises(GeometryError):
-                get_normal_vector(
-                    np.array(fail[0]), np.array(fail[1]), np.array(fail[2])
-                )
 
 
 class TestArea:

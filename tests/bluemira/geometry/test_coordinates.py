@@ -24,7 +24,7 @@ import pytest
 from copy import deepcopy
 
 from bluemira.geometry.error import CoordinatesError
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, get_normal_vector, get_perimeter
 
 
 def trace_torus_orbit(r_1, r_2, n_r_2_turns, n_points):
@@ -57,6 +57,42 @@ def trace_torus_orbit(r_1, r_2, n_r_2_turns, n_points):
     direction = 1 if n_r_2_turns > 0.0 else -1
     xyz_array = np.array([x[::direction], y[::direction], z[::direction]])
     return xyz_array
+
+
+class TestPerimeter:
+    def test_simple(self):
+        # 2 x 2 square
+        x = [0, 2, 2, 0, 0]
+        y = [0, 0, 2, 2, 0]
+        assert get_perimeter(x, y) == 8.0
+
+
+class TestGetNormal:
+    def test_simple(self):
+        x = np.array([0, 2, 2, 0, 0])
+        z = np.array([0, 0, 2, 2, 0])
+        y = np.zeros(5)
+        n_hat = get_normal_vector(x, y, z)
+        assert np.allclose(np.abs(n_hat), np.array([0, 1, 0]))
+
+    def test_edge(self):
+        x = np.array([1, 2, 3])
+        y = np.array([1, 2, 3])
+        z = np.array([1, 2, 4])
+        n_hat = get_normal_vector(x, y, z)
+        assert np.allclose(n_hat, 0.5 * np.array([np.sqrt(2), -np.sqrt(2), 0]))
+
+    def test_error(self):
+        fails = [
+            [[0, 1], [0, 1], [0, 1]],
+            [[0, 1, 2], [0, 1, 2], [0, 1]],
+            [[0, 0, 0], [1, 1, 1], [2, 2, 2]],
+        ]
+        for fail in fails:
+            with pytest.raises(CoordinatesError):
+                get_normal_vector(
+                    np.array(fail[0]), np.array(fail[1]), np.array(fail[2])
+                )
 
 
 class TestCoordinates:

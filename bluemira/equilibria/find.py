@@ -31,7 +31,8 @@ from matplotlib._contour import QuadContourGenerator
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.geometry._deprecated_tools import in_polygon, get_area_2d
+from bluemira.geometry._deprecated_tools import in_polygon
+from bluemira.geometry.coordinates import get_area_2d
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.constants import X_TOLERANCE, B_TOLERANCE
 
