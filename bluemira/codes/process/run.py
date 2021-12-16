@@ -34,7 +34,7 @@ import bluemira.base as bm_base
 import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes.process.api import DEFAULT_INDAT
-from bluemira.codes.process.constants import NAME as PROCESS
+from bluemira.codes.process.constants import NAME as PROCESS, BINARY
 from bluemira.codes.process.mapping import mappings
 from bluemira.codes.process.setup import Setup
 from bluemira.codes.process.teardown import Teardown
@@ -58,7 +58,7 @@ class Run(interface.Run):
     Run task for process
     """
 
-    _binary = "process"
+    _binary = BINARY
 
     def _run(self):
         self.run_PROCESS()
@@ -93,7 +93,7 @@ class Run(interface.Run):
                 os.remove(filepath)
 
     def _run_subprocess(self):
-        super()._run_subprocess("process")
+        super()._run_subprocess(self._binary)
 
 
 class Solver(interface.FileProgramInterface):
@@ -103,13 +103,16 @@ class Solver(interface.FileProgramInterface):
 
     Parameters
     ----------
-    reactor: Reactor class instance
-        The instantiated reactor class for the run. The parameters for the run are stored
-        in reactor.params; values with a mapping will be used by PROCESS. The run mode is
-        in reactor.build_config.processmode.
+    params: ParameterFrame
+        ParameterFrame for PROCESS
+    build_config: Dict
+        build configuration dictionary
     run_dir: str
         Path to the PROCESS run directory, where the main PROCESS executable is located
         and the input/output files will be written.
+    read_dir: str
+        Path to the PROCESS read directory, where the output files from a PROCESS run are
+        read in
     template_indat: str
         Path to the template IN.DAT file to be used for the run.
         Default, the value specified by DEFAULT_INDAT.
@@ -167,7 +170,6 @@ class Solver(interface.FileProgramInterface):
         read_dir: Optional[str] = None,
         template_indat: Optional[str] = None,
         params_to_update: Optional[List[str]] = None,
-        binary="process",
     ):
         self._read_dir = read_dir
 
@@ -187,7 +189,7 @@ class Solver(interface.FileProgramInterface):
             PROCESS,
             params,
             build_config.get("mode", "run"),
-            binary=binary,
+            binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
             mappings=mappings,
         )

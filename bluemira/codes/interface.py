@@ -221,7 +221,7 @@ class FileProgramInterface:
 
     def _protect_tasks(self):
         """
-        If tasks are not the a child class use the defaults.
+        If tasks are not a child class then use the defaults.
         """
         for sub_name, parent in [
             ["_setup", Setup],

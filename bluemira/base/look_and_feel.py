@@ -377,20 +377,26 @@ def bluemira_print_flush(string):
 
 def bluemira_print_clean(string):
     """
-    Print a coloured, boxed line to the console and flushes it. Useful for
-    updating information.
+    Print to the logging info console with no modification.
+    Useful for external programs
 
     Parameters
     ----------
     string: str
-        The string to colour flush print
+        The string to print
     """
     _terminator_handler(LOGGER.info, string)
 
 
 def bluemira_error_clean(string):
     """
-    Clean error writer
+    Print to the logging error console, colouring the output red.
+    No other modiication is made. Useful for external programs
+
+    Parameters
+    ----------
+    string: str
+        The string to colour print
     """
     _terminator_handler(LOGGER.error, _print_color(string, "red"))
 

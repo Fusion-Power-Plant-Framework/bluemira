@@ -37,7 +37,7 @@ import bluemira.codes.interface as interface
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.constants import NAME as PLASMOD
+from bluemira.codes.plasmod.constants import NAME as PLASMOD, BINARY
 from bluemira.codes.plasmod.mapping import (
     EquilibriumModel,
     ImpurityModel,
@@ -122,7 +122,7 @@ class PlasmodParameters:
         filepath: str
             json file to load
         """
-        bluemira_debug(str(filepath))
+        bluemira_debug(f"Loading default values from json: {filepath}")
         with open(filepath) as jfh:
             return json.load(jfh, cls=CommentJSONDecoder)
 
@@ -134,7 +134,7 @@ class PlasmodParameters:
 
     def __repr__(self):
         """
-        Representation string of the DisplayOptions.
+        Representation string of the PlasmodParameters.
         """
         return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
 
@@ -364,7 +364,7 @@ class Run(interface.Run):
 
     """
 
-    _binary = "transporz"  # Who knows why its not called plasmod
+    _binary = BINARY
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, kwargs.pop("binary", self._binary), *args, **kwargs)
@@ -430,21 +430,16 @@ class Solver(interface.FileProgramInterface):
 
     Parameters
     ----------
-    runmode: str
-        Plasmod runmode
     params: ParameterFrame
         ParameterFrame for plasmod
     build_config: Dict
         build configuration dictionary
-    input_file: str
-        input file save location
-    output_file: str
-        output file save location
-    profiles_file: str
-        profiles file save location
-    binary: str
-        plasmod binary name
+    run_dir: str
+        Plasmod run directory
 
+    Notes
+    -----
+    build config keys: mode, binary, problem_settings
     """
 
     _setup = Setup
@@ -457,14 +452,12 @@ class Solver(interface.FileProgramInterface):
         params,
         build_config=None,
         run_dir: Optional[str] = None,
-        binary: Optional[str] = "transporz",
     ):
-        # self._out_params = Outputs()
         super().__init__(
             PLASMOD,
             params,
             build_config.get("mode", "run"),
-            binary=binary,
+            binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
             mappings=create_mapping(),
             problem_settings=build_config.get("problem_settings", None),
