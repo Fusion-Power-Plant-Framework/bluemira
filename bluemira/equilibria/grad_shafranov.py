@@ -79,8 +79,8 @@ class GSOperator:
         """
         d_x = (self.x_max - self.x_min) / (nx - 1)
         d_z = (self.z_max - self.z_min) / (nz - 1)
-        x = linspace(self.x_min, self.x_max, nx)
-        d_x2, d_z2 = d_x ** 2, d_z ** 2
+        x = linspace(self.x_min, self.x_max, nx) + 0.5 * d_x  # centroids
+        inv_dx_2, inv_dz_2 = 1 / d_x ** 2, 1 / d_z ** 2
 
         if self.force_symmetry:
             # Check if applied grid is symmetric
@@ -98,17 +98,16 @@ class GSOperator:
         for i in range(1, nx - 1):
             for j in range(1, nz - 1):
                 ind = i * nz + j
-                rp = 0.5 * (x[i + 1] + x[i])  # x_{i+1/2}
-                rm = 0.5 * (x[i] + x[i - 1])  # x_{i-1/2}
-                A[ind, ind] = -(x[i] / d_x2) * (1 / rp + 1 / rm) - 2 / d_z2  # j, l
-                A[ind, ind + nz] = (x[i] / d_x2) / rp  # j, l-1
-                A[ind, ind - nz] = (x[i] / d_x2) / rm  # j, l+1
-                A[ind, ind + 1] = 1 / d_z2  # j-1, l
-                A[ind, ind - 1] = 1 / d_z2  # j+1, l
+                A[ind, ind] = -2 * (inv_dx_2 + inv_dz_2)  # j, l
+                A[ind, ind + nz] = inv_dx_2 - 0.5 / (x[i] * d_x)  # j, l-1
+                A[ind, ind - nz] = inv_dx_2 + 0.5 / (x[i] * d_x)  # j, l+1
+                A[ind, ind + 1] = inv_dz_2  # j-1, l
+                A[ind, ind - 1] = inv_dz_2  # j+1, l
+
             # Apply symmetry boundary if desired
             if self.force_symmetry:
                 # Apply ghost point method to apply symmetry to (d/dz^2) operator
-                # constributions close to symmetry plane.
+                # contributions close to symmetry plane.
                 # If symmetry boundary is centred halfway between cells,
                 # d(psi)/dz = 0 across midplane,
                 # else if symmetry boundary is centred on cells, d(psi)/dz
@@ -116,10 +115,10 @@ class GSOperator:
                 ind = i * nz + nz - 1
                 ghost_factor = 1 + nz % 2
 
-                A[ind, ind] = -(x[i] / d_x2) * (1 / rp + 1 / rm) - ghost_factor / d_z2
-                A[ind, ind - 1] = ghost_factor / d_z2
-                A[ind, ind + nz] = (x[i] / d_x2) / rp  # j, l-1
-                A[ind, ind - nz] = (x[i] / d_x2) / rm  # j, l+1
+                A[ind, ind] = -2 * inv_dx_2 - ghost_factor * inv_dz_2
+                A[ind, ind - 1] = ghost_factor * inv_dz_2
+                A[ind, ind + nz] = inv_dx_2 - 0.5 / (x[i] * d_x)  # j, l-1
+                A[ind, ind - nz] = inv_dx_2 + 0.5 / (x[i] * d_x)  # j, l+1
         return A.tocsr()  # Compressed sparse row format
 
 
