@@ -44,7 +44,7 @@ A geometry tutorial for users.
 # Let's start out by importing all the basic objects, and some typical tools
 
 # %%
-from copy import deepcopy
+import numpy as np
 
 # Basic objects
 from bluemira.geometry.wire import BluemiraWire
@@ -162,11 +162,9 @@ for i, shell in enumerate(cylinder.boundary):
 # %%
 
 # Polygon
-import numpy as np
-
 theta = np.linspace(0, 2 * np.pi, 6)
 x = 5 * np.cos(theta)
-y = np.zeros(5)
+y = np.zeros(6)
 z = 5 * np.sin(theta)
 
 # TODO: transpose in API
@@ -184,6 +182,30 @@ plot_2d(pentagon)
 # It's not a good idea to make a polygon with lots of very small sides
 # for this. It's computationally expensive, and it will look ugly.
 
+x = np.linspace(0, 10, 1000)
+y = 0.5 * np.sin(x) + 3 * np.cos(x) ** 2
+z = np.zeros(1000)
+
+# TODO: Transpose in user API
+points = np.array([x, y, z]).T
+spline = make_bspline(points)
+points = np.array([x + 3, y, z]).T
+polygon = make_polygon(points)
+
+show_cad(
+    [spline, polygon], [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")]
+)
+
+# %%
+# To get an idea of why polygons are bad / slow / ugly, try:
+vector = (0, 0, 1)
+show_cad(
+    [extrude_shape(spline, vector), extrude_shape(polygon, vector)],
+    [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")],
+)
+
+
+# %%
 
 # %%[markdown]
 
