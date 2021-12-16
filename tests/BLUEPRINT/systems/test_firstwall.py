@@ -24,7 +24,6 @@ from BLUEPRINT.systems.firstwall import FirstWallSN, FirstWallDN, get_tangent_ve
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import get_intersect
 import BLUEPRINT.geometry.loop as old_loop  # noqa (N813)
 from BLUEPRINT.geometry.shell import Shell
 
@@ -141,20 +140,6 @@ def check_firstwall(firstwall):
     inboard = firstwall.geom["Inboard wall"]
     outboard = firstwall.geom["Outboard wall"]
 
-    # Inboard / outboard intersect in SN case
-    if len(firstwall.divertor_loops) == 1:
-        int_x, int_z = get_intersect(inboard, outboard)
-        n_ints = len(int_x)
-        assert n_ints >= 1 and len(int_z) == n_ints
-
-    # Check intersections with the divertor
-    for div in firstwall.divertor_loops:
-        assert isinstance(div, (Loop, old_loop.Loop))
-        for sec_compare in [inboard, outboard]:
-            int_x, int_z = get_intersect(div, sec_compare)
-            n_ints = len(int_x)
-            assert n_ints >= 1 and len(int_z) == n_ints
-
     return True
 
 
@@ -261,18 +246,6 @@ class TestFirstWallDN:
         max_z = round(self.firstwall.points["x_point"]["z_low"], 5)
         min_z = round(tar_out[0][1], 5)
         # min_z = round(max_z - 2.25,5)
-
-        # TODO: I don't understand this test, and I suspect it is because the flux
-        # loops are incorrect.
-        # # Check the bounds
-        # div_x_max = np.max(div.x)
-        # div_x_min = np.min(div.x)
-        # div_z_max = np.max(div.z)
-        # div_z_min = np.min(div.z)
-        # assert div_x_max == max_x
-        # assert div_x_min == min_x
-        # assert div_z_max == max_z
-        # assert div_z_min == min_z
 
     # Test build for different combinations of thicknesses
     @pytest.mark.parametrize("tk_in", [0.1])

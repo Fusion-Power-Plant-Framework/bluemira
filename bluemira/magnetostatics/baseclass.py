@@ -41,6 +41,17 @@ class CurrentSource(ABC):
 
     current: float
 
+    def set_current(self, current):
+        """
+        Set the current inside each of the circuits.
+
+        Parameters
+        ----------
+        current: float
+            The current of each circuit [A]
+        """
+        self.current = current
+
     @abstractmethod
     def field(self, x, y, z):
         """
@@ -106,6 +117,18 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
     breadth: float
     depth: float
     length: float
+
+    def set_current(self, current):
+        """
+        Set the current inside the source, adjusting current density.
+
+        Parameters
+        ----------
+        current: float
+            The current of the source [A]
+        """
+        super().set_current(current)
+        self.rho = current / (4 * self.breadth * self.depth)
 
     def rotate(self, angle, axis):
         """
@@ -178,6 +201,18 @@ class SourceGroup(ABC):
     def __init__(self, sources):
         self.sources = sources
         self.points = np.vstack([np.vstack(s.points) for s in self.sources])
+
+    def set_current(self, current):
+        """
+        Set the current inside each of the circuits.
+
+        Parameters
+        ----------
+        current: float
+            The current of each circuit [A]
+        """
+        for source in self.sources:
+            source.set_current(current)
 
     def field(self, x, y, z):
         """

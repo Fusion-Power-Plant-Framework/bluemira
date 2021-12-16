@@ -682,7 +682,7 @@ class Equilibrium(MHDState):
             psi_bndry = xpoints[0][2]
         else:
             psi_bndry = np.amin(psi)
-        psinorm = np.linspace(0, 1, n_x, endpoint=False)  # No separatrix
+        psinorm = np.linspace(0, 1, n_x)
 
         if qpsi_calcmode is QpsiCalcMode.CALC:
             # This is too damn slow..
@@ -693,6 +693,9 @@ class Equilibrium(MHDState):
         lcfs = self.get_LCFS(psi)
         nbdry = lcfs.d2.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
+
+        profile_scale = np.abs(self._profiles.scale)
+
         result = {
             "nx": n_x,
             "nz": n_z,
@@ -711,9 +714,9 @@ class Equilibrium(MHDState):
             "cplasma": self._Ip,
             "psi": psi,
             "fpol": self.fRBpol(psinorm),
-            "ffprime": self.ffprime(psinorm),
-            "pprime": self.pprime(psinorm),
-            "pressure": self.pressure(psinorm),
+            "ffprime": self.ffprime(psinorm) * profile_scale,
+            "pprime": self.pprime(psinorm) * profile_scale,
+            "pressure": self.pressure(psinorm) * profile_scale,
             "pnorm": psinorm,
             "nbdry": nbdry,
             "xbdry": lcfs["x"],
@@ -1212,7 +1215,7 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm)
+        return self._profiles.fRBpol(psinorm) * np.abs(self._profiles.scale)
 
     def fvac(self):
         """
@@ -1279,7 +1282,7 @@ class Equilibrium(MHDState):
         # NOTE: You should use find.py::find_flux_surface_through_point, this is just
         # wrong, but is still used in BLUEPRINT.systems.firstwall.py
         bluemira_warn(
-            "This function does not do what it should do. You should not use " "it."
+            "This function does not do what it should do. You should not use it."
         )
         psi = self.psi(x, z)
         psi_n = calc_psi_norm(psi, *self.get_OX_psis())

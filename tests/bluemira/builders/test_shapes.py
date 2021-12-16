@@ -107,7 +107,11 @@ class MinimiseLength(GeometryOptimisationProblem):
 
 
 class TestMakeOptimisedShape:
-    def test_builder(self):
+    @pytest.mark.parametrize(
+        "problem_class",
+        ["tests.bluemira.builders.test_shapes::MinimiseLength", MinimiseLength],
+    )
+    def test_builder(self, problem_class):
         params = {
             "r_tf_in_centre": (5.0, "Input"),
             "r_tf_out_centre": (9.0, "Input"),
@@ -126,7 +130,7 @@ class TestMakeOptimisedShape:
                 },
                 "dz": 0.0,
             },
-            "problem_class": "tests.bluemira.builders.test_shapes::MinimiseLength",
+            "problem_class": problem_class,
             "label": "Shape",
         }
         builder = MakeOptimisedShape(params, build_config)

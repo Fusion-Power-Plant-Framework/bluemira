@@ -121,18 +121,6 @@ class HelmholtzCage(SourceGroup):
             sources.append(source)
         return sources
 
-    def set_current(self, current):
-        """
-        Set the current inside each of the circuits.
-
-        Parameters
-        ----------
-        current: float
-            The current of each circuit [A]
-        """
-        for source in self.sources:
-            source.current = current
-
     @process_xyz_array
     def ripple(self, x, y, z):
         """
