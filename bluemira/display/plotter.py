@@ -496,7 +496,7 @@ class WirePlotter(BasePlotter):
         pointsw = new_wire.discretize(
             ndiscr=self.options._options["ndiscr"],
             byedges=self.options._options["byedges"],
-        ).T
+        )
         self._pplotter._populate_data(pointsw)
         self._data = pointsw
         self._data_to_plot = self._pplotter._data_to_plot
