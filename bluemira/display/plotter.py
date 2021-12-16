@@ -450,6 +450,7 @@ class PointsPlotter(BasePlotter):
         return True
 
     def _populate_data(self, points):
+        points = geo.coordinates._parse_to_xyz_array(points).T
         self._data = points
         # apply rotation matrix given by options['plane']
         self.rot = self.options.plane.to_matrix().T
