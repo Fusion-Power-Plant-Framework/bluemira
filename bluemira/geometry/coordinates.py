@@ -27,6 +27,7 @@ from typing import Iterable
 import numpy as np
 import numba as nb
 from pyquaternion import Quaternion
+from abc import ABCMeta
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import EPS
