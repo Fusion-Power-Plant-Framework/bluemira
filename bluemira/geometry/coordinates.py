@@ -768,17 +768,6 @@ class Coordinates:
         """
         return {"x": self.x, "y": self.y, "z": self.z}
 
-    def tolist(self):
-        """
-        Cast the Coordinates as a list. Required as arrays sometimes call this.
-
-        Returns
-        -------
-        l: list
-            List of Coordinates
-        """
-        return self._array.tolist()
-
     # =============================================================================
     # Useful properties
     # =============================================================================
