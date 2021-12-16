@@ -156,7 +156,7 @@ class BluemiraWire(BluemiraGeo):
 
         Returns
         -------
-        points:
+        points: Coordinates
             a numpy array with the x,y,z coordinates of the discretized points.
         """
         if byedges:

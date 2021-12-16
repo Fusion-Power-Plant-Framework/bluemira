@@ -194,7 +194,7 @@ class GeometryParameterisation(abc.ABC):
 
         Returns
         -------
-        xyz: np.ndarray
+        xyz: Coordinates
             (3, N) array of point coordinates
 
         Notes
@@ -202,9 +202,7 @@ class GeometryParameterisation(abc.ABC):
         Override this method if you require a faster implementation, but be careful to
         retain a uniform discretisation
         """
-        return (
-            self.create_shape().discretize(ndiscr=n_points, byedges=by_edges, dl=d_l).T
-        )
+        return self.create_shape().discretize(ndiscr=n_points, byedges=by_edges, dl=d_l)
 
     @abc.abstractmethod
     def create_shape(self, label="", **kwargs) -> BluemiraWire:
