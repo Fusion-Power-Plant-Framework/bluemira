@@ -453,9 +453,9 @@ class PointsPlotter(BasePlotter):
         points = geo.coordinates._parse_to_xyz_array(points).T
         self._data = points
         # apply rotation matrix given by options['plane']
-        self.rot = self.options.plane.to_matrix().T
-        self.temp_data = np.c_[self._data, np.ones(len(self._data))]
-        self._data_to_plot = self.temp_data.dot(self.rot).T
+        rot = self.options.plane.to_matrix().T
+        temp_data = np.c_[self._data, np.ones(len(self._data))]
+        self._data_to_plot = temp_data.dot(rot).T
         self._data_to_plot = self._data_to_plot[0:2]
 
     def _make_plot_2d(self):
