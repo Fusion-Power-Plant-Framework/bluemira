@@ -36,6 +36,8 @@ from bluemira.geometry._deprecated_tools import (
     check_ccw_3d,
 )
 
+__all__ = ["Coordinates"]
+
 
 def principal_components(xyz_array):
     """
