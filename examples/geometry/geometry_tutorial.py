@@ -33,8 +33,10 @@ A geometry tutorial for users.
 
 # There a few basic concepts you need to familiarise yourself with:
 # * Basic objects: [`BluemiraWire`, `BluemiraFace`, `BluemiraShell`, `BluemiraSolid`]
+# * Basic properties
 # * Matryoshka structure
 # * Geometry creation
+# * Geometry modification
 # * Geometry operations
 
 ## Imports
@@ -42,11 +44,13 @@ A geometry tutorial for users.
 # Let's start out by importing all the basic objects, and some typical tools
 
 # %%
-
+# Basic objects
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
+
+# Some useful tools
 from bluemira.geometry.tools import (
     make_circle,
     make_polygon,
@@ -58,6 +62,10 @@ from bluemira.geometry.tools import (
     boolean_fuse,
 )
 
+# Some display functionality
+from bluemira.display import show_cad
+from bluemira.display.displayer import DisplayCADOptions
+
 # %%[markdown]
 
 ## Make a cylinder
@@ -68,7 +76,8 @@ from bluemira.geometry.tools import (
 # * Extrude that Face along a vector, to make a Solid
 
 # %%
-
+# Note that we are going to give these geometries some labels, which
+# we might use later.
 circle_wire = make_circle(
     radius=5,
     center=(0, 0, 0),
@@ -79,3 +88,52 @@ circle_wire = make_circle(
 )
 circle_face = BluemiraFace(circle_wire, label="my_face")
 cylinder = extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
+
+# %%[markdown]
+
+## Simple properties and representations
+
+# %%
+# Let's start off with some simple properties
+print(f"Circle length: {circle_wire.length} m")
+print(f"Circle area: {circle_face.area} m^2")
+print(f"Cylinder volume: {cylinder.volume} m^3")
+
+# You can also just print or repr these objects to get some useful info
+print(cylinder)
+
+# %%[markdown]
+
+## Display
+
+# %%
+show_cad(cylinder, DisplayCADOptions(color="blue"))
+
+# %%[markdown]
+
+## Matryoshka structure
+
+# Bluemira geometries are structured in a commonly used "Matryoska" or
+# "Russian doll"-like structure.
+
+# Solid -> Shell -> Face -> Wire
+
+# These are accessible via the boundary attribute, so, in general, the boundary
+# of a Solid is a Shell or set of Shells, and a Shell will have a set of Faces, etc.
+
+# Let's take a little peek under the hood of our cylinder
+
+# %%
+# Our cylinder is a BluemiraSolid
+i, j, k = 0, 0, 0  # This is just to facilitate comprehension
+for i, shell in enumerate(cylinder.boundary):
+    print(f"Shell: {i}.{j}.{k}")  # 1 Shell
+    for j, face in enumerate(shell.boundary):
+        print(f"Face: {i}.{j}.{k}")  # 3 Faces
+        for k, wire in enumerate(face.boundary):
+            print(f"Wire: {i}.{j}.{k}")  # 3 wires
+
+# OK, so a cylinder is pretty simple, but more complicated shapes
+# will follow the same pattern.
+
+# %%
