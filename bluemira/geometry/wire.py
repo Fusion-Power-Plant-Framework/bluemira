@@ -29,6 +29,7 @@ from typing import List
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
+from bluemira.geometry.coordinates import Coordinates
 
 from bluemira.codes._freecadapi import (
     discretize_by_edges,
@@ -162,7 +163,7 @@ class BluemiraWire(BluemiraGeo):
             points = discretize_by_edges(self._shape, ndiscr=ndiscr, dl=dl)
         else:
             points = discretize(self._shape, ndiscr=ndiscr, dl=dl)
-        return points
+        return Coordinates(points)
 
     def scale(self, factor) -> None:
         """
