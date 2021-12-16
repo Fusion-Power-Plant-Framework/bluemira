@@ -51,6 +51,7 @@ BLUEPRINT environment by running:
 PROCESS Installation
 ^^^^^^^^^^^^^^^^^^^^
 
+PROCESS is a 0D-1D fusion systems code. More information on PROCESS and how to inquire about access can be found `here <https://ccfe.ukaea.uk/resources/process/>`_.
 Bluemira is able perform a PROCESS run as the initial step in the reactor design.
 
 .. note::
@@ -87,7 +88,7 @@ Coordinate convention
 `Bluemira` uses a conventional right-handed Cartesian coordinate convention for all geometry.
 
 Occasionally, for certain modules and calculations, a quasi-toroidal coordinate system and a
-cylindrical coordinate system are used. Note that to facilitate conversion between, the 
+cylindrical coordinate system are used. Note that to facilitate conversion between, the
 the radial coordinate in the cylindrical coordinate system are denoted with :math:`x` and not
 :math:`r` for the radial coordinate.
 

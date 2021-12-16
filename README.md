@@ -4,7 +4,7 @@
 incorporates several modules, some of which rely on other codes, to carry out a range of
 typical conceptual fusion reactor design activities.
 
-``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see 
+``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see
 [publications](#Publications)).
 
 ## Work in Progress!
@@ -20,7 +20,7 @@ before starting to use any modules, so we can warn you of changes to come.
 
 ## Modules
 
-``Bluemira`` is composed of various modules: 
+``Bluemira`` is composed of various modules:
 
 * `balance_of_plant`: power balance solver and tools
 * `base`: the software backbone of the ``bluemira`` framework
@@ -33,7 +33,7 @@ before starting to use any modules, so we can warn you of changes to come.
 * `materials`: materials module
 * `radiation_transport` **[WIP]**: radiation and advection transport solvers
 * `structural` **[WIP]**: beam finite element structural solver
-* `utilities`: collection of utility toolboxes for file IO, databases, 
+* `utilities`: collection of utility toolboxes for file IO, databases,
   machine learning, and misc.
 
 ## Publications [](#Publications)
@@ -42,7 +42,7 @@ The ``bluemira`` code and its modules are described in the following publication
 
 * TBD
 
-As ``bluemira`` is the result of an integration between two historical codes, 
+As ``bluemira`` is the result of an integration between two historical codes,
 some previous publications may also be of interest.
 
 The ``BLUEPRINT`` code and its modules are described in the following publications:
@@ -60,22 +60,22 @@ The ``MIRA`` code and its modules are described in the following publications:
 
 ## Terms of use
 
-``Bluemira`` is [released under the LGPLv2.1 license](LICENSE.md), but we also ask that 
+``Bluemira`` is [released under the LGPLv2.1 license](LICENSE.md), but we also ask that
 you show professional courtesy when using this code:
 
-1. Since you are benefiting from work on ``bluemira``, we ask that you submit any 
-   improvements you make to the code to us by submitting a pull request to this 
-   repository. If you are looking to develop aspects of this code or add parts to it, 
+1. Since you are benefiting from work on ``bluemira``, we ask that you submit any
+   improvements you make to the code to us by submitting a pull request to this
+   repository. If you are looking to develop aspects of this code or add parts to it,
    please contact us beforehand so that we can help/advise if necessary.
 
 2. If you use ``bluemira`` results in a paper or professional publication, we ask that
    you discuss your work and results with one of the ``bluemira`` authors first so that
    we can check them. It is not necessary to list ``bluemira`` developers as co-authors.
-   If one or more of the ``bluemira`` team are involved in preparing results or 
+   If one or more of the ``bluemira`` team are involved in preparing results or
    functionality used in your work, then those members should appear as co-authors.
 
-3. If you use ``bluemira`` or any of its modules in your work, please help ensure that 
-   all the authors get the credit they deserve by citing the relevant ``bluemira``, 
+3. If you use ``bluemira`` or any of its modules in your work, please help ensure that
+   all the authors get the credit they deserve by citing the relevant ``bluemira``,
    ``BLUEPRINT``, and ``MIRA`` papers.
 
 For a full list of existing publications, see [here](#Publications).
@@ -87,7 +87,7 @@ See [code of conduct](CODE_OF_CONDUCT.md).
 ## Installation
 
 See our [getting started guide](documentation/source/started.rst).
-  
+
 ## Developing
 
 For working on ``bluemira`` you will also need to install the development dependencies
@@ -100,7 +100,7 @@ pre-commit install -f
 
 Please see the [guidelines for contributing to bluemira](CONTRIBUTING.md).
 
-In addition to the dependencies for installation, the following tools are useful for 
+In addition to the dependencies for installation, the following tools are useful for
 developing ``bluemira``:
 
 * Sphinx
@@ -114,10 +114,12 @@ pytest
 
 ---
 
-If you don't have ``PROCESS`` installed then you'll need to edit 
+If you don't have ``PROCESS`` installed then you'll need to edit
 `tests/test_reactor.py`.
 
 Change the line `"process_mode": "read"` to `"process_mode": "mock"`.
+
+For more information on PROCESS please see [here](https://ccfe.ukaea.uk/resources/process/)
 
 ---
 
@@ -127,11 +129,11 @@ To run all the tests:
 pytest --reactor --longrun --plotting-on
 ```
 
-`pytest` also supports running individual test files and selecting tests by name or 
+`pytest` also supports running individual test files and selecting tests by name or
 using a regular expression. See the
 [pytest documentation](https://docs.pytest.org/en/latest/usage.html).
 
-After a test run an html report of the results can be found in `report.html`. A test 
+After a test run an html report of the results can be found in `report.html`. A test
 coverage report can be found in the `htmlcov` directory.
 
 ## Building Documentation
