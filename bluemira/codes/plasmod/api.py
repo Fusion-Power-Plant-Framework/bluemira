@@ -179,11 +179,17 @@ class Inputs(PlasmodParameters):
         """
         Check selected plasmod models are known
         """
-        self.i_impmodel = ImpurityModel(self.i_impmodel)
-        self.i_modeltype = TransportModel(self.i_modeltype)
-        self.i_equiltype = EquilibriumModel(self.i_equiltype)
-        self.i_pedestal = PedestalModel(self.i_pedestal)
-        self.isiccir = SOLModel(self.isiccir)
+        models = [
+            ["i_impmodel", ImpurityModel],
+            ["i_modeltype", TransportModel],
+            ["i_equiltype", EquilibriumModel],
+            ["i_pedestal", PedestalModel],
+        ]
+
+        for name, model_cls in models:
+            val = getattr(self, name)
+            model = model_cls[val] if isinstance(val, str) else model_cls(val)
+            setattr(self, name, model)
 
     def get_default_plasmod_inputs(self):
         """

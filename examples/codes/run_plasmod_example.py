@@ -37,7 +37,7 @@ new_params = {
 build_config = {
     "problem settings": {
         "Pfus_req": 2000,
-        "i_modeltype": 111,
+        "i_modeltype": "GYROBOHM_2",
     },
     "mode": "run",
     "binary": f"{PLASMOD_PATH}/plasmod.o",
