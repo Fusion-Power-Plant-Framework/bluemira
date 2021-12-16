@@ -184,6 +184,7 @@ class Inputs(PlasmodParameters):
             ["i_modeltype", TransportModel],
             ["i_equiltype", EquilibriumModel],
             ["i_pedestal", PedestalModel],
+            ["isiccir", SOLModel],
         ]
 
         for name, model_cls in models:
