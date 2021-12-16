@@ -221,11 +221,9 @@ show_cad(BluemiraFace(my_shape))
 
 # %%[markdown]
 
-## Geometry operations
+## Geometry operations: Part 1
+# Making 3-D shapes from 2-D shapes
 
-# There are plenty of ways to create geometry. We've just seen how to
-# make some geometry from some points, but we can also make geometries
-# from other geometries
 # You can:
 # * extrude a shape `extrude_shape`, as we did with our cylinder
 # * revolve a shape `revolve_shape`
@@ -253,12 +251,28 @@ quarter_turn = make_circle(center=(3, 3, 2.5), axis=(0, 0, -1), radius=1.5, end_
 path = BluemiraWire([straight_line, quarter_turn])
 
 solid = sweep_shape(rectangle.boundary[0], path)
+
+# %%[markdown]
+
+## Geometry operations: Part 2
+# Making 3-D shapes from 3-D shapes
+
+# Boolean operations often come in very useful when making CAD.
+# * You can join geometries together with `boolean_fuse`
+# * You can cut geometries from one another with `boolean_cut`
+
+# %%
+
+
 # %%[markdown]
 
 ## Modification of existing geometries
 
 # Now we're going to look at some stuff that we can do to change
 # geometries we've already made.
+# * Rotate
+# * Translate
+# * Scale
 
 # %%
 # TODO: Once fixed.. :'(
