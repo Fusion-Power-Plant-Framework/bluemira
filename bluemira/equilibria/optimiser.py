@@ -38,13 +38,28 @@ from bluemira.utilities.plot_tools import save_figure
 from bluemira.utilities.opt_tools import (
     regularised_lsq_fom,
     tikhonov,
+    ObjectiveLibrary,
+    ConstraintLibrary,
 )
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.utilities.optimiser import (
+    Optimiser,
+    OptimiserConstraint,
+    approx_derivative,
+)
 from bluemira.codes._nlopt_api import process_NLOPT_result
 from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.flux_surfaces import (
+    calculate_connection_length_flt,
+    calculate_connection_length_fs,
+)
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_tools import (
+    loop_plane_intersect,
+)
+from bluemira.geometry._deprecated_loop import Loop
 
 __all__ = [
     "FBIOptimiser",
@@ -55,6 +70,7 @@ __all__ = [
     "CoilsetOptimiser",
     "NestedCoilsetOptimiser",
     "Norm2Tikhonov",
+    "ConnectionLengthOptimiser",
 ]
 
 
@@ -1231,21 +1247,31 @@ class CoilsetOptimiserBase:
 
         return current_bounds
 
-    def set_up_optimiser(self, opt_args, dimension, bounds, objective_func):
+    def set_up_optimiser(
+        self, opt_args, dimension, bounds, objective_func, opt_constraints=[]
+    ):
         """
         Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
         constraint & objective functions.
 
         Parameters
         ----------
+        opt_args: dict
+            Arguments to be passed to Optimiser interface during creation.
         dimension: int
-            Number of independent coil currents to optimise.
-            Should be equal to eq.coilset._ccoils when called.
+            Number of independent variables in the state vector to be optimised.
+        bounds: tuple
+            Tuple containing lower and upper bounds on the state vector.
+        objective_func: callable
+            Objective function to be minimised during optimisation
+        opt_constraints: iterable (default = [])
+            Iterable of OptimiserConstraint objects containing optimisation
+            constraints held during optimisation.
 
         Returns
         -------
-        opt: nlopt.opt
-            NLOpt optimiser to be used for optimisation.
+        opt: Optimiser
+            Optimiser object to be used for optimisation.
         """
         # Initialise NLOpt optimiser, with optimisation strategy and length
         # of state vector
@@ -1255,14 +1281,14 @@ class CoilsetOptimiserBase:
         opt.set_objective_function(objective_func)
 
         # Apply constraints
-        self.set_up_constraints(opt)
+        self.set_constraints(opt, opt_constraints)
 
         # Set state vector bounds (current limits)
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
         return opt
 
-    def set_up_constraints(self, opt):
+    def set_constraints(self, opt, opt_constraints):
         """
         Updates the optimiser in-place to apply problem constraints.
         To be overidden by child classes to apply specific constraints.
@@ -1270,8 +1296,40 @@ class CoilsetOptimiserBase:
         Parameters
         ----------
         opt: Optimiser
-            Optimiser to apply constraints to. Updated in-place.
+            Optimiser on which to apply the constraints. Updated in place.
+        opt_constraints: iterable
+            Iterable of OptimiserConstraint objects containing optimisation
+            constraints to be applied to the Optimiser.
+
+        Notes
+        -----
+        Lambda functions are used here to ensure the CoilsetOptimiser is passed
+        to the function, to allow any properties that are stored in the
+        CoilsetOptimiser to be accessed at runtime.
         """
+        for _opt_constraint in opt_constraints:
+            if _opt_constraint._constraint_type == "inequality":
+                opt.add_ineq_constraints(
+                    lambda constraint, vector, grad: _opt_constraint._f_constraint(
+                        self,
+                        constraint,
+                        vector,
+                        grad,
+                        *_opt_constraint._f_constraint_args,
+                    ),
+                    _opt_constraint._tolerance,
+                )
+            elif _opt_constraint._constraint_type == "equality":
+                opt.add_eq_constraints(
+                    lambda constraint, vector, grad: _opt_constraint._f_constraint(
+                        self,
+                        constraint,
+                        vector,
+                        grad,
+                        *_opt_constraint._f_constraint_args,
+                    ),
+                    _opt_constraint._tolerance,
+                )
         return opt
 
     def __call__(self, eq, constraints, psi_bndry=None):
@@ -1359,8 +1417,9 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
                 "ftol_abs": 1e-4,
                 "max_eval": 100,
             },
-            "opt_parameters": {},
+            "opt_parameters": {"initial_step": 0.03},
         },
+        opt_constraints=[],
     ):
         # noqa (N803)
         super().__init__(coilset)
@@ -1373,7 +1432,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         bounds = self.get_current_bounds(self.max_currents)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
 
     def optimise(self):
@@ -1397,10 +1456,12 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         self.b = self.w * self.constraints.b
 
         # Optimise
+        self.iter = 0
         currents = self.opt.optimise(initial_currents)
 
         coilset_state = np.concatenate((self.x0, self.z0, currents))
         self.set_coilset_state(coilset_state)
+        print(self.opt.optimum_value)
         return self.coilset
 
     def f_min_objective(self, vector, grad):
@@ -1421,18 +1482,9 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
         -------
         fom: Value of objective function (figure of merit).
         """
-        vector = vector * self.scale
-        fom, err = regularised_lsq_fom(vector, self.A, self.b, self.gamma)
-        if grad.size > 0:
-            jac = 2 * self.A.T @ self.A @ vector / np.float(len(self.b))
-            jac -= 2 * self.A.T @ self.b / np.float(len(self.b))
-            jac += 2 * self.gamma * self.gamma * vector
-            grad[:] = self.scale * jac
-        if not fom > 0:
-            raise EquilibriaError(
-                "Optimiser least-squares objective function less than zero or nan."
-            )
-        return fom
+        return ObjectiveLibrary.regularised_lsq_objective(
+            self, vector, grad, self.scale, self.A, self.b, self.gamma
+        )
 
 
 class CoilsetOptimiser(CoilsetOptimiserBase):
@@ -1482,6 +1534,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {},
         },
+        opt_constraints=[],
     ):
         # noqa (N803)
         super().__init__(coilset)
@@ -1498,7 +1551,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
         bounds = self.get_mapped_state_bounds(self.region_mapper, self.max_currents)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
 
     def get_mapped_state_bounds(self, region_mapper, max_currents):
@@ -1651,6 +1704,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             },
             "opt_parameters": {},
         },
+        opt_constraints=[],
     ):
         # noqa (N803)
         super().__init__(sub_opt.coilset)
@@ -1663,7 +1717,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         bounds = (lower_bounds, upper_bounds)
         dimension = len(bounds[0])
         self.opt = self.set_up_optimiser(
-            opt_args, dimension, bounds, self.f_min_objective
+            opt_args, dimension, bounds, self.f_min_objective, opt_constraints
         )
         self.sub_opt = sub_opt
 
@@ -1748,3 +1802,167 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
         self.sub_opt(self.eq, self.constraints)
         fom = self.sub_opt.opt.optimum_value
         return fom
+
+
+class ConnectionLengthOptimiser(BoundedCurrentOptimiser):
+    """
+    NLOpt based optimiser for the connection length calculated from a point on the
+    outboard edge of the SOL on the midplane to a provided first wall, subject to
+    maximum current bounds.
+
+    A derivative free optimisation algorithm, such as COBYLA, is recommended.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset used to get coil current limits and number of coils.
+    sol_width: float (default = 0.001)
+        Scrape off layer width [m]. Optimised connection length will be calculated
+        from the outboard edge of the SOL at the midplane.
+    first_wall: Loop (default: None)
+        Loop object representing the first wall. If None, the edge of the
+        Equilibrium grid will be used.
+    n_turns_max: Union[int, float] (default = None)
+        Maximum number of toroidal turns to trace the field line.
+        If None, the parallel connection length from the starting point to the
+        first wall will be used in calculations instead.
+    **kwargs: Remaining BoundedCurrentOptimiser keyword arguments.
+    """
+
+    def __init__(
+        self,
+        coilset,
+        sol_width=0.001,
+        first_wall=None,
+        n_turns_max=None,
+        opt_constraints=[
+            OptimiserConstraint(
+                ConstraintLibrary.objective_constraint,
+                (
+                    BoundedCurrentOptimiser.f_min_objective,
+                    0.2,
+                ),
+            )
+        ],
+        **kwargs,
+    ):
+        super().__init__(coilset=coilset, opt_constraints=opt_constraints, **kwargs)
+        self.sol_width = sol_width
+        self.first_wall = first_wall
+        self.n_turns_max = n_turns_max
+        if self.n_turns_max is None:
+            bluemira_warn(
+                "Number of toroidal turns not specified for ConnectionLengthOptimiser. "
+                "Parallel connection length over flux surface will be optimised instead "
+                "of connection length traced along field line."
+            )
+
+    def f_min_objective(self, vector, grad):
+        """
+        Objective function for nlopt optimisation (minimisation),
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+        grad: np.array
+            Local gradient of objective function used by LD NLOPT algorithms.
+            Updated in-place.
+
+        Returns
+        -------
+        fom: Value of objective function (figure of merit).
+        """
+        self.iter += 1
+        fom = self.get_state_figure_of_merit(vector)
+        if grad.size > 0:
+            grad[:] = self.opt.approx_derivative(
+                self.get_state_figure_of_merit,
+                vector,
+                f0=fom,
+            )
+        bluemira_print_flush(
+            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {fom:.2e}"
+        )
+        return fom
+
+    def get_state_figure_of_merit(self, vector):
+        """
+        Calculates figure of merit from objective function,
+        consisting of a least-squares objective with Tikhonov
+        regularisation term, which updates the gradient in-place.
+
+        Parameters
+        ----------
+        vector: np.array(n_C)
+            State vector of the array of coil currents.
+
+        Returns
+        -------
+        fom: Value of objective function (figure of merit).
+        """
+        coilset_state = np.concatenate((self.x0, self.z0, vector))
+        self.set_coilset_state(coilset_state)
+
+        try:
+            self.zomp = 0.0
+            self.xomp = self._get_sep_out_intersection(outboard=True) + self.sol_width
+
+            if self.n_turns_max is not None:
+                fom = (
+                    -calculate_connection_length_flt(
+                        self.eq,
+                        self.xomp,
+                        self.zomp,
+                        forward=True,
+                        first_wall=self.first_wall,
+                        n_turns_max=self.n_turns_max,
+                    )
+                    / (self.n_turns_max * 100.0)
+                )
+            else:
+                fom = (
+                    -calculate_connection_length_fs(
+                        self.eq,
+                        self.xomp,
+                        self.zomp,
+                        forward=True,
+                        first_wall=self.first_wall,
+                    )
+                    / 100.0
+                )
+        except (ValueError, AttributeError):
+            fom = 10.0
+
+        return fom
+
+    def _get_sep_out_intersection(self, outboard=True):
+        """
+        Find the middle and maximum outboard mid-plane psi norm values
+        """
+        # Pre-processing
+        o_points, _ = self.eq.get_OX_points()
+        o_point = o_points[0]
+        z = o_point.z
+        yz_plane = Plane([0, 0, z], [1, 0, z], [1, 1, z])
+        separatrix = self.eq.get_separatrix()
+
+        if not isinstance(separatrix, Loop):
+            sep1_intersections = loop_plane_intersect(separatrix[0], yz_plane)
+            sep2_intersections = loop_plane_intersect(separatrix[1], yz_plane)
+            sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
+            sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
+            x_sep1_mp = sep1_intersections.T[0][sep1_arg]
+            x_sep2_mp = sep2_intersections.T[0][sep2_arg]
+            if outboard:
+                x_sep_mp = x_sep1_mp if x_sep1_mp > x_sep2_mp else x_sep2_mp
+            else:
+                x_sep_mp = x_sep1_mp if x_sep1_mp < x_sep2_mp else x_sep2_mp
+        else:
+            sep_intersections = loop_plane_intersect(separatrix, yz_plane)
+            sep_arg = np.argmin(np.abs(sep_intersections.T[0] - o_point.x))
+            x_sep_mp = sep_intersections.T[0][sep_arg]
+
+        return x_sep_mp
