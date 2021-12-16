@@ -68,8 +68,11 @@ class TestGeometry:
         assert wire.is_closed()
 
     def test_add_wires(self):
-        wire1 = make_polygon(self.square_points[0:3], label="wire1", closed=False)
-        wire2 = make_polygon(self.square_points[2:], label="wire2", closed=False)
+        sq_points = np.array(self.square_points)
+        half_sq = sq_points[:3, :].T
+        half_sq_2 = sq_points[2:, :].T
+        wire1 = make_polygon(half_sq, label="wire1", closed=False)
+        wire2 = make_polygon(half_sq_2, label="wire2", closed=False)
         wire3 = wire1 + wire2
         wire3.label = "wire3"
         assert wire1.length == 2.0
