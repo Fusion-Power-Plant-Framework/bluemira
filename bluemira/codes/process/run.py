@@ -34,7 +34,8 @@ import bluemira.base as bm_base
 import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes.process.api import DEFAULT_INDAT
-from bluemira.codes.process.constants import NAME as PROCESS, BINARY
+from bluemira.codes.process.constants import BINARY
+from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.mapping import mappings
 from bluemira.codes.process.setup import Setup
 from bluemira.codes.process.teardown import Teardown

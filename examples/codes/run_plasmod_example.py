@@ -40,12 +40,12 @@ build_config = {
         "i_modeltype": 111,
     },
     "mode": "run",
+    "binary": f"{PLASMOD_PATH}/plasmod.o",
 }
 
 plasmod_solver = plasmod.Solver(
     params=Configuration(new_params),
     build_config=build_config,
-    binary=f"{PLASMOD_PATH}/plasmod.o",
 )
 # plasmod_solver._set_runmode("run")
 plasmod_solver.run()

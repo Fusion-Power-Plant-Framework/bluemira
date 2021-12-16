@@ -34,9 +34,9 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.utilities import (
     LogPipe,
+    add_mapping,
     get_recv_mapping,
     get_send_mapping,
-    add_mapping,
 )
 
 __all__ = [

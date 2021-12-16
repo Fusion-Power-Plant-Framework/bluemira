@@ -37,7 +37,8 @@ import bluemira.codes.interface as interface
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes.error import CodesError
-from bluemira.codes.plasmod.constants import NAME as PLASMOD, BINARY
+from bluemira.codes.plasmod.constants import BINARY
+from bluemira.codes.plasmod.constants import NAME as PLASMOD
 from bluemira.codes.plasmod.mapping import (
     EquilibriumModel,
     ImpurityModel,

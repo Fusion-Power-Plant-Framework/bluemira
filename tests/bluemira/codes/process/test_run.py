@@ -28,9 +28,7 @@ from unittest.mock import patch
 
 from bluemira.base.builder import BuildConfig
 from bluemira.codes.process.constants import NAME as PROCESS
-from bluemira.codes.process import run, PROCESS_ENABLED
-
-# from bluemira.codes.process.run import Solver
+from bluemira.codes.process import Solver, PROCESS_ENABLED
 
 from tests.bluemira.codes.process import (
     FRAME_LIST,
@@ -84,7 +82,7 @@ class TestRun:
         Set runmode in test reactor and run PROCESS.
         """
         self.set_runmode(runmode)
-        solver = run.Solver(
+        solver = Solver(
             self.params,
             self.build_config,
             self.run_dir,
