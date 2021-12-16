@@ -36,6 +36,7 @@ from .wire import BluemiraWire
 from .face import BluemiraFace
 from .shell import BluemiraShell
 from .solid import BluemiraSolid
+from .coordinates import Coordinates
 from .error import GeometryError
 
 
@@ -78,6 +79,7 @@ def make_polygon(
     wire: BluemiraWire
         a bluemira wire that contains the polygon
     """
+    points = Coordinates(points).T
     return BluemiraWire(cadapi.make_polygon(points, closed), label=label)
 
 
@@ -105,6 +107,7 @@ def make_bspline(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
+    points = Coordinates(points).T
     return BluemiraWire(cadapi.make_bspline(points, closed), label=label)
 
 
@@ -129,15 +132,16 @@ def make_bezier(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
+    points = Coordinates(points).T
     return BluemiraWire(cadapi.make_bezier(points, closed), label=label)
 
 
 def make_circle(
     radius=1.0,
-    center=[0.0, 0.0, 0.0],
+    center=(0.0, 0.0, 0.0),
     start_angle=0.0,
     end_angle=360.0,
-    axis=[0.0, 0.0, 1.0],
+    axis=(0.0, 0.0, 1.0),
     label: str = "",
 ) -> BluemiraWire:
     """
@@ -147,14 +151,14 @@ def make_circle(
     ----------
     radius: float, default =1.0
         Radius of the circle
-    center: Iterable, default = [0, 0, 0]
+    center: Iterable, default = (0, 0, 0)
         Center of the circle
     start_angle: float, default = 0.0
         Start angle of the arc [degrees]
     end_angle: float, default = 360.0
         End angle of the arc [degrees]. If start_angle == end_angle, a circle is created,
         otherwise a circle arc is created
-    axis: Iterable, default = [0, 0, 1]
+    axis: Iterable, default = (0, 0, 1)
         Normal vector to the circle plane. It defines the clockwise/anticlockwise
         circle orientation according to the right hand rule.
     label: str
@@ -193,11 +197,11 @@ def make_circle_arc_3P(p1, p2, p3, label: str = ""):  # noqa: N802
 
 
 def make_ellipse(
-    center=[0.0, 0.0, 0.0],
+    center=(0.0, 0.0, 0.0),
     major_radius=2.0,
     minor_radius=1.0,
-    major_axis=[1, 0, 0],
-    minor_axis=[0, 1, 0],
+    major_axis=(1, 0, 0),
+    minor_axis=(0, 1, 0),
     start_angle=0.0,
     end_angle=360.0,
     label: str = "",
@@ -207,15 +211,15 @@ def make_ellipse(
 
     Parameters
     ----------
-    center: Iterable, default = [0, 0, 0]
+    center: Iterable, default = (0, 0, 0)
         Center of the ellipse
     major_radius: float, default = 2
         Major radius of the ellipse
     minor_radius: float, default = 2
         Minor radius of the ellipse (float). Default to 2.
-    major_axis: Iterable, default = [1, 0, 0]
+    major_axis: Iterable, default = (1, 0, 0)
         Major axis direction
-    minor_axis: Iterable, default = [0, 1, 0]
+    minor_axis: Iterable, default = (0, 1, 0)
         Minor axis direction
     start_angle:  float, default = 0
         Start angle of the arc [degrees]
