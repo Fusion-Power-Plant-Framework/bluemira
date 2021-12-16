@@ -149,8 +149,15 @@ class TestGeometry:
     params_for_fuse_wires = [
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (2, False),
             id="coincident",
@@ -158,8 +165,22 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire1",
+                ),
+                make_polygon(
+                    [
+                        [1, 0, 0],
+                        [1, 1, 0],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (4, True),
             id="closed",
@@ -169,7 +190,7 @@ class TestGeometry:
                 make_polygon(
                     [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
                 ),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             (4, True),
             id="overlap",
@@ -177,8 +198,15 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [-1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, -1], [0, 0, 1], [0, 0, -1]], label="wire1"),
+                make_polygon(
+                    [
+                        [1, 0, 0],
+                        [1, 1, 0],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (4, True),
             id="intersection",
@@ -286,16 +314,30 @@ class TestGeometry:
     params_for_cut_wires = [
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire1",
+                ),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             ([]),
             id="coincident",
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False)],
             id="contact at start and end",
@@ -305,15 +347,15 @@ class TestGeometry:
                 make_polygon(
                     [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
                 ),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False)],
             id="overlap",
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 2, 0]], label="wire1"),
-                make_polygon([[2, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 2], [0, 0, 0]], label="wire1"),
+                make_polygon([[2, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False), (1, False)],
             id="intersection",

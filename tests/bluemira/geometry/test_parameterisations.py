@@ -35,7 +35,7 @@ from bluemira.geometry.parameterisations import (
     TaperedPictureFrame,
 )
 from bluemira.geometry.tools import make_polygon
-from bluemira.geometry._deprecated_tools import get_perimeter
+from bluemira.geometry.coordinates import get_perimeter
 from bluemira.geometry.wire import BluemiraWire
 
 
