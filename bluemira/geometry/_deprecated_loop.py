@@ -32,18 +32,20 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
 from bluemira.geometry._deprecated_tools import (
-    check_ccw,
     quart_rotate,
-    rotation_matrix_v1v2,
     bounding_box,
+    offset,
+    vector_lengthnorm,
+    in_polygon,
+)
+from bluemira.geometry.coordinates import (
+    check_ccw,
+    rotation_matrix_v1v2,
     get_perimeter,
     get_area,
     get_centroid_2d,
     get_centroid_3d,
     get_normal_vector,
-    offset,
-    vector_lengthnorm,
-    in_polygon,
 )
 from bluemira.utilities.tools import is_num
 from bluemira.utilities.plot_tools import (
