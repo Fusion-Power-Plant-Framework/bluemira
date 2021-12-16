@@ -124,14 +124,18 @@ show_cad(cylinder, DisplayCADOptions(color="blue"))
 # Let's take a little peek under the hood of our cylinder
 
 # %%
-# Our cylinder is a BluemiraSolid
+
+print(f"Our cylinder is a BluemiraSolid: {isinstance(cylinder, BluemiraSolid)}")
+
 i, j, k = 0, 0, 0  # This is just to facilitate comprehension
 for i, shell in enumerate(cylinder.boundary):
-    print(f"Shell: {i}.{j}.{k}")  # 1 Shell
+    print(f"Shell: {i}.{j}.{k} is a BluemiraShell: {isinstance(shell, BluemiraShell)}")
     for j, face in enumerate(shell.boundary):
-        print(f"Face: {i}.{j}.{k}")  # 3 Faces
+        print(f"Face: {i}.{j}.{k} is a BluemiraFace: {isinstance(face, BluemiraFace)}")
         for k, wire in enumerate(face.boundary):
-            print(f"Wire: {i}.{j}.{k}")  # 3 wires
+            print(
+                f"Wire: {i}.{j}.{k} is a BluemiraWire: {isinstance(wire, BluemiraWire)}"
+            )
 
 # OK, so a cylinder is pretty simple, but more complicated shapes
 # will follow the same pattern.
