@@ -31,14 +31,6 @@ from pyquaternion import Quaternion
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import EPS
 from bluemira.geometry.error import CoordinatesError
-from bluemira.geometry._deprecated_tools import (
-    get_perimeter_3d,
-    get_centroid_3d,
-    check_ccw_3d,
-)
-
-__all__ = ["Coordinates"]
-
 
 # =============================================================================
 # Pre-processing utilities
@@ -78,6 +70,11 @@ def _validate_coordinates(x, y, z=None):
                 "All coordinates must have the same length but "
                 f"got len(x) = {len(x)}, len(y) = {len(y)}, len(z) = {len(z)}"
             )
+
+
+# =============================================================================
+# Tools and calculations for sets of coordinates
+# =============================================================================
 
 
 @nb.jit(cache=True, nopython=True)
