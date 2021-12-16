@@ -1,3 +1,6 @@
+[![docs](https://readthedocs.org/projects/bluemira/badge/?version=develop)](https://bluemira.readthedocs.io/en/develop) [![codecov](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira/branch/develop/graph/badge.svg?token=BYTJ4CZ8BI)](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira)
+
+
 # Bluemira
 
 ``Bluemira`` is an integrated inter-disciplinary design tool for future fusion reactors. It
