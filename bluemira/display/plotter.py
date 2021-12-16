@@ -495,7 +495,7 @@ class WirePlotter(BasePlotter):
         pointsw = new_wire.discretize(
             ndiscr=self.options._options["ndiscr"],
             byedges=self.options._options["byedges"],
-        )
+        ).T
         self._pplotter._populate_data(pointsw)
         self._data = pointsw
         self._data_to_plot = self._pplotter._data_to_plot
@@ -664,7 +664,7 @@ def _get_plotter_class(part):
     """
     import bluemira.base.components
 
-    if isinstance(part, (list, np.ndarray)):
+    if isinstance(part, (list, np.ndarray, geo.coordinates.Coordinates)):
         plot_class = PointsPlotter
     elif isinstance(part, geo.wire.BluemiraWire):
         plot_class = WirePlotter
