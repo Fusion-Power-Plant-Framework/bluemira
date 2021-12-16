@@ -44,6 +44,8 @@ A geometry tutorial for users.
 # Let's start out by importing all the basic objects, and some typical tools
 
 # %%
+from copy import deepcopy
+
 # Basic objects
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
@@ -62,8 +64,11 @@ from bluemira.geometry.tools import (
     boolean_fuse,
 )
 
+# Some existing parameterisations
+from bluemira.geometry.parameterisations import PictureFrame, PrincetonD
+
 # Some display functionality
-from bluemira.display import show_cad
+from bluemira.display import show_cad, plot_2d
 from bluemira.display.displayer import DisplayCADOptions
 
 # %%[markdown]
@@ -140,4 +145,52 @@ for i, shell in enumerate(cylinder.boundary):
 # OK, so a cylinder is pretty simple, but more complicated shapes
 # will follow the same pattern.
 
+# It does go deeper than this, but that is outside the intended
+# user-realm.
+
+
+# %%[markdown]
+
+## Geometry creation
+
+# Let's get familiar with some more ways of making geometries. We've
+# looked at circle already, but what else is out there:
+# * polygons
+# * splines
+# * a bit of everything
+
 # %%
+
+# Polygon
+import numpy as np
+
+theta = np.linspace(0, 2 * np.pi, 6)
+x = 5 * np.cos(theta)
+y = np.zeros(5)
+z = 5 * np.sin(theta)
+
+# TODO: transpose in API
+points = np.array([x, y, z]).T
+pentagon = make_polygon(points)
+
+plot_2d(pentagon)
+
+# %%
+# Polygons are good for things with straight lines.
+# Circles you've met already.
+# For everything else, there's splines.
+
+# Say you have a weird shape, that you might calculate via a equation.
+# It's not a good idea to make a polygon with lots of very small sides
+# for this. It's computationally expensive, and it will look ugly.
+
+
+# %%[markdown]
+
+## Modification of existing geometries
+
+# Now we're going to look at some stuff that we can do to change
+# geometries we've already made.
+
+# %%
+# TODO: Once fixed.. :'(
