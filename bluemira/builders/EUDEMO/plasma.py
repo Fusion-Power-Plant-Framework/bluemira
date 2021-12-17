@@ -132,7 +132,7 @@ class PlasmaBuilder(Builder):
         self._plot_flag = build_config.get("plot_flag", False)
         self._segment_angle = build_config.get("segment_angle", 360.0)
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def reinitialise(self, params) -> None:
         """
         Reinitialise the parameters and boundary.
 
@@ -141,11 +141,11 @@ class PlasmaBuilder(Builder):
         params: dict
             The new parameter values to initialise this builder against.
         """
-        super().reinitialise(params, **kwargs)
+        super().reinitialise(params)
 
         self._boundary = None
 
-    def run(self, **kwargs):
+    def run(self):
         """
         Run the plasma equilibrium design problem.
         """
@@ -155,7 +155,7 @@ class PlasmaBuilder(Builder):
         self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
         return {"equilibrium": eq}
 
-    def read(self, **kwargs):
+    def read(self):
         """
         Read the plasma equilibrium design problem.
         """
@@ -165,7 +165,7 @@ class PlasmaBuilder(Builder):
         self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
         return {"equilibrium": eq}
 
-    def mock(self, **kwargs):
+    def mock(self):
         """
         Mock the plasma equilibrium design problem using a Johner LCFS.
         """
