@@ -319,9 +319,7 @@ class PlasmaBuilder(Builder):
         }
         self._params.update_kw_parameters(params, source="equilibria")
 
-    def build(
-        self, equilibrium: Optional[Equilibrium] = None, **kwargs
-    ) -> PlasmaComponent:
+    def build(self, equilibrium: Optional[Equilibrium] = None) -> PlasmaComponent:
         """
         Build the plasma components.
 
@@ -335,17 +333,17 @@ class PlasmaBuilder(Builder):
         plasma_component: Component
             The PlasmaComponent produced by this build.
         """
-        super().build(**kwargs)
+        super().build()
 
         component = PlasmaComponent(self._name, equilibrium=equilibrium)
 
-        component.add_child(self.build_xz(equilibrium=equilibrium, **kwargs))
-        component.add_child(self.build_xy(**kwargs))
-        component.add_child(self.build_xyz(**kwargs))
+        component.add_child(self.build_xz(equilibrium=equilibrium))
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
 
         return component
 
-    def build_xz(self, equilibrium: Optional[Equilibrium] = None, **kwargs) -> Component:
+    def build_xz(self, equilibrium: Optional[Equilibrium] = None) -> Component:
         """
         Build the xz representation of this plasma.
 
@@ -389,7 +387,7 @@ class PlasmaBuilder(Builder):
 
         return component
 
-    def build_xy(self, **kwargs) -> Component:
+    def build_xy(self) -> Component:
         """
         Build the xy representation of this plasma.
 
@@ -425,7 +423,7 @@ class PlasmaBuilder(Builder):
 
         return component
 
-    def build_xyz(self, segment_angle: Optional[float] = None, **kwargs) -> Component:
+    def build_xyz(self, segment_angle: Optional[float] = None) -> Component:
         """
         Build the 3D representation of this plasma.
 
