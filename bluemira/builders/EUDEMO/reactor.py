@@ -65,7 +65,7 @@ class EUDEMOReactor(Reactor):
         """
         name = PROCESS
 
-        bluemira_print(f"Running: {name}")
+        bluemira_print(f"Starting design stage: {name}")
 
         default_config = {"process_mode": "run"}
 
@@ -84,11 +84,15 @@ class EUDEMOReactor(Reactor):
         )
         self._params.update_kw_parameters(output.to_dict())
 
+        bluemira_print(f"Completed design stage: {name}")
+
     def build_plasma(self):
         """
         Run the plasma build using the requested equilibrium problem.
         """
         name = "Plasma"
+
+        bluemira_print(f"Starting design stage: {name}")
 
         default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
         default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
@@ -101,13 +105,19 @@ class EUDEMOReactor(Reactor):
         builder = PlasmaBuilder(self._params.to_dict(), config)
         self.register_builder(builder, name)
 
-        return super()._build_stage(name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
 
     def build_TF_coils(self, component_tree: Component):
         """
         Run the TF Coils build using the requested mode.
         """
         name = "TF Coils"
+
+        bluemira_print(f"Starting design stage: {name}")
 
         default_variables_map = {
             "x1": {
@@ -148,4 +158,8 @@ class EUDEMOReactor(Reactor):
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
 
-        return super()._build_stage(name, separatrix=sep_shape)
+        component = super()._build_stage(name, separatrix=sep_shape)
+
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
