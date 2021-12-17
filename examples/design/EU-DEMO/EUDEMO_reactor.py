@@ -23,13 +23,13 @@
 Perform the EU-DEMO reactor design.
 """
 
-import json
 import matplotlib.pyplot as plt
 
 from bluemira.base.config import Configuration
+from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.base.parameter import ParameterError
+from bluemira.base.parameter import ParameterMappingEncoder
 
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.plasma import PlasmaComponent
@@ -39,6 +39,10 @@ from bluemira.display.displayer import ComponentDisplayer
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
 
 from bluemira.codes import plot_PROCESS
+from bluemira.codes.process.mapping import mappings as PROCESS_mappings
+from bluemira.codes.plasmod.mapping import create_mapping as create_PLASMOD_mappings
+
+from bluemira.utilities.tools import json_writer
 
 # First define the configuration for the run.
 
@@ -57,11 +61,29 @@ for param in Configuration.params:
         params[param[0]]["mapping"] = {
             key: value.to_dict() for key, value in param[6].items()
         }
+    else:
+        params[param[0]]["mapping"] = {}
+
+        if PROCESS_mappings.get(param[0]) is not None:
+            params[param[0]]["mapping"]["PROCESS"] = PROCESS_mappings[param[0]]
+
+        PLASMOD_mappings = create_PLASMOD_mappings()
+        if PLASMOD_mappings.get(param[0]) is not None:
+            params[param[0]]["mapping"]["PLASMOD"] = PLASMOD_mappings[param[0]]
+
+        if params[param[0]]["mapping"] == {}:
+            params[param[0]].pop("mapping")
+
 
 params = dict(sorted(params.items()))
 
-with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/template.json", "w") as fh:
-    json.dump(params, fh, indent=2, ensure_ascii=True)
+json_writer(
+    params,
+    f"{get_bluemira_root()}/examples/design/EU-DEMO/template.json",
+    indent=2,
+    cls=ParameterMappingEncoder,
+    ensure_ascii=True,
+)
 
 config = {
     "Name": "EU-DEMO",
@@ -89,8 +111,13 @@ for key, val in config.items():
     else:
         params[key]["value"] = val
 
-with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json", "w") as fh:
-    json.dump(config, fh, indent=2, ensure_ascii=False)
+json_writer(
+    config,
+    f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json",
+    indent=2,
+    cls=ParameterMappingEncoder,
+    ensure_ascii=False,
+)
 
 build_config = {
     "reference_data_root": "!BM_ROOT!/data",
@@ -127,8 +154,11 @@ build_config = {
     },
 }
 
-with open(f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json", "w") as fh:
-    json.dump(build_config, fh, indent=2, ensure_ascii=False)
+json_writer(
+    build_config,
+    f"{get_bluemira_root()}/examples/design/EU-DEMO/build_config.json",
+    indent=2,
+)
 
 # If you have PROCESS installed then change these to enable a PROCESS run or to read
 # an existing PROCESS output.
