@@ -242,7 +242,7 @@ def _bm_print(string, width=73):
     return h + "\n" + "\n".join(lines) + "\n" + h
 
 
-def colourise(string, width=73, color="blue", end=None, flush=False):
+def colourise(string, width=73, color="blue"):
     """
     Print coloured, boxed text to the console. Default template for bluemira
     information.
@@ -253,12 +253,8 @@ def colourise(string, width=73, color="blue", end=None, flush=False):
         The string of text to colour and box
     width: int (default = 73)
         The width of the box (leave this alone for best results)
-    color: str from ['blue', 'red', 'green']
+    color: str from bluemira.base.constants.ANSI_COLOR
         The color to print the text in
-    end: str or None (default = None)
-        The value to print after the print operation
-    flush: bool (default=False)
-        As far as I can tell has no effect
     """
     text = _bm_print(string, width=width)
     color_text = _print_color(text, color)
@@ -391,7 +387,7 @@ def bluemira_print_clean(string):
 def bluemira_error_clean(string):
     """
     Print to the logging error console, colouring the output red.
-    No other modiication is made. Useful for external programs
+    No other modification is made. Useful for external programs
 
     Parameters
     ----------
@@ -534,7 +530,7 @@ def user_banner():
     Returns
     -------
     s: str
-        The text for the banner containing user and plaform information
+        The text for the banner containing user and platform information
     """
     return [
         f"User       : {getuser()}",
