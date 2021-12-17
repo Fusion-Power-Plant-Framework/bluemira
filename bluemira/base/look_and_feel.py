@@ -320,19 +320,18 @@ def _bm_print_singleflush(string, width=73, color="blue"):
     return _print_color(text, color)
 
 
-def _bluemira_clean_flush(string):
+def _bluemira_clean_flush(func, string):
     """
-    Print and flush string. Useful for
-    updating information.
+    Print and flush string. Useful for updating information.
 
     Parameters
     ----------
+    func: Callable[[str], None]
+        The function to use for logging (e.g LOGGER.info)
     string: str
         The string to colour flush print
     """
-    _terminator_handler(
-        LOGGER.info, "\r" + string, fhterm=logging.StreamHandler.terminator
-    )
+    _terminator_handler(func, "\r" + string, fhterm=logging.StreamHandler.terminator)
 
 
 def _terminator_handler(func, string, *, fhterm=""):
@@ -341,8 +340,8 @@ def _terminator_handler(func, string, *, fhterm=""):
 
     Parameters
     ----------
-    func: logging function
-        function to log with
+    func: Callable[[str], None]
+        The function to use for logging (e.g LOGGER.info)
     string: str
         The string to colour flush print
     fhterm: str
@@ -368,7 +367,20 @@ def bluemira_print_flush(string):
     string: str
         The string to colour flush print
     """
-    _bluemira_clean_flush(_bm_print_singleflush(string))
+    _bluemira_clean_flush(LOGGER.info, _bm_print_singleflush(string))
+
+
+def bluemira_debug_flush(string):
+    """
+    Print a coloured, boxed line to the console and flushes it. Useful for
+    updating information when running at the debug logging level.
+
+    Parameters
+    ----------
+    string: str
+        The string to colour flush print for debug messages.
+    """
+    _bluemira_clean_flush(LOGGER.debug, _bm_print_singleflush(string, color="green"))
 
 
 def bluemira_print_clean(string):
