@@ -320,14 +320,14 @@ def _bm_print_singleflush(string, width=73, color="blue"):
     return _print_color(text, color)
 
 
-def _bluemira_clean_flush(func, string):
+def _bluemira_clean_flush(string, func=LOGGER.info):
     """
     Print and flush string. Useful for updating information.
 
     Parameters
     ----------
     func: Callable[[str], None]
-        The function to use for logging (e.g LOGGER.info)
+        The function to use for logging, by default LOGGER.info
     string: str
         The string to colour flush print
     """
@@ -367,7 +367,7 @@ def bluemira_print_flush(string):
     string: str
         The string to colour flush print
     """
-    _bluemira_clean_flush(LOGGER.info, _bm_print_singleflush(string))
+    _bluemira_clean_flush(_bm_print_singleflush(string), func=LOGGER.info)
 
 
 def bluemira_debug_flush(string):
@@ -380,7 +380,9 @@ def bluemira_debug_flush(string):
     string: str
         The string to colour flush print for debug messages.
     """
-    _bluemira_clean_flush(LOGGER.debug, _bm_print_singleflush(string, color="green"))
+    _bluemira_clean_flush(
+        _bm_print_singleflush(string, color="green"), func=LOGGER.debug
+    )
 
 
 def bluemira_print_clean(string):
