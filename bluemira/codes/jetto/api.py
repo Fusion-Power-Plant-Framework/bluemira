@@ -18,8 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
 """
-The BLUEPRINT-JETTO wrapper.
+The bluemira-JETTO wrapper.
 """
 import tarfile
 import os
@@ -28,84 +29,30 @@ import numpy as np
 
 from enum import Enum, auto
 from importlib import util as imp_u
-from unittest.mock import patch
 
 from jetto_tools.job import JobManager
 
-from BLUEPRINT.equilibria.eqdsk import EQDSKInterface
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.equilibria.file import EQDSKInterface
+from bluemira.base.look_and_feel import bluemira_warn
+import bluemira.codes.interface as interface
+from bluemira.codes.jetto.prominence import ProminenceDownloader
+from bluemira.codes.jetto.constants import NAME as JETTO
+from bluemira.codes.jetto.mapping import mappings
+
 
 ####################
 # Setup and Run currently a skeleton of what will possibly happen
 # not completely working code
 ####################
 
-# BLUEPRINT -> JETTO
-# with JETTO short descriptions
-mapping = {
-    None: "q_min",  # minimum safety factor
-    "q_95": "q_95",  # edge safety factor
-    None: "n_GW",  # Greenwalf fraction
-    None: "n_GW_95",  # Greenwald fraction @rho=0.95
-    None: "s",  # magnetic shear
-    None: None,  # Troyon limit
-    None: None,  # resistive wall mode (no wall) limit
-    "beta_N": "beta_N",  # Normalised Beta
-    "l_i": "li3",  # Internal inductance   - UNSURE
-    None: "dWdt",  # ...
-    None: None,  # Fast particle pressure
-    "kappa": "kappa",  # Elongaton
-    "delta": "delta",  # Triangularity (absolute value)
-    "B_0": "Btor",  # Toroidal field on axis
-    "I_p": "Ip",  # Plasma current
-    "A": "A",  # Aspect Ratio
-    None: "H_98",  # confinement relative to scaling law
-    None: "alpha",  # Normalised pedistal pressure
-    None: "P_fus",  # fusion power
-    None: "f_boot",  # bootstrap fraction
-    None: "P_aux",  # Heating and CD power (coupled)
-    None: "I_aux",  # Current drive
-    None: "eta_CD",  # Current drive efficiency
-    None: "Q_fus",  # fusion gain
-    None: "Q_eng",  # Net energy gain
-    None: "P_sep",  # Power crossing separatrix
-    None: "f_rad",  # Radiation fraction
-    None: "Q_max",  # target heat load
-    None: None,  # Target incident angle
-    None: None,  # Flux expansion
-    None: "Q_max_fw",  # Maximum heat flux to the first wall
-    None: "eta_pll",  # Transient energy fluence to the divertor
-}
 
-
-class RunMode(Enum):
+class RunMode(interface.RunMode):
     PROMINENCE = auto()
     BATCH = auto()
     MOCK = auto()
 
-    def __call__(self, obj, *args, **kwargs):
-        """
-        Call function of object with lowercase name of
-        enum
 
-        Parameters
-        ----------
-        obj: instance
-            instance of class the function will come from
-        *args
-           args of function
-        **kwargs
-           kwargs of function
-
-        Returns
-        -------
-        function result
-        """
-        func = getattr(obj, f"_{self.name.lower()}")
-        return func(*args, **kwargs)
-
-
-class Setup:
+class Setup(interface.Setup):
     """
 
     TODO
@@ -134,23 +81,16 @@ class Setup:
 
     Parameters
     ----------
-    runmode: str
-        The running method for jetto see BLUEPRINT.codes.jetto.RunMode for possible values
     save_path: str
         path to save jeto input and output data
     """
 
-    def __init__(self, runmode, save_path="data/BLUEPRINT"):
-        self.set_runmode(runmode)
+    def __init__(self, save_path="data/bluemira", params=None):
+        super().__init__(params=params)
         self.save_path = save_path
-
-        self.runmode(self)
 
     def process_input(self):
         raise NotImplementedError
-
-    def set_runmode(self, runmode):
-        self.runmode = RunMode[runmode]
 
     def _prominence(self):
         raise NotImplementedError
@@ -212,10 +152,13 @@ class Setup:
             bnd.write(sections[-1])
 
 
-class Run:
-    def __init__(self, setup):
+class Run(interface.Run):
+
+    _binary = False
+
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, kwargs.pop("binary", self._binary), *args, **kwargs)
         self.jobmananger = JobManager()
-        self.result = setup.runmode(self, *setup.args)
 
     def _prominence(self, config, run_dir):
         self.jobid = self.jobmananger.submit_job_to_prominence(config, run_dir)
@@ -223,16 +166,10 @@ class Run:
     def _batch(self, config, run_dir, run=False):
         self.jobid = self.jobmananger.submit_job_to_batch(config, run_dir, run)
 
-    def _mock(self, *args):
-        pass
 
-
-##########################
-
-
-class Teardown:
+class Teardown(interface.Teardown):
     """
-    Teardown a JETTO run for use in the wider BLUEPRINT
+    Teardown a JETTO run for use in the wider bluemira
 
     TODO this could probably be coded cleaner/ refactored
     once I have a testable setup
@@ -246,19 +183,19 @@ class Teardown:
 
     files = {"eqdsk": "jetto.eqdsk_out"}
 
-    def __init__(self, filenames=None):
-
+    def __init__(self, parent, *args, filenames=None, **kwargs):
+        super().__init__(parent)
         # Process any file from JETTO run - maybe overkill
         if filenames is not None:
             # Python 3.9
             # self.filnames |= filenames
             self.files = {**self.files, **filenames}
 
-    def process(self, setup, runner):
+    def process(self):
         """
         Process a JETTO run
 
-        also saves a run to the save_path specified in setup
+        also saves a run to the save_path
 
         Parameters
         ----------
@@ -273,13 +210,7 @@ class Teardown:
           dictionary of JETTO data (currently only eqdsk)
 
         """
-        self._setup = setup
-        self._runner = runner
-        self.save_path = self._setup.save_path
-
-        self.processed_result = self._setup.runmode(self)
-
-        return self.processed_result
+        pass
 
     def _prominence(self, preprocessed=False):
         """
@@ -335,10 +266,12 @@ class Teardown:
         """
         job_running = True
         while job_running:
-            self._setup.client.list_jobs(completed=True, workflow_id=self.jobid)
+            self.parent.setup_obj.client.list_jobs(
+                completed=True, workflow_id=self.jobid
+            )
 
             job_running = False
-            # check if finished in while loop with a sleep time
+            # check if finished in while loop with a sleep time maybe in async?
 
     def _get_prominence_output(self):
         """
@@ -406,112 +339,41 @@ class Teardown:
         return EQDSKInterface().read(os.sep.join(self.save_path, self.files["eqdsk"]))
 
 
-class ProminenceDownloader:
+class Solver(interface.FileProgramInterface):
     """
-    Object to import prominence's binary file to enable job data downloading.
-
-    the binary file has a lot of python code directly in it that is
-    not accessible from the prominence module.
+    JETTO solver class
 
     Parameters
     ----------
-    jobid: int
-      prominence jobid
-    save_dir: str
-        directory to save the jetto output
-    force: bool
-        overwrite existing files
+    params: ParameterFrame
+        ParameterFrame for JETTO
+    build_config: Dict
+        build configuration dictionary
+    run_dir: str
+        Plasmod run directory
 
+    Notes
+    -----
+    build config keys: mode, binary, problem_settings
     """
 
-    def __init__(self, jobid, save_dir, force=False):
-        self.id = jobid
-        self.dir = False
-        self.force = force
+    _setup = Setup
+    _run = Run
+    _teardown = Teardown
+    _runmode = RunMode
 
-        self._save_dir = save_dir
-        self._old_open = open
-
-        self.prom_bin = self._import_binary()
-
-    @staticmethod
-    def _import_binary():
-        """
-        Import prominence binary file as a module in order to use download functionality
-
-        Returns
-        -------
-        module
-           prominence binary as a module
-
-        """
-        prom_bin_loc = shutil.which("prominence")
-        spec = imp_u.spec_from_file_location(prom_bin_loc, "prominence_bin")
-        try:
-            prom_bin = imp_u.module_from_spec(spec)
-        except AttributeError:
-            raise ImportError("Prominence binary not found")
-        spec.loader.exec_module(prom_bin)
-
-        return prom_bin
-
-    def __call__(self):
-        """
-        Download the data from a run.
-
-        Temporarily changes directory so that saving happens where desired
-        and not in working directory.
-
-        """
-        with patch("builtins.print", new=self.captured_print):
-            with patch("builtins.open", new=self.captured_open):
-                self.prom_bin.command_download(self)
-
-    def captured_print(self, string, *args, **kwargs):
-        """
-        Capture prominence print statements to feed them into our logging system
-
-        Parameters
-        ----------
-        string: str
-            string to print`
-        *args
-           builtin print statement args
-        *kwargs
-           builtin print statement kwargs
-
-        """
-        import sys
-
-        sys.stdout.write("HERE")
-        if string.startswith("Error"):
-            bluemira_warn(f"Prominence {string}")
-        else:
-            bluemira_print(string)
-
-    def captured_open(self, filepath, *args, **kwargs):
-        """
-        Prepend save directory to filepath
-
-        Parameters
-        ----------
-        filepath: str
-            filepath
-        *args
-           builtin open statement args
-        *kwargs
-           builtin open statement kwargs
-
-        Returns
-        -------
-        filehandle
-
-        """
-        filepath = os.path.join(self._save_dir, filepath)
-        return self._old_open(filepath, *args, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
+    def __init__(
+        self,
+        params,
+        build_config=None,
+        run_dir: Optional[str] = None,
+    ):
+        super().__init__(
+            JETTO,
+            params,
+            build_config.get("mode", "run"),
+            binary=build_config.get("binary", BINARY),
+            run_dir=run_dir,
+            mappings=mappings,
+            problem_settings=build_config.get("problem_settings", None),
+        )
