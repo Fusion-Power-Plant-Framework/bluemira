@@ -31,11 +31,12 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Union
 
+import fortranformat as ff
 import numpy as np
 
 import bluemira.codes.interface as interface
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.constants import BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD
@@ -145,6 +146,9 @@ class Inputs(PlasmodParameters):
     Class for Plasmod inputs
     """
 
+    f_int = ff.FortranRecordWriter("a20,i10")
+    f_float = ff.FortranRecordWriter("a20,e16.9")
+
     def __init__(self, new_inputs=None):
         super().__init__()
 
@@ -167,13 +171,16 @@ class Inputs(PlasmodParameters):
         with open(filename, "w") as fid:
             for k, v in self._options.items():
                 if isinstance(v, Enum):
-                    fid.write(f"{k} {v.value:d}\n")
+                    line = self.f_int.write([k, v.value])
                 elif isinstance(v, int):
-                    fid.write(f"{k} {v:d}\n")
+                    line = self.f_int.write([k, v])
                 elif isinstance(v, float):
-                    fid.write(f"{k} {v:5.4e}\n")
+                    line = self.f_float.write([k, v])
                 else:
-                    fid.write(f"{k} {v}\n")
+                    bluemira_warn(f"May produce fortran read errors, type: {type(v)}")
+                    line = f"{k} {v}"
+                fid.write(line)
+                fid.write("\n")
 
     def _check_models(self):
         """
