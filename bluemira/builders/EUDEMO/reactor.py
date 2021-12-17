@@ -59,7 +59,7 @@ class EUDEMOReactor(Reactor):
 
         return component
 
-    def run_systems_code(self, **kwargs):
+    def run_systems_code(self):
         """
         Run the systems code module in the requested run mode.
         """
@@ -84,7 +84,7 @@ class EUDEMOReactor(Reactor):
         )
         self._params.update_kw_parameters(output.to_dict())
 
-    def build_plasma(self, **kwargs):
+    def build_plasma(self):
         """
         Run the plasma build using the requested equilibrium problem.
         """
@@ -103,7 +103,7 @@ class EUDEMOReactor(Reactor):
 
         return super()._build_stage(name)
 
-    def build_TF_coils(self, component_tree: Component, **kwargs):
+    def build_TF_coils(self, component_tree: Component):
         """
         Run the TF Coils build using the requested mode.
         """
