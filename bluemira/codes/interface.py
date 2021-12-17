@@ -98,7 +98,7 @@ class Task:
         kwargs.pop("shell", None)  # Protect against user input
 
         with subprocess.Popen(  # noqa (S603)
-            command, stdout=stdout, stderr=stderr, **kwargs
+            command, stdout=stdout, stderr=stderr, shell=False, **kwargs  # noqa (S603)
         ) as s:
             stdout.close()
             stderr.close()
