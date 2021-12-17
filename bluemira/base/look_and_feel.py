@@ -324,6 +324,44 @@ def _bm_print_singleflush(string, width=73, color="blue"):
     return _print_color(text, color)
 
 
+def _bluemira_clean_flush(string):
+    """
+    Print and flush string. Useful for
+    updating information.
+
+    Parameters
+    ----------
+    string: str
+        The string to colour flush print
+    """
+    _terminator_handler(
+        LOGGER.info, "\r" + string, fhterm=logging.StreamHandler.terminator
+    )
+
+
+def _terminator_handler(func, string, *, fhterm=""):
+    """
+    Log string allowing modification to handler terminator
+
+    Parameters
+    ----------
+    func: logging function
+        function to log with
+    string: str
+        The string to colour flush print
+    fhterm: str
+        FileHandler Terminator
+    """
+    original_terminator = logging.StreamHandler.terminator
+    logging.StreamHandler.terminator = ""
+    logging.FileHandler.terminator = fhterm
+    try:
+        func(string)
+    finally:
+        logging.StreamHandler.terminator = original_terminator
+        logging.FileHandler.terminator = original_terminator
+
+
 def bluemira_print_flush(string):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
@@ -334,13 +372,33 @@ def bluemira_print_flush(string):
     string: str
         The string to colour flush print
     """
-    original_terminator = logging.StreamHandler.terminator
-    logging.StreamHandler.terminator = ""
-    logging.FileHandler.terminator = original_terminator
-    try:
-        LOGGER.info("\r" + _bm_print_singleflush(string))
-    finally:
-        logging.StreamHandler.terminator = original_terminator
+    _bluemira_clean_flush(_bm_print_singleflush(string))
+
+
+def bluemira_print_clean(string):
+    """
+    Print to the logging info console with no modification.
+    Useful for external programs
+
+    Parameters
+    ----------
+    string: str
+        The string to print
+    """
+    _terminator_handler(LOGGER.info, string)
+
+
+def bluemira_error_clean(string):
+    """
+    Print to the logging error console, colouring the output red.
+    No other modiication is made. Useful for external programs
+
+    Parameters
+    ----------
+    string: str
+        The string to colour print
+    """
+    _terminator_handler(LOGGER.error, _print_color(string, "red"))
 
 
 class BluemiraClock:

@@ -28,9 +28,8 @@ from __future__ import annotations
 from typing import Optional
 
 import bluemira.base as bm_base
-
-from bluemira.codes.error import CodesError
 from bluemira.codes import process
+from bluemira.codes.error import CodesError
 
 
 def run_systems_code(
@@ -80,11 +79,15 @@ def run_systems_code(
     CodesError
         If PROCESS is not being mocked and is not installed.
     """
-    process_mode = build_config["process_mode"]
+    # Remove me, temp compatibility layer
+    build_config["mode"] = build_config.get("mode", build_config["process_mode"])
+    # #####################################
+    process_mode = build_config.get("mode", "run")
     if (not process.PROCESS_ENABLED) and (process_mode.lower() != "mock"):
         raise CodesError("PROCESS not (properly) installed")
 
-    runner = process.Run(
+    solver = process.Solver(
         params, build_config, run_dir, read_dir, template_indat, params_to_update
     )
-    return runner.params
+    solver.run()
+    return solver.params

@@ -19,27 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-
-from bluemira.codes.process.api import PROCESS_ENABLED
-from bluemira.codes.process import teardown
-from bluemira.codes.process.mapping import mappings
-from tests.bluemira.codes.process import INDIR
-
-
-@pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
-class TestMFileReader:
-    @classmethod
-    def setup_class(cls):
-        cls.mapping = {p_map.name: bm_key for bm_key, p_map in mappings.items()}
-        cls.bmfile = teardown.BMFile(INDIR, cls.mapping)
-        return cls
-
-    def test_extraction(self):
-        inp = list(self.mapping.values())
-        out = self.bmfile.extract_outputs(inp)
-        assert len(inp) == len(out)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__])
+"""
+Importer for Plasmod runner constants and functions
+"""
+from bluemira.codes.plasmod.api import Solver
+from bluemira.codes.plasmod.constants import NAME
