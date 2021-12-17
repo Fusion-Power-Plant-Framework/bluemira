@@ -55,6 +55,8 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_plasma())
         component.add_child(self.build_TF_coils(component))
 
+        bluemira_print("Reactor Design Complete!")
+
         return component
 
     def run_systems_code(self, **kwargs):
