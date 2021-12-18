@@ -113,7 +113,23 @@ class GradShafranovLagrange:
         # initialize solution
         self.psi = dolfin.Function(self.V)
 
-    def solve(self, g, dirichletBCFunction=None, dirichlet_marker=None, 
+    @property
+    def g(self):
+        return self._g
+
+    @g.setter
+    def g(self, value):
+        self._g = value
+
+    @property
+    def psi(self):
+        return self._psi
+
+    @psi.setter
+    def psi(self, value):
+        self._psi = value
+
+    def solve(self, g, dirichletBCFunction=None, dirichlet_marker=None,
               neumannBCFunction=None):
         """
         Solve the Grad-Shafranov equation given a right hand side g, Dirichlet and 
@@ -158,59 +174,19 @@ class GradShafranovLagrange:
         # solve the system taking into account the boundary conditions
         dolfin.solve(self.a == self.L, self.psi, bcs)
         
-        self.__calculateB()
+        self.calculate_B()
         
         # return the solution
         return self.psi
 
-    # def __calculateB(self):
-    #     # from https://scicomp.stackexchange.com/questions/32844/electromagnetism-fem-fenics-interpolation-leakage-effect
-        
-    #     # POSTPROCESSING
-    #     #W = dolfin.VectorFunctionSpace(self.mesh, 'P', 1) # new function space for mapping B as vector
-        
-    #     r = dolfin.Expression('x[0]', degree = 1)
-        
-    #     # calculate derivatives
-    #     Bx = -self.psi.dx(1)/(2*dolfin.pi*r)
-    #     By = self.psi.dx(0)/(2*dolfin.pi*r)
-        
-    #     #B = dolfin.project( dolfin.as_vector(( Bx, By )), W ) # project B as vector to new function space
-    #     B_abs = numpy.power( Bx**2 + By**2, 0.5 ) # compute length of vector
-        
-    #     # # plot B vectors
-    #     # dolfin.plot(B)
-    #     # plt.show()
-        
-    #     # define new function space as Discontinuous Galerkin
-    #     abs_B = dolfin.FunctionSpace(self.mesh, 'DG', 0)
-    #     f = B_abs # obtained solution is "source" for solving another PDE
-        
-    #     # make new weak formulation
-    #     w_h = dolfin.TrialFunction(abs_B)
-    #     v = dolfin.TestFunction(abs_B)
-        
-    #     a = w_h*v*dolfin.dx
-    #     L = f*v*dolfin.dx
-        
-    #     w_h = dolfin.Function(abs_B)
-    #     dolfin.solve(a == L, w_h)
-        
-    #     # # plot the solution
-    #     # dolfin.plot(w_h)
-    #     # plt.show()
-    #     self.B = w_h
-        
-    def __calculateB(self):
+    def calculate_B(self):
         # POSTPROCESSING
-        W = dolfin.VectorFunctionSpace(self.mesh, 'P', 1) # new function space for mapping B as vector
+        W = dolfin.VectorFunctionSpace(self.mesh, 'P', 1)  # new function space for mapping B as vector
         
-        r = dolfin.Expression('x[0]', degree = 1)
+        r = dolfin.Expression('x[0]', degree=1)
         
         # calculate derivatives
         Bx = -self.psi.dx(1)/(2*dolfin.pi*r)
         Bz = self.psi.dx(0)/(2*dolfin.pi*r)
         
-        self.B = dolfin.project( dolfin.as_vector(( Bx, Bz )), W ) # project B as vector to new function space
-        
-        
+        self.B = dolfin.project( dolfin.as_vector((Bx, Bz)), W )  # project B as vector to new function space

@@ -23,7 +23,7 @@
 Testing the fixed-boundary equilibrium solver.
 """
 
-from bluemira.equilibria.fem_fixed_boundary.plasma import Plasma
+from plasma import Plasma
 import bluemira.equilibria.fem_fixed_boundary.tools as tools
 import bluemira.codes.plasmod as plasmod
 from dolfinSolver import GradShafranovLagrange
@@ -38,7 +38,6 @@ import matplotlib.pyplot as plt
 import bluemira.mesh.msh2xdmf as msh2xdmf
 import dolfin
 import numpy as np
-from bluemira.equilibria.find import find_flux_surf
 
 # creation of a plasma
 ## create a geometry
@@ -159,6 +158,11 @@ z = v[:, 1]
 psi_v = psi.compute_vertex_values()
 
 # todo get flux surface contours for 2D FEM functions, e.g. trincontour plots
+levels = [psi_ax*0.05]
+axis, cntr, cntrf = tools.plot2d_scalar_field(x, z, psi_v, levels=levels, axis=None, to_fill=False, show=True)
+path = []
+for index in range(len(levels)):
+    path.append(cntr.collections[index].get_paths()[0].vertices)
 
 
 # plt.close("all")

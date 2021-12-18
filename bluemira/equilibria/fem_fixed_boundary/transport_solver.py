@@ -32,13 +32,13 @@ class TransportSolver:
     def __init__(self, solver, *args, **kwargs):
         self.solver = solver
 
-    def get_pprime(self):
+    def pprime(self):
         """
         Get pprime
         """
         return self.solver.get_profile("pprime")
 
-    def get_ffprime(self):
+    def ffprime(self):
         """
         Get ffprime
         """

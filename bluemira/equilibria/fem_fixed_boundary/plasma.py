@@ -28,6 +28,10 @@ from bluemira.base.components import (
     MagneticComponent
 )
 from typing import Any
+import math
+
+import bluemira.base.constants as const
+from bluemira.mesh import meshing, msh2xdmf
 
 class Plasma(MagneticComponent):
 
@@ -42,26 +46,51 @@ class Plasma(MagneticComponent):
         parent: Component = None,
         children: Component = None,
     ):
-        super().__init__(name, material, conductor, parent, children)
+        super().__init__(name, shape, material, conductor, parent, children)
         self._mhd_solver = mhd_solver
         self._gs_solver = gs_solver
+        self.mesh_dict = {}
 
-        def set_mhd_solver(self,solver):
-            self._mhd_solver = solver
+    def set_mhd_solver(self, solver):
+        self._mhd_solver = solver
 
-        def set_gs_solver(self,solver):
-            self._gs_solver = solver
+    def set_gs_solver(self, solver):
+        self._gs_solver = solver
 
-        def _pprime(self):
-            return self._mhd_solver.get_pprime()
+    def _pprime(self):
+        return self._mhd_solver.get_pprime()
 
-        def _ffprime(self):
-            return self._mhd_solver.get_ffprime()
+    def _ffprime(self):
+        return self._mhd_solver.get_ffprime()
 
-        def curr_density(self):
-            """Toroidal plasma current density"""
+    def _psi(self):
+        def wrapper(points):
+            return self._mhd_solver.psi(points)
+        return wrapper
 
+    def curr_density(self):
+        """Toroidal plasma current density"""
+        def wrapper(points):
+            r = points[0]
+            return -1/const.MU_0*(-const.MU_0*r*self._pprime(self._psi(points))
+                                  - 1/r*self._ffprime(self._psi(points)))
+        return wrapper
 
+    def calculate_mesh(self):
+        m = meshing.Mesh()
+        buffer = m(self.shape)
+        msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
+        mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
+            prefix="Mesh",
+            dim=2,
+            directory=".",
+            subdomains=True,
+        )
+        self.mesh_dict = {'mesh': mesh, 'boundaries': boundaries,
+                          'subdomains': subdomains, 'labels': labels}
 
-
-
+    def calculate_plasma_parameters(self):
+        self.lp = self.shape.length
+        self.Ap = self.shape.area
+        self.Sp = 2*math.pi*self.shape.center_of_mass[0]*self.lp
+        self.Vp = 2*math.pi*self.shape.center_of_mass[0]*self.Ap
