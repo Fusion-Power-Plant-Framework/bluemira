@@ -26,7 +26,7 @@ Classes and methods to load, store, and retrieve materials.
 import copy
 import json
 
-from .material import (
+from bluemira.materials.material import (
     MaterialsError,
     Void,
     MassFractionMaterial,
@@ -37,7 +37,7 @@ from .material import (
     BePebbleBed,
     Plasma,
 )
-from .mixtures import HomogenisedMixture
+from bluemira.materials.mixtures import HomogenisedMixture
 
 
 class MaterialCache:

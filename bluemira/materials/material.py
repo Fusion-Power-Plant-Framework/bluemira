@@ -38,16 +38,16 @@ with warnings.catch_warnings():
 
 from bluemira.utilities.tools import is_num, json_writer
 
-from ..base.look_and_feel import bluemira_warn
-from ..utilities.tools import (
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.tools import (
     array_or_num,
     gcm3_to_kgm3,
     list_array,
     to_celsius,
     to_kelvin,
 )
-from .constants import P_DEFAULT, T_DEFAULT
-from .error import MaterialsError
+from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
+from bluemira.materials.error import MaterialsError
 
 # Set any custom symbols for use in asteval
 asteval_user_symbols = {
