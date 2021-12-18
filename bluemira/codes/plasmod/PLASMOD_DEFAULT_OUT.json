@@ -34,6 +34,8 @@
     "f_ind": null,
     // # [-] H-factor
     "H": null,
+    // # [-] H-factor (radiation corrected)
+    "Hcorr": null,
     // # [-] exit flag
     // #  1: PLASMOD converged successfully
     // # -1: Max number of iterations achieved

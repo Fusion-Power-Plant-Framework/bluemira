@@ -269,8 +269,6 @@ PLASMOD_INPUTS = {
     # [-]  normalized mean location of aux. heating for
     # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
     # ###### "BM_INP": "x_heat_nbi",
-    # [V] target loop voltage (if lower than -1e-3, ignored)
-    # ###### "BM_INP": "v_loop_in",
 }
 
 #
@@ -339,11 +337,11 @@ PLASMOD_OUTPUTS = {
     # [W] Line radiation power
     "P_line": "Pline",
     # [W] LH transition power
-    # ##### "BM_OUT": "PLH",
+    "P_LH": "PLH",
     # [W] neutron fusion power
     # ##### "BM_OUT": "Pneut",
     # [W] Ohimic heating power
-    # ##### "BM_OUT": "Pohm",
+    "P_ohm": "Pohm",
     # [W] total radiation power
     "P_rad": "Prad",
     # [W] total power across plasma separatrix
@@ -368,12 +366,10 @@ PLASMOD_OUTPUTS = {
     # ##### "BM_OUT": "toleq",
     # [-] overall tolerance
     # ##### "BM_OUT": "tolfin",
-    # [V] plasma loop voltage
-    # ##### "BM_OUT": "Vloop",
     # [J] plasma thermal energy
     # ##### "BM_OUT": "Wth",
     # [-] plasma effective charge
-    # ##### "BM_OUT": "Zeff",  # Z_eff?
+    "Z_eff": "Zeff",
 }
 
 PLASMOD_INOUTS = {
@@ -384,7 +380,11 @@ PLASMOD_INOUTS = {
     # [-] input H-factor:if i_modeltype > 1 H factor calculated
     # ##### "BM_INP": "hfact_inp",
     # [-] H-factor
-    # ##### "BM_OUT": "H",  # H_star?
+    # ##### "BM_OUT": "H",
+    # [-] H-factor (radiation corrected)
+    "H_star": "Hcorr",
+    # [V] target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage
+    "v_burn": "Vloop",
 }
 
 

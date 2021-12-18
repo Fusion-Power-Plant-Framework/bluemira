@@ -462,7 +462,9 @@ def get_perimeter_2d(x, y):
     perimeter: float
         The perimeter of the coordinates
     """
-    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+    dx = x[1:] - x[:-1]
+    dy = y[1:] - y[:-1]
+    return np.sum(np.sqrt(dx ** 2 + dy ** 2))
 
 
 @nb.jit(cache=True, nopython=True)
@@ -484,7 +486,10 @@ def get_perimeter_3d(x, y, z):
     perimeter: float
         The perimeter of the coordinates
     """
-    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2))
+    dx = x[1:] - x[:-1]
+    dy = y[1:] - y[:-1]
+    dz = z[1:] - z[:-1]
+    return np.sum(np.sqrt(dx ** 2 + dy ** 2 + dz ** 2))
 
 
 @xyz_process
@@ -540,7 +545,7 @@ def get_area_2d(x, y):
 @nb.jit(cache=True, nopython=True)
 def get_area_3d(x, y, z):
     """
-    Calculate the area inside a closed polygon with x, y coordinate vectors.
+    Calculate the area inside a closed polygon.
     `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
 
     Parameters
@@ -550,7 +555,7 @@ def get_area_3d(x, y, z):
     y: np.array
         The second set of coordinates [m]
     z: np.array
-        The third set of coordinates or None (for a 2-D polygon)
+        The third set of coordinates [m]
 
     Returns
     -------
@@ -571,6 +576,49 @@ def get_area_3d(x, y, z):
         a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
     a *= 0.5
     return abs(np.dot(a, v3))
+
+
+def check_ccw_3d(x, y, z, normal):
+    """
+    Check if a set of coordinates is counter-clockwise w.r.t a normal vector.
+
+    Parameters
+    ----------
+    x: np.array
+        The first set of coordinates [m]
+    y: np.array
+        The second set of coordinates [m]
+    z: np.array
+        The third set of coordinates [m]
+    normal: np.array
+        The normal vector about which to check for CCW
+
+    Returns
+    -------
+    ccw: bool
+        Whether or not the set is CCW about the normal vector
+    """
+    r = rotation_matrix_v1v2([0, 0, 1], normal)
+    x, y, z = r @ np.array([x, y, z])
+    a = _get_ccw_metric(x, y, z)
+    return np.dot(normal, a) >= 0.0
+
+
+@nb.jit(cache=True, nopython=True)
+def _get_ccw_metric(x, y, z):
+    """
+    Calculate the signed area of a set of x, y, z coordinate vectors.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+    """
+    m = np.zeros((3, len(x)))
+    # Translate all coordinates arbitrarily to dodge degenerate edge cases! :)
+    m[0, :] = x + 1.0
+    m[1, :] = y + 1.0
+    m[2, :] = z + 1.0
+    a = np.array([0.0, 0.0, 0.0])
+    for i in range(len(z)):
+        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
+    return a
 
 
 @xyz_process

@@ -24,3 +24,4 @@ Constants for the PROCESS integration.
 """
 
 NAME = "PROCESS"
+BINARY = "process"

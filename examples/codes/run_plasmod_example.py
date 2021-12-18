@@ -37,15 +37,15 @@ new_params = {
 build_config = {
     "problem settings": {
         "Pfus_req": 2000,
-        "i_modeltype": 111,
+        "i_modeltype": "GYROBOHM_2",
     },
     "mode": "run",
+    "binary": f"{PLASMOD_PATH}/plasmod.o",
 }
 
 plasmod_solver = plasmod.Solver(
     params=Configuration(new_params),
     build_config=build_config,
-    binary=f"{PLASMOD_PATH}/plasmod.o",
 )
 # plasmod_solver._set_runmode("run")
 plasmod_solver.run()

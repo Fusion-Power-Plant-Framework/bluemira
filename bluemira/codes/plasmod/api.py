@@ -31,12 +31,14 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Dict, Iterable, Optional, Union
 
+import fortranformat as ff
 import numpy as np
 
 import bluemira.codes.interface as interface
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes.error import CodesError
+from bluemira.codes.plasmod.constants import BINARY
 from bluemira.codes.plasmod.constants import NAME as PLASMOD
 from bluemira.codes.plasmod.mapping import (
     EquilibriumModel,
@@ -122,7 +124,7 @@ class PlasmodParameters:
         filepath: str
             json file to load
         """
-        bluemira_debug(str(filepath))
+        bluemira_debug(f"Loading default values from json: {filepath}")
         with open(filepath) as jfh:
             return json.load(jfh, cls=CommentJSONDecoder)
 
@@ -134,7 +136,7 @@ class PlasmodParameters:
 
     def __repr__(self):
         """
-        Representation string of the DisplayOptions.
+        Representation string of the PlasmodParameters.
         """
         return f"{self.__class__.__name__}({pprint.pformat(self._options)}" + "\n)"
 
@@ -143,6 +145,9 @@ class Inputs(PlasmodParameters):
     """
     Class for Plasmod inputs
     """
+
+    f_int = ff.FortranRecordWriter("a20,i10")
+    f_float = ff.FortranRecordWriter("a20,e16.9")
 
     def __init__(self, new_inputs=None):
         super().__init__()
@@ -166,23 +171,33 @@ class Inputs(PlasmodParameters):
         with open(filename, "w") as fid:
             for k, v in self._options.items():
                 if isinstance(v, Enum):
-                    fid.write(f"{k} {v.value:d}\n")
+                    line = self.f_int.write([k, v.value])
                 elif isinstance(v, int):
-                    fid.write(f"{k} {v:d}\n")
+                    line = self.f_int.write([k, v])
                 elif isinstance(v, float):
-                    fid.write(f"{k} {v:5.4e}\n")
+                    line = self.f_float.write([k, v])
                 else:
-                    fid.write(f"{k} {v}\n")
+                    bluemira_warn(f"May produce fortran read errors, type: {type(v)}")
+                    line = f"{k} {v}"
+                fid.write(line)
+                fid.write("\n")
 
     def _check_models(self):
         """
         Check selected plasmod models are known
         """
-        self.i_impmodel = ImpurityModel(self.i_impmodel)
-        self.i_modeltype = TransportModel(self.i_modeltype)
-        self.i_equiltype = EquilibriumModel(self.i_equiltype)
-        self.i_pedestal = PedestalModel(self.i_pedestal)
-        self.isiccir = SOLModel(self.isiccir)
+        models = [
+            ["i_impmodel", ImpurityModel],
+            ["i_modeltype", TransportModel],
+            ["i_equiltype", EquilibriumModel],
+            ["i_pedestal", PedestalModel],
+            ["isiccir", SOLModel],
+        ]
+
+        for name, model_cls in models:
+            val = getattr(self, name)
+            model = model_cls[val] if isinstance(val, str) else model_cls(val)
+            setattr(self, name, model)
 
     def get_default_plasmod_inputs(self):
         """
@@ -364,7 +379,7 @@ class Run(interface.Run):
 
     """
 
-    _binary = "transporz"  # Who knows why its not called plasmod
+    _binary = BINARY
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, kwargs.pop("binary", self._binary), *args, **kwargs)
@@ -430,21 +445,16 @@ class Solver(interface.FileProgramInterface):
 
     Parameters
     ----------
-    runmode: str
-        Plasmod runmode
     params: ParameterFrame
         ParameterFrame for plasmod
     build_config: Dict
         build configuration dictionary
-    input_file: str
-        input file save location
-    output_file: str
-        output file save location
-    profiles_file: str
-        profiles file save location
-    binary: str
-        plasmod binary name
+    run_dir: str
+        Plasmod run directory
 
+    Notes
+    -----
+    build config keys: mode, binary, problem_settings
     """
 
     _setup = Setup
@@ -457,14 +467,12 @@ class Solver(interface.FileProgramInterface):
         params,
         build_config=None,
         run_dir: Optional[str] = None,
-        binary: Optional[str] = "transporz",
     ):
-        # self._out_params = Outputs()
         super().__init__(
             PLASMOD,
             params,
             build_config.get("mode", "run"),
-            binary=binary,
+            binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
             mappings=create_mapping(),
             problem_settings=build_config.get("problem_settings", None),

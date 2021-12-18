@@ -81,6 +81,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['P_line', 'Line radiation', 30, 'MW', None, 'PLASMOD'],
         ['P_sync', 'Synchrotron radiation', 50, 'MW', None, 'PLASMOD'],
         ['P_brehms', 'Bremsstrahlung', 80, 'MW', None, 'PLASMOD'],
+        ['P_LH', 'LH transition power', 0, 'W', None, 'PLASMOD'],
+        ['P_ohm', 'Ohimic heating power', 0, 'W', None, 'PLASMOD'],
         ['f_bs', 'Bootstrap fraction', 0.5, 'N/A', None, 'PLASMOD'],
         ['beta_N', 'Normalised ratio of plasma pressure to magnetic pressure', 2.7, 'N/A', None, 'PLASMOD'],
         ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure', 0.04, 'N/A', None, 'PLASMOD'],
