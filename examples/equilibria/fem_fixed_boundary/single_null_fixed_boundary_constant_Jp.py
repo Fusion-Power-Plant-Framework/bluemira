@@ -22,23 +22,26 @@
 """
 Testing the fixed-boundary equilibrium solver.
 """
+from bluemira.equilibria.shapes import JohnerLCFS
 
-from plasma import Plasma
+from bluemira.base.config import Configuration
+
+from bluemira.equilibria.fem_fixed_boundary.plasma import Plasma
+from bluemira.equilibria.fem_fixed_boundary.dolfinSolver import GradShafranovLagrange
 import bluemira.equilibria.fem_fixed_boundary.tools as tools
-import bluemira.codes.plasmod as plasmod
-from dolfinSolver import GradShafranovLagrange
+import bluemira.equilibria.fem_fixed_boundary.transport_solver as transport_solver
+
 from bluemira.mesh import meshing
+import bluemira.mesh.msh2xdmf as msh2xdmf
+
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.equilibria.shapes import JohnerLCFS
-import bluemira.display as display
-from bluemira.display.plotter import FacePlotter
+
 import matplotlib.pyplot as plt
-import bluemira.mesh.msh2xdmf as msh2xdmf
+
 import dolfin
 import numpy as np
-import transport_solver
 
 # %% Geometry (EU-DEMO 2017)
 ## Plasma shape creation
@@ -54,52 +57,60 @@ p = JohnerLCFS(
         "delta_l": {"value": 0.50},
     }
 )
+
+# Plasma LCFS
 lcfs = p.create_shape(label="LCFS")
 lcfs.mesh_options = {"lcar": 0.3, "physical_group": "LCFS"}
 
-# plot shape
-my_options = display.plotter.get_default_options()
-print(my_options)
-f, ax = plt.subplots()
-ax.set_xlabel("r [m]")
-ax.set_ylabel("z [m]")
-ax.grid(True)
-ax.set_title("Plasma shape")
-display.plot_2d(
-    lcfs, show=False, ax=ax, wire_options={"color": "red", "linestyle": "dashed"}
-)
-
-# Face
+# Plasma cross-section
 plasma_face = BluemiraFace(lcfs, label="plasma_surface")
 plasma_face.mesh_options = {"lcar": 0.5, "physical_group": "plasma"}
 
-# plot face
-fig, ax = plt.subplots()
-fplotter = FacePlotter(plane="xz", face_options={"color": "red"})
-ax.set_xlabel("r [m]")
-ax.set_ylabel("z [m]")
-ax.grid(True)
-fplotter.plot_2d(plasma_face, ax=ax, show=False)
-ax.set_title("Face plot without points (default)")
-
-
-# %%[markdown] generate mesh
-xz_plane = BluemiraPlane(axis=[1, 0, 0], angle=-90)
-plasma_face.change_plane(xz_plane)
-
+# Plasma component
 plasma_comp = Plasma(name="plasma", shape=plasma_face)
 plasma_shell = BluemiraShell(plasma_face)
 
-# set an empty transport solver
+# plot plasma_comp (default)
+ax = plasma_comp.plot_2d(show=False)
+ax.grid(True)
+ax.set_title("Plasma shape (default plot options)")
+plt.show()
+
+# Now it is necessary to set the plasma solvers:
+# 1) mhd_solver
+# Note: with the new version of plasmod interfaces into codes, I cannot
+# run plasmod in mock mode. Since I don't have plasmod installed, I am
+# going to set an empty plasma transport solver (just a backup solution
+# for the moment).
 plasma_comp.set_mhd_solver(transport_solver.NoneTransportSolver(None))
 
+# 2) gs_solver
+# Note: to create a gs_solver, the plasma mesh is needed. In the following
+# the mesh is created with direct code. In the future, probably, it is better
+# to integrate this part in a "ad-hoc" plasma method (or gs_solver method).
+
+# %%[markdown] generate mesh
+# Note: due to problem with msh2xdmf when doing mesh2d, i.e. only first
+# 2 spatial compononents are saved into mesh coordinates, it is necessary
+# to change the plasma plane.
+xz_plane = BluemiraPlane(axis=[1, 0, 0], angle=-90)
+plasma_face.change_plane(xz_plane)
+
+# plot plasma_comp (only LCFS) - jsut to check that the plane has been changed
+plasma_comp._plotter.set_plane("xy")
+plasma_comp._plotter.options.show_faces = False
+plasma_comp._plotter.options.wire_options = {"color": "red", "linestyle": "dashed"}
+ax = plasma_comp.plot_2d(show=False)
+ax.grid(True)
+ax.set_title("Plasma contour")
+plt.show()
+
+# mesh is initialized and created
 m = meshing.Mesh()
 buffer = m(plasma_shell)
-# print(m.get_gmsh_dict(buffer))
 
 # %%[markdown]
 # Convert the me in xdmf for reading in fenics
-
 msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
 mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
     prefix="Mesh",
@@ -108,24 +119,30 @@ mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
     subdomains=True,
 )
 
-#%%[markdown] Plot mesh
+# %%[markdown] Plot mesh
+# Note: this plot function works only for 2D meshes.
 dolfin.plot(mesh)
 
-#%%[markdown] solve GSE for a constant current density distribution
+#%%[markdown] Define the GSE solver
 gs_solver = GradShafranovLagrange(mesh, p=2)
 
 # set plasma Grad-Shafranov solver
 plasma_comp.set_gs_solver(gs_solver)
 
+# This value should be declared into the set of plasma or reactor parameters
+# For this example, it is declared here
 Ip = 1.9e7
 Ap = plasma_face.area
 print("Average current density [A/m²] = " + str(Ip / Ap))
 
+# initialize the plasma current density to a constant value
+# (this is due to the fact that the msh_solver is None
 plasma_curr_density = plasma_comp.curr_density(Ip / Ap)
 
 g = tools.func_to_dolfinFunction(plasma_curr_density, gs_solver.V)
-
+# The next code would have produced the same result
 # g = dolfin.Expression(str(Ip / Ap), degree=2)
+
 gs_solver.solve(g)
 psi = gs_solver.psi
 
@@ -164,12 +181,17 @@ x = v[:, 0]
 z = v[:, 1]
 psi_v = psi.compute_vertex_values()
 
-# todo get flux surface contours for 2D FEM functions, e.g. trincontour plots
-levels = [psi_ax*0.05]
-axis, cntr, cntrf = tools.plot2d_scalar_field(x, z, psi_v, levels=levels, axis=None, to_fill=False, show=True)
-path = []
+psi_norm = (psi_ax - psi_v) / (psi_ax)
+
+levels = np.linspace(0, 1, 21)
+axis, cntr, cntrf = tools.plot2d_scalar_field(
+    x, z, psi_norm, levels=levels, axis=None, to_fill=False, show=True
+)
+path_coordinates = []
 for index in range(len(levels)):
-    path.append(cntr.collections[index].get_paths()[0].vertices)
-
-
-# plt.close("all")
+    path = cntr.collections[index].get_paths()
+    if path:
+        path_coordinates.append(path[0].vertices)
+    else:
+        path_coordinates.append([])
+plt.close("all")

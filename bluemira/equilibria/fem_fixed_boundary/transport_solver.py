@@ -22,24 +22,46 @@
 """
 The bluemira transport solver module
 """
-
+import scipy
+from bluemira.utilities.tools import get_module
 
 class TransportSolver:
     """
     Transport solver class
     """
 
-    def __init__(self, solver, *args, **kwargs):
-        self.solver = solver
+    def __init__(self, solver_name, *args, **kwargs):
+        self.solver = get_module(solver_name).Solver(*args, **kwargs)
+        self.solver.run()
 
+    @property
     def pprime(self):
         """
         Get pprime
         """
-        return self.solver.get_profile("pprime")
+        psinorm = self.solver.get_profile("x")
+        data = self.solver.get_profile("pprime")
+        return scipy.interpolate.UnivariateSpline(psinorm, data, ext=0)
 
+    @property
     def ffprime(self):
         """
         Get ffprime
         """
-        return self.solver.get_profile("pprime")
+        psinorm = self.solver.get_profile("x")
+        data = self.solver.get_profile("ffprime")
+        return scipy.interpolate.UnivariateSpline(psinorm, data, ext=0)
+
+
+class NoneTransportSolver(TransportSolver):
+    """Empty transport solver"""
+    def __init__(self, *args, **kwargs):
+        self.solver = None
+
+    @TransportSolver.pprime.getter
+    def pprime(self):
+        return None
+
+    @TransportSolver.ffprime.getter
+    def ffprime(self):
+        return None

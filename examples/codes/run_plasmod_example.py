@@ -39,7 +39,7 @@ build_config = {
         "Pfus_req": 2000,
         "i_modeltype": "GYROBOHM_2",
     },
-    "mode": "run",
+    "mode": "mock",
     "binary": f"{PLASMOD_PATH}/plasmod.o",
 }
 
@@ -50,12 +50,13 @@ plasmod_solver = plasmod.Solver(
 # plasmod_solver._set_runmode("run")
 plasmod_solver.run()
 
-ffprime = plasmod_solver.get_profile("ffprime")
-Te = plasmod_solver.get_profile("Te")
+ffprime = plasmod_solver.get_profile("pprime")
+
+# Te = plasmod_solver.get_profile("Te")
 x = plasmod_solver.get_profile("x")
 fig, ax = plt.subplots()
-ax.plot(x, Te)
-ax.set(xlabel="x (-)", ylabel="T_e (keV)")
+ax.plot(x, ffprime)
+ax.set(xlabel="x (-)", ylabel="ffprime")
 ax.grid()
 plt.show()
 

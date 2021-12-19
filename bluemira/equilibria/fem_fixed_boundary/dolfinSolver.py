@@ -129,6 +129,10 @@ class GradShafranovLagrange:
     def psi(self, value):
         self._psi = value
 
+    @property
+    def psi_max(self):
+        return self.psi.vector().max()
+
     def solve(self, g, dirichletBCFunction=None, dirichlet_marker=None,
               neumannBCFunction=None):
         """
@@ -173,9 +177,12 @@ class GradShafranovLagrange:
 
         # solve the system taking into account the boundary conditions
         dolfin.solve(self.a == self.L, self.psi, bcs)
-        
+
         self.calculate_B()
-        
+
+        dx = dolfin.Measure('dx', domain=self.mesh)
+        print(f"total current: {dolfin.assemble(g*dx)}")
+
         # return the solution
         return self.psi
 
