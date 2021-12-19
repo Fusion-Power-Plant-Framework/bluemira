@@ -22,7 +22,7 @@
 import dolfin
 import numpy
 
-def func_to_dolfinFunction(self , f, V):
+def func_to_dolfinFunction(J, V):
     f = dolfin.Function(V)
     p = V.ufl_element().degree()
     mesh = V.mesh()
@@ -31,7 +31,7 @@ def func_to_dolfinFunction(self , f, V):
     # psi = psi[:,numpy.newaxis]
     # x = numpy.concatenate((points,psi), 1)
     # print(points)
-    data = numpy.array([f(point) for point in points])
+    data = np.array([J(point) for point in points])
     # print("data = {}".format(data))
 
     if p > 1:

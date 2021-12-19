@@ -52,16 +52,37 @@ class Plasma(MagneticComponent):
         def set_gs_solver(self,solver):
             self._gs_solver = solver
 
-        def _pprime(self):
-            return self._mhd_solver.get_pprime()
+    @property
+    def _pprime(self):
+        return self._mhd_solver.pprime
 
-        def _ffprime(self):
-            return self._mhd_solver.get_ffprime()
+    @property
+    def _ffprime(self):
+        return self._mhd_solver.ffprime
 
-        def curr_density(self):
-            """Toroidal plasma current density"""
+    @property
+    def _psi(self):
+        def wrapper(points):
+            return self._gs_solver.psi(points)
+        return wrapper
 
+    @property
+    def psi_ax(self):
+        return self._gs_solver.psi_max
 
-
+    def curr_density(self, j0=0):
+        """Toroidal plasma current density"""
+        def wrapper(points):
+            r = points[0]
+            a = 0
+            b = 0
+            if self.psi_ax > 0:
+                psi_norm = (self.psi_ax - self._psi(points))/self.psi_ax
+                if self._pprime is not None:
+                    a = -const.MU_0*r*self._pprime(psi_norm)
+                if self._ffprime is not None:
+                    b = - 1/r*self._ffprime(psi_norm)
+            return j0 - 1/const.MU_0*(a + b)
+        return wrapper
 
 

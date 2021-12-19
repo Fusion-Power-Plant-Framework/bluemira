@@ -113,7 +113,27 @@ class GradShafranovLagrange:
         # initialize solution
         self.psi = dolfin.Function(self.V)
 
-    def solve(self, g, dirichletBCFunction=None, dirichlet_marker=None, 
+    @property
+    def g(self):
+        return self._g
+
+    @g.setter
+    def g(self, value):
+        self._g = value
+
+    @property
+    def psi(self):
+        return self._psi
+
+    @psi.setter
+    def psi(self, value):
+        self._psi = value
+
+    @property
+    def psi_max(self):
+        return self.psi.vector().max()
+
+    def solve(self, g, dirichletBCFunction=None, dirichlet_marker=None,
               neumannBCFunction=None):
         """
         Solve the Grad-Shafranov equation given a right hand side g, Dirichlet and 
@@ -157,9 +177,11 @@ class GradShafranovLagrange:
 
         # solve the system taking into account the boundary conditions
         dolfin.solve(self.a == self.L, self.psi, bcs)
-        
         self.__calculateB()
-        
+
+        dx = dolfin.Measure('dx', domain=self.mesh)
+        print(f"total current: {dolfin.assemble(g*dx)}")
+
         # return the solution
         return self.psi
 
