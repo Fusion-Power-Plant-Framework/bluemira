@@ -24,8 +24,6 @@ Testing the fixed-boundary equilibrium solver.
 """
 from bluemira.equilibria.shapes import JohnerLCFS
 
-from bluemira.base.config import Configuration
-
 from bluemira.equilibria.fem_fixed_boundary.plasma import Plasma
 from bluemira.equilibria.fem_fixed_boundary.dolfinSolver import GradShafranovLagrange
 import bluemira.equilibria.fem_fixed_boundary.tools as tools
@@ -44,7 +42,7 @@ import dolfin
 import numpy as np
 
 # %% Geometry (EU-DEMO 2017)
-## Plasma shape creation
+# Plasma shape creation
 R0 = 8.938
 A = 3.1
 p = JohnerLCFS(
@@ -123,13 +121,9 @@ mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
 # Note: this plot function works only for 2D meshes.
 dolfin.plot(mesh)
 
-#%%[markdown] Define the GSE solver
-gs_solver = GradShafranovLagrange(mesh, p=2)
+# %%[markdown] Define the GSE solver
 
-# set plasma Grad-Shafranov solver
-plasma_comp.set_gs_solver(gs_solver)
-
-# This value should be declared into the set of plasma or reactor parameters
+# The Ip value should be declared into the set of plasma or reactor parameters
 # For this example, it is declared here
 Ip = 1.9e7
 Ap = plasma_face.area
@@ -139,14 +133,14 @@ print("Average current density [A/m²] = " + str(Ip / Ap))
 # (this is due to the fact that the msh_solver is None
 plasma_curr_density = plasma_comp.curr_density(Ip / Ap)
 
-g = tools.func_to_dolfinFunction(plasma_curr_density, gs_solver.V)
-# The next code would have produced the same result
-# g = dolfin.Expression(str(Ip / Ap), degree=2)
+gs_solver = GradShafranovLagrange(plasma_curr_density, mesh, p=2)
 
-gs_solver.solve(g)
-psi = gs_solver.psi
+# set plasma Grad-Shafranov solver
+plasma_comp.set_gs_solver(gs_solver)
 
-#%%[markdown] plot poloidal flux
+psi = gs_solver.solve()
+
+# %%[markdown] plot poloidal flux
 fig, ax = plt.subplots()
 c = dolfin.plot(psi, title="Fancy plot", mode="color")
 dolfin.plot(mesh)
@@ -157,7 +151,7 @@ fig.colorbar(c)
 fig.show()
 fig.savefig("polo_flux.png")
 
-#%% calculate solution on a vertical line across r = R0
+# %% calculate solution on a vertical line across r = R0
 psi = gs_solver.psi
 z = np.linspace(-1, 1, 101)
 points = [(R0, z_) for z_ in z]  # 2D points
@@ -167,15 +161,15 @@ fig, ax = plt.subplots()
 plt.plot(z, psi_line, "ko-", linewidth=2)
 ax.grid(True)
 ax.set_xlabel("$z$ [m]")
-ax.set_ylabel("$\Psi$ [Wb]")
-plt.title("$\Psi$ vs. $z$")
+ax.set_ylabel("$\Psi$ [Wb]")  # noqa(W605)
+plt.title("$\Psi$ vs. $z$")  # noqa(W605)
 plt.show()
 
-#%%[markdown] calculate max value --> axis
+# %%[markdown] calculate max value --> axis
 psi_ax = psi.vector().max()
 print("Max polo flux at axis:", psi_ax, "Wb")
 
-#%%[markdown] get 95 % flux surface
+# %%[markdown] get 95 % flux surface
 v = mesh.coordinates()
 x = v[:, 0]
 z = v[:, 1]
@@ -194,4 +188,3 @@ for index in range(len(levels)):
         path_coordinates.append(path[0].vertices)
     else:
         path_coordinates.append([])
-plt.close("all")

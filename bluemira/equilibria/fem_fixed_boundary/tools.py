@@ -38,7 +38,7 @@ def func_to_dolfinFunction(J, V):
 
     if p > 1:
         # generate a 1-degree function space
-        V1 = dolfin.FunctionSpace(mesh, 'CG', 1)
+        V1 = dolfin.FunctionSpace(mesh, "CG", 1)
         f1 = dolfin.Function(V1)
         d2v = dolfin.dof_to_vertex_map(V1)
         new_data = [data[d2v[i]] for i in range(mesh.num_vertices())]
@@ -72,7 +72,7 @@ def plot2d_scalar_field(x, y, field, levels=20, axis=None, to_fill=True, show=Tr
     # # Directly supply the unordered, irregularly spaced coordinates
     # # to tricontour.
 
-    cntr = axis.tricontour(x, y, field, levels=levels, linewidths=0.5, colors='k')
+    cntr = axis.tricontour(x, y, field, levels=levels, linewidths=0.5, colors="k")
     if to_fill:
         cntrf = axis.tricontourf(x, y, field, levels=levels, cmap="RdBu_r")
         plt.gcf().colorbar(cntrf, ax=axis)
