@@ -24,19 +24,21 @@ api for plotting using matplotlib
 """
 from __future__ import annotations
 
-from abc import abstractmethod, ABC
 import copy
-import numpy as np
+import pprint
+from abc import ABC, abstractmethod
+from typing import List, Optional, Union
+
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
-import pprint
-from typing import Optional, Union, List
+import numpy as np
 
-from bluemira.geometry import plane as _plane, bound_box, wire, face
+from bluemira.geometry import bound_box, face
+from bluemira.geometry import plane as _plane
+from bluemira.geometry import wire
 
 from .error import DisplayError
 from .palettes import BLUE_PALETTE
-
 
 DEFAULT_PLOT_OPTIONS = {
     # flags to enable points, wires, and faces plot

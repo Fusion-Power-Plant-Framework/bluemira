@@ -37,7 +37,6 @@ from bluemira.materials.material import (
 )
 from bluemira.materials.mixtures import HomogenisedMixture
 
-
 __all__ = [
     "BePebbleBed",
     "HomogenisedMixture",

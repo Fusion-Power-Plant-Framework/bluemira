@@ -23,16 +23,16 @@
 Material mixture utility classes
 """
 import copy
-import numpy as np
 import typing
 import warnings
+
+import numpy as np
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import neutronics_material_maker as nmm
 
 from bluemira.base.look_and_feel import bluemira_warn
-
 from bluemira.materials.constants import MATERIAL_BEAM_MAP, T_DEFAULT
 from bluemira.materials.error import MaterialsError
 from bluemira.materials.material import SerialisedMaterial

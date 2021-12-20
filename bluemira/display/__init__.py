@@ -23,7 +23,7 @@
 Display and plotting module
 """
 
-from bluemira.display import plotter, displayer
+from bluemira.display import displayer, plotter
 from bluemira.display.auto_config import plot_defaults
 
 plot_defaults()

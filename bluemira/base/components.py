@@ -25,14 +25,14 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-import anytree
-from anytree import NodeMixin, RenderTree
 from typing import Any, List, Optional, Union
 
-from bluemira.display.plotter import Plottable
-from bluemira.display.displayer import DisplayableCAD
+import anytree
+from anytree import NodeMixin, RenderTree
 
 from bluemira.base.error import ComponentError
+from bluemira.display.displayer import DisplayableCAD
+from bluemira.display.plotter import Plottable
 
 
 class Component(NodeMixin, Plottable, DisplayableCAD):

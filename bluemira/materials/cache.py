@@ -27,15 +27,15 @@ import copy
 import json
 
 from bluemira.materials.material import (
-    MaterialsError,
-    Void,
-    MassFractionMaterial,
-    NbTiSuperconductor,
-    NbSnSuperconductor,
-    Liquid,
-    UnitCellCompound,
     BePebbleBed,
+    Liquid,
+    MassFractionMaterial,
+    MaterialsError,
+    NbSnSuperconductor,
+    NbTiSuperconductor,
     Plasma,
+    UnitCellCompound,
+    Void,
 )
 from bluemira.materials.mixtures import HomogenisedMixture
 

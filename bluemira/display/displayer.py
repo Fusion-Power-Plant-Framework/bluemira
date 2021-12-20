@@ -24,17 +24,16 @@ api for plotting using freecad
 """
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import copy
+from abc import ABC, abstractmethod
 from typing import Iterable, List, Optional, Tuple, Union
+
 import matplotlib.colors as colors
 
 from bluemira.codes import _freecadapi as cadapi
-
 from bluemira.display.error import DisplayError
-from bluemira.display.plotter import DisplayOptions
 from bluemira.display.palettes import BLUE_PALETTE
-
+from bluemira.display.plotter import DisplayOptions
 
 DEFAULT_DISPLAY_OPTIONS = {
     "color": (0.5, 0.5, 0.5),
