@@ -857,7 +857,8 @@ class AbInitioEquilibriumProblem(EquilibriumProblem):
             elif rtype == "ST":
                 profile = DoublePowerFunc([2, 1])
         elif isinstance(profile, ShapeFunction):
-            profile = profile
+            # profile is already a ShapeFunction, no need to do anything
+            pass
         else:
             raise ValueError(
                 f"Could not make a ShapeFunction from profile of type {type(profile)}"
