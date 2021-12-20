@@ -339,10 +339,22 @@ class Setup(interface.Setup):
         problem_settings: dict
             dictionary of extra arguments to override unmapped or default values
         """
+        self.io_manager = Inputs({**self._get_new_inputs(), **problem_settings})
+
+    def update_inputs(self):
+        """
+        Update plasmod inputs
+        """
+        self.io_manager.modify(self._get_new_inputs())
+
+    def _get_new_inputs(self):
+        """
+        Get new key mappings from the ParameterFrame.
+        """
         _inputs = {}
         for pl_key, bm_key in self._send_mapping.items():
             _inputs[pl_key] = self.params.get(bm_key)
-        self.io_manager = Inputs({**_inputs, **problem_settings})
+        return _inputs
 
     def write_input(self):
         """
@@ -354,12 +366,14 @@ class Setup(interface.Setup):
         """
         Run plasmod setup
         """
+        self.update_inputs()
         self.write_input()
 
     def _mock(self):
         """
         Mock plasmod setup
         """
+        self.update_inputs()
         self.write_input()
 
 

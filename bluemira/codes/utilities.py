@@ -25,6 +25,7 @@ Utility functions for interacting with external codes
 
 
 import os
+import functools
 import threading
 from typing import Dict, Literal
 
@@ -76,6 +77,7 @@ def _get_mapping(
     return mapping
 
 
+@functools.lru_cache(5)
 def get_recv_mapping(params, code_name, recv_all=False):
     """
     Get the recieve mapping for variables mapped from the external code to the provided
@@ -100,6 +102,7 @@ def get_recv_mapping(params, code_name, recv_all=False):
     return _get_mapping(params, code_name, "recv", recv_all)
 
 
+@functools.lru_cache(5)
 def get_send_mapping(params, code_name, send_all=False):
     """
     Get the send mapping for variables mapped from the external code to the provided
