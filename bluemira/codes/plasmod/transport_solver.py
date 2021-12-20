@@ -22,53 +22,34 @@
 """
 The bluemira transport solver module
 """
-from abc import ABC, abstractmethod
+from bluemira.equilibria.fem_fixed_boundary.transport_solver import TransportSolver
+from .api import Solver
+import scipy
 
 
-class TransportSolver(ABC):
-    """Abstract transport solver class"""
+class PlasmodTransportSolver(TransportSolver):
+    """
+    Plasmod transport solver class
+    """
 
-    # This abstract class specifies all the properties and methods that
-    # should be provided by a generic transport solver. For the moment
-    # they are limited to pprime and ffprime. It is only a draft version.
-    # Todo: check if it is necessary to add other properties or methods.
-
-    def __init__(self, *args, **kwargs):
-        self.solver = None
+    def __init__(self, params, build_config):
+        self.solver = Solver(params=params, build_config=build_config)
+        self.solver.run()
 
     @property
-    @abstractmethod
     def pprime(self):
         """
         Get pprime as function of psi_norm
         """
-        pass
+        psinorm = self.solver.get_profile("x")
+        data = self.solver.get_profile("pprime")
+        return scipy.interpolate.UnivariateSpline(psinorm, data, ext=0)
 
     @property
-    @abstractmethod
     def ffprime(self):
         """
         Get ffprime as function of psi_norm
         """
-        pass
-
-
-class NoneTransportSolver(TransportSolver):
-    """Empty transport solver"""
-
-    def __init__(self, *args, **kwargs):
-        self.solver = None
-
-    @TransportSolver.pprime.getter
-    def pprime(self):
-        """
-        Get pprime as function of psi_norm
-        """
-        return None
-
-    @TransportSolver.ffprime.getter
-    def ffprime(self):
-        """
-        Get ffprime as function of psi_norm
-        """
-        return None
+        psinorm = self.solver.get_profile("x")
+        data = self.solver.get_profile("ffprime")
+        return scipy.interpolate.UnivariateSpline(psinorm, data, ext=0)

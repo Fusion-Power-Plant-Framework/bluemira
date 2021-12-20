@@ -23,14 +23,11 @@
 Module containing the base Component class.
 """
 
-from bluemira.base.components import (
-    Component,
-    MagneticComponent
-)
+from bluemira.base.components import Component, MagneticComponent
 from typing import Any
 
-class Plasma(MagneticComponent):
 
+class Plasma(MagneticComponent):
     def __init__(
         self,
         name: str,
@@ -64,25 +61,51 @@ class Plasma(MagneticComponent):
     def _psi(self):
         def wrapper(points):
             return self._gs_solver.psi(points)
+
         return wrapper
 
     @property
     def psi_ax(self):
+        if self._gs_solver is None:
+            return 0
         return self._gs_solver.psi_max
 
     def curr_density(self, j0=0):
         """Toroidal plasma current density"""
+
         def wrapper(points):
             r = points[0]
             a = 0
             b = 0
             if self.psi_ax > 0:
-                psi_norm = (self.psi_ax - self._psi(points))/self.psi_ax
+                psi_norm = (self.psi_ax - self._psi(points)) / self.psi_ax
                 if self._pprime is not None:
-                    a = -const.MU_0*r*self._pprime(psi_norm)
+                    a = -const.MU_0 * r * self._pprime(psi_norm)
                 if self._ffprime is not None:
-                    b = - 1/r*self._ffprime(psi_norm)
-            return j0 - 1/const.MU_0*(a + b)
+                    b = -1 / r * self._ffprime(psi_norm)
+            return j0 - 1 / const.MU_0 * (a + b)
+
         return wrapper
 
+    def calculate_mesh(self):
+        m = meshing.Mesh()
+        buffer = m(self.shape)
+        msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
+        mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(
+            prefix="Mesh",
+            dim=2,
+            directory=".",
+            subdomains=True,
+        )
+        self.mesh_dict = {
+            "mesh": mesh,
+            "boundaries": boundaries,
+            "subdomains": subdomains,
+            "labels": labels,
+        }
 
+    def calculate_plasma_parameters(self):
+        self.lp = self.shape.length
+        self.Ap = self.shape.area
+        self.Sp = 2 * math.pi * self.shape.center_of_mass[0] * self.lp
+        self.Vp = 2 * math.pi * self.shape.center_of_mass[0] * self.Ap

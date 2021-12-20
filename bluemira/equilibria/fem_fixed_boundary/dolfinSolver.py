@@ -19,220 +19,258 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-# Grad-Shafranov solver
-# =====================
-
-# The main class for solving the Grad-Shafranov equation
-
-# Description
-# -----------
-# This class implements a general solver for the Grad-Shafranov equation where any
-# right hand side, as function of (P(\psi),f(\psi)), can be prescribed.
-# """
-
-import numpy
+"""
+Grad-Shafranov solver
+"""
 import dolfin
+import bluemira.equilibria.fem_fixed_boundary.tools as tools
+import numpy
 
 class GradShafranovLagrange:
-    def __init__(self, mesh, boundaries=None, p=3):
-        # """
-        # Grad-Shafranov solver implementation as a class.
-        
-        # DESCRIPTION
-        # -----------
-        # Solves the Grad-Shafranov equation:
-        
-        # Lagrange interpolants of order p are used for the unknown quantity.
-        
-        # INPUTS
-        # ------
-        # mesh : dolfin.mesh or string
-        #        the filename of the xml file with the mesh definition
-        #        or a dolfin mesh
-                       
-        # boundaries : dolfin.MeshFunction or string
-        #              the filename of the xml file with the boundaries definition
-        #              or a MeshFunction that defines the boundaries
-                              
-        # p : int
-        #     the order of the approximating polynomial basis functions
-            
-        # """        
+    """
+    A solver for the Grad-Shafranov equation:
+    # Todo: add GS equation
+    where any right hand side, as function of psi, can be prescribed.
 
-        """
-        Grad-Shafranov solver implementation as a class.
-        
-        :param constrList: list of constraints of the type 
-                [(P1, angle1),(P2, angle2), ...].
-                Points must to have a "list" rappresentation, i.e. the x and y 
-                coordinates must be accessible using P[0] and P[1].
-                Note: FreeCAD.Base.Vector fits the requirements
-        :type constrList: list(tuple)
-        
-        :param degree: option to consider angle as degree, defaults to False
-        :type degree: boolean    
-        
-        :return: center coordinates and major and minor axis length
-        :rtype: tuple
-        
-        Example:
-            constrainList = [(P1,angle1), (P2,), (P3,)]
-        """
+    Lagrange interpolants of order p are used for the unknown quantity.
 
-        #======================================================================
-        # define the geometry
-        if isinstance(mesh, str): # check wether mesh is a filename or a mesh, then load it or use it
-            self.mesh = dolfin.Mesh(mesh) # define the mesh
+    Parameters
+    ----------
+    g : float, function, dolfin.Expression, dolfin.Function
+        the right hand side function of the Poisson problem
+
+    mesh : dolfin.mesh, str
+           a dolfin mesh object or the filename of the xml file with the
+           mesh definition
+
+    boundaries : dolfin.MeshFunction or string
+                 the filename of the xml file with the boundaries definition
+                 or a MeshFunction that defines the boundaries
+
+    p : int
+        the order of the approximating polynomial basis functions
+
+    dirichlet_boundary : dolfin.Expression o dolfin.Function
+                          the Dirichlet boundary condition function
+
+    dirichlet_marker : int
+                       the identification number for the dirichlet boundary
+
+    neumann_boundary : dolfin.Expression or dolfin.Function
+                        the Neumann boundary condition function
+
+    tol : float64
+          the error goal to stop the iteration process
+    """
+
+    def __init__(
+        self,
+        g,
+        mesh,
+        p=3,
+        boundaries=None,
+        dirichlet_boundary=None,
+        dirichlet_marker=None,
+        neumann_boundary=None,
+        tol=1e-6,
+    ):
+        self.tol = tol
+
+        # check if mesh is a filename or a mesh, then load it or use it
+        if isinstance(mesh, str):
+            self.mesh = dolfin.Mesh(mesh)
         else:
-            self.mesh = mesh # use the mesh
-        
-        #======================================================================
-        # define boundaries        
-        if boundaries is None:                                                        # Dirichlet B.C. are defined
-            self.boundaries = dolfin.MeshFunction("size_t", mesh, mesh.topology().dim()-1) # initialize the MeshFunction       
-        elif isinstance(boundaries, str): # check wether boundaries is a filename or a MeshFunction, then load it or use it
-            self.boundaries = dolfin.MeshFunction("size_t", self.mesh, boundaries) # define the boundaries
+            self.mesh = mesh
+
+        # define boundaries
+        if boundaries is None:
+            # Dirichlet B.C. are defined
+            self.boundaries = dolfin.MeshFunction(
+                "size_t", mesh, mesh.topology().dim() - 1
+            )
+        # check if boundaries is a filename or a MeshFunction, then load it or use it
+        elif isinstance(boundaries, str):
+            self.boundaries = dolfin.MeshFunction("size_t", self.mesh, boundaries)
         else:
             self.boundaries = boundaries
-        
-        #======================================================================
-        # define the function space and bilinear forms
 
+        # define the function space and bilinear forms
         # the solution function space
-        self.V = dolfin.FunctionSpace(self.mesh, 'CG', p)
-        
+        self.V = dolfin.FunctionSpace(self.mesh, "CG", p)
         # define trial and test functions
         self.u = dolfin.TrialFunction(self.V)
-        self.v = dolfin.TestFunction(self.V)               
-
+        self.v = dolfin.TestFunction(self.V)
         # Define r
-        r = dolfin.Expression('x[0]', degree=p)
-        
-        self.a = 1/(2.*dolfin.pi*4*dolfin.pi*1e-7)*(1/r*dolfin.dot(dolfin.grad(self.u),dolfin.grad(self.v)))*dolfin.dx
-        
+        r = dolfin.Expression("x[0]", degree=p)
+
+        # define the left hand side
+        self.a = (
+            1
+            / (2.0 * dolfin.pi * 4 * dolfin.pi * 1e-7)
+            * (1 / r * dolfin.dot(dolfin.grad(self.u), dolfin.grad(self.v)))
+            * dolfin.dx
+        )
+
         # initialize solution
         self.psi = dolfin.Function(self.V)
 
+        if neumann_boundary is None:
+            self.neumann_boundary = dolfin.Expression("0.0", degree=2)
+
+        self.g = g
+
+        # define the Dirichlet boundary conditions
+        if dirichlet_boundary is None:
+            self.dirichlet_boundary = dolfin.Expression("0.0", degree=2)
+            self.dirichlet_boundary = dolfin.DirichletBC(
+                self.V, self.dirichlet_boundary, "on_boundary"
+            )
+        else:
+            self.dirichlet_boundary = dolfin.DirichletBC(
+                self.V, dirichlet_boundary, self.boundaries, dirichlet_marker
+            )
+        self._bcs = [self.dirichlet_boundary]
+
     @property
     def g(self):
+        """
+        Right hand side, as function of psi
+        Todo: add a better description and, probably, find a better name
+        """
         return self._g
 
     @g.setter
     def g(self, value):
-        self._g = value
+        """
+        Right hand side, as function of psi
+        Todo: add a better description and, probably, find a better name
+        """
+        self._g = self.check_g(value)
+
+    def check_g(self, value):
+        """Check the value for g and, if valid, return a dolfin function"""
+        if isinstance(value, (int, float)) or callable(value):
+            return tools.func_to_dolfinFunction(value, self.V)
+        elif isinstance(value, (dolfin.Expression, dolfin.Function)):
+            return value
+        else:
+            raise ValueError(
+                f"{value} of type{type(value)} is neither an int, float, callable, dolfin.Expression, "
+                f"or dolfin.Function"
+            )
+
+    # WIP to speed up the GS solver
+    # def update_g(self, value):
+    #     g = self.check_g(value)
+    #     mesh = self.V.mesh()
+    #     points = mesh.coordinates()
+    #     d2v = self.V.dofmap().tabulate_local_to_global_dofs()
+    #     data = numpy.array([g(p) for p in points])
+    #     new_data = [data[d2v[i]] for i in range(mesh.num_vertices())]
+    #     self._g.vector().set_local(new_data)
 
     @property
     def psi(self):
+        """
+        Magnetic flux
+        """
         return self._psi
 
     @psi.setter
     def psi(self, value):
+        """
+        Magnetic flux
+        """
         self._psi = value
 
     @property
     def psi_max(self):
+        """
+        Maximum value of the magnetic flux
+        """
         return self.psi.vector().max()
 
-    def solve(self, g, dirichletBCFunction=None, dirichlet_marker=None,
-              neumannBCFunction=None):
+    @property
+    def dirichlet_boundary_function(self):
         """
-        Solve the Grad-Shafranov equation given a right hand side g, Dirichlet and 
+        dolfin.Expression or dolfin.Function the Dirichlet boundary condition function
+        """
+        return self._dirichlet_boundary_function
+
+    @dirichlet_boundary_function.setter
+    def dirichlet_boundary_function(self, value):
+        """
+        dolfin.Expression or dolfin.Function the Dirichlet boundary condition function
+        """
+        self._dirichlet_boundary_function = value
+
+    @property
+    def dirichlet_markers(self):
+        """
+        The identification number (int) for the dirichlet boundary
+        """
+        return self._dirichlet_markers
+
+    @dirichlet_markers.setter
+    def dirichlet_markers(self, value):
+        """
+        The identification number (int) for the dirichlet boundary
+        """
+        self._dirichlet_markers = value
+
+    @property
+    def neumann_boundary_function(self):
+        """
+        dolfin.Expression or dolfin.Function the Neumann boundary condition function
+        """
+        return self._neumann_boundary_function
+
+    @neumann_boundary_function.setter
+    def neumann_boundary_function(self, value):
+        """
+        dolfin.Expression or dolfin.Function the Neumann boundary condition function
+        """
+        self._neumann_boundary_function = value
+
+    @property
+    def tol(self):
+        """The error goal (float) to stop the iteration process"""
+        return self._tol
+
+    @tol.setter
+    def tol(self, value):
+        """The error goal (float) to stop the iteration process"""
+        self._tol = value
+
+    def solve(self):
+        """
+        Solve the Grad-Shafranov equation given a right hand side g, Dirichlet and
         Neumann boundary conditions and convergence tolerance error.
-        
-        INPUTS
-        ------
-        g : dolfin.Expression or dolfin.Function
-            the right hand side function of the Poisson problem
-        
-        dirichletBCFunction : dolfin.Expression o dolfin.Function
-                              the Dirichlet boundary condition function
-        
-        neumannBCFunction : dolfin.Expression or dolfin.Function
-                            the Neumann boundary condition function
-         
-        tol : float64 
-              the error goal to stop the iteration process
-        
-        dirichlet_marker : int
-                           the identification number for the dirichlet boundary
-                           
-        OUTPUTS
-        -------
-        psi : the solution of the Grad-Shafranov problem
-        
-        """        
-        if neumannBCFunction is None:
-            neumannBCFunction = dolfin.Expression('0.0', degree=2)
-        
-        # define the right hand side         
-        self.L = g*self.v*dolfin.dx - neumannBCFunction*self.v*dolfin.ds
-        
-        # define the Dirichlet boundary conditions
-        if dirichletBCFunction is None:
-            dirichletBCFunction = dolfin.Expression('0.0', degree=2)
-            dirichletBC = dolfin.DirichletBC(self.V, dirichletBCFunction, 'on_boundary')
-        else:
-            dirichletBC = dolfin.DirichletBC(self.V, dirichletBCFunction, self.boundaries, dirichlet_marker) # dirichlet_marker is the identification of Dirichlet BC in the mesh
-        bcs = [dirichletBC] 
+        """
+        # define the right hand side
+        self.L = self.g * self.v * dolfin.dx - self.neumann_boundary * self.v * dolfin.ds
 
         # solve the system taking into account the boundary conditions
-        dolfin.solve(self.a == self.L, self.psi, bcs)
-        self.__calculateB()
+        dolfin.solve(self.a == self.L, self.psi, self._bcs)
 
-        dx = dolfin.Measure('dx', domain=self.mesh)
-        print(f"total current: {dolfin.assemble(g*dx)}")
+        self._calculate_B()
+
+        # dx = dolfin.Measure("dx", domain=self.mesh)
+        # print(f"total current: {dolfin.assemble(g*dx)}")
 
         # return the solution
         return self.psi
 
-    # def __calculateB(self):
-    #     # from https://scicomp.stackexchange.com/questions/32844/electromagnetism-fem-fenics-interpolation-leakage-effect
-        
-    #     # POSTPROCESSING
-    #     #W = dolfin.VectorFunctionSpace(self.mesh, 'P', 1) # new function space for mapping B as vector
-        
-    #     r = dolfin.Expression('x[0]', degree = 1)
-        
-    #     # calculate derivatives
-    #     Bx = -self.psi.dx(1)/(2*dolfin.pi*r)
-    #     By = self.psi.dx(0)/(2*dolfin.pi*r)
-        
-    #     #B = dolfin.project( dolfin.as_vector(( Bx, By )), W ) # project B as vector to new function space
-    #     B_abs = numpy.power( Bx**2 + By**2, 0.5 ) # compute length of vector
-        
-    #     # # plot B vectors
-    #     # dolfin.plot(B)
-    #     # plt.show()
-        
-    #     # define new function space as Discontinuous Galerkin
-    #     abs_B = dolfin.FunctionSpace(self.mesh, 'DG', 0)
-    #     f = B_abs # obtained solution is "source" for solving another PDE
-        
-    #     # make new weak formulation
-    #     w_h = dolfin.TrialFunction(abs_B)
-    #     v = dolfin.TestFunction(abs_B)
-        
-    #     a = w_h*v*dolfin.dx
-    #     L = f*v*dolfin.dx
-        
-    #     w_h = dolfin.Function(abs_B)
-    #     dolfin.solve(a == L, w_h)
-        
-    #     # # plot the solution
-    #     # dolfin.plot(w_h)
-    #     # plt.show()
-    #     self.B = w_h
-        
-    def __calculateB(self):
-        # POSTPROCESSING
-        W = dolfin.VectorFunctionSpace(self.mesh, 'P', 1) # new function space for mapping B as vector
-        
-        r = dolfin.Expression('x[0]', degree = 1)
-        
+    def _calculate_B(self):  # noqa(N802)
+        """Postprocessing function to calculate the magnetic field"""
+        # new function space for mapping B as vector
+        w = dolfin.VectorFunctionSpace(self.mesh, "P", 1)
+
+        r = dolfin.Expression("x[0]", degree=1)
+
         # calculate derivatives
-        Bx = -self.psi.dx(1)/(2*dolfin.pi*r)
-        Bz = self.psi.dx(0)/(2*dolfin.pi*r)
-        
-        self.B = dolfin.project( dolfin.as_vector(( Bx, Bz )), W ) # project B as vector to new function space
-        
-        
+        Bx = -self.psi.dx(1) / (2 * dolfin.pi * r)
+        Bz = self.psi.dx(0) / (2 * dolfin.pi * r)
+
+        # project B as vector to new function space
+        self.B = dolfin.project(dolfin.as_vector((Bx, Bz)), w)

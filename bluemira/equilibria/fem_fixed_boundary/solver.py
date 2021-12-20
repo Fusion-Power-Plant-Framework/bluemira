@@ -172,6 +172,13 @@ z = v[:, 1]
 psi_v = psi.compute_vertex_values()
 
 # todo get flux surface contours for 2D FEM functions, e.g. trincontour plots
+levels = [psi_ax * 0.05]
+axis, cntr, cntrf = tools.plot2d_scalar_field(
+    x, z, psi_v, levels=levels, axis=None, to_fill=False, show=True
+)
+path = []
+for index in range(len(levels)):
+    path.append(cntr.collections[index].get_paths()[0].vertices)
 
 
 # plt.close("all")
