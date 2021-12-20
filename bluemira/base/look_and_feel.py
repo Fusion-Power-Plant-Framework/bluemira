@@ -169,7 +169,6 @@ def count_slocs(
         lines[k] = 0
     files = get_git_files(directory, branch)
     for name in files:
-        name = name
         if name.split(os.sep)[-1] not in ignore and name not in ignore:
             for e in exts:
                 if name.endswith(e):
