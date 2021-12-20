@@ -315,7 +315,12 @@ class LifeCycle:
                 f"% diff: {100*delt:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(self.config, self.inputs)  # Phoenix
+            self.__init__(
+                self.config,
+                self.learning_strategy,
+                self.availability_strategy,
+                self.inputs,
+            )  # Phoenix
 
         if delta2 > 0.015:
             bluemira_warn(
@@ -326,7 +331,12 @@ class LifeCycle:
                 f"% diff: {100*delta2:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(self.config, self.inputs)  # Phoenix
+            self.__init__(
+                self.config,
+                self.learning_strategy,
+                self.availability_strategy,
+                self.inputs,
+            )  # Phoenix
 
         if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
             bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
