@@ -47,6 +47,7 @@ from bluemira.equilibria.shapes import JohnerLCFS
 import bluemira.geometry as geo
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.parameterisations import PrincetonD
+import bluemira.utilities.plot_tools as bm_plot_tools
 
 
 class PlasmaComponent(Component):
@@ -116,7 +117,7 @@ class PlasmaBuilder(Builder):
     _plot_flag: bool
     _segment_angle: float
     _eqdsk_path: Optional[str] = None
-    _default_run_mode: str = "run"
+    _default_runmode: str = "run"
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
@@ -131,7 +132,7 @@ class PlasmaBuilder(Builder):
         self._plot_flag = build_config.get("plot_flag", False)
         self._segment_angle = build_config.get("segment_angle", 360.0)
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def reinitialise(self, params) -> None:
         """
         Reinitialise the parameters and boundary.
 
@@ -140,11 +141,11 @@ class PlasmaBuilder(Builder):
         params: dict
             The new parameter values to initialise this builder against.
         """
-        super().reinitialise(params, **kwargs)
+        super().reinitialise(params)
 
         self._boundary = None
 
-    def run(self, **kwargs):
+    def run(self):
         """
         Run the plasma equilibrium design problem.
         """
@@ -154,7 +155,7 @@ class PlasmaBuilder(Builder):
         self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
         return {"equilibrium": eq}
 
-    def read(self, **kwargs):
+    def read(self):
         """
         Read the plasma equilibrium design problem.
         """
@@ -164,7 +165,7 @@ class PlasmaBuilder(Builder):
         self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz.T, "LCFS")
         return {"equilibrium": eq}
 
-    def mock(self, **kwargs):
+    def mock(self):
         """
         Mock the plasma equilibrium design problem using a Johner LCFS.
         """
@@ -318,9 +319,7 @@ class PlasmaBuilder(Builder):
         }
         self._params.update_kw_parameters(params, source="equilibria")
 
-    def build(
-        self, equilibrium: Optional[Equilibrium] = None, **kwargs
-    ) -> PlasmaComponent:
+    def build(self, equilibrium: Optional[Equilibrium] = None) -> PlasmaComponent:
         """
         Build the plasma components.
 
@@ -334,17 +333,17 @@ class PlasmaBuilder(Builder):
         plasma_component: Component
             The PlasmaComponent produced by this build.
         """
-        super().build(**kwargs)
+        super().build()
 
         component = PlasmaComponent(self._name, equilibrium=equilibrium)
 
-        component.add_child(self.build_xz(equilibrium=equilibrium, **kwargs))
-        component.add_child(self.build_xy(**kwargs))
-        component.add_child(self.build_xyz(**kwargs))
+        component.add_child(self.build_xz(equilibrium=equilibrium))
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
 
         return component
 
-    def build_xz(self, equilibrium: Optional[Equilibrium] = None, **kwargs) -> Component:
+    def build_xz(self, equilibrium: Optional[Equilibrium] = None) -> Component:
         """
         Build the xz representation of this plasma.
 
@@ -384,9 +383,11 @@ class PlasmaBuilder(Builder):
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
         component.add_child(lcfs_component)
 
+        bm_plot_tools.set_component_plane(component, "xz")
+
         return component
 
-    def build_xy(self, **kwargs) -> Component:
+    def build_xy(self) -> Component:
         """
         Build the xy representation of this plasma.
 
@@ -407,22 +408,22 @@ class PlasmaBuilder(Builder):
         self._ensure_boundary()
 
         component = Component("xy")
-        component.plot_options.plane = "xy"
 
         inner = geo.tools.make_circle(self._boundary.bounding_box.x_min, axis=[0, 0, 1])
         outer = geo.tools.make_circle(self._boundary.bounding_box.x_max, axis=[0, 0, 1])
 
         lcfs_face = geo.face.BluemiraFace([outer, inner], label="LCFS")
         lcfs_component = PhysicalComponent("LCFS", lcfs_face)
-        lcfs_component.plot_options.plane = "xy"
         lcfs_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
         component.add_child(lcfs_component)
 
+        bm_plot_tools.set_component_plane(component, "xy")
+
         return component
 
-    def build_xyz(self, segment_angle: Optional[float] = None, **kwargs) -> Component:
+    def build_xyz(self, segment_angle: Optional[float] = None) -> Component:
         """
         Build the 3D representation of this plasma.
 

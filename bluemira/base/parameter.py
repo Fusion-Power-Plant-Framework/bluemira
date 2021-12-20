@@ -95,6 +95,22 @@ class ParameterMapping:
         return repr(self.to_dict())
 
 
+class ParameterMappingEncoder(json.JSONEncoder):
+    """
+    Class to handle serialisation of ParameterMapping objects to JSON.
+    """
+
+    def default(self, obj):
+        """Overridden JSON serialisation method which will be called if an
+        object is not an instance of one of the classes with
+        built-in serialisations (e.g., list, dict, etc.).
+
+        """
+        if isinstance(obj, ParameterMapping):
+            return obj.to_dict()
+        return json.JSONEncoder.default(self, obj)
+
+
 def inplace_wrapper(method):
     """
     Decorator to update history for inplace operators
@@ -1217,21 +1233,6 @@ class ParameterFrame:
         """
         return cls(the_list)
 
-    class ParameterMappingEncoder(json.JSONEncoder):
-        """
-        Class to handle serialisation of ParameterMapping objects to JSON.
-        """
-
-        def default(self, obj):
-            """Overridden JSON serialisation method which will be called if an
-            object is not an instance of one of the classes with
-            built-in serialisations (e.g., list, dict, etc.).
-
-            """
-            if isinstance(obj, ParameterMapping):
-                return obj.to_dict()
-            return json.JSONEncoder.default(self, obj)
-
     def to_json(
         self,
         output_path=None,
@@ -1271,7 +1272,7 @@ class ParameterFrame:
             the_dict,
             output_path,
             return_output,
-            cls=self.ParameterMappingEncoder,
+            cls=ParameterMappingEncoder,
             **kwargs,
         )
 

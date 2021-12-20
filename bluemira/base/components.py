@@ -136,13 +136,14 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
+        # TODO: Support merge_trees here too.
         if child in self.children:
             raise ComponentError(f"Component {child} is already a child of {self}")
         self.children = list(self.children) + [child]
 
         return self
 
-    def add_children(self, children: List[Component]):
+    def add_children(self, children: List[Component], merge_trees=False):
         """
         Add multiple children to this node
 
@@ -156,10 +157,20 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         self: Component
             This component.
         """
+        if not isinstance(children, list) or len(children) == 0:
+            child = children[0] if isinstance(children, list) else children
+            return self.add_child(child)
+
         duplicates = []
-        for child in children:
-            if child in self.children:
-                duplicates += [child]
+        child: Component
+        for idx, child in reversed(list(enumerate(children))):
+            existing = self.get_component(child.name)
+            if existing is not None:
+                if merge_trees:
+                    existing.children = list(existing.children) + list(child.children)
+                    children.pop(idx)
+                else:
+                    duplicates += [child]
         if duplicates != []:
             raise ComponentError(
                 f"Components {duplicates} are already a children of {self}"
