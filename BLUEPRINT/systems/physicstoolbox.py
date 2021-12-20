@@ -301,7 +301,7 @@ def lambda_q(Bt, q_95, p_sol, R_0, error=False):
 
     Notes
     -----
-    [4] Eich, 2013, <http://iopscience.iop.org/article/10.1088/0029-5515/53/9/093031/meta>
+    [4] Eich, 2013, <https://iopscience.iop.org/article/10.1088/0029-5515/53/9/093031/meta>
     For conventional aspect ratios
     """  # noqa (W505)
     law = PowerLawScaling(
