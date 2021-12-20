@@ -32,7 +32,7 @@ import mpl_toolkits.mplot3d as a3
 import pprint
 from typing import Optional, Union, List
 
-from bluemira.geometry import plane, bound_box, wire, face
+from bluemira.geometry import plane as _plane, bound_box, wire, face
 
 from .error import DisplayError
 from .palettes import BLUE_PALETTE
@@ -70,7 +70,7 @@ def get_default_options():
         # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
         # copy.deepcopy. For this reason, its deepcopy method must be used in
         # this case.
-        if isinstance(v, plane.BluemiraPlane):
+        if isinstance(v, _plane.BluemiraPlane):
             output_dict[k] = v.deepcopy()
         else:
             output_dict[k] = copy.deepcopy(v)
@@ -151,7 +151,7 @@ class PlotOptions(DisplayOptions):
             # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
             # copy.deepcopy. For this reason, its deepcopy method must to be used in
             # this case.
-            if isinstance(v, plane.BluemiraPlane):
+            if isinstance(v, _plane.BluemiraPlane):
                 output_dict[k] = v.deepcopy()
             else:
                 output_dict[k] = copy.deepcopy(v)
@@ -283,18 +283,18 @@ class BasePlotter(ABC):
         """Set the plotting plane"""
         if plane == "xy":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = plane.BluemiraPlane()
+            self.options._options["plane"] = _plane.BluemiraPlane()
         elif plane == "xz":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = plane.BluemiraPlane(
+            self.options._options["plane"] = _plane.BluemiraPlane(
                 axis=(1.0, 0.0, 0.0), angle=-90.0
             )
         elif plane == "zy":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = plane.BluemiraPlane(
+            self.options._options["plane"] = _plane.BluemiraPlane(
                 axis=(0.0, 1.0, 0.0), angle=90.0
             )
-        elif isinstance(plane, plane.BluemiraPlane):
+        elif isinstance(plane, _plane.BluemiraPlane):
             self.options._options["plane"] = plane
         else:
             DisplayError(f"{plane} is not a valid plane")
