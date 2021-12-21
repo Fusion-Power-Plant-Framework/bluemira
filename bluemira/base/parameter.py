@@ -208,7 +208,7 @@ class Parameter(wrapt.ObjectProxy):
         self.name = name
         self.unit = unit
         self.description = description
-        self.mapping = mapping
+        self.mapping = mapping if mapping is not None else {}
 
         self._source = source
         if value is not None:
@@ -517,7 +517,7 @@ class Parameter(wrapt.ObjectProxy):
             "\n    {"
             + ", ".join([repr(k) + ": " + str(v) for k, v in self.mapping.items()])
             + "}"
-            if self.mapping is not None
+            if self.mapping != {}
             else ""
         )
         return (
