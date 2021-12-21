@@ -43,6 +43,9 @@ import matplotlib.pyplot as plt
 import dolfin
 import numpy as np
 
+import locale
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+
 # %% Geometry (EU-DEMO 2017)
 # Plasma shape creation
 R0 = 8.938
@@ -179,6 +182,8 @@ print("Average current density [A/m²] = " + str(Ip / Ap))
 # initialize the plasma current density to a constant value
 # (this is due to the fact that the msh_solver is None
 plasma_curr_density = plasma_comp.curr_density(Ip / Ap)
+print("TEST")
+print(plasma_curr_density([[9, 1], [10, 1]]))
 
 gs_solver = GradShafranovLagrange(plasma_curr_density, mesh, p=2)
 

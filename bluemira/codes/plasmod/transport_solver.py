@@ -53,3 +53,10 @@ class PlasmodTransportSolver(TransportSolver):
         psinorm = self.solver.get_profile("x")
         data = self.solver.get_profile("ffprime")
         return scipy.interpolate.UnivariateSpline(psinorm, data, ext=0)
+
+    @property
+    def k95(self):
+        """
+        Get plasma elongation at 95 % flux surface
+        """
+        return self.solver.get_scalar("k95")
