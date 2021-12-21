@@ -104,17 +104,29 @@ class BluemiraWire(BluemiraGeo):
         for o in self.boundary:
             if isinstance(o, apiWire):
                 for w in o.Wires:
-                    wire = apiWire(w.OrderedEdges)
+                    try:
+                        wire = apiWire(w.OrderedEdges)
+                        wireedge = wire.OrderedEdges
+                    except Exception as e:
+                        if len(w.Edges) == 1:
+                            wire = apiWire(w.Edges)
+                            wireedge = wire.Edges
+                        else:
+                            raise e
                     if self._orientation != _Orientation(wire.Orientation):
-                        edges = []
-                        for edge in wire.OrderedEdges:
-                            edge.reverse()
-                            edges.append(edge)
-                        wire = apiWire(edges)
+                        wire = self._reorinate(wireedge)
                     wires += [wire]
             else:
                 wires += o._wires
         return wires
+
+    @staticmethod
+    def _reorinate(wireedge):
+        edges = []
+        for edge in wireedge:
+            edge.reverse()
+            edges.append(edge)
+        return apiWire(edges)
 
     def get_single_wire(self) -> BluemiraWire:
         """Get a single wire representing the object"""
