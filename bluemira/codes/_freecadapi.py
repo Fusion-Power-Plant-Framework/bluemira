@@ -665,11 +665,17 @@ def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
         normal plane origin
     plane_axis: Iterable
         normal plane axis
+
+    Notes
+    -----
+    Degenerate cases such as tangets to solid or faces do not return intersections
+    if the shape and plane are acting at the Placement base. Further investigation needed.
+
     """
     if isinstance(shape, apiWire):
         return _slice_wire(shape, plane_axis, plane_origin)
     else:
-        bluemira_warn("The output sctructure of this function may not be as expected")
+        bluemira_warn("The output structure of this function may not be as expected")
         shift = np.dot(np.array(plane_origin), np.array(plane_axis))
         return _slice_solid(shape, plane_axis, shift)
 
@@ -683,17 +689,14 @@ def _slice_wire(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
     ).toShape()
     plane = apiFace(apiWire(circ))
     intersect_obj = wire.section(plane)
-    intersects = np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes])
-
-    return intersects if intersects.size > 0 else None
+    return np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes])
 
 
-def _slice_solid(obj, normal_plane=(0, 1, 0), shift=0):
+def _slice_solid(obj, normal_plane, shift):
     """
     Get the plane intersection points of a face or solid
     """
-    wires = obj.slice(Base.Vector(*normal_plane), shift)
-    return None if wires == [] else wires
+    return obj.slice(Base.Vector(*normal_plane), shift)
 
 
 # ======================================================================================

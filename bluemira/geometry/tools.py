@@ -448,7 +448,15 @@ def slice_shape(shape: BluemiraGeo, plane):
         list of intersections lines
 
     """
-    return cadapi.slice_shape(shape._shape, plane.base, plane.axis)
+    _slice = cadapi.slice_shape(shape._shape, plane.base, plane.axis)
+
+    if isinstance(_slice, np.ndarray) and _slice.size > 0:
+        return _slice
+
+    _slice = [convert(obj) for obj in _slice]
+
+    if len(_slice) > 0:
+        return _slice
 
 
 def circular_pattern(

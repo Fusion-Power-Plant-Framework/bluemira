@@ -49,6 +49,9 @@ class BluemiraPlane:
     -----
     The BluemiraPlane wraps a Placement, and not a Plane. The reasons for this will
     become clear in future. Placements and Planes should be interchangeable.
+
+    Angle is rotation around the axis which is taken from the base.
+    Usually the shape has a starting point which is not its centre
     """
 
     def __init__(
@@ -104,11 +107,6 @@ class BluemiraPlane:
         self._shape.Base = cadapi.Base.Vector(value)
 
     @property
-    def origin(self):
-        """TODO"""
-        return self._origin
-
-    @property
     def axis(self):
         """Plane's rotation matrix"""
         return self._shape.Rotation.Axis
@@ -123,11 +121,6 @@ class BluemiraPlane:
         value: Iterable
         """
         self._shape.Axis = cadapi.Base.Vector(value)
-
-    @property
-    def normal_vector(self):
-        """TODO"""
-        return self._normal_vector
 
     @property
     def angle(self):

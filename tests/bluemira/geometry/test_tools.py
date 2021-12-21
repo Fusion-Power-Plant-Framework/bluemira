@@ -20,17 +20,22 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-
-# from bluemira.geometry.base import BluemiraGeo
+import pytest
 
 from bluemira.geometry.tools import (
     signed_distance,
     signed_distance_2D_polygon,
     _signed_distance_2D,
     make_polygon,
+    make_circle,
     slice_shape,
+    revolve_shape,
+    extrude_shape,
+    offset_wire,
 )
 from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import PrincetonD
 
 
 class TestSignedDistanceFunctions:
@@ -253,3 +258,115 @@ class TestWirePlaneIntersect:
 
         intersect = slice_shape(wire, plane)
         assert intersect.shape[0] == 4
+
+
+class TestSolidFacePlaneIntersect:
+
+    big = 10
+    small = 5
+    centre = 15
+    twopi = 2 * np.pi
+    offset = 1
+
+    cyl_rect = 2 * big + 2 * offset
+    twopir = twopi * small
+
+    xz_plane = BluemiraPlane(axis=[0, 1, 0])
+    xy_plane = BluemiraPlane(axis=[0, 0, 1])
+    yz_plane = BluemiraPlane(axis=[1, 0, 0])
+
+    @pytest.mark.parametrize(
+        "plane, length, hollow",
+        [
+            # hollow
+            (xz_plane, offset, True),
+            (yz_plane, offset, True),
+            (xy_plane, twopir, True),
+            (BluemiraPlane(base=[0, 0, 0.5], axis=[0, 0, 1]), twopir, True),
+            (BluemiraPlane(base=[0, 0, offset], axis=[0, 0, 1]), twopir, True),
+            # solid
+            (xz_plane, cyl_rect, False),
+            (yz_plane, cyl_rect, False),
+            # tangent intersecting plane doesnt work at solid base??
+            pytest.param(xy_plane, twopir, False, marks=[pytest.mark.xfail]),
+            (BluemiraPlane(base=[0, 0, 0.5], axis=[0, 0, 1]), twopir, False),
+            (BluemiraPlane(base=[0, 0, offset], axis=[0, 0, 1]), twopir, False),
+        ],
+    )
+    def test_cylinder(self, plane, length, hollow):
+        circ = make_circle(self.small)
+        if not hollow:
+            circ = BluemiraFace(circ)
+        cylinder = extrude_shape(circ, (0, 0, self.offset))
+        _slice = slice_shape(cylinder, plane)
+        assert _slice is not None
+        assert all([np.isclose(sl.length, length) for sl in _slice]), [
+            f"{sl.length}, {length}" for sl in _slice
+        ]
+
+    def test_solid_nested_donut(self):
+
+        circ = make_circle(self.small, [0, 0, self.centre], axis=[0, 1, 0])
+        circ2 = make_circle(self.big, [0, 0, self.centre], axis=[0, 1, 0])
+
+        face = BluemiraFace([circ2, circ])
+
+        # cant join a face to itself atm 20/12/21
+        donut = revolve_shape(face, direction=[1, 0, 0], degree=359)
+
+        _slice = slice_shape(donut, self.xz_plane)
+
+        no_big = 0
+        no_small = 0
+        for sl in _slice:
+            try:
+                assert np.isclose(sl.length / self.twopi, self.big)
+                no_big += 1
+            except AssertionError:
+                assert np.isclose(sl.length / self.twopi, self.small)
+                no_small += 1
+        assert no_big == 2
+        assert no_small == 2
+
+    def test_primitive_cut(self):
+
+        path = PrincetonD({"x2": {"value": self.big}}).create_shape()
+        p2 = offset_wire(path, self.offset)
+        face = BluemiraFace([p2, path])
+        extruded = extrude_shape(face, (0, 1, 0))
+
+        _slice_xy = slice_shape(extruded, self.xy_plane)
+        _slice_xz = slice_shape(extruded, BluemiraPlane(base=[0, 1, 0], axis=[0, 1, 0]))
+
+        assert len(_slice_xy) == 2
+        assert len(_slice_xz) == 2
+
+    def test_polygon_cut(self):
+        wire = make_polygon(
+            [
+                [0.0, -1.0, 0.0],
+                [1.0, -2.0, 0.0],
+                [2.0, -3.0, 0.0],
+                [3.0, -4.0, 0.0],
+                [4.0, -5.0, 0.0],
+                [5.0, -6.0, 0.0],
+                [6.0, -7.0, 0.0],
+                [7.0, -8.0, 0.0],
+                [8.0, -4.0, 0.0],
+                [9.0, -2.0, 0.0],
+                [10.0, 3.0, 0.0],
+                [8.0, 2.0, 0.0],
+                [6.0, 4.0, 0.0],
+                [4.0, 2.0, 0.0],
+                [2.0, 0.0, 0.0],
+                [0.0, -1.0, 0.0],
+            ]
+        )
+
+        face = BluemiraFace(wire)
+
+        solid = extrude_shape(face, (1, 2, 3))
+
+        _slice = slice_shape(face, BluemiraPlane())
+
+        assert wire.length == _slice[0].length
