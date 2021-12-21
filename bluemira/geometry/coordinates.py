@@ -98,7 +98,7 @@ def get_normal_vector(x, y, z):
     """
     if len(x) < 3:
         raise CoordinatesError(
-            "Cannot get a normal vector for a set of points with" "length less than 3."
+            "Cannot get a normal vector for a set of points with length less than 3."
         )
 
     if not (len(x) == len(y) == len(z)):
