@@ -90,7 +90,7 @@ def singlepowerfunc(x, *args):
 def doublepowerfunc(x, *args):
     """
     Double power shape function defined e.g. in Lao 1985
-        http://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
+        https://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
     \t:math:`g(x)=(1-x^{m})^{n}`
     """
     # sign tweak needed to avoid runtimewarnings in np
@@ -178,7 +178,7 @@ def speedy_pressure_mask(ii, jj, psi_norm, psio, psix, shape):
 def laopoly(x, *args):
     """
     Polynomial shape function defined in Lao 1985
-        http://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
+        https://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
     \t:math:`g(x)=\\sum_{n=0}^{n_F} \\alpha_{n}x^{n}-`
     \t:math:`x^{n_F+1}\\sum_{n=0}^{n_F} \\alpha_{n}`
     """

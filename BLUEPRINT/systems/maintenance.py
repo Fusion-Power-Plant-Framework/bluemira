@@ -338,7 +338,7 @@ class BuildRMDB:
 
     def read_output(self):
         """
-        Ceci t'a bcp aide: http://stackoverflow.com/questions/41784468/update-links-in-for-excel-spreadsheet-using-python
+        Ceci t'a bcp aide: https://stackoverflow.com/questions/41784468/update-links-in-for-excel-spreadsheet-using-python
         """  # noqa (W505)
         application = win32com.client.Dispatch("Excel.Application")
         application.Visible = False

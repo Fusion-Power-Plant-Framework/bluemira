@@ -164,7 +164,7 @@ class NeutronicsRulesOfThumb:
         # Blanket outboard midplane EUROFER dmg rate [PP: 2M7HN3 fig. 20]
         self.blk_dmg = 10.2  # [dpa/FPY]
         # Divertor region CuCrZr dmg rate [dpa]
-        # http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf]
+        # https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf]
         self.div_dmg = 3  # [dpa/MW.annum/m^2]
         # VV peak SS316LN-IG dmg rate [MC: PP 2M7HN3 fig. 18]
         self.vv_dmg = 0.3  # [dpa/MW.annum/m^2]

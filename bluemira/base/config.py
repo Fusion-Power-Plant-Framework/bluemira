@@ -275,11 +275,11 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['vvpfrac', 'Fraction of neutrons deposited in VV', 0.04, 'N/A', 'simpleneutrons needs a correction for VV n absorbtion', 'Bachmanns only value'],
 
         # Neutronics
-        ['blk_1_dpa', 'Starter blanket life limit (EUROfer)', 20, 'dpa', 'http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
-        ['blk_2_dpa', 'Second blanket life limit (EUROfer)', 50, 'dpa', 'http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
-        ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', 'http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
+        ['blk_1_dpa', 'Starter blanket life limit (EUROfer)', 20, 'dpa', 'https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
+        ['blk_2_dpa', 'Second blanket life limit (EUROfer)', 50, 'dpa', 'https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
+        ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', 'https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
         ['vv_dpa', 'Vacuum vessel life limit (SS316-LN-IG)', 3.25, 'dpa', 'RCC-Mx or whatever it is called', 'Input'],
-        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'n/m^2', 'http://ieeexplore.ieee.org/document/6374236/', 'Input'],
+        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'n/m^2', 'https://ieeexplore.ieee.org/document/6374236/', 'Input'],
 
         # Central solenoid
         ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],

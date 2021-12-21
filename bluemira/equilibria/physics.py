@@ -299,7 +299,7 @@ def calc_li3(eq):
     Calculates the normalised internal plasma inductance (ITER approximate
     calculation)
 
-    see http://iopscience.iop.org/article/10.1088/0029-5515/48/12/125002/meta
+    see https://iopscience.iop.org/article/10.1088/0029-5515/48/12/125002/meta
 
     \t:math:`li(3)=\\dfrac{2V\\langle B_p^2\\rangle}{(\\mu_0I_p)^2R_0}`
 
