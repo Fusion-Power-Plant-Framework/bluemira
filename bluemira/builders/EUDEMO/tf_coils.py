@@ -403,7 +403,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             [
                 [x_min, x_turn_bot, x_turn_bot, x_min],
                 [-y_in, -y_in, y_in, y_in],
-                [z_max, z_max, z_max, z_max],
+                [z_min, z_min, z_min, z_min],
             ],
             closed=True,
         )
