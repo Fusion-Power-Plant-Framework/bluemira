@@ -26,18 +26,18 @@ Classes and methods to load, store, and retrieve materials.
 import copy
 import json
 
-from .material import (
-    MaterialsError,
-    Void,
-    MassFractionMaterial,
-    NbTiSuperconductor,
-    NbSnSuperconductor,
-    Liquid,
-    UnitCellCompound,
+from bluemira.materials.material import (
     BePebbleBed,
+    Liquid,
+    MassFractionMaterial,
+    MaterialsError,
+    NbSnSuperconductor,
+    NbTiSuperconductor,
     Plasma,
+    UnitCellCompound,
+    Void,
 )
-from .mixtures import HomogenisedMixture
+from bluemira.materials.mixtures import HomogenisedMixture
 
 
 class MaterialCache:

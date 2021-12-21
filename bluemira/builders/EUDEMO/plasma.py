@@ -25,29 +25,36 @@ A builder for Plasma properties and geometry
 
 from __future__ import annotations
 
-import numpy as np
 from typing import List, Optional
 
-from bluemira.base.builder import Builder, BuildConfig
+import numpy as np
+
+import bluemira.utilities.plot_tools as bm_plot_tools
+from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
-
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.equilibria.constants import (
-    NBTI_J_MAX,
-    NBTI_B_MAX,
-    NB3SN_J_MAX,
-    NB3SN_B_MAX,
-)
 from bluemira.equilibria import AbInitioEquilibriumProblem
+from bluemira.equilibria.constants import (
+    NB3SN_B_MAX,
+    NB3SN_J_MAX,
+    NBTI_B_MAX,
+    NBTI_J_MAX,
+)
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.shapes import JohnerLCFS
-import bluemira.geometry as geo
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
-import bluemira.utilities.plot_tools as bm_plot_tools
+from bluemira.geometry.tools import (
+    make_circle,
+    make_polygon,
+    offset_wire,
+    revolve_shape,
+)
+from bluemira.geometry.wire import BluemiraWire
 
 
 class PlasmaComponent(Component):
@@ -113,7 +120,7 @@ class PlasmaBuilder(Builder):
     ]
 
     _params: Configuration
-    _boundary: geo.wire.BluemiraWire
+    _boundary: BluemiraWire
     _plot_flag: bool
     _segment_angle: float
     _eqdsk_path: Optional[str] = None
@@ -152,7 +159,7 @@ class PlasmaBuilder(Builder):
         bluemira_print("Running Plasma equilibrium design problem")
         eq = self._create_equilibrium()
         self._analyse_equilibrium(eq)
-        self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz, "LCFS")
+        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
         return {"equilibrium": eq}
 
     def read(self):
@@ -162,7 +169,7 @@ class PlasmaBuilder(Builder):
         bluemira_print("Reading Plasma equilibrium design problem")
         eq = self._read_equilibrium()
         self._analyse_equilibrium(eq)
-        self._boundary = geo.tools.make_polygon(eq.get_LCFS().xyz, "LCFS")
+        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
         return {"equilibrium": eq}
 
     def mock(self):
@@ -234,7 +241,7 @@ class PlasmaBuilder(Builder):
             tf_boundary.rotate(
                 tf_boundary.center_of_mass, direction=(0, 1, 0), degree=180
             )
-        tf_boundary = geo.tools.offset_wire(tf_boundary, -0.5)
+        tf_boundary = offset_wire(tf_boundary, -0.5)
 
         # TODO: Avoid converting to (deprecated) Loop
         # TODO: Agree on numpy array dimensionality
@@ -372,12 +379,12 @@ class PlasmaBuilder(Builder):
 
         if equilibrium is not None:
             sep_loop = equilibrium.get_separatrix()
-            sep_wire = geo.tools.make_polygon(sep_loop.xyz, label="Separatrix")
+            sep_wire = make_polygon(sep_loop.xyz, label="Separatrix")
             sep_component = PhysicalComponent("Separatrix", sep_wire)
             sep_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
             component.add_child(sep_component)
 
-        lcfs_face = geo.face.BluemiraFace(self._boundary, label="LCFS")
+        lcfs_face = BluemiraFace(self._boundary, label="LCFS")
         lcfs_component = PhysicalComponent("LCFS", lcfs_face)
         lcfs_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
@@ -409,10 +416,10 @@ class PlasmaBuilder(Builder):
 
         component = Component("xy")
 
-        inner = geo.tools.make_circle(self._boundary.bounding_box.x_min, axis=[0, 0, 1])
-        outer = geo.tools.make_circle(self._boundary.bounding_box.x_max, axis=[0, 0, 1])
+        inner = make_circle(self._boundary.bounding_box.x_min, axis=[0, 0, 1])
+        outer = make_circle(self._boundary.bounding_box.x_max, axis=[0, 0, 1])
 
-        lcfs_face = geo.face.BluemiraFace([outer, inner], label="LCFS")
+        lcfs_face = BluemiraFace([outer, inner], label="LCFS")
         lcfs_component = PhysicalComponent("LCFS", lcfs_face)
         lcfs_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
         lcfs_component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
@@ -446,9 +453,7 @@ class PlasmaBuilder(Builder):
         if segment_angle is None:
             segment_angle = self._segment_angle
 
-        shell = geo.tools.revolve_shape(
-            self._boundary, direction=(0, 0, 1), degree=segment_angle
-        )
+        shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=segment_angle)
         component = PhysicalComponent("LCFS", shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
         component.display_cad_options.transparency = 0.5
