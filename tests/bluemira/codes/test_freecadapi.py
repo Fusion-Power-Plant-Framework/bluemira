@@ -27,7 +27,7 @@ import Part
 from FreeCAD import Base
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.constants import D_TOLERANCE, DOT_P_TOL
+from bluemira.geometry.constants import D_TOLERANCE
 
 
 class TestFreecadapi:
@@ -179,44 +179,3 @@ class TestFreecadapi:
 
         # assert that points1 and points2 are the same
         assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)
-
-
-class TestPlanePlacement:
-    def test_plane_placement_xy(self):
-        xy_plane = Part.Plane(
-            Base.Vector(0, 0, 0), Base.Vector(1, 1, 0), Base.Vector(1, -1, 0)
-        )
-        pseudo_plane = cadapi.make_plane_3P(
-            Base.Vector(0, 0, 0), Base.Vector(1, 1, 0), Base.Vector(1, -1, 0)
-        )
-        xy_plane_2 = cadapi._placement_to_plane(pseudo_plane)
-
-        f1 = cadapi.apiFace(xy_plane)
-        f2 = cadapi.apiFace(xy_plane_2)
-        assert np.isclose(
-            f1.normalAt(0, 0).getAngle(f2.normalAt(0, 0)), 0.0, rtol=0, atol=DOT_P_TOL
-        )
-        assert xy_plane.Position == xy_plane_2.Position
-        assert np.allclose(xy_plane.Axis, xy_plane_2.Axis)
-
-    def test_plane_placement_random(self):
-        for _ in range(100):
-            p1 = np.random.rand(3)
-            p2 = np.random.rand(3)
-            p3 = np.random.rand(3)
-            plane = Part.Plane(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
-            pseudo_plane = cadapi.make_plane_3P(p1, p2, p3)
-            plane_2 = cadapi._placement_to_plane(pseudo_plane)
-
-            f1 = cadapi.apiFace(plane)
-            f2 = cadapi.apiFace(plane_2)
-            assert np.isclose(
-                f1.normalAt(0, 0).getAngle(f2.normalAt(0, 0)),
-                0.0,
-                rtol=0,
-                atol=DOT_P_TOL,
-            )
-            assert plane.Position == plane_2.Position
-            assert np.allclose(plane.Axis, plane_2.Axis)
-            # TODO: This is frustrating... I think it is due to machine precision
-            # assert f1.isCoplanar(f2)
