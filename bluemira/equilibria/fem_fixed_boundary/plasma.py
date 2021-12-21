@@ -64,8 +64,8 @@ class Plasma(MagneticComponent):
 
     @property
     def _psi(self):
-        def wrapper(points):
-            return self._gs_solver.psi(points)
+        def wrapper(point):
+            return self._gs_solver.psi(point)
 
         return wrapper
 
@@ -78,12 +78,12 @@ class Plasma(MagneticComponent):
     def curr_density(self, j0=0):
         """Toroidal plasma current density"""
 
-        def wrapper(points):
-            r = points[0]
+        def wrapper(point):
+            r = point[0]
             a = 0
             b = 0
             if self.psi_ax > 0:
-                psi_norm = (self.psi_ax - self._psi(points)) / self.psi_ax
+                psi_norm = math.sqrt((self.psi_ax - self._psi(point)) / self.psi_ax)
                 if self._pprime is not None:
                     a = -const.MU_0 * r * self._pprime(psi_norm)
                 if self._ffprime is not None:
@@ -112,5 +112,12 @@ class Plasma(MagneticComponent):
     def calculate_plasma_parameters(self):
         self.lp = self.shape.length
         self.Ap = self.shape.area
+        wire_ext = self.shape.boundary[0]
+        points = wire_ext.discretize(ndiscr=100, byedges=False)
+        Sp = 0.
+        # for p in points:
+            # Sp = Sp + ...
+        # self.Sp = Sp
+
         self.Sp = 2 * math.pi * self.shape.center_of_mass[0] * self.lp
         self.Vp = 2 * math.pi * self.shape.center_of_mass[0] * self.Ap
