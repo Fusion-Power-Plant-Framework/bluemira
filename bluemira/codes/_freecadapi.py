@@ -25,7 +25,7 @@ Supporting functions for the bluemira geometry module.
 
 from __future__ import annotations
 
-import freecad  # noqa (F401)
+import freecad  # noqa: F401
 import Part
 import FreeCAD
 from FreeCAD import Base
@@ -655,7 +655,7 @@ def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     """
     Slice a shape along a given plane
 
-    TODO improve face-sold-shell interface
+    TODO improve face-solid-shell interface
 
     Parameters
     ----------
@@ -1109,7 +1109,7 @@ def _placement_to_plane(placement):
     """
     Convert a FreeCAD Base.Placement to FreeCAD Part.Plane
     """
-    plane = Part.Plane(placement.Base, Base.Vector(0.0, 0.0, 1.0))
+    plane = Part.Plane(placement.Base, placement.Rotation.Axis)
     plane.rotate(placement)
     return plane
 
