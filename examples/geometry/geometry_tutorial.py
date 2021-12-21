@@ -262,8 +262,35 @@ solid = sweep_shape(rectangle.boundary[0], path)
 # * You can cut geometries from one another with `boolean_cut`
 
 # %%
+points = np.array(
+    [
+        [0, 2, 2, 0],
+        [0, 0, 0, 0],
+        [0, 0, 3, 3],
+    ]
+)
 
+box_1 = BluemiraFace(make_polygon(points.T, closed=True))
+box_1 = extrude_shape(box_1, (0, 2, 0))
 
+points = np.array(
+    [
+        [1, 3, 3, 1],
+        [0, 0, 0, 0],
+        [0, 0, 2, 2],
+    ]
+)
+
+box_2 = BluemiraFace(make_polygon(points.T, closed=True))
+box_2 = extrude_shape(box_2, (0, 1, 0))
+
+fused_boxes = boolean_fuse([box_1, box_2])
+
+show_cad(fused_boxes)
+
+cut_box_1 = boolean_cut(box_1, box_2)[0]
+
+show_cad(cut_box_1)
 # %%[markdown]
 
 ## Modification of existing geometries
@@ -276,3 +303,9 @@ solid = sweep_shape(rectangle.boundary[0], path)
 
 # %%
 # TODO: Once fixed.. :'(
+
+# %%[markdown]
+
+## Exporting geometry
+
+# %%
