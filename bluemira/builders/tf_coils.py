@@ -123,9 +123,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         Make a set of points at which to evaluate the KOZ constraint
         """
-        return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200)[
-            :, [0, 2]
-        ]
+        return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200).xz
 
     def _make_ripple_points(self, separatrix):
         """
@@ -141,7 +139,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             raise BuilderError(
                 "Ripple points on faces made from multiple wires not yet supported."
             )
-        points = separatrix.discretize(ndiscr=self.n_rip_points).T
+        points = separatrix.discretize(ndiscr=self.n_rip_points)
         # Real argument to making the points the inputs... but then the plot would look
         # sad! :D
         # Can speed this up a lot if you know about your problem... I.e. with a princeton
@@ -252,7 +250,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         self.update_cage(x)
         shape = self.parameterisation.create_shape()
-        s = shape.discretize(ndiscr=self.n_koz_points)[:, [0, 2]]
+        s = shape.discretize(ndiscr=self.n_koz_points).xz
         return signed_distance_2D_polygon(s, self.koz_points)
 
     def f_constrain_koz(self, constraint, x, grad):
