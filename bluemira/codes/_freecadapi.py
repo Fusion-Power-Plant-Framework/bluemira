@@ -1105,23 +1105,6 @@ def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
 
 # BluemiraPlane wraps Base.Placement not Part.Plane. These conversions become useful..
 # They are probably a bit broken... cos this stuff is a mess in FreeCAD
-def _placement_to_plane(placement):
-    """
-    Convert a FreeCAD Base.Placement to FreeCAD Part.Plane
-    """
-    plane = Part.Plane(placement.Base, placement.Rotation.Axis)
-    plane.rotate(placement)
-    return plane
-
-
-def _plane_to_placement(plane):
-    """
-    Convert a FreeCAD Part.Plane to FreeCAD Base.Placement
-    """
-    placement = Base.Placement(plane.Position, plane.Axis, 0)
-    placement.Rotation = plane.Rotation
-    placement.Rotation.Axis = plane.Rotation.Axis
-    return placement
 
 
 def make_plane(base, axis, angle):
@@ -1141,28 +1124,6 @@ def make_plane(base, axis, angle):
     axis = Base.Vector(axis)
 
     return Base.Placement(base, axis, angle)
-
-
-def make_plane_3P(point_1, point_2, point_3):  # noqa: N802
-    """
-    Make a FreeCAD Placement from three points.
-
-    Parameters
-    ----------
-    point_1: Iterable
-        First point
-    point_2: Iterable
-        Second Point
-    point_3: Iterable
-        Third point
-
-    Returns
-    -------
-    plane: Base.Placement
-        The "plane"
-    """
-    plane = Part.Plane(Base.Vector(point_1), Base.Vector(point_2), Base.Vector(point_3))
-    return _plane_to_placement(plane)
 
 
 def move_plane(plane, vector):
