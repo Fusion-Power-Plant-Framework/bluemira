@@ -331,29 +331,14 @@ def check_ccw_3d(x, y, z, normal):
     ccw: bool
         Whether or not the set is CCW about the normal vector
     """
-    r = rotation_matrix_v1v2([0, 0, 1], normal)
-    x, y, z = r @ np.array([x, y, z])
+    # Translate to centroid
     dx, dy, dz = get_centroid_3d(x, y, z)
     x, y, z = x - dx, y - dy, z - dz
-    a = _get_ccw_metric(x, y, z)
-    return np.dot(normal, a) >= 0.0
-
-
-@nb.jit(cache=True, nopython=True)
-def _get_ccw_metric(x, y, z):
-    """
-    Calculate the signed area of a set of x, y, z coordinate vectors.
-    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
-    """
-    m = np.zeros((3, len(x)))
-    # Translate all coordinates arbitrarily to dodge degenerate edge cases! :)
-    m[0, :] = x + 1.0
-    m[1, :] = y + 1.0
-    m[2, :] = z + 1.0
-    a = np.array([0.0, 0.0, 0.0])
-    for i in range(len(z)):
-        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
-    return a
+    # Rotate to x-y plane
+    r = rotation_matrix_v1v2([0, 0, 1], normal)
+    x, y, z = r.T @ np.array([x, y, z])
+    # Check projected x-y is CCW
+    return check_ccw(x, y)
 
 
 @xyz_process
