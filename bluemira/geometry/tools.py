@@ -23,20 +23,20 @@
 Useful functions for bluemira geometries.
 """
 
-import numpy as np
-import numba as nb
 from copy import deepcopy
-from typing import List, Union, Iterable
+from typing import Iterable, List, Union
 
+import numba as nb
+import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.base import BluemiraGeo
 from bluemira.codes import _freecadapi as cadapi
-from .wire import BluemiraWire
-from .face import BluemiraFace
-from .shell import BluemiraShell
-from .solid import BluemiraSolid
-from .error import GeometryError
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.wire import BluemiraWire
 
 
 def convert(apiobj, label=""):

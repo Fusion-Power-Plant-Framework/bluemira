@@ -22,19 +22,25 @@
 """
 api for plotting using matplotlib
 """
-from abc import abstractmethod, ABC
+from __future__ import annotations
+
 import copy
-import numpy as np
+import pprint
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, List, Optional, Union
+
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
-import pprint
-from typing import Optional, Union, List
+import numpy as np
 
-import bluemira.geometry as geo
+from bluemira.display.error import DisplayError
+from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry import bound_box, face
+from bluemira.geometry import plane as _plane
+from bluemira.geometry import wire
 
-from .error import DisplayError
-from .palettes import BLUE_PALETTE
-
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 DEFAULT_PLOT_OPTIONS = {
     # flags to enable points, wires, and faces plot
@@ -68,7 +74,7 @@ def get_default_options():
         # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
         # copy.deepcopy. For this reason, its deepcopy method must be used in
         # this case.
-        if isinstance(v, geo.plane.BluemiraPlane):
+        if isinstance(v, _plane.BluemiraPlane):
             output_dict[k] = v.deepcopy()
         else:
             output_dict[k] = copy.deepcopy(v)
@@ -149,7 +155,7 @@ class PlotOptions(DisplayOptions):
             # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
             # copy.deepcopy. For this reason, its deepcopy method must to be used in
             # this case.
-            if isinstance(v, geo.plane.BluemiraPlane):
+            if isinstance(v, _plane.BluemiraPlane):
                 output_dict[k] = v.deepcopy()
             else:
                 output_dict[k] = copy.deepcopy(v)
@@ -281,18 +287,18 @@ class BasePlotter(ABC):
         """Set the plotting plane"""
         if plane == "xy":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = geo.plane.BluemiraPlane()
+            self.options._options["plane"] = _plane.BluemiraPlane()
         elif plane == "xz":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = geo.plane.BluemiraPlane(
+            self.options._options["plane"] = _plane.BluemiraPlane(
                 axis=(1.0, 0.0, 0.0), angle=-90.0
             )
         elif plane == "zy":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = geo.plane.BluemiraPlane(
+            self.options._options["plane"] = _plane.BluemiraPlane(
                 axis=(0.0, 1.0, 0.0), angle=90.0
             )
-        elif isinstance(plane, geo.plane.BluemiraPlane):
+        elif isinstance(plane, _plane.BluemiraPlane):
             self.options._options["plane"] = plane
         else:
             DisplayError(f"{plane} is not a valid plane")
@@ -361,9 +367,7 @@ class BasePlotter(ABC):
 
     def _set_aspect_3d(self):
         # This was the only way I found to get 3-D plots to look right in matplotlib
-        x_bb, y_bb, z_bb = geo.bound_box.BoundingBox.from_xyz(
-            *self._data.T
-        ).get_box_arrays()
+        x_bb, y_bb, z_bb = bound_box.BoundingBox.from_xyz(*self._data.T).get_box_arrays()
         for x, y, z in zip(x_bb, y_bb, z_bb):
             self.ax.plot([x], [y], [z], color="w")
 
@@ -476,7 +480,7 @@ class WirePlotter(BasePlotter):
     _CLASS_PLOT_OPTIONS = {"show_points": False}
 
     def _check_obj(self, obj):
-        if not isinstance(obj, geo.wire.BluemiraWire):
+        if not isinstance(obj, wire.BluemiraWire):
             raise ValueError(f"{obj} must be a BluemiraWire")
         return True
 
@@ -525,7 +529,7 @@ class FacePlotter(BasePlotter):
     _CLASS_PLOT_OPTIONS = {"show_points": False, "show_wires": False}
 
     def _check_obj(self, obj):
-        if not isinstance(obj, geo.face.BluemiraFace):
+        if not isinstance(obj, face.BluemiraFace):
             raise ValueError(f"{obj} must be a BluemiraFace")
         return True
 
@@ -547,7 +551,7 @@ class FacePlotter(BasePlotter):
         #  re-orient the Wires in the correct way for display. Find another way to do
         #  it (maybe adding this function to the freecadapi.
         for w in face._shape.Wires:
-            boundary = geo.wire.BluemiraWire(w)
+            boundary = wire.BluemiraWire(w)
             wplotter = WirePlotter(self.options)
             self._wplotters.append(wplotter)
             wplotter._populate_data(boundary)
@@ -666,9 +670,9 @@ def _get_plotter_class(part):
 
     if isinstance(part, (list, np.ndarray)):
         plot_class = PointsPlotter
-    elif isinstance(part, geo.wire.BluemiraWire):
+    elif isinstance(part, wire.BluemiraWire):
         plot_class = WirePlotter
-    elif isinstance(part, geo.face.BluemiraFace):
+    elif isinstance(part, face.BluemiraFace):
         plot_class = FacePlotter
     elif isinstance(part, bluemira.base.components.Component):
         plot_class = ComponentPlotter
@@ -680,7 +684,7 @@ def _get_plotter_class(part):
 
 
 def plot_2d(
-    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
     options: Optional[Union[PlotOptions, List[PlotOptions]]] = None,
     ax=None,
     show: bool = True,
@@ -715,7 +719,7 @@ def plot_2d(
 
 
 def plot_3d(
-    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
     options: Optional[Union[PlotOptions, List[PlotOptions]]] = None,
     ax=None,
     show: bool = True,
