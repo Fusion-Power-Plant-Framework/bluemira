@@ -24,7 +24,7 @@ A geometry tutorial for users.
 """
 
 # %%[markdown]
-## Introduction
+# ## Introduction
 
 # Geometry is not plasma physics, but it isn't trivial either. Chances are most of
 # your day-to-day interaction with bluemira will revolve around geometry in some form
@@ -38,7 +38,7 @@ A geometry tutorial for users.
 # * Geometry modification
 # * Geometry operations
 
-## Imports
+# ## Imports
 
 # Let's start out by importing all the basic objects, and some typical tools
 
@@ -70,7 +70,7 @@ from bluemira.display.displayer import DisplayCADOptions
 
 # %%[markdown]
 
-## Make a cylinder
+# ## Make a cylinder
 
 # There are many ways to make a cylinder, but perhaps the simplest way is as follows:
 # * Make a circular Wire
@@ -93,7 +93,7 @@ cylinder = extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
 
 # %%[markdown]
 
-## Simple properties and representations
+# ## Simple properties and representations
 
 # %%
 # Let's start off with some simple properties
@@ -105,15 +105,16 @@ print(f"Cylinder volume: {cylinder.volume} m^3")
 print(cylinder)
 
 # %%[markdown]
+# ## Display
 
-## Display
+# Geometry objects can be displayed via `show_cad`, and the appearance
+# of said objects customised by specifying `color` and `transparency`.
 
 # %%
-show_cad(cylinder, DisplayCADOptions(color="blue"))
+show_cad(cylinder, DisplayCADOptions(color="blue", transparency=0.1))
 
 # %%[markdown]
-
-## Matryoshka structure
+# ## Matryoshka structure
 
 # Bluemira geometries are structured in a commonly used "Matryoska" or
 # "Russian doll"-like structure.
@@ -126,7 +127,6 @@ show_cad(cylinder, DisplayCADOptions(color="blue"))
 # Let's take a little peek under the hood of our cylinder
 
 # %%
-
 print(f"Our cylinder is a BluemiraSolid: {isinstance(cylinder, BluemiraSolid)}")
 
 i, j, k = 0, 0, 0  # This is just to facilitate comprehension
@@ -145,10 +145,8 @@ for i, shell in enumerate(cylinder.boundary):
 # It does go deeper than this, but that is outside the intended
 # user-realm.
 
-
 # %%[markdown]
-
-## Geometry creation
+# ## Geometry creation
 
 # Let's get familiar with some more ways of making geometries. We've
 # looked at circle already, but what else is out there:
@@ -157,7 +155,6 @@ for i, shell in enumerate(cylinder.boundary):
 # * a bit of everything
 
 # %%
-
 # Polygon
 theta = np.linspace(0, 2 * np.pi, 6)
 x = 5 * np.cos(theta)
@@ -219,8 +216,7 @@ print(f"My shape is closed: {my_shape.is_closed()}")
 show_cad(BluemiraFace(my_shape))
 
 # %%[markdown]
-
-## Geometry operations: Part 1
+# ## Geometry operations: Part 1
 # Making 3-D shapes from 2-D shapes
 
 # You can:
@@ -229,7 +225,6 @@ show_cad(BluemiraFace(my_shape))
 # * sweep a shape `sweep_shape`
 
 # %%
-
 # Make a hollow cylinder, by revolving a rectangle
 points = np.array([[4, 5, 5, 4], [0, 0, 0, 0], [2, 2, 3, 3]]).T
 rectangle = BluemiraFace(make_polygon(points, closed=True))
@@ -241,19 +236,16 @@ hollow_cylinder = revolve_shape(
 show_cad(hollow_cylinder)
 
 # %%
-
 # Sweep a profile along a path
 
 points = np.array([[4.5, 4.5], [0, 3], [2.5, 2.5]]).T
 straight_line = make_polygon(points)
 quarter_turn = make_circle(center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_angle=90)
 path = BluemiraWire([straight_line, quarter_turn])
-
 solid = sweep_shape(rectangle.boundary[0], path)
-
+show_cad(solid)
 # %%[markdown]
-
-## Geometry operations: Part 2
+# ## Geometry operations: Part 2
 # Making 3-D shapes from 3-D shapes
 
 # Boolean operations often come in very useful when making CAD.
@@ -291,8 +283,7 @@ cut_box_1 = boolean_cut(box_1, box_2)[0]
 
 show_cad(cut_box_1)
 # %%[markdown]
-
-## Modification of existing geometries
+# ## Modification of existing geometries
 
 # Now we're going to look at some stuff that we can do to change
 # geometries we've already made.
@@ -311,13 +302,11 @@ blue_red_options = [DisplayCADOptions(color="blue"), DisplayCADOptions(color="re
 show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 
 # %%[markdown]
-
-## Exporting geometry
+# ## Exporting geometry
 
 # At present, only the STEP Assembly format is supported
 # for exporting geometry.
 # %%
-
 # Try saving any shape or group of shapes created above
 # as a STEP assembly
 
