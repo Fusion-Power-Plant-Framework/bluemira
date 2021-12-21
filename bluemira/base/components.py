@@ -25,7 +25,7 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 import anytree
 from anytree import NodeMixin, RenderTree
@@ -33,6 +33,9 @@ from anytree import NodeMixin, RenderTree
 from bluemira.base.error import ComponentError
 from bluemira.display.displayer import DisplayableCAD
 from bluemira.display.plotter import Plottable
+
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 
 class Component(NodeMixin, Plottable, DisplayableCAD):

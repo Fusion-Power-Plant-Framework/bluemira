@@ -27,18 +27,20 @@ from __future__ import annotations
 import copy
 import pprint
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
 import numpy as np
 
+from bluemira.display.error import DisplayError
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry import bound_box, face
 from bluemira.geometry import plane as _plane
 from bluemira.geometry import wire
 
-from .error import DisplayError
-from .palettes import BLUE_PALETTE
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 DEFAULT_PLOT_OPTIONS = {
     # flags to enable points, wires, and faces plot
