@@ -86,9 +86,6 @@ class BluemiraPlane:
 
         normal = v3 / np.sqrt(v3.dot(v3))
         return cls(point_1, normal, 0.0, label=label)
-        # constructor = cls(label=label)
-        # constructor._shape = cadapi.make_plane_3P(point_1, point_2, point_3)
-        # return constructor
 
     @property
     def base(self):

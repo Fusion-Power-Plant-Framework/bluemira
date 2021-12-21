@@ -301,8 +301,8 @@ def offset_wire(
 # # =============================================================================
 def revolve_shape(
     shape,
-    base: tuple = (0.0, 0.0, 0.0),
-    direction: tuple = (0.0, 0.0, 1.0),
+    base: Iterable = (0.0, 0.0, 0.0),
+    direction: Iterable = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
 ):
@@ -313,9 +313,9 @@ def revolve_shape(
     ----------
     shape: BluemiraGeo
         The shape to be revolved
-    base: tuple (x,y,z), default = (0.0, 0.0, 0.0)
+    base: Iterable (x,y,z), default = (0.0, 0.0, 0.0)
         Origin location of the revolution
-    direction: tuple (x,y,z), default = (0.0, 0.0, 1.0)
+    direction: Iterable (x,y,z), default = (0.0, 0.0, 1.0)
         The direction vector
     degree: double, default = 180
         revolution angle
