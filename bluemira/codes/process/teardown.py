@@ -483,7 +483,6 @@ def plot_radial_build(run, width=1.0):
         loop = Loop(x=xc, y=yc)
         for key, c in col.items():
             if key in comp[0]:
-                c = c
                 ax.plot(xc, yc, color=c, linewidth=0, label=key)
                 if comp[1] > 0:
                     loop.plot(ax, facecolor=c, edgecolor="k", linewidth=0)

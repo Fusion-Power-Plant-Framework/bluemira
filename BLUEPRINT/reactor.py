@@ -894,7 +894,7 @@ class Reactor(ReactorSystem):
         }
         targets = {"inner": defaults, "outer": defaults}
         targets["inner"]["L2D"] = self.params.div_L2D_ib
-        targets["inner"]["L2D"] = self.params.div_L2D_ob
+        targets["outer"]["L2D"] = self.params.div_L2D_ob
         return targets
 
     def define_in_vessel_layout(self):
