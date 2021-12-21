@@ -140,6 +140,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
                 "Ripple points on faces made from multiple wires not yet supported."
             )
         points = separatrix.discretize(ndiscr=self.n_rip_points)
+        points.set_ccw((0, 1, 0))
         # Real argument to making the points the inputs... but then the plot would look
         # sad! :D
         # Can speed this up a lot if you know about your problem... I.e. with a princeton
@@ -147,16 +148,6 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
 
         # idx = np.where(points[0] > self.params.R_0.value)[0]
         # points = points[:, idx]
-
-        # Yet again... CCW default one of the main motivations of Loop
-        from bluemira.geometry._deprecated_tools import check_ccw
-
-        xpl, ypl, zpl = points
-        if not check_ccw(xpl, zpl):
-            xpl = xpl[::-1]
-            ypl = ypl[::-1]
-            zpl = zpl[::-1]
-        points = np.array([xpl, ypl, zpl])
         return points
 
     def _make_single_circuit(self, wire):
@@ -190,14 +181,8 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             w.discretize(byedges=True, dl=wire.length / 200) for w in current_wires
         ]
 
-        # We need all arrays to be CCW, this will hopefully go away with a fix for #482
-        from bluemira.geometry._deprecated_tools import check_ccw
-
         for c in current_arrays:
-            if not check_ccw(c[:, 0], c[:, 2]):
-                c[:, 0] = c[:, 0][::-1]
-                c[:, 1] = c[:, 1][::-1]
-                c[:, 2] = c[:, 2][::-1]
+            c.set_ccw((0, 1, 0))
 
         radius = 0.5 * BluemiraFace(self.wp_cross_section).area / (self.nx * self.ny)
         filament = BiotSavartFilament(

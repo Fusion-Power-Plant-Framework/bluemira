@@ -348,17 +348,17 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         half_angle = np.pi / self.params.n_TF.value
         y_in = self.params.r_tf_in * np.sin(half_angle)
         inner_xs_rect = make_polygon(
-            [[x_min, -y_in, 0], [x_max, -y_in, 0], [x_max, y_in, 0], [x_min, y_in, 0]],
+            [[x_min, x_max, x_max, x_min], [-y_in, -y_in, y_in, y_in], [0, 0, 0, 0]],
             closed=True,
         )
 
         # Sweep with a varying rectangular cross-section
-        centreline_points = self._centreline.discretize(byedges=True, ndiscr=2000).T
-        idx = np.where(np.isclose(centreline_points[0], np.min(centreline_points[0])))[0]
-        z_turn_top = np.max(centreline_points[2][idx])
-        z_turn_bot = np.min(centreline_points[2][idx])
-        z_min_cl = np.min(centreline_points[2])
-        z_max_cl = np.max(centreline_points[2])
+        centreline_points = self._centreline.discretize(byedges=True, ndiscr=2000)
+        idx = np.where(np.isclose(centreline_points.x, np.min(centreline_points.x)))[0]
+        z_turn_top = np.max(centreline_points.z[idx])
+        z_turn_bot = np.min(centreline_points.z[idx])
+        z_min_cl = np.min(centreline_points.z)
+        z_max_cl = np.max(centreline_points.z)
 
         inner_xs_rect_top = deepcopy(inner_xs_rect)
         inner_xs_rect_top.translate((0, 0, z_turn_top))
@@ -386,26 +386,24 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # Join the straight leg to the curvy bits
         bb = inboard_casing.bounding_box
         x_min = bb.x_min
-        idx = np.where(np.isclose(centreline_points[2], z_max_cl))[0]
-        x_turn_top = np.min(centreline_points[0][idx])
-        idx = np.where(np.isclose(centreline_points[2], z_min_cl))[0]
-        x_turn_bot = np.min(centreline_points[0][idx])
+        idx = np.where(np.isclose(centreline_points.z, z_max_cl))[0]
+        x_turn_top = np.min(centreline_points.x[idx])
+        idx = np.where(np.isclose(centreline_points.z, z_min_cl))[0]
+        x_turn_bot = np.min(centreline_points.x[idx])
         joiner_top = make_polygon(
             [
-                [x_min, -y_in, z_max],
-                [x_turn_top, -y_in, z_max],
-                [x_turn_top, y_in, z_max],
-                [x_min, y_in, z_max],
+                [x_min, x_turn_top, x_turn_top, x_min],
+                [-y_in, -y_in, y_in, y_in],
+                [z_max, z_max, z_max, z_max],
             ],
             closed=True,
         )
         joiner_top = extrude_shape(BluemiraFace(joiner_top), (0, 0, -z_max))
         joiner_bot = make_polygon(
             [
-                [x_min, -y_in, z_min],
-                [x_turn_bot, -y_in, z_min],
-                [x_turn_bot, y_in, z_min],
-                [x_min, y_in, z_min],
+                [x_min, x_turn_bot, x_turn_bot, x_min],
+                [-y_in, -y_in, y_in, y_in],
+                [z_max, z_max, z_max, z_max],
             ],
             closed=True,
         )
@@ -456,10 +454,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         d_yc = 0.5 * (self.params.tf_wp_depth - 2 * self.params.tk_tf_ins)
         wp_xs = make_polygon(
             [
-                [x_c - d_xc, -d_yc, 0],
-                [x_c + d_xc, -d_yc, 0],
-                [x_c + d_xc, d_yc, 0],
-                [x_c - d_xc, d_yc, 0],
+                [x_c - d_xc, x_c + d_xc, x_c + d_xc, x_c - d_xc],
+                [-d_yc, -d_yc, d_yc, d_yc],
+                [0, 0, 0, 0],
             ],
             closed=True,
         )
@@ -493,7 +490,11 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         y_in = x_in * np.sin(half_angle)
         y_out = x_out * np.sin(half_angle)
         inboard_wire = make_polygon(
-            [[x_in, -y_in, 0], [x_out, -y_out, 0], [x_out, y_out, 0], [x_in, y_in, 0]],
+            [
+                [x_in, x_out, x_out, x_in],
+                [-y_in, -y_out, y_out, y_in],
+                [0, 0, 0, 0],
+            ],
             closed=True,
         )
 
@@ -509,10 +510,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         dy_out = dy_ins + self.params.tk_tf_side.value
         outboard_wire = make_polygon(
             [
-                [-dx_out, -dy_out, 0],
-                [dx_out, -dy_out, 0],
-                [dx_out, dy_out, 0],
-                [-dx_out, dy_out, 0],
+                [-dx_out, dx_out, dx_out, -dx_out],
+                [-dy_out, -dy_out, dy_out, dy_out],
+                [0, 0, 0, 0],
             ],
             closed=True,
         )
