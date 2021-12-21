@@ -38,6 +38,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry import bound_box, face
 from bluemira.geometry import plane as _plane
 from bluemira.geometry import wire
+from bluemira.geometry.coordinates import Coordinates, _parse_to_xyz_array
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
@@ -454,7 +455,7 @@ class PointsPlotter(BasePlotter):
         return True
 
     def _populate_data(self, points):
-        points = geo.coordinates._parse_to_xyz_array(points).T
+        points = _parse_to_xyz_array(points).T
         self._data = points
         # apply rotation matrix given by options['plane']
         rot = self.options.plane.to_matrix().T
@@ -669,7 +670,7 @@ def _get_plotter_class(part):
     """
     import bluemira.base.components
 
-    if isinstance(part, (list, np.ndarray, geo.coordinates.Coordinates)):
+    if isinstance(part, (list, np.ndarray, Coordinates)):
         plot_class = PointsPlotter
     elif isinstance(part, wire.BluemiraWire):
         plot_class = WirePlotter
