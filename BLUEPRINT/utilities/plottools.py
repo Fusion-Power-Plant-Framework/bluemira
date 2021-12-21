@@ -265,7 +265,7 @@ class BPPathPatch3D(PathPatch3D):
         """
         Get a rotation matrix based off two vectors.
         """
-        return rotation_matrix_v1v2(v1, v1)
+        return rotation_matrix_v1v2(v1, v2)
 
 
 if __name__ == "__main__":
