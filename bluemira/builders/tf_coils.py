@@ -187,8 +187,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         for c in current_arrays:
             c.set_ccw((0, 1, 0))
         print([check_ccw(c.x, c.z) for c in current_arrays])
-        print([check_ccw_3d(c.x, c.y, c.z, (0, 1, 0)) for c in current_arrays])
-        raise ValueError
+        assert all([check_ccw_3d(c.x, c.y, c.z, (0, 1, 0)) for c in current_arrays])
 
         radius = 0.5 * BluemiraFace(self.wp_cross_section).area / (self.nx * self.ny)
         filament = BiotSavartFilament(
