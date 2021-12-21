@@ -125,7 +125,7 @@ class DesignABC(abc.ABC):
         else:
             raise BuilderError(f"Builder {name} already exists in {self}.")
 
-    def _build_stage(self, name: str):
+    def _build_stage(self, name: str, **kwargs):
         """
         Build the requested stage and update the design's parameters.
 
@@ -139,7 +139,7 @@ class DesignABC(abc.ABC):
         component: Component
             The resulting component from the build.
         """
-        component = self._builders[name](self._params.to_dict())
+        component = self._builders[name](self._params.to_dict(), **kwargs)
         self._params.update_kw_parameters(self._builders[name].params.to_dict())
 
         return component
@@ -177,8 +177,12 @@ class Design(DesignABC):
             The Component tree resulting from the various build stages in the Design.
         """
         component = super().run()
+
         for builder in self._builders.values():
             component.add_child(self._build_stage(builder.name))
+
+        bluemira_print("Design Complete!")
+
         return component
 
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
@@ -242,6 +246,24 @@ class Reactor(DesignABC):
             "generated_data_root", f"{BM_ROOT}/generated_data"
         )
         self._plot_flag: bool = self._build_config.get("plot_flag", False)
+
+    def _process_design_stage_config(
+        self, name: str, default_config: BuildConfig = None
+    ) -> Dict[str, BuildConfig]:
+        config = {"name": name}
+
+        # Copy in top-level configuration
+        for key, val in self._build_config.items():
+            if not isinstance(val, dict):
+                config[key] = val
+
+        # Set the default configuration values
+        config.update(default_config)
+
+        # Set the specified configuration values
+        config.update(self._build_config.get(name, {}))
+
+        return config
 
     @property
     def file_manager(self):

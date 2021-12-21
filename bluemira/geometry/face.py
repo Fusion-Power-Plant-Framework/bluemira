@@ -66,7 +66,7 @@ class BluemiraFace(BluemiraGeo):
         """Make a copy of the BluemiraFace"""
         boundary = []
         for o in self.boundary:
-            boundary += [o.copy()]
+            boundary += [o.deepcopy()]
         return BluemiraFace(boundary, self.label)
 
     def _check_boundary(self, objs):
