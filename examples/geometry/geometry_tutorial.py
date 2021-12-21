@@ -55,7 +55,6 @@ from bluemira.geometry.solid import BluemiraSolid
 # Some useful tools
 from bluemira.geometry.tools import (
     make_circle,
-    make_circle_arc_3P,
     make_polygon,
     make_bspline,
     revolve_shape,
@@ -63,6 +62,7 @@ from bluemira.geometry.tools import (
     sweep_shape,
     boolean_cut,
     boolean_fuse,
+    save_as_STEP,
 )
 
 # Some display functionality
@@ -247,7 +247,7 @@ show_cad(hollow_cylinder)
 
 points = np.array([[4.5, 4.5], [0, 3], [2.5, 2.5]]).T
 straight_line = make_polygon(points)
-quarter_turn = make_circle(center=(3, 3, 2.5), axis=(0, 0, -1), radius=1.5, end_angle=90)
+quarter_turn = make_circle(center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_angle=90)
 path = BluemiraWire([straight_line, quarter_turn])
 
 solid = sweep_shape(rectangle.boundary[0], path)
@@ -302,10 +302,27 @@ show_cad(cut_box_1)
 # * Scale
 
 # %%
-# TODO: Once fixed.. :'(
+# Let's save a deepcopy of a shape before modifying
+new_cut_box_1 = cut_box_1.deepcopy()
+
+new_cut_box_1.rotate(base=(0, 0, 0), direction=(0, 1, 0), degree=45)
+new_cut_box_1.translate((0, 3, 0))
+new_cut_box_1.scale(3)
+blue_red_options = [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")]
+show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 
 # %%[markdown]
 
 ## Exporting geometry
 
+# At present, only the STEP Assembly format is supported
+# for exporting geometry.
 # %%
+
+# Try saving any shape or group of shapes created above
+# as a STEP assembly
+
+my_shapes = [cut_box_1]
+# Modify this file path to where you want to save the data.
+my_file_path = "home/my_data/my_tutorial_assembly.STP"
+save_as_STEP(my_shapes, filename=my_file_path, scale=1)
