@@ -222,9 +222,12 @@ def get_area(x, y, z=None):
     area: float
         The area of the polygon [m^2]
     """
+    x = np.ascontiguousarray(x, dtype=float)
+    y = np.ascontiguousarray(y, dtype=float)
     if z is None:
         return get_area_2d(x, y)
     else:
+        z = np.ascontiguousarray(z, dtype=float)
         return get_area_3d(x, y, z)
 
 
