@@ -333,6 +333,8 @@ def check_ccw_3d(x, y, z, normal):
     """
     r = rotation_matrix_v1v2([0, 0, 1], normal)
     x, y, z = r @ np.array([x, y, z])
+    dx, dy, dz = get_centroid_3d(x, y, z)
+    x, y, z = x - dx, y - dy, z - dz
     a = _get_ccw_metric(x, y, z)
     return np.dot(normal, a) >= 0.0
 
@@ -676,7 +678,6 @@ class Coordinates:
         """
         if len(self) < 3:
             return False
-        self._set_plane_props()
 
         if axis is None:
             axis = self.normal_vector
@@ -686,7 +687,7 @@ class Coordinates:
                 raise CoordinatesError("Base vector must be of size 3.")
             axis /= np.linalg.norm(axis)
 
-        return check_ccw_3d(*self._array, axis)
+        return check_ccw_3d(self.x, self.y, self.z, axis)
 
     def set_ccw(self, axis=None):
         """

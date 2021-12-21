@@ -275,11 +275,22 @@ class TestCoordinates:
         c.reverse()
         assert not c.check_ccw(axis=[0, 0, 1])
 
-    def test_brainfuck(self):
+    def test_circle_xz(self):
         radius = 5
         theta = np.linspace(0, 2 * np.pi, 100)
         x = radius * np.cos(theta)
         z = radius * np.sin(theta)
+        y = np.zeros(100)
+        c = Coordinates([x, y, z])
+        assert c.check_ccw(axis=[0, 1, 0])
+        c.reverse()
+        assert not c.check_ccw(axis=[0, 1, 0])
+
+    def test_circle_xz_translated(self):
+        radius = 5
+        theta = np.linspace(0, 2 * np.pi, 100)
+        x = radius * np.cos(theta) + 10
+        z = radius * np.sin(theta) + 10
         y = np.zeros(100)
         c = Coordinates([x, y, z])
         assert c.check_ccw(axis=[0, 1, 0])

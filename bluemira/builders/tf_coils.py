@@ -180,9 +180,15 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         current_arrays = [
             w.discretize(byedges=True, dl=wire.length / 200) for w in current_wires
         ]
+        from bluemira.geometry.coordinates import check_ccw, check_ccw_3d
 
+        print([check_ccw(c.x, c.z) for c in current_arrays])
+        print([check_ccw_3d(c.x, c.y, c.z, (0, 1, 0)) for c in current_arrays])
         for c in current_arrays:
             c.set_ccw((0, 1, 0))
+        print([check_ccw(c.x, c.z) for c in current_arrays])
+        print([check_ccw_3d(c.x, c.y, c.z, (0, 1, 0)) for c in current_arrays])
+        raise ValueError
 
         radius = 0.5 * BluemiraFace(self.wp_cross_section).area / (self.nx * self.ny)
         filament = BiotSavartFilament(
@@ -305,17 +311,15 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
                 wire_options={"color": "k", "linewidth": 0.5},
             )
 
-        xpl, zpl = self.ripple_points[0], self.ripple_points[2]
         rv = self.ripple_values
-
         norm = matplotlib.colors.Normalize()
         norm.autoscale(rv)
         cm = matplotlib.cm.viridis
         sm = matplotlib.cm.ScalarMappable(cmap=cm, norm=norm)
         sm.set_array([])
         ax.scatter(
-            xpl,
-            zpl,
+            self.ripple_points.x,
+            self.ripple_points.z,
             color=cm(norm(rv)),
         )
         color_bar = plt.gcf().colorbar(sm)
