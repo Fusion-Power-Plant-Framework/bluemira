@@ -29,8 +29,8 @@ import string
 from collections.abc import Iterable
 from functools import partial
 from importlib import import_module as imp
-from importlib import util as imp_u
 from importlib import machinery as imp_mach
+from importlib import util as imp_u
 from itertools import permutations
 from json import JSONDecoder, JSONEncoder, dumps
 from json.encoder import _make_iterencode

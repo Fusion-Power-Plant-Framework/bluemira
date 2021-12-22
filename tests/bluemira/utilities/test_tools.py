@@ -19,27 +19,28 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import os
-import numpy as np
 import json
+import os
 from io import StringIO
+
+import numpy as np
+import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.tools import (
+    CommentJSONDecoder,
+    NumpyJSONEncoder,
     asciistr,
     cartesian_to_polar,
     clip,
-    CommentJSONDecoder,
     compare_dicts,
     cross,
     dot,
-    get_module,
     get_class_from_module,
+    get_module,
     is_num,
     levi_civita_tensor,
     norm,
-    NumpyJSONEncoder,
     polar_to_cartesian,
 )
 
