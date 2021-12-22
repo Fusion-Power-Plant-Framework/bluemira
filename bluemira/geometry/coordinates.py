@@ -48,12 +48,10 @@ def xyz_process(func):
         _validate_coordinates(x, y, z)
         x = np.ascontiguousarray(x, dtype=np.float_)
         y = np.ascontiguousarray(y, dtype=np.float_)
-        if z is None:
-            return func(x, y, z)
-        else:
+        if z is not None:
             z = np.ascontiguousarray(z, dtype=np.float_)
 
-            return func(x, y, z)
+        return func(x, y, z)
 
     return wrapper
 
@@ -223,12 +221,9 @@ def get_area(x, y, z=None):
     area: float
         The area of the polygon [m^2]
     """
-    x = np.ascontiguousarray(x, dtype=float)
-    y = np.ascontiguousarray(y, dtype=float)
     if z is None:
         return get_area_2d(x, y)
     else:
-        z = np.ascontiguousarray(z, dtype=float)
         return get_area_3d(x, y, z)
 
 
@@ -251,6 +246,8 @@ def get_area_2d(x, y):
         The area of the polygon [m^2]
     """
     # No np.roll in numba
+    x = np.ascontiguousarray(x)
+    y = np.ascontiguousarray(y)
     x1 = np.append(x[-1], x[:-1])
     y1 = np.append(y[-1], y[:-1])
     return 0.5 * np.abs(np.dot(x, y1) - np.dot(y, x1))
@@ -387,10 +384,9 @@ def get_centroid_2d(x, z):
         The x, z coordinates of the centroid [m]
     """
     if not check_ccw(x, z):
-        x = x[::-1]
-        z = z[::-1]
-    x = np.ascontiguousarray(x, dtype=float)
-    z = np.ascontiguousarray(z, dtype=float)
+        x = np.ascontiguousarray(x[::-1])
+        z = np.ascontiguousarray(z[::-1])
+
     area = get_area_2d(x, z)
 
     cx, cz = 0, 0
