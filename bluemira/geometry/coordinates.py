@@ -30,6 +30,7 @@ import numba as nb
 from pyquaternion import Quaternion
 
 from bluemira.base.constants import EPS
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import CoordinatesError
 
 # =============================================================================
