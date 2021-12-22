@@ -334,6 +334,18 @@ class TestGetModule:
         with pytest.raises(ImportError):
             get_module(get_bluemira_path() + "../README.md")
 
+    def test_get_weird_ext_python_file(self, tmpdir):
+        path1 = tmpdir.join("file")
+        path2 = tmpdir.join("file.hello")
+        function = """def f():
+    return True"""
+        for path in [path1, path2]:
+            with open(path, "w") as file:
+                file.writelines(function)
+
+            mod = get_module(str(path))
+            assert mod.f()
+
     def test_get_class(self):
         for mod in [self.test_mod, self.test_mod_loc]:
             the_class = get_class_from_module(f"{mod}::{self.test_class_name}")
