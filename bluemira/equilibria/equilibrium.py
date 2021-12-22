@@ -23,7 +23,6 @@
 Plasma MHD equilibrium and state objects
 """
 import os
-from copy import deepcopy
 from enum import Enum
 
 import numpy as np
@@ -194,13 +193,6 @@ class MHDState:
             Coil representation of the plasma
         """
         raise NotImplementedError
-
-    def copy(self):
-        """
-        Get a deep copy of an MHDState object, returning a fully independent copy,
-        with independent values.
-        """
-        return deepcopy(self)
 
     @classmethod
     def _get_eqdsk(cls, filename, force_symmetry=False):

@@ -23,7 +23,6 @@
 Coil and coil grouping objects
 """
 
-from copy import deepcopy
 from typing import Any, Optional
 
 import matplotlib.pyplot as plt
@@ -760,17 +759,6 @@ class Coil:
             for coil in self.sub_coils.values():
                 coil.toggle_control()
 
-    def copy(self):
-        """
-        Get a deepcopy of the Coil.
-
-        Returns
-        -------
-        copy: Coil
-            The deepcopy of the Coil
-        """
-        return deepcopy(self)
-
     @property
     def n_control(self):
         """
@@ -949,12 +937,6 @@ class CoilGroup:
         for name, coil in coils.items():
             cdict[name] = coil.to_dict()
         return cdict
-
-    def copy(self):
-        """
-        Get a deep copy of the CoilGroup.
-        """
-        return deepcopy(self)
 
     def to_group_vecs(self):
         """

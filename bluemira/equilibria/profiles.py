@@ -23,8 +23,6 @@
 Plasma profile objects, shape functions, and associated tools
 """
 
-from copy import deepcopy
-
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
@@ -467,12 +465,6 @@ class Profile:
         Plot the Profile object
         """
         return ProfilePlotter(self, ax=ax)
-
-    def copy(self):
-        """
-        Get a deep copy of the Profile object
-        """
-        return deepcopy(self)
 
 
 class BetaIpProfile(Profile):

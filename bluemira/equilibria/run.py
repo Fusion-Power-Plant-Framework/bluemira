@@ -101,22 +101,22 @@ class Snapshot:
         limiter=None,
         tfcoil=None,
     ):
-        self.eq = eq.copy()
-        self.coilset = coilset.copy()
+        self.eq = deepcopy(eq)
+        self.coilset = deepcopy(coilset)
         if constraints is not None:
-            self.constraints = constraints.copy()
+            self.constraints = deepcopy(constraints)
         else:
             self.constraints = None
         if profiles is not None:
-            self.profiles = profiles.copy()
+            self.profiles = deepcopy(profiles)
         else:
             self.profiles = None
         if limiter is not None:
-            self.limiter = limiter.copy()
+            self.limiter = deepcopy(limiter)
         else:
             self.limiter = None
         if optimiser is not None:
-            self.optimiser = optimiser.copy()
+            self.optimiser = deepcopy(optimiser)
         else:
             self.optimiser = None
         self.tf = tfcoil
@@ -672,13 +672,6 @@ class EquilibriumProblem:
         ddd = ddd[ddd["Coil / Constraint"] != "F_z_CS_tot"]
         print(tabulate.tabulate(ddd, headers=ddd.columns, showindex=False))
         return ddd
-
-    def copy(self):
-        """
-        Deepcopies an EquilibriumProblem object, returning a fully independent
-        copy, with independent values.
-        """
-        return deepcopy(self)
 
 
 class AbInitioEquilibriumProblem(EquilibriumProblem):
