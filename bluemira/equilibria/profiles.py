@@ -619,8 +619,8 @@ class CustomProfile(Profile):
     def __init__(
         self, pprime_func, ffprime_func, R_0, B_0, p_func=None, f_func=None, Ip=None
     ):
-        self.pprime = self.parse_to_callable(pprime_func)
-        self.ffprime = self.parse_to_callable(ffprime_func)
+        self._pprime = self.parse_to_callable(pprime_func)
+        self._ffprime = self.parse_to_callable(ffprime_func)
         self.p_func = self.parse_to_callable(p_func)
         self.f_func = self.parse_to_callable(f_func)
         self._fvac = R_0 * B_0
@@ -646,6 +646,18 @@ class CustomProfile(Profile):
             return None
         else:
             raise TypeError("Could not make input object a callable function.")
+
+    def pprime(self, pn):
+        """
+        dp/dpsi as a function of normalised psi
+        """
+        return self.scale * self._pprime(pn)
+
+    def ffprime(self, pn):
+        """
+        f*df/dpsi as a function of normalised psi
+        """
+        return self.scale * self._ffprime(pn)
 
     def jtor(self, x, z, psi, o_points, x_points):
         """
