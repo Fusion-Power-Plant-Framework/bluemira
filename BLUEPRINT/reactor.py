@@ -24,6 +24,7 @@ The Reactor God-object
 """
 # Standard imports
 import os
+from copy import deepcopy
 import numpy as np
 import sys
 from time import time
@@ -422,7 +423,7 @@ class Reactor(ReactorSystem):
             qpsi_calcmode=qpsi_calcmode,
         )
         self.EQ = a
-        self.eqref = a.eq.copy()
+        self.eqref = deepcopy(a.eq)
         self.analyse_equilibrium(self.eqref)
 
     def load_equilibrium(self, filename=None, reconstruct_jtor=False, qpsi_calcmode=0):
