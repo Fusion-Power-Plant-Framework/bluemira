@@ -19,27 +19,28 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import os
-import numpy as np
 import json
+import os
 from io import StringIO
+
+import numpy as np
+import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.tools import (
+    CommentJSONDecoder,
+    NumpyJSONEncoder,
     asciistr,
     cartesian_to_polar,
     clip,
-    CommentJSONDecoder,
     compare_dicts,
     cross,
     dot,
-    get_module,
     get_class_from_module,
+    get_module,
     is_num,
     levi_civita_tensor,
     norm,
-    NumpyJSONEncoder,
     polar_to_cartesian,
 )
 
@@ -333,6 +334,18 @@ class TestGetModule:
         # Not a python module
         with pytest.raises(ImportError):
             get_module(get_bluemira_path() + "../README.md")
+
+    def test_get_weird_ext_python_file(self, tmpdir):
+        path1 = tmpdir.join("file")
+        path2 = tmpdir.join("file.hello")
+        function = """def f():
+    return True"""
+        for path in [path1, path2]:
+            with open(path, "w") as file:
+                file.writelines(function)
+
+            mod = get_module(str(path))
+            assert mod.f()
 
     def test_get_class(self):
         for mod in [self.test_mod, self.test_mod_loc]:
