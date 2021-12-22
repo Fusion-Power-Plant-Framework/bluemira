@@ -389,6 +389,8 @@ def get_centroid_2d(x, z):
     if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
+    x = np.ascontiguousarray(x, dtype=float)
+    z = np.ascontiguousarray(z, dtype=float)
     area = get_area_2d(x, z)
 
     cx, cz = 0, 0
