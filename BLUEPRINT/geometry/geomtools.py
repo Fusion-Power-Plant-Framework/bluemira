@@ -65,6 +65,7 @@ check_linesegment = check_linesegment  # noqa
 polygon_in_polygon = polygon_in_polygon  # noqa
 close_coordinates = close_coordinates  # noqa
 on_polygon = on_polygon  # noqa
+get_centroid_3d = get_centroid_3d  # noqa
 
 
 def get_normal_vector(x, y, z):
