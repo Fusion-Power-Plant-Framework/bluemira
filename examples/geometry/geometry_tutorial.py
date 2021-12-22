@@ -139,6 +139,7 @@ for i, shell in enumerate(cylinder.boundary):
                 f"Wire: {i}.{j}.{k} is a BluemiraWire: {isinstance(wire, BluemiraWire)}"
             )
 
+# %%[markdown]
 # OK, so a cylinder is pretty simple, but more complicated shapes
 # will follow the same pattern.
 
@@ -167,7 +168,7 @@ pentagon = make_polygon(points)
 
 plot_2d(pentagon)
 
-# %%
+# %%[markdown]
 # Polygons are good for things with straight lines.
 # Circles you've met already.
 # For everything else, there's splines.
@@ -175,6 +176,9 @@ plot_2d(pentagon)
 # Say you have a weird shape, that you might calculate via a equation.
 # It's not a good idea to make a polygon with lots of very small sides
 # for this. It's computationally expensive, and it will look ugly.
+
+# %%
+# Spline
 
 x = np.linspace(0, 10, 1000)
 y = 0.5 * np.sin(x) + 3 * np.cos(x) ** 2
@@ -244,6 +248,7 @@ quarter_turn = make_circle(center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_a
 path = BluemiraWire([straight_line, quarter_turn])
 solid = sweep_shape(rectangle.boundary[0], path)
 show_cad(solid)
+
 # %%[markdown]
 # ## Geometry operations: Part 2
 # Making 3-D shapes from 3-D shapes
@@ -282,6 +287,7 @@ show_cad(fused_boxes)
 cut_box_1 = boolean_cut(box_1, box_2)[0]
 
 show_cad(cut_box_1)
+
 # %%[markdown]
 # ## Modification of existing geometries
 
@@ -306,6 +312,7 @@ show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 
 # At present, only the STEP Assembly format is supported
 # for exporting geometry.
+
 # %%
 # Try saving any shape or group of shapes created above
 # as a STEP assembly
