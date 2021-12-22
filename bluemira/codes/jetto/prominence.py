@@ -18,11 +18,15 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""
+Prominence API
+"""
 
+import sys
+from pathlib import Path
 from unittest.mock import patch
 
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
-
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.utilities.tools import get_module
 
 
@@ -52,7 +56,7 @@ class ProminenceDownloader:
         self._save_dir = save_dir
         self._old_open = open
 
-        self.prom_bin = get_module("prominence")
+        self.prom_bin = self._get_binary()
 
     def __call__(self):
         """
@@ -65,6 +69,22 @@ class ProminenceDownloader:
         with patch("builtins.print", new=self.captured_print):
             with patch("builtins.open", new=self.captured_open):
                 self.prom_bin.command_download(self)
+
+    @staticmethod
+    def _get_binary():
+        """
+        Import the prominence binary directly.
+
+        There are a lot of python functions
+        that do not exist in the main module
+        """
+        for path in sys.path:
+            filepath = Path(path, "prominence")
+            if filepath.is_file():
+                bluemira_debug("Loading {filepath}")
+                return get_module(str(filepath))
+
+        raise ImportError("Prominence binary not found in sys.path")
 
     def captured_print(self, string, *args, **kwargs):
         """
@@ -103,5 +123,5 @@ class ProminenceDownloader:
         filehandle
 
         """
-        filepath = os.path.join(self._save_dir, filepath)
+        filepath = Path(self._save_dir, filepath)
         return self._old_open(filepath, *args, **kwargs)

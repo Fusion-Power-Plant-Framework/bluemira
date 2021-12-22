@@ -22,23 +22,20 @@
 """
 The bluemira-JETTO wrapper.
 """
-import tarfile
 import os
-import shutil
+import tarfile
+from enum import auto
+
 import numpy as np
-
-from enum import Enum, auto
-from importlib import util as imp_u
-
 from jetto_tools.job import JobManager
+from typing import Optional
 
-from bluemira.equilibria.file import EQDSKInterface
-from bluemira.base.look_and_feel import bluemira_warn
 import bluemira.codes.interface as interface
-from bluemira.codes.jetto.prominence import ProminenceDownloader
-from bluemira.codes.jetto.constants import NAME as JETTO
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes.jetto.constants import NAME as JETTO, BINARY
 from bluemira.codes.jetto.mapping import mappings
-
+from bluemira.codes.jetto.prominence import ProminenceDownloader
+from bluemira.equilibria.file import EQDSKInterface
 
 ####################
 # Setup and Run currently a skeleton of what will possibly happen
@@ -47,6 +44,10 @@ from bluemira.codes.jetto.mapping import mappings
 
 
 class RunMode(interface.RunMode):
+    """
+    JETTO runmodes
+    """
+
     PROMINENCE = auto()
     BATCH = auto()
     MOCK = auto()
@@ -90,6 +91,9 @@ class Setup(interface.Setup):
         self.save_path = save_path
 
     def process_input(self):
+        """
+        Process JETTO inputs
+        """
         raise NotImplementedError
 
     def _prominence(self):
@@ -153,6 +157,9 @@ class Setup(interface.Setup):
 
 
 class Run(interface.Run):
+    """
+    JETTO Run Task
+    """
 
     _binary = False
 
