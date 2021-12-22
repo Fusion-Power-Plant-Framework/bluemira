@@ -18,20 +18,19 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
-
 import numpy as np
+import pytest
 
 openmoc = pytest.importorskip("openmoc")
 
 from BLUEPRINT.neutronics.openmoc_geometry_tools import (  # noqa :E402
-    get_plane_properties_from_points,
-    get_plane_properties,
-    get_normalised_plane_properties,
-    evaluate_point_against_plane,
-    get_halfspace,
     PlaneHelper,
     calc_triangle_centroid,
+    evaluate_point_against_plane,
+    get_halfspace,
+    get_normalised_plane_properties,
+    get_plane_properties,
+    get_plane_properties_from_points,
 )
 
 

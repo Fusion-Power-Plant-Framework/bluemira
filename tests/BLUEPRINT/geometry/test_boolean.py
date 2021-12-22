@@ -25,13 +25,14 @@ Created on Fri Aug  2 13:08:34 2019
 """
 import os
 import pickle  # noqa :S403
-import pytest
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_common,
     boolean_2d_common_loop,
@@ -39,13 +40,13 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
     boolean_2d_union,
     boolean_2d_xor,
+    convex_hull,
     entagram,
     simplify_loop,
-    convex_hull,
 )
 from BLUEPRINT.geometry.geomtools import make_box_xz
-
-import tests
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
 
 
 class TestBooleanSimple:

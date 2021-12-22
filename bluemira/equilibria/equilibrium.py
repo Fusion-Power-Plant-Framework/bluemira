@@ -22,58 +22,56 @@
 """
 Plasma MHD equilibrium and state objects
 """
+import os
 from copy import deepcopy
 from enum import Enum
+
 import numpy as np
-import os
+import tabulate
 from pandas import DataFrame
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
-import tabulate
 
-from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import (
-    bluemira_print_flush,
-    bluemira_warn,
-)
 from bluemira.base.constants import MU_0
-from bluemira.equilibria.error import EquilibriaError
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
-from bluemira.equilibria.grid import Grid, integrate_dx_dz
+from bluemira.equilibria.coils import Coil, CoilSet, PlasmaCoil, symmetrise_coilset
+from bluemira.equilibria.constants import LI_REL_TOL, PSI_NORM_TOL
+from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import (
-    find_OX_points,
     find_flux_surf,
     find_flux_surfs,
     find_LCFS_separatrix,
-    in_zone,
+    find_OX_points,
     in_plasma,
+    in_zone,
 )
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface, analyse_plasma_core
+from bluemira.equilibria.force_field import ForceField
+from bluemira.equilibria.grad_shafranov import GSSolver
+from bluemira.equilibria.grid import Grid, integrate_dx_dz
+from bluemira.equilibria.limiter import Limiter
+from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import (
+    calc_li,
+    calc_li3minargs,
     calc_psi_norm,
     calc_q,
     calc_q0,
-    calc_li,
     calc_summary,
-    calc_li3minargs,
 )
-from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.plotting import (
-    EquilibriumPlotter,
-    CorePlotter,
     BreakdownPlotter,
+    CorePlotter,
     CorePlotter2,
+    EquilibriumPlotter,
 )
-from bluemira.equilibria.coils import Coil, CoilSet, PlasmaCoil, symmetrise_coilset
-from bluemira.equilibria.limiter import Limiter
-from bluemira.equilibria.num_control import VirtualController, DummyController
-from bluemira.equilibria.force_field import ForceField
-from bluemira.equilibria.constants import PSI_NORM_TOL, LI_REL_TOL
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.utilities.tools import abs_rel_difference
-from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.utilities.opt_tools import process_scipy_result
+from bluemira.utilities.tools import abs_rel_difference
 
 EQ_FOLDER = get_bluemira_path("equilibria", subfolder="data")
 

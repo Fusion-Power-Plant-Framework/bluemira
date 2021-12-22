@@ -19,16 +19,18 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import tests
 import os
+
 import numpy as np
+import pytest
 from matplotlib import pyplot as plt
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.parameterisations import flatD
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.equilibria.positioner import XZLMapper, CoilPositioner, RegionMapper
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.positioner import CoilPositioner, RegionMapper, XZLMapper
+from bluemira.geometry._deprecated_loop import Loop
+from BLUEPRINT.geometry.parameterisations import flatD
 
 DATA_PATH = get_bluemira_path("geometry", subfolder="data")
 

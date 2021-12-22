@@ -25,22 +25,22 @@ A collection of geometry tools.
 
 from functools import partial
 from itertools import zip_longest
-import numpy as np
+
 import numba as nb
+import numpy as np
 from numba.np.extensions import cross2d
-from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
+from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
+from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.bound_box import BoundingBox
 from bluemira.utilities.tools import flatten_iterable
-
 
 # =============================================================================
 # Errors

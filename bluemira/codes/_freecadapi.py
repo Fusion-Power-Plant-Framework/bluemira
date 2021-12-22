@@ -25,37 +25,38 @@ Supporting functions for the bluemira geometry module.
 
 from __future__ import annotations
 
-import freecad  # noqa: F401
-import Part
-import FreeCAD
-from FreeCAD import Base
+import math
+
+# import typing
+from typing import Dict, Iterable, List, Optional, Union
+
 import BOPTools
-import BOPTools.SplitAPI
 import BOPTools.GeneralFuseResult
 import BOPTools.JoinAPI
 import BOPTools.JoinFeatures
 import BOPTools.ShapeMerge
-import BOPTools.Utils
+import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
+import BOPTools.Utils
+import freecad  # noqa: F401
+import FreeCAD
 import FreeCADGui
 
 # import math lib
 import numpy as np
-import math
-
-# import typing
-from typing import List, Optional, Iterable, Union, Dict
-
-# import errors and warnings
-from bluemira.codes.error import FreeCADError
-from bluemira.base.look_and_feel import bluemira_warn
-
-from bluemira.base.constants import EPS
-from bluemira.geometry.constants import MINIMUM_LENGTH
+import Part
+from FreeCAD import Base
 
 # import visualisation
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
+
+from bluemira.base.constants import EPS
+from bluemira.base.look_and_feel import bluemira_warn
+
+# import errors and warnings
+from bluemira.codes.error import FreeCADError
+from bluemira.geometry.constants import MINIMUM_LENGTH
 
 apiWire = Part.Wire  # noqa :N816
 apiFace = Part.Face  # noqa :N816

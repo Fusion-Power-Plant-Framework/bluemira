@@ -22,26 +22,27 @@
 """
 Fuel cycle utility objects, including sink algorithms
 """
-import numpy as np
+import matplotlib.pyplot as plt
 import numba as nb
+import numpy as np
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
+
 from bluemira.base.constants import (
-    J_TO_EV,
-    EV_TO_J,
-    T_LAMBDA,
-    T_MOLAR_MASS,
-    N_AVOGADRO,
-    S_TO_YR,
-    D_MOLAR_MASS,
-    ELECTRON_MOLAR_MASS,
-    PROTON_MOLAR_MASS,
-    NEUTRON_MOLAR_MASS,
-    HE3_MOLAR_MASS,
-    HE_MOLAR_MASS,
     AMU_TO_KG,
     C_LIGHT,
+    D_MOLAR_MASS,
+    ELECTRON_MOLAR_MASS,
+    EV_TO_J,
+    HE3_MOLAR_MASS,
+    HE_MOLAR_MASS,
+    J_TO_EV,
+    N_AVOGADRO,
+    NEUTRON_MOLAR_MASS,
+    PROTON_MOLAR_MASS,
+    S_TO_YR,
+    T_LAMBDA,
+    T_MOLAR_MASS,
     YR_TO_S,
 )
 from bluemira.base.look_and_feel import bluemira_warn

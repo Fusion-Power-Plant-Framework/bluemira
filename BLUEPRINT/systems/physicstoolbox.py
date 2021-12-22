@@ -22,25 +22,26 @@
 """
 A collection of useful 0-D physics calculations
 """
-import numpy as np
 from typing import Union
 
+import numpy as np
+
+from bluemira.base.constants import (
+    AMU_TO_KG,
+    C_LIGHT,
+    D_MOLAR_MASS,
+    ELECTRON_MOLAR_MASS,
+    EV_TO_J,
+    HE3_MOLAR_MASS,
+    HE_MOLAR_MASS,
+    J_TO_EV,
+    N_AVOGADRO,
+    NEUTRON_MOLAR_MASS,
+    PROTON_MOLAR_MASS,
+    T_MOLAR_MASS,
+)
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import PowerLawScaling
-from bluemira.base.constants import (
-    C_LIGHT,
-    T_MOLAR_MASS,
-    D_MOLAR_MASS,
-    HE_MOLAR_MASS,
-    NEUTRON_MOLAR_MASS,
-    J_TO_EV,
-    EV_TO_J,
-    AMU_TO_KG,
-    PROTON_MOLAR_MASS,
-    HE3_MOLAR_MASS,
-    ELECTRON_MOLAR_MASS,
-    N_AVOGADRO,
-)
 
 
 def estimate_kappa95(A, m_s_limit):

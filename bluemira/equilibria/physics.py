@@ -27,8 +27,8 @@ import numpy as np
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.constants import PSI_NORM_TOL
-from bluemira.equilibria.find import find_flux_surf, _parse_OXp, in_plasma
-from bluemira.equilibria.grid import volume_integral, revolved_volume
+from bluemira.equilibria.find import _parse_OXp, find_flux_surf, in_plasma
+from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 
 def calc_psi_norm(psi, opsi, xpsi):

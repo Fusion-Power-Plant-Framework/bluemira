@@ -23,16 +23,14 @@
 Biot-Savart filament object
 """
 import numpy as np
+
 from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry._deprecated_tools import bounding_box, rotation_matrix
+from bluemira.magnetostatics.baseclass import CurrentSource
+from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
-from bluemira.geometry._deprecated_tools import (
-    rotation_matrix,
-    bounding_box,
-)
-from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
-from bluemira.magnetostatics.baseclass import CurrentSource
 
 __all__ = ["BiotSavartFilament"]
 

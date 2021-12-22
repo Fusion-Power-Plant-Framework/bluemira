@@ -8,13 +8,13 @@ from .divertor import Divertor
 from .divertor_silhouette import (
     DivertorSilhouette,
     DivertorSilhouetteFlatDome,
-    DivertorSilhouettePsiBaffle,
     DivertorSilhouetteFlatDomePsiBaffle,
+    DivertorSilhouettePsiBaffle,
 )
 from .hcd import HCDSystem
+from .pfcoils import PoloidalFieldCoils
 from .plasma import Plasma
 from .powerbalance import BalanceOfPlant
 from .tfcoils import ToroidalFieldCoils
-from .pfcoils import PoloidalFieldCoils
 from .thermalshield import ThermalShield
 from .vessel import VacuumVessel

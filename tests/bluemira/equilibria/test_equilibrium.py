@@ -19,19 +19,19 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-
-from matplotlib import pyplot as plt
-import numpy as np
 import os
 from unittest.mock import patch
 
+import numpy as np
+import pytest
+from matplotlib import pyplot as plt
+
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.profiles import DoublePowerFunc
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
+from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.tools import compare_dicts
 
 

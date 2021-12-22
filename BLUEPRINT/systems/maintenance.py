@@ -22,22 +22,21 @@
 """
 Some pretty outdated and crappy remote maintenance routines
 """
+import getpass
+import itertools
+import sys
+from typing import Type
+
 # flake8: noqa  (deprecated mess)
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-import itertools
-import sys
-import getpass
-from typing import Type
 
-from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.constants import GRAVITY
-from bluemira.base.parameter import ParameterFrame
-
 from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.systems.baseclass import ReactorSystem
-
 
 if sys.platform != "darwin" and getpass.getuser() != "mcintos":  # !!!
     if sys.platform == "windows":

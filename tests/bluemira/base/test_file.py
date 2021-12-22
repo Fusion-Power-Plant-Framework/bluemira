@@ -19,14 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-
 import os
 
+import pytest
+
 from bluemira.base.file import (
+    SUB_DIRS,
     FileManager,
     get_bluemira_path,
-    SUB_DIRS,
     try_get_bluemira_path,
 )
 

@@ -22,18 +22,19 @@
 """
 Shape parameterisations and optimisation variable classes
 """
+from collections import OrderedDict
+
 import matplotlib.pyplot as plt
-import seaborn as sns
-import scipy as sp
 import numpy as np
+import scipy as sp
+import seaborn as sns
+from pandas import DataFrame
 from scipy.special import binom
 from scipy.special import iv as bessel
-from collections import OrderedDict
-from pandas import DataFrame
-from BLUEPRINT.base.error import GeometryError
+
 from bluemira.geometry._deprecated_tools import innocent_smoothie
-from BLUEPRINT.geometry.geomtools import clock, qrotate, xz_interp
-from BLUEPRINT.geometry.geomtools import circle_seg
+from BLUEPRINT.base.error import GeometryError
+from BLUEPRINT.geometry.geomtools import circle_seg, clock, qrotate, xz_interp
 
 
 class OptVariables(OrderedDict):

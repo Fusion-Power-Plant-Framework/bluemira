@@ -23,40 +23,41 @@
 Coil positioning routines (automatic and adjustable)
 """
 
-import numpy as np
 import re
-from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
+
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.error import GeometryError
+from bluemira.equilibria.coils import (
+    CS_COIL_NAME,
+    PF_COIL_NAME,
+    Coil,
+    CoilSet,
+    Solenoid,
+    get_max_current,
+)
+from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
+from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_boolean import (
     boolean_2d_common,
     boolean_2d_difference,
     boolean_2d_union,
 )
-from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_tools import (
-    vector_lengthnorm_2d,
-    loop_plane_intersect,
-    join_intersect,
-)
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
-from bluemira.equilibria.constants import NBTI_J_MAX
-from bluemira.equilibria.coils import (
-    Coil,
-    CoilSet,
-    PF_COIL_NAME,
-    CS_COIL_NAME,
-    Solenoid,
-    get_max_current,
+from bluemira.geometry._deprecated_tools import (
+    join_intersect,
+    loop_plane_intersect,
+    vector_lengthnorm_2d,
 )
-from bluemira.equilibria.plotting import XZLPlotter, RegionPlotter
+from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
 from bluemira.utilities import tools
 
 

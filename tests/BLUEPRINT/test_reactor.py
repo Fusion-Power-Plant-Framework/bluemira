@@ -23,15 +23,15 @@
 # Smoke test
 # =============================================================================
 import pickle  # noqa :S403
+
 import pytest
 from matplotlib import pyplot as plt
 
+import tests
+from bluemira.base.config import SingleNull
 from bluemira.base.file import BM_ROOT
 from bluemira.utilities.tools import set_random_seed
 from BLUEPRINT.reactor import Reactor
-from bluemira.base.config import SingleNull
-import tests
-
 
 # Chosen by fair dice roll
 set_random_seed(7021769)

@@ -1,9 +1,7 @@
 import pytest
 
-import tests.BLUEPRINT.test_reactor as bp_test_reactor  # noqa :N813
-
 import tests.bluemira.test_component_integration as bm_test_reactor
-
+import tests.BLUEPRINT.test_reactor as bp_test_reactor  # noqa :N813
 
 # =============================================================================
 # Smoke test reactor fixtures

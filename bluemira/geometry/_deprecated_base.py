@@ -27,10 +27,10 @@ import abc
 import json
 import os
 import pickle  # noqa :S403
+import warnings
 from collections.abc import Iterable
 from copy import deepcopy
 from typing import Union
-import warnings
 
 import numpy as np
 

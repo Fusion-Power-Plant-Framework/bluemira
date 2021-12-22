@@ -22,10 +22,10 @@
 """
 Grad-Shafranov operator classes
 """
-from numpy import ones, linspace, reshape
 import numpy as np
-from scipy.sparse.linalg import factorized
+from numpy import linspace, ones, reshape
 from scipy.sparse import lil_matrix
+from scipy.sparse.linalg import factorized
 
 from bluemira.equilibria.error import EquilibriaError
 

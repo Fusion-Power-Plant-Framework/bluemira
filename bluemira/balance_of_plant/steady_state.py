@@ -24,17 +24,18 @@ Crude 0-D steady-state balance of plant model. Mostly for visualisation purposes
 """
 
 import abc
+
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
-from bluemira.balance_of_plant.error import BalanceOfPlantError
 from bluemira.balance_of_plant.calculations import (
-    He_pumping,
     H2O_pumping,
+    He_pumping,
     superheated_rankine,
 )
+from bluemira.balance_of_plant.error import BalanceOfPlantError
 from bluemira.balance_of_plant.plotting import BalanceOfPlantPlotter
+from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
+from bluemira.base.look_and_feel import bluemira_warn
 
 
 class CoolantPumping(abc.ABC):

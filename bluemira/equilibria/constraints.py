@@ -23,15 +23,16 @@
 Plasma magnetic constraint objects and auto-generation tools
 """
 from abc import ABC, abstractmethod
-from typing import List, Union
-from dataclasses import dataclass
-import numpy as np
 from copy import deepcopy
+from dataclasses import dataclass
+from typing import List, Union
 
-from bluemira.utilities.tools import abs_rel_difference
-from bluemira.geometry._deprecated_loop import Loop
+import numpy as np
+
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.equilibria.shapes import flux_surface_johner
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.utilities.tools import abs_rel_difference
 
 __all__ = ["MagneticConstraintSet"]
 

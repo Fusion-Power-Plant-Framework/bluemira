@@ -22,22 +22,24 @@
 """
 CAD model object for assemblies of components
 """
-import numpy as np
+import os
+import re
 from collections import OrderedDict
 from itertools import cycle
-import re
-import os
+
+import numpy as np
 from matplotlib.colors import to_rgb
-from BLUEPRINT.base.names import name_short_long
+
 from bluemira.base.look_and_feel import bluemira_warn
+from BLUEPRINT.base.names import name_short_long
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.cad.cadtools import (
     make_axis,
-    rotate_shape,
     make_compound,
+    rotate_shape,
     save_as_STEP_assembly,
 )
+from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.utilities.colortools import force_rgb
 
 

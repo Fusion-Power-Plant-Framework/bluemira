@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 from unittest.mock import MagicMock
+
 import pytest
 
 from bluemira.codes import interface

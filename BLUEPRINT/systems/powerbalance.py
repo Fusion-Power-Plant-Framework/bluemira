@@ -22,22 +22,18 @@
 """
 Balance of plant system
 """
-import numpy as np
 from typing import Type
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.constants import (
-    HE_MOLAR_MASS,
-    NEUTRON_MOLAR_MASS,
-    HE3_MOLAR_MASS,
-)
 from bluemira.balance_of_plant.plotting import SuperSankey
+from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
 from bluemira.utilities.tools import to_kelvin
-
-from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.palettes import B_PAL_MAP
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):

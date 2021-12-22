@@ -26,16 +26,15 @@ Created on Fri Aug  2 07:33:39 2019
 import os
 import pickle  # noqa :S403
 
-from matplotlib import pyplot as plt
 import numpy as np
 import pytest
+from matplotlib import pyplot as plt
 
+import tests
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.offset import offset, offset_clipper
-
-import tests
 
 
 class TestOffset:

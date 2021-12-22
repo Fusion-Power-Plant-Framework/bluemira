@@ -19,15 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-
 import numpy as np
+import pytest
 from scipy.special import ellipe, ellipk
 
 from bluemira.base.constants import MU_0
-
-from bluemira.equilibria.force_field import ForceField
 from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.force_field import ForceField
 
 
 class TestForceField:

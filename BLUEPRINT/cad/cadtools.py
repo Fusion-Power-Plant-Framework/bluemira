@@ -25,171 +25,151 @@ CAD functions and operations
 # High level imports
 import os
 from itertools import zip_longest
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 # OCC imports
 try:
-    from OCC.Core.gp import (
-        gp_Pnt,
-        gp_Vec,
-        gp_Ax1,
-        gp_Dir,
-        gp_Trsf,
-        gp_Pln,
-        gp_Circ,
-        gp_Ax2,
-    )
+    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
     from OCC.Core.BRepBuilderAPI import (
         BRepBuilderAPI_MakeEdge,
-        BRepBuilderAPI_MakeWire,
         BRepBuilderAPI_MakeFace,
         BRepBuilderAPI_MakePolygon,
         BRepBuilderAPI_MakeSolid,
+        BRepBuilderAPI_MakeWire,
+        BRepBuilderAPI_NurbsConvert,
         BRepBuilderAPI_Sewing,
         BRepBuilderAPI_Transform,
-        BRepBuilderAPI_NurbsConvert,
     )
-    from OCC.Core.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
-    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakeRevol, BRepPrimAPI_MakePrism
-    from OCC.Core.BRepOffsetAPI import (
-        BRepOffsetAPI_ThruSections,
-        BRepOffsetAPI_MakePipe,
-    )
-    from OCC.Core.TopoDS import TopoDS_Builder, TopoDS_Compound
-    from OCC.Core.TopTools import TopTools_ListOfShape
-    from OCC.Core.StlAPI import StlAPI_Writer
-    from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
-
-    # File exporting utility imports
-    from OCC.Core.Interface import Interface_Static_SetCVal, Interface_Static_Update
-    from OCC.Core.STEPControl import STEPControl_Writer, STEPControl_AsIs
-
-    # from OCC.Display.SimpleGui import init_display
-    from OCC.Core.Geom import Geom_BezierCurve
-    from OCC.Core.GeomAPI import (
-        GeomAPI_PointsToBSpline,
-        GeomAPI_Interpolate,
-    )
-    from OCC.Core.GeomAbs import GeomAbs_C2
-    from OCC.Core.TColgp import (
-        TColgp_Array1OfPnt2d,
-        TColgp_HArray1OfPnt,
-        TColgp_Array1OfPnt,
-        TColgp_Array1OfVec,
-    )
-    from OCC.Core.TColStd import TColStd_HArray1OfBoolean
-    from OCC.Core.GProp import GProp_GProps
     from OCC.Core.BRepGProp import (
         brepgprop_LinearProperties,
         brepgprop_SurfaceProperties,
         brepgprop_VolumeProperties,
     )
-    from OCC.Core.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
+    from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
+    from OCC.Core.BRepOffsetAPI import (
+        BRepOffsetAPI_MakePipe,
+        BRepOffsetAPI_ThruSections,
+    )
+    from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 
-    # OCC type mapping imports
-    from OCC.Core.TopoDS import TopoDS_Shape
-    from OCC.Core.TopoDS import topods
+    # from OCC.Display.SimpleGui import init_display
+    from OCC.Core.Geom import Geom_BezierCurve
+    from OCC.Core.GeomAbs import GeomAbs_C2
+    from OCC.Core.GeomAPI import GeomAPI_Interpolate, GeomAPI_PointsToBSpline
+    from OCC.Core.gp import (
+        gp_Ax1,
+        gp_Ax2,
+        gp_Circ,
+        gp_Dir,
+        gp_Pln,
+        gp_Pnt,
+        gp_Trsf,
+        gp_Vec,
+    )
+    from OCC.Core.GProp import GProp_GProps
+
+    # File exporting utility imports
+    from OCC.Core.Interface import Interface_Static_SetCVal, Interface_Static_Update
+    from OCC.Core.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
+    from OCC.Core.STEPControl import STEPControl_AsIs, STEPControl_Writer
+    from OCC.Core.StlAPI import StlAPI_Writer
+    from OCC.Core.TColgp import (
+        TColgp_Array1OfPnt,
+        TColgp_Array1OfPnt2d,
+        TColgp_Array1OfVec,
+        TColgp_HArray1OfPnt,
+    )
+    from OCC.Core.TColStd import TColStd_HArray1OfBoolean
     from OCC.Core.TopAbs import (
-        TopAbs_VERTEX,
-        TopAbs_EDGE,
-        TopAbs_FACE,
-        TopAbs_WIRE,
-        TopAbs_SHELL,
-        TopAbs_SOLID,
         TopAbs_COMPOUND,
         TopAbs_COMPSOLID,
+        TopAbs_EDGE,
+        TopAbs_FACE,
+        TopAbs_SHELL,
+        TopAbs_SOLID,
+        TopAbs_VERTEX,
+        TopAbs_WIRE,
     )
+
+    # OCC type mapping imports
+    from OCC.Core.TopoDS import TopoDS_Builder, TopoDS_Compound, TopoDS_Shape, topods
+    from OCC.Core.TopTools import TopTools_ListOfShape
 except ImportError:
-    from OCC.gp import (
-        gp_Pnt,
-        gp_Vec,
-        gp_Ax1,
-        gp_Dir,
-        gp_Trsf,
-        gp_Pln,
-        gp_Circ,
-        gp_Ax2,
-    )
+    from OCC.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
     from OCC.BRepBuilderAPI import (
         BRepBuilderAPI_MakeEdge,
-        BRepBuilderAPI_MakeWire,
         BRepBuilderAPI_MakeFace,
         BRepBuilderAPI_MakePolygon,
         BRepBuilderAPI_MakeSolid,
+        BRepBuilderAPI_MakeWire,
+        BRepBuilderAPI_NurbsConvert,
         BRepBuilderAPI_Sewing,
         BRepBuilderAPI_Transform,
-        BRepBuilderAPI_NurbsConvert,
     )
-    from OCC.BRepAlgoAPI import BRepAlgoAPI_Cut, BRepAlgoAPI_Fuse
-    from OCC.BRepPrimAPI import BRepPrimAPI_MakeRevol, BRepPrimAPI_MakePrism
-    from OCC.BRepOffsetAPI import (
-        BRepOffsetAPI_ThruSections,
-        BRepOffsetAPI_MakePipe,
-    )
-    from OCC.TopoDS import TopoDS_Builder, TopoDS_Compound
-    from OCC.TopTools import TopTools_ListOfShape
-    from OCC.StlAPI import StlAPI_Writer
-    from OCC.BRepMesh import BRepMesh_IncrementalMesh
-
-    # File exporting utility imports
-    from OCC.Interface import Interface_Static_SetCVal, Interface_Static_Update
-    from OCC.STEPControl import STEPControl_Writer, STEPControl_AsIs
-
-    # from OCC.Display.SimpleGui import init_display
-    from OCC.Geom import Geom_BezierCurve
-    from OCC.GeomAPI import (
-        GeomAPI_PointsToBSpline,
-        GeomAPI_Interpolate,
-    )
-    from OCC.GeomAbs import GeomAbs_C2
-    from OCC.TColgp import (
-        TColgp_Array1OfPnt2d,
-        TColgp_HArray1OfPnt,
-        TColgp_Array1OfPnt,
-        TColgp_Array1OfVec,
-    )
-    from OCC.TColStd import TColStd_HArray1OfBoolean
-    from OCC.GProp import GProp_GProps
     from OCC.BRepGProp import (
         brepgprop_LinearProperties,
         brepgprop_SurfaceProperties,
         brepgprop_VolumeProperties,
     )
-    from OCC.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
+    from OCC.BRepMesh import BRepMesh_IncrementalMesh
+    from OCC.BRepOffsetAPI import BRepOffsetAPI_MakePipe, BRepOffsetAPI_ThruSections
+    from OCC.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 
-    # OCC type mapping imports
-    from OCC.TopoDS import TopoDS_Shape
-    from OCC.TopoDS import topods
+    # from OCC.Display.SimpleGui import init_display
+    from OCC.Geom import Geom_BezierCurve
+    from OCC.GeomAbs import GeomAbs_C2
+    from OCC.GeomAPI import GeomAPI_Interpolate, GeomAPI_PointsToBSpline
+    from OCC.gp import gp_Ax1, gp_Ax2, gp_Circ, gp_Dir, gp_Pln, gp_Pnt, gp_Trsf, gp_Vec
+    from OCC.GProp import GProp_GProps
+
+    # File exporting utility imports
+    from OCC.Interface import Interface_Static_SetCVal, Interface_Static_Update
+    from OCC.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
+    from OCC.STEPControl import STEPControl_AsIs, STEPControl_Writer
+    from OCC.StlAPI import StlAPI_Writer
+    from OCC.TColgp import (
+        TColgp_Array1OfPnt,
+        TColgp_Array1OfPnt2d,
+        TColgp_Array1OfVec,
+        TColgp_HArray1OfPnt,
+    )
+    from OCC.TColStd import TColStd_HArray1OfBoolean
     from OCC.TopAbs import (
-        TopAbs_VERTEX,
-        TopAbs_EDGE,
-        TopAbs_FACE,
-        TopAbs_WIRE,
-        TopAbs_SHELL,
-        TopAbs_SOLID,
         TopAbs_COMPOUND,
         TopAbs_COMPSOLID,
+        TopAbs_EDGE,
+        TopAbs_FACE,
+        TopAbs_SHELL,
+        TopAbs_SOLID,
+        TopAbs_VERTEX,
+        TopAbs_WIRE,
     )
+
+    # OCC type mapping imports
+    from OCC.TopoDS import TopoDS_Builder, TopoDS_Compound, TopoDS_Shape, topods
+    from OCC.TopTools import TopTools_ListOfShape
 
 # Other CAD imports
 try:
     from aocxchange.step_ocaf import StepOcafExporter
 except ImportError:
     from BLUEPRINT.cad.step_writer import StepWriter as StepOcafExporter
+
 import trimesh
+
+from bluemira.base.file import file_name_maker
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.tools import flatten_iterable
+from BLUEPRINT.base.error import CADError
+from BLUEPRINT.cad.display import QtDisplayer
+from BLUEPRINT.geometry.geomtools import get_angle_between_points, get_dl
 
 # BLUEPRINT imports
 from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.geomtools import get_dl, get_angle_between_points
-from BLUEPRINT.base.error import CADError
-from bluemira.base.file import file_name_maker
-from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.utilities.tools import expand_nested_list
 from BLUEPRINT.utilities.plottools import Plot3D
-from BLUEPRINT.cad.display import QtDisplayer
-from bluemira.utilities.tools import flatten_iterable
-
+from BLUEPRINT.utilities.tools import expand_nested_list
 
 MINIMUM_MESH_VOL = 1e-5
 TOLERANCE = 1e-6

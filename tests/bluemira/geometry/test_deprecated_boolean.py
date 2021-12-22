@@ -25,24 +25,25 @@ Created on Fri Aug  2 13:08:34 2019
 """
 import os
 import pickle  # noqa :S403
-import pytest
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.error import GeometryError
-from bluemira.geometry._deprecated_loop import Loop
-from BLUEPRINT.geometry.shell import Shell
 from bluemira.geometry._deprecated_boolean import (
     boolean_2d_common,
     boolean_2d_difference,
     boolean_2d_union,
     boolean_2d_xor,
+    convex_hull,
     entagram,
     simplify_loop,
-    convex_hull,
 )
-
-import tests
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.shell import Shell
 
 
 class TestBooleanSimple:

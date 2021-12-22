@@ -23,20 +23,21 @@
 Plasma profile objects, shape functions, and associated tools
 """
 
-import numpy as np
+from copy import deepcopy
+
+import matplotlib.pyplot as plt
 import numba as nb
+import numpy as np
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
-from copy import deepcopy
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.find import in_plasma, find_LCFS_separatrix
-from bluemira.equilibria.plotting import ProfilePlotter
-from bluemira.equilibria.grid import integrate_dx_dz, volume_integral, revolved_volume
 from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma
+from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
+from bluemira.equilibria.plotting import ProfilePlotter
 
 __all__ = [
     "BetaIpProfile",

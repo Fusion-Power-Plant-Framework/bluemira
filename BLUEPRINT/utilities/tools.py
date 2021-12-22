@@ -22,12 +22,13 @@
 """
 Generic miscellaneous tools, including some amigo port-overs
 """
-import numpy as np
-from scipy.spatial.distance import cdist
 import re
 from collections import OrderedDict
 from collections.abc import Mapping
 from typing import List, Union
+
+import numpy as np
+from scipy.spatial.distance import cdist
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable

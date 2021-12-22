@@ -24,21 +24,22 @@ Geometry parameterisations
 """
 
 import abc
+
 import numpy as np
 from scipy.special import iv as bessel
 
-from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     make_bezier,
     make_bspline,
-    wire_closure,
-    make_polygon,
     make_circle,
     make_circle_arc_3P,
+    make_polygon,
+    wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 __all__ = [
     "GeometryParameterisation",

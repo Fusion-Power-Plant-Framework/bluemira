@@ -24,21 +24,14 @@ Coil and coil grouping objects
 """
 
 from copy import deepcopy
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import RectBivariateSpline
 from typing import Any, Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import is_num
-from bluemira.magnetostatics.greens import (
-    greens_psi,
-    greens_Bx,
-    greens_Bz,
-)
-from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.constants import (
     I_MIN,
     J_TOR_MIN,
@@ -46,9 +39,12 @@ from bluemira.equilibria.constants import (
     NBTI_J_MAX,
     X_TOLERANCE,
 )
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoilPlotter
-
+from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
+from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
+from bluemira.utilities.tools import is_num
 
 PF_COIL_NAME = "PF_{}"
 CS_COIL_NAME = "CS_{}"

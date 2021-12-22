@@ -23,15 +23,16 @@
 Finite element class
 """
 import numpy as np
+
+from bluemira.base.constants import GRAVITY
 from BLUEPRINT.base.error import BeamsError
+from BLUEPRINT.beams.constants import N_INTERP, NU, SD_LIMIT
+from BLUEPRINT.beams.loads import distributed_load, point_load
+from BLUEPRINT.beams.node import get_midpoint
+from BLUEPRINT.beams.stress import hermite_polynomials
+from BLUEPRINT.beams.transformation import lambda_matrix
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from bluemira.base.constants import GRAVITY
-from BLUEPRINT.beams.constants import NU, SD_LIMIT, N_INTERP
-from BLUEPRINT.beams.node import get_midpoint
-from BLUEPRINT.beams.loads import point_load, distributed_load
-from BLUEPRINT.beams.transformation import lambda_matrix
-from BLUEPRINT.beams.stress import hermite_polynomials
 
 # TODO: Clean up some class stuff with cached_property decorators.
 # Test some existing stuff (functools?), and your own custom class.

@@ -24,20 +24,20 @@ Vacuum vessel CAD routines
 """
 import seaborn as sns
 
+from BLUEPRINT.base.palettes import BLUE
+from BLUEPRINT.cad.cadtools import (  # noqa :F401  Used in some variations commented out
+    boolean_cut,
+    extrude,
+    make_compound,
+    make_face,
+    make_shell,
+    make_vector,
+    revolve,
+    rotate_shape,
+)
 from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.mixins import OnionCAD
 from BLUEPRINT.geometry.boolean import simplify_loop
-from BLUEPRINT.cad.cadtools import (  # noqa :F401  Used in some variations commented out
-    revolve,
-    boolean_cut,
-    make_face,
-    make_shell,
-    extrude,
-    make_compound,
-    make_vector,
-    rotate_shape,
-)
-from BLUEPRINT.base.palettes import BLUE
 
 
 class VesselCAD(OnionCAD, ComponentCAD):

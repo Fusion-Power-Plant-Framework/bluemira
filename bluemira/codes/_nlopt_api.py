@@ -23,14 +23,15 @@
 Thin wrapper API interface to optimisation library (NLOpt)
 """
 
-import numpy as np
-import nlopt
 import functools
+
+import nlopt
+import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import (
-    OptUtilitiesError,
     ExternalOptError,
+    OptUtilitiesError,
     OptVariablesError,
 )
 

@@ -24,17 +24,18 @@ Utility for sets of coordinates
 """
 
 from typing import Iterable
+
 import numpy as np
 from pyquaternion import Quaternion
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import EPS
-from bluemira.geometry.error import CoordinatesError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import (
-    get_perimeter_3d,
-    get_centroid_3d,
     check_ccw_3d,
+    get_centroid_3d,
+    get_perimeter_3d,
 )
+from bluemira.geometry.error import CoordinatesError
 
 
 def principal_components(xyz_array):

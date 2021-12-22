@@ -22,15 +22,17 @@
 """
 Coil CAD routines
 """
-from BLUEPRINT.geometry.offset import offset_clipper
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
+
+from BLUEPRINT.geometry.offset import offset_clipper
 
 try:
     from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
-    from OCC.Core.gp import gp_Pnt, gp_Ax1, gp_Dir, gp_Ax2, gp_Vec, gp_Circ
-    from OCC.Core.GC import GC_MakeArcOfCircle
     from OCC.Core.BRepFill import BRepFill_PipeShell
+    from OCC.Core.GC import GC_MakeArcOfCircle
+    from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Circ, gp_Dir, gp_Pnt, gp_Vec
     from OCC.Core.TopoDS import topods
 except ImportError:
     from OCC.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
@@ -38,40 +40,41 @@ except ImportError:
     from OCC.GC import GC_MakeArcOfCircle
     from OCC.BRepFill import BRepFill_PipeShell
     from OCC.TopoDS import topods
+
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.cadtools import (
-    boolean_cut,
-    boolean_fuse,
-    revolve,
-    extrude,
-    make_box,
-    sweep,
-    rotate_shape,
-    make_axis,
-    make_face,
-    make_mixed_shell,
-    make_mixed_face,
-    translate_shape,
-    make_compound,
-    sew_shapes,
-    make_circle,
-    mirror_shape,
-    make_wire,
     _make_OCCedge,
-    _make_OCCwire,
     _make_OCCface,
     _make_OCCsolid,
+    _make_OCCwire,
+    boolean_cut,
+    boolean_fuse,
+    extrude,
+    make_axis,
+    make_box,
+    make_circle,
+    make_compound,
+    make_face,
+    make_mixed_face,
+    make_mixed_shell,
+    make_wire,
+    mirror_shape,
+    revolve,
+    rotate_shape,
+    sew_shapes,
+    sweep,
+    translate_shape,
 )
+from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
     clean_loop,
     simplify_loop,
 )
-from BLUEPRINT.geometry.parameterisations import picture_frame
 from BLUEPRINT.geometry.geomtools import make_box_xz
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.parameterisations import picture_frame
+from BLUEPRINT.geometry.shell import Shell
 
 
 class RingCAD:

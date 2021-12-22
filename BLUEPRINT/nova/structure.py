@@ -22,32 +22,32 @@
 """
 Coil structure creation algorithms - binding TF and PF coils together
 """
-import numpy as np
-import matplotlib.pyplot as plt
 from copy import deepcopy
 from typing import Type
-from scipy.optimize import minimize_scalar, minimize
-from scipy.optimize import fmin_slsqp
 
-from bluemira.geometry._deprecated_tools import get_intersect
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import fmin_slsqp, minimize, minimize_scalar
+
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.systems.baseclass import ReactorSystem
 from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.positioner import XZLMapper
+from bluemira.geometry._deprecated_tools import get_intersect
 from BLUEPRINT.base.error import NovaError
+from BLUEPRINT.cad.coilCAD import CoilStructureCAD
+from BLUEPRINT.geometry.boolean import boolean_2d_difference
 from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import (
-    normal,
-    length,
-    xz_interp,
     distance_between_points,
+    length,
     loop_plane_intersect,
+    normal,
+    xz_interp,
 )
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.boolean import boolean_2d_difference
-from bluemira.equilibria.positioner import XZLMapper
-from BLUEPRINT.cad.coilCAD import CoilStructureCAD
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 

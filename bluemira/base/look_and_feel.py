@@ -23,18 +23,19 @@
 Aesthetic and ambiance functions.
 """
 
-import os
-import subprocess  # noqa :S404
-import platform
-from getpass import getuser
-from textwrap import wrap, dedent
-import time
 import datetime
-import shutil
 import logging
+import os
+import platform
+import shutil
+import subprocess  # noqa :S404
+import time
+from getpass import getuser
+from textwrap import dedent, wrap
+
 from bluemira import __version__
-from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
-from bluemira.base.file import get_bluemira_root, get_bluemira_path
+from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import logger_setup
 
 LOGGER = logger_setup()

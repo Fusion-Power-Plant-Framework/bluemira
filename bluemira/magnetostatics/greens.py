@@ -22,11 +22,11 @@
 """
 Green's functions mappings for psi, Bx, and Bz
 """
-import numpy as np
 import numba as nb
-from scipy.special import ellipk, ellipe
-from bluemira.base.constants import MU_0, MU_0_4PI
+import numpy as np
+from scipy.special import ellipe, ellipk
 
+from bluemira.base.constants import MU_0, MU_0_4PI
 
 __all__ = ["greens_psi", "greens_Bx", "greens_Bz", "greens_all"]
 

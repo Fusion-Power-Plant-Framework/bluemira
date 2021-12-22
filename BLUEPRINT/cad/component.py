@@ -23,15 +23,16 @@
 The base component object for CAD modelling
 """
 from itertools import cycle
-from BLUEPRINT.base.error import CADError
+
 from bluemira.base.look_and_feel import bluemira_warn
+from BLUEPRINT.base.error import CADError
 from BLUEPRINT.cad.cadtools import (
+    get_properties,
     make_compound,
+    rotate_shape,
     save_as_STEP,
     save_as_STEP_assembly,
-    rotate_shape,
     save_as_STL,
-    get_properties,
 )
 
 

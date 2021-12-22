@@ -19,23 +19,23 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import tests
-import pytest
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
 
+import tests
 from bluemira.base.constants import T_LAMBDA
 from bluemira.fuel_cycle.timeline_tools import (
-    generate_lognorm_distribution,
     generate_exponential_distribution,
+    generate_lognorm_distribution,
     generate_truncnorm_distribution,
 )
 from bluemira.fuel_cycle.tools import (
+    E_DD_fusion,
+    E_DT_fusion,
     _dec_I_mdot,
     _find_t15,
     _fountain_linear_sink,
-    E_DD_fusion,
-    E_DT_fusion,
 )
 
 

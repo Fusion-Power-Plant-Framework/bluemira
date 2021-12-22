@@ -20,39 +20,41 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
-import pytest
-import warnings
 import pickle  # noqa :S403
+import warnings
+from unittest.mock import patch
+
 import numpy as np
 import OCC
-from unittest.mock import patch
+import pytest
+
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.offset import offset_clipper
 from bluemira.utilities.tools import compare_dicts
 from BLUEPRINT.cad.cadtools import (
-    make_box,
-    make_wire,
-    make_face,
-    make_bezier_curve,
-    extrude,
-    revolve,
-    loft,
-    make_mixed_shell,
-    make_mixed_face,
-    get_properties,
-    save_as_STL,
-    make_shell,
-    make_circle,
-    sweep,
-    save_as_STEP,
-    check_good_STL,
-    make_spline_face,
-    save_as_STEP_assembly,
     boolean_cut,
     boolean_fuse,
+    check_good_STL,
+    extrude,
+    get_properties,
+    loft,
+    make_bezier_curve,
+    make_box,
+    make_circle,
+    make_face,
+    make_mixed_face,
+    make_mixed_shell,
+    make_shell,
+    make_spline_face,
+    make_wire,
+    revolve,
+    save_as_STEP,
+    save_as_STEP_assembly,
+    save_as_STL,
+    sweep,
 )
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.offset import offset_clipper
+from BLUEPRINT.geometry.shell import Shell
 
 TESTS = get_bluemira_path("BLUEPRINT/cad/test_data", subfolder="tests")
 

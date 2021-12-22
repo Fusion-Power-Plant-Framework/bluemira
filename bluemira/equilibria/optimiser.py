@@ -22,29 +22,27 @@
 """
 Constrained and unconstrained optimisation tools for coilset design
 """
-import numpy as np
-import nlopt
-from typing import Type
 from copy import deepcopy
-import matplotlib.pyplot as plt
-from pandas import DataFrame
-import tabulate
+from typing import Type
 
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print_flush
+import matplotlib.pyplot as plt
+import nlopt
+import numpy as np
+import tabulate
+from pandas import DataFrame
+
 from bluemira.base.file import try_get_bluemira_path
-from bluemira.equilibria.error import EquilibriaError
-from bluemira.geometry._deprecated_tools import make_circle_arc
-from bluemira.utilities.plot_tools import save_figure
-from bluemira.utilities.opt_tools import (
-    regularised_lsq_fom,
-    tikhonov,
-)
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.codes._nlopt_api import process_NLOPT_result
-from bluemira.equilibria.positioner import XZLMapper, RegionMapper
 from bluemira.equilibria.coils import CS_COIL_NAME
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.positioner import RegionMapper, XZLMapper
+from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
+from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.utilities.plot_tools import save_figure
 
 __all__ = [
     "FBIOptimiser",

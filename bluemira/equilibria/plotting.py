@@ -23,19 +23,19 @@
 Plot utilities for equilibria
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
-from itertools import cycle
-from scipy.interpolate import RectBivariateSpline
 import warnings
+from itertools import cycle
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.gridspec import GridSpec
+from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.plot_tools import str_to_latex
-from bluemira.equilibria.constants import M_PER_MN, J_TOR_MIN
+from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
-
+from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
     "GridPlotter",

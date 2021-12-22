@@ -23,9 +23,10 @@
 Plotting for balance of plant
 """
 
-import numpy as np
 from copy import deepcopy
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.sankey import Sankey
 from scipy.optimize import minimize
 

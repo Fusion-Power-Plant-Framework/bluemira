@@ -22,21 +22,22 @@
 """
 Full fuel cycle model object
 """
-from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import numpy as np
-from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
+from scipy.interpolate import interp1d
+
+from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
+from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 from bluemira.fuel_cycle.tools import (
     _speed_recycle,
-    find_max_load_factor,
-    legal_limit,
     discretise_1d,
+    find_max_load_factor,
     find_noisy_locals,
+    legal_limit,
     pam3s_to_mols,
 )
-from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
 # It will be slower... and it will probably be less accurate! But the plots..

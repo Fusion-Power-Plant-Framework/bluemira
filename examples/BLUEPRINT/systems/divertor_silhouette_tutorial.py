@@ -32,14 +32,14 @@ Example demonstrating usage of various divertor build recipes.
 # some of these recipes will be more or less appropriate for different choices of
 # reactor parameterisations.
 
+import os
+
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.file import get_bluemira_root
-
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.geometry.geomtools import unique
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.nova.firstwall import FirstWallProfile
@@ -47,8 +47,8 @@ from BLUEPRINT.nova.stream import StreamFlow
 from BLUEPRINT.systems.divertor_silhouette import (  # noqa :F401
     DivertorSilhouette,
     DivertorSilhouetteFlatDome,
-    DivertorSilhouettePsiBaffle,
     DivertorSilhouetteFlatDomePsiBaffle,
+    DivertorSilhouettePsiBaffle,
 )
 
 # %%[markdown]
