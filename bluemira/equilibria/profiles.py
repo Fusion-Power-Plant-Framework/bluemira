@@ -612,8 +612,11 @@ class CustomProfile(Profile):
         Force-Force prime profile f*df/dpsi(psi_N)
     R_0: float
         Reactor major radius [m]
-    B_0:
+    B_0: float
         Field at major radius [T]
+    Ip: Optional[float]
+        Plasma current [A]. If None, the plasma current will be calculated
+        from p' and ff'.
     """
 
     def __init__(
