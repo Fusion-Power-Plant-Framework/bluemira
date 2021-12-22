@@ -24,14 +24,15 @@ Created on Fri Aug  2 13:08:34 2019
 @author: matti
 """
 import os
-import pickle  # noqa (S403)
-import pytest
-import numpy as np
+import pickle  # noqa :S403
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_common,
     boolean_2d_common_loop,
@@ -39,13 +40,13 @@ from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
     boolean_2d_union,
     boolean_2d_xor,
+    convex_hull,
     entagram,
     simplify_loop,
-    convex_hull,
 )
 from BLUEPRINT.geometry.geomtools import make_box_xz
-
-import tests
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
 
 
 class TestBooleanSimple:
@@ -112,7 +113,7 @@ class TestBooleanOpen:
         fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "loopcut_data.pkl"])
         with open(fn, "rb") as f:
-            data = pickle.load(f)  # noqa (S301)
+            data = pickle.load(f)  # noqa :S301
         loop1 = Loop(data[0][0], data[0][1])  # Closed
         loop2 = Loop(data[0][2], data[0][3])  # Open
         result = boolean_2d_difference(loop2, loop1)

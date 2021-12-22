@@ -24,7 +24,7 @@ Geometry base objects - to be improved!
 """
 import json
 import os
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
 from copy import deepcopy
 
 import numpy as np
@@ -115,7 +115,7 @@ class GeomBase:
         ext = os.path.splitext(filename)[-1]
         if ext == ".pkl":
             with open(filename, "rb") as data:
-                return pickle.load(data)  # noqa (S301)
+                return pickle.load(data)  # noqa :S301
         elif ext == ".json":
             with open(filename, "r") as data:
                 return json.load(data)

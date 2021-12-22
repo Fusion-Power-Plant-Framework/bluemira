@@ -22,28 +22,27 @@
 """
 Very, very simple TBR and power deposition routines
 """
-import matplotlib.pyplot as plt
-import numpy as np
-import os
 import json
+import os
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.look_and_feel import bluemira_print
-from bluemira.display.auto_config import plot_defaults
+import matplotlib.pyplot as plt
+import numpy as np
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.parameter import ParameterFrame
+from bluemira.display.auto_config import plot_defaults
+from bluemira.geometry._deprecated_tools import innocent_smoothie
+from BLUEPRINT.geometry.boolean import boolean_2d_common
 from BLUEPRINT.geometry.constants import VERY_BIG
-from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import (
-    loop_volume,
     get_angle_between_points,
     join_intersect,
+    loop_volume,
 )
-from BLUEPRINT.geometry.boolean import boolean_2d_common
-from bluemira.geometry._deprecated_tools import innocent_smoothie
-
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 TBR_DATA_ROOT = "_TBR_data.json"
 
@@ -193,7 +192,7 @@ class BlanketCoverage(ReactorSystem):
     :math:`\\alpha_{i_{1}}`: starting poloidal angle of the non-breeding region $i$
     :math:`\\alpha_{i_{2}}`: final poloidal angle of the non-breeding region $i$
     :math:`\\lambda(\\theta)`: potential TBR as a function of poloidal angle
-    """  # noqa (W505)
+    """  # noqa :W505
 
     config: Type[ParameterFrame]
     inputs: dict

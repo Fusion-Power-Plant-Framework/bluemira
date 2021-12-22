@@ -23,18 +23,19 @@
 Aesthetic and ambiance functions.
 """
 
-import os
-import subprocess  # noqa (S404)
-import platform
-from getpass import getuser
-from textwrap import wrap, dedent
-import time
 import datetime
-import shutil
 import logging
+import os
+import platform
+import shutil
+import subprocess  # noqa :S404
+import time
+from getpass import getuser
+from textwrap import dedent, wrap
+
 from bluemira import __version__
-from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
-from bluemira.base.file import get_bluemira_root, get_bluemira_path
+from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import logger_setup
 
 LOGGER = logger_setup()
@@ -70,7 +71,7 @@ def get_git_version(directory):
     vinfo: bytes
         The git version bytestring
     """
-    return subprocess.check_output(  # noqa (S603, S607)
+    return subprocess.check_output(  # noqa :S603, S607
         ["git", "describe", "--tags", "--always"], cwd=directory
     ).strip()
 
@@ -89,7 +90,7 @@ def get_git_branch(directory):
     branch: str
         The git branch string
     """
-    out = subprocess.check_output(  # noqa (S603, S607)
+    out = subprocess.check_output(  # noqa :S603, S607
         ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=directory
     )
     return out.strip().decode("utf-8")
@@ -112,7 +113,7 @@ def get_git_files(directory, branch):
         The list of git-controlled path strings
     """
     return (
-        subprocess.check_output(  # noqa (S603, S607)
+        subprocess.check_output(  # noqa :S603, S607
             ["git", "ls-tree", "-r", branch, "--name-only"], cwd=directory
         )
         .decode("utf-8")

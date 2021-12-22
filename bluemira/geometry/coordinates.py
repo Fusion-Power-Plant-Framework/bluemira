@@ -24,11 +24,11 @@ Utility for sets of coordinates
 """
 
 from typing import Iterable
+
 import numpy as np
 import numba as nb
 from pyquaternion import Quaternion
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import EPS
 from bluemira.geometry.error import CoordinatesError
 
@@ -792,7 +792,7 @@ class Coordinates:
     # =============================================================================
 
     @property
-    def T(self):  # noqa(N802)
+    def T(self):  # noqa :N802
         """
         Transpose of the Coordinates
         """

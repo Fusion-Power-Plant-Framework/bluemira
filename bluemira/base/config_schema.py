@@ -75,7 +75,7 @@ class ConfigurationSchema:
     P_sync: Parameter
     P_brehms: Parameter
     f_bs: Parameter
-    beta_N: Parameter  # noqa(N815) - mixed case to match PROCESS
+    beta_N: Parameter  # noqa :N815 - mixed case to match PROCESS
     beta_p: Parameter
     beta: Parameter
     tau_e: Parameter
@@ -100,8 +100,8 @@ class ConfigurationSchema:
 
     # First wall profile
     fw_psi_n: Parameter
-    fw_dL_min: Parameter  # noqa(N815) - mixed case to match PROCESS
-    fw_dL_max: Parameter  # noqa(N815) - mixed case to match PROCESS
+    fw_dL_min: Parameter  # noqa :N815 - mixed case to match PROCESS
+    fw_dL_max: Parameter  # noqa :N815 - mixed case to match PROCESS
     fw_a_max: Parameter
     P_sep_particle: Parameter
     f_p_sol_near: Parameter
@@ -122,7 +122,7 @@ class ConfigurationSchema:
     div_L2D_ob: Parameter
     div_graze_angle: Parameter
     div_psi_o: Parameter
-    div_Ltarg: Parameter  # noqa(N815) - mixed case to match PROCESS
+    div_Ltarg: Parameter  # noqa :N815 - mixed case to match PROCESS
     div_open: Parameter
     g_vv_div_add: Parameter
     LPangle: Parameter

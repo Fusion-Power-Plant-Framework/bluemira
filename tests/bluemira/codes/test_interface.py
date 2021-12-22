@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 from unittest.mock import MagicMock
+
 import pytest
 
 from bluemira.codes import interface
@@ -39,9 +40,9 @@ class TestTask:
         parent._run_dir = "./"
         parent.NAME = "TEST"
         task = interface.Task(parent)
-        e_dict = EvilDict(shell=True)  # noqa (S604)
+        e_dict = EvilDict(shell=True)  # noqa :S604
         with pytest.raises((FileNotFoundError, TypeError)):
             task._run_subprocess("random command", **e_dict)
         assert e_dict["shell"]
         with pytest.raises(FileNotFoundError):
-            task._run_subprocess("random command", shell=e_dict["shell"])  # noqa (S604)
+            task._run_subprocess("random command", shell=e_dict["shell"])  # noqa :S604
