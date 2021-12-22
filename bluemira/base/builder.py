@@ -83,7 +83,7 @@ class Builder(abc.ABC):
     build components when a Design is run.
     """
 
-    _default_run_mode: Optional[str] = None
+    _default_runmode: Optional[str] = None
     _required_params: List[str] = []
     _required_config: List[str] = []
     _params: ParameterFrame
@@ -113,9 +113,11 @@ class Builder(abc.ABC):
         component: Component
             The Component build by this builder.
         """
+        bluemira_print(f"Reinitialising and running full build chain for {self.name}")
         self.reinitialise(params)
         run_result = {}
         if hasattr(self, "_runmode"):
+            bluemira_print(f"Designing {self.name} using runmode: {self.runmode}")
             run_result = self._runmode(self, *args, **kwargs) or {}
             if not isinstance(run_result, dict):
                 bluemira_warn(
@@ -166,7 +168,7 @@ class Builder(abc.ABC):
         return self._params
 
     @property
-    def required_parameters(self) -> List[str]:
+    def required_params(self) -> List[str]:
         """
         The variable names of the parameters that are needed to run this builder.
         """
@@ -192,6 +194,24 @@ class Builder(abc.ABC):
         The design problem solved by this builder, if any.
         """
         return self._design_problem
+
+    def run(self, *args, **kwargs):
+        """
+        Optional abstract method to run a design problem while building.
+        """
+        raise NotImplementedError
+
+    def read(self, *args, **kwargs):
+        """
+        Optional abstract method to read the result of a design problem while building.
+        """
+        raise NotImplementedError
+
+    def mock(self, *args, **kwargs):
+        """
+        Optional abstract method to mock a design problem while building.
+        """
+        raise NotImplementedError
 
     def _validate_requirement(
         self, input, source: Literal["params", "config"]
@@ -226,26 +246,26 @@ class Builder(abc.ABC):
 
     def _extract_config(self, build_config: BuildConfig):
         has_runmode = (
-            "run_mode" in build_config
-            or getattr(self, "_default_run_mode", None) is not None
+            "runmode" in build_config
+            or getattr(self, "_default_runmode", None) is not None
         )
         if has_runmode:
-            self._run_mode = self._set_runmode(build_config)
+            self._set_runmode(build_config)
 
     def _set_runmode(self, build_config: BuildConfig):
         """
-        Set runmode according to the "run_mode" parameter in build_config or the default
+        Set runmode according to the "runmode" parameter in build_config or the default
         run mode if not provided via build_config.
         """
-        run_mode = build_config.get("run_mode", self._default_run_mode)
+        runmode = build_config.get("runmode", self._default_runmode)
 
-        if not hasattr(self, run_mode.lower()):
+        if not hasattr(self, runmode.lower()):
             raise NotImplementedError(
-                f"Builder {self.__class__.__name__} has no {run_mode.lower()} mode."
+                f"Builder {self.__class__.__name__} has no {runmode.lower()} mode."
             )
 
         mode = (
-            build_config.get("run_mode", self._default_run_mode)
+            build_config.get("runmode", self._default_runmode)
             .upper()
             .translate(str.maketrans("", "", string.whitespace))
         )

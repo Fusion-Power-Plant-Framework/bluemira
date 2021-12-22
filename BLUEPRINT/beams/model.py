@@ -22,16 +22,18 @@
 """
 Finite element modeal
 """
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
 from scipy.sparse.linalg import spsolve
-from BLUEPRINT.base.error import BeamsError
+
 from bluemira.base.look_and_feel import bluemira_warn
+from BLUEPRINT.base.error import BeamsError
+from BLUEPRINT.beams.constants import CONDEPS, R_LARGE_DISP
 from BLUEPRINT.beams.geometry import Geometry
 from BLUEPRINT.beams.loads import LoadCase
-from BLUEPRINT.beams.constants import CONDEPS, R_LARGE_DISP
-from BLUEPRINT.beams.symmetry import CyclicSymmetry
 from BLUEPRINT.beams.result import Result
+from BLUEPRINT.beams.symmetry import CyclicSymmetry
 
 
 def check_matrix_condition(matrix, digits):
@@ -202,7 +204,7 @@ class FiniteElementModel:
             self.n_fixed_dofs += n_supports  # Count fixed DOFs
 
             if n_supports != 0:
-                support_indices = np.where(node.supports == True)[0]  # noqa (E712)
+                support_indices = np.where(node.supports == True)[0]  # noqa :E712
                 dofs = [6 * node.id_number + i for i in support_indices]
                 # Keep tracked of fixed DOFs
                 self.fixed_dof_ids.extend(dofs)

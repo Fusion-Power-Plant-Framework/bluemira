@@ -19,19 +19,20 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
-import pytest
-import numpy as np
 import json
+import os
+
+import numpy as np
+import pytest
+
 from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import (
+    _in_plasma,
+    find_LCFS_separatrix,
     find_local_minima,
     inv_2x2_matrix,
-    find_LCFS_separatrix,
-    _in_plasma,
 )
-from bluemira.equilibria.equilibrium import Equilibrium
-
 
 DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
 
@@ -127,7 +128,7 @@ class TestInPlasma:
     def test_recursion(self):
         fn = os.sep.join([DATA, "in_plasma_test.json"])
         with open(fn, "rb") as f:
-            data = json.load(f)  # noqa (S301)
+            data = json.load(f)  # noqa :S301
         x, z = np.array(data["X"]), np.array(data["Z"])
         lcfs = np.array(data["LCFS"])
         result = np.array(data["result"])

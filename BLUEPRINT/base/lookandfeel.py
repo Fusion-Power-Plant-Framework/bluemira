@@ -22,9 +22,10 @@
 """
 Mostly just aesthetic and ambiance functions
 """
+import subprocess  # noqa :S404
 from itertools import cycle
+
 import numpy as np
-import subprocess  # noqa (S404)
 import seaborn as sns
 from matplotlib.colors import hex2color
 

@@ -17,7 +17,7 @@ The coordinate system is right-handed, Cartesian (x, y, z) and centred at (0, 0,
 
 .. seealso::
 	
-	<http://mathworld.wolfram.com/Right-HandedCoordinateSystem.html>
+	<https://mathworld.wolfram.com/Right-HandedCoordinateSystem.html>
 
 
 * The default plane in BLUEPRINT is the x-z plane.

@@ -24,9 +24,17 @@ Utility functions for interacting with external codes
 """
 
 
+import os
+import threading
 from typing import Dict, Literal
 
-from . import error as code_err
+import bluemira.base as bm_base
+from bluemira.base.look_and_feel import (
+    _bluemira_clean_flush,
+    bluemira_error_clean,
+    bluemira_print_clean,
+)
+from bluemira.codes.error import CodesError
 
 
 def _get_mapping(
@@ -54,7 +62,7 @@ def _get_mapping(
         names (value).
     """
     if send_recv not in ["send", "recv"]:
-        raise code_err.CodesError("Mapping must be obtained for either send or recv.")
+        raise CodesError("Mapping must be obtained for either send or recv.")
 
     mapping = {}
     for key in params.keys():
@@ -114,3 +122,80 @@ def get_send_mapping(params, code_name, send_all=False):
         names (value) to use for sending.
     """
     return _get_mapping(params, code_name, "send", send_all)
+
+
+def add_mapping(
+    code_name: str,
+    params: bm_base.ParameterFrame,
+    mapping: Dict[str, bm_base.ParameterMapping],
+):
+    """
+    Adds mappings for a given code to a ParameterFrame.
+    Modifies directly params but only if no mapping for that code exists
+
+    Parameters
+    ----------
+    code_name: str
+        Name of code
+    params: ParameterFrame
+        ParameterFrame to modify
+    mapping: Dict[str, ParameterMapping]
+        mapping between bluemira and the code
+
+    """
+    for key in params.keys():
+        param = params.get_param(key)
+        if param.var in mapping:
+            if param.mapping is None:
+                param.mapping = {code_name: mapping[param.var]}
+            elif code_name not in param.mapping:
+                param.mapping[code_name] = mapping[param.var]
+
+
+class LogPipe(threading.Thread):
+    """
+    Capture logs for subprocesses
+
+    https://codereview.stackexchange.com/questions/6567/redirecting-subprocesses-output-stdout-and-stderr-to-the-logging-module
+
+    Parameters
+    ----------
+    loglevel: str
+        print or error flush printing
+
+    """
+
+    def __init__(self, loglevel):
+        super().__init__(daemon=True)
+
+        self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[
+            loglevel
+        ]
+        self.logfunc_flush = _bluemira_clean_flush
+        self.fd_read, self.fd_write = os.pipe()
+        self.pipe = os.fdopen(self.fd_read, encoding="utf-8", errors="ignore")
+        self.start()
+
+    def fileno(self):
+        """
+        Return the write file descriptor of the pipe
+        """
+        return self.fd_write
+
+    def run(self):
+        """
+        Run the thread and pipe it all into the logger.
+        """
+        for line in iter(self.pipe.readline, ""):
+            if line.startswith("==>"):
+                self.logfunc_flush(line.strip("\n"))
+            else:
+                self.logfunc(line)
+
+        self.pipe.close()
+
+    def close(self):
+        """
+        Close the write end of the pipe.
+        """
+        os.close(self.fd_write)
