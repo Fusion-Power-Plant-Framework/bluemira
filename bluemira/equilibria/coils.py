@@ -23,6 +23,7 @@
 Coil and coil grouping objects
 """
 
+from copy import deepcopy
 from typing import Any, Optional
 
 import matplotlib.pyplot as plt
@@ -1940,7 +1941,7 @@ class CoilSet(CoilGroup):
         Returns the central Solenoid object for a CoilSet
         """
         names = self.get_CS_names()
-        coils = [self.coils[name].copy() for name in names]
+        coils = [deepcopy(self.coils[name]) for name in names]
         return Solenoid.from_coils(coils)
 
     def get_positions(self):
@@ -2137,7 +2138,7 @@ def symmetrise_coilset(coilset):
         bluemira_warn(
             "Symmetrising a CoilSet which is not purely symmetric about z=0. This can result in undesirable behaviour."
         )
-    coilset = coilset.copy()
+    coilset = deepcopy(coilset)
 
     sym_stack = _get_symmetric_coils(coilset)
     counts = np.array(sym_stack, dtype=object).T[1]

@@ -232,7 +232,7 @@ class EquilibriumProblem:
         self.eq._remap_greens()
         if self.li is None:
             self.li = self.eq.calc_li()
-        return self.eq.copy()
+        return deepcopy(self.eq)
 
     def update_psi(self):
         """
@@ -508,7 +508,7 @@ class EquilibriumProblem:
             make_gif(figure_folder, "pos_opt")
 
         self._consolidate_coilset(
-            self.p_optimiser.eq.copy(), self.p_optimiser.swing, plot=plot
+            deepcopy(self.p_optimiser.eq), self.p_optimiser.swing, plot=plot
         )
 
         if "Breakdown" in self.snapshots:
@@ -537,7 +537,7 @@ class EquilibriumProblem:
         eqbase.coilset = self.coilset
         eqbase._remap_greens()
         # Make new equilibria objects for snapshots
-        optimiser = self.p_optimiser.current_optimiser.copy()
+        optimiser = deepcopy(self.p_optimiser.current_optimiser)
         # relaxation
         max_currents = np.append(
             1.0 * max_currents[: self.coilset.n_PF], max_currents[self.coilset.n_PF :]
@@ -560,7 +560,7 @@ class EquilibriumProblem:
                 name,
                 eq,
                 profiles=profiles,
-                coilset=eq.coilset.copy(),
+                coilset=deepcopy(eq.coilset),
                 optimiser=optimiser,
             )
 
@@ -570,7 +570,7 @@ class EquilibriumProblem:
         PF coil positions
         """
         bd = self.snapshots["Breakdown"].eq
-        bd.coilset = self.coilset.copy()
+        bd.coilset = deepcopy(self.coilset)
         optimiser = self.snapshots["Breakdown"].optimiser
 
         max_currents = self.coilset.get_max_currents(0)  # Sizes should all be fixed
