@@ -29,6 +29,7 @@ import string
 from collections.abc import Iterable
 from functools import partial
 from importlib import import_module as imp
+from importlib import machinery as imp_mach
 from importlib import util as imp_u
 from itertools import permutations
 from json import JSONDecoder, JSONEncoder, dumps
@@ -708,14 +709,23 @@ def _loadfromspec(name: str) -> ModuleType:
 
     mod_file = f"{dirname}/{requested}"
 
+    name, ext = requested.rsplit(".", 1) if "." in requested else (requested, "")
+
+    if ext not in imp_mach.SOURCE_SUFFIXES:
+        n_suffix = True
+        imp_mach.SOURCE_SUFFIXES.append(ext)
+    else:
+        n_suffix = False
+
     try:
-        spec = imp_u.spec_from_file_location(
-            mod_file.rsplit("/")[-1].split(".")[0], mod_file
-        )
+        spec = imp_u.spec_from_file_location(name, mod_file)
         module = imp_u.module_from_spec(spec)
         spec.loader.exec_module(module)
-    except (AttributeError, ImportError):
+    except (AttributeError, ImportError, SyntaxError):
         raise ImportError("File '{}' is not a module".format(mod_files[0]))
+
+    if n_suffix:
+        imp_mach.SOURCE_SUFFIXES.pop()
 
     return module
 
