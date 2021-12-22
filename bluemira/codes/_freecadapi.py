@@ -24,6 +24,7 @@ Supporting functions for the bluemira geometry module.
 """
 
 from __future__ import annotations
+import freecad  # noqa: F401
 
 import math
 
@@ -38,7 +39,6 @@ import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
-import freecad  # noqa: F401
 import FreeCAD
 import FreeCADGui
 
