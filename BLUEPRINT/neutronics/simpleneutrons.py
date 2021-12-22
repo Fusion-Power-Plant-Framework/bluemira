@@ -193,7 +193,7 @@ class BlanketCoverage(ReactorSystem):
     :math:`\\alpha_{i_{1}}`: starting poloidal angle of the non-breeding region $i$
     :math:`\\alpha_{i_{2}}`: final poloidal angle of the non-breeding region $i$
     :math:`\\lambda(\\theta)`: potential TBR as a function of poloidal angle
-    """  # noqa (W505)
+    """  # noqa :W505
 
     config: Type[ParameterFrame]
     inputs: dict

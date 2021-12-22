@@ -557,7 +557,7 @@ class Equilibrium(MHDState):
         psi=None,
         Ip=0,
         li=None,
-        RB0=None,  # noqa (N803)
+        RB0=None,  # noqa :N803
         jtor=None,
         profiles=None,
         filename=None,
@@ -1075,7 +1075,7 @@ class Equilibrium(MHDState):
             The radial position of the effective current centre
         zcur: float
             The vertical position of the effective current centre
-        """  # noqa (W505)
+        """  # noqa :W505
         xcur = np.sqrt(1 / self._Ip * self._int_dxdz(self.x ** 2 * self._jtor))
         zcur = 1 / self._Ip * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
@@ -1330,7 +1330,7 @@ class Equilibrium(MHDState):
             self.x, self.z, psi, o_points, x_points, double_null=self.is_double_null
         )[1]
 
-    def _clear_OX_points(self):  # noqa (N802)
+    def _clear_OX_points(self):  # noqa :N802
         """
         Speed optimisation for storing OX point searches in a single interation
         of the solve. Large grids can cause OX finding to be expensive..
@@ -1338,7 +1338,7 @@ class Equilibrium(MHDState):
         self._o_points = None
         self._x_points = None
 
-    def get_OX_points(self, psi=None, force_update=False):  # noqa (N802)
+    def get_OX_points(self, psi=None, force_update=False):  # noqa :N802
         """
         Returns list of [[O-points], [X-points]]
         """
@@ -1350,7 +1350,7 @@ class Equilibrium(MHDState):
             )
         return self._o_points, self._x_points
 
-    def get_OX_psis(self, psi=None):  # noqa (N802)
+    def get_OX_psis(self, psi=None):  # noqa :N802
         """
         Returns psi at the.base.O-point and X-point
         """

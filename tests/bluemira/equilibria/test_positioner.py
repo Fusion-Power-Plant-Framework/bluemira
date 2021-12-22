@@ -327,7 +327,7 @@ class TestRegionMapper:
 
 
 class TestCoilPositioner:
-    def test_DEMO_CS(self):  # noqa (N802)
+    def test_DEMO_CS(self):  # noqa :N802
         for n in [3, 5, 7, 9]:
             d_loop = flatD(4, 16, 0)
             d_loop = Loop(x=d_loop[0], z=d_loop[1])

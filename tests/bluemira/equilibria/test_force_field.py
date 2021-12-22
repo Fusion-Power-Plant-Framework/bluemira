@@ -45,7 +45,7 @@ class TestForceField:
         dummy = Coil(5, 0, current=0, ctype="Plasma", dx=0, dz=0)
         cls.ff = ForceField(cls.coilset, dummy)
 
-    def test_Fz(self):  # noqa (N802)
+    def test_Fz(self):  # noqa :N802
         """
         Check the vertical forces between a Helmholtz pair.
         Verbose: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6472319

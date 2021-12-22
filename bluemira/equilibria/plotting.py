@@ -535,7 +535,7 @@ class EquilibriumPlotter(Plotter):
                 zorder=9,
             )
 
-    def plot_X_points(self):  # noqa (N802)
+    def plot_X_points(self):  # noqa :N802
         """
         Plot X-points.
         """
@@ -549,7 +549,7 @@ class EquilibriumPlotter(Plotter):
                     zorder=10,
                 )
 
-    def plot_O_points(self):  # noqa (N802)
+    def plot_O_points(self):  # noqa :N802
         """
         Plot O-points.
         """

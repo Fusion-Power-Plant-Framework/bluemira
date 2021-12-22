@@ -24,7 +24,7 @@ import numpy as np
 
 openmoc = pytest.importorskip("openmoc")
 
-from BLUEPRINT.neutronics.openmoc_geometry_tools import (  # noqa (E402)
+from BLUEPRINT.neutronics.openmoc_geometry_tools import (  # noqa :E402
     get_plane_properties_from_points,
     get_plane_properties,
     get_normalised_plane_properties,

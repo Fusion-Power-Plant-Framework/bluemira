@@ -191,7 +191,7 @@ class ReactorCrossSection(ReactorSystem):
         self.x_b = self.geom["first_wall"]["x"]
         self.z_b = self.geom["first_wall"]["z"]
 
-    def _build_SN(self):  # noqa (N802)
+    def _build_SN(self):  # noqa :N802
         div_geom = self.div_profile.make_divertor(
             self.geom["inner_loop"], location="lower"
         )
@@ -234,7 +234,7 @@ class ReactorCrossSection(ReactorSystem):
             blanket_out, div_geom["divertor_gap"]
         )[0]
 
-    def _build_DN(self):  # noqa (N802)
+    def _build_DN(self):  # noqa :N802
         div_lower = self.div_profile.make_divertor(
             self.geom["inner_loop"], location="lower"
         )

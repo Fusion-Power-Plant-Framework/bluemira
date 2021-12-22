@@ -22,7 +22,7 @@
 import os
 import pytest
 import numpy as np
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.base.error import BeamsError
@@ -180,7 +180,7 @@ class TestDuploRectangle:
         path = get_bluemira_path("BLUEPRINT/beams", subfolder="tests")
         filename = os.sep.join([path, "tf_shell_sections.pkl"])
         with open(filename, "rb") as f:
-            cls.shells = pickle.load(f)  # noqa (S301)
+            cls.shells = pickle.load(f)  # noqa :S301
 
     def test_rotation(self):
         for shell in self.shells:

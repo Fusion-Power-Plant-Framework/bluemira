@@ -27,7 +27,7 @@ import seaborn as sns
 from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.mixins import OnionCAD
 from BLUEPRINT.geometry.boolean import simplify_loop
-from BLUEPRINT.cad.cadtools import (  # noqa (F401)  Used in some variations commented out
+from BLUEPRINT.cad.cadtools import (  # noqa :F401  Used in some variations commented out
     revolve,
     boolean_cut,
     make_face,

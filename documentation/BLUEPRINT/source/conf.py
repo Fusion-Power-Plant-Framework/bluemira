@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.abspath("../../../"))
 
-from BLUEPRINT._version import get_versions  # noqa (E402)
+from BLUEPRINT._version import get_versions  # noqa :E402
 
 
 def setup(app):

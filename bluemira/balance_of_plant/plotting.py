@@ -41,7 +41,7 @@ class SuperSankey(Sankey):
     required to connect two sub-diagrams.
     """
 
-    def add(  # noqa (D102)
+    def add(  # noqa :D102
         self,
         patchlabel="",
         flows=None,
@@ -55,7 +55,7 @@ class SuperSankey(Sankey):
         rotation=0,
         **kwargs
     ):
-        __doc__ = super().__doc__  # noqa (F841)
+        __doc__ = super().__doc__  # noqa :F841
         # Here we first check if the "add" method has received arguments that
         # the Sankey class can't handle.
         if future is None:

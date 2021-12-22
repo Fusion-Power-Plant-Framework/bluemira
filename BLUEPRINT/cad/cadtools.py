@@ -348,7 +348,7 @@ def check_watertight(stl_filename):
     return mesh.is_watertight
 
 
-def check_good_STL(stl_filename):  # noqa (N802)
+def check_good_STL(stl_filename):  # noqa :N802
     """
     Checks quality of an STL file and tests its applicability to neutronics. \n
     Presently checks:
@@ -372,7 +372,7 @@ def check_good_STL(stl_filename):  # noqa (N802)
     return all([mesh.is_watertight, mesh.is_volume, mesh.volume > MINIMUM_MESH_VOL])
 
 
-def check_STL_folder(folderpath):  # noqa (N802)
+def check_STL_folder(folderpath):  # noqa :N802
     """
     Checks the quality of all STL files in a given folder
 
@@ -400,7 +400,7 @@ def check_STL_folder(folderpath):  # noqa (N802)
 # =============================================================================
 
 
-def save_as_STL(  # noqa (N802)
+def save_as_STL(  # noqa :N802
     shape,
     filename="test",
     ascii_mode=False,
@@ -447,7 +447,7 @@ def save_as_STL(  # noqa (N802)
 
 def save_as_STEP(
     shape, filename="test", partname=None, scale=1, standard="AP214"
-):  # noqa (N802)
+):  # noqa :N802
     """
     Saves a shape in an STP format.
 
@@ -499,7 +499,7 @@ def save_as_STEP(
 
 def save_as_STEP_assembly(
     *shapes, filename="test", partname=None, scale=1
-):  # noqa (N802)
+):  # noqa :N802
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -1293,7 +1293,7 @@ class MixedFaceMaker:
             edges.append(edge)
         return edges
 
-    def make_OCC_face(self):  # noqa (N802)
+    def make_OCC_face(self):  # noqa :N802
         """
         Makes TopoDS Wire and Face from the collection of edges
         """
@@ -1792,7 +1792,7 @@ def curve_to_wire(curve):
     return BRepBuilderAPI_MakeWire(edge).Wire()
 
 
-def to_NURBS(shape):  # noqa (N802)
+def to_NURBS(shape):  # noqa :N802
     """
     Convert shape to NURBS spline
     """
@@ -1804,7 +1804,7 @@ def to_NURBS(shape):  # noqa (N802)
 # =============================================================================
 
 
-def point_array_to_TColgp_PntArrayType(array, typer=TColgp_Array1OfPnt):  # noqa (N802)
+def point_array_to_TColgp_PntArrayType(array, typer=TColgp_Array1OfPnt):  # noqa :N802
     """
     Creates a curve from a numpy array
 
@@ -1840,7 +1840,7 @@ def point_array_to_TColgp_PntArrayType(array, typer=TColgp_Array1OfPnt):  # noqa
     return pt_arr
 
 
-def _points_to_TColgp_Array(pointlist):  # noqa (N802)
+def _points_to_TColgp_Array(pointlist):  # noqa :N802
     """
     Parameters
     ----------
@@ -1855,7 +1855,7 @@ def _points_to_TColgp_Array(pointlist):  # noqa (N802)
     return _Tcol_dim_1(pointlist, TColgp_Array1OfPnt2d)
 
 
-def _Tcol_dim_1(pointlist, _type):  # noqa (N802)
+def _Tcol_dim_1(pointlist, _type):  # noqa :N802
     """
     Function factory for 1-dimensional TCol* types
     """
@@ -1865,12 +1865,12 @@ def _Tcol_dim_1(pointlist, _type):  # noqa (N802)
     return pts
 
 
-def _make_OCCedge(*args):  # noqa (N802)
+def _make_OCCedge(*args):  # noqa :N802
     edge = BRepBuilderAPI_MakeEdge(*args)
     return edge.Edge()
 
 
-def _make_OCCwire(*args):  # noqa (N802)
+def _make_OCCwire(*args):  # noqa :N802
     if isinstance(args[0], (list, tuple)):
         wire = BRepBuilderAPI_MakeWire()
         for i in args[0]:
@@ -1881,7 +1881,7 @@ def _make_OCCwire(*args):  # noqa (N802)
     return wire.Wire()
 
 
-def _make_OCCface(*args):  # noqa (N802)
+def _make_OCCface(*args):  # noqa :N802
     """
     Makes an OCC Face object from an OCC Wire object
 
@@ -1898,7 +1898,7 @@ def _make_OCCface(*args):  # noqa (N802)
     return face.Face()
 
 
-def _make_OCCsolid(*args):  # noqa (N802)
+def _make_OCCsolid(*args):  # noqa :N802
     """
     Makes an OCC Solid object from topods objects
 

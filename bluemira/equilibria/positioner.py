@@ -311,7 +311,7 @@ class XZLMapper:
             loop["z"](l_values) - point[1]
         ) ** 2
 
-    def xz_to_L(self, x, z):  # noqa (N802)
+    def xz_to_L(self, x, z):  # noqa :N802
         """
         Translação de coordenadas (x, z) até coordenadas lineares normalizadas
         (L) para as bobinas PF
@@ -320,14 +320,14 @@ class XZLMapper:
             self.PFnorm, method="bounded", args=(self.pftrack, [x, z]), bounds=[0, 1]
         ).x
 
-    def L_to_xz(self, l_values):  # noqa (N802)
+    def L_to_xz(self, l_values):  # noqa :N802
         """
         Translação de coordenadas lineares normalizadas (L) até coordenadas
         (x, z) para as bobinas PF
         """
         return self.pftrack["x"](l_values), self.pftrack["z"](l_values)
 
-    def z_to_L(self, zc_vec):  # noqa (N802)
+    def z_to_L(self, zc_vec):  # noqa :N802
         """
         Convert z values for the CS in L values of the CS track.
         """
@@ -358,7 +358,7 @@ class XZLMapper:
         # zc[-1] = self.Zmin+dz[-1]
         return self.Xcs * np.ones(len(l_values)), zc[::-1], dz[::-1]  # Coil numbering
 
-    def get_Lmap(self, coilset, mapping):  # noqa (N802)
+    def get_Lmap(self, coilset, mapping):  # noqa :N802
         """
         Calculates initial L vector and lb and ub constraints on L vector.
 

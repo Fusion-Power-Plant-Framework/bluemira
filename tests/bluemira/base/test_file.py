@@ -36,7 +36,7 @@ FILE_GEN_PATH = os.path.join("tests", "bluemira", "base", "file_manager_gen")
 
 
 @pytest.mark.parametrize(
-    "path,subfolder,allow_missing,expect_none",  # noqa(N802)
+    "path,subfolder,allow_missing,expect_none",  # noqa :N802
     [
         ("bluemira", "tests", False, False),  # NOTE: Change "bluemira" to e.g. "base"
         ("bluemira", "tests", True, False),  # NOTE: Change "bluemira" to e.g. "base"
@@ -55,7 +55,7 @@ def test_try_get_bluemira_path(path, subfolder, allow_missing, expect_none):
 
 
 @pytest.mark.parametrize(
-    "path,subfolder",  # noqa(N802)
+    "path,subfolder",  # noqa :N802
     [
         ("spam", "tests"),
         ("spam", "ham"),

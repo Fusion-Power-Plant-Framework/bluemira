@@ -57,12 +57,12 @@ from bluemira.geometry.constants import MINIMUM_LENGTH
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
-apiWire = Part.Wire  # noqa (N816)
-apiFace = Part.Face  # noqa (N816)
-apiShell = Part.Shell  # noqa (N816)
-apiSolid = Part.Solid  # noqa (N816)
-apiShape = Part.Shape  # noqa (N816)
-apiCompound = Part.Compound  # noqa (N816)
+apiWire = Part.Wire  # noqa :N816
+apiFace = Part.Face  # noqa :N816
+apiShell = Part.Shell  # noqa :N816
+apiSolid = Part.Solid  # noqa :N816
+apiShape = Part.Shape  # noqa :N816
+apiCompound = Part.Compound  # noqa :N816
 
 # ======================================================================================
 # Array, List, Vector, Point manipulation

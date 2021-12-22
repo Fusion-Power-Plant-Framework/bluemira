@@ -178,7 +178,7 @@ class CADModel:
         self._Q = qt_display  # for debugging
         qt_display.show()
 
-    def save_as_STEP_assembly(self, filename, partname=None, scale=1):  # noqa (N802)
+    def save_as_STEP_assembly(self, filename, partname=None, scale=1):  # noqa :N802
         """
         Saves the CADModel to a STEP assembly file
 
@@ -199,7 +199,7 @@ class CADModel:
                 shapes.append(compounds)
         save_as_STEP_assembly(shapes, filename=filename, partname=partname, scale=scale)
 
-    def save_as_STEP(self, filepath, scale=1):  # noqa (N802)
+    def save_as_STEP(self, filepath, scale=1):  # noqa :N802
         """
         Exports the CADModel into individual STEP files
 
@@ -214,7 +214,7 @@ class CADModel:
             filename = os.sep.join([filepath, name])
             part.save_as_STEP(filename, scale=scale)
 
-    def save_as_STL(self, filepath, scale=1):  # noqa (N802)
+    def save_as_STL(self, filepath, scale=1):  # noqa :N802
         """
         Exports the CADModel into individual STL files
 

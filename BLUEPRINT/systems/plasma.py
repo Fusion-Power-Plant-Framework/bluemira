@@ -192,7 +192,7 @@ class Plasma(Meshable, ReactorSystem):
         """
         return self.geom["Separatrix"]
 
-    def get_LCFS(self):  # noqa (N802)
+    def get_LCFS(self):  # noqa :N802
         """
         Get the last closed flux surface profile.
 

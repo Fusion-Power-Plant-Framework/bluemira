@@ -1291,7 +1291,7 @@ def princetonD(x1, x2, dz, npoints=200):
         :math:`I_{n}` is the n-th order modified Bessel function
         :math:`x_{1}` is the inner radial position of the shape
         :math:`x_{2}` is the outer radial position of the shape
-    """  # noqa (W505)
+    """  # noqa :W505
     if x2 <= x1:
         raise GeometryError(
             "Princeton D parameterisation requires an x2 value"

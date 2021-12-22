@@ -25,7 +25,7 @@ The bluemira external code wrapper
 from __future__ import annotations
 
 import string
-import subprocess  # noqa (S404)
+import subprocess  # noqa :S404
 from enum import Enum
 from typing import Dict
 
@@ -97,8 +97,8 @@ class Task:
         kwargs["cwd"] = kwargs.get("cwd", self._run_dir)
         kwargs.pop("shell", None)  # Protect against user input
 
-        with subprocess.Popen(  # noqa (S603)
-            command, stdout=stdout, stderr=stderr, shell=False, **kwargs  # noqa (S603)
+        with subprocess.Popen(  # noqa :S603
+            command, stdout=stdout, stderr=stderr, shell=False, **kwargs  # noqa :S603
         ) as s:
             stdout.close()
             stderr.close()

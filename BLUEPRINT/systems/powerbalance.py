@@ -83,7 +83,7 @@ def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
     return (1 + fmisc) * (nucl_heating + qcl + qac + qss)
 
 
-def He_pumping(  # noqa (N802)
+def He_pumping(  # noqa :N802
     pressure_in, d_pressure, t_in, t_out, blanket_power, eta_isen, eta_el
 ):
     """
@@ -125,7 +125,7 @@ def He_pumping(  # noqa (N802)
     \t:math:`P_{pump,el} = \\dfrac{P_{pump}}{\\eta_{el}}` [MW]\n
     **No longer in use:**
     \t:math:`f_{pump}=\\dfrac{dP}{dTc_P\\rho_{av}}`
-    """  # noqa (W505)
+    """  # noqa :W505
     d_temp = t_out - t_in
     t_bb_inlet = to_kelvin(t_in)
     # Modèle gaz idéal monoatomique - small compression ratios
@@ -141,7 +141,7 @@ def He_pumping(  # noqa (N802)
     return p_pump_is, p_pump_el
 
 
-def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa (N802)
+def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa :N802
     # TODO: Add proper pump model
     f_pump /= eta_isen
 
@@ -175,7 +175,7 @@ class BalanceOfPlant(ReactorSystem):
         +\\Bigg(P_{n_{DIV}}+f_{SOL_{rad}}f_{SOL_{ch}}f_{fw}\\Big(\\frac{P_{fus}}{5}+P_{HCD}\\Big)\\Bigg)\\
         \\Big(1+\\frac{f_{p_{DIV}}}{1-f_{p_{DIV}}}\\Big)\\Bigg]
 
-    """  # noqa (W505)
+    """  # noqa :W505
 
     config: Type[ParameterFrame]
     inputs: dict

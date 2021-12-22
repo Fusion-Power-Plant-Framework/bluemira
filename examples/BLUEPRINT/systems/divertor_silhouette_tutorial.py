@@ -44,7 +44,7 @@ from BLUEPRINT.geometry.geomtools import unique
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.nova.firstwall import FirstWallProfile
 from BLUEPRINT.nova.stream import StreamFlow
-from BLUEPRINT.systems.divertor_silhouette import (  # noqa(F401)
+from BLUEPRINT.systems.divertor_silhouette import (  # noqa :F401
     DivertorSilhouette,
     DivertorSilhouetteFlatDome,
     DivertorSilhouettePsiBaffle,

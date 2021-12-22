@@ -24,7 +24,7 @@ Created on Fri Aug  2 07:33:39 2019
 @author: matti
 """
 import os
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -327,7 +327,7 @@ class TestClipperOffset:
         fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "bb_offset_test.pkl"])
         with open(fn, "rb") as file:
-            d = pickle.load(file)  # noqa (S301)
+            d = pickle.load(file)  # noqa :S301
         loop = Loop(**d)
         offsets = []
         for m in ["square", "miter"]:  # round very slow...

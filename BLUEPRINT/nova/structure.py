@@ -338,7 +338,7 @@ class CoilArchitect(ReactorSystem):
         self.xsections["case_out"] = {"y": y_out, "z": np.array(z_out)}
         self.x_nose = self.tf.geom["Case inboard X-Y single"].outer.x[2]
 
-    def _calculate_CS_seat(self):  # noqa (N802)
+    def _calculate_CS_seat(self):  # noqa :N802
         """
         Calculates the position of the CS support seat
         """
@@ -357,7 +357,7 @@ class CoilArchitect(ReactorSystem):
         zo = min(zo, 0.9 * z_max)  # Eyeballing here
         return xo, zo
 
-    def _build_CS_support(self):  # noqa (N802)
+    def _build_CS_support(self):  # noqa :N802
         """
         Builds the CS supports onto the TF coils
         """
@@ -366,7 +366,7 @@ class CoilArchitect(ReactorSystem):
         self.geom["feed 3D CAD"]["CS"]["z"] = [znose, znose, ztop, ztop]
         self.geom["feed 3D CAD"]["CS"]["ztop"] = ztop
 
-    def _build_PF_supports(self):  # noqa (N802)
+    def _build_PF_supports(self):  # noqa :N802
         """
         Builds the PF supports
         """
@@ -394,7 +394,7 @@ class CoilArchitect(ReactorSystem):
             "space": space,
         }
 
-    def _connect_PF(self, coil, loop, edge, hover, ang_min):  # noqa (N802)
+    def _connect_PF(self, coil, loop, edge, hover, ang_min):  # noqa :N802
         """
         Connects a PF coil to the TF coil offset
         """
@@ -557,7 +557,7 @@ class CoilArchitect(ReactorSystem):
 
         self.geom["feed 3D CAD"]["Gsupport"] = gsupport
 
-    def _build_OIC_structures(self):  # noqa (N802)
+    def _build_OIC_structures(self):  # noqa :N802
         """
         Designs the outer inter-coil structures
         """

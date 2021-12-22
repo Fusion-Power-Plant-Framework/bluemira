@@ -714,7 +714,7 @@ class TFCoilCAD(ComponentCAD):
         self.add_shape(tfwp, name="TF_wp")
         return self.split(["TF_case", "TF_WP"], [["TF_case"], ["TF_wp"]])
 
-    def _get_OIS_collision(self):  # noqa (N802)
+    def _get_OIS_collision(self):  # noqa :N802
         """
         Gets x value of OIS collision.
         """
@@ -769,7 +769,7 @@ class CoilStructureCAD(ComponentCAD):
             cad[name] = rotate_shape(cad[name], axis=None, angle=180 / self.n_TF)
             self.add_shape(cad[name], name=name)
 
-    def _build_OIS(self, support):  # noqa (N802)
+    def _build_OIS(self, support):  # noqa :N802
         """
         Builds an individual outer inter-coil support
 
@@ -811,7 +811,7 @@ class CoilStructureCAD(ComponentCAD):
 
         return make_compound([left_ois, right_ois])
 
-    def _build_PF_seat(self, seat):  # noqa (N802)
+    def _build_PF_seat(self, seat):  # noqa :N802
         """
         Builds an individual PF seat
 
@@ -862,7 +862,7 @@ class CoilStructureCAD(ComponentCAD):
         return pf_seat
 
     @staticmethod
-    def _make_PF_plate(seat, width, thickness):  # noqa (N802)
+    def _make_PF_plate(seat, width, thickness):  # noqa :N802
         """
         Makes a flat plate for a PF coil to sit on.
         NOTE: Butt ugly generalisation
@@ -944,7 +944,7 @@ def cut_box(side="right", size=30, n_TF=16):
     return make_box((0, 0, -size / 2), v1, v2, (0, 0, size))
 
 
-def build_CS_seat(cs_support):  # noqa (N802)
+def build_CS_seat(cs_support):  # noqa :N802
     """
     Builds a single central solenoid support seat
 

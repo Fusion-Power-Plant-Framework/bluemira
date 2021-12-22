@@ -346,7 +346,7 @@ class Coordinates:
     # =============================================================================
 
     @property
-    def T(self):  # noqa(N802)
+    def T(self):  # noqa :N802
         """
         Transpose of the Coordinates
         """

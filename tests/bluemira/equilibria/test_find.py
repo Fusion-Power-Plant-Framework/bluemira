@@ -127,7 +127,7 @@ class TestInPlasma:
     def test_recursion(self):
         fn = os.sep.join([DATA, "in_plasma_test.json"])
         with open(fn, "rb") as f:
-            data = json.load(f)  # noqa (S301)
+            data = json.load(f)  # noqa :S301
         x, z = np.array(data["X"]), np.array(data["Z"])
         lcfs = np.array(data["LCFS"])
         result = np.array(data["result"])

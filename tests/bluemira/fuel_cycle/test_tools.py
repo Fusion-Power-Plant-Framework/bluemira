@@ -65,7 +65,7 @@ class TestSinkTools:
         th \\n
         :math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+\\dot{m}\\sum_{t=0}^{T}e^{-\\lambda(T-t)}`\\n
         :math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+\\dot{m}\\dfrac{e^{-{\\lambda}T}\\big(e^{{\\lambda}(T+1)}-1\\big)}{e^{\\lambda}-1}`
-        """  # noqa (W505)
+        """  # noqa :W505
         time_y = 0.50  # years
         n = 100000  # intersteps
 
@@ -277,12 +277,12 @@ class TestGCSEPhysics:
             delta * 1e-6, relate
         )
 
-    def test_DT(self):  # noqa (N802)
+    def test_DT(self):  # noqa :N802
         e_dt_kikuchi = (3.5 + 14.1) * 1e6
         e, v = E_DT_fusion(), e_dt_kikuchi
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
 
-    def test_DD(self):  # noqa (N802)
+    def test_DD(self):  # noqa :N802
         e_dd_kikuchi = np.array([1.01 + 3.02, 0.82 + 2.45]) * 1e6
         e, v = E_DD_fusion(), np.average(e_dd_kikuchi)
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)

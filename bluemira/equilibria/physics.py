@@ -274,7 +274,7 @@ def calc_energy(eq):
     return volume_integral(Bp ** 2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
 
 
-def calc_Li(eq):  # noqa (N802)
+def calc_Li(eq):  # noqa :N802
     """
     Calculates the internal inductance of the plasma [H]
 
@@ -488,7 +488,7 @@ def normalise_beta(beta, a, b_tor, Ip):
     return beta * a * b_tor / Ip
 
 
-def beta_N_to_beta(beta_N, a, Btor, Ip):  # noqa (N802)
+def beta_N_to_beta(beta_N, a, Btor, Ip):  # noqa :N802
     """
     Converts normalised beta to beta
 

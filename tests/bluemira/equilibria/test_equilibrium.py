@@ -108,13 +108,13 @@ class TestFields:
 
         assert np.allclose(b_values, b1)
 
-    def test_Bx(self):  # noqa (N802)
+    def test_Bx(self):  # noqa :N802
         self.callable_tester(self.eq.Bx)
 
-    def test_Bz(self):  # noqa (N802)
+    def test_Bz(self):  # noqa :N802
         self.callable_tester(self.eq.Bz)
 
-    def test_Bp(self):  # noqa (N802)
+    def test_Bp(self):  # noqa :N802
         self.callable_tester(self.eq.Bp)
 
     def test_psi(self):

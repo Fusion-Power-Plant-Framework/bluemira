@@ -331,7 +331,7 @@ class MagneticConstraintSet(ABC):
     def __init__(self, constraints):
         self.constraints = constraints
 
-    def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa (N803)
+    def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
 
         if I_not_dI:
             # hack to change from dI to I optimiser (and keep both)
@@ -525,7 +525,7 @@ class DivertorLegCalculator:
 
     def calc_divertor_leg(
         self, x_point, angle, length, n, loc="lower", pos="outer"
-    ):  # noqa (N802)
+    ):  # noqa :N802
         """
         Calculate the position of a straight line divertor leg.
         """

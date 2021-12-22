@@ -680,7 +680,7 @@ class ForceFieldConstrainer:
             grad
         """
         # get coil force and jacobian
-        F, dF = self.eq.force_field.calc_force(vector * self.scale)  # noqa (N803)
+        F, dF = self.eq.force_field.calc_force(vector * self.scale)  # noqa :N803
         F /= self.scale  # Scale down to MN
         # dF /= self.scale
 
@@ -735,7 +735,7 @@ class ForceFieldConstrainer:
             constraint
             grad
         """
-        B, dB = self.eq.force_field.calc_field(vector * self.scale)  # noqa (N803)
+        B, dB = self.eq.force_field.calc_field(vector * self.scale)  # noqa :N803
         dB /= self.scale ** 2
         if grad.size > 0:
             grad[:] = dB
@@ -762,7 +762,7 @@ class FBIOptimiser(SanityReporter, ForceFieldConstrainer, EquilibriumOptimiser):
 
     def __init__(
         self, max_fields, PF_Fz_max, CS_Fz_sum, CS_Fz_sep, **kwargs
-    ):  # noqa (N803)
+    ):  # noqa :N803
         # Used scale for optimiser RoundoffLimited Error prevention
         self.scale = 1e6  # Scale for currents and forces (MA and MN)
         self.gamma = kwargs.get("gamma", 1e-14)  # 1e-7  # 0
@@ -1100,7 +1100,7 @@ class CoilsetOptimiserBase:
     """
 
     def __init__(self, coilset):
-        # noqa (N803)
+        # noqa :N803
         # Scale for currents and forces (MA and MN) to protect against
         # floating point errors.
         self.scale = 1e6
@@ -1362,7 +1362,7 @@ class BoundedCurrentOptimiser(CoilsetOptimiserBase):
             "opt_parameters": {},
         },
     ):
-        # noqa (N803)
+        # noqa :N803
         super().__init__(coilset)
 
         self.max_currents = max_currents
@@ -1483,7 +1483,7 @@ class CoilsetOptimiser(CoilsetOptimiserBase):
             "opt_parameters": {},
         },
     ):
-        # noqa (N803)
+        # noqa :N803
         super().__init__(coilset)
 
         # Create region map
@@ -1652,7 +1652,7 @@ class NestedCoilsetOptimiser(CoilsetOptimiserBase):
             "opt_parameters": {},
         },
     ):
-        # noqa (N803)
+        # noqa :N803
         super().__init__(sub_opt.coilset)
 
         self.region_mapper = RegionMapper(pfregions)

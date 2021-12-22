@@ -1337,7 +1337,7 @@ def get_intersect(loop1, loop2):
     Note
     ----
     D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
-    """  # noqa (W505)
+    """  # noqa :W505
     x1, y1 = loop1.d2
     x2, y2 = loop2.d2
 

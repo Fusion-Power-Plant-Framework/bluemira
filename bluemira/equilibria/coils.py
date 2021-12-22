@@ -712,7 +712,7 @@ class Coil:
         """
         return semianalytic_Bz(self.x, self.z, x, z, d_xc=self.dx, d_zc=self.dz)
 
-    def F(self, eqcoil):  # noqa (N802)
+    def F(self, eqcoil):  # noqa :N802
         """
         Calculate the force response at the coil centre including the coil
         self-force.
@@ -720,7 +720,7 @@ class Coil:
         \t:math:`\\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}`\n
         \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
         \t:math:`F_z = -IBx`
-        """  # noqa (W505)
+        """  # noqa :W505
         Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
             a = MU_0 * self.current ** 2 / (4 * np.pi * self.x)
@@ -735,7 +735,7 @@ class Coil:
             ]
         )
 
-    def control_F(self, coil):  # noqa (N802)
+    def control_F(self, coil):  # noqa :N802
         """
         Returns the Green's matrix element for the coil mutual force.
 
@@ -1158,7 +1158,7 @@ class CoilGroup:
         """
         return self._all_if(self.coils.values(), "control_psi", x, z)
 
-    def F(self, eqcoil):  # noqa (N802)
+    def F(self, eqcoil):  # noqa :N802
         """
         Returns the forces in the CoilGroup as a response to an equilibrium or
         other CoilGroup

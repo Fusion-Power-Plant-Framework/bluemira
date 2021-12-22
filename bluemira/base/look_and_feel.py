@@ -24,7 +24,7 @@ Aesthetic and ambiance functions.
 """
 
 import os
-import subprocess  # noqa (S404)
+import subprocess  # noqa :S404
 import platform
 from getpass import getuser
 from textwrap import wrap, dedent
@@ -70,7 +70,7 @@ def get_git_version(directory):
     vinfo: bytes
         The git version bytestring
     """
-    return subprocess.check_output(  # noqa (S603, S607)
+    return subprocess.check_output(  # noqa :S603, S607
         ["git", "describe", "--tags", "--always"], cwd=directory
     ).strip()
 
@@ -89,7 +89,7 @@ def get_git_branch(directory):
     branch: str
         The git branch string
     """
-    out = subprocess.check_output(  # noqa (S603, S607)
+    out = subprocess.check_output(  # noqa :S603, S607
         ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=directory
     )
     return out.strip().decode("utf-8")
@@ -112,7 +112,7 @@ def get_git_files(directory, branch):
         The list of git-controlled path strings
     """
     return (
-        subprocess.check_output(  # noqa (S603, S607)
+        subprocess.check_output(  # noqa :S603, S607
             ["git", "ls-tree", "-r", branch, "--name-only"], cwd=directory
         )
         .decode("utf-8")

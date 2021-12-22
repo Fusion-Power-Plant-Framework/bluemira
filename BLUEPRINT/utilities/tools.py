@@ -57,7 +57,7 @@ class PowerLawScaling:
         The ordered list of exponents
     err: Union[np.array, List, None]
         The ordered list of errors of the exponents
-    """  # noqa (W505)
+    """  # noqa :W505
 
     def __init__(self, c=1, cerr=0, cexperr=None, exponents=None, err=None):
         self._len = len(exponents)
@@ -187,7 +187,7 @@ def map_nested_dict(obj, function):
             obj[k] = function(v)
 
 
-def get_max_PF(coil_dict):  # noqa (N802)
+def get_max_PF(coil_dict):  # noqa :N802
     """
     Returns maximum external radius of the largest PF coil
     takes a nova ordered dict of PFcoils

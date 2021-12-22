@@ -405,7 +405,7 @@ class BalanceOfPlant:
         +\\Bigg(P_{n_{DIV}}+f_{SOL_{rad}}f_{SOL_{ch}}f_{fw}\\Big(\\frac{P_{fus}}{5}+P_{HCD}\\Big)\\Bigg)\\
         \\Big(1+\\frac{f_{p_{DIV}}}{1-f_{p_{DIV}}}\\Big)\\Bigg]
 
-    """  # noqa (W505)
+    """  # noqa :W505
 
     _plotter = BalanceOfPlantPlotter
 

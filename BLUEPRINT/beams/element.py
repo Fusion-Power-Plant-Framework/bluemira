@@ -74,7 +74,7 @@ def _k_array(k11, k22, k33, k44, k55, k66, k35, k26, k511, k612):
 
 
 # @nb.jit(nopython=True, cache=True)
-def local_k_shear(EA, EIyy, EIzz, ry, rz, L, GJ, A, A_sy, A_sz, nu=NU):  # noqa (N803)
+def local_k_shear(EA, EIyy, EIzz, ry, rz, L, GJ, A, A_sy, A_sz, nu=NU):  # noqa :N803
     """
     3-D stiffness local member stiffness matrix, including shear deformation
 
@@ -118,7 +118,7 @@ def local_k_shear(EA, EIyy, EIzz, ry, rz, L, GJ, A, A_sy, A_sz, nu=NU):  # noqa 
 
 
 # @nb.jit(nopython=True, cache=True)
-def local_k(EA, EIyy, EIzz, L, GJ):  # noqa (N803)
+def local_k(EA, EIyy, EIzz, L, GJ):  # noqa :N803
     """
     3-D stiffness local member stiffness matrix, including shear deformation
 

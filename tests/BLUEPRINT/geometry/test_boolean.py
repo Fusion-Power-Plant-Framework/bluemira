@@ -24,7 +24,7 @@ Created on Fri Aug  2 13:08:34 2019
 @author: matti
 """
 import os
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
 import pytest
 import numpy as np
 import matplotlib.pyplot as plt
@@ -112,7 +112,7 @@ class TestBooleanOpen:
         fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "loopcut_data.pkl"])
         with open(fn, "rb") as f:
-            data = pickle.load(f)  # noqa (S301)
+            data = pickle.load(f)  # noqa :S301
         loop1 = Loop(data[0][0], data[0][1])  # Closed
         loop2 = Loop(data[0][2], data[0][3])  # Open
         result = boolean_2d_difference(loop2, loop1)

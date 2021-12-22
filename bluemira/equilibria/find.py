@@ -148,7 +148,7 @@ def find_local_minima(f):
     )
 
 
-def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa (N802)
+def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa :N802
     """
     Find local Bp^2 minima on a grid (precisely) using a scipy optimiser.
 
@@ -295,7 +295,7 @@ def triage_OX_points(f_psi, points):
     return o_points, x_points
 
 
-def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa (N802)
+def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -423,7 +423,7 @@ def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa (N802)
     return o_points, useful_x
 
 
-def _parse_OXp(x, z, psi, o_points, x_points):  # noqa (N802)
+def _parse_OXp(x, z, psi, o_points, x_points):  # noqa :N802
     """
     Handles Op and Xp retrieval, depending on combinations of None/not None
     """

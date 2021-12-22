@@ -23,7 +23,7 @@
 Home of the BLUEPRINT base class for reactor system objects
 """
 from copy import deepcopy
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
 from typing import Type, Union
 
 from bluemira.base.parameter import ParameterFrame
@@ -368,7 +368,7 @@ class ReactorSystem:
             Full path with filename
         """
         with open(path, "rb") as file:
-            return pickle.load(file)  # noqa (S301)
+            return pickle.load(file)  # noqa :S301
 
     def __getstate__(self):
         """

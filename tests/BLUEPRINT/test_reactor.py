@@ -22,7 +22,7 @@
 # =============================================================================
 # Smoke test
 # =============================================================================
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
 import pytest
 from matplotlib import pyplot as plt
 
@@ -126,7 +126,7 @@ def test_CAD(reactor):
 def test_pickle(reactor):
     original = reactor.params
     serialized = pickle.dumps(reactor)
-    loaded = pickle.loads(serialized)  # noqa (S301)
+    loaded = pickle.loads(serialized)  # noqa :S301
 
     # Loading a reactor replaces the ParameterFrame
     assert loaded.params is not original

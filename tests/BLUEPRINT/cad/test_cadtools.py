@@ -22,7 +22,7 @@
 import os
 import pytest
 import warnings
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
 import numpy as np
 import OCC
 from unittest.mock import patch
@@ -238,7 +238,7 @@ class TestCADOperations:
                 return True
         return False
 
-    def test_STL_meshes(self):  # noqa (N802)
+    def test_STL_meshes(self):  # noqa :N802
         results = {}
         for file in [f for f in os.listdir(self.path) if f.endswith(".stl")]:
             filename = os.sep.join([self.path, file])
@@ -374,7 +374,7 @@ class TestMixedFaces:
         """
         fn = os.sep.join([self.path, "shell_mixed_test.pkl"])
         with open(fn, "rb") as file:
-            d = pickle.load(file)  # noqa (S301)
+            d = pickle.load(file)  # noqa :S301
         # This was back in the day when I used to pickle Loop dicts only..
         inner = Loop(**d)
         outer = offset_clipper(inner, 0.2, method="miter")

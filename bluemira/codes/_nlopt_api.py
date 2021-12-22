@@ -65,7 +65,7 @@ TERMINATION_KEYS = [
 ]
 
 
-def process_NLOPT_conditions(opt_conditions):  # noqa (N802)
+def process_NLOPT_conditions(opt_conditions):  # noqa :N802
     """
     Process NLopt termination conditions. Checks for negative or 0 values on some
     conditions (which mean they are inactive), and warns if you are doing weird stuff.
@@ -110,7 +110,7 @@ def process_NLOPT_conditions(opt_conditions):  # noqa (N802)
     return conditions
 
 
-def process_NLOPT_result(opt):  # noqa (N802)
+def process_NLOPT_result(opt):  # noqa :N802
     """
     Handle a NLopt optimiser and check results.
 

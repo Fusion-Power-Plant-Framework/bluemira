@@ -281,7 +281,7 @@ class ComponentCAD:
         """
         return ComponentCAD.from_compound(self.get_compound(), self.name)
 
-    def save_as_STL(self, filename, scale=1):  # noqa (N802)
+    def save_as_STL(self, filename, scale=1):  # noqa :N802
         """
         Saves the Component parts to STL files in the same directory
 
@@ -302,7 +302,7 @@ class ComponentCAD:
                 filename_mod = f"{filename}_{i}.stl"
                 save_as_STL(shape, filename_mod, scale=scale)
 
-    def save_as_STEP(self, filename, scale=1):  # noqa (N802)
+    def save_as_STEP(self, filename, scale=1):  # noqa :N802
         """
         Saves all Component parts to STEP files in the same directory
 
@@ -325,7 +325,7 @@ class ComponentCAD:
                 filename_mod = f"{filename}_{name}_{i}.STP"
                 save_as_STEP(shape, filename_mod, scale=scale)
 
-    def save_as_STEP_assembly(self, filename):  # noqa (N802)
+    def save_as_STEP_assembly(self, filename):  # noqa :N802
         """
         Saves the Component to a STEP assembly file
 

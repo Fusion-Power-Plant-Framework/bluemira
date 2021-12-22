@@ -85,7 +85,7 @@ class HCDSystem(ReactorSystem):
         """
         self.requirements[req] = value
 
-    def allocate(self, req, f_NBI, f_ECD=0, f_ICRH=0):  # noqa (N803)
+    def allocate(self, req, f_NBI, f_ECD=0, f_ICRH=0):  # noqa :N803
         """
         Allocate a requirement to the NB and EC fractionally.
         """

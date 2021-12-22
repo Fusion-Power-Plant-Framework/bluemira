@@ -130,7 +130,7 @@ def project_point_axis(point, axis):
     -------
     projection: np.array(3)
         The coordinates of the projected point
-    """  # noqa (W505)
+    """  # noqa :W505
     point = np.array(point)
     axis = np.array(axis)
     return axis * np.dot(point, axis) / np.dot(axis, axis)
