@@ -26,7 +26,7 @@ PROCESS run functions
 from __future__ import annotations
 
 import os
-import subprocess  # noqa (S404)
+import subprocess  # noqa :S404
 from enum import auto
 from typing import Dict, List, Optional
 

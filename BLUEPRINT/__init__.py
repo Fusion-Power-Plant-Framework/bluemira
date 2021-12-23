@@ -26,8 +26,9 @@ from ._version import get_versions
 
 __version__ = get_versions()["version"]
 import pathlib  # noqa
-import subprocess  # noqa (S404)
+import subprocess  # noqa :S404
 import sys  # noqa
+
 from bluemira.base.file import get_bluemira_root  # noqa
 
 __all__ = ["test", "__version__"]
@@ -65,7 +66,7 @@ def test(path=None, *, plotting=False):
     args = ["pytest", str(full_path)]
     if plotting:
         args.append("--plotting-on")
-    subprocess.run(args)  # noqa (S603, S607)
+    subprocess.run(args)  # noqa :S603, S607
 
 
 import_path = pathlib.Path(__file__).parent.parent.parent / "PROCESS" / "utilities"

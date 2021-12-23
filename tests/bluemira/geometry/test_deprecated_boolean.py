@@ -24,25 +24,26 @@ Created on Fri Aug  2 13:08:34 2019
 @author: matti
 """
 import os
-import pickle  # noqa (S403)
-import pytest
-import numpy as np
+import pickle  # noqa :S403
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.error import GeometryError
-from bluemira.geometry._deprecated_loop import Loop
-from BLUEPRINT.geometry.shell import Shell
 from bluemira.geometry._deprecated_boolean import (
     boolean_2d_common,
     boolean_2d_difference,
     boolean_2d_union,
     boolean_2d_xor,
+    convex_hull,
     entagram,
     simplify_loop,
-    convex_hull,
 )
-
-import tests
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.shell import Shell
 
 
 class TestBooleanSimple:
@@ -109,7 +110,7 @@ class TestBooleanOpen:
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "loopcut_data.pkl"])
         with open(fn, "rb") as f:
-            data = pickle.load(f)  # noqa (S301)
+            data = pickle.load(f)  # noqa :S301
         loop1 = Loop(data[0][0], data[0][1])  # Closed
         loop2 = Loop(data[0][2], data[0][3])  # Open
         result = boolean_2d_difference(loop2, loop1)

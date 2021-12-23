@@ -24,21 +24,14 @@ Coil and coil grouping objects
 """
 
 from copy import deepcopy
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import RectBivariateSpline
 from typing import Any, Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import is_num
-from bluemira.magnetostatics.greens import (
-    greens_psi,
-    greens_Bx,
-    greens_Bz,
-)
-from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.constants import (
     I_MIN,
     J_TOR_MIN,
@@ -46,9 +39,12 @@ from bluemira.equilibria.constants import (
     NBTI_J_MAX,
     X_TOLERANCE,
 )
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoilPlotter
-
+from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
+from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
+from bluemira.utilities.tools import is_num
 
 PF_COIL_NAME = "PF_{}"
 CS_COIL_NAME = "CS_{}"
@@ -712,7 +708,7 @@ class Coil:
         """
         return semianalytic_Bz(self.x, self.z, x, z, d_xc=self.dx, d_zc=self.dz)
 
-    def F(self, eqcoil):  # noqa (N802)
+    def F(self, eqcoil):  # noqa :N802
         """
         Calculate the force response at the coil centre including the coil
         self-force.
@@ -720,7 +716,7 @@ class Coil:
         \t:math:`\\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}`\n
         \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
         \t:math:`F_z = -IBx`
-        """  # noqa (W505)
+        """  # noqa :W505
         Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
             a = MU_0 * self.current ** 2 / (4 * np.pi * self.x)
@@ -735,7 +731,7 @@ class Coil:
             ]
         )
 
-    def control_F(self, coil):  # noqa (N802)
+    def control_F(self, coil):  # noqa :N802
         """
         Returns the Green's matrix element for the coil mutual force.
 
@@ -1158,7 +1154,7 @@ class CoilGroup:
         """
         return self._all_if(self.coils.values(), "control_psi", x, z)
 
-    def F(self, eqcoil):  # noqa (N802)
+    def F(self, eqcoil):  # noqa :N802
         """
         Returns the forces in the CoilGroup as a response to an equilibrium or
         other CoilGroup

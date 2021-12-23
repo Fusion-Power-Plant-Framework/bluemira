@@ -79,7 +79,7 @@ def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
     return (1 + fmisc) * (nucl_heating + qcl + qac + qss)
 
 
-def He_pumping(  # noqa (N802)
+def He_pumping(  # noqa :N802
     pressure_in, pressure_out, t_in, t_out, blanket_power, eta_isen, eta_el
 ):
     """
@@ -120,7 +120,7 @@ def He_pumping(  # noqa (N802)
     \t:math:`P_{pump,el} = \\dfrac{P_{pump}}{\\eta_{el}}` [MW]\n
     **No longer in use:**
     \t:math:`f_{pump}=\\dfrac{dP}{dTc_P\\rho_{av}}`
-    """  # noqa (W505)
+    """  # noqa :W505
     d_temp = t_out - t_in
     t_bb_inlet = to_kelvin(t_in)
     # Ideal monoatomic gas - small compression ratios
@@ -136,7 +136,7 @@ def He_pumping(  # noqa (N802)
     return p_pump_is, p_pump_el
 
 
-def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa (N802)
+def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa :N802
     """
     H20-cooling pumping power calculation strategy
 

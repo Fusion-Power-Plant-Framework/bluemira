@@ -44,7 +44,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
     """
 
     materials: typing.Dict[str, float]
-    temperature_in_K: float  # noqa (N815)
+    temperature_in_K: float  # noqa :N815
     enrichment: float
 
     default_temperature = T_DEFAULT
@@ -54,13 +54,13 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         self,
         name,
         materials,
-        temperature_in_K=None,  # noqa(N803)
+        temperature_in_K=None,  # noqa :N803
         enrichment=None,
         zaid_suffix=None,
         material_id=None,
     ):
         if temperature_in_K is None:
-            temperature_in_K = self.default_temperature  # noqa(N803)
+            temperature_in_K = self.default_temperature  # noqa :N803
 
         mats = []
         for mat in materials.keys():

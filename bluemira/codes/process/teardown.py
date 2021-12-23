@@ -143,7 +143,7 @@ class BMFile(MFile):
             self.params[key] = self.build_parameter_frame(dic[key])
         self.rebuild_RB_dict()
 
-    def rebuild_RB_dict(self):  # noqa (N802)
+    def rebuild_RB_dict(self):  # noqa :N802
         """
         Takes the TF coil detailed breakdown and reconstructs the radial build
         ParameterFrame.
@@ -519,7 +519,7 @@ def plot_radial_build(run, width=1.0):
     )
 
 
-def process_RB_fromOUT(f):  # noqa (N802)
+def process_RB_fromOUT(f):  # noqa :N802
     """
     Parse PROCESS radial build from an OUT.DAT file.
     """

@@ -414,14 +414,14 @@ class Void(SerialisedMaterial, nmm.Material):
     """
 
     name: str
-    temperature_in_K: float  # noqa (N815)
+    temperature_in_K: float  # noqa :N815
     zaid_suffix: str
     material_id: str
 
     def __init__(
         self,
         name,
-        temperature_in_K=T_DEFAULT,  # noqa(N803)
+        temperature_in_K=T_DEFAULT,  # noqa :N803
         zaid_suffix=None,
         material_id=None,
     ):
@@ -445,7 +445,7 @@ class Void(SerialisedMaterial, nmm.Material):
         """
         return self.name
 
-    def E(self, temperature=None):  # noqa (N802)
+    def E(self, temperature=None):  # noqa :N802
         """
         Young's modulus.
 
@@ -567,7 +567,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
     elements: typing.Dict[str, float]
     density: MaterialProperty
     density_unit: str
-    temperature_in_K: float  # noqa (N815)
+    temperature_in_K: float  # noqa :N815
     zaid_suffix: str
     material_id: str
 
@@ -592,7 +592,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         elements,
         density=None,
         density_unit="kg/m3",
-        temperature_in_K=T_DEFAULT,  # noqa(N803)
+        temperature_in_K=T_DEFAULT,  # noqa :N803
         zaid_suffix=None,
         material_id=None,
         poissons_ratio=None,
@@ -696,19 +696,19 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         """
         return _try_calc_property(self, "thermal_conductivity", temperature)
 
-    def E(self, temperature):  # noqa (N802)
+    def E(self, temperature):  # noqa :N802
         """
         Young's modulus in GPa
         """
         return _try_calc_property(self, "youngs_modulus", temperature)
 
-    def Cp(self, temperature):  # noqa (N802)
+    def Cp(self, temperature):  # noqa :N802
         """
         Specific heat in J/kg/K
         """
         return _try_calc_property(self, "specific_heat", temperature)
 
-    def CTE(self, temperature):  # noqa (N802)
+    def CTE(self, temperature):  # noqa :N802
         """
         Mean coefficient of thermal expansion in 10**-6/T
         """
@@ -731,43 +731,43 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         """
         return _try_calc_property(self, "electrical_resistivity", temperature)
 
-    def Ms(self, temperature):  # noqa (N802)
+    def Ms(self, temperature):  # noqa :N802
         """
         Magnetic saturation in Am^2/kg
         """
         return _try_calc_property(self, "magnetic_saturation", temperature)
 
-    def Mt(self, temperature):  # noqa (N802)
+    def Mt(self, temperature):  # noqa :N802
         """
         Viscous remanent magnetisation in Am^2/kg
         """
         return _try_calc_property(self, "viscous_remanent_magnetisation", temperature)
 
-    def Hc(self, temperature):  # noqa (N802)
+    def Hc(self, temperature):  # noqa :N802
         """
         Coercive field in A/m
         """
         return _try_calc_property(self, "coercive_field", temperature)
 
-    def Sy(self, temperature):  # noqa (N802)
+    def Sy(self, temperature):  # noqa :N802
         """
         Minimum yield stress in MPa
         """
         return _try_calc_property(self, "minimum_yield_stress", temperature)
 
-    def Syavg(self, temperature):  # noqa (N802)
+    def Syavg(self, temperature):  # noqa :N802
         """
         Average yield stress in MPa
         """
         return _try_calc_property(self, "average_yield_stress", temperature)
 
-    def Su(self, temperature):  # noqa (N802)
+    def Su(self, temperature):  # noqa :N802
         """
         Minimum ultimate tensile stress in MPa
         """
         return _try_calc_property(self, "minimum_ultimate_tensile_stress", temperature)
 
-    def Suavg(self, temperature):  # noqa (N802)
+    def Suavg(self, temperature):  # noqa :N802
         """
         Average ultimate tensile stress in MPa
         """
@@ -832,7 +832,7 @@ class Superconductor:
         ax.plot_surface(fields, temperatures, jc, cmap=plt.cm.viridis)
         ax.view_init(30, 45)
 
-    def Jc(self):  # noqa (N802)
+    def Jc(self):  # noqa :N802
         _raise_error()
 
     @staticmethod
@@ -869,7 +869,7 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         gamma=None,
         density=None,
         density_unit="kg/m3",
-        temperature_in_K=T_DEFAULT,  # noqa(N803)
+        temperature_in_K=T_DEFAULT,  # noqa :N803
         zaid_suffix=None,
         material_id=None,
         poissons_ratio=None,
@@ -916,14 +916,14 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         self.beta = beta
         self.gamma = gamma
 
-    def Bc2(self, temperature):  # noqa (N802)
+    def Bc2(self, temperature):  # noqa :N802
         """
         Critical field \n
         :math:`B_{C2}^{*}(T) = B_{C20}(1-(\\frac{T}{T_{C0}})^{1.7})`
         """
         return self.bc_20 * (1 - (temperature / self.tc_0) ** 1.7)
 
-    def Jc(self, B, temperature):  # noqa (N802)
+    def Jc(self, B, temperature):  # noqa :N802
         """
         Critical current \n
         :math:`j_{c}(B, T) = \\frac{C_{0}}{B}(1-(\\frac{T}{T_{C0}})^{1.7})
@@ -986,7 +986,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         q=None,
         density=None,
         density_unit="kg/m3",
-        temperature_in_K=T_DEFAULT,  # noqa(N803)
+        temperature_in_K=T_DEFAULT,  # noqa :N803
         zaid_suffix=None,
         material_id=None,
         poissons_ratio=None,
@@ -1038,7 +1038,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
 
         self.eps_sh = self.c_a2 * self.eps_0a / np.sqrt(self.c_a1 ** 2 - self.c_a2 ** 2)
 
-    def Tc_star(self, B, eps):  # noqa (N802)
+    def Tc_star(self, B, eps):  # noqa :N802
         """
         Critical temperature
 
@@ -1052,7 +1052,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
             b = self._handle_ij(b)
             return self.t_c0max * self.s(eps) ** (1 / 3) * b
 
-    def Bc2_star(self, temperature, eps):  # noqa (N802)
+    def Bc2_star(self, temperature, eps):  # noqa :N802
         """
         Critical field
 
@@ -1064,7 +1064,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         else:
             return self.b_c20m * self.s(eps) * (1 - (self._t152(temperature, eps)))
 
-    def Jc(self, B, temperature, eps):  # noqa (N802)
+    def Jc(self, B, temperature, eps):  # noqa :N802
         """
         Critical current
 
@@ -1146,8 +1146,8 @@ class Liquid(SerialisedMaterial, nmm.Material):
     symbol: str
     density: MaterialProperty
     density_unit: str
-    temperature_in_K: float  # noqa(N815)
-    pressure_in_Pa: float  # noqa(N815)
+    temperature_in_K: float  # noqa :N815
+    pressure_in_Pa: float  # noqa :N815
     zaid_suffix: str
     material_id: str
 
@@ -1157,8 +1157,8 @@ class Liquid(SerialisedMaterial, nmm.Material):
         symbol,
         density=None,
         density_unit="kg/m3",
-        temperature_in_K=T_DEFAULT,  # noqa(N803)
-        pressure_in_Pa=P_DEFAULT,  # noqa(N803)
+        temperature_in_K=T_DEFAULT,  # noqa :N803
+        pressure_in_Pa=P_DEFAULT,  # noqa :N803
         zaid_suffix=None,
         material_id=None,
     ):
@@ -1217,7 +1217,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
 
         return density
 
-    def E(self, temperature=None):  # noqa (N802)
+    def E(self, temperature=None):  # noqa :N802
         """
         Youngs modulus (0 for all liquids)
         """
@@ -1313,7 +1313,7 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
     atoms_per_unit_cell: float
     packing_fraction: float
     enrichment: float
-    temperature_in_K: float  # noqa(N815)
+    temperature_in_K: float  # noqa :N815
     zaid_suffix: str
     material_id: str
 
@@ -1329,7 +1329,7 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
         atoms_per_unit_cell,
         packing_fraction=1.0,
         enrichment=None,
-        temperature_in_K=T_DEFAULT,  # noqa(N803)
+        temperature_in_K=T_DEFAULT,  # noqa :N803
         zaid_suffix=None,
         material_id=None,
         specific_heat=None,
@@ -1337,7 +1337,7 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
     ):
         self.is_enrichable = True
         try:
-            import openmc  # type: ignore # noqa(F401)
+            import openmc  # type: ignore # noqa :F401
         except ImportError:
             self.is_enrichable = False
         if enrichment is not None:
@@ -1374,13 +1374,13 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
         """
         return self.name
 
-    def Cp(self, temperature):  # noqa (N802)
+    def Cp(self, temperature):  # noqa :N802
         """
         Specific heat in J/kg/K
         """
         return _try_calc_property(self, "specific_heat", temperature)
 
-    def CTE(self, temperature, eps_vol=None):  # noqa (N802)
+    def CTE(self, temperature, eps_vol=None):  # noqa :N802
         """
         Mean coefficient of thermal expansion in 10**-6/T
         """
@@ -1395,7 +1395,7 @@ class BePebbleBed(UnitCellCompound):
     """
 
     @matproperty(t_min=to_kelvin(25), t_max=to_kelvin(800))
-    def CTE(self, temperature, eps_vol=0):  # noqa (N802)
+    def CTE(self, temperature, eps_vol=0):  # noqa :N802
         """
         https://www.sciencedirect.com/science/article/pii/S0920379602001655
         """
@@ -1441,7 +1441,7 @@ class Plasma(SerialisedMaterial, nmm.Material):
     isotopes: typing.Dict[str, float]
     density: MaterialProperty
     density_unit: str
-    temperature_in_K: float  # noqa(N815)
+    temperature_in_K: float  # noqa :N815
     zaid_suffix: str
     material_id: str
 
@@ -1451,13 +1451,13 @@ class Plasma(SerialisedMaterial, nmm.Material):
         isotopes,
         density=MaterialProperty(1e-6),
         density_unit="g/cm3",
-        temperature_in_K=None,  # noqa(N803)
+        temperature_in_K=None,  # noqa :N803
         zaid_suffix=None,
         material_id=None,
     ):
-        temperature_in_C = None  # noqa(N806)
+        temperature_in_C = None  # noqa :N806
         if temperature_in_K is not None:
-            temperature_in_C = to_celsius(temperature_in_K)  # noqa(N806)
+            temperature_in_C = to_celsius(temperature_in_K)  # noqa :N806
 
         density_val = None
         if isinstance(density.value, (int, float)):
@@ -1483,7 +1483,7 @@ class Plasma(SerialisedMaterial, nmm.Material):
         """
         return self.name
 
-    def E(self, temperature=None):  # noqa (N802)
+    def E(self, temperature=None):  # noqa :N802
         """
         Young's modulus.
         """

@@ -108,7 +108,7 @@ class Profiles(Enum):
 
     cubb = "cubb"  # [A/m²] Bootstrap parallel current density profile
     delta = "delta"  # [-] Triangularity profile
-    dV = "dV"  # noqa (N815) # [m³] Volume increment profile
+    dV = "dV"  # noqa :N815 # [m³] Volume increment profile
     ffprime = "ffprime"  # [(m*T) * (m*T) / Wb == T] FF' profile
     g1 = "g1"  # [m⁴] < |grad V|²> g1 metric coefficient's profile
     g2 = "g2"  # [m²] < |grad V|²/r²> g2 metric coefficient's profile
