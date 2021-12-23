@@ -131,6 +131,8 @@ class TestMakeOptimisedShape:
                 "dz": 0.0,
             },
             "problem_class": problem_class,
+            "algorithm_name": "SLSQP",
+            "opt_conditions": {"ftol_rel": 1e-6, "max_eval": 100},
             "label": "Shape",
         }
         builder = MakeOptimisedShape(params, build_config)
