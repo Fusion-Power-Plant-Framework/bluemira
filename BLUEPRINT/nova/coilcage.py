@@ -714,9 +714,3 @@ class HelmholtzCage:
         plt.setp(zc, color="r")
         plt.clabel(cs, inline=1, fontsize="medium", colors="k", fmt="%1.2f")
         return cs
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

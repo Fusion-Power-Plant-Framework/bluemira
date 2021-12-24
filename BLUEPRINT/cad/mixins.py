@@ -167,9 +167,3 @@ class OnionCAD:
         v = boolean_cut(v, vi)
         vv = v
         return vv, None
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

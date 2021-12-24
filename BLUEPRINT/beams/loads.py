@@ -234,9 +234,3 @@ class LoadCase(list):
                 "w": w,
             }
         )
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

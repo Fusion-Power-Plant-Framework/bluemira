@@ -101,9 +101,3 @@ class CryostatCAD(PlugChopper, ComponentCAD):
             p = make_face(f)
         pp = extrude(p, length=length, axis=d)
         return pp
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

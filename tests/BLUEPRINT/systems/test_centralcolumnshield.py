@@ -27,7 +27,7 @@ from math import acos, sqrt, pi
 
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.systems.centralcolumnshield import CentralColumnShield
 from BLUEPRINT.geometry.geomtools import circle_seg
 from BLUEPRINT.geometry.loop import Loop

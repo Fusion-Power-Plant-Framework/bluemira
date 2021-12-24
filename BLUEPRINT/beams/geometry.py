@@ -553,9 +553,3 @@ class DeformedGeometry(Geometry):
             return DeformedGeometryPlotter(self, ax=ax, **kwargs)
         else:
             return StressDeformedGeometryPlotter(self, ax=ax, stress=stress, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

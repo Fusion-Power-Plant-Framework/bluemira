@@ -390,9 +390,3 @@ def maximum(val, val_min):
     else:
         val = val_min if val < val_min else val
     return val
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

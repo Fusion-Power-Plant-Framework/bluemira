@@ -525,9 +525,3 @@ class StressDeformedGeometryPlotter(BasePlotter):
             centre = (smin + smax) / 2
 
         return TwoSlopeNorm(centre, vmin=min(stress), vmax=max(stress))
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

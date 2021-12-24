@@ -399,9 +399,3 @@ class Patterner:
         self.silo[partname]["names"].append(name)
         self.silo[partname]["colors"].append(color)
         self.silo[partname]["transparencies"].append(transp)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

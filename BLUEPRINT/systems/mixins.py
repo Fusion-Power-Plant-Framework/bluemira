@@ -310,9 +310,3 @@ class Meshable:
             polygons += [clean_geom.as_shpoly()]
         points, facets = get_boundary(polygons)
         return cross_sections, points, facets, control_points, holes
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

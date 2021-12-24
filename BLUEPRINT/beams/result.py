@@ -154,9 +154,3 @@ class Result:
         if pattern:
             pdg = self._make_cyclic_geometry(dg)
             pdg.plot(ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
