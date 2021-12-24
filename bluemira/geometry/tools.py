@@ -447,6 +447,12 @@ def slice_shape(shape: BluemiraGeo, plane):
     Face, Solid, Shell: Union[List[BluemiraWire], None]
         list of intersections lines
 
+    Notes
+    -----
+    Degenerate cases such as tangets to solid or faces do not return intersections
+    if the shape and plane are acting at the Placement base.
+    Further investigation needed.
+
     """
     _slice = cadapi.slice_shape(shape._shape, plane.base, plane.axis)
 

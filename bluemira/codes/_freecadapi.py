@@ -676,7 +676,8 @@ def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
     if isinstance(shape, apiWire):
         return _slice_wire(shape, plane_axis, plane_origin)
     else:
-        bluemira_warn("The output structure of this function may not be as expected")
+        if not isinstance(shape, (apiFace, apiSolid)):
+            bluemira_warn("The output structure of this function may not be as expected")
         shift = np.dot(np.array(plane_origin), np.array(plane_axis))
         return _slice_solid(shape, plane_axis, shift)
 
