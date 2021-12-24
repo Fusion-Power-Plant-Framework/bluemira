@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+authors:
+  - name: The bluemira Team
+message: "If you use this software, please cite it using these references."
+references:
+  - type: article
+    title: "BLUEPRINT: A novel approach to fusion reactor design"
+    authors:
+      - family-names: Coleman
+        given-names: M
+      - family-names: McIntosh
+        given-names: S
+    doi: https://doi.org/10.1016/j.fusengdes.2018.12.036
+    year: 2019
+    volume: 139
+    journal: Fusion Engineering and Design
+  - type: article
+    title: "Development and Validation of a Computational Tool for Fusion Reactors' System Analysis"
+    authors:
+      - family-names: Franza
+        given-names: F
+    doi: https://doi.org/10.5445/IR/1000095873
+    year: 2019
+title: "bluemira"
+license: LGPL-2.1+
+repository-code: "https://github.com/Fusion-Power-Plant-Framework/bluemira"
+website: "https://bluemira.readthedocs.io/en/develop"
