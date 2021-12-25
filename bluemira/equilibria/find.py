@@ -295,7 +295,7 @@ def triage_OX_points(f_psi, points):
     return o_points, x_points
 
 
-def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
+def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :N802
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -307,8 +307,10 @@ def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
         The spatial z coordinates of the grid points [m]
     psi: np.array(N, M)
         The poloidal magnetic flux map [V.s/rad]
-    limiter: Union[None, Limiter]
+    limiter: Optional[Limiter]
         The limiter to use (if any)
+    coilset: Optional[CoilSet]
+        The coilset to use (if any)
     x_min: Union[None, float]
         The inner x cut-off point for searching O, X points (useful when using
         big grids and avoiding singularities in the CS due to Greens functions)
@@ -362,8 +364,23 @@ def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
 
     Bp2 = f_bp(np.array([x, z]))
 
+    i_local_all, j_local_all = find_local_minima(Bp2)
+    if coilset:
+        # Remove local minima inside coils
+        i_local, j_local = [], []
+        for i, j in zip(i_local_all, j_local_all):
+            xi, zi = x[i, j], z[i, j]
+            for coil in coilset.coils.values():
+                if coil._points_inside_coil(xi, zi):
+                    continue
+            i_local.append(i)
+            j_local.append(j)
+
+    else:
+        i_local, j_local = i_local_all, j_local_all
+
     points = []
-    for i, j in zip(*find_local_minima(Bp2)):
+    for i, j in zip(i_local, j_local):
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
