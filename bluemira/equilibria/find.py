@@ -333,6 +333,31 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
 
     Points are order w.r.t. central grid coordinates.
     """
+
+    def f_bp(x_opt):
+        """
+        Poloidal field optimiser function handle
+        """
+        return (
+            np.hypot(
+                -f(x_opt[0], x_opt[1], dy=1, grid=False),
+                f(x_opt[0], x_opt[1], dx=1, grid=False),
+            )
+            / x_opt[0] ** 2
+        )
+
+    def _center_sort(p):
+        """
+        Sort points w.r.t. grid centre.
+        """
+        return (p[0] - x_m) ** 2 + (p[1] - z_m) ** 2
+
+    def _psi_sort(p):
+        """
+        Sort points w.r.t. primary O-point psi.
+        """
+        return (p[2] - psio) ** 2
+
     d_x, d_z = x[1, 0] - x[0, 0], z[0, 1] - z[0, 0]  # Grid resolution
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
 
@@ -349,18 +374,6 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
 
     radius = min(0.5, 2 * (d_x ** 2 + d_z ** 2))  # Search radius
 
-    def f_bp(x_opt):
-        """
-        Poloidal field optimiser function handle
-        """
-        return (
-            np.hypot(
-                -f(x_opt[0], x_opt[1], dy=1, grid=False),
-                f(x_opt[0], x_opt[1], dx=1, grid=False),
-            )
-            / x_opt[0] ** 2
-        )
-
     Bp2 = f_bp(np.array([x, z]))
 
     i_local_all, j_local_all = find_local_minima(Bp2)
@@ -369,12 +382,11 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
         i_local, j_local = [], []
         for i, j in zip(i_local_all, j_local_all):
             xi, zi = x[i, j], z[i, j]
-            for coil in coilset.coils.values():
-                if coil._points_inside_coil(xi, zi):
-                    continue
-            i_local.append(i)
-            j_local.append(j)
-
+            if not np.any(
+                [c._points_inside_coil(xi, zi) for c in coilset.coils.values()]
+            ):
+                i_local.append(i)
+                j_local.append(j)
     else:
         i_local, j_local = i_local_all, j_local_all
 
@@ -383,8 +395,8 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
-        if f_bp([x[i, j], z[i, j]]) > 1.0:  # T
-            continue  # This is not going to be a null
+        # if f_bp([x[i, j], z[i, j]]) > 1.0:  # T
+        #    continue  # This is not going to be a null
 
         if nx * nz <= 4225:  # scipy method faster on small grids
             point = find_local_Bp_minima_scipy(f_bp, x[i, j], z[i, j], radius)
@@ -404,21 +416,25 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
         bluemira_warn("EQUILIBRIA::find_OX: No O-points found during an iteration.")
         return o_points, x_points
 
-    def _cntr_sort(p):
-        return (p[0] - x_m) ** 2 + (p[1] - z_m) ** 2
-
-    def _psi_sort(p):
-        return (p[2] - psio) ** 2
-
-    o_points.sort(key=_cntr_sort)
+    o_points.sort(key=_center_sort)
     x_op, z_op, psio = o_points[0]  # Primary O-point
-    useful_x, useless_x = [], []
+
     if limiter is not None:
         limit_x = []
         for lim in limiter:
             limit_x.append(Lpoint(*lim, f(*lim)[0][0]))
         x_points.extend(limit_x)
 
+    if len(x_points) == 0:
+        # There is an O-point, but no X-points, so we will take the grid as a boundary
+        x_grid_edge = np.concatenate([x[0, :], x[:, 0], x[-1, :], x[:, -1]])
+        z_grid_edge = np.concatenate([z[0, :], z[:, 0], z[-1, :], z[:, -1]])
+        glimit_x = [
+            Lpoint(xi, zi, f(xi, zi)[0][0]) for xi, zi in zip(x_grid_edge, z_grid_edge)
+        ]
+        x_points.extend(glimit_x)
+
+    useful_x, useless_x = [], []
     for xp in x_points:
         x_xp, z_xp, psix = xp
         xx, zz = np.linspace(x_op, x_xp), np.linspace(z_op, z_xp)
