@@ -311,9 +311,6 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         The limiter to use (if any)
     coilset: Optional[CoilSet]
         The coilset to use (if any)
-    x_min: Union[None, float]
-        The inner x cut-off point for searching O, X points (useful when using
-        big grids and avoiding singularities in the CS due to Greens functions)
 
     Returns
     -------
@@ -361,8 +358,8 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     d_x, d_z = x[1, 0] - x[0, 0], z[0, 1] - z[0, 0]  # Grid resolution
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
     nx, nz = psi.shape  # Grid shape
-
     radius = min(0.5, 2 * (d_x ** 2 + d_z ** 2))  # Search radius
+    f = RectBivariateSpline(x[:, 0], z[0, :], psi)  # Spline for psi interpolation
 
     Bp2 = f_bp(np.array([x, z]))
 
