@@ -1207,7 +1207,8 @@ class Equilibrium(MHDState):
         """
         Get the safety factor at given psinorm.
         """
-        o_points, x_points = self.get_OX_points()
+        if o_points is None or x_points is None:
+            o_points, x_points = self.get_OX_points()
         if not isinstance(psinorm, Iterable):
             psinorm = [psinorm]
         psinorm = sorted(psinorm)
