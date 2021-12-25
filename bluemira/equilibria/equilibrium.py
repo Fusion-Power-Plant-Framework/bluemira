@@ -59,7 +59,6 @@ from bluemira.equilibria.physics import (
     calc_li,
     calc_li3minargs,
     calc_psi_norm,
-    calc_q,
     calc_q0,
     calc_summary,
 )
