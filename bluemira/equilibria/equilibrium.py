@@ -25,6 +25,7 @@ Plasma MHD equilibrium and state objects
 import os
 from copy import deepcopy
 from enum import Enum
+from typing import Iterable
 
 import numpy as np
 import tabulate
@@ -1207,7 +1208,29 @@ class Equilibrium(MHDState):
         """
         Get the safety factor at given psinorm.
         """
-        return calc_q(self, psinorm, o_points=o_points, x_points=x_points)
+        o_points, x_points = self.get_OX_points()
+        if not isinstance(psinorm, Iterable):
+            psinorm = [psinorm]
+        psinorm = sorted(psinorm)
+
+        psi = self.psi()
+        flux_surfaces = []
+        for psi_n in psinorm:
+            if psi_n < PSI_NORM_TOL:
+                psi_n = PSI_NORM_TOL
+            if psi_n > 1 - PSI_NORM_TOL:
+                f_s = ClosedFluxSurface(self.get_LCFS(psi))
+            else:
+                f_s = ClosedFluxSurface(
+                    self.get_flux_surface(
+                        psi_n, psi, o_points=o_points, x_points=x_points
+                    )
+                )
+            flux_surfaces.append(f_s)
+        q = [f_s.safety_factor(self) for f_s in flux_surfaces]
+        if len(q) == 1:
+            q = q[0]
+        return q
 
     def fRBpol(self, psinorm):
         """
