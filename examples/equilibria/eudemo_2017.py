@@ -35,7 +35,8 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print, plot_defaults
+from bluemira.base.look_and_feel import bluemira_print
+from bluemira.display import plot_defaults
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium, Breakdown

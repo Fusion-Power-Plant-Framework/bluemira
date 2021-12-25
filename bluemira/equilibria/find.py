@@ -352,15 +352,14 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
     def f_bp(x_opt):
         """
         Poloidal field optimiser function handle
-        \t:math:`B_{p} = B_{x}^{2}+B_{z}^{2}`
-
-        Notes
-        -----
-        No points square-rooting here, we don't care about actual values.
         """
-        return (-f(x_opt[0], x_opt[1], dy=1, grid=False) / x_opt[0]) ** 2 + (
-            f(x_opt[0], x_opt[1], dx=1, grid=False) / x_opt[0]
-        ) ** 2
+        return (
+            np.hypot(
+                -f(x_opt[0], x_opt[1], dy=1, grid=False),
+                f(x_opt[0], x_opt[1], dx=1, grid=False),
+            )
+            / x_opt[0] ** 2
+        )
 
     Bp2 = f_bp(np.array([x, z]))
 
@@ -383,6 +382,9 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
     for i, j in zip(i_local, j_local):
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
+
+        if f_bp([x[i, j], z[i, j]]) > 1.0:  # T
+            continue  # This is not going to be a null
 
         if nx * nz <= 4225:  # scipy method faster on small grids
             point = find_local_Bp_minima_scipy(f_bp, x[i, j], z[i, j], radius)
