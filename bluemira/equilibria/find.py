@@ -59,7 +59,7 @@ class PsiPoint:
     Abstract object for psi-points with list indexing and point behaviour.
     """
 
-    __slots__ = ["x", "z", "psi"]
+    __slots__ = ("x", "z", "psi")
 
     def __init__(self, x, z, psi):
         self.x, self.z = x, z
@@ -94,7 +94,7 @@ class Xpoint(PsiPoint):
     X-point class.
     """
 
-    __slots__ = []
+    __slots__ = ()
     pass
 
 
@@ -103,7 +103,7 @@ class Opoint(PsiPoint):
     O-point class.
     """
 
-    __slots__ = []
+    __slots__ = ()
     pass
 
 
@@ -112,7 +112,7 @@ class Lpoint(PsiPoint):
     Limiter point class.
     """
 
-    __slots__ = []
+    __slots__ = ()
     pass
 
 
@@ -223,9 +223,9 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
         if np.hypot(Bx, Bz) < B_TOLERANCE:
             return [xi, zi]
         else:
-            a = -Bx / xi - f_psi(xi, zi, dy=1, dx=1)[0][0] / xi
+            a = -Bx - f_psi(xi, zi, dy=1, dx=1)[0][0] / xi
             b = -f_psi(xi, zi, dy=2)[0][0] / xi
-            c = -Bz / xi + f_psi(xi, zi, dx=2) / xi
+            c = -Bz + f_psi(xi, zi, dx=2) / xi
             d = f_psi(xi, zi, dx=1, dy=1)[0][0] / xi
             inv_jac = inv_2x2_matrix(float(a), float(b), float(c), float(d))
             delta = np.dot(inv_jac, [Bx, Bz])
@@ -295,7 +295,7 @@ def triage_OX_points(f_psi, points):
     return o_points, x_points
 
 
-def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :N802
+def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -360,17 +360,7 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
 
     d_x, d_z = x[1, 0] - x[0, 0], z[0, 1] - z[0, 0]  # Grid resolution
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
-
-    if x_min is None:
-        f = RectBivariateSpline(x[:, 0], z[0, :], psi)  # Spline for psi interpolation
-    else:
-        # Truncate grid to avoid many OX points on solenoid (CREATE relic)
-        i_x = np.argmin(abs(x[:, 0] - x_min)) - 1
-        f = RectBivariateSpline(x[i_x:, 0], z[0, :], psi[i_x:, :])
-        x = x[i_x:0]
-        psi = psi[i_x:, :]
-
-    nx, nz = psi.shape  # Grid shape (including truncation)
+    nx, nz = psi.shape  # Grid shape
 
     radius = min(0.5, 2 * (d_x ** 2 + d_z ** 2))  # Search radius
 
@@ -395,8 +385,8 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None, x_min=None):  # noqa :
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
-        # if f_bp([x[i, j], z[i, j]]) > 1.0:  # T
-        #    continue  # This is not going to be a null
+        if f_bp([x[i, j], z[i, j]]) > 1.0:  # T
+            continue  # This is not going to be a null
 
         if nx * nz <= 4225:  # scipy method faster on small grids
             point = find_local_Bp_minima_scipy(f_bp, x[i, j], z[i, j], radius)
