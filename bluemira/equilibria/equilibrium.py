@@ -564,7 +564,7 @@ class Equilibrium(MHDState):
         # Constructors
         self._jtor = jtor
         self._profiles = profiles
-        self._plasmacoil = None  # So calcular se for preciso
+        self._plasmacoil = None  # Only calculate if necessary
         self._o_points = None
         self._x_points = None
         self._solver = None
