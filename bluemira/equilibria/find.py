@@ -413,13 +413,17 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         x_points.extend(limit_x)
 
     if len(x_points) == 0:
-        # There is an O-point, but no X-points, so we will take the grid as a boundary
+        # There is an O-point, but no X-points or L-points, so we will take the grid
+        # as a boundary
+        print("")  # stdout flusher
+        bluemira_warn(
+            "EQUILIBRIA::find_OX: No X-points found during an iteration, using grid boundary to limit the plasma."
+        )
         x_grid_edge = np.concatenate([x[0, :], x[:, 0], x[-1, :], x[:, -1]])
         z_grid_edge = np.concatenate([z[0, :], z[:, 0], z[-1, :], z[:, -1]])
-        glimit_x = [
+        x_points = [
             Lpoint(xi, zi, f(xi, zi)[0][0]) for xi, zi in zip(x_grid_edge, z_grid_edge)
         ]
-        x_points.extend(glimit_x)
 
     useful_x, useless_x = [], []
     for xp in x_points:
