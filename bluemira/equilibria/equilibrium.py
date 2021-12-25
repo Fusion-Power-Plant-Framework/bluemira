@@ -636,7 +636,9 @@ class Equilibrium(MHDState):
             # We can include the contribution of the plasma later if need be.
             jtor = None
         else:
-            o_points, x_points = cls.get_OX_points(force_update=True)
+            o_points, x_points = find_OX_points(
+                grid.x, grid.z, psi, limiter=limiter, coilset=coilset
+            )
             jtor = profiles.jtor(
                 grid.x, grid.z, psi, o_points=o_points, x_points=x_points
             )
