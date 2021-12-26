@@ -197,17 +197,24 @@ import nlopt
 
 def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
     def f_objective(x, grad):
-        Bx = -f_psi(x[0], x[1], dy=1, grid=False) / x[0]
-        Bz = f_psi(x[0], x[1], dx=1, grid=False) / x[0]
+        dpsi_x = f_psi(x[0], x[1], dy=1, grid=False)
+        dpsi_z = f_psi(x[0], x[1], dx=1, grid=False)
+        dpsi_x_dx = f_psi(x[0], x[1], dy=1, dx=1, grid=False)
+        dpsi_x_dz = f_psi(x[0], x[1], dy=2, grid=False)
+        dpsi_z_dx = f_psi(x[0], x[1], dx=2, grid=False)
+        dpsi_z_dz = f_psi(x[0], x[1], dx=1, dy=1, grid=False)
+
+        Bx = -dpsi_x / x[0]
+        Bz = dpsi_z / x[0]
         value = Bx ** 2 + Bz ** 2
         if grad.size > 0:
             grad[0] = (
-                2 * f_psi(x[0], x[1], dy=1, dx=1) / x[0]
-                + 2 * f_psi(x[0], x[1], dx=2) / x[0]
+                2 * dpsi_x * (x[0] * dpsi_x_dx - dpsi_x) / x[0] ** 3
+                + 2 * dpsi_z * (x[0] * dpsi_z_dx - dpsi_z) / x[0] ** 3
             )
             grad[1] = (
-                2 * f_psi(x[0], x[1], dy=2) / x[0]
-                + 2 * f_psi(x[0], x[1], dx=1, dy=1) / x[0]
+                2 * dpsi_x * (x[0] * dpsi_x_dz - dpsi_x) / x[0] ** 3
+                + 2 * dpsi_z * (x[0] * dpsi_z_dz - dpsi_z) / x[0] ** 3
             )
         return value
 
@@ -386,6 +393,7 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     Bp2 = f_bp(np.array([x, z]))
 
     i_local_all, j_local_all = find_local_minima(Bp2)
+    coilset = None
     if coilset:
         # Remove local minima inside coils
         i_local, j_local = [], []
