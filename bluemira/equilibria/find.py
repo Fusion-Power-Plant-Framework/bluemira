@@ -343,18 +343,6 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
             / x_opt[0] ** 2
         )
 
-    def _center_sort(p):
-        """
-        Sort points w.r.t. grid centre.
-        """
-        return (p[0] - x_m) ** 2 + (p[1] - z_m) ** 2
-
-    def _psi_sort(p):
-        """
-        Sort points w.r.t. primary O-point psi.
-        """
-        return (p[2] - psio) ** 2
-
     d_x, d_z = x[1, 0] - x[0, 0], z[0, 1] - z[0, 0]  # Grid resolution
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
     nx, nz = psi.shape  # Grid shape
@@ -403,7 +391,8 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         bluemira_warn("EQUILIBRIA::find_OX: No O-points found during an iteration.")
         return o_points, x_points
 
-    o_points.sort(key=_center_sort)
+    # Sort O-points by centrality to the grid
+    o_points.sort(key=lambda o: (o.x - x_m) ** 2 + (o.z - z_m) ** 2)
 
     if limiter is not None:
         limit_x = []
@@ -444,7 +433,8 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
 
         useful_x.append(xp)
 
-    useful_x.sort(key=_psi_sort)
+    # Sort X-points by proximity to O-point psi
+    useful_x.sort(key=lambda x: (x.psi - psio) ** 2)
     useful_x.extend(useless_x)
     return o_points, useful_x
 
