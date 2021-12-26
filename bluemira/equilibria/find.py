@@ -223,9 +223,9 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
         if np.hypot(Bx, Bz) < B_TOLERANCE:
             return [xi, zi]
         else:
-            a = -Bx / xi - f_psi(xi, zi, dy=1, dx=1)[0][0] / xi
+            a = -Bx - f_psi(xi, zi, dy=1, dx=1)[0][0] / xi
             b = -f_psi(xi, zi, dy=2)[0][0] / xi
-            c = -Bz / xi + f_psi(xi, zi, dx=2) / xi
+            c = -Bz + f_psi(xi, zi, dx=2) / xi
             d = f_psi(xi, zi, dx=1, dy=1)[0][0] / xi
             inv_jac = inv_2x2_matrix(float(a), float(b), float(c), float(d))
             delta = np.dot(inv_jac, [Bx, Bz])
@@ -370,9 +370,6 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
-        if f_bp([x[i, j], z[i, j]]) > 1.0:  # T
-            continue  # This is not going to be a null
-
         if nx * nz <= 4225:  # scipy method faster on small grids
             point = find_local_Bp_minima_scipy(f_bp, x[i, j], z[i, j], radius)
 
@@ -389,6 +386,7 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     if len(o_points) == 0:
         print("")  # stdout flusher
         bluemira_warn("EQUILIBRIA::find_OX: No O-points found during an iteration.")
+        o_points = [Opoint(x_m, z_m, f(x_m, z_m))]
         return o_points, x_points
 
     # Sort O-points by centrality to the grid
