@@ -404,7 +404,6 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         return o_points, x_points
 
     o_points.sort(key=_center_sort)
-    x_op, z_op, psio = o_points[0]  # Primary O-point
 
     if limiter is not None:
         limit_x = []
@@ -425,6 +424,7 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
             Lpoint(xi, zi, f(xi, zi)[0][0]) for xi, zi in zip(x_grid_edge, z_grid_edge)
         ]
 
+    x_op, z_op, psio = o_points[0]  # Primary O-point
     useful_x, useless_x = [], []
     for xp in x_points:
         x_xp, z_xp, psix = xp
@@ -622,7 +622,7 @@ def find_field_surf(x, z, Bp, field):
     surfaces = get_contours(x, z, Bp, field)
     err = []
     areas = []
-    for group in surfaces:  # Choisir la surface la plus "logique"
+    for group in surfaces:  # Choose the most "logical" surface
         err.append(f_min(*group.T))
         areas.append(get_area_2d(*group.T))
 
