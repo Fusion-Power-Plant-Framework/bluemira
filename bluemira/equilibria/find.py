@@ -393,7 +393,6 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     Bp2 = f_bp(np.array([x, z]))
 
     i_local_all, j_local_all = find_local_minima(Bp2)
-    coilset = None
     if coilset:
         # Remove local minima inside coils
         i_local, j_local = [], []
