@@ -264,7 +264,7 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
         if np.hypot(Bx, Bz) < B_TOLERANCE:
             return [xi, zi]
         else:
-            a = Bx / xi - f_psi(xi, zi, dy=1, dx=1)[0][0] / xi
+            a = -Bx / xi - f_psi(xi, zi, dy=1, dx=1)[0][0] / xi
             b = -f_psi(xi, zi, dy=2)[0][0] / xi
             c = -Bz / xi + f_psi(xi, zi, dx=2) / xi
             d = f_psi(xi, zi, dx=1, dy=1)[0][0] / xi
