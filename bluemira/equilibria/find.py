@@ -192,6 +192,40 @@ def inv_2x2_matrix(a, b, c, d):
     return np.array([[d, -b], [-c, a]]) / (a * d - b * c)
 
 
+import nlopt
+
+
+def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
+    def f_objective(x, grad):
+        Bx = -f_psi(x[0], x[1], dy=1, grid=False) / x[0]
+        Bz = f_psi(x[0], x[1], dx=1, grid=False) / x[0]
+        value = Bx ** 2 + Bz ** 2
+        if grad.size > 0:
+            grad[0] = (
+                2 * f_psi(x[0], x[1], dy=1, dx=1) / x[0]
+                + 2 * f_psi(x[0], x[1], dx=2) / x[0]
+            )
+            grad[1] = (
+                2 * f_psi(x[0], x[1], dy=2) / x[0]
+                + 2 * f_psi(x[0], x[1], dx=1, dy=1) / x[0]
+            )
+        return value
+
+    optimiser = nlopt.opt(nlopt.LD_SLSQP, 2)
+    v0 = np.array([x0, z0])
+    optimiser.set_lower_bounds([x0 - radius, z0 - radius])
+    optimiser.set_upper_bounds([x0 + radius, z0 + radius])
+    optimiser.set_min_objective(f_objective)
+    optimiser.set_ftol_abs(1e-8)
+    optimiser.set_xtol_rel(1e-8)
+    optimiser.set_maxeval(100)
+    x_opt = optimiser.optimize(v0)
+    if f_objective(x_opt, np.array([])) < B_TOLERANCE:
+        return list(x_opt)
+    else:
+        return None
+
+
 def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
     """
     Find local Bp minima on a grid (precisely) using a local Newton/Powell
@@ -223,9 +257,9 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
         if np.hypot(Bx, Bz) < B_TOLERANCE:
             return [xi, zi]
         else:
-            a = -Bx - f_psi(xi, zi, dy=1, dx=1)[0][0] / xi
+            a = Bx / xi - f_psi(xi, zi, dy=1, dx=1)[0][0] / xi
             b = -f_psi(xi, zi, dy=2)[0][0] / xi
-            c = -Bz + f_psi(xi, zi, dx=2) / xi
+            c = -Bz / xi + f_psi(xi, zi, dx=2) / xi
             d = f_psi(xi, zi, dx=1, dy=1)[0][0] / xi
             inv_jac = inv_2x2_matrix(float(a), float(b), float(c), float(d))
             delta = np.dot(inv_jac, [Bx, Bz])
@@ -373,8 +407,10 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         if nx * nz <= 4225:  # scipy method faster on small grids
             point = find_local_Bp_minima_scipy(f_bp, x[i, j], z[i, j], radius)
 
-        else:  # Local Newton/Powell CG method faster on large grids
-            point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
+        else:
+            point = find_local_Bp_minima_nlopt(f, x[i, j], z[i, j], radius)
+        # else:  # Local Newton/Powell CG method faster on large grids
+        #    point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
 
         if point:
             points.append(point)
@@ -385,7 +421,9 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
 
     if len(o_points) == 0:
         print("")  # stdout flusher
-        bluemira_warn("EQUILIBRIA::find_OX: No O-points found during an iteration.")
+        bluemira_warn(
+            "EQUILIBRIA::find_OX: No O-points found during an iteration. Defaulting to grid centre."
+        )
         o_points = [Opoint(x_m, z_m, f(x_m, z_m))]
         return o_points, x_points
 
@@ -393,9 +431,7 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     o_points.sort(key=lambda o: (o.x - x_m) ** 2 + (o.z - z_m) ** 2)
 
     if limiter is not None:
-        limit_x = []
-        for lim in limiter:
-            limit_x.append(Lpoint(*lim, f(*lim)[0][0]))
+        limit_x = [Lpoint(*lim, f(*lim)[0][0]) for lim in limiter]
         x_points.extend(limit_x)
 
     if len(x_points) == 0:
