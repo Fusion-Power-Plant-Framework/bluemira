@@ -28,6 +28,7 @@ import numpy as np
 from matplotlib._contour import QuadContourGenerator
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
+import nlopt
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
@@ -148,14 +149,22 @@ def find_local_minima(f):
     )
 
 
-def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa :N802
+@nb.jit(nopython=True, cache=True)
+def inv_2x2_matrix(a, b, c, d):
     """
-    Find local Bp^2 minima on a grid (precisely) using a scipy optimiser.
+    Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
+    """
+    return np.array([[d, -b], [-c, a]]) / (a * d - b * c)
+
+
+def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
+    """
+    Find local Bp minimum on a grid (precisely) using an NLopt optimiser.
 
     Parameters
     ----------
-    f_Bp2: callable
-        The function handle for Bp^2 interpolation
+    f_psi: callable
+        The function handle for RectBivariateSpline psi interpolation
     x0: float
         The local grid minimum x coordinate
     z0: float
@@ -170,32 +179,7 @@ def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa :N802
     z: float
         The z coordinate of the minimum
     """
-    x_0 = np.array([x0, z0])
-    # BFGS expensive with many grid points?
-    # bounds = [
-    #     [x0 - 2 * dx, x0 + 2 * dx],
-    #     [z0 - 2 * dz, z0 + 2 * dz],
-    # ]  # TODO: Implement and figure out why so slow
-    res = minimize(f_Bp2, x_0, method="BFGS", options={"disp": False})  # bounds=bounds,
-    if np.sqrt(res.fun) < B_TOLERANCE:
-        xn, zn = res.x[0], res.x[1]
-        if np.sqrt((x0 - xn) ** 2 + (z0 - zn) ** 2) < 5 * radius:
-            return [res.x[0], res.x[1]]
-    return None
 
-
-@nb.jit(nopython=True, cache=True)
-def inv_2x2_matrix(a, b, c, d):
-    """
-    Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
-    """
-    return np.array([[d, -b], [-c, a]]) / (a * d - b * c)
-
-
-import nlopt
-
-
-def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
     def f_objective(x, grad):
         dpsi_x = f_psi(x[0], x[1], dy=1, grid=False)
         dpsi_z = f_psi(x[0], x[1], dx=1, grid=False)
@@ -207,14 +191,15 @@ def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
         Bx = -dpsi_x / x[0]
         Bz = dpsi_z / x[0]
         value = Bx ** 2 + Bz ** 2
+        factor = 2 / x[0] ** 3
         if grad.size > 0:
-            grad[0] = (
-                2 * dpsi_x * (x[0] * dpsi_x_dx - dpsi_x) / x[0] ** 3
-                + 2 * dpsi_z * (x[0] * dpsi_z_dx - dpsi_z) / x[0] ** 3
+            grad[0] = factor * (
+                dpsi_x * (x[0] * dpsi_x_dx - dpsi_x)
+                + dpsi_z * (x[0] * dpsi_z_dx - dpsi_z)
             )
-            grad[1] = (
-                2 * dpsi_x * (x[0] * dpsi_x_dz - dpsi_x) / x[0] ** 3
-                + 2 * dpsi_z * (x[0] * dpsi_z_dz - dpsi_z) / x[0] ** 3
+            grad[1] = factor * (
+                dpsi_x * (x[0] * dpsi_x_dz - dpsi_x)
+                + dpsi_z * (x[0] * dpsi_z_dz - dpsi_z)
             )
         return value
 
@@ -224,10 +209,11 @@ def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
     optimiser.set_upper_bounds([x0 + radius, z0 + radius])
     optimiser.set_min_objective(f_objective)
     optimiser.set_ftol_abs(1e-8)
+    optimiser.set_ftol_rel(1e-8)
     optimiser.set_xtol_rel(1e-8)
     optimiser.set_maxeval(100)
     x_opt = optimiser.optimize(v0)
-    if f_objective(x_opt, np.array([])) < B_TOLERANCE:
+    if np.sqrt(f_objective(x_opt, np.array([]))) < B_TOLERANCE:
         return list(x_opt)
     else:
         return None
@@ -411,13 +397,12 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
-        if nx * nz <= 4225:  # scipy method faster on small grids
-            point = find_local_Bp_minima_scipy(f_bp, x[i, j], z[i, j], radius)
-
-        else:
+        if nx * nz <= 4225:
+            # Could be faster
             point = find_local_Bp_minima_nlopt(f, x[i, j], z[i, j], radius)
-        # else:  # Local Newton/Powell CG method faster on large grids
-        #    point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
+        else:
+            # Local Newton/Powell CG method faster on large grids
+            point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
 
         if point:
             points.append(point)
