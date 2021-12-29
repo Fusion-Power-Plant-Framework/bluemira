@@ -877,6 +877,6 @@ def _in_plasma(x, z, mask, sep):
     dz = 0.5 * abs(z[1, 0] - z[0, 0])
     for i in range(n):
         for j in range(m):
-            if in_polygon(x[i, j] + dx, z[i, j] - dz, sep):
+            if in_polygon(x[i, j] + dx, z[i, j] + dz, sep):
                 mask[i, j] = 1
     return mask
