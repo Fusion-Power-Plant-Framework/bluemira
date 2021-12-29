@@ -23,7 +23,6 @@
 Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
 
-import nlopt
 import numba as nb
 import numpy as np
 from matplotlib._contour import QuadContourGenerator
@@ -154,63 +153,6 @@ def inv_2x2_matrix(a, b, c, d):
     Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
     """
     return np.array([[d, -b], [-c, a]]) / (a * d - b * c)
-
-
-def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
-    """
-    Find local Bp minimum on a grid (precisely) using an NLopt optimiser.
-
-    Parameters
-    ----------
-    f_psi: callable
-        The function handle for RectBivariateSpline psi interpolation
-    x0: float
-        The local grid minimum x coordinate
-    z0: float
-        The local grid minimum z coordinate
-    radius: float
-        The search radius
-
-    Returns
-    -------
-    x: Union[float, None]
-        The x coordinate of the minimum. None if the minimum is not valid.
-    z: float
-        The z coordinate of the minimum
-    """
-
-    def f_objective(x, grad):
-        dpsi_x = f_psi(x[0], x[1], dy=1, grid=False)
-        dpsi_z = f_psi(x[0], x[1], dx=1, grid=False)
-
-        Bx = -dpsi_x / x[0]
-        Bz = dpsi_z / x[0]
-        value = Bx ** 2 + Bz ** 2
-
-        if grad.size > 0:
-            factor = 2 / x[0] ** 2
-            dpsi_x_dx = f_psi(x[0], x[1], dy=1, dx=1, grid=False)
-            dpsi_x_dz = f_psi(x[0], x[1], dy=2, grid=False)
-            dpsi_z_dx = f_psi(x[0], x[1], dx=2, grid=False)
-            dpsi_z_dz = f_psi(x[0], x[1], dx=1, dy=1, grid=False)
-            grad[0] = factor * (dpsi_x * dpsi_x_dx + dpsi_z * dpsi_z_dx)
-            grad[1] = factor * (dpsi_x * dpsi_x_dz + dpsi_z * dpsi_z_dz)
-        return value
-
-    optimiser = nlopt.opt(nlopt.LD_LBFGS, 2)
-    v0 = np.array([x0, z0])
-    optimiser.set_lower_bounds([x0 - radius, z0 - radius])
-    optimiser.set_upper_bounds([x0 + radius, z0 + radius])
-    optimiser.set_min_objective(f_objective)
-    optimiser.set_ftol_abs(1e-8)
-    optimiser.set_ftol_rel(1e-8)
-    optimiser.set_xtol_rel(1e-8)
-    optimiser.set_maxeval(100)
-    x_opt = optimiser.optimize(v0)
-    if f_objective(x_opt, np.array([])) < B_TOLERANCE:
-        return list(x_opt)
-    else:
-        return None
 
 
 def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
@@ -380,12 +322,17 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
-        if nx * nz <= 4225:
-            # Could be faster
-            point = find_local_Bp_minima_nlopt(f, x[i, j], z[i, j], radius)
-        else:
-            # Local Newton/Powell CG method faster on large grids
-            point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
+        if (
+            np.hypot(
+                -f(x[i, j], z[i, j], dy=1, grid=False) / x[i, j],
+                f(x[i, j], z[i, j], dx=1, grid=False) / x[i, j],
+            )
+            > 1.0
+        ):  # T
+            continue
+
+        # Local Newton/Powell CG method faster on large grids
+        point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
 
         if point:
             points.append(point)
