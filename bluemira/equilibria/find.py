@@ -356,26 +356,15 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
 
     Points are order w.r.t. central grid coordinates.
     """
-
-    def f_bp(x_opt):
-        """
-        Poloidal field optimiser function handle
-        """
-        return (
-            np.hypot(
-                -f(x_opt[0], x_opt[1], dy=1, grid=False),
-                f(x_opt[0], x_opt[1], dx=1, grid=False),
-            )
-            / x_opt[0] ** 2
-        )
-
     d_x, d_z = x[1, 0] - x[0, 0], z[0, 1] - z[0, 0]  # Grid resolution
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
     nx, nz = psi.shape  # Grid shape
     radius = min(0.5, 2 * (d_x ** 2 + d_z ** 2))  # Search radius
     f = RectBivariateSpline(x[:, 0], z[0, :], psi)  # Spline for psi interpolation
 
-    Bp2 = f_bp(np.array([x, z]))
+    Bx = -f(x, z, dy=1, grid=False) / x
+    Bz = f(x, z, dx=1, grid=False) / x
+    Bp2 = Bx ** 2 + Bz ** 2
 
     i_local_all, j_local_all = find_local_minima(Bp2)
     if coilset:
