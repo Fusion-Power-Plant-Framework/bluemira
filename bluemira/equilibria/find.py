@@ -182,27 +182,22 @@ def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
     def f_objective(x, grad):
         dpsi_x = f_psi(x[0], x[1], dy=1, grid=False)
         dpsi_z = f_psi(x[0], x[1], dx=1, grid=False)
-        dpsi_x_dx = f_psi(x[0], x[1], dy=1, dx=1, grid=False)
-        dpsi_x_dz = f_psi(x[0], x[1], dy=2, grid=False)
-        dpsi_z_dx = f_psi(x[0], x[1], dx=2, grid=False)
-        dpsi_z_dz = f_psi(x[0], x[1], dx=1, dy=1, grid=False)
 
         Bx = -dpsi_x / x[0]
         Bz = dpsi_z / x[0]
         value = Bx ** 2 + Bz ** 2
-        factor = 2 / x[0] ** 3
+
         if grad.size > 0:
-            grad[0] = factor * (
-                dpsi_x * (x[0] * dpsi_x_dx - dpsi_x)
-                + dpsi_z * (x[0] * dpsi_z_dx - dpsi_z)
-            )
-            grad[1] = factor * (
-                dpsi_x * (x[0] * dpsi_x_dz - dpsi_x)
-                + dpsi_z * (x[0] * dpsi_z_dz - dpsi_z)
-            )
+            factor = 2 / x[0] ** 2
+            dpsi_x_dx = f_psi(x[0], x[1], dy=1, dx=1, grid=False)
+            dpsi_x_dz = f_psi(x[0], x[1], dy=2, grid=False)
+            dpsi_z_dx = f_psi(x[0], x[1], dx=2, grid=False)
+            dpsi_z_dz = f_psi(x[0], x[1], dx=1, dy=1, grid=False)
+            grad[0] = factor * (dpsi_x * dpsi_x_dx + dpsi_z * dpsi_z_dx)
+            grad[1] = factor * (dpsi_x * dpsi_x_dz + dpsi_z * dpsi_z_dz)
         return value
 
-    optimiser = nlopt.opt(nlopt.LD_SLSQP, 2)
+    optimiser = nlopt.opt(nlopt.LD_LBFGS, 2)
     v0 = np.array([x0, z0])
     optimiser.set_lower_bounds([x0 - radius, z0 - radius])
     optimiser.set_upper_bounds([x0 + radius, z0 + radius])
@@ -212,7 +207,7 @@ def find_local_Bp_minima_nlopt(f_psi, x0, z0, radius):
     optimiser.set_xtol_rel(1e-8)
     optimiser.set_maxeval(100)
     x_opt = optimiser.optimize(v0)
-    if np.sqrt(f_objective(x_opt, np.array([]))) < B_TOLERANCE:
+    if f_objective(x_opt, np.array([])) < B_TOLERANCE:
         return list(x_opt)
     else:
         return None
