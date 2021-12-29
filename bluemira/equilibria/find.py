@@ -23,12 +23,11 @@
 Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
 
+import nlopt
 import numba as nb
 import numpy as np
 from matplotlib._contour import QuadContourGenerator
 from scipy.interpolate import RectBivariateSpline
-from scipy.optimize import minimize
-import nlopt
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
