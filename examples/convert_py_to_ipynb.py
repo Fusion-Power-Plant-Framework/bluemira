@@ -19,8 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Convert all .py files in the underlying directory or specified files to .ipynb.
-
+Convert all example .py files specified or in the underlying directory to .ipynb.
 """
 
 import glob
@@ -115,11 +114,16 @@ def convert(path):
     """
     with open(path, "r") as py_fh:
         py_str = py_fh.read()
-        if header_comment in py_str:
-            nb_str = py2nb(py_str)
-            name, _ = os.path.splitext(path)
-        with open(name + ".ipynb", "w") as nb_fh:
-            json.dump(nb_str, nb_fh, indent=2)
+        try:
+            if header_comment in py_str:
+                nb_str = py2nb(py_str)
+                name, _ = os.path.splitext(path)
+            with open(name + ".ipynb", "w") as nb_fh:
+                json.dump(nb_str, nb_fh, indent=2)
+        except UnboundLocalError:
+            raise UnboundLocalError(
+                f"No markdown detected, please comment your example {os.path.splitext(path)[0]}"
+            ) from None
 
 
 print(__doc__)
