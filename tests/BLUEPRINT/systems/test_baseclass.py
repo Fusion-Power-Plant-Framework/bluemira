@@ -19,12 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 from typing import Type
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
+import pytest
+
 from bluemira.base.error import BluemiraError
 from BLUEPRINT.nova.firstwall import DivertorProfile
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.blanket import BreedingBlanket
 from BLUEPRINT.systems.divertor import Divertor
 

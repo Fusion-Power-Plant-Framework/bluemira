@@ -26,9 +26,10 @@ Created on Fri Aug  2 12:33:20 2019
 @author: matti
 """
 import numpy as np
+
+from BLUEPRINT.geometry.geombase import Plane, point_dict_to_array
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geombase import Plane, point_dict_to_array
 
 
 def test_read_write_geombase(tmpdir):

@@ -19,8 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def _plot_verification_test(
