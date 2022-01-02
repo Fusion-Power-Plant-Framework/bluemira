@@ -23,6 +23,7 @@
 Distribution and timeline utilities
 """
 import abc
+
 import numpy as np
 from scipy.optimize import brentq
 

@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import freecad  # noqa: F401
-import numpy
+import numpy as np
 import Part
 import pytest
 from FreeCAD import Base

@@ -32,6 +32,8 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
     revolve_shape,
+    signed_distance,
+    signed_distance_2D_polygon,
     slice_shape,
 )
 
