@@ -24,12 +24,10 @@ Tools for integrating geometry information into OpenMOC
 """
 
 import numpy as np
-
 import openmoc
 
 # BLUEPRINT imports
 from BLUEPRINT.geometry.geomtools import polyarea
-
 
 ###########################################
 # Tools for manipulating points and planes.

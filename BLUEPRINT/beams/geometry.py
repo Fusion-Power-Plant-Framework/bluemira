@@ -22,19 +22,21 @@
 """
 Finite element geometry
 """
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
 from scipy.sparse import lil_matrix
+
 from BLUEPRINT.base.error import BeamsError
 from BLUEPRINT.beams.constants import D_TOLERANCE
-from BLUEPRINT.geometry.geomtools import bounding_box
-from BLUEPRINT.beams.node import Node
 from BLUEPRINT.beams.element import Element
+from BLUEPRINT.beams.node import Node
 from BLUEPRINT.beams.plotting import (
-    GeometryPlotter,
     DeformedGeometryPlotter,
+    GeometryPlotter,
     StressDeformedGeometryPlotter,
 )
+from BLUEPRINT.geometry.geomtools import bounding_box
 
 
 class Geometry:

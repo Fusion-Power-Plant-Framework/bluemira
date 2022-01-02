@@ -27,9 +27,8 @@ from scipy.optimize._constraints import old_constraint_to_new
 
 from bluemira.geometry._deprecated_tools import get_intersect
 from bluemira.geometry.constants import VERY_BIG
-
-from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import distance_between_points, normal
+from BLUEPRINT.geometry.loop import Loop
 
 
 def convert_scipy_constraints(list_of_con_dicts):

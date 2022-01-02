@@ -22,10 +22,10 @@
 """
 Color utilities
 """
-from matplotlib.colors import hex2color
 import matplotlib.colors as col
-import seaborn as sns
 import numpy as np
+import seaborn as sns
+from matplotlib.colors import hex2color
 
 
 def facecolor_kwargs(**kwargs):
