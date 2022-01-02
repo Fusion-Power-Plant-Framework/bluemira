@@ -1,5 +1,6 @@
 import numpy as np
-from bluemira.magnetostatics.greens import greens_psi, greens_Bx, greens_Bz
+
+from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
 
 coil_x, coil_z = 4, 5
 x = np.linspace(0.1, 10, 100)
