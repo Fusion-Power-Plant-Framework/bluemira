@@ -23,18 +23,20 @@
 Script used to analyse T retention data
 """
 
+import json
 import os
+
 import numpy as np
 from matplotlib import pyplot as plt
-import json
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
+from bluemira.fuel_cycle.blocks import FuelCycleComponent
 from bluemira.fuel_cycle.tools import (
     convert_flux_to_flow,
     fit_sink_data,
     piecewise_sqrt_threshold,
 )
-from bluemira.fuel_cycle.blocks import FuelCycleComponent
 
 plot_defaults()
 
