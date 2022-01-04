@@ -1,7 +1,100 @@
 {
+
+    // ############################
+    // # list numerics properties (num type)
+    // #############################
+    // # [-] max iteration error between transport/equilibrium iterations
+    "tol": 1e-10,
+    // # [-] min time step between iterations
+    "dtmin": 1e-2,
+    // # [-] max time step between iterations
+    "dtmax": 1e-2,
+    // # [-] exponent of jipperdo2
+    "dtmaxmin": 0.1,
+    // # [-] stabilizing diff for TGLF in m²/s
+    "dtmaxmax": 1.0,
+    // # [-] tolerance above which TGLF should be always called
+    "dtminmax": 5.0,
+    // # [-] !time step
+    "dt": 0.01,
+    // # [-] !decrease of dt
+    "dtinc": 2.0,
+    // # [-] !increase of dt
+    "Ainc": 1.1,
+    // # [-] max number of iteration
+    "test": 10000,
+    // # [-] ! multiplier of etolm that should not be overcome
+    "tolmin": 10.1,
+    // # [-] Newton differential
+    "dgy": 1e-5,
+    // # [-] exponent of jipperdo
+    "eopt": 0.1,
+    // # [-] first radial grid point
+    "capA": 0.1,
+    // # [-] diagnostics for ASTRA (0 or 1)
+    "i_diagz": 0,
+    // # [-] SOL model selector:
+    // # 0 - fit based on Eich scaling
+    // # 1 - Mattia Siccinio's model
+    "isiccir": 0,
+    // # [-] sawtooth correction of q
+    // (fix q = 1 if q below 1)
+    "isawt": 1,
+    // # [-] number of interpolated grid points
+    "nx": 41,
+    // # [-] number of reduced grid points
+    "nxt": 5,
+    // # [-] number of unknowns in the transport solver
+    //(ne, Te, Ti) leave this equal to 3!
+    "nchannels": 3,
+    // # [-] impurity model selector:
+    // # 0 - fixed concentration,
+    // # 1 - concentration fixed at pedestal top, then fixed density.
+    "i_impmodel": 1,
+    // # [-] selector for transport model: (see trmodel.f90)
+    // # 1 - simple gyrobohm scaling with imposed H factor,
+    // # 555 - H factor scaling from F. Palermo
+    // # 111 - another model based on gyro-Bohm transport
+    // # 2 - no reference in the source code
+    "i_modeltype": 1,
+    // # [-] equilibrium model selector:
+    // # 1 - EMEQ solves equilibrium with given q95, with sawteeth.
+    // # 2 - EMEQ solves with given Ip, with sawteeth
+    "i_equiltype": 2,
+    // # [-] pedestal model selector:
+    // # 1 - fixed pedestal temperature (Teped_in),
+    // # 2 - Saarelma scaling
+    "i_pedestal": 2,
+    // # [-] number of tglf points, below positions
+    "ntglf": 11,
+    // # [-] tglf points, position 1
+    "xtglf_1": 0.1,
+    // # [-] tglf points, position 2
+    "xtglf_2": 0.15,
+    // # [-] tglf points, position 3
+    "xtglf_3": 0.2,
+    // # [-] tglf points, position 4
+    "xtglf_4": 0.25,
+    // # [-] tglf points, position 5
+    "xtglf_5": 0.3,
+    // # [-] tglf points, position 6
+    "xtglf_6": 0.4,
+    // # [-] tglf points, position 7
+    "xtglf_7": 0.5,
+    // # [-] tglf points, position 8
+    "xtglf_8": 0.6,
+    // # [-] tglf points, position 9
+    "xtglf_9": 0.7,
+    // # [-] tglf points, position 10
+    "xtglf_10": 0.75,
+    // # [-] tglf points, position 11
+    "xtglf_11": 0.8,
+
     // ############################
     // # list geometry properties
     // ############################
+    // # [m] plasma major radius
+    "R": 9.0,
     // # [-] plasma aspect ratio
     "A": 3.1,
     // # [T] Toroidal field at plasma center
@@ -18,29 +111,23 @@
     "kappa95": 1.65,
     // # [-] safety factor at 95% flux surface
     "q95": 3.5,
-    // # [m] plasma major radius
-    "R0": 9.0,
     // # [m3] constrained plasma volume (set zero to disable volume constraining)
     "V_in": 0,
+
+
     // ############################
-    // # list numerics properties
+    // # list composition properties (comp type)
     // #############################
-    // # [-] Newton differential
-    "dgy": 1e-5,
-    // # [-] min time step between iterations
-    "dtmin": 1e-2,
-    // # [-] max time step between iterations
-    "dtmax": 1e-2,
-    // # [-] number of interpolated grid points
-    "nx": 41,
-    // # [-] number of reduced grid points
-    "nxt": 5,
-    // # [-] max number of iteration
-    "test": 10000,
-    // # [-] max iteration error between transport/equilibrium iterations
-    "tol": 1e-10,
+
+
     // ############################
-    // # list transport & confinement properties
+    // # list pedestal properties (ped type)
+    // #############################
+
+
+
+    // ############################
+    // # list general inputs: control, B.C., etc (inp type)
     // #############################
     // # [-] Greenwald density fraction at pedestal
     "f_gwped": 0.85,
@@ -68,6 +155,12 @@
     "Teped_inp": 5.5,
     // # [keV] electrons/ions temperature at separatrix
     "Tesep": 0.1,
+
+
+
+
+
+
     // ############################
     // # list composition properties
     // #############################
@@ -92,28 +185,6 @@
     "dx_heat_nbi": 0.2,
     // # [-] required fraction of non inductive current, if 0, dont use CD
     "f_ni": 0.0,
-    // # [-] equilibrium model selector:
-    // # 1 - EMEQ solves equilibrium with given q95, with sawteeth.
-    // # 2 - EMEQ solves with given Ip, with sawteeth
-    "i_equiltype": 1,
-    // # [-] impurity model selector:
-    // # 0 - fixed concentration,
-    // # 1 - concentration fixed at pedestal top, then fixed density.
-    "i_impmodel": 1,
-    // # [-] selector for transport model: (see trmodel.f90)
-    // # 1 - simple gyrobohm scaling with imposed H factor,
-    // # 555 - H factor scaling from F. Palermo
-    // # 111 - another model based on gyro-Bohm transport
-    // # 2 - no reference in the source code
-    "i_modeltype": 1,
-    // # [-] pedestal model selector:
-    // # 1 - fixed pedestal temperature (Teped_in),
-    // # 2 - Saarelma scaling
-    "i_pedestal": 1,
-    // # [-] SOL model selector:
-    // # 0 - fit based on Eich scaling
-    // # 1 - Mattia Siccinio's model
-    "isiccir": 0,
     // # [m*MA/MW] Normalized CD efficiency
     "nbcdeff": 0.3,
     // # [MW] max allowed power for control (fusion power, H-mode)

@@ -63,7 +63,7 @@ class EquilibriumModel(Enum):
     """
     Equilibrium Model Selector
 
-    ! - EMEQ solves equilibrium with given q95, with sawteeth.
+    1 - EMEQ solves equilibrium with given q95, with sawteeth.
     2 - EMEQ solves with given Ip, with sawteeth
 
     Plasmod variable name: "i_equiltype"
@@ -146,6 +146,83 @@ class Profiles(Enum):
 # Link all plasmod outputs
 
 PLASMOD_INPUTS = {
+
+    ############################
+    # list numerics properties
+    #############################
+    # [-] max iteration error between transport/equilibrium iterations
+    # ###### "BM_INP": "tol",
+    # [-] min time step between iterations
+    # ###### "BM_INP": "dtmin",
+    # [-] max time step between iterations
+    # ###### "BM_INP": "dtmax",
+    # [-] exponent of jipperdo2
+    # ###### "BM_INP": "dtmaxmin",
+    # [-] stabilizing diff for TGLF in m²/s
+    # ###### "BM_INP": "dtmaxmax",
+    # [-] tolerance above which TGLF should be always called
+    # ###### "BM_INP": "dtminmax",
+    # [-] !time step
+    # ###### "BM_INP": "dt",
+    # [-] !decrease of dt
+    # ###### "BM_INP": "dtinc",
+    # [-] !increase of dt
+    # ###### "BM_INP": "Ainc",
+    # [-] max number of iteration
+    # ###### "BM_INP": "test",
+    # [-] ! multiplier of etolm that should not be overcome
+    # ###### "BM_INP": "tolmin",
+    # [-] Newton differential
+    # ###### "BM_INP": "dgy",
+    # [-] !exponent of jipperdo
+    # ###### "BM_INP": "eopt",
+    # [-] first radial grid point
+    # ###### "BM_INP": "capA",
+    # [-] diagnostics for ASTRA (0 or 1)
+    # ###### "BM_INP": "i_diagz",
+    # [-] SOL model selector:
+    # ###### "BM_INP": "isiccir": 0,
+    # [-] sawtooth correction of q
+    # ###### "BM_INP": "isawt",
+    # [-] number of interpolated grid points
+    # ###### "BM_INP": "nx",
+    # [-] number of reduced grid points
+    # ###### "BM_INP": "nxt",
+    # [-] number of unknowns in the transport solver
+    # ###### "BM_INP": "nchannels",
+    # [-] impurity model selector:
+    # ###### "BM_INP": "i_impmodel",
+    # [-] selector for transport model
+    # ###### "BM_INP": "i_modeltype",
+    # [-] equilibrium model selector:
+    # ###### "BM_INP": "i_equiltype",
+    # [-] pedestal model selector:
+    # ###### "BM_INP": "i_pedestal",
+    # [-] number of tglf points, below positions
+    # ###### "BM_INP": "ntglf",
+    # [-] tglf points, position 1
+    # ###### "BM_INP": "xtglf_1",
+    # [-] tglf points, position 2
+    # ###### "BM_INP": "xtglf_2",
+    # [-] tglf points, position 3
+    # ###### "BM_INP": "xtglf_3",
+    # [-] tglf points, position 4,
+    # ###### "BM_INP": "xtglf_4",
+    # [-] tglf points, position 5
+    # ###### "BM_INP": "xtglf_5",
+    # [-] tglf points, position 6
+    # ###### "BM_INP": "xtglf_6",
+    # [-] tglf points, position 7
+    # ###### "BM_INP": "xtglf_7",
+    # [-] tglf points, position 8
+    # ###### "BM_INP": "xtglf_8",
+    # [-] tglf points, position 9
+    # ###### "BM_INP": "xtglf_9",
+    # [-] tglf points, position 10
+    # ###### "BM_INP": "xtglf_10",
+    # [-] tglf points, position 11
+    # ###### "BM_INP": "xtglf_11",
+
     ############################
     # list geometry properties
     ############################
@@ -169,24 +246,11 @@ PLASMOD_INPUTS = {
     "R_0": "R0",
     # [m3] constrained plasma volume (set zero to disable volume constraining)
     "V_p": "V_in",
-    ############################
-    # list numerics properties
-    #############################
-    # [-] Newton differential
-    # ###### "BM_INP": "dgy",
-    # [-] min time step between iterations
-    # ###### "BM_INP ": "dtmin",
-    # [-] max time step between iterations
-    # ###### "BM_INP": "dtmax",
-    # [-] number of interpolated grid points
-    # ###### "BM_INP": "nx",
-    # [-] number of reduced grid points
-    # ###### "BM_INP": "nxt",
-    # [-] max number of iteration
-    # ###### "BM_INP": "test",
-    # [-] max iteration error between transport/equilibrium iterations
-    # ###### "BM_INP": "tol",
-    ############################
+
+
+
+
+############################
     # list transport & confinement properties
     #############################
     # [-] Greenwald density fraction at pedestal
@@ -285,7 +349,7 @@ PLASMOD_OUTPUTS = {
     # [-] poloidal beta
     "beta_p": "beta_p",
     # [-] normalized beta
-    "beta_N": "beta_n",
+    "beta_N": "betan",
     # [-] toroidal beta
     # ##### "BM_OUT": "beta_t",
     # [T] average poloidal field
