@@ -596,9 +596,3 @@ class Element:
             ]
         )
         self.shapes = c + scale * displacements
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

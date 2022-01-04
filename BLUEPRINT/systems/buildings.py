@@ -169,9 +169,3 @@ class RadiationShieldPlotter(ReactorSystemPlotter):
         if not isinstance(alpha, list) and not isinstance(alpha, cycle):
             kwargs["alpha"] = [alpha] + [alpha / 2] * (len(plot_objects) - 1)
         super().plot_xz(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

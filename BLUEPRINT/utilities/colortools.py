@@ -199,9 +199,3 @@ def shift_rgb_color(rgb, alpha):
         v = 1
     rgb_new = rgb + (v - rgb) * abs(alpha)
     return tuple(rgb_new)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

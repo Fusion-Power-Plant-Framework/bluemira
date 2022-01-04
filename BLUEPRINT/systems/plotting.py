@@ -343,9 +343,3 @@ class ReactorPlotter:
             self.axxy.plot(
                 x, y, linestyle="--", linewidth=linewidth, color=color, alpha=alpha
             )
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

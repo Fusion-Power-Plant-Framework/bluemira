@@ -22,7 +22,7 @@
 import os
 import numpy as np
 from bluemira.base.file import get_bluemira_path, make_bluemira_path
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.shape import Shape, fit_shape_to_loop
 from BLUEPRINT.geometry.loop import Loop
 import pytest

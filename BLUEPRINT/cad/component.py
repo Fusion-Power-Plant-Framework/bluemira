@@ -338,9 +338,3 @@ class ComponentCAD:
         if not filename.endswith(".STP"):
             filename += ".STP"
         save_as_STEP_assembly(self.component["shapes"], filename)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

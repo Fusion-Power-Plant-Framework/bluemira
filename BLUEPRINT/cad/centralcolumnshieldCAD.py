@@ -91,9 +91,3 @@ class CentralColumnShieldCAD(ComponentCAD):
 
         # Save
         self.add_shape(ccs_cad)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

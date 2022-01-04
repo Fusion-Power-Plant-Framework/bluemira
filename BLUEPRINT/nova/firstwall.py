@@ -999,9 +999,3 @@ class DivertorProfile(ReactorSystem):
         if dx[1] < dx[0]:
             x_new, z_new = x_new[::-1], z_new[::-1]
         return np.append(x, x_new[1:-1]), np.append(z, z_new[1:-1])
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

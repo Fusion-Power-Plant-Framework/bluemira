@@ -82,9 +82,3 @@ class DivertorCAD(ComponentCAD):
         """
         self.build(**kwargs)
         self.component_pattern(self.n_TF)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

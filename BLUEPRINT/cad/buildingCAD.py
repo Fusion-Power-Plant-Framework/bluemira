@@ -148,9 +148,3 @@ class RadiationCAD(PlugChopper, ComponentCAD):
             plugs.append(plug)
         self.add_shape(rs, name="Radiation shield")
         self.plugs_for_neutronics(plugs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

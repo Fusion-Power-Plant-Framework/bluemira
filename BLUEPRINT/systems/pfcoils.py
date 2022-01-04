@@ -198,9 +198,3 @@ class PoloidalFieldCoilsPlotter(ReactorSystemPlotter):
         Plot the PoloidalFieldCoils in x-y.
         """
         raise NotImplementedError
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

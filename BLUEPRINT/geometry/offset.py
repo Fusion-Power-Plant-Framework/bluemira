@@ -32,7 +32,7 @@ from pyclipper import (
     JT_MITER,
     JT_SQUARE,
 )
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import innocent_smoothie
 from BLUEPRINT.geometry.geomtools import order, normal
@@ -376,9 +376,3 @@ def varied_angular_offset(
     )
     loop_dict = {dims[0]: x, dims[1]: z}
     return Loop.from_dict(loop_dict)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

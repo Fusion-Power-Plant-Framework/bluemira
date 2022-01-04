@@ -31,8 +31,8 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import json_writer
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.constants import TOLERANCE
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.constants import D_TOLERANCE as TOLERANCE
 
 # =============================================================================
 # Type check static methods - Eventually make part of GeomBase object?
@@ -367,9 +367,3 @@ def make_plane(point, norm):
         return make_xy_plane(point)
     else:
         raise NotImplementedError
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
