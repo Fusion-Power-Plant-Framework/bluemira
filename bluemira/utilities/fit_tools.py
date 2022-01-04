@@ -104,7 +104,7 @@ def powers_arange(powers):
     Parameters
     ----------
     powers: np.ndarray
-        array of powers (from poly.powers_)
+        array of powers (from `PolynomialFeatures().powers_`)
 
     Returns
     -------
