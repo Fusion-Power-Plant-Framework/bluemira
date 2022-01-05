@@ -25,7 +25,8 @@ the way:
 Many typical tokamak fusion reactor design optimisation problems are also implemented,
 leveraging the functionality of the above modules.
 
-
-
-
-
+``Bluemira`` is still in the early phases of development, and presently contains less
+functionality than ``BLUEPRINT`` or ``MIRA`` did. We are very actively working to reach
+a point where ``bluemira`` is greater than the sum of its parts. If you are interested in
+using ``bluemira`` as an ''early adopter'', please do get in touch with us so that we can
+help you.
