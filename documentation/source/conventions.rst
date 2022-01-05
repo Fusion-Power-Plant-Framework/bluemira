@@ -1,0 +1,63 @@
+Conventions
+-----------
+
+Coordinate convention
+^^^^^^^^^^^^^^^^^^^^^
+
+``Bluemira`` uses a conventional right-handed Cartesian coordinate convention for all geometry.
+
+Occasionally, for certain modules and calculations, a quasi-toroidal coordinate system and a
+cylindrical coordinate system are used. Note that to facilitate conversion between, the
+the radial coordinate in the cylindrical coordinate system are denoted with :math:`x` and not
+:math:`r` for the radial coordinate.
+
+.. figure:: coordinate_systems.png
+    :name: fig:coordinates
+
+    The three different coordinate systems used in the ``bluemira`` framework: right-handed Cartesian coordinate system (:math:`x, y, z`, black), quasi-toroidal coordinate system (:math:`r, \theta, \phi`, red), and cylindrical coordinate system (:math:`x, \phi, z`, blue).
+
+Unit convention
+^^^^^^^^^^^^^^^
+
+``Bluemira`` uses the `International System of Units (SI) <https://en.wikipedia.org/wiki/International_System_of_Units>`_ convention,
+with only minor deviations. As a summary, all inputs to the code should be in the following units:
+
+.. list-table:: Unit conventions in `bluemira`
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Quantity
+     - Unit name
+     - Symbol
+   * - time
+     - second
+     - [s]
+   * - distance
+     - metre
+     - [m]
+   * - mass
+     - kilogram
+     - [kg]
+   * - electric current
+     - ampere
+     - [A]
+   * - temperature
+     - celsius
+     - [C]
+   * - amount of substance
+     - mol
+     - [mol]
+   * - angles
+     - degrees
+     - [°]
+   * - density
+     - kilograms per cubic metre
+     - [kg/m^3]
+   * - particle density
+     - particles per cubic metre
+     - [1/m^3]
+   * - flux density
+     - particles per square metre per second
+     - [1/m^2/s]
+
+
