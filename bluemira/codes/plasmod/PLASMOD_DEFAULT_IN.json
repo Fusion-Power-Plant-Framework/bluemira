@@ -200,7 +200,7 @@
     // # [-] Greenwald density fraction at separatrix
     "f_gws": 0.5,
     // # [-] input H-factor:if i_modeltype > 1 H factor calculated
-    "hfact": 1.1,
+    "Hfact": 1.1,
     // # [-] fraction of NBI power to ions
     "fpion": 0.5,
     // # [m*MA/MW] Normalized CD efficiency
