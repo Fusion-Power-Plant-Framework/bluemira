@@ -297,11 +297,12 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
     nx, nz = psi.shape  # Grid shape
     radius = min(0.5, 2 * np.hypot(d_x, d_z))  # Search radius
-    f = RectBivariateSpline(x[:, 0], z[0, :], psi)  # Spline for psi interpolation
+    f_psi = RectBivariateSpline(x[:, 0], z[0, :], psi)  # Spline for psi interpolation
+    f_Bx = lambda x, z: -f_psi(x, z, dy=1, grid=False) / x
+    f_Bz = lambda x, z: f_psi(x, z, dx=1, grid=False) / x
+    f_Bp = lambda x, z: np.hypot(f_Bx(x, z), f_Bz(x, z))
 
-    Bx = -f(x, z, dy=1, grid=False) / x
-    Bz = f(x, z, dx=1, grid=False) / x
-    Bp2 = Bx ** 2 + Bz ** 2
+    Bp2 = f_Bx(x, z) ** 2 + f_Bz(x, z) ** 2
 
     i_local_all, j_local_all = find_local_minima(Bp2)
     if coilset:
@@ -309,11 +310,11 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         i_local, j_local = [], []
         for i, j in zip(i_local_all, j_local_all):
             xi, zi = x[i, j], z[i, j]
-            if not np.any(
-                [c._points_inside_coil(xi, zi) for c in coilset.coils.values()]
-            ):
-                i_local.append(i)
-                j_local.append(j)
+            for coil in coilset.coils.values():
+                if coil._points_inside_coil(xi, zi):
+                    i_local.append(i)
+                    j_local.append(j)
+                    break
     else:
         i_local, j_local = i_local_all, j_local_all
 
@@ -322,37 +323,31 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
-        if (
-            np.hypot(
-                -f(x[i, j], z[i, j], dy=1, grid=False) / x[i, j],
-                f(x[i, j], z[i, j], dx=1, grid=False) / x[i, j],
-            )
-            > 1.0
-        ):  # T
+        if f_Bp(x[i, j], z[i, j]) > 1.0:  # T
             continue
 
-        point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
+        point = find_local_Bp_minima_cg(f_psi, x[i, j], z[i, j], radius)
 
         if point:
             points.append(point)
 
     points = drop_space_duplicates(points)
 
-    o_points, x_points = triage_OX_points(f, points)
+    o_points, x_points = triage_OX_points(f_psi, points)
 
     if len(o_points) == 0:
         print("")  # stdout flusher
         bluemira_warn(
             "EQUILIBRIA::find_OX: No O-points found during an iteration. Defaulting to grid centre."
         )
-        o_points = [Opoint(x_m, z_m, f(x_m, z_m))]
+        o_points = [Opoint(x_m, z_m, f_psi(x_m, z_m))]
         return o_points, x_points
 
     # Sort O-points by centrality to the grid
     o_points.sort(key=lambda o: (o.x - x_m) ** 2 + (o.z - z_m) ** 2)
 
     if limiter is not None:
-        limit_x = [Lpoint(*lim, f(*lim)[0][0]) for lim in limiter]
+        limit_x = [Lpoint(*lim, f_psi(*lim)[0][0]) for lim in limiter]
         x_points.extend(limit_x)
 
     if len(x_points) == 0:
@@ -365,7 +360,8 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         x_grid_edge = np.concatenate([x[0, :], x[:, 0], x[-1, :], x[:, -1]])
         z_grid_edge = np.concatenate([z[0, :], z[:, 0], z[-1, :], z[:, -1]])
         x_points = [
-            Lpoint(xi, zi, f(xi, zi)[0][0]) for xi, zi in zip(x_grid_edge, z_grid_edge)
+            Lpoint(xi, zi, f_psi(xi, zi)[0][0])
+            for xi, zi in zip(x_grid_edge, z_grid_edge)
         ]
 
     x_op, z_op, psio = o_points[0]  # Primary O-point
@@ -374,9 +370,9 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         x_xp, z_xp, psix = xp
         xx, zz = np.linspace(x_op, x_xp), np.linspace(z_op, z_xp)
         if psix < psio:
-            psi_ox = -f(xx, zz, grid=False)
+            psi_ox = -f_psi(xx, zz, grid=False)
         else:
-            psi_ox = f(xx, zz, grid=False)
+            psi_ox = f_psi(xx, zz, grid=False)
 
         if np.argmin(psi_ox) > 1:
             useless_x.append(xp)
