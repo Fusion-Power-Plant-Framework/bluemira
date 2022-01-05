@@ -254,8 +254,12 @@ class CADModel:
         component_dict = {}
         current_id = 0
         for system, component in self.silo.items():
-            # Get sub compon
-            names = component["names"]
+
+            # Replace spaces with underscores for parity with STP output
+            sysname = system.replace(" ", "_")
+
+            # Get sub component names with spaces replaced
+            names = [sub_name.replace(" ", "_") for sub_name in component["names"]]
 
             # Generate ids
             start_id = current_id + 1
@@ -267,7 +271,7 @@ class CADModel:
             sub_components = list(zip(names, ids))
 
             # Save mapping of system to subcomponents
-            component_dict[system] = sub_components
+            component_dict[sysname] = sub_components
 
         if not filename.endswith(".json"):
             filename += ".json"

@@ -106,7 +106,7 @@ class PFSystemCAD(ComponentCAD):
 
     def __init__(self, pf_system, **kwargs):
         self.pf_system = pf_system
-        self.name = "Poloidal_field_system"
+        self.name = "Poloidal field system"
         self.component = {
             "shapes": [],
             "names": [],

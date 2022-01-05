@@ -133,7 +133,7 @@ class TestTFCoil:
         tf1._generate_xz_plot_loops()
 
         CAD = tf1.build_CAD()
-        expected_names = ["Toroidal_field_coils_case", "Toroidal_field_coils_wp"]
+        expected_names = ["Toroidal field coils_case", "Toroidal field coils_wp"]
         assert CAD.component["names"] == expected_names
 
 
@@ -237,10 +237,10 @@ class TestTaperedPictureFrameTF:
 
         CAD = tf1.build_CAD()
         expected_names = [
-            "Toroidal_field_coils_b_cyl",
-            "Toroidal_field_coils_leg_conductor",
-            "Toroidal_field_coils_cp_conductor",
-            "Toroidal_field_coils_case",
+            "Toroidal field coils_b_cyl",
+            "Toroidal field coils_leg_conductor",
+            "Toroidal field coils_cp_conductor",
+            "Toroidal field coils_case",
         ]
         assert CAD.component["names"] == expected_names
 
@@ -325,8 +325,8 @@ class TestSCPictureFrameTF:
 
         CAD = tf1.build_CAD()
         expected_names = [
-            "Toroidal_field_coils_case",
-            "Toroidal_field_coils_wp",
+            "Toroidal field coils_case",
+            "Toroidal field coils_wp",
         ]
         assert CAD.component["names"] == expected_names
 
@@ -414,9 +414,9 @@ class TestCurvedPictureframeTF:
 
         CAD = tf1.build_CAD()
         expected_names = [
-            "Toroidal_field_coils_leg_conductor",
-            "Toroidal_field_coils_cp_conductor",
-            "Toroidal_field_coils_case",
+            "Toroidal field coils_leg_conductor",
+            "Toroidal field coils_cp_conductor",
+            "Toroidal field coils_case",
         ]
         assert CAD.component["names"] == expected_names
 
@@ -516,10 +516,10 @@ class TestResistiveCurvedPictureframeTF:
 
         CAD = tf1.build_CAD()
         expected_names = [
-            "Toroidal_field_coils_b_cyl",
-            "Toroidal_field_coils_leg_conductor",
-            "Toroidal_field_coils_cp_conductor",
-            "Toroidal_field_coils_case",
+            "Toroidal field coils_b_cyl",
+            "Toroidal field coils_leg_conductor",
+            "Toroidal field coils_cp_conductor",
+            "Toroidal field coils_case",
         ]
         assert CAD.component["names"] == expected_names
 
