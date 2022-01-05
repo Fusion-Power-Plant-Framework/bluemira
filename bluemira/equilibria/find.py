@@ -296,7 +296,7 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     d_x, d_z = x[1, 0] - x[0, 0], z[0, 1] - z[0, 0]  # Grid resolution
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
     nx, nz = psi.shape  # Grid shape
-    radius = min(0.5, 2 * (d_x ** 2 + d_z ** 2))  # Search radius
+    radius = min(0.5, 2 * np.hypot(d_x, d_z))  # Search radius
     f = RectBivariateSpline(x[:, 0], z[0, :], psi)  # Spline for psi interpolation
 
     Bx = -f(x, z, dy=1, grid=False) / x
@@ -331,7 +331,6 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         ):  # T
             continue
 
-        # Local Newton/Powell CG method faster on large grids
         point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
 
         if point:
