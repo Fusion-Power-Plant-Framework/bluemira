@@ -555,14 +555,14 @@
     "value": 20,
     "unit": "dpa",
     "source": "Input",
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+    "description": "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
   },
   "blk_2_dpa": {
     "name": "Second blanket life limit (EUROfer)",
     "value": 50,
     "unit": "dpa",
     "source": "Input",
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+    "description": "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
   },
   "bmd": {
     "name": "Blanket maintenance duration",
@@ -643,7 +643,7 @@
     "value": 5,
     "unit": "dpa",
     "source": "Input",
-    "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
+    "description": "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf"
   },
   "div_graze_angle": {
     "name": "Divertor SOL grazing angle",
@@ -1569,7 +1569,7 @@
     "value": 3.2e+21,
     "unit": "n/m^2",
     "source": "Input",
-    "description": "http://ieeexplore.ieee.org/document/6374236/"
+    "description": "https://ieeexplore.ieee.org/document/6374236/"
   },
   "tf_taper_frac": {
     "name": "Height of straight portion as fraction of total tapered section height",
