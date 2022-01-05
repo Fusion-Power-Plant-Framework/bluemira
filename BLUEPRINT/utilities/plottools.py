@@ -31,7 +31,6 @@ from matplotlib.patches import Patch, PathPatch
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp1d
-from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.coordinates import rotation_matrix_v1v2
 
