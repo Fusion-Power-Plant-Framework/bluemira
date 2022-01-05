@@ -34,8 +34,8 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.display.auto_config import plot_defaults
 from bluemira.geometry._deprecated_tools import innocent_smoothie
+from bluemira.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.boolean import boolean_2d_common
-from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.geomtools import (
     get_angle_between_points,
     join_intersect,
@@ -444,9 +444,3 @@ class BlanketCoverage(ReactorSystem):
         self.inputs["ideal_shell"].plot(ax[1])
         for loop in self.plug_loops:
             loop.plot(ax[1], facecolor="r")
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

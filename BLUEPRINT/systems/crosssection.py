@@ -861,9 +861,3 @@ class NLoop:
         for t in trim:
             index.append(np.argmin(np.abs(length_norm - t)))
         return index
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

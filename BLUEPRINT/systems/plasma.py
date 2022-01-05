@@ -423,9 +423,3 @@ class PlasmaPlotter(ReactorSystemPlotter):
         """
         kwargs["alpha"] = kwargs.get("alpha", 0.15)
         super().plot_xy(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

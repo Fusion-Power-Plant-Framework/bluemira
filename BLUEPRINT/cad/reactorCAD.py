@@ -81,9 +81,3 @@ class ReactorCAD(CADModel):
             self.add_part(component())
             clock.tock()
         bluemira_print("CAD built in {:1.1f} seconds".format(clock.stop()))
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

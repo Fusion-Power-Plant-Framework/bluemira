@@ -48,7 +48,7 @@ from bluemira.geometry._deprecated_tools import (  # noqa
     vector_intersect,
 )
 from bluemira.geometry.coordinates import get_centroid_3d  # noqa
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 
 # A couple of name changes
 rotate_matrix = rotation_matrix  # noqa
@@ -1300,9 +1300,3 @@ def get_boundary(polygons):
             boundary_facets += get_facets(union.boundary.coords, len(boundary_points))
             boundary_points += get_points(union.boundary.coords)
     return boundary_points, boundary_facets
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

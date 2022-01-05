@@ -1958,9 +1958,3 @@ def boolean_fuse(shape1, shape2):
     except AttributeError:
         pass
     return shp
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

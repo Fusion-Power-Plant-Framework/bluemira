@@ -31,8 +31,8 @@ from matplotlib.patches import Patch, PathPatch
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import interp1d
-from bluemira.base.file import get_bluemira_path
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.coordinates import rotation_matrix_v1v2
 
 
@@ -84,48 +84,6 @@ def savefig(f, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
         f.savefig(name, dpi=dpi, bbox_inches="tight", format=formatt, **kwargs)
     else:
         pass
-
-
-def gsymbolify(string):
-    """
-    Returns a string to a latex printable greek letter if detected
-
-    Parameters
-    ----------
-    string: str
-        The string to add Greek symbols to
-
-    Returns
-    -------
-    string: str
-        The modified string. Returns input if no changes made
-    """
-    if string in GREEK_ALPHABET or string in GREEK_ALPHABET_CAPS:
-        return "\\" + string
-    else:
-        return string
-
-
-def mathify(string):
-    """
-    Creates a new string which can be printed in LaTEX nicely
-
-    Parameters
-    ----------
-    string: str
-        The string to be converted
-
-    Returns
-    -------
-    string: str
-        The mathified string
-
-    'I_m_p' ==> '$I_{m_{p}}$'
-    """
-    s = string.split("_")
-    s = [gsymbolify(sec) for sec in s]
-    ss = "".join(["_" + "{" + lab for i, lab in enumerate(s[1:])])
-    return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
 
 
 def weather_front(d2, n=10, scale=True, ends=True, **kwargs):
@@ -266,9 +224,3 @@ class BPPathPatch3D(PathPatch3D):
         Get a rotation matrix based off two vectors.
         """
         return rotation_matrix_v1v2(v1, v2)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

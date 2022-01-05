@@ -32,7 +32,8 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import loop_plane_intersect, get_intersect
 
 from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import SystemsError, GeometryError
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (

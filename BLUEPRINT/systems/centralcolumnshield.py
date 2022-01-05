@@ -27,7 +27,7 @@ import numpy as np
 import bluemira.geometry._deprecated_loop as new_loop
 
 from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
 from BLUEPRINT.geometry.boolean import (
     simplify_loop,
