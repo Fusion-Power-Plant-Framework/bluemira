@@ -39,8 +39,6 @@ from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
 
 from bluemira.display.displayer import ComponentDisplayer
 
-from bluemira.display.displayer import ComponentDisplayer
-
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
 
 from bluemira.codes import plot_PROCESS
