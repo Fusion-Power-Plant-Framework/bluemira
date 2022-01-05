@@ -25,7 +25,6 @@ CAD model object for assemblies of components
 import os
 import re
 import numpy as np
-import json
 from collections import OrderedDict
 from itertools import cycle
 from matplotlib.colors import to_rgb
@@ -235,7 +234,17 @@ class CADModel:
 
     def save_component_names_as_json(self, filename):
         """
-        Save the mapping of system to component names as JSON format.
+        Save the mapping of system to components as JSON format.
+
+        Each system maps to a list of tuples, where is tuple contains
+        a string holding the component name, and a unique ID that is
+        equivalent to the order in which components are written to STP
+        file in assembly mode.
+
+        Parameters
+        ----------
+        filename: str
+            Name of file in which to save.
         """
         # Populate the silo dict with all CAD components and their data
         if self.silo is None:
@@ -264,8 +273,6 @@ class CADModel:
             filename += ".json"
         bluemira_print(f"Writing {filename}")
         json_writer(component_dict, filename)
-        # with open(filename, "w") as handle:
-        #    json.dump(component_dict, handle, indent=4)
 
 
 class Patterner:
