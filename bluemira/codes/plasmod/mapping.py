@@ -228,114 +228,181 @@ PLASMOD_INPUTS = {
     ############################
     # [-] plasma aspect ratio
     "A": "A",
+    # [-] plasma minor radius
+    # "BM_INP": "amin",
     # [T] Toroidal field at plasma center
     "B_0": "Bt",
     # [-] plasma edge triangularity (used only for first iteration,
     # then iterated to constrain delta95)
-    "delta": "deltaX",
+    "delta": "d",
     # [-] plasma triangularity at 95 % flux
-    "delta_95": "delta95",
+    "delta_95": "d95",
     # [-] plasma edge elongation (used only for first iteration,
     # then iterated to constrain kappa95)
-    "kappa": "kappaX",
+    "kappa": "k",
     # [-] plasma elongation at 95 % flux
-    "kappa_95": "kappa95",
-    # [-] safety factor at 95% flux surface
-    "q_95": "q95",
+    "kappa_95": "k95",
     # [m] plasma major radius
-    "R_0": "R0",
+    "R_0": "R",
     # [m3] constrained plasma volume (set zero to disable volume constraining)
-    "V_p": "V_in",
+    "V_p": "volume_in",
 
-
-
-
-############################
-    # list transport & confinement properties
+    ############################
+    # list composition properties
     #############################
-    # [-] Greenwald density fraction at pedestal
-    # ###### "BM_INP": "f_gwped",
-    # [-] Greenwald density fraction at separatrix
-    # ###### "BM_INP": "f_gws",
-    # [-] fraction of NBI power to ions
-    # ###### "BM_INP": "fpion",
+    # [-] fuel mix D/T
+    # ###### "BM_INP": "fuelmix",
+    # [-] He3 as fuel concentration
+    # ###### "BM_INP": "fuelhe3",
     # [-] tauparticle / tauE for D
-    # ###### "BM_INP": "fp2e_d",
+    # ###### "BM_INP": "globtau_d",
     # [-] tauparticle / tauE for T
-    # ###### "BM_INP": "fp2e_t",
+    # ###### "BM_INP": "globtau_t",
     # [-] tauparticle / tauE for He
-    # ###### "BM_INP": "fp2e_he",
+    # ###### "BM_INP": "globtau_he",
     # [-] tauparticle / tauE for Xe
-    # ###### "BM_INP": "fp2e_xe",
+    # ###### "BM_INP": "globtau_xe",
     # [-] tauparticle / tauE for Ar
-    # ###### "BM_INP": "fp2e_ar",
+    # ###### "BM_INP": "globtau_ar",
+    # [-] helium3 concentration
+    ###### "BM_INP": "che3",
+    # [-] protium concentration
+    ###### "BM_INP": "cprotium",
+    # [-] Tungsten concentration
+    ###### "BM_INP": "cwol": 0.0,
+    # [-] min P_sep/P_LH. if Psep/PLH < Psep/PLH_max -> use heating
+    # ###### "BM_INP": "psepplh_inf",
+    # [-] max P_sep/P_LH. if Psep/PLH > Psep/PLH_max -> use Xe
+    # ###### "BM_INP": "psepplh_sup",
+    # [-] position after which radiation is "edge"
+    # ###### "BM_INP": "pradpos",
+    # [-] radiation fraction used for core transport
+    # ###### "BM_INP": "pradfrac",
+    # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
+    # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
+    # ###### "BM_INP": "psepb_q95AR_sup",
+    # [MW/m] Divertor challenging criterion Psep / R0
+    # if Psep/R0 > Psep_R0_max seed Xenon
+    # ###### "BM_INP": "psep_r_sup",
+    # [-] ratio of Pline(Xe)/(Psep0 - Psepcrit), or -1 to ignore
+    # ###### "BM_INP": "fcoreraditv",
+    # [MW/m2] max divertor heat flux -->
+    # if qdivt > qdivt_sup -> seed argon
+    # ###### "BM_INP": "qdivt_sup",
+    # [-] compression factor between sol and div
+    # ###### "BM_INP": "c_car",
+
+    ############################
+    # list pedestal properties
+    #############################
     # [-] normalized coordinate of pedestal density
     # ###### "BM_INP": "rho_n",
     # [-] normalized coordinate of pedestal temperature
     # ###### "BM_INP": "rho_T",
     # [keV] electrons/ions temperature at separatrix
     # ###### "BM_INP": "Tesep",
+    # [-] scaling factor for p_ped scaling formula
+    # ###### "BM_INP": "pedscal",
+
     ############################
-    # list composition properties
+    # listlist general inputs: control, confinement, B.C., etc
     #############################
-    # [-] Tungsten concentration
-    # ###### "BM_INP": "cwol",
-    # [-] fuel mix D/T
-    # ###### "BM_INP": "fuelmix",
-    ############################
-    # list control & transport settings
-    #############################
-    # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x for NBI heating (CD) to control Vloop or f_ni
-    # ###### "BM_INP": "dx_cd_nbi",
+    # [-] Greenwald density fraction at pedestal
+    # ###### "BM_INP": "f_gw",
+    # [-] Greenwald density fraction at separatrix
+    # ###### "BM_INP": "f_gws",
+    # [-] fraction of NBI power to ions
+    # ###### "BM_INP": "fpion",
+    # [m*MA/MW] Normalized CD efficiency
+    # ###### "BM_INP": "nbcdeff",  # tentative g_cd_nb but normalise wrt to what?
+    # [m*MA/MW] Normalized EC efficiency
+    # ###### "BM_INP": "eccdeff",  # tentative g_cd_nb but normalise wrt to what?
+    # [-]  normalized mean location of fixed NBI heating
+    # ###### "BM_INP": "x_control_nbi",
+    # [-]  normalized mean location of fixed EC heating
+    # ###### "BM_INP": "x_control_ech",
     # [-] variance of heat deposition, assimung Gaussian distribution on
     # normalized coordinate x for fixed NBI heating
     # ###### "BM_INP": "dx_control_nbi",
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x, for NBI heating to control fusion power
-    # ###### "BM_INP": "dx_fus_nbi",
-    # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x, for NBI heating to control H-mode
-    # ###### "BM_INP": "dx_heat_nbi",
-    # [-] required fraction of non inductive current, if 0, dont use CD
-    "f_ni": "f_ni",
-    # [m*MA/MW] Normalized CD efficiency
-    # ###### "BM_INP": "nbcdeff",  # tentative g_cd_nb but normalise wrt to what?
-    # [MW] max allowed power for control (fusion power, H-mode)
-    # ###### "BM_INP": "Pheat_max",
-    # [MW] required fusion power.
-    # 0. - ignored
-    # > 0 - Auxiliary heating is calculated to match Pfus_req
-    # ###### "BM_INP": "Pfus_req",
-    # [MW*T/m] Divertor challenging criterion Psep * Bt / (q95 * A R0)
-    # if PsepBt_qAR > PsepBt_qAR_max seed Xenon
-    # ###### "BM_INP": "PsepBt_qAR_max",
-    # [-] max P_sep/P_LH. if Psep/PLH > Psep/PLH_max -> use Xe
-    # ###### "BM_INP": "Psep_PLH_max",
-    # [-] min P_sep/P_LH. if Psep/PLH < Psep/PLH_max -> use heating
-    # ###### "BM_INP": "Psep_PLH_min",
-    # [MW/m] Divertor challenging criterion Psep / R0
-    # if Psep/R0 > Psep_R0_max seed Xenon
-    # ###### "BM_INP": "Psep_R0_max",
-    # [MW] fixed auxiliary heating power required for control
-    "q_control": "q_control",
-    # [MW/m2] max divertor heat flux -->
-    # if qdivt > qdivt_max -> seed argon
-    # ###### "BM_INP": "qdivt_max",
+    # normalized coordinate x for fixed EC heating
+    # ###### "BM_INP": "dx_control_ech",
     # [-]  normalized mean location of NBI power for
     # controlling loop voltage or f_ni
     # ###### "BM_INP": "x_cd_nbi",
-    # [-]  normalized mean location of fixed NBI heating
-    # ###### "BM_INP": "x_control_nbi",
+    # [-]  normalized mean location of NBI power for
+    # controlling loop voltage or f_ni
+    # ###### "BM_INP": "x_cd_ech",
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x for NBI heating (CD) to control Vloop or f_ni
+    # ###### "BM_INP": "dx_cd_nbi",
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x for EC heating to control Vloop or f_ni
+    # ###### "BM_INP": "dx_cd_ech",
     # [-]  normalized mean location of NBI heating for
     # controlling fusion power (Pfus = Pfus_req)
     # ###### "BM_INP": "x_fus_nbi",
-    # [-]  normalized mean location of aux. heating for
+    # [-]  normalized mean location of EC heating for
+    # controlling fusion power (Pfus = Pfus_req)
+    # ###### "BM_INP": "x_fus_ech",
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x, for NBI heating to control fusion power
+    # ###### "BM_INP": "dx_fus_nbi",
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x, for EC heating to control fusion power
+    # ###### "BM_INP": "dx_fus_ech",
+    # [-]  normalized mean location of aux. NBI heating for
     # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
     # ###### "BM_INP": "x_heat_nbi",
-}
+    # [-]  normalized mean location of aux. EC heating for
+    # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
+    # ###### "BM_INP": "x_heat_ech",
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x, for NBI heating to control H-mode
+    # ###### "BM_INP": "dx_heat_nbi",
+    # [-] variance of heat deposition, assimung Gaussian distribution on
+    # normalized coordinate x, for EC heating to control H-mode
+    # ###### "BM_INP": "dx_heat_ech",
+    # [keV] NBI energy
+    # ###### "BM_INP": "nbi_energy",
+    # [MW] required fusion power.
+    # 0. - ignored
+    # > 0 - Auxiliary heating is calculated to match Pfus_req
+    # ###### "BM_INP": "pfus_req",
+    # [-] required fraction of non inductive current, if 0, dont use CD
+    "f_ni": "f_ni",
+    # [MW] max allowed power for control (fusion power, H-mode)
+    # ###### "BM_INP": "pheat_max",
+    # [MW] fixed auxiliary heating power required for control
+    "q_control": "q_control",
+    # [MW] total auxiliary power  (0.) DO NOT CHANGE
+    # ###### "BM_INP": "q_heat",
+    # [MW] total auxiliary current drive power (0.) DO NOT CHANGE
+    # ###### "BM_INP": "q_cd",
+    # [MW] total fusion power (0.) DO NOT CHANGE
+    # ###### "BM_INP": "q_fus",
+    # [MW] ECH power (not used)
+    # ###### "BM_INP": "pech": 0.0,
+    # [MW] NBI power (not used)
+    # ###### "BM_INP": "pnbi": 0.0,
+    # [-] ratio of PCD-Pothers over Pmax - Pothers
+    # ###### "BM_INP": "fcdp": -1.0,
+    # [-] maximum Paux/R allowed
+    # ###### "BM_INP": "maxpauxor",
+    # [-] type of PLH threshold.  6 - Martin scaling. Use 6 only
+    # ###### "BM_INP": "plh",
+    # [-] scaling factor for newton scheme on NBI (100.)
+    # ###### "BM_INP": "qnbi_psepfac",
+    # [-] scale factor for newton scheme on Xe (1.e-3)
+    # ###### "BM_INP": "cxe_psepfac",
+    # [-] scale factor for newton scheme on Ar (1.e-4)
+    # ###### "BM_INP": "car_qdivt",
+    # [MW / m²] Pcontrol / S_lateral(0.)
+    # ###### "BM_INP": "contrpovs",
+    # [MW / m²] Pcontrol / R(0.)
+    # ###### "BM_INP": "contrpovr",
 
-#
+}
 
 
 PLASMOD_OUTPUTS = {
@@ -372,8 +439,6 @@ PLASMOD_OUTPUTS = {
     # ##### "BM_OUT": "f_cd",
     # [-] plasma current inductive fraction
     # ##### "BM_OUT": "f_ind",
-    # [MA] plasma current
-    "I_p": "Ip",
     # [-] plasma edge elongation
     "kappa": "kappa_e",
     # [-] plasma internal inductance
@@ -437,18 +502,41 @@ PLASMOD_OUTPUTS = {
 }
 
 PLASMOD_INOUTS = {
+
+    ##### geometry ######
+    # [MA] plasma current
+    "I_p": "Ip",
+    # [-] safety factor at 95% flux surface
+    "q_95": "q95",
+
+    ############################
+    # list composition properties
+    #############################
+    # [-] Argon concentration
+    # ###### "BM_IO": "car",
+    # [-] Xenon concentration
+    ###### "BM_IO": "cxe",
+    # [-] helium concentration
+    ###### "BM_IO": "che",
+
+    ############################
+    # list pedestal properties
+    #############################
     # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
     # ##### "BM_IO": "Teped",
-    # [keV] electrons/ions temperature at pedestal (ignored if i_pedestal = 2)
-    # ##### "BM_IO": "Teped_inp",
     # [-] input H-factor:if i_modeltype > 1 H factor calculated
-    # ##### "BM_INP": "hfact_inp",
+
+
+    ############################
+    # list general inputs, confinement, control, etc
+    #############################
+    # ##### "BM_IO": "hfact",
     # [-] H-factor
     # ##### "BM_OUT": "H",
     # [-] H-factor (radiation corrected)
     "H_star": "Hcorr",
     # [V] target loop voltage (if lower than -1e-3, ignored)-> plasma loop voltage
-    "v_burn": "Vloop",
+    "v_burn": "v_loop",
 }
 
 
