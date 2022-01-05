@@ -27,10 +27,10 @@ from typing import Dict, Optional, Type
 
 from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
-import bluemira.geometry as geo
-from bluemira.geometry.parameterisations import GeometryParameterisation
-
 from bluemira.builders.shapes import ParameterisedShapeBuilder
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.tools import make_circle, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.display.palettes import BLUE_PALETTE
 
@@ -92,7 +92,8 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         result: Component
             The resulting component representing the xz view of the LCFS.
         """
-        face = geo.face.BluemiraFace(self._boundary, label)
+        # TODO: Specify a palette so that the plotting options are set up here.
+        face = BluemiraFace(self._boundary, label)
         component = PhysicalComponent("LCFS", face)
         component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
@@ -116,10 +117,11 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         result: PhysicalComponent
             The resulting component representing the xy view of the LCFS.
         """
-        inner = geo.tools.make_circle(self._boundary.bounding_box.x_min, axis=[0, 1, 0])
-        outer = geo.tools.make_circle(self._boundary.bounding_box.x_max, axis=[0, 1, 0])
+        # TODO: Specify a palette so that the plotting options are set up here.
+        inner = make_circle(self._boundary.bounding_box.x_min, axis=[0, 1, 0])
+        outer = make_circle(self._boundary.bounding_box.x_max, axis=[0, 1, 0])
 
-        face = geo.face.BluemiraFace([outer, inner], label)
+        face = BluemiraFace([outer, inner], label)
         component = PhysicalComponent(label, face)
         component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
@@ -153,9 +155,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         if segment_angle is None:
             segment_angle = self._segment_angle
 
-        shell = geo.tools.revolve_shape(
-            self._boundary, direction=(0, 0, 1), degree=segment_angle
-        )
+        shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=segment_angle)
         component = PhysicalComponent(label, shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
 

@@ -29,7 +29,7 @@ from typing import Type
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.cad.vesselCAD import VesselCAD, SegmentedVesselCAD
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
@@ -708,9 +708,3 @@ class VacuumVesselPlotter(ReactorSystemPlotter):
             alpha2 = alpha * 0.5
             kwargs["alpha"] = [alpha2] + [alpha] * (len(plot_objects) - 1)
         super().plot_xz(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

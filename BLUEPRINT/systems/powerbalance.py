@@ -22,22 +22,18 @@
 """
 Balance of plant system
 """
-import numpy as np
 from typing import Type
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.constants import (
-    HE_MOLAR_MASS,
-    NEUTRON_MOLAR_MASS,
-    HE3_MOLAR_MASS,
-)
 from bluemira.balance_of_plant.plotting import SuperSankey
+from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
 from bluemira.utilities.tools import to_kelvin
-
-from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.palettes import B_PAL_MAP
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
@@ -83,7 +79,7 @@ def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
     return (1 + fmisc) * (nucl_heating + qcl + qac + qss)
 
 
-def He_pumping(  # noqa (N802)
+def He_pumping(  # noqa :N802
     pressure_in, d_pressure, t_in, t_out, blanket_power, eta_isen, eta_el
 ):
     """
@@ -125,7 +121,7 @@ def He_pumping(  # noqa (N802)
     \t:math:`P_{pump,el} = \\dfrac{P_{pump}}{\\eta_{el}}` [MW]\n
     **No longer in use:**
     \t:math:`f_{pump}=\\dfrac{dP}{dTc_P\\rho_{av}}`
-    """  # noqa (W505)
+    """  # noqa :W505
     d_temp = t_out - t_in
     t_bb_inlet = to_kelvin(t_in)
     # Modèle gaz idéal monoatomique - small compression ratios
@@ -141,7 +137,7 @@ def He_pumping(  # noqa (N802)
     return p_pump_is, p_pump_el
 
 
-def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa (N802)
+def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa :N802
     # TODO: Add proper pump model
     f_pump /= eta_isen
 
@@ -175,7 +171,7 @@ class BalanceOfPlant(ReactorSystem):
         +\\Bigg(P_{n_{DIV}}+f_{SOL_{rad}}f_{SOL_{ch}}f_{fw}\\Big(\\frac{P_{fus}}{5}+P_{HCD}\\Big)\\Bigg)\\
         \\Big(1+\\frac{f_{p_{DIV}}}{1-f_{p_{DIV}}}\\Big)\\Bigg]
 
-    """  # noqa (W505)
+    """  # noqa :W505
 
     config: Type[ParameterFrame]
     inputs: dict
@@ -771,9 +767,3 @@ class BalanceOfPlantPlotter:
                 text.set_color("white")
 
         self.fig.tight_layout()
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

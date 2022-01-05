@@ -435,7 +435,6 @@ class Timeline:
         divdpa = [div_dmg_t[x - 2] for x in self.mci[:-1]]
         for j, i in enumerate(self.mci[:-1]):
             div_dmg_t[i:] = np.array([-divdpa[j] + self.ft[i:] * self.div_dmg])
-        div_dmg_t = div_dmg_t
         self.div_nfrac = div_dmg_t / self.div_dpa
         vv_dmg_t = self.vv_dmg * self.ft
         self.vv_nfrac = vv_dmg_t / self.vv_dpa

@@ -475,9 +475,3 @@ def populate_source_cells(geometry, solver, source, source_cells, source_section
                 # Normalise to the cell volume
                 norm_source_strength = source_strength * area * circumfrence
                 solver.setFixedSourceByFSR(fsr_id, 1, norm_source_strength)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

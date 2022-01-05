@@ -177,8 +177,12 @@ class Design(DesignABC):
             The Component tree resulting from the various build stages in the Design.
         """
         component = super().run()
+
         for builder in self._builders.values():
             component.add_child(self._build_stage(builder.name))
+
+        bluemira_print("Design Complete!")
+
         return component
 
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):

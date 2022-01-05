@@ -241,9 +241,3 @@ def get_midpoint(node1, node2):
         The coordinates of the mid-point
     """
     return (node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1.z + node2.z) / 2
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

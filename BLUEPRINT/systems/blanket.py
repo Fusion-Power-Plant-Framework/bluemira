@@ -30,8 +30,9 @@ from typing import Type
 from shapely.geometry import Polygon
 
 from bluemira.base.parameter import ParameterFrame
+from bluemira.geometry.error import GeometryError
 
-from BLUEPRINT.base.error import SystemsError, GeometryError
+from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.cad.blanketCAD import BlanketCAD, STBlanketCAD
 from BLUEPRINT.geometry.geomtools import qrotate, rainbow_arc, make_box_xz
 from BLUEPRINT.geometry.geombase import Plane
@@ -955,9 +956,3 @@ class STBreedingBlanket(Meshable, ReactorSystem):
             self.__build_immersion_blanket()
         else:
             raise SystemsError(f"Unknown blanket type '{self.params.blanket_type}'. ")
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

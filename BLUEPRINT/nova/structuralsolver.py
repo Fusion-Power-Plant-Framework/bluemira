@@ -30,7 +30,7 @@ from bluemira.geometry._deprecated_tools import get_intersect
 
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.constants import VERY_BIG
+from bluemira.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.geomtools import (
     circle_seg,
     qrotate,
@@ -489,10 +489,3 @@ class StructuralSolver:
         Plot the coil cage structural model.
         """
         return self.model.plot(ax=ax)
-
-
-if __name__ == "__main__":
-    # from BLUEPRINT import test
-    #
-    # test()
-    pass

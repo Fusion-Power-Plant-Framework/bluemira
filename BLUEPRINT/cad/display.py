@@ -99,9 +99,3 @@ class QtDisplayer:
             qc = Quantity_Color(*color, Quantity_TOC_RGB)
             qc.ChangeIntensity(-50)
             self.qt_display.DisplayColoredShape(shape, qc)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

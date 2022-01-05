@@ -24,7 +24,7 @@ Display and plotting module
 """
 
 from . import plotter, displayer
-from .auto_config import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 
 plot_defaults()
 

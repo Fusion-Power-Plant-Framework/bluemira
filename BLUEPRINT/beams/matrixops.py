@@ -112,9 +112,3 @@ def cyclic_decomposition(k, p, l_nodes, r_nodes):
     selections = [left, right, interior]
 
     return k_cyc, p_cyc, selections
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

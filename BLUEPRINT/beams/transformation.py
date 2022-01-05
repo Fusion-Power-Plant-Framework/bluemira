@@ -291,9 +291,3 @@ def cyclic_pattern(geometry, axis, angle, n, include_first=True):
         del sector  # Save some RAM
 
     return patterned
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

@@ -1065,9 +1065,3 @@ class StreamFlow:
                 ),
             )
         return l_2d, l_3d, x_sol, z_sol
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

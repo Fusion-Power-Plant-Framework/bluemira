@@ -1237,9 +1237,3 @@ class ThermalShieldPlotter(ReactorSystemPlotter):
             alpha2 = alpha * 0.5
             kwargs["alpha"] = [alpha2] + [alpha] * (len(plot_objects) - 1)
         super().plot_xz(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

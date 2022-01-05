@@ -40,7 +40,7 @@ from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_ban
 from bluemira.base.parameter import ParameterFrame
 
 from BLUEPRINT.base import BLUE
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 
 # Utility imports
 from BLUEPRINT.geometry.loop import Loop, point_loop_cast
@@ -894,7 +894,7 @@ class Reactor(ReactorSystem):
         }
         targets = {"inner": defaults, "outer": defaults}
         targets["inner"]["L2D"] = self.params.div_L2D_ib
-        targets["inner"]["L2D"] = self.params.div_L2D_ob
+        targets["outer"]["L2D"] = self.params.div_L2D_ob
         return targets
 
     def define_in_vessel_layout(self):
@@ -1639,9 +1639,3 @@ class ConfigurableReactor(Reactor):
             raise FileNotFoundError(
                 f"Specified config directory not a directory: {config_dir}"
             )
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

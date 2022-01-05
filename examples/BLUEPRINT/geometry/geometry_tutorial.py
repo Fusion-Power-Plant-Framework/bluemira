@@ -65,7 +65,7 @@ plt.close("all")
 #
 # The coordinate system is right-handed and centred at (0, 0, 0).
 #
-# See e.g. http://mathworld.wolfram.com/Right-HandedCoordinateSystem.html
+# See e.g. https://mathworld.wolfram.com/Right-HandedCoordinateSystem.html
 #
 # Or enjoy some of my finest ASCII art instead:
 #

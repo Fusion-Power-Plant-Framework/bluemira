@@ -229,9 +229,3 @@ def make_linkfile(fp):
         d.append(entry)
     with open(fp + "geometry_details.json", "w") as f:
         json.dump(d, f, indent=4)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

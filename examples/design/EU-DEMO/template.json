@@ -9,6 +9,11 @@
         "name": "aspect",
         "recv": true,
         "send": true
+      },
+      "PLASMOD": {
+        "name": "A",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -28,6 +33,11 @@
         "name": "bt",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Bt",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -84,6 +94,11 @@
         "name": "hfact",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Hcorr",
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -95,6 +110,11 @@
     "mapping": {
       "PROCESS": {
         "name": "plascur/1d6",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Ip",
         "recv": true,
         "send": false
       }
@@ -118,6 +138,19 @@
     "unit": "N/A",
     "source": "Input"
   },
+  "P_LH": {
+    "name": "LH transition power",
+    "value": 0,
+    "unit": "W",
+    "source": "PLASMOD",
+    "mapping": {
+      "PLASMOD": {
+        "name": "PLH",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
   "P_brehms": {
     "name": "Bremsstrahlung",
     "value": 80,
@@ -126,6 +159,11 @@
     "mapping": {
       "PROCESS": {
         "name": "pbrempv*vol",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Pbrem",
         "recv": true,
         "send": false
       }
@@ -167,6 +205,11 @@
         "name": "powfmw",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Pfus",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -180,6 +223,11 @@
         "name": "pdd",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "PfusDD",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -191,6 +239,11 @@
     "mapping": {
       "PROCESS": {
         "name": "pdt",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "PfusDT",
         "recv": true,
         "send": false
       }
@@ -219,6 +272,24 @@
         "name": "plinepv*vol",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Pline",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_ohm": {
+    "name": "Ohimic heating power",
+    "value": 0,
+    "unit": "W",
+    "source": "PLASMOD",
+    "mapping": {
+      "PLASMOD": {
+        "name": "Pohm",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -230,6 +301,11 @@
     "mapping": {
       "PROCESS": {
         "name": "pradmw",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Prad",
         "recv": true,
         "send": false
       }
@@ -271,6 +347,11 @@
         "name": "pdivt",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Psep",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -288,6 +369,11 @@
     "mapping": {
       "PROCESS": {
         "name": "psyncpv*vol",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Psync",
         "recv": true,
         "send": false
       }
@@ -310,6 +396,11 @@
         "name": "rmajor",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "R0",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -349,6 +440,11 @@
         "name": "vol",
         "recv": false,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "V_in",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -361,6 +457,11 @@
       "PROCESS": {
         "name": "zeff",
         "recv": false,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Zeff",
+        "recv": true,
         "send": false
       }
     }
@@ -416,7 +517,14 @@
     "name": "Normalised ratio of plasma pressure to magnetic pressure",
     "value": 2.7,
     "unit": "N/A",
-    "source": "PLASMOD"
+    "source": "PLASMOD",
+    "mapping": {
+      "PLASMOD": {
+        "name": "beta_n",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "beta_p": {
     "name": "Ratio of plasma pressure to poloidal magnetic pressure",
@@ -426,6 +534,11 @@
     "mapping": {
       "PROCESS": {
         "name": "betap",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "beta_p",
         "recv": true,
         "send": false
       }
@@ -481,6 +594,11 @@
         "name": "triang",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "delta_e",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -494,6 +612,11 @@
         "name": "triang95",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "delta95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -597,6 +720,11 @@
         "name": "bootipf",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "f_bs",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -646,6 +774,11 @@
         "name": "faccd",
         "recv": false,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "f_ni",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -944,6 +1077,11 @@
         "name": "kappa",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "kappa_e",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -957,6 +1095,11 @@
         "name": "kappa95",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "kappa95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -969,6 +1112,11 @@
       "PROCESS": {
         "name": "rli",
         "recv": false,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "li",
+        "recv": true,
         "send": false
       }
     }
@@ -1115,6 +1263,11 @@
         "name": "q95",
         "recv": false,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "q95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1122,7 +1275,14 @@
     "name": "Control HCD power",
     "value": 50,
     "unit": "MW",
-    "source": "Input"
+    "source": "Input",
+    "mapping": {
+      "PLASMOD": {
+        "name": "q_control",
+        "recv": false,
+        "send": true
+      }
+    }
   },
   "r_ccs": {
     "name": "Outer radius of the central column shield",
@@ -1331,7 +1491,14 @@
     "name": "Plasma resistance",
     "value": 0,
     "unit": "Ohm",
-    "source": "Calculated"
+    "source": "Calculated",
+    "mapping": {
+      "PLASMOD": {
+        "name": "rplas",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "rs_l_d": {
     "name": "Radiation shield labyrinth delta",
@@ -1374,6 +1541,11 @@
     "mapping": {
       "PROCESS": {
         "name": "taueff",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "tau_e",
         "recv": true,
         "send": false
       }
@@ -1953,6 +2125,11 @@
         "name": "vburn",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Vloop",
+        "recv": true,
+        "send": true
       }
     }
   },

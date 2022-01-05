@@ -35,7 +35,7 @@ SS316 = SS316()
 
 
 def test_illconditioned(caplog):
-    # http://www.ti3.tu-harburg.de/paper/rump/NiRuOi11.pdf
+    # https://www.ti3.tu-harburg.de/paper/rump/NiRuOi11.pdf
 
     k1 = np.array([[1, -6, 7, -9], [1, -5, 0, 0], [0, 1, -5, 0], [0, 0, 1, -5]])
     k2 = np.array(

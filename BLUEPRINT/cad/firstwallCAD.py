@@ -100,9 +100,3 @@ class FirstWallCAD(ComponentCAD):
 
             # Save
             self.add_shape(segment)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

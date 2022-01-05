@@ -24,21 +24,22 @@ Geometry parameterisations
 """
 
 import abc
+
 import numpy as np
 from scipy.special import iv as bessel
 
-from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     make_bezier,
     make_bspline,
-    wire_closure,
-    make_polygon,
     make_circle,
     make_circle_arc_3P,
+    make_polygon,
+    wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 __all__ = [
     "GeometryParameterisation",
@@ -368,7 +369,7 @@ class PrincetonD(GeometryParameterisation):
             :math:`I_{n}` is the n-th order modified Bessel function
             :math:`x_{1}` is the inner radial position of the shape
             :math:`x_{2}` is the outer radial position of the shape
-        """  # noqa (W505)
+        """  # noqa :W505
         if x2 <= x1:
             raise GeometryParameterisationError(
                 "Princeton D parameterisation requires an x2 value"
@@ -640,6 +641,38 @@ class SextupleArc(GeometryParameterisation):
         )
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
+        self.n_ineq_constraints = 1
+
+    def shape_ineq_constraints(self, constraint, x_norm, grad):
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation.
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Contraint vector (assign in place)
+        x: np.ndarray
+            Normalised vector of free variables
+        grad: np.ndarray
+            Gradient matrix of the constraint (assign in place)
+        """
+        x_actual = self._process_x_norm_fixed(x_norm)
+
+        _, _, _, _, _, _, _, a1, a2, a3, a4, a5 = x_actual
+
+        constraint[0] = a1 + a2 + a3 + a4 + a5 - 360
+        var_strings = ["a1", "a2", "a3", "a4", "a5"]
+
+        if grad.size > 0:
+            g = np.zeros(len(x_norm))
+            for var in var_strings:
+                if not self.variables[var].fixed:
+                    g[self._get_x_norm_index(var)] = 1
+
+            grad[0, :] = g
+
+        return constraint
 
     @staticmethod
     def _project_centroid(xc, zc, xi, zi, ri):

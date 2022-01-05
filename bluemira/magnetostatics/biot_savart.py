@@ -23,16 +23,14 @@
 Biot-Savart filament object
 """
 import numpy as np
+
 from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry._deprecated_tools import bounding_box, rotation_matrix
+from bluemira.magnetostatics.baseclass import CurrentSource
+from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
-from bluemira.geometry._deprecated_tools import (
-    rotation_matrix,
-    bounding_box,
-)
-from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
-from bluemira.magnetostatics.baseclass import CurrentSource
 
 __all__ = ["BiotSavartFilament"]
 
@@ -159,7 +157,7 @@ class BiotSavartFilament(CurrentSource):
 
         This is the original Biot-Savart equation, without centre-averaged
         smoothing. Do not use for values near the coil current centreline.
-        """  # noqa (W505)
+        """  # noqa :W505
         point = np.array([x, y, z])
         r = point - self.mid_points
         r3 = np.linalg.norm(r, axis=1) ** 3
@@ -193,7 +191,7 @@ class BiotSavartFilament(CurrentSource):
 
         You probably shouldn't use this if you are actually interested in the
         inductance of an arbitrarily shaped loop...
-        """  # noqa (W505)
+        """  # noqa :W505
         # TODO: Validate inductance calculate properly and compare stored
         # energy of systems
         inductance = 0

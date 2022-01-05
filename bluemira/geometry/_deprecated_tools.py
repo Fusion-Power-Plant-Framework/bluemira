@@ -25,22 +25,22 @@ A collection of geometry tools.
 
 from functools import partial
 from itertools import zip_longest
-import numpy as np
+
 import numba as nb
+import numpy as np
 from numba.np.extensions import cross2d
-from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
+from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
+from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.bound_box import BoundingBox
 from bluemira.utilities.tools import flatten_iterable
-
 
 # =============================================================================
 # Errors
@@ -462,7 +462,9 @@ def get_perimeter_2d(x, y):
     perimeter: float
         The perimeter of the coordinates
     """
-    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
+    dx = x[1:] - x[:-1]
+    dy = y[1:] - y[:-1]
+    return np.sum(np.sqrt(dx ** 2 + dy ** 2))
 
 
 @nb.jit(cache=True, nopython=True)
@@ -484,7 +486,10 @@ def get_perimeter_3d(x, y, z):
     perimeter: float
         The perimeter of the coordinates
     """
-    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2))
+    dx = x[1:] - x[:-1]
+    dy = y[1:] - y[:-1]
+    dz = z[1:] - z[:-1]
+    return np.sum(np.sqrt(dx ** 2 + dy ** 2 + dz ** 2))
 
 
 @xyz_process
@@ -540,7 +545,7 @@ def get_area_2d(x, y):
 @nb.jit(cache=True, nopython=True)
 def get_area_3d(x, y, z):
     """
-    Calculate the area inside a closed polygon with x, y coordinate vectors.
+    Calculate the area inside a closed polygon.
     `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
 
     Parameters
@@ -550,7 +555,7 @@ def get_area_3d(x, y, z):
     y: np.array
         The second set of coordinates [m]
     z: np.array
-        The third set of coordinates or None (for a 2-D polygon)
+        The third set of coordinates [m]
 
     Returns
     -------
@@ -571,6 +576,49 @@ def get_area_3d(x, y, z):
         a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
     a *= 0.5
     return abs(np.dot(a, v3))
+
+
+def check_ccw_3d(x, y, z, normal):
+    """
+    Check if a set of coordinates is counter-clockwise w.r.t a normal vector.
+
+    Parameters
+    ----------
+    x: np.array
+        The first set of coordinates [m]
+    y: np.array
+        The second set of coordinates [m]
+    z: np.array
+        The third set of coordinates [m]
+    normal: np.array
+        The normal vector about which to check for CCW
+
+    Returns
+    -------
+    ccw: bool
+        Whether or not the set is CCW about the normal vector
+    """
+    r = rotation_matrix_v1v2([0, 0, 1], normal)
+    x, y, z = r @ np.array([x, y, z])
+    a = _get_ccw_metric(x, y, z)
+    return np.dot(normal, a) >= 0.0
+
+
+@nb.jit(cache=True, nopython=True)
+def _get_ccw_metric(x, y, z):
+    """
+    Calculate the signed area of a set of x, y, z coordinate vectors.
+    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
+    """
+    m = np.zeros((3, len(x)))
+    # Translate all coordinates arbitrarily to dodge degenerate edge cases! :)
+    m[0, :] = x + 1.0
+    m[1, :] = y + 1.0
+    m[2, :] = z + 1.0
+    a = np.array([0.0, 0.0, 0.0])
+    for i in range(len(z)):
+        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
+    return a
 
 
 @xyz_process
@@ -1198,7 +1246,8 @@ def vector_intersect_3d(p_1, p_2, p_3, p_4):
 
     Notes
     -----
-    Credit: Paul Bourke at http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline3d/
+    Credit: Paul Bourke at
+    http://paulbourke.net/geometry/pointlineplane/#:~:text=The%20shortest%20line%20between%20two%20lines%20in%203D
     """
     p_13 = p_1 - p_3
     p_43 = p_4 - p_3
@@ -1288,7 +1337,7 @@ def get_intersect(loop1, loop2):
     Note
     ----
     D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
-    """  # noqa (W505)
+    """  # noqa :W505
     x1, y1 = loop1.d2
     x2, y2 = loop2.d2
 

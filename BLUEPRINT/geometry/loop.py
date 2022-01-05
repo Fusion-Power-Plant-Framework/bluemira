@@ -58,9 +58,9 @@ from BLUEPRINT.geometry.geomtools import (
     get_control_point,
     clean_loop_points,
 )
-from BLUEPRINT.geometry.constants import VERY_BIG
+from bluemira.geometry.constants import VERY_BIG
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.utilities.plottools import pathify, BPPathPatch3D, Plot3D
 from BLUEPRINT.utilities.tools import furthest_perp_point
 from bluemira.utilities.tools import is_num
@@ -1972,9 +1972,3 @@ def make_ring(r_i, r_o, angle=360, centre=(0, 0), npoints=200):
         return shell.connect_open_loops()
     else:
         return shell
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

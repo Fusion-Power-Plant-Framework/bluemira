@@ -26,7 +26,7 @@ from random import uniform
 from itertools import cycle
 from matplotlib import pyplot as plt
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop, MultiLoop
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.utilities.plottools import Plot3D

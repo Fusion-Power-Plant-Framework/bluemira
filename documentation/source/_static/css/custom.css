@@ -32,7 +32,7 @@ div.math {
 .eqno .headerlink:after {
     visibility: visible;
     content: "\f0c1";
-    font-family: FontAwesome;
+    font-family: FontAwesome, sans-serif;
     display: inline-block;
     margin-left: -.9em;
 }

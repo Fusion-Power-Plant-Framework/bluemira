@@ -19,14 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-
 import os
 
+import pytest
+
 from bluemira.base.file import (
+    SUB_DIRS,
     FileManager,
     get_bluemira_path,
-    SUB_DIRS,
     try_get_bluemira_path,
 )
 
@@ -36,7 +36,7 @@ FILE_GEN_PATH = os.path.join("tests", "bluemira", "base", "file_manager_gen")
 
 
 @pytest.mark.parametrize(
-    "path,subfolder,allow_missing,expect_none",  # noqa(N802)
+    "path,subfolder,allow_missing,expect_none",  # noqa :N802
     [
         ("bluemira", "tests", False, False),  # NOTE: Change "bluemira" to e.g. "base"
         ("bluemira", "tests", True, False),  # NOTE: Change "bluemira" to e.g. "base"
@@ -55,7 +55,7 @@ def test_try_get_bluemira_path(path, subfolder, allow_missing, expect_none):
 
 
 @pytest.mark.parametrize(
-    "path,subfolder",  # noqa(N802)
+    "path,subfolder",  # noqa :N802
     [
         ("spam", "tests"),
         ("spam", "ham"),

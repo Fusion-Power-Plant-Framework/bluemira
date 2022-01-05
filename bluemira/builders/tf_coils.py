@@ -28,7 +28,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import matplotlib
 
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug_flush
 from bluemira.base.error import BuilderError
 from bluemira.display import plot_2d
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
@@ -241,7 +241,9 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             grad[:] = self.optimiser.approx_derivative(
                 self.calculate_ripple, x, constraint
             )
-        bluemira_debug(f"Max ripple: {max(constraint+self.params.TF_ripple_limit)}")
+        bluemira_debug_flush(
+            f"Max ripple: {max(constraint+self.params.TF_ripple_limit)}"
+        )
         return constraint
 
     def calculate_signed_distance(self, x):

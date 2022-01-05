@@ -29,9 +29,9 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
-from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
@@ -57,15 +57,17 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
 
+        bluemira_print("Reactor Design Complete!")
+
         return component
 
-    def run_systems_code(self, **kwargs):
+    def run_systems_code(self):
         """
         Run the systems code module in the requested run mode.
         """
         name = PROCESS
 
-        bluemira_print(f"Running: {name}")
+        bluemira_print(f"Starting design stage: {name}")
 
         default_config = {"process_mode": "run"}
 
@@ -84,11 +86,15 @@ class EUDEMOReactor(Reactor):
         )
         self._params.update_kw_parameters(output.to_dict())
 
-    def build_plasma(self, **kwargs):
+        bluemira_print(f"Completed design stage: {name}")
+
+    def build_plasma(self):
         """
         Run the plasma build using the requested equilibrium problem.
         """
         name = "Plasma"
+
+        bluemira_print(f"Starting design stage: {name}")
 
         default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
         default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
@@ -101,13 +107,19 @@ class EUDEMOReactor(Reactor):
         builder = PlasmaBuilder(self._params.to_dict(), config)
         self.register_builder(builder, name)
 
-        return super()._build_stage(name)
+        component = super()._build_stage(name)
 
-    def build_TF_coils(self, component_tree: Component, **kwargs):
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
+
+    def build_TF_coils(self, component_tree: Component):
         """
         Run the TF Coils build using the requested mode.
         """
         name = "TF Coils"
+
+        bluemira_print(f"Starting design stage: {name}")
 
         default_variables_map = {
             "x1": {
@@ -170,4 +182,7 @@ class EUDEMOReactor(Reactor):
         builder = PFCoilsBuilder(self._params.to_dict(), config)
         self.register_builder(builder, name)
 
-        return super()._build_stage(name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+        return component

@@ -101,9 +101,3 @@ class PlasmaCAD(ComponentCAD):
         p = make_face(plasma["LCFS"])
         plasma = revolve(p, None, angle=360)
         self.add_shape(plasma, name="Plasma_0", transparency=0.5)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

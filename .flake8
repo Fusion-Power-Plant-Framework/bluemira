@@ -94,6 +94,8 @@ pep8-naming = True
 ignore_names =
     *PROCESS*,
     *PLASMOD*,
+    *NAME*,
+    *BINARY*,
     *CAD*,
     *STEP*,
     *STL*,

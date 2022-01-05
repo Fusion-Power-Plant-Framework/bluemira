@@ -27,7 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.file import make_bluemira_path, get_bluemira_path
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.geombase import JSONReaderWriter
 from BLUEPRINT.geometry.parameterisations import (
     TripleArc,
@@ -538,9 +538,3 @@ def fit_shape_to_loop(shape_type, loop, n_points=100):
     shape.f_ieq_constraints = f_constraints
     shape.args = o_args
     return shape
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

@@ -4,14 +4,15 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 """Configuration file for the Sphinx documentation builder."""
-from docutils.parsers.rst import Directive
-from docutils import nodes, statemachine
-import sys
 import os
+import sys
 
-sys.path.insert(0, os.path.abspath("../../"))  # noqa (E402)
+from docutils import nodes, statemachine
+from docutils.parsers.rst import Directive
 
-from bluemira._version import get_versions  # noqa (E402)
+sys.path.insert(0, os.path.abspath("../../"))  # noqa :E402
+
+from bluemira._version import get_versions  # noqa :E402
 
 
 def setup(app):

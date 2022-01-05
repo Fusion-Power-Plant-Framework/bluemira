@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import filecmp
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geomtools import rotate_matrix, circle_seg

@@ -26,8 +26,9 @@ import numpy as np
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry._deprecated_tools import get_intersect
+from bluemira.geometry.error import GeometryError
 
-from BLUEPRINT.base.error import GeometryError, SystemsError
+from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.systems.blanket import STBreedingBlanket
 from BLUEPRINT.geometry.geomtools import make_box_xz, circle_seg
 from BLUEPRINT.geometry.loop import Loop
