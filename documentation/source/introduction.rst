@@ -20,7 +20,7 @@ the way:
 * 2-D fixed and free boundary equilibrium solvers
 * 3-D magnetostatics solvers
 * 3-D geometry and CAD
-* Simplified dynamic fuel cycle model
+* Simplified dynamic tritium fuel cycle model
 
 Many typical tokamak fusion reactor design optimisation problems are also implemented,
 leveraging the functionality of the above modules.
