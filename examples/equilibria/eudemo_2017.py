@@ -32,6 +32,7 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 import json
 import os
 
+import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython import get_ipython

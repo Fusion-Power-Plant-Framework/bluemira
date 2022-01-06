@@ -23,7 +23,6 @@
 Limiter object class
 """
 
-from copy import deepcopy
 from itertools import cycle
 
 import numpy as np

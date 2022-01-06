@@ -33,6 +33,7 @@ from time import time
 from types import ModuleType
 from typing import Type, Union
 
+import deepcopy
 import numpy as np
 
 # Configuration / Input imports
