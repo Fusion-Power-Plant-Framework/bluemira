@@ -26,7 +26,6 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
-import tests
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.file import EQDSKInterface
