@@ -19,9 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import os
+from copy import deepcopy
 from unittest.mock import MagicMock, patch
 
-import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
