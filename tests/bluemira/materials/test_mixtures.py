@@ -24,7 +24,6 @@ import pytest
 # Material mixture utility classes
 # =============================================================================
 from bluemira.materials.constants import MATERIAL_BEAM_MAP
-
 from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
 
 

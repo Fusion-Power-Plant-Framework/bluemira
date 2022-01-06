@@ -140,6 +140,3 @@ with only minor deviations. As a summary, all inputs to the code should be in th
    * - flux density
      - particles per square metre per second
      - [1/m^2/s]
-
-
-

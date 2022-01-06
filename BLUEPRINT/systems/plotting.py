@@ -22,18 +22,18 @@
 """
 Plotting utilities for ReactorSystem objects
 """
-from itertools import cycle
-import numpy as np
-import matplotlib.pyplot as plt
 import os
+from itertools import cycle
 
-from BLUEPRINT.geometry.geomtools import qrotate
-from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.palettes import BLUE
-from bluemira.display.auto_config import plot_defaults
-from BLUEPRINT.utilities.colortools import color_kwargs
+import matplotlib.pyplot as plt
+import numpy as np
 
 import bluemira.codes as codes
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.display.auto_config import plot_defaults
+from BLUEPRINT.base.palettes import BLUE
+from BLUEPRINT.geometry.geomtools import qrotate
+from BLUEPRINT.utilities.colortools import color_kwargs
 
 DEFAULTS = {"linewidth": 0.3, "edgecolor": "k", "alpha": 1}
 

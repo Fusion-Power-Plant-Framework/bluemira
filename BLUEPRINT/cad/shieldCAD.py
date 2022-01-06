@@ -23,22 +23,22 @@
 Thermal shield CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.boolean import simplify_loop
-from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.mixins import OnionCAD
 from BLUEPRINT.cad.cadtools import (
-    revolve,
-    extrude,
     boolean_cut,
     boolean_fuse,
+    extrude,
     make_face,
-    make_shell,
-    make_vector,
     make_mixed_face,
     make_mixed_shell,
+    make_shell,
+    make_vector,
+    revolve,
     rotate_shape,
 )
+from BLUEPRINT.cad.component import ComponentCAD
+from BLUEPRINT.cad.mixins import OnionCAD
+from BLUEPRINT.geometry.boolean import simplify_loop
+from BLUEPRINT.geometry.shell import Shell
 
 
 class ThermalShieldCAD(OnionCAD, ComponentCAD):

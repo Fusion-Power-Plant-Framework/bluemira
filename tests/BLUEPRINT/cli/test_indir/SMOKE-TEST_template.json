@@ -231,6 +231,14 @@
         "source": "Input",
         "mapping": null
     },
+    "P_sep_particle": {
+        "name": "Separatrix power",
+        "value": 150,
+        "unit": "MW",
+        "description": null,
+        "source": "Input",
+        "mapping": null
+    },
     "P_sync": {
         "name": "Synchrotron radiation",
         "value": 50,
@@ -562,6 +570,14 @@
     "f_ni": {
         "name": "Non-inductive current drive fraction",
         "value": 0.1,
+        "unit": "N/A",
+        "description": null,
+        "source": "Input",
+        "mapping": null
+    },
+    "f_p_sol_near": {
+        "name": "near scrape-off layer power rate",
+        "value": 0.65,
         "unit": "N/A",
         "description": null,
         "source": "Input",
@@ -1461,7 +1477,13 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": null
+        "mapping": {
+            "PROCESS": {
+                "name": "fwith",
+                "recv": true,
+                "send": false
+            }
+        }
     },
     "tk_fw_out": {
         "name": "Outboard first wall thickness",
@@ -1469,7 +1491,13 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": null
+        "mapping": {
+            "PROCESS": {
+                "name": "fwoth",
+                "recv": true,
+                "send": false
+            }
+        }
     },
     "tk_ib_ts": {
         "name": "Inboard TS thickness",

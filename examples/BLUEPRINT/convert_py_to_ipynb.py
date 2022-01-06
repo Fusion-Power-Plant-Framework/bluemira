@@ -25,8 +25,8 @@ Convert all .py files in the underlying directory or specified files to .ipynb.
 
 import glob
 import json
-import platform
 import os
+import platform
 from sys import argv
 
 header_comment = "# %%"

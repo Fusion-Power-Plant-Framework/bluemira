@@ -19,16 +19,18 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import os
-import numpy as np
-import matplotlib.pyplot as plt
 import json
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.file import get_bluemira_path
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.nova.coilcage import HelmholtzCage
-from bluemira.geometry._deprecated_tools import innocent_smoothie
-import tests
 
 
 def test_pattern():

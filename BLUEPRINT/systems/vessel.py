@@ -23,25 +23,25 @@
 Reactor vacuum vessel system
 """
 from itertools import cycle
-import numpy as np
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
+import numpy as np
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
+from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry.error import GeometryError
-from BLUEPRINT.cad.vesselCAD import VesselCAD, SegmentedVesselCAD
+from BLUEPRINT.cad.vesselCAD import SegmentedVesselCAD, VesselCAD
 from BLUEPRINT.geometry.boolean import (
-    boolean_2d_difference_loop,
     boolean_2d_difference,
+    boolean_2d_difference_loop,
     boolean_2d_union,
-    simplify_loop,
     clean_loop,
+    simplify_loop,
 )
-from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
-from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import loop_plane_intersect, make_box_xz
+from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable, UpperPort
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 

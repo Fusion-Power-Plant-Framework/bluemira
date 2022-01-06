@@ -27,26 +27,26 @@ from __future__ import annotations
 
 from typing import List
 
+import numpy
+
+from bluemira.codes._freecadapi import (
+    apiWire,
+    change_plane,
+    discretize,
+    discretize_by_edges,
+    rotate_shape,
+    scale_shape,
+    translate_shape,
+    wire_closure,
+)
+
+# import from bluemira
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.coordinates import Coordinates
 
-from bluemira.codes._freecadapi import (
-    discretize_by_edges,
-    discretize,
-    wire_closure,
-    scale_shape,
-    translate_shape,
-    apiWire,
-    change_plane,
-    rotate_shape,
-)
-
-# import mathematical library
-import numpy
-
 # import from error
-from bluemira.geometry.error import NotClosedWire, MixedOrientationWireError
+from bluemira.geometry.error import MixedOrientationWireError, NotClosedWire
 
 
 class BluemiraWire(BluemiraGeo):

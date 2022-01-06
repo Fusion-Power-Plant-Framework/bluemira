@@ -23,10 +23,11 @@
 Automatic configuration some plot defaults
 """
 
+import functools
 import os
 import sys
+
 import numpy as np
-import functools
 import seaborn as sns
 from PySide2 import QtWidgets
 

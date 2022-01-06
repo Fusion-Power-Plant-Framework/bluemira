@@ -19,24 +19,24 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
+import pytest
 
-from bluemira.utilities.error import OptVariablesError
-from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
+from bluemira.geometry._deprecated_tools import get_perimeter
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
-    PrincetonD,
-    TripleArc,
-    SextupleArc,
     PictureFrame,
     PolySpline,
+    PrincetonD,
+    SextupleArc,
     TaperedPictureFrame,
+    TripleArc,
 )
 from bluemira.geometry.tools import make_polygon
-from bluemira.geometry.coordinates import get_perimeter
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.error import OptVariablesError
+from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 
 class TestGeometryParameterisation:

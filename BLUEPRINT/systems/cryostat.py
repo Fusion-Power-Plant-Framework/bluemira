@@ -23,17 +23,17 @@
 Cryostat system
 """
 from itertools import cycle
-import numpy as np
-from shapely.ops import cascaded_union
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
+import numpy as np
+from shapely.ops import cascaded_union
 
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.cad.cryostatCAD import CryostatCAD
-from BLUEPRINT.geometry.loop import Loop, make_ring
 from BLUEPRINT.geometry.geombase import Plane
-from BLUEPRINT.systems.mixins import Meshable, OnionRing
+from BLUEPRINT.geometry.loop import Loop, make_ring
 from BLUEPRINT.systems.baseclass import ReactorSystem
+from BLUEPRINT.systems.mixins import Meshable, OnionRing
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 

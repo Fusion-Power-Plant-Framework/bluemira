@@ -22,33 +22,34 @@
 """
 EU-DEMO build classes for TF Coils.
 """
-from typing import Type, Optional, List
 from copy import deepcopy
+from typing import List, Optional, Type
+
 import numpy as np
 
-from bluemira.base.config import Configuration
+import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.builders.shapes import OptimisedShapeBuilder
+from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
-from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.builders.shapes import OptimisedShapeBuilder
+from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
+    boolean_cut,
     boolean_fuse,
     extrude_shape,
+    make_polygon,
     offset_wire,
     sweep_shape,
-    make_polygon,
-    boolean_cut,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.solid import BluemiraSolid
-from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
-import bluemira.utilities.plot_tools as bm_plot_tools
 
 
 class TFCoilsComponent(Component):

@@ -23,14 +23,14 @@ import numpy as np
 import pytest
 
 from bluemira.codes.error import FreeCADError
-from bluemira.geometry.tools import make_polygon, offset_wire
 from bluemira.geometry.parameterisations import (
-    PrincetonD,
-    TripleArc,
     PictureFrame,
-    TaperedPictureFrame,
     PolySpline,
+    PrincetonD,
+    TaperedPictureFrame,
+    TripleArc,
 )
+from bluemira.geometry.tools import make_polygon, offset_wire
 
 
 class TestOffset:

@@ -24,6 +24,7 @@ CAD display utilities
 """
 import numpy as np
 from OCC.Display.SimpleGui import init_display
+
 from bluemira.base.look_and_feel import bluemira_warn
 
 try:

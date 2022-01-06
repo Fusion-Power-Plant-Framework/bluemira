@@ -23,8 +23,9 @@
 FE transformation matrices and methods
 """
 import numpy as np
-from BLUEPRINT.geometry.geomtools import rotate_matrix
+
 from BLUEPRINT.beams.constants import FLOAT_TYPE
+from BLUEPRINT.geometry.geomtools import rotate_matrix
 
 
 def _nb_isclose(a, b, rtol=1.0e-5, atol=0.0e-8):
@@ -272,7 +273,7 @@ def cyclic_pattern(geometry, axis, angle, n, include_first=True):
         The patterned and merged geometry
     """
     # Dodge cyclic import
-    from BLUEPRINT.beams.geometry import Geometry, DeformedGeometry
+    from BLUEPRINT.beams.geometry import DeformedGeometry, Geometry
 
     if include_first:
         patterned = geometry.copy()

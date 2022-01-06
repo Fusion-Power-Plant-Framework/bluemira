@@ -23,14 +23,16 @@
 Generic plot utilities, figure and gif operations
 """
 import os
-import numpy as np
+
 import imageio
 import matplotlib.pyplot as plt
-from matplotlib.path import Path
+import numpy as np
 from matplotlib.patches import Patch, PathPatch
-from mpl_toolkits.mplot3d.art3d import PathPatch3D
+from matplotlib.path import Path
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from scipy.interpolate import interp1d
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.coordinates import rotation_matrix_v1v2
 

@@ -24,20 +24,26 @@ Offset tools (including ClipperLib functions and some homebrew ones)
 """
 import numpy as np
 from pyclipper import (
-    PyclipperOffset,
     ET_CLOSEDPOLYGON,
-    ET_OPENSQUARE,
     ET_OPENROUND,
-    JT_ROUND,
+    ET_OPENSQUARE,
     JT_MITER,
+    JT_ROUND,
     JT_SQUARE,
+    PyclipperOffset,
 )
-from bluemira.geometry.error import GeometryError
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import innocent_smoothie
-from BLUEPRINT.geometry.geomtools import order, normal
-from BLUEPRINT.geometry.geomtools import normal_vector, side_vector, vector_intersect
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.boolean import PyclipperMixin, loop_to_pyclippath
+from BLUEPRINT.geometry.geomtools import (
+    normal,
+    normal_vector,
+    order,
+    side_vector,
+    vector_intersect,
+)
 
 
 class OffsetOperationManager(PyclipperMixin):

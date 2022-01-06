@@ -48,10 +48,7 @@ try:
         brepgprop_VolumeProperties,
     )
     from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
-    from OCC.Core.BRepOffsetAPI import (
-        BRepOffsetAPI_MakePipe,
-        BRepOffsetAPI_ThruSections,
-    )
+    from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe, BRepOffsetAPI_ThruSections
     from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 
     # from OCC.Display.SimpleGui import init_display

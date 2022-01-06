@@ -21,30 +21,26 @@
 """
 ST equilibrium attempt
 """
-import numpy as np
-import matplotlib.pyplot as plt
-import copy
 import argparse
+import copy
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.display.auto_config import plot_defaults
-from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.constraints import (
-    MagneticConstraintSet,
-    IsofluxConstraint,
-)
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimiser import (
-    Norm2Tikhonov,
-    UnconstrainedCurrentOptimiser,
     BoundedCurrentOptimiser,
     CoilsetOptimiser,
     NestedCoilsetOptimiser,
+    Norm2Tikhonov,
+    UnconstrainedCurrentOptimiser,
 )
-from bluemira.equilibria.solve import (
-    PicardDeltaIterator,
-    PicardCoilsetIterator,
-)
+from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
 from bluemira.geometry._deprecated_loop import Loop
 
 # Clean up and make plots look good

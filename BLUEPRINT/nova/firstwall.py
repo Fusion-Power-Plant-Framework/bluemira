@@ -22,35 +22,35 @@
 """
 First wall and divertor profile calculation algorithms
 """
-import numpy as np
-import matplotlib.pyplot as plt
-from typing import Type, List
-from scipy.interpolate import InterpolatedUnivariateSpline
-import nlopt
 from collections import OrderedDict
+from typing import List, Type
 
-from bluemira.base.parameter import ParameterFrame
+import matplotlib.pyplot as plt
+import nlopt
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from bluemira.utilities.optimiser import approx_derivative
-
-from BLUEPRINT.nova.stream import StreamFlow
-from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
-from BLUEPRINT.geometry.stringgeom import String
-from BLUEPRINT.geometry.shape import Shape
 from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union
 from BLUEPRINT.geometry.geomtools import (
     lengthnorm,
+    order,
     rotate_vector_2d,
     tangent,
     unique,
-    order,
     vector_intersect,
     xz_interp,
 )
+from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.offset import offset_clipper
-from bluemira.geometry._deprecated_tools import innocent_smoothie
+from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
+from BLUEPRINT.geometry.shape import Shape
+from BLUEPRINT.geometry.stringgeom import String
+from BLUEPRINT.nova.stream import StreamFlow
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 class FirstWallProfile(ReactorSystem):

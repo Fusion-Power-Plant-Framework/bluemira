@@ -24,9 +24,9 @@ Optimisation utilities
 """
 
 import numpy as np
-from bluemira.utilities.error import InternalOptError
-from bluemira.base.look_and_feel import bluemira_warn
 
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.error import InternalOptError
 
 # =============================================================================
 # Analytical objective functions

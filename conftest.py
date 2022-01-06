@@ -26,7 +26,6 @@ Used by pytest for configuration like adding command line options.
 import matplotlib as mpl
 
 import tests
-
 from bluemira.base.file import try_get_bluemira_private_data_root
 from bluemira.base.look_and_feel import bluemira_warn
 
