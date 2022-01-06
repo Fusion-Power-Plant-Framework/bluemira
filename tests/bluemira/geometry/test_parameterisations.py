@@ -22,7 +22,7 @@
 import numpy as np
 import pytest
 
-from bluemira.geometry._deprecated_tools import get_perimeter
+from bluemira.geometry.coordinates import get_perimeter
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
