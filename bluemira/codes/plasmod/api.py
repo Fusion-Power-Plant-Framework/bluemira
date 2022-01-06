@@ -146,8 +146,8 @@ class Inputs(PlasmodParameters):
     Class for Plasmod inputs
     """
 
-    f_int = ff.FortranRecordWriter("a20,i10")
-    f_float = ff.FortranRecordWriter("a20,e16.9")
+    f_int = ff.FortranRecordWriter("a20,  i10")
+    f_float = ff.FortranRecordWriter("a20, e17.9")
 
     def __init__(self, new_inputs=None):
         super().__init__()

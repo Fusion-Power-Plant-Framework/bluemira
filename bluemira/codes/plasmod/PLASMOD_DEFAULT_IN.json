@@ -1,5 +1,4 @@
 {
-
     // ############################
     // # list numerics properties (num type)
     // #############################
@@ -89,7 +88,6 @@
     "xtglf_10": 0.75,
     // # [-] tglf points, position 11
     "xtglf_11": 0.8,
-
     // ############################
     // # list geometry properties
     // ############################
@@ -116,13 +114,11 @@
     // # then iterated to constrain kappa95)
     "k": 1.6969830041844367,
     // # [-] plasma elongation at 95 % flux
-    "k95": 1.65,
+    "k95": 1.652,
     // # [-] safety factor at 95% flux surface
     // (used if i_equiltype == 1. Otherwise q95 is calculated
     // and Ip is used as input)
     "q95": 3.5,
-
-
     // ############################
     // # list composition properties (comp type)
     // #############################
@@ -159,7 +155,7 @@
     "psepplh_inf": 0.1,
     // # [-] max P_sep/P_LH. if Psep/PLH > Psep/PLH_max -> use Xe
     "psepplh_sup": 1000.0,
-    // # [-] position after which radiation is "edge"
+    // # [-] position after which radiation is edge
     "pradpos": 0.7,
     // # [-] radiation fraction used for core transport
     "pradfrac": 0.6,
@@ -191,7 +187,6 @@
     "tesep": 0.1,
     // # [-] scaling factor for p_ped scaling formula
     "pedscal": 1.0,
-
     // ############################
     // # list general inputs: control, confinement, B.C., etc (inp type)
     // #############################
@@ -254,7 +249,7 @@
     // # normalized coordinate x, for NBI heating to control H-mode
     "dx_heat_ech": 0.03,
     // # [keV] NBI energy
-    "nbi_energy": 0.0,
+    "nbi_energy": 1000.0,
     // # [MW] required fusion power.
     // # 0. - ignored
     // # > 0 - Auxiliary heating is calculated to match Pfus_req
