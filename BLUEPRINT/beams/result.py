@@ -23,9 +23,10 @@
 FE result object
 """
 import numpy as np
-from BLUEPRINT.beams.transformation import cyclic_pattern
-from BLUEPRINT.beams.plotting import Plot3D
+
 from BLUEPRINT.beams.geometry import DeformedGeometry
+from BLUEPRINT.beams.plotting import Plot3D
+from BLUEPRINT.beams.transformation import cyclic_pattern
 
 
 class Result:

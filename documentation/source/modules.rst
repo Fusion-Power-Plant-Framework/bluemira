@@ -5,7 +5,7 @@ Bluemira Modules
     :maxdepth: 4
     :caption: Contents:
     :hidden:
- 
+
     balance_of_plant/balance_of_plant
     base/base
     codes/codes

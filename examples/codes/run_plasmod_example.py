@@ -22,9 +22,10 @@
 """
 Test for plasmod run
 """
-from bluemira.base.config import Configuration
-import bluemira.codes.plasmod as plasmod
 import matplotlib.pyplot as plt
+
+import bluemira.codes.plasmod as plasmod
+from bluemira.base.config import Configuration
 
 PLASMOD_PATH = "../plasmod_bluemira"
 

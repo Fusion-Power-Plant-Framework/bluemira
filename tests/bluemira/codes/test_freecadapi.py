@@ -19,11 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import numpy as np
-
 import freecad  # noqa: F401
+import numpy as np
 import Part
+import pytest
 from FreeCAD import Base
 
 import bluemira.codes._freecadapi as cadapi

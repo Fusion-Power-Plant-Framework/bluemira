@@ -22,20 +22,20 @@
 import numpy as np
 import pytest
 
-from bluemira.geometry.tools import (
-    signed_distance,
-    signed_distance_2D_polygon,
-    _signed_distance_2D,
-    make_polygon,
-    make_circle,
-    slice_shape,
-    revolve_shape,
-    extrude_shape,
-    offset_wire,
-)
-from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import (
+    _signed_distance_2D,
+    extrude_shape,
+    make_circle,
+    make_polygon,
+    offset_wire,
+    revolve_shape,
+    signed_distance,
+    signed_distance_2D_polygon,
+    slice_shape,
+)
 
 generic_wire = make_polygon(
     [

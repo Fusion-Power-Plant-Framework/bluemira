@@ -22,9 +22,10 @@
 """
 A cheeky jagged edge shape paramterisation - used in firstwallprofile
 """
-import numpy as np
 from itertools import count
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class String:

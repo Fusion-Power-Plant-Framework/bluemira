@@ -29,12 +29,14 @@ the first wall and optimise the shape design.
 
 # %%
 import os
+from time import time
+
 import matplotlib.pyplot as plt
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
-from BLUEPRINT.systems.firstwall import FirstWallDN
 from BLUEPRINT.geometry.loop import Loop
-from time import time
+from BLUEPRINT.systems.firstwall import FirstWallDN
 
 # %%[markdown]
 # Loading an equilibrium file

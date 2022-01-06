@@ -22,11 +22,13 @@
 """
 Finite element Node object
 """
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
+
 from BLUEPRINT.base.error import BeamsError
+from BLUEPRINT.beams.constants import D_TOLERANCE, FLOAT_TYPE
 from BLUEPRINT.beams.loads import node_load
-from BLUEPRINT.beams.constants import FLOAT_TYPE, D_TOLERANCE
 
 
 class Node:

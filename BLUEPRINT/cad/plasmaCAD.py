@@ -23,10 +23,11 @@
 Plasma CAD routines
 """
 import numpy as np
+
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.geometry.loop import MultiLoop
+from BLUEPRINT.cad.cadtools import make_face, revolve
 from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import revolve, make_face
+from BLUEPRINT.geometry.loop import MultiLoop
 
 
 class PlasmaCAD(ComponentCAD):

@@ -24,15 +24,15 @@ Three-dimensional current source terms.
 """
 
 import numpy as np
+
 from bluemira.geometry._deprecated_tools import (
     get_angle_between_vectors,
-    rotation_matrix,
     get_normal_vector,
+    rotation_matrix,
 )
-from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.baseclass import SourceGroup
+from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
-
 
 __all__ = ["ArbitraryPlanarRectangularXSCircuit", "HelmholtzCage"]
 

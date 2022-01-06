@@ -22,10 +22,10 @@
 """
 Some more aesthetic standardisation.. color palettes
 """
-import seaborn as sns
 import numpy as np
-from BLUEPRINT.utilities.colortools import make_rgb_alpha
+import seaborn as sns
 
+from BLUEPRINT.utilities.colortools import make_rgb_alpha
 
 BLUE = dict(
     zip(

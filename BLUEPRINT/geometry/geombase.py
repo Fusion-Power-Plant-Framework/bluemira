@@ -30,9 +30,9 @@ from copy import deepcopy
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import json_writer
-from bluemira.geometry.error import GeometryError
 from bluemira.geometry.constants import D_TOLERANCE as TOLERANCE
+from bluemira.geometry.error import GeometryError
+from bluemira.utilities.tools import json_writer
 
 # =============================================================================
 # Type check static methods - Eventually make part of GeomBase object?

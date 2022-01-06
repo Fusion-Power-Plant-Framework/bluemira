@@ -23,19 +23,19 @@
 Divertor system
 """
 from collections import OrderedDict
-import numpy as np
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
+import numpy as np
 
+from bluemira.base.parameter import ParameterFrame
+from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.cad.divertorCAD import DivertorCAD
+from BLUEPRINT.geometry.boolean import boolean_2d_difference
 from BLUEPRINT.geometry.geomtools import qrotate
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
-from BLUEPRINT.geometry.boolean import boolean_2d_difference
 from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
-from BLUEPRINT.base.error import SystemsError
 
 
 class Divertor(Meshable, ReactorSystem):

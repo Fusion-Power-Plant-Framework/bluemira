@@ -24,13 +24,14 @@ Supporting functions for the bluemira geometry module.
 """
 
 from __future__ import annotations
-import freecad  # noqa: F401
 
 import math
 
 # import typing
 from typing import Dict, Iterable, List, Optional, Union
 
+import freecad  # noqa: F401
+import FreeCAD
 import BOPTools
 import BOPTools.GeneralFuseResult
 import BOPTools.JoinAPI
@@ -39,7 +40,6 @@ import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
-import FreeCAD
 import FreeCADGui
 
 # import math lib

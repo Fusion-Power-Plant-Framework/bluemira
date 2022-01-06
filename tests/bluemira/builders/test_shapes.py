@@ -23,16 +23,13 @@
 Tests for shape builders
 """
 
+import numpy as np
 import pytest
 
-import numpy as np
-from bluemira.base.components import PhysicalComponent
-
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
-
-from bluemira.builders.shapes import MakeParameterisedShape, MakeOptimisedShape
-
 import tests
+from bluemira.base.components import PhysicalComponent
+from bluemira.builders.shapes import MakeOptimisedShape, MakeParameterisedShape
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
 
 
 class TestMakeParameterisedShape:

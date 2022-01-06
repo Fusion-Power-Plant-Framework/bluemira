@@ -23,23 +23,21 @@
 Built-in build steps for making parameterised TF coils.
 """
 
-import numpy as np
 from copy import deepcopy
-import matplotlib.pyplot as plt
-import matplotlib
 
-from bluemira.base.look_and_feel import bluemira_debug_flush
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_debug_flush
 from bluemira.display import plot_2d
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.tools import offset_wire, signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-from bluemira.geometry.tools import (
-    offset_wire,
-    signed_distance_2D_polygon,
-)
+from bluemira.magnetostatics.circuits import HelmholtzCage
 
 
 class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
