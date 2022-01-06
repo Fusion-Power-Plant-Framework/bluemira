@@ -23,25 +23,25 @@
 Breeding blanket system
 """
 from collections import OrderedDict
-import matplotlib.pyplot as plt
-import numpy as np
 from itertools import cycle
 from typing import Type
+
+import matplotlib.pyplot as plt
+import numpy as np
 from shapely.geometry import Polygon
 
 from bluemira.base.parameter import ParameterFrame
 from bluemira.geometry.error import GeometryError
-
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.cad.blanketCAD import BlanketCAD, STBlanketCAD
-from BLUEPRINT.geometry.geomtools import qrotate, rainbow_arc, make_box_xz
-from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_common,
-    boolean_2d_difference,
     boolean_2d_common_loop,
+    boolean_2d_difference,
     boolean_2d_difference_loop,
 )
+from BLUEPRINT.geometry.geombase import Plane
+from BLUEPRINT.geometry.geomtools import make_box_xz, qrotate, rainbow_arc
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, mirror
 from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable

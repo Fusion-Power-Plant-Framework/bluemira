@@ -2,10 +2,10 @@
         % Serpent input file generated in BLUEPRINT
         % Date: 27/11/19 10:13
         % materials.serp
-        %  
+        %
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _breeding_blanket_fw -5.887433692 rgb 0 0 0
-%  
+%
 %  EUROfer
 %  with a density of 7.625 g per cm3
 %  packing fraction of 1.0
@@ -68,7 +68,7 @@ mat _breeding_blanket_fw -5.887433692 rgb 0 0 0
    74183        0.000435318923006033     % Tungsten_183
    74184        0.0009320874773518415    % Tungsten_184
    74186        0.0008648579301929782    % Tungsten_186
-%  
+%
 %  Tungsten
 %  with a density of 19.178158000000003 g per cm3
 %  packing fraction of 1.0
@@ -174,15 +174,15 @@ mat _breeding_blanket_fw -5.887433692 rgb 0 0 0
    40092        1.515182252589224e-07    % Zirconium_92
    40094        1.5355024810496043e-07   % Zirconium_94
    40096        2.4737669430028145e-08   % Zirconium_96
-%  
+%
 %  Void
 %   with a density of 0.0 g per cm3
 %   volume fraction of 0.34
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _breeding_blanket_bz -1.406018276 rgb 0 0 0
-%  
+%
 %  EUROfer
 %  with a density of 7.625 g per cm3
 %  packing fraction of 1.0
@@ -245,14 +245,14 @@ mat _breeding_blanket_bz -1.406018276 rgb 0 0 0
    74183        8.226172960119622e-05    % Tungsten_183
    74184        0.00017613552725231674   % Tungsten_184
    74186        0.00016343123497987482   % Tungsten_186
-%  
+%
 %  Be
 %  with a density of 1.16672 g per cm3
 %  packing fraction of 1
 %  volume fraction of 0.3663
 %  mass fraction of 0.30395731214520855
    4009         0.6055148123153006       % Beryllium_9
-%  
+%
 %  Li4SiO4
 %  with a density of 1.5264 g per cm3
 %  packing fraction of 1
@@ -266,15 +266,15 @@ mat _breeding_blanket_bz -1.406018276 rgb 0 0 0
    8016         0.0984822685179993       % Oxygen_16
    8017         3.75144220825002e-05     % Oxygen_17
    8018         0.0002023804349187511    % Oxygen_18
-%  
+%
 %  Void
 %   with a density of 0.0 g per cm3
 %   volume fraction of 0.3861
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _breeding_blanket_mb -3.1559874999999997 rgb 0 0 0
-%  
+%
 %  EUROfer
 %  with a density of 7.625 g per cm3
 %  packing fraction of 1.0
@@ -337,15 +337,15 @@ mat _breeding_blanket_mb -3.1559874999999997 rgb 0 0 0
    74183        0.0004772660526378097    % Tungsten_183
    74184        0.0010219029946067428    % Tungsten_184
    74186        0.0009481952394474444    % Tungsten_186
-%  
+%
 %  Void
 %   with a density of 0.0 g per cm3
 %   volume fraction of 0.5861
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _breeding_blanket_bss -4.6215125 rgb 0 0 0
-%  
+%
 %  EUROfer
 %  with a density of 7.625 g per cm3
 %  packing fraction of 1.0
@@ -408,15 +408,15 @@ mat _breeding_blanket_bss -4.6215125 rgb 0 0 0
    74183        0.0004772660526378097    % Tungsten_183
    74184        0.0010219029946067428    % Tungsten_184
    74186        0.0009481952394474444    % Tungsten_186
-%  
+%
 %  Void
 %   with a density of 0.0 g per cm3
 %   volume fraction of 0.3939
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _divertor -4.335358707661667 rgb 0 0 0
-%  
+%
 %  CuCrZr
 %  with a density of 8.839754981075 g per cm3
 %  packing fraction of 1.0
@@ -487,7 +487,7 @@ mat _divertor -4.335358707661667 rgb 0 0 0
    82207        3.841001467906976e-08    % Lead_207
    82208        9.107170901281698e-08    % Lead_208
    83209        5.170030309059387e-08    % Bismuth_209
-%  
+%
 %  Pure Cu
 %  with a density of 8.87916006338475 g per cm3
 %  packing fraction of 1.0
@@ -560,7 +560,7 @@ mat _divertor -4.335358707661667 rgb 0 0 0
    30067        3.192260104585102e-10    % Zinc_67
    30068        1.457851458653345e-09    % Zinc_68
    30070        4.8199966925666157e-11   % Zinc_70
-%  
+%
 %  EUROfer
 %  with a density of 7.7315 g per cm3
 %  packing fraction of 1.0
@@ -623,7 +623,7 @@ mat _divertor -4.335358707661667 rgb 0 0 0
    74183        0.00046142475794883075   % Tungsten_183
    74184        0.0009879842476276852    % Tungsten_184
    74186        0.0009167229817250355    % Tungsten_186
-%  
+%
 %  Tungsten
 %  with a density of 19.266515920000003 g per cm3
 %  packing fraction of 1.0
@@ -729,7 +729,7 @@ mat _divertor -4.335358707661667 rgb 0 0 0
    40092        2.4681887359043673e-08   % Zirconium_92
    40094        2.50128980933049e-08     % Zirconium_94
    40096        4.029695895354068e-09    % Zirconium_96
-%  
+%
 %  H2O
 %  with a density of 0.0005227299125237988 g per cm3
 %  packing fraction of 1.0
@@ -741,7 +741,7 @@ mat _divertor -4.335358707661667 rgb 0 0 0
    8017         6.679190197739877e-08    % Oxygen_17
    8018         3.6032473435175664e-07   % Oxygen_18
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _radiation_shield -3.6 rgb 0 0 0
    1001        0.132837888436191        % Hydrogen_1
@@ -770,7 +770,7 @@ mat _radiation_shield -3.6 rgb 0 0 0
    26058       0.0007386107044224002    % Iron_58
    15031       0.0012470988364364272    % Phosphorus_31
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _toroidal_field_coils_case -7.93 rgb 0 0 0
    5010        1.0243164408959862e-05   % Boron_10
@@ -815,17 +815,17 @@ mat _toroidal_field_coils_case -7.93 rgb 0 0 0
    73180       3.6934955464838036e-09   % Tantalum_180
    73181       3.074980814045522e-05    % Tantalum_181
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _toroidal_field_coils_wp -5.597919330799545 rgb 0 0 0
-%  
+%
 %  Nb3Sn - WST
 %  with a density of 8.91 g per cm3
 %  packing fraction of 1.0
 %  volume fraction of 0.02895
 %  mass fraction of 0.046078638286335946
    13027        0.06349653010193175      % Aluminium_27
-%  
+%
 %  Pure Cu
 %  with a density of 8.94 g per cm3
 %  packing fraction of 1.0
@@ -898,7 +898,7 @@ mat _toroidal_field_coils_wp -5.597919330799545 rgb 0 0 0
    30067        4.289371284210373e-09    % Zinc_67
    30068        1.9588836681604307e-08   % Zinc_68
    30070        6.476525948931506e-10    % Zinc_70
-%  
+%
 %  Epoxy resin
 %  with a density of 1.207 g per cm3
 %  packing fraction of 1.0
@@ -924,7 +924,7 @@ mat _toroidal_field_coils_wp -5.597919330799545 rgb 0 0 0
    14028        0.014294250973549935     % Silicon_28
    14029        0.0007261590472125332    % Silicon_29
    14030        0.0004792494715007797    % Silicon_30
-%  
+%
 %  Bronze
 %  with a density of 8.8775 g per cm3
 %  packing fraction of 1.0
@@ -942,7 +942,7 @@ mat _toroidal_field_coils_wp -5.597919330799545 rgb 0 0 0
    50120        0.0005947053132102787    % Tin_120
    50122        8.451459791785116e-05    % Tin_122
    50124        0.00010568888162945101   % Tin_124
-%  
+%
 %  He
 %  with a density of 0.0009844280591261626 g per cm3
 %  packing fraction of 1.0
@@ -950,7 +950,7 @@ mat _toroidal_field_coils_wp -5.597919330799545 rgb 0 0 0
 %  mass fraction of 2.957898993542138e-05
    2003         3.684218305723723e-10    % Helium_3
    2004         0.0002749412961844174    % Helium_4
-%  
+%
 %  SS316-LN
 %  with a density of 7.93 g per cm3
 %  packing fraction of 1.0
@@ -997,22 +997,22 @@ mat _toroidal_field_coils_wp -5.597919330799545 rgb 0 0 0
    14030        0.00012534548179775129   % Silicon_30
    73180        1.5113701930642794e-09   % Tantalum_180
    73181        1.2582753351407931e-05   % Tantalum_181
-%  
+%
 %  Void
 %   with a density of 0.0 g per cm3
 %   volume fraction of 0.00055
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _poloidal_field_coils -5.529249930799544 rgb 0 0 0
-%  
+%
 %  NbTi
 %  with a density of 6.538 g per cm3
 %  packing fraction of 1.0
 %  volume fraction of 0.02895
 %  mass fraction of 0.03423160507642857
    13027        0.04739376742588026      % Aluminium_27
-%  
+%
 %  Pure Cu
 %  with a density of 8.94 g per cm3
 %  packing fraction of 1.0
@@ -1085,7 +1085,7 @@ mat _poloidal_field_coils -5.529249930799544 rgb 0 0 0
    30067        4.363125125001404e-09    % Zinc_67
    30068        1.9925658058484137e-08   % Zinc_68
    30070        6.587886946165488e-10    % Zinc_70
-%  
+%
 %  Epoxy resin
 %  with a density of 1.207 g per cm3
 %  packing fraction of 1.0
@@ -1111,7 +1111,7 @@ mat _poloidal_field_coils -5.529249930799544 rgb 0 0 0
    14028        0.014540034292520494     % Silicon_28
    14029        0.0007386450306372437    % Silicon_29
    14030        0.0004874899540513037    % Silicon_30
-%  
+%
 %  Bronze
 %  with a density of 8.8775 g per cm3
 %  packing fraction of 1.0
@@ -1129,7 +1129,7 @@ mat _poloidal_field_coils -5.529249930799544 rgb 0 0 0
    50120        0.0006049310078591776    % Tin_120
    50122        8.596778902357252e-05    % Tin_122
    50124        0.00010750615517202697   % Tin_124
-%  
+%
 %  He
 %  with a density of 0.0009844280591261626 g per cm3
 %  packing fraction of 1.0
@@ -1137,7 +1137,7 @@ mat _poloidal_field_coils -5.529249930799544 rgb 0 0 0
 %  mass fraction of 2.9946340212021692e-05
    2003         3.74756680888548e-10     % Helium_3
    2004         0.0002796687900855191    % Helium_4
-%  
+%
 %  SS316-LN
 %  with a density of 7.93 g per cm3
 %  packing fraction of 1.0
@@ -1184,22 +1184,22 @@ mat _poloidal_field_coils -5.529249930799544 rgb 0 0 0
    14030        0.00012750074188036924   % Silicon_30
    73180        1.5373575346138213e-09   % Tantalum_180
    73181        1.2799108226260736e-05   % Tantalum_181
-%  
+%
 %  Void
 %   with a density of 0.0 g per cm3
 %   volume fraction of 0.00055
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _central_solenoid -5.597919330799545 rgb 0 0 0
-%  
+%
 %  Nb3Sn - WST
 %  with a density of 8.91 g per cm3
 %  packing fraction of 1.0
 %  volume fraction of 0.02895
 %  mass fraction of 0.046078638286335946
    13027        0.06349653010193175      % Aluminium_27
-%  
+%
 %  Pure Cu
 %  with a density of 8.94 g per cm3
 %  packing fraction of 1.0
@@ -1272,7 +1272,7 @@ mat _central_solenoid -5.597919330799545 rgb 0 0 0
    30067        4.289371284210373e-09    % Zinc_67
    30068        1.9588836681604307e-08   % Zinc_68
    30070        6.476525948931506e-10    % Zinc_70
-%  
+%
 %  Epoxy resin
 %  with a density of 1.207 g per cm3
 %  packing fraction of 1.0
@@ -1298,7 +1298,7 @@ mat _central_solenoid -5.597919330799545 rgb 0 0 0
    14028        0.014294250973549935     % Silicon_28
    14029        0.0007261590472125332    % Silicon_29
    14030        0.0004792494715007797    % Silicon_30
-%  
+%
 %  Bronze
 %  with a density of 8.8775 g per cm3
 %  packing fraction of 1.0
@@ -1316,7 +1316,7 @@ mat _central_solenoid -5.597919330799545 rgb 0 0 0
    50120        0.0005947053132102787    % Tin_120
    50122        8.451459791785116e-05    % Tin_122
    50124        0.00010568888162945101   % Tin_124
-%  
+%
 %  He
 %  with a density of 0.0009844280591261626 g per cm3
 %  packing fraction of 1.0
@@ -1324,7 +1324,7 @@ mat _central_solenoid -5.597919330799545 rgb 0 0 0
 %  mass fraction of 2.957898993542138e-05
    2003         3.684218305723723e-10    % Helium_3
    2004         0.0002749412961844174    % Helium_4
-%  
+%
 %  SS316-LN
 %  with a density of 7.93 g per cm3
 %  packing fraction of 1.0
@@ -1371,12 +1371,12 @@ mat _central_solenoid -5.597919330799545 rgb 0 0 0
    14030        0.00012534548179775129   % Silicon_30
    73180        1.5113701930642794e-09   % Tantalum_180
    73181        1.2582753351407931e-05   % Tantalum_181
-%  
+%
 %  Void
 %   with a density of 0.0 g per cm3
 %   volume fraction of 0.00055
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _cryostat -7.93 rgb 0 0 0
    5010        1.0243164408959862e-05   % Boron_10
@@ -1421,10 +1421,10 @@ mat _cryostat -7.93 rgb 0 0 0
    73180       3.6934955464838036e-09   % Tantalum_180
    73181       3.074980814045522e-05    % Tantalum_181
 
-%  
+%
 %  Made with https://github.com/ukaea/neutronics_material_maker
 mat _reactor_vacuum_vessel -5.1575949391208 rgb 0 0 0
-%  
+%
 %  H2O
 %  with a density of 0.998987347802 g per cm3
 %  packing fraction of 1.0
@@ -1435,7 +1435,7 @@ mat _reactor_vacuum_vessel -5.1575949391208 rgb 0 0 0
    8016         0.14544761335744022      % Oxygen_16
    8017         5.54047265613714e-05     % Oxygen_17
    8018         0.0002988939196073984    % Oxygen_18
-%  
+%
 %  SS316-LN
 %  with a density of 7.93 g per cm3
 %  packing fraction of 1.0
@@ -1482,4 +1482,3 @@ mat _reactor_vacuum_vessel -5.1575949391208 rgb 0 0 0
    14030        0.00017233389774583486   % Silicon_30
    73180        2.0779394085213444e-09   % Tantalum_180
    73181        1.7299665678587687e-05   % Tantalum_181
-

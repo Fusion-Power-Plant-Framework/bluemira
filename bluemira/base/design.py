@@ -26,7 +26,7 @@ Module containing the bluemira Design class.
 import abc
 from typing import Dict, List, Optional, Type, Union
 
-from bluemira.base.builder import Builder, BuildConfig
+from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError

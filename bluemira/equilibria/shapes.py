@@ -26,10 +26,10 @@ Useful parameterisations for plasma flux surface shapes.
 import numpy as np
 
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_bspline
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
+from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 __all__ = [
     "flux_surface_cunningham",

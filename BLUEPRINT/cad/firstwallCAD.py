@@ -23,12 +23,8 @@
 First wall CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
+from BLUEPRINT.cad.cadtools import make_face, revolve, rotate_shape
 from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import (
-    make_face,
-    revolve,
-    rotate_shape,
-)
 
 
 class FirstWallCAD(ComponentCAD):
@@ -61,7 +57,7 @@ class FirstWallCAD(ComponentCAD):
 
     def __init__(self, firstwall, **kwargs):
 
-        from BLUEPRINT.systems.firstwall import FirstWallSN, FirstWallDN
+        from BLUEPRINT.systems.firstwall import FirstWallDN, FirstWallSN
 
         # Check the passed system is the correct type
         if not isinstance(firstwall, (FirstWallSN, FirstWallDN)):

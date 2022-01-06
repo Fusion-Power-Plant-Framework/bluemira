@@ -24,27 +24,28 @@ Flux surface utility classes and calculations
 """
 
 
-from dataclasses import dataclass
-from typing import Iterable
 from copy import deepcopy
-import numpy as np
-import numba as nb
-import matplotlib.pyplot as plt
+from dataclasses import dataclass
 from functools import lru_cache
+from typing import Iterable
+
+import matplotlib.pyplot as plt
+import numba as nb
+import numpy as np
 from scipy.integrate import solve_ivp
 
-from bluemira.utilities.tools import cartesian_to_polar
-from bluemira.geometry._deprecated_tools import (
-    get_angle_between_points,
-    loop_plane_intersect,
-    join_intersect,
-    check_linesegment,
-)
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_base import Plane
-from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.constants import PSI_NORM_TOL
+from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import (
+    check_linesegment,
+    get_angle_between_points,
+    join_intersect,
+    loop_plane_intersect,
+)
+from bluemira.utilities.tools import cartesian_to_polar
 
 
 @nb.jit(nopython=True, cache=True)

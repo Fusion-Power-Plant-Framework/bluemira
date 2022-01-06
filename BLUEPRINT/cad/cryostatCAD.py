@@ -23,15 +23,15 @@
 Cryostat CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.mixins import PlugChopper
 from BLUEPRINT.cad.cadtools import (
     boolean_cut,
-    revolve,
-    make_face,
-    make_compound,
     extrude,
+    make_compound,
+    make_face,
+    revolve,
 )
+from BLUEPRINT.cad.component import ComponentCAD
+from BLUEPRINT.cad.mixins import PlugChopper
 
 
 class CryostatCAD(PlugChopper, ComponentCAD):

@@ -21,7 +21,8 @@
 
 
 import pytest
-from bluemira.utilities.plot_tools import str_to_latex, gsymbolify
+
+from bluemira.utilities.plot_tools import gsymbolify, str_to_latex
 
 
 class TestStrToLatex:

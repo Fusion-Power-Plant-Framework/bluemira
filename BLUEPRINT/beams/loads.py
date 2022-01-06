@@ -23,8 +23,9 @@
 Load objects
 """
 import numpy as np
-from BLUEPRINT.base.error import BeamsError
+
 from bluemira.base.look_and_feel import bluemira_warn
+from BLUEPRINT.base.error import BeamsError
 from BLUEPRINT.beams.constants import LOAD_MAPPING, LOAD_TYPES
 
 

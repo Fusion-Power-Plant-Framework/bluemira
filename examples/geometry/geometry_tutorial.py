@@ -45,28 +45,28 @@ A geometry tutorial for users.
 # %%
 import numpy as np
 
-# Basic objects
-from bluemira.geometry.wire import BluemiraWire
+# Some display functionality
+from bluemira.display import plot_2d, show_cad
+from bluemira.display.displayer import DisplayCADOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 
 # Some useful tools
 from bluemira.geometry.tools import (
-    make_circle,
-    make_polygon,
-    make_bspline,
-    revolve_shape,
-    extrude_shape,
-    sweep_shape,
     boolean_cut,
     boolean_fuse,
+    extrude_shape,
+    make_bspline,
+    make_circle,
+    make_polygon,
+    revolve_shape,
     save_as_STEP,
+    sweep_shape,
 )
 
-# Some display functionality
-from bluemira.display import show_cad, plot_2d
-from bluemira.display.displayer import DisplayCADOptions
+# Basic objects
+from bluemira.geometry.wire import BluemiraWire
 
 # %%[markdown]
 

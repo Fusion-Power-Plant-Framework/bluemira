@@ -26,18 +26,17 @@ import json
 import os
 from copy import deepcopy
 from itertools import cycle
+
+from bluemira.base.file import get_bluemira_path, get_files_by_ext
+from bluemira.materials import MaterialCache
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.blanketCAD import BlanketCAD
+from BLUEPRINT.cad.buildingCAD import RadiationCAD
+from BLUEPRINT.cad.coilCAD import CSCoilCAD, PFCoilCAD, TFCoilCAD
+from BLUEPRINT.cad.cryostatCAD import CryostatCAD
 from BLUEPRINT.cad.divertorCAD import DivertorCAD
 from BLUEPRINT.cad.vesselCAD import VesselCAD
-from BLUEPRINT.cad.buildingCAD import RadiationCAD
-from BLUEPRINT.cad.cryostatCAD import CryostatCAD
-from BLUEPRINT.cad.coilCAD import PFCoilCAD, CSCoilCAD, TFCoilCAD
 from BLUEPRINT.neutronics.constants import L_BP_TO_OMC
-
-from bluemira.base.file import get_files_by_ext, get_bluemira_path
-from bluemira.materials import MaterialCache
-
 
 material_data_path = get_bluemira_path("materials", subfolder="data")
 material_cache = MaterialCache()

@@ -19,26 +19,27 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-from scipy.special import ellipe
 import math
+
+import numpy as np
 import pytest
+from scipy.special import ellipe
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
-    make_polygon,
-    make_ellipse,
-    make_circle,
-    make_circle_arc_3P,
     boolean_cut,
     boolean_fuse,
-    extrude_shape,
     circular_pattern,
-    revolve_shape,
+    extrude_shape,
+    make_circle,
+    make_circle_arc_3P,
+    make_ellipse,
+    make_polygon,
     offset_wire,
+    revolve_shape,
 )
+from bluemira.geometry.wire import BluemiraWire
 
 
 class TestGeometry:

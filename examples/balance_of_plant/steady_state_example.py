@@ -23,18 +23,17 @@
 Simple example of a 0-D steady-state balance of plant view.
 """
 
-from bluemira.base.parameter import ParameterFrame
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlant,
-    NeutronPowerStrategy,
     H2OPumping,
     HePumping,
+    NeutronPowerStrategy,
+    ParasiticLoadStrategy,
+    PredeterminedEfficiency,
     RadChargedPowerStrategy,
     SuperheatedRankine,
-    PredeterminedEfficiency,
-    ParasiticLoadStrategy,
 )
-
+from bluemira.base.parameter import ParameterFrame
 
 # fmt: off
 default_params = ParameterFrame([

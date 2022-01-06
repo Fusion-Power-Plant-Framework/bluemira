@@ -47,12 +47,7 @@ from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.tools import (
-    make_circle,
-    make_polygon,
-    offset_wire,
-    revolve_shape,
-)
+from bluemira.geometry.tools import make_circle, make_polygon, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 import bluemira.utilities.plot_tools as bm_plot_tools
 

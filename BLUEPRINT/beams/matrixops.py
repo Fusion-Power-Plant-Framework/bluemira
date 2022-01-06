@@ -22,8 +22,9 @@
 """
 Matrix manipulation methods for finite element solver
 """
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
 
 
 def k_condensation(k, releases):

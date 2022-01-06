@@ -19,22 +19,24 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-import matplotlib.pyplot as plt
-import pytest
-import tests
 import json
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_tools import innocent_smoothie
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import innocent_smoothie
 from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
-from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 
 def test_analyticalsolvergrouper():
