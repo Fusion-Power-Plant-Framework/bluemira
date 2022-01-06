@@ -17,7 +17,6 @@ import numpy
 
 from bluemira.base.file import get_bluemira_root
 
-
 # Create the file to store C5G7 multi-groups cross-sections
 f = h5py.File(f"{get_bluemira_root()}/examples/neutronics/example_materials.h5", "w")
 f.attrs["# groups"] = 7

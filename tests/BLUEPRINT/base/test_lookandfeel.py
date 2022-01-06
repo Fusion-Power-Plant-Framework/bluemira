@@ -26,13 +26,9 @@ Created on Fri Aug  2 20:29:07 2019
 
 import pytest
 
-from BLUEPRINT.utilities.colortools import map_palette
+from bluemira.base.look_and_feel import _print_color, bluemira_print, bluemira_warn
 from BLUEPRINT.base.palettes import LONDON
-from bluemira.base.look_and_feel import (
-    bluemira_warn,
-    bluemira_print,
-    _print_color,
-)
+from BLUEPRINT.utilities.colortools import map_palette
 
 
 class TestLookAndFeel:

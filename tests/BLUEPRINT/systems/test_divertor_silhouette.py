@@ -26,16 +26,15 @@ Tests the divertor silhouette functionality for shaping the divertor system.
 import numpy as np
 import pytest
 
+import tests
 from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.systems.divertor_silhouette import (
     DivertorSilhouette,
     DivertorSilhouetteFlatDome,
-    DivertorSilhouettePsiBaffle,
     DivertorSilhouetteFlatDomePsiBaffle,
+    DivertorSilhouettePsiBaffle,
 )
-
-import tests
 
 
 class TestDivertorSilhouette:

@@ -24,49 +24,50 @@ Main interface for building and loading equilibria and coilset designs
 """
 
 from copy import deepcopy
+
 import matplotlib.pyplot as plt
 import numpy as np
-from pandas import DataFrame, concat
 import tabulate
+from pandas import DataFrame, concat
 
+from bluemira.base.file import try_get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.equilibria.constants import (
+    B_BREAKDOWN,
     NB3SN_B_MAX,
     NB3SN_J_MAX,
     NBTI_B_MAX,
     NBTI_J_MAX,
-    B_BREAKDOWN,
 )
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
-from bluemira.base.file import try_get_bluemira_path
-from bluemira.utilities.plot_tools import make_gif
-from bluemira.utilities.tools import abs_rel_difference
-from bluemira.equilibria.positioner import CoilPositioner
-from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
-from bluemira.equilibria.profiles import (
-    BetaIpProfile,
-    LaoPolynomialFunc,
-    DoublePowerFunc,
-    ShapeFunction,
-)
-from bluemira.equilibria.physics import calc_psib
-from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.constraints import (
-    EUDEMOSingleNullConstraints,
     EUDEMODoubleNullConstraints,
+    EUDEMOSingleNullConstraints,
 )
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.optimiser import (
-    Norm2Tikhonov,
     BreakdownOptimiser,
+    Norm2Tikhonov,
     PositionOptimiser,
 )
-from bluemira.equilibria.solve import (
-    PicardLiDeltaIterator,
-    PicardLiAbsIterator,
-    PicardDeltaIterator,
-    PicardAbsIterator,
-    EquilibriumConverger,
+from bluemira.equilibria.physics import calc_psib
+from bluemira.equilibria.positioner import CoilPositioner
+from bluemira.equilibria.profiles import (
+    BetaIpProfile,
+    DoublePowerFunc,
+    LaoPolynomialFunc,
+    ShapeFunction,
 )
-from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.solve import (
+    EquilibriumConverger,
+    PicardAbsIterator,
+    PicardDeltaIterator,
+    PicardLiAbsIterator,
+    PicardLiDeltaIterator,
+)
+from bluemira.utilities.plot_tools import make_gif
+from bluemira.utilities.tools import abs_rel_difference
 
 
 class Snapshot:

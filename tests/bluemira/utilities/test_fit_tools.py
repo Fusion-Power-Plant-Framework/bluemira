@@ -19,61 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
-from pandas import DataFrame
+import pytest
 
-from BLUEPRINT.utilities.powerlearn import PowerLaw, LinearLaw, surface_fit
-
-
-def power_law_func1(x, y, z):
-    return 0.5 * x ** 2.3 * y ** -0.6 * z ** 4.44
-
-
-def power_law_func2(x, y, z):
-    return 4.3 * x ** 1.1 * y ** 4.6 * z ** 0
-
-
-def linear_law_func1(x, y, z):
-    return 1.1 * x + 3.6 * y + 6.67 * z
-
-
-def linear_law_func2(x, y, z):
-    return -0.5 * x + 0 * y + 2.34 * z
-
-
-class TestPowerLaw:
-    def test_powerlaw(self):
-        x = np.random.rand(100)
-        y = np.random.rand(100)
-        z = np.random.rand(100)
-        target1 = power_law_func1(x, y, z)
-        target2 = power_law_func2(x, y, z)
-        array = np.array([x, y, z, target1, target2]).T
-        df = DataFrame(array, columns=["x", "y", "z", "target1", "target2"])
-
-        law1 = PowerLaw(df, targets=["target1", "target2"], target="target1")
-        law2 = PowerLaw(df, targets=["target1", "target2"], target="target2")
-
-        assert law1.r_2 == 1
-        assert law2.r_2 == 1
-
-
-class TestLinearLaw:
-    def test_linearlaw(self):
-        x = np.random.rand(100)
-        y = np.random.rand(100)
-        z = np.random.rand(100)
-        target1 = linear_law_func1(x, y, z)
-        target2 = linear_law_func2(x, y, z)
-        array = np.array([x, y, z, target1, target2]).T
-        df = DataFrame(array, columns=["x", "y", "z", "target1", "target2"])
-
-        law1 = LinearLaw(df, targets=["target1", "target2"], target="target1")
-        law2 = LinearLaw(df, targets=["target1", "target2"], target="target2")
-
-        assert law1.r_2 == 1
-        assert law2.r_2 == 1
+from bluemira.utilities.fit_tools import powers_arange, surface_fit
 
 
 class TestSurfaceFit:
@@ -155,3 +104,45 @@ class TestSurfaceFit:
         z = np.random.rand(len(x) - 1)
         with pytest.raises(ValueError):
             surface_fit(x, y, z, order=1)
+
+    def test_power_arange(self):
+
+        power_2 = np.array([[0, 0], [1, 0], [0, 1], [2, 0], [1, 1], [0, 2]])
+
+        power_3 = np.array(
+            [
+                [0, 0],
+                [1, 0],
+                [0, 1],
+                [2, 0],
+                [1, 1],
+                [0, 2],
+                [3, 0],
+                [2, 1],
+                [1, 2],
+                [0, 3],
+            ]
+        )
+
+        power_2_sort = np.array([[2, 0], [0, 2], [1, 1], [1, 0], [0, 1], [0, 0]])
+
+        power_3_sort = np.array(
+            [
+                [3, 0],
+                [0, 3],
+                [2, 1],
+                [1, 2],
+                [2, 0],
+                [0, 2],
+                [1, 1],
+                [1, 0],
+                [0, 1],
+                [0, 0],
+            ]
+        )
+
+        ind_2 = powers_arange(power_2)
+        ind_3 = powers_arange(power_3)
+
+        assert (power_2[ind_2] == power_2_sort).all()
+        assert (power_3[ind_3] == power_3_sort).all()

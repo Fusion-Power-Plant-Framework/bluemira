@@ -23,10 +23,11 @@
 Plasma CAD routines
 """
 import numpy as np
+
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.geometry.loop import MultiLoop
+from BLUEPRINT.cad.cadtools import make_face, revolve
 from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import revolve, make_face
+from BLUEPRINT.geometry.loop import MultiLoop
 
 
 class PlasmaCAD(ComponentCAD):
@@ -101,9 +102,3 @@ class PlasmaCAD(ComponentCAD):
         p = make_face(plasma["LCFS"])
         plasma = revolve(p, None, angle=360)
         self.add_shape(plasma, name="Plasma_0", transparency=0.5)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

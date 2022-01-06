@@ -22,48 +22,48 @@
 """
 A coordinate-series object class
 """
-import numpy as np
+from itertools import combinations
+from random import randint
 
 # Plotting imports
 import matplotlib.pyplot as plt
-from random import randint
-from itertools import combinations
-from scipy.spatial.distance import cdist
-from scipy.interpolate import interp1d
-from scipy.interpolate import InterpolatedUnivariateSpline
-from shapely.geometry import Polygon, LineString
+import numpy as np
 from matplotlib.patches import PathPatch
-from sectionproperties.pre.sections import CustomSection
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
+from scipy.spatial.distance import cdist
 from sectionproperties.analysis.cross_section import CrossSection
+from sectionproperties.pre.sections import CustomSection
+from shapely.geometry import LineString, Polygon
+
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.error import GeometryError
+from bluemira.utilities.tools import is_num
 from BLUEPRINT.geometry.geombase import (
     GeomBase,
     Plane,
-    point_dict_to_array,
     _check_other,
+    point_dict_to_array,
 )
 from BLUEPRINT.geometry.geomtools import (
+    bounding_box,
+    circle_seg,
+    clean_loop_points,
+    distance_between_points,
     get_centroid,
     get_centroid_3d,
+    get_control_point,
+    in_polygon,
     length,
     lengthnorm,
-    distance_between_points,
-    vector_intersect,
-    qrotate,
-    circle_seg,
-    in_polygon,
     line_crossing,
     loop_plane_intersect,
+    qrotate,
+    vector_intersect,
     vector_lengthnorm,
-    bounding_box,
-    get_control_point,
-    clean_loop_points,
 )
-from BLUEPRINT.geometry.constants import VERY_BIG
-from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.utilities.plottools import pathify, BPPathPatch3D, Plot3D
+from BLUEPRINT.utilities.plottools import BPPathPatch3D, Plot3D, pathify
 from BLUEPRINT.utilities.tools import furthest_perp_point
-from bluemira.utilities.tools import is_num
 
 
 class Loop(GeomBase):
@@ -1972,9 +1972,3 @@ def make_ring(r_i, r_o, angle=360, centre=(0, 0), npoints=200):
         return shell.connect_open_loops()
     else:
         return shell
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

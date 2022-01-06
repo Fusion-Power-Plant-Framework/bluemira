@@ -20,11 +20,12 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-from BLUEPRINT.beams.model import FiniteElementModel
+
+from BLUEPRINT.beams.crosssection import RectangularBeam
 from BLUEPRINT.beams.geometry import Geometry
 from BLUEPRINT.beams.loads import LoadCase
 from BLUEPRINT.beams.material import SS316
-from BLUEPRINT.beams.crosssection import RectangularBeam
+from BLUEPRINT.beams.model import FiniteElementModel
 from BLUEPRINT.beams.plotting import GeometryPlotter
 from BLUEPRINT.geometry.loop import Loop
 

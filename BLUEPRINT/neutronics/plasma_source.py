@@ -26,8 +26,9 @@ For more information / citation see
 [here](https://doi.org/10.1016/j.fusengdes.2012.02.025)
 """
 
-import numpy as np
 import math
+
+import numpy as np
 from scipy.interpolate import griddata
 
 

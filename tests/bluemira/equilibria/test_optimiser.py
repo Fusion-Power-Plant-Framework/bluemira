@@ -18,32 +18,28 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from copy import deepcopy
-import pytest
-import tests
-from unittest.mock import patch, MagicMock
 import os
-import numpy as np
+from unittest.mock import MagicMock, patch
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
 from scipy.optimize import minimize
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import make_circle_arc
-from bluemira.equilibria.optimiser import (
-    PositionOptimiser,
-    BreakdownOptimiser,
-    CoilsetOptimiser,
-)
-from bluemira.utilities.opt_tools import process_scipy_result
+from bluemira.equilibria.coils import PF_COIL_NAME, Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.grid import Grid
-from tests.bluemira.equilibria.setup_methods import _coilset_setup, _make_square
-from bluemira.equilibria.coils import (
-    Coil,
-    CoilSet,
-    SymmetricCircuit,
-    PF_COIL_NAME,
+from bluemira.equilibria.optimiser import (
+    BreakdownOptimiser,
+    CoilsetOptimiser,
+    PositionOptimiser,
 )
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.utilities.opt_tools import process_scipy_result
+from tests.bluemira.equilibria.setup_methods import _coilset_setup, _make_square
 
 
 class TestPositionOptimiser:

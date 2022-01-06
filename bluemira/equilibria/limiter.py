@@ -23,8 +23,10 @@
 Limiter object class
 """
 
-import numpy as np
+from copy import deepcopy
 from itertools import cycle
+
+import numpy as np
 
 from bluemira.equilibria.plotting import LimiterPlotter
 

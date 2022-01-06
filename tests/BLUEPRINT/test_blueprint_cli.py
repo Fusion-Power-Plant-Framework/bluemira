@@ -19,27 +19,29 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from click.testing import CliRunner
 import copy
 import functools
 import json
 import os
-from unittest.mock import patch
-from pathlib import Path
-import pytest
 import shutil
 import tempfile
 import traceback
+from pathlib import Path
+from unittest.mock import patch
 
-from bluemira.base.file import get_bluemira_root, BM_ROOT
+import pytest
+from click.testing import CliRunner
+
+from bluemira.base.file import BM_ROOT, get_bluemira_root
 from BLUEPRINT.blueprint_cli import cli, get_reactor_class
 from BLUEPRINT.reactor import ConfigurableReactor
-
-from tests.BLUEPRINT.test_reactor import REACTORNAME
-from tests.BLUEPRINT.test_reactor import SmokeTestSingleNullReactor
-from tests.BLUEPRINT.test_reactor import config
-from tests.BLUEPRINT.test_reactor import build_config
-from tests.BLUEPRINT.test_reactor import build_tweaks
+from tests.BLUEPRINT.test_reactor import (
+    REACTORNAME,
+    SmokeTestSingleNullReactor,
+    build_config,
+    build_tweaks,
+    config,
+)
 
 INDIR = os.path.join(get_bluemira_root(), "tests", "BLUEPRINT", "cli", "test_indir")
 OUTDIR = os.path.join(get_bluemira_root(), "tests", "BLUEPRINT", "cli", "test_outdir")

@@ -605,9 +605,3 @@ class FiniteElementModel:
         Get a deep copy of the FiniteElementModel.
         """
         return deepcopy(self)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

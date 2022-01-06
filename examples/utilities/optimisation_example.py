@@ -22,8 +22,9 @@
 """
 Optimiser API tutorial
 """
-import numpy as np
 from pprint import pprint
+
+import numpy as np
 
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 

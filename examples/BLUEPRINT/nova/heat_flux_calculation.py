@@ -26,14 +26,13 @@ Heat flux calculation example
 # %%
 import os
 from time import time
+
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria.equilibrium import Equilibrium
-
+from bluemira.geometry._deprecated_loop import Loop
 from BLUEPRINT.systems.firstwall import FirstWallSN
-
 
 # %%[markdown]
 # Loading an equilibrium file and a first wall profile

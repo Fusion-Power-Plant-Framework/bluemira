@@ -1,7 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+import numpy as np
 
+from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 
 source = CircularArcCurrentSource(
     origin=[1, 1, 1],

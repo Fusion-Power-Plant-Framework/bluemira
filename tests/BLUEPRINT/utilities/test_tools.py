@@ -19,20 +19,22 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
+import pytest
+
+from BLUEPRINT.geometry.geomtools import polyarea
+from BLUEPRINT.utilities.tools import _apply_rule  # noqa
+from BLUEPRINT.utilities.tools import _apply_rules  # noqa
+from BLUEPRINT.utilities.tools import _split_rule  # noqa
 from BLUEPRINT.utilities.tools import (
     PowerLawScaling,
-    nested_dict_search,
-    expand_nested_list,
-    _split_rule,  # noqa
-    _apply_rule,  # noqa
-    _apply_rules,  # noqa
-    maximum,
     ellipse,
+    expand_nested_list,
+    maximum,
+    nested_dict_search,
 )
-from BLUEPRINT.geometry.geomtools import polyarea
 
 
 class TestPowerLaw:

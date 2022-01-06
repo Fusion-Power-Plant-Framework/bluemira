@@ -26,9 +26,9 @@ Perform the EU-DEMO design.
 import os
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.codes import run_systems_code
