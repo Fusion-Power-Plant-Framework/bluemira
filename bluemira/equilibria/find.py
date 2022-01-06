@@ -258,7 +258,7 @@ def triage_OX_points(f_psi, points):
     return o_points, x_points
 
 
-def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
+def find_OX_points(x, z, psi, limiter=None):  # noqa :N802
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -272,8 +272,6 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         The poloidal magnetic flux map [V.s/rad]
     limiter: Optional[Limiter]
         The limiter to use (if any)
-    coilset: Optional[CoilSet]
-        The coilset to use (if any)
 
     Returns
     -------
