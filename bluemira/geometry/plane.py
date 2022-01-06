@@ -25,19 +25,67 @@ Wrapper for FreeCAD Plane (Placement) objects
 
 from __future__ import annotations
 
-import math
 import numpy as np
 import bluemira.codes._freecadapi as cadapi
+from bluemira.geometry.error import GeometryError
 
 
 class BluemiraPlane:
-    """Bluemira Plane class."""
+    """
+    Bluemira Plane class.
+
+    Parameters
+    ----------
+    base: Iterable
+        Base vector of the plane
+    axis: Iterable
+        Axis vector of the plane
+    angle: float
+        Angle of the plane
+    label: str
+        Label of the plane
+
+    Notes
+    -----
+    The BluemiraPlane wraps a Placement, and not a Plane. The reasons for this will
+    become clear in future. Placements and Planes should be interchangeable.
+
+    Angle is rotation around the axis which is taken from the base.
+    Usually the shape has a starting point which is not its centre
+    """
 
     def __init__(
         self, base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0], angle=0.0, label: str = ""
     ):
         self._shape = cadapi.make_plane(base, axis, angle)
         self.label = label
+
+    @classmethod
+    def from_3_points(cls, point_1, point_2, point_3, label: str = ""):
+        """
+        Instantiate a BluemiraPlane from three points.
+
+        Parameters
+        ----------
+        point_1: Iterable
+            First point
+        point_2: Iterable
+            Second Point
+        point_3: Iterable
+            Third point
+        label: str
+            Label of the plane
+        """
+        p1 = np.array(point_1)
+        p2 = np.array(point_2)
+        p3 = np.array(point_3)
+        v1, v2 = p3 - p1, p2 - p1
+        v3 = np.cross(v2, v1)
+        if np.all(v3 == 0):
+            raise GeometryError("Cannot make a BluemiraPlane from co-linear points.")
+
+        normal = v3 / np.sqrt(v3.dot(v3))
+        return cls(point_1, normal, 0.0, label=label)
 
     @property
     def base(self):
@@ -73,8 +121,8 @@ class BluemiraPlane:
 
     @property
     def angle(self):
-        """Plane's rotation matrix"""
-        return math.degrees(self._shape.Rotation.Angle)
+        """Plane's angle"""
+        return np.rad2deg(self._shape.Rotation.Angle)
 
     @angle.setter
     def angle(self, value):
