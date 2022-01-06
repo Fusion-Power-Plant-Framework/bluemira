@@ -297,26 +297,22 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
     nx, nz = psi.shape  # Grid shape
     radius = min(0.5, 2 * np.hypot(d_x, d_z))  # Search radius
-    f_psi = RectBivariateSpline(x[:, 0], z[0, :], psi)  # Spline for psi interpolation
-    f_Bx = lambda x, z: -f_psi(x, z, dy=1, grid=False) / x
-    f_Bz = lambda x, z: f_psi(x, z, dx=1, grid=False) / x
-    f_Bp = lambda x, z: np.hypot(f_Bx(x, z), f_Bz(x, z))
+
+    # Splines for interpolation
+    f_psi = RectBivariateSpline(x[:, 0], z[0, :], psi)
+
+    def f_Bx(x, z):
+        return -f_psi(x, z, dy=1, grid=False) / x
+
+    def f_Bz(x, z):
+        return f_psi(x, z, dx=1, grid=False) / x
+
+    def f_Bp(x, z):
+        return np.hypot(f_Bx(x, z), f_Bz(x, z))
 
     Bp2 = f_Bx(x, z) ** 2 + f_Bz(x, z) ** 2
 
-    i_local_all, j_local_all = find_local_minima(Bp2)
-    if coilset:
-        # Remove local minima inside coils
-        i_local, j_local = [], []
-        for i, j in zip(i_local_all, j_local_all):
-            xi, zi = x[i, j], z[i, j]
-            for coil in coilset.coils.values():
-                if coil._points_inside_coil(xi, zi):
-                    i_local.append(i)
-                    j_local.append(j)
-                    break
-    else:
-        i_local, j_local = i_local_all, j_local_all
+    i_local, j_local = find_local_minima(Bp2)
 
     points = []
     for i, j in zip(i_local, j_local):
@@ -340,8 +336,8 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         bluemira_warn(
             "EQUILIBRIA::find_OX: No O-points found during an iteration. Defaulting to grid centre."
         )
-        o_points = [Opoint(x_m, z_m, f_psi(x_m, z_m))]
         return o_points, x_points
+        # o_points = [Opoint(x_m, z_m, f_psi(x_m, z_m))]
 
     # Sort O-points by centrality to the grid
     o_points.sort(key=lambda o: (o.x - x_m) ** 2 + (o.z - z_m) ** 2)
@@ -368,7 +364,9 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
     useful_x, useless_x = [], []
     for xp in x_points:
         x_xp, z_xp, psix = xp
-        xx, zz = np.linspace(x_op, x_xp), np.linspace(z_op, z_xp)
+        d_l = np.hypot(x_xp - x_op, z_xp - z_op)
+        n_line = int(d_l // radius) + 1
+        xx, zz = np.linspace(x_op, x_xp, n_line), np.linspace(z_op, z_xp, n_line)
         if psix < psio:
             psi_ox = -f_psi(xx, zz, grid=False)
         else:
@@ -423,7 +421,7 @@ def _parse_OXp(x, z, psi, o_points, x_points):  # noqa :N802
 
 def get_contours(x, z, array, value):
     """
-    Get the contours of a value in continous array.
+    Get the contours of a value in continuous array.
 
     Parameters
     ----------
