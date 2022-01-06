@@ -26,8 +26,9 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
-from bluemira.base.file import get_bluemira_path
+from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.profiles import DoublePowerFunc
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
@@ -269,6 +270,27 @@ class TestEqReadWrite:
         d2 = eq2.to_dict(qpsi_calcmode=qpsi_calcmode)
         os.remove(new_file_path)
         assert compare_dicts(d1, d2, almost_equal=True)
+
+
+@pytest.mark.private
+class TestQBenchmark:
+    @classmethod
+    def setup_class(cls):
+        root = try_get_bluemira_private_data_root()
+        path = os.sep.join([root, "equilibria", "STEP_SPR_08"])
+        jetto_file = "SPR-008_3_Inputs_jetto.eqdsk_out"
+        jetto_file = os.sep.join([path, jetto_file])
+        reader = EQDSKInterface()
+        jetto = reader.read(jetto_file)
+        cls.q_ref = jetto["qpsi"]
+        eq_file = "SPR-008_3_Outputs_STEP_eqref.eqdsk"
+        eq_file = os.sep.join([path, eq_file])
+        cls.eq = Equilibrium.from_eqdsk(eq_file)
+
+    def test_q_benchmark(self):
+        n = len(self.q_ref)
+        psi_norm = np.linspace(0, 1, n)
+        q = self.eq.q(psi_norm)
 
 
 if __name__ == "__main__":
