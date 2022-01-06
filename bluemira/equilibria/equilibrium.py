@@ -1215,16 +1215,11 @@ class Equilibrium(MHDState):
 
         psi = self.psi()
         flux_surfaces = []
-        flag_edge = False
         for psi_n in psinorm:
             if psi_n < PSI_NORM_TOL:
                 psi_n = PSI_NORM_TOL
             if psi_n > 1 - PSI_NORM_TOL:
-                if not flag_edge:
-                    f_s = ClosedFluxSurface(self.get_LCFS(psi))
-                else:
-                    flag_edge = True
-                    continue
+                f_s = ClosedFluxSurface(self.get_LCFS(psi))
             else:
                 f_s = ClosedFluxSurface(
                     self.get_flux_surface(

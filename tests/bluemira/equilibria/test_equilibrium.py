@@ -26,6 +26,7 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
+import tests
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.file import EQDSKInterface
@@ -33,7 +34,7 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.profiles import DoublePowerFunc
 from bluemira.equilibria.run import AbInitioEquilibriumProblem
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.utilities.tools import compare_dicts
+from bluemira.utilities.tools import abs_rel_difference, compare_dicts
 
 
 class TestFields:
@@ -291,6 +292,9 @@ class TestQBenchmark:
         n = len(self.q_ref)
         psi_norm = np.linspace(0, 1, n)
         q = self.eq.q(psi_norm)
+
+        assert 100 * np.median(abs_rel_difference(q, self.q_ref)) < 3.5
+        assert 100 * np.mean(abs_rel_difference(q, self.q_ref)) < 4.0
 
 
 if __name__ == "__main__":
