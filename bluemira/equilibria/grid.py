@@ -28,7 +28,6 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import MIN_N_DISCR, X_AXIS_MIN
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.geometry._deprecated_tools import get_area_2d, get_centroid_2d
 from bluemira.geometry.coordinates import get_area_2d, get_centroid_2d
 
 __all__ = ["Grid", "integrate_dx_dz", "volume_integral", "revolved_volume"]
