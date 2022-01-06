@@ -28,12 +28,12 @@ import json
 # Standard imports
 import os
 import sys
+from copy import deepcopy
 from pathlib import Path, PosixPath
 from time import time
 from types import ModuleType
 from typing import Type, Union
 
-import deepcopy
 import numpy as np
 
 # Configuration / Input imports
