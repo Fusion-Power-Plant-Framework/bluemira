@@ -336,8 +336,8 @@ def find_OX_points(x, z, psi, limiter=None, coilset=None):  # noqa :N802
         bluemira_warn(
             "EQUILIBRIA::find_OX: No O-points found during an iteration. Defaulting to grid centre."
         )
+        o_points = [Opoint(x_m, z_m, f_psi(x_m, z_m))]
         return o_points, x_points
-        # o_points = [Opoint(x_m, z_m, f_psi(x_m, z_m))]
 
     # Sort O-points by centrality to the grid
     o_points.sort(key=lambda o: (o.x - x_m) ** 2 + (o.z - z_m) ** 2)
