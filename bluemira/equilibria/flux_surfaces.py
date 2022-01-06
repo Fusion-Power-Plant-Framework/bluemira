@@ -45,7 +45,6 @@ from bluemira.geometry._deprecated_tools import (
     join_intersect,
     loop_plane_intersect,
 )
-from bluemira.utilities.tools import cartesian_to_polar
 
 
 @nb.jit(nopython=True, cache=True)
