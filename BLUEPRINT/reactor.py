@@ -24,8 +24,6 @@ The Reactor God-object
 """
 import datetime
 import json
-
-# Standard imports
 import os
 import sys
 from copy import deepcopy
