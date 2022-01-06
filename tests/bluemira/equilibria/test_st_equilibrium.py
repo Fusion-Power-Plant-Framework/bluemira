@@ -24,23 +24,25 @@ BLUEPRINT -> bluemira ST equilibrium recursion test
 """
 
 import os
+
 import numpy as np
 import pytest
+
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria import (
-    Equilibrium,
-    CustomProfile,
-    Grid,
-    CoilSet,
-    MagneticConstraintSet,
-    IsofluxConstraint,
-    Norm2Tikhonov,
     Coil,
-    SymmetricCircuit,
+    CoilSet,
+    CustomProfile,
+    Equilibrium,
+    Grid,
+    IsofluxConstraint,
+    MagneticConstraintSet,
+    Norm2Tikhonov,
     PicardDeltaIterator,
+    SymmetricCircuit,
 )
-from bluemira.equilibria.physics import calc_li
 from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.physics import calc_li
 from bluemira.equilibria.solve import DudsonConvergence
 
 

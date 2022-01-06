@@ -23,20 +23,19 @@
 Tests for EU-DEMO build.
 """
 
+import json
+import os
+
+import numpy as np
 import pytest
 
-import json
-import numpy as np
-import os
+import tests
 from bluemira.base.components import Component
-
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.builders.EUDEMO.plasma import PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsComponent
-
-import tests
 
 PARAMS_DIR = os.path.join(get_bluemira_root(), "tests", "bluemira", "builders", "EUDEMO")
 

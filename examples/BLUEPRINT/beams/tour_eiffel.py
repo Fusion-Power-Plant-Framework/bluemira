@@ -24,9 +24,10 @@ Eiffel tower beams example
 
 # %%
 import matplotlib.pyplot as plt
-from BLUEPRINT.beams.model import FiniteElementModel
+
 from BLUEPRINT.beams.crosssection import RectangularBeam
 from BLUEPRINT.beams.material import SS316
+from BLUEPRINT.beams.model import FiniteElementModel
 
 plt.close("all")
 

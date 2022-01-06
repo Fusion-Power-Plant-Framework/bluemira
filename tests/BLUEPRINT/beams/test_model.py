@@ -22,14 +22,14 @@
 
 import numpy as np
 import pytest
-from BLUEPRINT.base.error import BeamsError
-from bluemira.base.constants import ANSI_COLOR
-from BLUEPRINT.beams.model import FiniteElementModel, check_matrix_condition
-from BLUEPRINT.beams.crosssection import IBeam, RectangularBeam
-from BLUEPRINT.beams.material import SS316
-from BLUEPRINT.beams.loads import LoadCase
 
 import tests
+from bluemira.base.constants import ANSI_COLOR
+from BLUEPRINT.base.error import BeamsError
+from BLUEPRINT.beams.crosssection import IBeam, RectangularBeam
+from BLUEPRINT.beams.loads import LoadCase
+from BLUEPRINT.beams.material import SS316
+from BLUEPRINT.beams.model import FiniteElementModel, check_matrix_condition
 
 SS316 = SS316()
 

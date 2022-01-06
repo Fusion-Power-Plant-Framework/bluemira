@@ -18,15 +18,17 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import math
+
 import pytest
-from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
+
 from BLUEPRINT.cad.cadtools import get_properties
+from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
 from BLUEPRINT.systems.centralcolumnshield import CentralColumnShield
 from tests.BLUEPRINT.systems.test_centralcolumnshield import (
-    setup_cc_params,
     setup_cc_inputs,
+    setup_cc_params,
 )
-import math
 
 
 class TestCentralColumnShieldCAD:

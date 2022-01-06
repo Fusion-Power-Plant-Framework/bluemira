@@ -23,30 +23,26 @@
 Perform the EU-DEMO reactor design.
 """
 
+import pprint as pprint
+
 # %%
 import matplotlib.pyplot as plt
-import pprint as pprint
 
 from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter import ParameterMappingEncoder
-
-from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.plasma import PlasmaComponent
+from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
-
-from bluemira.display.displayer import ComponentDisplayer
-
-from bluemira.equilibria.run import AbInitioEquilibriumProblem
-
 from bluemira.codes import plot_PROCESS
-from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
 )
-
+from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
+from bluemira.display.displayer import ComponentDisplayer
+from bluemira.equilibria.run import AbInitioEquilibriumProblem
 from bluemira.utilities.tools import json_writer
 
 # %%[markdown]

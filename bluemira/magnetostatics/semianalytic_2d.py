@@ -23,10 +23,11 @@
 Semi-analytic methods for Bx, Bz, and psi for circular coils of rectangular
 cross-section.
 """
-import numpy as np
 import numba as nb
+import numpy as np
+
 from bluemira.base.constants import EPS
-from bluemira.magnetostatics.tools import jit_llc5, jit_llc7, integrate, n_integrate
+from bluemira.magnetostatics.tools import integrate, jit_llc5, jit_llc7, n_integrate
 from bluemira.utilities.tools import is_num
 
 __all__ = ["semianalytic_Bx", "semianalytic_Bz", "semianalytic_psi"]

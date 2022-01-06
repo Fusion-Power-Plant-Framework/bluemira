@@ -22,25 +22,26 @@
 """
 Coil cage object used for calculating 3-D toroidal field ripple
 """
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize_scalar
-import matplotlib.pyplot as plt
-import matplotlib
-from bluemira.magnetostatics.biot_savart import BiotSavartFilament
+
 from bluemira.base.constants import MU_0
-from BLUEPRINT.base.error import NovaError
 from bluemira.geometry._deprecated_tools import innocent_smoothie
-from BLUEPRINT.utilities.plottools import Plot3D
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
+from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.geometry.geombase import Plane
-from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import (
-    clock,
-    rotate_matrix,
-    lengthnorm,
     bounding_box,
+    clock,
+    lengthnorm,
     loop_plane_intersect,
+    rotate_matrix,
 )
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.utilities.plottools import Plot3D
 
 
 class HelmholtzCage:
@@ -714,9 +715,3 @@ class HelmholtzCage:
         plt.setp(zc, color="r")
         plt.clabel(cs, inline=1, fontsize="medium", colors="k", fmt="%1.2f")
         return cs
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

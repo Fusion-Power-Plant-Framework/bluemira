@@ -29,7 +29,6 @@ from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import set_random_seed
 
-
 set_random_seed(134365475)
 
 

@@ -22,36 +22,38 @@
 Flux surface attributes and first wall profile based on heat flux calculation
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import Type
-from bluemira.base.parameter import ParameterFrame
-from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
-from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import loop_plane_intersect, get_intersect
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import SystemsError, GeometryError
+import matplotlib.pyplot as plt
+import numpy as np
+
+from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.find import find_flux_surface_through_point, find_flux_surfs
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import get_intersect, loop_plane_intersect
+from bluemira.geometry.error import GeometryError
+from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
+from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
-from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
-    convex_hull,
-    boolean_2d_union,
+    boolean_2d_common_loop,
     boolean_2d_difference,
     boolean_2d_difference_loop,
     boolean_2d_difference_split,
-    boolean_2d_common_loop,
+    boolean_2d_union,
+    convex_hull,
     simplify_loop,
 )
-from BLUEPRINT.geometry.offset import offset_clipper
+from BLUEPRINT.geometry.geombase import make_plane
 from BLUEPRINT.geometry.geomtools import (
+    clean_loop_points,
     index_of_point_on_loop,
     make_box_xz,
-    clean_loop_points,
+    rotate_vector_2d,
 )
-from BLUEPRINT.geometry.geombase import make_plane
-from BLUEPRINT.geometry.geomtools import rotate_vector_2d
+from BLUEPRINT.geometry.offset import offset_clipper
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.utilities.csv_writer import write_csv
 

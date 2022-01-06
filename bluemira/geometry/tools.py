@@ -301,8 +301,8 @@ def offset_wire(
 # # =============================================================================
 def revolve_shape(
     shape,
-    base: tuple = (0.0, 0.0, 0.0),
-    direction: tuple = (0.0, 0.0, 1.0),
+    base: Iterable = (0.0, 0.0, 0.0),
+    direction: Iterable = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
 ):
@@ -313,9 +313,9 @@ def revolve_shape(
     ----------
     shape: BluemiraGeo
         The shape to be revolved
-    base: tuple (x,y,z), default = (0.0, 0.0, 0.0)
+    base: Iterable (x,y,z), default = (0.0, 0.0, 0.0)
         Origin location of the revolution
-    direction: tuple (x,y,z), default = (0.0, 0.0, 1.0)
+    direction: Iterable (x,y,z), default = (0.0, 0.0, 1.0)
         The direction vector
     degree: double, default = 180
         revolution angle
@@ -428,6 +428,41 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     shape1 = geo1._shape
     shape2 = geo2._shape
     return cadapi.dist_to_shape(shape1, shape2)
+
+
+def slice_shape(shape: BluemiraGeo, plane):
+    """
+    Calculate the plane intersection points with an object
+
+    Parameters
+    ----------
+    obj: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
+        obj to intersect with a plane
+    plane: BluemiraPlane
+
+    Returns
+    -------
+    Wire: Union[List[np.ndarray], None]
+        returns array of intersection points
+    Face, Solid, Shell: Union[List[BluemiraWire], None]
+        list of intersections lines
+
+    Notes
+    -----
+    Degenerate cases such as tangets to solid or faces do not return intersections
+    if the shape and plane are acting at the Placement base.
+    Further investigation needed.
+
+    """
+    _slice = cadapi.slice_shape(shape._shape, plane.base, plane.axis)
+
+    if isinstance(_slice, np.ndarray) and _slice.size > 0:
+        return _slice
+
+    _slice = [convert(obj) for obj in _slice]
+
+    if len(_slice) > 0:
+        return _slice
 
 
 def circular_pattern(

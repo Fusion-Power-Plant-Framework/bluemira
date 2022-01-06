@@ -19,7 +19,7 @@ A. I. Blair<sup>1</sup>, M. Bluteau<sup>1</sup>, M. Coleman,  J. Cook, S. Desai<
 
 4: ITER Organization, Route de Vinon-sur-Verdon, CS 90 046, 13067 St Paul Lez Durance Cedex, France
 
-5: Agile Abstractions, Northampton, United Kingdom  
+5: Agile Abstractions, Northampton, United Kingdom
 
 ## Funding
 
@@ -66,5 +66,3 @@ We would like to thank:
 * Dr. U. Fischer and Dr. Y. Qiu for their for their worthwhile aid regarding the neutron transport modelling part.
 
 * Dr. G. Pattabhi Vishnuvardhan and R. Heller for their help and advice on superconducting cable and magnets modelling.
-	
-	

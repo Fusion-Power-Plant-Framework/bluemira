@@ -25,14 +25,14 @@ In contained file because loop module imports geomtools and geombase modules
 """
 import numpy as np
 from scipy.spatial.distance import pdist
+
+from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
+    get_intersect,
     loop_plane_intersect,
     quart_rotate,
-    get_intersect,
 )
-from bluemira.geometry._deprecated_base import Plane
-
 
 __all__ = ["inscribed_rect_in_poly"]
 

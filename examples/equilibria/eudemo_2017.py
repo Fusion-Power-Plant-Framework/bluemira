@@ -29,22 +29,23 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 # %%
 
-from IPython import get_ipython
-import os
 import json
-import numpy as np
+import os
+
 import matplotlib.pyplot as plt
+import numpy as np
+from IPython import get_ipython
+
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print
-from bluemira.display import plot_defaults
-from bluemira.equilibria.grid import Grid
+from bluemira.base.look_and_feel import bluemira_print, plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
 from bluemira.equilibria.constraints import AutoConstraints
-from bluemira.equilibria.profiles import BetaIpProfile, DoublePowerFunc, CustomProfile
-from bluemira.equilibria.optimiser import FBIOptimiser, BreakdownOptimiser
-from bluemira.equilibria.physics import calc_psib, calc_beta_p, calc_li
-from bluemira.equilibria.solve import PicardLiAbsIterator, PicardAbsIterator
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
+from bluemira.equilibria.physics import calc_beta_p, calc_li, calc_psib
+from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile, DoublePowerFunc
+from bluemira.equilibria.solve import PicardAbsIterator, PicardLiAbsIterator
 
 # %%[markdown]
 
