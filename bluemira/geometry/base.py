@@ -25,6 +25,7 @@ Base classes and functionality for the bluemira geometry module.
 
 from __future__ import annotations
 
+import copy
 import enum
 
 # import for abstract class
@@ -33,8 +34,6 @@ from abc import ABC, abstractmethod
 # import freecad api
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
-
-import copy
 
 
 class _Orientation(enum.Enum):

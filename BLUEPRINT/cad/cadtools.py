@@ -48,10 +48,7 @@ try:
         brepgprop_VolumeProperties,
     )
     from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
-    from OCC.Core.BRepOffsetAPI import (
-        BRepOffsetAPI_MakePipe,
-        BRepOffsetAPI_ThruSections,
-    )
+    from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe, BRepOffsetAPI_ThruSections
     from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 
     # from OCC.Display.SimpleGui import init_display
@@ -1958,9 +1955,3 @@ def boolean_fuse(shape1, shape2):
     except AttributeError:
         pass
     return shp
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

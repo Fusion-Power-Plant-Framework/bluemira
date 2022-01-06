@@ -1,9 +1,10 @@
 import numpy as np
+
 from bluemira.equilibria.constraints import (
-    MagneticConstraintSet,
     FieldNullConstraint,
-    PsiConstraint,
     IsofluxConstraint,
+    MagneticConstraintSet,
+    PsiConstraint,
 )
 
 magnetic_constraints = MagneticConstraintSet(

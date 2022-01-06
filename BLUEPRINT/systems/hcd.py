@@ -328,9 +328,3 @@ class HCDSystemPlotter(ReactorSystemPlotter):
         Plot the HCDsystem in x-y.
         """
         raise NotImplementedError
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

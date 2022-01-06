@@ -19,15 +19,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Convert all .py files in the underlying directory or specified files to .ipynb.
-
+Convert all example .py files specified or in the underlying directory to .ipynb.
 """
 
 import glob
 import json
-import platform
 import os
-from sys import argv
+import platform
+from argparse import ArgumentParser
+from sys import exit
 
 header_comment = "# %%"
 
@@ -103,7 +103,7 @@ def py2nb(py_str):
     return nb_str
 
 
-def convert(path):
+def convert(path, check):
     """
     Convert file to ipynb.
 
@@ -115,28 +115,70 @@ def convert(path):
     """
     with open(path, "r") as py_fh:
         py_str = py_fh.read()
-        if header_comment in py_str:
-            nb_str = py2nb(py_str)
-            name, _ = os.path.splitext(path)
-        with open(name + ".ipynb", "w") as nb_fh:
-            json.dump(nb_str, nb_fh, indent=2)
 
+    if header_comment in py_str:
+        nb_str = py2nb(py_str)
+        name, _ = os.path.splitext(path)
+        ipynb = name + ".ipynb"
 
-print(__doc__)
-if len(argv) > 1:
-    if argv[1] == "-h":
-        print(
-            """Running this script with no file arguments will convert every .py file in the
-current directory and all subdirectories to an .ipynb.
+        if check and os.path.isfile(ipynb):
+            with open(ipynb, "r") as orig_nb:
+                orig_nb_json = orig_nb.read()
+        else:
+            orig_nb_json = ""
 
-Usage:
-python convert_py_to_ipynb.py
-python convert_py_to_ipynb.py <files...>"""
-        )
+        nb_json = json.dumps(nb_str, indent=2) + "\n"
+
+        if not check or orig_nb_json != nb_json:
+            with open(name + ".ipynb", "w") as nb_fh:
+                nb_fh.write(nb_json)
+            return ipynb + " UPDATED"
     else:
-        for file in argv[1:]:
-            convert(file)
-else:
-    for path in glob.glob(f"{os.path.dirname(__file__)}/**/*.py", recursive=True):
-        if path != __file__:
-            convert(path)
+        return path + " No markdown comments"
+
+
+def arguments():
+    """
+    Parse arguments for conversion script
+    """
+    parser = ArgumentParser(
+        description=__doc__
+        + "Running this script with no file arguments will convert every .py file in the"
+        " current directory and all subdirectories to an .ipynb."
+    )
+    parser.add_argument(
+        "--check", action="store_true", default=False, help="precommit difference check"
+    )
+    parser.add_argument(
+        "files",
+        metavar="files",
+        type=str,
+        default=None,
+        nargs="+",
+        help="python files to be converted",
+    )
+
+    args = parser.parse_args()
+
+    if args.files is None and not args.check:
+        files = list(glob.glob(f"{os.path.dirname(__file__)}/**/*.py", recursive=True))
+        try:
+            files.pop(files.index(__file__))
+        except ValueError:
+            pass
+    else:
+        files = args.files
+
+    return files, args.check
+
+
+files, check = arguments()
+updated = []
+for file in files:
+    update = convert(file, check)
+    if update is not None:
+        updated.append(update)
+
+if updated != []:
+    print("\n".join(updated))
+    exit(1)

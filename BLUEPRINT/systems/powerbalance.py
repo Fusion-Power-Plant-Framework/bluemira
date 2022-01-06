@@ -767,9 +767,3 @@ class BalanceOfPlantPlotter:
                 text.set_color("white")
 
         self.fig.tight_layout()
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

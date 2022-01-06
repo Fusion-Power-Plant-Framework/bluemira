@@ -89,9 +89,3 @@ class CastEC1(Material):
 
     def __init__(self):
         super().__init__(190e9, 0.29, 8910, 10.38e-6, 750e6)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

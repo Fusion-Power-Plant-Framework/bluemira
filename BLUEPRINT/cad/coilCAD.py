@@ -1177,10 +1177,3 @@ def build_GS_ITER(g_support):
     floor = extrude(face, vec=[0, 0, -3 * p_width])
     compound_list.append(floor)
     return make_compound(compound_list)
-
-
-if __name__ == "__main__":
-    pass
-    # from BLUEPRINT import test
-    #
-    # test()

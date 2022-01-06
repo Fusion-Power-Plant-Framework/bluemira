@@ -19,12 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-import pytest
 from copy import deepcopy
 
-from bluemira.geometry.error import CoordinatesError
+import numpy as np
+import pytest
+
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.error import CoordinatesError
 
 
 def trace_torus_orbit(r_1, r_2, n_r_2_turns, n_points):

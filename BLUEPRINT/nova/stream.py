@@ -22,22 +22,26 @@
 """
 Equilibrium manipulation tool - reduced version of SF from nova
 """
-import numpy as np
-from copy import deepcopy
-from scipy.interpolate import RectBivariateSpline
-from scipy.interpolate import UnivariateSpline
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.interpolate import interp1d
-from scipy.optimize import minimize
-import matplotlib.pyplot as plt
 from collections import OrderedDict
+from copy import deepcopy
+
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib._contour import QuadContourGenerator
+from scipy.interpolate import (
+    InterpolatedUnivariateSpline,
+    RectBivariateSpline,
+    UnivariateSpline,
+    interp1d,
+)
+from scipy.optimize import minimize
+
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import find_OX_points
-from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.error import NovaError
 from bluemira.geometry._deprecated_tools import innocent_smoothie
-from BLUEPRINT.geometry.geomtools import theta_sort, length, lengthnorm, clock
+from BLUEPRINT.base.error import NovaError
+from BLUEPRINT.geometry.geomtools import clock, length, lengthnorm, theta_sort
 from BLUEPRINT.geometry.offset import offset_smc
 
 
@@ -1065,9 +1069,3 @@ class StreamFlow:
                 ),
             )
         return l_2d, l_3d, x_sol, z_sol
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

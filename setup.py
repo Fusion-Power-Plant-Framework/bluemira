@@ -1,9 +1,9 @@
 """
 Setup utility for bluemira
 """
-from setuptools import setup, find_packages
-import versioneer
+from setuptools import find_packages, setup
 
+import versioneer
 
 short = "An integrated inter-disciplinary design tool for future fusion "
 "reactors, incorporating several modules, some of which rely on "

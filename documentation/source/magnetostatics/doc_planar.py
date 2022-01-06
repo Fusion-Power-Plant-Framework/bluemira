@@ -1,5 +1,6 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.magnetostatics.circuits import ArbitraryPlanarRectangularXSCircuit
 
 x = np.array([0, 1, 3, 4, 4, 3, 1, 0, 0])

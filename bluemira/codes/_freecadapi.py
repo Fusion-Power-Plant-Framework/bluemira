@@ -24,13 +24,14 @@ Supporting functions for the bluemira geometry module.
 """
 
 from __future__ import annotations
-import freecad  # noqa: F401
 
 import math
 
 # import typing
 from typing import Dict, Iterable, List, Optional, Union
 
+import freecad  # noqa: F401
+import FreeCAD
 import BOPTools
 import BOPTools.GeneralFuseResult
 import BOPTools.JoinAPI
@@ -39,7 +40,6 @@ import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
-import FreeCAD
 import FreeCADGui
 
 # import math lib
@@ -652,6 +652,56 @@ def dist_to_shape(shape1, shape2):
     return dist, vectors
 
 
+def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
+    """
+    Slice a shape along a given plane
+
+    TODO improve face-solid-shell interface
+
+    Parameters
+    ----------
+    shape: apiShape
+        shape to slice
+    plane_origin: Iterable
+        normal plane origin
+    plane_axis: Iterable
+        normal plane axis
+
+    Notes
+    -----
+    Degenerate cases such as tangets to solid or faces do not return intersections
+    if the shape and plane are acting at the Placement base.
+    Further investigation needed.
+
+    """
+    if isinstance(shape, apiWire):
+        return _slice_wire(shape, plane_axis, plane_origin)
+    else:
+        if not isinstance(shape, (apiFace, apiSolid)):
+            bluemira_warn("The output structure of this function may not be as expected")
+        shift = np.dot(np.array(plane_origin), np.array(plane_axis))
+        return _slice_solid(shape, plane_axis, shift)
+
+
+def _slice_wire(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
+    """
+    Get the plane intersection points of any wire (possibly anything, needs testing)
+    """
+    circ = Part.Circle(
+        Base.Vector(*shift), Base.Vector(*normal_plane), BIG_NUMBER
+    ).toShape()
+    plane = apiFace(apiWire(circ))
+    intersect_obj = wire.section(plane)
+    return np.array([[v.X, v.Y, v.Z] for v in intersect_obj.Vertexes])
+
+
+def _slice_solid(obj, normal_plane, shift):
+    """
+    Get the plane intersection points of a face or solid
+    """
+    return obj.slice(Base.Vector(*normal_plane), shift)
+
+
 # ======================================================================================
 # Save functions
 # ======================================================================================
@@ -1054,6 +1104,11 @@ def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
 # ======================================================================================
 # Plane manipulations
 # ======================================================================================
+
+# BluemiraPlane wraps Base.Placement not Part.Plane. These conversions become useful..
+# They are probably a bit broken... cos this stuff is a mess in FreeCAD
+
+
 def make_plane(base, axis, angle):
     """
     Make a FreeCAD Placement

@@ -33,10 +33,10 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.positioner import XZLMapper
 from bluemira.geometry._deprecated_tools import get_intersect
+from bluemira.geometry.constants import VERY_BIG
 from BLUEPRINT.base.error import NovaError
 from BLUEPRINT.cad.coilCAD import CoilStructureCAD
 from BLUEPRINT.geometry.boolean import boolean_2d_difference
-from BLUEPRINT.geometry.constants import VERY_BIG
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import (
     distance_between_points,
@@ -934,9 +934,3 @@ class CoilArchitectPlotter(ReactorSystemPlotter):
     def __init__(self):
         super().__init__()
         self._palette_key = "ATEC"
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

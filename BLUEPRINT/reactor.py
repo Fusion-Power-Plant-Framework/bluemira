@@ -22,97 +22,96 @@
 """
 The Reactor God-object
 """
-# Standard imports
-import os
-import numpy as np
-import sys
-from time import time
 import datetime
 import json
-from pathlib import Path, PosixPath
 
+# Standard imports
+import os
+import sys
+from pathlib import Path, PosixPath
+from time import time
 from types import ModuleType
 from typing import Type, Union
 
+import numpy as np
+
+# Configuration / Input imports
+from bluemira.base.config import SingleNull
+
 # Framework imports
-from bluemira.base.file import BM_ROOT, get_files_by_ext, FileManager
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
+from bluemira.base.file import BM_ROOT, FileManager, get_files_by_ext
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn, print_banner
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base import BLUE
-from BLUEPRINT.base.error import GeometryError
-
-# Utility imports
-from BLUEPRINT.geometry.loop import Loop, point_loop_cast
-from BLUEPRINT.geometry.geomtools import qrotate
-from BLUEPRINT.geometry.parameterisations import flatD, negativeD
-from BLUEPRINT.utilities.colortools import force_rgb
-from bluemira.utilities.tools import CommentJSONDecoder, json_writer
-
-# BLUEPRINT system imports
-from BLUEPRINT.systems import (
-    ReactorSystem,
-    STBreedingBlanket,
-    BreedingBlanket,
-    Divertor,
-    Plasma,
-    HCDSystem,
-    Cryostat,
-    VacuumVessel,
-    RadiationShield,
-    ReactorCrossSection,
-    BalanceOfPlant,
-    ToroidalFieldCoils,
-    PoloidalFieldCoils,
-    ThermalShield,
-)
-from BLUEPRINT.systems.maintenance import RMMetrics
-from BLUEPRINT.systems.plotting import ReactorPlotter
-from BLUEPRINT.systems.physicstoolbox import (
-    n_DT_reactions,
-    n_DD_reactions,
-    lambda_q,
-    estimate_kappa95,
-)
+# PROCESS imports
+from bluemira.codes import run_systems_code
 
 # Equilibria imports
 from bluemira.equilibria import AbInitioEquilibriumProblem
 from bluemira.equilibria.constants import (
     NB3SN_B_MAX,
+    NB3SN_J_MAX,
     NBTI_B_MAX,
     NBTI_J_MAX,
-    NB3SN_J_MAX,
 )
 from bluemira.equilibria.physics import normalise_beta
-
-# BLUPRINT.cad imports
-from BLUEPRINT.cad import ReactorCAD
-from BLUEPRINT.cad.cadtools import check_STL_folder
-
-# BLUEPRINT.nova imports
-from BLUEPRINT.nova.stream import StreamFlow
-from BLUEPRINT.nova.structure import CoilArchitect
-from BLUEPRINT.nova.firstwall import FirstWallProfile
-from BLUEPRINT.nova.optimiser import StructuralOptimiser
-
-# Neutronics imports
-from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
+from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
+from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+from bluemira.fuel_cycle.lifecycle import LifeCycle
 
 # Lifetime / fuel cycle imports
 from bluemira.fuel_cycle.timeline_tools import (
     GompertzLearningStrategy,
     LogNormalAvailabilityStrategy,
 )
-from bluemira.fuel_cycle.lifecycle import LifeCycle
+from bluemira.geometry.error import GeometryError
+from bluemira.utilities.tools import CommentJSONDecoder, json_writer
+from BLUEPRINT.base import BLUE
 
-from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
-from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+# BLUPRINT.cad imports
+from BLUEPRINT.cad import ReactorCAD
+from BLUEPRINT.cad.cadtools import check_STL_folder
+from BLUEPRINT.geometry.geomtools import qrotate
 
-# Configuration / Input imports
-from bluemira.base.config import SingleNull
+# Utility imports
+from BLUEPRINT.geometry.loop import Loop, point_loop_cast
+from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 
-# PROCESS imports
-from bluemira.codes import run_systems_code
+# Neutronics imports
+from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
+from BLUEPRINT.nova.firstwall import FirstWallProfile
+from BLUEPRINT.nova.optimiser import StructuralOptimiser
+
+# BLUEPRINT.nova imports
+from BLUEPRINT.nova.stream import StreamFlow
+from BLUEPRINT.nova.structure import CoilArchitect
+
+# BLUEPRINT system imports
+from BLUEPRINT.systems import (
+    BalanceOfPlant,
+    BreedingBlanket,
+    Cryostat,
+    Divertor,
+    HCDSystem,
+    Plasma,
+    PoloidalFieldCoils,
+    RadiationShield,
+    ReactorCrossSection,
+    ReactorSystem,
+    STBreedingBlanket,
+    ThermalShield,
+    ToroidalFieldCoils,
+    VacuumVessel,
+)
+from BLUEPRINT.systems.maintenance import RMMetrics
+from BLUEPRINT.systems.physicstoolbox import (
+    estimate_kappa95,
+    lambda_q,
+    n_DD_reactions,
+    n_DT_reactions,
+)
+from BLUEPRINT.systems.plotting import ReactorPlotter
+from BLUEPRINT.utilities.colortools import force_rgb
 
 
 class Reactor(ReactorSystem):
@@ -1639,9 +1638,3 @@ class ConfigurableReactor(Reactor):
             raise FileNotFoundError(
                 f"Specified config directory not a directory: {config_dir}"
             )
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
