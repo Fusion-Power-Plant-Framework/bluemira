@@ -20,9 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-import pytest
+from pandas import DataFrame
 
-from bluemira.utilities.powerlearn import PowerLaw, LinearLaw
+from bluemira.utilities.powerlearn import LinearLaw, PowerLaw
 
 
 def power_law_func1(x, y, z):

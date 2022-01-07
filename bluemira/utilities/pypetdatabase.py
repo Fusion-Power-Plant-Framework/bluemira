@@ -319,9 +319,3 @@ class DataBase:
                 row_list.append(newrow)
             self.traj_old.f_restore_default()
         return DataFrame(row_list)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

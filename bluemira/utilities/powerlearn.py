@@ -26,14 +26,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import ticker
-from scipy.linalg import lstsq
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 
-from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.utilities.plot_tools import gsymbolify, str_to_latex
+from bluemira.utilities.plot_tools import str_to_latex
 
 
 class Law:
@@ -390,114 +387,3 @@ class PowerLaw(LinearLaw):
         Prints the equation of the PowerLaw and the fitting R^2 score.
         """
         super().print_fit(sep1="^", sep2="*")
-
-
-def surface_fit(x, y, z, order: int = 2, n_grid: int = 30):
-    """
-    Fit a polynomial surface to a 3-D data set.
-
-    Parameters
-    ----------
-    x: np.array(n)
-        The x values of the data set
-    y: np.array(n)
-        The y values of the data set
-    z: np.array(n)
-        The z values of the data set
-    order: int
-        The order of the fitting polynomial
-    n_grid: int
-        The number of gridding points to use on the x and y data
-
-    Returns
-    -------
-    x2d: np.array(n_grid, n_grid)
-        The gridded x data
-    y2d: np.array(n_grid, n_grid)
-        The gridded y data
-    zz: np.array(n_grid, n_grid)
-        The gridded z fit data
-    coeffs: list
-        The list of polynomial coefficents
-    r2: float
-        The R^2 score of the fit
-
-    Notes
-    -----
-    The coefficients are ordered by power, and by x and y. For an order = 2
-    polynomial, the resultant equation would be:
-
-    \t:math:`c_{1}x^{2}+c_{2}y^{2}+c_{3}xy+c_{4}x+c_{5}y+c_{6}`
-    """
-    x, y, z = np.array(x), np.array(y), np.array(z)
-    if len(x) != len(y) != len(z):
-        raise ValueError("x, y, and z must be of equal length.")
-
-    n = len(x)
-    x_min, x_max = np.min(x), np.max(x)
-    y_min, y_max = np.min(y), np.max(y)
-
-    # Grid the x and y arrays
-    x2d, y2d = np.meshgrid(
-        np.linspace(x_min, x_max, n_grid), np.linspace(y_min, y_max, n_grid)
-    )
-    xx = x2d.flatten()
-    yy = y2d.flatten()
-
-    if order == 1:  # Linear
-        eq_matrix = np.c_[x, y, np.ones(n)]
-        coeffs, _, _, _ = lstsq(eq_matrix, z)
-
-        zz = np.dot(np.c_[xx, yy, np.ones(xx.shape)], coeffs).reshape(x2d.shape)
-
-    elif order == 2:  # Quadratic
-        eq_matrix = np.c_[x ** 2, y ** 2, x * y, x, y, np.ones(n)]
-        coeffs, _, _, _ = lstsq(eq_matrix, z)
-
-        zz = np.dot(
-            np.c_[xx ** 2, yy ** 2, xx * yy, xx, yy, np.ones(xx.shape)], coeffs
-        ).reshape(x2d.shape)
-
-    elif order == 3:  # Cubic
-        eq_matrix = np.c_[
-            x ** 3,
-            y ** 3,
-            x ** 2 * y,
-            x * y ** 2,
-            x ** 2,
-            y ** 2,
-            x * y,
-            x,
-            y,
-            np.ones(n),
-        ]
-        coeffs, _, _, _ = lstsq(eq_matrix, z)
-
-        zz = np.dot(
-            np.c_[
-                xx ** 3,
-                yy ** 3,
-                xx ** 2 * yy,
-                xx * yy ** 2,
-                xx ** 2,
-                yy ** 2,
-                xx * yy,
-                xx,
-                yy,
-                np.ones(xx.shape),
-            ],
-            coeffs,
-        ).reshape(x2d.shape)
-
-    else:
-        # Too lazy for polynomial expansion...
-        raise ValueError("order must be 1, 2 or 3.")
-
-    z_predicted = np.dot(eq_matrix, coeffs).reshape(n)
-    return x2d, y2d, zz, coeffs, r2_score(z, z_predicted)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
