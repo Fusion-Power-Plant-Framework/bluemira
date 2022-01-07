@@ -31,6 +31,7 @@ from scipy import LowLevelCallable
 from scipy.integrate import IntegrationWarning, nquad, quad
 
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.error import MagnetostaticsError
 
 __all__ = [
@@ -109,6 +110,9 @@ def process_loop_array(shape):
 
     elif isinstance(shape, np.ndarray):
         pass
+
+    elif isinstance(shape, Coordinates):
+        shape = shape.T
 
     else:
         raise MagnetostaticsError(
