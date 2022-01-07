@@ -22,18 +22,19 @@
 """
 Shape parameterisations and optimisation variable classes
 """
+from collections import OrderedDict
+
 import matplotlib.pyplot as plt
-import seaborn as sns
-import scipy as sp
 import numpy as np
+import scipy as sp
+import seaborn as sns
+from pandas import DataFrame
 from scipy.special import binom
 from scipy.special import iv as bessel
-from collections import OrderedDict
-from pandas import DataFrame
-from BLUEPRINT.base.error import GeometryError
+
 from bluemira.geometry._deprecated_tools import innocent_smoothie
-from BLUEPRINT.geometry.geomtools import clock, qrotate, xz_interp
-from BLUEPRINT.geometry.geomtools import circle_seg
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.geomtools import circle_seg, clock, qrotate, xz_interp
 
 
 class OptVariables(OrderedDict):
@@ -1291,7 +1292,7 @@ def princetonD(x1, x2, dz, npoints=200):
         :math:`I_{n}` is the n-th order modified Bessel function
         :math:`x_{1}` is the inner radial position of the shape
         :math:`x_{2}` is the outer radial position of the shape
-    """  # noqa (W505)
+    """  # noqa :W505
     if x2 <= x1:
         raise GeometryError(
             "Princeton D parameterisation requires an x2 value"
@@ -1903,9 +1904,3 @@ class BackwardPolySpline(PolySpline):  # polybezier
 
         self._plot_po(ax, points)
         ax.set_aspect("equal")
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

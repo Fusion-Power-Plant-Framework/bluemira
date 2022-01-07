@@ -23,20 +23,20 @@
 Useful functions for bluemira geometries.
 """
 
-import numpy as np
-import numba as nb
 from copy import deepcopy
-from typing import Union, Iterable
+from typing import Iterable, List, Union
 
+import numba as nb
+import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.base import BluemiraGeo
 from bluemira.codes import _freecadapi as cadapi
-from .wire import BluemiraWire
-from .face import BluemiraFace
-from .shell import BluemiraShell
-from .solid import BluemiraSolid
-from .error import GeometryError
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.wire import BluemiraWire
 
 
 def convert(apiobj, label=""):
@@ -301,8 +301,8 @@ def offset_wire(
 # # =============================================================================
 def revolve_shape(
     shape,
-    base: tuple = (0.0, 0.0, 0.0),
-    direction: tuple = (0.0, 0.0, 1.0),
+    base: Iterable = (0.0, 0.0, 0.0),
+    direction: Iterable = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
 ):
@@ -313,9 +313,9 @@ def revolve_shape(
     ----------
     shape: BluemiraGeo
         The shape to be revolved
-    base: tuple (x,y,z), default = (0.0, 0.0, 0.0)
+    base: Iterable (x,y,z), default = (0.0, 0.0, 0.0)
         Origin location of the revolution
-    direction: tuple (x,y,z), default = (0.0, 0.0, 1.0)
+    direction: Iterable (x,y,z), default = (0.0, 0.0, 1.0)
         The direction vector
     degree: double, default = 180
         revolution angle
@@ -430,9 +430,44 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
     return cadapi.dist_to_shape(shape1, shape2)
 
 
+def slice_shape(shape: BluemiraGeo, plane):
+    """
+    Calculate the plane intersection points with an object
+
+    Parameters
+    ----------
+    obj: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
+        obj to intersect with a plane
+    plane: BluemiraPlane
+
+    Returns
+    -------
+    Wire: Union[List[np.ndarray], None]
+        returns array of intersection points
+    Face, Solid, Shell: Union[List[BluemiraWire], None]
+        list of intersections lines
+
+    Notes
+    -----
+    Degenerate cases such as tangets to solid or faces do not return intersections
+    if the shape and plane are acting at the Placement base.
+    Further investigation needed.
+
+    """
+    _slice = cadapi.slice_shape(shape._shape, plane.base, plane.axis)
+
+    if isinstance(_slice, np.ndarray) and _slice.size > 0:
+        return _slice
+
+    _slice = [convert(obj) for obj in _slice]
+
+    if len(_slice) > 0:
+        return _slice
+
+
 def circular_pattern(
     shape, origin=(0, 0, 0), direction=(0, 0, 1), degree=360, n_shapes=10
-):
+) -> List[BluemiraGeo]:
     """
     Make a equally spaced circular pattern of shapes.
 

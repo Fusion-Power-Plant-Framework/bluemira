@@ -77,7 +77,7 @@ class DummyController:
 class VirtualController(CoilGroup):
     """
     Represents a pair of virtual coils for the numerical vertical control of
-    the plasma, as described in Jeon, 2015: http://link.springer.com/10.3938/jkps.67.843
+    the plasma, as described in Jeon, 2015: https://link.springer.com/10.3938/jkps.67.843
 
     It does work to some extent (perhaps I've implemented it incorrectly). It
     seems to fall over for large numerical instabilities.

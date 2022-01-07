@@ -22,19 +22,19 @@
 """
 Plasma system
 """
-import numpy as np
 from typing import Type
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from bluemira.base.constants import MU_0
 from bluemira.base.parameter import ParameterFrame
-
+from BLUEPRINT.cad.plasmaCAD import PlasmaCAD
 from BLUEPRINT.geometry.geomtools import loop_volume
 from BLUEPRINT.geometry.loop import make_ring
-from BLUEPRINT.systems.physicstoolbox import n_DT_reactions, r_T_burn, P_LH
 from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.cad.plasmaCAD import PlasmaCAD
 from BLUEPRINT.systems.mixins import Meshable
+from BLUEPRINT.systems.physicstoolbox import P_LH, n_DT_reactions, r_T_burn
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
@@ -192,7 +192,7 @@ class Plasma(Meshable, ReactorSystem):
         """
         return self.geom["Separatrix"]
 
-    def get_LCFS(self):  # noqa (N802)
+    def get_LCFS(self):  # noqa :N802
         """
         Get the last closed flux surface profile.
 
@@ -423,9 +423,3 @@ class PlasmaPlotter(ReactorSystemPlotter):
         """
         kwargs["alpha"] = kwargs.get("alpha", 0.15)
         super().plot_xy(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

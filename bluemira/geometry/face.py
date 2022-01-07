@@ -27,15 +27,16 @@ from __future__ import annotations
 
 from typing import List
 
-# import from bluemira
-from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.wire import BluemiraWire
+import numpy as np
+
 import bluemira.codes._freecadapi as cadapi
 
-# import from error
-from bluemira.geometry.error import NotClosedWire, DisjointedFace
+# import from bluemira
+from bluemira.geometry.base import BluemiraGeo
 
-import numpy as np
+# import from error
+from bluemira.geometry.error import DisjointedFace, NotClosedWire
+from bluemira.geometry.wire import BluemiraWire
 
 
 class BluemiraFace(BluemiraGeo):
@@ -66,7 +67,7 @@ class BluemiraFace(BluemiraGeo):
         """Make a copy of the BluemiraFace"""
         boundary = []
         for o in self.boundary:
-            boundary += [o.copy()]
+            boundary += [o.deepcopy()]
         return BluemiraFace(boundary, self.label)
 
     def _check_boundary(self, objs):

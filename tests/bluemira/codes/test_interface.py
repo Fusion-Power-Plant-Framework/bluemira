@@ -19,36 +19,30 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-Generic plot utilities, figure and gif operations
-"""
+from unittest.mock import MagicMock
 
 import pytest
-from BLUEPRINT.utilities.plottools import mathify, gsymbolify
+
+from bluemira.codes import interface
 
 
-class TestMathify:
-    def test_single(self):
-        result = mathify("PF_1")
-        assert result == "$PF_{1}$"
+class EvilDict(dict):
+    def __init__(self, *arg, **kw):
+        super().__init__(*arg, **kw)
 
-        result = mathify("I_m_p")
-        assert result == "$I_{m_{p}}$"
-
-
-class TestGsymbolify:
-    def test_lowercase(self):
-        string = gsymbolify("beta")
-        assert string == "\\beta"
-
-    def test_uppercase(self):
-        string = gsymbolify("Beta")
-        assert string == "\\Beta"
-
-    def test_nothing(self):
-        string = gsymbolify("nothing")
-        assert string == "nothing"
+    def pop(self, *args, **kw):
+        pass
 
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+class TestTask:
+    def test_protected_subprocess(self):
+        parent = MagicMock()
+        parent._run_dir = "./"
+        parent.NAME = "TEST"
+        task = interface.Task(parent)
+        e_dict = EvilDict(shell=True)  # noqa :S604
+        with pytest.raises((FileNotFoundError, TypeError)):
+            task._run_subprocess("random command", **e_dict)
+        assert e_dict["shell"]
+        with pytest.raises(FileNotFoundError):
+            task._run_subprocess("random command", shell=e_dict["shell"])  # noqa :S604

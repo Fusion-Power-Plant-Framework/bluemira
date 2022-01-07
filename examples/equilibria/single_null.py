@@ -25,17 +25,19 @@ SN pulsed equilibrium example
 # %%[markdown]
 # # Single Null example pulsed equilibrium problem
 
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 # %%
 from IPython import get_ipython
-import os
-import numpy as np
-import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.equilibria.run import AbInitioEquilibriumProblem
 from bluemira.equilibria.profiles import DoublePowerFunc
+from bluemira.equilibria.run import AbInitioEquilibriumProblem
+from bluemira.geometry._deprecated_loop import Loop
 
 try:
     get_ipython().run_line_magic("matplotlib", "qt")

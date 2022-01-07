@@ -19,13 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
 import filecmp
+import os
+
 import matplotlib.pyplot as plt
 
+from bluemira.balance_of_plant.plotting import SuperSankey
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
-from bluemira.balance_of_plant.plotting import SuperSankey
 
 
 class TestSuperSankey:

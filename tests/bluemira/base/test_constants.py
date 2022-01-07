@@ -18,10 +18,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
 import numpy as np
+import pytest
 
-from bluemira.base.constants import E_IJK, E_IJ, E_I
+from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.utilities.tools import levi_civita_tensor
 
 

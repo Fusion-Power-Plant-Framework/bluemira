@@ -22,31 +22,32 @@
 """
 A collection of geometry utility functions
 """
-import numpy as np
 from collections.abc import Iterable
+
+import numpy as np
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
 
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 
 # Port over without modifying imports
 from bluemira.geometry._deprecated_tools import (  # noqa
-    check_linesegment,
-    loop_plane_intersect,
-    join_intersect,
-    in_polygon,
-    on_polygon,
-    distance_between_points,
-    close_coordinates,
-    get_intersect,
-    polygon_in_polygon,
-    vector_intersect,
     bounding_box,
-    rotation_matrix,
+    check_linesegment,
+    close_coordinates,
+    distance_between_points,
+    get_intersect,
+    in_polygon,
+    join_intersect,
+    loop_plane_intersect,
+    on_polygon,
+    polygon_in_polygon,
     quart_rotate,
+    rotation_matrix,
+    vector_intersect,
 )
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 
 # A couple of name changes
 rotate_matrix = rotation_matrix  # noqa
@@ -130,7 +131,7 @@ def project_point_axis(point, axis):
     -------
     projection: np.array(3)
         The coordinates of the projected point
-    """  # noqa (W505)
+    """  # noqa :W505
     point = np.array(point)
     axis = np.array(axis)
     return axis * np.dot(point, axis) / np.dot(axis, axis)
@@ -1346,9 +1347,3 @@ def get_boundary(polygons):
             boundary_facets += get_facets(union.boundary.coords, len(boundary_points))
             boundary_points += get_points(union.boundary.coords)
     return boundary_points, boundary_facets
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

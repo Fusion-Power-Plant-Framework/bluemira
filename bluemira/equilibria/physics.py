@@ -27,8 +27,8 @@ import numpy as np
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.constants import PSI_NORM_TOL
-from bluemira.equilibria.find import find_flux_surf, _parse_OXp, in_plasma
-from bluemira.equilibria.grid import volume_integral, revolved_volume
+from bluemira.equilibria.find import _parse_OXp, find_flux_surf, in_plasma
+from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 
 def calc_psi_norm(psi, opsi, xpsi):
@@ -274,7 +274,7 @@ def calc_energy(eq):
     return volume_integral(Bp ** 2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
 
 
-def calc_Li(eq):  # noqa (N802)
+def calc_Li(eq):  # noqa :N802
     """
     Calculates the internal inductance of the plasma [H]
 
@@ -299,7 +299,7 @@ def calc_li3(eq):
     Calculates the normalised internal plasma inductance (ITER approximate
     calculation)
 
-    see http://iopscience.iop.org/article/10.1088/0029-5515/48/12/125002/meta
+    see https://iopscience.iop.org/article/10.1088/0029-5515/48/12/125002/meta
 
     \t:math:`li(3)=\\dfrac{2V\\langle B_p^2\\rangle}{(\\mu_0I_p)^2R_0}`
 
@@ -488,7 +488,7 @@ def normalise_beta(beta, a, b_tor, Ip):
     return beta * a * b_tor / Ip
 
 
-def beta_N_to_beta(beta_N, a, Btor, Ip):  # noqa (N802)
+def beta_N_to_beta(beta_N, a, Btor, Ip):  # noqa :N802
     """
     Converts normalised beta to beta
 

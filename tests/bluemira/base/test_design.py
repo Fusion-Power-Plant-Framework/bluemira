@@ -23,9 +23,8 @@
 Tests for the design module.
 """
 
-from bluemira.base.design import Design
-
 import tests
+from bluemira.base.design import Design
 
 
 class TestDesign:

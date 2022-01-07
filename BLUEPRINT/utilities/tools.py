@@ -22,12 +22,13 @@
 """
 Generic miscellaneous tools, including some amigo port-overs
 """
-import numpy as np
-from scipy.spatial.distance import cdist
 import re
 from collections import OrderedDict
 from collections.abc import Mapping
 from typing import List, Union
+
+import numpy as np
+from scipy.spatial.distance import cdist
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable
@@ -57,7 +58,7 @@ class PowerLawScaling:
         The ordered list of exponents
     err: Union[np.array, List, None]
         The ordered list of errors of the exponents
-    """  # noqa (W505)
+    """  # noqa :W505
 
     def __init__(self, c=1, cerr=0, cexperr=None, exponents=None, err=None):
         self._len = len(exponents)
@@ -187,7 +188,7 @@ def map_nested_dict(obj, function):
             obj[k] = function(v)
 
 
-def get_max_PF(coil_dict):  # noqa (N802)
+def get_max_PF(coil_dict):  # noqa :N802
     """
     Returns maximum external radius of the largest PF coil
     takes a nova ordered dict of PFcoils
@@ -389,9 +390,3 @@ def maximum(val, val_min):
     else:
         val = val_min if val < val_min else val
     return val
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

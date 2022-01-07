@@ -23,10 +23,8 @@
 A basic tutorial for configuring and running a design with a parameterised plasma.
 """
 
-from bluemira.builders.plasma import MakeParameterisedPlasma
-
 from bluemira.base.design import Design
-
+from bluemira.builders.plasma import MakeParameterisedPlasma
 
 build_config = {
     "Plasma": {

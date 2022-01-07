@@ -23,15 +23,20 @@
 Tests for EU-DEMO build.
 """
 
-import pytest
-
 import json
-import numpy as np
 import os
 
+import numpy as np
+import pytest
+
+import tests
+from bluemira.base.components import Component
 from bluemira.base.file import get_bluemira_root
+from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.builders.EUDEMO.plasma import PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
+from bluemira.builders.EUDEMO.tf_coils import TFCoilsComponent
+from bluemira.geometry.coordinates import Coordinates
 
 PARAMS_DIR = os.path.join(get_bluemira_root(), "tests", "bluemira", "builders", "EUDEMO")
 
@@ -56,14 +61,17 @@ class TestEUDEMO:
         with open(os.path.join(PARAMS_DIR, "build_config.json")) as fh:
             build_config = json.load(fh)
 
-        self.reactor = EUDEMOReactor(params, build_config)
-        self.component = self.reactor.run()
+        orig_log_level = get_log_level()
+        set_log_level("DEBUG")
+        try:
+            self.reactor = EUDEMOReactor(params, build_config)
+            self.component = self.reactor.run()
+        finally:
+            set_log_level(orig_log_level)
 
     def test_plasma_build(self):
         """
         Test the results of the plasma build.
-
-        TODO: Add a regression test for the resulting equilibrium.
         """
         plasma_builder = self.reactor.get_builder("Plasma")
         assert plasma_builder is not None
@@ -79,13 +87,68 @@ class TestEUDEMO:
         reference_eq_vals = {}
         with open(reference_eq_path, "r") as fh:
             reference_eq_vals: dict = json.load(fh)
-        reference_eq_vals.pop("name")
+        ref_lcfs = Coordinates(
+            {"x": reference_eq_vals["xbdry"], "z": reference_eq_vals["zbdry"]}
+        )
 
-        eq_dict = plasma_component.equilibrium.to_dict()
-        bad_attrs = []
-        attr: str
-        for attr, ref_val in reference_eq_vals.items():
-            if not np.allclose(eq_dict[attr], ref_val):
-                bad_attrs.append(attr)
+        lcfs = Coordinates(plasma_component.equilibrium.get_LCFS().xyz)
+        assert np.isclose(ref_lcfs.length, lcfs.length, rtol=1e-3)
+        assert np.isclose(ref_lcfs.center_of_mass[0], lcfs.center_of_mass[0], rtol=1e-3)
 
-        assert len(bad_attrs) == 0, f"Attrs didn't match reference: {bad_attrs}"
+    def test_tf_build(self):
+        """
+        Test the results of the TF build.
+        """
+        tf_builder = self.reactor.get_builder("TF Coils")
+        assert tf_builder is not None
+        assert tf_builder.design_problem is not None
+
+        tf_component: TFCoilsComponent = self.component.get_component("TF Coils")
+        assert tf_component is not None
+
+        # Check field at origin
+        field = tf_component.field(
+            self.reactor.params.R_0.value, 0.0, self.reactor.params.z_0.value
+        )
+        assert field is not None
+        print(field)
+        assert field == pytest.approx([0, -5.0031, 0])
+
+    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
+    def test_plot_xz(self):
+        """
+        Display the results.
+        """
+        Component(
+            "xz view",
+            children=[
+                self.component.get_component("Plasma").get_component("xz"),
+                self.component.get_component("TF Coils").get_component("xz"),
+            ],
+        ).plot_2d()
+
+    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
+    def test_plot_xy(self):
+        """
+        Display the results.
+        """
+        Component(
+            "xy view",
+            children=[
+                self.component.get_component("Plasma").get_component("xy"),
+                self.component.get_component("TF Coils").get_component("xy"),
+            ],
+        ).plot_2d()
+
+    @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
+    def test_show_cad(self):
+        """
+        Display the results.
+        """
+        Component(
+            "xyz view",
+            children=[
+                self.component.get_component("Plasma").get_component("xyz"),
+                self.component.get_component("TF Coils").get_component("xyz"),
+            ],
+        ).show_cad()

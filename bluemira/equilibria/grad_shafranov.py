@@ -22,10 +22,10 @@
 """
 Grad-Shafranov operator classes
 """
-from numpy import ones, linspace, reshape
 import numpy as np
-from scipy.sparse.linalg import factorized
+from numpy import linspace, ones, reshape
 from scipy.sparse import lil_matrix
+from scipy.sparse.linalg import factorized
 
 from bluemira.equilibria.error import EquilibriaError
 
@@ -57,7 +57,7 @@ class GSOperator:
     \t:math:`+\\Bigg[2\\Bigg(\\dfrac{1}{(\\Delta X)^2}+\\dfrac{1}{(\\Delta Z)^2}\\Bigg)\\Bigg]\\psi_{i, j}`
     \t:math:`+\\bigg(\\dfrac{1}{(\\Delta X)^2}-\\dfrac{1}{2X_j(\\Delta X)}\\bigg)\\psi_{i, j+1}`
     \t:math:`+\\dfrac{1}{(\\Delta Z)^2}\\psi_{i+1, j}=-\\mu_0 X_j J_{\\phi_{i, j}}`
-    """  # noqa (W505)
+    """  # noqa :W505
 
     def __init__(self, x_min, x_max, z_min, z_max, force_symmetry=False):
         self.x_min = x_min

@@ -18,15 +18,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
 import os
-from BLUEPRINT.systems.firstwall import FirstWallSN, FirstWallDN, get_tangent_vector
+
+import pytest
+
+import BLUEPRINT.geometry.loop as old_loop  # noqa :N813
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
-import BLUEPRINT.geometry.loop as old_loop  # noqa (N813)
 from BLUEPRINT.geometry.shell import Shell
-
+from BLUEPRINT.systems.firstwall import FirstWallDN, FirstWallSN, get_tangent_vector
 
 DATA_PATH = get_bluemira_path("equilibria", subfolder="data")
 

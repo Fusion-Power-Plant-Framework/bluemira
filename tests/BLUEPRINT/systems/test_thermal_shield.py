@@ -26,11 +26,10 @@ import numpy as np
 import pytest
 
 from bluemira.base.parameter import ParameterFrame
-
-from BLUEPRINT.systems.thermalshield import SegmentedThermalShield
-from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
-from BLUEPRINT.geometry.loop import Loop
 from bluemira.equilibria.coils import Coil
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
+from BLUEPRINT.systems.thermalshield import SegmentedThermalShield
 
 
 class TestSegmentedThermalShield:

@@ -232,6 +232,3 @@ In general, for curvy shapes, Bezier splines are much better for CAD than lots o
 	show_CAD(plasma_block, plasma_block2)
 
 .. image:: ../images/cad/show_CAD9.png
-
-
-

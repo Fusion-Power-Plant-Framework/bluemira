@@ -9,6 +9,11 @@
         "name": "aspect",
         "recv": true,
         "send": true
+      },
+      "PLASMOD": {
+        "name": "A",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -28,6 +33,11 @@
         "name": "bt",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Bt",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -84,6 +94,11 @@
         "name": "hfact",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Hcorr",
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -97,13 +112,18 @@
         "name": "plascur/1d6",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Ip",
+        "recv": true,
+        "send": false
       }
     }
   },
   "LPangle": {
     "name": "Lower port inclination angle",
     "value": -30,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "Name": {
@@ -118,6 +138,19 @@
     "unit": "N/A",
     "source": "Input"
   },
+  "P_LH": {
+    "name": "LH transition power",
+    "value": 0,
+    "unit": "W",
+    "source": "PLASMOD",
+    "mapping": {
+      "PLASMOD": {
+        "name": "PLH",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
   "P_brehms": {
     "name": "Bremsstrahlung",
     "value": 80,
@@ -126,6 +159,11 @@
     "mapping": {
       "PROCESS": {
         "name": "pbrempv*vol",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Pbrem",
         "recv": true,
         "send": false
       }
@@ -167,6 +205,11 @@
         "name": "powfmw",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Pfus",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -180,6 +223,11 @@
         "name": "pdd",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "PfusDD",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -191,6 +239,11 @@
     "mapping": {
       "PROCESS": {
         "name": "pdt",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "PfusDT",
         "recv": true,
         "send": false
       }
@@ -219,6 +272,24 @@
         "name": "plinepv*vol",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Pline",
+        "recv": true,
+        "send": false
+      }
+    }
+  },
+  "P_ohm": {
+    "name": "Ohimic heating power",
+    "value": 0,
+    "unit": "W",
+    "source": "PLASMOD",
+    "mapping": {
+      "PLASMOD": {
+        "name": "Pohm",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -230,6 +301,11 @@
     "mapping": {
       "PROCESS": {
         "name": "pradmw",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Prad",
         "recv": true,
         "send": false
       }
@@ -271,8 +347,19 @@
         "name": "pdivt",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Psep",
+        "recv": true,
+        "send": false
       }
     }
+  },
+  "P_sep_particle": {
+    "name": "Separatrix power",
+    "value": 150,
+    "unit": "MW",
+    "source": "Input"
   },
   "P_sync": {
     "name": "Synchrotron radiation",
@@ -282,6 +369,11 @@
     "mapping": {
       "PROCESS": {
         "name": "psyncpv*vol",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Psync",
         "recv": true,
         "send": false
       }
@@ -304,6 +396,11 @@
         "name": "rmajor",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "R0",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -343,6 +440,11 @@
         "name": "vol",
         "recv": false,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "V_in",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -355,6 +457,11 @@
       "PROCESS": {
         "name": "zeff",
         "recv": false,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "Zeff",
+        "recv": true,
         "send": false
       }
     }
@@ -389,7 +496,7 @@
   "bb_min_angle": {
     "name": "Minimum module angle",
     "value": 70,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany",
     "description": "Sharpest cut of a module possible"
   },
@@ -410,7 +517,14 @@
     "name": "Normalised ratio of plasma pressure to magnetic pressure",
     "value": 2.7,
     "unit": "N/A",
-    "source": "PLASMOD"
+    "source": "PLASMOD",
+    "mapping": {
+      "PLASMOD": {
+        "name": "beta_n",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "beta_p": {
     "name": "Ratio of plasma pressure to poloidal magnetic pressure",
@@ -420,6 +534,11 @@
     "mapping": {
       "PROCESS": {
         "name": "betap",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "beta_p",
         "recv": true,
         "send": false
       }
@@ -475,6 +594,11 @@
         "name": "triang",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "delta_e",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -488,6 +612,11 @@
         "name": "triang95",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "delta95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -519,7 +648,7 @@
   "div_graze_angle": {
     "name": "Divertor SOL grazing angle",
     "value": 1.5,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "div_open": {
@@ -591,6 +720,11 @@
         "name": "bootipf",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "f_bs",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -607,25 +741,25 @@
     "source": "Input"
   },
   "f_hfs_lower_target": {
-    "name": "Power fraction hfs lower",
+    "name": "Fraction of SOL power deposited on the HFS lower target",
     "value": 0.5,
     "unit": "N/A",
     "source": "Input"
   },
   "f_hfs_upper_target": {
-    "name": "Power fraction hfs upper",
+    "name": "Fraction of SOL power deposited on the HFS upper target (DN only)",
     "value": 0.5,
     "unit": "N/A",
     "source": "Input"
   },
   "f_lfs_lower_target": {
-    "name": "Power fraction lfs lower",
+    "name": "Fraction of SOL power deposited on the LFS lower target",
     "value": 0.5,
     "unit": "N/A",
     "source": "Input"
   },
   "f_lfs_upper_target": {
-    "name": "Power fraction lfs upper",
+    "name": "Fraction of SOL power deposited on the LFS upper target (DN only)",
     "value": 0.5,
     "unit": "N/A",
     "source": "Input"
@@ -640,13 +774,24 @@
         "name": "faccd",
         "recv": false,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "f_ni",
+        "recv": false,
+        "send": true
       }
     }
+  },
+  "f_p_sol_near": {
+    "name": "near scrape-off layer power rate",
+    "value": 0.65,
+    "unit": "N/A",
+    "source": "Input"
   },
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
     "value": 25,
-    "unit": "°",
+    "unit": "\u00b0",
     "source": "Input"
   },
   "fw_dL_max": {
@@ -658,24 +803,6 @@
   "fw_dL_min": {
     "name": "Minimum FW module length",
     "value": 0.75,
-    "unit": "m",
-    "source": "Input"
-  },
-  "fw_dx": {
-    "name": "Minimum distance of FW to separatrix",
-    "value": 0.225,
-    "unit": "m",
-    "source": "Input"
-  },
-  "fw_dx_imp": {
-    "name": "Initial offset from LCFS imp",
-    "value": 0.05,
-    "unit": "m",
-    "source": "Input"
-  },
-  "fw_dx_omp": {
-    "name": "Initial offset from LCFS omp",
-    "value": 0.2,
     "unit": "m",
     "source": "Input"
   },
@@ -701,18 +828,6 @@
     "name": "Lambda_q near SOL omp",
     "value": 0.003,
     "unit": "m",
-    "source": "Input"
-  },
-  "fw_p_sol_far": {
-    "name": "far Scrape off layer power",
-    "value": 50,
-    "unit": "MW",
-    "source": "Input"
-  },
-  "fw_p_sol_near": {
-    "name": "near Scrape off layer power",
-    "value": 50,
-    "unit": "MW",
     "source": "Input"
   },
   "fw_psi_n": {
@@ -962,6 +1077,11 @@
         "name": "kappa",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "kappa_e",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -975,6 +1095,11 @@
         "name": "kappa95",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "kappa95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -988,6 +1113,11 @@
         "name": "rli",
         "recv": false,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "li",
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -995,7 +1125,7 @@
     "name": "Gas puff flow rate",
     "value": 50,
     "unit": "Pam^3/s",
-    "source": "Discussions with Chris Day and Yannick Hörstenmeyer",
+    "source": "Discussions with Chris Day and Yannick H\u00f6rstenmeyer",
     "description": "To maintain detachment - no chance of fusion from gas injection"
   },
   "m_s_limit": {
@@ -1133,6 +1263,11 @@
         "name": "q95",
         "recv": false,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "q95",
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1140,7 +1275,14 @@
     "name": "Control HCD power",
     "value": 50,
     "unit": "MW",
-    "source": "Input"
+    "source": "Input",
+    "mapping": {
+      "PLASMOD": {
+        "name": "q_control",
+        "recv": false,
+        "send": true
+      }
+    }
   },
   "r_ccs": {
     "name": "Outer radius of the central column shield",
@@ -1337,7 +1479,14 @@
     "name": "Plasma resistance",
     "value": 0,
     "unit": "Ohm",
-    "source": "Calculated"
+    "source": "Calculated",
+    "mapping": {
+      "PLASMOD": {
+        "name": "rplas",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "rs_l_d": {
     "name": "Radiation shield labyrinth delta",
@@ -1380,6 +1529,11 @@
     "mapping": {
       "PROCESS": {
         "name": "taueff",
+        "recv": true,
+        "send": false
+      },
+      "PLASMOD": {
+        "name": "tau_e",
         "recv": true,
         "send": false
       }
@@ -1560,13 +1714,27 @@
     "name": "Inboard first wall thickness",
     "value": 0.052,
     "unit": "m",
-    "source": "Input"
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "fwith",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "tk_fw_out": {
     "name": "Outboard first wall thickness",
     "value": 0.052,
     "unit": "m",
-    "source": "Input"
+    "source": "Input",
+    "mapping": {
+      "PROCESS": {
+        "name": "fwoth",
+        "recv": true,
+        "send": false
+      }
+    }
   },
   "tk_ib_ts": {
     "name": "Inboard TS thickness",
@@ -1921,6 +2089,11 @@
         "name": "vburn",
         "recv": true,
         "send": false
+      },
+      "PLASMOD": {
+        "name": "Vloop",
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1977,6 +2150,12 @@
   "xpt_outer_gap": {
     "name": "Gap between x-point and outer wall",
     "value": 2,
+    "unit": "m",
+    "source": "Input"
+  },
+  "z_0": {
+    "name": "Vertical offset of plasma centreline",
+    "value": 0,
     "unit": "m",
     "source": "Input"
   },

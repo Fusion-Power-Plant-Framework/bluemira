@@ -24,18 +24,19 @@ api for plotting using freecad
 """
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import copy
-from typing import List, Optional, Tuple, Union
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+
 import matplotlib.colors as colors
 
-import bluemira.geometry as geo
 from bluemira.codes import _freecadapi as cadapi
+from bluemira.display.error import DisplayError
+from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.display.plotter import DisplayOptions
 
-from .error import DisplayError
-from .plotter import DisplayOptions
-from .palettes import BLUE_PALETTE
-
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 DEFAULT_DISPLAY_OPTIONS = {
     "color": (0.5, 0.5, 0.5),
@@ -139,7 +140,7 @@ def _validate_display_inputs(parts, options):
 
 
 def show_cad(
-    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
     **kwargs,
 ):
@@ -148,7 +149,7 @@ def show_cad(
 
     Parameters
     ----------
-    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]]
+    parts: Union[BluemiraGeo, List[BluemiraGeo]]
         The parts to display.
     options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.
@@ -199,24 +200,37 @@ class ComponentDisplayer(BaseDisplayer):
     CAD displayer for Components
     """
 
-    def show_cad(self, comp, **kwargs):
+    def show_cad(
+        self,
+        comps,
+        **kwargs,
+    ):
         """
-        Display the CAD of a component
+        Display the CAD of a component or iterable of components
 
         Parameters
         ----------
-        comp:
-            Component to be displayed
+        comp: Union[Iterable[Component], Component]
+            Component, or iterable of Components, to be displayed
         """
+        import bluemira.base.components as bm_comp
+
         self._shapes = []
         self._options = []
-        if comp.is_leaf:
-            self._shapes.append(comp.shape)
-            self._options.append(comp.display_cad_options)
-        else:
-            for child in comp.children:
-                self._shapes.append(child.shape)
-                self._options.append(child.display_cad_options)
+
+        if not isinstance(comps, Iterable):
+            comps = [comps]
+
+        def populate_data(comp: bm_comp.Component):
+            if comp.is_leaf and isinstance(comp, bm_comp.PhysicalComponent):
+                self._shapes.append(comp.shape)
+                self._options.append(comp.display_cad_options)
+            else:
+                for child in comp.children:
+                    populate_data(child)
+
+        for comp in comps:
+            populate_data(comp)
         show_cad(self._shapes, self._options, **kwargs)
 
 

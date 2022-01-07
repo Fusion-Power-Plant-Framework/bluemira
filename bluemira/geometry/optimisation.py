@@ -24,9 +24,10 @@ Geometry optimisation classes and tools
 """
 
 import abc
-import numpy as np
-from bluemira.base.look_and_feel import bluemira_warn
 
+import numpy as np
+
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.utilities.optimiser import Optimiser
 

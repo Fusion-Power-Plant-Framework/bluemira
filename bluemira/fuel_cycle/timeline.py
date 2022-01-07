@@ -22,8 +22,9 @@
 """
 Partially randomised fusion reactor load signal object and tools
 """
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.fuel_cycle.timeline_tools import LogNormalAvailabilityStrategy
 
@@ -435,7 +436,6 @@ class Timeline:
         divdpa = [div_dmg_t[x - 2] for x in self.mci[:-1]]
         for j, i in enumerate(self.mci[:-1]):
             div_dmg_t[i:] = np.array([-divdpa[j] + self.ft[i:] * self.div_dmg])
-        div_dmg_t = div_dmg_t
         self.div_nfrac = div_dmg_t / self.div_dpa
         vv_dmg_t = self.vv_dmg * self.ft
         self.vv_nfrac = vv_dmg_t / self.vv_dpa

@@ -27,18 +27,20 @@ First wall example
 
 # %%
 import os
-import numpy as np
+
 import matplotlib.pyplot as plt
-from bluemira.display.auto_config import plot_defaults
+import numpy as np
+
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.boolean import (
-    boolean_2d_union,
-    boolean_2d_difference,
-    convex_hull,
-)
+from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.limiter import Limiter
+from BLUEPRINT.geometry.boolean import (
+    boolean_2d_difference,
+    boolean_2d_union,
+    convex_hull,
+)
+from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.nova.firstwall import Paneller
 
 plot_defaults()

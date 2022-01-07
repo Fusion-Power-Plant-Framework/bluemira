@@ -23,18 +23,19 @@
 CAD DRY mixin clases
 """
 import numpy as np
-from BLUEPRINT.geometry.loop import Loop
+
 from BLUEPRINT.cad.cadtools import (
-    make_compound,
-    extrude,
     boolean_cut,
     boolean_fuse,
-    revolve,
+    extrude,
+    make_compound,
     make_face,
     make_shell,
     make_vector,
+    revolve,
     sew_shapes,
 )
+from BLUEPRINT.geometry.loop import Loop
 
 
 class PlugChopper:
@@ -167,9 +168,3 @@ class OnionCAD:
         v = boolean_cut(v, vi)
         vv = v
         return vv, None
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

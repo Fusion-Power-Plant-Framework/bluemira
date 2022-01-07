@@ -1,1 +1,1 @@
-from .reactorCAD import ReactorCAD  # noqa (F401)
+from .reactorCAD import ReactorCAD  # noqa :F401

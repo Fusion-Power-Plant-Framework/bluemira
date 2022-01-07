@@ -23,18 +23,19 @@
 Aesthetic and ambiance functions.
 """
 
-import os
-import subprocess  # noqa (S404)
-import platform
-from getpass import getuser
-from textwrap import wrap, dedent
-import time
 import datetime
-import shutil
 import logging
+import os
+import platform
+import shutil
+import subprocess  # noqa :S404
+import time
+from getpass import getuser
+from textwrap import dedent, wrap
+
 from bluemira import __version__
-from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
-from bluemira.base.file import get_bluemira_root, get_bluemira_path
+from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import logger_setup
 
 LOGGER = logger_setup()
@@ -70,7 +71,7 @@ def get_git_version(directory):
     vinfo: bytes
         The git version bytestring
     """
-    return subprocess.check_output(  # noqa (S603, S607)
+    return subprocess.check_output(  # noqa :S603, S607
         ["git", "describe", "--tags", "--always"], cwd=directory
     ).strip()
 
@@ -89,7 +90,7 @@ def get_git_branch(directory):
     branch: str
         The git branch string
     """
-    out = subprocess.check_output(  # noqa (S603, S607)
+    out = subprocess.check_output(  # noqa :S603, S607
         ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=directory
     )
     return out.strip().decode("utf-8")
@@ -112,7 +113,7 @@ def get_git_files(directory, branch):
         The list of git-controlled path strings
     """
     return (
-        subprocess.check_output(  # noqa (S603, S607)
+        subprocess.check_output(  # noqa :S603, S607
             ["git", "ls-tree", "-r", branch, "--name-only"], cwd=directory
         )
         .decode("utf-8")
@@ -169,7 +170,6 @@ def count_slocs(
         lines[k] = 0
     files = get_git_files(directory, branch)
     for name in files:
-        name = name
         if name.split(os.sep)[-1] not in ignore and name not in ignore:
             for e in exts:
                 if name.endswith(e):
@@ -242,7 +242,7 @@ def _bm_print(string, width=73):
     return h + "\n" + "\n".join(lines) + "\n" + h
 
 
-def colourise(string, width=73, color="blue", end=None, flush=False):
+def colourise(string, width=73, color="blue"):
     """
     Print coloured, boxed text to the console. Default template for bluemira
     information.
@@ -253,12 +253,8 @@ def colourise(string, width=73, color="blue", end=None, flush=False):
         The string of text to colour and box
     width: int (default = 73)
         The width of the box (leave this alone for best results)
-    color: str from ['blue', 'red', 'green']
+    color: str from bluemira.base.constants.ANSI_COLOR
         The color to print the text in
-    end: str or None (default = None)
-        The value to print after the print operation
-    flush: bool (default=False)
-        As far as I can tell has no effect
     """
     text = _bm_print(string, width=width)
     color_text = _print_color(text, color)
@@ -324,6 +320,43 @@ def _bm_print_singleflush(string, width=73, color="blue"):
     return _print_color(text, color)
 
 
+def _bluemira_clean_flush(string, func=LOGGER.info):
+    """
+    Print and flush string. Useful for updating information.
+
+    Parameters
+    ----------
+    func: Callable[[str], None]
+        The function to use for logging, by default LOGGER.info
+    string: str
+        The string to colour flush print
+    """
+    _terminator_handler(func, "\r" + string, fhterm=logging.StreamHandler.terminator)
+
+
+def _terminator_handler(func, string, *, fhterm=""):
+    """
+    Log string allowing modification to handler terminator
+
+    Parameters
+    ----------
+    func: Callable[[str], None]
+        The function to use for logging (e.g LOGGER.info)
+    string: str
+        The string to colour flush print
+    fhterm: str
+        FileHandler Terminator
+    """
+    original_terminator = logging.StreamHandler.terminator
+    logging.StreamHandler.terminator = ""
+    logging.FileHandler.terminator = fhterm
+    try:
+        func(string)
+    finally:
+        logging.StreamHandler.terminator = original_terminator
+        logging.FileHandler.terminator = original_terminator
+
+
 def bluemira_print_flush(string):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
@@ -334,13 +367,48 @@ def bluemira_print_flush(string):
     string: str
         The string to colour flush print
     """
-    original_terminator = logging.StreamHandler.terminator
-    logging.StreamHandler.terminator = ""
-    logging.FileHandler.terminator = original_terminator
-    try:
-        LOGGER.info("\r" + _bm_print_singleflush(string))
-    finally:
-        logging.StreamHandler.terminator = original_terminator
+    _bluemira_clean_flush(_bm_print_singleflush(string), func=LOGGER.info)
+
+
+def bluemira_debug_flush(string):
+    """
+    Print a coloured, boxed line to the console and flushes it. Useful for
+    updating information when running at the debug logging level.
+
+    Parameters
+    ----------
+    string: str
+        The string to colour flush print for debug messages.
+    """
+    _bluemira_clean_flush(
+        _bm_print_singleflush(string, color="green"), func=LOGGER.debug
+    )
+
+
+def bluemira_print_clean(string):
+    """
+    Print to the logging info console with no modification.
+    Useful for external programs
+
+    Parameters
+    ----------
+    string: str
+        The string to print
+    """
+    _terminator_handler(LOGGER.info, string)
+
+
+def bluemira_error_clean(string):
+    """
+    Print to the logging error console, colouring the output red.
+    No other modification is made. Useful for external programs
+
+    Parameters
+    ----------
+    string: str
+        The string to colour print
+    """
+    _terminator_handler(LOGGER.error, _print_color(string, "red"))
 
 
 class BluemiraClock:
@@ -476,7 +544,7 @@ def user_banner():
     Returns
     -------
     s: str
-        The text for the banner containing user and plaform information
+        The text for the banner containing user and platform information
     """
     return [
         f"User       : {getuser()}",

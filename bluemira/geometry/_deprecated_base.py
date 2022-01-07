@@ -26,7 +26,8 @@ Base class and Plane object for use with Loop.
 import abc
 import json
 import os
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
+import warnings
 from collections.abc import Iterable
 from copy import deepcopy
 from typing import Union
@@ -76,11 +77,13 @@ class GeomBase(abc.ABC):
         """
         ext = os.path.splitext(filename)[-1]
         if ext == ".pkl":
-            raise DeprecationWarning(
-                "GeomBase objects should no longer be saved as pickle files."
+            warnings.warn(
+                "GeomBase objects should no longer be saved as pickle files.",
+                DeprecationWarning,
+                stacklevel=2,
             )
             with open(filename, "rb") as data:
-                return pickle.load(data)  # noqa (S301)
+                return pickle.load(data)  # noqa :S301
 
         elif ext == ".json":
             with open(filename, "r") as data:

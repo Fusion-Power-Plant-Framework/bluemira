@@ -23,16 +23,13 @@
 Tests for shape builders
 """
 
+import numpy as np
 import pytest
 
-import numpy as np
-from bluemira.base.components import PhysicalComponent
-
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
-
-from bluemira.builders.shapes import MakeParameterisedShape, MakeOptimisedShape
-
 import tests
+from bluemira.base.components import PhysicalComponent
+from bluemira.builders.shapes import MakeOptimisedShape, MakeParameterisedShape
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
 
 
 class TestMakeParameterisedShape:
@@ -131,6 +128,8 @@ class TestMakeOptimisedShape:
                 "dz": 0.0,
             },
             "problem_class": problem_class,
+            "algorithm_name": "SLSQP",
+            "opt_conditions": {"ftol_rel": 1e-6, "max_eval": 100},
             "label": "Shape",
         }
         builder = MakeOptimisedShape(params, build_config)

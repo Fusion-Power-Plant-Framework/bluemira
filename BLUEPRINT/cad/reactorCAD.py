@@ -23,16 +23,17 @@
 Reactor CAD model builder
 """
 from collections import OrderedDict
+
+from bluemira.base.look_and_feel import BluemiraClock, bluemira_print
+from BLUEPRINT.cad.blanketCAD import BlanketCAD
+from BLUEPRINT.cad.buildingCAD import RadiationCAD
+from BLUEPRINT.cad.coilCAD import CoilStructureCAD, CSCoilCAD, PFCoilCAD, TFCoilCAD
+from BLUEPRINT.cad.cryostatCAD import CryostatCAD
+from BLUEPRINT.cad.divertorCAD import DivertorCAD
 from BLUEPRINT.cad.model import CADModel
 from BLUEPRINT.cad.plasmaCAD import PlasmaCAD
-from BLUEPRINT.cad.blanketCAD import BlanketCAD
-from BLUEPRINT.cad.divertorCAD import DivertorCAD
-from BLUEPRINT.cad.coilCAD import TFCoilCAD, PFCoilCAD, CSCoilCAD, CoilStructureCAD
-from BLUEPRINT.cad.cryostatCAD import CryostatCAD
-from BLUEPRINT.cad.buildingCAD import RadiationCAD
-from BLUEPRINT.cad.vesselCAD import VesselCAD
 from BLUEPRINT.cad.shieldCAD import ThermalShieldCAD
-from bluemira.base.look_and_feel import bluemira_print, BluemiraClock
+from BLUEPRINT.cad.vesselCAD import VesselCAD
 
 
 class ReactorCAD(CADModel):
@@ -81,9 +82,3 @@ class ReactorCAD(CADModel):
             self.add_part(component())
             clock.tock()
         bluemira_print("CAD built in {:1.1f} seconds".format(clock.stop()))
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

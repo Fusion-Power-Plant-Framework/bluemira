@@ -22,8 +22,8 @@
 import numpy as np
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.utilities.optimiser import Optimiser
 from bluemira.geometry.parameterisations import TripleArc
+from bluemira.utilities.optimiser import Optimiser
 
 
 class TestOptimisationProblem(GeometryOptimisationProblem):

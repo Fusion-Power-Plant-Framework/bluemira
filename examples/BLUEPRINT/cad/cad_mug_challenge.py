@@ -26,17 +26,17 @@ A more advanced CAD tutorial to make a mug.
 
 
 import os
-from BLUEPRINT.cad.cadtools import (
-    make_circle,
-    make_axis,
-    revolve,
-    extrude,
-    boolean_fuse,
-    boolean_cut,
-    show_CAD,
-    save_as_STEP,
-)
 
+from BLUEPRINT.cad.cadtools import (
+    boolean_cut,
+    boolean_fuse,
+    extrude,
+    make_axis,
+    make_circle,
+    revolve,
+    save_as_STEP,
+    show_CAD,
+)
 
 # %%[markdown]
 # If you've completed the previous tutorial and played around a little making freeform
