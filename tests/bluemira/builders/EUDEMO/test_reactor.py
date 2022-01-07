@@ -87,11 +87,11 @@ class TestEUDEMO:
         reference_eq_vals = {}
         with open(reference_eq_path, "r") as fh:
             reference_eq_vals: dict = json.load(fh)
-        ref_lcfs = Coordinates(reference_eq_vals["xbdry"], reference_eq_vals["zbdry"])
+        ref_lcfs = Coordinates(
+            {"x": reference_eq_vals["xbdry"], "z": reference_eq_vals["zbdry"]}
+        )
 
-        lcfs = plasma_component.equilibrium.get_LCFS()
-        lcfs = Coordinates(lcfs.xyz)
-        assert np.isclose(ref_lcfs.area, lcfs.area, rtol=1e-3)
+        lcfs = Coordinates(plasma_component.equilibrium.get_LCFS().xyz)
         assert np.isclose(ref_lcfs.length, lcfs.length, rtol=1e-3)
         assert np.isclose(ref_lcfs.center_of_mass[0], lcfs.center_of_mass[0], rtol=1e-3)
 
