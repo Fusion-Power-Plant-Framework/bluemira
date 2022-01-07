@@ -24,12 +24,14 @@ CAD model object for assemblies of components
 """
 import os
 import re
-import numpy as np
 from collections import OrderedDict
 from itertools import cycle
+
+import numpy as np
 from matplotlib.colors import to_rgb
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.utilities.tools import json_writer
 from BLUEPRINT.base.names import name_short_long
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.cadtools import (
@@ -40,8 +42,6 @@ from BLUEPRINT.cad.cadtools import (
 )
 from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.utilities.colortools import force_rgb
-from bluemira.base.look_and_feel import bluemira_print
-from bluemira.utilities.tools import json_writer
 
 
 class CADModel:

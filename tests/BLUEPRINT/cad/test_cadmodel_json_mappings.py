@@ -1,14 +1,12 @@
-import os
 import filecmp
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.geomtools import circle_seg, make_box_xz
-from BLUEPRINT.cad.model import CADModel
-from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import (
-    make_face,
-    revolve,
-)
+import os
+
 from bluemira.base.file import get_bluemira_path
+from BLUEPRINT.cad.cadtools import make_face, revolve
+from BLUEPRINT.cad.component import ComponentCAD
+from BLUEPRINT.cad.model import CADModel
+from BLUEPRINT.geometry.geomtools import circle_seg, make_box_xz
+from BLUEPRINT.geometry.loop import Loop
 
 
 class DummyCAD(ComponentCAD):
