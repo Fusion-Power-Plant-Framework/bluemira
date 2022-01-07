@@ -36,6 +36,7 @@ from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.builders.EUDEMO.plasma import PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsComponent
+from bluemira.geometry.coordinates import Coordinates
 
 PARAMS_DIR = os.path.join(get_bluemira_root(), "tests", "bluemira", "builders", "EUDEMO")
 
@@ -86,16 +87,13 @@ class TestEUDEMO:
         reference_eq_vals = {}
         with open(reference_eq_path, "r") as fh:
             reference_eq_vals: dict = json.load(fh)
-        reference_eq_vals.pop("name")
+        ref_lcfs = Coordinates(reference_eq_vals["xbdry"], reference_eq_vals["zbdry"])
 
-        eq_dict = plasma_component.equilibrium.to_dict()
-        bad_attrs = []
-        attr: str
-        for attr, ref_val in reference_eq_vals.items():
-            if not np.allclose(eq_dict[attr], ref_val):
-                bad_attrs.append(attr)
-
-        assert len(bad_attrs) == 0, f"Attrs didn't match reference: {bad_attrs}"
+        lcfs = plasma_component.equilibrium.get_LCFS()
+        lcfs = Coordinates(lcfs.xyz)
+        assert np.isclose(ref_lcfs.area, lcfs.area, rtol=1e-3)
+        assert np.isclose(ref_lcfs.length, lcfs.length, rtol=1e-3)
+        assert np.isclose(ref_lcfs.center_of_mass[0], lcfs.center_of_mass[0], rtol=1e-3)
 
     def test_tf_build(self):
         """
