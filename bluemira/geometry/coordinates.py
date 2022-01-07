@@ -25,8 +25,8 @@ Utility for sets of coordinates
 
 from typing import Iterable
 
-import numpy as np
 import numba as nb
+import numpy as np
 from pyquaternion import Quaternion
 
 from bluemira.base.constants import EPS
@@ -309,6 +309,7 @@ def check_ccw(x, z):
     a = 0
     for n in range(len(x) - 1):
         a += (x[n + 1] - x[n]) * (z[n + 1] + z[n])
+    print(a)
     return a < 0
 
 
@@ -383,15 +384,11 @@ def get_centroid_2d(x, z):
     centroid: List[float]
         The x, z coordinates of the centroid [m]
     """
-    if not check_ccw(x, z):
-        x = np.ascontiguousarray(x[::-1])
-        z = np.ascontiguousarray(z[::-1])
-
-    area = get_area_2d(x, z)
+    area = abs(get_area_2d(x, z))
 
     cx, cz = 0, 0
     for i in range(len(x) - 1):
-        a = x[i] * z[i + 1] - x[i + 1] * z[i]
+        a = abs(x[i] * z[i + 1] - x[i + 1] * z[i])
         cx += (x[i] + x[i + 1]) * a
         cz += (z[i] + z[i + 1]) * a
 
