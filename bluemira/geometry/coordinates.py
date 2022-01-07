@@ -384,11 +384,14 @@ def get_centroid_2d(x, z):
     centroid: List[float]
         The x, z coordinates of the centroid [m]
     """
-    area = abs(get_area_2d(x, z))
+    if not check_ccw(x, z):
+        x = np.ascontiguousarray(x[::-1])
+        z = np.ascontiguousarray(z[::-1])
+    area = get_area_2d(x, z)
 
     cx, cz = 0, 0
     for i in range(len(x) - 1):
-        a = abs(x[i] * z[i + 1] - x[i + 1] * z[i])
+        a = x[i] * z[i + 1] - x[i + 1] * z[i]
         cx += (x[i] + x[i + 1]) * a
         cz += (z[i] + z[i + 1]) * a
 
@@ -443,9 +446,10 @@ def get_centroid_3d(x, y, z):
         elif len(args) == 1:
             return array[args[0][0]]
         else:
-            if not np.isclose(array[0], array[1]):
+            if all(np.isclose(array, 0)):
+                return 0
+            elif any(np.isclose(array, 0)):
                 # Occasionally the two c values are not the same, and one is 0
-                # Take non-trivial value (this works in the case of 2 zeros)
                 return array[np.argmax(np.abs(array))]
             else:
                 return array[0]

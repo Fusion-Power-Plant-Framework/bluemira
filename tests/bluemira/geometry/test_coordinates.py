@@ -24,7 +24,12 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from bluemira.geometry.coordinates import Coordinates, get_normal_vector, get_perimeter
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    get_centroid,
+    get_normal_vector,
+    get_perimeter,
+)
 from bluemira.geometry.error import CoordinatesError
 
 
@@ -94,6 +99,28 @@ class TestGetNormal:
                 get_normal_vector(
                     np.array(fail[0]), np.array(fail[1]), np.array(fail[2])
                 )
+
+
+class TestGetCentroid:
+    def test_simple(self):
+        x = [0, 2, 2, 0, 0]
+        y = [0, 0, 2, 2, 0]
+        xc, yc = get_centroid(x, y)
+        assert np.isclose(xc, 1)
+        assert np.isclose(yc, 1)
+        xc, yc = get_centroid(np.array(x[::-1]), np.array(y[::-1]))
+        assert np.isclose(xc, 1)
+        assert np.isclose(yc, 1)
+
+    def test_negative(self):
+        x = [0, -2, -2, 0, 0]
+        y = [0, 0, -2, -2, 0]
+        xc, yc = get_centroid(x, y)
+        assert np.isclose(xc, -1)
+        assert np.isclose(yc, -1)
+        xc, yc = get_centroid(np.array(x[::-1]), np.array(y[::-1]))
+        assert np.isclose(xc, -1)
+        assert np.isclose(yc, -1)
 
 
 class TestCoordinates:
