@@ -430,12 +430,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
-        bluemira_warn(f"Casing solid volume {case_solid.volume}")
-        bluemira_warn(f"Ins solid volume {outer_ins_solid.volume}")
         case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
-        bluemira_warn(f"Casing hollow volume {case_solid_hollow.volume}")
         self._make_cas_xz(case_solid_hollow)
-        self._debug = [case_solid, ins_solid, case_solid_hollow]
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
