@@ -38,5 +38,6 @@ The documentation is divided into the following sections:
    :caption: Developer Documentation
    :name: dev-docs
 
+   Configuring SSH keys <ssh>
    Bluemira Parameterisations <parameterisations>
    Module API Reference <autoapi/index>
