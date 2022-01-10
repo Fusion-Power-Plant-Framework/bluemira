@@ -188,7 +188,6 @@ def arguments():
         try:
             pop = [
                 __file__,
-                "examples/BLUEPRINT/convert_py_to_ipynb.py",
                 "examples/BLUEPRINT_integration.py",
             ]
             for file in pop:
