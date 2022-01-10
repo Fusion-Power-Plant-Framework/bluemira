@@ -32,6 +32,7 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 import json
 import os
 
+import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython import get_ipython
@@ -160,7 +161,7 @@ max_currents = coilset.get_max_currents(0)
 coilset.set_control_currents(max_currents, update_size=False)
 
 
-breakdown = Breakdown(coilset.copy(), grid, R_0=R_0)
+breakdown = Breakdown(deepcopy(coilset), grid, R_0=R_0)
 breakdown.set_breakdown_point(x_zone, z_zone)
 
 optimiser = BreakdownOptimiser(
@@ -208,7 +209,7 @@ profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 # %%
 
 sof = Equilibrium(
-    coilset.copy(),
+    deepcopy(coilset),
     grid,
     Ip=I_p / 1e6,
     li=l_i,

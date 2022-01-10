@@ -24,10 +24,9 @@ The Reactor God-object
 """
 import datetime
 import json
-
-# Standard imports
 import os
 import sys
+from copy import deepcopy
 from pathlib import Path, PosixPath
 from time import time
 from types import ModuleType
@@ -421,7 +420,7 @@ class Reactor(ReactorSystem):
             qpsi_calcmode=qpsi_calcmode,
         )
         self.EQ = a
-        self.eqref = a.eq.copy()
+        self.eqref = deepcopy(a.eq)
         self.analyse_equilibrium(self.eqref)
 
     def load_equilibrium(self, filename=None, reconstruct_jtor=False, qpsi_calcmode=0):

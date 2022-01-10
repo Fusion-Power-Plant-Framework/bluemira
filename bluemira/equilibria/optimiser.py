@@ -22,7 +22,7 @@
 """
 Constrained and unconstrained optimisation tools for coilset design
 """
-from copy import deepcopy
+
 from typing import Type
 
 import matplotlib.pyplot as plt
@@ -114,12 +114,6 @@ class EquilibriumOptimiser:
         self.n_PF, self.n_CS = eq.coilset.n_PF, eq.coilset.n_CS
         self.n_C = eq.coilset.n_coils
         return self.optimise()
-
-    def copy(self):
-        """
-        Get a deep copy of the EquilibriumOptimiser.
-        """
-        return deepcopy(self)
 
 
 class Norm2Tikhonov(EquilibriumOptimiser):
@@ -1075,12 +1069,6 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
         Update the current vector bounds. Must be called prior to optimise
         """
         self.I_max = max_currents / self.scale
-
-    def copy(self):
-        """
-        Get a deep copy of the BreakdownOptimiser.
-        """
-        return deepcopy(self)
 
 
 class CoilsetOptimiserBase:

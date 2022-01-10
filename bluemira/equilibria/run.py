@@ -102,22 +102,22 @@ class Snapshot:
         limiter=None,
         tfcoil=None,
     ):
-        self.eq = eq.copy()
-        self.coilset = coilset.copy()
+        self.eq = deepcopy(eq)
+        self.coilset = deepcopy(coilset)
         if constraints is not None:
-            self.constraints = constraints.copy()
+            self.constraints = deepcopy(constraints)
         else:
             self.constraints = None
         if profiles is not None:
-            self.profiles = profiles.copy()
+            self.profiles = deepcopy(profiles)
         else:
             self.profiles = None
         if limiter is not None:
-            self.limiter = limiter.copy()
+            self.limiter = deepcopy(limiter)
         else:
             self.limiter = None
         if optimiser is not None:
-            self.optimiser = optimiser.copy()
+            self.optimiser = deepcopy(optimiser)
         else:
             self.optimiser = None
         self.tf = tfcoil
@@ -233,7 +233,7 @@ class EquilibriumProblem:
         self.eq._remap_greens()
         if self.li is None:
             self.li = self.eq.calc_li()
-        return self.eq.copy()
+        return deepcopy(self.eq)
 
     def update_psi(self):
         """
@@ -509,7 +509,7 @@ class EquilibriumProblem:
             make_gif(figure_folder, "pos_opt")
 
         self._consolidate_coilset(
-            self.p_optimiser.eq.copy(), self.p_optimiser.swing, plot=plot
+            deepcopy(self.p_optimiser.eq), self.p_optimiser.swing, plot=plot
         )
 
         if "Breakdown" in self.snapshots:
@@ -538,7 +538,7 @@ class EquilibriumProblem:
         eqbase.coilset = self.coilset
         eqbase._remap_greens()
         # Make new equilibria objects for snapshots
-        optimiser = self.p_optimiser.current_optimiser.copy()
+        optimiser = deepcopy(self.p_optimiser.current_optimiser)
         # relaxation
         max_currents = np.append(
             1.0 * max_currents[: self.coilset.n_PF], max_currents[self.coilset.n_PF :]
@@ -561,7 +561,7 @@ class EquilibriumProblem:
                 name,
                 eq,
                 profiles=profiles,
-                coilset=eq.coilset.copy(),
+                coilset=deepcopy(eq.coilset),
                 optimiser=optimiser,
             )
 
@@ -571,7 +571,7 @@ class EquilibriumProblem:
         PF coil positions
         """
         bd = self.snapshots["Breakdown"].eq
-        bd.coilset = self.coilset.copy()
+        bd.coilset = deepcopy(self.coilset)
         optimiser = self.snapshots["Breakdown"].optimiser
 
         max_currents = self.coilset.get_max_currents(0)  # Sizes should all be fixed
@@ -673,13 +673,6 @@ class EquilibriumProblem:
         ddd = ddd[ddd["Coil / Constraint"] != "F_z_CS_tot"]
         print(tabulate.tabulate(ddd, headers=ddd.columns, showindex=False))
         return ddd
-
-    def copy(self):
-        """
-        Deepcopies an EquilibriumProblem object, returning a fully independent
-        copy, with independent values.
-        """
-        return deepcopy(self)
 
 
 class AbInitioEquilibriumProblem(EquilibriumProblem):

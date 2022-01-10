@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import os
+from copy import deepcopy
 from unittest.mock import MagicMock, patch
 
 import matplotlib.pyplot as plt
@@ -509,7 +510,7 @@ class TestScipyNLoptOptimiser:
         )
 
         grid = Grid(0.1, self.R_0 * 2, -1.5 * self.R_0, 1.5 * self.R_0, 100, 100)
-        bd = Breakdown(self.coilset.copy(), grid, psi=None, R_0=self.R_0)
+        bd = Breakdown(deepcopy(self.coilset), grid, psi=None, R_0=self.R_0)
 
         currents = optimiser(bd)
         bd.coilset.set_control_currents(currents)

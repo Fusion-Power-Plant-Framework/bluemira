@@ -23,7 +23,6 @@
 Plasma magnetic constraint objects and auto-generation tools
 """
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from dataclasses import dataclass
 from typing import List, Union
 
@@ -436,12 +435,6 @@ class MagneticConstraintSet(ABC):
             if isinstance(constraint, PsiBoundaryConstraint):
                 constraint.target_value = psi_bndry
         self.build_target()
-
-    def copy(self):
-        """
-        Get a deep copy of the MagneticConstraintSet instance.
-        """
-        return deepcopy(self)
 
     def plot(self, ax=None):
         """
