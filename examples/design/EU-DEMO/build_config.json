@@ -5,7 +5,7 @@
     "runmode": "read"
   },
   "Plasma": {
-    "runmode": "read"
+    "runmode": "run"
   },
   "TF Coils": {
     "runmode": "run",

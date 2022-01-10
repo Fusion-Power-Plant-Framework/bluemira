@@ -31,6 +31,7 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
@@ -386,6 +387,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         bb = boundary.bounding_box
         z_min = bb.z_min
         z_max = bb.z_max
+        y_in = 0.5 * (
+            self.params.tf_wp_depth + self.params.tk_tf_ins + self.params.tk_tf_side
+        )
 
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
@@ -426,8 +430,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
+        bluemira_warn(f"Casing solid volume {case_solid.volume}")
+        bluemira_warn(f"Ins solid volume {outer_ins_solid.volume}")
         case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
+        bluemira_warn(f"Casing hollow volume {case_solid_hollow.volume}")
         self._make_cas_xz(case_solid_hollow)
+        self._debug = [case_solid, ins_solid, case_solid_hollow]
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
@@ -537,7 +545,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         )
         wires.sort(key=lambda wire: wire.length)
         if len(wires) != 4:
-            raise BuilderError("Unexpected TF coil x-z cross-section.")
+            raise BuilderError(
+                "Unexpected TF coil x-z cross-section. It is likely that a previous"
+                "boolean cutting operation failed to create a hollow solid."
+            )
 
         inner = BluemiraFace([wires[1], wires[0]])
         outer = BluemiraFace([wires[3], wires[2]])
