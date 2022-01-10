@@ -150,8 +150,6 @@ class Inputs(PlasmodParameters):
     f_float = ff.FortranRecordWriter("a20, e17.9")
 
     def __init__(self, new_inputs=None):
-        super().__init__()
-
         self._options = self.get_default_plasmod_inputs()
 
         self.modify(new_inputs)
@@ -210,7 +208,6 @@ class Outputs(PlasmodParameters):
     """Class for Plasmod outputs"""
 
     def __init__(self):
-        super().__init__()
         self._options = self.get_default_plasmod_outputs()
 
     def get_default_plasmod_outputs(self):

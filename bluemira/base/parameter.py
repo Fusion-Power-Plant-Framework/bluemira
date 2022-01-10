@@ -514,18 +514,18 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         mapping_str = (
-            " {"
+            "\n    {"
             + ", ".join([repr(k) + ": " + str(v) for k, v in self.mapping.items()])
             + "}"
             if self.mapping is not None
             else ""
         )
         return (
-            f"{self.var}"
+            f"{self.name if self.name is not None else ''}"
+            f" [{self.unit if self.unit not in [None, 'N/A'] else '-'}]:"
+            f" {self.var}"
             f"{' = ' + str(self.value) if self.value is not None else ''}"
-            f"{' ' + self.unit if self.unit is not None else ''}"
-            f"{' (' + self.name + ')' if self.name is not None else ''}"
-            f"{' : ' + self.description if self.description is not None else ''}"
+            f"{'(' + self.description + ')' if self.description is not None else ''}"
             f"{mapping_str}"
         )
 
