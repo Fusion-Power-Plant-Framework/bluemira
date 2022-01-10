@@ -103,6 +103,24 @@ def py2nb(py_str):
     return nb_str
 
 
+def equal(orig, new):
+    """
+    Check ipynb strings are equal.
+    Ignore version string as long as using python 3
+    """
+    orig_check = orig.splitlines(keepends=True)
+    new_check = new.splitlines(keepends=True)
+
+    version_str = '"version": "3'
+
+    for old, new in zip(orig_check, new_check):
+        if old != new:
+            if not (version_str in old and version_str in new):
+                return True
+
+    return False
+
+
 def convert(path, check):
     """
     Convert file to ipynb.
@@ -129,7 +147,7 @@ def convert(path, check):
 
         nb_json = json.dumps(nb_str, indent=2) + "\n"
 
-        if not check or orig_nb_json != nb_json:
+        if not check or equal(orig_nb_json, nb_json):
             with open(name + ".ipynb", "w") as nb_fh:
                 nb_fh.write(nb_json)
             return ipynb + " UPDATED"
