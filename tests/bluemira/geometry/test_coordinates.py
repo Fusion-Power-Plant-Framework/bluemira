@@ -325,6 +325,7 @@ class TestCoordinates:
         c.reverse()
         assert not c.check_ccw(axis=[0, 1, 0])
 
+    @pytest.mark.xfail
     def test_complicated(self):
         xyz = trace_torus_orbit(5, 1, 10, 999)
         c = Coordinates(xyz)

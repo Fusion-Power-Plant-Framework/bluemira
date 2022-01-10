@@ -309,7 +309,6 @@ def check_ccw(x, z):
     a = 0
     for n in range(len(x) - 1):
         a += (x[n + 1] - x[n]) * (z[n + 1] + z[n])
-    print(a)
     return a < 0
 
 
