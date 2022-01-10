@@ -37,8 +37,8 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
+from bluemira.geometry.coordinates import _validate_coordinates, get_area
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.coordinates import get_area, _validate_coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import flatten_iterable
