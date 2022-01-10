@@ -36,7 +36,7 @@ from bluemira.base.logs import set_log_level
 # # Configuring the PLASMOD solver
 
 # PLASMOD is one of the codes bluemira can use to compliment a reactor design.
-# As with any of the external codes bluemira can use, a solver object is created.
+# As with any of the external codes bluemira uses, a solver object is created.
 # The solver object abstracts away most of the complexities of running different
 # programs within bluemira.
 
@@ -62,7 +62,7 @@ binary = f"{PLASMOD_PATH}plasmod"
 
 # %%[markdown]
 # ### Creating the solver object
-# bluemira-plasmod have been mapped across where possible.
+# bluemira-plasmod parameter names have been mapped across where possible.
 # Some example parameters have been set here in `new_params`
 # before being converted into a bluemira configuration store.
 #
@@ -109,7 +109,7 @@ problem_settings = {
 }
 
 # %%[markdown]
-# There is also some model choices that can be set in `problem_settings`.
+# There are also some model choices that can be set in `problem_settings`.
 # The available models with their options and explanations
 # can be seen by running the below snippet.
 
@@ -141,9 +141,9 @@ plasmod_solver = plasmod.Solver(
 )
 
 # %%[markdown]
-# These few functions are helpers to simplify the remainder of the tutorial
+# These few functions are helpers to simplify the remainder of the tutorial.
 # The first shows a few of the output scalar values and the second plots a
-# given profile
+# given profile.
 
 # %%
 
@@ -206,7 +206,7 @@ plasmod_solver.run()
 # 3. Unlinked plasmod parameters can be accessed through the
 #    `get_scalar` function
 #
-# The list of available profiles can be seen by running the below cell,
+# The list of available profiles can be seen by running the below cell.
 # A good exercise would be to try showing a different profile in the plot.
 
 # %%
