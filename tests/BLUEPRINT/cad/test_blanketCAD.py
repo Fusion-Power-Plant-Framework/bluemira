@@ -19,15 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
-
 from numpy import pi
 
 from bluemira.base.parameter import ParameterFrame
-
 from BLUEPRINT.cad.blanketCAD import STBlanketCAD
 from BLUEPRINT.geometry.geomtools import make_box_xz
 from BLUEPRINT.systems.blanket import STBreedingBlanket
-
 from tests.BLUEPRINT.cad.test_firstwallCAD import check_cad
 
 

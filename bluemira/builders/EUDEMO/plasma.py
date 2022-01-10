@@ -48,12 +48,7 @@ from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.tools import (
-    make_circle,
-    make_polygon,
-    offset_wire,
-    revolve_shape,
-)
+from bluemira.geometry.tools import make_circle, make_polygon, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -159,7 +154,7 @@ class PlasmaBuilder(Builder):
         bluemira_print("Running Plasma equilibrium design problem")
         eq = self._create_equilibrium()
         self._analyse_equilibrium(eq)
-        self._boundary = make_polygon(eq.get_LCFS().xyz.T, "LCFS")
+        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
         return {"equilibrium": eq}
 
     def read(self):
@@ -169,7 +164,7 @@ class PlasmaBuilder(Builder):
         bluemira_print("Reading Plasma equilibrium design problem")
         eq = self._read_equilibrium()
         self._analyse_equilibrium(eq)
-        self._boundary = make_polygon(eq.get_LCFS().xyz.T, "LCFS")
+        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
         return {"equilibrium": eq}
 
     def mock(self):
@@ -245,7 +240,7 @@ class PlasmaBuilder(Builder):
 
         # TODO: Avoid converting to (deprecated) Loop
         # TODO: Agree on numpy array dimensionality
-        x, z = flatten_shape(*tf_boundary.discretize(200, byedges=True).T[[0, 2]])
+        x, z = flatten_shape(*tf_boundary.discretize(200, byedges=True).xz)
         tf_boundary = Loop(x=x, z=z)
 
         profile = None
@@ -379,7 +374,7 @@ class PlasmaBuilder(Builder):
 
         if equilibrium is not None:
             sep_loop = equilibrium.get_separatrix()
-            sep_wire = make_polygon(sep_loop.xyz.T, label="Separatrix")
+            sep_wire = make_polygon(sep_loop.xyz, label="Separatrix")
             sep_component = PhysicalComponent("Separatrix", sep_wire)
             sep_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]
             component.add_child(sep_component)

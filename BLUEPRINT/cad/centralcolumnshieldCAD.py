@@ -23,8 +23,8 @@
 Central column shield CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.cadtools import make_face, revolve, rotate_shape
+from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.geometry.loop import Loop
 
 

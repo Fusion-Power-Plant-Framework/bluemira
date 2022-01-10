@@ -24,10 +24,7 @@ A script to rebuild the example CLI inputs. Builds an EU-DEMO-like single null t
 fusion power reactor and saves the input JSON files to rebuild using the CLI.
 """
 from bluemira.base.file import get_bluemira_root
-from examples.EUDEMO import SingleNullReactor
-from examples.EUDEMO import config
-from examples.EUDEMO import build_config
-from examples.EUDEMO import build_tweaks
+from examples.EUDEMO import SingleNullReactor, build_config, build_tweaks, config
 
 R = SingleNullReactor(config, build_config, build_tweaks)
 R.config_to_json(f"{get_bluemira_root()}/examples/cli/indir/")

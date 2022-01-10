@@ -22,17 +22,18 @@
 Simple CAD objects for testing OCC CAD display.
 """
 
-# %%
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.cad.cadtools import (
+    extrude,
+    make_axis,
     make_face,
     make_shell,
     revolve,
-    make_axis,
-    extrude,
     show_CAD,
 )
+
+# %%
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
 
 # %%[markdown]
 # # Make Some CAD

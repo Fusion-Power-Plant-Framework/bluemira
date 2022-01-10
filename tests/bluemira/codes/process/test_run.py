@@ -19,17 +19,17 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import pathlib
 import shutil
 import tempfile
 from typing import Dict
 from unittest.mock import patch
 
-from bluemira.base.builder import BuildConfig
-from bluemira.codes.process.constants import NAME as PROCESS
-from bluemira.codes.process import Solver, PROCESS_ENABLED
+import pytest
 
+from bluemira.base.builder import BuildConfig
+from bluemira.codes.process import PROCESS_ENABLED, Solver
+from bluemira.codes.process.constants import NAME as PROCESS
 from tests.bluemira.codes.process import (
     FRAME_LIST,
     INDIR,

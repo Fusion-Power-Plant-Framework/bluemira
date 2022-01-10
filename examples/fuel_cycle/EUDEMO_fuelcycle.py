@@ -23,21 +23,21 @@
 A typical fuel cycle result for an EU-DEMO reference point
 """
 
-from bluemira.display.auto_config import plot_defaults
 from bluemira.base.parameter import ParameterFrame
-from bluemira.utilities.tools import set_random_seed
-from bluemira.fuel_cycle.lifecycle import LifeCycle
-from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+from bluemira.display.auto_config import plot_defaults
 from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
+from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+from bluemira.fuel_cycle.lifecycle import LifeCycle
+from bluemira.fuel_cycle.timeline_tools import (
+    GompertzLearningStrategy,
+    LogNormalAvailabilityStrategy,
+)
 from bluemira.fuel_cycle.tools import (
     convert_flux_to_flow,
     n_DD_reactions,
     n_DT_reactions,
 )
-from bluemira.fuel_cycle.timeline_tools import (
-    LogNormalAvailabilityStrategy,
-    GompertzLearningStrategy,
-)
+from bluemira.utilities.tools import set_random_seed
 
 plot_defaults()
 

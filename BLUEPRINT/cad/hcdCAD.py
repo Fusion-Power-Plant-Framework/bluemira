@@ -23,8 +23,8 @@
 HCD CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
+from BLUEPRINT.cad.cadtools import make_axis, make_face, revolve
 from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import make_face, make_axis, revolve
 
 
 class NBIoCAD(ComponentCAD):

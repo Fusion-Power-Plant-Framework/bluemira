@@ -23,25 +23,26 @@
 A collection of Boolean operations, wrapping ClipperLib
 """
 import numpy as np
-from scipy.spatial import ConvexHull
 from pyclipper import (
-    Pyclipper,
+    CT_DIFFERENCE,
+    CT_INTERSECTION,
+    CT_UNION,
+    PFT_EVENODD,
     PT_CLIP,
     PT_SUBJECT,
-    PFT_EVENODD,
-    CT_INTERSECTION,
-    CT_DIFFERENCE,
-    CT_UNION,
-    SimplifyPolygon,
     CleanPolygon,
     PolyTreeToPaths,
+    Pyclipper,
     PyPolyNode,
+    SimplifyPolygon,
     scale_from_clipper,
     scale_to_clipper,
 )
+from scipy.spatial import ConvexHull
+
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.loop import Loop
-from bluemira.base.look_and_feel import bluemira_warn
 
 
 def loop_to_pyclippath(loop):

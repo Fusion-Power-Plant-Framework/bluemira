@@ -23,15 +23,18 @@
 Generic plot utilities, figure and gif operations
 """
 import os
-import numpy as np
+
 import imageio
 import matplotlib.pyplot as plt
-from matplotlib.path import Path
+import numpy as np
 from matplotlib.patches import Patch, PathPatch
-from mpl_toolkits.mplot3d.art3d import PathPatch3D
+from matplotlib.path import Path
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from scipy.interpolate import interp1d
+
 from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.coordinates import rotation_matrix_v1v2
 
 
 def makegif(folder, figname, formatt="png", clean=True):
@@ -221,24 +224,4 @@ class BPPathPatch3D(PathPatch3D):
         """
         Get a rotation matrix based off two vectors.
         """
-        v1 /= np.linalg.norm(v1)
-        v2 /= np.linalg.norm(v2)
-
-        cos_angle = np.dot(v1, v2)
-        d = np.cross(v1, v2)
-        sin_angle = np.linalg.norm(d)
-
-        if sin_angle == 0:
-            matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
-        else:
-            d /= sin_angle
-
-            eye = np.eye(3)
-            ddt = np.outer(d, d)
-            skew = np.array(
-                [[0, d[2], -d[1]], [-d[2], 0, d[0]], [d[1], -d[0], 0]], dtype=np.float64
-            )
-
-            matrix = ddt + cos_angle * (eye - ddt) + sin_angle * skew
-
-        return matrix
+        return rotation_matrix_v1v2(v1, v2)

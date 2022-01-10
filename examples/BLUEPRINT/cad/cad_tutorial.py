@@ -34,20 +34,21 @@ Feel free to change parameters!
 
 # %%
 import os
+
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.cad.cadtools import (
-    make_face,
-    make_circle,
-    make_axis,
-    revolve,
-    extrude,
-    translate_shape,
-    boolean_fuse,
     boolean_cut,
-    show_CAD,
+    boolean_fuse,
+    extrude,
+    make_axis,
+    make_circle,
+    make_face,
+    revolve,
     save_as_STEP,
+    show_CAD,
+    translate_shape,
 )
+from BLUEPRINT.geometry.loop import Loop
 
 # %%[markdown]
 # Let's say you want to make some 3-D shapes to impress your boss.

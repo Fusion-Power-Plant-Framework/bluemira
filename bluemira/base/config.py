@@ -22,8 +22,8 @@
 """
 Configuration classes
 """
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.config_schema import ConfigurationSchema
+from bluemira.base.parameter import ParameterFrame
 
 
 class Configuration(ConfigurationSchema, ParameterFrame):

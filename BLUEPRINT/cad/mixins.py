@@ -23,18 +23,19 @@
 CAD DRY mixin clases
 """
 import numpy as np
-from BLUEPRINT.geometry.loop import Loop
+
 from BLUEPRINT.cad.cadtools import (
-    make_compound,
-    extrude,
     boolean_cut,
     boolean_fuse,
-    revolve,
+    extrude,
+    make_compound,
     make_face,
     make_shell,
     make_vector,
+    revolve,
     sew_shapes,
 )
+from BLUEPRINT.geometry.loop import Loop
 
 
 class PlugChopper:

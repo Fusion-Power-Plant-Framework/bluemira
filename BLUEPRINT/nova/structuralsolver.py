@@ -27,27 +27,26 @@ An attempt at including structural constraints in TF coil optimisations..
 import numpy as np
 
 from bluemira.geometry._deprecated_tools import get_intersect
-
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
 from bluemira.geometry.constants import VERY_BIG
+from BLUEPRINT.beams.crosssection import (
+    AnalyticalShellComposite,
+    CircularHollowBeam,
+    CompositeCrossSection,
+    MultiCrossSection,
+    RectangularBeam,
+)
+from BLUEPRINT.beams.material import CastEC1, ForgedJJ1, ForgedSS316LN, Material
+from BLUEPRINT.beams.model import FiniteElementModel
+from BLUEPRINT.beams.node import get_midpoint
+from BLUEPRINT.beams.transformation import cyclic_pattern
 from BLUEPRINT.geometry.geomtools import (
     circle_seg,
+    get_angle_between_vectors,
     qrotate,
     rotate_matrix,
-    get_angle_between_vectors,
 )
-from BLUEPRINT.beams.node import get_midpoint
-from BLUEPRINT.beams.model import FiniteElementModel
-from BLUEPRINT.beams.material import Material, ForgedJJ1, ForgedSS316LN, CastEC1
-from BLUEPRINT.beams.crosssection import (
-    CompositeCrossSection,
-    CircularHollowBeam,
-    RectangularBeam,
-    AnalyticalShellComposite,
-    MultiCrossSection,
-)
-from BLUEPRINT.beams.transformation import cyclic_pattern
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
 
 FORGED_JJ1 = ForgedJJ1()
 FORGED_SS316_LN = ForgedSS316LN()

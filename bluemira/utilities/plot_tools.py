@@ -24,21 +24,21 @@ A collection of plotting tools.
 """
 
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-from matplotlib.patches import Patch, PathPatch
-from mpl_toolkits.mplot3d.art3d import PathPatch3D
-from mpl_toolkits.mplot3d import Axes3D
-import imageio
 from typing import Union
 
-from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
-from bluemira.base.components import Component
-from bluemira.base.file import get_bluemira_path
-import bluemira.display.error as bm_display_error
-from bluemira.geometry.plane import BluemiraPlane
+import imageio
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Patch, PathPatch
+from matplotlib.path import Path
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
+import bluemira.display.error as bm_display_error
+from bluemira.base.components import Component
+from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.plane import BluemiraPlane
 
 __all__ = [
     "str_to_latex",

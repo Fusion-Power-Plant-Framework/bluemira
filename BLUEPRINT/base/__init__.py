@@ -1,5 +1,10 @@
 # flake8: noqa
-from bluemira.base.look_and_feel import bluemira_print, print_banner, bluemira_warn
-from bluemira.base.file import make_bluemira_path, FileManager, SUB_DIRS
-from bluemira.base.file import get_files_by_ext
+from bluemira.base.file import (
+    SUB_DIRS,
+    FileManager,
+    get_files_by_ext,
+    make_bluemira_path,
+)
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn, print_banner
+
 from .palettes import BLUE
