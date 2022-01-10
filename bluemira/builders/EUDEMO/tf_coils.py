@@ -31,7 +31,6 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
