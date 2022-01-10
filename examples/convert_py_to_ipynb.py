@@ -121,7 +121,7 @@ def equal(orig, new):
     return False
 
 
-def convert(path, check):
+def convert(path, check, ci):
     """
     Convert file to ipynb.
 
@@ -148,9 +148,12 @@ def convert(path, check):
         nb_json = json.dumps(nb_str, indent=2) + "\n"
 
         if not check or equal(orig_nb_json, nb_json):
-            with open(name + ".ipynb", "w") as nb_fh:
-                nb_fh.write(nb_json)
-            return ipynb + " UPDATED"
+            if ci:
+                return ipynb + " NEEDS UPDATE"
+            else:
+                with open(name + ".ipynb", "w") as nb_fh:
+                    nb_fh.write(nb_json)
+                return ipynb + " UPDATED"
     else:
         return path + " No markdown comments"
 
@@ -168,32 +171,40 @@ def arguments():
         "--check", action="store_true", default=False, help="precommit difference check"
     )
     parser.add_argument(
+        "--ci", action="store_true", default=False, help="dont make changes for CI"
+    )
+    parser.add_argument(
         "files",
         metavar="files",
         type=str,
-        default=None,
-        nargs="+",
+        default=[],
+        nargs="*",
         help="python files to be converted",
     )
 
     args = parser.parse_args()
-
-    if args.files is None and not args.check:
+    if args.files == [] and not args.check:
         files = list(glob.glob(f"{os.path.dirname(__file__)}/**/*.py", recursive=True))
         try:
-            files.pop(files.index(__file__))
+            pop = [
+                __file__,
+                "examples/BLUEPRINT/convert_py_to_ipynb.py",
+                "examples/BLUEPRINT_integration.py",
+            ]
+            for file in pop:
+                files.pop(files.index(file))
         except ValueError:
             pass
     else:
         files = args.files
 
-    return files, args.check
+    return files, args.check, args.ci
 
 
-files, check = arguments()
+files, check, ci = arguments()
 updated = []
 for file in files:
-    update = convert(file, check)
+    update = convert(file, check, ci)
     if update is not None:
         updated.append(update)
 
