@@ -7,14 +7,17 @@ Coordinate convention
 ``Bluemira`` uses a conventional right-handed Cartesian coordinate convention for all geometry.
 
 Occasionally, for certain modules and calculations, a quasi-toroidal coordinate system and a
-cylindrical coordinate system are used. Note that to facilitate conversion between, the
-the radial coordinate in the cylindrical coordinate system are denoted with :math:`x` and not
-:math:`r` for the radial coordinate.
+cylindrical coordinate system are used. Note that to facilitate conversion between the
+systems, the radial coordinate in the cylindrical coordinate system is denoted with
+:math:`x` and not :math:`r`.
 
 .. figure:: coordinate_systems.png
     :name: fig:coordinates
 
-    The three different coordinate systems used in the ``bluemira`` framework: right-handed Cartesian coordinate system (:math:`x, y, z`, black), quasi-toroidal coordinate system (:math:`r, \theta, \phi`, red), and cylindrical coordinate system (:math:`x, \phi, z`, blue).
+    The three different coordinate systems used in the ``bluemira`` framework: right-handed
+    Cartesian coordinate system (:math:`x, y, z`, black), quasi-toroidal coordinate
+    system (:math:`r, \theta, \phi`, red), and cylindrical coordinate system
+    (:math:`x, \phi, z`, blue).
 
 Unit convention
 ^^^^^^^^^^^^^^^
@@ -59,5 +62,3 @@ with only minor deviations. As a summary, all inputs to the code should be in th
    * - flux density
      - particles per square metre per second
      - [1/m^2/s]
-
-
