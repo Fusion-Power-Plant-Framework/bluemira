@@ -29,7 +29,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import BuildConfig, Builder
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
@@ -61,6 +61,10 @@ class ThermalShieldBuilder(Builder):
     ]
 
     def reinitialise(self, params, **kwargs) -> None:
+        """
+        Initialise the state of this builder ready for a new run.
+        """
+        # Seems we need to override this so it isn't an abstract method
         return super().reinitialise(params, **kwargs)
 
     def build(
@@ -82,8 +86,8 @@ class ThermalShieldBuilder(Builder):
 
         component = Component(name=label)
         component.add_child(self.build_xz())
-        # component.add_child(self.build_xy())
-        # component.add_child(self.build_xyz())
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
         return component
 
     def build_xz(self):
@@ -178,8 +182,12 @@ class ThermalShieldBuilder(Builder):
         # Cryostat thermal shield
         component = Component("xyz")
         cts_face = self._cts_face.deepcopy()
-        cts_face.rotate(degree=-180 / self.params.n_TF)
-        cts = revolve_shape(cts_face, degree=360 / self.params.n_TF)
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        cts_face.rotate(base=base, direction=direction, degree=-180 / self.params.n_TF)
+        cts = revolve_shape(
+            cts_face, base=base, direction=direction, degree=360 / self.params.n_TF
+        )
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
         sectors = circular_pattern_component(cryostat_ts, self._params.n_TF.value)
