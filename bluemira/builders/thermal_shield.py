@@ -35,6 +35,7 @@ from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
+    boolean_cut,
     boolean_fuse,
     make_polygon,
     offset_wire,
