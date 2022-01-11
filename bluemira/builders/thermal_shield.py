@@ -99,7 +99,7 @@ class ThermalShieldBuilder(Builder):
             x.append(xc + dx)
             z.append(zc + z_sign * dz)
 
-        # Project extrema slightly beyond axis (might be bad for NT) - will get clipped later
+        # Project extrema slightly beyond axis (might be bad for NT) - will get cut later
         x.extend([-0.5, -0.5])  # [m]
         z.extend([np.min(z), np.max(z)])
 
