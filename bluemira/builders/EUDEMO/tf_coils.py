@@ -30,12 +30,14 @@ import numpy as np
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
+from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -43,6 +45,7 @@ from bluemira.geometry.tools import (
     extrude_shape,
     make_polygon,
     offset_wire,
+    slice_shape,
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
@@ -204,9 +207,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         field_solver = self._make_field_solver()
         component = TFCoilsComponent(self.name, field_solver=field_solver)
 
-        component.add_child(self.build_xz())
         component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
+        component.add_child(self.build_xz())
         return component
 
     def build_xz(self) -> Component:
@@ -241,8 +244,13 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.add_child(insulation)
 
         # Casing
-        # TODO: Either via section of 3-D or some varied thickness offset that we can't
-        # really do with primitives
+        cas_inner, cas_outer = self._temp_casing
+        cas_inner = PhysicalComponent("inner", cas_inner)
+        cas_inner.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
+        cas_outer = PhysicalComponent("outer", cas_outer)
+        cas_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
+        casing = Component("Casing", children=[cas_inner, cas_outer])
+        component.add_child(casing)
 
         bm_plot_tools.set_component_plane(component, "xz")
 
@@ -369,17 +377,18 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self._centreline
         )
 
-        # Christ, need offset or bounding_box or section_shape, can't trust any atm.
-        # The bounding box of the solid is much bigger than I'd expect
-        bb = solid.bounding_box
+        # This is because the bounding box of a solid is not to be trusted
+        cut_wires = slice_shape(
+            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+        )
+        cut_wires.sort(key=lambda wire: wire.length)
+        boundary = cut_wires[-1]
+        bb = boundary.bounding_box
         z_min = bb.z_min
         z_max = bb.z_max
-        f_guess = 0.8  # Because bounding box is unreliable
-        est_tk = 0.5 * self.params.tf_wp_width + f_guess * 0.5 * (
-            self.params.tk_tf_nose + self.params.tk_tf_front_ib
+        y_in = 0.5 * (
+            self.params.tf_wp_depth + self.params.tk_tf_ins + self.params.tk_tf_side
         )
-        z_min = z_min_cl - est_tk
-        z_max = z_max_cl + est_tk
 
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
@@ -421,6 +430,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
         case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
+        self._make_cas_xz(case_solid_hollow)
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
@@ -520,3 +530,21 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         x_out = self._centreline.bounding_box.x_max
         outboard_wire.translate((x_out, 0, 0))
         return inboard_wire, outboard_wire
+
+    def _make_cas_xz(self, solid):
+        """
+        Make the casing x-z cross-section from a 3-D volume.
+        """
+        wires = slice_shape(
+            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+        )
+        wires.sort(key=lambda wire: wire.length)
+        if len(wires) != 4:
+            raise BuilderError(
+                "Unexpected TF coil x-z cross-section. It is likely that a previous"
+                "boolean cutting operation failed to create a hollow solid."
+            )
+
+        inner = BluemiraFace([wires[1], wires[0]])
+        outer = BluemiraFace([wires[3], wires[2]])
+        self._temp_casing = [inner, outer]
