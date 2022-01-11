@@ -31,9 +31,15 @@ from scipy.spatial import ConvexHull
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import boolean_fuse, make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    boolean_fuse,
+    make_polygon,
+    offset_wire,
+    revolve_shape,
+)
 
 
 class ThermalShieldBuilder(Builder):
@@ -46,6 +52,7 @@ class ThermalShieldBuilder(Builder):
         "g_ts_pf",
         "g_ts_tf",
         "g_vv_ts",
+        "n_TF",
     ]
 
     def run(self, pf_coils_xz_kozs, tf_xz_koz=None, vv_xz_koz=None):
@@ -99,6 +106,7 @@ class ThermalShieldBuilder(Builder):
         # TODO: Add boolean union of TF exclusion zone
 
         cts = BluemiraFace(wire)
+        self._cts_face = cts
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
@@ -124,9 +132,13 @@ class ThermalShieldBuilder(Builder):
         Build the x-y-z components of the thermal shield.
         """
         # Cryostat thermal shield
-        cts = None
+        component = Component("xyz")
+        cts_face = self._cts_face.deepcopy()
+        cts_face.rotate(degree=-180 / self.params.n_TF)
+        cts = revolve_shape(cts_face, degree=360 / self.params.n_TF)
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
+        sectors = circular_pattern_component(cryostat_ts, self._params.n_TF.value)
+        component.add_children(sectors, merge_trees=True)
 
-        component = Component("xyz", children=[cts])
         return component
