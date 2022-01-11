@@ -28,6 +28,7 @@ from typing import Dict, Optional, Type
 from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.shapes import ParameterisedShapeBuilder
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle, revolve_shape
@@ -94,6 +95,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         # TODO: Specify a palette so that the plotting options are set up here.
         face = BluemiraFace(self._boundary, label)
         component = PhysicalComponent("LCFS", face)
+        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
         return Component("xz").add_child(component)
 
@@ -121,6 +123,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
         face = BluemiraFace([outer, inner], label)
         component = PhysicalComponent(label, face)
+        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
         return Component("xy").add_child(component)
 
@@ -149,11 +152,11 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         result: PhysicalComponent
             The resulting component.
         """
-        # TODO: Specify a palette so that the CAD display options are set up here.
         if segment_angle is None:
             segment_angle = self._segment_angle
 
         shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=segment_angle)
         component = PhysicalComponent(label, shell)
+        component.display_cad_options.color = BLUE_PALETTE["PL"]
 
         return Component("xyz").add_child(component)
