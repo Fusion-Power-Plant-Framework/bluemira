@@ -82,8 +82,8 @@ class ThermalShieldBuilder(Builder):
 
         component = Component(name=label)
         component.add_child(self.build_xz())
-        component.add_child(self.build_xy())
-        component.add_child(self.build_xyz())
+        # component.add_child(self.build_xy())
+        # component.add_child(self.build_xyz())
         return component
 
     def build_xz(self):
@@ -128,8 +128,9 @@ class ThermalShieldBuilder(Builder):
                 [BluemiraFace(pf_o_wire), BluemiraFace(tf_o_wire)]
             ).boundary[0]
         except GeometryError:
+            # TODO: boolean_fuse probably shouldn't throw an error here...
             # the TF offset face is probably enclosed by the PF offset face
-            cts_inner = BluemiraFace(pf_o_wire)
+            cts_inner = pf_o_wire
 
         cts_outer = offset_wire(cts_inner, self.params.tk_ts)
         cts_face = BluemiraFace([cts_outer, cts_inner])
@@ -145,7 +146,7 @@ class ThermalShieldBuilder(Builder):
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
-        component = Component("xz", children=[cts])
+        component = Component("xz", children=[cryostat_ts])
         bm_plot_tools.set_component_plane(component, "xz")
         return component
 
@@ -155,8 +156,8 @@ class ThermalShieldBuilder(Builder):
         """
         # Cryostat thermal shield
         mid_plane = BluemiraPlane()
-        intersections = slice_shape(self._cts_face, mid_plane)
-        r_values = np.array(intersections)[0, :]
+        intersections = slice_shape(self._cts_face.boundary[0], mid_plane)
+        r_values = np.array(intersections)[:, 0]
         r_in = np.min(r_values)
         r_out = np.max(r_values)
         inner = make_circle(radius=r_in)
@@ -166,7 +167,7 @@ class ThermalShieldBuilder(Builder):
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
 
-        component = Component("xy", children=[cts])
+        component = Component("xy", children=[cryostat_ts])
         bm_plot_tools.set_component_plane(component, "xy")
         return component
 
