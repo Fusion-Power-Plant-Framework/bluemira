@@ -918,7 +918,7 @@
   },
   "r_pf_corner": {
     "name": "Corner radius of the PF coil winding pack",
-    "value": 0.05, 
+    "value": 0.05,
     "unit": "m",
     "source": "Input"
   },
