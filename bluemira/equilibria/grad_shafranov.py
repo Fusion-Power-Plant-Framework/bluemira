@@ -79,7 +79,7 @@ class GSOperator:
         """
         d_x = (self.x_max - self.x_min) / (nx - 1)
         d_z = (self.z_max - self.z_min) / (nz - 1)
-        x = linspace(self.x_min, self.x_max, nx) + 0.5 * d_x  # centroids
+        x = linspace(self.x_min, self.x_max, nx)  # + 0.5 * d_x  # centroids
         inv_dx_2, inv_dz_2 = 1 / d_x ** 2, 1 / d_z ** 2
 
         if self.force_symmetry:
@@ -96,11 +96,12 @@ class GSOperator:
         A.setdiag(ones(nx * nz))
         # NOTE: nb.jit doesn't seem to help here :(
         for i in range(1, nx - 1):
+            half_xdx = 0.5 / (x[i] * d_x)
             for j in range(1, nz - 1):
                 ind = i * nz + j
                 A[ind, ind] = -2 * (inv_dx_2 + inv_dz_2)  # j, l
-                A[ind, ind + nz] = inv_dx_2 - 0.5 / (x[i] * d_x)  # j, l-1
-                A[ind, ind - nz] = inv_dx_2 + 0.5 / (x[i] * d_x)  # j, l+1
+                A[ind, ind + nz] = inv_dx_2 - half_xdx  # j, l-1
+                A[ind, ind - nz] = inv_dx_2 + half_xdx  # j, l+1
                 A[ind, ind + 1] = inv_dz_2  # j-1, l
                 A[ind, ind - 1] = inv_dz_2  # j+1, l
 
@@ -117,8 +118,8 @@ class GSOperator:
 
                 A[ind, ind] = -2 * inv_dx_2 - ghost_factor * inv_dz_2
                 A[ind, ind - 1] = ghost_factor * inv_dz_2
-                A[ind, ind + nz] = inv_dx_2 - 0.5 / (x[i] * d_x)  # j, l-1
-                A[ind, ind - nz] = inv_dx_2 + 0.5 / (x[i] * d_x)  # j, l+1
+                A[ind, ind + nz] = inv_dx_2 - half_xdx  # j, l-1
+                A[ind, ind - nz] = inv_dx_2 + half_xdx  # j, l+1
         return A.tocsr()  # Compressed sparse row format
 
 
