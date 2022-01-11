@@ -94,21 +94,27 @@ class ThermalShieldBuilder(Builder):
         x, z = [], []
         for coil in pf_xz:
             bound_box = coil.bounding_box
-            xc = 0.5 * (bound_box.x_max - bound_box.x_min)
-            zc = 0.5 * (bound_box.z_max - bound_box.z_min)
-            dx = bound_box.x_max - xc
-            dz = abs(bound_box.z_max - zc)
-            z_sign = -1 if zc < 0 else 1
-
-            x.append(xc + dx)
-            z.append(zc + z_sign * dz)
+            x_corner = [
+                bound_box.x_min,
+                bound_box.x_max,
+                bound_box.x_max,
+                bound_box.x_min,
+            ]
+            z_corner = [
+                bound_box.z_min,
+                bound_box.z_min,
+                bound_box.z_max,
+                bound_box.z_max,
+            ]
+            x.extend(x_corner)
+            z.extend(z_corner)
 
         # Project extrema slightly beyond axis (might be bad for NT) - will get cut later
         x.extend([-0.5, -0.5])  # [m]
         z.extend([np.min(z), np.max(z)])
-
-        hull = ConvexHull(np.array([x, z]).T)
-        wire = make_polygon([hull.vertices[0], 0, hull.vertices[1]], closed=True)
+        x, z = np.array(x), np.array(z)
+        hull_idx = ConvexHull(np.array([x, z]).T).vertices
+        wire = make_polygon({"x": x[hull_idx], "y": 0, "z": z[hull_idx]}, closed=True)
         wire = offset_wire(wire, self.params.g_ts_pf, open_wire=False)
         pf_o_wire = offset_wire(wire, self.params.tk_ts, open_wire=False)
 
