@@ -32,6 +32,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
@@ -210,4 +211,26 @@ class EUDEMOReactor(Reactor):
         component = super()._build_stage(name)
 
         bluemira_print(f"Completed design stage: {name}")
+        return component
+
+    def build_thermal_shield(self, component_tree: Component):
+        """
+        Run the thermal shield build.
+        """
+        name = "Thermal Shield"
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        builder = ThermalShieldBuilder(self._params.to_dict())
+        self.register_builder(builder, name)
+
+        pf_coils = component_tree.get_component("PF Coils").get_component("xz")
+        pf_kozs = [coil.get_component("Casing").shape.boundary[0] for coil in pf_coils]
+        tf_coils = component_tree.get_component("TF Coils").get_component("xz")
+        tf_koz = tf_coils.get_component("Casing").shape.boundary[0]
+        args = (pf_kozs, tf_koz)
+        component = super()._build_stage(name, *args)
+
+        bluemira_print(f"Completed design stage: {name}")
+
         return component
