@@ -81,8 +81,13 @@ dev_requires = [
     "versioneer",  # 0.19
 ]
 
+examples = [
+    "notebook",  # 6.4.6
+]
+
 extras_require = {
     "dev": dev_requires,
+    "examples": examples,
     "process": process,
     "openmoc": openmoc,
     "openmc": openmc,
