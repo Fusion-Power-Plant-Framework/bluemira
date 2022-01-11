@@ -160,7 +160,11 @@ class EUDEMOReactor(Reactor):
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
 
-        return super()._build_stage(name, separatrix=sep_shape)
+        component = super()._build_stage(name, separatrix=sep_shape)
+
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
 
     def build_PF_coils(self, component_tree: Component, **kwargs):
         """
