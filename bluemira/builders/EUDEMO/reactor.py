@@ -161,31 +161,10 @@ class EUDEMOReactor(Reactor):
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
 
-        return super()._build_stage(name, separatrix=sep_shape)
-
-    def build_PF_coils(self, component_tree: Component, **kwargs):
-        """
-        Run the PF Coils build using the requested mode.
-        """
-        name = "PF Coils"
-
-        default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
-        default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
-        default_eqdsk_path = os.path.join(default_eqdsk_dir, default_eqdsk_name)
-
-        default_config = {
-            "runmode": "read",
-            "eqdsk_path": default_eqdsk_path,
-        }
-
-        config = self._process_design_stage_config(name, default_config)
-
-        builder = PFCoilsBuilder(self._params.to_dict(), config)
-        self.register_builder(builder, name)
-
-        component = super()._build_stage(name)
+        component = super()._build_stage(name, separatrix=sep_shape)
 
         bluemira_print(f"Completed design stage: {name}")
+
         return component
 
     def build_PF_coils(self, component_tree: Component, **kwargs):
@@ -229,6 +208,7 @@ class EUDEMOReactor(Reactor):
         tf_coils = component_tree.get_component("TF Coils").get_component("xz")
         tf_koz = tf_coils.get_component("Casing").shape.boundary[0]
         args = (pf_kozs, tf_koz)
+
         component = super()._build_stage(name, *args)
 
         bluemira_print(f"Completed design stage: {name}")
