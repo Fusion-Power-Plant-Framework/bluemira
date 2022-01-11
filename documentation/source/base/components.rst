@@ -2,7 +2,7 @@ components
 ==========
 
 ``Components`` are the fundamental building blocks of a bluemira design. Various types of
-``Component`` classes are defined that can be used to represent different parts of a 
+``Component`` classes are defined that can be used to represent different parts of a
 design:
 
 - :py:class:`bluemira.base.components.Component` is the base class and defines the
