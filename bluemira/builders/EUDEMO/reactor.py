@@ -57,6 +57,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_plasma())
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
+        # component.add_child(self.build_thermal_shield(component))
 
         bluemira_print("Reactor Design Complete!")
 
@@ -200,16 +201,23 @@ class EUDEMOReactor(Reactor):
 
         bluemira_print(f"Starting design stage: {name}")
 
-        builder = ThermalShieldBuilder(self._params.to_dict())
-        self.register_builder(builder, name)
-
+        # Prepare inputs
         pf_coils = component_tree.get_component("PF Coils").get_component("xz")
-        pf_kozs = [coil.get_component("Casing").shape.boundary[0] for coil in pf_coils]
+        pf_kozs = [
+            coil.get_component("casing").shape.boundary[0] for coil in pf_coils.children
+        ]
         tf_coils = component_tree.get_component("TF Coils").get_component("xz")
-        tf_koz = tf_coils.get_component("Casing").shape.boundary[0]
-        args = (pf_kozs, tf_koz)
+        tf_koz = (
+            tf_coils.get_component("Casing").get_component("outer").shape.boundary[0]
+        )
 
-        component = super()._build_stage(name, *args)
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = ThermalShieldBuilder(self._params.to_dict(), config)
+        component = builder.build(name, pf_kozs, tf_koz, vv_xz_koz=None)
+        # self.register_builder(builder, name)
+        # component = super()._build_stage(name, *args)
 
         bluemira_print(f"Completed design stage: {name}")
 

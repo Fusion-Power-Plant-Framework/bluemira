@@ -59,12 +59,12 @@ class ThermalShieldBuilder(Builder):
         "n_TF",
     ]
 
-    def run(self, pf_coils_xz_kozs, tf_xz_koz=None, vv_xz_koz=None):
-        self._pf_coils = pf_coils_xz_kozs
-        self._tf_koz = tf_xz_koz
-        self._vv_koz = vv_xz_koz
+    def reinitialise(self, params, **kwargs) -> None:
+        return super().reinitialise(params, **kwargs)
 
-    def build(self, label: str = "Thermal Shield", **kwargs) -> Component:
+    def build(
+        self, label: str, pf_coils_xz_kozs, tf_xz_koz, vv_xz_koz=None, **kwargs
+    ) -> Component:
         """
         Build the thermal shield component.
 
@@ -74,6 +74,10 @@ class ThermalShieldBuilder(Builder):
             The Component built by this builder.
         """
         super().build(**kwargs)
+
+        self._pf_coils = pf_coils_xz_kozs
+        self._tf_koz = tf_xz_koz
+        self._vv_koz = vv_xz_koz
 
         component = Component(name=label)
         component.add_child(self.build_xz())
@@ -103,7 +107,7 @@ class ThermalShieldBuilder(Builder):
         x.extend([-0.5, -0.5])  # [m]
         z.extend([np.min(z), np.max(z)])
 
-        hull = ConvexHull(np.array([x, z]))
+        hull = ConvexHull(np.array([x, z]).T)
         wire = make_polygon([hull.vertices[0], 0, hull.vertices[1]], closed=True)
         wire = offset_wire(wire, self.params.g_ts_pf, open_wire=False)
         pf_o_wire = offset_wire(wire, self.params.tk_ts, open_wire=False)

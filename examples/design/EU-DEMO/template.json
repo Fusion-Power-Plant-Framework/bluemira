@@ -98,7 +98,7 @@
       "PLASMOD": {
         "name": "Hcorr",
         "recv": true,
-        "send": true
+        "send": false
       }
     }
   },
@@ -116,7 +116,7 @@
       "PLASMOD": {
         "name": "Ip",
         "recv": true,
-        "send": false
+        "send": true
       }
     }
   },
@@ -163,7 +163,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "Pbrem",
+        "name": "Pbrehms",
         "recv": true,
         "send": false
       }
@@ -225,7 +225,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "PfusDD",
+        "name": "Pfusdd",
         "recv": true,
         "send": false
       }
@@ -243,7 +243,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "PfusDT",
+        "name": "Pfusdt",
         "recv": true,
         "send": false
       }
@@ -398,7 +398,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "R0",
+        "name": "R",
         "recv": false,
         "send": true
       }
@@ -442,7 +442,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "V_in",
+        "name": "volume_in",
         "recv": false,
         "send": true
       }
@@ -520,7 +520,7 @@
     "source": "PLASMOD",
     "mapping": {
       "PLASMOD": {
-        "name": "beta_n",
+        "name": "betan",
         "recv": true,
         "send": false
       }
@@ -538,7 +538,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "beta_p",
+        "name": "betapol",
         "recv": true,
         "send": false
       }
@@ -596,9 +596,9 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "delta_e",
+        "name": "d",
         "recv": true,
-        "send": false
+        "send": true
       }
     }
   },
@@ -614,7 +614,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "delta95",
+        "name": "d95",
         "recv": false,
         "send": true
       }
@@ -722,7 +722,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "f_bs",
+        "name": "fbs",
         "recv": true,
         "send": false
       }
@@ -1079,9 +1079,9 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "kappa_e",
+        "name": "k",
         "recv": true,
-        "send": false
+        "send": true
       }
     }
   },
@@ -1097,7 +1097,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "kappa95",
+        "name": "k95",
         "recv": false,
         "send": true
       }
@@ -1115,7 +1115,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "li",
+        "name": "rli",
         "recv": true,
         "send": false
       }
@@ -1266,7 +1266,7 @@
       },
       "PLASMOD": {
         "name": "q95",
-        "recv": false,
+        "recv": true,
         "send": true
       }
     }
@@ -1545,7 +1545,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "tau_e",
+        "name": "taueff",
         "recv": true,
         "send": false
       }
@@ -2127,7 +2127,7 @@
         "send": false
       },
       "PLASMOD": {
-        "name": "Vloop",
+        "name": "v_loop",
         "recv": true,
         "send": true
       }
