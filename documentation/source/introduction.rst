@@ -2,18 +2,18 @@ Introduction
 ============
 
 ``Bluemira`` is a Python 3 framework for designing tokamak nuclear fusion reactors. It
-has been developed from the original ``BLUEPRINT`` and ``MIRA`` codes, written by M. 
+has been developed from the original ``BLUEPRINT`` and ``MIRA`` codes, written by M.
 Coleman and S. McIntosh, and F. Franza, respectively.
 
-The overarching aim of the ``bluemira`` framework is to facilitate reactor design using 
+The overarching aim of the ``bluemira`` framework is to facilitate reactor design using
 different levels of fidelity at different stages in the design process. The general idea
 is that there is nothing particularly wrong with how tokamak fusion reactors are designed
 today, except that it takes months to reach an initial design point. In ``bluemira``,
 typical tokamak fusion reactor design activities are parameterised, automated, combined
-together, and exposed to the user, enabling reactor designs to be generated in a matter 
+together, and exposed to the user, enabling reactor designs to be generated in a matter
 of minutes.
 
-The goal is for ``bluemira`` to one day function as a multi-fidelity systems code for 
+The goal is for ``bluemira`` to one day function as a multi-fidelity systems code for
 tokamaks.
 
 A wide variety of modules useful for the design of tokamaks are available, with more on
