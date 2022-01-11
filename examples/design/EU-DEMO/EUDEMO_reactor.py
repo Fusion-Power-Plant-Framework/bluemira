@@ -349,6 +349,9 @@ plasma: PlasmaComponent = component.get_component("Plasma")
 # %%
 tf_coils = component.get_component("TF Coils")
 
+# %%
+pf_coils = component.get_component("PF Coils")
+
 # %%[markdown]
 # ### Saving the Equilibrium
 #
@@ -451,11 +454,14 @@ plt.show()
 
 # %%
 ax = tf_coils.get_component("xy").plot_2d(show=False)
-plasma.get_component("xy").plot_2d(ax=ax)
+plasma.get_component("xy").plot_2d(ax=ax, show=False)
+pf_coils.get_component("xy").plot_2d(ax=ax)
 
 # %%
 ax = tf_coils.get_component("xz").plot_2d(show=False)
-plasma.get_component("xz").plot_2d(ax=ax)
+plasma.get_component("xz").plot_2d(ax=ax, show=False)
+pf_coils.get_component("xz").plot_2d(ax=ax)
+
 
 # %%
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
