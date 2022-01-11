@@ -178,8 +178,9 @@ class EUDEMOReactor(Reactor):
 
         pf_coils = component_tree.get_component("PF Coils").get_component("xz")
         pf_kozs = [coil.get_component("Casing").shape.boundary[0] for coil in pf_coils]
-
-        args = ()
+        tf_coils = component_tree.get_component("TF Coils").get_component("xz")
+        tf_koz = tf_coils.get_component("Casing").shape.boundary[0]
+        args = (pf_kozs, tf_koz)
         component = super()._build_stage(name, *args)
 
         bluemira_print(f"Completed design stage: {name}")

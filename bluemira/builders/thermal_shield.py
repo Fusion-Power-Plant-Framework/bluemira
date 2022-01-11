@@ -99,17 +99,33 @@ class ThermalShieldBuilder(Builder):
             x.append(xc + dx)
             z.append(zc + z_sign * dz)
 
-        # Project extrema onto axis (might be bad for NT)
-        x.extend([0, 0])
+        # Project extrema slightly beyond axis (might be bad for NT) - will get clipped later
+        x.extend([-0.5, -0.5])  # [m]
         z.extend([np.min(z), np.max(z)])
 
         hull = ConvexHull(np.array([x, z]))
-        wire = make_polygon([hull.vertices[0], 0, hull.vertices[1]])
-        wire = offset_wire(wire, self.params.g_ts_pf, open_wire=True)
-        o_wire = offset_wire(wire, self.params.tk_ts, open_wire=True)
-        # TODO: Add boolean union of TF exclusion zone
+        wire = make_polygon([hull.vertices[0], 0, hull.vertices[1]], closed=True)
+        wire = offset_wire(wire, self.params.g_ts_pf, open_wire=False)
+        pf_o_wire = offset_wire(wire, self.params.tk_ts, open_wire=False)
 
-        cts = BluemiraFace(wire)
+        tf_o_wire = offset_wire(
+            self._tf_koz, self.params.g_ts_tf, join="arc", open_wire=False
+        )
+
+        cts_inner = boolean_fuse(
+            [BluemiraFace(pf_o_wire), BluemiraFace(tf_o_wire)]
+        ).boundary[0]
+        cts_outer = offset_wire(cts_inner, self.params.tk_ts)
+        cts_face = BluemiraFace([cts_outer, cts_inner])
+        bound_box = cts_face.bounding_box
+        z_min, z_max = bound_box.z_min, bound_box.z_max
+        x_in, x_out = 0, -bound_box.x_max
+        x = [x_in, x_out, x_out, x_in]
+        y = [0, 0, 0, 0]
+        z = [z_min, z_min, z_max, z_max]
+        cutter = BluemiraFace(make_polygon([x, y, z], closed=True))
+
+        cts = boolean_cut(cts_face, cutter)[0]
         self._cts_face = cts
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
