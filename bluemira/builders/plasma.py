@@ -28,11 +28,11 @@ from typing import Dict, Optional, Type
 from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.shapes import ParameterisedShapeBuilder
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.display.palettes import BLUE_PALETTE
 
 
 class MakeParameterisedPlasma(ParameterisedShapeBuilder):
