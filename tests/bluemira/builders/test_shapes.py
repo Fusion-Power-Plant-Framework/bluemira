@@ -47,7 +47,7 @@ class TestMakeParameterisedShape:
                     "value": "r_tf_out_centre",
                     "lower_bound": 8.0,
                 },
-                "dz": 0.0,
+                "dz": {"value": 0.0, "fixed": True},
             },
             "label": "Shape",
         }
@@ -66,10 +66,10 @@ class TestMakeParameterisedShape:
         assert child.shape.label == label
 
         discr = child.shape.discretize()
-        assert min(discr.T[0]) == pytest.approx(params["r_tf_in_centre"][0], abs=1e-3)
-        assert max(discr.T[0]) == pytest.approx(params["r_tf_out_centre"][0], abs=1e-3)
-        assert np.average(discr.T[1]) == pytest.approx(
-            build_config["variables_map"]["dz"], abs=1e-3
+        assert min(discr.x) == pytest.approx(params["r_tf_in_centre"][0], abs=1e-3)
+        assert max(discr.x) == pytest.approx(params["r_tf_out_centre"][0], abs=1e-3)
+        assert np.average(discr.z) == pytest.approx(
+            build_config["variables_map"]["dz"]["value"], abs=1e-2
         )
 
         if tests.PLOTTING:
@@ -125,7 +125,7 @@ class TestMakeOptimisedShape:
                     "value": "r_tf_out_centre",
                     "lower_bound": 8.0,
                 },
-                "dz": 0.0,
+                "dz": {"value": 0.0, "fixed": True},
             },
             "problem_class": problem_class,
             "algorithm_name": "SLSQP",
@@ -147,14 +147,14 @@ class TestMakeOptimisedShape:
         assert child.shape.label == label
 
         discr = child.shape.discretize()
-        assert min(discr.T[0]) == pytest.approx(
+        assert min(discr.x) == pytest.approx(
             build_config["variables_map"]["x1"]["upper_bound"], abs=1e-3
         )
-        assert max(discr.T[0]) == pytest.approx(
+        assert max(discr.x) == pytest.approx(
             build_config["variables_map"]["x2"]["lower_bound"], abs=1e-3
         )
-        assert np.average(discr.T[1]) == pytest.approx(
-            build_config["variables_map"]["dz"], abs=1e-3
+        assert np.average(discr.z) == pytest.approx(
+            build_config["variables_map"]["dz"]["value"], abs=1e-2
         )
 
         if tests.PLOTTING:

@@ -760,17 +760,6 @@ class Coil:
             for coil in self.sub_coils.values():
                 coil.toggle_control()
 
-    def copy(self):
-        """
-        Get a deepcopy of the Coil.
-
-        Returns
-        -------
-        copy: Coil
-            The deepcopy of the Coil
-        """
-        return deepcopy(self)
-
     @property
     def n_control(self):
         """
@@ -949,12 +938,6 @@ class CoilGroup:
         for name, coil in coils.items():
             cdict[name] = coil.to_dict()
         return cdict
-
-    def copy(self):
-        """
-        Get a deep copy of the CoilGroup.
-        """
-        return deepcopy(self)
 
     def to_group_vecs(self):
         """
@@ -1958,7 +1941,7 @@ class CoilSet(CoilGroup):
         Returns the central Solenoid object for a CoilSet
         """
         names = self.get_CS_names()
-        coils = [self.coils[name].copy() for name in names]
+        coils = [deepcopy(self.coils[name]) for name in names]
         return Solenoid.from_coils(coils)
 
     def get_positions(self):
@@ -2155,7 +2138,7 @@ def symmetrise_coilset(coilset):
         bluemira_warn(
             "Symmetrising a CoilSet which is not purely symmetric about z=0. This can result in undesirable behaviour."
         )
-    coilset = coilset.copy()
+    coilset = deepcopy(coilset)
 
     sym_stack = _get_symmetric_coils(coilset)
     counts = np.array(sym_stack, dtype=object).T[1]

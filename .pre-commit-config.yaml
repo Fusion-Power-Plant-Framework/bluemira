@@ -45,7 +45,6 @@ repos:
       exclude: |
             (?x)^(
                 examples/convert_py_to_ipynb.py |
-                examples/BLUEPRINT/convert_py_to_ipynb.py |
                 examples/BLUEPRINT_integration.py
             )$
 

@@ -180,33 +180,6 @@ class GeometryParameterisation(abc.ABC):
                 count += 1
         return idx_actual - count
 
-    def create_array(self, n_points=200, by_edges=True, d_l=None):
-        """
-        Make an array of the geometry.
-
-        Parameters
-        ----------
-        n_points: int
-            Number of points in the array
-        by_edges: bool
-            Whether or not to discretise by edges
-        d_l: Optional[float]
-            Discretisation length (overrides n_points)
-
-        Returns
-        -------
-        xyz: np.ndarray
-            (3, N) array of point coordinates
-
-        Notes
-        -----
-        Override this method if you require a faster implementation, but be careful to
-        retain a uniform discretisation
-        """
-        return (
-            self.create_shape().discretize(ndiscr=n_points, byedges=by_edges, dl=d_l).T
-        )
-
     @abc.abstractmethod
     def create_shape(self, label="", **kwargs) -> BluemiraWire:
         """

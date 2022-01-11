@@ -1,5 +1,5 @@
-Parametrisations
-================
+Parameterisations
+=================
 
 .. toctree::
    :maxdepth: 1

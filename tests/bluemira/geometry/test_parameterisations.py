@@ -22,7 +22,6 @@
 import numpy as np
 import pytest
 
-from bluemira.geometry._deprecated_tools import get_perimeter
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
@@ -86,17 +85,6 @@ class TestPrincetonD:
     def test_error(self):
         with pytest.raises(GeometryParameterisationError):
             PrincetonD._princeton_d(10, 3, 0)
-
-    def test_parameterisation(self):
-        p = PrincetonD()
-        p.adjust_variable("x1", 4, lower_bound=3, upper_bound=5)
-        p.adjust_variable("x2", 16, lower_bound=10, upper_bound=20)
-        p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
-
-        wire = p.create_shape()
-        array = p.create_array(n_points=200)
-
-        assert np.isclose(wire.length, get_perimeter(*array), rtol=1e-3)
 
     def test_bad_behaviour(self):
         p = PrincetonD()
