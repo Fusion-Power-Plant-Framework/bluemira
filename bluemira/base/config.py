@@ -223,6 +223,14 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
         ['r_tf_curve', "Start of the upper curve of domed picture frame shale", 3., 'm', None, 'Input'],
 
+        # PF coils
+        ['r_pf_corner', 'Corner radius of the PF coil winding pack', 0.05, 'm', None, 'Input'],
+        ['tk_pf_insulation', 'Thickness of the PF coil insulation', 0.05, 'm', None, 'Input'],
+        ['tk_pf_casing', 'Thickness of the PF coil casing', 0.07, 'm', None, 'Input'],
+        ['r_cs_corner', 'Corner radius of the CS coil winding pack', 0.05, 'm', None, 'Input'],
+        ['tk_cs_insulation', 'Thickness of the CS coil insulation', 0.05, 'm', None, 'Input'],
+        ['tk_cs_casing', 'Thickness of the CS coil casing', 0.07, 'm', None, 'Input'],
+
         # Coil structures
         ['x_g_support', 'TF coil gravity support radius', 13, 'm', None, 'Input'],
         ['w_g_support', 'TF coil gravity support width', 0.75, 'm', None, 'Input'],

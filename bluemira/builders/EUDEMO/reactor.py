@@ -186,3 +186,28 @@ class EUDEMOReactor(Reactor):
 
         bluemira_print(f"Completed design stage: {name}")
         return component
+
+    def build_PF_coils(self, component_tree: Component, **kwargs):
+        """
+        Run the PF Coils build using the requested mode.
+        """
+        name = "PF Coils"
+
+        default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
+        default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
+        default_eqdsk_path = os.path.join(default_eqdsk_dir, default_eqdsk_name)
+
+        default_config = {
+            "runmode": "read",
+            "eqdsk_path": default_eqdsk_path,
+        }
+
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = PFCoilsBuilder(self._params.to_dict(), config)
+        self.register_builder(builder, name)
+
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+        return component
