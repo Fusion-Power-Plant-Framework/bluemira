@@ -33,6 +33,7 @@ from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -122,18 +123,22 @@ class ThermalShieldBuilder(Builder):
             self._tf_koz, self.params.g_ts_tf, join="arc", open_wire=False
         )
 
-        cts_inner = boolean_fuse(
-            [BluemiraFace(pf_o_wire), BluemiraFace(tf_o_wire)]
-        ).boundary[0]
+        try:
+            cts_inner = boolean_fuse(
+                [BluemiraFace(pf_o_wire), BluemiraFace(tf_o_wire)]
+            ).boundary[0]
+        except GeometryError:
+            # the TF offset face is probably enclosed by the PF offset face
+            cts_inner = BluemiraFace(pf_o_wire)
+
         cts_outer = offset_wire(cts_inner, self.params.tk_ts)
         cts_face = BluemiraFace([cts_outer, cts_inner])
         bound_box = cts_face.bounding_box
         z_min, z_max = bound_box.z_min, bound_box.z_max
         x_in, x_out = 0, -bound_box.x_max
         x = [x_in, x_out, x_out, x_in]
-        y = [0, 0, 0, 0]
         z = [z_min, z_min, z_max, z_max]
-        cutter = BluemiraFace(make_polygon([x, y, z], closed=True))
+        cutter = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
 
         cts = boolean_cut(cts_face, cutter)[0]
         self._cts_face = cts
