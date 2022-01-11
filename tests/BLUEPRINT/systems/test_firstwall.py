@@ -188,8 +188,11 @@ class TestFirstWallDN:
             vertical_target=True,
             outer_target=True,
         )
-        assert tar_out[0][0] > self.firstwall.points["x_point"]["x"]
-        assert tar_out[0][0] < tar_out[1][0]
+        tar_pfr_end = tar_out[0]
+        tar_sol_end = tar_out[1]
+        assert tangent[0] < 0
+        assert tar_sol_end[0] > self.firstwall.points["x_point"]["x"]
+        assert tar_sol_end[0] > tar_pfr_end[0]
 
     def test_make_divertor_inner_target(self):
         div_builder = self.firstwall.divertor_builder
@@ -202,8 +205,11 @@ class TestFirstWallDN:
             vertical_target=False,
             outer_target=False,
         )
-        assert tar_in[0][0] < self.firstwall.points["x_point"]["x"]
-        assert tar_in[0][0] > tar_in[1][0]
+        tar_pfr_end = tar_in[0]
+        tar_sol_end = tar_in[1]
+        assert tangent[0] < 0
+        assert tar_pfr_end[0] < self.firstwall.points["x_point"]["x"]
+        assert tar_pfr_end[0] > tar_sol_end[0]
 
     @pytest.mark.parametrize("ints_from_psi", [True, False])
     def test_make_divertor_from_koz(self, ints_from_psi):
