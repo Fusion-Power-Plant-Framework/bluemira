@@ -33,16 +33,7 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import (
-    boolean_cut,
-    boolean_fuse,
-    make_circle,
-    make_polygon,
-    offset_wire,
-    revolve_shape,
-    slice_shape,
-)
+from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
 
 
 class CryostatBuilder(Builder):
