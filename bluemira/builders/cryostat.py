@@ -87,12 +87,8 @@ class CryostatBuilder(Builder):
         Build the x-z components of the cryostat.
         """
         # Cryostat VV
-        bound_box = self._cts.bounding_box
-        z_max = bound_box.z_max
-        x_max = bound_box.x_max
         x_in = 0
-        x_out = x_max + self.params.g_cr_ts
-        z_top = z_max + self.params.g_cr_ts
+        x_out, z_top = self._get_extrema()
         z_gs = -15  # TODO: Get from gravity support
         x_gs_kink = self.params.x_g_support - 2  # TODO: Get from a parameter
         well_depth = 5  # TODO: Get from a parameter
@@ -117,6 +113,7 @@ class CryostatBuilder(Builder):
         shape = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         self._cryo_vv = shape
         cryostat_vv = PhysicalComponent("Cryostat VV", shape)
+        cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         component = Component("xz", children=[cryostat_vv])
         bm_plot_tools.set_component_plane(component, "xz")
         return component
@@ -125,8 +122,14 @@ class CryostatBuilder(Builder):
         """
         Build the x-y components of the cryostat.
         """
-        shape = None
+        r_in, _ = self._get_extrema()
+        r_out = r_in + self.params.tk_cr_vv
+        inner = make_circle(radius=r_in)
+        outer = make_circle(radius=r_out)
+
+        shape = BluemiraFace([outer, inner])
         cryostat_vv = PhysicalComponent("Cryostat VV", shape)
+        cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
         component = Component("xy", children=[cryostat_vv])
         bm_plot_tools.set_component_plane(component, "xy")
         return component
@@ -145,8 +148,16 @@ class CryostatBuilder(Builder):
         )
 
         cryostat_vv = PhysicalComponent("Cryostat TS", shape)
-        cryostat_vv.display_cad_options.color = BLUE_PALETTE["TS"][0]
+        cryostat_vv.display_cad_options.color = BLUE_PALETTE["CR"][0]
         sectors = circular_pattern_component(cryostat_vv, self._params.n_TF.value)
         component.add_children(sectors, merge_trees=True)
 
         return component
+
+    def _get_extrema(self):
+        bound_box = self._cts.bounding_box
+        z_max = bound_box.z_max
+        x_max = bound_box.x_max
+        x_out = x_max + self.params.g_cr_ts
+        z_top = z_max + self.params.g_cr_ts
+        return x_out, z_top
