@@ -2166,7 +2166,23 @@ def symmetrise_coilset(coilset):
 
 
 def make_mutual_inductance_matrix(coilset):
-    """ """
+    """
+    Calculate the mutual inductance matrix of a coilset.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset for which to calculate the mutual inductance matrix
+
+    Returns
+    -------
+    M: np.ndarray
+        The symmetric mutual inductance matrix [H]
+
+    Notes
+    -----
+    Single-filament coil formulation; serves as a useful approximation.
+    """
     n_coils = coilset.n_coils
     M = np.zeros((n_coils, n_coils))  # noqa
     coils = list(coilset.coils.values())

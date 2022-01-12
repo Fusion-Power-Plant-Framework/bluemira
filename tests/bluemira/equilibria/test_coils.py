@@ -34,6 +34,7 @@ from bluemira.equilibria.coils import (
     CoilSet,
     SymmetricCircuit,
     check_coilset_symmetric,
+    make_mutual_inductance_matrix,
     symmetrise_coilset,
 )
 from bluemira.equilibria.constants import NBTI_J_MAX
@@ -542,6 +543,32 @@ class TestCoilSizing:
             Coil(4, 4, dx=1)
         with pytest.raises(EquilibriaError):
             Coil(4, 4, dz=1)
+
+
+class TestMutualInductances:
+    @classmethod
+    def setup_class(cls):
+        coil1 = Coil(4, 4, j_max=1)
+        coil2 = Coil(5, 5, j_max=1)
+        coil3 = Coil(6, 6, j_max=1)
+        cls.coilset1 = CoilSet([coil1, coil2, coil3])
+
+    def test_normal(self):
+        """
+        Just check the symmetry for now
+        """
+        m = make_mutual_inductance_matrix(self.coilset1)
+
+        assert m.shape == (3, 3)
+        idxs = np.triu_indices(3, k=1)
+        tri_upper = m[idxs]
+
+        test_m = np.zeros((3, 3))
+        test_m[idxs] = tri_upper
+        test_m = test_m + test_m.T
+        diag = np.diag_indices(3)
+        m[diag] = 0.0
+        assert np.allclose(m, test_m)
 
 
 if __name__ == "__main__":
