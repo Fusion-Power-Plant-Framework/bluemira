@@ -118,7 +118,18 @@ class RadiationShieldBuilder(Builder):
         """
         Build the x-y components of the radiation shield.
         """
-        pass
+        x_max = self._cryo_vv.bounding_box.x_max
+        r_in = x_max + self.params.g_cr_rs
+        r_out = r_in + self.params.tk_rs
+        inner = make_circle(radius=r_in)
+        outer = make_circle(radius=r_out)
+
+        shape = BluemiraFace([outer, inner])
+        shield_body = PhysicalComponent("Body", shape)
+        shield_body.plot_options.face_options["color"] = BLUE_PALETTE["RS"][0]
+        component = Component("xy", children=[shield_body])
+        bm_plot_tools.set_component_plane(component, "xy")
+        return component
 
     def build_xyz(self):
         """
