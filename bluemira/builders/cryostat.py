@@ -115,6 +115,7 @@ class CryostatBuilder(Builder):
         z = np.concatenate([z_inner, z_outer])
 
         shape = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+        self._cryo_vv = shape
         cryostat_vv = PhysicalComponent("Cryostat VV", shape)
         component = Component("xz", children=[cryostat_vv])
         bm_plot_tools.set_component_plane(component, "xz")
@@ -135,8 +136,14 @@ class CryostatBuilder(Builder):
         Build the x-y-z components of the cryostat.
         """
         component = Component("xyz")
+        vv_face = self._cts_face.deepcopy()
+        base = (0, 0, 0)
+        direction = (0, 0, 1)
+        vv_face.rotate(base=base, direction=direction, degree=-180 / self.params.n_TF)
+        shape = revolve_shape(
+            vv_face, base=base, direction=direction, degree=360 / self.params.n_TF
+        )
 
-        shape = None
         cryostat_vv = PhysicalComponent("Cryostat TS", shape)
         cryostat_vv.display_cad_options.color = BLUE_PALETTE["TS"][0]
         sectors = circular_pattern_component(cryostat_vv, self._params.n_TF.value)
