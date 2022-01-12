@@ -37,6 +37,10 @@ from bluemira.geometry.tools import make_circle, make_polygon, revolve_shape
 
 
 class CryostatBuilder(Builder):
+    """
+    Builder for the cryostat
+    """
+
     required_params: List[str] = [
         "tk_cr_vv",
         "g_cr_ts",
