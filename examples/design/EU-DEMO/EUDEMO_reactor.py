@@ -23,9 +23,9 @@
 Perform the EU-DEMO reactor design.
 """
 
+# %%
 import pprint as pprint
 
-# %%
 import matplotlib.pyplot as plt
 
 from bluemira.base.config import Configuration
