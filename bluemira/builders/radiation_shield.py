@@ -43,7 +43,7 @@ from bluemira.geometry.tools import (
 
 class RadiationShieldBuilder(Builder):
     """
-    Builder for the cryostat
+    Builder for the radiation shield
     """
 
     required_params: List[str] = [
