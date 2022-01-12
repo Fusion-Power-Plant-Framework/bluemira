@@ -25,8 +25,6 @@ Radiation shield builder
 
 from typing import List
 
-import numpy as np
-
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
