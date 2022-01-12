@@ -38,6 +38,7 @@ import bluemira.display.error as bm_display_error
 from bluemira.base.components import Component
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.coordinates import check_ccw
 from bluemira.geometry.plane import BluemiraPlane
 
 __all__ = [
@@ -154,8 +155,6 @@ def coordinates_to_path(x, z):
     """
     Convert coordinates to path vertices.
     """
-    from bluemira.geometry._deprecated_tools import check_ccw
-
     if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
