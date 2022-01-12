@@ -42,7 +42,12 @@ from bluemira.equilibria.constants import (
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoilPlotter
-from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
+from bluemira.magnetostatics.greens import (
+    circular_coil_inductance_elliptic,
+    greens_Bx,
+    greens_Bz,
+    greens_psi,
+)
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.tools import is_num
 
@@ -2158,3 +2163,26 @@ def symmetrise_coilset(coilset):
             raise EquilibriaError("There are super-posed Coils in this CoilSet.")
 
     return CoilSet(new_coils)
+
+
+def make_mutual_inductance_matrix(coilset):
+    """ """
+    n_coils = coilset.n_coils
+    M = np.zeros((n_coils, n_coils))  # noqa
+    coils = list(coilset.coils.values())
+
+    itri, jtri = np.triu_indices(n_coils, k=1)
+
+    for i, j in zip(itri, jtri):
+        coil_1 = coils[i]
+        coil_2 = coils[j]
+        n1 = coil_1.n_turns
+        n2 = coil_2.n_turns
+        mi = n1 * n2 * greens_psi(coil_1.x, coil_1.z, coil_2.x, coil_2.z)
+        M[i, j] = M[j, i] = mi
+
+    for i, coil in enumerate(coils):
+        radius = np.hypot(coil.dx, coil.dz)
+        M[i, i] = coil.n_turns ** 2 * circular_coil_inductance_elliptic(coil.x, radius)
+
+    return M
