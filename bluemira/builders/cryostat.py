@@ -53,6 +53,7 @@ class CryostatBuilder(Builder):
         "n_cr_lab",
         "cr_l_d",
         "n_TF",
+        "x_g_support",
     ]
 
     def reinitialise(self, params, **kwargs) -> None:
@@ -85,13 +86,41 @@ class CryostatBuilder(Builder):
         """
         Build the x-z components of the cryostat.
         """
-        shape = None
+        # Cryostat VV
+        bound_box = self._cts.bounding_box
+        z_max = bound_box.z_max
+        x_max = bound_box.x_max
+        x_in = 0
+        x_out = x_max + self.params.g_cr_ts
+        z_top = z_max + self.params.g_cr_ts
+        z_gs = -15  # TODO: Get from gravity support
+        x_gs_kink = self.params.x_g_support - 2  # TODO: Get from a parameter
+        well_depth = 5  # TODO: Get from a parameter
+        z_mid = z_gs - self.params.g_cr_ts
+        z_bot = z_mid - well_depth
+        tk = self.params.tk_cr_vv.value
+
+        x_inner = [x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in]
+        z_inner = [z_top, z_top, z_mid, z_mid, z_bot, z_bot]
+        x_outer = [x_in, x_gs_kink + tk, x_out + tk, x_out + tk, x_in]
+        z_outer = [
+            z_bot - tk,
+            z_bot - tk,
+            z_mid - tk,
+            z_mid - tk,
+            z_top + tk,
+            z_top + tk,
+        ]
+        x = np.concatenate([x_inner, x_outer])
+        z = np.concatenate([z_inner, z_outer])
+
+        shape = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         cryostat_vv = PhysicalComponent("Cryostat VV", shape)
         component = Component("xz", children=[cryostat_vv])
         bm_plot_tools.set_component_plane(component, "xz")
         return component
 
-    def build_xz(self):
+    def build_xy(self):
         """
         Build the x-y components of the cryostat.
         """
