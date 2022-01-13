@@ -1,0 +1,274 @@
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris,
+#                    D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+"""
+A collection of tools used for position interpolation.
+"""
+
+import abc
+
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import minimize_scalar
+from scipy.spatial import ConvexHull
+
+from bluemira.base.constants import EPS
+from bluemira.geometry._deprecated_tools import vector_lengthnorm_2d
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import slice_shape
+from bluemira.utilities.error import PositionerError
+
+
+class XZGeometryInterpolator(abc.ABC):
+    """
+    Abstract base class for 2-D x-z geometry interpolation
+
+    Parameters
+    ----------
+    geometry: BluemiraWire
+        Geometry to interpolate with
+    """
+
+    def __init__(self, geometry):
+        self.geometry = geometry
+
+    def _get_xz_coordinates(self):
+        """
+        Get discretised x-z coordinates of the geometry.
+        """
+        return self.geometry.discretize(by_edges=True, dl=self.geometry.length / 1000).xz
+
+    @abc.abstractmethod
+    def to_xz(self, l_value):
+        pass
+
+    @abc.abstractmethod
+    def to_L(self, x, z):
+        pass
+
+
+class PathInterpolator(XZGeometryInterpolator):
+    """
+    Sets up an x-z path for a point to move along.
+
+    The path is treated as flat in the x-z plane.
+
+    Parameters
+    ----------
+    geometry: BluemiraWire
+        Path to interpolate along
+    """
+
+    def __init__(self, geometry):
+        super().__init__(geometry)
+        x, z = self._get_xz_coordinates()
+        ln = vector_lengthnorm_2d(x, z)
+        self.x_ius = InterpolatedUnivariateSpline(ln, x)
+        self.z_ius = InterpolatedUnivariateSpline(ln, z)
+
+    @staticmethod
+    def _f_min(l_value, f_x, f_z, x, z):
+        dx = f_x(l_value) - x
+        dz = f_z(l_value) - z
+        return dx ** 2 + dz ** 2
+
+    def to_xz(self, l_value):
+        return self.x_ius(l_value), self.z_ius(l_value)
+
+    def to_L(self, x, z):
+        return minimize_scalar(
+            self._f_min,
+            args=(self.x_ius, self.z_ius, x, z),
+            bounds=[0, 1],
+            method="bounded",
+        ).x
+
+
+class RegionInterpolator(XZGeometryInterpolator):
+    """
+    Sets up an x-z region for a point to move within.
+
+    The region is treated as a flat x-z surface.
+
+    The normalisation occurs by cutting the shape in two axes and
+    normalising over the cut length within the region.
+
+    Currently this is limited to convex polygons.
+
+    Generalisation to all polygons is possible but unimplemented
+    and possibly quite slow when converting from normalised to real coordinates.
+
+    When the point position provided is outside the given region the point will
+    be moved to the closest edge of the region.
+
+    The mapping from outside to the edge of the region is not strictly defined.
+    The only certainty is that the point will be moved into the region.
+
+    Parameters
+    ----------
+    geometry: BluemiraWire
+        Region to interpolate within
+    """
+
+    def __init__(self, geometry):
+        super().__init__(geometry)
+        self.check_geometry_feasibility(geometry)
+        self.z_min = geometry.bounding_box.z_min
+        self.z_max = geometry.bounding_box.z_max
+
+    def _check_geometry_feasibility(self, geometry):
+        """
+        Checks the provided region is convex.
+
+        This is a current limitation of RegionInterpolator
+        not providing a 'smooth' interpolation surface.
+
+        Parameters
+        ----------
+        geometry: BluemiraFace
+            Region to check
+
+        Raises
+        ------
+        PositionerError
+            When geometry is not a convex
+        """
+        if not self.geometry.is_closed:
+            raise PositionerError("RegionInterpolator can only handle closed wires.")
+
+        xz_coordinates = self._get_xz_coordinates()
+        if not np.allclose(ConvexHull(xz_coordinates.T).volume, geometry.area, atol=EPS):
+            raise PositionerError(
+                "RegionInterpolator can only handle convex geometries."
+            )
+
+    def to_xz(self, l_values):
+        """
+        Convert L values to x,z values for xy_cut.
+
+        Parameters
+        ----------
+        l_values: list(float, float)
+            Coordinates in normalised space
+
+        Returns
+        -------
+        x, z: float
+            Coordinates in real space
+
+        Raises
+        ------
+        GeometryError
+            When loop is not a Convex Hull
+
+        """
+        l_0, l_1 = l_values
+        z = self.z_min + (self.z_max - self.z_min) * l_1
+
+        plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
+
+        intersect = slice_shape(self.geometry, plane)
+        if len(intersect) == 1:
+            x = intersect[0][0]
+        elif len(intersect) == 2:
+            x_min, x_max = sorted([intersect[0][0], intersect[1][0]])
+            x = x_min + (x_max - x_min) * l_0
+        else:
+            raise PositionerError(
+                "Unexpected number of intersections in x-z conversion."
+            )
+
+        return x, z
+
+    def to_L(self, x, z):
+        """
+        Convert x-z values to L values for xy_cut.
+
+        Parameters
+        ----------
+        x: float
+            x coordinate in real space
+        z: float
+            z coordinate in real space
+
+        Returns
+        -------
+        l_0, l_1: float
+            Coordinates in normalised space
+
+        Raises
+        ------
+        GeometryError
+            When loop is not a Convex Hull
+
+        """
+        l_1 = (z - self.z_min) / (self.z_max - self.z_min)
+        l_1 = np.clip(l_1, 0.0, 1.0)
+
+        plane = BluemiraPlane.from_3_points([x, 0, z], [x + 1, 0, z], [x, 1, z])
+        intersect = slice_shape(self.geometry, plane)
+
+        return self._intersect_filter(x, l_1, intersect)
+
+    def _intersect_filter(self, x, l_1, intersect):
+        """
+        Checks where points are based on number of intersections
+        with a plane. Should initially be called with a plane involving z.
+
+        No intersection could mean above 1 edge therefore a plane in xy
+        is checked before recalling this function.
+        If there is one intersection point we are on an edge (either bottom or top),
+        if there is two intersection points we are in the region,
+        otherwise the region is not a convex hull.
+
+        Parameters
+        ----------
+        x: float
+            x coordinate
+        l_1: float
+            Normalised z coordinate
+        intersect: Plane
+            A plane through xz
+
+        Returns
+        -------
+        l_0, l_1: float
+            Coordinates in normalised space
+
+        Raises
+        ------
+        PositionerError
+            When geometry is not a convex
+        """
+        if intersect is None:
+            plane = BluemiraPlane.from_3_points([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
+            intersect = slice_shape(self.geometry, plane)
+            l_0, l_1 = self._intersect_filter(
+                x, l_1, [False] if intersect is None else intersect
+            )
+        elif len(intersect) == 2:
+            x_min, x_max = sorted([intersect[0][0], intersect[1][0]])
+            l_0 = np.clip((x - x_min) / (x_max - x_min), 0.0, 1.0)
+        elif len(intersect) == 1:
+            l_0 = float(l_1 == 1.0)
+        else:
+            raise PositionerError("Unexpected number of intersections in L conversion.")
+        return l_0, l_1
