@@ -39,7 +39,9 @@ from bluemira.utilities.error import PositionerError
 
 class XZGeometryInterpolator(abc.ABC):
     """
-    Abstract base class for 2-D x-z geometry interpolation
+    Abstract base class for 2-D x-z geometry interpolation to normalised [0, 1] space.
+
+    By convention, normalised x-z space is oriented counter-clockwise w.r.t. [0, 1, 0].
 
     Parameters
     ----------
@@ -54,7 +56,11 @@ class XZGeometryInterpolator(abc.ABC):
         """
         Get discretised x-z coordinates of the geometry.
         """
-        return self.geometry.discretize(by_edges=True, dl=self.geometry.length / 1000).xz
+        coordinates = self.geometry.discretize(
+            byedges=True, dl=self.geometry.length / 1000
+        )
+        coordinates.set_ccw([0, 1, 0])
+        return coordinates.xz
 
     @abc.abstractmethod
     def to_xz(self, l_value):
@@ -99,6 +105,7 @@ class PathInterpolator(XZGeometryInterpolator):
             args=(self.x_ius, self.z_ius, x, z),
             bounds=[0, 1],
             method="bounded",
+            options={"xatol": 1e-8},
         ).x
 
 
