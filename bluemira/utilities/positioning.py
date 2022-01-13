@@ -311,7 +311,11 @@ class PositionMapper:
 
         Parameters
         ----------
-        l_values: Union[List[float], List[Tuple[Float]], List[Union[float, Tuple[float]]]]
+        l_values: Union[List[float],
+                        List[Tuple[Float]],
+                        List[Union[float,
+                        Tuple[float]]]]
+
             The set of parametric-space values to convert
 
         Returns
@@ -338,7 +342,11 @@ class PositionMapper:
 
         Returns
         -------
-        l_values: Union[List[float], List[Tuple[Float]], List[Union[float, Tuple[float]]]]
+        l_values: Union[List[float],
+                        List[Tuple[Float]],
+                        List[Union[float,
+                        Tuple[float]]]]
+
             The set of parametric-space values
         """
         self._check_length(x)
