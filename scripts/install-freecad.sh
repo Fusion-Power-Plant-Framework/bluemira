@@ -73,5 +73,6 @@ cp -r ../freecad-build/Mod/Part/BOPTools $PYTHON_FREECAD_DIR
 if ! grep -Fq "export LD_LIBRARY_PATH=" $PYTHON_BIN_DIR/activate
 then
   echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\
-  $PYTHON_PACKAGES_DIR/PySide2:$PYTHON_PACKAGES_DIR/shiboken2" > $PYTHON_BIN_DIR/activate
+  $PYTHON_PACKAGES_DIR/PySide2:$PYTHON_PACKAGES_DIR/shiboken2":/opt/qt514/lib \
+  > $PYTHON_BIN_DIR/activate
 fi
