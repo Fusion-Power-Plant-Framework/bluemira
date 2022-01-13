@@ -178,7 +178,8 @@ class RegionInterpolator(XZGeometryInterpolator):
         # Yes, the "area" of a 2-D scipy ConvexHull is its perimeter...
         if not np.allclose(hull.area, geometry.length, atol=EPS):
             raise PositionerError(
-                f"RegionInterpolator can only handle convex geometries. Perimeter difference between convex hull and geometry: {hull.volume - geometry.area}"
+                "RegionInterpolator can only handle convex geometries. Perimeter "
+                f"difference between convex hull and geometry: {hull.volume - geometry.area}"
             )
 
     def to_xz(self, l_values):
@@ -338,8 +339,9 @@ class PositionMapper:
             Array of z coordinates
         """
         self._check_length(l_values)
-        xz = [tool.to_xz(l_value) for tool, l_value in zip(self.interpolators, l_values)]
-        return np.array(xz)[:, 0], np.array(xz)[:, 1]
+        return np.array(
+            [tool.to_xz(l_values[i]) for i, tool, in enumerate(self.interpolators)]
+        ).T
 
     def to_L(self, x, z):
         """
@@ -363,7 +365,4 @@ class PositionMapper:
         """
         self._check_length(x)
         self._check_length(z)
-        return [
-            self.interpolators[i].to_L(x[i], z[i])
-            for i in range(len(self.interpolators))
-        ]
+        return [tool.to_L(x[i], z[i]) for i, tool in enumerate(self.interpolators)]
