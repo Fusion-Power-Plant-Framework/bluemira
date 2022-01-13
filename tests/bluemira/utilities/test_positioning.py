@@ -20,8 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+import pytest
 
 from bluemira.geometry.tools import make_circle, make_polygon
+from bluemira.utilities.error import PositionerError
 from bluemira.utilities.positioning import PathInterpolator, RegionInterpolator
 
 
@@ -65,3 +67,24 @@ class TestPathInterpolator:
         assert np.isclose(x180, -10)
         assert np.isclose(z180, 0)
         assert np.isclose(interpolator.to_L(-10, 0), 0.5)
+
+
+class TestRegionInterpolator:
+    def test_bad_shapes(self):
+        x = [0, 4, 2, 4, 0, 2]
+        z = [0, 0, 1, 2, 2, 1]
+        concave_polygon = make_polygon({"x": x, "z": z}, closed=True)
+        with pytest.raises(PositionerError):
+            RegionInterpolator(concave_polygon)
+
+        open_polygon = make_polygon({"x": x, "z": z})
+        with pytest.raises(PositionerError):
+            RegionInterpolator(open_polygon)
+
+    def test_circle(self):
+        circle = make_circle(center=(0, 0, 0), axis=(0, 1, 0), radius=10)
+        interpolator = RegionInterpolator(circle)
+
+        xc, zc = interpolator.to_xz((0.5, 0.5))
+        assert np.isclose(xc, 0)
+        assert np.isclose(zc, 0)
