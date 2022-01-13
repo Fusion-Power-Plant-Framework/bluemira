@@ -64,10 +64,16 @@ class XZGeometryInterpolator(abc.ABC):
 
     @abc.abstractmethod
     def to_xz(self, l_value):
+        """
+        Convert parametric-space 'L' values to physical x-z space.
+        """
         pass
 
     @abc.abstractmethod
     def to_L(self, x, z):
+        """
+        Convert physical x-z space values to parametric-space 'L' values.
+        """
         pass
 
 
@@ -97,9 +103,15 @@ class PathInterpolator(XZGeometryInterpolator):
         return dx ** 2 + dz ** 2
 
     def to_xz(self, l_value):
+        """
+        Convert parametric-space 'L' values to physical x-z space.
+        """
         return float(self.x_ius(l_value)), float(self.z_ius(l_value))
 
     def to_L(self, x, z):
+        """
+        Convert physical x-z space values to parametric-space 'L' values.
+        """
         return minimize_scalar(
             self._f_min,
             args=(self.x_ius, self.z_ius, x, z),
@@ -171,11 +183,11 @@ class RegionInterpolator(XZGeometryInterpolator):
 
     def to_xz(self, l_values):
         """
-        Convert L values to x,z values for xy_cut.
+        Convert parametric-space 'L' values to physical x-z space.
 
         Parameters
         ----------
-        l_values: list(float, float)
+        l_values: Tuple[float, float]
             Coordinates in normalised space
 
         Returns
@@ -209,7 +221,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
     def to_L(self, x, z):
         """
-        Convert x-z values to L values for xy_cut.
+        Convert physical x-z space values to parametric-space 'L' values.
 
         Parameters
         ----------
@@ -220,7 +232,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         Returns
         -------
-        l_0, l_1: float
+        l_values: Tuple[float, float]
             Coordinates in normalised space
 
         Raises
@@ -259,7 +271,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         Returns
         -------
-        l_0, l_1: float
+        l_values: Tuple[float, float]
             Coordinates in normalised space
 
         Raises
@@ -312,7 +324,7 @@ class PositionMapper:
         Parameters
         ----------
         l_values: Union[List[float],
-                        List[Tuple[Float]],
+                        List[Tuple[float]],
                         List[Union[float,
                         Tuple[float]]]]
 
@@ -343,7 +355,7 @@ class PositionMapper:
         Returns
         -------
         l_values: Union[List[float],
-                        List[Tuple[Float]],
+                        List[Tuple[float]],
                         List[Union[float,
                         Tuple[float]]]]
 
