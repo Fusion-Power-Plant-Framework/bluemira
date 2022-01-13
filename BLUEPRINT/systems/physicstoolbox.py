@@ -22,25 +22,26 @@
 """
 A collection of useful 0-D physics calculations
 """
-import numpy as np
 from typing import Union
 
+import numpy as np
+
+from bluemira.base.constants import (
+    AMU_TO_KG,
+    C_LIGHT,
+    D_MOLAR_MASS,
+    ELECTRON_MOLAR_MASS,
+    EV_TO_J,
+    HE3_MOLAR_MASS,
+    HE_MOLAR_MASS,
+    J_TO_EV,
+    N_AVOGADRO,
+    NEUTRON_MOLAR_MASS,
+    PROTON_MOLAR_MASS,
+    T_MOLAR_MASS,
+)
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.utilities.tools import PowerLawScaling
-from bluemira.base.constants import (
-    C_LIGHT,
-    T_MOLAR_MASS,
-    D_MOLAR_MASS,
-    HE_MOLAR_MASS,
-    NEUTRON_MOLAR_MASS,
-    J_TO_EV,
-    EV_TO_J,
-    AMU_TO_KG,
-    PROTON_MOLAR_MASS,
-    HE3_MOLAR_MASS,
-    ELECTRON_MOLAR_MASS,
-    N_AVOGADRO,
-)
 
 
 def estimate_kappa95(A, m_s_limit):
@@ -75,7 +76,7 @@ def estimate_kappa95(A, m_s_limit):
 
     \t:math:`m_{s} = a\\kappa_{95}^{2}+bA^{2}+c\\kappa A+d\\kappa+eA+f`\n
     \t:math:`\\kappa_{95}(A, m_{s}) = \\dfrac{-d-cA-\\sqrt{(c^{2}-4ab)A^{2}+(2dc-4ae)A+d^{2}-4af+4am_{s})}}{2a}`
-    """  # noqa (W505)
+    """  # noqa :W505
     a = 8.39148185
     b = -0.17713049
     c = 1.9031585
@@ -132,14 +133,14 @@ def plasma_resistance(R_0, A, z_eff, kappa, t_e):
 
     [1] N. A. Uckan et al, Fusion Technology 13 (1988) p.411.
         The expression is valid for aspect ratios in the range 2.5 to 4.
-    """  # noqa (W505)
+    """  # noqa :W505
     a = R_0 / A
     r_plasma = 2.15e-9 * z_eff * R_0 / (kappa * a ** 2 * (t_e / 10) ** 1.5)
     rpfac = 4.3 - 0.6 * R_0 / a
     return r_plasma * rpfac
 
 
-def calc_P_ohmic(f_ind, r_plasma, Ip):  # noqa (N802)
+def calc_P_ohmic(f_ind, r_plasma, Ip):  # noqa :N802
     """
     Berechnet die Ohmische Heizung des Plasmas
 
@@ -183,7 +184,7 @@ def joule_heating(rho, length, area, current):
     return rho * length / area * current ** 2
 
 
-def IPB98y2(Ip, b_tor, p_sep, n19, R_0, A, kappa):  # noqa (N802)
+def IPB98y2(Ip, b_tor, p_sep, n19, R_0, A, kappa):  # noqa :N802
     """
     ITER IPB98(y, 2) Confinement time scaling [2]
 
@@ -214,7 +215,7 @@ def IPB98y2(Ip, b_tor, p_sep, n19, R_0, A, kappa):  # noqa (N802)
     [2] ITER Physics Expert Group, Nucl. Fus. 39, 12, <https://iopscience.iop.org/article/10.1088/0029-5515/39/12/302/pdf>
 
     \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
-    """  # noqa (W505)
+    """  # noqa :W505
     bluemira_warn("IPB98y2 parameterisation possibly incorrect!")
     m_t = T_MOLAR_MASS - ELECTRON_MOLAR_MASS
     m_d = D_MOLAR_MASS - ELECTRON_MOLAR_MASS
@@ -235,7 +236,7 @@ def separatrix_power(p_fus, p_aux, p_rad):
     return p_fus / 5 + p_aux - p_rad
 
 
-def P_LH(n_e20, b_tor, a, R_0, error=False):  # noqa (N802)
+def P_LH(n_e20, b_tor, a, R_0, error=False):  # noqa :N802
     """
     Power requirement for accessing H-mode, Martin scaling [3]
 
@@ -262,7 +263,7 @@ def P_LH(n_e20, b_tor, a, R_0, error=False):  # noqa (N802)
 
     \t:math:`P_{LH}=2.15e^{\\pm 0.107}n_{e20}^{0.782 \\pm 0.037}`
     \t:math:`B_{T}^{0.772 \\pm 0.031}a^{0.975 \\pm 0.08}R_{0}^{0.999 \\pm 101}`
-    """  # noqa (W505)
+    """  # noqa :W505
     law = PowerLawScaling(
         c=2.15,
         cerr=0,
@@ -301,9 +302,9 @@ def lambda_q(Bt, q_95, p_sol, R_0, error=False):
 
     Notes
     -----
-    [4] Eich, 2013, <http://iopscience.iop.org/article/10.1088/0029-5515/53/9/093031/meta>
+    [4] Eich, 2013, <https://iopscience.iop.org/article/10.1088/0029-5515/53/9/093031/meta>
     For conventional aspect ratios
-    """  # noqa (W505)
+    """  # noqa :W505
     law = PowerLawScaling(
         c=0.0007,
         cerr=0.0002,
@@ -316,7 +317,7 @@ def lambda_q(Bt, q_95, p_sol, R_0, error=False):
         return law(Bt, q_95, p_sol, R_0)
 
 
-def MeV_to_MW(p_fus, e_per_neutron):  # noqa (N802)
+def MeV_to_MW(p_fus, e_per_neutron):  # noqa :N802
     """
     Converts MeV per birth neutron to MW of power
 
@@ -335,7 +336,7 @@ def MeV_to_MW(p_fus, e_per_neutron):  # noqa (N802)
     return e_per_neutron * n_DT_reactions(p_fus) * EV_TO_J
 
 
-def E_DT_fusion():  # noqa (N802)
+def E_DT_fusion():  # noqa :N802
     """
     Calculates the total energy released from the D-T fusion reaction
 
@@ -355,7 +356,7 @@ def E_DT_fusion():  # noqa (N802)
     return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
 
 
-def E_DD_fusion():  # noqa (N802)
+def E_DD_fusion():  # noqa :N802
     """
     Calculates the total energy released from the D-D fusion reaction
 
@@ -371,7 +372,7 @@ def E_DD_fusion():  # noqa (N802)
         (1.01 ~\\text{MeV})+\\text{p} (3.02~\\text{MeV})~~[50 \\textrm{\\%}]
         ~~~~~~~~~~\\rightarrow~{^{3}_{2}He} (0.82~\\text{MeV})+\\text{n}^{0} (2.45~\\text{MeV})~~[50 \\text{\\%}]\n
         \\Delta E = \\Delta m c^2
-    """  # noqa (W505)
+    """  # noqa :W505
     # NOTE: Electron mass must be included with proton mass
     delta_m = np.array(
         [
@@ -406,7 +407,7 @@ def n_DT_reactions(p_fus: Union[int, float]) -> float:
     return float(p_fus * 1e6 / (e_dt * EV_TO_J))
 
 
-def n_DD_reactions(p_fus: Union[int, float]) -> float:  # noqa (N802)
+def n_DD_reactions(p_fus: Union[int, float]) -> float:  # noqa :N802
     """
     Calculates the number of D-D fusion reactions per s for a given D-D fusion
     power
@@ -427,7 +428,7 @@ def n_DD_reactions(p_fus: Union[int, float]) -> float:  # noqa (N802)
     return float(p_fus * 1e6 / (e_dd * EV_TO_J))
 
 
-def r_T_burn(p_fus):  # noqa (N802)
+def r_T_burn(p_fus):  # noqa :N802
     """
     Calculates the tritium burn rate for a given fusion power
 
@@ -442,11 +443,11 @@ def r_T_burn(p_fus):  # noqa (N802)
     -------
     r_burn: float
         T burn rate in the plasma [g/s]
-    """  # noqa (W505)
+    """  # noqa :W505
     return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
 
 
-def r_D_burn_DT(p_fus):  # noqa (N802)
+def r_D_burn_DT(p_fus):  # noqa :N802
     """
     Calculates the deuterium burn rate for a given fusion power in D-T
 
@@ -469,7 +470,7 @@ def r_D_burn_DT(p_fus):  # noqa (N802)
     return n_DT_reactions(p_fus) * D_MOLAR_MASS / N_AVOGADRO
 
 
-def r_D_burn_DD(p_fus):  # noqa (N802) # TODO: FIX
+def r_D_burn_DD(p_fus):  # noqa :N802 # TODO: FIX
     """
     Calculates the deuterium burn rate for a given fusion power in D-D
 

@@ -22,8 +22,10 @@
 """
 csv writer utilities
 """
-import numpy as np
 import os
+
+import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_print
 
 

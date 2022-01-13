@@ -14,6 +14,3 @@ This module was written by Matti Coleman, and is based heavily on open source so
 Simon McIntosh, UKAEA/ITER Organisation, United Kingdom, who's contributions to the coil CAD representations from Nova in particular are much appreciated.
 
 The author is greatly indebted to the above.
-
-
-

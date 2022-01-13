@@ -24,18 +24,19 @@ api for plotting using freecad
 """
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import copy
-from typing import Iterable, List, Optional, Tuple, Union
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+
 import matplotlib.colors as colors
 
-import bluemira.geometry as geo
 from bluemira.codes import _freecadapi as cadapi
+from bluemira.display.error import DisplayError
+from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.display.plotter import DisplayOptions
 
-from .error import DisplayError
-from .plotter import DisplayOptions
-from .palettes import BLUE_PALETTE
-
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 DEFAULT_DISPLAY_OPTIONS = {
     "color": (0.5, 0.5, 0.5),
@@ -139,7 +140,7 @@ def _validate_display_inputs(parts, options):
 
 
 def show_cad(
-    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
     **kwargs,
 ):
@@ -148,7 +149,7 @@ def show_cad(
 
     Parameters
     ----------
-    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]]
+    parts: Union[BluemiraGeo, List[BluemiraGeo]]
         The parts to display.
     options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.

@@ -22,11 +22,13 @@
 """
 Finite element Node object
 """
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
+
 from BLUEPRINT.base.error import BeamsError
+from BLUEPRINT.beams.constants import D_TOLERANCE, FLOAT_TYPE
 from BLUEPRINT.beams.loads import node_load
-from BLUEPRINT.beams.constants import FLOAT_TYPE, D_TOLERANCE
 
 
 class Node:
@@ -241,9 +243,3 @@ def get_midpoint(node1, node2):
         The coordinates of the mid-point
     """
     return (node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1.z + node2.z) / 2
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

@@ -22,13 +22,12 @@
 """
 Home of the BLUEPRINT base class for reactor system objects
 """
+import pickle  # noqa :S403
 from copy import deepcopy
-import pickle  # noqa (S403)
 from typing import Type, Union
 
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.error import BluemiraError
-
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.error import SystemsError
 
 
@@ -368,7 +367,7 @@ class ReactorSystem:
             Full path with filename
         """
         with open(path, "rb") as file:
-            return pickle.load(file)  # noqa (S301)
+            return pickle.load(file)  # noqa :S301
 
     def __getstate__(self):
         """
@@ -409,9 +408,3 @@ class ReactorSystem:
             The copy of the ReactorSystem
         """
         return deepcopy(self)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

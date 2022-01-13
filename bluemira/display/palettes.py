@@ -23,11 +23,12 @@
 Colour palettes
 """
 
-from typing import Union
-import numpy as np
 from itertools import cycle
-import seaborn as sns
+from typing import Union
+
 import matplotlib.colors as colors
+import numpy as np
+import seaborn as sns
 
 
 class ColorPalette:
@@ -135,7 +136,7 @@ class ColorPalette:
         if not InteractiveShell.initialized():
             return self._palette.__repr__()
 
-        from IPython.core.display import display, HTML
+        from IPython.core.display import HTML, display
 
         display(HTML(self._repr_html()))
         return ""

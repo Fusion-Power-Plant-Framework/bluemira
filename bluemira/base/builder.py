@@ -35,7 +35,6 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 
-
 __all__ = ["Builder", "BuildConfig"]
 
 

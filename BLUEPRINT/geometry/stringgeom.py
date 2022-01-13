@@ -22,9 +22,10 @@
 """
 A cheeky jagged edge shape paramterisation - used in firstwallprofile
 """
-import numpy as np
 from itertools import count
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class String:
@@ -146,9 +147,3 @@ class String:
             ax.set_xlim([-bb, bb])
             ax.set_ylim([-bb, bb])
             ax.set_zlim([-bb + zo, bb + zo])
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

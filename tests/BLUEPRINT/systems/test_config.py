@@ -20,9 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
 
-
 from bluemira.base.config import Configuration, SingleNull
-
 
 build_config = {
     "plasma_mode": "read",

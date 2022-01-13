@@ -25,9 +25,8 @@ Tests for the plotter module.
 
 import numpy as np
 
-from bluemira.base.components import Component, PhysicalComponent
 import bluemira.geometry as geo
-
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import plotter
 
 SQUARE_POINTS = np.array(

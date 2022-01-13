@@ -19,51 +19,42 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import tests
-import pytest
 import os
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import Any, Dict
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_base import Plane, GeometryError
-from bluemira.geometry._deprecated_tools import (
-    check_linesegment,
-    bounding_box,
-    on_polygon,
-    in_polygon,
-    loop_plane_intersect,
-    polygon_in_polygon,
-    get_normal_vector,
-    get_perimeter,
-    get_area,
-    rotation_matrix,
-    offset,
-    get_intersect,
-    join_intersect,
-    make_wire,
-    make_face,
-    make_mixed_wire,
-    make_mixed_face,
-    convert_coordinates_to_wire,
-    convert_coordinates_to_face,
-    distance_between_points,
-)
+from bluemira.geometry._deprecated_base import GeometryError, Plane
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import (
+    bounding_box,
+    check_linesegment,
+    convert_coordinates_to_face,
+    convert_coordinates_to_wire,
+    distance_between_points,
+    get_area,
+    get_intersect,
+    in_polygon,
+    join_intersect,
+    loop_plane_intersect,
+    make_face,
+    make_mixed_face,
+    make_mixed_wire,
+    make_wire,
+    offset,
+    on_polygon,
+    polygon_in_polygon,
+    rotation_matrix,
+)
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import revolve_shape, extrude_shape
+from bluemira.geometry.tools import extrude_shape, revolve_shape
 
 TEST_PATH = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
-
-
-class TestPerimeter:
-    def test_simple(self):
-        # 2 x 2 square
-        x = [0, 2, 2, 0, 0]
-        y = [0, 0, 2, 2, 0]
-        assert get_perimeter(x, y) == 8.0
 
 
 class TestCheckLineSegment:
@@ -117,34 +108,6 @@ class TestBoundingBox:
         assert np.allclose(xb, np.array([-2, -2, -2, -2, 2, 2, 2, 2]))
         assert np.allclose(yb, np.array([-2, -2, 2, 2, -2, -2, 2, 2]))
         assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
-
-
-class TestGetNormal:
-    def test_simple(self):
-        x = np.array([0, 2, 2, 0, 0])
-        z = np.array([0, 0, 2, 2, 0])
-        y = np.zeros(5)
-        n_hat = get_normal_vector(x, y, z)
-        assert np.allclose(np.abs(n_hat), np.array([0, 1, 0]))
-
-    def test_edge(self):
-        x = np.array([1, 2, 3])
-        y = np.array([1, 2, 3])
-        z = np.array([1, 2, 4])
-        n_hat = get_normal_vector(x, y, z)
-        assert np.allclose(n_hat, 0.5 * np.array([np.sqrt(2), -np.sqrt(2), 0]))
-
-    def test_error(self):
-        fails = [
-            [[0, 1], [0, 1], [0, 1]],
-            [[0, 1, 2], [0, 1, 2], [0, 1]],
-            [[0, 0, 0], [1, 1, 1], [2, 2, 2]],
-        ]
-        for fail in fails:
-            with pytest.raises(GeometryError):
-                get_normal_vector(
-                    np.array(fail[0]), np.array(fail[1]), np.array(fail[2])
-                )
 
 
 class TestArea:

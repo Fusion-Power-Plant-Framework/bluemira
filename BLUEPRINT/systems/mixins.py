@@ -23,11 +23,12 @@
 Some useful mixin classes for systems
 """
 import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
 from BLUEPRINT.base.error import SystemsError
+from BLUEPRINT.geometry.geomtools import get_boundary, lineq
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geomtools import get_boundary, lineq
 
 TOLERANCE = 1e-5
 
@@ -310,9 +311,3 @@ class Meshable:
             polygons += [clean_geom.as_shpoly()]
         points, facets = get_boundary(polygons)
         return cross_sections, points, facets, control_points, holes
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

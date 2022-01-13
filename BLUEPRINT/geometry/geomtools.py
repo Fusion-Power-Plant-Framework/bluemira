@@ -22,31 +22,33 @@
 """
 A collection of geometry utility functions
 """
-import numpy as np
 from collections.abc import Iterable
+
+import numpy as np
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
 
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 
 # Port over without modifying imports
 from bluemira.geometry._deprecated_tools import (  # noqa
-    check_linesegment,
-    loop_plane_intersect,
-    join_intersect,
-    in_polygon,
-    on_polygon,
-    distance_between_points,
-    close_coordinates,
-    get_intersect,
-    polygon_in_polygon,
-    vector_intersect,
     bounding_box,
-    rotation_matrix,
+    check_linesegment,
+    close_coordinates,
+    distance_between_points,
+    get_intersect,
+    in_polygon,
+    join_intersect,
+    loop_plane_intersect,
+    on_polygon,
+    polygon_in_polygon,
     quart_rotate,
+    rotation_matrix,
+    vector_intersect,
 )
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.coordinates import get_centroid_3d  # noqa
+from bluemira.geometry.error import GeometryError
 
 # A couple of name changes
 rotate_matrix = rotation_matrix  # noqa
@@ -64,6 +66,7 @@ check_linesegment = check_linesegment  # noqa
 polygon_in_polygon = polygon_in_polygon  # noqa
 close_coordinates = close_coordinates  # noqa
 on_polygon = on_polygon  # noqa
+get_centroid_3d = get_centroid_3d  # noqa
 
 
 def get_normal_vector(x, y, z):
@@ -130,7 +133,7 @@ def project_point_axis(point, axis):
     -------
     projection: np.array(3)
         The coordinates of the projected point
-    """  # noqa (W505)
+    """  # noqa :W505
     point = np.array(point)
     axis = np.array(axis)
     return axis * np.dot(point, axis) / np.dot(axis, axis)
@@ -511,55 +514,6 @@ def get_centroid(x, z, output_area=False):
         return cx, cz, area
     else:
         return cx, cz
-
-
-def get_centroid_3d(x, y, z):
-    """
-    Calculates the centroid of a non-self-intersecting counterclockwise polygon
-    in 3-D.
-
-    Parameters
-    ----------
-    x, y, z: np.array(N), np.array(N), np.array(N)
-        Coordinates of the loop to calculate on
-
-    Returns
-    -------
-    cx, cy, cz: float, float
-        The x, y, z coordinates of the centroid [m]
-    """
-    cx, cy = get_centroid(x, y)
-    cx2, cz = get_centroid(x, z)
-    cy2, cz2 = get_centroid(y, z)
-
-    # The following is an "elegant" but computationally more expensive way of
-    # dealing with the 0-area edge cases
-    # (of which there are more than you think)
-    cx = np.array([cx, cx2])
-    cy = np.array([cy, cy2])
-    cz = np.array([cz, cz2])
-
-    def get_rational(i, array):
-        """
-        Gets rid of infinity and nan coordinates
-        """
-        args = np.argwhere(np.isfinite(array))
-        if len(args) == 0:
-            # 2-D shape with a simple axis offset
-            # Get the first value of the coordinate set which is equal to the
-            # offset
-            return [x, y, z][i][0]
-        elif len(args) == 1:
-            return array[args[0][0]]
-        else:
-            if not np.isclose(array[0], array[1]):
-                # Occasionally the two c values are not the same, and one is 0
-                # Take non-trivial value (this works in the case of 2 zeros)
-                return array[np.argmax(np.abs(array))]
-            else:
-                return array[0]
-
-    return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
 
 
 def loop_volume(x, z):
@@ -1346,9 +1300,3 @@ def get_boundary(polygons):
             boundary_facets += get_facets(union.boundary.coords, len(boundary_points))
             boundary_points += get_points(union.boundary.coords)
     return boundary_points, boundary_facets
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

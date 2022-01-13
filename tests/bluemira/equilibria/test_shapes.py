@@ -20,17 +20,16 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-from matplotlib import pyplot as plt
 import pytest
-
-from bluemira.equilibria.shapes import (
-    flux_surface_johner,
-    flux_surface_manickam,
-    flux_surface_cunningham,
-    JohnerLCFS,
-)
+from matplotlib import pyplot as plt
 
 import tests
+from bluemira.equilibria.shapes import (
+    JohnerLCFS,
+    flux_surface_cunningham,
+    flux_surface_johner,
+    flux_surface_manickam,
+)
 
 
 @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")

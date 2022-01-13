@@ -22,10 +22,10 @@
 """
 Color utilities
 """
-from matplotlib.colors import hex2color
 import matplotlib.colors as col
-import seaborn as sns
 import numpy as np
+import seaborn as sns
+from matplotlib.colors import hex2color
 
 
 def facecolor_kwargs(**kwargs):
@@ -199,9 +199,3 @@ def shift_rgb_color(rgb, alpha):
         v = 1
     rgb_new = rgb + (v - rgb) * abs(alpha)
     return tuple(rgb_new)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

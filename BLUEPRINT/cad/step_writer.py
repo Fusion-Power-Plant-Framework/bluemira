@@ -24,15 +24,15 @@ Writer for STP files.
 """
 
 from OCC.Core.IFSelect import IFSelect_RetDone
+from OCC.Core.Interface import Interface_Static_SetCVal
 from OCC.Core.Quantity import Quantity_Color, Quantity_NOC_RED
 from OCC.Core.STEPCAFControl import STEPCAFControl_Writer
 from OCC.Core.STEPControl import STEPControl_AsIs
 from OCC.Core.TCollection import TCollection_ExtendedString
-from OCC.Core.TDocStd import TDocStd_Document
 from OCC.Core.TDF import TDF_LabelSequence
+from OCC.Core.TDocStd import TDocStd_Document
 from OCC.Core.XCAFDoc import XCAFDoc_ColorGen, XCAFDoc_DocumentTool
 from OCC.Core.XSControl import XSControl_WorkSession
-from OCC.Core.Interface import Interface_Static_SetCVal
 
 from BLUEPRINT.base.error import CADError
 

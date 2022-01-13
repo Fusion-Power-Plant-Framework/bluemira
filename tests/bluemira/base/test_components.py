@@ -21,11 +21,7 @@
 
 import pytest
 
-from bluemira.base.components import (
-    Component,
-    PhysicalComponent,
-    MagneticComponent,
-)
+from bluemira.base.components import Component, MagneticComponent, PhysicalComponent
 from bluemira.base.error import ComponentError
 
 

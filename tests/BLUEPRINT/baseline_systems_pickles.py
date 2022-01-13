@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 
 from tests.BLUEPRINT.test_reactor import (
     SmokeTestSingleNullReactor,
-    config,
     build_config,
     build_tweaks,
+    config,
 )
 
 reactor = SmokeTestSingleNullReactor(config, build_config, build_tweaks)

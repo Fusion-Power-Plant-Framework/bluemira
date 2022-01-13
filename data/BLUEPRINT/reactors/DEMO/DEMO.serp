@@ -2,27 +2,27 @@
         % Serpent input file generated in BLUEPRINT
         % Date: 17/02/19 12:51
         % DEMO.serp
-        
-        % produces diagrams of loaded gemoetry 
+
+        % produces diagrams of loaded gemoetry
         % plot, axis, x resolution, y resolution, slice height on axis, start and end points on other axis
         plot 2 1000 1000  50    %Y axis slice
         plot 3 1000 1000  0    %Z axis slice
-        
+
         include "DEMO_geometry.serp"
         include "DEMO_materials.serp"
 
         % tells serpent where to find the nuclear data
-        
+
         set acelib "/opt/serpent2/xsdir.serp"
         %set pdatadir "/opt/serpent2/photon_data/"
-        
+
         % constructive solid geometry for edge of the model
         surf 1 cuboid -30000 30000 -30000 30000 -30000 30000
-        
+
         cell 1 0 fill stl_geometry -1
         cell 2 0 outside  1
-        
-        
+
+
         % --------------------- SOURCE SPECIFICATION ---------------------
         % MUIR GAUSSIAN FUSION ENERGY SPECTRUM IN USER DEFINED SUBROUTINE
         % PARAMETERS TO DESCRIBE THE PLASMA:
@@ -42,7 +42,7 @@
         0  % RDUM(9) = DELTAZ = PLASMA VERTICAL SHIFT (+=UP)
         0.  % RDUM(10) = Start of angular extent
         360. % RDUM(11) = Range of angular extent
-        
+
         % neutron population, bunch count
         set nps 1000 200
         %only prints output after batchs +1, ie at the end
@@ -52,9 +52,8 @@
         %set tpa
         % reduce memory usage
         set opti 1
-        
+
         % Detector
         det TBR n
             dc blanket-c
             dr -55 blanket-m
-        

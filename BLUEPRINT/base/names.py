@@ -1,4 +1,3 @@
-# bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
@@ -90,9 +89,3 @@ def name_long_short(name_dict):
     Map the long names to the short names
     """
     return name_mapper(name_dict, NAME_SHORT_TO_LONG, NAME_LONG_TO_SHORT)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

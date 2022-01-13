@@ -72,3 +72,11 @@ class GeometryParameterisationError(GeometryError):
     """
 
     pass
+
+
+class CoordinatesError(GeometryError):
+    """
+    Error class for use in Coordinates
+    """
+
+    pass

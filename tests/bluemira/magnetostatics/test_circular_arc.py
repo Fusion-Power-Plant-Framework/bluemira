@@ -19,11 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
+import pytest
+
 import tests
-from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from tests.bluemira.magnetostatics.setup_methods import _plot_verification_test
 
 

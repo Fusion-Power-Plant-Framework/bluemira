@@ -21,8 +21,9 @@
 
 
 import numpy as np
-from BLUEPRINT.beams.node import Node
 import pytest
+
+from BLUEPRINT.beams.node import Node
 
 
 class TestNode:

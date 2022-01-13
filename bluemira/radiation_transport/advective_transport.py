@@ -23,21 +23,18 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import EPS
-from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_tools import (
-    loop_plane_intersect,
-)
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import loop_plane_intersect
 from bluemira.radiation_transport.error import AdvectionTransportError
-
 
 __all__ = ["ChargedParticleSolver"]
 

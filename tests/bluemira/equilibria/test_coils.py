@@ -19,26 +19,26 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
+import pytest
 from matplotlib import pyplot as plt
 
 import tests
 from bluemira.base.constants import MU_0
-from bluemira.equilibria.constants import NBTI_J_MAX
-from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.coils import (
+    CS_COIL_NAME,
+    NO_COIL_NAME,
+    PF_COIL_NAME,
     Coil,
     CoilGroup,
     CoilSet,
     SymmetricCircuit,
     check_coilset_symmetric,
     symmetrise_coilset,
-    PF_COIL_NAME,
-    CS_COIL_NAME,
-    NO_COIL_NAME,
 )
+from bluemira.equilibria.constants import NBTI_J_MAX
+from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.grid import Grid
 
 
 class TestCoil:

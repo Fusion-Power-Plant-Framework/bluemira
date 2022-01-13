@@ -55,6 +55,9 @@ per-file-ignores =
    bluemira/codes/__init__.py:
         # FreeCAD message removal function above imports
         E402,
+    documentation/source/*:
+        D100,
+        D101,
 
 
 exclude =
@@ -94,6 +97,8 @@ pep8-naming = True
 ignore_names =
     *PROCESS*,
     *PLASMOD*,
+    *NAME*,
+    *BINARY*,
     *CAD*,
     *STEP*,
     *STL*,

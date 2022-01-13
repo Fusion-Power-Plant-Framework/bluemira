@@ -19,15 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-
 import numpy as np
+import pytest
 from scipy.special import ellipe, ellipk
 
 from bluemira.base.constants import MU_0
-
-from bluemira.equilibria.force_field import ForceField
 from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.equilibria.force_field import ForceField
 
 
 class TestForceField:
@@ -45,7 +43,7 @@ class TestForceField:
         dummy = Coil(5, 0, current=0, ctype="Plasma", dx=0, dz=0)
         cls.ff = ForceField(cls.coilset, dummy)
 
-    def test_Fz(self):  # noqa (N802)
+    def test_Fz(self):  # noqa :N802
         """
         Check the vertical forces between a Helmholtz pair.
         Verbose: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6472319

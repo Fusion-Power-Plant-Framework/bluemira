@@ -23,25 +23,26 @@
 A collection of Boolean operations, wrapping ClipperLib
 """
 import numpy as np
-from scipy.spatial import ConvexHull
 from pyclipper import (
-    Pyclipper,
+    CT_DIFFERENCE,
+    CT_INTERSECTION,
+    CT_UNION,
+    PFT_EVENODD,
     PT_CLIP,
     PT_SUBJECT,
-    PFT_EVENODD,
-    CT_INTERSECTION,
-    CT_DIFFERENCE,
-    CT_UNION,
-    SimplifyPolygon,
     CleanPolygon,
     PolyTreeToPaths,
+    Pyclipper,
     PyPolyNode,
+    SimplifyPolygon,
     scale_from_clipper,
     scale_to_clipper,
 )
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.loop import Loop
+from scipy.spatial import ConvexHull
+
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.loop import Loop
 
 
 def loop_to_pyclippath(loop):
@@ -593,9 +594,3 @@ def entagram(r, p=8, q=3, c=[0, 0]):
     xx.append(x2[0])
     zz.append(z2[0])
     return xx, zz
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

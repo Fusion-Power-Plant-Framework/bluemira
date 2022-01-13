@@ -1,7 +1,9 @@
 # flake8: noqa
-from bluemira.base.look_and_feel import bluemira_warn
 import os
+
 import matplotlib
+
+from bluemira.base.look_and_feel import bluemira_warn
 
 if os.sys.platform != "linux":
     bluemira_warn("Cannot run radiation transport codes on Windows or Mac..")

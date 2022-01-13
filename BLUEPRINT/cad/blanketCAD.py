@@ -23,14 +23,14 @@
 Blanket CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.cadtools import (
     make_axis,
-    revolve,
     make_face,
     make_mixed_face,
+    revolve,
     rotate_shape,
 )
+from BLUEPRINT.cad.component import ComponentCAD
 
 
 class BlanketCAD(ComponentCAD):
@@ -155,9 +155,3 @@ class STBlanketCAD(ComponentCAD):
 
             # Save
             self.add_shape(segment)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

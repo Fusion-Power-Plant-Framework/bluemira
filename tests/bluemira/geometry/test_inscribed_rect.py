@@ -18,16 +18,15 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
-import tests
-
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
 
-from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly, _rect
+import tests
+from bluemira.geometry._deprecated_boolean import boolean_2d_difference
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import make_circle_arc
-from bluemira.geometry._deprecated_boolean import boolean_2d_difference
+from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
 
 
 class TestInscribedRectangle:

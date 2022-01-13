@@ -25,9 +25,9 @@ Boundary conditions for equilibria.
 
 import numpy as np
 
-from bluemira.utilities.tools import is_num
-from bluemira.magnetostatics.greens import greens_psi
 from bluemira.equilibria.grid import integrate_dx_dz
+from bluemira.magnetostatics.greens import greens_psi
+from bluemira.utilities.tools import is_num
 
 __all__ = ["FreeBoundary", "apply_boundary"]
 

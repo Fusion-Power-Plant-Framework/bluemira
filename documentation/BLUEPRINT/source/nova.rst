@@ -6,7 +6,7 @@ A collection of tools for equilibria and the optimisation of the toroidal field 
 
 Designing TF coils
 ------------------
-Nova is primarily used in BLUEPRINT for the design of the TF coil shapes. 
+Nova is primarily used in BLUEPRINT for the design of the TF coil shapes.
 
 The design problem as it is presently formulated in BLUEPRINT is as follows. A shape parameterisation is chosen, with variables :math:`\mathbf{x}`, and optimised:
 
@@ -28,7 +28,7 @@ Where the ripple :math:`\delta_{\phi}` is calculated on the 2-D separatrix shape
 	\delta_{\phi}(x, z) = \frac{B_{t}(x, z, \phi=0)-B_{t}(x, z, \phi=\pi/n_{TF})}{B_{t}(x, z, \phi=0)+B_{t}(x, z, \phi=\pi/n_{TF})} \forall (x, z) \in \Psi_{1} ~~~\text{where}~~~ \Psi_{1} = f(x, z,\phi) = 1
 
 .. note::
-	
+
 	Other optimisation objectives are possible (:math:`V`: volume, :math:`E`: stored energy), but these have been found to produce shapes with re-entrant curvatures, which are difficult to manufacture. They are also more expensive to evaluate (stored energy in particular).
 
 
@@ -68,7 +68,7 @@ Here is a default ParameterFrame for a TF coil in BLUEPRINT:
 Geometry is stored in Loop objects (collections of 2/3-D coordinates, and associated methods). Here we need some geometry to help us define the optimisation problem for the TF coil design. We are just going to load some existing shapes rather than make our own, to focus on the problem at hand.
 
 .. code-block:: python
-	
+
 	# Load a separatrix shape, along which we will calculate the toroidal field
 	# ripple.
 	read_path = get_BP_path("Geometry", subfolder="data")
@@ -174,7 +174,7 @@ Let's plot our TF coils and we what we have so far
 	# Now, let's look at the TF coil itself (in the x-z plane)
 	TF1.plot_XZ(ax=ax1)
 
-	# Depending on whether you are running from (console, IDE, inline plotting, etc.) you may have to call plt.show() to see the plots that are generated	
+	# Depending on whether you are running from (console, IDE, inline plotting, etc.) you may have to call plt.show() to see the plots that are generated
 	plt.show()
 
 	# And in the x-y plane (at the midplane)
@@ -196,7 +196,7 @@ We can see that the TF coil is also encroaching upon its keep-out zone...
 What about the ripple?
 
 .. code-block:: python
-	
+
 	TF1.plot_ripple(ax=ax1, fig=f1)
 	plt.show()
 
@@ -264,8 +264,7 @@ So we speed up the problem by only checking points on the LFS
 Let's improve this a bit, by increasing the resolution:
 
 .. code-block:: python
-	
+
 	TF1.optimise(ny=2, nrippoints=20)
 
 There, that's a bit better...
-

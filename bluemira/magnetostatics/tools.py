@@ -23,15 +23,16 @@
 Just-in-time compilation and LowLevelCallable speed-up tools.
 """
 import warnings
-import numpy as np
+
 import numba as nb
-from numba.types import intc, CPointer, float64
+import numpy as np
+from numba.types import CPointer, float64, intc
 from scipy import LowLevelCallable
-from scipy.integrate import quad, nquad, IntegrationWarning
+from scipy.integrate import IntegrationWarning, nquad, quad
 
-from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.geometry._deprecated_loop import Loop
-
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.magnetostatics.error import MagnetostaticsError
 
 __all__ = [
     "jit_llc3",
@@ -109,6 +110,9 @@ def process_loop_array(shape):
 
     elif isinstance(shape, np.ndarray):
         pass
+
+    elif isinstance(shape, Coordinates):
+        shape = shape.T
 
     else:
         raise MagnetostaticsError(

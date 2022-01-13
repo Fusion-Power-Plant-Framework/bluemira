@@ -27,25 +27,25 @@ from __future__ import annotations
 
 import enum
 from typing import Dict, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
-from bluemira.equilibria.coils import Coil
-from BLUEPRINT.geometry.geombase import GeomBase
-from BLUEPRINT.geometry.shell import Shell, MultiShell
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
-from BLUEPRINT.reactor import Reactor
-
-from bluemira.base.components import Component, PhysicalComponent, ComponentError
+from bluemira.base.components import Component, ComponentError, PhysicalComponent
 from bluemira.base.config import SingleNull
 from bluemira.base.file import BM_ROOT
-from bluemira.geometry.face import BluemiraFace
+from bluemira.equilibria.coils import Coil
+from bluemira.geometry._deprecated_loop import Loop as BMLoop
 from bluemira.geometry._deprecated_tools import (
     convert_coordinates_to_face,
     convert_coordinates_to_wire,
 )
-from bluemira.geometry._deprecated_loop import Loop as BMLoop
+from bluemira.geometry.face import BluemiraFace
+from BLUEPRINT.geometry.geombase import GeomBase
+from BLUEPRINT.geometry.loop import Loop, MultiLoop
+from BLUEPRINT.geometry.shell import MultiShell, Shell
+from BLUEPRINT.reactor import Reactor
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 class ConversionMethod(enum.Enum):

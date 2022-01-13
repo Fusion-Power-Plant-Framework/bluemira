@@ -22,12 +22,12 @@
 """
 Fuel cycle analysis class for Monte Carlo statistics
 """
-import numpy as np
-import matplotlib.pyplot as plt
 from collections.abc import Iterable
 
-from bluemira.base.look_and_feel import bluemira_warn, BluemiraClock
+import matplotlib.pyplot as plt
+import numpy as np
 
+from bluemira.base.look_and_feel import BluemiraClock, bluemira_warn
 
 __all__ = ["FuelCycleAnalysis"]
 

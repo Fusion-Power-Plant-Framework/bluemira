@@ -23,8 +23,8 @@
 """Logging system setup and control."""
 
 import logging
-from enum import Enum
 import sys
+from enum import Enum
 
 from bluemira.base.error import LogsError
 

@@ -24,17 +24,18 @@ rectangular cross-section, following equations as described in:
 
 https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 """
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.base.constants import MU_0_4PI
 from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
 from bluemira.magnetostatics.tools import (
+    integrate,
     jit_llc3,
     jit_llc4,
-    integrate,
     process_xyz_array,
 )
-from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
 
 __all__ = ["CircularArcCurrentSource"]
 

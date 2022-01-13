@@ -32,15 +32,15 @@ Feel free to change parameters!
 from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
-
-from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.geometry.loop import Loop
-
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 # %%[markdown]
 # # Anatomy of a ReactorSystem
 
 # %%
+
+
 class TypicalSystem(ReactorSystem):
     """
     The class docstring. It should contain a simple description of what

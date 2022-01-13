@@ -18,18 +18,19 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
+import itertools
 
 import numpy as np
-import itertools
+import pytest
 from matplotlib import pyplot as plt
+
+import tests
 from BLUEPRINT.beams.node import Node
-from BLUEPRINT.beams.transformation import _direction_cosine_matrix, lambda_matrix
+from BLUEPRINT.beams.transformation import _direction_cosine_matrix
 from BLUEPRINT.beams.transformation import (
     _direction_cosine_matrix_debugging as _dcm_debug,
 )
-
-import tests
+from BLUEPRINT.beams.transformation import lambda_matrix
 
 
 class TestLambdaTransformationMatrices:

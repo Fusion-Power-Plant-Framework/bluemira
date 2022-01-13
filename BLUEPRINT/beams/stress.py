@@ -79,9 +79,3 @@ def hermite_polynomials(n):
     n_2 = hermite_curvature(n)
     n_3 = hermite_shear(n)
     return [n_1, n_2, n_3]
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

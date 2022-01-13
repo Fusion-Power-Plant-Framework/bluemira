@@ -24,17 +24,17 @@ Created on Tue Sep 17 11:18:37 2019
 @author: matti
 """
 
+import warnings
+
 import numpy as np
 import pytest
-import warnings
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     from neutronics_material_maker.utils import make_serpent_material
 
-from bluemira.utilities.tools import is_num, kgm3_to_gcm3, to_kelvin
-
 import tests
+from bluemira.utilities.tools import is_num, kgm3_to_gcm3, to_kelvin
 from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
 
 

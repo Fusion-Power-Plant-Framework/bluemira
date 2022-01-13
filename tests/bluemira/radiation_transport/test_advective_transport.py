@@ -20,16 +20,16 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+
 import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.radiation_transport.error import AdvectionTransportError
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
-
+from bluemira.radiation_transport.error import AdvectionTransportError
 
 TEST_PATH = get_bluemira_path(
     "bluemira/radiation_transport/test_data", subfolder="tests"

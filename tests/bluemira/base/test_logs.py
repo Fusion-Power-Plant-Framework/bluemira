@@ -21,17 +21,18 @@
 
 """Testing for logging system."""
 
-import pytest
 import logging
 
+import pytest
+
+from bluemira.base.error import LogsError
 from bluemira.base.logs import (
+    LoggingContext,
+    LogLevel,
     get_log_level,
     logger_setup,
     set_log_level,
-    LogLevel,
-    LoggingContext,
 )
-from bluemira.base.error import LogsError
 
 
 class TestLoggingLevel:

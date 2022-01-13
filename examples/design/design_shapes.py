@@ -26,7 +26,6 @@ A basic tutorial for configuring and running a design with parameterised shapes.
 from bluemira.base.design import Design
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 
-
 # Make an example optimisation problem to be solved in the design.
 
 

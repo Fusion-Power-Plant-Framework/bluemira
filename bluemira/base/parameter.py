@@ -95,6 +95,22 @@ class ParameterMapping:
         return repr(self.to_dict())
 
 
+class ParameterMappingEncoder(json.JSONEncoder):
+    """
+    Class to handle serialisation of ParameterMapping objects to JSON.
+    """
+
+    def default(self, obj):
+        """Overridden JSON serialisation method which will be called if an
+        object is not an instance of one of the classes with
+        built-in serialisations (e.g., list, dict, etc.).
+
+        """
+        if isinstance(obj, ParameterMapping):
+            return obj.to_dict()
+        return json.JSONEncoder.default(self, obj)
+
+
 def inplace_wrapper(method):
     """
     Decorator to update history for inplace operators
@@ -498,18 +514,18 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         mapping_str = (
-            " {"
+            "\n    {"
             + ", ".join([repr(k) + ": " + str(v) for k, v in self.mapping.items()])
             + "}"
             if self.mapping is not None
             else ""
         )
         return (
-            f"{self.var}"
+            f"{self.name if self.name is not None else ''}"
+            f" [{self.unit if self.unit not in [None, 'N/A'] else '-'}]:"
+            f" {self.var}"
             f"{' = ' + str(self.value) if self.value is not None else ''}"
-            f"{' ' + self.unit if self.unit is not None else ''}"
-            f"{' (' + self.name + ')' if self.name is not None else ''}"
-            f"{' : ' + self.description if self.description is not None else ''}"
+            f"{' (' + self.description + ')' if self.description is not None else ''}"
             f"{mapping_str}"
         )
 
@@ -1217,21 +1233,6 @@ class ParameterFrame:
         """
         return cls(the_list)
 
-    class ParameterMappingEncoder(json.JSONEncoder):
-        """
-        Class to handle serialisation of ParameterMapping objects to JSON.
-        """
-
-        def default(self, obj):
-            """Overridden JSON serialisation method which will be called if an
-            object is not an instance of one of the classes with
-            built-in serialisations (e.g., list, dict, etc.).
-
-            """
-            if isinstance(obj, ParameterMapping):
-                return obj.to_dict()
-            return json.JSONEncoder.default(self, obj)
-
     def to_json(
         self,
         output_path=None,
@@ -1271,7 +1272,7 @@ class ParameterFrame:
             the_dict,
             output_path,
             return_output,
-            cls=self.ParameterMappingEncoder,
+            cls=ParameterMappingEncoder,
             **kwargs,
         )
 

@@ -23,15 +23,16 @@
 Optimisation variable class.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 from operator import attrgetter
+
+import matplotlib.pyplot as plt
+import numpy as np
 from pandas import DataFrame
 from tabulate import tabulate
-from bluemira.base.look_and_feel import bluemira_warn
 
-from bluemira.utilities.error import OptVariablesError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.palettes import BLUEMIRA_PALETTE
+from bluemira.utilities.error import OptVariablesError
 
 
 def normalise_value(value, lower_bound, upper_bound):

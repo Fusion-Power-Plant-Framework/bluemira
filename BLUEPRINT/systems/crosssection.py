@@ -22,30 +22,27 @@
 """
 Reactor 2-D cross-section
 """
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import minimize
 from collections import OrderedDict
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.optimize import minimize
 
+from bluemira.base.parameter import ParameterFrame
+from bluemira.geometry._deprecated_tools import innocent_smoothie
+from BLUEPRINT.base.error import SystemsError
+from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union
+from BLUEPRINT.geometry.geomtools import inloop, lengthnorm, normal, order, unique
+from BLUEPRINT.geometry.loop import Loop, MultiLoop
+from BLUEPRINT.geometry.offset import max_steps, offset_smc
+from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
+from BLUEPRINT.geometry.shape import Shape
+from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.nova.firstwall import DivertorProfile, FirstWallProfile
 from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
-from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.boolean import (
-    boolean_2d_union,
-    boolean_2d_difference,
-)
-from BLUEPRINT.geometry.geomtools import order, lengthnorm, normal, unique, inloop
-from BLUEPRINT.geometry.offset import offset_smc, max_steps
-from BLUEPRINT.geometry.parameterisations import PolySpline, PictureFrame
-from BLUEPRINT.geometry.shape import Shape
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
-from bluemira.geometry._deprecated_tools import innocent_smoothie
 
 
 class ReactorCrossSection(ReactorSystem):
@@ -191,7 +188,7 @@ class ReactorCrossSection(ReactorSystem):
         self.x_b = self.geom["first_wall"]["x"]
         self.z_b = self.geom["first_wall"]["z"]
 
-    def _build_SN(self):  # noqa (N802)
+    def _build_SN(self):  # noqa :N802
         div_geom = self.div_profile.make_divertor(
             self.geom["inner_loop"], location="lower"
         )
@@ -234,7 +231,7 @@ class ReactorCrossSection(ReactorSystem):
             blanket_out, div_geom["divertor_gap"]
         )[0]
 
-    def _build_DN(self):  # noqa (N802)
+    def _build_DN(self):  # noqa :N802
         div_lower = self.div_profile.make_divertor(
             self.geom["inner_loop"], location="lower"
         )
@@ -864,9 +861,3 @@ class NLoop:
         for t in trim:
             index.append(np.argmin(np.abs(length_norm - t)))
         return index
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

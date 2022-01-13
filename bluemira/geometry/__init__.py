@@ -22,14 +22,3 @@
 """
 Methods and classes for geometry creation and manipulation.
 """
-
-from . import base
-from . import wire
-from . import face
-from . import shell
-from . import solid
-from . import constants
-from . import error
-from . import tools
-from . import plane
-from . import bound_box

@@ -19,8 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
+import pytest
+
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid, integrate_dx_dz, volume_integral
 

@@ -25,15 +25,15 @@ object, optimized for the minimum length
 """
 
 import os
+
 import matplotlib.pyplot as plt
 
-from bluemira.base.parameter import ParameterFrame
-
 from bluemira.base.file import make_bluemira_path
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
+from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.model import CADModel
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 
 # BASED ON GV_SCR_03 from the PROCESS-STEP repository
 # fmt: off

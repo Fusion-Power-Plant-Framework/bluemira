@@ -143,4 +143,3 @@
     inp0%dx_control(1)=0.2 !nbi
     inp0%dx_control(2)=0.03 !ech
     inp0%nbi_energy=1000. !in keV
-    

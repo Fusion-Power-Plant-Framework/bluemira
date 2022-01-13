@@ -16,8 +16,8 @@ The coordinate system is right-handed, Cartesian (x, y, z) and centred at (0, 0,
 
 
 .. seealso::
-	
-	<http://mathworld.wolfram.com/Right-HandedCoordinateSystem.html>
+
+	<https://mathworld.wolfram.com/Right-HandedCoordinateSystem.html>
 
 
 * The default plane in BLUEPRINT is the x-z plane.
@@ -61,7 +61,7 @@ Let's make a triangle:
 	# default to 0.
 
 	triangle = Loop(x=[1, 2, 0], y=[2 ** 0.5, 0, 0])
-	
+
 	# Let's check that the coordinates are the same as specified:
 	print(f"triangle.x: {triangle.x}")
 	print(f"triangle.y: {triangle.y}")
@@ -109,12 +109,12 @@ It is usually desirable to work with closed Loops. These are used frequently in 
 
 Unlike ccw, Loops are not forced to be closed Loops.
 
-	
+
 .. code-block:: python
 
 	triangle.close()
 	print(triangle)
-	
+
 	>>> 2-D closed ccw x-y Loop, 4 long
 
 Notice it is now of length = 4, and not 3 as before. The first and end points are coincident.
@@ -234,7 +234,7 @@ There are other ways to instantiate a Loop:
 
 
 
-3) from a file: 
+3) from a file:
 
 This is mostly useful for debugging, save Loops if they are nasty geometry edge cases, or passing information to people. Loops are saved in a JSON format, because it is widely-used and human readable.
 
@@ -431,4 +431,3 @@ Shells can be manipulated in the same way as Loops:
 	rotated_shell.plot(edgecolor="k", facecolor="b")
 
 .. image:: ../images/geometry/figure12.png
-

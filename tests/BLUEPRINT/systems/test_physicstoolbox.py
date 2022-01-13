@@ -18,8 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
 import numpy as np
+import pytest
+
 from BLUEPRINT.systems.physicstoolbox import (
     E_DD_fusion,
     E_DT_fusion,
@@ -36,12 +37,12 @@ class TestGCSEPhysics:
             delta * 1e-6, relate
         )
 
-    def test_DT(self):  # noqa (N802)
+    def test_DT(self):  # noqa :N802
         e_dt_kikuchi = (3.5 + 14.1) * 1e6
         e, v = E_DT_fusion(), e_dt_kikuchi
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
 
-    def test_DD(self):  # noqa (N802)
+    def test_DD(self):  # noqa :N802
         e_dd_kikuchi = np.array([1.01 + 3.02, 0.82 + 2.45]) * 1e6
         e, v = E_DD_fusion(), np.average(e_dd_kikuchi)
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
@@ -49,7 +50,7 @@ class TestGCSEPhysics:
 
 class TestTE:
     @pytest.mark.xfail
-    def test_IPB(self):  # noqa (N802)
+    def test_IPB(self):  # noqa :N802
         # This is not working because I never got the right values... couldn't
         # find the scaling law working backwards :/
         i_p = 15

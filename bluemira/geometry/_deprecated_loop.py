@@ -23,34 +23,37 @@
 A coordinate-series object class.
 """
 
-import numpy as np
-from scipy.spatial.distance import cdist
-from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import PathPatch
+from scipy.interpolate import interp1d
+from scipy.spatial.distance import cdist
+
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry._deprecated_base import GeomBase, GeometryError, Plane
 from bluemira.geometry._deprecated_tools import (
-    check_ccw,
-    quart_rotate,
-    rotation_matrix_v1v2,
     bounding_box,
-    get_perimeter,
+    in_polygon,
+    offset,
+    quart_rotate,
+    vector_lengthnorm,
+)
+from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.coordinates import (
+    check_ccw,
     get_area,
     get_centroid_2d,
     get_centroid_3d,
     get_normal_vector,
-    offset,
-    vector_lengthnorm,
-    in_polygon,
+    get_perimeter,
+    rotation_matrix_v1v2,
+)
+from bluemira.utilities.plot_tools import (
+    BluemiraPathPatch3D,
+    Plot3D,
+    coordinates_to_path,
 )
 from bluemira.utilities.tools import is_num
-from bluemira.utilities.plot_tools import (
-    coordinates_to_path,
-    Plot3D,
-    BluemiraPathPatch3D,
-)
 
 
 class Loop(GeomBase):

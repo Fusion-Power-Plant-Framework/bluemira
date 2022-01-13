@@ -23,7 +23,7 @@
 Error classes for the materials module.
 """
 
-from ..base.error import BluemiraError
+from bluemira.base.error import BluemiraError
 
 
 class MaterialsError(BluemiraError):

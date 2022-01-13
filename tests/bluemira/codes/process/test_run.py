@@ -19,17 +19,17 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import pathlib
 import shutil
 import tempfile
 from typing import Dict
 from unittest.mock import patch
 
-from bluemira.base.builder import BuildConfig
-from bluemira.codes.process.constants import NAME as PROCESS
-from bluemira.codes.process import run, PROCESS_ENABLED
+import pytest
 
+from bluemira.base.builder import BuildConfig
+from bluemira.codes.process import PROCESS_ENABLED, Solver
+from bluemira.codes.process.constants import NAME as PROCESS
 from tests.bluemira.codes.process import (
     FRAME_LIST,
     INDIR,
@@ -75,20 +75,22 @@ class TestRun:
         shutil.rmtree(self.run_dir)
 
     def set_runmode(self, runmode):
-        self.build_config["process_mode"] = runmode
+        self.build_config["mode"] = runmode
 
     def run_PROCESS(self, runmode, **kwargs):
         """
         Set runmode in test reactor and run PROCESS.
         """
         self.set_runmode(runmode)
-        return run.Run(
+        solver = Solver(
             self.params,
             self.build_config,
             self.run_dir,
             self.read_dir,
             **kwargs,
         )
+        solver.run()
+        return solver
 
     @pytest.mark.parametrize(
         "runmode",
@@ -102,13 +104,27 @@ class TestRun:
         ]
         # fmt: on
     )
+    @patch("bluemira.codes.process.setup.Setup._run")
+    @patch("bluemira.codes.process.setup.Setup._runinput")
     @patch("bluemira.codes.process.run.Run._run")
     @patch("bluemira.codes.process.run.Run._runinput")
-    @patch("bluemira.codes.process.run.Run._read")
-    @patch("bluemira.codes.process.run.Run._readall")
-    @patch("bluemira.codes.process.run.Run._mock")
+    @patch("bluemira.codes.process.teardown.Teardown._run")
+    @patch("bluemira.codes.process.teardown.Teardown._runinput")
+    @patch("bluemira.codes.process.teardown.Teardown._read")
+    @patch("bluemira.codes.process.teardown.Teardown._readall")
+    @patch("bluemira.codes.process.teardown.Teardown._mock")
     def test_runmode(
-        self, mock_mock, mock_readall, mock_read, mock_runinput, mock_run, runmode
+        self,
+        mock_mock,
+        mock_readall,
+        mock_read,
+        mock_runinput_t,
+        mock_run_t,
+        mock_runinput_r,
+        mock_run_r,
+        mock_runinput_s,
+        mock_run_s,
+        runmode,
     ):
         """
         Test that the PROCESS runner accepts valid runmodes and calls the corresponding
@@ -118,9 +134,13 @@ class TestRun:
 
         # Check correct call was made.
         if runmode.upper() == "RUN":
-            assert mock_run.call_count == 1
+            assert mock_run_s.call_count == 1
+            assert mock_run_r.call_count == 1
+            assert mock_run_t.call_count == 1
         elif runmode.upper() == "RERUN":
-            assert mock_runinput.call_count == 1
+            assert mock_runinput_s.call_count == 1
+            assert mock_runinput_r.call_count == 1
+            assert mock_runinput_t.call_count == 1
         elif runmode.upper() == "READ":
             assert mock_read.call_count == 1
         elif runmode.upper() == "READALL":
@@ -141,7 +161,7 @@ class TestRun:
         """
         self.params.add_parameters(FRAME_LIST)
 
-        with patch("bluemira.codes.process.run.Run._mock"):
+        with patch("bluemira.codes.process.teardown.Teardown._mock"):
             runner = self.run_PROCESS("MOCK")
 
         # Test that PROCESS params with recv = False are not read.
@@ -157,11 +177,11 @@ class TestRun:
         assert "PROCESS" not in param.mapping and param.mapping["FAKE_CODE"].recv is True
         assert "gp" not in runner._recv_mapping
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run.read_mfile")
+    @patch("bluemira.codes.process.teardown.Teardown.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_runinput(
@@ -190,11 +210,11 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run.read_mfile")
+    @patch("bluemira.codes.process.teardown.Teardown.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_run_with_params_to_update(
@@ -229,11 +249,11 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.run.Run.read_mfile")
+    @patch("bluemira.codes.process.teardown.Teardown.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_run_without_params_to_update(
@@ -274,8 +294,8 @@ class TestRun:
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
@@ -294,8 +314,8 @@ class TestRun:
         assert mock_load.call_count == 1
         assert mock_add_parameter.call_count == 0
 
-    @patch("bluemira.codes.process.run.Run._load_PROCESS")
-    @patch("bluemira.codes.process.run.Run._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")

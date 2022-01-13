@@ -23,8 +23,8 @@
 HCD CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
+from BLUEPRINT.cad.cadtools import make_axis, make_face, revolve
 from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import make_face, make_axis, revolve
 
 
 class NBIoCAD(ComponentCAD):
@@ -81,9 +81,3 @@ class ECDoCAD(ComponentCAD):
             ax = make_axis(path["rotation axis"][0], (0, 0, 1))
             shape = revolve(bb_face, ax, path["angle"])
             self.add_shape(shape, name=seg)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

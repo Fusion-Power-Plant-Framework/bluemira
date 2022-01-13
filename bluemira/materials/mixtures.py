@@ -23,19 +23,19 @@
 Material mixture utility classes
 """
 import copy
-import numpy as np
 import typing
 import warnings
+
+import numpy as np
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import neutronics_material_maker as nmm
 
-from ..base.look_and_feel import bluemira_warn
-
-from .constants import MATERIAL_BEAM_MAP, T_DEFAULT
-from .error import MaterialsError
-from .material import SerialisedMaterial
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.materials.constants import MATERIAL_BEAM_MAP, T_DEFAULT
+from bluemira.materials.error import MaterialsError
+from bluemira.materials.material import SerialisedMaterial
 
 
 class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
@@ -44,7 +44,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
     """
 
     materials: typing.Dict[str, float]
-    temperature_in_K: float  # noqa (N815)
+    temperature_in_K: float  # noqa :N815
     enrichment: float
 
     default_temperature = T_DEFAULT
@@ -54,13 +54,13 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         self,
         name,
         materials,
-        temperature_in_K=None,  # noqa(N803)
+        temperature_in_K=None,  # noqa :N803
         enrichment=None,
         zaid_suffix=None,
         material_id=None,
     ):
         if temperature_in_K is None:
-            temperature_in_K = self.default_temperature  # noqa(N803)
+            temperature_in_K = self.default_temperature  # noqa :N803
 
         mats = []
         for mat in materials.keys():

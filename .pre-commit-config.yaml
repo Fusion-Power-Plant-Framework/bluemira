@@ -1,14 +1,56 @@
 repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+    - id: trailing-whitespace
+    - id: check-merge-conflict
+    - id: end-of-file-fixer
+      exclude: |
+            (?x)^(
+                tests/bluemira/utilities/test_data/testJSONEncoder.json |
+                tests/BLUEPRINT/cli/test_indir/SMOKE-TEST_template.json
+            )$
+
+    - id: mixed-line-ending
+      args: [--fix=lf]
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+    - id: isort
+
 -   repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 21.12b0
     hooks:
     - id: black
       language_version: python3.8
 
 -   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
+    rev: 3.9.2
     hooks:
     - id: flake8
       verbose: True
       additional_dependencies: [flake8-docstrings,  pep8-naming, flake8-bandit]
       args: [--exit-zero]
+
+-   repo: local
+    hooks:
+    - id: regenerate-ipynb-examples
+      name: regenerate-ipynb-examples
+      entry: python examples/convert_py_to_ipynb.py
+      language: system
+      args: [--check]
+      types: [python]
+      files: ^examples/
+      exclude: |
+            (?x)^(
+                examples/convert_py_to_ipynb.py |
+                examples/BLUEPRINT_integration.py
+            )$
+
+-   repo: https://github.com/psf/black
+    rev: 21.12b0
+    hooks:
+    - id: black-jupyter
+      language_version: python3.8
+      types: [jupyter]

@@ -20,16 +20,18 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+
 import numpy as np
 import pytest
+
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.optimiser import UnconstrainedCurrentOptimiser
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.constraints import (
-    MagneticConstraintSet,
     IsofluxConstraint,
+    MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.optimiser import UnconstrainedCurrentOptimiser
 
 
 # @pytest.mark.longrun

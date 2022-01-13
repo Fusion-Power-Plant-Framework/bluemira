@@ -22,11 +22,11 @@
 """
 Green's functions mappings for psi, Bx, and Bz
 """
-import numpy as np
 import numba as nb
-from scipy.special import ellipk, ellipe
-from bluemira.base.constants import MU_0, MU_0_4PI
+import numpy as np
+from scipy.special import ellipe, ellipk
 
+from bluemira.base.constants import MU_0, MU_0_4PI
 
 __all__ = ["greens_psi", "greens_Bx", "greens_Bz", "greens_all"]
 
@@ -178,7 +178,7 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
 
 
 @nb.jit(nopython=True)
-def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa (N802)
+def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
     """
     Calculate radial magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.

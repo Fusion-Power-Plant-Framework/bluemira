@@ -23,40 +23,41 @@
 Coil positioning routines (automatic and adjustable)
 """
 
-import numpy as np
 import re
-from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
+
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.error import GeometryError
+from bluemira.equilibria.coils import (
+    CS_COIL_NAME,
+    PF_COIL_NAME,
+    Coil,
+    CoilSet,
+    Solenoid,
+    get_max_current,
+)
+from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
+from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_boolean import (
     boolean_2d_common,
     boolean_2d_difference,
     boolean_2d_union,
 )
-from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_tools import (
-    vector_lengthnorm_2d,
-    loop_plane_intersect,
-    join_intersect,
-)
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
-from bluemira.equilibria.constants import NBTI_J_MAX
-from bluemira.equilibria.coils import (
-    Coil,
-    CoilSet,
-    PF_COIL_NAME,
-    CS_COIL_NAME,
-    Solenoid,
-    get_max_current,
+from bluemira.geometry._deprecated_tools import (
+    join_intersect,
+    loop_plane_intersect,
+    vector_lengthnorm_2d,
 )
-from bluemira.equilibria.plotting import XZLPlotter, RegionPlotter
+from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
 from bluemira.utilities import tools
 
 
@@ -311,7 +312,7 @@ class XZLMapper:
             loop["z"](l_values) - point[1]
         ) ** 2
 
-    def xz_to_L(self, x, z):  # noqa (N802)
+    def xz_to_L(self, x, z):  # noqa :N802
         """
         Translação de coordenadas (x, z) até coordenadas lineares normalizadas
         (L) para as bobinas PF
@@ -320,14 +321,14 @@ class XZLMapper:
             self.PFnorm, method="bounded", args=(self.pftrack, [x, z]), bounds=[0, 1]
         ).x
 
-    def L_to_xz(self, l_values):  # noqa (N802)
+    def L_to_xz(self, l_values):  # noqa :N802
         """
         Translação de coordenadas lineares normalizadas (L) até coordenadas
         (x, z) para as bobinas PF
         """
         return self.pftrack["x"](l_values), self.pftrack["z"](l_values)
 
-    def z_to_L(self, zc_vec):  # noqa (N802)
+    def z_to_L(self, zc_vec):  # noqa :N802
         """
         Convert z values for the CS in L values of the CS track.
         """
@@ -358,7 +359,7 @@ class XZLMapper:
         # zc[-1] = self.Zmin+dz[-1]
         return self.Xcs * np.ones(len(l_values)), zc[::-1], dz[::-1]  # Coil numbering
 
-    def get_Lmap(self, coilset, mapping):  # noqa (N802)
+    def get_Lmap(self, coilset, mapping):  # noqa :N802
         """
         Calculates initial L vector and lb and ub constraints on L vector.
 

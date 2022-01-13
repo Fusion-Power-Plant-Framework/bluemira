@@ -1,7 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
+import numpy as np
 
+from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 source = TrapezoidalPrismCurrentSource(
     origin=[1, 1, 1],  # the centroid of the current source

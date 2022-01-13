@@ -712,7 +712,7 @@ analytical relation can be derived for the amount of tritium released to
 the environment over a given annual period, see Equation :eq:`legal`:
 
 .. math::
-   :label: legal   
+   :label: legal
 
    \begin{gathered}
    \dot{m}_{release} = A_{max}\Bigg[\bigg(\dot{m}_{b}\bigg[\bigg(\dfrac{1}{f_{b}}-1\bigg)+(1-{\eta}_{f_{pump}})
@@ -839,11 +839,11 @@ default case are shown in :numref:`distribution`, and the results summarised in
 .. table:: Default results for :math:`m_{T_{start}}` and :math:`t_{d}`, over 200 runs
 
       ======================== ========================== ==================
-      Value                    :math:`m_{T_{start}}` [kg] :math:`t_{d}` [yr] 
+      Value                    :math:`m_{T_{start}}` [kg] :math:`t_{d}` [yr]
       ======================== ========================== ==================
-      Mean                     5.52                       12.53              
-      95\ :sup:`th` percentile 5.58                       12.94              
-      Maximum                  5.78                       13.14              
+      Mean                     5.52                       12.53
+      95\ :sup:`th` percentile 5.58                       12.94
+      Maximum                  5.78                       13.14
       ======================== ========================== ==================
 
 
@@ -899,4 +899,3 @@ default case are shown in :numref:`distribution`, and the results summarised in
 .. [Hörstensmeyer_2018] Y. N. Hörstensmeyer, B. Butler, C. Day, and F. Franza, Analysis of the EU-DEMO fuel cycle elements: Intrinsic impact of technology choices, Fusion Engineering and Design, 2018
 
 .. [Johnston_2017] J. Johnston, DEMO Plant Safety Requirements Documents (PSRD), Tech. Rep. EFDA D 2MKFDY, Culham Centre for Fusion Energy - EUROfusion, 2017
-

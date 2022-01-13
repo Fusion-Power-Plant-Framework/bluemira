@@ -1,1 +1,1 @@
-# flake8: noqa (D104)
+# flake8: noqa :D104

@@ -22,11 +22,11 @@
 """
 Divertor CAD routines
 """
-from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.base.error import CADError
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
+from BLUEPRINT.base.palettes import BLUE
+from BLUEPRINT.cad.cadtools import make_axis, make_mixed_face, revolve
 from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.cadtools import revolve, make_axis, make_mixed_face
+from BLUEPRINT.geometry.loop import Loop, MultiLoop
 
 
 class DivertorCAD(ComponentCAD):
@@ -82,9 +82,3 @@ class DivertorCAD(ComponentCAD):
         """
         self.build(**kwargs)
         self.component_pattern(self.n_TF)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

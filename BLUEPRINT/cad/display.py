@@ -24,6 +24,7 @@ CAD display utilities
 """
 import numpy as np
 from OCC.Display.SimpleGui import init_display
+
 from bluemira.base.look_and_feel import bluemira_warn
 
 try:
@@ -99,9 +100,3 @@ class QtDisplayer:
             qc = Quantity_Color(*color, Quantity_TOC_RGB)
             qc.ChangeIntensity(-50)
             self.qt_display.DisplayColoredShape(shape, qc)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

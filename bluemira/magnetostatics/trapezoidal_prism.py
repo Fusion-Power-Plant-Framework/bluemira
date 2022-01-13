@@ -27,11 +27,12 @@ https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594?saml_referrer=
 including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
-import numpy as np
 import numba as nb
+import numpy as np
+
 from bluemira.base.constants import MU_0_4PI
-from bluemira.magnetostatics.tools import process_xyz_array
 from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
+from bluemira.magnetostatics.tools import process_xyz_array
 
 __all__ = ["TrapezoidalPrismCurrentSource"]
 

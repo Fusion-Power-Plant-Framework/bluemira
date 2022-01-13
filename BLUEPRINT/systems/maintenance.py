@@ -22,22 +22,21 @@
 """
 Some pretty outdated and crappy remote maintenance routines
 """
+import getpass
+import itertools
+import sys
+from typing import Type
+
 # flake8: noqa  (deprecated mess)
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-import itertools
-import sys
-import getpass
-from typing import Type
 
-from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.constants import GRAVITY
-from bluemira.base.parameter import ParameterFrame
-
 from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.systems.baseclass import ReactorSystem
-
 
 if sys.platform != "darwin" and getpass.getuser() != "mcintos":  # !!!
     if sys.platform == "windows":
@@ -338,8 +337,8 @@ class BuildRMDB:
 
     def read_output(self):
         """
-        Ceci t'a bcp aide: http://stackoverflow.com/questions/41784468/update-links-in-for-excel-spreadsheet-using-python
-        """  # noqa (W505)
+        Ceci t'a bcp aide: https://stackoverflow.com/questions/41784468/update-links-in-for-excel-spreadsheet-using-python
+        """  # noqa :W505
         application = win32com.client.Dispatch("Excel.Application")
         application.Visible = False
         application.DisplayAlerts = False
@@ -367,9 +366,3 @@ class BuildRMDB:
     def store_dp(self, dp):
         self.RMDB = pd.concat([self.RMDB, dp], ignore_index=True)
         return
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

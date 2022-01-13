@@ -76,7 +76,7 @@ class ForceField:
             self.Bp = self.get_B_p(self.eq_plasma_coil)
             self.flag_pcoil = True
 
-    def get_F_a(self):  # noqa (N803)
+    def get_F_a(self):  # noqa :N803
         """
         Returns the active force response matrix for the force
 
@@ -86,20 +86,20 @@ class ForceField:
         Note: if i=j:\n
         \t:math:`F_{x_{a_{i,j=i}}}=2\\pi X_i\\dfrac{\\mu_0}{4\\pi X_i}\\textrm{ln}\\bigg(\\dfrac{8X_i}{r_{c_{i}}}-1+\\xi/2\\bigg)`
         \t:math:`F_{z_{a_{i,j}}}=-2\\pi X_i \\mathcal{G}_{B_x}(X_j, Z_j, X_i, Z_i)`
-        """  # noqa (W505)
-        Fa = np.zeros((self.n_coils, self.n_coils, 2))  # noqa (N803)
+        """  # noqa :W505
+        Fa = np.zeros((self.n_coils, self.n_coils, 2))  # noqa :N803
         for i, coil1 in enumerate(self.coils.values()):
             for j, coil2 in enumerate(self.coils.values()):
                 Fa[i, j, :] = coil1.control_F(coil2)
         return Fa
 
-    def get_F_p(self, plasmacoil):  # noqa (N803)
+    def get_F_p(self, plasmacoil):  # noqa :N803
         """
         Returns the passive force response vector for the force
 
         \t:math:`\\mathbf{F}=\\mathbf{I}^T(\\mathbf{F_{a}}\\cdot\\mathbf{I}+\\mathbf{F_{p}})`\n
-        """  # noqa (W505)
-        Fp = np.zeros((self.n_coils, 2))  # noqa (N803)
+        """  # noqa :W505
+        Fp = np.zeros((self.n_coils, 2))  # noqa :N803
         for i, coil in enumerate(self.coils.values()):
             if coil.current != 0:
                 Fp[i, :] = coil.F(plasmacoil) / coil.current
@@ -117,9 +117,9 @@ class ForceField:
 
         Note: if i=j:
         \t:math:`F_{x_{a_{i,j=i}}}=2\\pi X_i\\dfrac{\\mu_0}{4\\pi X_i}\\textrm{ln}\\bigg(\\dfrac{8X_i}{r_{c_{i}}}-1+\\xi/2\\bigg)`
-        """  # noqa (W505)
+        """  # noqa :W505
         F = np.zeros((self.n_coils, 2))
-        dF = np.zeros((self.n_coils, self.n_coils, 2))  # noqa (N803)
+        dF = np.zeros((self.n_coils, self.n_coils, 2))  # noqa :N803
         im = np.dot(
             currents.reshape(-1, 1), np.ones((1, self.n_coils))
         )  # current matrix
@@ -135,7 +135,7 @@ class ForceField:
             np.fill_diagonal(dF[:, :, i], diag)
         return F, dF
 
-    def get_B_a(self):  # noqa (N803)
+    def get_B_a(self):  # noqa :N803
         """
         Returns the active field response matrix for the field
 
@@ -143,14 +143,14 @@ class ForceField:
         ----
         Peak field an inboard central edge of coil!
         """
-        Ba = np.zeros((self.n_coils, self.n_coils, 2))  # noqa (N803)
+        Ba = np.zeros((self.n_coils, self.n_coils, 2))  # noqa :N803
         for i, coil1 in enumerate(self.coils.values()):
             for j, coil2 in enumerate(self.coils.values()):
                 Ba[i, j, 0] = np.array(coil2.control_Bx(coil1.x - coil1.dx, coil1.z))
                 Ba[i, j, 1] = np.array(coil2.control_Bz(coil1.x - coil1.dx, coil1.z))
         return Ba
 
-    def get_B_p(self, plasmacoil):  # noqa (N803)
+    def get_B_p(self, plasmacoil):  # noqa :N803
         """
         Calculate the passive field response vectors for the field
         """
@@ -166,12 +166,12 @@ class ForceField:
 
         Derivation: Book 11, p. 58
         """
-        Ba = np.zeros((self.n_coils, 2))  # noqa (N803)
+        Ba = np.zeros((self.n_coils, 2))  # noqa :N803
         for i in range(2):
             Ba[:, i] = self.Ba[:, :, i] @ currents
         Bp_x, Bp_z = self.Bp
         B = np.sqrt((Ba[:, 0] + Bp_x) ** 2 + (Ba[:, 1] + Bp_z) ** 2)
-        dB = Ba[:, 0] * (Ba[:, 0] @ currents + Bp_x) + Ba[:, 1] * (  # noqa (N803)
+        dB = Ba[:, 0] * (Ba[:, 0] @ currents + Bp_x) + Ba[:, 1] * (  # noqa :N803
             Ba[:, 1] @ currents + Bp_z
         )
         dB /= B

@@ -23,14 +23,15 @@
 Fuel cycle model fundamental building blocks
 """
 import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
 from bluemira.fuel_cycle.tools import (
-    linear_bathtub,
+    delay_decay,
     fountain,
     fountain_bathtub,
+    linear_bathtub,
     sqrt_bathtub,
-    delay_decay,
 )
 
 

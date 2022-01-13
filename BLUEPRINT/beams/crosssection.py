@@ -22,17 +22,19 @@
 """
 Objects and tools for calculating cross-sectional properties
 """
-import numpy as np
-import numba as nb
 from copy import deepcopy
-from sectionproperties.pre.sections import CustomSection, MergedSection
-from sectionproperties.pre.pre import Material as SPMaterial
+
+import numba as nb
+import numpy as np
 from sectionproperties.analysis.cross_section import CrossSection as _CrossSection
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
-from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geomtools import circle_seg, get_control_point
+from sectionproperties.pre.pre import Material as SPMaterial
+from sectionproperties.pre.sections import CustomSection, MergedSection
+
 from BLUEPRINT.base.error import BeamsError
 from BLUEPRINT.beams.constants import NEAR_ZERO
+from BLUEPRINT.geometry.geomtools import circle_seg, get_control_point
+from BLUEPRINT.geometry.loop import Loop, MultiLoop
+from BLUEPRINT.geometry.shell import Shell
 
 
 @nb.jit(nopython=True, cache=True)

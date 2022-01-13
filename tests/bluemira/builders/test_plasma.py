@@ -23,10 +23,9 @@
 Tests for plasma builders
 """
 
+import tests
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.plasma import MakeParameterisedPlasma
-
-import tests
 
 
 class TestMakeParameterisedPlasma:

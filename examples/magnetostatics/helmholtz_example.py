@@ -22,17 +22,18 @@
 """
 Simple HelmholzCage example with different current sources.
 """
-import numpy as np
 import matplotlib.pyplot as plt
-from bluemira.utilities.plot_tools import Plot3D
-from bluemira.geometry._deprecated_tools import make_circle_arc
+import numpy as np
+
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
+from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.utilities.plot_tools import Plot3D
 
 # Set up some geometry and key parameters
 n_TF = 6

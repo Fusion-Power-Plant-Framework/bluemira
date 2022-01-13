@@ -25,7 +25,7 @@ A path can be provided for each input or the following defaults can be used:
 
 .. note::
 
-    The intended way to use the BLUEPRINT CLI is to leave these positional arguments 
+    The intended way to use the BLUEPRINT CLI is to leave these positional arguments
     blank, instead using  the `--indir` and `--reactornamein` options to specify the
     directory and reactor name used by input files.
 
@@ -67,7 +67,7 @@ The following options are available when running the BLUEPRINT CLI:
         Prepends ``PATH`` to each input. Default = ``""``
 
         This option can be used to more easily specify a common directory for inputs.
-        For example, if each input is stored in ``input_directory``, 
+        For example, if each input is stored in ``input_directory``,
         the following commands are equivalent:
 
         ::
@@ -87,7 +87,7 @@ The following options are available when running the BLUEPRINT CLI:
                         build_tweaks.json
 
         .. note::
-                If your inputs are stored in separate directories, this option can still 
+                If your inputs are stored in separate directories, this option can still
                 be used to enter the common components of their paths. For example:
 
                 ::
@@ -106,7 +106,7 @@ The following options are available when running the BLUEPRINT CLI:
         ::
 
                 $ blueprint -i ./input_directory -ri reactor_name
-        
+
         is equivalent to
         ::
 
@@ -119,13 +119,13 @@ The following options are available when running the BLUEPRINT CLI:
         Specifies ``PATH`` as the generated data root for outputs. Default = ``None``
 
         .. note::
-        
+
                 The keyword ``!BM_ROOT!`` may be used, to be replaced with the path to
                 the local BLUEPRINT directory (e.g. ``~/code/BLUEPRINT``).
 
 -ro, --reactornameout TEXT
         Specifies the reactor name to use for the run and makes a copy of reference data
-        in a new subdirectory using this reactor name. Also sets the name of the output 
+        in a new subdirectory using this reactor name. Also sets the name of the output
         subdirectory and the filename prefix for each output file.
 
         .. note::

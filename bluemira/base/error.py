@@ -23,7 +23,7 @@
 Bluemira base error class
 """
 
-from textwrap import fill, dedent
+from textwrap import dedent, fill
 
 
 class BluemiraError(Exception):

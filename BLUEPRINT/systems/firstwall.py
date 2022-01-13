@@ -22,36 +22,38 @@
 Flux surface attributes and first wall profile based on heat flux calculation
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import Type
-from bluemira.base.parameter import ParameterFrame
-from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
-from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import loop_plane_intersect, get_intersect
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import SystemsError, GeometryError
+import matplotlib.pyplot as plt
+import numpy as np
+
+from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.find import find_flux_surface_through_point, find_flux_surfs
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import get_intersect, loop_plane_intersect
+from bluemira.geometry.error import GeometryError
+from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
+from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
-from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
-    convex_hull,
-    boolean_2d_union,
+    boolean_2d_common_loop,
     boolean_2d_difference,
     boolean_2d_difference_loop,
     boolean_2d_difference_split,
-    boolean_2d_common_loop,
+    boolean_2d_union,
+    convex_hull,
     simplify_loop,
 )
-from BLUEPRINT.geometry.offset import offset_clipper
+from BLUEPRINT.geometry.geombase import make_plane
 from BLUEPRINT.geometry.geomtools import (
+    clean_loop_points,
     index_of_point_on_loop,
     make_box_xz,
-    clean_loop_points,
+    rotate_vector_2d,
 )
-from BLUEPRINT.geometry.geombase import make_plane
-from BLUEPRINT.geometry.geomtools import rotate_vector_2d
+from BLUEPRINT.geometry.offset import offset_clipper
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.utilities.csv_writer import write_csv
 
@@ -134,6 +136,11 @@ def get_tangent_vector(point_on_loop, loop):
 
     # Return normalised tangent vector
     tangent_norm = tangent / np.linalg.norm(tangent)
+
+    # Fixing the tangent vector direction to be concordant with the x-axis
+    if tangent_norm[0] > 0:
+        tangent_norm = -tangent_norm
+
     return tangent_norm
 
 
@@ -464,29 +471,19 @@ class DivertorBuilder:
 
         # if horizontal target
         if not vertical_target:
-            target_par = rotate_vector_2d(tangent, np.radians(theta_target * sign))
+            target_par = rotate_vector_2d(
+                tangent, np.radians(180 + (theta_target * sign))
+            )
         # if vertical target
         else:
-            target_par = rotate_vector_2d(tangent, np.radians(-theta_target * sign))
+            target_par = rotate_vector_2d(
+                tangent, np.radians(360 - (theta_target * sign))
+            )
 
         # Create relative vectors whose length will be the offset distance
         # from the strike point
         pfr_target_end = -target_par * target_length_pfr * sign
         sol_target_end = target_par * target_length_sol * sign
-
-        # Swap if we got the wrong way round
-        if outer_target:
-            swap_points = sol_target_end[0] < pfr_target_end[0]
-        # for the inner target
-        else:
-            swap_points = (
-                not vertical_target and sol_target_end[0] > pfr_target_end[0]
-            ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
-
-        if swap_points:
-            tmp = pfr_target_end
-            pfr_target_end = sol_target_end
-            sol_target_end = tmp
 
         # Add the strike point to diffs to get the absolute positions
         # of the end points of the target
@@ -520,10 +517,7 @@ class DivertorBuilder:
         tangent = get_tangent_vector(outer_strike, flux_loop)
 
         # Get the outer target points
-        (
-            outer_target_internal_point,
-            outer_target_external_point,
-        ) = self.make_divertor_target(
+        (outer_target_pfr_end, outer_target_sol_end) = self.make_divertor_target(
             outer_strike,
             tangent,
             vertical_target=self.inputs["div_vertical_outer_target"],
@@ -542,10 +536,10 @@ class DivertorBuilder:
         # Select the top and bottom limits for the guide lines
         z_x_point = self.points["x_point"]["z_low"]
         outer_leg_external_top_limit = [div_top_right, z_x_point]
-        outer_leg_external_bottom_limit = outer_target_external_point
+        outer_leg_external_bottom_limit = outer_target_sol_end
 
         outer_leg_internal_top_limit = middle_point
-        outer_leg_internal_bottom_limit = outer_target_internal_point
+        outer_leg_internal_bottom_limit = outer_target_pfr_end
 
         # Make the guide lines
         external_guide_line = make_guide_line(
@@ -566,7 +560,7 @@ class DivertorBuilder:
             internal_guide_line.x,
             internal_guide_line.z,
             [middle_point[0], middle_point[1]],
-            outer_target_internal_point,
+            outer_target_pfr_end,
             degree_in,
         )
 
@@ -576,7 +570,7 @@ class DivertorBuilder:
             external_guide_line.x,
             external_guide_line.z,
             [div_top_right, z_x_point],
-            outer_target_external_point,
+            outer_target_sol_end,
             degree_out,
         )
 
@@ -614,18 +608,16 @@ class DivertorBuilder:
         # Find the tangent to the approriate flux loop at the outer strike point
         tangent = get_tangent_vector(inner_strike, flux_loop)
 
-        degree = self.inner_leg_polyfit_degree
-
         # Get the outer target points
-        (
-            inner_target_internal_point,
-            inner_target_external_point,
-        ) = self.make_divertor_target(
+        (inner_target_pfr_end, inner_target_sol_end,) = self.make_divertor_target(
             inner_strike,
             tangent,
             vertical_target=self.inputs["div_vertical_inner_target"],
             outer_target=False,
         )
+
+        # Select the degree of the fitting polynomial
+        degree = self.inner_leg_polyfit_degree
 
         # Select those points along the given flux line below the X point
         inner_leg_central_guide_line = flux_loop
@@ -644,7 +636,7 @@ class DivertorBuilder:
         # Select those points along the top-clipped flux line above the
         # inner target internal point height
         bottom_clip_inner_leg_central_guide_line = np.where(
-            inner_leg_central_guide_line.z > inner_target_internal_point[1],
+            inner_leg_central_guide_line.z > inner_target_pfr_end[1],
         )
 
         # Create a new Loop from the points selected along the flux line
@@ -660,7 +652,7 @@ class DivertorBuilder:
             inner_leg_central_guide_line.x,
             inner_leg_central_guide_line.z,
             [middle_point[0], middle_point[1]],
-            inner_target_internal_point,
+            inner_target_pfr_end,
             degree,
         )
 
@@ -670,7 +662,7 @@ class DivertorBuilder:
             inner_leg_central_guide_line.x,
             inner_leg_central_guide_line.z,
             [div_top_left, z_x_point],
-            inner_target_external_point,
+            inner_target_sol_end,
             degree,
         )
 

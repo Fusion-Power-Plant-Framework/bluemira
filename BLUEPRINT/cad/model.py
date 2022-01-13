@@ -22,22 +22,24 @@
 """
 CAD model object for assemblies of components
 """
-import numpy as np
+import os
+import re
 from collections import OrderedDict
 from itertools import cycle
-import re
-import os
+
+import numpy as np
 from matplotlib.colors import to_rgb
-from BLUEPRINT.base.names import name_short_long
+
 from bluemira.base.look_and_feel import bluemira_warn
+from BLUEPRINT.base.names import name_short_long
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.cad.cadtools import (
     make_axis,
-    rotate_shape,
     make_compound,
+    rotate_shape,
     save_as_STEP_assembly,
 )
+from BLUEPRINT.cad.display import QtDisplayer
 from BLUEPRINT.utilities.colortools import force_rgb
 
 
@@ -178,7 +180,7 @@ class CADModel:
         self._Q = qt_display  # for debugging
         qt_display.show()
 
-    def save_as_STEP_assembly(self, filename, partname=None, scale=1):  # noqa (N802)
+    def save_as_STEP_assembly(self, filename, partname=None, scale=1):  # noqa :N802
         """
         Saves the CADModel to a STEP assembly file
 
@@ -199,7 +201,7 @@ class CADModel:
                 shapes.append(compounds)
         save_as_STEP_assembly(shapes, filename=filename, partname=partname, scale=scale)
 
-    def save_as_STEP(self, filepath, scale=1):  # noqa (N802)
+    def save_as_STEP(self, filepath, scale=1):  # noqa :N802
         """
         Exports the CADModel into individual STEP files
 
@@ -214,7 +216,7 @@ class CADModel:
             filename = os.sep.join([filepath, name])
             part.save_as_STEP(filename, scale=scale)
 
-    def save_as_STL(self, filepath, scale=1):  # noqa (N802)
+    def save_as_STL(self, filepath, scale=1):  # noqa :N802
         """
         Exports the CADModel into individual STL files
 
@@ -397,9 +399,3 @@ class Patterner:
         self.silo[partname]["names"].append(name)
         self.silo[partname]["colors"].append(color)
         self.silo[partname]["transparencies"].append(transp)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

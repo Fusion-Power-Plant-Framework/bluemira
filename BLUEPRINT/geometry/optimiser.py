@@ -24,7 +24,9 @@ Shape optimiser object and interfaces to scipy.
 """
 
 import time
-from scipy.optimize import minimize, differential_evolution, shgo
+
+from scipy.optimize import differential_evolution, minimize, shgo
+
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.utilities.opt_tools import process_scipy_result
 from BLUEPRINT.utilities.optimisation import convert_scipy_constraints

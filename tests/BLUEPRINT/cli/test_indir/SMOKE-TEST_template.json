@@ -5,13 +5,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "aspect",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "Av": {
         "name": "Reactor availability",
@@ -27,13 +21,7 @@
         "unit": "T",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "bt",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "B_tf_peak": {
         "name": "Peak field inside the TF coil winding pack",
@@ -57,13 +45,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982)",
-        "mapping": {
-            "PROCESS": {
-                "name": "gamma",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "F_cs_sepmax": {
         "name": "Maximum separation force between CS modules",
@@ -95,13 +77,7 @@
         "unit": "N/A",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "hfact",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "I_p": {
         "name": "Plasma current",
@@ -109,13 +85,7 @@
         "unit": "MA",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "plascur/1d6",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "LPangle": {
         "name": "Lower port inclination angle",
@@ -141,19 +111,21 @@
         "source": "Input",
         "mapping": null
     },
+    "P_LH": {
+        "name": "LH transition power",
+        "value": 0,
+        "unit": "W",
+        "description": null,
+        "source": "PLASMOD",
+        "mapping": null
+    },
     "P_brehms": {
         "name": "Bremsstrahlung",
         "value": 80,
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "pbrempv*vol",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "P_el_net": {
         "name": "Net electrical power output",
@@ -161,13 +133,7 @@
         "unit": "MW",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "pnetelin",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "P_el_net_process": {
         "name": "Net electrical power output as provided by PROCESS",
@@ -175,13 +141,7 @@
         "unit": "MW",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "pnetelmw",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "P_fus": {
         "name": "Total fusion power",
@@ -189,13 +149,7 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "powfmw",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "P_fus_DD": {
         "name": "D-D fusion power",
@@ -203,13 +157,7 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "pdd",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "P_fus_DT": {
         "name": "D-T fusion power",
@@ -217,13 +165,7 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "pdt",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "P_hcd_ss": {
         "name": "Steady-state HCD power",
@@ -231,13 +173,7 @@
         "unit": "MW",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "pinjalw",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "P_line": {
         "name": "Line radiation",
@@ -245,13 +181,15 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "plinepv*vol",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
+    },
+    "P_ohm": {
+        "name": "Ohimic heating power",
+        "value": 0,
+        "unit": "W",
+        "description": null,
+        "source": "PLASMOD",
+        "mapping": null
     },
     "P_rad": {
         "name": "Radiation power",
@@ -259,13 +197,7 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "pradmw",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "P_rad_core": {
         "name": "Core radiation power",
@@ -273,13 +205,7 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "pcoreradmw",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "P_rad_edge": {
         "name": "Edge radiation power",
@@ -287,13 +213,7 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "pedgeradmw",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "P_sep": {
         "name": "Separatrix power",
@@ -301,13 +221,15 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "pdivt",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
+    },
+    "P_sep_particle": {
+        "name": "Separatrix power",
+        "value": 150,
+        "unit": "MW",
+        "description": null,
+        "source": "Input",
+        "mapping": null
     },
     "P_sep_particle": {
         "name": "Separatrix power",
@@ -323,13 +245,7 @@
         "unit": "MW",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "psyncpv*vol",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "RMTFI": {
         "name": "RM Technical Feasibility Index",
@@ -345,13 +261,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "rmajor",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "TF_ripple_limit": {
         "name": "TF coil ripple limit",
@@ -359,13 +269,7 @@
         "unit": "%",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "ripmax",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "T_e": {
         "name": "Average plasma electron temperature",
@@ -373,13 +277,7 @@
         "unit": "keV",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "te",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "V_p": {
         "name": "Plasma volume",
@@ -387,13 +285,7 @@
         "unit": "m^3",
         "description": null,
         "source": "Calculated",
-        "mapping": {
-            "PROCESS": {
-                "name": "vol",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "Z_eff": {
         "name": "Effective particle radiation atomic mass",
@@ -401,13 +293,7 @@
         "unit": "a.u.",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "zeff",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "a_max": {
         "name": "Maximum operational load factor",
@@ -431,13 +317,7 @@
         "unit": "N/A",
         "description": null,
         "source": "HCPB classic",
-        "mapping": {
-            "PROCESS": {
-                "name": "emult",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "bb_min_angle": {
         "name": "Minimum module angle",
@@ -453,13 +333,7 @@
         "unit": "N/A",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "beta",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "beta_N": {
         "name": "Normalised ratio of plasma pressure to magnetic pressure",
@@ -475,13 +349,7 @@
         "unit": "N/A",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "betap",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "blanket_type": {
         "name": "Blanket type",
@@ -495,7 +363,7 @@
         "name": "Starter blanket life limit (EUROfer)",
         "value": 20,
         "unit": "dpa",
-        "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf",
+        "description": "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf",
         "source": "Input",
         "mapping": null
     },
@@ -503,7 +371,7 @@
         "name": "Second blanket life limit (EUROfer)",
         "value": 50,
         "unit": "dpa",
-        "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf",
+        "description": "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf",
         "source": "Input",
         "mapping": null
     },
@@ -537,13 +405,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "triang",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "delta_95": {
         "name": "95th percentile plasma triangularity",
@@ -551,13 +413,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "triang95",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "div_L2D_ib": {
         "name": "Inboard divertor leg length",
@@ -587,7 +443,7 @@
         "name": "Divertor life limit (CuCrZr)",
         "value": 5,
         "unit": "dpa",
-        "description": "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf",
+        "description": "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf",
         "source": "Input",
         "mapping": null
     },
@@ -629,13 +485,7 @@
         "unit": "keV",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "enbeam",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "eta_ec": {
         "name": "EC electrical efficiency",
@@ -651,13 +501,7 @@
         "unit": "N/A",
         "description": "Check units!",
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "etanbi",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "f_DD_fus": {
         "name": "Fraction of D-D fusion in total fusion",
@@ -673,13 +517,7 @@
         "unit": "N/A",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "bootipf",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "f_cd_aux": {
         "name": "Auxiliary current drive fraction",
@@ -735,13 +573,15 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "faccd",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
+    },
+    "f_p_sol_near": {
+        "name": "near scrape-off layer power rate",
+        "value": 0.65,
+        "unit": "N/A",
+        "description": null,
+        "source": "Input",
+        "mapping": null
     },
     "f_p_sol_near": {
         "name": "near scrape-off layer power rate",
@@ -909,13 +749,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "gapoh",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "g_ib_ts_tf": {
         "name": "Inboard gap between TS and TF",
@@ -971,13 +805,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "tftsgap",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "g_ts_tf_topbot": {
         "name": "Vessel KOZ offset to TF coils on top and bottom edges",
@@ -993,13 +821,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "vvblgap",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "g_vv_div_add": {
         "name": "Additional divertor/VV gap",
@@ -1015,13 +837,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "gapds",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "gs_z_offset": {
         "name": "Gravity support vertical offset",
@@ -1037,13 +853,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "h_cp_top",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "h_cs_seat": {
         "name": "Height of the CS support",
@@ -1059,13 +869,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "hmax",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "h_tf_min_in": {
         "name": "Plasma side TF coil min height",
@@ -1105,13 +909,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "kappa",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "kappa_95": {
         "name": "95th percentile plasma elongation",
@@ -1119,13 +917,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "kappa95",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "l_i": {
         "name": "Normalised internal plasma inductance",
@@ -1133,13 +925,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "rli",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "m_gas": {
         "name": "Gas puff flow rate",
@@ -1203,13 +989,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "n_tf",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "n_cr_lab": {
         "name": "Number of cryostat labyrinth levels",
@@ -1313,13 +1093,7 @@
         "unit": "N/A",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "q95",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "q_control": {
         "name": "Control HCD power",
@@ -1343,13 +1117,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_cp_top",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_cryo_ts": {
         "name": "Radius of outboard cryo TS",
@@ -1365,13 +1133,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "bore",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_fw_ib_in": {
         "name": "Inboard first wall inner radius",
@@ -1379,13 +1141,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_fw_ib_in",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_fw_ob_in": {
         "name": "Outboard first wall inner radius",
@@ -1393,13 +1149,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_fw_ob_in",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_tf_curve": {
         "name": "Start of the upper curve of domed picture frame shale",
@@ -1415,13 +1165,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "rtfin",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_tf_in_centre": {
         "name": "Inboard TF leg centre radius",
@@ -1429,13 +1173,7 @@
         "unit": "N/A",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_tf_inboard_mid",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_tf_inboard_corner": {
         "name": "Corner Radius of TF coil inboard legs",
@@ -1451,13 +1189,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_tf_inboard_out",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_tf_out_centre": {
         "name": "Outboard TF leg centre radius",
@@ -1465,13 +1197,7 @@
         "unit": "N/A",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_tf_outboard_mid",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_tf_outboard_corner": {
         "name": "Corner Radius of TF coil outboard legs",
@@ -1487,13 +1213,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_ts_ib_in",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_ts_joint": {
         "name": "Radius of inboard/outboard TS joint",
@@ -1509,13 +1229,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_vv_ib_in",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "r_vv_joint": {
         "name": "Radius of inboard/outboard VV joint",
@@ -1531,13 +1245,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "r_vv_ob_in",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "reactor_type": {
         "name": "Type of reactor",
@@ -1585,13 +1293,7 @@
         "unit": "Pa",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "alstrtf",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tau_e": {
         "name": "Energy confinement time",
@@ -1599,13 +1301,7 @@
         "unit": "s",
         "description": null,
         "source": "PLASMOD",
-        "mapping": {
-            "PROCESS": {
-                "name": "taueff",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tau_flattop": {
         "name": "Flat-top duration",
@@ -1613,19 +1309,13 @@
         "unit": "s",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "tburn",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tf_fluence": {
         "name": "Insulation fluence limit for ITER equivalent to 10 MGy",
         "value": 3.2e+21,
         "unit": "n/m^2",
-        "description": "http://ieeexplore.ieee.org/document/6374236/",
+        "description": "https://ieeexplore.ieee.org/document/6374236/",
         "source": "Input",
         "mapping": null
     },
@@ -1643,13 +1333,7 @@
         "unit": "m",
         "description": "Including insulation",
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "wwp1",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tf_wp_width": {
         "name": "TF coil winding pack radial width",
@@ -1705,13 +1389,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "blnkith",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_bb_man": {
         "name": "Breeding blanket manifold thickness",
@@ -1727,13 +1405,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "blnkoth",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_ccs_min": {
         "name": "Minimum thickness of the central column shield",
@@ -1749,13 +1421,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "ddwex",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_cryo_ts": {
         "name": "Cryo TS thickness",
@@ -1771,13 +1437,7 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "ohcth",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tk_div": {
         "name": "Divertor thickness",
@@ -1965,13 +1625,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "shldlth",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_sh_in": {
         "name": "Inboard shield thickness",
@@ -1979,13 +1633,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "shldith",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_sh_out": {
         "name": "Outboard shield thickness",
@@ -1993,13 +1641,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "shldoth",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_sh_top": {
         "name": "Upper shield thickness",
@@ -2007,13 +1649,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "shldtth",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_sol_ib": {
         "name": "Inboard SOL thickness",
@@ -2021,13 +1657,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "scrapli",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_sol_ob": {
         "name": "Outboard SOL thickness",
@@ -2035,13 +1665,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "scraplo",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_tf_case_out_in": {
         "name": "TF coil case thickness on the outboard inside",
@@ -2065,13 +1689,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "casthi",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_tf_inboard": {
         "name": "TF coil inboard thickness",
@@ -2079,13 +1697,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "tfcth",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tk_tf_ins": {
         "name": "TF coil ground insulation thickness",
@@ -2109,13 +1721,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "thkcas",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tk_tf_ob_casing": {
         "name": "TF leg conductor casing general thickness",
@@ -2131,13 +1737,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "tfthko",
-                "recv": false,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tk_tf_side": {
         "name": "TF coil inboard case minimum side wall thickness",
@@ -2145,13 +1745,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "casths",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_tf_wp": {
         "name": "TF coil winding pack thickness",
@@ -2159,13 +1753,7 @@
         "unit": "m",
         "description": "Excluding insulation",
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "dr_tf_wp",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "tk_ts": {
         "name": "TS thickness",
@@ -2173,13 +1761,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "thshield",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_vv_bot": {
         "name": "Lower vacuum vessel thickness",
@@ -2187,13 +1769,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "d_vv_bot",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_vv_in": {
         "name": "Inboard vacuum vessel thickness",
@@ -2201,13 +1777,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "d_vv_in",
-                "recv": true,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_vv_out": {
         "name": "Outboard vacuum vessel thickness",
@@ -2215,13 +1785,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "d_vv_out",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "tk_vv_top": {
         "name": "Upper vacuum vessel thickness",
@@ -2229,13 +1793,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": {
-            "PROCESS": {
-                "name": "d_vv_top",
-                "recv": false,
-                "send": true
-            }
-        }
+        "mapping": null
     },
     "v_burn": {
         "name": "Loop voltage during burn",
@@ -2243,13 +1801,7 @@
         "unit": "V",
         "description": null,
         "source": "PROCESS",
-        "mapping": {
-            "PROCESS": {
-                "name": "vburn",
-                "recv": true,
-                "send": false
-            }
-        }
+        "mapping": null
     },
     "vv_dpa": {
         "name": "Vacuum vessel life limit (SS316-LN-IG)",

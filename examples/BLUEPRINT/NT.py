@@ -21,16 +21,15 @@
 """
 A negative triangularity tokamak fusion power reactor.
 """
-import matplotlib.pyplot as plt
-
-from BLUEPRINT.reactor import Reactor
-from bluemira.base.config import SingleNull
-
 # Structural imports
 import os
+
+import matplotlib.pyplot as plt
+
+from bluemira.base.config import SingleNull
 from bluemira.base.file import BM_ROOT, make_bluemira_path
 from bluemira.display.auto_config import plot_defaults
-
+from BLUEPRINT.reactor import Reactor
 
 plot_defaults()
 KEY_TO_PLOT = False

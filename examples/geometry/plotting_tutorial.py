@@ -25,25 +25,19 @@ Plotting module examples
 # %%
 import matplotlib.pyplot as plt
 
+import bluemira.display as display
 import bluemira.geometry.tools
 from bluemira.base.components import Component, PhysicalComponent
-
-import bluemira.display as display
-
-from bluemira.display.plotter import (
-    WirePlotter,
-    FacePlotter,
-)
-
-from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.display.plotter import FacePlotter, WirePlotter
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import PrincetonD
 
 # %%[markdown]
 # ## Setup
 #
-# Creation of a closed wire and respective face and discretization points.
+# Creation of a closed wire and respective face and discretisation points.
 #
-# PrincetonD parametrisation is used as example.
+# PrincetonD parameterisation is used as example.
 #
 # Note: the curve is generated on the x-z plane
 

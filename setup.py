@@ -1,9 +1,9 @@
 """
 Setup utility for bluemira
 """
-from setuptools import setup, find_packages
-import versioneer
+from setuptools import find_packages, setup
 
+import versioneer
 
 short = "An integrated inter-disciplinary design tool for future fusion "
 "reactors, incorporating several modules, some of which rely on "
@@ -81,8 +81,13 @@ dev_requires = [
     "versioneer",  # 0.19
 ]
 
+examples = [
+    "notebook",  # 6.4.6
+]
+
 extras_require = {
     "dev": dev_requires,
+    "examples": examples,
     "process": process,
     "openmoc": openmoc,
     "openmc": openmc,

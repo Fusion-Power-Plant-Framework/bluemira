@@ -24,8 +24,8 @@
 Module-level functionality for materials.
 """
 
-from .cache import MaterialCache
-from .material import (
+from bluemira.materials.cache import MaterialCache
+from bluemira.materials.material import (
     BePebbleBed,
     Liquid,
     MassFractionMaterial,
@@ -35,8 +35,7 @@ from .material import (
     UnitCellCompound,
     Void,
 )
-from .mixtures import HomogenisedMixture
-
+from bluemira.materials.mixtures import HomogenisedMixture
 
 __all__ = [
     "BePebbleBed",

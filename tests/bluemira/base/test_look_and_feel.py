@@ -19,27 +19,27 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import os
 
+import pytest
+
+from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
 from bluemira.base.file import get_bluemira_root
-from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR
 from bluemira.base.logs import LoggingContext
 from bluemira.base.look_and_feel import (
     bluemira_critical,
+    bluemira_debug,
     bluemira_error,
+    bluemira_print,
     bluemira_print_flush,
     bluemira_warn,
-    bluemira_print,
-    bluemira_debug,
-    get_git_version,
-    get_git_branch,
     count_slocs,
+    get_git_branch,
+    get_git_version,
+    print_banner,
     user_banner,
     version_banner,
-    print_banner,
 )
-
 
 ROOT = get_bluemira_root()
 

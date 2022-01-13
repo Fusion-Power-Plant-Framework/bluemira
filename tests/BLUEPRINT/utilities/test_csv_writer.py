@@ -18,18 +18,20 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
+import filecmp
 import os
+
 import numpy as np
+import pytest
+
+from bluemira.base.file import get_bluemira_path
+from BLUEPRINT.geometry.geomtools import make_box_xz
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.utilities.csv_writer import (
+    write_components_to_csv,
     write_csv,
     write_geometry_to_csv,
-    write_components_to_csv,
 )
-from BLUEPRINT.geometry.geomtools import make_box_xz
-import filecmp
-from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 def test_csv_writer():

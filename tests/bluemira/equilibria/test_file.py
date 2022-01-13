@@ -19,15 +19,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
+import os
 
 import fortranformat as ff
 import numpy as np
-import os
+import pytest
 
 from bluemira.base.file import get_bluemira_path, get_files_by_ext
-from bluemira.utilities.tools import compare_dicts
 from bluemira.equilibria.file import EQDSKInterface
+from bluemira.utilities.tools import compare_dicts
 
 
 class TestEQDSKInterface:

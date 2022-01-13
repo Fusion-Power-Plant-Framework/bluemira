@@ -26,7 +26,6 @@ Tests for utilities for external code integration
 import pytest
 
 from bluemira.base.parameter import ParameterFrame, ParameterMapping
-
 from bluemira.codes.utilities import get_recv_mapping, get_send_mapping
 
 

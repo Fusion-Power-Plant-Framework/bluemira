@@ -22,9 +22,10 @@
 """
 Mostly just aesthetic and ambiance functions
 """
+import subprocess  # noqa :S404
 from itertools import cycle
+
 import numpy as np
-import subprocess  # noqa (S404)
 import seaborn as sns
 from matplotlib.colors import hex2color
 
@@ -59,9 +60,3 @@ def color_kwargs(**kwargs):
         colors = ["grey"]
     colors = cycle(colors)
     return colors
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

@@ -20,9 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
 import pytest
-from BLUEPRINT.base.error import GeometryError
+
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.parameterisations import tapered_picture_frame
 
 
 class TestTaperedPictureFrame:

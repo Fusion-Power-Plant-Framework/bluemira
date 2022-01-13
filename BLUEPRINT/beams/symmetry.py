@@ -23,13 +23,14 @@
 Symmetry boundary conditions
 """
 import numpy as np
+
 from BLUEPRINT.base.error import BeamsError
+from BLUEPRINT.beams.matrixops import cyclic_decomposition
 from BLUEPRINT.geometry.geomtools import (
+    get_angle_between_points,
     project_point_axis,
     rotate_matrix,
-    get_angle_between_points,
 )
-from BLUEPRINT.beams.matrixops import cyclic_decomposition
 
 
 class CyclicSymmetry:

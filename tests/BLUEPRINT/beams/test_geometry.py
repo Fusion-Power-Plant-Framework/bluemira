@@ -20,14 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 
-from matplotlib import pyplot as plt
 import numpy as np
 import pytest
+from matplotlib import pyplot as plt
 
+import tests
+from BLUEPRINT.beams.crosssection import IBeam
 from BLUEPRINT.beams.geometry import Geometry
 from BLUEPRINT.beams.material import SS316
-from BLUEPRINT.beams.crosssection import IBeam
-import tests
 
 SS316 = SS316()
 

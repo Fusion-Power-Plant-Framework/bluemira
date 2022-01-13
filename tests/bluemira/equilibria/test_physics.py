@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
 
-
 from bluemira.equilibria.physics import calc_psib
 
 

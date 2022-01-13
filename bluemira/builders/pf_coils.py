@@ -23,11 +23,11 @@
 Builder for the PF coils
 """
 
-from bluemira.base.components import PhysicalComponent, Component
-from bluemira.geometry.tools import revolve_shape, make_circle, offset_wire
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
-from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
 
 
 class PFCoilBuilder:

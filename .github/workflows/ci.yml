@@ -71,6 +71,8 @@ jobs:
     - name: Check Code Quality
       shell: bash -l {0}
       run: |
+        SKIP=flake8,black,black-jupyter,regenerate-ipynb-examples pre-commit run --all-files
+        # python examples/convert_py_to_ipynb.py --check --ci
         flake8 --count
         black --check .
 
@@ -87,9 +89,19 @@ jobs:
     - name: Run pytest BLUEPRINT
       shell: bash -l {0}
       run: |
-        pytest --cov=BLUEPRINT --cov-report html:htmlcov_BLUEPRINT tests/BLUEPRINT --reactor
+        pytest --cov=BLUEPRINT \
+               --cov-report html:htmlcov_BLUEPRINT \
+               tests/BLUEPRINT --reactor
 
     - name: Run pytest bluemira
       shell: bash -l {0}
       run: |
-        pytest --cov=bluemira --cov-report html:htmlcov_bluemira tests/bluemira
+        pytest --cov=bluemira \
+               --cov-report html:htmlcov_bluemira \
+               --cov-report xml \
+               tests/bluemira --reactor
+
+    - name: "Upload coverage to Codecov"
+      uses: codecov/codecov-action@v2
+      with:
+        fail_ci_if_error: true

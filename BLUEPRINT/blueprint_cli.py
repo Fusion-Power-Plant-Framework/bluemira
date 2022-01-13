@@ -23,21 +23,21 @@
 BLUEPRINT Command Line Interface
 """
 
-import click
-from dataclasses import dataclass
 import json
-import matplotlib.pyplot as plt
 import os
-from pathlib import Path
 import shutil
 import sys
 import tarfile
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
-from bluemira.base.file import BM_ROOT
-from bluemira.base.file import get_bluemira_root
+import click
+import matplotlib.pyplot as plt
+
+from bluemira.base.file import BM_ROOT, get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.utilities.tools import get_module, CommentJSONDecoder, json_writer
+from bluemira.utilities.tools import CommentJSONDecoder, get_module, json_writer
 
 try:
     from functools import cached_property

@@ -2,12 +2,12 @@
         % Serpent input file generated in BLUEPRINT
         % Date: 12/06/18 14:02
         % Cambridge_materials.serp
-        mat plasma-m  1e-06 rgb 243 169 187 
+        mat plasma-m  1e-06 rgb 243 169 187
    1002.31c    0.5                    % Hydrogen_2
    1003.31c    0.5                    % Hydrogen_3
 
 
-mat vessel-m  7.93 rgb 182 212 233 
+mat vessel-m  7.93 rgb 182 212 233
    5010.31c    1.84071301217e-07      % Boron_10.0
    5011.31c    7.40910111935e-07      % Boron_11.0
    6012.31c    2.47103926479e-05      % Carbon_12.0
@@ -52,7 +52,7 @@ mat vessel-m  7.93 rgb 182 212 233
    73181.31c   5.52578965895e-07      % Tantalum_181.0
 
 
-mat bio-m  7.93 rgb 147 196 222 
+mat bio-m  7.93 rgb 147 196 222
    5010.31c    1.84071301217e-07      % Boron_10.0
    5011.31c    7.40910111935e-07      % Boron_11.0
    6012.31c    2.47103926479e-05      % Carbon_12.0
@@ -95,5 +95,3 @@ mat bio-m  7.93 rgb 147 196 222
    14030.31c   5.50462007615e-06      % Silicon_30.0
    73180.10c   6.63727051659e-11      % Tantalum_180.0
    73181.31c   5.52578965895e-07      % Tantalum_181.0
-
-

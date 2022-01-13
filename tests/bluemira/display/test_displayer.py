@@ -23,23 +23,17 @@
 Tests for the displayer module.
 """
 
-import pytest
+import contextlib
 from unittest.mock import patch
 
-import contextlib
 import numpy as np
-
-from bluemira.base.components import (
-    Component,
-    PhysicalComponent,
-)
-from bluemira.geometry.tools import make_polygon, extrude_shape
-
-from bluemira.display import displayer
-from bluemira.display.error import DisplayError
-
+import pytest
 
 import tests
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.display import displayer
+from bluemira.display.error import DisplayError
+from bluemira.geometry.tools import extrude_shape, make_polygon
 from tests.bluemira.display.helpers import PatchQApp, PatchQuarterWidget
 
 

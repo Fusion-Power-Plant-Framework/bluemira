@@ -1,7 +1,7 @@
 from bluemira.equilibria.constraints import (
-    MagneticConstraintSet,
     FieldNullConstraint,
     IsofluxConstraint,
+    MagneticConstraintSet,
 )
 from bluemira.equilibria.shapes import flux_surface_johner
 

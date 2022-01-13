@@ -90,9 +90,3 @@ STRESS_COLOR = cm.get_cmap("seismic", 1000)
 
 # Color map for Element deflections
 DEFLECT_COLOR = cm.get_cmap("viridis", 1000)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

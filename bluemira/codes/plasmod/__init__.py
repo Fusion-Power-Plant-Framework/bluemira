@@ -20,25 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Constants for the geometry module
+Importer for Plasmod runner constants and functions
 """
-
-# Absolute tolerance for equality
-TOLERANCE = 1e-5  # [m]
-
-# Cross product tolerance
-CROSS_P_TOL = 1e-14
-
-# Dot product tolerance
-DOT_P_TOL = 1e-6
-
-
-# Very big number (for large distance projection) - can't go too large because
-# of clipperlib conversions
-VERY_BIG = 10e4  # [m]
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
+from bluemira.codes.plasmod.api import Solver
+from bluemira.codes.plasmod.constants import NAME

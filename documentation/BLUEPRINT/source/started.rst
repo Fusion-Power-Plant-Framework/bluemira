@@ -43,7 +43,7 @@ Installation steps:
 Installation in conda (experimental)
 ************************************
 
-We are currently working on an alternative installation approach, using ``conda`` 
+We are currently working on an alternative installation approach, using ``conda``
 (specifically `miniforge <https://github.com/conda-forge/miniforge>`_).
 If you would like to install BLUEPRINT this way then run the following steps:
 
@@ -62,7 +62,7 @@ If you would like to install BLUEPRINT this way then run the following steps:
     # If you already have pyenv installed then skip this step
     sudo apt-get install curl
     curl https://pyenv.run | bash
-    
+
     # Follow the instructions in the command prompt to activate pyenv
 
     # Install miniforge
@@ -167,7 +167,7 @@ In order to give BLUEPRINT visibility of an installed version of PROCESS in a vi
 environment then run the following:
 
 .. code-block:: bash
-    
+
     sudo bash install-process-ubuntu.sh
     bash install-process.sh
 

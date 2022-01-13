@@ -27,10 +27,11 @@ TF coil cage structural optimisation
 
 import numpy as np
 from scipy.optimize import minimize
+
 from bluemira.utilities.opt_tools import process_scipy_result
+from BLUEPRINT.geometry.boolean import convex_hull
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.offset import varied_angular_offset
-from BLUEPRINT.geometry.boolean import convex_hull
 from BLUEPRINT.nova.structuralsolver import StructuralSolver
 
 

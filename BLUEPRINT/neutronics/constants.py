@@ -29,9 +29,3 @@ L_BP_TO_SII = 1000
 
 # Length conversion from BLUEPRINT to OpenMC / DagMC
 L_BP_TO_OMC = 100
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

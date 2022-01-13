@@ -25,11 +25,8 @@ An example of how to use Components to represent a set of objects in a reactor.
 
 # %%
 from anytree import RenderTree
-from bluemira.base.components import (
-    Component,
-    MagneticComponent,
-    PhysicalComponent,
-)
+
+from bluemira.base.components import Component, MagneticComponent, PhysicalComponent
 
 # %%[markdown]
 # Example of a Tree structure

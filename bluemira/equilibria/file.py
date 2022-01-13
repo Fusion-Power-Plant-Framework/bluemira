@@ -72,7 +72,7 @@ class EQDSKInterface:
     Poloidal magnetic flux units not enforced here!
 
     Plasma current direction is not enforced here!
-    """  # noqa (W505)
+    """  # noqa :W505
 
     # fmt: off
     p = [

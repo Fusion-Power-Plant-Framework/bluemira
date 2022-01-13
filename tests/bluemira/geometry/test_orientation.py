@@ -22,10 +22,10 @@
 import pytest
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.error import MixedOrientationWireError
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.face import BluemiraFace
 import bluemira.geometry.tools as geo_tools
+from bluemira.geometry.error import MixedOrientationWireError
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.wire import BluemiraWire
 
 
 class TestOrientation:

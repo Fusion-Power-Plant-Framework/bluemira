@@ -19,26 +19,27 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-from scipy.special import ellipe
 import math
+
+import numpy as np
 import pytest
+from scipy.special import ellipe
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
-    make_polygon,
-    make_ellipse,
-    make_circle,
-    make_circle_arc_3P,
     boolean_cut,
     boolean_fuse,
-    extrude_shape,
     circular_pattern,
-    revolve_shape,
+    extrude_shape,
+    make_circle,
+    make_circle_arc_3P,
+    make_ellipse,
+    make_polygon,
     offset_wire,
+    revolve_shape,
 )
+from bluemira.geometry.wire import BluemiraWire
 
 
 class TestGeometry:
@@ -68,8 +69,11 @@ class TestGeometry:
         assert wire.is_closed()
 
     def test_add_wires(self):
-        wire1 = make_polygon(self.square_points[0:3], label="wire1", closed=False)
-        wire2 = make_polygon(self.square_points[2:], label="wire2", closed=False)
+        sq_points = np.array(self.square_points)
+        half_sq = sq_points[:3, :].T
+        half_sq_2 = sq_points[2:, :].T
+        wire1 = make_polygon(half_sq, label="wire1", closed=False)
+        wire2 = make_polygon(half_sq_2, label="wire2", closed=False)
         wire3 = wire1 + wire2
         wire3.label = "wire3"
         assert wire1.length == 2.0
@@ -149,8 +153,15 @@ class TestGeometry:
     params_for_fuse_wires = [
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (2, False),
             id="coincident",
@@ -158,8 +169,22 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire1",
+                ),
+                make_polygon(
+                    [
+                        [1, 0, 0],
+                        [1, 1, 0],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (4, True),
             id="closed",
@@ -169,7 +194,7 @@ class TestGeometry:
                 make_polygon(
                     [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
                 ),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             (4, True),
             id="overlap",
@@ -177,8 +202,15 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [-1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, -1], [0, 0, 1], [0, 0, -1]], label="wire1"),
+                make_polygon(
+                    [
+                        [1, 0, 0],
+                        [1, 1, 0],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (4, True),
             id="intersection",
@@ -286,16 +318,30 @@ class TestGeometry:
     params_for_cut_wires = [
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire1",
+                ),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             ([]),
             id="coincident",
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False)],
             id="contact at start and end",
@@ -305,15 +351,15 @@ class TestGeometry:
                 make_polygon(
                     [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
                 ),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False)],
             id="overlap",
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 2, 0]], label="wire1"),
-                make_polygon([[2, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 2], [0, 0, 0]], label="wire1"),
+                make_polygon([[2, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False), (1, False)],
             id="intersection",

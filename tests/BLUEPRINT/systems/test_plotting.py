@@ -21,9 +21,10 @@
 
 """Test routines for reactor system plotting."""
 
+import filecmp
+
 import pytest
 from matplotlib import pyplot as plt
-import filecmp
 
 from bluemira.base.file import FileManager
 from BLUEPRINT.nova.structure import CoilArchitect

@@ -26,6 +26,7 @@ Created on Fri Aug  2 07:51:11 2019
 @author: matti
 """
 import numpy as np
+
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.systems.mixins import UpperPort

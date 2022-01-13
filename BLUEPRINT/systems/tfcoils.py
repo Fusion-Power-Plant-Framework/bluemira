@@ -22,20 +22,17 @@
 """
 Toroidal field system
 """
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import Type
-from scipy.interpolate import interp1d
-from scipy.interpolate import InterpolatedUnivariateSpline
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 
 from bluemira.base.constants import MU_0
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
-
-from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
-from BLUEPRINT.systems.baseclass import ReactorSystem
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.geometry.offset import offset_smc, offset
+from BLUEPRINT.cad.coilCAD import TFCoilCAD
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
     boolean_2d_union,
@@ -44,9 +41,11 @@ from BLUEPRINT.geometry.boolean import (
 )
 from BLUEPRINT.geometry.geomtools import length, lengthnorm, make_box_xz, rainbow_seg
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
-from BLUEPRINT.geometry.shell import Shell, MultiShell
+from BLUEPRINT.geometry.offset import offset, offset_smc
 from BLUEPRINT.geometry.shape import Shape
-from BLUEPRINT.cad.coilCAD import TFCoilCAD
+from BLUEPRINT.geometry.shell import MultiShell, Shell
+from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
