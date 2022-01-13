@@ -26,17 +26,16 @@ PYTHON_BIN_DIR=$(dirname $(which python))
 PYTHON_PACKAGES_DIR=$(readlink --canonicalize $PYTHON_BIN_DIR/../lib/python$PYTHON_VERSION/site-packages)
 PYTHON_FREECAD_DIR=$PYTHON_PACKAGES_DIR/freecad
 
-sLD_LIBRARY_PATH=/opt/qt514/lib/
-LIBRARY_PATH=/opt/qt514/lib/
-export CPLUS_INCLUDE_PATH=/opt/qt514/include/
-
 mkdir freecad-build
 cd freecad-build
+
 cmake -DBUILD_QT5=TRUE \
-      -DBUILD_GUI=TRUE \  # Linking error when building the GUI (needed for display)
+      -DBUILD_GUI=TRUE \
       -DPYTHON_EXECUTABLE=$(which python) \
       -DPYSIDE_INCLUDE_DIR=$PYTHON_PACKAGES_DIR/PySide2/include \
+      -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/libpyside2.abi3.so.5.14 \
       -DCMAKE_PREFIX_PATH=/opt/qt514/lib/cmake \
+      -DCMAKE_CXX_FLAGS=-isystem\ /opt/qt514/include \
       -DPYSIDE2UICBINARY=$PYTHON_PACKAGES_DIR/PySide2/uic \
       -DPYSIDE2RCCBINARY=$PYTHON_PACKAGES_DIR/PySide2/rcc \
       ../freecad-source
@@ -68,3 +67,11 @@ import FreeCAD as app" >> $PYTHON_FREECAD_DIR/__init__.py
 cp ../freecad-build/lib/*.so $PYTHON_FREECAD_DIR/lib
 cp ../freecad-build/Mod/Part/Part.so $PYTHON_FREECAD_DIR/lib
 cp -r ../freecad-build/Mod/Part/BOPTools $PYTHON_FREECAD_DIR
+
+# Ensure pip installed PySide2 and shiboken2 are included in LD_LIBRARY_PATH
+
+if ! grep -Fq "export LD_LIBRARY_PATH=" $PYTHON_BIN_DIR/activate
+then
+  echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\
+  $PYTHON_PACKAGES_DIR/PySide2:$PYTHON_PACKAGES_DIR/shiboken2" > $PYTHON_BIN_DIR/activate
+fi
