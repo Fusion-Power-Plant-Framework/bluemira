@@ -97,7 +97,7 @@ class PathInterpolator(XZGeometryInterpolator):
         return dx ** 2 + dz ** 2
 
     def to_xz(self, l_value):
-        return self.x_ius(l_value), self.z_ius(l_value)
+        return float(self.x_ius(l_value)), float(self.z_ius(l_value))
 
     def to_L(self, x, z):
         return minimize_scalar(
@@ -137,7 +137,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
     def __init__(self, geometry):
         super().__init__(geometry)
-        self.check_geometry_feasibility(geometry)
+        self._check_geometry_feasibility(geometry)
         self.z_min = geometry.bounding_box.z_min
         self.z_max = geometry.bounding_box.z_max
 
@@ -150,7 +150,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         Parameters
         ----------
-        geometry: BluemiraFace
+        geometry: BluemiraWire
             Region to check
 
         Raises
@@ -162,9 +162,11 @@ class RegionInterpolator(XZGeometryInterpolator):
             raise PositionerError("RegionInterpolator can only handle closed wires.")
 
         xz_coordinates = self._get_xz_coordinates()
-        if not np.allclose(ConvexHull(xz_coordinates.T).volume, geometry.area, atol=EPS):
+        hull = ConvexHull(xz_coordinates.T)
+        # Yes, the "area" of a 2-D scipy ConvexHull is its perimeter...
+        if not np.allclose(hull.area, geometry.length, atol=EPS):
             raise PositionerError(
-                "RegionInterpolator can only handle convex geometries."
+                f"RegionInterpolator can only handle convex geometries. Perimeter difference between convex hull and geometry: {hull.volume - geometry.area}"
             )
 
     def to_xz(self, l_values):
@@ -279,3 +281,69 @@ class RegionInterpolator(XZGeometryInterpolator):
         else:
             raise PositionerError("Unexpected number of intersections in L conversion.")
         return l_0, l_1
+
+
+class PositionMapper:
+    """
+    Positioning tool for use in optimisation
+
+    Parameters
+    ----------
+    interpolators: List[XZGeometryInterpolator]
+        The ordered list of geometry interpolators
+    """
+
+    def __init__(self, interpolators):
+        self.interpolators = interpolators
+
+    def _check_length(self, thing):
+        """
+        Check that something is the same length as the number of available interpolators.
+        """
+        if len(thing) != len(self.interpolators):
+            raise PositionerError(
+                f"Object of length: {len(thing)} not of length {len(self.interpolators)}"
+            )
+
+    def to_xz(self, l_values):
+        """
+        Convert a set of parametric-space values to physical x, z coordinates.
+
+        Parameters
+        ----------
+        l_values: Union[List[float], List[Tuple[Float]], List[Union[float, Tuple[float]]]]
+            The set of parametric-space values to convert
+
+        Returns
+        -------
+        x: np.ndarray
+            Array of x coordinates
+        z: np.ndarray
+            Array of z coordinates
+        """
+        self._check_length(l_values)
+        xz = [tool.to_xz(l_value) for tool, l_value in zip(self.interpolators, l_values)]
+        return np.array(xz)[:, 0], np.array(xz)[:, 1]
+
+    def to_L(self, x, z):
+        """
+        Convert a set of physical x, z coordinates to parametric-space values.
+
+        Parameters
+        ----------
+        x: Iterable
+            The x coordinates to convert
+        z: Iterable
+            The z coordinates to convert
+
+        Returns
+        -------
+        l_values: Union[List[float], List[Tuple[Float]], List[Union[float, Tuple[float]]]]
+            The set of parametric-space values
+        """
+        self._check_length(x)
+        self._check_length(z)
+        return [
+            self.interpolators[i].to_L(x[i], z[i])
+            for i in range(len(self.interpolators))
+        ]

@@ -88,3 +88,6 @@ class TestRegionInterpolator:
         xc, zc = interpolator.to_xz((0.5, 0.5))
         assert np.isclose(xc, 0)
         assert np.isclose(zc, 0)
+        l0, l1 = interpolator.to_L(0, 0)
+        assert np.isclose(l0, 0.5)
+        assert np.isclose(l1, 0.5)
