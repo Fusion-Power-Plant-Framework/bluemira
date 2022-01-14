@@ -233,3 +233,17 @@ class PFCoilsBuilder(Builder):
 
         field_solver = SourceGroup(sources)
         return field_solver
+
+
+from bluemira.geometry.tools import boolean_cut, point_inside_shape
+
+
+def make_segments(track, exclusion_zones, coils):
+    track = track
+    exclusion_zones = exclusion_zones
+    segments = boolean_cut(track, exclusion_zones)
+
+    for i, coil in enumerate(coils):
+        for zone in exclusion_zones:
+            if point_inside_shape([coil.x, 0, coil.z], zone):
+                pass

@@ -756,3 +756,22 @@ def boolean_cut(shape, tools):
         return [convert(obj, shape.label) for obj in cut_shape]
 
     return convert(cut_shape, shape.label)
+
+
+def point_inside_shape(point, shape):
+    """
+    Whether or not a point is inside a shape.
+
+    Parameters
+    ----------
+    point: Iterable(3)
+        Coordinates of the point
+    shape: BluemiraGeo
+        Geometry to check with
+
+    Returns
+    -------
+    inside: bool
+        Whether or not the point is inside the shape
+    """
+    return cadapi.point_inside_shape(point, shape._shape)
