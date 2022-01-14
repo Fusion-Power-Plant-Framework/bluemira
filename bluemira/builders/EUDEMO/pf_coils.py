@@ -235,7 +235,7 @@ class PFCoilsBuilder(Builder):
         return field_solver
 
 
-from bluemira.geometry.tools import boolean_cut, point_inside_shape
+from bluemira.geometry.tools import boolean_cut, make_circle, point_inside_shape
 
 
 def make_segments(track, exclusion_zones, coils):
@@ -243,7 +243,23 @@ def make_segments(track, exclusion_zones, coils):
     exclusion_zones = exclusion_zones
     segments = boolean_cut(track, exclusion_zones)
 
+    links = []
     for i, coil in enumerate(coils):
         for zone in exclusion_zones:
             if point_inside_shape([coil.x, 0, coil.z], zone):
+                # Coil is inside an exclusion zone
                 pass
+            else:
+                # Coil can be mapped to a segment already
+                for j, segment in enumerate(segments):
+                    l_value = segment.to_L(coil.x, coil.z)
+                    if l_value == 0.0:
+                        pass
+                    elif l_value == 1.0:
+                        pass
+                    else:
+                        links.append(i, j)
+
+    # Check if multiple coils are on the same segment and split the segments
+
+    return
