@@ -26,7 +26,7 @@ A collection of tools used for position interpolation.
 import abc
 
 import numpy as np
-from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
 
@@ -194,8 +194,10 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         Returns
         -------
-        x, z: float
-            Coordinates in real space
+        x: float
+            x coordinate in real space
+        z: float
+            z coordinate in real space
 
         Raises
         ------
@@ -321,7 +323,7 @@ class PositionMapper:
 
     def to_xz(self, l_values):
         """
-        Convert a set of parametric-space values to physical x, z coordinates.
+        Convert a set of parametric-space values to physical x-z coordinates.
 
         Parameters
         ----------
@@ -346,7 +348,7 @@ class PositionMapper:
 
     def to_L(self, x, z):
         """
-        Convert a set of physical x, z coordinates to parametric-space values.
+        Convert a set of physical x-z coordinates to parametric-space values.
 
         Parameters
         ----------
@@ -367,3 +369,65 @@ class PositionMapper:
         self._check_length(x)
         self._check_length(z)
         return [tool.to_L(x[i], z[i]) for i, tool in enumerate(self.interpolators)]
+
+
+class ZLineDivider:
+    """
+    Sets up a vertical line along which multiple points can move, such that their
+    inscribed circles fill the length whilst touching. The circles can be separated by
+    a gap.
+
+    By convention, the first point is at the top of the line.
+
+    Parameters
+    ----------
+    z_min: float
+        Minimum vertical coordinate of the line
+    z_max: float
+        Maximum vertical coordinate of the line
+    z_gap: float
+        Vertical gap between the inscribed circles
+    """
+
+    def __init__(self, z_min, z_max, z_gap=0.0):
+        if z_max < z_min:
+            z_min, z_max = z_max, z_min
+        self.z_min = z_min
+        self.z_max = z_max
+        self.z_gap = z_gap
+        z = [z_max, z_min]
+        self.z_interpolator = interp1d([0, 1], z)
+        self.l_interpolator = interp1d(z, [0, 1])
+
+    def to_zdz(self, l_values):
+        """
+        Convert parametric-space 'L' values to physical z-dz space.
+        """
+        if len(l_values) == 1:
+            return 0.5 * (self.z_max - self.z_min), 0.5 * (self.z_max - self.z_min)
+
+        l_values = np.clip(l_values, 0, 1)
+        l_values = np.sort(l_values)
+        z_edge = self.z_interpolator(l_values)
+        dz, zc = np.zeros(len(l_values)), np.zeros(len(l_values))
+        dz[0] = 0.5 * abs(self.z_max - z_edge[0])
+        zc[0] = self.z_max - dz[0]
+        for i in range(1, len(l_values)):
+            dz[i] = 0.5 * abs(z_edge[i - 1] - z_edge[i] - self.z_gap)
+            zc[i] = z_edge[i - 1] - dz[i] - self.gap
+        return zc[::-1], dz[::-1]
+
+    def to_L(self, zc_values):
+        """
+        Convert physical z-dz space values to parametric-space 'L' values.
+        """
+        if len(zc_values) == 1:
+            return np.array([0.5])
+
+        zc_values = np.sort(zc_values)[::-1]
+        z_edge = np.zeros(len(zc_values))
+        z_edge[0] = self.z_max - 2 * abs(self.z_max - zc_values[0])
+        for i in range(1, len(zc_values) - 1):
+            z_edge[i] = zc_values[i] - (z_edge[i - 1] - zc_values[i] - self.gap)
+        z_edge[len(zc_values) - 1] = self.z_min
+        return self.l_interpolator(z_edge)
