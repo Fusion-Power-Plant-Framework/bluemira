@@ -65,7 +65,7 @@ sys.path += [os.path.join(__path__[0], 'lib')]
 import FreeCAD as app" >> $PYTHON_FREECAD_DIR/__init__.py
 
 cp ../freecad-build/lib/*.so $PYTHON_FREECAD_DIR/lib
-cp ../freecad-build/Mod/Part/Part.so $PYTHON_FREECAD_DIR/lib
+cp ../freecad-build/Mod/Part/*.so $PYTHON_FREECAD_DIR/lib
 cp -r ../freecad-build/Mod/Part/BOPTools $PYTHON_FREECAD_DIR
 
 # Ensure pip installed PySide2 and shiboken2 are included in LD_LIBRARY_PATH
