@@ -73,7 +73,7 @@ class TestCADModel:
         for i_line in range(0, n_lines):
             if i_line in skip_lines:
                 continue
-            assert lines_test[i_line] == lines_compare[i_line]
+            assert lines_test[i_line].strip() == lines_compare[i_line].strip()
 
         # Clean up
         os.remove(test_file)
