@@ -235,7 +235,8 @@ class PFCoilsBuilder(Builder):
         return field_solver
 
 
-from bluemira.geometry.tools import boolean_cut, make_circle, point_inside_shape
+from bluemira.geometry.tools import boolean_cut, distance_to, point_inside_shape
+from bluemira.utilities.positioning import PathInterpolator
 
 
 def make_segments(track, exclusion_zones, coils):
@@ -248,7 +249,10 @@ def make_segments(track, exclusion_zones, coils):
         for zone in exclusion_zones:
             if point_inside_shape([coil.x, 0, coil.z], zone):
                 # Coil is inside an exclusion zone
-                pass
+                for j, segment in enumerate(segments):
+                    # Find out which segment the coil is nearest to
+                    pass
+
             else:
                 # Coil can be mapped to a segment already
                 for j, segment in enumerate(segments):
@@ -262,4 +266,5 @@ def make_segments(track, exclusion_zones, coils):
 
     # Check if multiple coils are on the same segment and split the segments
 
+    # Make a PathInterpolator for each PF coil
     return

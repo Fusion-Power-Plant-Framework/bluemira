@@ -58,6 +58,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 
+apiVertex = Part.Vertex  # noqa :N816
 apiVector = Base.Vector  # noqa :N816
 apiWire = Part.Wire  # noqa :N816
 apiFace = Part.Face  # noqa :N816
@@ -1097,8 +1098,8 @@ def point_inside_shape(point, shape):
     inside: bool
         Whether or not the point is inside the shape
     """
-    vertex = apiVector(*point)
-    return shape.isInside(vertex, EPS, True)
+    vector = apiVector(*point)
+    return shape.isInside(vector, EPS, True)
 
 
 # ======================================================================================

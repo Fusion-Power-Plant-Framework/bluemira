@@ -58,10 +58,31 @@ def convert(apiobj, label=""):
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
+def _make_vertex(point):
+    """
+    Make a vertex.
+
+    Parameters
+    ----------
+    point: Iterable
+        Coordinates of the point
+
+    Returns
+    -------
+    vertex: apiVertex
+        Vertex at the point
+    """
+    if not len(point) == 3:
+        raise GeometryError("Points must be of dimension 3.")
+
+    return cadapi.apiVertex(*point)
+
+
 def make_polygon(
     points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
-    """Make a polygon from a set of points.
+    """
+    Make a polygon from a set of points.
 
     Parameters
     ----------
@@ -429,8 +450,15 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
         between geo1 and geo2. The distance between those points
         is the minimum distance given by dist.
     """
-    shape1 = geo1._shape
-    shape2 = geo2._shape
+    # Check geometry for vertices
+    if isinstance(geo1, Iterable):
+        shape1 = _make_vertex(geo1)
+    else:
+        shape1 = geo1._shape
+    if isinstance(geo2, Iterable):
+        shape2 = _make_vertex(geo2)
+    else:
+        shape2 = geo2._shape
     return cadapi.dist_to_shape(shape1, shape2)
 
 
