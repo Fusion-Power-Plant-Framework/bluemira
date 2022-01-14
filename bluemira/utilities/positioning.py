@@ -385,13 +385,22 @@ class ZLineDivider:
         Minimum vertical coordinate of the line
     z_max: float
         Maximum vertical coordinate of the line
+    n_divisions: int
+        Number of divisions along the vertical line
     z_gap: float
         Vertical gap between the inscribed circles
     """
 
-    def __init__(self, z_min, z_max, z_gap=0.0):
+    def __init__(self, z_min, z_max, n_divisions, z_gap=0.0):
         if z_max < z_min:
             z_min, z_max = z_max, z_min
+
+        if n_divisions <= 1:
+            raise PositionerError(
+                "No point making a ZLineDivider with 1 or fewer divisions..."
+            )
+
+        self.n_divisions = n_divisions
         self.z_min = z_min
         self.z_max = z_max
         self.z_gap = z_gap
@@ -399,12 +408,20 @@ class ZLineDivider:
         self.z_interpolator = interp1d([0, 1], z)
         self.l_interpolator = interp1d(z, [0, 1])
 
+    def _check_length(self, thing):
+        """
+        Check that something is the same length as the number of divisions.
+        """
+        if len(thing) != self.n_divisions:
+            raise PositionerError(
+                f"Object of length: {len(thing)} not of length {self.n_divisions}"
+            )
+
     def to_zdz(self, l_values):
         """
         Convert parametric-space 'L' values to physical z-dz space.
         """
-        if len(l_values) == 1:
-            return 0.5 * (self.z_max - self.z_min), 0.5 * (self.z_max - self.z_min)
+        self._check_length(l_values)
 
         l_values = np.clip(l_values, 0, 1)
         l_values = np.sort(l_values)
@@ -414,20 +431,19 @@ class ZLineDivider:
         zc[0] = self.z_max - dz[0]
         for i in range(1, len(l_values)):
             dz[i] = 0.5 * abs(z_edge[i - 1] - z_edge[i] - self.z_gap)
-            zc[i] = z_edge[i - 1] - dz[i] - self.gap
+            zc[i] = z_edge[i - 1] - dz[i] - self.z_gap
         return zc[::-1], dz[::-1]
 
     def to_L(self, zc_values):
         """
         Convert physical z-dz space values to parametric-space 'L' values.
         """
-        if len(zc_values) == 1:
-            return np.array([0.5])
+        self._check_length(zc_values)
 
         zc_values = np.sort(zc_values)[::-1]
         z_edge = np.zeros(len(zc_values))
         z_edge[0] = self.z_max - 2 * abs(self.z_max - zc_values[0])
         for i in range(1, len(zc_values) - 1):
-            z_edge[i] = zc_values[i] - (z_edge[i - 1] - zc_values[i] - self.gap)
+            z_edge[i] = zc_values[i] - (z_edge[i - 1] - zc_values[i] - self.z_gap)
         z_edge[len(zc_values) - 1] = self.z_min
         return self.l_interpolator(z_edge)

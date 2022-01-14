@@ -24,7 +24,11 @@ import pytest
 
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.utilities.error import PositionerError
-from bluemira.utilities.positioning import PathInterpolator, RegionInterpolator
+from bluemira.utilities.positioning import (
+    PathInterpolator,
+    RegionInterpolator,
+    ZLineDivider,
+)
 
 
 class TestPathInterpolator:
@@ -100,3 +104,25 @@ class TestRegionInterpolator:
         l0, l1 = interpolator.to_L(0, 0)
         assert np.isclose(l0, 0.5)
         assert np.isclose(l1, 0.5)
+
+
+class TestZLineDivider:
+    def test_single(self):
+        with pytest.raises(PositionerError):
+            ZLineDivider(-10, 10, 1)
+
+    @pytest.mark.parametrize("n", [5, 4, 3, 2])
+    def test_normal(self, n):
+        divider = ZLineDivider(-10, 10, n)
+        zc = np.linspace(-10, 10, n)
+        l_values = divider.to_L(zc)
+        zc_new = divider.to_zdz(l_values)[0]
+        assert np.allclose(zc, zc_new)
+
+    @pytest.mark.parametrize("n", [5, 4, 3, 2])
+    def test_gap(self, n):
+        divider = ZLineDivider(-10, 10, n, z_gap=0.1)
+        zc = np.linspace(-10, 10, n)
+        l_values = divider.to_L(zc)
+        zc_new = divider.to_zdz(l_values)[0]
+        assert np.allclose(zc, zc_new)
