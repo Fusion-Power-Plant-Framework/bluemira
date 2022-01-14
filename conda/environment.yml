@@ -20,8 +20,8 @@ variables:
 
 dependencies:
   - python=3.8
-  - freecad=0.19.2
-  - numpy=1.20.3
+  - freecad=0.19.3
+  - numpy=1.21.5
   - python-gmsh=4.8.4
   - gmsh=4.8.4
   - fenics=2019.1.0
@@ -30,7 +30,7 @@ dependencies:
   - mshr=2019.1.0
   - wrapt=1.13.3
   - pythonocc-core=7.5.1
-  - fluids=1.0.15
+  - fluids=1.0.16
   - shapely=1.8.0
   - scipy=1.5.3
   - graphviz
