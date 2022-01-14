@@ -68,6 +68,15 @@ class TestPathInterpolator:
         assert np.isclose(z180, 0)
         assert np.isclose(interpolator.to_L(-10, 0), 0.5)
 
+    def test_straight(self):
+        line = make_polygon([[5, 10], [0, 0], [-10, 10]])
+        interpolator = PathInterpolator(line)
+        x05, z05 = interpolator.to_xz(0.5)
+        assert np.isclose(x05, 7.5)
+        assert np.isclose(z05, 0)
+        l05 = interpolator.to_L(7.5, 0)
+        assert np.isclose(l05, 0.5)
+
 
 class TestRegionInterpolator:
     def test_bad_shapes(self):
