@@ -187,7 +187,7 @@ class FiniteElementModel:
         rx, ry, rz: bool, bool, bool
             Whether or not the rotational DOFs at the Node
         """
-        supports = np.array([dx, dy, dz, rx, ry, rz], dtype=np.bool)
+        supports = np.array([dx, dy, dz, rx, ry, rz], dtype=bool)
         self.geometry.nodes[node_id].add_support(supports)
 
     def find_supports(self):

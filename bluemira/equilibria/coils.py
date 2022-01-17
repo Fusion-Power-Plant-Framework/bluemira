@@ -460,7 +460,7 @@ class Coil:
 
         Returns
         -------
-        inside: np.array(dtype=np.bool)
+        inside: np.array(dtype=bool)
             The Boolean array of point indices inside/outside the coil boundary
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)

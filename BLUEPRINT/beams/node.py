@@ -67,7 +67,7 @@ class Node:
         self.id_number = id_number
 
         self.loads = []
-        self.supports = np.zeros(6, dtype=np.bool)  # Defaults to False
+        self.supports = np.zeros(6, dtype=bool)  # Defaults to False
         self.symmetry = False
         self.displacements = np.zeros(6, dtype=FLOAT_TYPE)
         self.reactions = np.zeros(6, dtype=FLOAT_TYPE)
@@ -131,13 +131,13 @@ class Node:
         Clear all loads and displacements applied to the Node
         """
         self.loads = []
-        self.displacements = np.zeros(6, dtype=np.float32)
+        self.displacements = np.zeros(6, dtype=FLOAT_TYPE)
 
     def clear_supports(self):
         """
         Clears all supported DOFs applied to the Node
         """
-        self.supports = np.zeros(6, dtype=np.bool)  # Defaults to False
+        self.supports = np.zeros(6, dtype=bool)  # Defaults to False
 
     def add_support(self, supports):
         """
@@ -145,7 +145,7 @@ class Node:
 
         Parameters
         ----------
-        supports: np.array([dx, dy, dz, rx, ry, rz], dtype=np.bool)
+        supports: np.array([dx, dy, dz, rx, ry, rz], dtype=bool)
             A boolean vector of the support DOFs:
                 True == supported
                 False == free
