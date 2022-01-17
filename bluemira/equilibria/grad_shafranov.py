@@ -79,7 +79,7 @@ class GSOperator:
         """
         d_x = (self.x_max - self.x_min) / (nx - 1)
         d_z = (self.z_max - self.z_min) / (nz - 1)
-        x = linspace(self.x_min, self.x_max, nx)  # + 0.5 * d_x  # centroids
+        x = linspace(self.x_min, self.x_max, nx)
         inv_dx_2, inv_dz_2 = 1 / d_x ** 2, 1 / d_z ** 2
 
         if self.force_symmetry:
