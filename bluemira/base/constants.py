@@ -110,7 +110,7 @@ S_TO_YR = 1 / YR_TO_S
 # =============================================================================
 
 # Numpy's default float precision limit
-EPS = np.finfo(np.float).eps
+EPS = np.finfo(float).eps
 
 # Levi Civita Tensors
 E_IJK = np.zeros((3, 3, 3))
