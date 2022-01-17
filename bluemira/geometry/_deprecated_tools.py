@@ -1608,7 +1608,7 @@ class MixedFaceMaker:
 
         Parameters
         ----------
-        vertices: np.ndarray(dtype=np.int)
+        vertices: np.ndarray(dtype=int)
             The vertices of the loop which are polygon-like
 
         Returns
