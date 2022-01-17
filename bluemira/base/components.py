@@ -23,15 +23,19 @@
 Module containing the base Component class.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, List, Optional, Union
+
 import anytree
 from anytree import NodeMixin, RenderTree
-import copy
-from typing import Any, List, Optional, Type, Union
 
-from bluemira.display.plotter import Plottable
+from bluemira.base.error import ComponentError
 from bluemira.display.displayer import DisplayableCAD
+from bluemira.display.plotter import Plottable
 
-from .error import ComponentError
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 
 class Component(NodeMixin, Plottable, DisplayableCAD):
@@ -58,24 +62,14 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def __init__(
         self,
         name: str,
-        parent: Optional["Component"] = None,
-        children: Optional[List["Component"]] = None,
+        parent: Optional[Component] = None,
+        children: Optional[List[Component]] = None,
     ):
         super().__init__()
         self.name = name
         self.parent = parent
         if children:
             self.children = children
-
-    def __new__(cls, *args, **kwargs) -> Type["Component"]:
-        """
-        Constructor for Component class.
-        """
-        if cls is Component:
-            raise ComponentError(
-                "Component cannot be initialised directly - use a subclass."
-            )
-        return super().__new__(cls)
 
     def __repr__(self) -> str:
         """
@@ -91,7 +85,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component(
         self, name: str, first: bool = True, full_tree: bool = False
-    ) -> Union["Component", List["Component"]]:
+    ) -> Union["Component", List[Component]]:
         """
         Find the components with the specified name.
 
@@ -129,24 +123,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         return found_components
 
-    def copy(self):
-        """
-        Provides a deep copy of the Component
-
-        Returns
-        -------
-        copy: Component
-            The copy of the Component
-        """
-        return copy.deepcopy(self)
-
-
-class GroupingComponent(Component):
-    """
-    A Component that groups other Components.
-    """
-
-    def add_child(self, child: Component):
+    def add_child(self, child: Component) -> Component:
         """
         Add a single child to this node
 
@@ -154,12 +131,20 @@ class GroupingComponent(Component):
         ----------
         child: Component
             The child to be added
+
+        Returns
+        -------
+        self: Component
+            This component.
         """
+        # TODO: Support merge_trees here too.
         if child in self.children:
             raise ComponentError(f"Component {child} is already a child of {self}")
         self.children = list(self.children) + [child]
 
-    def add_children(self, children: List[Component]):
+        return self
+
+    def add_children(self, children: List[Component], merge_trees=False):
         """
         Add multiple children to this node
 
@@ -167,16 +152,33 @@ class GroupingComponent(Component):
         ----------
         children: List[Component]
             The children to be added
+
+        Returns
+        -------
+        self: Component
+            This component.
         """
+        if not isinstance(children, list) or len(children) == 0:
+            child = children[0] if isinstance(children, list) else children
+            return self.add_child(child)
+
         duplicates = []
-        for child in children:
-            if child in self.children:
-                duplicates += [child]
+        child: Component
+        for idx, child in reversed(list(enumerate(children))):
+            existing = self.get_component(child.name)
+            if existing is not None:
+                if merge_trees:
+                    existing.children = list(existing.children) + list(child.children)
+                    children.pop(idx)
+                else:
+                    duplicates += [child]
         if duplicates != []:
             raise ComponentError(
                 f"Components {duplicates} are already a children of {self}"
             )
         self.children = list(self.children) + children
+
+        return self
 
 
 class PhysicalComponent(Component):
@@ -187,7 +189,7 @@ class PhysicalComponent(Component):
     def __init__(
         self,
         name: str,
-        shape: Any,
+        shape: BluemiraGeo,
         material: Any = None,
         parent: Component = None,
         children: Component = None,
@@ -197,14 +199,14 @@ class PhysicalComponent(Component):
         self.material = material
 
     @property
-    def shape(self):
+    def shape(self) -> BluemiraGeo:
         """
         The geometric shape of the Component.
         """
         return self._shape
 
     @shape.setter
-    def shape(self, value):
+    def shape(self, value: BluemiraGeo):
         self._shape = value
 
     @property
@@ -227,7 +229,7 @@ class MagneticComponent(PhysicalComponent):
     def __init__(
         self,
         name: str,
-        shape: Any,
+        shape: BluemiraGeo,
         material: Any = None,
         conductor: Any = None,
         parent: Component = None,

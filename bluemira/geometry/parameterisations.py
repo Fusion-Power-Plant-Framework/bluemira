@@ -24,21 +24,22 @@ Geometry parameterisations
 """
 
 import abc
+
 import numpy as np
 from scipy.special import iv as bessel
 
-from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     make_bezier,
     make_bspline,
-    wire_closure,
-    make_polygon,
     make_circle,
     make_circle_arc_3P,
+    make_polygon,
+    wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 __all__ = [
     "GeometryParameterisation",
@@ -61,7 +62,7 @@ class GeometryParameterisation(abc.ABC):
     variables with initial values, and override the create_shape method.
     """
 
-    __slots__ = ("name", "variables")
+    __slots__ = ("name", "variables", "n_ineq_constraints")
 
     def __init__(self, variables):
         """
@@ -72,6 +73,7 @@ class GeometryParameterisation(abc.ABC):
         """
         self.name = self.__class__.__name__
         self.variables = variables
+        self.n_ineq_constraints = 0
         super().__init__()
 
     def adjust_variable(self, name, value=None, lower_bound=None, upper_bound=None):
@@ -105,35 +107,81 @@ class GeometryParameterisation(abc.ABC):
         """
         self.variables.fix_variable(name, value)
 
-    def create_array(self, n_points=200, by_edges=True, d_l=None):
+    def shape_ineq_constraints(self, constraint, x, grad):
         """
-        Make an array of the geometry.
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation. This is used when internal consistency between different
+        un-fixed variables is required.
 
         Parameters
         ----------
-        n_points: int
-            Number of points in the array
-        by_edges: bool
-            Whether or not to discretise by edges
-        d_l: Optional[float]
-            Discretisation length (overrides n_points)
+        constraint: np.ndarray
+            Constraint vector (assign in place)
+        x: np.ndarray
+            Normalised vector of free variables
+        grad: np.ndarray
+            Gradient matrix of the constraint (assign in place)
+        """
+        if self.n_ineq_constraints < 1:
+            raise GeometryParameterisationError(
+                f"Cannot apply shape_ineq_constraints to {self.__class__.__name__}: it"
+                "has no inequality constraints."
+            )
+
+    def _process_x_norm_fixed(self, x_norm):
+        """
+        Utility for processing a set of free, normalised variables, and folding the fixed
+        un-normalised variables back into a single list of all actual values.
+
+        Parameters
+        ----------
+        x_norm: np.ndarray
+            Normalised vector of variable values
 
         Returns
         -------
-        xyz: np.ndarray
-            (3, N) array of point coordinates
-
-        Notes
-        -----
-        Override this method if you require a faster implementation, but be careful to
-        retain a uniform discretisation
+        x_actual: list
+            List of ordered actual (un-normalised) values
         """
-        return (
-            self.create_shape().discretize(ndiscr=n_points, byedges=by_edges, dl=d_l).T
-        )
+        fixed_idx = self.variables._fixed_variable_indices
+
+        # Note that we are dealing with normalised values when coming from the optimiser
+        x_actual = list(self.variables.get_values_from_norm(x_norm))
+
+        if fixed_idx:
+            x_fixed = self.variables.values
+            for i in fixed_idx:
+                x_actual.insert(i, x_fixed[i])
+        return x_actual
+
+    def _get_x_norm_index(self, name: str):
+        """
+        Get the index of a variable name in the modified-length x_norm vector
+
+        Parameters
+        ----------
+        name: str
+            Variable name for which to get the index
+
+        Returns
+        -------
+        idx_x_norm: int
+            Index of the variable name in the modified-length x_norm vector
+        """
+        fixed_idx = self.variables._fixed_variable_indices
+        idx_actual = self.variables.names.index(name)
+
+        if not fixed_idx:
+            return idx_actual
+
+        count = 0
+        for idx_fx in fixed_idx:
+            if idx_actual > idx_fx:
+                count += 1
+        return idx_actual - count
 
     @abc.abstractmethod
-    def create_shape(self, label="", **kwargs):
+    def create_shape(self, label="", **kwargs) -> BluemiraWire:
         """
         Make a CAD representation of the geometry.
 
@@ -153,11 +201,16 @@ class GeometryParameterisation(abc.ABC):
 class PrincetonD(GeometryParameterisation):
     """
     Princeton D geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -180,9 +233,10 @@ class PrincetonD(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
 
         super().__init__(variables)
+        self.n_ineq_constraints = 1
 
     def create_shape(self, label="", n_points=2000):
         """
@@ -215,6 +269,38 @@ class PrincetonD(GeometryParameterisation):
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
+    def shape_ineq_constraints(self, constraint, x_norm, grad):
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation.
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Constraint vector (assign in place)
+        x: np.ndarray
+            Normalised vector of free variables
+        grad: np.ndarray
+            Gradient matrix of the constraint (assign in place)
+        """
+        x_actual = self._process_x_norm_fixed(x_norm)
+
+        x1, x2, _ = x_actual
+
+        constraint[0] = x1 - x2
+
+        idx_x1 = self._get_x_norm_index("x1")
+        idx_x2 = self._get_x_norm_index("x2")
+
+        if grad.size > 0:
+            grad[:] = np.zeros(len(x_norm))
+            if not self.variables["x1"].fixed:
+                grad[0, idx_x1] = 1
+            if not self.variables["x2"].fixed:
+                grad[0, idx_x2] = -1
+
+        return constraint
+
     @staticmethod
     def _princeton_d(x1, x2, dz, npoints=2000):
         """
@@ -226,7 +312,7 @@ class PrincetonD(GeometryParameterisation):
         x1: float
             The inboard centreline radius of the Princeton D
         x2: float
-            The outboard centrleine radius of the Princeton D
+            The outboard centreline radius of the Princeton D
         dz: float
             The vertical offset (from z=0)
         npoints: int (default = 2000)
@@ -256,7 +342,7 @@ class PrincetonD(GeometryParameterisation):
             :math:`I_{n}` is the n-th order modified Bessel function
             :math:`x_{1}` is the inner radial position of the shape
             :math:`x_{2}` is the outer radial position of the shape
-        """  # noqa (W505)
+        """  # noqa :W505
         if x2 <= x1:
             raise GeometryParameterisationError(
                 "Princeton D parameterisation requires an x2 value"
@@ -289,18 +375,27 @@ class PrincetonD(GeometryParameterisation):
 class TripleArc(GeometryParameterisation):
     """
     Triple-arc up-down symmetric geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
                     "x1", 4.486, lower_bound=4, upper_bound=5, descr="Inner limb radius"
                 ),
                 BoundedVariable(
-                    "z1", 0, lower_bound=-1, upper_bound=1, descr="Inboard limb height"
+                    "dz",
+                    0,
+                    lower_bound=-1,
+                    upper_bound=1,
+                    descr="Vertical offset from z=0",
                 ),
                 BoundedVariable(
                     "sl", 6.428, lower_bound=5, upper_bound=10, descr="Straight length"
@@ -328,8 +423,42 @@ class TripleArc(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
+        self.n_ineq_constraints = 1
+
+    def shape_ineq_constraints(self, constraint, x_norm, grad):
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation.
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Contraint vector (assign in place)
+        x: np.ndarray
+            Normalised vector of free variables
+        grad: np.ndarray
+            Gradient matrix of the constraint (assign in place)
+        """
+        x_actual = self._process_x_norm_fixed(x_norm)
+
+        _, _, _, _, _, a1, a2 = x_actual
+
+        constraint[0] = a1 + a2 - 180
+
+        idx_a1 = self._get_x_norm_index("a1")
+        idx_a2 = self._get_x_norm_index("a2")
+
+        if grad.size > 0:
+            g = np.zeros(len(x_norm))
+            if not self.variables["a1"].fixed:
+                g[idx_a1] = 1
+            if not self.variables["a2"].fixed:
+                g[idx_a2] = 1
+            grad[0, :] = g
+
+        return constraint
 
     def create_shape(self, label=""):
         """
@@ -345,10 +474,10 @@ class TripleArc(GeometryParameterisation):
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-        x1, z1, sl, f1, f2, a1, a2 = self.variables.values
+        x1, dz, sl, f1, f2, a1, a2 = self.variables.values
         a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
-        z0 = z1
-        z1 = z1 + sl
+
+        z1 = 0.5 * sl
         # Upper half
         p1 = [x1, 0, z1]
         atot = a1 + a2
@@ -367,7 +496,7 @@ class TripleArc(GeometryParameterisation):
             0,
             p2[2] + f2 * (np.sin(atot) - np.sin(a1)),
         ]
-        rl = (p3[2] - z0) / np.sin(np.pi - atot)
+        rl = p3[2] / np.sin(np.pi - atot)
 
         a35 = 0.5 * atot
         p35 = [
@@ -404,17 +533,24 @@ class TripleArc(GeometryParameterisation):
             )
             wires.append(straight_segment)
 
-        return BluemiraWire(wires, label=label)
+        wire = BluemiraWire(wires, label=label)
+        wire.translate((0, 0, dz))
+        return wire
 
 
 class SextupleArc(GeometryParameterisation):
     """
     Sextuple-arc up-down asymmetric geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -476,8 +612,40 @@ class SextupleArc(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
+        self.n_ineq_constraints = 1
+
+    def shape_ineq_constraints(self, constraint, x_norm, grad):
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation.
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Contraint vector (assign in place)
+        x: np.ndarray
+            Normalised vector of free variables
+        grad: np.ndarray
+            Gradient matrix of the constraint (assign in place)
+        """
+        x_actual = self._process_x_norm_fixed(x_norm)
+
+        _, _, _, _, _, _, _, a1, a2, a3, a4, a5 = x_actual
+
+        constraint[0] = a1 + a2 + a3 + a4 + a5 - 360
+        var_strings = ["a1", "a2", "a3", "a4", "a5"]
+
+        if grad.size > 0:
+            g = np.zeros(len(x_norm))
+            for var in var_strings:
+                if not self.variables[var].fixed:
+                    g[self._get_x_norm_index(var)] = 1
+
+            grad[0, :] = g
+
+        return constraint
 
     @staticmethod
     def _project_centroid(xc, zc, xi, zi, ri):
@@ -565,11 +733,16 @@ class SextupleArc(GeometryParameterisation):
 class PolySpline(GeometryParameterisation):
     """
     Simon McIntosh's Poly-Bézier-spline geometry parameterisation (19 variables).
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -684,7 +857,7 @@ class PolySpline(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -784,11 +957,16 @@ class PolySpline(GeometryParameterisation):
 class PictureFrame(GeometryParameterisation):
     """
     Picture-frame geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -811,12 +989,12 @@ class PictureFrame(GeometryParameterisation):
                     descr="Inboard corner radius",
                 ),
                 BoundedVariable(
-                    "ro", 2, lower_bound=1, upper_bound=5, descr="Outbord corner radius"
+                    "ro", 2, lower_bound=1, upper_bound=5, descr="Outboard corner radius"
                 ),
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):
@@ -910,11 +1088,16 @@ class PictureFrame(GeometryParameterisation):
 class TaperedPictureFrame(GeometryParameterisation):
     """
     Tapered picture-frame geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
     """
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -957,7 +1140,7 @@ class TaperedPictureFrame(GeometryParameterisation):
             ],
             frozen=True,
         )
-        variables.adjust_variables(var_dict)
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(self, label=""):

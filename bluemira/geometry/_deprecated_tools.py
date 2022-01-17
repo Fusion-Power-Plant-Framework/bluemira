@@ -25,22 +25,23 @@ A collection of geometry tools.
 
 from functools import partial
 from itertools import zip_longest
-import numpy as np
+
 import numba as nb
+import numpy as np
 from numba.np.extensions import cross2d
-from scipy.interpolate import UnivariateSpline, interp1d
 from pyquaternion import Quaternion
+from scipy.interpolate import UnivariateSpline, interp1d
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry import _freecadapi
+from bluemira.codes import _freecadapi as cadapi
+from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
+from bluemira.geometry.coordinates import _validate_coordinates, get_area
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.geometry.bound_box import BoundingBox
 from bluemira.utilities.tools import flatten_iterable
-
 
 # =============================================================================
 # Errors
@@ -54,46 +55,6 @@ class MixedFaceAreaError(GeometryError):
     """
 
     pass
-
-
-# =============================================================================
-# Pre-processing utilities
-# =============================================================================
-
-
-def xyz_process(func):
-    """
-    Decorator for parsing x, y, z coordinates to numpy float arrays and dimension
-    checking.
-    """
-
-    def wrapper(x, y, z=None):
-        _validate_coordinates(x, y, z)
-        x = np.ascontiguousarray(x, dtype=np.float_)
-        y = np.ascontiguousarray(y, dtype=np.float_)
-        if z is None:
-            return func(x, y, z)
-        else:
-            z = np.ascontiguousarray(z, dtype=np.float_)
-
-            return func(x, y, z)
-
-    return wrapper
-
-
-def _validate_coordinates(x, y, z=None):
-    if z is None:
-        if not len(x) == len(y):
-            raise GeometryError(
-                "All coordinates must have the same length but "
-                f"got len(x) = {len(x)}, len(y) = {len(y)}"
-            )
-    else:
-        if not len(x) == len(y) == len(z):
-            raise GeometryError(
-                "All coordinates must have the same length but "
-                f"got len(x) = {len(x)}, len(y) = {len(y)}, len(z) = {len(z)}"
-            )
 
 
 # =============================================================================
@@ -244,29 +205,6 @@ def on_polygon(x, z, poly):
     return on_edge
 
 
-@nb.jit(cache=True, nopython=True)
-def check_ccw(x, z):
-    """
-    Check that a set of x, z coordinates are counter-clockwise.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates of the polygon
-    z: np.array
-        The z coordinates of the polygon
-
-    Returns
-    -------
-    ccw: bool
-        True if polygon counterclockwise
-    """
-    a = 0
-    for n in range(len(x) - 1):
-        a += (x[n + 1] - x[n]) * (z[n + 1] + z[n])
-    return a < 0
-
-
 def check_closed(x, y, z):
     """
     Check that the coordinates are closed e.g. first element == last element for all
@@ -365,325 +303,6 @@ def get_angle_between_vectors(v1, v2, signed=False):
             sign = np.sign(det)
 
     return sign * angle
-
-
-@nb.jit(cache=True, nopython=True)
-def get_normal_vector(x, y, z):
-    """
-    Calculate the normal vector from a series of planar points.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coordinates
-    z: np.array
-        The z coordinates
-
-    Returns
-    -------
-    n_hat: np.array(3)
-        The normalised normal vector
-    """
-    if len(x) < 3:
-        raise GeometryError(
-            "Cannot get a normal vector for a set of points with" "length less than 3."
-        )
-
-    if not (len(x) == len(y) == len(z)):
-        raise GeometryError("Point coordinate vectors must be of equal length.")
-
-    n_hat = np.array([0.0, 0.0, 0.0])  # Force numba to type to floats
-    p1 = np.array([x[0], y[0], z[0]])
-    p2 = np.array([x[1], y[1], z[1]])
-    v1 = p2 - p1
-
-    # Force length 3 vectors to access index 2 without raising IndexErrors elsewhere
-    i_max = max(3, len(x) - 1)
-    for i in range(2, i_max):
-        p3 = np.array([x[i], y[i], z[i]])
-        v2 = p3 - p2
-
-        if np.all(np.abs(v2) < EPS):  # np.allclose not available in numba
-            v2 = p3 - p1
-            if np.all(np.abs(v2) < EPS):
-                continue
-
-        n_hat[:] = np.cross(v1, v2)
-
-        if not np.all(np.abs(n_hat) < EPS):
-            break
-    else:
-        raise GeometryError("Unable to find a normal vector from set of points.")
-
-    return n_hat / np.linalg.norm(n_hat)
-
-
-@xyz_process
-def get_perimeter(x, y, z=None):
-    """
-    Calculate the perimeter of a set of coordinates.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coordinates
-    z: Union[None, np.array]
-        The z coordinates
-
-    Returns
-    -------
-    perimeter: float
-        The perimeter of the coordinates
-    """
-    if z is None:
-        return get_perimeter_2d(x, y)
-    else:
-        return get_perimeter_3d(x, y, z)
-
-
-@nb.jit(cache=True, nopython=True)
-def get_perimeter_2d(x, y):
-    """
-    Calculate the perimeter of a 2-D set of coordinates.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coordinates
-
-    Returns
-    -------
-    perimeter: float
-        The perimeter of the coordinates
-    """
-    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2))
-
-
-@nb.jit(cache=True, nopython=True)
-def get_perimeter_3d(x, y, z):
-    """
-    Calculate the perimeter of a set of 3-D coordinates.
-
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coordinates
-    z: np.array
-        The z coordinates
-
-    Returns
-    -------
-    perimeter: float
-        The perimeter of the coordinates
-    """
-    return np.sum(np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2))
-
-
-@xyz_process
-def get_area(x, y, z=None):
-    """
-    Calculate the area inside a closed polygon with x, y coordinate vectors.
-    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
-
-    Parameters
-    ----------
-    x: np.array
-        The first set of coordinates [m]
-    y: np.array
-        The second set of coordinates [m]
-    z: Union[np.array, None]
-        The third set of coordinates or None (for a 2-D polygon)
-
-    Returns
-    -------
-    area: float
-        The area of the polygon [m^2]
-    """
-    if z is None:
-        return get_area_2d(x, y)
-    else:
-        return get_area_3d(x, y, z)
-
-
-@nb.jit(cache=True, nopython=True)
-def get_area_2d(x, y):
-    """
-    Calculate the area inside a closed polygon with x, y coordinate vectors.
-    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
-
-    Parameters
-    ----------
-    x: np.array
-        The first set of coordinates [m]
-    y: np.array
-        The second set of coordinates [m]
-
-    Returns
-    -------
-    area: float
-        The area of the polygon [m^2]
-    """
-    # No np.roll in numba
-    x1 = np.append(x[-1], x[:-1])
-    y1 = np.append(y[-1], y[:-1])
-    return 0.5 * np.abs(np.dot(x, y1) - np.dot(y, x1))
-
-
-@nb.jit(cache=True, nopython=True)
-def get_area_3d(x, y, z):
-    """
-    Calculate the area inside a closed polygon with x, y coordinate vectors.
-    `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
-
-    Parameters
-    ----------
-    x: np.array
-        The first set of coordinates [m]
-    y: np.array
-        The second set of coordinates [m]
-    z: np.array
-        The third set of coordinates or None (for a 2-D polygon)
-
-    Returns
-    -------
-    area: float
-        The area of the polygon [m^2]
-    """
-    if np.all(x == x[0]) and np.all(y == y[0]) and np.all(z == z[0]):
-        # Basically a point, but avoid getting the normal vector..
-        return 0
-
-    v3 = get_normal_vector(x, y, z)
-    m = np.zeros((3, len(x)))
-    m[0, :] = x
-    m[1, :] = y
-    m[2, :] = z
-    a = np.array([0.0, 0.0, 0.0])
-    for i in range(len(z)):
-        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
-    a *= 0.5
-    return abs(np.dot(a, v3))
-
-
-@xyz_process
-def get_centroid(x, y, z=None):
-    """
-    Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
-
-    Parameters
-    ----------
-    x: np.array
-        x coordinates of the loop to calculate on
-    y: np.array
-        y coordinates of the loop to calculate on
-    z: Union[None, np.array]
-
-    Returns
-    -------
-    centroid: np.array
-        The x, y, [z] coordinates of the centroid [m]
-    """
-    if z is None:
-        return get_centroid_2d(x, y)
-    else:
-        return get_centroid_3d(x, y, z)
-
-
-@nb.jit(cache=True, nopython=True)
-def get_centroid_2d(x, z):
-    """
-    Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
-
-    Parameters
-    ----------
-    x: np.array
-        x coordinates of the loop to calculate on
-    z: np.array
-        z coordinates of the loop to calculate on
-
-    Returns
-    -------
-    centroid: List[float]
-        The x, z coordinates of the centroid [m]
-    """
-    if not check_ccw(x, z):
-        x = x[::-1]
-        z = z[::-1]
-    area = get_area_2d(x, z)
-
-    cx, cz = 0, 0
-    for i in range(len(x) - 1):
-        a = x[i] * z[i + 1] - x[i + 1] * z[i]
-        cx += (x[i] + x[i + 1]) * a
-        cz += (z[i] + z[i + 1]) * a
-
-    if area != 0:
-        # Zero division protection
-        cx /= 6 * area
-        cz /= 6 * area
-
-    return [cx, cz]
-
-
-def get_centroid_3d(x, y, z):
-    """
-    Calculate the centroid of a non-self-intersecting counterclockwise polygon
-    in 3-D.
-
-    Parameters
-    ----------
-    x: Iterable
-        The x coordinates
-    y: Iterable
-        The y coordinates
-    z: Iterable
-        The z coordinates
-
-    Returns
-    -------
-    centroid: List[float]
-        The x, y, z coordinates of the centroid [m]
-    """
-    cx, cy = get_centroid_2d(x, y)
-    cx2, cz = get_centroid_2d(x, z)
-    cy2, cz2 = get_centroid_2d(y, z)
-
-    # The following is an "elegant" but computationally more expensive way of
-    # dealing with the 0-area edge cases
-    # (of which there are more than you think)
-    cx = np.array([cx, cx2])
-    cy = np.array([cy, cy2])
-    cz = np.array([cz, cz2])
-
-    def get_rational(i, array):
-        """
-        Gets rid of infinity and nan coordinates
-        """
-        args = np.argwhere(np.isfinite(array))
-        if len(args) == 0:
-            # 2-D shape with a simple axis offset
-            # Get the first value of the coordinate set which is equal to the
-            # offset
-            return [x, y, z][i][0]
-        elif len(args) == 1:
-            return array[args[0][0]]
-        else:
-            if not np.isclose(array[0], array[1]):
-                # Occasionally the two c values are not the same, and one is 0
-                # Take non-trivial value (this works in the case of 2 zeros)
-                return array[np.argmax(np.abs(array))]
-            else:
-                return array[0]
-
-    return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
 
 
 def segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray):
@@ -1109,33 +728,6 @@ def rotation_matrix(theta, axis="z"):
     return r_matrix
 
 
-def rotation_matrix_v1v2(v1, v2):
-    """
-    Get a rotation matrix based off two vectors.
-    """
-    v1 /= np.linalg.norm(v1)
-    v2 /= np.linalg.norm(v2)
-
-    cos_angle = np.dot(v1, v2)
-    d = np.cross(v1, v2)
-    sin_angle = np.linalg.norm(d)
-
-    if sin_angle == 0:
-        matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
-    else:
-        d /= sin_angle
-
-        eye = np.eye(3)
-        ddt = np.outer(d, d)
-        skew = np.array(
-            [[0, d[2], -d[1]], [-d[2], 0, d[0]], [d[1], -d[0], 0]], dtype=np.float64
-        )
-
-        matrix = ddt + cos_angle * (eye - ddt) + sin_angle * skew
-
-    return matrix
-
-
 # =============================================================================
 # Intersection tools
 # =============================================================================
@@ -1198,7 +790,8 @@ def vector_intersect_3d(p_1, p_2, p_3, p_4):
 
     Notes
     -----
-    Credit: Paul Bourke at http://local.wasp.uwa.edu.au/~pbourke/geometry/lineline3d/
+    Credit: Paul Bourke at
+    http://paulbourke.net/geometry/pointlineplane/#:~:text=The%20shortest%20line%20between%20two%20lines%20in%203D
     """
     p_13 = p_1 - p_3
     p_43 = p_4 - p_3
@@ -1288,7 +881,7 @@ def get_intersect(loop1, loop2):
     Note
     ----
     D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
-    """  # noqa (W505)
+    """  # noqa :W505
     x1, y1 = loop1.d2
     x2, y2 = loop2.d2
 
@@ -1809,7 +1402,7 @@ def make_wire(x, y, z, label="", spline=False):
     wire: BluemiraWire
         The BluemiraWire bound by the coordinates
     """
-    wire_func = _freecadapi.make_bspline if spline else _freecadapi.make_polygon
+    wire_func = cadapi.make_bspline if spline else cadapi.make_polygon
     return BluemiraWire(wire_func(np.array([x, y, z]).T), label=label)
 
 

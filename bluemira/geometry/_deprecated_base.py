@@ -23,18 +23,21 @@
 Base class and Plane object for use with Loop.
 """
 
-import os
-import numpy as np
 import abc
 import json
-import pickle  # noqa (S403)
+import os
+import pickle  # noqa :S403
+import warnings
+from collections.abc import Iterable
 from copy import deepcopy
 from typing import Union
-from collections.abc import Iterable
+
+import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import NumpyJSONEncoder
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
+from bluemira.utilities.tools import json_writer
 
 
 class GeomBase(abc.ABC):
@@ -58,15 +61,14 @@ class GeomBase(abc.ABC):
         """
         pass
 
-    def to_json(self, filename):
+    def to_json(self, filename, **kwargs):
         """
         Exports a JSON of a geometry object
         """
         d = self.as_dict()
         filename = os.path.splitext(filename)[0]
         filename += ".json"
-        with open(filename, "w") as f:
-            json.dump(d, f, cls=NumpyJSONEncoder)
+        return json_writer(d, filename, **kwargs)
 
     @classmethod
     def load(cls, filename):
@@ -75,11 +77,13 @@ class GeomBase(abc.ABC):
         """
         ext = os.path.splitext(filename)[-1]
         if ext == ".pkl":
-            raise DeprecationWarning(
-                "GeomBase objects should no longer be saved as pickle files."
+            warnings.warn(
+                "GeomBase objects should no longer be saved as pickle files.",
+                DeprecationWarning,
+                stacklevel=2,
             )
             with open(filename, "rb") as data:
-                return pickle.load(data)  # noqa (S301)
+                return pickle.load(data)  # noqa :S301
 
         elif ext == ".json":
             with open(filename, "r") as data:

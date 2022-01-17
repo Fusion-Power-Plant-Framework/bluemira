@@ -33,19 +33,20 @@ Feel free to change parameters!
 
 # %%
 import os
-import numpy as np
+
 import matplotlib.pyplot as plt
-from bluemira.base.look_and_feel import bluemira_print
+import numpy as np
+
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
+from bluemira.base.look_and_feel import bluemira_print
 from BLUEPRINT.geometry.boolean import (
+    boolean_2d_common,
     boolean_2d_difference,
     boolean_2d_union,
-    boolean_2d_common,
     simplify_loop,
 )
-
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
 
 plt.close("all")
 
@@ -65,7 +66,7 @@ plt.close("all")
 #
 # The coordinate system is right-handed and centred at (0, 0, 0).
 #
-# See e.g. http://mathworld.wolfram.com/Right-HandedCoordinateSystem.html
+# See e.g. https://mathworld.wolfram.com/Right-HandedCoordinateSystem.html
 #
 # Or enjoy some of my finest ASCII art instead:
 #

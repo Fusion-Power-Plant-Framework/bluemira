@@ -19,20 +19,22 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
 import json
-import numpy as np
+import os
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 from scipy.interpolate import interp1d
+
 import tests
 from bluemira.base.file import get_bluemira_path
+from bluemira.fuel_cycle.blocks import FuelCycleComponent
 from bluemira.fuel_cycle.tools import (
     convert_flux_to_flow,
     fit_sink_data,
     piecewise_sqrt_threshold,
 )
-from bluemira.fuel_cycle.blocks import FuelCycleComponent
 
 
 class TestFuelCycleComponent:

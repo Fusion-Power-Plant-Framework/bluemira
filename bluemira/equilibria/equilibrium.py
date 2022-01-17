@@ -22,58 +22,55 @@
 """
 Plasma MHD equilibrium and state objects
 """
-from copy import deepcopy
-from enum import Enum
-import numpy as np
 import os
+from enum import Enum
+
+import numpy as np
+import tabulate
 from pandas import DataFrame
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
-import tabulate
 
-from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import (
-    bluemira_print_flush,
-    bluemira_warn,
-)
 from bluemira.base.constants import MU_0
-from bluemira.equilibria.error import EquilibriaError
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
-from bluemira.equilibria.grid import Grid, integrate_dx_dz
+from bluemira.equilibria.coils import Coil, CoilSet, PlasmaCoil, symmetrise_coilset
+from bluemira.equilibria.constants import LI_REL_TOL, PSI_NORM_TOL
+from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import (
-    find_OX_points,
     find_flux_surf,
     find_flux_surfs,
     find_LCFS_separatrix,
-    in_zone,
+    find_OX_points,
     in_plasma,
+    in_zone,
 )
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface, analyse_plasma_core
+from bluemira.equilibria.force_field import ForceField
+from bluemira.equilibria.grad_shafranov import GSSolver
+from bluemira.equilibria.grid import Grid, integrate_dx_dz
+from bluemira.equilibria.limiter import Limiter
+from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import (
+    calc_li,
+    calc_li3minargs,
     calc_psi_norm,
     calc_q,
     calc_q0,
-    calc_li,
     calc_summary,
-    calc_li3minargs,
 )
-from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.plotting import (
-    EquilibriumPlotter,
-    CorePlotter,
     BreakdownPlotter,
+    CorePlotter,
     CorePlotter2,
+    EquilibriumPlotter,
 )
-from bluemira.equilibria.coils import Coil, CoilSet, PlasmaCoil, symmetrise_coilset
-from bluemira.equilibria.limiter import Limiter
-from bluemira.equilibria.num_control import VirtualController, DummyController
-from bluemira.equilibria.force_field import ForceField
-from bluemira.equilibria.constants import PSI_NORM_TOL, LI_REL_TOL
-from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.utilities.tools import abs_rel_difference
-from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.utilities.opt_tools import process_scipy_result
+from bluemira.utilities.tools import abs_rel_difference
 
 EQ_FOLDER = get_bluemira_path("equilibria", subfolder="data")
 
@@ -196,13 +193,6 @@ class MHDState:
             Coil representation of the plasma
         """
         raise NotImplementedError
-
-    def copy(self):
-        """
-        Get a deep copy of an MHDState object, returning a fully independent copy,
-        with independent values.
-        """
-        return deepcopy(self)
 
     @classmethod
     def _get_eqdsk(cls, filename, force_symmetry=False):
@@ -557,7 +547,7 @@ class Equilibrium(MHDState):
         psi=None,
         Ip=0,
         li=None,
-        RB0=None,  # noqa (N803)
+        RB0=None,  # noqa :N803
         jtor=None,
         profiles=None,
         filename=None,
@@ -682,7 +672,7 @@ class Equilibrium(MHDState):
             psi_bndry = xpoints[0][2]
         else:
             psi_bndry = np.amin(psi)
-        psinorm = np.linspace(0, 1, n_x, endpoint=False)  # No separatrix
+        psinorm = np.linspace(0, 1, n_x)
 
         if qpsi_calcmode is QpsiCalcMode.CALC:
             # This is too damn slow..
@@ -693,6 +683,9 @@ class Equilibrium(MHDState):
         lcfs = self.get_LCFS(psi)
         nbdry = lcfs.d2.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
+
+        profile_scale = np.abs(self._profiles.scale)
+
         result = {
             "nx": n_x,
             "nz": n_z,
@@ -711,9 +704,9 @@ class Equilibrium(MHDState):
             "cplasma": self._Ip,
             "psi": psi,
             "fpol": self.fRBpol(psinorm),
-            "ffprime": self.ffprime(psinorm),
-            "pprime": self.pprime(psinorm),
-            "pressure": self.pressure(psinorm),
+            "ffprime": self.ffprime(psinorm) * profile_scale,
+            "pprime": self.pprime(psinorm) * profile_scale,
+            "pressure": self.pressure(psinorm) * profile_scale,
             "pnorm": psinorm,
             "nbdry": nbdry,
             "xbdry": lcfs["x"],
@@ -1072,7 +1065,7 @@ class Equilibrium(MHDState):
             The radial position of the effective current centre
         zcur: float
             The vertical position of the effective current centre
-        """  # noqa (W505)
+        """  # noqa :W505
         xcur = np.sqrt(1 / self._Ip * self._int_dxdz(self.x ** 2 * self._jtor))
         zcur = 1 / self._Ip * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
@@ -1212,7 +1205,7 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm)
+        return self._profiles.fRBpol(psinorm) * np.abs(self._profiles.scale)
 
     def fvac(self):
         """
@@ -1279,7 +1272,7 @@ class Equilibrium(MHDState):
         # NOTE: You should use find.py::find_flux_surface_through_point, this is just
         # wrong, but is still used in BLUEPRINT.systems.firstwall.py
         bluemira_warn(
-            "This function does not do what it should do. You should not use " "it."
+            "This function does not do what it should do. You should not use it."
         )
         psi = self.psi(x, z)
         psi_n = calc_psi_norm(psi, *self.get_OX_psis())
@@ -1327,7 +1320,7 @@ class Equilibrium(MHDState):
             self.x, self.z, psi, o_points, x_points, double_null=self.is_double_null
         )[1]
 
-    def _clear_OX_points(self):  # noqa (N802)
+    def _clear_OX_points(self):  # noqa :N802
         """
         Speed optimisation for storing OX point searches in a single interation
         of the solve. Large grids can cause OX finding to be expensive..
@@ -1335,7 +1328,7 @@ class Equilibrium(MHDState):
         self._o_points = None
         self._x_points = None
 
-    def get_OX_points(self, psi=None, force_update=False):  # noqa (N802)
+    def get_OX_points(self, psi=None, force_update=False):  # noqa :N802
         """
         Returns list of [[O-points], [X-points]]
         """
@@ -1347,7 +1340,7 @@ class Equilibrium(MHDState):
             )
         return self._o_points, self._x_points
 
-    def get_OX_psis(self, psi=None):  # noqa (N802)
+    def get_OX_psis(self, psi=None):  # noqa :N802
         """
         Returns psi at the.base.O-point and X-point
         """

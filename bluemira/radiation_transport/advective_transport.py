@@ -23,21 +23,18 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from bluemira.base.parameter import ParameterFrame
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.constants import EPS
-from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_tools import (
-    loop_plane_intersect,
-)
-from bluemira.geometry._deprecated_loop import Loop
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
+from bluemira.geometry._deprecated_base import Plane
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import loop_plane_intersect
 from bluemira.radiation_transport.error import AdvectionTransportError
-
 
 __all__ = ["ChargedParticleSolver"]
 
@@ -49,8 +46,8 @@ class ChargedParticleSolver:
 
     # fmt: off
     default_params = [
-        ["fw_p_sol_near", "near scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
+        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
@@ -310,9 +307,7 @@ class ChargedParticleSolver:
 
         # Correct power (energy conservation)
         q_omp_int = 2 * np.pi * np.sum(q_par_omp / (B_omp / Bp_omp) * self.dx_mp * x_omp)
-        f_correct_power = (
-            self.params.fw_p_sol_near + self.params.fw_p_sol_far
-        ) / q_omp_int
+        f_correct_power = self.params.P_sep_particle / q_omp_int
         return (
             np.append(x_lfs_inter, x_hfs_inter),
             np.append(z_lfs_inter, z_hfs_inter),
@@ -398,7 +393,7 @@ class ChargedParticleSolver:
         q_omp_int = 2 * np.pi * np.sum(q_par_omp * Bp_omp / B_omp * self.dx_mp * x_omp)
         q_imp_int = 2 * np.pi * np.sum(q_par_imp * Bp_imp / B_imp * self.dx_mp * x_imp)
 
-        total_power = self.params.fw_p_sol_near + self.params.fw_p_sol_far
+        total_power = self.params.P_sep_particle
         f_outboard = self.params.f_lfs_lower_target + self.params.f_lfs_upper_target
         f_inboard = self.params.f_hfs_lower_target + self.params.f_hfs_upper_target
         f_correct_lfs_down = (
@@ -435,8 +430,8 @@ class ChargedParticleSolver:
         """
         Calculate the parallel power at the midplane.
         """
-        p_sol_near = self.params.fw_p_sol_near
-        p_sol_far = self.params.fw_p_sol_far
+        p_sol_near = self.params.P_sep_particle * self.params.f_p_sol_near
+        p_sol_far = self.params.P_sep_particle * (1 - self.params.f_p_sol_near)
         if outboard:
             lq_near = self.params.fw_lambda_q_near_omp
             lq_far = self.params.fw_lambda_q_far_omp

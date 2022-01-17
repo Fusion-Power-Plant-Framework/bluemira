@@ -23,15 +23,35 @@
 Importer for external code API and related functions
 """
 
-# External codes wrapper imports
-from bluemira.codes.wrapper import (
-    run_systems_code,
-)
+
+def freecad_message_removal():
+    """
+    Remove annoying message about freecad libdir not being set
+    """
+    import importlib
+    import os
+
+    if "PATH_TO_FREECAD_LIBDIR" in os.environ:
+        return os.environ["PATH_TO_FREECAD_LIBDIR"]
+    freecad_default_path = None
+    with open(importlib.util.find_spec("freecad").origin, "r") as rr:
+        for line in rr:
+            if '_path_to_freecad_libdir = "' in line:
+                freecad_default_path = line.split('"')[1]
+                break
+    if freecad_default_path is not None:
+        os.environ["PATH_TO_FREECAD_LIBDIR"] = freecad_default_path
+
+    return freecad_default_path
+
+
+freecad_default_path = freecad_message_removal()
 
 # PROCESS systems code imports
-from bluemira.codes.process.teardown import (
-    plot_PROCESS,
-)
+from bluemira.codes.process.teardown import plot_PROCESS
+
+# External codes wrapper imports
+from bluemira.codes.wrapper import run_systems_code
 
 __all__ = [
     "run_systems_code",

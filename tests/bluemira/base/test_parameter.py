@@ -19,12 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 from typing import Type
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
+import pytest
 
 from bluemira.base.parameter import Parameter, ParameterFrame, ParameterMapping
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 class Dummy(ReactorSystem):
@@ -74,7 +74,10 @@ class TestParameter:
         "Input",
         {"PROCESS": ParameterMapping("rmajor", False, True)},
     )
-    p_str = "r_0 = 9 m (Major radius) : marjogrgrbg {'PROCESS': {'name': 'rmajor', 'recv': False, 'send': True}}"
+    p_str = (
+        "Major radius [m]: r_0 = 9 (marjogrgrbg)\n"
+        "    {'PROCESS': {'name': 'rmajor', 'recv': False, 'send': True}}"
+    )
     g = Parameter(
         "B_0",
         "Toroidal field at R_0",
@@ -83,7 +86,7 @@ class TestParameter:
         "Toroidal field at the centre of the plasma",
         "Input",
     )
-    g_str = "B_0 = 5.7 T (Toroidal field at R_0) : Toroidal field at the centre of the plasma"
+    g_str = "Toroidal field at R_0 [T]: B_0 = 5.7 (Toroidal field at the centre of the plasma)"
 
     def test_p(self, capsys):
         # make a copy of p
@@ -377,10 +380,12 @@ class TestParameterFrame:
         assert params_copy.R_0 == 10
         assert params_copy.get_param("R_0").name == self.params.get_param("R_0").name
         assert params_copy.get_param("R_0").unit == self.params.get_param("R_0").unit
-        assert (
-            params_copy.get_param("R_0").description
-            == self.params.get_param("R_0").description
-        )
+        # TODO: Remove - Users should be able to define their own description IMO
+        # Perhaps we should prevent a change of description if they have set it though
+        # assert (
+        #     params_copy.get_param("R_0").description
+        #     == self.params.get_param("R_0").description
+        # )
         # The source should be updated because it has changed
         # assert params_copy.get("R_0").source == self.params.get("R_0").source
 
@@ -537,20 +542,20 @@ class TestParameterFrame:
         assert self.params == new_params
 
     def test_to_from_verbose_json(self):
-        j = self.params.to_json(verbose=True)
+        j = self.params.to_json(verbose=True, return_output=True)
         new_params = ParameterFrame.from_json(j)
         assert id(self.params) != id(new_params)
         assert self.params == new_params
 
     def test_to_from_verbose_json_file(self, tmpdir):
         json_path = tmpdir.join("verbose.json")
-        j = self.params.to_json(output_path=json_path, verbose=True)
+        j = self.params.to_json(output_path=json_path, verbose=True, return_output=True)
         new_params = ParameterFrame.from_json(json_path)
         assert id(self.params) != id(new_params)
         assert self.params == new_params
 
     def test_set_values_from_json(self):
-        j = self.params.to_json()
+        j = self.params.to_json(return_output=True)
         params_copy = self.params.copy()
         params_copy.R_0 = 60.0
         params_copy.B_0 = 0.0
@@ -566,7 +571,7 @@ class TestParameterFrame:
 
     def test_set_values_from_json_file(self, tmpdir):
         json_path = tmpdir.join("concise.json")
-        j = self.params.to_json(output_path=json_path)
+        j = self.params.to_json(output_path=json_path, return_output=True)
         params_copy = self.params.copy()
         params_copy.R_0 = 60.0
         params_copy.B_0 = 0.0
@@ -582,7 +587,7 @@ class TestParameterFrame:
 
     def test_to_from_verbose_json_file_validation(self, tmpdir):
         json_path = tmpdir.join("concise_invalid.json")
-        j = self.params.to_json(output_path=json_path)
+        j = self.params.to_json(output_path=json_path, return_output=True)
         with pytest.raises(ValueError) as ex_info:
             new_params = ParameterFrame.from_json(json_path)
         assert (
@@ -592,7 +597,7 @@ class TestParameterFrame:
 
     def test_set_values_from_json_file_validation(self, tmpdir):
         json_path = tmpdir.join("verbose_invalid.json")
-        j = self.params.to_json(output_path=json_path, verbose=True)
+        j = self.params.to_json(output_path=json_path, verbose=True, return_output=True)
         with pytest.raises(ValueError) as ex_info:
             self.params.set_values_from_json(json_path)
         assert (

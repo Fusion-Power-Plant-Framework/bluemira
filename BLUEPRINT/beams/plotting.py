@@ -23,16 +23,16 @@
 FE plotting tools
 """
 import numpy as np
-from matplotlib.colors import TwoSlopeNorm, Normalize
+from matplotlib.colors import Normalize, TwoSlopeNorm
 
-from BLUEPRINT.utilities.plottools import Plot3D
 from BLUEPRINT.beams.constants import (
-    LOAD_STR_VECTORS,
-    LOAD_INT_VECTORS,
-    FLOAT_TYPE,
-    STRESS_COLOR,
     DEFLECT_COLOR,
+    FLOAT_TYPE,
+    LOAD_INT_VECTORS,
+    LOAD_STR_VECTORS,
+    STRESS_COLOR,
 )
+from BLUEPRINT.utilities.plottools import Plot3D
 
 # Plotting options
 DEFAULT_OPTIONS = {
@@ -525,9 +525,3 @@ class StressDeformedGeometryPlotter(BasePlotter):
             centre = (smin + smax) / 2
 
         return TwoSlopeNorm(centre, vmin=min(stress), vmax=max(stress))
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

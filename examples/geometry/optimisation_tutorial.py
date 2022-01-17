@@ -29,7 +29,6 @@ from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import set_random_seed
 
-
 set_random_seed(134365475)
 
 
@@ -182,7 +181,7 @@ problem.solve()
 # tolerances)... but we don't!
 
 print(f"Theoretical optimum: {problem.some_arg_value-1e-6}")
-print(f"Length: {parameterisation_3.create_shape().length}")
+print(f"Length with SLSQP: {parameterisation_3.create_shape().length}")
 print(f"n_evals: {problem.optimiser.n_evals}")
 
 # This is because we're using numerical gradients and jacobians for our objective and
@@ -198,7 +197,7 @@ parameterisation_4 = PrincetonD()
 cobyla_optimiser2 = Optimiser(
     "COBYLA",
     opt_conditions={
-        "ftol_rel": 1e-6,
+        "ftol_rel": 1e-7,
         "xtol_rel": 1e-12,
         "xtol_abs": 1e-12,
         "max_eval": 1000,
@@ -233,4 +232,4 @@ print(f"n_evals: {problem.optimiser.n_evals}")
 # problem intelligently, using well-behaved objective and constraint functions, and smart
 # bounds. Trying out different optimisers doesn't hurt. There's a trade-off between speed
 # and accuracy. If you can't work out the analytical gradients, numerical gradients are a
-# questionable approach, but do work well (fast) on some problems.
+# questionable approach, but can work well (fast) on some problems.

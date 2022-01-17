@@ -19,24 +19,27 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-from scipy.special import ellipe
 import math
-import pytest
 
-import bluemira.geometry._freecadapi as cadapi
-from bluemira.geometry.wire import BluemiraWire
+import numpy as np
+import pytest
+from scipy.special import ellipe
+
+import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
-    make_polygon,
-    make_ellipse,
-    make_circle,
-    make_circle_arc_3P,
     boolean_cut,
     boolean_fuse,
-    extrude_shape,
     circular_pattern,
+    extrude_shape,
+    make_circle,
+    make_circle_arc_3P,
+    make_ellipse,
+    make_polygon,
+    offset_wire,
+    revolve_shape,
 )
+from bluemira.geometry.wire import BluemiraWire
 
 
 class TestGeometry:
@@ -66,8 +69,11 @@ class TestGeometry:
         assert wire.is_closed()
 
     def test_add_wires(self):
-        wire1 = make_polygon(self.square_points[0:3], label="wire1", closed=False)
-        wire2 = make_polygon(self.square_points[2:], label="wire2", closed=False)
+        sq_points = np.array(self.square_points)
+        half_sq = sq_points[:3, :].T
+        half_sq_2 = sq_points[2:, :].T
+        wire1 = make_polygon(half_sq, label="wire1", closed=False)
+        wire2 = make_polygon(half_sq_2, label="wire2", closed=False)
         wire3 = wire1 + wire2
         wire3.label = "wire3"
         assert wire1.length == 2.0
@@ -147,8 +153,15 @@ class TestGeometry:
     params_for_fuse_wires = [
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (2, False),
             id="coincident",
@@ -156,8 +169,22 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire1",
+                ),
+                make_polygon(
+                    [
+                        [1, 0, 0],
+                        [1, 1, 0],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (4, True),
             id="closed",
@@ -167,7 +194,7 @@ class TestGeometry:
                 make_polygon(
                     [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
                 ),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             (4, True),
             id="overlap",
@@ -175,8 +202,15 @@ class TestGeometry:
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [-1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, -1], [0, 0, 1], [0, 0, -1]], label="wire1"),
+                make_polygon(
+                    [
+                        [1, 0, 0],
+                        [1, 1, 0],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             (4, True),
             id="intersection",
@@ -284,16 +318,30 @@ class TestGeometry:
     params_for_cut_wires = [
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire2"),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire1",
+                ),
+                make_polygon(
+                    [
+                        [0, 1, 1],
+                        [0, 0, 1],
+                        [0, 0, 0],
+                    ],
+                    label="wire2",
+                ),
             ],
             ([]),
             id="coincident",
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]], label="wire1"),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 1], [0, 0, 0]], label="wire1"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False)],
             id="contact at start and end",
@@ -303,15 +351,15 @@ class TestGeometry:
                 make_polygon(
                     [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0.5, 1, 0]], label="wire1"
                 ),
-                make_polygon([[1, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[1, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False)],
             id="overlap",
         ),
         pytest.param(
             [
-                make_polygon([[0, 0, 0], [1, 0, 0], [1, 2, 0]], label="wire1"),
-                make_polygon([[2, 1, 0], [0, 1, 0], [0, 0, 0]], label="wire2"),
+                make_polygon([[0, 1, 1], [0, 0, 2], [0, 0, 0]], label="wire1"),
+                make_polygon([[2, 0, 0], [1, 1, 0], [0, 0, 0]], label="wire2"),
             ],
             [(2, False), (1, False)],
             id="intersection",
@@ -455,6 +503,50 @@ class TestGeometry:
             bm_shape.is_valid()
             self._compare_fc_bm(fc_shape, bm_shape)
             assert bm_shape.volume < solid2.volume
+
+    def test_cut_hollow(self):
+        x_c = 10
+        d_xc = 1.0
+        d_zc = 1.0
+        inner = make_polygon(
+            [
+                [x_c - d_xc, 0, -d_zc],
+                [x_c + d_xc, 0, -d_zc],
+                [x_c + d_xc, 0, d_zc],
+                [x_c - d_xc, 0, d_zc],
+            ],
+            closed=True,
+        )
+        outer = offset_wire(inner, 1.0, join="intersect")
+        face = BluemiraFace(outer)
+        solid = revolve_shape(face, degree=360)
+
+        face_2 = BluemiraFace(inner)
+        solid_2 = revolve_shape(face_2, degree=360)
+        solid = boolean_cut(solid, solid_2)[0]
+
+        true_volume = 2 * np.pi * x_c * (4 ** 2 - 2 ** 2)
+        assert solid.is_valid()
+        assert np.isclose(solid.volume, true_volume)
+
+    @pytest.mark.xfail
+    def test_cut_hollow_circle(self):
+        # TODO: More fun to be had with circles...
+        x_c = 10
+        radius = 1
+        circle = make_circle(radius=radius, center=[10, 0, 0], axis=[0, 1, 0])
+        face = BluemiraFace(circle)
+        solid = revolve_shape(face, degree=360)
+
+        circle_2 = make_circle(radius=0.5 * radius, center=[10, 0, 0], axis=[0, 1, 0])
+        face_2 = BluemiraFace(circle_2)
+        solid_2 = revolve_shape(face_2, degree=360)
+
+        solid = boolean_cut(solid, solid_2)[0]
+
+        true_volume = 2 * np.pi * x_c * (np.pi * (radius ** 2 - (0.5 * radius) ** 2))
+        assert solid.is_valid()
+        assert np.isclose(solid.volume, true_volume)
 
     @pytest.mark.parametrize("direction", [1, -1])
     def test_fuse_solids(self, direction):

@@ -23,15 +23,15 @@
 Plasma magnetic constraint objects and auto-generation tools
 """
 from abc import ABC, abstractmethod
-from typing import List, Union
 from dataclasses import dataclass
-import numpy as np
-from copy import deepcopy
+from typing import List, Union
 
-from bluemira.utilities.tools import abs_rel_difference
-from bluemira.geometry._deprecated_loop import Loop
+import numpy as np
+
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.equilibria.shapes import flux_surface_johner
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.utilities.tools import abs_rel_difference
 
 __all__ = ["MagneticConstraintSet"]
 
@@ -331,7 +331,7 @@ class MagneticConstraintSet(ABC):
     def __init__(self, constraints):
         self.constraints = constraints
 
-    def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa (N803)
+    def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
 
         if I_not_dI:
             # hack to change from dI to I optimiser (and keep both)
@@ -436,12 +436,6 @@ class MagneticConstraintSet(ABC):
                 constraint.target_value = psi_bndry
         self.build_target()
 
-    def copy(self):
-        """
-        Get a deep copy of the MagneticConstraintSet instance.
-        """
-        return deepcopy(self)
-
     def plot(self, ax=None):
         """
         Plots constraints
@@ -525,7 +519,7 @@ class DivertorLegCalculator:
 
     def calc_divertor_leg(
         self, x_point, angle, length, n, loc="lower", pos="outer"
-    ):  # noqa (N802)
+    ):  # noqa :N802
         """
         Calculate the position of a straight line divertor leg.
         """

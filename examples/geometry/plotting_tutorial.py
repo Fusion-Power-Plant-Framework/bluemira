@@ -25,25 +25,19 @@ Plotting module examples
 # %%
 import matplotlib.pyplot as plt
 
-import bluemira.geometry.tools
-from bluemira.base.components import PhysicalComponent, GroupingComponent
-
 import bluemira.display as display
-
-from bluemira.display.plotter import (
-    WirePlotter,
-    FacePlotter,
-)
-
-from bluemira.geometry.parameterisations import PrincetonD
+import bluemira.geometry.tools
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.display.plotter import FacePlotter, WirePlotter
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import PrincetonD
 
 # %%[markdown]
 # ## Setup
 #
-# Creation of a closed wire and respective face and discretization points.
+# Creation of a closed wire and respective face and discretisation points.
 #
-# PrincetonD parametrisation is used as example.
+# PrincetonD parameterisation is used as example.
 #
 # Note: the curve is generated on the x-z plane
 
@@ -363,6 +357,9 @@ w1face = BluemiraFace(wire1)
 #
 # Creates a `PhysicalComponent` and plots it in the xz plane
 
+# Note that if no face colour is set, a colour from the default palette will be chosen
+# by default. This will not be the same every time.
+
 # %%
 c = PhysicalComponent("Comp", face)
 c.plot_options.plane = "xz"
@@ -372,13 +369,13 @@ ax.set_title("test component plot")
 plt.show(block=True)
 
 # %%[markdown]
-# ## GroupingComponent Plot
+# ## Component Plot
 #
-# Creates a `GroupingComponent` and plots it in the xz plane using matplotlib defaults.
+# Creates a `Component` and plots it in the xz plane using matplotlib defaults.
 # Here we override some defaults and make our custom set of plot options.
 
 # %%
-group = GroupingComponent("Components")
+group = Component("Components")
 my_group_options = group.plot_options.as_dict()
 my_group_options["wire_options"] = {}
 my_group_options["face_options"] = {"color": "red"}
@@ -422,17 +419,20 @@ print(f"component plotter options: {c.plot_options}")
 display.show_cad(face)
 
 # %%[markdown]
-# Fow what concern Components, the component function show_cad is used.
+# For what concern Components, the component function show_cad is used.
 
+# Note that if no colour is set, a colour from the default palette will be chosen
+# by default. This will not be the same every time.
 # %%
 group.show_cad()
 
 # %%[markdown]
-# We can also change the appeare of individual components inside the group
+# We can also change the appearance of individual components inside the group.
+# Colours can be specified as an R-G-B tuple, string, or hex-string.
 
 # %%
-c1.display_cad_options.modify(**{"color": (0.1, 0.1, 0.1)})
-c2.display_cad_options.modify(**{"color": (0.3, 0.2, 0.6)})
-c3.display_cad_options.modify(**{"color": (0.2, 0.6, 0.1), "transparency": 0.5})
+c1.display_cad_options.modify(**{"color": (0.1, 0.2, 0.4)})
+c2.display_cad_options.modify(**{"color": "g"})
+c3.display_cad_options.modify(**{"color": "#FF3450", "transparency": 0.5})
 
 group.show_cad()

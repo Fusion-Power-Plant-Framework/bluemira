@@ -23,20 +23,19 @@
 Plasma profile objects, shape functions, and associated tools
 """
 
-import numpy as np
+import matplotlib.pyplot as plt
 import numba as nb
+import numpy as np
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
-from copy import deepcopy
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.find import in_plasma, find_LCFS_separatrix
-from bluemira.equilibria.plotting import ProfilePlotter
-from bluemira.equilibria.grid import integrate_dx_dz, volume_integral, revolved_volume
 from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma
+from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
+from bluemira.equilibria.plotting import ProfilePlotter
 
 __all__ = [
     "BetaIpProfile",
@@ -90,7 +89,7 @@ def singlepowerfunc(x, *args):
 def doublepowerfunc(x, *args):
     """
     Double power shape function defined e.g. in Lao 1985
-        http://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
+        https://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
     \t:math:`g(x)=(1-x^{m})^{n}`
     """
     # sign tweak needed to avoid runtimewarnings in np
@@ -178,7 +177,7 @@ def speedy_pressure_mask(ii, jj, psi_norm, psio, psix, shape):
 def laopoly(x, *args):
     """
     Polynomial shape function defined in Lao 1985
-        http://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
+        https://iopscience.iop.org/article/10.1088/0029-5515/25/11/007/pdf \n
     \t:math:`g(x)=\\sum_{n=0}^{n_F} \\alpha_{n}x^{n}-`
     \t:math:`x^{n_F+1}\\sum_{n=0}^{n_F} \\alpha_{n}`
     """
@@ -378,7 +377,7 @@ class Profile:
             o_vals[i] = self._scalar_denorm(self.pprime, p_vals[i])
         return np.reshape(o_vals, psinorm.shape)
 
-    def fRBpol(self, psinorm):  # noqa (N802)
+    def fRBpol(self, psinorm):  # noqa :N802
         """
         Return f as a function of normalised psi
 
@@ -467,12 +466,6 @@ class Profile:
         """
         return ProfilePlotter(self, ax=ax)
 
-    def copy(self):
-        """
-        Get a deep copy of the Profile object
-        """
-        return deepcopy(self)
-
 
 class BetaIpProfile(Profile):
     """
@@ -497,7 +490,7 @@ class BetaIpProfile(Profile):
     \t:math:`d{\\Omega}`\n
 
     \t:math:`{\\beta}_{p}=\\dfrac{\\langle p({\\beta_{0}})\\rangle}{\\langle B_{p}^{2}\\rangle_{\\psi_{a}}/2\\mu_{0}}`
-    """  # noqa (W505)
+    """  # noqa :W505
 
     # NOTE: For high betap >= 2, this can lead to there being no plasma current
     # on the high field side...
@@ -508,6 +501,8 @@ class BetaIpProfile(Profile):
         self._fvac = R_0 * B_0
         self.R_0 = R_0
         self._B_0 = B_0  # Store for eqdsk only
+        self.scale = 1.0
+
         if shape is None:
             self.shape = DoublePowerFunc([1, 0.8])
         else:
@@ -532,7 +527,7 @@ class BetaIpProfile(Profile):
         \t:math:`\\lambda=\\dfrac{I_{p}-\\lambda{\\beta_{0}}\\bigg(\\int\\int\\dfrac{X}{R_{0}}f+\\int\\int\\dfrac{R_{0}}{X}f\\bigg)}{\\int\\int\\dfrac{R_{0}}{X}f}`
 
         Derivation: book 10, p 120
-        """  # noqa (W505)
+        """  # noqa :W505
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
         psix, psio, mask = self._jtor(x, z, psi, o_points, x_points)
@@ -624,6 +619,7 @@ class CustomProfile(Profile):
         self.R_0 = R_0
         self._B_0 = B_0
         self.Ip = Ip
+        self.scale = 1.0
 
         # Fit a shape function to the pprime profile (mostly for plotting)
         x = np.linspace(0, 1, 50)
@@ -661,8 +657,8 @@ class CustomProfile(Profile):
         if self.Ip is not None:
             # This is a simple way to prescribe the plasma current
             Ip = self.int2d(jtor)
-            scale = self.Ip / Ip
-            jtor *= scale
+            self.scale = self.Ip / Ip
+            jtor *= self.scale
         return jtor
 
     def pressure(self, psinorm):

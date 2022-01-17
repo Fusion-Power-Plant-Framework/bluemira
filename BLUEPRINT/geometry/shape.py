@@ -23,24 +23,26 @@
 Base shape object for optimisations with parameterised shapes
 """
 import os
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+from bluemira.base.file import get_bluemira_path, make_bluemira_path
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.file import make_bluemira_path, get_bluemira_path
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.geombase import JSONReaderWriter
-from BLUEPRINT.geometry.parameterisations import (
-    TripleArc,
-    PrincetonD,
-    PolySpline,
-    BackwardPolySpline,
-    PictureFrame,
-    TaperedPictureFrame,
-    CurvedPictureFrame,
-)
-from BLUEPRINT.geometry.optimiser import ShapeOptimiser
 from BLUEPRINT.geometry.geomtools import length, loop_volume, normal
 from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.optimiser import ShapeOptimiser
+from BLUEPRINT.geometry.parameterisations import (
+    BackwardPolySpline,
+    CurvedPictureFrame,
+    PictureFrame,
+    PolySpline,
+    PrincetonD,
+    TaperedPictureFrame,
+    TripleArc,
+)
 
 # fmt: off
 PARAMETERISATION_MAP = {
@@ -538,9 +540,3 @@ def fit_shape_to_loop(shape_type, loop, n_points=100):
     shape.f_ieq_constraints = f_constraints
     shape.args = o_args
     return shape
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

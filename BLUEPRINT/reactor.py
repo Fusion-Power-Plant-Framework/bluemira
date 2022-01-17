@@ -22,102 +22,95 @@
 """
 The Reactor God-object
 """
-# Standard imports
-import os
-import numpy as np
-import sys
-from time import time
 import datetime
 import json
+import os
+import sys
+from copy import deepcopy
 from pathlib import Path, PosixPath
-
+from time import time
 from types import ModuleType
 from typing import Type, Union
 
+import numpy as np
+
+# Configuration / Input imports
+from bluemira.base.config import SingleNull
+
 # Framework imports
-from bluemira.base.file import BM_ROOT, get_files_by_ext, FileManager
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print, print_banner
+from bluemira.base.file import BM_ROOT, FileManager, get_files_by_ext
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn, print_banner
 from bluemira.base.parameter import ParameterFrame
 
-from BLUEPRINT.base import BLUE
-from BLUEPRINT.base.error import GeometryError
-
-# Utility imports
-from BLUEPRINT.geometry.loop import Loop, point_loop_cast
-from BLUEPRINT.geometry.geomtools import qrotate
-from BLUEPRINT.geometry.parameterisations import flatD, negativeD
-from BLUEPRINT.utilities.colortools import force_rgb
-from bluemira.utilities.tools import CommentJSONDecoder
-
-# BLUEPRINT system imports
-from BLUEPRINT.systems import (
-    ReactorSystem,
-    STBreedingBlanket,
-    BreedingBlanket,
-    Divertor,
-    Plasma,
-    HCDSystem,
-    Cryostat,
-    VacuumVessel,
-    RadiationShield,
-    ReactorCrossSection,
-    BalanceOfPlant,
-    ToroidalFieldCoils,
-    PoloidalFieldCoils,
-    ThermalShield,
-)
-from BLUEPRINT.systems.maintenance import RMMetrics
-from BLUEPRINT.systems.optimisation_callbacks import (
-    TF_optimiser,
-    EQ_optimiser,
-    ATEC_optimiser,
-    FW_optimiser,
-)
-from BLUEPRINT.systems.plotting import ReactorPlotter
-from BLUEPRINT.systems.physicstoolbox import (
-    n_DT_reactions,
-    n_DD_reactions,
-    lambda_q,
-    estimate_kappa95,
-)
+# PROCESS imports
+from bluemira.codes import run_systems_code
 
 # Equilibria imports
 from bluemira.equilibria import AbInitioEquilibriumProblem
 from bluemira.equilibria.constants import (
     NB3SN_B_MAX,
+    NB3SN_J_MAX,
     NBTI_B_MAX,
     NBTI_J_MAX,
-    NB3SN_J_MAX,
 )
 from bluemira.equilibria.physics import normalise_beta
-
-# BLUPRINT.cad imports
-from BLUEPRINT.cad import ReactorCAD
-from BLUEPRINT.cad.cadtools import check_STL_folder
-
-# BLUEPRINT.nova imports
-from BLUEPRINT.nova.stream import StreamFlow
-from BLUEPRINT.nova.structure import CoilArchitect
-from BLUEPRINT.nova.firstwall import FirstWallProfile
-
-# Neutronics imports
-from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
+from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
+from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+from bluemira.fuel_cycle.lifecycle import LifeCycle
 
 # Lifetime / fuel cycle imports
 from bluemira.fuel_cycle.timeline_tools import (
     GompertzLearningStrategy,
     LogNormalAvailabilityStrategy,
 )
-from bluemira.fuel_cycle.lifecycle import LifeCycle
+from bluemira.geometry.error import GeometryError
+from bluemira.utilities.tools import CommentJSONDecoder, json_writer
+from BLUEPRINT.base import BLUE
 
-from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
-from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+# BLUPRINT.cad imports
+from BLUEPRINT.cad import ReactorCAD
+from BLUEPRINT.cad.cadtools import check_STL_folder
+from BLUEPRINT.geometry.geomtools import qrotate
 
-# Configuration / Input imports
-from BLUEPRINT.systems.config import SingleNull
+# Utility imports
+from BLUEPRINT.geometry.loop import Loop, point_loop_cast
+from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 
-# PROCESS imports
-from bluemira.codes import run_systems_code
+# Neutronics imports
+from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
+from BLUEPRINT.nova.firstwall import FirstWallProfile
+from BLUEPRINT.nova.optimiser import StructuralOptimiser
+
+# BLUEPRINT.nova imports
+from BLUEPRINT.nova.stream import StreamFlow
+from BLUEPRINT.nova.structure import CoilArchitect
+
+# BLUEPRINT system imports
+from BLUEPRINT.systems import (
+    BalanceOfPlant,
+    BreedingBlanket,
+    Cryostat,
+    Divertor,
+    HCDSystem,
+    Plasma,
+    PoloidalFieldCoils,
+    RadiationShield,
+    ReactorCrossSection,
+    ReactorSystem,
+    STBreedingBlanket,
+    ThermalShield,
+    ToroidalFieldCoils,
+    VacuumVessel,
+)
+from BLUEPRINT.systems.maintenance import RMMetrics
+from BLUEPRINT.systems.physicstoolbox import (
+    estimate_kappa95,
+    lambda_q,
+    n_DD_reactions,
+    n_DT_reactions,
+)
+from BLUEPRINT.systems.plotting import ReactorPlotter
+from BLUEPRINT.utilities.colortools import force_rgb
 
 
 class Reactor(ReactorSystem):
@@ -257,8 +250,7 @@ class Reactor(ReactorSystem):
         # Run 0-1D systems code modules
         self.run_systems_code()
 
-        if self.build_config["process_mode"] != "mock":
-            self.build_0D_plasma()
+        self.build_0D_plasma()
 
         # Calculate or load preliminary plasma MHD equilibrium
         if self.build_config["plasma_mode"] == "run":
@@ -298,7 +290,13 @@ class Reactor(ReactorSystem):
         """
         Runs, reads, or mocks the systems code according to the build config dictionary.
         """
-        run_systems_code(self)
+        PROCESS_output: ParameterFrame = run_systems_code(
+            self.params,
+            self.build_config,
+            self.file_manager.generated_data_dirs["systems_code"],
+            self.file_manager.reference_data_dirs["systems_code"],
+        )
+        self.params.update_kw_parameters(PROCESS_output.to_dict())
 
     def estimate_kappa_95(self):
         """
@@ -324,9 +322,6 @@ class Reactor(ReactorSystem):
         Pickling utility. Need to get rid of C objects prior to pickling.
         """
         d = super().__getstate__()
-        # BMFile can't be pickled so after unpickling run_PROCESS must be
-        # called
-        d.pop("__PROCESS__", None)
         # ReactorCAD can't be pickled so after unpickling build_cad must be
         # called
         d.pop("CAD", None)
@@ -341,58 +336,21 @@ class Reactor(ReactorSystem):
         """
         profiles = {}
 
-        variables = [
-            "I_p",
-            "P_fus",
-            "P_fus_DT",
-            "P_fus_DD",
-            "H_star",
-            "P_rad_core",
-            "P_rad_edge",
-            "P_rad",
-            "P_line",
-            "P_sync",
-            "P_brehms",
-            "f_bs",
-            "tau_e",
-            "P_sep",
-            "beta",
-            "v_burn",
-        ]
-        values = self.__PROCESS__.extract_outputs(variables)
-        param_dict = dict(zip(variables, values))
-        self.add_parameters(param_dict)
-        beta_n = normalise_beta(
-            self.params.beta,
-            self.params.R_0 / self.params.A,
-            self.params.B_0,
-            self.params.I_p,
-        )
-        self.add_parameters({"beta_N": beta_n})
+        derived_params = {
+            "f_DD_fus": self.params.P_fus_DD / self.params.P_fus,
+            "beta_n": normalise_beta(
+                self.params.beta,
+                self.params.R_0 / self.params.A,
+                self.params.B_0,
+                self.params.I_p,
+            ),
+            "n_DT_reactions": n_DT_reactions(self.params.P_fus_DT),
+            "n_DD_reactions": n_DD_reactions(self.params.P_fus_DD),
+        }
+        self.add_parameters(derived_params, "Derived")
 
-        self.calc_reaction_rates()
-        self.PL = Plasma(self.params, profiles, self.build_config["plasma_mode"])
-
-    def calc_reaction_rates(self):
-        """
-        Calculate the fusion reaction rates.
-        """
-        self.add_parameter(
-            "n_DT_reactions",
-            "Number of D-T reactions per second",
-            n_DT_reactions(self.params.P_fus_DT),
-            "1/s",
-            "At full power",
-            "Derived",
-        )
-        self.add_parameter(
-            "n_DD_reactions",
-            "Number of D-D reactions per second",
-            n_DD_reactions(self.params.P_fus_DD),
-            "1/s",
-            "At full power",
-            "Derived",
-        )
+        PlasmaClass = self.get_subsystem_class("PL")
+        self.PL = PlasmaClass(self.params, profiles, self.build_config["plasma_mode"])
 
     def create_equilibrium(self, qpsi_calcmode=0):
         """
@@ -471,7 +429,7 @@ class Reactor(ReactorSystem):
             qpsi_calcmode=qpsi_calcmode,
         )
         self.EQ = a
-        self.eqref = a.eq.copy()
+        self.eqref = deepcopy(a.eq)
         self.analyse_equilibrium(self.eqref)
 
     def load_equilibrium(self, filename=None, reconstruct_jtor=False, qpsi_calcmode=0):
@@ -911,7 +869,7 @@ class Reactor(ReactorSystem):
         }
         targets = {"inner": defaults, "outer": defaults}
         targets["inner"]["L2D"] = self.params.div_L2D_ib
-        targets["inner"]["L2D"] = self.params.div_L2D_ob
+        targets["outer"]["L2D"] = self.params.div_L2D_ob
         return targets
 
     def define_in_vessel_layout(self):
@@ -1471,7 +1429,7 @@ class Reactor(ReactorSystem):
         reactor.file_manager.build_dirs(create_reference_data_paths=True)
         return reactor
 
-    def config_to_json(self, output_path: Union[str, Path]):
+    def config_to_json(self, output_path: Union[str, Path], **kwargs):
         """
         Saves reactor default parameters, parameter diff, build config, and build tweaks
         to JSON in the format usable by the Configurable Reactor class.
@@ -1502,15 +1460,20 @@ class Reactor(ReactorSystem):
             output_path=output_path.joinpath(self.params.Name + "_config.json")
         )
 
-        with open(
-            output_path.joinpath(self.params.Name + "_build_config.json"), "w"
-        ) as fh:
-            json.dump(self.build_config, fh, indent=2)
+        indent = kwargs.pop("indent", 2)
 
-        with open(
-            output_path.joinpath(self.params.Name + "_build_tweaks.json"), "w"
-        ) as fh:
-            json.dump(self.build_tweaks, fh, indent=2)
+        json_writer(
+            self.build_config,
+            output_path.joinpath(self.params.Name + "_build_config.json"),
+            indent=indent,
+            **kwargs,
+        )
+        json_writer(
+            self.build_tweaks,
+            output_path.joinpath(self.params.Name + "_build_tweaks.json"),
+            indent=indent,
+            **kwargs,
+        )
 
 
 _registry_name = "BLUEPRINT.reactor._registry"
@@ -1651,9 +1614,3 @@ class ConfigurableReactor(Reactor):
             raise FileNotFoundError(
                 f"Specified config directory not a directory: {config_dir}"
             )
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

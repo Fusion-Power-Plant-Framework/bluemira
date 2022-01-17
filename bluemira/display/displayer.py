@@ -24,16 +24,19 @@ api for plotting using freecad
 """
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import copy
-from typing import List, Optional, Tuple, Union
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
 
-import bluemira.geometry as geo
-from bluemira.geometry import _freecadapi
+import matplotlib.colors as colors
 
-from .error import DisplayError
-from .plotter import DisplayOptions
+from bluemira.codes import _freecadapi as cadapi
+from bluemira.display.error import DisplayError
+from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.display.plotter import DisplayOptions
 
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 DEFAULT_DISPLAY_OPTIONS = {
     "color": (0.5, 0.5, 0.5),
@@ -54,8 +57,8 @@ class DisplayCADOptions(DisplayOptions):
 
     Parameters
     ----------
-    color: Tuple[float, float, float]
-        The RBG colour to display the object, by default (0.5, 0.5, 0.5).
+    color: Union[str, Tuple[float, float, float]]
+        The colour to display the object, by default (0.5, 0.5, 0.5).
     transparency: float
         The transparency to display the object, by default 0.0.
     """
@@ -64,15 +67,26 @@ class DisplayCADOptions(DisplayOptions):
         self._options = get_default_options()
         self.modify(**kwargs)
 
+    def as_dict(self):
+        """
+        Returns the instance as a dictionary.
+        """
+        dict_ = super().as_dict()
+        if "color" in dict_:
+            dict_["color"] = self.color
+        return dict_
+
     @property
     def color(self) -> Tuple[float, float, float]:
         """
         The RBG colour to display the object.
         """
-        return self._options["color"]
+        # NOTE: We only convert to (R,G,B) at the last minute, so that the reprs are
+        # legible.
+        return colors.to_rgb(self._options["color"])
 
     @color.setter
-    def color(self, val: Tuple[float, float, float]):
+    def color(self, val: Union[str, Tuple[float, float, float]]):
         self._options["color"] = val
 
     @property
@@ -126,7 +140,7 @@ def _validate_display_inputs(parts, options):
 
 
 def show_cad(
-    parts: Union[geo.base.BluemiraGeo, List[geo.base.BluemiraGeo]],
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
     **kwargs,
 ):
@@ -135,7 +149,7 @@ def show_cad(
 
     Parameters
     ----------
-    parts: Union[Part.Shape, List[Part.Shape]]
+    parts: Union[BluemiraGeo, List[BluemiraGeo]]
         The parts to display.
     options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
         The options to use to display the parts.
@@ -155,7 +169,7 @@ def show_cad(
     shapes = [part._shape for part in parts]
     freecad_options = [o.as_dict() for o in new_options]
 
-    _freecadapi.show_cad(shapes, freecad_options)
+    cadapi.show_cad(shapes, freecad_options)
 
 
 class BaseDisplayer(ABC):
@@ -186,24 +200,37 @@ class ComponentDisplayer(BaseDisplayer):
     CAD displayer for Components
     """
 
-    def show_cad(self, comp, **kwargs):
+    def show_cad(
+        self,
+        comps,
+        **kwargs,
+    ):
         """
-        Display the CAD of a component
+        Display the CAD of a component or iterable of components
 
         Parameters
         ----------
-        comp:
-            Component to be displayed
+        comp: Union[Iterable[Component], Component]
+            Component, or iterable of Components, to be displayed
         """
+        import bluemira.base.components as bm_comp
+
         self._shapes = []
         self._options = []
-        if comp.is_leaf:
-            self._shapes.append(comp.shape)
-            self._options.append(comp.display_cad_options)
-        else:
-            for child in comp.children:
-                self._shapes.append(child.shape)
-                self._options.append(child.display_cad_options)
+
+        if not isinstance(comps, Iterable):
+            comps = [comps]
+
+        def populate_data(comp: bm_comp.Component):
+            if comp.is_leaf and isinstance(comp, bm_comp.PhysicalComponent):
+                self._shapes.append(comp.shape)
+                self._options.append(comp.display_cad_options)
+            else:
+                for child in comp.children:
+                    populate_data(child)
+
+        for comp in comps:
+            populate_data(comp)
         show_cad(self._shapes, self._options, **kwargs)
 
 
@@ -215,6 +242,7 @@ class DisplayableCAD:
     def __init__(self):
         super().__init__()
         self._display_cad_options: DisplayCADOptions = DisplayCADOptions()
+        self._display_cad_options.color = next(BLUE_PALETTE)
 
     @property
     def display_cad_options(self) -> DisplayCADOptions:

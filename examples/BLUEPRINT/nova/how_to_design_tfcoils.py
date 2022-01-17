@@ -31,14 +31,14 @@ the console one by one.
 
 # %%
 import os
+
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import make_bluemira_path
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_print
-
-from BLUEPRINT.systems.baseclass import ReactorSystem
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 
 # %%[markdown]

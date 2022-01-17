@@ -20,16 +20,18 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+
 import numpy as np
 import pytest
+
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.optimiser import Norm2Tikhonov
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.constraints import (
-    MagneticConstraintSet,
     IsofluxConstraint,
+    MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.optimiser import UnconstrainedCurrentOptimiser
 
 
 # @pytest.mark.longrun
@@ -82,8 +84,9 @@ class TestWeightedConstraints:
             constraint_set(eq)
 
             # Test that weights have been applied
-            optimiser = Norm2Tikhonov(gamma=1e-8)
+            optimiser = UnconstrainedCurrentOptimiser(eq.coilset, gamma=1e-8)
             optimiser(eq, constraint_set)
+
             assert np.allclose(optimiser.b, weights * constraint_set.b)
             for (i, weight) in enumerate(weights):
                 assert np.allclose(

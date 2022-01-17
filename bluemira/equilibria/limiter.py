@@ -23,9 +23,9 @@
 Limiter object class
 """
 
-import numpy as np
 from itertools import cycle
-from copy import deepcopy
+
+import numpy as np
 
 from bluemira.equilibria.plotting import LimiterPlotter
 
@@ -81,9 +81,3 @@ class Limiter:
         Plots the Limiter object
         """
         return LimiterPlotter(self, ax)
-
-    def copy(self):
-        """
-        Get a deep copy of the Limiter object.
-        """
-        return deepcopy(self)

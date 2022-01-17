@@ -23,7 +23,7 @@
 Bluemira base error class
 """
 
-from textwrap import fill, dedent
+from textwrap import dedent, fill
 
 
 class BluemiraError(Exception):
@@ -36,6 +36,14 @@ class BluemiraError(Exception):
         Prettier handling of the Exception strings
         """
         return fill(dedent(self.args[0]))
+
+
+class BuilderError(BluemiraError):
+    """
+    Exception class for Builders.
+    """
+
+    pass
 
 
 class ComponentError(BluemiraError):

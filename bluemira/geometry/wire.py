@@ -27,25 +27,26 @@ from __future__ import annotations
 
 from typing import List
 
-# import from bluemira
-from bluemira.geometry.base import BluemiraGeo, _Orientation
-
-from bluemira.geometry._freecadapi import (
-    discretize_by_edges,
-    discretize,
-    wire_closure,
-    scale_shape,
-    translate_shape,
-    apiWire,
-    change_plane,
-    rotate_shape,
-)
-
-# import mathematical library
 import numpy
 
+from bluemira.codes._freecadapi import (
+    apiWire,
+    change_plane,
+    discretize,
+    discretize_by_edges,
+    rotate_shape,
+    scale_shape,
+    translate_shape,
+    wire_closure,
+)
+
+# import from bluemira
+# import from bluemira
+from bluemira.geometry.base import BluemiraGeo, _Orientation
+from bluemira.geometry.coordinates import Coordinates
+
 # import from error
-from bluemira.geometry.error import NotClosedWire, MixedOrientationWireError
+from bluemira.geometry.error import MixedOrientationWireError, NotClosedWire
 
 
 class BluemiraWire(BluemiraGeo):
@@ -155,14 +156,14 @@ class BluemiraWire(BluemiraGeo):
 
         Returns
         -------
-        points:
+        points: Coordinates
             a numpy array with the x,y,z coordinates of the discretized points.
         """
         if byedges:
             points = discretize_by_edges(self._shape, ndiscr=ndiscr, dl=dl)
         else:
             points = discretize(self._shape, ndiscr=ndiscr, dl=dl)
-        return points
+        return Coordinates(points)
 
     def scale(self, factor) -> None:
         """

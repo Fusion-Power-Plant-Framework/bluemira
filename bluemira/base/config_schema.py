@@ -47,6 +47,7 @@ class ConfigurationSchema:
     Av: Parameter
     A: Parameter
     R_0: Parameter
+    z_0: Parameter
     B_0: Parameter
 
     # Plasma
@@ -74,7 +75,7 @@ class ConfigurationSchema:
     P_sync: Parameter
     P_brehms: Parameter
     f_bs: Parameter
-    beta_N: Parameter  # noqa(N815) - mixed case to match PROCESS
+    beta_N: Parameter  # noqa :N815 - mixed case to match PROCESS
     beta_p: Parameter
     beta: Parameter
     tau_e: Parameter
@@ -98,20 +99,15 @@ class ConfigurationSchema:
     f_cd_ohm: Parameter
 
     # First wall profile
-    fw_dx: Parameter
     fw_psi_n: Parameter
-    fw_dL_min: Parameter  # noqa(N815) - mixed case to match PROCESS
-    fw_dL_max: Parameter  # noqa(N815) - mixed case to match PROCESS
+    fw_dL_min: Parameter  # noqa :N815 - mixed case to match PROCESS
+    fw_dL_max: Parameter  # noqa :N815 - mixed case to match PROCESS
     fw_a_max: Parameter
-    fw_p_sol_near: Parameter
-    fw_p_sol_far: Parameter
+    P_sep_particle: Parameter
+    f_p_sol_near: Parameter
     hf_limit: Parameter
 
     # SN/DN variables for heat flux transport
-    fw_dpsi_n_near: Parameter
-    fw_dpsi_n_far: Parameter
-    fw_dx_omp: Parameter
-    fw_dx_imp: Parameter
     fw_lambda_q_near_omp: Parameter
     fw_lambda_q_far_omp: Parameter
     fw_lambda_q_near_imp: Parameter
@@ -126,7 +122,7 @@ class ConfigurationSchema:
     div_L2D_ob: Parameter
     div_graze_angle: Parameter
     div_psi_o: Parameter
-    div_Ltarg: Parameter  # noqa(N815) - mixed case to match PROCESS
+    div_Ltarg: Parameter  # noqa :N815 - mixed case to match PROCESS
     div_open: Parameter
     g_vv_div_add: Parameter
     LPangle: Parameter
@@ -213,6 +209,14 @@ class ConfigurationSchema:
     r_tf_curve: Parameter
     h_tf_max_in: Parameter
     h_tf_min_in: Parameter
+
+    # PF coils
+    r_pf_corner: Parameter
+    tk_pf_insulation: Parameter
+    tk_pf_casing: Parameter
+    r_cs_corner: Parameter
+    tk_cs_insulation: Parameter
+    tk_cs_casing: Parameter
 
     # Coil structures
     x_g_support: Parameter

@@ -25,8 +25,8 @@ PROCESS api
 
 import os
 
-from bluemira.base.file import get_bluemira_root
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
+from bluemira.base.file import get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.utilities.tools import flatten_iterable
 
 PROCESS_ENABLED = True
@@ -64,8 +64,8 @@ PROCESS_DICT = dict()
 # Import PROCESS objects, override the above dummy objects if PROCESS installed.
 # Note: noqa used to ignore "redefinition of unused variable" errors.
 try:
-    from process.io.mfile import MFile  # noqa: F811,F401
     from process.io.in_dat import InDat  # noqa: F811,F40
+    from process.io.mfile import MFile  # noqa: F811,F401
     from process.io.python_fortran_dicts import get_dicts  # noqa: F811
 except (ModuleNotFoundError, FileNotFoundError):
     PROCESS_ENABLED = False
@@ -83,7 +83,7 @@ if PROCESS_ENABLED:
     PROCESS_DICT = get_dicts()
 
 DEFAULT_INDAT = os.path.join(
-    get_bluemira_root(), "bluemira", "codes", "process", "PROCESS_DEFAULT_IN.DAT"
+    get_bluemira_path("codes/process"), "PROCESS_DEFAULT_IN.DAT"
 )
 
 PTOBUNITS = {
@@ -136,6 +136,9 @@ def update_obsolete_vars(process_map_name: str) -> str:
 
 
 def _nested_check(process_name):
+    """
+    Recursively checks for obsolete variable names
+    """
     while process_name in OBS_VARS:
         process_name = OBS_VARS[process_name]
         if isinstance(process_name, list):

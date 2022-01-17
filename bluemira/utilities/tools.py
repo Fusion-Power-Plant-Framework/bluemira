@@ -23,24 +23,27 @@
 A collection of miscellaneous tools.
 """
 
-import numpy as np
-import nlopt
 import operator
 import re
 import string
 from collections.abc import Iterable
 from functools import partial
-from importlib import util as imp_u, import_module as imp
+from importlib import import_module as imp
+from importlib import machinery as imp_mach
+from importlib import util as imp_u
 from itertools import permutations
-from json import JSONDecoder, JSONEncoder
+from json import JSONDecoder, JSONEncoder, dumps
 from json.encoder import _make_iterencode
 from os import listdir
-from typing import Any, List, Union
+from types import ModuleType
+from typing import Any, List, Type, Union
 from unittest.mock import patch
+
+import nlopt
+import numpy as np
 
 from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
-from bluemira.base.parameter import Parameter
 
 # =====================================================
 # JSON utilities
@@ -70,6 +73,7 @@ class CommentJSONDecoder(JSONDecoder):
         containing a JSON document).
         """
         s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
+        bluemira_debug("Comment stripped JSON\n" + s)
         return super().decode(s, *args, **kwargs)
 
 
@@ -96,6 +100,8 @@ class NumpyJSONEncoder(JSONEncoder):
         https://bugs.python.org/issue42434
         https://bugs.python.org/issue31466
         """
+        from bluemira.base.parameter import Parameter
+
         if isinstance(obj, Parameter):
             obj = obj.value
         return _floatstr(obj, *args, **kwargs)
@@ -129,6 +135,41 @@ def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
     return _make_iterencode(
         markers, _default, _encoder, _indent, _floatstr, *args, **kwargs
     )
+
+
+def json_writer(data, file=None, return_output=False, *, cls=NumpyJSONEncoder, **kwargs):
+    """
+    Write json in the bluemria style.
+
+    Parameters
+    ----------
+    data: dict
+        dictionary to write to json
+    filename: str
+        filename to write to
+    return_output:bool
+        return the json as a string
+    cls: JsonEncoder
+        json encoder child class
+    kwargs: dict
+        all further kwargs passed to the json writer
+
+    """
+    if file is None and not return_output:
+        bluemira_warn("No json action to take")
+        return
+
+    if "indent" not in kwargs:
+        kwargs["indent"] = 4
+
+    the_json = dumps(data, cls=cls, **kwargs)
+
+    if file is not None:
+        with open(file, "w") as fh:
+            fh.write(the_json)
+
+    if return_output:
+        return the_json
 
 
 # =====================================================
@@ -535,7 +576,6 @@ def flatten_iterable(iters):
     """
     for _iter in iters:
         if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes)):
-            print(_iter)
             for _it in flatten_iterable(_iter):
                 yield _it
         else:
@@ -607,30 +647,29 @@ def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
 # ======================================================================================
 
 
-def get_module(name):
+def get_module(name: str) -> ModuleType:
     """
     Load module dynamically.
 
     Parameters
     ----------
-    name: string
+    name: str
         Filename or python path (a.b.c) of module to import
 
     Returns
     -------
-    output: module
+    output: ModuleType
         Loaded module
-
     """
     try:
         module = imp(name)
     except ImportError:
         module = _loadfromspec(name)
-    bluemira_debug(f"Loaded {module.__name__}")
+    bluemira_debug(f"Loaded module {module.__name__}")
     return module
 
 
-def _loadfromspec(name):
+def _loadfromspec(name: str) -> ModuleType:
     """
     Load module from filename.
 
@@ -670,16 +709,58 @@ def _loadfromspec(name):
 
     mod_file = f"{dirname}/{requested}"
 
+    name, ext = requested.rsplit(".", 1) if "." in requested else (requested, "")
+
+    if ext not in imp_mach.SOURCE_SUFFIXES:
+        n_suffix = True
+        imp_mach.SOURCE_SUFFIXES.append(ext)
+    else:
+        n_suffix = False
+
     try:
-        spec = imp_u.spec_from_file_location(
-            mod_file.rsplit("/")[-1].split(".")[0], mod_file
-        )
+        spec = imp_u.spec_from_file_location(name, mod_file)
         module = imp_u.module_from_spec(spec)
         spec.loader.exec_module(module)
-    except (AttributeError, ImportError):
+    except (AttributeError, ImportError, SyntaxError):
         raise ImportError("File '{}' is not a module".format(mod_files[0]))
 
+    if n_suffix:
+        imp_mach.SOURCE_SUFFIXES.pop()
+
     return module
+
+
+def get_class_from_module(name: str, default_module: str = "") -> Type:
+    """
+    Load a class from a module dynamically.
+
+    Parameters
+    ----------
+    name: str
+        Filename or python path (a.b.c) of module to import, with specific class to load
+        appended following :: e.g. my_package.my_module::my_class. If the default_module
+        is provided then only the class name (e.g. my_class) needs to be provided.
+    default_module: str
+        The default module to search for the class, by default "". If provided then if
+        name does not contain a module path then this the default module will be used to
+        search for the class. Can be overridden if the name provides a module path.
+
+    Returns
+    -------
+    output: Type
+        Loaded class
+    """
+    module = default_module
+    class_name = name
+    if "::" in class_name:
+        module, class_name = class_name.split("::")
+    try:
+        output = getattr(get_module(module), class_name)
+    except AttributeError:
+        raise ImportError(f"Unable to load class {class_name} - not in module {module}")
+
+    bluemira_debug(f"Loaded class {output.__name__}")
+    return output
 
 
 # ======================================================================================

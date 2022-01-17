@@ -25,16 +25,15 @@ Base classes and functionality for the bluemira geometry module.
 
 from __future__ import annotations
 
+import copy
 import enum
 
 # import for abstract class
 from abc import ABC, abstractmethod
 
 # import freecad api
-from . import _freecadapi
+from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
-
-import copy
 
 
 class _Orientation(enum.Enum):
@@ -117,40 +116,40 @@ class BluemiraGeo(ABC):
     @property
     def length(self):
         """Shape's length"""
-        return _freecadapi.length(self._shape)
+        return cadapi.length(self._shape)
 
     @property
     def area(self):
         """Shape's area"""
-        return _freecadapi.area(self._shape)
+        return cadapi.area(self._shape)
 
     @property
     def volume(self):
         """Shape's volume"""
-        return _freecadapi.volume(self._shape)
+        return cadapi.volume(self._shape)
 
     @property
     def center_of_mass(self):
         """Shape's center of mass"""
-        return _freecadapi.center_of_mass(self._shape)
+        return cadapi.center_of_mass(self._shape)
 
     @property
     def bounding_box(self):
         """The bounding box of the shape"""
-        x_min, y_min, z_min, x_max, y_max, z_max = _freecadapi.bounding_box(self._shape)
+        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self._shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
     def is_null(self):
         """Checks if the shape is null."""
-        return _freecadapi.is_null(self._shape)
+        return cadapi.is_null(self._shape)
 
     def is_closed(self):
         """Checks if the shape is closed"""
-        return _freecadapi.is_closed(self._shape)
+        return cadapi.is_closed(self._shape)
 
     def is_valid(self):
         """Checks if the shape is valid"""
-        return _freecadapi.is_valid(self._shape)
+        return cadapi.is_valid(self._shape)
 
     def search(self, label: str):
         """

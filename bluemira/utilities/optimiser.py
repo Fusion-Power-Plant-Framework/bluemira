@@ -22,12 +22,13 @@
 """
 Static API to optimisation library
 """
+from pprint import pformat
+
 import numpy as np
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # noqa
 
-from bluemira.utilities._nlopt_api import NLOPTOptimiser
-from bluemira.utilities.error import InternalOptError
-
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes._nlopt_api import NLOPTOptimiser
 
 __all__ = ["approx_derivative", "Optimiser"]
 
@@ -108,7 +109,7 @@ class Optimiser(NLOPTOptimiser):
 
 
     The grad and constraint matrices must be assigned in place
-    """  # noqa (W505)
+    """  # noqa :W505
 
     def optimise(self, x0=None):
         """
@@ -226,6 +227,7 @@ class Optimiser(NLOPTOptimiser):
         tolerances = np.array(tolerances)
 
         if not np.all(c_values < tolerances):
-            raise InternalOptError(
-                "Some constraints have not been adequately satisfied."
+            bluemira_warn(
+                "Some constraints have not been adequately satisfied.\n"
+                f"{pformat(c_values)} !< {pformat(tolerances)}"
             )

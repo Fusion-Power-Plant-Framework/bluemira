@@ -52,6 +52,12 @@ per-file-ignores =
         # Allow unused imports in __init__.py, so we can expose at parent module level
         F401,
         F403,
+   bluemira/codes/__init__.py:
+        # FreeCAD message removal function above imports
+        E402,
+    documentation/source/*:
+        D100,
+        D101,
 
 
 exclude =
@@ -91,6 +97,8 @@ pep8-naming = True
 ignore_names =
     *PROCESS*,
     *PLASMOD*,
+    *NAME*,
+    *BINARY*,
     *CAD*,
     *STEP*,
     *STL*,

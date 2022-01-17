@@ -21,18 +21,19 @@
 """
 An example file to perform a simple beam FE analysis on a coil cage
 """
-# %%
-from IPython import get_ipython
-import matplotlib.pyplot as plt
 import os
 
-from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
-from BLUEPRINT.nova.structuralsolver import StructuralSolver
+import matplotlib.pyplot as plt
 
+# %%
+from IPython import get_ipython
+
+from bluemira.base.config import SingleNull
 from bluemira.base.file import BM_ROOT, get_bluemira_path
-from bluemira.base.look_and_feel import plot_defaults
+from bluemira.display.auto_config import plot_defaults
 from bluemira.materials import MaterialCache
+from BLUEPRINT.nova.structuralsolver import StructuralSolver
+from BLUEPRINT.reactor import Reactor
 
 try:
     get_ipython().run_line_magic("matplotlib", "qt")

@@ -23,14 +23,16 @@
 Optimisation variable class.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 from operator import attrgetter
+
+import matplotlib.pyplot as plt
+import numpy as np
 from pandas import DataFrame
 from tabulate import tabulate
 
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.display.palettes import BLUEMIRA_PALETTE
 from bluemira.utilities.error import OptVariablesError
-from bluemira.base.constants import BLUEMIRA_PAL_MAP
 
 
 def normalise_value(value, lower_bound, upper_bound):
@@ -98,9 +100,9 @@ class BoundedVariable:
     __slots__ = ("name", "_value", "lower_bound", "upper_bound", "fixed", "_description")
 
     def __init__(self, name, value, lower_bound, upper_bound, fixed=False, descr=None):
+        self.name = name
         self._validate_bounds(lower_bound, upper_bound)
         self._validate_value(value, lower_bound, upper_bound)
-        self.name = name
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self._value = None
@@ -147,7 +149,9 @@ class BoundedVariable:
         if value is not None:
             self._value = value
 
-    def adjust(self, value=None, lower_bound=None, upper_bound=None):
+    def adjust(
+        self, value=None, lower_bound=None, upper_bound=None, *, strict_bounds=True
+    ):
         """
         Adjust the BoundedVariable.
 
@@ -161,17 +165,25 @@ class BoundedVariable:
             Value of the lower bound to set
         upper_bound: Optional[float]
             Value of the upper to set
+        strict_bounds: bool
+            If True, will raise errors if values are outside the bounds. If False, the
+            bounds are dynamically adjusted to match the value.
         """
         if self.fixed:
             raise OptVariablesError("Cannot adjust a fixed variable.")
+
         if lower_bound is not None:
             self.lower_bound = lower_bound
+
         if upper_bound is not None:
             self.upper_bound = upper_bound
 
         self._validate_bounds(self.lower_bound, self.upper_bound)
 
         if value is not None:
+            if not strict_bounds:
+                self._adjust_bounds(value, self.lower_bound, self.upper_bound)
+
             self.value = value
 
     @property
@@ -181,15 +193,33 @@ class BoundedVariable:
         """
         return normalise_value(self.value, self.lower_bound, self.upper_bound)
 
-    @staticmethod
-    def _validate_bounds(lower_bound, upper_bound):
-        if lower_bound > upper_bound:
-            raise OptVariablesError("Lower bound is higher than upper bound.")
+    def _adjust_bounds(self, value, lower_bound, upper_bound):
+        """
+        Adjust the bounds to the value
+        """
+        if value < lower_bound:
+            bluemira_warn(
+                f"BoundedVariable '{self.name}': value was set to below its lower bound. Adjusting bound."
+            )
+            self.lower_bound = value
 
-    @staticmethod
-    def _validate_value(value, lower_bound, upper_bound):
+        if value > upper_bound:
+            bluemira_warn(
+                f"BoundedVariable '{self.name}': value was set to above its upper bound. Adjusting bound."
+            )
+            self.upper_bound = value
+
+    def _validate_bounds(self, lower_bound, upper_bound):
+        if lower_bound > upper_bound:
+            raise OptVariablesError(
+                f"BoundedVariable '{self.name}': lower bound is higher than upper bound."
+            )
+
+    def _validate_value(self, value, lower_bound, upper_bound):
         if not lower_bound <= value <= upper_bound:
-            raise OptVariablesError(f"Variable value {value} is out of bounds.")
+            raise OptVariablesError(
+                f"BoundedVariable '{self.name}': value {value} is out of bounds."
+            )
 
     def __repr__(self) -> str:
         """
@@ -265,7 +295,14 @@ class OptVariables:
         del self._var_dict[name]
 
     def adjust_variable(
-        self, name, value=None, lower_bound=None, upper_bound=None, fixed=False
+        self,
+        name,
+        value=None,
+        lower_bound=None,
+        upper_bound=None,
+        fixed=False,
+        *,
+        strict_bounds=True,
     ):
         """
         Adjust a variable in the set.
@@ -282,41 +319,54 @@ class OptVariables:
             Value of the upper to set
         fixed: bool
             Whether or not the variable is to be held constant
+        strict_bounds: bool
+            If True, will raise errors if values are outside the bounds. If False, the
+            bounds are dynamically adjusted to match the value.
         """
         self._check_presence(name)
 
         if fixed:
-            self._var_dict[name].adjust(lower_bound=lower_bound, upper_bound=upper_bound)
+            self._var_dict[name].adjust(
+                lower_bound=lower_bound,
+                upper_bound=upper_bound,
+                strict_bounds=strict_bounds,
+            )
             self.fix_variable(name, value)
 
         else:
-            self._var_dict[name].adjust(value, lower_bound, upper_bound)
+            self._var_dict[name].adjust(
+                value, lower_bound, upper_bound, strict_bounds=strict_bounds
+            )
 
-    def adjust_variables(self, var_dict={}):
+    def adjust_variables(self, var_dict=None, *, strict_bounds=True):
         """
         Adjust multiple variables in the set.
 
         Parameters
         ----------
-        var_dict: dict
+        var_dict: Optional[dict]
             Dictionary with which to update the set, of the form
             {"var_name": {"value": v, "lower_bound": lb, "upper_bound": ub}, ...}
+        strict_bounds: bool
+            If True, will raise errors if values are outside the bounds. If False, the
+            bounds are dynamically adjusted to match the value.
         """
-        for k, v in var_dict.items():
+        if var_dict:
+            for k, v in var_dict.items():
 
-            args = [
-                v.get("value", None),
-                v.get("lower_bound", None),
-                v.get("upper_bound", None),
-                v.get("fixed", None),
-            ]
-            if all([i is None for i in args]):
-                raise OptVariablesError(
-                    "When adjusting variables in a OptVariables instance, the dictionary"
-                    " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
-                )
+                args = [
+                    v.get("value", None),
+                    v.get("lower_bound", None),
+                    v.get("upper_bound", None),
+                    v.get("fixed", None),
+                ]
+                if all([i is None for i in args]):
+                    raise OptVariablesError(
+                        "When adjusting variables in a OptVariables instance, the dictionary"
+                        " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
+                    )
 
-            self.adjust_variable(k, *args)
+                self.adjust_variable(k, *args, strict_bounds=strict_bounds)
 
     def fix_variable(self, name, value=None):
         """
@@ -356,15 +406,36 @@ class OptVariables:
         x_norm: np.ndarray
             Array of normalised values
         """
+        true_values = self.get_values_from_norm(x_norm)
+        for name, value in zip(self._opt_vars, true_values):
+            variable = self._var_dict[name]
+            variable.value = value
+
+    def get_values_from_norm(self, x_norm):
+        """
+        Get actual values from a normalised vector.
+
+        Parameters
+        ----------
+        x_norm: np.ndarray
+            Array of normalised values
+
+        Returns
+        -------
+        x_true: np.ndarray
+            Array of actual values in units
+        """
         if len(x_norm) != self.n_free_variables:
             raise OptVariablesError(
                 f"Number of normalised variables {len(x_norm)} != {self.n_free_variables}."
             )
 
+        true_values = []
         for name, v_norm in zip(self._opt_vars, x_norm):
             variable = self._var_dict[name]
             value = denormalise_value(v_norm, variable.lower_bound, variable.upper_bound)
-            variable.value = value
+            true_values.append(value)
+        return true_values
 
     @property
     def names(self):
@@ -386,6 +457,17 @@ class OptVariables:
         Number of free variables in the set.
         """
         return len(self._opt_vars)
+
+    @property
+    def _fixed_variable_indices(self) -> list:
+        """
+        Indices of fixed variables in the set.
+        """
+        indices = []
+        for i, v in enumerate(self._var_dict.values()):
+            if v.fixed:
+                indices.append(i)
+        return indices
 
     @property
     def _opt_vars(self):
@@ -515,7 +597,7 @@ class OptVariables:
             v.normalised_value if not v.fixed else 0.5 for v in self._var_dict.values()
         ]
         colors = [
-            BLUEMIRA_PAL_MAP["red"] if v.fixed else BLUEMIRA_PAL_MAP["blue"]
+            BLUEMIRA_PALETTE["red"] if v.fixed else BLUEMIRA_PALETTE["blue"]
             for v in self._var_dict.values()
         ]
 

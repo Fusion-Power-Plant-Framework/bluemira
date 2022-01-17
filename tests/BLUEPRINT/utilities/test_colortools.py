@@ -25,10 +25,11 @@ Created on Thu Aug  1 21:50:44 2019
 @author: matti
 """
 
-from matplotlib import pyplot as plt
 import pytest
-from BLUEPRINT.utilities.colortools import shift_rgb_color
+from matplotlib import pyplot as plt
+
 import tests
+from BLUEPRINT.utilities.colortools import shift_rgb_color
 
 
 @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")

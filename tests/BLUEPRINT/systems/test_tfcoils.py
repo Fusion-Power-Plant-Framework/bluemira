@@ -23,28 +23,27 @@
 Testing routines for different TF coil optimisations
 """
 
-from copy import copy
 import os
-import time
-from BLUEPRINT.geometry.geomtools import make_box_xz
-import pytest
-import matplotlib.pyplot as plt
-import tests
-import numpy as np
 import shutil
 import tempfile
+import time
+from copy import copy
+
+import matplotlib.pyplot as plt
+import numpy as np
 import OCC
+import pytest
 
-
-from bluemira.base.parameter import ParameterFrame
-
+import tests
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
-from BLUEPRINT.systems.optimisation_callbacks import TF_optimiser
+from bluemira.base.look_and_feel import bluemira_error
+from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.cadtools import get_properties
-from bluemira.base.look_and_feel import bluemira_error
+from BLUEPRINT.geometry.geomtools import make_box_xz
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.systems.optimisation_callbacks import TF_optimiser
+from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 
 
 # Make temporary sub-directory for tests.

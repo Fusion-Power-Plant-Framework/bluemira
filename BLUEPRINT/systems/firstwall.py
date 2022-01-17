@@ -22,36 +22,38 @@
 Flux surface attributes and first wall profile based on heat flux calculation
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
-from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
-from bluemira.equilibria.find import find_flux_surfs, find_flux_surface_through_point
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import loop_plane_intersect, get_intersect
+import matplotlib.pyplot as plt
+import numpy as np
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import SystemsError, GeometryError
+from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.find import find_flux_surface_through_point, find_flux_surfs
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import get_intersect, loop_plane_intersect
+from bluemira.geometry.error import GeometryError
+from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
+from BLUEPRINT.base.error import SystemsError
 from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
-from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.boolean import (
-    convex_hull,
-    boolean_2d_union,
+    boolean_2d_common_loop,
     boolean_2d_difference,
     boolean_2d_difference_loop,
     boolean_2d_difference_split,
-    boolean_2d_common_loop,
+    boolean_2d_union,
+    convex_hull,
     simplify_loop,
 )
-from BLUEPRINT.geometry.offset import offset_clipper
+from BLUEPRINT.geometry.geombase import make_plane
 from BLUEPRINT.geometry.geomtools import (
+    clean_loop_points,
     index_of_point_on_loop,
     make_box_xz,
+    rotate_vector_2d,
 )
-from BLUEPRINT.geometry.geombase import make_plane
-from BLUEPRINT.geometry.geomtools import rotate_vector_2d
+from BLUEPRINT.geometry.offset import offset_clipper
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.utilities.csv_writer import write_csv
 
@@ -134,6 +136,11 @@ def get_tangent_vector(point_on_loop, loop):
 
     # Return normalised tangent vector
     tangent_norm = tangent / np.linalg.norm(tangent)
+
+    # Fixing the tangent vector direction to be concordant with the x-axis
+    if tangent_norm[0] > 0:
+        tangent_norm = -tangent_norm
+
     return tangent_norm
 
 
@@ -464,29 +471,19 @@ class DivertorBuilder:
 
         # if horizontal target
         if not vertical_target:
-            target_par = rotate_vector_2d(tangent, np.radians(theta_target * sign))
+            target_par = rotate_vector_2d(
+                tangent, np.radians(180 + (theta_target * sign))
+            )
         # if vertical target
         else:
-            target_par = rotate_vector_2d(tangent, np.radians(-theta_target * sign))
+            target_par = rotate_vector_2d(
+                tangent, np.radians(360 - (theta_target * sign))
+            )
 
         # Create relative vectors whose length will be the offset distance
         # from the strike point
         pfr_target_end = -target_par * target_length_pfr * sign
         sol_target_end = target_par * target_length_sol * sign
-
-        # Swap if we got the wrong way round
-        if outer_target:
-            swap_points = sol_target_end[0] < pfr_target_end[0]
-        # for the inner target
-        else:
-            swap_points = (
-                not vertical_target and sol_target_end[0] > pfr_target_end[0]
-            ) or (vertical_target and sol_target_end[0] < pfr_target_end[0])
-
-        if swap_points:
-            tmp = pfr_target_end
-            pfr_target_end = sol_target_end
-            sol_target_end = tmp
 
         # Add the strike point to diffs to get the absolute positions
         # of the end points of the target
@@ -520,10 +517,7 @@ class DivertorBuilder:
         tangent = get_tangent_vector(outer_strike, flux_loop)
 
         # Get the outer target points
-        (
-            outer_target_internal_point,
-            outer_target_external_point,
-        ) = self.make_divertor_target(
+        (outer_target_pfr_end, outer_target_sol_end) = self.make_divertor_target(
             outer_strike,
             tangent,
             vertical_target=self.inputs["div_vertical_outer_target"],
@@ -542,10 +536,10 @@ class DivertorBuilder:
         # Select the top and bottom limits for the guide lines
         z_x_point = self.points["x_point"]["z_low"]
         outer_leg_external_top_limit = [div_top_right, z_x_point]
-        outer_leg_external_bottom_limit = outer_target_external_point
+        outer_leg_external_bottom_limit = outer_target_sol_end
 
         outer_leg_internal_top_limit = middle_point
-        outer_leg_internal_bottom_limit = outer_target_internal_point
+        outer_leg_internal_bottom_limit = outer_target_pfr_end
 
         # Make the guide lines
         external_guide_line = make_guide_line(
@@ -566,7 +560,7 @@ class DivertorBuilder:
             internal_guide_line.x,
             internal_guide_line.z,
             [middle_point[0], middle_point[1]],
-            outer_target_internal_point,
+            outer_target_pfr_end,
             degree_in,
         )
 
@@ -576,7 +570,7 @@ class DivertorBuilder:
             external_guide_line.x,
             external_guide_line.z,
             [div_top_right, z_x_point],
-            outer_target_external_point,
+            outer_target_sol_end,
             degree_out,
         )
 
@@ -614,18 +608,16 @@ class DivertorBuilder:
         # Find the tangent to the approriate flux loop at the outer strike point
         tangent = get_tangent_vector(inner_strike, flux_loop)
 
-        degree = self.inner_leg_polyfit_degree
-
         # Get the outer target points
-        (
-            inner_target_internal_point,
-            inner_target_external_point,
-        ) = self.make_divertor_target(
+        (inner_target_pfr_end, inner_target_sol_end,) = self.make_divertor_target(
             inner_strike,
             tangent,
             vertical_target=self.inputs["div_vertical_inner_target"],
             outer_target=False,
         )
+
+        # Select the degree of the fitting polynomial
+        degree = self.inner_leg_polyfit_degree
 
         # Select those points along the given flux line below the X point
         inner_leg_central_guide_line = flux_loop
@@ -644,7 +636,7 @@ class DivertorBuilder:
         # Select those points along the top-clipped flux line above the
         # inner target internal point height
         bottom_clip_inner_leg_central_guide_line = np.where(
-            inner_leg_central_guide_line.z > inner_target_internal_point[1],
+            inner_leg_central_guide_line.z > inner_target_pfr_end[1],
         )
 
         # Create a new Loop from the points selected along the flux line
@@ -660,7 +652,7 @@ class DivertorBuilder:
             inner_leg_central_guide_line.x,
             inner_leg_central_guide_line.z,
             [middle_point[0], middle_point[1]],
-            inner_target_internal_point,
+            inner_target_pfr_end,
             degree,
         )
 
@@ -670,7 +662,7 @@ class DivertorBuilder:
             inner_leg_central_guide_line.x,
             inner_leg_central_guide_line.z,
             [div_top_left, z_x_point],
-            inner_target_external_point,
+            inner_target_sol_end,
             degree,
         )
 
@@ -875,7 +867,7 @@ class DivertorBuilder:
             flux_loops = self.separatrix
         return flux_loops
 
-    def make_divertor_cassette(self, divertor_loops):
+    def make_divertor_cassette(self, divertor_loops, outer_profile):
         """
         Given the divertor loops create the divertor cassette.
 
@@ -883,6 +875,8 @@ class DivertorBuilder:
         ----------
         divertor_loops : list
             List of Loop objects representing the divertor
+        outer_profile : Loop
+            Loop of the outer profile of first wall.
 
         Returns
         -------
@@ -978,15 +972,9 @@ class DivertorBuilder:
             # Find the overlap between the vv and the box
             cassette = boolean_2d_common_loop(div_box, vv)
 
-            # Subtract the divertor (get an inner and outer piece)
-            subtracted = boolean_2d_difference(cassette, div)
-            if not len(subtracted) == 2:
-                raise GeometryError("Unexpected number of loops")
-            # Select the outer one
-            if np.max(subtracted[0].x) > np.max(subtracted[1].x):
-                cassette = subtracted[0]
-            else:
-                cassette = subtracted[1]
+            # Subtract the first wall outer profile
+            subtracted = boolean_2d_difference(cassette, outer_profile)
+            cassette = subtracted[0]
 
             # Finally, simplify
             cassette = simplify_loop(cassette)
@@ -1094,6 +1082,8 @@ class FirstWall(ReactorSystem):
         ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
         ["psi_norm", "Normalised flux value of strike-point contours",
          1, "N/A", None, "Input"],
+        ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
         ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
         ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
@@ -1319,11 +1309,6 @@ class FirstWall(ReactorSystem):
         inboard_wall = sections[-2]
         outboard_wall = sections[-1]
 
-        # For now, make the divertor cassette here (to be refactored)
-        self.divertor_cassettes = self.divertor_builder.make_divertor_cassette(
-            self.divertor_loops
-        )
-
         # Make a shell from the inner and outer profile
         fw_shell = Shell(inner=self.inner_profile, outer=outer_profile)
 
@@ -1333,6 +1318,11 @@ class FirstWall(ReactorSystem):
         self.geom["Inner profile"] = self.inner_profile
         self.geom["Inboard wall"] = inboard_wall
         self.geom["Outboard wall"] = outboard_wall
+
+        # For now, make the divertor cassette here (to be refactored)
+        self.divertor_cassettes = self.divertor_builder.make_divertor_cassette(
+            self.divertor_loops, self.geom["2D profile"].outer
+        )
 
         n_div = len(self.divertor_loops)
         n_cass = len(self.divertor_cassettes)
@@ -1403,12 +1393,18 @@ class FirstWall(ReactorSystem):
         # Remove the overlaps between the offset sections
         sections = get_non_overlapping(inboard, outboard, offset_divertor_loops, cutters)
 
-        # Subtract the inner profile from each component
-        for i, sec in enumerate(sections):
-            sections[i] = boolean_2d_difference_loop(sec, inner_wall)
-
         # Now find the union of our offset loops and the original profile
         outer_wall = self.attach_divertor(inner_wall, sections)
+
+        # Subtract the inner profile from each component
+        for ii, sec in enumerate(sections):
+            section = boolean_2d_difference_loop(sec, inner_wall)
+            # Remove duplicate points on the loop
+            clean_points = clean_loop_points(section, 1e-4)
+            clean_array = np.array(clean_points).T
+            clean_loop = Loop(x=clean_array[0], z=clean_array[1])
+            clean_loop.close()
+            sections[ii] = clean_loop
 
         # Return both the union and individual sections
         return outer_wall, sections
@@ -1576,11 +1572,8 @@ class FirstWallSN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        # ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
-        ["fw_dx", "Minimum distance of FW to separatrix", 0.3, "m", None, "Input"],
+        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "N/A", None, "Input"],
-        ["fw_p_sol_near", "near Scrape off layer power", 50, "MW", None, "Input"],
-        ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
         ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "N/A", None, "Input"],
@@ -1635,7 +1628,7 @@ class FirstWallSN(FirstWall):
         fw_loop: Loop
             Here the first wall is without divertor. The wall is cut at the X-point
         """
-        dx_loop = self.lcfs.offset(self.params.fw_dx)
+        dx_loop = self.lcfs.offset(self.params.tk_sol_ob)
         psi_n_loop = self.equilibrium.get_flux_surface(
             self.params.fw_psi_n,
         )
@@ -1734,12 +1727,9 @@ class FirstWallDN(FirstWall):
 
     # fmt: off
     default_params = FirstWall.base_default_params + [
-        ["fw_psi_init", "Initial psi norm value", 1, "N/A", None, "Input"],
-        ["fw_dx_omp", "Initial offset from LCFS omp", 0.2, "m", None, "Input"],
-        ["fw_dx_imp", "Initial offset from LCFS imp", 0.05, "m", None, "Input"],
+        ['tk_sol_ib', 'Inboard SOL thickness', 0.225, 'm', None, 'Input'],
+        ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
         ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
-        ["fw_p_sol_near", "near Scrape off layer power", 90, "MW", None, "Input"],
-        ["fw_p_sol_far", "far Scrape off layer power", 50, "MW", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda_q near SOL omp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda_q far SOL omp", 0.1, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda_q near SOL imp", 0.003, "m", None, "Input"],
@@ -1750,8 +1740,6 @@ class FirstWallDN(FirstWall):
         # ["dr_far_omp", "fs thickness far SOL", 0.005, "m", None, "Input"],
         # These seem to be inconsistent with the above, or at least could be set as such
         # Do not appear to be used anyway
-        # ["fw_dpsi_n_near", "Step size of psi in near SOL", 0.1, "N/A", None, "Input"],
-        # ["fw_dpsi_n_far", "Step size of psi in far SOL", 0.1, "N/A", None, "Input"],
 
         ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "N/A", None, "Input"],
         ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "N/A", None, "Input"],
@@ -1816,7 +1804,7 @@ class FirstWallDN(FirstWall):
         fw_loop: Loop
             Here the first wall is without divertor. The wall is cut at the X-point
         """
-        dx_loop_lfs = self.lcfs.offset(self.params.fw_dx_omp)
+        dx_loop_lfs = self.lcfs.offset(self.params.tk_sol_ob)
         clip_lfs = np.where(
             dx_loop_lfs.x > self.points["x_point"]["x"],
         )
@@ -1825,7 +1813,7 @@ class FirstWallDN(FirstWall):
             z=dx_loop_lfs.z[clip_lfs],
         )
 
-        dx_loop_hfs = self.lcfs.offset(self.params.fw_dx_imp)
+        dx_loop_hfs = self.lcfs.offset(self.params.tk_sol_ib)
         clip_hfs = np.where(
             dx_loop_hfs.x < self.points["x_point"]["x"],
         )
@@ -1909,7 +1897,7 @@ class FirstWallDN(FirstWall):
                 elif loop_plane_intersect(loop, self.mid_plane)[0][0] < self.points[
                     "o_point"
                 ]["x"] and loop_plane_intersect(loop, self.mid_plane)[0][0] > (
-                    self.x_imp_lcfs - self.params.fw_dx_imp
+                    self.x_imp_lcfs - self.params.tk_sol_ib
                 ):
                     clip_vertical = np.where(loop.x < self.points["x_point"]["x"])
 

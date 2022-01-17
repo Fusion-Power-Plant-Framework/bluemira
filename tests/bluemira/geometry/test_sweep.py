@@ -22,13 +22,17 @@
 import numpy as np
 import pytest
 
-from bluemira.geometry.error import FreeCADError
+from bluemira.codes.error import FreeCADError
+from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 from bluemira.geometry.tools import (
-    make_polygon,
     make_circle,
+    make_polygon,
+    offset_wire,
+    revolve_shape,
     sweep_shape,
 )
-from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 
 
 class TestSweep:
@@ -103,7 +107,7 @@ class TestSweep:
         sweep = sweep_shape(profile, path)
 
         assert sweep.is_valid()
-        assert np.isclose(sweep.volume, 139.5618, rtol=1e-4)
+        assert np.isclose(sweep.volume, 95.61485, rtol=1e-4)
 
     def test_bad_profiles(self):
         path = make_polygon([[0, 0, 0], [0, 0, 10]])
@@ -130,3 +134,70 @@ class TestSweep:
         sweep = sweep_shape(profile, path, solid=False)
 
         assert sweep.is_valid()
+
+
+class TestRevolve:
+    def test_semi_circle(self):
+        wire = make_polygon(
+            [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
+        )
+        shape = revolve_shape(wire, degree=180)
+        assert np.isclose(shape.area, 4 * np.pi)
+        assert shape.is_valid()
+        face = BluemiraFace(wire)
+        shape = revolve_shape(face, degree=180)
+        assert np.isclose(shape.volume, np.pi)
+        assert shape.is_valid()
+
+    def test_circle(self):
+        wire = make_polygon(
+            [[0.5, 0, -0.5], [1.5, 0, -0.5], [1.5, 0, 0.5], [0.5, 0, 0.5]], closed=True
+        )
+        shape = revolve_shape(wire, degree=360)
+        assert np.isclose(shape.area, 8 * np.pi)
+        assert shape.is_valid()
+        face = BluemiraFace(wire)
+        shape = revolve_shape(face, degree=360)
+        assert np.isclose(shape.volume, 2 * np.pi)
+        assert shape.is_valid()
+
+    def test_johner_semi(self):
+        wire = JohnerLCFS().create_shape()
+        face = BluemiraFace(wire)
+        shape = revolve_shape(wire, degree=180)
+        assert shape.is_valid()
+        true_volume = np.pi * face.center_of_mass[0] * face.area
+        shape = revolve_shape(face, degree=180)
+        assert shape.is_valid()
+        assert np.isclose(shape.volume, true_volume)
+
+    def test_johner_full(self):
+        wire = JohnerLCFS().create_shape()
+        face = BluemiraFace(wire)
+        shape = revolve_shape(wire, degree=360)
+        assert shape.is_valid()
+        true_volume = 2 * np.pi * face.center_of_mass[0] * face.area
+        shape = revolve_shape(face, degree=360)
+        assert shape.is_valid()
+        assert np.isclose(shape.volume, true_volume)
+
+    def test_revolve_hollow(self):
+        x_c = 10
+        d_xc = 1.0
+        d_zc = 1.0
+        inner = make_polygon(
+            [
+                [x_c - d_xc, 0, -d_zc],
+                [x_c + d_xc, 0, -d_zc],
+                [x_c + d_xc, 0, d_zc],
+                [x_c - d_xc, 0, d_zc],
+            ],
+            closed=True,
+        )
+        outer = offset_wire(inner, 1.0, join="intersect")
+        face = BluemiraFace([outer, inner])
+        solid = revolve_shape(face, degree=360)
+
+        true_volume = 2 * np.pi * x_c * (4 ** 2 - 2 ** 2)
+        assert solid.is_valid()
+        assert np.isclose(solid.volume, true_volume)

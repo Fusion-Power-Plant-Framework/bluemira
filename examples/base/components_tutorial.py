@@ -25,11 +25,8 @@ An example of how to use Components to represent a set of objects in a reactor.
 
 # %%
 from anytree import RenderTree
-from bluemira.base.components import (
-    GroupingComponent,
-    MagneticComponent,
-    PhysicalComponent,
-)
+
+from bluemira.base.components import Component, MagneticComponent, PhysicalComponent
 
 # %%[markdown]
 # Example of a Tree structure
@@ -37,11 +34,11 @@ from bluemira.base.components import (
 # but represent common systems within a reactor (or indeed the reactor itself).
 
 # %%
-reactor = GroupingComponent("Reactor")
+reactor = Component("Reactor")
 
-magnets = GroupingComponent("Magnets", parent=reactor)
-tf_coils = GroupingComponent("TFCoils", parent=magnets)
-pf_coils = GroupingComponent("PFCoils", parent=magnets)
+magnets = Component("Magnets", parent=reactor)
+tf_coils = Component("TFCoils", parent=magnets)
+pf_coils = Component("PFCoils", parent=magnets)
 
 # %%[markdown]
 # Definition of some sub-components as physical components
@@ -62,7 +59,7 @@ for i in range(6):
 # Do the same for the CS coils
 
 # %%
-cs_coils = GroupingComponent("CSCoils", parent=magnets)
+cs_coils = Component("CSCoils", parent=magnets)
 for i in range(6):
     MagneticComponent(
         "CS" + str(i),
@@ -76,7 +73,7 @@ for i in range(6):
 # Adding in vessel components
 
 # %%
-in_vessel = GroupingComponent("InVessel", parent=reactor)
+in_vessel = Component("InVessel", parent=reactor)
 blanket = PhysicalComponent(
     "Blanket",
     shape="BB_shape",

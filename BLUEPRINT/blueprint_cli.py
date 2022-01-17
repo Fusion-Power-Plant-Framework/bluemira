@@ -23,21 +23,21 @@
 BLUEPRINT Command Line Interface
 """
 
-import click
-from dataclasses import dataclass
 import json
-import matplotlib.pyplot as plt
 import os
-from pathlib import Path
 import shutil
 import sys
 import tarfile
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
-from bluemira.base.file import BM_ROOT
-from bluemira.base.file import get_bluemira_root
+import click
+import matplotlib.pyplot as plt
+
+from bluemira.base.file import BM_ROOT, get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.utilities.tools import get_module, CommentJSONDecoder
+from bluemira.utilities.tools import CommentJSONDecoder, get_module, json_writer
 
 try:
     from functools import cached_property
@@ -525,7 +525,7 @@ def cli(
     # Update generated_data_root to value given in CLI options.
     inputs.build_config_dict["reference_data_root"] = str(inputs.reference_root_path)
 
-    dump_json(inputs.build_config_dict, outputs.build_config)
+    json_writer(inputs.build_config_dict, outputs.build_config)
 
     # Update reactor name and make a copy of reference data to a subdirectory using the
     # new reactor name.
@@ -544,7 +544,7 @@ def cli(
             inputs.reference_root_path, "reactors", old_reactorname
         )
         shutil.copytree(reference_source, inputs.reference_path)
-        dump_json(inputs.config_dict, outputs.config)
+        json_writer(inputs.config_dict, outputs.config)
 
     # Instantiate BLUEPRINT reactor class.
     reactor = get_reactor_class(reactor_class).from_json(**outputs.reactor_kwargs)

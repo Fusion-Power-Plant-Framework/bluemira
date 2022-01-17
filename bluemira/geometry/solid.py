@@ -26,13 +26,12 @@ Wrapper for FreeCAD Part.Face objects
 from __future__ import annotations
 
 # import from freecad
-import bluemira.geometry._freecadapi as cadapi
+import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.shell import BluemiraShell
-
 from bluemira.geometry.error import DisjointedSolid
+from bluemira.geometry.shell import BluemiraShell
 
 
 class BluemiraSolid(BluemiraGeo):
@@ -47,8 +46,16 @@ class BluemiraSolid(BluemiraGeo):
         new_shell = self.boundary[0]._create_shell(check_reverse=False)
         solid = cadapi.apiSolid(new_shell)
 
+        if len(self.boundary) > 1:
+            shell_holes = [cadapi.apiSolid(s._shape) for s in self.boundary[1:]]
+            solid = solid.cut(shell_holes)
+            if len(solid.Solids) == 1:
+                solid = solid.Solids[0]
+            else:
+                raise DisjointedSolid("Disjointed solids are not accepted.")
+
         if check_reverse:
-            return self._check_reverse(cadapi.apiSolid(new_shell))
+            return self._check_reverse(cadapi.apiSolid(solid))
         else:
             return solid
 
@@ -62,16 +69,17 @@ class BluemiraSolid(BluemiraGeo):
         if isinstance(obj, cadapi.apiSolid):
             orientation = obj.Orientation
 
-            shells = obj.Shells
-            if len(shells) == 1:
-                bmshell = BluemiraShell._create(shells[0])
-                bmsolid = cls(bmshell, label=label)
-
-                bmsolid._orientation = orientation
-                return bmsolid
-
-            else:
+            if len(obj.Solids) > 1:
                 raise DisjointedSolid("Disjointed solids are not accepted.")
+
+            bm_shells = []
+            for shell in obj.Shells:
+                bm_shells.append(BluemiraShell._create(shell))
+
+            bmsolid = cls(bm_shells, label=label)
+            bmsolid._orientation = orientation
+            return bmsolid
+
         raise TypeError(
             f"Only Part.Solid objects can be used to create a {cls} instance"
         )

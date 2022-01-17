@@ -23,22 +23,19 @@
 Picard iteration procedures for equilibria (and their infinite variations)
 """
 from abc import ABC, abstractmethod
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.utilities.error import ExternalOptError
-from bluemira.utilities.plot_tools import save_figure, make_gif
-from bluemira.equilibria.constants import (
-    PSI_REL_TOL,
-    DPI_GIF,
-    PLT_PAUSE,
-)
+from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import (
-    bluemira_print_flush,
     bluemira_print,
+    bluemira_print_flush,
     bluemira_warn,
 )
-from bluemira.base.file import try_get_bluemira_path
+from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE, PSI_REL_TOL
+from bluemira.utilities.error import ExternalOptError
+from bluemira.utilities.plot_tools import make_gif, save_figure
 
 __all__ = [
     "DudsonConvergence",
@@ -48,7 +45,7 @@ __all__ = [
     "JrelConvergence",
     "PicardLiAbsIterator",
     "PicardAbsIterator",
-    "PicardAbsCoilsetIterator",
+    "PicardCoilsetIterator",
     "PicardDeltaIterator",
     "PicardLiDeltaIterator",
 ]
@@ -447,7 +444,6 @@ class CoilsetPropertiesOptimiser:
         update_size: bool, optional
             If True then update the coilset size, by default True.
         """
-        self.constraints(self.eq, I_not_dI=True)
         try:
             coilset = self.optimiser(self.eq, self.constraints, psib)
             self.store.append(coilset)
@@ -830,7 +826,7 @@ class PicardAbsIterator(CurrentOptimiser, PicardBaseIterator):
         self.eq.solve(self.profiles, psi=self.psi)
 
 
-class PicardAbsCoilsetIterator(CoilsetPropertiesOptimiser, PicardBaseIterator):
+class PicardCoilsetIterator(CoilsetPropertiesOptimiser, PicardBaseIterator):
     """
     Picard solver for unconstrained plasma profiles (li) using I iteration.
     Best used for constrained coil optimisation
