@@ -103,6 +103,11 @@ from BLUEPRINT.systems import (
     VacuumVessel,
 )
 from BLUEPRINT.systems.maintenance import RMMetrics
+from BLUEPRINT.systems.optimisation_callbacks import (
+    EQ_optimiser,
+    FW_optimiser,
+    TF_optimiser,
+)
 from BLUEPRINT.systems.physicstoolbox import (
     estimate_kappa95,
     lambda_q,
