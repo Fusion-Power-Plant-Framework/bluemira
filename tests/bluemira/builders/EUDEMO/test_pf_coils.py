@@ -56,7 +56,7 @@ class TestMakeCoilMapper:
         actual_length = sum([seg.length for seg in segments])
         mapper = make_coil_mapper(self.track, self.exclusions, self.coils)
         interp_length = sum([tool.geometry.length for tool in mapper.interpolators])
-        assert np.isclose(actual_length, interp_length)
+        assert np.isclose(actual_length, interp_length, rtol=1e-2)
 
     def test_simple(self):
         mapper = make_coil_mapper(self.track, self.exclusions, self.coils)

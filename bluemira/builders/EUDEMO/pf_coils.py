@@ -289,7 +289,7 @@ def make_coil_mapper(track, exclusion_zones, coils):
             for i in range(len(split_values) - 1):
                 start = split_values[i]
                 stop = split_values[i + 1]
-                l_range = np.linspace(start, stop, 1000)
+                l_range = np.linspace(start, stop, 500)
                 x, z = segment.to_xz(l_range)
                 y = np.zeros_like(x)
                 sub_segs.append(PathInterpolator(make_bspline([x, y, z])))
