@@ -23,7 +23,6 @@
 Grad-Shafranov operator classes
 """
 import numpy as np
-from numpy import linspace, ones, reshape
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import factorized
 
@@ -79,7 +78,7 @@ class GSOperator:
         """
         d_x = (self.x_max - self.x_min) / (nx - 1)
         d_z = (self.z_max - self.z_min) / (nz - 1)
-        x = linspace(self.x_min, self.x_max, nx)
+        half_xdx = 0.5 / (np.linspace(self.x_min, self.x_max, nx) * d_x)
         inv_dx_2, inv_dz_2 = 1 / d_x ** 2, 1 / d_z ** 2
 
         if self.force_symmetry:
@@ -93,15 +92,14 @@ class GSOperator:
             nz = np.floor_divide(nz + 1, 2)
 
         A = lil_matrix((nx * nz, nx * nz))
-        A.setdiag(ones(nx * nz))
+        A.setdiag(np.ones(nx * nz))
         # NOTE: nb.jit doesn't seem to help here :(
         for i in range(1, nx - 1):
-            half_xdx = 0.5 / (x[i] * d_x)
             for j in range(1, nz - 1):
                 ind = i * nz + j
                 A[ind, ind] = -2 * (inv_dx_2 + inv_dz_2)  # j, l
-                A[ind, ind + nz] = inv_dx_2 - half_xdx  # j, l-1
-                A[ind, ind - nz] = inv_dx_2 + half_xdx  # j, l+1
+                A[ind, ind + nz] = inv_dx_2 - half_xdx[i]  # j, l-1
+                A[ind, ind - nz] = inv_dx_2 + half_xdx[i]  # j, l+1
                 A[ind, ind + 1] = inv_dz_2  # j-1, l
                 A[ind, ind - 1] = inv_dz_2  # j+1, l
 
@@ -118,8 +116,8 @@ class GSOperator:
 
                 A[ind, ind] = -2 * inv_dx_2 - ghost_factor * inv_dz_2
                 A[ind, ind - 1] = ghost_factor * inv_dz_2
-                A[ind, ind + nz] = inv_dx_2 - half_xdx  # j, l-1
-                A[ind, ind - nz] = inv_dx_2 + half_xdx  # j, l+1
+                A[ind, ind + nz] = inv_dx_2 - half_xdx[i]  # j, l-1
+                A[ind, ind - nz] = inv_dx_2 + half_xdx[i]  # j, l+1
         return A.tocsr()  # Compressed sparse row format
 
 
@@ -147,11 +145,11 @@ class DirectSolver:
             Numpy array containing RHS of equation system.
             Converted to 1D before linear solve applied..
         """
-        b1d = reshape(b, -1)
+        b1d = np.reshape(b, -1)
         x = self.solve(b1d)
         if np.any(np.isnan(x)):
             raise EquilibriaError("Matrix inversion problem in GS solver.")
-        return reshape(x, b.shape)
+        return np.reshape(x, b.shape)
 
 
 class GSSolver(DirectSolver):
