@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import numpy as np
+
 from bluemira.builders.EUDEMO.pf_coils import make_coil_mapper
 from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
@@ -27,18 +29,33 @@ from bluemira.geometry.parameterisations import (
     TaperedPictureFrame,
     TripleArc,
 )
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import boolean_cut, make_polygon
 
 
 class TestMakeCoilMapper:
     @classmethod
     def setup_class(cls):
-        track = PrincetonD().create_shape()
-        exclusion = BluemiraFace(
+        cls.track = PrincetonD().create_shape()
+        exclusion1 = BluemiraFace(
             make_polygon([[6, 9, 9, 6], [0, 0, 0, 0], [0, 0, 20, 20]], closed=True)
         )
+        exclusion2 = BluemiraFace(
+            make_polygon([[9, 9, 20, 20], [0, 0, 0, 0], [-1, -1, 1, 1]], closed=True)
+        )
+        cls.exclusions = [exclusion1, exclusion2]
         coil1 = Coil(4, 9, current=1, j_max=1)
         coil2 = Coil(9, -9, current=1, j_max=1)
+        coil3 = Coil(0, 12, current=1, j_max=1)
+        cls.coils = [coil1, coil2, coil3]
+
+    def test_cuts(self):
+        total_length = self.track.length
+        segments = boolean_cut(self.track, self.exclusions)
+        actual_length = sum([seg.length for seg in segments])
+        mapper = make_coil_mapper(self.track, self.exclusions, self.coils)
+        interp_length = sum([tool.geometry.length for tool in mapper.interpolators])
+        assert np.isclose(actual_length, interp_length)
 
     def test_simple(self):
-        mapper = make_coil_mapper(track, [exclusion], [coil1, coil2])
+        mapper = make_coil_mapper(self.track, self.exclusions, self.coils)
+        assert len(mapper.interpolators) == len(self.coils)
