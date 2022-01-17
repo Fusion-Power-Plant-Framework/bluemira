@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+    ignore:
+      - dependency-name: "matplotlib" # Issue #234
+      - dependency-name: "scipy"  # section-properties and numba-scipy limit
+      - dependency-name: "numpy"  # numba limited
+      - dependency-name: "section-properties" # beams needs to be updated
