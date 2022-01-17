@@ -53,6 +53,7 @@ class RunMode(Enum):
     READ = auto()
     READALL = auto()
     MOCK = auto()
+    NONE = auto()
 
     def __call__(self, obj, *args, **kwargs):
         """
@@ -115,6 +116,8 @@ class Run:
     - "mock": Run bluemira without running PROCESS, using the default radial build based
         on EU-DEMO. This option should not be used if PROCESS is installed, except for
         testing purposes.
+    - "none": Do nothing. Useful when loading results from previous runs of Bluemira,
+        when overwriting data with PROCESS output would be undesirable.
     """
 
     def __init__(
@@ -192,6 +195,9 @@ class Run:
 
     def _mock(self):
         self.mock_PROCESS_run()
+
+    def _none(self):
+        pass
 
     def run_PROCESS(self, use_bp_inputs=True):
         """

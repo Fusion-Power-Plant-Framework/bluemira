@@ -18,6 +18,11 @@ def TF_optimiser(TF, verbose, kwargs):
     TF.shp.optimise(verbose=verbose, **kwargs)
 
 
+def TF_loader(TF, verbose, kwargs):
+    """Instead of optimising TF coils, load a previous optimisation."""
+    TF.shp.load()
+
+
 def EQ_optimiser(EQ, TF, params, exclusions, plot_flag):
     eta_pf_imax = 1.4  # Maximum current scaling for PF coil
     if params.PF_material == "NbTi":
