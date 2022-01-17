@@ -505,7 +505,7 @@ class Paneller:
         opt.set_upper_bounds([1 for _ in range(self.n_opt)])
 
         self.bounds = np.array(
-            [np.zeros(self.n_opt, dtype=np.int), np.ones(self.n_opt, dtype=np.int)]
+            [np.zeros(self.n_opt, dtype=int), np.ones(self.n_opt, dtype=int)]
         )
 
         tol = 1e-2 * np.ones(self.n_constraints)
@@ -937,7 +937,7 @@ class DivertorProfile(ReactorSystem):
         x, z = xz_interp(x, z, n_interp)
         # update graze
         graze = self.sf.get_graze([x[-1], z[-1]], [x[-1] - x[-2], z[-1] - z[-2]])
-        n_range = np.int(length / d_l + 1)
+        n_range = int(length / d_l + 1)
         if n_range < 30:
             n_range = 30
         d_l = length / (n_range - 1)

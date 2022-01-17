@@ -95,7 +95,7 @@ class FiniteElementModel:
         self.geometry = Geometry()
         self.load_case = LoadCase()
         self.n_fixed_dofs = 0
-        self.fixed_dofs = np.zeros(6, dtype=np.bool)  # Defaults to False
+        self.fixed_dofs = np.zeros(6, dtype=bool)  # Defaults to False
         self.fixed_dof_ids = []
         self.cycle_sym_ids = []
         self.cycle_sym = None

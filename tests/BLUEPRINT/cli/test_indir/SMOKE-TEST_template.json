@@ -1111,6 +1111,14 @@
         "source": "Input",
         "mapping": null
     },
+    "r_cs_corner": {
+        "name": "Corner radius of the CS coil winding pack",
+        "value": 0.05,
+        "unit": "m",
+        "description": null,
+        "source": "Input",
+        "mapping": null
+    },
     "r_cs_in": {
         "name": "Central Solenoid inner radius",
         "value": 2.2,
@@ -1133,6 +1141,14 @@
         "unit": "m",
         "description": null,
         "source": "PROCESS",
+        "mapping": null
+    },
+    "r_pf_corner": {
+        "name": "Corner radius of the PF coil winding pack",
+        "value": 0.05,
+        "unit": "m",
+        "description": null,
+        "source": "Input",
         "mapping": null
     },
     "r_tf_curve": {
@@ -1423,6 +1439,22 @@
         "source": "PROCESS",
         "mapping": null
     },
+    "tk_cs_casing": {
+        "name": "Thickness of the CS coil casing",
+        "value": 0.07,
+        "unit": "m",
+        "description": null,
+        "source": "Input",
+        "mapping": null
+    },
+    "tk_cs_insulation": {
+        "name": "Thickness of the CS coil insulation",
+        "value": 0.05,
+        "unit": "m",
+        "description": null,
+        "source": "Input",
+        "mapping": null
+    },
     "tk_div": {
         "name": "Divertor thickness",
         "value": 0.4,
@@ -1522,6 +1554,22 @@
     "tk_outer_target_sol": {
         "name": "Outer target length SOL side",
         "value": 0.7,
+        "unit": "m",
+        "description": null,
+        "source": "Input",
+        "mapping": null
+    },
+    "tk_pf_casing": {
+        "name": "Thickness of the PF coil casing",
+        "value": 0.07,
+        "unit": "m",
+        "description": null,
+        "source": "Input",
+        "mapping": null
+    },
+    "tk_pf_insulation": {
+        "name": "Thickness of the PF coil insulation",
+        "value": 0.05,
         "unit": "m",
         "description": null,
         "source": "Input",

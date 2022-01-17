@@ -179,7 +179,7 @@ def polygon_in_polygon(poly1, poly2, include_edges=False):
     return inside_array
 
 
-@nb.jit(cache=True, forceobj=True)
+@nb.jit(forceobj=True)
 def on_polygon(x, z, poly):
     """
     Determine if a point (x, z) is on the perimeter of a closed 2-D polygon.
@@ -1550,7 +1550,7 @@ class MixedFaceMaker:
 
         Returns
         -------
-        vertices: np.ndarray(dtype=np.int)
+        vertices: np.ndarray(dtype=int)
             The vertices of the loop which are polygon-like
         """
         seg_lengths = segment_lengths(self.x, self.y, self.z)
@@ -1599,7 +1599,7 @@ class MixedFaceMaker:
                 vertices.extend([index])
             else:
                 vertices.extend([index, index + 1])
-        vertices = np.unique(np.array(vertices, dtype=np.int))
+        vertices = np.unique(np.array(vertices, dtype=int))
         return vertices
 
     def _get_polygon_sequences(self, vertices: np.ndarray):
