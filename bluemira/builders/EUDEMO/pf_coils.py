@@ -288,16 +288,11 @@ def make_segments(track, exclusion_zones, coils):
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
             # Sub-divide into BSplines for now...
             # TODO: Actual primitive sub-division less fun...
-            split_values = np.append(split_values, 1.0)
+            split_values = np.concatenate([[0.0], split_values, [1.0]])
             sub_segs = []
-            for i, split in enumerate(split_values):
-                if i == 0:
-                    start = 0.0
-                    stop = split
-                else:
-                    start = split_values[i - 1]
-                    stop = split
-
+            for i in range(len(split_values) - 1):
+                start = split_values[i]
+                stop = split_values[i + 1]
                 l_range = np.linspace(start, stop, 1000)
                 x, z = segment.to_xz(l_range)
                 y = np.zeros_like(x)
