@@ -26,30 +26,36 @@ import json
 import os
 from copy import deepcopy
 from itertools import cycle
+
+from bluemira.base.file import get_bluemira_path, get_files_by_ext
+from bluemira.materials import MaterialCache
 from BLUEPRINT.base.palettes import BLUE
-from bluemira.base.file import get_files_by_ext
 from BLUEPRINT.cad.blanketCAD import BlanketCAD
+from BLUEPRINT.cad.buildingCAD import RadiationCAD
+from BLUEPRINT.cad.coilCAD import CSCoilCAD, PFCoilCAD, TFCoilCAD
+from BLUEPRINT.cad.cryostatCAD import CryostatCAD
 from BLUEPRINT.cad.divertorCAD import DivertorCAD
 from BLUEPRINT.cad.vesselCAD import VesselCAD
-from BLUEPRINT.cad.buildingCAD import RadiationCAD
-from BLUEPRINT.cad.cryostatCAD import CryostatCAD
-from BLUEPRINT.cad.coilCAD import PFCoilCAD, CSCoilCAD, TFCoilCAD
-from BLUEPRINT.materials import materials_cache
 from BLUEPRINT.neutronics.constants import L_BP_TO_OMC
+
+material_data_path = get_bluemira_path("materials", subfolder="data")
+material_cache = MaterialCache()
+material_cache.load_from_file(os.sep.join([material_data_path, "materials.json"]))
+material_cache.load_from_file(os.sep.join([material_data_path, "mixtures.json"]))
+
 
 # Populate materials
 
-eurofer = materials_cache.get_material("EUROfer")
-ss316 = materials_cache.get_material("SS316-LN")
-concrete = materials_cache.get_material("HeavyConcrete")
-HCPB_FW = materials_cache.get_material("Homogenised_HCPB_2015_v3_FW")
-HCPB_BZ = materials_cache.get_material("Homogenised_HCPB_2015_v3_BZ")
-HCPB_MB = materials_cache.get_material("Homogenised_HCPB_2015_v3_MB")
-HCPB_BSS = materials_cache.get_material("Homogenised_HCPB_2015_v3_BSS")
-div_mat = materials_cache.get_material("Homogenised_Divertor_2015")
-vessel_mat = materials_cache.get_material("Steel Water 60/40")
-tf_mat = materials_cache.get_material("Toroidal_Field_Coil_2015")
-pf_mat = materials_cache.get_material("Poloidal_Field_Coil")
+ss316 = material_cache.get_material("SS316-LN")
+concrete = material_cache.get_material("HeavyConcrete")
+HCPB_FW = material_cache.get_material("Homogenised_HCPB_2015_v3_FW")
+HCPB_BZ = material_cache.get_material("Homogenised_HCPB_2015_v3_BZ")
+HCPB_MB = material_cache.get_material("Homogenised_HCPB_2015_v3_MB")
+HCPB_BSS = material_cache.get_material("Homogenised_HCPB_2015_v3_BSS")
+div_mat = material_cache.get_material("Homogenised_Divertor_2015")
+vessel_mat = material_cache.get_material("Steel Water 60/40")
+tf_mat = material_cache.get_material("Toroidal_Field_Coil_2015")
+pf_mat = material_cache.get_material("Poloidal_Field_Coil")
 
 
 class MaterialFile:
@@ -222,9 +228,3 @@ def make_linkfile(fp):
         d.append(entry)
     with open(fp + "geometry_details.json", "w") as f:
         json.dump(d, f, indent=4)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

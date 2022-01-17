@@ -19,30 +19,48 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
-from matplotlib import pyplot as plt
-import pytest
+import os
 
-from BLUEPRINT.utilities.plottools import Plot3D
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.nova.structuralsolver import StructuralSolver
+import numpy as np
+import pytest
+from matplotlib import pyplot as plt
 
 import tests
+from bluemira.base.file import get_bluemira_path
+from bluemira.materials import MaterialCache
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.nova.structuralsolver import StructuralSolver
+from BLUEPRINT.utilities.plottools import Plot3D
 
 
 @pytest.mark.longrun
 @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
 class TestStructuralSymmetry:
     def test_full_cage(self, reactor):
+        material_data_path = get_bluemira_path("materials", subfolder="data")
+        materials_cache = MaterialCache()
+        materials_cache.load_from_file(
+            os.sep.join([material_data_path, "materials.json"])
+        )
+        materials_cache.load_from_file(
+            os.sep.join([material_data_path, "mixtures.json"])
+        )
+
         s_sfull = StructuralSolver(
-            reactor.ATEC, reactor.TF.cage, reactor.EQ.snapshots["EOF"].eq
+            reactor.ATEC,
+            reactor.TF.cage,
+            [reactor.EQ.snapshots["EOF"].eq],
+            materials_cache,
         )
         s_sfull.pattern()
         s_sfull.model.add_gravity_loads()
         s_sfull.solve(sparse=True)
 
         solver = StructuralSolver(
-            reactor.ATEC, reactor.TF.cage, reactor.EQ.snapshots["EOF"].eq
+            reactor.ATEC,
+            reactor.TF.cage,
+            [reactor.EQ.snapshots["EOF"].eq],
+            materials_cache,
         )
         solver.model.add_gravity_loads()
         solver.solve(sparse=False)

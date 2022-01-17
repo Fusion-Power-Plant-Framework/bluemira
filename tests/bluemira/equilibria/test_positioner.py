@@ -19,18 +19,18 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import tests
 import os
+
 import numpy as np
+import pytest
 from matplotlib import pyplot as plt
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.parameterisations import flatD
+from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.positioner import CoilPositioner, RegionMapper, XZLMapper
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.equilibria.positioner import (
-    XZLMapper,
-    CoilPositioner,
-)
+from BLUEPRINT.geometry.parameterisations import flatD
 
 DATA_PATH = get_bluemira_path("geometry", subfolder="data")
 
@@ -273,8 +273,63 @@ class TestZLMapperEdges:
             plt.show()
 
 
+class TestRegionMapper:
+    @classmethod
+    def setup_class(cls):
+        coil = Coil(
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=1e7,
+            b_max=100,
+            ctype="PF",
+            name="PF_2",
+        )
+        circuit = SymmetricCircuit(coil)
+
+        coil2 = Coil(
+            x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5e6, b_max=50, name="PF_1"
+        )
+
+        cls.coilset = CoilSet([coil2, circuit])
+
+    def create_rectangular_region(self):
+        max_coil_shifts = {
+            "x_shifts_lower": -2.0,
+            "x_shifts_upper": 1.0,
+            "z_shifts_lower": -1.0,
+            "z_shifts_upper": 5.0,
+        }
+
+        pfregions = {}
+        for coil in self.coilset._ccoils:
+            xu = coil.x + max_coil_shifts["x_shifts_upper"]
+            xl = coil.x + max_coil_shifts["x_shifts_lower"]
+            zu = coil.z + max_coil_shifts["z_shifts_upper"]
+            zl = coil.z + max_coil_shifts["z_shifts_lower"]
+
+            rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
+
+            pfregions[coil.name] = rect
+        return pfregions
+
+    def test_region_mapper(self):
+        pfregions = self.create_rectangular_region()
+        region_mapper = RegionMapper(pfregions)
+        x_init, z_init = self.coilset.get_positions()
+
+        mapped_positions = region_mapper.get_Lmap(self.coilset)[0]
+        region_mapper.set_Lmap(mapped_positions)
+        x, z = region_mapper.get_xz_arrays()
+
+        assert np.allclose(x_init, x)
+        assert np.allclose(z_init, z)
+
+
 class TestCoilPositioner:
-    def test_DEMO_CS(self):  # noqa (N802)
+    def test_DEMO_CS(self):  # noqa :N802
         for n in [3, 5, 7, 9]:
             d_loop = flatD(4, 16, 0)
             d_loop = Loop(x=d_loop[0], z=d_loop[1])

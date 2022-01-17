@@ -24,21 +24,14 @@ Coil and coil grouping objects
 """
 
 from copy import deepcopy
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.interpolate import RectBivariateSpline
 from typing import Any, Optional
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import is_num
-from bluemira.magnetostatics.greens import (
-    greens_psi,
-    greens_Bx,
-    greens_Bz,
-)
-from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.constants import (
     I_MIN,
     J_TOR_MIN,
@@ -46,9 +39,12 @@ from bluemira.equilibria.constants import (
     NBTI_J_MAX,
     X_TOLERANCE,
 )
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.plotting import CoilPlotter, CoilSetPlotter, PlasmaCoilPlotter
-
+from bluemira.magnetostatics.greens import greens_Bx, greens_Bz, greens_psi
+from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
+from bluemira.utilities.tools import is_num
 
 PF_COIL_NAME = "PF_{}"
 CS_COIL_NAME = "CS_{}"
@@ -220,12 +216,13 @@ class CoilSizer:
         Returns
         -------
         max_current: float
-            Maximum current for the coil
+            Maximum current for the coil. If the current density
+            is not specified, this will be set to np.inf.
 
         Raises
         ------
         EquilibriaError:
-            If the coil size is not fixed or no current density is specified
+            If the coil size is not fixed.
         """
         self.update(coil)
         if not self.flag_sizefix:
@@ -234,11 +231,11 @@ class CoilSizer:
             )
 
         if self.j_max is None:
-            raise EquilibriaError(
-                "Cannot get the maximum current of a coil of unspecified current density."
-            )
+            max_current = np.inf
+        else:
+            max_current = get_max_current(self.dx, self.dz, self.j_max)
 
-        return get_max_current(self.dx, self.dz, self.j_max)
+        return max_current
 
     def _make_size(self, current=None):
         """
@@ -711,7 +708,7 @@ class Coil:
         """
         return semianalytic_Bz(self.x, self.z, x, z, d_xc=self.dx, d_zc=self.dz)
 
-    def F(self, eqcoil):  # noqa (N802)
+    def F(self, eqcoil):  # noqa :N802
         """
         Calculate the force response at the coil centre including the coil
         self-force.
@@ -719,7 +716,7 @@ class Coil:
         \t:math:`\\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}`\n
         \t:math:`F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)`\n
         \t:math:`F_z = -IBx`
-        """  # noqa (W505)
+        """  # noqa :W505
         Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
             a = MU_0 * self.current ** 2 / (4 * np.pi * self.x)
@@ -734,7 +731,7 @@ class Coil:
             ]
         )
 
-    def control_F(self, coil):  # noqa (N802)
+    def control_F(self, coil):  # noqa :N802
         """
         Returns the Green's matrix element for the coil mutual force.
 
@@ -762,17 +759,6 @@ class Coil:
         if self.sub_coils is not None:
             for coil in self.sub_coils.values():
                 coil.toggle_control()
-
-    def copy(self):
-        """
-        Get a deepcopy of the Coil.
-
-        Returns
-        -------
-        copy: Coil
-            The deepcopy of the Coil
-        """
-        return deepcopy(self)
 
     @property
     def n_control(self):
@@ -952,12 +938,6 @@ class CoilGroup:
         for name, coil in coils.items():
             cdict[name] = coil.to_dict()
         return cdict
-
-    def copy(self):
-        """
-        Get a deep copy of the CoilGroup.
-        """
-        return deepcopy(self)
 
     def to_group_vecs(self):
         """
@@ -1157,7 +1137,7 @@ class CoilGroup:
         """
         return self._all_if(self.coils.values(), "control_psi", x, z)
 
-    def F(self, eqcoil):  # noqa (N802)
+    def F(self, eqcoil):  # noqa :N802
         """
         Returns the forces in the CoilGroup as a response to an equilibrium or
         other CoilGroup
@@ -1961,15 +1941,16 @@ class CoilSet(CoilGroup):
         Returns the central Solenoid object for a CoilSet
         """
         names = self.get_CS_names()
-        coils = [self.coils[name].copy() for name in names]
+        coils = [deepcopy(self.coils[name]) for name in names]
         return Solenoid.from_coils(coils)
 
     def get_positions(self):
         """
         Returns the arrays of the coil centre coordinates
         """
-        x, z = np.zeros(self.n_coils), np.zeros(self.n_coils)
-        for i, coil in enumerate(self.coils.values()):
+        coil_values = self.coils.values()
+        x, z = np.zeros(len(coil_values)), np.zeros(len(coil_values))
+        for i, coil in enumerate(coil_values):
             x[i] = float(coil.x)
             z[i] = float(coil.z)
         return x, z
@@ -2027,7 +2008,8 @@ class CoilSet(CoilGroup):
         -------
         max_currents: np.array(n_C)
         """
-        max_currents = max_pf_current * np.ones(self.n_coils)
+        n_currents = len(self.coils.values())
+        max_currents = max_pf_current * np.ones(n_currents)
         pf_names = self.get_PF_names()
         for i, name in enumerate(pf_names):
             if self.coils[name].flag_sizefix:
@@ -2156,7 +2138,7 @@ def symmetrise_coilset(coilset):
         bluemira_warn(
             "Symmetrising a CoilSet which is not purely symmetric about z=0. This can result in undesirable behaviour."
         )
-    coilset = coilset.copy()
+    coilset = deepcopy(coilset)
 
     sym_stack = _get_symmetric_coils(coilset)
     counts = np.array(sym_stack, dtype=object).T[1]

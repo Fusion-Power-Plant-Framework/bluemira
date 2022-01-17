@@ -25,13 +25,20 @@ Base classes and functionality for the bluemira geometry module.
 
 from __future__ import annotations
 
+import copy
+import enum
+
 # import for abstract class
 from abc import ABC, abstractmethod
 
 # import freecad api
-from . import _freecadapi
+from bluemira.codes import _freecadapi as cadapi
+from bluemira.geometry.bound_box import BoundingBox
 
-import copy
+
+class _Orientation(enum.Enum):
+    FORWARD = "Forward"
+    REVERSED = "Reversed"
 
 
 class BluemiraGeo(ABC):
@@ -47,20 +54,6 @@ class BluemiraGeo(ABC):
         list of allowed class types for shape's boundary
     """
 
-    # # Obsolete
-    # # a set of property and methods that are inherited from FreeCAD objects
-    # props = {
-    #     'length': 'Length',
-    #     'area': 'Area',
-    #     'volume': 'Volume',
-    #     'center_of_mass': 'CenterOfMass'
-    # }
-    # metds = {
-    #     'is_null': 'isNull',
-    #     'is_closed': 'isClosed'
-    # }
-    # attrs = {**props, **metds}
-
     def __init__(
         self,
         boundary,
@@ -70,29 +63,26 @@ class BluemiraGeo(ABC):
         self._boundary_classes = boundary_classes
         self.boundary = boundary
         self.label = label
+        self.__orientation = _Orientation("Forward")
+
+    @property
+    def _orientation(self):
+        return self.__orientation
+
+    @_orientation.setter
+    def _orientation(self, value):
+        self.__orientation = _Orientation(value)
+
+    def _check_reverse(self, obj):
+        if self._orientation != _Orientation(obj.Orientation):
+            obj.reverse()
+            self._orientation = _Orientation(obj.Orientation)
+        return obj
 
     @staticmethod
     def _converter(func):
         """Function used in __getattr__ to modify the added functions"""
         return func
-
-    # Obsolete.
-    # It was used to getattr from the primitive object, but it was replaced
-    # with specific implementation into the respective api. However it could be still
-    # useful (for this reason is just commented).
-    # def __getattr__(self, key):
-    #     """
-    #     Transfer the key getattr to shape object.
-    #     """
-    #     if key in type(self).attrs:
-    #         output = getattr(self._shape, type(self).attrs[key])
-    #         if callable(output):
-    #             return self.__class__._converter(output)
-    #         else:
-    #             return output
-    #     else:
-    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
-    #             self).__name__), key))
 
     def _check_boundary(self, objs):
         """Check if objects objs can be used as boundaries"""
@@ -126,38 +116,44 @@ class BluemiraGeo(ABC):
     @property
     def length(self):
         """Shape's length"""
-        return _freecadapi.length(self._shape)
+        return cadapi.length(self._shape)
 
     @property
     def area(self):
         """Shape's area"""
-        return _freecadapi.area(self._shape)
+        return cadapi.area(self._shape)
 
     @property
     def volume(self):
         """Shape's volume"""
-        return _freecadapi.volume(self._shape)
+        return cadapi.volume(self._shape)
 
     @property
     def center_of_mass(self):
         """Shape's center of mass"""
-        return _freecadapi.center_of_mass(self._shape)
+        return cadapi.center_of_mass(self._shape)
 
     @property
     def bounding_box(self):
-        """Checks if the shape is closed"""
-        return _freecadapi.bounding_box(self._shape)
+        """The bounding box of the shape"""
+        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self._shape)
+        return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
     def is_null(self):
         """Checks if the shape is null."""
-        return _freecadapi.is_null(self._shape)
+        return cadapi.is_null(self._shape)
 
     def is_closed(self):
         """Checks if the shape is closed"""
-        return _freecadapi.is_closed(self._shape)
+        return cadapi.is_closed(self._shape)
+
+    def is_valid(self):
+        """Checks if the shape is valid"""
+        return cadapi.is_valid(self._shape)
 
     def search(self, label: str):
-        """Search for a shape with the specified label
+        """
+        Search for a shape with the specified label
 
         Parameters
         ----------
@@ -179,18 +175,41 @@ class BluemiraGeo(ABC):
         return output
 
     def scale(self, factor) -> None:
-        """Apply scaling with factor to this object. This function modifies the self
+        """
+        Apply scaling with factor to this object. This function modifies the self
         object.
         """
         for o in self.boundary:
             o.scale(factor)
 
     def translate(self, vector) -> None:
-        """Translate this shape with the vector. This function modifies the self
+        """
+        Translate this shape with the vector. This function modifies the self
         object.
         """
         for o in self.boundary:
             o.translate(vector)
+
+    def rotate(self, base, direction, degree) -> None:
+        """
+        Rotate this shape.
+
+        Parameters
+        ----------
+        base: tuple (x,y,z)
+            Origin location of the rotation
+        direction: tuple (x,y,z)
+            The direction vector
+        degree: float
+            rotation angle
+        """
+        for o in self.boundary:
+            o.rotate(base, direction, degree)
+
+    def change_plane(self, plane) -> None:
+        """Apply a plane transformation to the wire"""
+        for o in self.boundary:
+            o.change_plane(plane)
 
     def __repr__(self):  # noqa D105
         new = []
@@ -218,3 +237,21 @@ class BluemiraGeo(ABC):
         else:
             geo_copy.label = self.label
         return geo_copy
+
+    # Obsolete.
+    # It was used to getattr from the primitive object, but it was replaced
+    # with specific implementation into the respective api. However it could be still
+    # useful (for this reason is just commented).
+    # def __getattr__(self, key):
+    #     """
+    #     Transfer the key getattr to shape object.
+    #     """
+    #     if key in type(self).attrs:
+    #         output = getattr(self._shape, type(self).attrs[key])
+    #         if callable(output):
+    #             return self.__class__._converter(output)
+    #         else:
+    #             return output
+    #     else:
+    #         raise AttributeError("'{}' has no attribute '{}'".format(str(type(
+    #             self).__name__), key))

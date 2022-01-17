@@ -23,23 +23,19 @@
 Aesthetic and ambiance functions.
 """
 
-import os
-import sys
-import numpy as np
-import subprocess  # noqa (S404)
-import platform
-from getpass import getuser
-from textwrap import wrap, dedent
-import time
 import datetime
-import shutil
-import functools
-import seaborn as sns
 import logging
-from PySide2 import QtWidgets
+import os
+import platform
+import shutil
+import subprocess  # noqa :S404
+import time
+from getpass import getuser
+from textwrap import dedent, wrap
+
 from bluemira import __version__
-from bluemira.base.constants import EXIT_COLOR, ANSI_COLOR, BLUEMIRA_PALETTE
-from bluemira.base.file import get_bluemira_root, get_bluemira_path
+from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import logger_setup
 
 LOGGER = logger_setup()
@@ -75,7 +71,7 @@ def get_git_version(directory):
     vinfo: bytes
         The git version bytestring
     """
-    return subprocess.check_output(  # noqa (S603, S607)
+    return subprocess.check_output(  # noqa :S603, S607
         ["git", "describe", "--tags", "--always"], cwd=directory
     ).strip()
 
@@ -94,7 +90,7 @@ def get_git_branch(directory):
     branch: str
         The git branch string
     """
-    out = subprocess.check_output(  # noqa (S603, S607)
+    out = subprocess.check_output(  # noqa :S603, S607
         ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=directory
     )
     return out.strip().decode("utf-8")
@@ -117,7 +113,7 @@ def get_git_files(directory, branch):
         The list of git-controlled path strings
     """
     return (
-        subprocess.check_output(  # noqa (S603, S607)
+        subprocess.check_output(  # noqa :S603, S607
             ["git", "ls-tree", "-r", branch, "--name-only"], cwd=directory
         )
         .decode("utf-8")
@@ -174,7 +170,6 @@ def count_slocs(
         lines[k] = 0
     files = get_git_files(directory, branch)
     for name in files:
-        name = name
         if name.split(os.sep)[-1] not in ignore and name not in ignore:
             for e in exts:
                 if name.endswith(e):
@@ -234,7 +229,10 @@ def _bm_print(string, width=73):
     ss: str
         The text string of the boxed text
     """
-    strings = string.splitlines()
+    strings = [
+        " " if s == "\n" and i != 0 else s[:-1] if s.endswith("\n") else s
+        for i, s in enumerate(string.splitlines(keepends=True))
+    ]
     bw = width - 4
     t = [
         wrap(s, width=bw, replace_whitespace=False, drop_whitespace=False)
@@ -247,7 +245,7 @@ def _bm_print(string, width=73):
     return h + "\n" + "\n".join(lines) + "\n" + h
 
 
-def colourise(string, width=73, color="blue", end=None, flush=False):
+def colourise(string, width=73, color="blue"):
     """
     Print coloured, boxed text to the console. Default template for bluemira
     information.
@@ -258,12 +256,8 @@ def colourise(string, width=73, color="blue", end=None, flush=False):
         The string of text to colour and box
     width: int (default = 73)
         The width of the box (leave this alone for best results)
-    color: str from ['blue', 'red', 'green']
+    color: str from bluemira.base.constants.ANSI_COLOR
         The color to print the text in
-    end: str or None (default = None)
-        The value to print after the print operation
-    flush: bool (default=False)
-        As far as I can tell has no effect
     """
     text = _bm_print(string, width=width)
     color_text = _print_color(text, color)
@@ -272,7 +266,7 @@ def colourise(string, width=73, color="blue", end=None, flush=False):
 
 def bluemira_critical(string):
     """
-    Standard template for BLUEPRINT critical errors.
+    Standard template for bluemira critical errors.
     """
     return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
 
@@ -329,6 +323,43 @@ def _bm_print_singleflush(string, width=73, color="blue"):
     return _print_color(text, color)
 
 
+def _bluemira_clean_flush(string, func=LOGGER.info):
+    """
+    Print and flush string. Useful for updating information.
+
+    Parameters
+    ----------
+    func: Callable[[str], None]
+        The function to use for logging, by default LOGGER.info
+    string: str
+        The string to colour flush print
+    """
+    _terminator_handler(func, "\r" + string, fhterm=logging.StreamHandler.terminator)
+
+
+def _terminator_handler(func, string, *, fhterm=""):
+    """
+    Log string allowing modification to handler terminator
+
+    Parameters
+    ----------
+    func: Callable[[str], None]
+        The function to use for logging (e.g LOGGER.info)
+    string: str
+        The string to colour flush print
+    fhterm: str
+        FileHandler Terminator
+    """
+    original_terminator = logging.StreamHandler.terminator
+    logging.StreamHandler.terminator = ""
+    logging.FileHandler.terminator = fhterm
+    try:
+        func(string)
+    finally:
+        logging.StreamHandler.terminator = original_terminator
+        logging.FileHandler.terminator = original_terminator
+
+
 def bluemira_print_flush(string):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
@@ -339,13 +370,48 @@ def bluemira_print_flush(string):
     string: str
         The string to colour flush print
     """
-    original_terminator = logging.StreamHandler.terminator
-    logging.StreamHandler.terminator = ""
-    logging.FileHandler.terminator = original_terminator
-    try:
-        LOGGER.info("\r" + _bm_print_singleflush(string))
-    finally:
-        logging.StreamHandler.terminator = original_terminator
+    _bluemira_clean_flush(_bm_print_singleflush(string), func=LOGGER.info)
+
+
+def bluemira_debug_flush(string):
+    """
+    Print a coloured, boxed line to the console and flushes it. Useful for
+    updating information when running at the debug logging level.
+
+    Parameters
+    ----------
+    string: str
+        The string to colour flush print for debug messages.
+    """
+    _bluemira_clean_flush(
+        _bm_print_singleflush(string, color="green"), func=LOGGER.debug
+    )
+
+
+def bluemira_print_clean(string):
+    """
+    Print to the logging info console with no modification.
+    Useful for external programs
+
+    Parameters
+    ----------
+    string: str
+        The string to print
+    """
+    _terminator_handler(LOGGER.info, string)
+
+
+def bluemira_error_clean(string):
+    """
+    Print to the logging error console, colouring the output red.
+    No other modification is made. Useful for external programs
+
+    Parameters
+    ----------
+    string: str
+        The string to colour print
+    """
+    _terminator_handler(LOGGER.error, _print_color(string, "red"))
 
 
 class BluemiraClock:
@@ -367,7 +433,10 @@ class BluemiraClock:
         self.rate = print_rate
         self.elapsed = " elapsed"
         self.left = " left"
-        self.width = width - len(self.elapsed) - len(self.left) - n_iter * 2 - 4 - 2 * 9
+
+        self.width = (
+            width - len(self.elapsed) - len(self.left) - 2 * (9 + len(str(n_iter))) - 17
+        )
 
         # Constructors
         self.i = 0
@@ -397,21 +466,18 @@ class BluemiraClock:
         self.i += 1
         if self.i % self.rate == 0 and self.i > 0:
             elapsed = time.time() - self.t_start
-            remain = int((self.n_iter - self.i) / self.i * elapsed)
-            prog_str = f"| \r{self.i:1d}/{self.n_iter:1d}"
+            remain = elapsed * (self.n_iter - self.i) / self.i
+            prog_str = f"{self.i:1d}/{self.n_iter:1d}"
 
             str_elapsed = str(datetime.timedelta(seconds=int(elapsed)))
-            str_left = str(datetime.timedelta(seconds=remain))
+            str_left = str(datetime.timedelta(seconds=int(remain)))
             prog_str += f" {str_elapsed:0>8}s{self.elapsed}"
             prog_str += f" {str_left:0>8}s{self.left}"
             prog_str += f" {1e2 * self.i / self.n_iter:1.1f}%"
-            nh = int(self.i / self.n_iter * self.width)
+            nh = int((self.i / self.n_iter) * self.width)
             prog_str += " |" + nh * "#" + (self.width - nh) * "-" + "|"
 
-            sys.stdout.write(
-                "\r" + _bm_print_singleflush(f"{self.i}/{self.n_iter} {prog_str}")
-            )
-            sys.stdout.flush()
+            bluemira_print_flush(prog_str)
 
         if self.i == self.n_iter:
             print("\n")
@@ -481,125 +547,9 @@ def user_banner():
     Returns
     -------
     s: str
-        The text for the banner containing user and plaform information
+        The text for the banner containing user and platform information
     """
     return [
         f"User       : {getuser()}",
         f"Platform   : {get_platform()}",
     ]
-
-
-# =============================================================================
-# Plotting defaults
-# =============================================================================
-
-
-@functools.lru_cache(1)
-def get_primary_screen_size():
-    """
-    Get the size in pixels of the primary screen.
-
-    Used for sizing figures to the screen for small screens.
-
-    Returns
-    -------
-    width: Union[int, None]
-        width of the primary screen in pixels. If there is no screen returns None
-    height: Union[int, None]
-        height of the primary screen in pixels. If there is no screen returns None
-    """
-    if sys.platform.startswith("linux") and os.getenv("DISPLAY") is None:
-        return None, None
-
-    # IPython detection (of sorts)
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        # if IPython isn't open then a QApplication is created to get screen size
-        app = QtWidgets.QApplication([])
-        rect = app.primaryScreen().availableGeometry()
-    else:
-        rect = app.primaryScreen().availableGeometry()
-
-    return rect.width(), rect.height()
-
-
-def get_figure_scale_factor(figsize):
-    """
-    Scale figure size to fit on small screens.
-
-    If the screen fits the figure the scale factor is 1.
-
-    Parameters
-    ----------
-    figsize: np.array(float, float)
-        matplotlib figsize width x height
-
-    Returns
-    -------
-    sf: float
-        scale factor to fit screen
-
-    """
-    screen_size = get_primary_screen_size()
-
-    if None in screen_size:
-        return 1
-
-    dpi = sns.mpl.rcParams["figure.dpi"]
-
-    dpi_size = figsize * dpi
-    dpi_size += 0.10 * dpi_size  # space for toolbar
-
-    sf = 1  # scale factor
-    for ds, ss in zip(dpi_size, screen_size):
-        if ds > ss:
-            scale_temp = ss / ds
-            if scale_temp < sf:
-                sf = scale_temp
-    return sf
-
-
-def plot_defaults(force=False):
-    """
-    Set a series of plotting defaults based on machine and user.
-
-    If bluemira plots are not to your tastes, do not work with your OS, or
-    don't fit your screen, please create a user profile for yourself/machine
-    here and adjust settings as needed.
-
-    Parameters
-    ----------
-    force: bool
-        force default figsize irrespective of screen size
-    """
-    figsize = np.array([18, 15])
-
-    sf = 1 if force else get_figure_scale_factor(figsize)
-
-    sns.set(
-        context="paper",
-        style="ticks",
-        font="DejaVu Sans",
-        font_scale=2.5 * sf,
-        color_codes=False,
-        rc={
-            "axes.labelweight": "normal",
-            "axes.titlesize": 20 * sf,
-            "figure.figsize": list(figsize * sf),
-            "lines.linewidth": 4 * sf,
-            "lines.markersize": 13 * sf,
-            "contour.negative_linestyle": "solid",
-        },
-    )
-    sns.set_style(
-        {
-            "xtick.direction": "in",
-            "ytick.direction": "in",
-            "xtick.major.size": 8 * sf,
-            "ytick.major.size": 8 * sf,
-            "xtick.minor.size": 4 * sf,
-            "ytick.minor.size": 4 * sf,
-            "xtick.color": "k",
-        }
-    )
-    sns.set_palette(BLUEMIRA_PALETTE)

@@ -27,10 +27,11 @@ TF coil cage structural optimisation
 
 import numpy as np
 from scipy.optimize import minimize
-from BLUEPRINT.utilities.optimisation import process_scipy_result
+
+from bluemira.utilities.opt_tools import process_scipy_result
+from BLUEPRINT.geometry.boolean import convex_hull
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.offset import varied_angular_offset
-from BLUEPRINT.geometry.boolean import convex_hull
 from BLUEPRINT.nova.structuralsolver import StructuralSolver
 
 
@@ -46,9 +47,11 @@ class StructuralOptimiser:
         The CoilCage used to calculate the TF forces
     equilibria: List[Union[Type[Equilibrium], Type[Breakdown]]
         The list of equilibria objects used to calculate the PF forces
+    material_cache: MaterialCache
+        The cache of material definitions.
     """
 
-    def __init__(self, architect, coilcage, equilibria):
+    def __init__(self, architect, coilcage, equilibria, material_cache):
         # Handle inputs
         self.architect = architect
         self.coilcage = coilcage
@@ -65,7 +68,7 @@ class StructuralOptimiser:
         self.args = ()
 
         # Initial set-up
-        self.solver = StructuralSolver(architect, coilcage, equilibria)
+        self.solver = StructuralSolver(architect, coilcage, equilibria, material_cache)
 
         # Determine worst case scenario, and optimise over this
         worst_case = self._get_worst_case()

@@ -1,28 +1,51 @@
+[![docs](https://readthedocs.org/projects/bluemira/badge/?version=develop)](https://bluemira.readthedocs.io/en/develop) [![codecov](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira/branch/develop/graph/badge.svg?token=BYTJ4CZ8BI)](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira)
+
+
 # Bluemira
 
 ``Bluemira`` is an integrated inter-disciplinary design tool for future fusion reactors. It
 incorporates several modules, some of which rely on other codes, to carry out a range of
 typical conceptual fusion reactor design activities.
 
-``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see 
-[publications](#Publications)).
+``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see
+[publications](#publications)).
+
+## Work in Progress!
+
+The `bluemira` team has been working hard since mid-2021 to combine ``BLUEPRINT`` and ``MIRA`` into a single reactor design framework. We took the opportunity to embark upon
+a significant refactor of both code bases, delivering improved functionality, code
+quality, and hopefully maintainability. This, along with some resourcing issues has
+caused our feature roadmap to slip. A lot of functionality that was present in  ``BLUEPRINT`` and ``MIRA`` is not yet available in `bluemira`.
+
+`Bluemira` is very much under active development, and will likely be subject to API
+changes in the near future. We apologise in advance for these. Please do get in touch
+before starting to use any modules, so we can warn you of changes to come.
 
 ## Modules
 
-``Bluemira`` is composed of various modules: 
+``Bluemira`` is composed of various modules:
 
-* **base**: the software backbone of the ``bluemira`` framework
-* TBD
-* **utilities**: collection of utility toolboxes for file IO, plotting, databases, 
+* `balance_of_plant`: power balance solver and tools
+* `base`: the software backbone of the ``bluemira`` framework
+* `codes` **[WIP]**: interfaces to external codes (both API and file PI)
+* `display`: plotting and display module
+* `equilibria`: equilibrium solvers and objects
+* `fuel_cycle`: fuel cycle model
+* `geometry`: the geometry "engine" of the ``bluemira`` framework
+* `magnetostatics`: magnetostatics solvers
+* `materials`: materials module
+* `radiation_transport` **[WIP]**: radiation and advection transport solvers
+* `structural` **[WIP]**: beam finite element structural solver
+* `utilities`: collection of utility toolboxes for file IO, databases,
   machine learning, and misc.
 
-## Publications [](#Publications)
+## Publications
 
 The ``bluemira`` code and its modules are described in the following publications:
 
 * TBD
 
-As ``bluemira`` is the result of an integration between two historical codes, 
+As ``bluemira`` is the result of an integration between two historical codes,
 some previous publications may also be of interest.
 
 The ``BLUEPRINT`` code and its modules are described in the following publications:
@@ -34,31 +57,31 @@ The ``BLUEPRINT`` code and its modules are described in the following publicatio
 
 The ``MIRA`` code and its modules are described in the following publications:
 
-* [On the implementation of new technology modules for fusion reactor systems codes, Franza, Boccaccinni, Fischer, Gade, and Heller, *Fusion Engineering and Design*, v **98-99** pp 1767-1770 (2015)](http://www.sciencedirect.com/science/article/pii/S0920379615001933)
-* [Development of an advanced magnetic equilibrium model for fusion reactor system codes, Franza, Landman, and Petschanyi, *Fusion Engineering and Design*, v **136** pp 309-313 (2018)](http://www.sciencedirect.com/science/article/pii/S0920379618301157)
+* [On the implementation of new technology modules for fusion reactor systems codes, Franza, Boccaccinni, Fischer, Gade, and Heller, *Fusion Engineering and Design*, v **98-99** pp 1767-1770 (2015)](https://www.sciencedirect.com/science/article/pii/S0920379615001933)
+* [Development of an advanced magnetic equilibrium model for fusion reactor system codes, Franza, Landman, and Petschanyi, *Fusion Engineering and Design*, v **136** pp 309-313 (2018)](https://www.sciencedirect.com/science/article/pii/S0920379618301157)
 * [Development and Validation of a Computational Tool for Fusion Reactors' System Analysis, Franza, Ph.D thesis, Karlsruher Institut f&uuml;r Technologie (2019)](https://publikationen.bibliothek.kit.edu/1000095873)
 
 ## Terms of use
 
-``Bluemira`` is [released under the LGPLv2.1 license](LICENSE.md), but we also ask that 
+``Bluemira`` is [released under the LGPLv2.1 license](LICENSE), but we also ask that
 you show professional courtesy when using this code:
 
-1. Since you are benefiting from work on ``bluemira``, we ask that you submit any 
-   improvements you make to the code to us by submitting a pull request to this 
-   repository. If you are looking to develop aspects of this code or add parts to it, 
+1. Since you are benefiting from work on ``bluemira``, we ask that you submit any
+   improvements you make to the code to us by submitting a pull request to this
+   repository. If you are looking to develop aspects of this code or add parts to it,
    please contact us beforehand so that we can help/advise if necessary.
 
 2. If you use ``bluemira`` results in a paper or professional publication, we ask that
    you discuss your work and results with one of the ``bluemira`` authors first so that
    we can check them. It is not necessary to list ``bluemira`` developers as co-authors.
-   If one or more of the ``bluemira`` team are involved in preparing results or 
+   If one or more of the ``bluemira`` team are involved in preparing results or
    functionality used in your work, then those members should appear as co-authors.
 
-3. If you use ``bluemira`` or any of its modules in your work, please help ensure that 
-   all the authors get the credit they deserve by citing the relevant ``bluemira``, 
+3. If you use ``bluemira`` or any of its modules in your work, please help ensure that
+   all the authors get the credit they deserve by citing the relevant ``bluemira``,
    ``BLUEPRINT``, and ``MIRA`` papers.
 
-For a full list of existing publications, see [here](#Publications).
+For a full list of existing publications, see [here](#publications).
 
 ## Code of conduct
 
@@ -66,8 +89,8 @@ See [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Installation
 
-See our [getting started guide](documentation/source/started.rst).
-  
+See our [installation guide](https://bluemira.readthedocs.io/en/develop/installation.html).
+
 ## Developing
 
 For working on ``bluemira`` you will also need to install the development dependencies
@@ -80,7 +103,7 @@ pre-commit install -f
 
 Please see the [guidelines for contributing to bluemira](CONTRIBUTING.md).
 
-In addition to the dependencies for installation, the following tools are useful for 
+In addition to the dependencies for installation, the following tools are useful for
 developing ``bluemira``:
 
 * Sphinx
@@ -94,10 +117,12 @@ pytest
 
 ---
 
-If you don't have ``PROCESS`` installed then you'll need to edit 
+If you don't have ``PROCESS`` installed then you'll need to edit
 `tests/test_reactor.py`.
 
 Change the line `"process_mode": "read"` to `"process_mode": "mock"`.
+
+For more information on PROCESS please see [here](https://ccfe.ukaea.uk/resources/process/)
 
 ---
 
@@ -107,11 +132,11 @@ To run all the tests:
 pytest --reactor --longrun --plotting-on
 ```
 
-`pytest` also supports running individual test files and selecting tests by name or 
+`pytest` also supports running individual test files and selecting tests by name or
 using a regular expression. See the
 [pytest documentation](https://docs.pytest.org/en/latest/usage.html).
 
-After a test run an html report of the results can be found in `report.html`. A test 
+After a test run an html report of the results can be found in `report.html`. A test
 coverage report can be found in the `htmlcov` directory.
 
 ## Building Documentation

@@ -20,14 +20,26 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-BLUEPRINT External Codes Wrapper
+Bluemira External Codes Wrapper
 """
 
-from bluemira.codes.error import CodesError
+from __future__ import annotations
+
+from typing import Optional
+
+import bluemira.base as bm_base
 from bluemira.codes import process
+from bluemira.codes.error import CodesError
 
 
-def run_systems_code(reactor, params_to_update=None):
+def run_systems_code(
+    params: bm_base.ParameterFrame,
+    build_config: bm_base.BuildConfig,
+    run_dir: str,
+    read_dir: Optional[str] = None,
+    template_indat=None,
+    params_to_update=None,
+) -> bm_base.ParameterFrame:
     """
     Runs, reads or mocks PROCESS according to the build configuration dictionary.
 
@@ -45,20 +57,20 @@ def run_systems_code(reactor, params_to_update=None):
 
     Notes
     -----
-    - "run": Run PROCESS within a BLUEPRINT run to generate an radial build.
+    - "run": Run PROCESS within a bluemira run to generate an radial build.
         Creates a new input file from a template IN.DAT modified with updated parameters
-        from the BLUEPRINT run mapped with write=True. If params_to_update are provided
+        from the bluemira run mapped with write=True. If params_to_update are provided
         then these will be modified to have write=True and all other will be modified to
         have write=False.
     - "runinput": Run PROCESS from an unmodified input file (IN.DAT), generating the
-        radial build to use as the input to the BLUEPRINT run. Overrides the write
+        radial build to use as the input to the bluemira run. Overrides the write
         mapping of all parameters to be False.
     - "read": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
         only the parameters mapped with read=True.
     - "readall": Load the radial build from a previous PROCESS run (MFILE.DAT). Loads
-        all values with a BLUEPRINT mapping regardless of the mapping.read bool.
+        all values with a bluemira mapping regardless of the mapping.read bool.
         Overrides the read mapping of all parameters to be True.
-    - "mock": Run BLUEPRINT without running PROCESS, using the default radial build based
+    - "mock": Run bluemira without running PROCESS, using the default radial build based
         on EU-DEMO. This option should not be used if PROCESS is installed, except for
         testing purposes.
 
@@ -67,14 +79,15 @@ def run_systems_code(reactor, params_to_update=None):
     CodesError
         If PROCESS is not being mocked and is not installed.
     """
-    process_mode = reactor.build_config["process_mode"]
+    # Remove me, temp compatibility layer
+    build_config["mode"] = build_config.get("mode", build_config["process_mode"])
+    # #####################################
+    process_mode = build_config.get("mode", "run")
     if (not process.PROCESS_ENABLED) and (process_mode.lower() != "mock"):
         raise CodesError("PROCESS not (properly) installed")
 
-    process.Run(reactor, params_to_update)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
+    solver = process.Solver(
+        params, build_config, run_dir, read_dir, template_indat, params_to_update
+    )
+    solver.run()
+    return solver.params

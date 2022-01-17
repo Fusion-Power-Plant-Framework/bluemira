@@ -23,40 +23,41 @@
 Coil positioning routines (automatic and adjustable)
 """
 
-import numpy as np
 import re
-from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
+
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.optimize import minimize_scalar
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.error import GeometryError
+from bluemira.equilibria.coils import (
+    CS_COIL_NAME,
+    PF_COIL_NAME,
+    Coil,
+    CoilSet,
+    Solenoid,
+    get_max_current,
+)
+from bluemira.equilibria.constants import NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.plotting import RegionPlotter, XZLPlotter
+from bluemira.geometry._deprecated_base import Plane
 from bluemira.geometry._deprecated_boolean import (
     boolean_2d_common,
     boolean_2d_difference,
     boolean_2d_union,
 )
-from bluemira.geometry.constants import VERY_BIG
-from bluemira.geometry._deprecated_base import Plane
-from bluemira.geometry._deprecated_tools import (
-    vector_lengthnorm_2d,
-    loop_plane_intersect,
-    join_intersect,
-)
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
-from bluemira.equilibria.constants import NBTI_J_MAX
-from bluemira.equilibria.coils import (
-    Coil,
-    CoilSet,
-    PF_COIL_NAME,
-    CS_COIL_NAME,
-    Solenoid,
-    get_max_current,
+from bluemira.geometry._deprecated_tools import (
+    join_intersect,
+    loop_plane_intersect,
+    vector_lengthnorm_2d,
 )
-from bluemira.equilibria.plotting import XZLPlotter, RegionPlotter
+from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
 from bluemira.utilities import tools
 
 
@@ -311,7 +312,7 @@ class XZLMapper:
             loop["z"](l_values) - point[1]
         ) ** 2
 
-    def xz_to_L(self, x, z):  # noqa (N802)
+    def xz_to_L(self, x, z):  # noqa :N802
         """
         Translação de coordenadas (x, z) até coordenadas lineares normalizadas
         (L) para as bobinas PF
@@ -320,14 +321,14 @@ class XZLMapper:
             self.PFnorm, method="bounded", args=(self.pftrack, [x, z]), bounds=[0, 1]
         ).x
 
-    def L_to_xz(self, l_values):  # noqa (N802)
+    def L_to_xz(self, l_values):  # noqa :N802
         """
         Translação de coordenadas lineares normalizadas (L) até coordenadas
         (x, z) para as bobinas PF
         """
         return self.pftrack["x"](l_values), self.pftrack["z"](l_values)
 
-    def z_to_L(self, zc_vec):  # noqa (N802)
+    def z_to_L(self, zc_vec):  # noqa :N802
         """
         Convert z values for the CS in L values of the CS track.
         """
@@ -358,7 +359,7 @@ class XZLMapper:
         # zc[-1] = self.Zmin+dz[-1]
         return self.Xcs * np.ones(len(l_values)), zc[::-1], dz[::-1]  # Coil numbering
 
-    def get_Lmap(self, coilset, mapping):  # noqa (N802)
+    def get_Lmap(self, coilset, mapping):  # noqa :N802
         """
         Calculates initial L vector and lb and ub constraints on L vector.
 
@@ -562,6 +563,8 @@ class RegionMapper:
         self.no_regions = len(self.regions)
 
         self.l_values = np.zeros((self.no_regions, 2))
+        self.l_map = self.l_values.flatten()
+
         self.max_currents = np.zeros(self.no_regions)
 
     def _region_setup(self, pf_name, loop_reg):
@@ -625,13 +628,13 @@ class RegionMapper:
 
     def get_Lmap(self, coilset):
         """
-        Calculates initial L vector and sets lb and ub constraints on L vector.
+        Get 1D array of mapped position coordinates from coil positions
+        in a provided coilset, along with mapped position bounds.
 
         Parameters
         ----------
         coilset: CoilSet object
             A coilset object to map
-
         """
         self._coilset = coilset
 
@@ -645,13 +648,45 @@ class RegionMapper:
             self.l_values[no] = self.xz_to_L(region, coil.x, coil.z)
 
         # Force all initial positions to be within region
-        self.l_values = tools.clip(self.l_values, 0, 1).flatten()
-
+        self.l_map = tools.clip(self.l_values, 0, 1).flatten()
         return (
-            self.l_values,
-            np.zeros_like(self.l_values),
-            np.ones_like(self.l_values),
+            self.l_map,
+            np.zeros_like(self.l_map),
+            np.ones_like(self.l_map),
         )
+
+    def set_Lmap(self, l_map):
+        """
+        Sets the mapped positions from a provided 1D array.
+        """
+        if np.size(l_map) == 2 * self.no_regions:
+            self.l_map = l_map
+            self.l_values = l_map.reshape(-1, 2)
+        else:
+            raise EquilibriaError(
+                "Provided l_map does not contain exactly one pair of mapped"
+                "coordinates for each region in RegionMapper"
+            )
+
+    def get_xz_arrays(self):
+        """
+        Get arrays containing x and z coordinates for all coils from the position
+        map.
+
+        Returns
+        -------
+        x: np.array
+            Array containing radial positions of all coils in mapped regions,
+            enumerated by region index in self.regions.
+        z: np.array
+            Array containing vertical positions of all coils in mapped regions,
+            enumerated by region index in self.regions.
+
+        """
+        x, z = np.zeros(len(self.l_values)), np.zeros(len(self.l_values))
+        for i, region in enumerate(self.regions.keys()):
+            x[i], z[i] = self.L_to_xz(region, self.l_values[i])
+        return x, z
 
     def get_size_current_limit(self):
         """
@@ -669,7 +704,9 @@ class RegionMapper:
         for no, (name, region) in enumerate(self.regions.items()):
             coil = self._coilset.coils[self._name_converter(name)]
             self.max_currents[no] = get_max_current(
-                *inscribed_rect_in_poly(region.loop.x, region.loop.z, coil.x, coil.z),
+                *inscribed_rect_in_poly(
+                    region.loop.x, region.loop.z, coil.x, coil.z, coil.dx / coil.dz
+                ),
                 coil.j_max,
             )
 

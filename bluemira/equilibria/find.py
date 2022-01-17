@@ -23,17 +23,18 @@
 Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
 
-import numpy as np
 import numba as nb
+import numpy as np
+from matplotlib._contour import QuadContourGenerator
 from scipy.interpolate import RectBivariateSpline
 from scipy.optimize import minimize
-from matplotlib._contour import QuadContourGenerator
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.geometry._deprecated_tools import in_polygon, get_area_2d
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.equilibria.constants import X_TOLERANCE, B_TOLERANCE
+from bluemira.geometry._deprecated_tools import in_polygon
+from bluemira.geometry.coordinates import get_area_2d
 
 __all__ = [
     "Xpoint",
@@ -148,7 +149,7 @@ def find_local_minima(f):
     )
 
 
-def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa (N802)
+def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa :N802
     """
     Find local Bp^2 minima on a grid (precisely) using a scipy optimiser.
 
@@ -295,7 +296,7 @@ def triage_OX_points(f_psi, points):
     return o_points, x_points
 
 
-def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa (N802)
+def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -423,7 +424,7 @@ def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa (N802)
     return o_points, useful_x
 
 
-def _parse_OXp(x, z, psi, o_points, x_points):  # noqa (N802)
+def _parse_OXp(x, z, psi, o_points, x_points):  # noqa :N802
     """
     Handles Op and Xp retrieval, depending on combinations of None/not None
     """

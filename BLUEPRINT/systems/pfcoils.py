@@ -25,11 +25,10 @@ Poloidal field system
 from typing import Type
 
 from bluemira.base.parameter import ParameterFrame
-
-from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.coilCAD import PFSystemCAD
 from BLUEPRINT.geometry.geomtools import get_boundary
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
@@ -198,9 +197,3 @@ class PoloidalFieldCoilsPlotter(ReactorSystemPlotter):
         Plot the PoloidalFieldCoils in x-y.
         """
         raise NotImplementedError
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

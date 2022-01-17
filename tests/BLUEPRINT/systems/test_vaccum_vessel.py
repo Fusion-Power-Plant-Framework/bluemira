@@ -24,10 +24,9 @@ Testing routines for different thermal shield system
 import numpy as np
 
 from bluemira.base.parameter import ParameterFrame
-
-from BLUEPRINT.systems.vessel import SegmentedVaccumVessel
+from bluemira.geometry._deprecated_tools import get_intersect
 from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.geomtools import get_intersect
+from BLUEPRINT.systems.vessel import SegmentedVaccumVessel
 
 
 def setup_vessel_loops():

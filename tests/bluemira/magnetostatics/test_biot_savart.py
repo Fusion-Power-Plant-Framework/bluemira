@@ -19,20 +19,21 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import plot_defaults
-from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.display.auto_config import plot_defaults
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.greens import (
-    greens_all,
     circular_coil_inductance_elliptic,
     circular_coil_inductance_kirchhoff,
+    greens_all,
 )
-from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-import tests
 
 
 def test_biot_savart_loop():

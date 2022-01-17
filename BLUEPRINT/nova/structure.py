@@ -22,31 +22,32 @@
 """
 Coil structure creation algorithms - binding TF and PF coils together
 """
-import numpy as np
-import matplotlib.pyplot as plt
 from copy import deepcopy
 from typing import Type
-from scipy.optimize import minimize_scalar, minimize
-from scipy.optimize import fmin_slsqp
-from BLUEPRINT.geometry.geomtools import normal
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import fmin_slsqp, minimize, minimize_scalar
+
 from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.systems.baseclass import ReactorSystem
 from bluemira.base.parameter import ParameterFrame
+from bluemira.equilibria.positioner import XZLMapper
+from bluemira.geometry._deprecated_tools import get_intersect
+from bluemira.geometry.constants import VERY_BIG
 from BLUEPRINT.base.error import NovaError
-from BLUEPRINT.geometry.constants import VERY_BIG
+from BLUEPRINT.cad.coilCAD import CoilStructureCAD
+from BLUEPRINT.geometry.boolean import boolean_2d_difference
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import (
-    get_intersect,
-    length,
-    xz_interp,
     distance_between_points,
+    length,
     loop_plane_intersect,
+    normal,
+    xz_interp,
 )
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.boolean import boolean_2d_difference
-from bluemira.equilibria.positioner import XZLMapper
-from BLUEPRINT.cad.coilCAD import CoilStructureCAD
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
@@ -337,7 +338,7 @@ class CoilArchitect(ReactorSystem):
         self.xsections["case_out"] = {"y": y_out, "z": np.array(z_out)}
         self.x_nose = self.tf.geom["Case inboard X-Y single"].outer.x[2]
 
-    def _calculate_CS_seat(self):  # noqa (N802)
+    def _calculate_CS_seat(self):  # noqa :N802
         """
         Calculates the position of the CS support seat
         """
@@ -356,7 +357,7 @@ class CoilArchitect(ReactorSystem):
         zo = min(zo, 0.9 * z_max)  # Eyeballing here
         return xo, zo
 
-    def _build_CS_support(self):  # noqa (N802)
+    def _build_CS_support(self):  # noqa :N802
         """
         Builds the CS supports onto the TF coils
         """
@@ -365,7 +366,7 @@ class CoilArchitect(ReactorSystem):
         self.geom["feed 3D CAD"]["CS"]["z"] = [znose, znose, ztop, ztop]
         self.geom["feed 3D CAD"]["CS"]["ztop"] = ztop
 
-    def _build_PF_supports(self):  # noqa (N802)
+    def _build_PF_supports(self):  # noqa :N802
         """
         Builds the PF supports
         """
@@ -393,7 +394,7 @@ class CoilArchitect(ReactorSystem):
             "space": space,
         }
 
-    def _connect_PF(self, coil, loop, edge, hover, ang_min):  # noqa (N802)
+    def _connect_PF(self, coil, loop, edge, hover, ang_min):  # noqa :N802
         """
         Connects a PF coil to the TF coil offset
         """
@@ -556,7 +557,7 @@ class CoilArchitect(ReactorSystem):
 
         self.geom["feed 3D CAD"]["Gsupport"] = gsupport
 
-    def _build_OIC_structures(self):  # noqa (N802)
+    def _build_OIC_structures(self):  # noqa :N802
         """
         Designs the outer inter-coil structures
         """
@@ -933,9 +934,3 @@ class CoilArchitectPlotter(ReactorSystemPlotter):
     def __init__(self):
         super().__init__()
         self._palette_key = "ATEC"
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

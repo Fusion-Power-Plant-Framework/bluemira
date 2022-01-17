@@ -26,6 +26,9 @@ Constants for the geometry module
 # Absolute tolerance for equality in distances
 D_TOLERANCE = 1e-5  # [m]
 
+# Minimum length of a wire or sub-wire (edge)
+MINIMUM_LENGTH = 1e-5  # [m]
+
 # Cross product tolerance
 CROSS_P_TOL = 1e-14
 

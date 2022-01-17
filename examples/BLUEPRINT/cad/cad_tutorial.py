@@ -34,20 +34,21 @@ Feel free to change parameters!
 
 # %%
 import os
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.geometry.loop import Loop
+
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.cad.cadtools import (
-    make_face,
-    make_circle,
-    make_axis,
-    revolve,
-    extrude,
-    translate_shape,
-    boolean_fuse,
     boolean_cut,
-    show_CAD,
+    boolean_fuse,
+    extrude,
+    make_axis,
+    make_circle,
+    make_face,
+    revolve,
     save_as_STEP,
+    show_CAD,
+    translate_shape,
 )
+from BLUEPRINT.geometry.loop import Loop
 
 # %%[markdown]
 # Let's say you want to make some 3-D shapes to impress your boss.
@@ -205,7 +206,7 @@ show_CAD(cutlet)
 # For this we're going to load some Loop shapes from files
 
 # %%
-path = get_BP_path("BLUEPRINT/cad/test_data", subfolder="tests")
+path = get_bluemira_path("BLUEPRINT/cad/test_data", subfolder="tests")
 name = "plasmaloop.json"
 filename = os.sep.join([path, name])
 
@@ -271,7 +272,7 @@ filename = os.sep.join([path, "plasma_block_test"])
 save_as_STEP(plasma_block2, filename)
 
 # %%[markdown]
-# You can check it was saved by typing: `exporer.exe .` in your ubuntu terminal, and
+# You can check it was saved by typing: `explorer.exe .` in your ubuntu terminal, and
 # navigating to the file path above.
 
 # You can view the file in any CAD program, like FreeCAD..

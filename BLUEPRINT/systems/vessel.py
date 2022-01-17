@@ -23,25 +23,25 @@
 Reactor vacuum vessel system
 """
 from itertools import cycle
-import numpy as np
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
+import numpy as np
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.cad.vesselCAD import VesselCAD, SegmentedVesselCAD
+from bluemira.base.parameter import ParameterFrame
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.cad.vesselCAD import SegmentedVesselCAD, VesselCAD
 from BLUEPRINT.geometry.boolean import (
-    boolean_2d_difference_loop,
     boolean_2d_difference,
+    boolean_2d_difference_loop,
     boolean_2d_union,
-    simplify_loop,
     clean_loop,
+    simplify_loop,
 )
-from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
-from BLUEPRINT.geometry.shell import Shell
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import loop_plane_intersect, make_box_xz
+from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable, UpperPort
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
@@ -529,7 +529,7 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             cutter_loop = make_box_xz(
                 x_min=self.params.r_vv_joint,
                 x_max=np.amax(offset_loop.x) + 0.1,
-                z_min=-np.amax(offset_loop.z) - 0.1,
+                z_min=np.min(offset_loop.z) - 0.1,
                 z_max=np.amax(offset_loop.z) + 0.1,
             )
 
@@ -538,7 +538,7 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
             cutter_loop = make_box_xz(
                 x_min=np.amin(offset_loop.x) - 0.1,
                 x_max=self.params.r_vv_joint,
-                z_min=-np.amax(offset_loop.z) - 0.1,
+                z_min=np.min(offset_loop.z) - 0.1,
                 z_max=np.amax(offset_loop.z) + 0.1,
             )
 
@@ -583,6 +583,11 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
         z_ib_joint_bot = z_ib_joint_top - self.params.tk_vv_in
         z_ob_joint_bot = z_ob_joint_top - self.params.tk_vv_out
 
+        z_ib_joint_bot_neg = np.amin(joint_ib_intersect.T[2])
+        z_ob_joint_bot_neg = np.amin(joint_ob_intersect.T[2])
+        z_ib_joint_top_neg = z_ib_joint_bot_neg + self.params.tk_vv_in
+        z_ob_joint_top_neg = z_ob_joint_bot_neg + self.params.tk_vv_out
+
         contact = (
             (  # Case 1: The outboard is on top of the inboard
                 z_ib_joint_top < z_ob_joint_top and z_ob_joint_bot < z_ib_joint_top
@@ -619,8 +624,17 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
                     min(z_ib_joint_bot, z_ob_joint_bot),
                 ]
             )
+
+            loop_z_neg = np.array(
+                [
+                    max(z_ib_joint_top_neg, z_ob_joint_top_neg),
+                    max(z_ib_joint_top_neg, z_ob_joint_top_neg),
+                    min(z_ib_joint_bot_neg, z_ob_joint_bot_neg),
+                    min(z_ib_joint_bot_neg, z_ob_joint_bot_neg),
+                ]
+            )
             vv_junction_loop_top = Loop(x=loop_x, z=loop_z)
-            vv_junction_loop_bot = Loop(x=loop_x, z=-loop_z)
+            vv_junction_loop_bot = Loop(x=loop_x, z=loop_z_neg)
             vv_junction_loop_top.close()
             vv_junction_loop_bot.close()
 
@@ -694,9 +708,3 @@ class VacuumVesselPlotter(ReactorSystemPlotter):
             alpha2 = alpha * 0.5
             kwargs["alpha"] = [alpha2] + [alpha] * (len(plot_objects) - 1)
         super().plot_xz(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

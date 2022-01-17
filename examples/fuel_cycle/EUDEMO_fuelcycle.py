@@ -23,21 +23,21 @@
 A typical fuel cycle result for an EU-DEMO reference point
 """
 
-from bluemira.base.look_and_feel import plot_defaults
 from bluemira.base.parameter import ParameterFrame
-from bluemira.utilities.tools import set_random_seed
-from bluemira.fuel_cycle.lifecycle import LifeCycle
-from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+from bluemira.display.auto_config import plot_defaults
 from bluemira.fuel_cycle.analysis import FuelCycleAnalysis
+from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+from bluemira.fuel_cycle.lifecycle import LifeCycle
+from bluemira.fuel_cycle.timeline_tools import (
+    GompertzLearningStrategy,
+    LogNormalAvailabilityStrategy,
+)
 from bluemira.fuel_cycle.tools import (
     convert_flux_to_flow,
     n_DD_reactions,
     n_DT_reactions,
 )
-from bluemira.fuel_cycle.timeline_tools import (
-    LogNormalAvailabilityStrategy,
-    GompertzLearningStrategy,
-)
+from bluemira.utilities.tools import set_random_seed
 
 plot_defaults()
 
@@ -77,14 +77,14 @@ lifecycle_config = ParameterFrame([
     ["n_DT_reactions", "D-T fusion reaction rate", n_DT_reactions(p_fus_DT), "1/s", "At full power", "Input"],
     ["n_DD_reactions", "D-D fusion reaction rate", n_DD_reactions(p_fus_DD), "1/s", "At full power", "Input"],
     ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa",
-     "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+     "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
     ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa",
-     "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+     "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
     ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa",
-     "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+     "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
     ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
     ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "n/m^2",
-     "http://ieeexplore.ieee.org/document/6374236/", "Input"],
+     "https://ieeexplore.ieee.org/document/6374236/", "Input"],
 ])
 # fmt:on
 
@@ -175,23 +175,23 @@ tfv_config = ParameterFrame([
     ['A_global', 'Load factor', A_global, 'N/A', None, 'Silent input'],
     ['r_learn', 'Learning rate', 1, 'N/A', None, 'Silent input'],
     ['t_pump', 'Time in DIR loop', t_pump, 's', 'Time between exit from plasma and entry into plasma through DIR loop', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-    ['t_exh', 'Time in INDIR loop', t_exh, 's', 'Time between exit from plasma and entry into TFV systems INDIR', None],
-    ['t_ters', 'Time from BB exit to TFV system', 6750, 's', None, None],
+    ['t_exh', 'Time in INDIR loop', t_exh, 's', 'Time between exit from plasma and entry into TFV systems INDIR', 'Input'],
+    ['t_ters', 'Time from BB exit to TFV system', 6750, 's', None, 'Input'],
     ['t_freeze', 'Time taken to freeze pellets', 3600 / 2, 's', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
     ['f_dir', 'Fraction of flow through DIR loop', f_dir, 'N/A', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
-    ['t_detrit', 'Time in detritiation system', 0, 's', None, None],
-    ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'N/A', None, None],
-    ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'N/A', None, None],
-    ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'N/A', 'Pump which pumps down the fuelling lines', None],
-    ['eta_f', 'Fuelling efficiency', 0.5, 'N/A', 'Efficiency of the fuelling lines prior to entry into the VV chamber', None],
-    ['I_miv', 'Maximum in-vessel T inventory', max_ivc_inventory, 'kg', None, None],
+    ['t_detrit', 'Time in detritiation system', 0, 's', None, 'Input'],
+    ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'N/A', None, 'Input'],
+    ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'N/A', None, 'Input'],
+    ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'N/A', 'Pump which pumps down the fuelling lines', 'Input'],
+    ['eta_f', 'Fuelling efficiency', 0.5, 'N/A', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Input'],
+    ['I_miv', 'Maximum in-vessel T inventory', max_ivc_inventory, 'kg', None, 'Input'],
     ['I_tfv_min', 'Minimum TFV inventory', m_cryodistillation, 'kg', 'Without which e.g. cryodistillation columns are not effective', "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
     ['I_tfv_max', 'Maximum TFV inventory', m_cryodistillation + 0.2, 'kg', "Account for T sequestration inside the T plant", "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
-    ['I_mbb', 'Maximum BB T inventory', max_bb_inventory, 'kg', None, None],
-    ['eta_iv', 'In-vessel bathtub parameter', eta_ivc, 'N/A', None, None],
-    ['eta_bb', 'BB bathtub parameter', 0.995, 'N/A', None, None],
-    ['eta_tfv', 'TFV bathtub parameter', 0.998, 'N/A', None, None],
-    ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'N/A', None, None]
+    ['I_mbb', 'Maximum BB T inventory', max_bb_inventory, 'kg', None, 'Input'],
+    ['eta_iv', 'In-vessel bathtub parameter', eta_ivc, 'N/A', None, 'Input'],
+    ['eta_bb', 'BB bathtub parameter', 0.995, 'N/A', None, 'Input'],
+    ['eta_tfv', 'TFV bathtub parameter', 0.998, 'N/A', None, 'Input'],
+    ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'N/A', None, 'Input']
 ])
 # fmt:on
 

@@ -21,21 +21,22 @@
 """
 Fusion power reactor lifecycle object.
 """
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 import json
 from typing import Type
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.lines import Line2D
+
+from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter import ParameterFrame
-from bluemira.base.constants import S_TO_YR, YR_TO_S
-from bluemira.utilities.tools import abs_rel_difference, is_num
 from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.fuel_cycle.timeline_tools import (
     LearningStrategy,
     OperationalAvailabilityStrategy,
 )
+from bluemira.utilities.tools import abs_rel_difference, is_num, json_writer
 
 __all__ = ["LifeCycle"]
 
@@ -58,14 +59,14 @@ class LifeCycle:
         ["s_ramp_down", "Plasma current ramp-down rate", 0.1, "MA/s", None, "R. Wenninger"],
         ["n_DT_reactions", "D-T fusion reaction rate", 7.078779946428698e20, "1/s", "At full power", "Input"],
         ["n_DD_reactions", "D-D fusion reaction rate", 8.548069652616976e18, "1/s", "At full power", "Input"],
-        ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-        ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
-        ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+        ["blk_1_dpa", "Starter blanket life limit (EUROfer)", 20, "dpa", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+        ["blk_2_dpa", "Second blanket life limit (EUROfer)", 50, "dpa", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+        ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
-        ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "n/m^2", "http://ieeexplore.ieee.org/document/6374236/", "Input"],
+        ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "n/m^2", "https://ieeexplore.ieee.org/document/6374236/", "Input"],
         ["tf_ins_nflux", "TF insulation peak neutron flux", 1.4e13, "n/m^2/s", "Pavel Pereslavtsev sent me an email 20/02/2017", "Input"],
         ["blk_dmg", "Blanket neutron daamge rate", 10.2, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 20", "Input"],
-        ["div_dmg", "Divertor neutron damange rate", 3, "dpa/fpy", "http://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
+        ["div_dmg", "Divertor neutron damange rate", 3, "dpa/fpy", "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
         ["vv_dmg", "Vacuum vessel neutron damage rate", 0.3, "dpa/fpy", "Pavel Pereslavtsev 2M7HN3 fig. 18", "Input"],
     ]
     # fmt: on
@@ -314,7 +315,12 @@ class LifeCycle:
                 f"% diff: {100*delt:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(self.config, self.inputs)  # Phoenix
+            self.__init__(
+                self.config,
+                self.learning_strategy,
+                self.availability_strategy,
+                self.inputs,
+            )  # Phoenix
 
         if delta2 > 0.015:
             bluemira_warn(
@@ -325,7 +331,12 @@ class LifeCycle:
                 f"% diff: {100*delta2:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(self.config, self.inputs)  # Phoenix
+            self.__init__(
+                self.config,
+                self.learning_strategy,
+                self.availability_strategy,
+                self.inputs,
+            )  # Phoenix
 
         if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
             bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
@@ -451,14 +462,13 @@ class LifeCycle:
             )
         )
 
-    def write(self, filename):
+    def write(self, filename, **kwargs):
         """
         Save a Timeline to a JSON file.
         """
         bluemira_print(f"Writing {filename}")
         data = self.T.to_dict()
-        with open(filename, "w") as f_h:
-            json.dump(data, f_h, indent=4)
+        return json_writer(data, filename, **kwargs)
 
     def read(self, filename):
         """

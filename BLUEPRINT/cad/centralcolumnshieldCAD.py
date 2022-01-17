@@ -23,8 +23,8 @@
 Central column shield CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.cadtools import make_face, revolve, rotate_shape
+from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.geometry.loop import Loop
 
 
@@ -72,7 +72,7 @@ class CentralColumnShieldCAD(ComponentCAD):
 
         if not isinstance(self.profile, Loop):
             raise TypeError("2D profile key does not map to a Loop object")
-        super().__init__(self, "Central column shield", palette=BLUE["CCS"], **kwargs)
+        super().__init__("Central column shield", palette=BLUE["CCS"], **kwargs)
 
     def build(self, **kwargs):
         """
@@ -91,9 +91,3 @@ class CentralColumnShieldCAD(ComponentCAD):
 
         # Save
         self.add_shape(ccs_cad)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

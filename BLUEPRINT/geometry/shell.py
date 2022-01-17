@@ -22,27 +22,27 @@
 """
 A shell object (essentially just a polygon with a single hole)
 """
-import numpy as np
-
 # Plotting imports
 import matplotlib.pyplot as plt
-from shapely.geos import TopologicalError
+import numpy as np
 from matplotlib.patches import PathPatch
-from sectionproperties.pre.sections import CustomSection
 from sectionproperties.analysis.cross_section import CrossSection
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.utilities.plottools import pathify, BPPathPatch3D, Plot3D
+from sectionproperties.pre.sections import CustomSection
+from shapely.geos import TopologicalError
+
+from bluemira.geometry._deprecated_tools import get_intersect
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.boolean import boolean_2d_difference
 from BLUEPRINT.geometry.geombase import GeomBase, _check_other, point_dict_to_array
-from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.geomtools import (
-    distance_between_points,
-    qrotate,
     bounding_box,
-    get_control_point,
     clean_loop_points,
-    get_intersect,
+    distance_between_points,
+    get_control_point,
+    qrotate,
 )
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.utilities.plottools import BPPathPatch3D, Plot3D, pathify
 
 
 class Shell(GeomBase):
@@ -645,9 +645,3 @@ class MultiShell(GeomBase):
             ax = kwargs.get("ax", plt.gca())
         for shell in self.shells:
             shell.plot(ax, points, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

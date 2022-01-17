@@ -25,15 +25,15 @@ object, optimized for the minimum length
 """
 
 import os
+
 import matplotlib.pyplot as plt
 
+from bluemira.base.file import make_bluemira_path
 from bluemira.base.parameter import ParameterFrame
-
-from BLUEPRINT.base.file import make_BP_path
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from bluemira.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.model import CADModel
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 
 # BASED ON GV_SPR_08 from the PROCESS-STEP repository
 # fmt: off
@@ -59,8 +59,8 @@ params = [
 
 parameters = ParameterFrame(params)
 
-read_path = make_BP_path("Geometry", subfolder="data/BLUEPRINT")
-write_path = make_BP_path("SC_P_coil", subfolder="generated_data/BLUEPRINT")
+read_path = make_bluemira_path("Geometry", subfolder="data/BLUEPRINT")
+write_path = make_bluemira_path("SC_P_coil", subfolder="generated_data/BLUEPRINT")
 
 lcfs = flux_surface_manickam(3.639, 0, 2.183, 2.8, 0.543, n=40)
 lcfs.close()

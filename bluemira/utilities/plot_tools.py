@@ -24,18 +24,22 @@ A collection of plotting tools.
 """
 
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-from matplotlib.patches import Patch, PathPatch
-from mpl_toolkits.mplot3d.art3d import PathPatch3D
-from mpl_toolkits.mplot3d import Axes3D
-import imageio
+from typing import Union
 
-from bluemira.base.components import Component, GroupingComponent
+import imageio
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Patch, PathPatch
+from matplotlib.path import Path
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import PathPatch3D
+
+import bluemira.display.error as bm_display_error
+from bluemira.base.components import Component
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
-
+from bluemira.geometry.coordinates import check_ccw
+from bluemira.geometry.plane import BluemiraPlane
 
 __all__ = [
     "str_to_latex",
@@ -125,8 +129,6 @@ def make_gif(folder, figname, formatt="png", clean=True):
 def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
     """
     Saves a figure to the directory if save flag active
-    Meant to be used to switch on/off output figs from main BLUEPRINT run,
-    typically flagged in reactor.py
     """
     if save is True:
         if folder is None:
@@ -153,14 +155,23 @@ def coordinates_to_path(x, z):
     """
     Convert coordinates to path vertices.
     """
-    from bluemira.geometry._deprecated_tools import check_ccw
-
     if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
     vertices = np.array([x, z]).T
     codes = ring_coding(len(x))
     return Path(vertices, codes)
+
+
+def set_component_plane(comp: Component, plane: Union[str, BluemiraPlane]):
+    if plane not in ["xy", "xz", "zy"] and not isinstance(plane, BluemiraPlane):
+        raise bm_display_error.DisplayError(
+            f"Not a valid plane {plane} - select either xy, xz, zy, or a BluemiraPlane"
+        )
+
+    comp.plot_options.plane = plane
+    for child in comp.children:
+        set_component_plane(child, plane)
 
 
 class Plot3D(Axes3D):
@@ -222,26 +233,3 @@ class BluemiraPathPatch3D(PathPatch3D):
         Transfer the key getattr to underlying PathPatch object.
         """
         return getattr(self._patch2d, key)
-
-
-def plot_component(component: Component, axis=None):
-    """
-    Plot the Component on the provided axis.
-
-    If the Component is a GroupingComponent then all child components with shapes will be
-    plotted.
-    """
-    from bluemira.geometry.plotting import plot_face
-
-    if axis is None:
-        axis = Plot3D()
-
-    if isinstance(component, GroupingComponent):
-        for child in component.children:
-            plot_component(child, axis=axis)
-        return
-
-    if hasattr(component, "shape"):
-        plot_face(component.shape, axis=axis)
-    else:
-        raise ValueError(f"Could not plot component {component}")

@@ -23,15 +23,17 @@
 Example of an OpenMOC simulation using an imported BLUEPRINT geometry
 """
 
-# Common imports
-from datetime import datetime
-from matplotlib.cbook import mplDeprecation
-import numpy as np
 import os
 import warnings
 
+# Common imports
+from datetime import datetime
+
+import numpy as np
+
 # Import OpenMOC and it's plotter
 import openmoc
+from matplotlib.cbook import mplDeprecation
 from openmoc import plotter as plotter
 
 # Some BLUEPRINT imports
@@ -47,8 +49,8 @@ from BLUEPRINT.neutronics.plasma_source import PlasmaSource
 from examples.neutronics.openmoc_geometry import (
     geometry,
     plasma,
-    plasma_sections,
     plasma_cells,
+    plasma_sections,
 )
 
 ####################################

@@ -24,9 +24,14 @@ File I/O functions and some path operations
 """
 
 import os
+import pathlib
+from typing import Dict
+
+BM_ROOT = "!BM_ROOT!"
+SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
 
 
-def _get_relpath(folder, subfolder):
+def _get_relpath(folder: str, subfolder: str) -> str:
     path = os.sep.join([folder, subfolder])
     if os.path.isdir(path):
         return path
@@ -34,7 +39,7 @@ def _get_relpath(folder, subfolder):
         raise ValueError(f"{path} Not a valid folder.")
 
 
-def get_bluemira_root():
+def get_bluemira_root() -> str:
     """
     Get the bluemira root install folder.
 
@@ -51,7 +56,7 @@ def get_bluemira_root():
     return root
 
 
-def try_get_bluemira_private_data_root():
+def try_get_bluemira_private_data_root() -> str:
     """
     Get the bluemira-private-data root install folder.
 
@@ -74,7 +79,7 @@ def try_get_bluemira_private_data_root():
         return None
 
 
-def get_bluemira_path(path="", subfolder="bluemira"):
+def get_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
     """
     Get a bluemira path of a module subfolder. Defaults to root folder.
 
@@ -100,7 +105,9 @@ def get_bluemira_path(path="", subfolder="bluemira"):
     return _get_relpath(bpath, path)
 
 
-def try_get_bluemira_path(path="", subfolder="bluemira", allow_missing=True):
+def try_get_bluemira_path(
+    path: str = "", subfolder: str = "bluemira", allow_missing=True
+):
     """
     Try to get the bluemira path of a module subfolder.
 
@@ -136,7 +143,7 @@ def try_get_bluemira_path(path="", subfolder="bluemira", allow_missing=True):
             raise error
 
 
-def make_bluemira_path(path="", subfolder="bluemira"):
+def make_bluemira_path(path: str = "", subfolder: str = "bluemira"):
     """
     Create a new folder in the path, provided one does not already exist.
     """
@@ -154,7 +161,7 @@ def make_bluemira_path(path="", subfolder="bluemira"):
         return _get_relpath(bpath, path)
 
 
-def get_files_by_ext(folder, extension):
+def get_files_by_ext(folder: str, extension: str):
     """
     Get filenames of files in folder with the specified extension.
 
@@ -179,3 +186,182 @@ def get_files_by_ext(folder, extension):
 
         bluemira_warn(f"No files with extension {extension} found in folder {folder}")
     return files
+
+
+def file_name_maker(filename: str, lowercase: bool = False) -> str:
+    """
+    Ensure the file name is acceptable.
+
+    Parameters
+    ----------
+    filename: str
+        Full filename or path
+    lowercase: bool
+        Whether or not to force lowercase filenames
+
+    Returns
+    -------
+    filename: str
+        Full filename or path, corrected
+    """
+    filename = filename.replace(" ", "_")
+    if lowercase:
+        split = filename.split(os.sep)
+        filename = os.sep.join(split[:-1])
+        filename = os.sep.join([filename, split[-1].lower()])
+    return filename
+
+
+class FileManager:
+    """
+    A class for managing file operations.
+    """
+
+    _reactor_name: str
+    _reference_data_root: str
+    _generated_data_root: str
+
+    reference_data_dirs: Dict[str, str]
+    generated_data_dirs: Dict[str, str]
+
+    def __init__(
+        self,
+        reactor_name: str,
+        reference_data_root: str = "data/bluemira",
+        generated_data_root: str = "data/bluemira",
+    ):
+        self._reactor_name = reactor_name
+        self._reference_data_root = reference_data_root
+        self._generated_data_root = generated_data_root
+        self.replace_bm_root()
+
+    @property
+    def reactor_name(self):
+        """
+        Gets the reactor name for this instance.
+        """
+        return self._reactor_name
+
+    @property
+    def generated_data_root(self) -> str:
+        """
+        Gets the generated data root directory for this instance.
+        """
+        return self._generated_data_root
+
+    @property
+    def reference_data_root(self) -> str:
+        """
+        Get the reference data root directory for this instance.
+        """
+        return self._reference_data_root
+
+    def replace_bm_root(self, keyword=BM_ROOT):
+        """
+        Replace the keyword in input paths with path to local bluemira installation.
+        """
+        bm_root = get_bluemira_root()
+        self._reference_data_root = self.reference_data_root.replace(keyword, bm_root)
+        self._generated_data_root = self.generated_data_root.replace(keyword, bm_root)
+
+    def _verify_reference_data_root(self):
+        """
+        Check that the reference data root defined in this instance is a valid
+        directory.
+
+        Raises
+        ------
+        ValueError
+            If the reference data root for this instance is not a valid directory.
+        """
+        _get_relpath(self._reference_data_root, subfolder="")
+
+    def make_reactor_folder(self, subfolder: str) -> Dict[str, str]:
+        """
+        Initialise a data storage folder tree.
+
+        Parameters
+        ----------
+        subfolder: str
+            The subfolder of the bluemira directory in which to add the data structure
+
+        Returns
+        -------
+        mapping: dict
+            The dictionary of subfolder names to full paths (useful shorthand)
+        """
+        root = os.path.join(subfolder, "reactors", self.reactor_name)
+        pathlib.Path(root).mkdir(parents=True, exist_ok=True)
+
+        mapping = {"root": root}
+        for sub in SUB_DIRS:
+            folder = os.sep.join([root, sub])
+            pathlib.Path(folder).mkdir(exist_ok=True)
+
+            mapping[sub] = folder
+
+        return mapping
+
+    def set_reference_data_paths(self):
+        """
+        Generate the reference data paths for this instance, based on the reactor name.
+        """
+        self._verify_reference_data_root()
+        self.reference_data_dirs = self.make_reactor_folder(self._reference_data_root)
+
+    def create_reference_data_paths(self):
+        """
+        Generate the reference data paths for this instance, based on the reactor name.
+
+        Also builds the relevant directory structure.
+        """
+        pathlib.Path(self._reference_data_root).mkdir(parents=True, exist_ok=True)
+        self.reference_data_dirs = self.make_reactor_folder(self._reference_data_root)
+
+    def create_generated_data_paths(self):
+        """
+        Generate the generated data paths for this instance, based on the reactor name.
+
+        Also builds the relevant directory structure.
+        """
+        pathlib.Path(self._generated_data_root).mkdir(parents=True, exist_ok=True)
+        self.generated_data_dirs = self.make_reactor_folder(self._generated_data_root)
+
+    def build_dirs(self, create_reference_data_paths: bool = False):
+        """
+        Create the directory structures for this instance and sets the path references.
+        """
+        if create_reference_data_paths:
+            self.create_reference_data_paths()
+        else:
+            self.set_reference_data_paths()
+        self.create_generated_data_paths()
+
+    def get_path(self, sub_dir_name: str, path: str, make_dir: bool = False) -> str:
+        """
+        Get a path within the generated data sub-sdirectories.
+
+        If the path does not exist then it will optionally be created as a directory.
+
+        Parameters
+        ----------
+        sub_dir_name: str
+            The name of the sub-directory to create the path under. Must be one of the
+            names in bluemira.base.file.SUB_DIRS.
+        path: str
+            The path to create under the sub-directory.
+        make_dir: bool
+            Optionally create a directory at the path, by default False.
+
+        Returns
+        -------
+        path: str
+            The path within the data sub-directories.
+        """
+        path = os.sep.join(
+            [self.generated_data_dirs[sub_dir_name], path.replace("/", os.sep)]
+        )
+        if make_dir:
+            if not os.path.isdir(path):
+                os.makedirs(path)
+        return path

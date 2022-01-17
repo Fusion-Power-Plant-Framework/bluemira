@@ -5,7 +5,7 @@ Bluemira Modules
     :maxdepth: 4
     :caption: Contents:
     :hidden:
- 
+
     base/base
     codes
     components

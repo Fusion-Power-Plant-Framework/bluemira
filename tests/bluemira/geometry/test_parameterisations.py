@@ -19,24 +19,23 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
 import numpy as np
+import pytest
 
-from bluemira.utilities.error import OptVariablesError
-from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
-    PrincetonD,
-    TripleArc,
-    SextupleArc,
     PictureFrame,
     PolySpline,
+    PrincetonD,
+    SextupleArc,
     TaperedPictureFrame,
+    TripleArc,
 )
 from bluemira.geometry.tools import make_polygon
-from bluemira.geometry._deprecated_tools import get_perimeter
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.error import OptVariablesError
+from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 
 class TestGeometryParameterisation:
@@ -87,17 +86,6 @@ class TestPrincetonD:
         with pytest.raises(GeometryParameterisationError):
             PrincetonD._princeton_d(10, 3, 0)
 
-    def test_parameterisation(self):
-        p = PrincetonD()
-        p.adjust_variable("x1", 4, lower_bound=3, upper_bound=5)
-        p.adjust_variable("x2", 16, lower_bound=10, upper_bound=20)
-        p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
-
-        wire = p.create_shape()
-        array = p.create_array(n_points=200)
-
-        assert np.isclose(wire.length, get_perimeter(*array), rtol=1e-3)
-
     def test_bad_behaviour(self):
         p = PrincetonD()
         with pytest.raises(OptVariablesError):
@@ -105,6 +93,13 @@ class TestPrincetonD:
 
         with pytest.raises(OptVariablesError):
             p.variables.remove_variable("x1")
+
+    def test_instantiation_fixed(self):
+        p = PrincetonD(
+            {"x1": {"value": 5, "fixed": True}, "x2": {"value": 14, "fixed": False}}
+        )
+        assert p.variables["x1"].fixed
+        assert not p.variables["x2"].fixed
 
 
 class TestPictureFrame:
@@ -141,7 +136,7 @@ class TestTripleArc:
     def test_circle(self):
         p = TripleArc()
         p.adjust_variable("x1", value=4)
-        p.adjust_variable("z1", value=0)
+        p.adjust_variable("dz", value=0)
         p.adjust_variable("sl", value=0, lower_bound=0)
         p.adjust_variable("f1", value=3)
         p.adjust_variable("f2", value=3)

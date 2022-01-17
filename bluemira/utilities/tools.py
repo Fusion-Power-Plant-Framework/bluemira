@@ -23,22 +23,31 @@
 A collection of miscellaneous tools.
 """
 
-import numpy as np
 import operator
-from importlib import util as imp_u, import_module as imp
-from json import JSONDecoder, JSONEncoder
-from json.encoder import _make_iterencode
-import string
-import nlopt
-from os import listdir
 import re
+import string
+from collections.abc import Iterable
 from functools import partial
+from importlib import import_module as imp
+from importlib import machinery as imp_mach
+from importlib import util as imp_u
 from itertools import permutations
+from json import JSONDecoder, JSONEncoder, dumps
+from json.encoder import _make_iterencode
+from os import listdir
+from types import ModuleType
+from typing import Any, List, Type, Union
 from unittest.mock import patch
 
-from bluemira.base.constants import E_I, E_IJ, E_IJK
+import nlopt
+import numpy as np
+
+from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
-from bluemira.base.parameter import Parameter
+
+# =====================================================
+# JSON utilities
+# =====================================================
 
 
 class CommentJSONDecoder(JSONDecoder):
@@ -64,6 +73,7 @@ class CommentJSONDecoder(JSONDecoder):
         containing a JSON document).
         """
         s = self.eof.sub("}", self.comma.sub("}", self.comments.sub("", s)).strip())
+        bluemira_debug("Comment stripped JSON\n" + s)
         return super().decode(s, *args, **kwargs)
 
 
@@ -90,6 +100,8 @@ class NumpyJSONEncoder(JSONEncoder):
         https://bugs.python.org/issue42434
         https://bugs.python.org/issue31466
         """
+        from bluemira.base.parameter import Parameter
+
         if isinstance(obj, Parameter):
             obj = obj.value
         return _floatstr(obj, *args, **kwargs)
@@ -125,49 +137,39 @@ def _patcher(markers, _default, _encoder, _indent, _floatstr, *args, **kwargs):
     )
 
 
-def is_num(thing):
+def json_writer(data, file=None, return_output=False, *, cls=NumpyJSONEncoder, **kwargs):
     """
-    Determine whether or not the input is a number.
+    Write json in the bluemria style.
 
     Parameters
     ----------
-    thing: unknown type
-        The input which we need to determine is a number or not
+    data: dict
+        dictionary to write to json
+    filename: str
+        filename to write to
+    return_output:bool
+        return the json as a string
+    cls: JsonEncoder
+        json encoder child class
+    kwargs: dict
+        all further kwargs passed to the json writer
 
-    Returns
-    -------
-    num: bool
-        Whether or not the input is a number
     """
-    if thing is True or thing is False:
-        return False
-    if thing is np.nan:
-        return False
-    try:
-        float(thing)
-        return True
-    except (ValueError, TypeError):
-        return False
+    if file is None and not return_output:
+        bluemira_warn("No json action to take")
+        return
 
+    if "indent" not in kwargs:
+        kwargs["indent"] = 4
 
-def abs_rel_difference(v2, v1_ref):
-    """
-    Calculate the absolute relative difference between a new value and an old
-    reference value.
+    the_json = dumps(data, cls=cls, **kwargs)
 
-    Parameters
-    ----------
-    v2: float
-        The new value to compare to the old
-    v1_ref: float
-        The old reference value
+    if file is not None:
+        with open(file, "w") as fh:
+            fh.write(the_json)
 
-    Returns
-    -------
-    delta: float
-        The absolute relative difference between v2 and v1ref
-    """
-    return abs((v2 - v1_ref) / v1_ref)
+    if return_output:
+        return the_json
 
 
 # =====================================================
@@ -375,6 +377,55 @@ norm = wrap.norm
 dot = wrap.dot
 cross = wrap.cross
 
+# =====================================================
+# Misc utilities
+# =====================================================
+
+
+def is_num(thing):
+    """
+    Determine whether or not the input is a number.
+
+    Parameters
+    ----------
+    thing: unknown type
+        The input which we need to determine is a number or not
+
+    Returns
+    -------
+    num: bool
+        Whether or not the input is a number
+    """
+    if thing is True or thing is False:
+        return False
+    if thing is np.nan:
+        return False
+    try:
+        float(thing)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def abs_rel_difference(v2, v1_ref):
+    """
+    Calculate the absolute relative difference between a new value and an old
+    reference value.
+
+    Parameters
+    ----------
+    v2: float
+        The new value to compare to the old
+    v1_ref: float
+        The old reference value
+
+    Returns
+    -------
+    delta: float
+        The absolute relative difference between v2 and v1ref
+    """
+    return abs((v2 - v1_ref) / v1_ref)
+
 
 def set_random_seed(seed_number: int):
     """
@@ -510,6 +561,27 @@ def clip(val, val_min, val_max):
     return val
 
 
+def flatten_iterable(iters):
+    """
+    Expands a nested iterable structure, flattening it into one iterable
+
+    Parameters
+    ----------
+    lists: set of Iterables
+        The object(s) to de-nest
+
+    Yields
+    ------
+        elements of iterable
+    """
+    for _iter in iters:
+        if isinstance(_iter, Iterable) and not isinstance(_iter, (str, bytes)):
+            for _it in flatten_iterable(_iter):
+                yield _it
+        else:
+            yield _iter
+
+
 # ======================================================================================
 # Coordinate system transformations
 # ======================================================================================
@@ -570,30 +642,34 @@ def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
     return x, z
 
 
-def get_module(name):
+# ======================================================================================
+# Dynamic module loading
+# ======================================================================================
+
+
+def get_module(name: str) -> ModuleType:
     """
     Load module dynamically.
 
     Parameters
     ----------
-    name: string
+    name: str
         Filename or python path (a.b.c) of module to import
 
     Returns
     -------
-    output: module
+    output: ModuleType
         Loaded module
-
     """
     try:
         module = imp(name)
     except ImportError:
         module = _loadfromspec(name)
-    bluemira_debug(f"Loaded {module.__name__}")
+    bluemira_debug(f"Loaded module {module.__name__}")
     return module
 
 
-def _loadfromspec(name):
+def _loadfromspec(name: str) -> ModuleType:
     """
     Load module from filename.
 
@@ -633,13 +709,203 @@ def _loadfromspec(name):
 
     mod_file = f"{dirname}/{requested}"
 
+    name, ext = requested.rsplit(".", 1) if "." in requested else (requested, "")
+
+    if ext not in imp_mach.SOURCE_SUFFIXES:
+        n_suffix = True
+        imp_mach.SOURCE_SUFFIXES.append(ext)
+    else:
+        n_suffix = False
+
     try:
-        spec = imp_u.spec_from_file_location(
-            mod_file.rsplit("/")[-1].split(".")[0], mod_file
-        )
+        spec = imp_u.spec_from_file_location(name, mod_file)
         module = imp_u.module_from_spec(spec)
         spec.loader.exec_module(module)
-    except (AttributeError, ImportError):
+    except (AttributeError, ImportError, SyntaxError):
         raise ImportError("File '{}' is not a module".format(mod_files[0]))
 
+    if n_suffix:
+        imp_mach.SOURCE_SUFFIXES.pop()
+
     return module
+
+
+def get_class_from_module(name: str, default_module: str = "") -> Type:
+    """
+    Load a class from a module dynamically.
+
+    Parameters
+    ----------
+    name: str
+        Filename or python path (a.b.c) of module to import, with specific class to load
+        appended following :: e.g. my_package.my_module::my_class. If the default_module
+        is provided then only the class name (e.g. my_class) needs to be provided.
+    default_module: str
+        The default module to search for the class, by default "". If provided then if
+        name does not contain a module path then this the default module will be used to
+        search for the class. Can be overridden if the name provides a module path.
+
+    Returns
+    -------
+    output: Type
+        Loaded class
+    """
+    module = default_module
+    class_name = name
+    if "::" in class_name:
+        module, class_name = class_name.split("::")
+    try:
+        output = getattr(get_module(module), class_name)
+    except AttributeError:
+        raise ImportError(f"Unable to load class {class_name} - not in module {module}")
+
+    bluemira_debug(f"Loaded class {output.__name__}")
+    return output
+
+
+# ======================================================================================
+# Materials related conversion functions
+# ======================================================================================
+
+
+def to_kelvin(
+    temp_in_celsius: Union[float, np.array, List[float]]
+) -> Union[float, np.array]:
+    """
+    Convert a temperature in Celsius to Kelvin.
+
+    Parameters
+    ----------
+    temp_in_celsius: Union[float, np.array, List[float]]
+        The temperature to convert [°C]
+
+    Returns
+    -------
+    temp_in_kelvin: Union[float, np.array]
+        The temperature [K]
+    """
+    if (is_num(temp_in_celsius) and temp_in_celsius < ABS_ZERO_C) or np.any(
+        np.less(temp_in_celsius, ABS_ZERO_C)
+    ):
+        raise ValueError("Negative temperature in K specified.")
+    return array_or_num(list_array(temp_in_celsius) - ABS_ZERO_C)
+
+
+def to_celsius(
+    temp_in_kelvin: Union[float, np.array, List[float]]
+) -> Union[float, np.array]:
+    """
+    Convert a temperature in Celsius to Kelvin.
+
+    Parameters
+    ----------
+    temp_in_kelvin: Union[float, np.array, List[float]]
+        The temperature to convert [K]
+
+    Returns
+    -------
+    temp_in_celsius: Union[float, np.array]
+        The temperature [°C]
+    """
+    if (is_num(temp_in_kelvin) and temp_in_kelvin < ABS_ZERO_K) or np.any(
+        np.less(temp_in_kelvin, ABS_ZERO_K)
+    ):
+        raise ValueError("Negative temperature in K specified.")
+    return array_or_num(list_array(temp_in_kelvin) + ABS_ZERO_C)
+
+
+def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+    """
+    Convert a density in kg/m3 to g/cm3
+
+    Parameters
+    ----------
+    density : Union[float, np.array, List[float]]
+        The density [kg/m3]
+
+    Returns
+    -------
+    density_gcm3 : Union[float, np.array]
+        The density [g/cm3]
+    """
+    if density is not None:
+        return array_or_num(list_array(density) / 1000.0)
+
+
+def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+    """
+    Convert a density in g/cm3 to kg/m3
+
+    Parameters
+    ----------
+    density : Union[float, np.array, List[float]]
+        The density [g/cm3]
+
+    Returns
+    -------
+    density_kgm3 : Union[float, np.array]
+        The density [kg/m3]
+    """
+    if density is not None:
+        return array_or_num(list_array(density) * 1000.0)
+
+
+def list_array(list_: Any) -> np.ndarray:
+    """
+    Always returns a numpy array
+    Can handle int, float, list, np.ndarray
+
+    Parameters
+    ----------
+    list_ : Any
+        The value to convert into a numpy array.
+
+    Returns
+    -------
+    result : np.ndarray
+        The value as a numpy array.
+
+    Raises
+    ------
+    TypeError
+        If the value cannot be converted to a numpy array.
+    """
+    if isinstance(list_, list):
+        return np.array(list_)
+    elif isinstance(list_, np.ndarray):
+        try:  # This catches the odd np.array(8) instead of np.array([8])
+            len(list_)
+            return list_
+        except TypeError:
+            return np.array([list_])
+    elif is_num(list_):
+        return np.array([list_])
+    else:
+        raise TypeError("Could not convert input type to list_array to a np.array.")
+
+
+def array_or_num(array: Any) -> Union[np.ndarray, float]:
+    """
+    Always returns a numpy array or a float
+
+    Parameters
+    ----------
+    array : Any
+        The value to convert into a numpy array or number.
+
+    Returns
+    -------
+    result : Union[np.ndarray, float]
+        The value as a numpy array or number.
+
+    Raises
+    ------
+    TypeError
+        If the value cannot be converted to a numpy or number.
+    """
+    if is_num(array):
+        return float(array)
+    elif isinstance(array, np.ndarray):
+        return array
+    else:
+        raise TypeError

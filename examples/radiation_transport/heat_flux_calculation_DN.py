@@ -24,6 +24,7 @@ Example single null first wall particle heat flux
 """
 
 import os
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria import Equilibrium
@@ -43,16 +44,20 @@ fw_name = os.sep.join([read_path, fw_name])
 fw_shape = Loop.from_file(fw_name)
 
 params = ParameterFrame(
+    # fmt: off
     [
-        ["fw_p_sol_near", "near scrape-off layer power", 90, "MW", None, "Input"],
-        ["fw_p_sol_far", "far scrape-off layer power", 50, "MW", None, "Input"],
-        ["fw_lambda_q_near", "Lambda q near SOL", 0.003, "m", None, "Input"],
-        ["fw_lambda_q_far", "Lambda q far SOL", 0.1, "m", None, "Input"],
-        ["f_outer_target", "Power fraction", 0.9, "N/A", None, "Input"],
-        ["f_inner_target", "Power fraction", 0.1, "N/A", None, "Input"],
-        ["f_upper_target", "Power fraction", 0.5, "N/A", None, "Input"],
-        ["f_lower_target", "Power fraction", 0.5, "N/A", None, "Input"],
+        ["P_sep_particle", "Separatrix power", 150, "MW", None, "Input"],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
+        ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
+        ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.1, "m", None, "Input"],
+        ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
+        ["fw_lambda_q_far_imp", "Lambda q far SOL at the inboard", 0.1, "m", None, "Input"],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "N/A", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "N/A", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0.9 * 0.5, "N/A", None, "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0.1 * 0.5, "N/A", None, "Input"],
     ]
+    # fmt: on
 )
 
 

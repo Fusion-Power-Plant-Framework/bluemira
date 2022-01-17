@@ -25,24 +25,32 @@ The home of Parameter and ParameterFrame objects
 These objects contain the definitions for the configuration of physical parameters in a
 bluemira analysis.
 """
+
+from __future__ import annotations
+
 import copy
-from dataclasses import dataclass
+import gc
 import json
 import os
-import gc
+from dataclasses import dataclass
+from functools import wraps
+from typing import Dict, List, Union
+
+import numpy as np
+import wrapt
 from pandas import DataFrame
 from tabulate import tabulate
-from typing import Dict
-from typing import Union
-import wrapt
-import numpy as np
-from functools import wraps
 
-from .error import ParameterError
-from .look_and_feel import bluemira_warn
-
+from bluemira.base.error import ParameterError
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.tools import json_writer
 
 __all__ = ["Parameter", "ParameterFrame", "ParameterMapping"]
+
+RecordList = List[List[Union[int, str, float]]]
+"""
+Type for parameters when represented as a record list.
+"""
 
 
 @dataclass
@@ -50,17 +58,34 @@ class ParameterMapping:
     """
     Simple class containing information on mapping of a bluemira parameter to one in
     external software.
+
+    Parameters
+    ----------
+    name: str
+       name of mapped parameter
+    recv: bool
+        receive data from mapped parameter (to overwrite bluemira parameter)
+    send: bool
+        send data to mapped parameter (from bluemira parameter)
+
     """
 
     name: str
-    read: bool = True
-    write: bool = True
+    recv: bool = True
+    send: bool = True
 
     def to_dict(self):
         """
         Convert this object to a dictionary with attributes as values.
         """
-        return {"name": self.name, "read": self.read, "write": self.write}
+        return {"name": self.name, "recv": self.recv, "send": self.send}
+
+    @classmethod
+    def from_dict(cls, the_dict) -> "ParameterMapping":
+        """
+        Create a ParameterMapping using a dictionary with attributes as values.
+        """
+        return cls(**the_dict)
 
     def __str__(self):
         """
@@ -68,6 +93,22 @@ class ParameterMapping:
         provided by the default `__repr__` method.
         """
         return repr(self.to_dict())
+
+
+class ParameterMappingEncoder(json.JSONEncoder):
+    """
+    Class to handle serialisation of ParameterMapping objects to JSON.
+    """
+
+    def default(self, obj):
+        """Overridden JSON serialisation method which will be called if an
+        object is not an instance of one of the classes with
+        built-in serialisations (e.g., list, dict, etc.).
+
+        """
+        if isinstance(obj, ParameterMapping):
+            return obj.to_dict()
+        return json.JSONEncoder.default(self, obj)
 
 
 def inplace_wrapper(method):
@@ -170,8 +211,12 @@ class Parameter(wrapt.ObjectProxy):
         self.mapping = mapping
 
         self._source = source
-        self._value_history = [value.copy() if hasattr(value, "copy") else value]
-        self._source_history = [source]
+        if value is not None:
+            self._value_history = [value.copy() if hasattr(value, "copy") else value]
+            self._source_history = [source]
+        else:
+            self._value_history = []
+            self._source_history = []
 
     def __deepcopy__(self, memo):
         """
@@ -286,7 +331,10 @@ class Parameter(wrapt.ObjectProxy):
         self.__wrapped__ = val
         self._source = None
 
-        self._update_history()
+        if val is None and len(self.value_history) == 0:
+            pass
+        else:
+            self._update_history()
 
     @property
     def source(self):
@@ -308,14 +356,14 @@ class Parameter(wrapt.ObjectProxy):
         """
         self._source = val
 
-        if self.source_history[-1] is None:
+        if len(self.source_history) > 0 and self.source_history[-1] is None:
             self._source_history[-1] = self._source
         else:
             self._update_history()
 
     def _update_history(self):
         if (
-            self.source_history[-1] is None
+            len(self.source_history) > 0 and self.source_history[-1] is None
         ):  # Should I be more strict and error out here?
             bluemira_warn(
                 f"The source of the value of {self.var} not consistently known"
@@ -466,18 +514,18 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         mapping_str = (
-            " {"
+            "\n    {"
             + ", ".join([repr(k) + ": " + str(v) for k, v in self.mapping.items()])
             + "}"
             if self.mapping is not None
             else ""
         )
         return (
-            f"{self.var}"
+            f"{self.name if self.name is not None else ''}"
+            f" [{self.unit if self.unit not in [None, 'N/A'] else '-'}]:"
+            f" {self.var}"
             f"{' = ' + str(self.value) if self.value is not None else ''}"
-            f"{' ' + self.unit if self.unit is not None else ''}"
-            f"{' (' + self.name + ')' if self.name is not None else ''}"
-            f"{' : ' + self.description if self.description is not None else ''}"
+            f"{' (' + self.description + ')' if self.description is not None else ''}"
             f"{mapping_str}"
         )
 
@@ -489,7 +537,7 @@ class ParameterFrame:
 
     Parameters
     ----------
-    record_list: List[List[Any]]
+    record_list: RecordList
         The list of records from which to build a ParameterFrame of Parameters
     with_defaults: bool
         initialise with the default parameters as a base, values will be
@@ -497,15 +545,24 @@ class ParameterFrame:
 
     """
 
+    params = []
+
     __default_params = {}
     __defaults_setting = False
     __defaults_set = False
+    _template_params = {}
 
     def __init__(self, record_list=None, *, with_defaults=False):
         if with_defaults:
             self._reinit()
         if record_list is not None:
             self.add_parameters(record_list)
+
+    def __init_subclass__(cls) -> None:
+        """
+        Initialise the template parameters when sub-classing from ParameterFrame.
+        """
+        cls.set_template_parameters(cls.params)
 
     @classmethod
     def set_default_parameters(cls, params):
@@ -538,6 +595,8 @@ class ParameterFrame:
             cls.__setattr = cls.__setattr__
             cls.__setattr__ = sv_set
 
+            cls.set_template_parameters(params)
+
             cls.__defaults_setting = False
         else:
             raise ParameterError(
@@ -547,8 +606,54 @@ class ParameterFrame:
         cls.__defaults_set = True
 
     @classmethod
+    def set_template_parameters(cls, params: RecordList):
+        """
+        Fills the template parameters from the minimal content of the provided parameter
+        records list.
+
+        Parameters
+        ----------
+        params: RecordList
+            The parameter record list to use to populate the template.
+        """
+        for param in params:
+            cls._template_params[param[0]] = {
+                "name": param[1],
+                "unit": param[3],
+            }
+
+    @classmethod
     def __setattr(cls, *args, **kwargs):
         return cls.__setattr(cls, *args, **kwargs)
+
+    @classmethod
+    def from_template(cls, param_vars: List[str]) -> "ParameterFrame":
+        """
+        Generate a minimal ParameterFrame from the provided parameter variable names.
+
+        Parameters
+        ----------
+        param_vars: List[str]
+            The parameter variable names to include in the resulting ParameterFrame.
+
+        Returns
+        -------
+        params: ParameterFrame
+            The ParameterFrame including the minimal content for the requested parameter
+            variable names.
+        """
+        params = ParameterFrame()
+        for var in param_vars:
+            if var not in cls._template_params:
+                raise ParameterError(
+                    f"Parameter with short name {var} is not known as a template "
+                    f"parameter for class {cls.__name__}."
+                )
+            name = cls._template_params[var]["name"]
+            unit = cls._template_params[var]["unit"]
+            params.add_parameter(var=var, name=name, unit=unit)
+
+        return params
 
     @staticmethod
     def modify_source(source, param):
@@ -641,7 +746,7 @@ class ParameterFrame:
         """
         Reinitialise class with defaults.
         """
-        self.__dict__ = self.__default_params.copy()
+        self.__dict__ = copy.deepcopy(self.__default_params)
 
     def to_records(self):
         """
@@ -799,14 +904,27 @@ class ParameterFrame:
                 continue
             if isinstance(var, dict):
                 src = var.get("source") if source is None else source
+                desc = var.get("description")
+                mapping = var.get("mapping")
                 var = var.get("value")
             elif isinstance(var, Parameter):
                 src = var.source if source is None else source
+                desc = var.description
+                mapping = var.mapping
                 var = var.value
             else:
                 src = source
+                desc = None
+                mapping = None
 
             self.__setattr__(key, self.modify_source(src, var))
+            if desc is not None:
+                self.__dict__[key].description = desc
+            if mapping is not None:
+                for code, val in mapping.items():
+                    if isinstance(val, dict):
+                        mapping[code] = ParameterMapping.from_dict(val)
+                self.__dict__[key].mapping = mapping
 
     def items(self):
         """
@@ -820,7 +938,7 @@ class ParameterFrame:
         """
         return self.__dict__.keys()
 
-    def get_parameter_list(self):
+    def get_parameter_list(self) -> List[Parameter]:
         """
         Get a list of Parameters for the ParameterFrame
 
@@ -831,7 +949,7 @@ class ParameterFrame:
         """
         return list(self.__dict__.values())
 
-    def get_param(self, var):
+    def get_param(self, var) -> Parameter:
         """
         Returns a Parameter object using the short var_name
         """
@@ -1115,22 +1233,14 @@ class ParameterFrame:
         """
         return cls(the_list)
 
-    class ParameterMappingEncoder(json.JSONEncoder):
-        """
-        Class to handle serialisation of ParameterMapping objects to JSON.
-        """
-
-        def default(self, obj):
-            """Overridden JSON serialisation method which will be called if an
-            object is not an instance of one of the classes with
-            built-in serialisations (e.g., list, dict, etc.).
-
-            """
-            if isinstance(obj, ParameterMapping):
-                return obj.to_dict()
-            return json.JSONEncoder.default(self, obj)
-
-    def to_json(self, output_path=None, verbose=False, return_output=False) -> str:
+    def to_json(
+        self,
+        output_path=None,
+        verbose=False,
+        return_output=False,
+        sort_keys=False,
+        **kwargs,
+    ) -> str:
         """
         Convert the ParameterFrame to a JSON representation.
 
@@ -1143,22 +1253,28 @@ class ParameterFrame:
         return_output: bool
             If an output path is specified, then if True returns the JSON output,
             by default False.
+        sort_keys: bool
+            If True then the output will be alphanumerically sorted by the parameter
+            keys.
+        kwargs: dict
+            all further arguments are passed to the json function
 
         Returns
         -------
         the_json: Union[str, None]
             The JSON representation of the Parameter.
         """
-        the_json = json.dumps(
-            self.to_dict(verbose), indent=2, cls=self.ParameterMappingEncoder
+        the_dict = self.to_dict(verbose)
+        the_dict = dict(sorted(the_dict.items())) if sort_keys else the_dict
+
+        kwargs.pop("cls", None)  # we need to set the cls for mapping encoding
+        return json_writer(
+            the_dict,
+            output_path,
+            return_output,
+            cls=ParameterMappingEncoder,
+            **kwargs,
         )
-        if output_path is not None:
-            with open(output_path, "w") as fh:
-                fh.write(the_json)
-            if return_output:
-                return the_json
-        else:
-            return the_json
 
     @staticmethod
     def parameter_mapping_hook(dct: Dict) -> ParameterMapping:
@@ -1166,7 +1282,7 @@ class ParameterFrame:
         Callback to convert suitable JSON objects (dictionaries) into
         ParameterMapping objects.
         """
-        if {"name", "read", "write"} == set(dct.keys()):
+        if {"name", "send", "recv"} == set(dct.keys()):
             return ParameterMapping(**dct)
         return dct
 

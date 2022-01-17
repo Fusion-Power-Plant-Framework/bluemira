@@ -65,30 +65,6 @@ class UtilitiesError(BluemiraError):
     pass
 
 
-class MaterialsError(BluemiraError):
-    """
-    Error class for use in the materials module
-    """
-
-    pass
-
-
-class SysCodesError(BluemiraError):
-    """
-    Error class for use in the syscodes module
-    """
-
-    pass
-
-
-class GeometryError(BluemiraError):
-    """
-    Error class for use in the geometry module
-    """
-
-    pass
-
-
 class NovaError(BluemiraError):
     """
     Error class for use in the nova module
@@ -103,9 +79,3 @@ class BaseError(BluemiraError):
     """
 
     pass
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

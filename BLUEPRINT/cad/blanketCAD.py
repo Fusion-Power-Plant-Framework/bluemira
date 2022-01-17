@@ -23,14 +23,14 @@
 Blanket CAD routines
 """
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.cadtools import (
     make_axis,
-    revolve,
     make_face,
     make_mixed_face,
+    revolve,
     rotate_shape,
 )
+from BLUEPRINT.cad.component import ComponentCAD
 
 
 class BlanketCAD(ComponentCAD):
@@ -44,8 +44,7 @@ class BlanketCAD(ComponentCAD):
     """
 
     def __init__(self, blanket, **kwargs):
-        ComponentCAD.__init__(
-            self,
+        super().__init__(
             "Breeding blanket",
             blanket.geom,
             blanket.params.n_TF,
@@ -134,7 +133,7 @@ class STBlanketCAD(ComponentCAD):
 
         self.n_TF = blanket.params.n_TF
 
-        ComponentCAD.__init__(self, "Breeding blanket", palette=BLUE["BB"], **kwargs)
+        super().__init__("Breeding blanket", palette=BLUE["BB"], **kwargs)
 
     def build(self, **kwargs):
         """
@@ -156,9 +155,3 @@ class STBlanketCAD(ComponentCAD):
 
             # Save
             self.add_shape(segment)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

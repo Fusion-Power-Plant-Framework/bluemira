@@ -22,15 +22,17 @@
 """
 Coil CAD routines
 """
-from BLUEPRINT.geometry.offset import offset_clipper
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
+
+from BLUEPRINT.geometry.offset import offset_clipper
 
 try:
     from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
-    from OCC.Core.gp import gp_Pnt, gp_Ax1, gp_Dir, gp_Ax2, gp_Vec, gp_Circ
-    from OCC.Core.GC import GC_MakeArcOfCircle
     from OCC.Core.BRepFill import BRepFill_PipeShell
+    from OCC.Core.GC import GC_MakeArcOfCircle
+    from OCC.Core.gp import gp_Ax1, gp_Ax2, gp_Circ, gp_Dir, gp_Pnt, gp_Vec
     from OCC.Core.TopoDS import topods
 except ImportError:
     from OCC.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
@@ -38,40 +40,41 @@ except ImportError:
     from OCC.GC import GC_MakeArcOfCircle
     from OCC.BRepFill import BRepFill_PipeShell
     from OCC.TopoDS import topods
+
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.cadtools import (
-    boolean_cut,
-    boolean_fuse,
-    revolve,
-    extrude,
-    make_box,
-    sweep,
-    rotate_shape,
-    make_axis,
-    make_face,
-    make_mixed_shell,
-    make_mixed_face,
-    translate_shape,
-    make_compound,
-    sew_shapes,
-    make_circle,
-    mirror_shape,
-    make_wire,
     _make_OCCedge,
-    _make_OCCwire,
     _make_OCCface,
     _make_OCCsolid,
+    _make_OCCwire,
+    boolean_cut,
+    boolean_fuse,
+    extrude,
+    make_axis,
+    make_box,
+    make_circle,
+    make_compound,
+    make_face,
+    make_mixed_face,
+    make_mixed_shell,
+    make_wire,
+    mirror_shape,
+    revolve,
+    rotate_shape,
+    sew_shapes,
+    sweep,
+    translate_shape,
 )
+from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
     clean_loop,
     simplify_loop,
 )
-from BLUEPRINT.geometry.parameterisations import picture_frame
 from BLUEPRINT.geometry.geomtools import make_box_xz
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.parameterisations import picture_frame
+from BLUEPRINT.geometry.shell import Shell
 
 
 class RingCAD:
@@ -566,6 +569,7 @@ class TFCoilCAD(ComponentCAD):
                     z_max=zmax_wp + 5.0,
                 )
                 case = boolean_2d_difference_loop(case, inner_cut_loop)
+                case.interpolate(800)
 
                 # Shift the casing loop in the y direction prepare the extrusion
                 half_depth_casing = 0.5 * TF_depth_at_r_cp + tf.params.tk_tf_ob_casing
@@ -589,6 +593,8 @@ class TFCoilCAD(ComponentCAD):
                 leg_initial_2D = geom["TF Leg Conductor"]
 
                 # case:
+                geom["TF case in"].inner.interpolate(800)
+                geom["TF case out"].outer.interpolate(800)
                 case_initial_2D = Shell(
                     geom["TF case in"].inner, geom["TF case out"].outer
                 )
@@ -711,7 +717,7 @@ class TFCoilCAD(ComponentCAD):
         self.add_shape(tfwp, name="TF_wp")
         return self.split(["TF_case", "TF_WP"], [["TF_case"], ["TF_wp"]])
 
-    def _get_OIS_collision(self):  # noqa (N802)
+    def _get_OIS_collision(self):  # noqa :N802
         """
         Gets x value of OIS collision.
         """
@@ -766,7 +772,7 @@ class CoilStructureCAD(ComponentCAD):
             cad[name] = rotate_shape(cad[name], axis=None, angle=180 / self.n_TF)
             self.add_shape(cad[name], name=name)
 
-    def _build_OIS(self, support):  # noqa (N802)
+    def _build_OIS(self, support):  # noqa :N802
         """
         Builds an individual outer inter-coil support
 
@@ -808,7 +814,7 @@ class CoilStructureCAD(ComponentCAD):
 
         return make_compound([left_ois, right_ois])
 
-    def _build_PF_seat(self, seat):  # noqa (N802)
+    def _build_PF_seat(self, seat):  # noqa :N802
         """
         Builds an individual PF seat
 
@@ -859,7 +865,7 @@ class CoilStructureCAD(ComponentCAD):
         return pf_seat
 
     @staticmethod
-    def _make_PF_plate(seat, width, thickness):  # noqa (N802)
+    def _make_PF_plate(seat, width, thickness):  # noqa :N802
         """
         Makes a flat plate for a PF coil to sit on.
         NOTE: Butt ugly generalisation
@@ -941,7 +947,7 @@ def cut_box(side="right", size=30, n_TF=16):
     return make_box((0, 0, -size / 2), v1, v2, (0, 0, size))
 
 
-def build_CS_seat(cs_support):  # noqa (N802)
+def build_CS_seat(cs_support):  # noqa :N802
     """
     Builds a single central solenoid support seat
 
@@ -1171,10 +1177,3 @@ def build_GS_ITER(g_support):
     floor = extrude(face, vec=[0, 0, -3 * p_width])
     compound_list.append(floor)
     return make_compound(compound_list)
-
-
-if __name__ == "__main__":
-    pass
-    # from BLUEPRINT import test
-    #
-    # test()

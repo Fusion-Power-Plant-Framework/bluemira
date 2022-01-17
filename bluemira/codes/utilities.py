@@ -24,27 +24,35 @@ Utility functions for interacting with external codes
 """
 
 
+import os
+import threading
 from typing import Dict, Literal
 
-from . import error as code_err
+import bluemira.base as bm_base
+from bluemira.base.look_and_feel import (
+    _bluemira_clean_flush,
+    bluemira_error_clean,
+    bluemira_print_clean,
+)
+from bluemira.codes.error import CodesError
 
 
 def _get_mapping(
-    params, code_name: str, read_write: Literal["read", "write"], override: bool = False
+    params, code_name: str, send_recv: Literal["send", "recv"], override: bool = False
 ) -> Dict[str, str]:
     """
-    Create a dictionary to get the read or write mappings for a given code.
+    Create a dictionary to get the send or recieve mappings for a given code.
 
     Parameters
     ----------
     params: ParameterFrame
-        The parameters with mappings that define what is going to be read or written.
+        The parameters with mappings that define what is going to be sent or recieved.
     code_name: str
-        The identifying name of the code that is being read or written from.
-    read_write: Literal["read", "write"]
-        Whether to generate a mapping for reading or writing.
+        The identifying name of the code that data being send to or recieved from.
+    send_recv: Literal["send", "recv"]
+        Whether to generate a mapping for sending or reciving.
     override: bool, optional
-        If True then map variables with a mapping defined, even if read or write=False.
+        If True then map variables with a mapping defined, even if recv or send=False.
         By default, False.
 
     Yields
@@ -53,64 +61,141 @@ def _get_mapping(
         The mapping between external code parameter names (key) and bluemira parameter
         names (value).
     """
-    if read_write not in ["read", "write"]:
-        raise code_err.CodesError("Mapping must be obtained for either read or write.")
+    if send_recv not in ["send", "recv"]:
+        raise CodesError("Mapping must be obtained for either send or recv.")
 
     mapping = {}
     for key in params.keys():
         param = params.get_param(key)
         has_mapping = param.mapping is not None and code_name in param.mapping
         map_param = has_mapping and (
-            override or getattr(param.mapping[code_name], read_write)
+            override or getattr(param.mapping[code_name], send_recv)
         )
         if map_param:
             mapping[param.mapping[code_name].name] = key
     return mapping
 
 
-def get_read_mapping(params, code_name, read_all=False):
+def get_recv_mapping(params, code_name, recv_all=False):
     """
-    Get the read mapping for variables mapped from the external code to the provided
+    Get the recieve mapping for variables mapped from the external code to the provided
     input ParameterFrame.
 
     Parameters
     ----------
     params: ParameterFrame
-        The parameters with mappings that define what is going to be read.
+        The parameters with mappings that define what is going to be recieved.
     code_name: str
-        The identifying name of the code that is being read from.
-    read_all: bool, optional
-        If True then read all variables with a mapping defined, even if read=False. By
+        The identifying name of the code that is being recieved from.
+    recv_all: bool, optional
+        If True then recieve all variables with a mapping defined, even if recv=False. By
         default, False.
 
     Returns
     -------
     mapping: Dict[str, str]
         The mapping between external code parameter names (key) and bluemira parameter
-        names (value) to use for readings.
+        names (value) to use for recieving.
     """
-    return _get_mapping(params, code_name, "read", read_all)
+    return _get_mapping(params, code_name, "recv", recv_all)
 
 
-def get_write_mapping(params, code_name, write_all=False):
+def get_send_mapping(params, code_name, send_all=False):
     """
-    Get the write mapping for variables mapped from the external code to the provided
+    Get the send mapping for variables mapped from the external code to the provided
     input ParameterFrame.
 
     Parameters
     ----------
     params: ParameterFrame
-        The parameters with mappings that define what is going to be written.
+        The parameters with mappings that define what is going to be sent.
     code_name: str
-        The identifying name of the code that is being written to.
-    write_all: bool, optional
-        If True then write all variables with a mapping defined, even if write=False. By
+        The identifying name of the code that is being sent to.
+    send_all: bool, optional
+        If True then send all variables with a mapping defined, even if send=False. By
         default, False.
 
     Returns
     -------
     mapping: Dict[str, str]
         The mapping between external code parameter names (key) and bluemira parameter
-        names (value) to use for writing.
+        names (value) to use for sending.
     """
-    return _get_mapping(params, code_name, "write", write_all)
+    return _get_mapping(params, code_name, "send", send_all)
+
+
+def add_mapping(
+    code_name: str,
+    params: bm_base.ParameterFrame,
+    mapping: Dict[str, bm_base.ParameterMapping],
+):
+    """
+    Adds mappings for a given code to a ParameterFrame.
+    Modifies directly params but only if no mapping for that code exists
+
+    Parameters
+    ----------
+    code_name: str
+        Name of code
+    params: ParameterFrame
+        ParameterFrame to modify
+    mapping: Dict[str, ParameterMapping]
+        mapping between bluemira and the code
+
+    """
+    for key in params.keys():
+        param = params.get_param(key)
+        if param.var in mapping:
+            if param.mapping is None:
+                param.mapping = {code_name: mapping[param.var]}
+            elif code_name not in param.mapping:
+                param.mapping[code_name] = mapping[param.var]
+
+
+class LogPipe(threading.Thread):
+    """
+    Capture logs for subprocesses
+
+    https://codereview.stackexchange.com/questions/6567/redirecting-subprocesses-output-stdout-and-stderr-to-the-logging-module
+
+    Parameters
+    ----------
+    loglevel: str
+        print or error flush printing
+
+    """
+
+    def __init__(self, loglevel):
+        super().__init__(daemon=True)
+
+        self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[
+            loglevel
+        ]
+        self.logfunc_flush = _bluemira_clean_flush
+        self.fd_read, self.fd_write = os.pipe()
+        self.pipe = os.fdopen(self.fd_read, encoding="utf-8", errors="ignore")
+        self.start()
+
+    def fileno(self):
+        """
+        Return the write file descriptor of the pipe
+        """
+        return self.fd_write
+
+    def run(self):
+        """
+        Run the thread and pipe it all into the logger.
+        """
+        for line in iter(self.pipe.readline, ""):
+            if line.startswith("==>"):
+                self.logfunc_flush(line.strip("\n"))
+            else:
+                self.logfunc(line)
+
+        self.pipe.close()
+
+    def close(self):
+        """
+        Close the write end of the pipe.
+        """
+        os.close(self.fd_write)

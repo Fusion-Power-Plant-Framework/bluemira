@@ -18,18 +18,20 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
+import filecmp
 import os
+
 import numpy as np
+import pytest
+
+from bluemira.base.file import get_bluemira_path
+from BLUEPRINT.geometry.geomtools import make_box_xz
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.utilities.csv_writer import (
+    write_components_to_csv,
     write_csv,
     write_geometry_to_csv,
-    write_components_to_csv,
 )
-from BLUEPRINT.geometry.geomtools import make_box_xz
-import filecmp
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 def test_csv_writer():
@@ -48,7 +50,7 @@ def test_csv_writer():
     # Retrieve data file to compare
     data_file = "test_csv_writer.csv"
     data_dir = "BLUEPRINT/utilities/test_data"
-    data_path = get_BP_path(data_dir, subfolder="tests")
+    data_path = get_bluemira_path(data_dir, subfolder="tests")
     compare_file = os.sep.join([data_path, data_file])
 
     # Compare
@@ -87,7 +89,7 @@ def test_write_geometry_to_csv():
     # Fetch comparison data file
     data_file = "loop_test_data.csv"
     data_dir = "BLUEPRINT/utilities/test_data"
-    compare_path = get_BP_path(data_dir, subfolder="tests")
+    compare_path = get_bluemira_path(data_dir, subfolder="tests")
     compare_file = os.sep.join([compare_path, data_file])
 
     # Compare generated data to data file
@@ -122,7 +124,7 @@ def test_reactor_system_write_to_csv():
     # Fetch comparison data file
     data_file = "reactor_system_dummy_loop_no_metadata.csv"
     data_dir = "BLUEPRINT/utilities/test_data"
-    compare_path = get_BP_path(data_dir, subfolder="tests")
+    compare_path = get_bluemira_path(data_dir, subfolder="tests")
     compare_file = os.sep.join([compare_path, data_file])
 
     # Compare against test file

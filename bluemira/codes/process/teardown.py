@@ -22,30 +22,32 @@
 """
 PROCESS teardown functions
 """
+import json
 import os
 import re
-import matplotlib.pyplot as plt
-import numpy as np
 from collections import namedtuple
 
-from bluemira.base import ParameterFrame
-from bluemira.base.look_and_feel import bluemira_warn
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
+
+import bluemira.base as bm_base
+import bluemira.codes.interface as interface
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
-from BLUEPRINT.geometry.geomtools import rainbow_seg
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.utilities.tools import is_num
 from bluemira.codes.process.api import (
     PROCESS_DICT,
-    update_obsolete_vars,
-    convert_unit_p_to_b,
     MFile,
+    convert_unit_p_to_b,
+    update_obsolete_vars,
 )
 from bluemira.codes.process.constants import NAME as PROCESS
+from bluemira.utilities.tools import is_num
 
 
 class BMFile(MFile):
     """
-    BLUEPRINT MFile reader for PROCESS output
+    Bluemira MFile reader for PROCESS output
     Sub-classed from PROCESS utilities
     Builds ParameterFrames of output in logical chunks
     """
@@ -59,10 +61,31 @@ class BMFile(MFile):
         super().__init__(filename=filename)
         self.defs = self.unitsplit(PROCESS_DICT["DICT_DESCRIPTIONS"])
         self.ptob_mapping = parameter_mapping
-        self.btop_mapping = {val: key for key, val in parameter_mapping.items()}
-        for key, val in self.btop_mapping.items():
-            self.btop_mapping[key] = update_obsolete_vars(val)
+        self.btop_mapping = self.new_mappings(
+            {val: key for key, val in parameter_mapping.items()}
+        )
+
         self.read()
+
+    @staticmethod
+    def new_mappings(old_mappings):
+        """
+        Convert old PROCESS mappings to new ones
+
+        Parameters
+        ----------
+        old_mappings: dict
+            dictionary of parameter mappings
+
+        Returns
+        -------
+        new_mappings: dict
+            dictionary of new parameter mappings
+        """
+        new_mappings = {}
+        for key, val in old_mappings.items():
+            new_mappings[key] = update_obsolete_vars(val)
+        return new_mappings
 
     @staticmethod
     def linesplit(line):
@@ -102,7 +125,7 @@ class BMFile(MFile):
                 desc = key + ": PROCESS variable description not found"
                 unit = "N/A"
             param.append([key, desc, val, unit, None, PROCESS])
-        return ParameterFrame(param)
+        return bm_base.ParameterFrame(param)
 
     def read(self):
         """
@@ -120,7 +143,7 @@ class BMFile(MFile):
             self.params[key] = self.build_parameter_frame(dic[key])
         self.rebuild_RB_dict()
 
-    def rebuild_RB_dict(self):  # noqa (N802)
+    def rebuild_RB_dict(self):  # noqa :N802
         """
         Takes the TF coil detailed breakdown and reconstructs the radial build
         ParameterFrame.
@@ -148,9 +171,9 @@ class BMFile(MFile):
         rtfin = rb["r_cs_in"] + rb["tk_cs"] + rb["precomp"] + rb["g_cs_tf"]
         r_ts_ib_in = rtfin + rb["tk_tf_inboard"] + rb["g_ts_tf"] + rb["tk_ts"]
         r_vv_ib_in = r_ts_ib_in + rb["g_vv_ts"] + rb["tk_vv_in"] + rb["tk_sh_in"]
-        r_fw_ib_in = r_vv_ib_in + rb["g_vv_bb"] + rb["tk_bb_ib"] + rb["fwith"]
+        r_fw_ib_in = r_vv_ib_in + rb["g_vv_bb"] + rb["tk_bb_ib"] + rb["tk_fw_in"]
         r_fw_ob_in = r_fw_ib_in + rb["tk_sol_ib"] + 2 * pl["rminor"] + rb["tk_sol_ob"]
-        r_vv_ob_in = r_fw_ob_in + rb["fwoth"] + rb["tk_bb_ob"] + rb["g_vv_bb"]
+        r_vv_ob_in = r_fw_ob_in + rb["tk_fw_out"] + rb["tk_bb_ob"] + rb["g_vv_bb"]
         # fmt:off
         rb.add_parameter("r_tf_in", "Inboard radius of the TF coil inboard leg", rtfin, "m", None, PROCESS)
         rb.add_parameter("r_ts_ib_in", "Inboard TS inner radius", r_ts_ib_in, "m", None, PROCESS)
@@ -164,27 +187,193 @@ class BMFile(MFile):
     def extract_outputs(self, outputs):
         """
         Searches MFile for variable
-        Outputs defined in BLUEPRINT variable names
+        Outputs defined in bluemira variable names
         """
         out = []
         if isinstance(outputs, str):
             # Handle single variable request
             outputs = [outputs]
         for var in outputs:
-            found = False
-            for frame in self.params.values():
-                if var in frame.keys():
-                    out.append(frame[var])
-                    found = True
-                    break  # only keep one!
+            if isinstance(var, list):
+                for v in var:
+                    found = self._find_var_in_frame(var, out)
+                    if found:
+                        break
+            else:
+                found = self._find_var_in_frame(var, out)
+
             if not found:
                 out.append(0.0)
                 bluemira_warn(
-                    f'BLUEPRINT variable "{var}" a.k.a. '
+                    f'bluemira variable "{var}" a.k.a. '
                     f'PROCESS variable "{self.btop_mapping[var]}" '
                     "not found in PROCESS output. Value set to 0.0."
                 )
         return out
+
+    def _find_var_in_frame(self, var, out):
+        """
+        Find variable value in parameter frame
+
+        Parameters
+        ----------
+        var:str
+            variable
+        out: list
+            output list
+
+        Returns
+        -------
+        bool
+            if variable found
+        """
+        found = False
+        for frame in self.params.values():
+            if var in frame.keys():
+                out.append(frame[var])
+                found = True
+                break  # only keep one!
+        return found
+
+
+class Teardown(interface.Teardown):
+    """
+    Teardown Task for process
+    """
+
+    def _run(self):
+        self._check_PROCESS_output()
+
+        # Load PROCESS results into bluemira
+        self._load_PROCESS(self.read_mfile(), recv_all=False)
+
+    def _runinput(self):
+        self._check_PROCESS_output()
+
+        # Load PROCESS results into bluemira
+        self._load_PROCESS(self.read_mfile(), recv_all=True)
+
+    def _read(self):
+        self.get_PROCESS_run(path=self.parent._read_dir, recv_all=False)
+
+    def _readall(self):
+        self.get_PROCESS_run(path=self.parent._read_dir, recv_all=True)
+
+    def _mock(self):
+        self.mock_PROCESS_run()
+
+    def get_PROCESS_run(self, path, recv_all=False):
+        """
+        Loads an existing PROCESS file (read-only). Not to be used when running PROCESS.
+        """
+        bluemira_print("Loading PROCESS systems code run.")
+
+        # Load the PROCESS MFile & read selected output
+        params_to_recv = (
+            self.parent._parameter_mapping if recv_all else self.parent._recv_mapping
+        )
+        self._load_PROCESS(BMFile(path, params_to_recv), recv_all)
+
+    def _load_PROCESS(self, bm_file: BMFile, recv_all: bool = False):
+        """
+        Loads a PROCESS output file (MFILE.DAT) and extract some or all its output data
+
+        Parameters
+        ----------
+            bm_file: BMFile
+                PROCESS output file (MFILE.DAT) to load
+            recv_all: bool, optional
+                True - Read all PROCESS output with a mapping,
+                False - reads only PROCESS output with a mapping and recv = True.
+                Default, False
+        """
+        # Load all PROCESS vars mapped with a bluemira input
+        var = (
+            self.parent._parameter_mapping.values()
+            if recv_all
+            else self.parent._recv_mapping.values()
+        )
+        param = bm_file.extract_outputs(var)
+        self.parent.params.update_kw_parameters(dict(zip(var, param)), source=PROCESS)
+
+    def read_mfile(self):
+        """
+        Read the MFILE.DAT from the PROCESS run_dir.
+
+        Returns
+        -------
+        mfile: BMFile
+            The object representation of the output MFILE.DAT.
+        """
+        m_file = BMFile(self._run_dir, self.parent._parameter_mapping)
+        self._check_feasible_solution(m_file)
+        return m_file
+
+    def mock_PROCESS_run(self):
+        """
+        Mock PROCESS. To be used in tests and examples only!
+        """
+        bluemira_print("Mocking PROCESS systems code run")
+
+        # Create mock PROCESS file.
+        path = self.parent._read_dir
+        filename = os.sep.join([path, "mockPROCESS.json"])
+        with open(filename, "r") as fh:
+            process = json.load(fh)
+
+        self.parent.params.update_kw_parameters(process, source=f"{PROCESS} (Mock)")
+
+    def _check_PROCESS_output(self):
+        """
+        Check that PROCESS has produced valid (non-zero lined) output.
+
+        Raises
+        ------
+        CodesError
+            If any resulting output files don't exist or are empty.
+        """
+        for filename in self.parent.output_files:
+            filepath = os.sep.join([self._run_dir, filename])
+            if os.path.exists(filepath):
+                with open(filepath) as fh:
+                    if len(fh.readlines()) == 0:
+                        message = (
+                            f"PROCESS generated an empty {filename} "
+                            f"file in {self._run_dir} - check PROCESS logs."
+                        )
+                        bluemira_warn(message)
+                        raise CodesError(message)
+            else:
+                message = (
+                    f"PROCESS run did not generate the {filename} "
+                    f"file in {self._run_dir} - check PROCESS logs."
+                )
+                bluemira_warn(message)
+                raise CodesError(message)
+
+    @staticmethod
+    def _check_feasible_solution(m_file):
+        """
+        Check that PROCESS found a feasible solution.
+
+        Parameters
+        ----------
+        m_file: BMFile
+            The PROCESS MFILE to check for a feasible solution
+
+        Raises
+        ------
+        CodesError
+            If a feasible solution was not found.
+        """
+        error_code = m_file.params["Numerics"]["ifail"]
+        if error_code != 1:
+            message = (
+                f"PROCESS did not find a feasible solution. ifail = {error_code}."
+                " Check PROCESS logs."
+            )
+            bluemira_warn(message)
+            raise CodesError(message)
 
 
 def boxr(ri, ro, w, off=0):
@@ -243,15 +432,16 @@ def read_n_line(line):
     return out
 
 
-def plot_radial_build(run, typ="Cross-section", width=1.0):
+def plot_radial_build(run, width=1.0):
     """
     Plots radial and vertical build of a PROCESS run
     Input: Dictionary of PROCESS output
     Output: Plots
     """
-    n_TF = run["n_TF"]
+    from bluemira.geometry._deprecated_loop import Loop
+
     R_0 = run["R_0"]
-    alpha = np.radians(360 / n_TF)
+
     col = {
         "Gap": "w",
         "blanket": "#edb120",
@@ -265,90 +455,71 @@ def plot_radial_build(run, typ="Cross-section", width=1.0):
         "solenoid": "#0072bd",
         "Thermal shield": "#77ac30",
     }
-    if typ == "Plan":
-        f, ax = plt.subplots()
-        for comp in run["Radial Build"]:
-            xc, yc = rainbow_seg(comp[2] - comp[1], comp[2], angle=alpha)
-            loop = Loop(x=xc, y=yc)
-            for key, c in col.items():
-                if key in comp[0]:
-                    c = c
-                    ax.plot(xc, yc, color=c, linewidth=0)
+
+    f, ax = plt.subplots(figsize=[14, 10])
+
+    lpatches = []
+    gkeys = [
+        "blanket",
+        "TF coil",
+        "Vacuum vessel",
+        "Plasma",
+        "scrape-off",
+        "solenoid",
+        "Thermal shield",
+    ]
+    glabels = {
+        "blanket": "Breeding blanket",
+        "TF coil": "TF coil",
+        "Plasma": "Plasma",
+        "Vacuum vessel": "Vacuum vessel",
+        "scrape-off": "Scrape-off layer",
+        "solenoid": "Central solenoid",
+        "Thermal shield": "Thermal shield",
+    }
+    for comp in run["Radial Build"]:
+        xc, yc = boxr(comp[2] - comp[1], comp[2], width)
+        yc = np.array(yc)
+        loop = Loop(x=xc, y=yc)
+        for key, c in col.items():
+            if key in comp[0]:
+                ax.plot(xc, yc, color=c, linewidth=0, label=key)
+                if comp[1] > 0:
                     loop.plot(ax, facecolor=c, edgecolor="k", linewidth=0)
-                    ax.annotate(
-                        comp[0],
-                        xy=[np.mean(xc), np.mean(abs(yc)) * np.random.rand(1)],
-                        fontsize=10,
-                    )
+                if key in gkeys:
+                    gkeys.remove(key)
+                    lpatches.append(patches.Patch(color=c, label=glabels[key]))
 
-        ax.set_aspect("equal")
-    elif typ == "Cross-section":
-        f, ax = plt.subplots(figsize=[14, 10])
-        import matplotlib.patches as p
+    ax.set_xlim([0, np.ceil(run["Radial Build"][-1][-1])])
+    ax.set_ylim([-width * 0.5, width * 0.5])
+    ax.set_xticks(list(ax.get_xticks()) + [R_0])
 
-        lpatches = []
-        gkeys = [
-            "blanket",
-            "TF coil",
-            "Vacuum vessel",
-            "Plasma",
-            "scrape-off",
-            "solenoid",
-            "Thermal shield",
-        ]
-        glabels = {
-            "blanket": "Breeding blanket",
-            "TF coil": "TF coil",
-            "Plasma": "Plasma",
-            "Vacuum vessel": "Vacuum vessel",
-            "scrape-off": "Scrape-off layer",
-            "solenoid": "Central solenoid",
-            "Thermal shield": "Thermal shield",
-        }
-        for comp in run["Radial Build"]:
-            xc, yc = boxr(comp[2] - comp[1], comp[2], width)
-            yc = np.array(yc)
-            loop = Loop(x=xc, y=yc)
-            for key, c in col.items():
-                if key in comp[0]:
-                    c = c
-                    ax.plot(xc, yc, color=c, linewidth=0, label=key)
-                    if comp[1] > 0:
-                        loop.plot(ax, facecolor=c, edgecolor="k", linewidth=0)
-                    if key in gkeys:
-                        gkeys.remove(key)
-                        lpatches.append(p.Patch(color=c, label=glabels[key]))
+    def tick_format(value, n):
+        if value == R_0:
+            return "\n$R_{0}$"
+        else:
+            return int(value)
 
-        ax.set_xlim([0, np.ceil(run["Radial Build"][-1][-1])])
-        ax.set_ylim([-width * 0.5, width * 0.5])
-        ax.set_xticks(list(ax.get_xticks()) + [R_0])
+    def tick_formaty(value, n):
+        if value == 0:
+            return int(value)
+        else:
+            return ""
 
-        def tick_format(value, n):
-            if value == R_0:
-                return "\n$R_{0}$"
-            else:
-                return int(value)
-
-        def tick_formaty(value, n):
-            if value == 0:
-                return int(value)
-            else:
-                return ""
-
-        ax.xaxis.set_major_formatter(plt.FuncFormatter(tick_format))
-        ax.yaxis.set_major_formatter(plt.FuncFormatter(tick_formaty))
-        ax.set_xlabel("$x$ [m]")
-        ax.set_aspect("equal")
-        ax.legend(
-            handles=lpatches,
-            ncol=3,
-            loc="lower left",
-            bbox_to_anchor=(0.0, 1.0),
-            frameon=False,
-        )
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(tick_format))
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(tick_formaty))
+    ax.set_xlabel("$x$ [m]")
+    ax.set_aspect("equal")
+    ax.legend(
+        handles=lpatches,
+        ncol=3,
+        loc="lower left",
+        bbox_to_anchor=(0.0, 1.0),
+        frameon=False,
+    )
 
 
-def process_RB_fromOUT(f):  # noqa (N802)
+def process_RB_fromOUT(f):  # noqa :N802
     """
     Parse PROCESS radial build from an OUT.DAT file.
     """
@@ -393,22 +564,30 @@ def process_RB_fromOUT(f):  # noqa (N802)
     return {"Radial Build": rb, "n_TF": n_TF, "R_0": R_0}
 
 
-def plot_PROCESS(filename, width=1.0):
+def plot_PROCESS(filename: str, width: float = 1.0, show: bool = True):
     """
     Plot PROCESS radial build.
 
     Parameters
     ----------
-    filename: string
-        OUT.DAT filename string
+    filename: str
+        OUT.DAT filename string, the corresponding MFILE.DAT path, or the directory
+        containing the PROCESS run results.
+    width: float
+        The relative width of the plot.
+    show: bool
+        If True then immediately display the plot, else delay displaying the plot until
+        the user shows it, by default True.
     """
-    if filename.endswith("MFILE.DAT"):
+    if os.path.isdir(filename):
+        filename = os.path.join(filename, "OUT.DAT")
+    elif filename.endswith("MFILE.DAT"):
         filename = filename.replace("MFILE.DAT", "OUT.DAT")
+
+    if not os.path.exists(filename):
+        raise CodesError(f"Could not find PROCESS OUT.DAT results at {filename}")
+
     radial_build = process_RB_fromOUT(filename)
     plot_radial_build(radial_build, width=width)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
+    if show:
+        plt.show()

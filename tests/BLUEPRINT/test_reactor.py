@@ -22,14 +22,16 @@
 # =============================================================================
 # Smoke test
 # =============================================================================
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
+
 import pytest
 from matplotlib import pyplot as plt
-from BLUEPRINT.utilities.tools import set_random_seed
-from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
-import tests
 
+import tests
+from bluemira.base.config import SingleNull
+from bluemira.base.file import BM_ROOT
+from bluemira.utilities.tools import set_random_seed
+from BLUEPRINT.reactor import Reactor
 
 # Chosen by fair dice roll
 set_random_seed(7021769)
@@ -37,30 +39,30 @@ set_random_seed(7021769)
 REACTORNAME = "SMOKE-TEST"
 
 config = {
-    "Name": REACTORNAME,
-    "P_el_net": 580,
-    "tau_flattop": 3600,
-    "plasma_type": "SN",
-    "reactor_type": "Normal",
-    "CS_material": "Nb3Sn",
-    "PF_material": "NbTi",
-    "A": 3.1,
-    "n_CS": 5,
-    "n_PF": 6,
-    "f_ni": 0.1,
-    "fw_psi_n": 1.06,
-    "tk_ts": 0.05,
-    "tk_vv_in": 0.3,
-    "tk_sh_in": 0.3,
-    "tk_tf_side": 0.1,
-    "tk_bb_ib": 0.7,
-    "tk_sol_ib": 0.225,
-    "LPangle": -15,
+    "Name": (REACTORNAME, "Input"),
+    "P_el_net": (580, "Input"),
+    "tau_flattop": (3600, "Input"),
+    "plasma_type": ("SN", "Input"),
+    "reactor_type": ("Normal", "Input"),
+    "CS_material": ("Nb3Sn", "Input"),
+    "PF_material": ("NbTi", "Input"),
+    "A": (3.1, "Input"),
+    "n_CS": (5, "Input"),
+    "n_PF": (6, "Input"),
+    "f_ni": (0.1, "Input"),
+    "fw_psi_n": (1.06, "Input"),
+    "tk_ts": (0.05, "Input"),
+    "tk_vv_in": (0.3, "Input"),
+    "tk_sh_in": (0.3, "Input"),
+    "tk_tf_side": (0.1, "Input"),
+    "tk_bb_ib": (0.7, "Input"),
+    "tk_sol_ib": (0.225, "Input"),
+    "LPangle": (-15, "Input"),
 }
 
 build_config = {
-    "reference_data_root": "!BP_ROOT!/tests/BLUEPRINT/test_data",
-    "generated_data_root": "!BP_ROOT!/tests/BLUEPRINT/test_generated_data",
+    "reference_data_root": f"{BM_ROOT}/tests/BLUEPRINT/test_data",
+    "generated_data_root": f"{BM_ROOT}/tests/BLUEPRINT/test_generated_data",
     "plot_flag": tests.PLOTTING,
     "process_mode": "mock",  # Tests don't require PROCESS to be installed
     "plasma_mode": "run",
@@ -124,7 +126,7 @@ def test_CAD(reactor):
 def test_pickle(reactor):
     original = reactor.params
     serialized = pickle.dumps(reactor)
-    loaded = pickle.loads(serialized)  # noqa (S301)
+    loaded = pickle.loads(serialized)  # noqa :S301
 
     # Loading a reactor replaces the ParameterFrame
     assert loaded.params is not original

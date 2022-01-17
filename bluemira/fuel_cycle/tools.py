@@ -22,26 +22,27 @@
 """
 Fuel cycle utility objects, including sink algorithms
 """
-import numpy as np
+import matplotlib.pyplot as plt
 import numba as nb
+import numpy as np
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
+
 from bluemira.base.constants import (
-    J_TO_EV,
-    EV_TO_J,
-    T_LAMBDA,
-    T_MOLAR_MASS,
-    N_AVOGADRO,
-    S_TO_YR,
-    D_MOLAR_MASS,
-    ELECTRON_MOLAR_MASS,
-    PROTON_MOLAR_MASS,
-    NEUTRON_MOLAR_MASS,
-    HE3_MOLAR_MASS,
-    HE_MOLAR_MASS,
     AMU_TO_KG,
     C_LIGHT,
+    D_MOLAR_MASS,
+    ELECTRON_MOLAR_MASS,
+    EV_TO_J,
+    HE3_MOLAR_MASS,
+    HE_MOLAR_MASS,
+    J_TO_EV,
+    N_AVOGADRO,
+    NEUTRON_MOLAR_MASS,
+    PROTON_MOLAR_MASS,
+    S_TO_YR,
+    T_LAMBDA,
+    T_MOLAR_MASS,
     YR_TO_S,
 )
 from bluemira.base.look_and_feel import bluemira_warn
@@ -52,7 +53,7 @@ from bluemira.fuel_cycle.error import FuelCycleError
 # =============================================================================
 
 
-def E_DT_fusion():  # noqa (N802)
+def E_DT_fusion():  # noqa :N802
     """
     Calculates the total energy released from the D-T fusion reaction
 
@@ -72,7 +73,7 @@ def E_DT_fusion():  # noqa (N802)
     return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
 
 
-def E_DD_fusion():  # noqa (N802)
+def E_DD_fusion():  # noqa :N802
     """
     Calculates the total energy released from the D-D fusion reaction
 
@@ -88,7 +89,7 @@ def E_DD_fusion():  # noqa (N802)
         (1.01 ~\\text{MeV})+\\text{p} (3.02~\\text{MeV})~~[50 \\textrm{\\%}]
         ~~~~~~~~~~\\rightarrow~{^{3}_{2}He} (0.82~\\text{MeV})+\\text{n}^{0} (2.45~\\text{MeV})~~[50 \\text{\\%}]\n
         \\Delta E = \\Delta m c^2
-    """  # noqa (W505)
+    """  # noqa :W505
     # NOTE: Electron mass must be included with proton mass
     delta_m = np.array(
         [
@@ -123,7 +124,7 @@ def n_DT_reactions(p_fus) -> float:
     return float(p_fus * 1e6 / (e_dt * EV_TO_J))
 
 
-def n_DD_reactions(p_fus) -> float:  # noqa (N802)
+def n_DD_reactions(p_fus) -> float:  # noqa :N802
     """
     Calculates the number of D-D fusion reactions per s for a given D-D fusion
     power
@@ -144,7 +145,7 @@ def n_DD_reactions(p_fus) -> float:  # noqa (N802)
     return float(p_fus * 1e6 / (e_dd * EV_TO_J))
 
 
-def r_T_burn(p_fus):  # noqa (N802)
+def r_T_burn(p_fus):  # noqa :N802
     """
     Calculates the tritium burn rate for a given fusion power
 
@@ -159,11 +160,11 @@ def r_T_burn(p_fus):  # noqa (N802)
     -------
     r_burn: float
         T burn rate in the plasma [g/s]
-    """  # noqa (W505)
+    """  # noqa :W505
     return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
 
 
-def r_D_burn_DT(p_fus):  # noqa (N802)
+def r_D_burn_DT(p_fus):  # noqa :N802
     """
     Calculates the deuterium burn rate for a given fusion power in D-T
 
@@ -212,7 +213,7 @@ def pam3s_to_mols(flow_in_pam3_s):
     return flow_in_pam3_s / 2270
 
 
-def mols_to_pam3s(flow_in_mols):  # noqa (N802)
+def mols_to_pam3s(flow_in_mols):  # noqa :N802
     """
     Convert a flow in Pa.m^3/s to a flow in mols.
 
@@ -447,7 +448,7 @@ def fit_sink_data(x, y, method="sqrt", plot=True):
 
 
 @nb.jit(nopython=True, cache=True)
-def delay_decay(t, m_t_flow, t_delay):
+def delay_decay(t, m_t_flow, tt_delay):
     """
     Time-shift a tritium flow with a delay and account for radioactive decay.
 
@@ -465,7 +466,7 @@ def delay_decay(t, m_t_flow, t_delay):
     flow: np.array
         The delayed flow
     """
-    t_delay = t_delay * S_TO_YR
+    t_delay = tt_delay * S_TO_YR
     shift = np.argmin(np.abs(t - t_delay))
     flow = np.zeros(shift)
     deldec = np.exp(-T_LAMBDA * t_delay)
@@ -633,7 +634,7 @@ def legal_limit(
 
 
 @nb.jit(nopython=True, cache=True)
-def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa (N802)
+def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa :N802
     """
     Analytical value of series expansion for an inventory I with a incoming
     flux of tritium (kg/yr).
@@ -641,7 +642,7 @@ def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa (N802)
     \t:math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+{\\eta}\\dot{m}\\sum_{t=0}^{{\\Delta}t}e^{-\\lambda(T-t)}`
 
     \t:math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+{\\eta}\\dot{m}\\dfrac{e^{-{\\lambda}T}\\big(e^{{\\lambda}({\\Delta}t+1/2)}-1\\big)}{e^{\\lambda}-1}`
-    """  # noqa (W505)
+    """  # noqa :W505
     # intuitive hack for 1/2... maths says it should be 1
     dt = t_out - t_in
 
@@ -672,7 +673,7 @@ def _timestep_decay(flux, dt):
     -------
     decay: float
         The value of the total inventory which decayed over the time-step.
-    """  # noqa (W505)
+    """  # noqa :W505
     return flux * (
         1
         - (np.exp(-T_LAMBDA * dt) * (np.exp(T_LAMBDA * (dt + 0)) - 1))

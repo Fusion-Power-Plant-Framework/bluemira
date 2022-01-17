@@ -22,35 +22,35 @@
 """
 First wall and divertor profile calculation algorithms
 """
-import numpy as np
-import matplotlib.pyplot as plt
-from typing import Type, List
-from scipy.interpolate import InterpolatedUnivariateSpline
-import nlopt
 from collections import OrderedDict
+from typing import List, Type
 
-from bluemira.base.parameter import ParameterFrame
+import matplotlib.pyplot as plt
+import nlopt
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+
 from bluemira.base.look_and_feel import bluemira_warn
-
-from BLUEPRINT.nova.stream import StreamFlow
-from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
-from BLUEPRINT.geometry.stringgeom import String
-from BLUEPRINT.geometry.shape import Shape
+from bluemira.base.parameter import ParameterFrame
+from bluemira.geometry._deprecated_tools import innocent_smoothie
+from bluemira.utilities.optimiser import approx_derivative
 from BLUEPRINT.geometry.boolean import boolean_2d_difference, boolean_2d_union
 from BLUEPRINT.geometry.geomtools import (
     lengthnorm,
+    order,
     rotate_vector_2d,
     tangent,
     unique,
-    order,
     vector_intersect,
     xz_interp,
 )
+from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.offset import offset_clipper
-from BLUEPRINT.utilities.tools import innocent_smoothie
-from BLUEPRINT.utilities.optimisation import approx_fprime
+from BLUEPRINT.geometry.parameterisations import PictureFrame, PolySpline
+from BLUEPRINT.geometry.shape import Shape
+from BLUEPRINT.geometry.stringgeom import String
+from BLUEPRINT.nova.stream import StreamFlow
+from BLUEPRINT.systems.baseclass import ReactorSystem
 
 
 class FirstWallProfile(ReactorSystem):
@@ -451,7 +451,10 @@ class Paneller:
         length = self.fw_length(x_opt, 0)
         if grad.size > 0:
 
-            grad[:] = approx_fprime(x_opt, self.fw_length, 1e-6, self.bounds, 0)
+            grad[:] = approx_derivative(
+                self.fw_length, x_opt, rel_step=1e-6, f0=length, args=(0,)
+            )
+
         return length
 
     def set_cmm(self, x_opt, cmm, index):  # min max constraints
@@ -468,6 +471,7 @@ class Paneller:
         Constrain the lengths of the flat first wall panels.
         """
         d_l_space = 1e-3  # minimum inter-point spacing
+
         if grad.size > 0:
             grad[:] = np.zeros((self.n_constraints, self.n_opt))  # initalise
             for i in range(self.n_opt - 1):  # order points
@@ -475,13 +479,12 @@ class Paneller:
                 grad[i, i + 1] = 1
 
             for i in range(2 * self.n_opt + 4):
-                grad[self.n_opt - 1 + i, :] = approx_fprime(
-                    x_opt,
+                grad[self.n_opt - 1 + i, :] = approx_derivative(
                     self.set_cmm,
-                    1e-6,
-                    self.bounds,
-                    np.zeros(2 * self.n_opt + 4),
-                    i,
+                    x_opt,
+                    rel_step=1e-6,
+                    bounds=self.bounds,
+                    args=(np.zeros(2 * self.n_opt + 4), i),
                 )
 
         constraint[: self.n_opt - 1] = (
@@ -494,7 +497,6 @@ class Paneller:
         Optimise the panelling of the profile.
         """
         opt = nlopt.opt(nlopt.LD_SLSQP, self.n_opt)
-        # opt = nlopt.opt(nlopt.LD_MMA, self.nP)
         opt.set_ftol_rel(1e-4)
         opt.set_ftol_abs(1e-4)
         opt.set_min_objective(self.fw_vector)
@@ -997,9 +999,3 @@ class DivertorProfile(ReactorSystem):
         if dx[1] < dx[0]:
             x_new, z_new = x_new[::-1], z_new[::-1]
         return np.append(x, x_new[1:-1]), np.append(z, z_new[1:-1])
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

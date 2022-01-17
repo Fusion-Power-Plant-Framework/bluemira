@@ -21,11 +21,12 @@
 
 """Test routines for reactor system plotting."""
 
-import pytest
-from matplotlib import pyplot as plt
 import filecmp
 
-from BLUEPRINT.base.file import FileManager
+import pytest
+from matplotlib import pyplot as plt
+
+from bluemira.base.file import FileManager
 from BLUEPRINT.nova.structure import CoilArchitect
 from BLUEPRINT.systems.blanket import BreedingBlanket
 from BLUEPRINT.systems.buildings import RadiationShield

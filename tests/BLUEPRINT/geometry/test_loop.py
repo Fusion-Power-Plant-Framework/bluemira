@@ -19,22 +19,23 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import numpy as np
 import os
-from random import uniform
 from itertools import cycle
+from random import uniform
+
+import numpy as np
+import pytest
 from matplotlib import pyplot as plt
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
-from BLUEPRINT.geometry.geombase import Plane
-from BLUEPRINT.utilities.plottools import Plot3D
-from BLUEPRINT.geometry.geomtools import get_intersect
 
 import tests
+from bluemira.base.file import get_bluemira_path
+from bluemira.geometry._deprecated_tools import get_intersect
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.geombase import Plane
+from BLUEPRINT.geometry.loop import Loop, MultiLoop
+from BLUEPRINT.utilities.plottools import Plot3D
 
-TEST = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+TEST = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
 
 
 class TestLoop:

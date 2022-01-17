@@ -24,17 +24,15 @@ Central column neutron shield system
 """
 import numpy as np
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
-from BLUEPRINT.base.error import GeometryError
+import bluemira.geometry._deprecated_loop as new_loop
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
-from BLUEPRINT.geometry.boolean import (
-    simplify_loop,
-    boolean_2d_difference_loop,
-)
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.geometry.boolean import boolean_2d_difference_loop, simplify_loop
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import loop_plane_intersect
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
@@ -151,7 +149,7 @@ class CentralColumnShield(Meshable, ReactorSystem):
         """
         Return offset (and simplified) loop
         """
-        if not isinstance(loop, Loop):
+        if not isinstance(loop, (Loop, new_loop.Loop)):
             raise TypeError(self.INPUT_TYPE_ERR)
 
         if offset < 0.0:

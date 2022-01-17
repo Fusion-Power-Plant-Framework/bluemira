@@ -22,47 +22,51 @@
 """
 A collection of geometry utility functions
 """
-import numba as nb
-import numpy as np
-from numpy.linalg import LinAlgError
 from collections.abc import Iterable
-from pyquaternion import Quaternion
+
+import numpy as np
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiLineString, MultiPolygon
 from shapely.ops import unary_union
-from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_warn, bluemira_print
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 
-def close_coordinates(x, y, z):
-    """
-    Close an ordered set of coordinates.
+# Port over without modifying imports
+from bluemira.geometry._deprecated_tools import (  # noqa
+    bounding_box,
+    check_linesegment,
+    close_coordinates,
+    distance_between_points,
+    get_intersect,
+    in_polygon,
+    join_intersect,
+    loop_plane_intersect,
+    on_polygon,
+    polygon_in_polygon,
+    quart_rotate,
+    rotation_matrix,
+    vector_intersect,
+)
+from bluemira.geometry.coordinates import get_centroid_3d  # noqa
+from bluemira.geometry.error import GeometryError
 
-    Parameters
-    ----------
-    x: np.array
-        The x coordinates
-    y: np.array
-        The y coordinates
-    z: np.array
-        The z coordinates
+# A couple of name changes
+rotate_matrix = rotation_matrix  # noqa
+qrotate = quart_rotate  # noqa
 
-    Returns
-    -------
-    x: np.array
-        The closed x coordinates
-    y: np.array
-        The closed y coordinates
-    z: np.array
-        The closed z coordinates
-    """
-    if distance_between_points([x[0], y[0], z[0]], [x[-1], y[-1], z[-1]]) > EPS:
-        x = np.append(x, x[0])
-        y = np.append(y, y[0])
-        z = np.append(z, z[0])
-    return x, y, z
+# This is let the BLUEPRINT docs build correctly...
+distance_between_points = distance_between_points  # noqa
+vector_intersect = vector_intersect  # noqa
+in_polygon = in_polygon  # noqa
+loop_plane_intersect = loop_plane_intersect  # noqa
+bounding_box = bounding_box  # noqa
+get_intersect = get_intersect  # noqa
+join_intersect = join_intersect  # noqa
+check_linesegment = check_linesegment  # noqa
+polygon_in_polygon = polygon_in_polygon  # noqa
+close_coordinates = close_coordinates  # noqa
+on_polygon = on_polygon  # noqa
+get_centroid_3d = get_centroid_3d  # noqa
 
 
 def get_normal_vector(x, y, z):
@@ -129,44 +133,10 @@ def project_point_axis(point, axis):
     -------
     projection: np.array(3)
         The coordinates of the projected point
-    """  # noqa (W505)
+    """  # noqa :W505
     point = np.array(point)
     axis = np.array(axis)
     return axis * np.dot(point, axis) / np.dot(axis, axis)
-
-
-def bounding_box(x, y, z):
-    """
-    Calculates a bounding box for a set of 3-D coordinates
-
-    Parameters
-    ----------
-    x: np.array(N)
-        The x coordinates
-    y: np.array(N)
-        The y coordinates
-    z: np.array(N)
-        The z coordinates
-
-    Returns
-    -------
-    x_b: np.array(8)
-        The x coordinates of the bounding box rectangular cuboid
-    y_b: np.array(8)
-        The y coordinates of the bounding box rectangular cuboid
-    z_b: np.array(8)
-        The z coordinates of the bounding box rectangular cuboid
-    """
-    xmax, xmin = np.max(x), np.min(x)
-    ymax, ymin = np.max(y), np.min(y)
-    zmax, zmin = np.max(z), np.min(z)
-
-    size = max([xmax - xmin, ymax - ymin, zmax - zmin])
-
-    x_b = 0.5 * size * np.array([-1, -1, -1, -1, 1, 1, 1, 1]) + 0.5 * (xmax + xmin)
-    y_b = 0.5 * size * np.array([-1, -1, 1, 1, -1, -1, 1, 1]) + 0.5 * (ymax + ymin)
-    z_b = 0.5 * size * np.array([-1, 1, -1, 1, -1, 1, -1, 1]) + 0.5 * (zmax + zmin)
-    return x_b, y_b, z_b
 
 
 def make_box_xz(x_min, x_max, z_min, z_max):
@@ -231,45 +201,6 @@ def grid_2d_contour(loop):
     x_new.append(x[0])
     z_new.append(z[0])
     return np.array(x_new), np.array(z_new)
-
-
-def loop_plane_intersect(loop, plane):
-    """
-    Calculates the intersection of a loop with a plane
-
-    Parameters
-    ----------
-    loop: BLUEPRINT Loop object
-        The loop to calculate the intersection on
-    plane: BLUEPRINT Plane object
-        The plan to calculate the intersection with
-
-    Returns
-    -------
-    inter: np.array(3, n_intersections) or None
-        The xyz coordinates of the intersections with the loop. Returns None if
-        there are no intersections detected
-    """
-    out = _loop_plane_intersect(loop.xyz.T[:-1], plane.p1, plane.n_hat)
-    if not out:
-        return None
-    else:
-        return np.unique(out, axis=0)  # Drop occasional duplicates
-
-
-@nb.jit(cache=True, nopython=True)
-def _loop_plane_intersect(array, p1, vec2):
-    # JIT compiled utility of the above
-    out = []
-    for i in range(len(array)):
-        vec1 = array[i + 1] - array[i]
-        dot = np.dot(vec1, vec2)
-        if abs(dot) > DOT_P_TOL:
-            w = array[i] - p1
-            fac = -(np.dot(vec2, w)) / dot
-            if (fac >= 0) and (fac <= 1):
-                out.append(array[i] + fac * vec1)
-    return out
 
 
 def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
@@ -339,104 +270,6 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
     return x, z
 
 
-def get_intersect(loop1, loop2):
-    """
-    Calculates the intersection points between two Loops. Will return unique
-    list of x, z intersections (no duplicates in x-z space)
-
-    Parameters
-    ----------
-    loop1: Loop
-        The Loops between which intersection points should be calculated
-    loop2: Loop
-        The Loops between which intersection points should be calculated
-
-    Returns
-    -------
-    xi: np.array(N_itersection)
-        The x coordinates of the intersection points
-    zi: np.array(N_itersection)
-        The z coordinates of the intersection points#
-
-    Note
-    ----
-    D. Schwarz, <https://uk.mathworks.com/matlabcentral/fileexchange/11837-fast-and-robust-curve-intersections>
-    """  # noqa (W505)
-    x1, y1 = loop1.d2
-    x2, y2 = loop2.d2
-
-    def inner_inter(x_1, x_2):
-        n1, n2 = x_1.shape[0] - 1, x_2.shape[0] - 1
-        xx1 = np.c_[x_1[:-1], x_1[1:]]
-        xx2 = np.c_[x_2[:-1], x_2[1:]]
-        return (
-            np.less_equal(
-                np.tile(xx1.min(axis=1), (n2, 1)).T, np.tile(xx2.max(axis=1), (n1, 1))
-            ),
-            np.greater_equal(
-                np.tile(xx1.max(axis=1), (n2, 1)).T, np.tile(xx2.min(axis=1), (n1, 1))
-            ),
-        )
-
-    x_x = inner_inter(x1, x2)
-    z_z = inner_inter(y1, y2)
-    m, k = np.nonzero(x_x[0] & x_x[1] & z_z[0] & z_z[1])
-    n = len(m)
-    a_m, xz, b_m = np.zeros((4, 4, n)), np.zeros((4, n)), np.zeros((4, n))
-    a_m[0:2, 2, :] = -1
-    a_m[2:4, 3, :] = -1
-    a_m[0::2, 0, :] = np.diff(np.c_[x1, y1], axis=0)[m, :].T
-    a_m[1::2, 1, :] = np.diff(np.c_[x2, y2], axis=0)[k, :].T
-    b_m[0, :] = -x1[m].ravel()
-    b_m[1, :] = -x2[k].ravel()
-    b_m[2, :] = -y1[m].ravel()
-    b_m[3, :] = -y2[k].ravel()
-    for i in range(n):
-        try:
-            xz[:, i] = np.linalg.solve(a_m[:, :, i], b_m[:, i])
-        except LinAlgError:
-            # Parallel segments. Will raise numpy RuntimeWarnings
-            xz[0, i] = np.nan
-    in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)
-    xz = xz[2:, in_range].T
-    x, z = xz[:, 0], xz[:, 1]
-    if len(x) > 0:
-        x, z = np.unique([x, z], axis=1)
-    return x, z
-
-
-@nb.jit(cache=True, forceobj=True)
-def check_linesegment(point_a, point_b, point_c):
-    """
-    Check that point C is on the line between points A and B
-
-    Parameters
-    ----------
-    point_a, point_b: [float, float]*2
-        The line segment points
-    point_c: [float, float]
-        The point which to check is on A--B
-
-    Returns
-    -------
-    check: bool
-        True: if C on A--B, else False
-    """
-    point_a, point_b, point_c = np.array(point_a), np.array(point_b), np.array(point_c)
-    a_c, a_b = point_c - point_a, point_b - point_a
-    distance = distance_between_points(point_a, point_b)
-    if np.abs(np.cross(a_b, a_c)) > CROSS_P_TOL * distance:
-        return False
-    k_ac = np.dot(a_b, a_c)
-    k_ab = np.dot(a_b, a_b)
-    if k_ac < 0:
-        return False
-    elif k_ac > k_ab:
-        return False
-    else:
-        return True
-
-
 def get_points_of_loop(loop):
     """
     Get the [x, z] points corresponding to this loop. If the loop is closed then skips
@@ -487,6 +320,7 @@ def index_of_point_on_loop(loop, point_on_loop, before=True):
     """
     # Combine coords into single array, skipping the last if it's a closed loop
     coords = np.array(get_points_of_loop(loop))
+    point_on_loop = np.array(point_on_loop)
 
     # Get the number of points in the loop
     n_points = coords.shape[0]
@@ -510,59 +344,6 @@ def index_of_point_on_loop(loop, point_on_loop, before=True):
         raise GeometryError("Point is not on loop")
 
     return index_of_point
-
-
-def join_intersect(loop1, loop2, get_arg=False):
-    """
-    Adds the intersection points between Loop1 and Loop2 to Loop1
-
-    Parameters
-    ----------
-    loop1: BLUEPRINT Loop object
-        The Loop to which the intersection points should be added
-    loop2: BLUEPRINT Loop object
-        The intersecting Loop
-    get_arg: bool (default = False)
-
-    Returns
-    -------
-    (if get_arg is True)
-    args: list(int, int, ..) of len(N_intersections)
-        The arguments of Loop1 in which the intersections were added.
-
-    Note
-    ----
-    Modifies loop1
-    """
-    x_inter, z_inter = get_intersect(loop1, loop2)
-    xz = loop1.d2.T
-    count = 0
-    args = []
-    for i, (x, z) in enumerate(zip(x_inter, z_inter)):
-        for j, (xx, zz) in enumerate(xz[:-1]):
-            if check_linesegment((xx, zz), xz[j + 1], (x, z)):
-                args.append(j)
-                break
-
-    orderr = np.array(args).argsort()
-    x_int = x_inter[orderr]
-    z_int = z_inter[orderr]
-    for i, (x, z) in enumerate(zip(x_int, z_int)):
-        for j, (xx, zz) in enumerate(xz[:-1]):
-            if check_linesegment((xx, zz), xz[j + 1], (x, z)):
-                arg = j + count + 1
-                loop1.insert((x, z), pos=arg)
-                count += 1
-                # Stop looking (can only be one)
-                # Occasional duplicates will happen when the intersection lies
-                # on a point of the Loop
-                break
-
-    if get_arg:
-        args = []
-        for x, z in zip(x_inter, z_inter):
-            args.append(loop1.argmin([x, z]))
-        return list(set(args))
 
 
 def _ccw(a, b, c):
@@ -622,110 +403,6 @@ def check_ccw(x, z):
     for n in range(len(x) - 1):
         a += (x[n + 1] - x[n]) * (z[n + 1] + z[n])
     return a < 0
-
-
-@nb.jit(cache=True, forceobj=True)
-def on_polygon(x, z, poly):
-    """
-    Determines if a point (x, z) is on the perimeter of a closed 2-D polygon
-
-    Parameters
-    ----------
-    x, z: float, float
-        Point coordinates
-    poly: np.array(2, N)
-        The array of polygon point coordinates
-
-    Returns
-    -------
-    on_edge: bool
-        Whether or not the point is on the perimeter of the polygon
-    """
-    on_edge = False
-    for i, (point_a, point_b) in enumerate(zip(poly[:-1], poly[1:])):
-        c = check_linesegment(point_a, point_b, [x, z])
-
-        if c is True:
-            return True
-    return on_edge
-
-
-@nb.jit(cache=True, nopython=True)
-def in_polygon(x, z, poly, include_edges=False):
-    """
-    Determines if a point (x, z) is inside a 2-D polygon
-
-    Parameters
-    ----------
-    x, z: float, float
-        Point coordinates
-    poly: np.array(2, N)
-        The array of polygon point coordinates
-    include_edges: bool
-        Whether or not to return True if a point is on the perimeter of the
-        polygon
-
-    Returns
-    -------
-    inside: bool
-        Whether or not the point is in the polygon
-    """
-    n = len(poly)
-    inside = False
-    x1, z1, x_inter = 0, 0, 0
-    x0, z0 = poly[0]
-    for i in range(n + 1):
-        x1, z1 = poly[i % n]
-
-        if x == x1 and z == z1:
-            return include_edges
-
-        if z > min(z0, z1):
-            if z <= max(z0, z1):
-                if x <= max(x0, x1):
-
-                    if z0 != z1:
-                        x_inter = (z - z0) * (x1 - x0) / (z1 - z0) + x0
-                        if x == x_inter:
-                            return include_edges
-                    if x0 == x1 or x <= x_inter:
-
-                        inside = not inside  # Beautiful
-        elif z == min(z0, z1):
-            if z0 == z1:
-                if (x <= max(x0, x1)) and (x >= min(x0, x1)):
-                    return include_edges
-
-        x0, z0 = x1, z1
-    return inside
-
-
-@nb.jit(cache=True, nopython=True)
-def polygon_in_polygon(poly1, poly2, include_edges=False):
-    """
-    Determines what points of a polygon are inside another polygon
-
-    Parameters
-    ----------
-    poly1: np.array(2, N1)
-        The array of polygon1 point coordinates
-    poly2: np.array(2, N2)
-        The array of polygon2 point coordinates
-    include_edges: bool
-        Whether or not to return True if a point is on the perimeter of the
-        polygon
-
-    Returns
-    -------
-    inside: np.array(N1, dtype=bool)
-        The array of boolean values per index of polygon1
-    """
-    inside_array = np.empty(len(poly1), dtype=np.bool_)
-    for i in range(len(poly1)):
-        inside_array[i] = in_polygon(
-            poly1[i][0], poly1[i][1], poly2, include_edges=include_edges
-        )
-    return inside_array
 
 
 # # TODO: test/compare speed with ray-tracer algos also found here
@@ -837,55 +514,6 @@ def get_centroid(x, z, output_area=False):
         return cx, cz, area
     else:
         return cx, cz
-
-
-def get_centroid_3d(x, y, z):
-    """
-    Calculates the centroid of a non-self-intersecting counterclockwise polygon
-    in 3-D.
-
-    Parameters
-    ----------
-    x, y, z: np.array(N), np.array(N), np.array(N)
-        Coordinates of the loop to calculate on
-
-    Returns
-    -------
-    cx, cy, cz: float, float
-        The x, y, z coordinates of the centroid [m]
-    """
-    cx, cy = get_centroid(x, y)
-    cx2, cz = get_centroid(x, z)
-    cy2, cz2 = get_centroid(y, z)
-
-    # The following is an "elegant" but computationally more expensive way of
-    # dealing with the 0-area edge cases
-    # (of which there are more than you think)
-    cx = np.array([cx, cx2])
-    cy = np.array([cy, cy2])
-    cz = np.array([cz, cz2])
-
-    def get_rational(i, array):
-        """
-        Gets rid of infinity and nan coordinates
-        """
-        args = np.argwhere(np.isfinite(array))
-        if len(args) == 0:
-            # 2-D shape with a simple axis offset
-            # Get the first value of the coordinate set which is equal to the
-            # offset
-            return [x, y, z][i][0]
-        elif len(args) == 1:
-            return array[args[0][0]]
-        else:
-            if not np.isclose(array[0], array[1]):
-                # Occasionally the two c values are not the same, and one is 0
-                # Take non-trivial value (this works in the case of 2 zeros)
-                return array[np.argmax(np.abs(array))]
-            else:
-                return array[0]
-
-    return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
 
 
 def loop_volume(x, z):
@@ -1097,40 +725,6 @@ def normal_vector(side_vectors):
     return a
 
 
-def vector_intersect(p1, p2, p3, p4):
-    """
-
-    Parameters
-    ----------
-    p1: np.array(2)
-        The first point on the first vector
-    p2: np.array(2)
-        The second point on the first vector
-    p3: np.array(2)
-        The first point on the second vector
-    p4: np.array(2)
-        The second point on the second vector
-
-    Returns
-    -------
-    p_inter: np.array(2)
-        The point of the intersection between the two vectors
-    """
-    da = p2 - p1
-    db = p4 - p3
-
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
-        # NOTE: careful modifying this, different behaviour required...
-        point = p2
-    else:
-        dp = p1 - p3
-        dap = normal_vector(da)
-        denom = np.dot(dap, db)
-        num = np.dot(dap, dp)
-        point = num / denom.astype(float) * db + p3
-    return point
-
-
 def unique(x, z):
     """
     Removes duplicates
@@ -1174,164 +768,6 @@ def rotate_vector_2d(vector, theta):
     return v_hat
 
 
-def qrotate(point, **kwargs):
-    """
-    Rotate a point cloud by angle theta around vector (right-hand coordinates).
-    Uses black quarternion magic.
-
-    Parameters
-    ----------
-    point: np.array(N, 3) or dict('x': [], 'y': [], 'z': [])
-        The coordinates of the points to be rotated
-    kwargs:
-        theta: float
-            Rotation angle [radians]
-        p1: [float, float, float]
-            Origin of rotation vector
-        p2: [float, float, float]
-            Second point defining rotation axis
-    OR kwargs:
-        theta: float
-            Rotation angle [radians]
-        xo: [float, float, float]
-            Origin of rotation vector
-        dx: [float, float, float] or one of 'x', 'y', 'z'
-            Direction vector definition rotation axis from origin. If a string
-            is specified the dx vector is automatically calculated, e.g.
-            'z': (0, 0, 1)
-    OR kwargs:
-        quart: Quarternion object
-            The rotation quarternion
-        xo: [float, float, float]
-            Origin of rotation vector
-
-    Returns
-    -------
-    rpoint: np.array(N, 3) or dict('x': [], 'y': [], 'z': [])
-        The rotated coordinates. Output in numpy array or dict, depending on
-        input type
-    """
-    if "quart" in kwargs:
-        quart = kwargs["quart"]
-        xo = kwargs.get("xo", np.zeros(3))
-    else:
-        theta = kwargs["theta"]
-        if "p1" in kwargs and "p2" in kwargs:
-            p1, p2 = kwargs["p1"], kwargs["p2"]
-            if not isinstance(p1, np.ndarray) or not isinstance(p1, np.ndarray):
-                p1, p2 = np.array(p1), np.array(p2)
-            xo = p1
-            dx = p2 - p1
-            dx = tuple(dx)
-        elif "xo" in kwargs and "dx" in kwargs:
-            xo, dx = kwargs["xo"], kwargs["dx"]
-        elif "dx" in kwargs:
-            dx = kwargs["dx"]
-            if isinstance(dx, str):
-                index = ["x", "y", "z"].index(dx)
-                dx = np.zeros(3)
-                dx[index] = 1
-            xo = np.zeros(3)
-        else:
-            errtxt = "error in kwargs input\n"
-            errtxt += "rotation vector input as ether:\n"
-            errtxt += "\tpair of points, p1=[x,y,z] and p2=[x,y,z]\n"
-            errtxt += "\torigin and vector, xo=[x,y,z] and dx=[x,y,z]\n"
-            raise GeometryError(errtxt)
-
-        dx /= np.linalg.norm(dx)  # normalise rotation axis
-        quart = Quaternion(axis=dx, angle=theta)
-    if isinstance(point, dict):
-        isdict = True
-        p = np.zeros((len(point["x"]), 3))
-        for i, var in enumerate(["x", "y", "z"]):
-            p[:, i] = point[var]
-        point = p
-    else:
-        isdict = False
-    if np.ndim(point) == 1 and len(point) == 3:
-        point = np.array([point])
-    if np.shape(point)[1] != 3:
-        errtxt = "point vector required as numpy.array size=(:,3)"
-        raise GeometryError(errtxt)
-
-    trans = np.ones((len(point), 1)) * xo  # expand vector origin
-    p = point - trans  # translate to rotation vector's origin (xo)
-    rpoint = np.zeros(np.shape(point))
-    for i, po in enumerate(p):
-        rpoint[i, :] = quart.rotate(po)
-    rpoint += trans  # translate from rotation vector's origion (xo)
-    if isdict:  # return to dict
-        p = {}
-        for i, var in enumerate(["x", "y", "z"]):
-            p[var] = rpoint[:, i]
-        rpoint = p
-    return rpoint
-
-
-def rotate_matrix(theta, axis="z"):
-    """
-    Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
-    \t:math:`\\mathbf{x^{'}}=\\mathbf{R_{u}}(\\theta)\\mathbf{x}`
-
-    \t:math:`\\mathbf{R_{u}}(\\theta)=cos(\\theta)\\mathbf{I}+sin(\\theta)[\\mathbf{u}]_{\\times}(1-cos(\\theta))(\\mathbf{u}\\otimes\\mathbf{u})`
-
-    Parameters
-    ----------
-    theta: float
-        The rotation angle [radians] (counter-clockwise about axis!)
-    axis: Union[str, iterable(3)]
-        The rotation axis (specified by axis label or vector)
-
-    Returns
-    -------
-    r_matrix: np.array((3, 3))
-        The (active) rotation matrix about the axis for an angle theta
-    """
-    if isinstance(axis, str):
-        # All das hier lass ich rein, damit alle verstehen koennen, dass es
-        # sich um normalen Rotation Matrices handelt.
-        if axis == "z":
-            r_matrix = np.array(
-                [
-                    [np.cos(theta), -np.sin(theta), 0],
-                    [np.sin(theta), np.cos(theta), 0],
-                    [0, 0, 1],
-                ]
-            )
-        elif axis == "y":
-            r_matrix = np.array(
-                [
-                    [np.cos(theta), 0, np.sin(theta)],
-                    [0, 1, 0],
-                    [-np.sin(theta), 0, np.cos(theta)],
-                ]
-            )
-        elif axis == "x":
-            r_matrix = np.array(
-                [
-                    [1, 0, 0],
-                    [0, np.cos(theta), -np.sin(theta)],
-                    [0, np.sin(theta), np.cos(theta)],
-                ]
-            )
-        else:
-            raise GeometryError(
-                f"Incorrect rotation axis: {axis}\n"
-                "please select from: ['x', 'y', 'z']"
-            )
-    else:
-        # Mignon, mais difficile de savoir ce qui se passe
-        axis = np.array(axis) / np.linalg.norm(axis)  # Unit vector
-        cos = np.cos(theta)
-        sin = np.sin(theta)
-        x, y, z = axis
-        u_x = np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
-        u_o_u = np.outer(axis, axis)
-        r_matrix = cos * np.eye(3) + sin * u_x + (1 - cos) * u_o_u
-    return r_matrix
-
-
 # =============================================================================
 # Ordering algorithms
 #     TODO: sort these out... subtleties important
@@ -1354,7 +790,7 @@ def clock(x, z, reverse=True):
     Order loop anti-clockwise with spline smoothing.
     """
     # Circular import
-    from BLUEPRINT.utilities.tools import innocent_smoothie
+    from bluemira.geometry._deprecated_tools import innocent_smoothie
 
     rc, zc = (np.mean(x), np.mean(z))
     radius = ((x - rc) ** 2 + (z - zc) ** 2) ** 0.5
@@ -1401,31 +837,6 @@ def theta_sort(x, z, origin="lfs", **kwargs):
     if not anti:
         x, z = x[::-1], z[::-1]
     return x, z
-
-
-def distance_between_points(p1, p2):
-    """
-    Calculates the distance between two points
-
-    Parameters
-    ----------
-    p1: (float, float)
-        The coordinates of the first point
-    p2: (float, float)
-        The coordinates of the second point
-
-    Returns
-    -------
-    d: float
-        The distance between the two points [m]
-    """
-    if len(p1) != len(p2):
-        raise GeometryError("Need two points of the same number of coordinates.")
-
-    if (len(p1) not in [2, 3]) or (len(p2) not in [2, 3]):
-        raise GeometryError("Need 2- or 3-D sized points.")
-
-    return np.sqrt(sum([(p2[i] - p1[i]) ** 2 for i in range(len(p2))]))
 
 
 def get_angle_between_points(p0, p1, p2):
@@ -1889,9 +1300,3 @@ def get_boundary(polygons):
             boundary_facets += get_facets(union.boundary.coords, len(boundary_points))
             boundary_points += get_points(union.boundary.coords)
     return boundary_points, boundary_facets
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

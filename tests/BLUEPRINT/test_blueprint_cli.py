@@ -19,28 +19,29 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from click.testing import CliRunner
 import copy
 import functools
 import json
 import os
-from unittest.mock import patch
-from pathlib import Path
-import pytest
 import shutil
 import tempfile
 import traceback
+from pathlib import Path
+from unittest.mock import patch
 
-from BLUEPRINT.base.file import KEYWORD
-from bluemira.base.file import get_bluemira_root
+import pytest
+from click.testing import CliRunner
+
+from bluemira.base.file import BM_ROOT, get_bluemira_root
 from BLUEPRINT.blueprint_cli import cli, get_reactor_class
 from BLUEPRINT.reactor import ConfigurableReactor
-
-from tests.BLUEPRINT.test_reactor import REACTORNAME
-from tests.BLUEPRINT.test_reactor import SmokeTestSingleNullReactor
-from tests.BLUEPRINT.test_reactor import config
-from tests.BLUEPRINT.test_reactor import build_config
-from tests.BLUEPRINT.test_reactor import build_tweaks
+from tests.BLUEPRINT.test_reactor import (
+    REACTORNAME,
+    SmokeTestSingleNullReactor,
+    build_config,
+    build_tweaks,
+    config,
+)
 
 INDIR = os.path.join(get_bluemira_root(), "tests", "BLUEPRINT", "cli", "test_indir")
 OUTDIR = os.path.join(get_bluemira_root(), "tests", "BLUEPRINT", "cli", "test_outdir")
@@ -386,8 +387,8 @@ def test_cli_bproot_keyword(
     runner = CliRunner()
 
     # Set temp outdir and ensure directory does not already exist.
-    outdir_flag = os.path.join(KEYWORD, "tests", "BLUEPRINT", "cli", "temp_outdir")
-    outdir_path = outdir_flag.replace(KEYWORD, get_bluemira_root())
+    outdir_flag = os.path.join(BM_ROOT, "tests", "BLUEPRINT", "cli", "temp_outdir")
+    outdir_path = outdir_flag.replace(BM_ROOT, get_bluemira_root())
     if os.path.exists(outdir_path):
         shutil.rmtree(outdir_path)
 

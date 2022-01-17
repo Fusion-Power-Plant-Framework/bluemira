@@ -21,16 +21,15 @@
 
 import numpy as np
 import pytest
-import tests
 
-from BLUEPRINT.systems.baseclass import ReactorSystem
+import tests
+from bluemira.base.config import SingleNull
+from bluemira.base.file import BM_ROOT
 from BLUEPRINT.geometry.loop import MultiLoop
 from BLUEPRINT.geometry.shell import MultiShell
 from BLUEPRINT.reactor import Reactor
-from BLUEPRINT.systems.config import SingleNull
-
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from examples.BLUEPRINT_integration import BluemiraReactor
-
 
 REACTORNAME = "BLUEPRINT-INTEGRATION-TEST"
 
@@ -57,8 +56,8 @@ config = {
 }
 
 build_config = {
-    "reference_data_root": "!BP_ROOT!/tests/bluemira/test_data",
-    "generated_data_root": "!BP_ROOT!/tests/bluemira/test_generated_data",
+    "reference_data_root": f"{BM_ROOT}/tests/bluemira/test_data",
+    "generated_data_root": f"{BM_ROOT}/tests/bluemira/test_generated_data",
     "plot_flag": tests.PLOTTING,
     "process_mode": "mock",  # Tests don't require PROCESS to be installed
     "plasma_mode": "run",
@@ -66,6 +65,7 @@ build_config = {
     # TF coil config
     "TF_type": "S",
     "wp_shape": "N",
+    "conductivity": "SC",
     "TF_objective": "L",
     # FW and VV config
     "VV_parameterisation": "S",

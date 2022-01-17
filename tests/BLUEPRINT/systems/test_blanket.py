@@ -21,16 +21,17 @@
 """
 Testing routines for the central column shield system
 """
-import pytest
 import numpy as np
+import pytest
 
 from bluemira.base.parameter import ParameterFrame
-
-from BLUEPRINT.base.error import GeometryError, SystemsError
-from BLUEPRINT.systems.blanket import STBreedingBlanket
-from BLUEPRINT.geometry.geomtools import make_box_xz, get_intersect, circle_seg
+from bluemira.geometry._deprecated_tools import get_intersect
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.base.error import SystemsError
+from BLUEPRINT.geometry.geomtools import circle_seg, make_box_xz
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.systems.blanket import STBreedingBlanket
 
 
 def setup_fw_loop(x_low, x_mid, x_high, z_mid, z_high):

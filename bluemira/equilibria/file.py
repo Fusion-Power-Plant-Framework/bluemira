@@ -22,15 +22,16 @@
 """
 Input and output file interface. EQDSK and json. NOTE: jsons are better :)
 """
-import fortranformat as ff
 import json
-import numpy as np
 import os
 import time
 
-from bluemira.base.parameter import ParameterFrame
+import fortranformat as ff
+import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import is_num, NumpyJSONEncoder
+from bluemira.base.parameter import ParameterFrame
+from bluemira.utilities.tools import is_num, json_writer
 
 __all__ = ["EQDSKInterface"]
 
@@ -71,45 +72,45 @@ class EQDSKInterface:
     Poloidal magnetic flux units not enforced here!
 
     Plasma current direction is not enforced here!
-    """  # noqa (W505)
+    """  # noqa :W505
 
     # fmt: off
     p = [
-        ["name", "Name of the equilibrium EQDSK", None, "N.A", None, None],
-        ["nx", "Number of grid points in the radial direction", None, "N.A", None, None],
-        ["nz", "Number of grid points in the vertical direction", None, "N.A", None, None],
-        ["xdim", "Horizontal dimension of the spatial grid", None, "m", None, None],
-        ["zdim", "Vertical dimension of the spatial grid", None, "m", None, None],
-        ["xcentre", "Radius of the reference toroidal magnetic field", None, "m", None, None],
-        ["xgrid1", "Minimum radius of the spatial grid", None, "m", None, None],
-        ["zmid", "Z coordinate of the middle of the spatial grid", None, "m", None, None],
-        ["xmag", "Radius of the magnetic axis", None, "m", None, None],
-        ["zmag", "Z coordinate of the magnetic axis", None, "m", None, None],
-        ["psimag", "Poloidal flux at the magnetic axis", None, "V.s/rad", None, None],
-        ["psibdry", "Poloidal flux at the magnetic axis", None, "V.s/rad", None, None],
-        ["bcentre", "Magnetic field at the reference radius", None, "T", None, None],
-        ["cplasma", "Plasma current", None, "A", None, None],
-        ["fpol", "Poloidal current function f = R*B on 1-D flux grid", None, "T.m", None, None],
-        ["pressure", "Plasma pressure function on 1-D flux grid", None, "n.t/m^2", None, None],
-        ["ffprime", "FF' function on 1-D flux grid", None, "m.T^2/V.s/rad", None, None],
-        ["pprime", "P' function on 1-D flux grid", None, "n.t/m^2/V.s/rad", None, None],
-        ["psi", "Poloidal magnetic flux on the 2-D grid", None, "V.s/rad", None, None],
-        ["qpsi", "Safety factor values on the 1-D flux grid", None, "N.A", None, None],
-        ["nbdry", "Number of boundary points", None, "N.A", None, None],
-        ["nlim", "Number of limiters", None, "N.A", None, None],
-        ["xbdry", "X coordinates of the plasma boundary", None, "m", None, None],
-        ["zbdry", "Z coordinates of the plasma boundary", None, "m", None, None],
-        ["xlim", "X coordinates of the limiters", None, "m", None, None],
-        ["zlim", "Z coordinates of the limiters", None, "m", None, None],
-        ["ncoil", "Number of coils", None, "N/A", None, None],
-        ["xc", "X coordinates of the coils", None, "m", None, None],
-        ["zc", "Z coordinates of the coils", None, "m", None, None],
-        ["dxc", "X half-thicknesses of the coils", None, "m", None, None],
-        ["dzc", "Z half-thicknesses of hte coils", None, "m", None, None],
-        ["Ic", "Coil currents", None, "A", None, None],
-        ["x", "X 1-D vector", None, "m", None, None],
-        ["z", "Z 1-D vector", None, "m", None, None],
-        ["psinorm", "Normalised psi vector", None, "A", None, None],
+        ["name", "Name of the equilibrium EQDSK", None, "N.A", None, "eqfile"],
+        ["nx", "Number of grid points in the radial direction", None, "N.A", None, "eqfile"],
+        ["nz", "Number of grid points in the vertical direction", None, "N.A", None, "eqfile"],
+        ["xdim", "Horizontal dimension of the spatial grid", None, "m", None, "eqfile"],
+        ["zdim", "Vertical dimension of the spatial grid", None, "m", None, "eqfile"],
+        ["xcentre", "Radius of the reference toroidal magnetic field", None, "m", None, "eqfile"],
+        ["xgrid1", "Minimum radius of the spatial grid", None, "m", None, "eqfile"],
+        ["zmid", "Z coordinate of the middle of the spatial grid", None, "m", None, "eqfile"],
+        ["xmag", "Radius of the magnetic axis", None, "m", None, "eqfile"],
+        ["zmag", "Z coordinate of the magnetic axis", None, "m", None, "eqfile"],
+        ["psimag", "Poloidal flux at the magnetic axis", None, "V.s/rad", None, "eqfile"],
+        ["psibdry", "Poloidal flux at the magnetic axis", None, "V.s/rad", None, "eqfile"],
+        ["bcentre", "Magnetic field at the reference radius", None, "T", None, "eqfile"],
+        ["cplasma", "Plasma current", None, "A", None, "eqfile"],
+        ["fpol", "Poloidal current function f = R*B on 1-D flux grid", None, "T.m", None, "eqfile"],
+        ["pressure", "Plasma pressure function on 1-D flux grid", None, "n.t/m^2", None, "eqfile"],
+        ["ffprime", "FF' function on 1-D flux grid", None, "m.T^2/V.s/rad", None, "eqfile"],
+        ["pprime", "P' function on 1-D flux grid", None, "n.t/m^2/V.s/rad", None, "eqfile"],
+        ["psi", "Poloidal magnetic flux on the 2-D grid", None, "V.s/rad", None, "eqfile"],
+        ["qpsi", "Safety factor values on the 1-D flux grid", None, "N.A", None, "eqfile"],
+        ["nbdry", "Number of boundary points", None, "N.A", None, "eqfile"],
+        ["nlim", "Number of limiters", None, "N.A", None, "eqfile"],
+        ["xbdry", "X coordinates of the plasma boundary", None, "m", None, "eqfile"],
+        ["zbdry", "Z coordinates of the plasma boundary", None, "m", None, "eqfile"],
+        ["xlim", "X coordinates of the limiters", None, "m", None, "eqfile"],
+        ["zlim", "Z coordinates of the limiters", None, "m", None, "eqfile"],
+        ["ncoil", "Number of coils", None, "N/A", None, "eqfile"],
+        ["xc", "X coordinates of the coils", None, "m", None, "eqfile"],
+        ["zc", "Z coordinates of the coils", None, "m", None, "eqfile"],
+        ["dxc", "X half-thicknesses of the coils", None, "m", None, "eqfile"],
+        ["dzc", "Z half-thicknesses of hte coils", None, "m", None, "eqfile"],
+        ["Ic", "Coil currents", None, "A", None, "eqfile"],
+        ["x", "X 1-D vector", None, "m", None, "eqfile"],
+        ["z", "Z 1-D vector", None, "m", None, "eqfile"],
+        ["psinorm", "Normalised psi vector", None, "A", None, "eqfile"],
     ]
     # fmt: on
     data = ParameterFrame(p)
@@ -226,12 +227,7 @@ class EQDSKInterface:
         return self.to_dict()
 
     def _write_json(self, file, data, **kwargs):
-        if isinstance(file, str):
-            with open(file, "w") as f_handle:
-                return self._write_json(f_handle, data)
-        if "indent" not in kwargs:
-            kwargs["indent"] = 4
-        json.dump(data, file, cls=NumpyJSONEncoder, **kwargs)
+        return json_writer(data, file, **kwargs)
 
     def _read_eqdsk(self, file):
         if isinstance(file, str):

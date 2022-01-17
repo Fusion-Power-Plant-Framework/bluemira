@@ -20,16 +20,18 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 
-import pytest
-import tests
 import os
-import numpy as np
-import matplotlib.pyplot as plt
 from random import uniform
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.utilities.plot_tools import Plot3D
-from bluemira.geometry.error import GeometryError
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.error import GeometryError
+from bluemira.utilities.plot_tools import Plot3D
 
 TEST = get_bluemira_path("bluemira/geometry/test_data", subfolder="tests")
 

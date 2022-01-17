@@ -40,8 +40,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pnetelin",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -54,8 +54,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pnetelmw",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -68,8 +68,8 @@
     "mapping": {
       "PROCESS": {
         "name": "tburn",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -90,8 +90,8 @@
     "mapping": {
       "PROCESS": {
         "name": "n_tf",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -120,8 +120,8 @@
     "mapping": {
       "PROCESS": {
         "name": "ripmax",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -142,8 +142,8 @@
     "mapping": {
       "PROCESS": {
         "name": "aspect",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -156,8 +156,8 @@
     "mapping": {
       "PROCESS": {
         "name": "rmajor",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -170,8 +170,8 @@
     "mapping": {
       "PROCESS": {
         "name": "bt",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -184,8 +184,8 @@
     "mapping": {
       "PROCESS": {
         "name": "q95",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -198,8 +198,8 @@
     "mapping": {
       "PROCESS": {
         "name": "kappa95",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -212,8 +212,8 @@
     "mapping": {
       "PROCESS": {
         "name": "kappa",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -226,8 +226,8 @@
     "mapping": {
       "PROCESS": {
         "name": "triang95",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -240,8 +240,8 @@
     "mapping": {
       "PROCESS": {
         "name": "triang",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -254,8 +254,8 @@
     "mapping": {
       "PROCESS": {
         "name": "te",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -268,8 +268,8 @@
     "mapping": {
       "PROCESS": {
         "name": "zeff",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -290,8 +290,8 @@
     "mapping": {
       "PROCESS": {
         "name": "vol",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -304,8 +304,8 @@
     "mapping": {
       "PROCESS": {
         "name": "rli",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -318,8 +318,8 @@
     "mapping": {
       "PROCESS": {
         "name": "plascur/1d6",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -332,8 +332,8 @@
     "mapping": {
       "PROCESS": {
         "name": "powfmw",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -346,8 +346,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pdt",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -360,8 +360,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pdd",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -382,8 +382,8 @@
     "mapping": {
       "PROCESS": {
         "name": "hfact",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -396,8 +396,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pdivt",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -410,8 +410,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pcoreradmw",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -424,8 +424,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pedgeradmw",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -438,8 +438,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pradmw",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -452,8 +452,8 @@
     "mapping": {
       "PROCESS": {
         "name": "plinepv*vol",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -466,8 +466,8 @@
     "mapping": {
       "PROCESS": {
         "name": "psyncpv*vol",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -480,8 +480,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pbrempv*vol",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -494,8 +494,8 @@
     "mapping": {
       "PROCESS": {
         "name": "bootipf",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -516,8 +516,8 @@
     "mapping": {
       "PROCESS": {
         "name": "betap",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -530,8 +530,8 @@
     "mapping": {
       "PROCESS": {
         "name": "beta",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -544,8 +544,8 @@
     "mapping": {
       "PROCESS": {
         "name": "taueff",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -558,8 +558,8 @@
     "mapping": {
       "PROCESS": {
         "name": "vburn",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -580,8 +580,8 @@
     "mapping": {
       "PROCESS": {
         "name": "gamma",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -602,8 +602,8 @@
     "mapping": {
       "PROCESS": {
         "name": "faccd",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -616,8 +616,8 @@
     "mapping": {
       "PROCESS": {
         "name": "enbeam",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -630,8 +630,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pinjalw",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -660,8 +660,8 @@
     "mapping": {
       "PROCESS": {
         "name": "etanbi",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -818,8 +818,8 @@
     "mapping": {
       "PROCESS": {
         "name": "emult",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -888,8 +888,8 @@
     "mapping": {
       "PROCESS": {
         "name": "blnkith",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -902,8 +902,8 @@
     "mapping": {
       "PROCESS": {
         "name": "blnkoth",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -932,8 +932,8 @@
     "mapping": {
       "PROCESS": {
         "name": "shldith",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -946,8 +946,8 @@
     "mapping": {
       "PROCESS": {
         "name": "shldoth",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -960,8 +960,8 @@
     "mapping": {
       "PROCESS": {
         "name": "shldtth",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -974,8 +974,8 @@
     "mapping": {
       "PROCESS": {
         "name": "shldlth",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -988,8 +988,8 @@
     "mapping": {
       "PROCESS": {
         "name": "d_vv_in",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1002,8 +1002,8 @@
     "mapping": {
       "PROCESS": {
         "name": "d_vv_out",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1016,8 +1016,8 @@
     "mapping": {
       "PROCESS": {
         "name": "d_vv_top",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1030,8 +1030,8 @@
     "mapping": {
       "PROCESS": {
         "name": "d_vv_bot",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1044,8 +1044,8 @@
     "mapping": {
       "PROCESS": {
         "name": "scrapli",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1058,8 +1058,8 @@
     "mapping": {
       "PROCESS": {
         "name": "scraplo",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1080,8 +1080,8 @@
     "mapping": {
       "PROCESS": {
         "name": "thshield",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1094,8 +1094,8 @@
     "mapping": {
       "PROCESS": {
         "name": "ddwex",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1116,8 +1116,8 @@
     "mapping": {
       "PROCESS": {
         "name": "thkcas",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1130,8 +1130,8 @@
     "mapping": {
       "PROCESS": {
         "name": "dr_tf_wp",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1144,8 +1144,8 @@
     "mapping": {
       "PROCESS": {
         "name": "casthi",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1174,8 +1174,8 @@
     "mapping": {
       "PROCESS": {
         "name": "casths",
-        "read": false,
-        "write": true
+        "recv": false,
+        "send": true
       }
     }
   },
@@ -1220,8 +1220,8 @@
     "mapping": {
       "PROCESS": {
         "name": "ohcth",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1234,8 +1234,8 @@
     "mapping": {
       "PROCESS": {
         "name": "alstrtf",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -1320,8 +1320,8 @@
     "mapping": {
       "PROCESS": {
         "name": "bore",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1334,8 +1334,8 @@
     "mapping": {
       "PROCESS": {
         "name": "rtfin",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1348,8 +1348,8 @@
     "mapping": {
       "PROCESS": {
         "name": "r_tf_inboard_out",
-        "read": false,
-        "write": false
+        "recv": false,
+        "send": false
       }
     }
   },
@@ -1362,8 +1362,8 @@
     "mapping": {
       "PROCESS": {
         "name": "r_tf_inboard_mid",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1376,8 +1376,8 @@
     "mapping": {
       "PROCESS": {
         "name": "r_ts_ib_in",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1390,8 +1390,8 @@
     "mapping": {
       "PROCESS": {
         "name": "r_vv_ib_in",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1404,8 +1404,8 @@
     "mapping": {
       "PROCESS": {
         "name": "r_fw_ib_in",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1418,8 +1418,8 @@
     "mapping": {
       "PROCESS": {
         "name": "r_fw_ob_in",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1432,8 +1432,8 @@
     "mapping": {
       "PROCESS": {
         "name": "r_vv_ob_in",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1446,8 +1446,8 @@
     "mapping": {
       "PROCESS": {
         "name": "r_tf_outboard_mid",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1468,8 +1468,8 @@
     "mapping": {
       "PROCESS": {
         "name": "gapds",
-        "read": true,
-        "write": false
+        "recv": true,
+        "send": false
       }
     }
   },
@@ -1482,8 +1482,8 @@
     "mapping": {
       "PROCESS": {
         "name": "gapoh",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1496,8 +1496,8 @@
     "mapping": {
       "PROCESS": {
         "name": "tftsgap",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },
@@ -1510,8 +1510,8 @@
     "mapping": {
       "PROCESS": {
         "name": "vvblgap",
-        "read": true,
-        "write": true
+        "recv": true,
+        "send": true
       }
     }
   },

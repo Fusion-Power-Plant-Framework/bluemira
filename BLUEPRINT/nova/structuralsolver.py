@@ -25,29 +25,28 @@ An attempt at including structural constraints in TF coil optimisations..
 # flake8: noqa - UNDER DEVELOPMENT
 
 import numpy as np
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.constants import VERY_BIG
+
+from bluemira.geometry._deprecated_tools import get_intersect
+from bluemira.geometry.constants import VERY_BIG
+from BLUEPRINT.beams.crosssection import (
+    AnalyticalShellComposite,
+    CircularHollowBeam,
+    CompositeCrossSection,
+    MultiCrossSection,
+    RectangularBeam,
+)
+from BLUEPRINT.beams.material import CastEC1, ForgedJJ1, ForgedSS316LN, Material
+from BLUEPRINT.beams.model import FiniteElementModel
+from BLUEPRINT.beams.node import get_midpoint
+from BLUEPRINT.beams.transformation import cyclic_pattern
 from BLUEPRINT.geometry.geomtools import (
     circle_seg,
+    get_angle_between_vectors,
     qrotate,
     rotate_matrix,
-    get_angle_between_vectors,
-    get_intersect,
 )
-from BLUEPRINT.materials import materials_cache
-from BLUEPRINT.beams.node import get_midpoint
-from BLUEPRINT.beams.model import FiniteElementModel
-from BLUEPRINT.beams.material import Material, ForgedJJ1, ForgedSS316LN, CastEC1
-from BLUEPRINT.beams.crosssection import (
-    CompositeCrossSection,
-    CircularHollowBeam,
-    RectangularBeam,
-    AnalyticalShellComposite,
-    MultiCrossSection,
-)
-from BLUEPRINT.beams.transformation import cyclic_pattern
-
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.shell import Shell
 
 FORGED_JJ1 = ForgedJJ1()
 FORGED_SS316_LN = ForgedSS316LN()
@@ -66,6 +65,8 @@ class StructuralSolver:
         The CoilCage used to calculate the TF forces
     equilibria: List[Union[Type[Equilibrium], Type[Breakdown]]
         The list of equilibria objects used to calculate the PF forces
+    material_cache: MaterialCache
+        The cache of material definitions.
 
     Notes
     -----
@@ -74,7 +75,7 @@ class StructuralSolver:
     convention.
     """
 
-    def __init__(self, architect, coilcage, equilibria):
+    def __init__(self, architect, coilcage, equilibria, material_cache):
         self.architect = architect
         self.coilcage = coilcage
         self.equilibria = equilibria
@@ -87,7 +88,7 @@ class StructuralSolver:
         self._gs_node_ids = []  # Storage for tweaking GS position
         self._set_nose()
         self.model = None
-        self.define_materials()
+        self.define_materials(material_cache)
         self.define_geometry()
 
     def _set_nose(self):
@@ -95,12 +96,12 @@ class StructuralSolver:
         x_min = np.min(self.tf.loops["cl"]["x"])
         self.x_nose = 1.1 * x_min
 
-    def define_materials(self):
+    def define_materials(self, material_cache):
         """
         Define the materials to be used in the StructuralSolver problem.
         """
         # Load up some materials objects
-        nb3_sn_wp = materials_cache.get_material("Toroidal_Field_Coil_2015")
+        nb3_sn_wp = material_cache.get_material("Toroidal_Field_Coil_2015")
         # No properties below 300 K ...
         mat_dict = nb3_sn_wp.make_mat_dict(300)
         wp_material = Material(*mat_dict.values())
@@ -487,10 +488,3 @@ class StructuralSolver:
         Plot the coil cage structural model.
         """
         return self.model.plot(ax=ax)
-
-
-if __name__ == "__main__":
-    # from BLUEPRINT import test
-    #
-    # test()
-    pass

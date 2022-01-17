@@ -18,3 +18,35 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+
+import pytest
+
+from bluemira.utilities.plot_tools import gsymbolify, str_to_latex
+
+
+class TestStrToLatex:
+    def test_single(self):
+        result = str_to_latex("PF_1")
+        assert result == "$PF_{1}$"
+
+        result = str_to_latex("I_m_p")
+        assert result == "$I_{m_{p}}$"
+
+
+class TestGsymbolify:
+    def test_lowercase(self):
+        string = gsymbolify("beta")
+        assert string == "\\beta"
+
+    def test_uppercase(self):
+        string = gsymbolify("Beta")
+        assert string == "\\Beta"
+
+    def test_nothing(self):
+        string = gsymbolify("nothing")
+        assert string == "nothing"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__])

@@ -18,21 +18,28 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import pytest
-import tests
-from unittest.mock import patch, MagicMock
 import os
-import numpy as np
+from copy import deepcopy
+from unittest.mock import MagicMock, patch
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
 from scipy.optimize import minimize
+
+import tests
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import make_circle_arc
-from bluemira.equilibria.optimiser import PositionOptimiser, BreakdownOptimiser
-from bluemira.equilibria.coils import PF_COIL_NAME
-from bluemira.utilities.opt_tools import process_scipy_result
+from bluemira.equilibria.coils import PF_COIL_NAME, Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.optimiser import (
+    BreakdownOptimiser,
+    CoilsetOptimiser,
+    PositionOptimiser,
+)
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.utilities.opt_tools import process_scipy_result
 from tests.bluemira.equilibria.setup_methods import _coilset_setup, _make_square
 
 
@@ -187,6 +194,109 @@ class TestPositionOptimiser:
             )
 
             function(patch_loc, nlo_retv, pos_opt, eq)
+
+
+class TestCoilsetOptimiser:
+    @classmethod
+    def setup_class(cls):
+        coil = Coil(
+            x=1.5,
+            z=6.0,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=1e-5,
+            b_max=100,
+            ctype="PF",
+            name="PF_2",
+        )
+        circuit = SymmetricCircuit(coil)
+
+        coil2 = Coil(
+            x=4.0,
+            z=10.0,
+            current=2e6,
+            dx=0.5,
+            dz=0.33,
+            j_max=5.0e-6,
+            b_max=50.0,
+            name="PF_1",
+        )
+
+        coil3 = Coil(
+            x=4.0,
+            z=20.0,
+            current=7e6,
+            dx=0.5,
+            dz=0.33,
+            j_max=None,
+            b_max=50.0,
+            name="PF_3",
+        )
+        cls.coilset = CoilSet([circuit, coil2, coil3])
+
+        max_coil_shifts = {
+            "x_shifts_lower": -2.0,
+            "x_shifts_upper": 1.0,
+            "z_shifts_lower": -1.0,
+            "z_shifts_upper": 5.0,
+        }
+
+        cls.pfregions = {}
+        for coil in cls.coilset._ccoils:
+            xu = coil.x + max_coil_shifts["x_shifts_upper"]
+            xl = coil.x + max_coil_shifts["x_shifts_lower"]
+            zu = coil.z + max_coil_shifts["z_shifts_upper"]
+            zl = coil.z + max_coil_shifts["z_shifts_lower"]
+
+            rect = Loop(x=[xl, xu, xu, xl, xl], z=[zl, zl, zu, zu, zl])
+
+            cls.pfregions[coil.name] = rect
+
+        cls.optimiser = CoilsetOptimiser(cls.coilset, cls.pfregions)
+
+    def test_modify_coilset(self):
+        # Read
+        coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
+        # Modify vectors
+        x, z, currents = np.array_split(coilset_state, substates)
+        x += 1.1
+        z += 0.6
+        currents += 0.99
+        updated_coilset_state = np.concatenate((x, z, currents))
+        self.optimiser.set_coilset_state(updated_coilset_state)
+
+        coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
+        state_x, state_z, state_i = np.array_split(coilset_state, substates)
+        assert np.allclose(state_x, x)
+        assert np.allclose(state_z, z)
+        assert np.allclose(state_i, currents)
+
+    def test_current_bounds(self):
+        n_control_currents = len(self.coilset.get_control_currents())
+        user_max_current = 2.0e9
+        user_current_limits = (
+            user_max_current * np.ones(n_control_currents) / self.optimiser.scale
+        )
+        coilset_current_limits = self.optimiser.coilset.get_max_currents(0.0)
+
+        control_current_limits = np.minimum(user_current_limits, coilset_current_limits)
+        bounds = (-control_current_limits, control_current_limits)
+
+        assert n_control_currents == len(user_current_limits)
+        assert n_control_currents == len(coilset_current_limits)
+
+        optimiser_current_bounds = self.optimiser.get_current_bounds(user_max_current)
+        assert np.allclose(bounds[0], optimiser_current_bounds[0])
+        assert np.allclose(bounds[1], optimiser_current_bounds[1])
+
+        # print(self.optimiser.coilset.get_max_currents(0.0))
+        # print(self.optimiser.get_current_bounds(10.0) / self.optimiser.scale)
+
+        # self.optimiser.get_current_bounds()
+
+        # optimiser_maxima = 0.9
+        # i_max = self.coilset.get_max_currents(max_currents)
 
 
 # Recursion test and comparision between scipy and NLopt implementation of
@@ -400,7 +510,7 @@ class TestScipyNLoptOptimiser:
         )
 
         grid = Grid(0.1, self.R_0 * 2, -1.5 * self.R_0, 1.5 * self.R_0, 100, 100)
-        bd = Breakdown(self.coilset.copy(), grid, psi=None, R_0=self.R_0)
+        bd = Breakdown(deepcopy(self.coilset), grid, psi=None, R_0=self.R_0)
 
         currents = optimiser(bd)
         bd.coilset.set_control_currents(currents)

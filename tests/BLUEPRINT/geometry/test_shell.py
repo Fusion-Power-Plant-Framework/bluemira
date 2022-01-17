@@ -19,17 +19,19 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import filecmp
 import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import matplotlib.pyplot as plt
-import filecmp
-from BLUEPRINT.base.file import get_BP_path
-from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.base.error import GeometryError
+
+from bluemira.base.file import get_bluemira_path
+from bluemira.display.auto_config import plot_defaults
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.geomtools import circle_seg, rotate_matrix
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geomtools import rotate_matrix, circle_seg
 
 
 class TestShell:
@@ -67,7 +69,7 @@ class TestShell:
         shell.rotate(30, p1=[4, 3, 1], p2=[6, 4, 2])
         shell.plot()
 
-        path = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+        path = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         name_new = os.sep.join([path, "test_3d_shell_fig_new.png"])
         plt.savefig(name_new)
         name_old = os.sep.join([path, "test_3d_shell_fig.png"])

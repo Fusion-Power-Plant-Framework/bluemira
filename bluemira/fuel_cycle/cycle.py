@@ -22,21 +22,22 @@
 """
 Full fuel cycle model object
 """
-from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import numpy as np
-from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, N_AVOGADRO, YR_TO_S
+from scipy.interpolate import interp1d
+
+from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, YR_TO_S
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
+from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 from bluemira.fuel_cycle.tools import (
     _speed_recycle,
-    find_max_load_factor,
-    legal_limit,
     discretise_1d,
+    find_max_load_factor,
     find_noisy_locals,
+    legal_limit,
     pam3s_to_mols,
 )
-from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
 # It will be slower... and it will probably be less accurate! But the plots..
@@ -85,46 +86,38 @@ class EUDEMOFuelCycleModel:
 
     # fmt: off
     default_params = [
-        ['TBR', 'Tritium breeding ratio', 1.05, 'N/A', None, 'Input'],
-        ['f_b', 'Burn-up fraction', 0.015, 'N/A', None, 'Input'],
-        ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s',
-         'To maintain detachment - no chance of fusion from gas injection',
-         'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['A_global', 'Load factor', 0.3, 'N/A', None, 'Silent input'],
-        ['r_learn', 'Learning rate', 1, 'N/A', None, 'Silent input'],
-        ['t_pump', 'Time in DIR loop', 100, 's',
-         'Time between exit from plasma and entry into plasma through DIR loop',
-         'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['t_exh', 'Time in INDIR loop', 3600, 's', 'Time between exit from plasma and entry into TFV systems INDIR',
-         None],
-        ['t_ters', 'Time from BB exit to TFV system', 5 * 3600, 's', None, None],
-        ['t_freeze', 'Time taken to freeze pellets', 1800, 's', None,
-         'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['f_dir', 'Fraction of flow through DIR loop', 0.9, 'N/A', None,
-         'Discussions with Chris Day and Yannick Hörstenmeyer'],
-        ['t_detrit', 'Time in detritiation system', 10 * 3600, 's', None, None],
-        ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'N/A', None, None],
-        ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'N/A', None, None],
-        ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'N/A', 'Pump which pumps down the fuelling lines', None],
-        ['eta_f', 'Fuelling efficiency', 0.5, 'N/A',
-         'Efficiency of the fuelling lines prior to entry into the VV chamber', None],
-        ['I_miv', 'Maximum in-vessel T inventory', 0.3, 'kg', None, None],
-        ['I_tfv_min', 'Minimum TFV inventory', 2, 'kg', 'Without which e.g. cryodistillation columns are not effective',
-         "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
-        ['I_tfv_max', 'Maximum TFV inventory', 2.2, 'kg', "Account for T sequestration inside the T plant",
-         "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
-        ['I_mbb', 'Maximum BB T inventory', 0.055, 'kg', None, None],
-        ['eta_iv', 'In-vessel bathtub parameter', 0.9995, 'N/A', None, None],
-        ['eta_bb', 'BB bathtub parameter', 0.995, 'N/A', None, None],
-        ['eta_tfv', 'TFV bathtub parameter', 0.998, 'N/A', None, None],
-        ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'N/A', None, None]
+        ['TBR', 'Tritium breeding ratio', 1.05, 'N/A', None, 'Default'],
+        ['f_b', 'Burn-up fraction', 0.015, 'N/A', None, 'Default'],
+        ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+        ['A_global', 'Load factor', 0.3, 'N/A', None, 'Default'],
+        ['r_learn', 'Learning rate', 1, 'N/A', None, 'Default'],
+        ['t_pump', 'Time in DIR loop', 100, 's', 'Time between exit from plasma and entry into plasma through DIR loop', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+        ['t_exh', 'Time in INDIR loop', 3600, 's', 'Time between exit from plasma and entry into TFV systems INDIR', 'Default'],
+        ['t_ters', 'Time from BB exit to TFV system', 5 * 3600, 's', None, 'Default'],
+        ['t_freeze', 'Time taken to freeze pellets', 1800, 's', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+        ['f_dir', 'Fraction of flow through DIR loop', 0.9, 'N/A', None, 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+        ['t_detrit', 'Time in detritiation system', 10 * 3600, 's', None, 'Default'],
+        ['f_detrit_split', 'Fraction of detritiation line tritium extracted', 0.9999, 'N/A', None, 'Default'],
+        ['f_exh_split', 'Fraction of exhaust tritium extracted', 0.99, 'N/A', None, 'Default'],
+        ['eta_fuel_pump', 'Efficiency of fuel line pump', 0.9, 'N/A', 'Pump which pumps down the fuelling lines', 'Default'],
+        ['eta_f', 'Fuelling efficiency', 0.5, 'N/A', 'Efficiency of the fuelling lines prior to entry into the VV chamber', 'Default'],
+        ['I_miv', 'Maximum in-vessel T inventory', 0.3, 'kg', None, 'Default'],
+        ['I_tfv_min', 'Minimum TFV inventory', 2, 'kg', 'Without which e.g. cryodistillation columns are not effective', "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
+        ['I_tfv_max', 'Maximum TFV inventory', 2.2, 'kg', "Account for T sequestration inside the T plant", "Discussions with Chris Day and Jonas Schwenzer (N.B. working assumptions only)"],
+        ['I_mbb', 'Maximum BB T inventory', 0.055, 'kg', None, 'Default'],
+        ['eta_iv', 'In-vessel bathtub parameter', 0.9995, 'N/A', None, 'Default'],
+        ['eta_bb', 'BB bathtub parameter', 0.995, 'N/A', None, 'Default'],
+        ['eta_tfv', 'TFV bathtub parameter', 0.998, 'N/A', None, 'Default'],
+        ['f_terscwps', 'TERS and CWPS cumulated factor', 0.9999, 'N/A', None, 'Default']
     ]
     # fmt: on
 
     def __init__(self, config, inputs):
         # Handle parameters
         self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(config)
+        self.params.update_kw_parameters(
+            config, source=f"{self.__class__.__name__} input"
+        )
 
         # Handle calculation information
         self.verbose = inputs.get("verbose", False)
@@ -412,7 +405,7 @@ class EUDEMOFuelCycleModel:
         # Blanket
         m_T_bred = self.blanket(self.params.eta_bb, self.params.I_mbb)
         t, m_bred = discretise_1d(self.DEMO_t, m_T_bred, n_ts)
-        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters)
+        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters.value)
         # Tritium extraction and recovery system + coolant water purification
         m_T_bred_totfv, m_T_bred_tostack = m_T_bred.split(2, [self.params.f_terscwps])
         # TFV systems - runs in t
@@ -598,7 +591,7 @@ class EUDEMOFuelCycleModel:
             Doubling time of the tritium fuel cycle [y]
 
         \t:math:`t_{d} = t[\\text{max}(\\text{argmin}\\lvert m_{T_{store}}-I_{TFV_{min}}-m_{T_{start}}\\rvert))]`
-        """  # noqa (W505)
+        """  # noqa :W505
         t_req = self.m_T[0] + self.params.I_tfv_min
         m_temp = self.m_T[::-1]
         try:

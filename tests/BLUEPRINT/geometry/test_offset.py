@@ -24,18 +24,17 @@ Created on Fri Aug  2 07:33:39 2019
 @author: matti
 """
 import os
-import pickle  # noqa (S403)
+import pickle  # noqa :S403
 
-from matplotlib import pyplot as plt
 import numpy as np
 import pytest
-
-from BLUEPRINT.base.file import get_BP_path
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.geometry.offset import offset, offset_clipper
+from matplotlib import pyplot as plt
 
 import tests
+from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.geometry.offset import offset, offset_clipper
 
 
 class TestOffset:
@@ -324,10 +323,10 @@ class TestClipperOffset:
             ax.set_aspect("equal")
 
     def test_blanket_offset(self):
-        fp = get_BP_path("BLUEPRINT/geometry/test_data", subfolder="tests")
+        fp = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
         fn = os.sep.join([fp, "bb_offset_test.pkl"])
         with open(fn, "rb") as file:
-            d = pickle.load(file)  # noqa (S301)
+            d = pickle.load(file)  # noqa :S301
         loop = Loop(**d)
         offsets = []
         for m in ["square", "miter"]:  # round very slow...

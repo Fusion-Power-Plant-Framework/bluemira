@@ -21,17 +21,17 @@
 """
 Testing routines for the central column shield system
 """
+from math import acos, pi, sqrt
+
 import pytest
 
-from math import acos, sqrt, pi
-
+import bluemira.geometry._deprecated_loop as new_loop
 from bluemira.base.parameter import ParameterFrame
-
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.systems.centralcolumnshield import CentralColumnShield
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.geomtools import circle_seg
 from BLUEPRINT.geometry.loop import Loop
-from tests.BLUEPRINT.systems.test_firstwall import load_firstwall_sn, load_firstwall_dn
+from BLUEPRINT.systems.centralcolumnshield import CentralColumnShield
+from tests.BLUEPRINT.systems.test_firstwall import load_firstwall_dn, load_firstwall_sn
 
 
 # Pretend that the fw profile is a circle
@@ -243,6 +243,7 @@ def test_build_from_fw(is_single_null):
         firstwall = load_firstwall_sn()
     else:
         firstwall = load_firstwall_dn()
+    firstwall.build()
 
     vv_inner = firstwall.inputs["vv_inner"]
     fw_outer = firstwall.geom["2D profile"].outer
@@ -252,4 +253,4 @@ def test_build_from_fw(is_single_null):
     params = ParameterFrame(CentralColumnShield.default_params.to_records())
     params.r_ccs = 9
     ccs = CentralColumnShield(params, inputs)
-    assert isinstance(ccs.geom["2D profile"], Loop)
+    assert isinstance(ccs.geom["2D profile"], (Loop, new_loop.Loop))

@@ -29,21 +29,24 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 # %%
 
-from IPython import get_ipython
-import os
 import json
-import numpy as np
+import os
+
+import deepcopy
 import matplotlib.pyplot as plt
+import numpy as np
+from IPython import get_ipython
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print, plot_defaults
-from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium, Breakdown
 from bluemira.equilibria.constraints import AutoConstraints
-from bluemira.equilibria.profiles import BetaIpProfile, DoublePowerFunc
-from bluemira.equilibria.optimiser import FBIOptimiser, BreakdownOptimiser
-from bluemira.equilibria.physics import calc_psib, calc_beta_p, calc_li
-from bluemira.equilibria.solve import PicardLiAbsIterator
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.optimiser import BreakdownOptimiser, FBIOptimiser
+from bluemira.equilibria.physics import calc_beta_p, calc_li, calc_psib
+from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile, DoublePowerFunc
+from bluemira.equilibria.solve import PicardAbsIterator, PicardLiAbsIterator
 
 # %%[markdown]
 
@@ -100,9 +103,9 @@ coilset = CoilSet(coils)
 
 # Assign current density and peak field constraints
 coilset.assign_coil_materials("CS", j_max=16.5, b_max=12.5)
-coilset.assign_coil_materials("PF", j_max=12.5, b_max=7)
+coilset.assign_coil_materials("PF", j_max=12.5, b_max=11)
 coilset.fix_sizes()
-coilset.mesh_coils(0.2)
+coilset.mesh_coils(0.3)
 
 coilset.plot()
 
@@ -146,7 +149,7 @@ CS_Fz_sep = 350e6
 
 # %%
 
-grid = Grid(0.1, 18.0, -10.0, 10.0, 100, 100)
+grid = Grid(2, 16.0, -9.0, 9.0, 100, 100)
 
 # %%[markdown]
 
@@ -158,7 +161,7 @@ max_currents = coilset.get_max_currents(0)
 coilset.set_control_currents(max_currents, update_size=False)
 
 
-breakdown = Breakdown(coilset.copy(), grid, R_0=R_0)
+breakdown = Breakdown(deepcopy(coilset), grid, R_0=R_0)
 breakdown.set_breakdown_point(x_zone, z_zone)
 
 optimiser = BreakdownOptimiser(
@@ -206,7 +209,7 @@ profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 # %%
 
 sof = Equilibrium(
-    coilset.copy(),
+    deepcopy(coilset),
     grid,
     Ip=I_p / 1e6,
     li=l_i,
@@ -232,13 +235,13 @@ sof_constraints = AutoConstraints(
     sof_xbdry,
     sof_zbdry,
     psi_sof / 2 / np.pi,
-    n_points=100,
+    n_points=50,
 )
 eof_constraints = AutoConstraints(
     sof_xbdry,
     sof_zbdry,
     psi_eof / 2 / np.pi,
-    n_points=100,
+    n_points=50,
 )
 
 
@@ -250,13 +253,18 @@ optimiser = FBIOptimiser(
 )
 optimiser.update_current_constraint(coilset.get_max_currents(0))
 
-solver = PicardLiAbsIterator
 
-iterator = solver(sof, profile, sof_constraints, optimiser, plot=True)
+iterator = PicardLiAbsIterator(sof, profile, sof_constraints, optimiser, plot=True)
 iterator()
 
+profile_eof = CustomProfile(
+    profile.pprime(np.linspace(0, 1)), profile.ffprime(np.linspace(0, 1)), R_0, B_0
+)
 
-iterator = solver(eof, profile, eof_constraints, optimiser, plot=False)
+
+iterator = PicardAbsIterator(
+    eof, profile_eof, eof_constraints, optimiser, plot=True, relaxation=0.2
+)
 iterator()
 
 # %%[markdown]
@@ -279,5 +287,5 @@ ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
 bluemira_print("SOF:\n" f"beta_p: {calc_beta_p(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
 
-
-bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")
+# TODO: Fix this example...
+# bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")

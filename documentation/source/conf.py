@@ -4,14 +4,15 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 """Configuration file for the Sphinx documentation builder."""
-from docutils.parsers.rst import Directive
-from docutils import nodes, statemachine
-import sys
 import os
+import sys
 
-sys.path.insert(0, os.path.abspath("../../"))  # noqa (E402)
+from docutils import nodes, statemachine
+from docutils.parsers.rst import Directive
 
-from bluemira._version import get_versions  # noqa (E402)
+sys.path.insert(0, os.path.abspath("../../"))  # noqa :E402
+
+from bluemira._version import get_versions  # noqa :E402
 
 
 def setup(app):
@@ -48,6 +49,7 @@ release = get_versions()["version"]
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
+    "sphinx.ext.mathjax",
     "sphinx_rtd_theme",
 ]
 
@@ -160,7 +162,7 @@ class SkipAlreadyDocumented:
     def __init__(self):
         lis = [
             "bluemira.codes.process.api.PROCESS_ENABLED",
-            "bluemira.codes.process.api.OBS_VARS",
+            "bluemira.codes.process.api.PROCESS_DICT",
         ]
 
         self.dict = {i: 0 for i in lis}

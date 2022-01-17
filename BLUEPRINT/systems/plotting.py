@@ -22,17 +22,18 @@
 """
 Plotting utilities for ReactorSystem objects
 """
+import os
 from itertools import cycle
-import numpy as np
-import matplotlib.pyplot as plt
 
-from BLUEPRINT.geometry.geomtools import qrotate
-from bluemira.base.look_and_feel import bluemira_warn
-from BLUEPRINT.base.palettes import BLUE
-from bluemira.base.look_and_feel import plot_defaults
-from BLUEPRINT.utilities.colortools import color_kwargs
+import matplotlib.pyplot as plt
+import numpy as np
 
 import bluemira.codes as codes
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.display.auto_config import plot_defaults
+from BLUEPRINT.base.palettes import BLUE
+from BLUEPRINT.geometry.geomtools import qrotate
+from BLUEPRINT.utilities.colortools import color_kwargs
 
 DEFAULTS = {"linewidth": 0.3, "edgecolor": "k", "alpha": 1}
 
@@ -182,7 +183,8 @@ class ReactorPlotter:
         """
         # TODO: POSTprocess.py is archaic... need to refactor heavily and bring
         # into the fold...
-        codes.plot_PROCESS(self.reactor.__PROCESS__.filename, width=width)
+        sys_code_dir = self.reactor.file_manager.generated_data_dirs["systems_code"]
+        codes.plot_PROCESS(os.sep.join([sys_code_dir, "OUT.DAT"]), width=width)
 
     def plot_xz(self, x=None, z=None, show_eq=False, force=False):
         """
@@ -341,9 +343,3 @@ class ReactorPlotter:
             self.axxy.plot(
                 x, y, linestyle="--", linewidth=linewidth, color=color, alpha=alpha
             )
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

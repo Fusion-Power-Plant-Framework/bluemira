@@ -24,15 +24,15 @@ Three-dimensional current source terms.
 """
 
 import numpy as np
+
 from bluemira.geometry._deprecated_tools import (
     get_angle_between_vectors,
     rotation_matrix,
-    get_normal_vector,
 )
-from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
+from bluemira.geometry.coordinates import get_normal_vector
 from bluemira.magnetostatics.baseclass import SourceGroup
+from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
-
 
 __all__ = ["ArbitraryPlanarRectangularXSCircuit", "HelmholtzCage"]
 
@@ -120,18 +120,6 @@ class HelmholtzCage(SourceGroup):
             source.rotate(angle, axis="z")
             sources.append(source)
         return sources
-
-    def set_current(self, current):
-        """
-        Set the current inside each of the circuits.
-
-        Parameters
-        ----------
-        current: float
-            The current of each circuit [A]
-        """
-        for source in self.sources:
-            source.current = current
 
     @process_xyz_array
     def ripple(self, x, y, z):

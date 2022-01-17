@@ -20,20 +20,21 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+
 import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.error import FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
+    FieldLineTracer,
     OpenFluxSurface,
     PartialOpenFluxSurface,
-    FieldLineTracer,
 )
+from bluemira.geometry._deprecated_loop import Loop
 
 TEST_PATH = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
 

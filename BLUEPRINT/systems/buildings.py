@@ -23,17 +23,17 @@
 Radiation shield system
 """
 from itertools import cycle
-import numpy as np
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
+import numpy as np
 
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.cad.buildingCAD import RadiationCAD
+from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.loop import Loop, make_ring
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geombase import Plane
-from BLUEPRINT.systems.mixins import Meshable, OnionRing
 from BLUEPRINT.systems.baseclass import ReactorSystem
+from BLUEPRINT.systems.mixins import Meshable, OnionRing
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
 
@@ -169,9 +169,3 @@ class RadiationShieldPlotter(ReactorSystemPlotter):
         if not isinstance(alpha, list) and not isinstance(alpha, cycle):
             kwargs["alpha"] = [alpha] + [alpha / 2] * (len(plot_objects) - 1)
         super().plot_xz(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

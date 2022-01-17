@@ -25,19 +25,16 @@ Example of a meshed BLUEPRINT geometry imported into OpenMOC.
 
 # Common imports
 from datetime import datetime
-import sectionproperties.pre.sections as sections
-from sectionproperties.analysis.cross_section import CrossSection
 
 # OpenMOC must be installed to run this tutorial
 import openmoc
+import sectionproperties.pre.sections as sections
+from sectionproperties.analysis.cross_section import CrossSection
 
 # BLUEPRINT imports
-from BLUEPRINT.base.file import get_bluemira_root, FileManager
+from bluemira.base.file import FileManager, get_bluemira_root
 from bluemira.base.look_and_feel import bluemira_print
-from BLUEPRINT.neutronics.openmoc_geometry_tools import (
-    create_system_cells,
-    PlaneHelper,
-)
+from BLUEPRINT.neutronics.openmoc_geometry_tools import PlaneHelper, create_system_cells
 from BLUEPRINT.systems.blanket import BreedingBlanket
 from BLUEPRINT.systems.buildings import RadiationShield
 from BLUEPRINT.systems.cryostat import Cryostat
@@ -48,8 +45,7 @@ from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 from BLUEPRINT.systems.vessel import VacuumVessel
 
 # Get the configuration from EUDEMO
-from tests.test_reactor import config, build_config
-
+from tests.BLUEPRINT.test_reactor import build_config, config
 
 #####################
 # Define some options

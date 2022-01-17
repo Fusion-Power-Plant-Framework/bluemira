@@ -19,16 +19,20 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import os
-import pytest
+
 import numpy as np
-from BLUEPRINT.base.file import get_BP_path
+import pytest
+
+from bluemira.base.file import get_bluemira_path
 from BLUEPRINT.cad.vesselCAD import VesselCAD
 from BLUEPRINT.systems.vessel import VacuumVessel
 
 
 class TestVVCAD:
     def setup_method(self):
-        path = get_BP_path("BLUEPRINT/test_data/reactors/SMOKE-TEST", subfolder="tests")
+        path = get_bluemira_path(
+            "BLUEPRINT/test_data/reactors/SMOKE-TEST", subfolder="tests"
+        )
         file = os.sep.join([path, "SMOKE-TEST_VV.pkl"])
         self.vessel = VacuumVessel.load(file)
 
