@@ -43,6 +43,7 @@ from bluemira.geometry.optimisation import GeometryOptimisationProblem
 # (since minimising the negative length will maximise the value of the absolute length).
 # Such an optimisation problem can be defined as below.
 
+
 # %%
 class MaximiseLength(GeometryOptimisationProblem):
     """
