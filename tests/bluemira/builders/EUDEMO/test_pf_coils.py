@@ -43,13 +43,15 @@ class TestMakeCoilMapper:
             make_polygon([[9, 9, 20, 20], [0, 0, 0, 0], [-1, -1, 1, 1]], closed=True)
         )
         cls.exclusions = [exclusion1, exclusion2]
-        coil1 = Coil(4, 9, current=1, j_max=1)
-        coil2 = Coil(9, -9, current=1, j_max=1)
-        coil3 = Coil(0, 12, current=1, j_max=1)
-        cls.coils = [coil1, coil2, coil3]
+
+        cls.coils = [
+            Coil(4, 9, current=1, j_max=1),
+            Coil(9, -9, current=1, j_max=1),
+            Coil(0, 12, current=1, j_max=1),
+            Coil(9, -10, current=1, j_max=1),
+        ]
 
     def test_cuts(self):
-        total_length = self.track.length
         segments = boolean_cut(self.track, self.exclusions)
         actual_length = sum([seg.length for seg in segments])
         mapper = make_coil_mapper(self.track, self.exclusions, self.coils)
