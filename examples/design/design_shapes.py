@@ -93,10 +93,12 @@ class MaximiseLength(GeometryOptimisationProblem):
 #   - uses the `MakeOptimisedShape` Builder class.
 #   - parameterises the TF Coils centerline shape using the `PrincetonD`
 #     GeometryParameterisation class.
-#   - maps the r_tf_in_centre and r_tf_out_centre Design parameters to the x1 and x2
-#     shape parameters. The dz shape parameter is set to 0 and fixed. The x1 shape
+#   - maps the r_tf_in_centre and r_tf_out_centre Design parameters to the x1 (the
+#     inboard limb radius) and x2 (the outboard limb radius) shape parameters. The dz
+#     (vertical offset from z=0) shape parameter is set to 0 and fixed. The x1 shape
 #     parameter is also fixed, while the x2 shape parameter is allowed to vary in the
-#     optimisation, with an adjusted lower bound of 14.
+#     optimisation, with an adjusted lower bound of 14. This means that only the outboard
+#     leg radius is free to vary in the optimisation.
 #   - uses the `MaximiseLength` GeometryOptimisationProblem class to define the design
 #     problem that will be solved as part of the TF Coil build stage.
 #   - labels the resulting component as "Shape".
