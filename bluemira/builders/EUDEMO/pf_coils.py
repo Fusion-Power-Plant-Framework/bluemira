@@ -293,4 +293,4 @@ def make_coil_mapper(track, exclusion_zones, coils):
                 sub_segs.append(PathInterpolator(make_bspline([x, y, z])))
             new_segments.extend(sub_segs)
 
-    return PositionMapper([segment for segment in new_segments])
+    return PositionMapper(new_segments)
