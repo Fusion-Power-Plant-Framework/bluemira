@@ -257,8 +257,6 @@ def make_coil_mapper(track, exclusion_zones, coils):
     mapper: PositionMapper
         Position mapper for coil position interpolation
     """
-    track = track
-    exclusion_zones = exclusion_zones
     # Break down the track into subsegments
     segments = boolean_cut(track, exclusion_zones)
 
