@@ -35,7 +35,11 @@ from bluemira.geometry.tools import boolean_cut, make_polygon
 class TestMakeCoilMapper:
     @classmethod
     def setup_class(cls):
-        cls.track = PrincetonD().create_shape()
+        cls.tracks = [
+            PrincetonD().create_shape(),
+            TaperedPictureFrame().create_shape(),
+            TripleArc().create_shape(),
+        ]
         exclusion1 = BluemiraFace(
             make_polygon([[6, 9, 9, 6], [0, 0, 0, 0], [0, 0, 20, 20]], closed=True)
         )
@@ -52,12 +56,15 @@ class TestMakeCoilMapper:
         ]
 
     def test_cuts(self):
-        segments = boolean_cut(self.track, self.exclusions)
-        actual_length = sum([seg.length for seg in segments])
-        mapper = make_coil_mapper(self.track, self.exclusions, self.coils)
-        interp_length = sum([tool.geometry.length for tool in mapper.interpolators])
-        assert np.isclose(actual_length, interp_length, rtol=1e-2)
+        for track in self.tracks:
+            segments = boolean_cut(track, self.exclusions)
+            actual_length = sum([seg.length for seg in segments])
+            mapper = make_coil_mapper(track, self.exclusions, self.coils)
+            interp_length = sum([tool.geometry.length for tool in mapper.interpolators])
+            assert np.isclose(actual_length, interp_length, rtol=1e-2)
 
     def test_simple(self):
-        mapper = make_coil_mapper(self.track, self.exclusions, self.coils)
-        assert len(mapper.interpolators) == len(self.coils)
+        for track in self.tracks:
+
+            mapper = make_coil_mapper(track, self.exclusions, self.coils)
+            assert len(mapper.interpolators) == len(self.coils)
