@@ -35,8 +35,10 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import CoilSet
+from bluemira.geometry.tools import boolean_cut, distance_to, make_bspline
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 
 
 class PFCoilsComponent(Component):
@@ -234,15 +236,6 @@ class PFCoilsBuilder(Builder):
 
         field_solver = SourceGroup(sources)
         return field_solver
-
-
-from bluemira.geometry.tools import (
-    boolean_cut,
-    distance_to,
-    make_bspline,
-    point_inside_shape,
-)
-from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 
 
 def make_coil_mapper(track, exclusion_zones, coils):
