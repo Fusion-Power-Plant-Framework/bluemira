@@ -38,7 +38,7 @@ import bluemira.display.error as bm_display_error
 from bluemira.base.components import Component
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.coordinates import check_ccw
+from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.plane import BluemiraPlane
 
 __all__ = [
@@ -207,8 +207,6 @@ class BluemiraPathPatch3D(PathPatch3D):
     # Thank you StackOverflow
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
     def __init__(self, path, normal, translation=None, color="b", **kwargs):
-        from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2
-
         Patch.__init__(self, **kwargs)
 
         if translation is None:
