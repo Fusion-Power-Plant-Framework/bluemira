@@ -31,6 +31,7 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import CoilSet
@@ -235,36 +236,88 @@ class PFCoilsBuilder(Builder):
         return field_solver
 
 
-from bluemira.geometry.tools import boolean_cut, distance_to, point_inside_shape
-from bluemira.utilities.positioning import PathInterpolator
+from bluemira.geometry.tools import (
+    boolean_cut,
+    distance_to,
+    make_bspline,
+    point_inside_shape,
+)
+from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 
 
 def make_segments(track, exclusion_zones, coils):
+    """
+    Break a track down into individual interpolator segments, incorporating exclusion
+    zones.
+
+    Parameters
+    ----------
+    track: BluemiraWire
+        Full length interpolator track for PF coils
+    exclusion_zones: List[BluemiraFace]
+        List of exclusion zones
+    coils: List[Coil]
+        List of coils
+
+    Returns
+    -------
+    mapper: PositionMapper
+        Position mapper for coil position interpolation
+    """
     track = track
     exclusion_zones = exclusion_zones
     segments = boolean_cut(track, exclusion_zones)
 
-    links = []
+    coil_bins = [[] for _ in range(len(segments))]
     for i, coil in enumerate(coils):
-        for zone in exclusion_zones:
-            if point_inside_shape([coil.x, 0, coil.z], zone):
-                # Coil is inside an exclusion zone
-                for j, segment in enumerate(segments):
-                    # Find out which segment the coil is nearest to
-                    pass
-
-            else:
-                # Coil can be mapped to a segment already
-                for j, segment in enumerate(segments):
-                    l_value = segment.to_L(coil.x, coil.z)
-                    if l_value == 0.0:
-                        pass
-                    elif l_value == 1.0:
-                        pass
-                    else:
-                        links.append(i, j)
+        distances = [distance_to([coil.x, 0, coil.z], seg)[0] for seg in segments]
+        coil_bins[np.argmin(distances)].append(i)
 
     # Check if multiple coils are on the same segment and split the segments
+    new_segments = []
+    for segment, bin in zip(segments, coil_bins):
+        segment = PathInterpolator(segment)
+        if len(bin) < 1:
+            bluemira_warn("There is a segment of the track which has no coils on it.")
+        elif len(bin) == 1:
+            new_segments.append(segment)
+        else:
+            # Split segment
+            coils = [coils[i] for i in bin]
+            l_values = [segment.to_L(c.x, c.z) for c in coils]
+            split_values = l_values[:-1] + 0.5 * np.diff(l_values)
+            # Sub-divide into BSplines for now...
+            # TODO: Actual primitive sub-division less fun...
+            split_values = np.append(split_values, 1.0)
+            sub_segs = []
+            for i, split in enumerate(split_values):
+                if i == 0:
+                    start = 0.0
+                    stop = split
+                else:
+                    start = split_values[i - 1]
+                    stop = split
+
+                l_range = np.linspace(start, stop, 1000)
+                x, z = segment.to_xz(l_range)
+                y = np.zeros_like(x)
+                sub_segs.append(PathInterpolator(make_bspline([x, y, z])))
+            new_segments.extend(sub_segs)
 
     # Make a PathInterpolator for each PF coil
-    return
+    return PositionMapper([segment for segment in new_segments])
+
+
+from bluemira.equilibria.coils import Coil, CoilSet
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.tools import make_polygon
+
+track = PrincetonD().create_shape()
+exclusion = BluemiraFace(
+    make_polygon([[6, 9, 9, 6], [0, 0, 0, 0], [0, 0, 20, 20]], closed=True)
+)
+coil1 = Coil(4, 9, current=1, j_max=1)
+coil2 = Coil(9, -9, current=1, j_max=1)
+
+mapper = make_segments(track, [exclusion], [coil1, coil2])
