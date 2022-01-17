@@ -25,7 +25,7 @@ Module containing the bluemira Design class.
 
 import abc
 import copy
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, Optional, Set, Type, Union
 
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
@@ -44,7 +44,7 @@ class DesignABC(abc.ABC):
     the analysis results and reactor components.
     """
 
-    _required_params: List[str]
+    _required_params: Set[str]
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
@@ -62,7 +62,7 @@ class DesignABC(abc.ABC):
         self._params.update_kw_parameters(params)
 
     @property
-    def required_params(self) -> List[str]:
+    def required_params(self) -> Set[str]:
         """
         The names of the parameters that are required to run this design.
         """
@@ -134,7 +134,7 @@ class DesignABC(abc.ABC):
         else:
             raise BuilderError(f"Builder {name} already exists in {self}.")
 
-    def _build_stage(self, name: str, **kwargs):
+    def _build_stage(self, name: str, **kwargs) -> Component:
         """
         Build the requested stage and update the design's parameters.
 
@@ -161,20 +161,21 @@ class DesignABC(abc.ABC):
         corresponding options.
         """
         self._builders = {}
-        self._required_params = ["Name"]
+        self._required_params = {"Name"}
 
     def _validate_params(self, params: Dict[str, Union[int, float, str]]):
         """
         Validate that the provided parameters are as expected.
         """
-        missing_params = []
-        for param_name in self._required_params:
-            if param_name not in params:
-                missing_params.append(param_name)
+        missing_params = {
+            param_name
+            for param_name in self._required_params
+            if param_name not in params
+        }
 
-        if missing_params != []:
+        if len(missing_params) > 0:
             raise BuilderError(
-                f"Required parameters {', '.join(missing_params)} not provided to Design"
+                f"Required parameters {', '.join(sorted(missing_params))} not provided to Design"
             )
 
 
@@ -186,7 +187,7 @@ class Design(DesignABC):
     analysis results and reactor components.
     """
 
-    _required_params: List[str] = ["Name"]
+    _required_params: Set[str]
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
@@ -223,7 +224,7 @@ class Design(DesignABC):
                 class_name, default_module="bluemira.builders"
             )
             self.register_builder(builder_class(params, val), key)
-            self._required_params += self._builders[key]._required_params
+            self._required_params |= set(self._builders[key]._required_params)
 
 
 class Reactor(DesignABC):
@@ -235,7 +236,7 @@ class Reactor(DesignABC):
     managed output via a FileManager to aid the persistence of input and output data.
     """
 
-    _required_params: List[str] = list(Configuration().keys())
+    _required_params: Set[str]
     _params: Configuration
     _build_config: BuildConfig
     _builders: Dict[str, Builder]
@@ -264,6 +265,11 @@ class Reactor(DesignABC):
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
         super()._extract_build_config(params)
 
+        # For now the params can come from any parameters defined in Configuration.
+        # In the future we probably want to register the Builders early and get the
+        # parameters that the Builders need.
+        self._required_params |= set(Configuration().keys())
+
         self._reference_data_root: str = self._build_config.get(
             "reference_data_root", f"{BM_ROOT}/data"
         )
@@ -291,7 +297,7 @@ class Reactor(DesignABC):
         return config
 
     @property
-    def file_manager(self):
+    def file_manager(self) -> FileManager:
         """
         The FileManager instance associated with this Reactor.
         """
