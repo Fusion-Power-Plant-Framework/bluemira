@@ -107,7 +107,7 @@ class PathInterpolator(XZGeometryInterpolator):
         Convert parametric-space 'L' values to physical x-z space.
         """
         l_value = np.clip(l_value, 0.0, 1.0)
-        return float(self.x_ius(l_value)), float(self.z_ius(l_value))
+        return self.x_ius(l_value), self.z_ius(l_value)
 
     def to_L(self, x, z):
         """

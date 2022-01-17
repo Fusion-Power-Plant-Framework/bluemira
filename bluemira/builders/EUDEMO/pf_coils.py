@@ -31,11 +31,14 @@ import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.pf_coils import PFCoilBuilder
 from bluemira.equilibria.coils import CoilSet
+from bluemira.geometry.tools import boolean_cut, distance_to, make_bspline
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 
 
 class PFCoilsComponent(Component):
@@ -233,3 +236,61 @@ class PFCoilsBuilder(Builder):
 
         field_solver = SourceGroup(sources)
         return field_solver
+
+
+def make_coil_mapper(track, exclusion_zones, coils):
+    """
+    Break a track down into individual interpolator segments, incorporating exclusion
+    zones and mapping them to coils.
+
+    Parameters
+    ----------
+    track: BluemiraWire
+        Full length interpolator track for PF coils
+    exclusion_zones: List[BluemiraFace]
+        List of exclusion zones
+    coils: List[Coil]
+        List of coils
+
+    Returns
+    -------
+    mapper: PositionMapper
+        Position mapper for coil position interpolation
+    """
+    # Break down the track into subsegments
+    segments = boolean_cut(track, exclusion_zones)
+
+    # Sort the coils into the segments
+    coil_bins = [[] for _ in range(len(segments))]
+    for i, coil in enumerate(coils):
+        distances = [distance_to([coil.x, 0, coil.z], seg)[0] for seg in segments]
+        coil_bins[np.argmin(distances)].append(i)
+
+    # Check if multiple coils are on the same segment and split the segments
+    new_segments = []
+    for segment, bin in zip(segments, coil_bins):
+        segment = PathInterpolator(segment)
+        if len(bin) < 1:
+            bluemira_warn("There is a segment of the track which has no coils on it.")
+        elif len(bin) == 1:
+            new_segments.append(segment)
+        else:
+            # Split segment: Sub-divide into BSplines for now...
+            # TODO: Actual primitive sub-division less fun...
+            coils = [coils[i] for i in bin]
+            l_values = [segment.to_L(c.x, c.z) for c in coils]
+            split_values = l_values[:-1] + 0.5 * np.diff(l_values)
+            split_values = np.concatenate([[0.0], split_values, [1.0]])
+
+            # TODO: Treat start == stop
+            sub_segs = []
+            for i in range(len(split_values) - 1):
+                start = split_values[i]
+                stop = split_values[i + 1]
+                l_range = np.linspace(start, stop, 500)
+                x, z = segment.to_xz(l_range)
+                y = np.zeros_like(x)
+                sub_segs.append(PathInterpolator(make_bspline([x, y, z])))
+            new_segments.extend(sub_segs)
+
+    return PositionMapper(new_segments)
