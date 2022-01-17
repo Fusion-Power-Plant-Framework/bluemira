@@ -82,10 +82,6 @@ def check_linesegment(point_a, point_b, point_c):
         True: if C on A--B, else False
     """
     # Do some protection of numba against integers and lists
-    point_a = np.ascontiguousarray(point_a)
-    point_b = np.ascontiguousarray(point_b)
-    point_c = np.ascontiguousarray(point_c)
-
     a_c = np.array([point_c[0] - point_a[0], point_c[1] - point_a[1]], dtype=np.float_)
     a_b = np.array([point_b[0] - point_a[0], point_b[1] - point_a[1]], dtype=np.float_)
 
