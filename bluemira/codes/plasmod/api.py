@@ -153,6 +153,16 @@ class Inputs(PlasmodParameters):
         self._options = self.get_default_plasmod_inputs()
 
         self.modify(new_inputs)
+
+    def modify(self, new_inputs):
+        """
+        Modify and check models
+
+        Parameters
+        ----------
+        new_inputs: dict
+        """
+        super().modify(new_inputs)
         self._check_models()
 
     def _write(self, filename):
@@ -325,27 +335,17 @@ class Setup(interface.Setup):
     def __init__(self, parent, *args, problem_settings=None, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
-        self.prepare_inputs(problem_settings if problem_settings is not None else {})
+        self._problem_settings = problem_settings if problem_settings is not None else {}
         self.input_file = "plasmod_input.dat"
         self.output_file = "plasmod_outputs.dat"
         self.profiles_file = "plasmod_profiles.dat"
-
-    def prepare_inputs(self, problem_settings):
-        """
-        Prepare inputs for plasmod
-
-        Parameters
-        ----------
-        problem_settings: dict
-            dictionary of extra arguments to override unmapped or default values
-        """
-        self.io_manager = Inputs({**self._get_new_inputs(), **problem_settings})
+        self.io_manager = Inputs({**self._get_new_inputs(), **self._problem_settings})
 
     def update_inputs(self):
         """
         Update plasmod inputs
         """
-        self.io_manager.modify(self._get_new_inputs())
+        self.io_manager.modify({**self._get_new_inputs(), **self._problem_settings})
 
     def _get_new_inputs(self):
         """
@@ -488,6 +488,13 @@ class Solver(interface.FileProgramInterface):
             mappings=create_mapping(),
             problem_settings=build_config.get("problem_settings", None),
         )
+
+    @property
+    def problem_settings(self):
+        """
+        Get problem settings dictionary
+        """
+        return self.setup_obj._problem_settings
 
     def get_scalar(self, scalar):
         """
