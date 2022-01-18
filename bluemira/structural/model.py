@@ -350,7 +350,7 @@ class FiniteElementModel:
                 element = self.geometry.elements[load["element_id"]]
                 element.add_load(load)
             else:
-                raise StructuralError(f'Unbekannte Lasttyp "{load["type"]}"')
+                raise StructuralError(f'Unknown load type "{load["type"]}"')
 
     def _get_nodal_forces(self):
         """

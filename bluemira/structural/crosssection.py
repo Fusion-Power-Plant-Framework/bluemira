@@ -96,7 +96,7 @@ def _transform_properties(izz, iyy, izy, alpha):
 
 class CrossSection:
     """
-    Base class for a structurual cross-section of a 1-D beam.
+    Base class for a structural cross-section of a 1-D beam.
     """
 
     def __init__(self):
