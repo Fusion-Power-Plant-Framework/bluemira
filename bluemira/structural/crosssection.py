@@ -23,21 +23,22 @@
 Objects and tools for calculating cross-sectional properties
 """
 
-import numpy as np
-import numba as nb
 from copy import deepcopy
-from sectionproperties.pre.sections import CustomSection, MergedSection
-from sectionproperties.pre.pre import Material as SPMaterial
+
+import numba as nb
+import numpy as np
 from sectionproperties.analysis.cross_section import CrossSection as _CrossSection
+from sectionproperties.pre.pre import Material as SPMaterial
+from sectionproperties.pre.sections import CustomSection, MergedSection
 
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
-    make_circle_arc,
     get_control_point,
+    make_circle_arc,
     segment_lengths,
 )
-from bluemira.structural.error import StructuralError
 from bluemira.structural.constants import NEAR_ZERO
+from bluemira.structural.error import StructuralError
 from BLUEPRINT.geometry.shell import Shell
 
 
@@ -912,9 +913,3 @@ class AnalyticalShellComposite(CompositeCrossSection):
         g = (g_inner * inner.area + g_outer * outer.area) / (inner.area + outer.area)
         # Still eyeballing this one...
         self.gj = g * (outer.j + inner.j) * 2
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test(plotting=True)

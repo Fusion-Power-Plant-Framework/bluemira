@@ -23,15 +23,16 @@
 Finite element class
 """
 import numpy as np
-from BLUEPRINT.geometry.shell import Shell
-from bluemira.geometry._deprecated_loop import Loop
+
 from bluemira.base.constants import GRAVITY
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.structural.constants import N_INTERP, NU, SD_LIMIT
 from bluemira.structural.error import StructuralError
-from bluemira.structural.constants import NU, SD_LIMIT, N_INTERP
+from bluemira.structural.loads import distributed_load, point_load
 from bluemira.structural.node import get_midpoint
-from bluemira.structural.loads import point_load, distributed_load
-from bluemira.structural.transformation import lambda_matrix
 from bluemira.structural.stress import hermite_polynomials
+from bluemira.structural.transformation import lambda_matrix
+from BLUEPRINT.geometry.shell import Shell
 
 # TODO: Clean up some class stuff with cached_property decorators.
 # Test some existing stuff (functools?), and your own custom class.
@@ -463,7 +464,7 @@ class Element:
             elif load["type"] == "Distributed Load":
                 enf += distributed_load(load["w"], self.length, load["sub_type"])
             else:
-                raise StructuralError(f'Unbekannte Lasttyp "{load["type"]}"')
+                raise StructuralError(f'Unknown load type: "{load["type"]}"')
 
         return enf
 

@@ -23,6 +23,7 @@
 FE transformation matrices and methods
 """
 import numpy as np
+
 from bluemira.geometry._deprecated_tools import rotation_matrix
 from bluemira.structural.constants import FLOAT_TYPE
 
@@ -272,7 +273,7 @@ def cyclic_pattern(geometry, axis, angle, n, include_first=True):
         The patterned and merged geometry
     """
     # Dodge cyclic import
-    from BLUEPRINT.beams.geometry import Geometry, DeformedGeometry
+    from BLUEPRINT.beams.geometry import DeformedGeometry, Geometry
 
     if include_first:
         patterned = geometry.copy()
@@ -291,9 +292,3 @@ def cyclic_pattern(geometry, axis, angle, n, include_first=True):
         del sector  # Save some RAM
 
     return patterned
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()

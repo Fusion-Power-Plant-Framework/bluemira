@@ -24,14 +24,15 @@ FE plotting tools
 """
 import numpy as np
 from matplotlib.colors import DivergingNorm, Normalize
-from bluemira.utilities.plot_tools import Plot3D
+
 from bluemira.structural.constants import (
-    LOAD_STR_VECTORS,
-    LOAD_INT_VECTORS,
-    FLOAT_TYPE,
-    STRESS_COLOR,
     DEFLECT_COLOR,
+    FLOAT_TYPE,
+    LOAD_INT_VECTORS,
+    LOAD_STR_VECTORS,
+    STRESS_COLOR,
 )
+from bluemira.utilities.plot_tools import Plot3D
 
 # Plotting options
 DEFAULT_OPTIONS = {
@@ -524,9 +525,3 @@ class StressDeformedGeometryPlotter(BasePlotter):
             centre = (smin + smax) / 2
 
         return DivergingNorm(centre, vmin=min(stress), vmax=max(stress))
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()

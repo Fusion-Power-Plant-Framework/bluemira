@@ -23,9 +23,10 @@
 Load objects
 """
 import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.structural.error import StructuralError
 from bluemira.structural.constants import LOAD_MAPPING, LOAD_TYPES
+from bluemira.structural.error import StructuralError
 
 
 def _check_load_type(load_type):
@@ -234,9 +235,3 @@ class LoadCase(list):
                 "w": w,
             }
         )
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()

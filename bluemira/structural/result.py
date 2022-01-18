@@ -24,9 +24,10 @@
 FE result object
 """
 import numpy as np
-from bluemira.utilities.plot_tools import Plot3D
-from bluemira.structural.transformation import cyclic_pattern
+
 from bluemira.structural.geometry import DeformedGeometry
+from bluemira.structural.transformation import cyclic_pattern
+from bluemira.utilities.plot_tools import Plot3D
 
 
 class Result:
@@ -155,9 +156,3 @@ class Result:
         if pattern:
             pdg = self._make_cyclic_geometry(dg)
             pdg.plot(ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()

@@ -22,16 +22,18 @@
 """
 Finite element modeal
 """
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
 from scipy.sparse.linalg import spsolve
+
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.structural.constants import CONDEPS, R_LARGE_DISP
 from bluemira.structural.error import StructuralError
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.loads import LoadCase
-from bluemira.structural.constants import CONDEPS, R_LARGE_DISP
-from bluemira.structural.symmetry import CyclicSymmetry
 from bluemira.structural.result import Result
+from bluemira.structural.symmetry import CyclicSymmetry
 
 
 def check_matrix_condition(matrix, digits):
@@ -603,9 +605,3 @@ class FiniteElementModel:
         Get a deep copy of the FiniteElementModel.
         """
         return deepcopy(self)
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()

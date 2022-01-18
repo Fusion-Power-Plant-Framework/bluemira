@@ -22,11 +22,13 @@
 """
 Finite element Node object
 """
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
+
+from bluemira.structural.constants import D_TOLERANCE, FLOAT_TYPE
 from bluemira.structural.error import StructuralError
 from bluemira.structural.loads import node_load
-from bluemira.structural.constants import FLOAT_TYPE, D_TOLERANCE
 
 
 class Node:
@@ -65,7 +67,7 @@ class Node:
         self.id_number = id_number
 
         self.loads = []
-        self.supports = np.zeros(6, dtype=np.bool)  # Defaults to False
+        self.supports = np.zeros(6, dtype=bool)  # Defaults to False
         self.symmetry = False
         self.displacements = np.zeros(6, dtype=FLOAT_TYPE)
         self.reactions = np.zeros(6, dtype=FLOAT_TYPE)
@@ -135,7 +137,7 @@ class Node:
         """
         Clears all supported DOFs applied to the Node
         """
-        self.supports = np.zeros(6, dtype=np.bool)  # Defaults to False
+        self.supports = np.zeros(6, dtype=bool)  # Defaults to False
 
     def add_support(self, supports):
         """

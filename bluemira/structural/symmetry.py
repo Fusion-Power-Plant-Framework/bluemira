@@ -23,12 +23,13 @@
 Symmetry boundary conditions
 """
 import numpy as np
-from bluemira.structural.error import StructuralError
+
 from bluemira.geometry._deprecated_tools import (
+    get_angle_between_points,
     project_point_axis,
     rotation_matrix,
-    get_angle_between_points,
 )
+from bluemira.structural.error import StructuralError
 from bluemira.structural.matrixops import cyclic_decomposition
 
 
@@ -192,9 +193,3 @@ class CyclicSymmetry:
         u_ordered[left] = u_left
 
         return u_ordered
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test(plotting=True)

@@ -22,17 +22,19 @@
 """
 Finite element geometry
 """
-import numpy as np
 from copy import deepcopy
+
+import numpy as np
 from scipy.sparse import lil_matrix
-from bluemira.structural.error import StructuralError
-from bluemira.structural.constants import D_TOLERANCE
+
 from bluemira.geometry._deprecated_tools import bounding_box
-from bluemira.structural.node import Node
+from bluemira.structural.constants import D_TOLERANCE
 from bluemira.structural.element import Element
+from bluemira.structural.error import StructuralError
+from bluemira.structural.node import Node
 from bluemira.structural.plotting import (
-    GeometryPlotter,
     DeformedGeometryPlotter,
+    GeometryPlotter,
     StressDeformedGeometryPlotter,
 )
 
@@ -553,9 +555,3 @@ class DeformedGeometry(Geometry):
             return DeformedGeometryPlotter(self, ax=ax, **kwargs)
         else:
             return StressDeformedGeometryPlotter(self, ax=ax, stress=stress, **kwargs)
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()
