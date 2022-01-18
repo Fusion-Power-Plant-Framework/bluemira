@@ -19,15 +19,18 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from copy import deepcopy
+
 import numpy as np
 from matplotlib import pyplot as plt
+
+import tests
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import make_circle_arc
-from bluemira.structural.material import SS316
 from bluemira.structural.crosssection import IBeam
-from bluemira.structural.transformation import cyclic_pattern
+from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel
-import tests
+from bluemira.structural.transformation import cyclic_pattern
 
 SS316 = SS316()
 
@@ -60,7 +63,7 @@ class TestCyclicSymmetry:
         model.add_distributed_load(10, 200e5, "Fy")
 
         # apply loads so they get patterned too
-        fullmodel = model.copy()
+        fullmodel = deepcopy(model)
         fullmodel._apply_load_case(fullmodel.load_case)
         fullmodel.clear_load_case()  # To avoid duplicate loads on the first sector
         fullmodel.geometry = cyclic_pattern(

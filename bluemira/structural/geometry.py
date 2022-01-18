@@ -22,6 +22,7 @@
 """
 Finite element geometry
 """
+from copy import deepcopy
 
 import numpy as np
 from scipy.sparse import lil_matrix
@@ -160,7 +161,7 @@ class Geometry:
         if np.sqrt(dx ** 2 + dy ** 2 + dz ** 2) <= D_TOLERANCE:
             return
 
-        moved_node = self.nodes[node_id].copy()
+        moved_node = deepcopy(self.nodes[node_id])
         moved_node.x += dx
         moved_node.y += dy
         moved_node.z += dz
@@ -174,7 +175,7 @@ class Geometry:
                         # duplicate, remove it
                         self.remove_element(elem_id)
                         # Make a new local copy
-                        moved_node = self.nodes[node_id].copy()
+                        moved_node = deepcopy(self.nodes[node_id])
 
                 # Transfer Node connections
                 # Start again, because of potential renumbering
@@ -222,7 +223,7 @@ class Geometry:
 
         # Remove any Elements connected to the dead node
         # Cycle backwards to avoid re-numbering
-        for elem_id in sorted(dead_node.connections.copy())[::-1]:
+        for elem_id in sorted(deepcopy(dead_node.connections))[::-1]:
             self.remove_element(elem_id)
 
     def add_element(self, node_id1, node_id2, cross_section, material=None):
@@ -296,7 +297,7 @@ class Geometry:
 
         # Re-number node connections
         for node in self.nodes:
-            connections = sorted(node.connections.copy())
+            connections = sorted(deepcopy(node.connections))
             new_connections = set()
             for connection in connections:
                 if connection == elem_id:
@@ -512,7 +513,7 @@ class DeformedGeometry(Geometry):
     """
 
     def __init__(self, geometry, scale):
-        geometry = geometry.copy()
+        geometry = deepcopy(geometry)
         self.nodes = geometry.nodes
         self.node_xyz = geometry.node_xyz
         self.elements = geometry.elements

@@ -19,17 +19,18 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from copy import deepcopy
+
 import numpy as np
 import pytest
 
-from bluemira.base.constants import ANSI_COLOR
-from bluemira.structural.error import StructuralError
-from bluemira.structural.model import FiniteElementModel, check_matrix_condition
-from bluemira.structural.crosssection import IBeam, RectangularBeam
-from bluemira.structural.material import SS316
-from bluemira.structural.loads import LoadCase
-
 import tests
+from bluemira.base.constants import ANSI_COLOR
+from bluemira.structural.crosssection import IBeam, RectangularBeam
+from bluemira.structural.error import StructuralError
+from bluemira.structural.loads import LoadCase
+from bluemira.structural.material import SS316
+from bluemira.structural.model import FiniteElementModel, check_matrix_condition
 
 SS316 = SS316()
 
@@ -217,7 +218,7 @@ class TestCantilever:
 
         model.add_node(0, 0, 0)
         model.add_node(-length, 0, 0)
-        dummy_material = SS316.copy()
+        dummy_material = deepcopy(SS316)
         dummy_material["E"] = 10e9
         model.add_element(0, 1, rect_beam, dummy_material)
         model.add_support(0, True, True, True, True, True, True)
@@ -327,7 +328,7 @@ class TestCantilever:
 
         b = 3
         rect_beam = RectangularBeam(0.1, 0.1)
-        dummy_material = SS316.copy()
+        dummy_material = deepcopy(SS316)
         dummy_material["E"] = 10e9
 
         e_mat = dummy_material["E"]
@@ -405,7 +406,7 @@ class TestDistributedLoads:
         # simplest to implement!
 
         length = 2
-        dummy_material = SS316.copy()
+        dummy_material = deepcopy(SS316)
         rect_beam = RectangularBeam(0.05, 0.61867)
         w = 2000
 

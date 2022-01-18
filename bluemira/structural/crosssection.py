@@ -447,7 +447,7 @@ def loop_to_point_facet(loop):
 
 def mat_to_mat(material):
     """
-    Converts a BLUEPRINT Material object to a sectionproperties Material
+    Converts a bluemira Material object to a sectionproperties Material
     """
     return SPMaterial(
         "Dummy",
@@ -573,7 +573,7 @@ class CustomCrossSection(CrossSection):
         # Although recommended, this can break small crosssection meshes
         geometry.clean_geometry()
 
-        # Mesh the cross-seciton geometry with a reasonable resolution
+        # Mesh the cross-section geometry with a reasonable resolution
         mesh = geometry.create_mesh([geometry.mesh_size / 4])
         return _CrossSection(geometry, mesh)
 
