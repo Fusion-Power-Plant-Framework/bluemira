@@ -1,6 +1,79 @@
 cff-version: 1.2.0
 authors:
-  - name: The bluemira Team
+  - family-name: Coleman
+    given-names: M.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+    affiliation: EUROfusion Consortium, Boltzmannstr.2, Garching, 85748, Germany
+
+  - family-name: Cook
+    given-names: J. E.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Franza
+    given-names: F.
+    affiliation: Karlsruher Institut f&uuml;r Technologie, Hermann-von-Helmholtz-Platz 1, 76344 Eggenstein-Leopoldshafen, Germany
+
+  - family-name: Maione
+    given-names: I. A.
+    affiliation: Karlsruher Institut f&uuml;r Technologie, Hermann-von-Helmholtz-Platz 1, 76344 Eggenstein-Leopoldshafen, Germany
+
+  - family-name: McIntosh
+    given-names: S.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+    affiliation: ITER Organization, Route de Vinon-sur-Verdon, CS 90 046, 13067 St Paul Lez Durance Cedex, France
+
+  - family-name: Morris
+    given-names: J.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Short
+    given-names: D.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Blair
+    given-names: A. I.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Bluteau
+    given-names: M.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Brooks
+    given-names: H.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Desai
+    given-names: S.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Foord
+    given-names: M.
+    affiliation: Agile Abstractions, Northampton, United Kingdom
+
+  - family-name: Johnson
+    given-names: M.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Kahn
+    given-names: S.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Humphrey
+    given-names: L.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: MacMackin
+    given-names: C.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Saunders
+    given-names: H.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-name: Vaccaro
+    given-names: D.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
 message: "If you use this software, please cite it using these references."
 references:
   - type: article
