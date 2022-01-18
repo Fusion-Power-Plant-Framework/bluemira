@@ -177,17 +177,15 @@ class TestRun:
         assert "PROCESS" not in param.mapping and param.mapping["FAKE_CODE"].recv is True
         assert "gp" not in runner._recv_mapping
 
-    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
-    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown.load_PROCESS_run")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output_files")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.teardown.Teardown.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_runinput(
         self,
         mock_add_parameter,
-        mock_read_mfile,
         mock_clear,
         mock_run,
         mock_check,
@@ -204,23 +202,20 @@ class TestRun:
         assert mock_add_parameter.call_count == 0
 
         # Check that correct run calls were made.
-        assert mock_read_mfile.call_count == 1
         assert mock_clear.call_count == 1
         assert mock_run.call_count == 1
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
-    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown.load_PROCESS_run")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output_files")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.teardown.Teardown.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_run_with_params_to_update(
         self,
         mock_add_parameter,
-        mock_read_mfile,
         mock_clear,
         mock_run,
         mock_check,
@@ -243,23 +238,20 @@ class TestRun:
         mock_add_parameter.assert_any_call("fp", 5)
 
         # Check that correct run calls were made.
-        assert mock_read_mfile.call_count == 1
         assert mock_clear.call_count == 1
         assert mock_run.call_count == 1
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
-    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown.load_PROCESS_run")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output_files")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
-    @patch("bluemira.codes.process.teardown.Teardown.read_mfile")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
     @pytest.mark.skipif(PROCESS_ENABLED is not True, reason="PROCESS install required")
     def test_run_without_params_to_update(
         self,
         mock_add_parameter,
-        mock_read_mfile,
         mock_clear,
         mock_run,
         mock_check,
@@ -288,14 +280,13 @@ class TestRun:
         mock_add_parameter.assert_any_call("fp", 5)
 
         # Check that correct run calls were made.
-        assert mock_read_mfile.call_count == 1
         assert mock_clear.call_count == 1
         assert mock_run.call_count == 1
         assert mock_check.call_count == 1
         assert mock_load.call_count == 1
 
-    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
-    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown.load_PROCESS_run")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output_files")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
@@ -314,8 +305,8 @@ class TestRun:
         assert mock_load.call_count == 1
         assert mock_add_parameter.call_count == 0
 
-    @patch("bluemira.codes.process.teardown.Teardown._load_PROCESS")
-    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output")
+    @patch("bluemira.codes.process.teardown.Teardown.load_PROCESS_run")
+    @patch("bluemira.codes.process.teardown.Teardown._check_PROCESS_output_files")
     @patch("bluemira.codes.process.run.Run._run_subprocess")
     @patch("bluemira.codes.process.run.Run._clear_PROCESS_output")
     @patch("bluemira.codes.process.setup.PROCESSInputWriter.add_parameter")
