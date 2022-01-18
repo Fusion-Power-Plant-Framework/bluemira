@@ -53,7 +53,7 @@ def check_matrix_condition(matrix, digits):
 
     if condition_number > 1 / CONDEPS:
         bluemira_warn(
-            "Beams::FiniteElementModel:\n Singular stiffness matrix will "
+            "Structural::FiniteElementModel:\n Singular stiffness matrix will "
             "cause LinAlgErrors.\n"
             f"matrix condition number: {condition_number}"
         )
@@ -61,7 +61,7 @@ def check_matrix_condition(matrix, digits):
     if digit_loss > digits:
         digit_loss = int(np.ceil(digit_loss))
         bluemira_warn(
-            "Beams::FiniteElementModel:\n Ill-conditioned matrix"
+            "Structural::FiniteElementModel:\n Ill-conditioned matrix"
             f"\n|\tAccuracy loss below the {digit_loss}-th digit."
         )
 
@@ -76,9 +76,9 @@ class FiniteElementModel:
 
     Attributes
     ----------
-    geometry: BLUEPRINT::structural::Geometry object
+    geometry: bluemira::structural::Geometry object
         The geometry in the FiniteElementModel
-    load_case: BLUEPRINT::structural::LoadCase object
+    load_case: bluemira::structural::LoadCase object
         The load case applied in the FiniteElementModel
     n_fixed_dofs: int
         The number of fixed degrees of freedom
@@ -598,10 +598,4 @@ class FiniteElementModel:
         # Interpolate the result between nodes, and calculate stresses
         self.geometry.interpolate()
 
-        return Result(self.geometry.copy(), load_case, ur, reactions, self.cycle_sym)
-
-    def copy(self):
-        """
-        Get a deep copy of the FiniteElementModel.
-        """
-        return deepcopy(self)
+        return Result(deepcopy(self.geometry), load_case, ur, reactions, self.cycle_sym)

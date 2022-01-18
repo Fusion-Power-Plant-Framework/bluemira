@@ -42,12 +42,12 @@ from bluemira.structural.error import StructuralError
 from BLUEPRINT.geometry.shell import Shell
 
 
-def _get_min_length(loop):
-    return np.min(segment_lengths(loop.x, loop.y, loop.z))
+def _get_min_length(coordinates):
+    return np.min(segment_lengths(coordinates.x, coordinates.y, coordinates.z))
 
 
-def _get_max_length(loop):
-    return np.max(segment_lengths(loop.x, loop.y, loop.z))
+def _get_max_length(coordinates):
+    return np.max(segment_lengths(coordinates.x, coordinates.y, coordinates.z))
 
 
 @nb.jit(nopython=True, cache=True)
@@ -135,12 +135,6 @@ class CrossSection:
         Plot the CrossSection
         """
         self.geometry.plot(ax=ax, points=True)
-
-    def copy(self):
-        """
-        Get a deep copy of the CrossSection.
-        """
-        return deepcopy(self)
 
     def rotate(self, angle):
         """
@@ -481,7 +475,7 @@ class CustomCrossSection(CrossSection):
         self._calc_properties_fe(geometry)
 
     def _set_loop(self, loop):
-        loop = loop.copy()  # Detach CrossSection loop from its input geometry object
+        loop = deepcopy(loop)  # Detach CrossSection loop from its input geometry object
         if loop.__class__.__name__ == "Loop":
             if not loop.closed:
                 loop.close()
@@ -598,7 +592,7 @@ class RapidCustomCrossSection(CrossSection):
 
     def __init__(self, loop, opt_var=3e8):
         super().__init__()
-        self.geometry = loop.copy()
+        self.geometry = deepcopy(loop)
 
         self.area = self.geometry.area
         self.centroid = self.geometry.centroid
@@ -641,7 +635,7 @@ class RapidCustomHollowCrossSection(CrossSection):
     def __init__(self, shell, j_opt_var=14.123):
         super().__init__()
         area = shell.area
-        self.geometry = shell.copy()
+        self.geometry = deepcopy(shell)
 
         self.area = area
         self.centroid = self.geometry.inner.centroid
@@ -720,7 +714,7 @@ class CompositeCrossSection(CustomCrossSection):
     def _set_loops(self, loops):
         new_loops = []
         for loop in loops:
-            loop = loop.copy()
+            loop = deepcopy(loop)
             if loop.__class__.__name__ == "Loop":
                 if not loop.closed:
                     loop.close()
@@ -838,7 +832,7 @@ class AnalyticalShellComposite(CompositeCrossSection):
 
         # Need to store this information to retrieve stresses in the various
         # parts of the CompositeCrossSection
-        loops = [shell.outer.copy(), shell.inner.copy()]
+        loops = [deepcopy(shell.outer), deepcopy(shell.inner)]
         self._set_loops(loops)
         self.material = materials
         self._calc_density([shell, shell.inner], materials)

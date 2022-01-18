@@ -22,6 +22,8 @@
 """
 FE transformation matrices and methods
 """
+from copy import deepcopy
+
 import numpy as np
 
 from bluemira.geometry._deprecated_tools import rotation_matrix
@@ -273,10 +275,10 @@ def cyclic_pattern(geometry, axis, angle, n, include_first=True):
         The patterned and merged geometry
     """
     # Dodge cyclic import
-    from BLUEPRINT.beams.geometry import DeformedGeometry, Geometry
+    from bluemira.structural.geometry import DeformedGeometry, Geometry
 
     if include_first:
-        patterned = geometry.copy()
+        patterned = deepcopy(geometry)
     else:
         if isinstance(geometry, DeformedGeometry):
             patterned = DeformedGeometry(Geometry(), geometry._scale)
@@ -284,7 +286,7 @@ def cyclic_pattern(geometry, axis, angle, n, include_first=True):
             patterned = Geometry()
 
     for i in range(1, n):
-        sector = geometry.copy()
+        sector = deepcopy(geometry)
         theta = np.deg2rad(i * angle)
         t_matrix = rotation_matrix(theta, axis)
         sector.rotate(t_matrix)

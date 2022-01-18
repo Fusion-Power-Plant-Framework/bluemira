@@ -22,7 +22,6 @@
 """
 Finite element geometry
 """
-from copy import deepcopy
 
 import numpy as np
 from scipy.sparse import lil_matrix
@@ -504,12 +503,6 @@ class Geometry:
             The matplotlib Axes upon which to plot
         """
         return GeometryPlotter(self, ax=ax, **kwargs)
-
-    def copy(self):
-        """
-        Get a deep copy of the Geometry.
-        """
-        return deepcopy(self)
 
 
 class DeformedGeometry(Geometry):

@@ -216,17 +216,6 @@ class Node:
 
     __hash__ = None
 
-    def copy(self):
-        """
-        Create a copy of the Node object
-
-        Returns
-        -------
-        copy: Node
-            A copy of the current Node object
-        """
-        return deepcopy(self)
-
 
 def get_midpoint(node1, node2):
     """
