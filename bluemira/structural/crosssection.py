@@ -32,14 +32,11 @@ from sectionproperties.pre.pre import Material as SPMaterial
 from sectionproperties.pre.sections import CustomSection, MergedSection
 
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import (
-    get_control_point,
-    make_circle_arc,
-    segment_lengths,
-)
+from bluemira.geometry._deprecated_tools import get_control_point, segment_lengths
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.structural.constants import NEAR_ZERO
 from bluemira.structural.error import StructuralError
-from BLUEPRINT.geometry.shell import Shell
 
 
 def _get_min_length(coordinates):
@@ -122,11 +119,11 @@ class CrossSection:
         self.nu = None
         self.rho = None
 
-        self.geometry = None
+        self.geometry: BluemiraFace = None
 
-    def make_loop(self, *args, **kwargs):
+    def make_geometry(self, *args, **kwargs):
         """
-        Make a Loop object for the CrossSection.
+        Make a BluemiraFace object for the CrossSection.
         """
         raise NotImplementedError
 
@@ -167,12 +164,13 @@ class CrossSection:
         except TypeError:
             pass
 
-        cy, cz = self.centroid
         if isinstance(self.geometry, list):
             for geometry in self.geometry:
-                geometry.rotate(angle, p1=[0, cy, cz], p2=[1, cy, cz])
+                geometry.rotate(base=geometry.centroid, axis=(1, 0, 0), degree=angle)
         else:
-            self.geometry.rotate(angle, p1=[0, cy, cz], p2=[1, cy, cz])
+            self.geometry.rotate(
+                base=self.geometry.centroid, axis=(1, 0, 0), degree=angle
+            )
 
     def translate(self, vector):
         """
@@ -184,9 +182,11 @@ class CrossSection:
         vector: iterable(3)
             The translation vector.
         """
-        self.geometry.translate(vector, update=True)
-        self.centroid[0] += vector[1]
-        self.centroid[1] += vector[2]
+        self.geometry.translate(vector)
+
+    @property
+    def centroid(self):
+        return self.geometry.center_of_mass
 
 
 class RectangularBeam(CrossSection):
@@ -214,7 +214,7 @@ class RectangularBeam(CrossSection):
         self.qzz = 0  # Centred about (0, 0)
         self.width = width
         self.height = height
-        self.make_loop()
+        self.make_geometry()
 
     @staticmethod
     def calc_torsion(width, height):
@@ -234,18 +234,23 @@ class RectangularBeam(CrossSection):
 
         return a * b ** 3 * (16 / 3 - 3.36 * (b / a) * (1 - b ** 4 / (12 * a ** 4)))
 
-    def make_loop(self):
+    def make_geometry(self):
         """
-        Make a Loop for the RectangularBeam cross-section.
+        Make a BluemiraFace for the RectangularBeam cross-section.
         """
         width = self.width
         height = self.height
-        loop = Loop(
-            y=[-width / 2, width / 2, width / 2, -width / 2, -width / 2],
-            z=[-height / 2, -height / 2, height / 2, height / 2, -height / 2],
+        polygon = BluemiraFace(
+            make_polygon(
+                {
+                    "x": 0,
+                    "y": [-width / 2, width / 2, width / 2, -width / 2, -width / 2],
+                    "z": [-height / 2, -height / 2, height / 2, height / 2, -height / 2],
+                }
+            )
         )
-        self.geometry = loop
-        self.centroid = self.geometry.centroid
+        self.geometry = polygon
+        self.centroid = self.geometry.center_of_mass
 
 
 class CircularBeam(CrossSection):
@@ -267,12 +272,9 @@ class CircularBeam(CrossSection):
         self.j = np.pi * radius ** 4 / 2
         self.ry = radius / 2
         self.rz = radius / 2
-        self.centroid = 0.0, 0.0
-
-        y, z = make_circle_arc(radius, *self.centroid, n_points=20)
-        loop = Loop(y=y, z=z)
-        loop.close()
-        self.geometry = loop
+        self.geometry = BluemiraFace(
+            make_circle(radius, center=(0, 0, 0), axis=(1, 0, 0))
+        )
 
 
 class CircularHollowBeam(CrossSection):
@@ -296,15 +298,10 @@ class CircularHollowBeam(CrossSection):
         self.j = np.pi / 2 * (r_outer ** 4 - r_inner ** 4)
         self.ry = np.sqrt((r_outer ** 2 + r_inner ** 2) / 4)
         self.rz = np.sqrt((r_outer ** 2 + r_inner ** 2) / 4)
-        self.centroid = 0.0, 0.0
 
-        y1, z1 = make_circle_arc(r_inner, *self.centroid, n_points=20)
-        y2, z2 = make_circle_arc(r_outer, *self.centroid, n_points=20)
-        inner = Loop(y=y1, z=z1)
-        inner.close()
-        outer = Loop(y=y2, z=z2)
-        outer.close()
-        self.geometry = Shell(inner, outer)
+        inner = make_circle(r_inner, center=(0, 0, 0), axis=(1, 0, 0))
+        outer = make_circle(r_outer, center=(0, 0, 0), axis=(1, 0, 0))
+        self.geometry = BluemiraFace([outer, inner])
 
 
 class IBeam(CrossSection):
@@ -334,7 +331,7 @@ class IBeam(CrossSection):
         self.j = self.calc_torsion(base, depth, web, flange)
         self.ry = np.sqrt(self.i_yy / self.area)
         self.rz = np.sqrt(self.i_zz / self.area)
-        self.make_loop(base, depth, flange, web)
+        self.make_geometry(base, depth, flange, web)
 
     @staticmethod
     def check_dimensions(base, depth, flange, web):
@@ -351,9 +348,9 @@ class IBeam(CrossSection):
         ):
             raise StructuralError("I-beam dimensions don't make sense.")
 
-    def make_loop(self, base, depth, flange, web):
+    def make_geometry(self, base, depth, flange, web):
         """
-        Make a Loop for the IBeam cross-section.
+        Make a BluemiraFace for the IBeam cross-section.
         """
         y = [
             -base / 2,
@@ -385,8 +382,7 @@ class IBeam(CrossSection):
             -depth / 2 + flange,
             -depth / 2,
         ]
-        self.geometry = Loop(y=y, z=z)
-        self.centroid = self.geometry.centroid
+        self.geometry = BluemiraFace(make_polygon({"x": 0, "y": y, "z": z}))
 
     @staticmethod
     def calc_area(b, d, h, t):
@@ -445,6 +441,12 @@ def loop_to_point_facet(loop):
     return points, facets
 
 
+def get_coordinate_point_facets(coordinates):
+    facets = [[i, i + 1] for i in range(len(coordinates) - 1)]
+    facets.append([0, len(coordinates) - 1])
+    return coordinates.yz, facets
+
+
 def mat_to_mat(material):
     """
     Converts a bluemira Material object to a sectionproperties Material
@@ -464,38 +466,22 @@ class CustomCrossSection(CrossSection):
 
     Parameters
     ----------
-    loop: Loop object
-        The loop of the CrossSection
+    geometry: BluemiraFace
+        The geometry of the CrossSection
     """
 
-    def __init__(self, loop, hollow=False):
+    def __init__(self, geometry, hollow=False):
         super().__init__()
-        self._set_loop(loop)
+        self._set_geometry(geometry)
         geometry = self.make_geometry(self.geometry, hollow)
         self._calc_properties_fe(geometry)
 
-    def _set_loop(self, loop):
-        loop = deepcopy(loop)  # Detach CrossSection loop from its input geometry object
-        if loop.__class__.__name__ == "Loop":
-            if not loop.closed:
-                loop.close()
-        if not loop.plan_dims == ["y", "z"]:
-            loop = self._rebase_loop(loop)
-        self.geometry = loop
-
-    @staticmethod
-    def _rebase_loop(loop):
-        a, b = loop.plan_dims
-        typ = loop.__class__.__name__
-        if typ == "Loop":
-            y, z = loop[a], loop[b]
-            return Loop(y=y, z=z)
-        elif typ == "Shell":
-            yi, zi = loop.inner[a], loop.inner[b]
-            yo, zo = loop.outer[a], loop.outer[b]
-            return Shell(Loop(y=yi, z=zi), Loop(y=yo, z=zo))
-        else:
-            raise ValueError
+    def _set_geometry(self, geometry):
+        """ """
+        outer_coords = geometry.boundary[0].discretize(npoints=100, byedges=True)
+        if len(geometry.boundary) > 1:
+            for wire in geometry.boundary[1:]:
+                inner_coords = wire.discretize(npoints=100, byedges=True)
 
     def make_geometry(self, loop, hollow=False):
         """
@@ -586,23 +572,22 @@ class RapidCustomCrossSection(CrossSection):
 
     Parameters
     ----------
-    loop: Loop
-        The Loop for the polygonal cross-section
+    geometry: BluemiraFace
+        The geometry of the CrossSection
     """
 
-    def __init__(self, loop, opt_var=3e8):
+    def __init__(self, geometry, opt_var=3e8):
         super().__init__()
-        self.geometry = deepcopy(loop)
+        self.geometry = deepcopy(geometry)
 
         self.area = self.geometry.area
-        self.centroid = self.geometry.centroid
 
         y_l, z_l = self.geometry.y, self.geometry.z
         q_zz, q_yy, i_zz, i_yy, i_zy = _calculate_properties(y_l, z_l)
 
-        self.i_yy = i_yy - self.area * self.centroid[1] ** 2
-        self.i_zz = i_zz - self.area * self.centroid[0] ** 2
-        self.i_zy = i_zy - self.area * self.centroid[0] * self.centroid[1]
+        self.i_yy = i_yy - self.area * self.centroid[2] ** 2
+        self.i_zz = i_zz - self.area * self.centroid[1] ** 2
+        self.i_zy = i_zy - self.area * self.centroid[1] * self.centroid[2]
         self.qyy = q_yy
         self.qzz = q_zz
         self.ry = np.sqrt(self.i_yy / self.area)
@@ -621,7 +606,7 @@ class RapidCustomHollowCrossSection(CrossSection):
 
     Parameters
     ----------
-    shell: Shell
+    geometry: Shell
         The Shell for the polygonal cross-section
 
     Notes
@@ -907,3 +892,127 @@ class AnalyticalShellComposite(CompositeCrossSection):
         g = (g_inner * inner.area + g_outer * outer.area) / (inner.area + outer.area)
         # Still eyeballing this one...
         self.gj = g * (outer.j + inner.j) * 2
+
+
+# New implementations of the hard stuff
+
+
+class AnalyticalCrossSection(CrossSection):
+    """
+    Analytical formulation for a polygonal cross-section. Torsional properties
+    less accurate. Faster as based on analytical calculation of cross-sectional
+    properties, as opposed to FE.
+
+    Parameters
+    ----------
+    geometry: BluemiraFace
+        The geometry for the polygonal cross-section
+
+    Notes
+    -----
+    All cross-section properties calculated exactly (within reason), except for
+    the torsional constant J, which is approximated using St Venant's approach.
+    The j_opt_var for fitting the J value must be determined based on suitable
+    finite element analyses.
+
+    If the geometry has any holes in it, they will be treated as holes.
+    """
+
+    def __init__(self, geometry, n_discr=100, j_opt_var=14.123):
+        super().__init__()
+        self.geometry = deepcopy(geometry)
+        self.area = area = self.geometry.area
+        y, z = self.geometry.boundary[0].discretize(ndiscr=n_discr, byedges=True).yz
+
+        q_zz_o, q_yy_o, i_zz_o, i_yy_o, i_zy_o = _calculate_properties(y, z)
+
+        if len(self.geometry.boundary) > 1:
+            # Cut out any holes in the face
+            for wire in self.geometry.boundary[1:]:
+                y, z = wire.discretize(ndiscr=n_discr, byedges=True).yz
+                q_zz_i, q_yy_i, i_zz_i, i_yy_i, i_zy_i = _calculate_properties(y, z)
+
+                q_zz_o -= q_zz_i
+                q_yy_o -= q_yy_i
+                i_zz_o -= i_zz_i
+                i_yy_o -= i_yy_i
+                i_zy_o -= i_zy_i
+
+        cy = q_zz_o / area
+        cz = q_yy_o / area
+        self.centroid_geom = (cy, cz)
+
+        self.i_yy = i_yy_o - area * cz ** 2
+        self.i_zz = i_zz_o - area * cy ** 2
+        self.i_zy = i_zy_o - area * cz * cy
+        self.qyy = q_yy_o
+        self.qzz = q_zz_o
+        self.ry = np.sqrt(self.i_yy / area)
+        self.rz = np.sqrt(self.i_zz / area)
+
+        # OK so there is no cute general polygon form for J... need FE!
+        # St Venant approach
+        self.j = self.area ** 4 / (j_opt_var * (i_yy_o + i_zz_o))
+
+
+class AnalyticalCompositeCrossSection(CustomCrossSection):
+    """
+    A cross-section object for composite structural.
+
+    When making a composite cross-section, we need to add material properties
+    in order to effectively weight the cross-sectional properties.
+
+    Cross-sectional properties are calculated analytical relations, and are
+    therefore much fast than the FE approach. For simple cross-sections, the
+    properties are all identical except for J, where a fitting on similar
+    shapes must be carried out, following St. Venant's method.
+
+    This somewhat modifies the API when getting properties...
+
+    Parameters
+    ----------
+    geometry: BluemiraFace
+        The ordered list of geometries making up the cross-section
+    materials: List[Material]
+        The ordered list of Materials to use for the geometry
+    """
+
+    def __init__(self, geometry, materials):
+        super().__init__()
+        self.geometry = deepcopy(geometry)
+
+        n = len(geometry.boundary)
+
+        if len(materials) != n:
+            raise StructuralError(f"Need {n} materials for this geometry.")
+
+        outer = AnalyticalCrossSection(geometry.boundary)
+        inners = []
+        for wire in geometry.boundary[1:]:
+            face = BluemiraFace(wire)
+            inners.append(AnalyticalCrossSection(face))
+
+        cross_sections = [outer]
+        cross_sections.extend(inners)
+
+        self.area = 0
+        self.ea = 0
+        ga = 0
+        self.ei_yy = 0
+        self.ei_zz = 0
+        self.ei_zy = 0
+
+        for xs, mat in zip(cross_sections, materials):
+            self.area += xs.area
+            e, g = mat["E"], mat["G"]
+            self.ea += e * xs.area
+            ga += g * xs.area
+            self.ei_yy += e * xs.i_yy
+            self.ei_zz += e * xs.i_zz
+            self.ei_zy += e * xs.i_zy
+
+        self.nu = self.ea / (2 * ga) - 1
+        self.ry = np.sqrt(self.ei_yy / self.ea)
+        self.rz = np.sqrt(self.ei_zz / self.ea)
+
+        self.gj = ga / self.area * n * sum(xs.j for xs in cross_sections)
