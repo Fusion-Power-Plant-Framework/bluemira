@@ -268,7 +268,7 @@ def find_noisy_locals(x, x_bins=50, mode="min"):
     y_bins = [x[i : i + bin_size] for i in range(0, n, bin_size)]
 
     local_m = np.zeros(len(y_bins))
-    local_mid_x = np.zeros(len(y_bins), dtype=np.int)
+    local_mid_x = np.zeros(len(y_bins), dtype=int)
     for i, y_bin in enumerate(y_bins):
         local_m[i] = peak(y_bin)
         local_mid_x[i] = arg_peak(y_bin) + i * bin_size

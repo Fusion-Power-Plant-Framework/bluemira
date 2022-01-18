@@ -356,7 +356,7 @@ class PositionOptimiser:
         opt.set_upper_bounds(ub)
 
         self.bounds = np.array(
-            [np.zeros(self.n_L, dtype=np.int), np.ones(self.n_L, dtype=np.int)]
+            [np.zeros(self.n_L, dtype=int), np.ones(self.n_L, dtype=int)]
         )
 
         if self.flag_CS:

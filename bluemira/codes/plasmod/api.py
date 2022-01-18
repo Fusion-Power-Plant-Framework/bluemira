@@ -254,7 +254,7 @@ class Outputs(PlasmodParameters):
             for row in csv.reader(fd, delimiter="\t"):
                 output_key, *output_value = row[0].split()
                 output[output_key] = (
-                    np.array(output_value, dtype=np.float)
+                    np.array(output_value, dtype=float)
                     if len(output_value) > 1
                     else float(output_value[0])
                 )

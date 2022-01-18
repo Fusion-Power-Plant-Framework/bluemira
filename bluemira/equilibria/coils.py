@@ -460,7 +460,7 @@ class Coil:
 
         Returns
         -------
-        inside: np.array(dtype=np.bool)
+        inside: np.array(dtype=bool)
             The Boolean array of point indices inside/outside the coil boundary
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
@@ -1374,7 +1374,7 @@ class PlasmaCoil:
         Map a Green's function across the grid at a point, without crashing or
         running out of memory.
         """
-        array = np.zeros_like(x, dtype=np.float)
+        array = np.zeros_like(x, dtype=float)
         for i, j in zip(self._ii, self._jj):
             current = self.j_tor[i, j] * self.grid.dx * self.grid.dz
             array += current * func(self.grid.x[i, j], self.grid.z[i, j], x, z)

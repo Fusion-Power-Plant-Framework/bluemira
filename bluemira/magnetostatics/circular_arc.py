@@ -778,7 +778,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         arc_4 = np.array([arc_4x, arc_4y, b * ones]).T
 
         n_slices = int(2 + self.dtheta // (0.25 * np.pi))
-        slices = np.linspace(0, n - 1, n_slices, endpoint=True, dtype=np.int)
+        slices = np.linspace(0, n - 1, n_slices, endpoint=True, dtype=int)
         points = [arc_1, arc_2, arc_3, arc_4]
 
         # Rectangles
