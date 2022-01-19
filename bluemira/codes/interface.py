@@ -137,8 +137,18 @@ class Setup(Task):
         self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
         self._params = type(params).from_template(self._parameter_mapping.values())
         self._params.update_kw_parameters(params.to_dict(verbose=True))
-        self._recv_mapping = get_recv_mapping(params, NAME)
-        self._send_mapping = get_send_mapping(params, NAME)
+        self.__recv_mapping = get_recv_mapping(params, NAME)
+        self.__send_mapping = get_send_mapping(params, NAME)
+
+    @property
+    def _recv_mapping(self):
+        self.__recv_mapping = get_recv_mapping(self.params, self.parent.NAME)
+        return self.__recv_mapping
+
+    @property
+    def _send_mapping(self):
+        self.__send_mapping = get_send_mapping(self.params, self.parent.NAME)
+        return self.__send_mapping
 
     @property
     def params(self) -> bm_base.ParameterFrame:
