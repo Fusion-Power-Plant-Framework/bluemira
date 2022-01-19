@@ -26,6 +26,7 @@ import numpy as np
 
 from bluemira.base.constants import GRAVITY
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry.face import BluemiraFace
 from bluemira.structural.constants import N_INTERP, NU, SD_LIMIT
 from bluemira.structural.error import StructuralError
 from bluemira.structural.loads import distributed_load, point_load
@@ -542,6 +543,8 @@ class Element:
                 zo = c_s.outer.z - c_s.centroid[1]
                 y = np.append(yi, yo)
                 z = np.append(zi, zo)
+            elif isinstance(c_s, BluemiraFace):
+                pass
             else:
                 raise StructuralError(
                     f"Unrecognised X-section geometry type :{type(c_s)}"

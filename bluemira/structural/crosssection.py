@@ -27,9 +27,6 @@ from copy import deepcopy
 
 import numba as nb
 import numpy as np
-from sectionproperties.analysis.cross_section import CrossSection as _CrossSection
-from sectionproperties.pre.pre import Material as SPMaterial
-from sectionproperties.pre.sections import CustomSection, MergedSection
 
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import get_control_point, segment_lengths
@@ -250,7 +247,6 @@ class RectangularBeam(CrossSection):
             )
         )
         self.geometry = polygon
-        self.centroid = self.geometry.center_of_mass
 
 
 class CircularBeam(CrossSection):
@@ -417,151 +413,10 @@ class IBeam(CrossSection):
         return (2 * b * t ** 3 + (d - s) * t ** 3) / 3
 
 
-def loop_to_point_facet(loop):
-    """
-    Convert a Loop object to a sectionproperties list, list combo
-
-    Parameters
-    ----------
-    loop: Loop
-        The Loop to convert
-
-    Returns
-    -------
-    points: [[float, float], ...]
-        The list of point [x, y] lists
-    facets: [[int, int], ...]
-        The list of node id [i, j] lists
-    """
-    points = loop.d2.T.tolist()
-    facets = [[i, i + 1] for i in range(len(loop) - 1)]
-
-    # Closed loops (CrossSections always closed)
-    facets.append([0, len(loop) - 1])
-    return points, facets
-
-
 def get_coordinate_point_facets(coordinates):
     facets = [[i, i + 1] for i in range(len(coordinates) - 1)]
     facets.append([0, len(coordinates) - 1])
     return coordinates.yz, facets
-
-
-def mat_to_mat(material):
-    """
-    Converts a bluemira Material object to a sectionproperties Material
-    """
-    return SPMaterial(
-        "Dummy",
-        material["E"],
-        material["nu"],
-        yield_strength=0,
-        color=np.random.rand(3),
-    )
-
-
-class CustomCrossSection(CrossSection):
-    """
-    A polygonic cross-section implementation for those more complicated shapes.
-
-    Parameters
-    ----------
-    geometry: BluemiraFace
-        The geometry of the CrossSection
-    """
-
-    def __init__(self, geometry, hollow=False):
-        super().__init__()
-        self._set_geometry(geometry)
-        geometry = self.make_geometry(self.geometry, hollow)
-        self._calc_properties_fe(geometry)
-
-    def _set_geometry(self, geometry):
-        """ """
-        outer_coords = geometry.boundary[0].discretize(npoints=100, byedges=True)
-        if len(geometry.boundary) > 1:
-            for wire in geometry.boundary[1:]:
-                inner_coords = wire.discretize(npoints=100, byedges=True)
-
-    def make_geometry(self, loop, hollow=False):
-        """
-        Make the geometry of the CustomCrossSection
-        """
-        typ = loop.__class__.__name__
-        if typ == "Loop":
-            return self._make_loop_geometry(loop)
-        elif typ == "Shell":
-            return self._make_shell_geometry(loop, hollow)
-        else:
-            raise ValueError
-
-    @staticmethod
-    def _make_loop_geometry(loop):
-        """
-        Makes a sectionproperties Geometry object from a Loop
-        """
-        points, facets = loop_to_point_facet(loop)
-        cp = get_control_point(loop)
-        geometry = CustomSection(points, facets, [], [cp])
-        mesh_size = _get_min_length(loop)
-        # Keep the mesh size in the geometry
-        geometry.mesh_size = mesh_size
-        return geometry
-
-    @staticmethod
-    def _make_shell_geometry(shell, hollow=False):
-        """
-        Makes a sectionproperties Geometry object from a Shell
-        """
-        points, facets = loop_to_point_facet(shell.outer)
-        p2, f2 = loop_to_point_facet(shell.inner)
-        f2 = np.array(f2, dtype=np.int32) + len(shell.outer)
-        f2 = f2.tolist()
-        points.extend(p2)
-        facets.extend(f2)
-        if hollow:
-            holes = [get_control_point(shell.inner)]
-            control = [get_control_point(shell)]
-        else:
-            holes = []
-            control = [get_control_point(shell)]
-        # NOTE: This will not make a hole in the section, but make two
-        # individual mesh regions
-        geometry = CustomSection(points, facets, holes, control)
-
-        l_1 = _get_min_length(shell.inner)
-        l_2 = _get_min_length(shell.outer)
-        mesh_size = min([l_1, l_2])
-
-        geometry.mesh_size = mesh_size
-        return geometry
-
-    def _calc_properties_fe(self, geometry):
-        section = self._make_section(geometry)
-        section.calculate_geometric_properties()
-        area, ixx, iyy, ixy, j, phi = section.calculate_frame_properties()
-        self.area = area
-        self.i_yy = ixx
-        self.i_zz = iyy
-        self.i_zy = ixy
-        self.j = j
-        self.centroid = [section.section_props.cx, section.section_props.cy]
-        self.ry = section.section_props.rx_c
-        self.rz = section.section_props.ry_c
-        self.qyy = section.section_props.qx
-        self.qzz = section.section_props.qy
-
-        # Keep this in case needed (CAN'T COPY OR PICKLE)
-        # self._section = section
-
-    @staticmethod
-    def _make_section(geometry):
-        # Although recommended, this can break small crosssection meshes
-        geometry.clean_geometry()
-
-        # Mesh the cross-section geometry with a reasonable resolution
-        mesh = geometry.create_mesh([geometry.mesh_size / 4])
-        return _CrossSection(geometry, mesh)
 
 
 class RapidCustomCrossSection(CrossSection):
@@ -654,249 +509,6 @@ class RapidCustomHollowCrossSection(CrossSection):
         self.j = self.area ** 4 / (j_opt_var * (i_yy + i_zz))
 
 
-class CompositeCrossSection(CustomCrossSection):
-    """
-    A cross-section object for composite structural.
-
-    When making a composite cross-section, we need to add material properties
-    in order to effectively weight the cross-sectional properties.
-
-    Cross-sectional properties are calculated using finite element analysis.
-
-    This somewhat modifies the API when getting properties...
-
-    Parameters
-    ----------
-    loops: List[Loop]
-        The ordered list of Loops making up the geometry
-    materials: List[Material]
-        The ordered list of Materials to use for the geometry
-    """
-
-    def __init__(self, loops, materials):
-        if len(loops) != len(materials):
-            raise StructuralError(
-                "We need the same number of materials and x-sections to build"
-                "a composite."
-            )
-        # Need to store this information to retrieve stresses in the various
-        # parts of the CompositeCrossSection
-        self._set_loops(loops)
-        self.material = materials
-        self._calc_density(loops, materials)
-
-        geometries = [self.make_geometry(loop) for loop in loops]
-        materials = [mat_to_mat(material) for material in materials]
-
-        if len(geometries) == 1:
-            geometries = geometries[0]
-
-        self._geometries = geometries
-        self._materials = materials
-        self._calc_properties_fe(geometries, materials)
-        self._correct_axis()
-
-    def _set_loops(self, loops):
-        new_loops = []
-        for loop in loops:
-            loop = deepcopy(loop)
-            if loop.__class__.__name__ == "Loop":
-                if not loop.closed:
-                    loop.close()
-            if not loop.plan_dims == ["y", "z"]:
-                loop = self._rebase_loop(loop)
-            new_loops.append(loop)
-        self.geometry = new_loops
-
-    @staticmethod
-    def _make_section(geometries, materials):
-        geometry = MergedSection(geometries)
-        mesh_sizes = [g.mesh_size for g in geometries]
-
-        geometry.clean_geometry()
-        mesh = geometry.create_mesh(mesh_sizes)
-
-        return _CrossSection(geometry, mesh, materials=materials)
-
-    def _calc_properties_fe(self, geometries, materials):
-        section = self._make_section(geometries, materials)
-        section.calculate_geometric_properties()
-        # area is not correctly calculated for composites (returns EA)
-        _, ixx, iyy, ixy, j, phi = section.calculate_frame_properties()
-
-        sec_props = section.section_props
-
-        self.qyy = sec_props.qx
-        self.qzz = sec_props.qy
-        self.i_yy = ixx
-        self.i_zz = iyy
-        self.i_zy = ixy
-        self.j = j
-        self.centroid = [sec_props.cx, sec_props.cy]
-        self.ry = sec_props.rx_c
-        self.rz = sec_props.ry_c
-
-        self.ea = sec_props.ea
-        self.ei_yy = sec_props.ixx_c
-        self.ei_zz = sec_props.iyy_c
-        self.ei_zy = sec_props.ixy_c
-        self.gj = sec_props.j / (2 * (1 + sec_props.nu_eff))
-        self.nu = sec_props.nu_eff
-
-        # self._section = section
-
-    def _correct_axis(self):
-        """
-        Correct the cross-sectional properties so that they are about the
-        prescribed centroid of the shape (0, 0).
-        """
-        if self.geometry[0].__class__.__name__ == "Shell":
-            area1 = self.geometry[0].area
-            centroid = self.geometry[0].centroid
-            reference = self.centroid
-            e1 = self.material[0]["E"]
-            e2 = self.material[1]["E"]
-            dy = centroid[0] - reference[0]
-            dz = centroid[1] - reference[1]
-
-            self.ei_yy -= area1 * e1 * dz ** 2
-            self.ei_zz -= area1 * e1 * dy ** 2
-
-            area2 = self.geometry[1].area
-            centroid2 = self.geometry[1].centroid
-            dy = centroid2[0] - reference[0]
-            dz = centroid2[1] - reference[1]
-
-            self.ei_yy -= area2 * e2 * dz ** 2
-            self.ei_zz -= area2 * e2 * dy ** 2
-
-    def _calc_density(self, loops, materials):
-        """
-        Calculates the cross-sectional area-weighted density of the CompositeCS
-        """
-        areas = np.array([loop.area for loop in loops])
-        densities = np.array([mat["rho"] for mat in materials])
-        self.area = np.sum(areas)
-        self.rho = np.dot(areas, densities) / np.sum(areas)
-
-    def plot(self, ax=None):
-        """
-        Plot the CustomCrossSection and the underlying FE mesh used to
-        calculate its properties.
-        """
-        section = self._make_section(self._geometries, self._materials)
-        section.plot_mesh(materials=True)
-
-
-class AnalyticalShellComposite(CompositeCrossSection):
-    """
-    A cross-section object for composite structural.
-
-    When making a composite cross-section, we need to add material properties
-    in order to effectively weight the cross-sectional properties.
-
-    Cross-sectional properties are calculated analytical relations, and are
-    therefore much fast than the FE approach. For simple cross-sections, the
-    properties are all identical except for J, where a fitting on similar
-    shapes must be carried out, following St. Venant's method.
-
-    This somewhat modifies the API when getting properties...
-
-    Parameters
-    ----------
-    shell: Shell
-        The ordered list of Loops making up the geometry
-    materials: List[Material]
-        The ordered list of Materials to use for the geometry
-    """
-
-    def __init__(self, shell, materials):
-
-        if len(materials) != 2:
-            raise StructuralError("Need 2 materials for a AnalyticalShellComposite.")
-
-        # Need to store this information to retrieve stresses in the various
-        # parts of the CompositeCrossSection
-        loops = [deepcopy(shell.outer), deepcopy(shell.inner)]
-        self._set_loops(loops)
-        self.material = materials
-        self._calc_density([shell, shell.inner], materials)
-
-        loops.sort(key=lambda x: x.area)
-
-        inner, outer = loops
-
-        a = _get_max_length(inner) / 2
-        b = _get_min_length(inner) / 2
-        # Use analytical relation for a rectangle torsion constant
-        j_inner = a * b ** 3 * (16 / 3 - 3.36 * (b / a) * (1 - b ** 4 / (12 * a ** 4)))
-
-        inner = RapidCustomCrossSection(inner)
-        inner.j = j_inner
-
-        outer = RapidCustomHollowCrossSection(shell)
-
-        self._calculate_composite_properties(inner, outer)
-
-    def rotate(self, angle):
-        """
-        Rotate the AnalyticalShellComposite cross-section about its centroid.
-
-        Parameters
-        ----------
-        angle: float
-            The angle to rotate the CrossSection by [degrees]
-        """
-        loops = self.geometry
-        loops.sort(key=lambda x: x.area)
-
-        inner, outer = loops
-
-        a = inner.get_max_length() / 2
-        b = inner.get_min_length() / 2
-        # Use analytical relation for a rectangle torsion constant
-        j_inner = a * b ** 3 * (16 / 3 - 3.36 * (b / a) * (1 - b ** 4 / (12 * a ** 4)))
-
-        inner = RapidCustomCrossSection(inner)
-        inner.j = j_inner
-        outer = RapidCustomHollowCrossSection(Shell(*loops))
-        inner.rotate(angle)
-        outer.rotate(angle)
-        self._calculate_composite_properties(inner, outer)
-
-    def _calculate_composite_properties(self, inner, outer):
-        e_inner, e_outer = self.material[1]["E"], self.material[0]["E"]
-        g_inner, g_outer = self.material[1]["G"], self.material[0]["G"]
-
-        ea = e_inner * inner.area + e_outer * outer.area
-        ga = g_inner * inner.area + g_outer * outer.area
-
-        nu_eff = ea / (2 * ga) - 1
-
-        eiyy = inner.i_yy * e_inner + outer.i_yy * e_outer
-        eizz = inner.i_zz * e_inner + outer.i_zz * e_outer
-        eizy = inner.i_zy * e_inner + outer.i_zy * e_outer
-
-        self.centroid = inner.centroid
-
-        self.ea = ea
-        self.nu = nu_eff
-
-        self.ei_yy = eiyy
-        self.ei_zz = eizz
-        self.ei_zy = eizy
-        self.ry = np.sqrt(eiyy / ea)
-        self.rz = np.sqrt(eizz / ea)
-
-        # Area weighted G modulus
-        g = (g_inner * inner.area + g_outer * outer.area) / (inner.area + outer.area)
-        # Still eyeballing this one...
-        self.gj = g * (outer.j + inner.j) * 2
-
-
-# New implementations of the hard stuff
-
-
 class AnalyticalCrossSection(CrossSection):
     """
     Analytical formulation for a polygonal cross-section. Torsional properties
@@ -955,15 +567,15 @@ class AnalyticalCrossSection(CrossSection):
         self.j = self.area ** 4 / (j_opt_var * (i_yy_o + i_zz_o))
 
 
-class AnalyticalCompositeCrossSection(CustomCrossSection):
+class AnalyticalCompositeCrossSection(CrossSection):
     """
-    A cross-section object for composite structural.
+    A cross-section object for composite structural beam.
 
     When making a composite cross-section, we need to add material properties
     in order to effectively weight the cross-sectional properties.
 
     Cross-sectional properties are calculated analytical relations, and are
-    therefore much fast than the FE approach. For simple cross-sections, the
+    therefore much faster than an FE approach. For simple cross-sections, the
     properties are all identical except for J, where a fitting on similar
     shapes must be carried out, following St. Venant's method.
 
