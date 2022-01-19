@@ -20,13 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-from bluemira.structural.model import FiniteElementModel
+
+from bluemira.geometry._deprecated_loop import Loop
+from bluemira.structural.crosssection import RectangularBeam
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.loads import LoadCase
 from bluemira.structural.material import SS316
-from bluemira.structural.crosssection import RectangularBeam
+from bluemira.structural.model import FiniteElementModel
 from bluemira.structural.plotting import GeometryPlotter
-from bluemira.geometry._deprecated_loop import Loop
 
 SS316 = SS316()
 
@@ -67,7 +68,7 @@ class TestPlotting:
 
         for letter in [l_loop, u_loop, e_loop, p_loop, r_loop, i_loop, n_loop, t_loop]:
             letter.rotate(30, p1=[0, 0, 0], p2=[0, 0, 1])
-            geometry.add_loop(letter, rect_beam, SS316)
+            geometry.add_coordinates(letter, rect_beam, SS316)
 
         fem.set_geometry(geometry)
         fem.add_support(0, True, True, True, True, True, True)

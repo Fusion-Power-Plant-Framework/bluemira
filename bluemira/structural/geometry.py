@@ -311,28 +311,28 @@ class Geometry:
                     new_connections.add(connection)
             node.connections = new_connections
 
-    def add_loop(self, loop, cross_section, material=None):
+    def add_coordinates(self, coordinates, cross_section, material=None):
         """
         Adds a Loop object to the Geometry
 
         Parameters
         ----------
-        loop: BLUEPRINT::geometry::Loop object
-            The Loop to transform into Nodes and Elements
-        cross_section: BLUEPRINT::structural::CrossSection object
+        coordinates: Coordinates
+            The coordinates to transform into connected Nodes and Elements
+        cross_section: CrossSection
             The cross section of all the Elements in the Loop
-        material: BLUEPRINT::structural::Material object
+        material: Material
             The material of all the Elements in the Loop
         """
-        n_start = self.add_node(*loop[0])  # Add first Node
+        n_start = self.add_node(*coordinates[0])  # Add first Node
 
         n1 = n_start
-        for point in loop.xyz.T[1:]:
+        for point in coordinates.points[1:]:
             n2 = self.add_node(*point)
             self.add_element(n1, n2, cross_section, material)
             n1 = n2
 
-        if loop.closed:
+        if coordinates.closed:
             self.add_element(n2, n_start, cross_section, material)
 
     def k_matrix(self):
@@ -523,23 +523,7 @@ class DeformedGeometry(Geometry):
         self.interpolate(scale)
 
     def deform(self):
-        """
-        Deform the Geometry by displacing the nodes by their deflections.
-        """
-        for node in self.nodes:
-            node.x += node.displacements[0] * self._scale
-            node.y += node.displacements[1] * self._scale
-            node.z += node.displacements[2] * self._scale
-            node.displacements[0] = 0
-            node.displacements[1] = 0
-            node.displacements[2] = 0
-
-    def plot(self, ax=None, stress=None, **kwargs):
-        """
-        Plot the DeformedGeometry.
-
-        Parameters
-        ----------
+        """def rotate
         ax: Union[Axes, None]
             The matplotlib Axes upon which to plot
         stress: Union[array_like, None]

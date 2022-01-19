@@ -28,20 +28,10 @@ from copy import deepcopy
 import numba as nb
 import numpy as np
 
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import get_control_point, segment_lengths
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.structural.constants import NEAR_ZERO
 from bluemira.structural.error import StructuralError
-
-
-def _get_min_length(coordinates):
-    return np.min(segment_lengths(coordinates.x, coordinates.y, coordinates.z))
-
-
-def _get_max_length(coordinates):
-    return np.max(segment_lengths(coordinates.x, coordinates.y, coordinates.z))
 
 
 @nb.jit(nopython=True, cache=True)

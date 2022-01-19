@@ -65,13 +65,13 @@ def _direction_cosine_matrix(dx, dy, dz):
         The direction cosine matrix with reference to the global coordinate
         system
     """
-    # Please be careful when modifing this function, and instead work on the
+    # Please be careful when modifying this function, and instead work on the
     # debugging version which is tested...
     length = np.sqrt(dx ** 2 + dy ** 2 + dz ** 2)
     a = dx / length
     b = dy / length
     c = dz / length
-    d = (a ** 2 + b ** 2) ** 0.5
+    d = np.hypot(a, b)
     # TODO: Why does the less intuitive, simpler algebra form work better??
     # https://ocw.mit.edu/courses/civil-and-environmental-engineering/1-571-structural-analysis-and-control-spring-2004/readings/connor_ch5.pdf
     if np.isclose(a, 0) and np.isclose(b, 0):

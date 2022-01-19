@@ -170,7 +170,7 @@ class FiniteElementModel:
         material: BLUEPRINT::structural::Material object
             The material of all the Elements in the Loop
         """
-        self.geometry.add_loop(loop, cross_section, material)
+        self.geometry.add_coordinates(loop, cross_section, material)
 
     def add_support(
         self, node_id, dx=False, dy=False, dz=False, rx=False, ry=False, rz=False
