@@ -404,7 +404,7 @@ class AnalyticalCrossSection(CrossSection):
             self.geometry.boundary[0].discretize(ndiscr=n_discr, byedges=True).yz
         )
 
-        q_zz_o, q_yy_o, i_zz_o, i_yy_o, i_zy_o = _calculate_properties(y, z)
+        q_zz_o, q_yy_o, i_zz_o, i_yy_o, i_zy_o = _calculate_properties(self.y, self.z)
 
         if len(self.geometry.boundary) > 1:
             # Cut out any holes in the face
