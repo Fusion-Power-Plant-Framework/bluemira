@@ -29,9 +29,24 @@ from bluemira.structural.constants import LOAD_MAPPING, LOAD_TYPES
 from bluemira.structural.error import StructuralError
 
 
-def _check_load_type(load_type):
+def _check_load_type(load_type, sub_type="all"):
     if load_type not in LOAD_TYPES:
         raise StructuralError(f"Unrecognised load type: {load_type}.")
+
+    if sub_type == "all":
+        pass
+
+    elif sub_type == "force":
+        if load_type not in LOAD_TYPES[:3]:
+            raise StructuralError(
+                f"Cannot set a force load with a moment load type: {load_type}"
+            )
+
+    elif sub_type == "moment":
+        if load_type not in LOAD_TYPES[3:]:
+            raise StructuralError(
+                f"Cannot set a moment load with a force load type: {load_type}"
+            )
 
 
 def node_load(load, load_type):
@@ -54,8 +69,7 @@ def node_load(load, load_type):
         The fixed-ends reaction force vector
     """
     reactions = np.zeros(6)
-    if load_type not in LOAD_MAPPING:
-        raise StructuralError(f"Unrecognised load type: {load_type}.")
+    _check_load_type(load_type)
     reactions[LOAD_MAPPING[load_type]] = load
     return reactions
 
@@ -121,7 +135,7 @@ def point_load(load, x, length, load_type):
 
 def distributed_load(w, length, load_type):
     """
-    Calculates the reactor force vector due to a dsitributed load w, applied
+    Calculates the reactor force vector due to a distributed load w, applied
     over the length of the element.
 
     Parameters
@@ -134,7 +148,7 @@ def distributed_load(w, length, load_type):
         The type of load to apply:
             'Fi': force in the 'i' direction
     """
-    _check_load_type(load_type)
+    _check_load_type(load_type, sub_type="force")
 
     reactions = np.zeros(12)
     if load_type == "Fx":
@@ -150,10 +164,7 @@ def distributed_load(w, length, load_type):
         reactions[4] = -w * length ** 2 / 12
         reactions[8] = w * length / 2
         reactions[10] = w * length ** 2 / 12
-    else:
-        raise StructuralError(
-            f"Keine Ahnung was für eine Art verteilte Last {load_type} sein soll."
-        )
+
     return reactions
 
 
