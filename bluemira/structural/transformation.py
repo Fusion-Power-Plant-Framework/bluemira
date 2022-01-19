@@ -73,7 +73,7 @@ def _direction_cosine_matrix(dx, dy, dz):
     c = dz / length
     d = np.hypot(a, b)
     # TODO: Why does the less intuitive, simpler algebra form work better??
-    # https://ocw.mit.edu/courses/civil-and-environmental-engineering/1-571-structural-analysis-and-control-spring-2004/readings/connor_ch5.pdf
+    # https://ocw.mit.edu/courses/civil-and-environmental-engineering/1-571-structural-analysis-and-control-spring-2004/readings/connor_ch5.pdf  # noqa
     if np.isclose(a, 0) and np.isclose(b, 0):
         dcm = np.array(
             [[0.0, 0.0, -np.sign(c)], [0.0, 1.0, 0.0], [np.sign(c), 0.0, 0.0]]
@@ -82,69 +82,6 @@ def _direction_cosine_matrix(dx, dy, dz):
         dcm = np.array([[a, -b / d, -a * c / d], [b, a / d, -b * c / d], [c, 0, d]]).T
 
     return dcm
-
-    u = np.array([dx, dy, dz], dtype=FLOAT_TYPE)
-    x_local = u / np.linalg.norm(u)  # The local unit vector in global coords
-
-    # Global coordinate system
-    x_global = np.array([1.0, 0.0, 0.0])
-    y_global = np.array([0.0, 1.0, 0.0])
-    z_global = np.array([0.0, 0.0, 1.0])
-
-    # Handle edge cases which can cause NaN's later..
-    if x_local[0] == 1:
-        # This is just the global coordinate system!
-        return np.eye(3)
-
-    if x_local[0] == -1:
-        # The mirrored global coordinate system!
-        return np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]], dtype=FLOAT_TYPE)
-
-    if _nb_isclose(abs(x_local[1]), 1):
-        # Corresponds to a local y-vector sitting on the global x-vector
-        # (rotation about z-axis)
-        cos_theta = 0.0
-        sin_theta = np.sign(x_local[1])  # Determines which way local x points
-        return np.array(
-            [
-                [cos_theta, -sin_theta, 0.0],
-                [sin_theta, cos_theta, 0.0],
-                [0.0, 0.0, 1.0],
-            ],
-            dtype=FLOAT_TYPE,
-        )
-
-    if _nb_isclose(abs(x_local[2]), 1.0):
-        # Corresponds to a local z-vector sitting on the global x-vector
-        # (rotation about y-axis)
-        cos_theta = 0.0
-        sin_theta = -np.sign(x_local[2])
-        return np.array(
-            [
-                [cos_theta, 0.0, sin_theta],
-                [0.0, 1.0, 0.0],
-                [-sin_theta, 0.0, cos_theta],
-            ],
-            dtype=FLOAT_TYPE,
-        )
-
-    # Build local y and z vectors, following right-handed convention
-    y_local = np.array([0.0, 1.0, 0.0], dtype=FLOAT_TYPE)
-    y_local -= np.dot(x_local, y_local) * x_local
-    y_local /= np.linalg.norm(y_local)
-    z_local = np.cross(x_local, y_local)
-
-    # Calculate C_ij cosines
-    c11 = np.dot(x_global, x_local)
-    c12 = np.dot(x_global, y_local)
-    c13 = np.dot(x_global, z_local)
-    c21 = np.dot(y_global, x_local)
-    c22 = np.dot(y_global, y_local)
-    c23 = np.dot(y_global, z_local)
-    c31 = np.dot(z_global, x_local)
-    c32 = np.dot(z_global, y_local)
-    c33 = np.dot(z_global, z_local)
-    return np.array([[c11, c12, c13], [c21, c22, c23], [c31, c32, c33]])
 
 
 def _direction_cosine_matrix_debugging(dx, dy, dz, debug=False):
