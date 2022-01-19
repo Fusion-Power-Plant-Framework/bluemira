@@ -103,7 +103,7 @@ class TestLambdaTransformationMatrices:
         self.assert_maths_good(dcm)
 
     def test_random(self):
-        for i in range(10):
+        for _ in range(10):
             v = np.random.rand(3)
             dcm, local = _dcm_debug(*v, debug=True)
             self.assert_maths_good(dcm, msg=f"coords: {v}")
@@ -114,7 +114,7 @@ class TestLambdaTransformationMatrices:
             #                       local)
 
     def test_big_random(self):
-        for i in range(100):
+        for _ in range(100):
             v = 10000 * np.random.rand(3)
             dcm, local = _dcm_debug(*v, debug=True)
             self.assert_maths_good(dcm, msg=f"coords: {v}")
@@ -148,13 +148,13 @@ class TestLambdaTransformationMatrices:
         # self.assert_looks_good(N1, N2, self.global_cs)
 
     def test_random2(self):
-        for i in range(100):
+        for _ in range(100):
             v = np.random.rand(3)
             dcm = _direction_cosine_matrix(*v)
             self.assert_maths_good(dcm, msg=f"coords: {v}")
 
     def test_big_random2(self):
-        for i in range(100):
+        for _ in range(100):
             v = 10000 * np.random.rand(3)
             dcm = _direction_cosine_matrix(*v)
             self.assert_maths_good(dcm, msg=f"coords: {v}")
@@ -169,7 +169,7 @@ class TestLambdaTransformationMatrices:
             (0, -1, 0): np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]]),
         }
 
-        for i, (axis, local) in enumerate(axis_coord_combo.items()):
+        for axis, local in axis_coord_combo.items():
             dcm = _direction_cosine_matrix(*axis)
             self.assert_maths_good(dcm, msg=f"coords: {axis}")
 

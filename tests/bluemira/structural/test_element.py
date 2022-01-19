@@ -36,9 +36,6 @@ class Testk:
 
         # Check array is symmetric
         assert np.allclose(k, k.T, rtol=1e-9)
-        # from matplotlib import pyplot as plt
-        # f, ax = plt.subplots()
-        # ax.matshow(k)
 
 
 if __name__ == "__main__":
