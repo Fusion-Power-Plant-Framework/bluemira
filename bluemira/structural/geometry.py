@@ -523,7 +523,23 @@ class DeformedGeometry(Geometry):
         self.interpolate(scale)
 
     def deform(self):
-        """def rotate
+        """
+        Deform the Geometry by displacing the nodes by their deflections.
+        """
+        for node in self.nodes:
+            node.x += node.displacements[0] * self._scale
+            node.y += node.displacements[1] * self._scale
+            node.z += node.displacements[2] * self._scale
+            node.displacements[0] = 0
+            node.displacements[1] = 0
+            node.displacements[2] = 0
+
+    def plot(self, ax=None, stress=None, **kwargs):
+        """
+        Plot the DeformedGeometry.
+
+        Parameters
+        ----------
         ax: Union[Axes, None]
             The matplotlib Axes upon which to plot
         stress: Union[array_like, None]
