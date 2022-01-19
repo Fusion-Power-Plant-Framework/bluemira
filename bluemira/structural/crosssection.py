@@ -99,7 +99,6 @@ class CrossSection:
         self.rz = None
         self.qyy = None
         self.qzz = None
-        self.centroid = None
         self.centroid_geom = None
         self.ea = None
         self.gj = None
@@ -107,6 +106,8 @@ class CrossSection:
         self.rho = None
 
         self.geometry: BluemiraFace = None
+        self.y = None
+        self.z = None
 
     def make_geometry(self, *args, **kwargs):
         """
@@ -227,12 +228,14 @@ class RectangularBeam(CrossSection):
         """
         width = self.width
         height = self.height
+        self.y = [-width / 2, width / 2, width / 2, -width / 2, -width / 2]
+        self.z = [-height / 2, -height / 2, height / 2, height / 2, -height / 2]
         polygon = BluemiraFace(
             make_polygon(
                 {
                     "x": 0,
-                    "y": [-width / 2, width / 2, width / 2, -width / 2, -width / 2],
-                    "z": [-height / 2, -height / 2, height / 2, height / 2, -height / 2],
+                    "y": self.y,
+                    "z": self.z,
                 }
             )
         )
@@ -310,11 +313,12 @@ class IBeam(CrossSection):
         super().__init__()
         self.check_dimensions(base, depth, flange, web)
         h = depth - 2 * flange
-        self.area = self.calc_area(base, depth, h, web)
-        self.i_yy = self.calc_i_yy(base, depth, h, web)
-        self.i_zz = self.calc_i_zz(base, h, web, flange)
+        b, d, t, s = base, depth, web, flange
+        self.area = b * d - h * (b - t)
+        self.i_yy = (b * d ** 3 - h ** 3 * (b - t)) / 12
+        self.i_zz = (2 * s * b ** 3 + h * t ** 3) / 12
         self.i_zy = 0.0
-        self.j = self.calc_torsion(base, depth, web, flange)
+        self.j = (2 * b * t ** 3 + (d - s) * t ** 3) / 3
         self.ry = np.sqrt(self.i_yy / self.area)
         self.rz = np.sqrt(self.i_zz / self.area)
         self.make_geometry(base, depth, flange, web)
@@ -338,7 +342,7 @@ class IBeam(CrossSection):
         """
         Make a BluemiraFace for the IBeam cross-section.
         """
-        y = [
+        self.y = [
             -base / 2,
             base / 2,
             base / 2,
@@ -353,7 +357,7 @@ class IBeam(CrossSection):
             -base / 2,
             -base / 2,
         ]
-        z = [
+        self.z = [
             -depth / 2,
             -depth / 2,
             -depth / 2 + flange,
@@ -368,135 +372,7 @@ class IBeam(CrossSection):
             -depth / 2 + flange,
             -depth / 2,
         ]
-        self.geometry = BluemiraFace(make_polygon({"x": 0, "y": y, "z": z}))
-
-    @staticmethod
-    def calc_area(b, d, h, t):
-        """
-        Calculate the area of the Ibeam.
-        """
-        return b * d - h * (b - t)
-
-    @staticmethod
-    def calc_i_zz(b, h, t, s):
-        """
-        Calculate the zz second moment of area of the Ibeam.
-
-        \t:math:`\\int\\int y^2 dydz`
-        """
-        return (2 * s * b ** 3 + h * t ** 3) / 12
-
-    @staticmethod
-    def calc_i_yy(b, d, h, t):
-        """
-        Calculate the yy second moment of area of the Ibeam.
-
-        \t:math:`\\int\\int z^2 dydz`
-        """
-        return (b * d ** 3 - h ** 3 * (b - t)) / 12
-
-    @staticmethod
-    def calc_torsion(b, d, t, s):
-        """
-        Calculate the torsional constant of the Ibeam.
-        """
-        return (2 * b * t ** 3 + (d - s) * t ** 3) / 3
-
-
-def get_coordinate_point_facets(coordinates):
-    facets = [[i, i + 1] for i in range(len(coordinates) - 1)]
-    facets.append([0, len(coordinates) - 1])
-    return coordinates.yz, facets
-
-
-class RapidCustomCrossSection(CrossSection):
-    """
-    Analytical formulation for a polygonal cross-section. Torsional properties
-    less accurate. Faster as based on analytical calculation of cross-sectional
-    properties, as opposed to FE.
-
-    Parameters
-    ----------
-    geometry: BluemiraFace
-        The geometry of the CrossSection
-    """
-
-    def __init__(self, geometry, opt_var=3e8):
-        super().__init__()
-        self.geometry = deepcopy(geometry)
-
-        self.area = self.geometry.area
-
-        y_l, z_l = self.geometry.y, self.geometry.z
-        q_zz, q_yy, i_zz, i_yy, i_zy = _calculate_properties(y_l, z_l)
-
-        self.i_yy = i_yy - self.area * self.centroid[2] ** 2
-        self.i_zz = i_zz - self.area * self.centroid[1] ** 2
-        self.i_zy = i_zy - self.area * self.centroid[1] * self.centroid[2]
-        self.qyy = q_yy
-        self.qzz = q_zz
-        self.ry = np.sqrt(self.i_yy / self.area)
-        self.rz = np.sqrt(self.i_zz / self.area)
-
-        # OK so there is no cute general polygon form for J... need FE!
-        # St Venant approach
-        self.j = self.area ** 4 / (opt_var * (i_yy + i_zz))
-
-
-class RapidCustomHollowCrossSection(CrossSection):
-    """
-    Analytical formulation for a polygonal cross-section. Torsional properties
-    less accurate. Faster as based on analytical calculation of cross-sectional
-    properties, as opposed to FE.
-
-    Parameters
-    ----------
-    geometry: Shell
-        The Shell for the polygonal cross-section
-
-    Notes
-    -----
-    All cross-section properties calculated exactly (within reason), except for
-    the torsional constant J, which is approximated using St Venant's approach.
-    The j_opt_var for fitting the J value must be determined based on suitable
-    finite element analyses.
-    """
-
-    def __init__(self, shell, j_opt_var=14.123):
-        super().__init__()
-        area = shell.area
-        self.geometry = deepcopy(shell)
-
-        self.area = area
-        self.centroid = self.geometry.inner.centroid
-
-        y_l, z_l = self.geometry.outer.y, self.geometry.outer.z
-        q_zz_o, q_yy_o, i_zz_o, i_yy_o, i_zy_o = _calculate_properties(y_l, z_l)
-
-        y_l, z_l = self.geometry.inner.y, self.geometry.inner.z
-        q_zz_i, q_yy_i, i_zz_i, i_yy_i, i_zy_i = _calculate_properties(y_l, z_l)
-
-        q_zz = q_zz_o - q_zz_i
-        q_yy = q_yy_o - q_yy_i
-        i_zz = i_zz_o - i_zz_i
-        i_yy = i_yy_o - i_yy_i
-        i_zy = i_zy_o - i_zy_i
-
-        cy = q_zz / area
-        cz = q_yy / area
-        self.centroid_geom = (cy, cz)
-
-        self.i_yy = i_yy - area * cz ** 2
-        self.i_zz = i_zz - area * cy ** 2
-        self.i_zy = i_zy - area * cz * cy
-        self.qyy = q_yy
-        self.qzz = q_zz
-        self.ry = np.sqrt(self.i_yy / area)
-        self.rz = np.sqrt(self.i_zz / area)
-
-        # OK so there is no cute general polygon form for J... need FE!
-        # St Venant approach
-        self.j = self.area ** 4 / (j_opt_var * (i_yy + i_zz))
+        self.geometry = BluemiraFace(make_polygon({"x": 0, "y": self.y, "z": self.z}))
 
 
 class AnalyticalCrossSection(CrossSection):
@@ -524,7 +400,9 @@ class AnalyticalCrossSection(CrossSection):
         super().__init__()
         self.geometry = deepcopy(geometry)
         self.area = area = self.geometry.area
-        y, z = self.geometry.boundary[0].discretize(ndiscr=n_discr, byedges=True).yz
+        self.y, self.z = (
+            self.geometry.boundary[0].discretize(ndiscr=n_discr, byedges=True).yz
+        )
 
         q_zz_o, q_yy_o, i_zz_o, i_yy_o, i_zy_o = _calculate_properties(y, z)
 
@@ -539,6 +417,8 @@ class AnalyticalCrossSection(CrossSection):
                 i_zz_o -= i_zz_i
                 i_yy_o -= i_yy_i
                 i_zy_o -= i_zy_i
+                self.y = np.append(self.y, y)
+                self.z = np.append(self.z, z)
 
         cy = q_zz_o / area
         cz = q_yy_o / area
