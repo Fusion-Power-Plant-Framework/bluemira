@@ -22,8 +22,6 @@
 """
 Finite element Node object
 """
-from copy import deepcopy
-
 import numpy as np
 
 from bluemira.structural.constants import D_TOLERANCE, FLOAT_TYPE
