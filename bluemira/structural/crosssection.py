@@ -172,6 +172,9 @@ class CrossSection:
 
     @property
     def centroid(self):
+        """
+        Centroid of the cross-section geometry
+        """
         return self.geometry.center_of_mass
 
 
