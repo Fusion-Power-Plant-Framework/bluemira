@@ -25,6 +25,7 @@ Finite element class
 import numpy as np
 
 from bluemira.base.constants import GRAVITY
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.structural.constants import N_INTERP, NU, SD_LIMIT
 from bluemira.structural.error import StructuralError
 from bluemira.structural.loads import distributed_load, point_load
@@ -352,14 +353,15 @@ class Element:
         """
         if self._k_matrix is None:
             p = self._properties
+            k = local_k(p["EA"], p["EIyy"], p["EIzz"], self.length, p["GJ"])
 
-            if (p["ry"] / self.length <= SD_LIMIT) or (p["rz"] / self.length < SD_LIMIT):
-                k = local_k(p["EA"], p["EIyy"], p["EIzz"], self.length, p["GJ"])
-            else:
-                # TODO: add capacity to handle thick structural (A_sy and A_sz)
-                # --> local_k_shear
-                # For the time being: slender structural fudge
-                k = local_k(p["EA"], p["EIyy"], p["EIzz"], self.length, p["GJ"])
+            if not (p["ry"] / self.length <= SD_LIMIT) or (
+                p["rz"] / self.length < SD_LIMIT
+            ):
+                bluemira_warn(
+                    "Thick cross-section detected. Slender beam approximation being used, so be careful."
+                )
+
             self._k_matrix = k
 
         return self._k_matrix
