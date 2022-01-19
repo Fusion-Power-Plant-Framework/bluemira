@@ -263,8 +263,7 @@ class TestCantilever:
             load_case = LoadCase()
 
             load_case.add_node_load(1, load, "Fz")
-            # P = model.geometry.apply_load_case(load_case)
-            # print(P)
+
             result = model.solve(load_case)
             deflections = result.deflections
 
@@ -429,7 +428,6 @@ class TestDistributedLoads:
             load_case = LoadCase()
             load_case.add_distributed_load(0, w, "Fz")
             load_case.add_distributed_load(1, w, "Fz")
-            k_matrix = model.geometry.k_matrix()
 
             result = model.solve(load_case)
             deflections = result.deflections
