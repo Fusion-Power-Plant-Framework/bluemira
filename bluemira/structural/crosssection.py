@@ -154,11 +154,9 @@ class CrossSection:
 
         if isinstance(self.geometry, list):
             for geometry in self.geometry:
-                geometry.rotate(base=geometry.centroid, axis=(1, 0, 0), degree=angle)
+                geometry.rotate(base=self.centroid, axis=(1, 0, 0), degree=angle)
         else:
-            self.geometry.rotate(
-                base=self.geometry.centroid, axis=(1, 0, 0), degree=angle
-            )
+            self.geometry.rotate(base=self.centroid, axis=(1, 0, 0), degree=angle)
 
     def translate(self, vector):
         """
