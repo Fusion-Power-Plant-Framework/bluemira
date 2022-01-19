@@ -25,8 +25,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import tests
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.geometry.tools import make_circle
 from bluemira.structural.crosssection import IBeam
 from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel
@@ -46,13 +45,13 @@ class TestCyclicSymmetry:
         model.add_element(i1, i2, xsection, SS316)
         model.add_support(0, True, True, True, True, True, True)
 
-        x, y = make_circle_arc(9, 0, 0, np.deg2rad(30), 15)
-        loop = Loop(x=x, y=y, z=3)
+        circle = make_circle(radius=9, center=(0, 0, 3), start_angle=0, end_angle=30)
+        coordinates = circle.discretize(ndiscr=15)
 
         sym_nodes = []
-        n1 = model.add_node(*loop[0])
+        n1 = model.add_node(*coordinates.points[0])
         sym_nodes.append(n1)
-        for point in loop.xyz.T[1:]:
+        for point in coordinates.points[1:]:
             n2 = model.add_node(*point)
             model.add_element(n1, n2, xsection, SS316)
             n1 = n2
