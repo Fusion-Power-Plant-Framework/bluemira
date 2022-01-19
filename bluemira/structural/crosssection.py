@@ -344,23 +344,7 @@ class IBeam(CrossSection):
         Make a BluemiraFace for the IBeam cross-section.
         """
         b, d, f, w = 0.5 * base, 0.5 * depth, flange, 0.5 * web
-        self.y = np.array(
-            [
-                -b,
-                b,
-                b,
-                w,
-                w,
-                b,
-                b,
-                -b,
-                -b,
-                -w,
-                -w,
-                -b,
-                -b,
-            ]
-        )
+        self.y = np.array([-b, b, b, w, w, b, b, -b, -b, -w, -w, -b, -b])
         self.z = np.array(
             [
                 -d,
