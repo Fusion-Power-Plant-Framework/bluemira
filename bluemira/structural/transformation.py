@@ -27,7 +27,6 @@ from copy import deepcopy
 import numpy as np
 
 from bluemira.geometry._deprecated_tools import rotation_matrix
-from bluemira.structural.constants import FLOAT_TYPE
 
 
 def _nb_isclose(a, b, rtol=1.0e-5, atol=0.0e-8):
