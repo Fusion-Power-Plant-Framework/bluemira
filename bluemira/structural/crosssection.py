@@ -226,10 +226,10 @@ class RectangularBeam(CrossSection):
         """
         Make a BluemiraFace for the RectangularBeam cross-section.
         """
-        width = self.width
-        height = self.height
-        self.y = [-width / 2, width / 2, width / 2, -width / 2, -width / 2]
-        self.z = [-height / 2, -height / 2, height / 2, height / 2, -height / 2]
+        w = 0.5 * self.width
+        h = 0.5 * self.height
+        self.y = np.array([-w, w, w, -w, -w])
+        self.z = np.array([-h, -h, h, h, -h])
         polygon = BluemiraFace(
             make_polygon(
                 {
@@ -252,7 +252,7 @@ class CircularBeam(CrossSection):
         The radius of the circular cross-section
     """
 
-    def __init__(self, radius):
+    def __init__(self, radius, n_discr=30):
         super().__init__()
         self.area = np.pi * radius ** 2
         self.i_zz = np.pi * radius ** 4 / 4
@@ -264,6 +264,7 @@ class CircularBeam(CrossSection):
         self.geometry = BluemiraFace(
             make_circle(radius, center=(0, 0, 0), axis=(1, 0, 0))
         )
+        self.y, self.z = self.geometry.discretize(ndiscr=n_discr).yz
 
 
 class CircularHollowBeam(CrossSection):
@@ -342,36 +343,41 @@ class IBeam(CrossSection):
         """
         Make a BluemiraFace for the IBeam cross-section.
         """
-        self.y = [
-            -base / 2,
-            base / 2,
-            base / 2,
-            web / 2,
-            web / 2,
-            base / 2,
-            base / 2,
-            -base / 2,
-            -base / 2,
-            -web / 2,
-            -web / 2,
-            -base / 2,
-            -base / 2,
-        ]
-        self.z = [
-            -depth / 2,
-            -depth / 2,
-            -depth / 2 + flange,
-            -depth / 2 + flange,
-            depth / 2 - flange,
-            depth / 2 - flange,
-            depth / 2,
-            depth / 2,
-            depth / 2 - flange,
-            depth / 2 - flange,
-            -depth / 2 + flange,
-            -depth / 2 + flange,
-            -depth / 2,
-        ]
+        b, d, f, w = 0.5 * base, 0.5 * depth, flange, 0.5 * web
+        self.y = np.array(
+            [
+                -b,
+                b,
+                b,
+                w,
+                w,
+                b,
+                b,
+                -b,
+                -b,
+                -w,
+                -w,
+                -b,
+                -b,
+            ]
+        )
+        self.z = np.array(
+            [
+                -d,
+                -d,
+                -d + f,
+                -d + f,
+                d - f,
+                d - f,
+                d,
+                d,
+                d - f,
+                d - f,
+                -d + f,
+                -d + f,
+                -d,
+            ]
+        )
         self.geometry = BluemiraFace(make_polygon({"x": 0, "y": self.y, "z": self.z}))
 
 

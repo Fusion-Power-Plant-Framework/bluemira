@@ -25,10 +25,10 @@ import pytest
 
 import tests
 from bluemira.structural.crosssection import (
+    AnalyticalCrossSection,
     CircularBeam,
     CircularHollowBeam,
     IBeam,
-    RapidCustomCrossSection,
     RectangularBeam,
 )
 from bluemira.structural.error import StructuralError
@@ -82,7 +82,7 @@ class TestIbeam:
 class TestRectangleCustom:
     def test_compare(self):
         sq_beam = RectangularBeam(50, 40)
-        custom_beam = RapidCustomCrossSection(sq_beam.geometry, opt_var=42.77)
+        custom_beam = AnalyticalCrossSection(sq_beam.geometry, opt_var=42.77)
         for k in ["area", "centroid", "i_yy", "i_zz", "i_zy", "qyy", "qzz", "ry", "rz"]:
             assert np.allclose(getattr(sq_beam, k), getattr(custom_beam, k))
         # J will not be so close...

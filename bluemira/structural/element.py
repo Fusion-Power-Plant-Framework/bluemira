@@ -520,7 +520,7 @@ class Element:
         Calculates the stresses in the Element, using Hermite polynomials for
         interpolation between the Nodes
         """
-        xsections = self._cross_section.geometry
+        xsections = self._cross_section
         materials = self.material
 
         # Handle both single and multiple composite cross-sections
@@ -532,23 +532,8 @@ class Element:
         stresses = []
         safety_factors = []
         for c_s, mat in zip(xsections, materials):
-            # Handle both solid, hollow, and multi cross-sections
-            if isinstance(c_s, Loop):
-                y = c_s.y - c_s.centroid[0]  # y-distances to centroid
-                z = c_s.z - c_s.centroid[1]  # z-distances to centroid
-            elif isinstance(c_s, Shell):
-                yi = c_s.inner.y - c_s.centroid[0]
-                zi = c_s.inner.z - c_s.centroid[1]
-                yo = c_s.outer.y - c_s.centroid[0]
-                zo = c_s.outer.z - c_s.centroid[1]
-                y = np.append(yi, yo)
-                z = np.append(zi, zo)
-            elif isinstance(c_s, BluemiraFace):
-                pass
-            else:
-                raise StructuralError(
-                    f"Unrecognised X-section geometry type :{type(c_s)}"
-                )
+            y = c_s.y - c_s.centroid[1]  # y-distances to centroid
+            z = c_s.z - c_s.centroid[2]  # z-distances to centroid
 
             n_points = len(y)
             # Tile coordinates
