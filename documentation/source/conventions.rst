@@ -1,6 +1,8 @@
 Conventions
 -----------
 
+.. _global_coordinates:
+
 Coordinate convention
 ^^^^^^^^^^^^^^^^^^^^^
 
