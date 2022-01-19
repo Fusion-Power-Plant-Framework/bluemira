@@ -27,11 +27,11 @@ from matplotlib import pyplot as plt
 
 import tests
 from bluemira.structural.node import Node
-from bluemira.structural.transformation import _direction_cosine_matrix
 from bluemira.structural.transformation import (
-    _direction_cosine_matrix_debugging as _dcm_debug,
+    _direction_cosine_matrix,
+    _direction_cosine_matrix_debugging,
+    lambda_matrix,
 )
-from bluemira.structural.transformation import lambda_matrix
 
 
 class TestLambdaTransformationMatrices:
@@ -99,13 +99,13 @@ class TestLambdaTransformationMatrices:
         dx = n_2.x - n_1.x
         dy = n_2.y - n_1.y
         dz = n_2.z - n_1.z
-        dcm, local = _dcm_debug(dx, dy, dz, debug=True)
+        dcm, _ = _direction_cosine_matrix_debugging(dx, dy, dz, debug=True)
         self.assert_maths_good(dcm)
 
     def test_random(self):
         for _ in range(10):
             v = np.random.rand(3)
-            dcm, local = _dcm_debug(*v, debug=True)
+            dcm, local = _direction_cosine_matrix_debugging(*v, debug=True)
             self.assert_maths_good(dcm, msg=f"coords: {v}")
 
             # TODO: these are not asserts
@@ -116,7 +116,7 @@ class TestLambdaTransformationMatrices:
     def test_big_random(self):
         for _ in range(100):
             v = 10000 * np.random.rand(3)
-            dcm, local = _dcm_debug(*v, debug=True)
+            dcm, local = _direction_cosine_matrix_debugging(*v, debug=True)
             self.assert_maths_good(dcm, msg=f"coords: {v}")
             self.assert_works_good(dcm, local, msg=f"coords: {v}")
 
@@ -124,7 +124,7 @@ class TestLambdaTransformationMatrices:
         edge_coords = list(itertools.product([0, 1], [0, 1], [0, 1]))
         edge_coords.remove((0, 0, 0))  # Special case
         for coord_system in edge_coords:
-            dcm, local = _dcm_debug(*coord_system, debug=True)
+            dcm, local = _direction_cosine_matrix_debugging(*coord_system, debug=True)
             self.assert_maths_good(dcm, msg=f"coords: {coord_system}")
             self.assert_works_good(dcm, local, msg=f"coords: {coord_system}")
 
@@ -132,7 +132,7 @@ class TestLambdaTransformationMatrices:
         edge_coords = list(itertools.product([0, 1, -1], [0, 1, -1], [0, 1, -1]))
         edge_coords.remove((0, 0, 0))  # Special case
         for coord_system in edge_coords:
-            dcm, local = _dcm_debug(*coord_system, debug=True)
+            dcm, local = _direction_cosine_matrix_debugging(*coord_system, debug=True)
             self.assert_maths_good(dcm, msg=f"coords: {coord_system}")
             self.assert_works_good(dcm, local, msg=f"coords: {coord_system}")
 
