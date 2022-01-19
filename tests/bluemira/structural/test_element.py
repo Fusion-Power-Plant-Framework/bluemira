@@ -25,7 +25,7 @@ import pytest
 from bluemira.structural.element import _k_array
 
 
-class Testk:
+class TestK:
     def test_shape(self):
         k = _k_array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
         assert k.shape == (12, 12)
