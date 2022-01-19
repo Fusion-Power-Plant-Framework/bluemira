@@ -1,26 +1,3 @@
-
-# Contributors
-
-## Copyright
-
-M. Coleman<sup>1, 2 </sup>, J. Cook<sup> 1 </sup>, F. Franza<sup> 3 </sup>, I. Maione<sup> 3 </sup>, S. McIntosh<sup>1 ,4</sup>, J. Morris<sup> 1 </sup>, D. Short<sup> 1 </sup>
-
-## Contributors
-
-A. I. Blair<sup>1</sup>, M. Bluteau<sup>1</sup>, M. Coleman,  J. Cook, S. Desai<sup>1</sup>, M. Foord<sup>1, 5</sup>, F. Franza, M.Johnson<sup>1</sup>, S. Kahn<sup>1</sup>, L. Humphrey<sup>1</sup>, C. MacMackin<sup>1</sup>, I. Maione, S. McIntosh, J. Morris, D. Short, D. Vaccaro<sup>1</sup>
-
-### Affiliations:
-
-1: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
-
-2: EUROfusion Consortium, Boltzmannstr.2, Garching, 85748, Germany
-
-3: Karlsruher Institut f&uuml;r Technologie, Hermann-von-Helmholtz-Platz 1, 76344 Eggenstein-Leopoldshafen, Germany
-
-4: ITER Organization, Route de Vinon-sur-Verdon, CS 90 046, 13067 St Paul Lez Durance Cedex, France
-
-5: Agile Abstractions, Northampton, United Kingdom
-
 ## Funding
 
 The work on ``bluemira`` been funded by:
