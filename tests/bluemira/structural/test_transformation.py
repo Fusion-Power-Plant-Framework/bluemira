@@ -19,17 +19,19 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import numpy as np
 import itertools
+
+import numpy as np
+import pytest
 from matplotlib import pyplot as plt
+
+import tests
 from bluemira.structural.node import Node
-from bluemira.structural.transformation import _direction_cosine_matrix, lambda_matrix
+from bluemira.structural.transformation import _direction_cosine_matrix
 from bluemira.structural.transformation import (
     _direction_cosine_matrix_debugging as _dcm_debug,
 )
-
-import tests
+from bluemira.structural.transformation import lambda_matrix
 
 
 class TestLambdaTransformationMatrices:

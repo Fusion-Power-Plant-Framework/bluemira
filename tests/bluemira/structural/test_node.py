@@ -21,6 +21,7 @@
 
 import numpy as np
 import pytest
+
 from bluemira.structural.node import Node
 
 

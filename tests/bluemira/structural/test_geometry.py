@@ -19,14 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from matplotlib import pyplot as plt
 import numpy as np
 import pytest
+from matplotlib import pyplot as plt
 
+import tests
+from bluemira.structural.crosssection import IBeam
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.material import SS316
-from bluemira.structural.crosssection import IBeam
-import tests
 
 SS316 = SS316()
 
