@@ -46,7 +46,7 @@ Bluemira global coordinates
 
 Global x, y, z coordinates are used as in the rest of the code base:
 
-.. figure:: coordinate_system.png
+.. figure:: structural_coordinate_system.png
    :name: global_coordinates
 
 
