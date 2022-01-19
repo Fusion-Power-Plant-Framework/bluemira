@@ -15,7 +15,7 @@ look like it might make sense when using computers.
 (`feapy <https://github.com/tenko/feapy>`_) whose modules were
 useful examples, if not quite what I was looking for.
 
-.. figure:: beams_eiffel.png
+.. figure:: structural_eiffel.png
    :name: eiffel
 
 Overview
@@ -55,7 +55,7 @@ Element local coordinates
 
 Here, local x, y, z coordinates are as follows:
 
-.. figure:: beams/beams_coordinate_system.jpg
+.. figure:: structural_coordinate_system.jpg
    :name: local_coordinates
 
 
