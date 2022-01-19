@@ -55,9 +55,7 @@ def node_load(load, load_type):
     """
     reactions = np.zeros(6)
     if load_type not in LOAD_MAPPING:
-        raise StructuralError(
-            f"Keine Ahnung was für eine Art Punktlast {load_type} sein soll."
-        )
+        raise StructuralError(f"Unrecognised load type: {load_type}.")
     reactions[LOAD_MAPPING[load_type]] = load
     return reactions
 
