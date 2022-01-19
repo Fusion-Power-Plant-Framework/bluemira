@@ -184,7 +184,7 @@ class Element:
 
     HERMITE_POLYS = hermite_polynomials(N_INTERP)
 
-    __slots__ = [
+    __slots__ = (
         "node_1",
         "node_2",
         "id_number",
@@ -203,7 +203,7 @@ class Element:
         "_lambda_matrix",
         "_k_matrix_glob",
         "_s_functs",
-    ]
+    )
 
     def __init__(self, node_1, node_2, id_number, cross_section, material=None):
         # Utility properties
@@ -581,9 +581,3 @@ class Element:
             ]
         )
         self.shapes = c + scale * displacements
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()

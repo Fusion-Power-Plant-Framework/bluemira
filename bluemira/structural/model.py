@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Finite element modeal
+Finite element model
 """
 from copy import deepcopy
 

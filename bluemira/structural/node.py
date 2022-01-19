@@ -45,7 +45,7 @@ class Node:
         The node number in the finite element model
     """
 
-    __slots__ = [
+    __slots__ = (
         "x",
         "y",
         "z",
@@ -56,7 +56,7 @@ class Node:
         "loads",
         "reactions",
         "connections",
-    ]
+    )
 
     def __init__(self, x, y, z, id_number):
         self.x = x
