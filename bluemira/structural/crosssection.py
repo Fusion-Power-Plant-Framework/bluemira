@@ -154,9 +154,9 @@ class CrossSection:
 
         if isinstance(self.geometry, list):
             for geometry in self.geometry:
-                geometry.rotate(base=self.centroid, axis=(1, 0, 0), degree=angle)
+                geometry.rotate(base=self.centroid, direction=(1, 0, 0), degree=angle)
         else:
-            self.geometry.rotate(base=self.centroid, axis=(1, 0, 0), degree=angle)
+            self.geometry.rotate(base=self.centroid, direction=(1, 0, 0), degree=angle)
 
     def translate(self, vector):
         """
@@ -259,10 +259,9 @@ class CircularBeam(CrossSection):
         self.j = np.pi * radius ** 4 / 2
         self.ry = radius / 2
         self.rz = radius / 2
-        self.geometry = BluemiraFace(
-            make_circle(radius, center=(0, 0, 0), axis=(1, 0, 0))
-        )
-        self.y, self.z = self.geometry.discretize(ndiscr=n_discr).yz
+        circle = make_circle(radius, center=(0, 0, 0), axis=(1, 0, 0))
+        self.geometry = BluemiraFace(circle)
+        self.y, self.z = circle.discretize(ndiscr=n_discr).yz
 
 
 class CircularHollowBeam(CrossSection):
@@ -277,7 +276,7 @@ class CircularHollowBeam(CrossSection):
         The outer radius of the hollow circular cross-section
     """
 
-    def __init__(self, r_inner, r_outer):
+    def __init__(self, r_inner, r_outer, n_discr=30):
         super().__init__()
         self.area = np.pi * (r_outer ** 2 - r_inner ** 2)
         self.i_zz = np.pi / 4 * (r_outer ** 4 - r_inner ** 4)
@@ -290,6 +289,10 @@ class CircularHollowBeam(CrossSection):
         inner = make_circle(r_inner, center=(0, 0, 0), axis=(1, 0, 0))
         outer = make_circle(r_outer, center=(0, 0, 0), axis=(1, 0, 0))
         self.geometry = BluemiraFace([outer, inner])
+        self.y, self.z = np.concatenate(
+            [outer.discretize(ndiscr=n_discr).yz, inner.discretize(ndiscr=n_discr).yz],
+            axis=1,
+        )
 
 
 class IBeam(CrossSection):
