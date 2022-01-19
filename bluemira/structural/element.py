@@ -25,15 +25,12 @@ Finite element class
 import numpy as np
 
 from bluemira.base.constants import GRAVITY
-from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry.face import BluemiraFace
 from bluemira.structural.constants import N_INTERP, NU, SD_LIMIT
 from bluemira.structural.error import StructuralError
 from bluemira.structural.loads import distributed_load, point_load
 from bluemira.structural.node import get_midpoint
 from bluemira.structural.stress import hermite_polynomials
 from bluemira.structural.transformation import lambda_matrix
-from BLUEPRINT.geometry.shell import Shell
 
 # TODO: Clean up some class stuff with cached_property decorators.
 # Test some existing stuff (functools?), and your own custom class.
