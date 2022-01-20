@@ -1117,7 +1117,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": null
+        "mapping": {}
     },
     "r_cs_in": {
         "name": "Central Solenoid inner radius",
@@ -1149,7 +1149,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": null
+        "mapping": {}
     },
     "r_tf_curve": {
         "name": "Start of the upper curve of domed picture frame shale",
@@ -1445,7 +1445,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": null
+        "mapping": {}
     },
     "tk_cs_insulation": {
         "name": "Thickness of the CS coil insulation",
@@ -1453,7 +1453,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": null
+        "mapping": {}
     },
     "tk_div": {
         "name": "Divertor thickness",
@@ -1565,7 +1565,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": null
+        "mapping": {}
     },
     "tk_pf_insulation": {
         "name": "Thickness of the PF coil insulation",
@@ -1573,7 +1573,7 @@
         "unit": "m",
         "description": null,
         "source": "Input",
-        "mapping": null
+        "mapping": {}
     },
     "tk_pf_support": {
         "name": "PF coil support plate thickness",
