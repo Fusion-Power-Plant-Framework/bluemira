@@ -79,14 +79,32 @@ class TestIbeam:
         assert np.isclose(rect_beam.j, 81234.94973767549, rtol=1e-4)
 
 
-class TestRectangleCustom:
-    def test_compare(self):
+class TestAnalytical:
+    def test_rectangle(self):
         sq_beam = RectangularBeam(50, 40)
         custom_beam = AnalyticalCrossSection(sq_beam.geometry, j_opt_var=42.77)
         for k in ["area", "centroid", "i_yy", "i_zz", "i_zy", "qyy", "qzz", "ry", "rz"]:
             assert np.allclose(getattr(sq_beam, k), getattr(custom_beam, k))
         # J will not be so close...
         assert np.isclose(sq_beam.j, custom_beam.j, rtol=1e-4)
+
+    def test_ibeam(self):
+        i_beam = IBeam(1, 1, 0.25, 0.5)
+        custom_beam = AnalyticalCrossSection(i_beam.geometry)
+        for k in ["area", "centroid", "i_yy", "i_zz", "i_zy", "qyy", "qzz", "ry", "rz"]:
+            assert np.allclose(getattr(i_beam, k), getattr(custom_beam, k))
+
+    def test_circle(self):
+        c_beam = CircularBeam(1, n_discr=500)
+        custom_beam = AnalyticalCrossSection(c_beam.geometry)
+        for k in ["area", "centroid", "i_yy", "i_zz", "i_zy", "qyy", "qzz", "ry", "rz"]:
+            assert np.allclose(getattr(c_beam, k), getattr(custom_beam, k))
+
+    def test_hollow_circle(self):
+        ch_beam = CircularHollowBeam(1, 1.2, n_discr=500)
+        custom_beam = AnalyticalCrossSection(ch_beam.geometry)
+        for k in ["area", "centroid", "i_yy", "i_zz", "i_zy", "qyy", "qzz", "ry", "rz"]:
+            assert np.allclose(getattr(ch_beam, k), getattr(custom_beam, k))
 
 
 class TestRotation:

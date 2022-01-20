@@ -477,18 +477,21 @@ class AnalyticalCompositeCrossSection(CrossSection):
         self.ei_yy = 0
         self.ei_zz = 0
         self.ei_zy = 0
+        rhoa = 0
 
         for xs, mat in zip(cross_sections, materials):
             self.area += xs.area
-            e, g = mat["E"], mat["G"]
+            e, g, rho = mat["E"], mat["G"], mat["rho"]
             self.ea += e * xs.area
             ga += g * xs.area
             self.ei_yy += e * xs.i_yy
             self.ei_zz += e * xs.i_zz
             self.ei_zy += e * xs.i_zy
+            rhoa += rho * xs.area
 
         self.nu = self.ea / (2 * ga) - 1
         self.ry = np.sqrt(self.ei_yy / self.ea)
         self.rz = np.sqrt(self.ei_zz / self.ea)
 
         self.gj = ga / self.area * n * sum(xs.j for xs in cross_sections)
+        self.rho = rhoa / self.area
