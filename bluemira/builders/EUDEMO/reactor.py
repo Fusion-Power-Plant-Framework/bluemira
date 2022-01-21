@@ -28,6 +28,7 @@ import os
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -47,8 +48,10 @@ class EUDEMOReactor(Reactor):
         Run the EU-DEMO reactor build process. Performs the following tasks:
 
         - Run the (PROCESS) systems code
-        - Build the Plasma
-        - Build the TF Coils
+        - Build the 'Plasma'
+        - Build the 'TF Coils'
+        - Build the 'PF Coils'
+        - Build the 'First Wall'
         """
         component = super().run()
 
@@ -57,6 +60,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
         component.add_child(self.build_thermal_shield(component))
+        component.add_child(self.build_first_wall(component))
 
         bluemira_print("Reactor Design Complete!")
 
@@ -239,4 +243,30 @@ class EUDEMOReactor(Reactor):
 
         bluemira_print(f"Completed design stage: {name}")
 
+    def build_first_wall(self, component_tree: Component, **kwargs):
+        """
+        Run the first wall builder.
+        """
+        name = "First Wall"
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        default_variables_map = {
+            "x1": {"value": "r_fw_ib_in"},  # ib radius
+            "x2": {"value": "r_fw_ob_in"},  # ob radius
+        }
+
+        default_config = {
+            "param_class": "bluemira.builders.EUDEMO.first_wall::FirstWallPolySpline",
+            "variables_map": default_variables_map,
+            "runmode": "mock",
+        }
+
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = FirstWallBuilder(self._params.to_dict(), build_config=config)
+        self.register_builder(builder, name)
+
+        component = super()._build_stage(name)
+        bluemira_print(f"Completed design stage: {name}")
         return component
