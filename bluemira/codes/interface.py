@@ -326,6 +326,24 @@ class FileProgramInterface:
         """
         return self.setup_obj._send_mapping
 
+    def modify_mappings(self, mappings: Dict[str : Dict[str, bool]]):
+        """
+        Modify the send/recieve mappings of a key
+
+        Parameters
+        ----------
+        mappings: dict
+            A list of keys wi
+        """
+        for key, val in mappings.items():
+            try:
+                p_map = getattr(self.params, key).mapping[self.NAME]
+            except (AttributeError, KeyError):
+                bluemira_warn(f"No mapping known for {key} in {self.NAME}")
+            else:
+                for sr_key, sr_val in val.items():
+                    setattr(p_map, sr_key, sr_val)
+
     def run(self, *args, **kwargs):
         """
         Run the full program interface
