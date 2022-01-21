@@ -249,3 +249,16 @@ print_outputs(plasmod_solver)
 plasmod_solver.problem_settings["qdivt_sup"] = 10.0
 plasmod_solver.run()
 print_outputs(plasmod_solver)
+
+# %%[markdown]
+# #### Changing the mapping sending or recieving
+# The mapping can be changed on a given parameter or set of parameters.
+# Notice how the value of `q_95` doesn't change even though its value has
+# (the previous value of 3.5 is used).
+
+# %%
+plasmod_solver.modify_mappings({"q_95": {"send": False}})
+plasmod_solver.params.q_95 = (5, "input")
+plasmod_solver.run()
+print_outputs(plasmod_solver)
+print("\nq_95 value history\n", plasmod_solver.params.q_95.history())
