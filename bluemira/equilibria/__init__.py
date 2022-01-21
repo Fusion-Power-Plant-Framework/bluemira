@@ -36,9 +36,11 @@ from .equilibrium import Breakdown, Equilibrium
 from .find import find_flux_surfs, find_LCFS_separatrix, find_OX_points
 from .grid import Grid
 from .limiter import Limiter
-from .optimiser import (  # CoilsetOptimiser,; NestedCoilsetOptimiser,
+from .optimiser import (
     BoundedCurrentOptimiser,
+    CoilsetOptimiser,
     FBIOptimiser,
+    NestedCoilsetOptimiser,
     Norm2Tikhonov,
     PositionOptimiser,
     UnconstrainedCurrentOptimiser,
