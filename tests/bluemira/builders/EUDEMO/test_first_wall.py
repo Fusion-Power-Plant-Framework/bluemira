@@ -28,11 +28,9 @@ class TestFirstWallBuilder:
     _default_variables_map = {
         "x1": {  # ib radius
             "value": "r_fw_ib_in",
-            "fixed": True,
         },
         "x2": {  # ob radius
             "value": "r_fw_ob_in",
-            "lower_bound": 10.0,
         },
     }
 
@@ -69,3 +67,16 @@ class TestFirstWallBuilder:
         xy_component = component.get_component("xz", first=False)
         assert len(xy_component) == 1
         assert len(xy_component[0].get_component("first_wall", first=False)) == 1
+
+    def test_component_height_derived_from_params(self):
+        params = copy.deepcopy(self._params)
+        params.update(
+            {"R_0": (10.0, "Input"), "kappa_95": (2.0, "Input"), "A": (2.0, "Input")}
+        )
+
+        builder = FirstWallBuilder(self._params, build_config=self._default_config)
+        component = builder(params)
+
+        bounding_box = component.get_component("first_wall").shape.bounding_box
+        # expected_height = 2*(R_0/A)*kappa_95 = 20
+        assert bounding_box.z_max - bounding_box.z_min == 20.0
