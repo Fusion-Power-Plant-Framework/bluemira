@@ -326,7 +326,7 @@ class FileProgramInterface:
         """
         return self.setup_obj._send_mapping
 
-    def modify_mappings(self, mappings: Dict[str : Dict[str, bool]]):
+    def modify_mappings(self, mappings: Dict[str, Dict[str, bool]]):
         """
         Modify the send/recieve mappings of a key
 
