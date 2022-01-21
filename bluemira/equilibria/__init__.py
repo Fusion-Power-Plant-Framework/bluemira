@@ -36,22 +36,17 @@ from .equilibrium import Breakdown, Equilibrium
 from .find import find_flux_surfs, find_LCFS_separatrix, find_OX_points
 from .grid import Grid
 from .limiter import Limiter
-from .optimiser import (
-    BoundedCurrentOptimiser,
-    CoilsetOptimiser,
-    FBIOptimiser,
-    NestedCoilsetOptimiser,
-    Norm2Tikhonov,
-    PositionOptimiser,
-    UnconstrainedCurrentOptimiser,
+from .opt_problems import (
+    BoundedCurrentCOP,
+    CoilsetPositionCOP,
+    NestedCoilsetPositionCOP,
+    UnconstrainedCurrentCOP,
 )
-from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
-from bluemira.equilibria.shapes import (
-    flux_surface_cunningham,
-    flux_surface_johner,
-    flux_surface_manickam,
-)
-from bluemira.equilibria.solve import (
+from .optimiser import FBIOptimiser, Norm2Tikhonov, PositionOptimiser
+from .profiles import BetaIpProfile, CustomProfile
+from .run import AbInitioEquilibriumProblem
+from .shapes import flux_surface_cunningham, flux_surface_johner, flux_surface_manickam
+from .solve import (
     PicardAbsIterator,
     PicardCoilsetIterator,
     PicardDeltaIterator,

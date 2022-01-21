@@ -32,16 +32,22 @@ from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.optimiser import (
-    BoundedCurrentOptimiser,
-    CoilsetOptimiser,
-    NestedCoilsetOptimiser,
-    Norm2Tikhonov,
-    UnconstrainedCurrentOptimiser,
+from bluemira.equilibria.opt_problems import (
+    BoundedCurrentCOP,
+    CoilsetPositionCOP,
+    NestedCoilsetPositionCOP,
+    UnconstrainedCurrentCOP,
 )
+from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
 from bluemira.geometry._deprecated_loop import Loop
+
+# %%[markdown]
+
+# # Script to demonstrate optimisation of coilset of a double null equilibrium
+
+# %%
 
 # Clean up and make plots look good
 plt.close("all")
@@ -254,7 +260,7 @@ def init_equilibrium(grid, coilset, constraint_set):
         li=None,
     )
     constraint_set(eq)
-    optimiser = UnconstrainedCurrentOptimiser(coilset_temp, gamma=1e-7)
+    optimiser = UnconstrainedCurrentCOP(coilset_temp, gamma=1e-7)
     coilset_temp = optimiser(eq, constraint_set)
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
@@ -295,7 +301,7 @@ def pre_optimise(eq, profile, constraint_set):
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = UnconstrainedCurrentOptimiser(eq.coilset, gamma=1e-8)
+    optimiser = UnconstrainedCurrentCOP(eq.coilset, gamma=1e-8)
 
     program = PicardCoilsetIterator(
         eq,
@@ -317,7 +323,7 @@ def set_coilset_optimiser(
     coilset,
     optimiser_name,
     optimisation_options,
-    suboptimiser_name="BoundedCurrentOptimiser",
+    suboptimiser_name="BoundedCurrentCOP",
     suboptimisation_options=None,
 ):
     """
@@ -326,21 +332,21 @@ def set_coilset_optimiser(
     pfregions = init_pfregions(coilset)
     if optimiser_name in ["Norm2Tikhonov"]:
         optimiser = Norm2Tikhonov(**optimisation_options)
-    if optimiser_name in ["UnconstrainedCurrentOptimiser"]:
-        optimiser = UnconstrainedCurrentOptimiser(coilset, **optimisation_options)
-    elif optimiser_name in ["BoundedCurrentOptimiser"]:
-        optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
-    elif optimiser_name in ["CoilsetOptimiser"]:
-        optimiser = CoilsetOptimiser(
+    if optimiser_name in ["UnconstrainedCurrentCOP"]:
+        optimiser = UnconstrainedCurrentCOP(coilset, **optimisation_options)
+    elif optimiser_name in ["BoundedCurrentCOP"]:
+        optimiser = BoundedCurrentCOP(coilset, **optimisation_options)
+    elif optimiser_name in ["CoilsetPositionCOP"]:
+        optimiser = CoilsetPositionCOP(
             coilset, pfregions=pfregions, **optimisation_options
         )
-    elif optimiser_name in ["NestedCoilsetOptimiser"]:
+    elif optimiser_name in ["NestedCoilsetPositionCOP"]:
         sub_optimiser = set_coilset_optimiser(
             coilset,
             optimiser_name=suboptimiser_name,
             optimisation_options=suboptimisation_options,
         )
-        optimiser = NestedCoilsetOptimiser(
+        optimiser = NestedCoilsetPositionCOP(
             sub_optimiser, pfregions=pfregions, **optimisation_options
         )
     return optimiser
@@ -355,10 +361,10 @@ def set_iterator(eq, profile, constraint_set, optimiser):
     iterator_kwargs = {"plot": True, "gif": False, "relaxation": 0.3, "maxiter": 400}
 
     if optimiser_name in [
-        "BoundedCurrentOptimiser",
-        "CoilsetOptimiser",
-        "NestedCoilsetOptimiser",
-        "UnconstrainedCurrentOptimiser",
+        "BoundedCurrentCOP",
+        "CoilsetPositionCOP",
+        "NestedCoilsetPositionCOP",
+        "UnconstrainedCurrentCOP",
     ]:
         program = PicardCoilsetIterator(*iterator_args, **iterator_kwargs)
     else:
@@ -372,14 +378,14 @@ def default_optimiser_options(optimiser_name):
     Specifies default optimiser options.
     """
     options = {"optimiser_name": optimiser_name}
-    if optimiser_name in ["Norm2Tikhonov", "UnconstrainedCurrentOptimiser"]:
+    if optimiser_name in ["Norm2Tikhonov", "UnconstrainedCurrentCOP"]:
         options["optimisation_options"] = {"gamma": 1e-8}
-    elif optimiser_name in ["BoundedCurrentOptimiser"]:
+    elif optimiser_name in ["BoundedCurrentCOP"]:
         options["optimisation_options"] = {
             "max_currents": 3.0e7,
             "gamma": 1e-8,
         }
-    elif optimiser_name in ["CoilsetOptimiser"]:
+    elif optimiser_name in ["CoilsetPositionCOP"]:
         options["optimisation_options"] = {
             "max_currents": 3.0e7,
             "gamma": 1e-8,
@@ -392,7 +398,7 @@ def default_optimiser_options(optimiser_name):
                 "opt_parameters": {},
             },
         }
-    elif optimiser_name in ["NestedCoilsetOptimiser"]:
+    elif optimiser_name in ["NestedCoilsetPositionCOP"]:
         options["optimisation_options"] = {
             "opt_args": {
                 "algorithm_name": "SBPLX",
@@ -403,7 +409,7 @@ def default_optimiser_options(optimiser_name):
                 "opt_parameters": {},
             },
         }
-        options["suboptimiser_name"] = "BoundedCurrentOptimiser"
+        options["suboptimiser_name"] = "BoundedCurrentCOP"
         options["suboptimisation_options"] = {"max_currents": 3.0e7, "gamma": 1e-8}
     else:
         print("Coilset optimiser name not supported for this example")
@@ -441,13 +447,13 @@ if __name__ == "__main__":
         help="Name of optimiser to use",
         choices=[
             "Norm2Tikhonov",
-            "UnconstrainedCurrentOptimiser",
-            "BoundedCurrentOptimiser",
-            "CoilsetOptimiser",
-            "NestedCoilsetOptimiser",
+            "UnconstrainedCurrentCOP",
+            "BoundedCurrentCOP",
+            "CoilsetPositionCOP",
+            "NestedCoilsetPositionCOP",
         ],
         type=str,
-        default="UnconstrainedCurrentOptimiser",
+        default="UnconstrainedCurrentCOP",
     )
     parser.add_argument(
         "--no-pre_optimise",

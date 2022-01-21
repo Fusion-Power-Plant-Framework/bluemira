@@ -24,30 +24,27 @@ optimisation method with bound constraints on the maximum coil currents
 and on the position of the inboard midplane.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
 import copy
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.display.auto_config import plot_defaults
-from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.constraints import (
-    MagneticConstraintSet,
-    IsofluxConstraint,
-)
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimiser import (
-    UnconstrainedCurrentOptimiser,
-    BoundedCurrentOptimiser,
-)
-from bluemira.equilibria.solve import (
-    PicardCoilsetIterator,
-    DudsonConvergence,
-)
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.opt_problems import BoundedCurrentCOP, UnconstrainedCurrentCOP
+from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.solve import DudsonConvergence, PicardCoilsetIterator
+from bluemira.utilities.opt_tools import ConstraintLibrary
 from bluemira.utilities.optimiser import OptimiserConstraint
-from bluemira.utilities.opt_tools import (
-    ConstraintLibrary,
-)
+
+# %%[markdown]
+
+# # Script to demonstrate constrained optimisation of coilset of a double null equilibrium
+
+# %%
 
 # Clean up and make plots look good
 plt.close("all")
@@ -238,7 +235,7 @@ def init_equilibrium(grid, coilset, targets, profile):
         li=None,
     )
     targets(eq)
-    optimiser = UnconstrainedCurrentOptimiser(coilset_temp, gamma=1e-7)
+    optimiser = UnconstrainedCurrentCOP(coilset_temp, gamma=1e-7)
     coilset_temp = optimiser(eq, targets)
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
@@ -272,7 +269,6 @@ def optimise_fbe(program):
         f, ax = plt.subplots()
         program.eq.plot(ax=ax)
         program.constraints.plot(ax=ax)
-    return
 
 
 def pre_optimise(eq, profile, targets):
@@ -280,7 +276,7 @@ def pre_optimise(eq, profile, targets):
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = UnconstrainedCurrentOptimiser(eq.coilset, gamma=1e-8)
+    optimiser = UnconstrainedCurrentCOP(eq.coilset, gamma=1e-8)
 
     program = PicardCoilsetIterator(
         eq,
@@ -334,7 +330,7 @@ def set_coilset_optimiser(
         },
         "opt_constraints": opt_constraints,
     }
-    optimiser = BoundedCurrentOptimiser(coilset, **optimisation_options)
+    optimiser = BoundedCurrentCOP(coilset, **optimisation_options)
     return optimiser
 
 
