@@ -43,6 +43,11 @@ class EUDEMOReactor(Reactor):
     design.
     """
 
+    PLASMA = "Plasma"
+    TF_COILS = "TF Coils"
+    PF_COILS = "PF Coils"
+    FIRST_WALL = "First Wall"
+
     def run(self) -> Component:
         """
         Run the EU-DEMO reactor build process. Performs the following tasks:
@@ -100,7 +105,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the plasma build using the requested equilibrium problem.
         """
-        name = "Plasma"
+        name = EUDEMOReactor.PLASMA
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -125,7 +130,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the TF Coils build using the requested mode.
         """
-        name = "TF Coils"
+        name = EUDEMOReactor.TF_COILS
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -172,7 +177,7 @@ class EUDEMOReactor(Reactor):
 
             config["geom_path"] = geom_path
 
-        plasma = component_tree.get_component("Plasma")
+        plasma = component_tree.get_component(EUDEMOReactor.PLASMA)
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
 
@@ -189,7 +194,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the PF Coils build using the requested mode.
         """
-        name = "PF Coils"
+        name = EUDEMOReactor.PF_COILS
 
         default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
         default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
@@ -247,7 +252,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the first wall builder.
         """
-        name = "First Wall"
+        name = EUDEMOReactor.FIRST_WALL
 
         bluemira_print(f"Starting design stage: {name}")
 
