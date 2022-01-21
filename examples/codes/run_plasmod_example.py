@@ -253,8 +253,8 @@ print_outputs(plasmod_solver)
 # %%[markdown]
 # #### Changing the mapping sending or recieving
 # The mapping can be changed on a given parameter or set of parameters.
-# Notice how the value of `q_95` doesn't change even though its value has
-# (the previous value of 3.5 is used).
+# Notice how the value of `q_95` doesn't change in the output
+# even though its value has in the parameter (the previous value of 3.5 is used).
 
 # %%
 plasmod_solver.modify_mappings({"q_95": {"send": False}})
