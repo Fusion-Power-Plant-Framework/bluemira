@@ -79,7 +79,6 @@ from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 # Neutronics imports
 from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
 from BLUEPRINT.nova.firstwall import FirstWallProfile
-from BLUEPRINT.nova.optimiser import StructuralOptimiser
 
 # BLUEPRINT.nova imports
 from BLUEPRINT.nova.stream import StreamFlow
@@ -158,7 +157,6 @@ class Reactor(ReactorSystem):
     # Construction and calculation class declarations
     EQ: Type[AbInitioEquilibriumProblem]
     RB: Type[ReactorCrossSection]
-    SO: Type[StructuralOptimiser]
     CAD: Type[ReactorCAD]
     n_CAD: Type[ReactorCAD]
 
@@ -785,18 +783,6 @@ class Reactor(ReactorSystem):
         self.ATEC = CoilArchitectClass(self.params, to_atec)
 
         self.ATEC.build()
-
-    def optimise_coil_cage(self):
-        """
-        Optimise the TF coil casing. WIP.
-        """
-        bluemira_print("Optimising coil structures.")
-        self.SO = StructuralOptimiser(
-            self.ATEC, self.TF.cage, [s.eq for s in self.EQ.snapshots.values()]
-        )
-        t = time()
-        self.SO.optimise()
-        bluemira_print(f"Optimisation time: {time()-t:.2f} s")
 
     def define_port_exclusions(self):
         """
