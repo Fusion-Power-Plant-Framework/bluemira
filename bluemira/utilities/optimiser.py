@@ -30,8 +30,7 @@ from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # n
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._nlopt_api import NLOPTOptimiser
 
-
-__all__ = ["approx_derivative", "Optimiser", "OptimiserConstraint"]
+__all__ = ["approx_derivative", "Optimiser", "OptimiserObjective", "OptimiserConstraint"]
 
 
 def approx_derivative(
@@ -94,6 +93,30 @@ class OptimiserConstraint:
         self._constraint_type = constraint_type
         self._f_constraint = f_constraint
         self._f_constraint_args = f_constraint_args
+
+
+class OptimiserObjective:
+    """
+    Data class to store information needed to apply a constraint
+    to an optimisation problem.
+
+    Parameters
+    ----------
+    f_objective: callable
+        Objective function to apply to problem.
+        For NLOpt objectives, objective functions should be of the form
+        f_objective(cls, x, grad, f_objective_args)
+    f_objective_args: tuple (default = ())
+        Additional arguments to pass to NLOpt objective function when called.
+    tolerance: array
+        Array of tolerances to use when applying the optimisation constraint.
+    objective_type: string (default: "min")
+        Controls whether to minimise or maximise objective; either "min" or "max".
+    """
+
+    def __init__(self, f_objective, f_objective_args=()):
+        self._f_objective = f_objective
+        self._f_objective_args = f_objective_args
 
 
 class Optimiser(NLOPTOptimiser):

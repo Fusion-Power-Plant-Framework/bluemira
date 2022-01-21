@@ -32,19 +32,13 @@ from bluemira.equilibria.constraints import (
     PsiBoundaryConstraint,
     PsiConstraint,
 )
-from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
-from bluemira.equilibria.find import (
-    find_flux_surfs,
-    find_LCFS_separatrix,
-    find_OX_points,
-)
-from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.limiter import Limiter
-from bluemira.equilibria.optimiser import (
+from .equilibrium import Breakdown, Equilibrium
+from .find import find_flux_surfs, find_LCFS_separatrix, find_OX_points
+from .grid import Grid
+from .limiter import Limiter
+from .optimiser import (  # CoilsetOptimiser,; NestedCoilsetOptimiser,
     BoundedCurrentOptimiser,
-    CoilsetOptimiser,
     FBIOptimiser,
-    NestedCoilsetOptimiser,
     Norm2Tikhonov,
     PositionOptimiser,
     UnconstrainedCurrentOptimiser,
