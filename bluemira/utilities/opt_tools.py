@@ -24,9 +24,10 @@ Optimisation utilities
 """
 
 import numpy as np
-from bluemira.utilities.error import InternalOptError
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.utilities.error import InternalOptError
 
 
 class ConstraintLibrary:
@@ -123,7 +124,7 @@ class ObjectiveLibrary:
     :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
     """  # noqa (W505)
 
-    def regularised_lsq_objective(self, vector, grad, scale, A, b, gamma):
+    def regularised_lsq_objective(self, vector, grad, scale, a_mat, b_vec, gamma):
         """
         Objective function for nlopt optimisation (minimisation),
         consisting of a least-squares objective with Tikhonov
@@ -142,10 +143,10 @@ class ObjectiveLibrary:
         fom: Value of objective function (figure of merit).
         """
         vector = vector * scale
-        fom, err = regularised_lsq_fom(vector, A, b, gamma)
+        fom, err = regularised_lsq_fom(vector, a_mat, b_vec, gamma)
         if grad.size > 0:
-            jac = 2 * A.T @ A @ vector / np.float(len(b))
-            jac -= 2 * A.T @ b / np.float(len(b))
+            jac = 2 * a_mat.T @ a_mat @ vector / np.float(len(b_vec))
+            jac -= 2 * a_mat.T @ b_vec / np.float(len(b_vec))
             jac += 2 * gamma * gamma * vector
             grad[:] = scale * jac
         if not fom > 0:
@@ -154,8 +155,6 @@ class ObjectiveLibrary:
             )
         return fom
 
-from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.error import InternalOptError
 
 # =============================================================================
 # Analytical objective functions

@@ -586,7 +586,7 @@ class CoilsetPositionCOP(CoilsetOP):
                 f0=fom,
             )
         bluemira_print_flush(
-            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {fom:.2e}"
+            f"EQUILIBRIA Coilset iter {self.iter}: figure of merit = {fom:.2e}"
         )
         return fom
 
@@ -739,7 +739,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
                 f0=fom,
             )
         bluemira_print_flush(
-            f"EQUILIBRIA Coilset iter {self.iter}: " f"figure of merit = {fom:.2e}"
+            f"EQUILIBRIA Coilset iter {self.iter}: figure of merit = {fom:.2e}"
         )
         return fom
 
