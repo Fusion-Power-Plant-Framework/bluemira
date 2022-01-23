@@ -38,7 +38,7 @@ from bluemira.equilibria.opt_problems import BoundedCurrentCOP, UnconstrainedCur
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardCoilsetIterator
 from bluemira.utilities.opt_tools import ConstraintLibrary
-from bluemira.utilities.optimiser import OptimiserConstraint
+from bluemira.utilities.optimiser import Optimiser, OptimiserConstraint
 
 # %%[markdown]
 
@@ -321,13 +321,11 @@ def set_coilset_optimiser(
     optimisation_options = {
         "max_currents": 3.0e7,
         "gamma": 1e-8,
-        "opt_args": {
-            "algorithm_name": "COBYLA",
-            "opt_conditions": {
-                "max_eval": 200,
-            },
-            "opt_parameters": {"initial_step": 0.03},
-        },
+        "optimiser": Optimiser(
+            algorithm_name="COBYLA",
+            opt_conditions={"max_eval": 200},
+            opt_parameters={"initial_step": 0.03},
+        ),
         "opt_constraints": opt_constraints,
     }
     optimiser = BoundedCurrentCOP(coilset, **optimisation_options)

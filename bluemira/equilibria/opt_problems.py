@@ -374,23 +374,22 @@ class BoundedCurrentCOP(CoilsetOP):
     def __init__(
         self,
         coilset,
-        max_currents=None,
-        gamma=1e-8,
-        opt_args={
-            "algorithm_name": "SLSQP",
-            "opt_conditions": {
+        optimiser=Optimiser(
+            algorithm_name="SLSQP",
+            opt_conditions={
                 "xtol_rel": 1e-4,
                 "xtol_abs": 1e-4,
                 "ftol_rel": 1e-4,
                 "ftol_abs": 1e-4,
                 "max_eval": 100,
             },
-            "opt_parameters": {"initial_step": 0.03},
-        },
+            opt_parameters={"initial_step": 0.03},
+        ),
+        max_currents=None,
+        gamma=1e-8,
         opt_constraints=[],
     ):
         # noqa :N803
-        optimiser = Optimiser(**opt_args)
         opt_objective = OptimiserObjective(self.f_min_objective)
         super().__init__(coilset, optimiser, opt_objective)
         self.max_currents = max_currents
@@ -492,20 +491,19 @@ class CoilsetPositionCOP(CoilsetOP):
         self,
         coilset,
         pfregions,
-        max_currents=None,
-        gamma=1e-8,
-        opt_args={
-            "algorithm_name": "SBPLX",
-            "opt_conditions": {
+        optimiser=Optimiser(
+            algorithm_name="SBPLX",
+            opt_conditions={
                 "stop_val": 1.0,
                 "max_eval": 100,
             },
-            "opt_parameters": {},
-        },
+            opt_parameters={},
+        ),
+        max_currents=None,
+        gamma=1e-8,
         opt_constraints=[],
     ):
         # noqa :N803
-        optimiser = Optimiser(**opt_args)
         opt_objective = OptimiserObjective(self.f_min_objective)
         super().__init__(coilset, optimiser, opt_objective)
 
@@ -666,18 +664,17 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         self,
         sub_opt,
         pfregions,
-        opt_args={
-            "algorithm_name": "SBPLX",
-            "opt_conditions": {
+        optimiser=Optimiser(
+            algorithm_name="SBPLX",
+            opt_conditions={
                 "stop_val": 1.0,
                 "max_eval": 100,
             },
-            "opt_parameters": {},
-        },
+            opt_parameters={},
+        ),
         opt_constraints=[],
     ):
         # noqa :N803
-        optimiser = Optimiser(**opt_args)
         opt_objective = OptimiserObjective(self.f_min_objective)
         super().__init__(sub_opt.coilset, optimiser, opt_objective)
 

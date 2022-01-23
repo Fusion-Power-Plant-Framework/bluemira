@@ -42,6 +42,7 @@ from bluemira.equilibria.optimiser import Norm2Tikhonov
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.utilities.optimiser import Optimiser
 
 # %%[markdown]
 
@@ -389,25 +390,25 @@ def default_optimiser_options(optimiser_name):
         options["optimisation_options"] = {
             "max_currents": 3.0e7,
             "gamma": 1e-8,
-            "opt_args": {
-                "algorithm_name": "SBPLX",
-                "opt_conditions": {
+            "optimiser": Optimiser(
+                algorithm_name="SBPLX",
+                opt_conditions={
                     "stop_val": 2.5e-2,
                     "max_eval": 100,
                 },
-                "opt_parameters": {},
-            },
+                opt_parameters={},
+            ),
         }
     elif optimiser_name in ["NestedCoilsetPositionCOP"]:
         options["optimisation_options"] = {
-            "opt_args": {
-                "algorithm_name": "SBPLX",
-                "opt_conditions": {
+            "optimiser": Optimiser(
+                algorithm_name="SBPLX",
+                opt_conditions={
                     "stop_val": 2.5e-2,
                     "max_eval": 100,
                 },
-                "opt_parameters": {},
-            },
+                opt_parameters={},
+            )
         }
         options["suboptimiser_name"] = "BoundedCurrentCOP"
         options["suboptimisation_options"] = {"max_currents": 3.0e7, "gamma": 1e-8}
