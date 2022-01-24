@@ -117,48 +117,83 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
 
         return value
 
-    def E(self, temperature):
+    def E(self, temperature):  # noqa :N802
         """
+        Young's modulus.
+
         Parameters
         ----------
         temperature: float
-            The temperature in Kelvin
+            The optional temperature [K].
+
+        Returns
+        -------
+        youngs_modulus: float
+            The Young's modulus of the material at the given temperature.
         """
         return self._calc_homogenised_property("E", temperature)
 
     def mu(self, temperature):
         """
+        Poisson's ratio.
+
         Parameters
         ----------
         temperature: float
-            The temperature in Kelvin
+            The optional temperature [K].
+
+        Returns
+        -------
+        poissons_ratio: float
+            Poisson's ratio for the material at the given temperature.
         """
         return self._calc_homogenised_property("mu", temperature)
 
-    def CTE(self, temperature):
+    def CTE(self, temperature):  # noqa :N802
         """
+        Mean coefficient of thermal expansion in 10**-6/T
+
         Parameters
         ----------
         temperature: float
             The temperature in Kelvin
+
+        Returns
+        -------
+        cte: float
+            Mean coefficient of thermal expansion in 10**-6/T at the given temperature.
         """
         return self._calc_homogenised_property("CTE", temperature)
 
     def rho(self, temperature):
         """
+        Density.
+
         Parameters
         ----------
         temperature: float
-            The temperature in Kelvin
+            The optional temperature [K].
+
+        Returns
+        -------
+        density: float
+            The density of the material at the given temperature.
         """
         return self._calc_homogenised_property("rho", temperature)
 
-    def Sy(self, temperature):
+    def Sy(self, temperature):  # noqa :N802
         """
+        Minimum yield stress in MPa
+
         Parameters
         ----------
         temperature: float
             The temperature in Kelvin
+
+        Returns
+        -------
+        sy: float
+            Minimum yield stress in MPa at the given temperature.
         """
         return self._calc_homogenised_property("Sy", temperature)
 
