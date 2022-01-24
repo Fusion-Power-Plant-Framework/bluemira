@@ -87,58 +87,80 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         """
         return self.name
 
-    def make_mat_dict(self, temperature):
+    def _calc_homogenised_property(self, prop: str, temperature: float):
         """
-        Makes a material dictionary for use in simple beam FE solver
+        Calculate an mass-fraction-averaged property for the homogenised mixture.
+        """
+        warn = []
+        values, fractions = [], []
+        # Calculate property mixtures, ignoring liquids and voids
+        # for certain properties
+        for mat, vf in zip(self.materials, self.fracs):
+            try:
+                v = getattr(mat, prop)(temperature)
+                values.append(v)
+                fractions.append(vf)
+            except (NotImplementedError, AttributeError, MaterialsError):
+                warn.append([mat, prop])
 
+        f = np.array(fractions) / sum(fractions)  # Normalised
+        value = np.dot(values, f)
+
+        if warn:
+            txt = (
+                f"Materials::{self.__class__.__name__}: The following "
+                + "mat.prop calls failed:\n"
+            )
+            for w in warn:
+                txt += f"{w[0]}: {w[1]}" + "\n"
+            bluemira_warn(txt)
+
+        return value
+
+    def E(self, temperature):
+        """
         Parameters
         ----------
         temperature: float
             The temperature in Kelvin
-
-        Returns
-        -------
-        mat_dict: dict
-            The simplified dictionary of material properties
         """
-        mat_dict = {}
+        return self._calc_homogenised_property("E", temperature)
 
-        for prop in ["E", "mu", "rho", "CTE", "Sy"]:
-            if hasattr(self, prop):
-                # Override mixture property calculation if one has been specced
-                value = getattr(self, prop)(temperature)
-            else:
-                warn = []
-                values, fractions = [], []
-                # Calculate property mixtures, ignoring liquids and voids
-                # for certain properties
-                for mat, vf in zip(self.materials, self.fracs):
-                    try:
-                        v = getattr(mat, prop)(temperature)
-                        values.append(v)
-                        fractions.append(vf)
-                    except (NotImplementedError, AttributeError, MaterialsError):
-                        warn.append([mat, prop])
+    def mu(self, temperature):
+        """
+        Parameters
+        ----------
+        temperature: float
+            The temperature in Kelvin
+        """
+        return self._calc_homogenised_property("mu", temperature)
 
-                vals = np.array(values)
-                f = np.array(fractions) / sum(fractions)  # Normalised
-                value = np.dot(vals, f)
+    def CTE(self, temperature):
+        """
+        Parameters
+        ----------
+        temperature: float
+            The temperature in Kelvin
+        """
+        return self._calc_homogenised_property("CTE", temperature)
 
-                if warn:
-                    txt = (
-                        f"Materials::{self.__class__.__name__}: The following "
-                        + "mat.prop calls failed:\n"
-                    )
-                    for w in warn:
-                        txt += f"{w[0]}: {w[1]}" + "\n"
-                    bluemira_warn(txt)
+    def rho(self, temperature):
+        """
+        Parameters
+        ----------
+        temperature: float
+            The temperature in Kelvin
+        """
+        return self._calc_homogenised_property("rho", temperature)
 
-            key = MATERIAL_BEAM_MAP[prop]
-            if prop == "E":
-                value *= 1e9
-            mat_dict[key] = value
-
-        return mat_dict
+    def Sy(self, temperature):
+        """
+        Parameters
+        ----------
+        temperature: float
+            The temperature in Kelvin
+        """
+        return self._calc_homogenised_property("Sy", temperature)
 
     @classmethod
     def from_dict(cls, name, material_dict, material_cache):

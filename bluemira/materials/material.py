@@ -661,29 +661,6 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         """
         return self.name
 
-    def make_mat_dict(self, temperature):
-        """
-        Makes a material dictionary for use in simple beam FE solver
-
-        Parameters
-        ----------
-        temperature: float
-            The temperature in Kelvin
-
-        Returns
-        -------
-        mat_dict: dict
-            The simplified dictionary of material properties
-        """
-        mat_dict = {
-            "E": self.E(temperature) * 1e9,
-            "nu": self.mu(temperature),
-            "alpha": self.CTE(temperature),
-            "rho": self.rho(temperature),
-            "sigma_y": self.Sy(temperature),
-        }
-        return mat_dict
-
     def mu(self, temperature):
         """
         Poisson's ratio
