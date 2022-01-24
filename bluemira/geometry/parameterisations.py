@@ -1363,6 +1363,12 @@ class SCCurvedPictureFrame(GeometryParameterisation):
             )
 
             wires.append(top_leg_curve)
+
+            # Outer leg
+            px = [x_out, 0, z_mid_up]
+            po = [x_out, 0, 0]
+            wires.append(make_polygon([px, po], label="outer_limb_upper"))
+
         else:
             # If top leg is flat
             wires.append(
@@ -1376,11 +1382,20 @@ class SCCurvedPictureFrame(GeometryParameterisation):
                 )
             )
 
-        # Outer Leg
+            # Outer leg
+            px = [x_out, 0, z_mid_up - r_j]
+            po = [x_out, 0, 0]
+            wires.append(make_polygon([px, po], label="outer_limb_upper"))
 
         # Bottom Curve
         if z_max_down + z_mid_down < -0.001:
             # If bottom leg is curved
+
+            # Outer leg
+            px = [x_out, 0, z_mid_down]
+            po = [x_out, 0, 0]
+            wires.append(make_polygon([po, px], label="outer_limb_lower"))
+
             bot_leg_curve = CurvedPictureFrameMixin._domed_leg(
                 axis,
                 x_out,
@@ -1396,6 +1411,12 @@ class SCCurvedPictureFrame(GeometryParameterisation):
 
         else:
             # If bottom leg is flat
+
+            # Outer leg
+            px = [x_out, 0, z_mid_down + r_j]
+            po = [x_out, 0, 0]
+            wires.append(make_polygon([po, px], label="outer_limb_lower"))
+
             wires.append(
                 make_circle(
                     r_j,
@@ -1410,7 +1431,6 @@ class SCCurvedPictureFrame(GeometryParameterisation):
         p3 = [x_mid, 0, z_mid_down]
         p4 = [x_mid, 0, 0]
         wires.append(make_polygon([p3, p4], label="bot_limb_inb"))
-
         return wires  # BluemiraWire(wires, label=label)
 
 
@@ -1496,6 +1516,12 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
             )
 
             wires.append(top_leg_curve)
+
+            # Outer leg
+            px = [x_out, 0, z_mid_up]
+            po = [x_out, 0, 0]
+            wires.append(make_polygon([px, po], label="outer_limb_upper"))
+
         else:
             # If top leg is flat
             wires.append(
@@ -1509,9 +1535,20 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
                 )
             )
 
+            # Outer leg
+            px = [x_out, 0, z_mid_up - r_j]
+            po = [x_out, 0, 0]
+            wires.append(make_polygon([px, po], label="outer_limb_upper"))
+
         # Bottom Curve
         if z_max_down + z_mid_down < -0.001:
             # If bottom leg is curved
+
+            # Outer leg
+            px = [x_out, 0, z_mid_down]
+            po = [x_out, 0, 0]
+            wires.append(make_polygon([po, px], label="outer_limb_lower"))
+
             bot_leg_curve = CurvedPictureFrameMixin._domed_leg(
                 axis,
                 x_out,
@@ -1527,6 +1564,12 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
 
         else:
             # If bottom leg is flat
+
+            # Outer leg
+            px = [x_out, 0, z_mid_down + r_j]
+            po = [x_out, 0, 0]
+            wires.append(make_polygon([po, px], label="outer_limb_lower"))
+
             wires.append(
                 make_circle(
                     r_j,
@@ -1561,25 +1604,4 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
             )
         )
 
-        if r != 0.0:
-            wires.append(
-                make_circle(
-                    r,
-                    c1,
-                    start_angle=270,
-                    end_angle=360,
-                    axis=axis,
-                    label="lower_corner",
-                )
-            )
-
-        wires.append(make_polygon([p9, p10], label="outer_limb"))
-
-        if r != 0.0:
-            wires.append(
-                make_circle(
-                    r, c2, start_angle=0, end_angle=90, axis=axis, label="upper_corner"
-                )
-            )
-
-        return BluemiraWire(wires, label=label)
+        return wires  # BluemiraWire(wires, label=label)
