@@ -445,7 +445,7 @@ def read_n_line(line):
     return out
 
 
-def plot_radial_build(run, width=1.0):
+def setup_radial_build(run, width=1.0):
     """
     Plots radial and vertical build of a PROCESS run
     Input: Dictionary of PROCESS output
@@ -577,7 +577,7 @@ def process_RB_fromOUT(f):  # noqa :N802
     return {"Radial Build": rb, "n_TF": n_TF, "R_0": R_0}
 
 
-def plot_PROCESS(filename: str, width: float = 1.0, show: bool = True):
+def plot_radial_build(filename: str, width: float = 1.0, show: bool = True):
     """
     Plot PROCESS radial build.
 
@@ -601,6 +601,6 @@ def plot_PROCESS(filename: str, width: float = 1.0, show: bool = True):
         raise CodesError(f"Could not find PROCESS OUT.DAT results at {filename}")
 
     radial_build = process_RB_fromOUT(filename)
-    plot_radial_build(radial_build, width=width)
+    setup_radial_build(radial_build, width=width)
     if show:
         plt.show()

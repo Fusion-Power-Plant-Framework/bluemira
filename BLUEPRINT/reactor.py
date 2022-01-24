@@ -43,7 +43,7 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn, print_ban
 from bluemira.base.parameter import ParameterFrame
 
 # PROCESS imports
-from bluemira.codes import run_systems_code
+from bluemira.codes import systems_code_solver
 
 # Equilibria imports
 from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
@@ -292,12 +292,14 @@ class Reactor(ReactorSystem):
         """
         Runs, reads, or mocks the systems code according to the build config dictionary.
         """
-        PROCESS_solver = run_systems_code(
+        PROCESS_solver = systems_code_solver(
             self.params,
             self.build_config,
             self.file_manager.generated_data_dirs["systems_code"],
             self.file_manager.reference_data_dirs["systems_code"],
         )
+
+        PROCESS_solver.run()
         self.params.update_kw_parameters(PROCESS_solver.params.to_dict())
 
     def estimate_kappa_95(self):

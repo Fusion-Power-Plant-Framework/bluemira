@@ -217,8 +217,11 @@ class Inputs(PlasmodParameters):
 class Outputs(PlasmodParameters):
     """Class for Plasmod outputs"""
 
-    def __init__(self):
+    def __init__(self, use_defaults=False):
         self._options = self.get_default_plasmod_outputs()
+        if not use_defaults:
+            for k in self._options.keys():
+                self._options[k] = None
 
     def get_default_plasmod_outputs(self):
         """
@@ -301,7 +304,7 @@ class Outputs(PlasmodParameters):
                 f"{PLASMOD} error: " "Abnormal paramters, possibly dtmax/dtmin too large"
             )
         else:
-            raise CodesError(f"{PLASMOD} error: " f"Unknown error code {exit_flag}")
+            raise CodesError(f"{PLASMOD} error: Unknown error code {exit_flag}")
 
 
 class RunMode(interface.RunMode):
@@ -310,6 +313,7 @@ class RunMode(interface.RunMode):
     """
 
     RUN = auto()
+    READ = auto()
     MOCK = auto()
 
 
@@ -365,13 +369,6 @@ class Setup(interface.Setup):
     def _run(self):
         """
         Run plasmod setup
-        """
-        self.update_inputs()
-        self.write_input()
-
-    def _mock(self):
-        """
-        Mock plasmod setup
         """
         self.update_inputs()
         self.write_input()

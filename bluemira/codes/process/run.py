@@ -33,7 +33,8 @@ from typing import Dict, List, Optional, Union
 import bluemira.base as bm_base
 import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.codes.process.api import DEFAULT_INDAT
+from bluemira.codes.error import CodesError
+from bluemira.codes.process.api import DEFAULT_INDAT, ENABLED
 from bluemira.codes.process.constants import BINARY
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.mapping import mappings
@@ -143,6 +144,11 @@ class Solver(interface.FileProgramInterface):
         testing purposes.
     - "none": Do nothing. Useful when loading results from previous runs of Bluemira,
         when overwriting data with PROCESS output would be undesirable.
+
+    Raises
+    ------
+    CodesError
+        If PROCESS is not being mocked and is not installed.
     """
 
     _params: bm_base.ParameterFrame
@@ -175,8 +181,11 @@ class Solver(interface.FileProgramInterface):
         template_indat: Optional[str] = None,
         params_to_update: Optional[List[str]] = None,
     ):
-        self._read_dir = read_dir
 
+        if (not ENABLED) and (build_config.get("mode", "run").lower() != "mock"):
+            raise CodesError(f"{PROCESS} not (properly) installed")
+
+        self.read_dir = read_dir
         self._params_to_update = (
             build_config.get("params_to_update", None)
             if params_to_update is None

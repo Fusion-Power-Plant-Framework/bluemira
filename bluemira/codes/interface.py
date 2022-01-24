@@ -193,12 +193,6 @@ class Teardown(Task):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
 
-    def get_parameters(self):
-        """
-        TODO?
-        """
-        pass
-
 
 class FileProgramInterface:
     """An external code wrapper"""
@@ -221,7 +215,7 @@ class FileProgramInterface:
         if self._runmode is not RunMode and issubclass(self._runmode, RunMode):
             self._set_runmode(runmode)
         else:
-            raise CodesError("Please define a RunMode child lass")
+            raise CodesError("Please define a RunMode child class")
 
         self._protect_tasks()
 

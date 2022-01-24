@@ -300,7 +300,7 @@ PLASMOD_INPUTS = {
     # [-] scaling factor for p_ped scaling formula
     # ###### "BM_INP": "pedscal",
     # ###########################
-    # listlist general inputs: control, confinement, B.C., etc
+    # list general inputs: control, confinement, B.C., etc
     # ############################
     # [-] Greenwald density fraction at pedestal
     # ###### "BM_INP": "f_gw",

@@ -35,6 +35,27 @@ from bluemira.base.look_and_feel import (
     bluemira_print_clean,
 )
 from bluemira.codes.error import CodesError
+from bluemira.utilities.tools import get_module
+
+
+def get_code_interface(module):
+    """
+    Dynamically import code interface
+
+    Parameters
+    ----------
+    module: str
+        module to import
+
+    Returns
+    -------
+    code module
+
+    """
+    try:
+        return get_module(f"bluemira.codes.{module.lower()}")
+    except ImportError:
+        return get_module(module)
 
 
 def _get_mapping(

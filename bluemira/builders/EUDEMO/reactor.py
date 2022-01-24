@@ -32,7 +32,7 @@ from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
-from bluemira.codes import run_systems_code
+from bluemira.codes import systems_code_solver
 from bluemira.codes.process import NAME as PROCESS
 
 
@@ -79,13 +79,15 @@ class EUDEMOReactor(Reactor):
         # run_systems_code interface is updated to have a more general runmode value.
         config["process_mode"] = config.pop("runmode")
 
-        solver = run_systems_code(
+        solver = systems_code_solver(
             self._params,
             config,
             self._file_manager.generated_data_dirs["systems_code"],
             self._file_manager.reference_data_dirs["systems_code"],
         )
+
         self.register_solver(solver, name)
+        solver.run()
         self._params.update_kw_parameters(solver.params.to_dict())
 
         bluemira_print(f"Completed design stage: {name}")
