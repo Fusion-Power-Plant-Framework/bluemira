@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.equilibria.constraint_library as constraint_library
-import examples.equilibria.double_null_ST as double_null
+import examples.equilibria.double_null_ST as double_null_ST
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.coils import Coil
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -213,10 +213,10 @@ def run():
     """
     Main program to solve the specified FBE problem.
     """
-    grid = double_null.init_grid()
-    profile = double_null.init_profile()
-    targets, core_targets = double_null.init_targets()
-    coilset = double_null.init_coilset()
+    grid = double_null_ST.init_grid()
+    profile = double_null_ST.init_profile()
+    targets, core_targets = double_null_ST.init_targets()
+    coilset = double_null_ST.init_coilset()
     eq = init_equilibrium(grid, coilset, targets, profile)
 
     # Perform a fast initial unconstrained optimisation to create a
