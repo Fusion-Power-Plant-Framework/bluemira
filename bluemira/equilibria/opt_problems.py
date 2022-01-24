@@ -27,11 +27,12 @@ from typing import List
 
 import numpy as np
 
+import bluemira.equilibria.objectives as objectives
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.positioner import RegionMapper
-from bluemira.utilities.opt_tools import ObjectiveLibrary, regularised_lsq_fom, tikhonov
+from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
 from bluemira.utilities.optimiser import (
     Optimiser,
     OptimiserConstraint,
@@ -76,7 +77,7 @@ class OptimisationProblem:
         self.opt.build_optimiser(n_variables=dimension)
 
         # Set up objective function for optimiser
-        self.opt.set_objective_function(self._objective._f_objective)
+        self.opt.set_objective_function(self._objective)
 
         # Apply constraints
         self.set_constraints(self.opt, self._constraints)
@@ -385,18 +386,18 @@ class BoundedCurrentCOP(CoilsetOP):
             },
             opt_parameters={"initial_step": 0.03},
         ),
-        max_currents=None,
         gamma=1e-8,
         opt_constraints=[],
+        max_currents=None,
     ):
         # noqa :N803
-        opt_objective = OptimiserObjective(self.f_min_objective)
-        super().__init__(coilset, optimiser, opt_objective)
-        self.max_currents = max_currents
-        self.gamma = gamma
+        objective = OptimiserObjective(
+            objectives.regularised_lsq_objective, {"gamma": gamma}
+        )
+        super().__init__(coilset, optimiser, objective, opt_constraints)
 
         # Set up optimiser
-        bounds = self.get_current_bounds(self.max_currents)
+        bounds = self.get_current_bounds(max_currents)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
@@ -416,39 +417,18 @@ class BoundedCurrentCOP(CoilsetOP):
         # Set up data needed in FoM evaluation.
         # Scale the control matrix and constraint vector by weights.
         self.constraints(self.eq, I_not_dI=True)
-        self.w = self.constraints.w
-        self.A = self.w[:, np.newaxis] * self.constraints.A
-        self.b = self.w * self.constraints.b
+        weights = self.constraints.w
+
+        self._objective._args["scale"] = self.scale
+        self._objective._args["a_mat"] = weights[:, np.newaxis] * self.constraints.A
+        self._objective._args["b_vec"] = weights * self.constraints.b
 
         # Optimise
-        self.iter = 0
         currents = self.opt.optimise(initial_currents)
 
         coilset_state = np.concatenate((self.x0, self.z0, currents))
         self.set_coilset_state(coilset_state)
         return self.coilset
-
-    def f_min_objective(self, vector, grad):
-        """
-        Objective function for nlopt optimisation (minimisation),
-        consisting of a least-squares objective with Tikhonov
-        regularisation term, which updates the gradient in-place.
-
-        Parameters
-        ----------
-        vector: np.array(n_C)
-            State vector of the array of coil currents.
-        grad: np.array
-            Local gradient of objective function used by LD NLOPT algorithms.
-            Updated in-place.
-
-        Returns
-        -------
-        fom: Value of objective function (figure of merit).
-        """
-        return ObjectiveLibrary.regularised_lsq_objective(
-            self, vector, grad, self.scale, self.A, self.b, self.gamma
-        )
 
 
 class CoilsetPositionCOP(CoilsetOP):

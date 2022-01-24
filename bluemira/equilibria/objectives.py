@@ -20,7 +20,22 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Optimisation utilities
+Equilibrium optimisation objective functions.
+
+Objective functions must be of the form:
+
+.. code-block:: python
+
+    def f_objective(x, grad, args):
+        if grad.size > 0:
+            grad[:] = my_gradient_calc(x)
+        return my_objective_calc(x)
+
+The objective function is minimised, so lower values are "better".
+
+Note that the gradient of the objective function is of the form:
+
+:math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
 """
 
 import numpy as np
@@ -30,77 +45,36 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.utilities.error import InternalOptError
 
 
-class ConstraintLibrary:
+def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
     """
-    Library class containing constraint functions to use in NLOpt constrained
-    optimisation problems.
+    Objective function for nlopt optimisation (minimisation),
+    consisting of a least-squares objective with Tikhonov
+    regularisation term, which updates the gradient in-place.
 
-    Constraint functions must be of the form:
+    Parameters
+    ----------
+    vector: np.array(n_C)
+        State vector of the array of coil currents.
+    grad: np.array
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
 
-    .. code-block:: python
-
-        def f_constraint(constraint, x, grad, args):
-            constraint[:] = my_constraint_calc(x)
-            if grad.size > 0:
-                grad[:] = my_gradient_calc(x)
-            return constraint
-
-    The constraint function convention is such that c <= 0 is sought. I.e. all constraint
-    values must be negative.
-
-    Note that the gradient (Jacobian) of the constraint function is of the form:
-
-    .. math::
-
-        \\nabla \\mathbf{c} = \\begin{bmatrix}
-                \\dfrac{\\partial c_{0}}{\\partial x_0} & \\dfrac{\\partial c_{0}}{\\partial x_1} & ... \n
-                \\dfrac{\\partial c_{1}}{\\partial x_0} & \\dfrac{\\partial c_{1}}{\\partial x_1} & ... \n
-                ... & ... & ... \n
-                \\end{bmatrix}
-
-    The grad and constraint matrices must be assigned in place.
-    """  # noqa (W505)
-
-    def objective_constraint(
-        self, constraint, vector, grad, objective_function, maximum_fom=1.0
-    ):
-        """
-        Constraint function to constrain the maximum value of an NLOpt objective
-        function provided
-
-        Parameters
-        ----------
-        objective_function: callable
-            NLOpt objective function to use in constraint.
-        maximum_fom: float (default=1.0)
-            Value to constrain the objective function by during optimisation.
-        """
-        constraint[:] = objective_function(self, vector, grad) - maximum_fom
-        return constraint
-
-    def current_midplane_constraint(
-        self, constraint, vector, grad, radius, inboard=True
-    ):
-        """
-        Constraint function to constrain the inboard or outboard midplane
-        of the plasma during optimisation.
-
-        Parameters
-        ----------
-        radius: float
-            Toroidal radius at which to constrain the plasma midplane.
-        inboard: bool (default=True)
-            Boolean controlling whether to constrain the inboard (if True) or
-            outboard (if False) side of the plasma midplane.
-        """
-        coilset_state = np.concatenate((self.x0, self.z0, vector))
-        self.set_coilset_state(coilset_state)
-        lcfs = self.eq.get_LCFS()
-        if inboard:
-            constraint[:] = radius - min(lcfs.x)
-        else:
-            constraint[:] = max(lcfs.x) - radius
-        return constraint
+    Returns
+    -------
+    fom: Value of objective function (figure of merit).
+    """
+    vector = vector * scale
+    fom, err = regularised_lsq_fom(vector, a_mat, b_vec, gamma)
+    if grad.size > 0:
+        jac = 2 * a_mat.T @ a_mat @ vector / np.float(len(b_vec))
+        jac -= 2 * a_mat.T @ b_vec / np.float(len(b_vec))
+        jac += 2 * gamma * gamma * vector
+        grad[:] = scale * jac
+    if not fom > 0:
+        raise EquilibriaError(
+            "Optimiser least-squares objective function less than zero or nan."
+        )
+    return fom
 
 
 # =============================================================================
@@ -131,13 +105,13 @@ def tikhonov(A, b, gamma):
     """
     try:
         return np.dot(
-            np.linalg.inv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
+            np.linalg.inv(np.dot(A.T, A) + gamma ** 2 * np.eye(A.shape[1])),
             np.dot(A.T, b),
         )
     except np.linalg.LinAlgError:
         bluemira_warn("Tikhonov singular matrix..!")
         return np.dot(
-            np.linalg.pinv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
+            np.linalg.pinv(np.dot(A.T, A) + gamma ** 2 * np.eye(A.shape[1])),
             np.dot(A.T, b),
         )
 

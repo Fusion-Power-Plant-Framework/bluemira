@@ -106,7 +106,7 @@ class OptimiserObjective:
         Objective function to apply to problem.
         For NLOpt objectives, objective functions should be of the form
         f_objective(cls, x, grad, f_objective_args)
-    f_objective_args: tuple (default = ())
+    _args: dict (default = {})
         Additional arguments to pass to NLOpt objective function when called.
     tolerance: array
         Array of tolerances to use when applying the optimisation constraint.
@@ -114,9 +114,12 @@ class OptimiserObjective:
         Controls whether to minimise or maximise objective; either "min" or "max".
     """
 
-    def __init__(self, f_objective, f_objective_args=()):
+    def __init__(self, f_objective, f_objective_args={}):
         self._f_objective = f_objective
-        self._f_objective_args = f_objective_args
+        self._args = f_objective_args
+
+    def __call__(self, vector, grad):
+        return self._f_objective(vector, grad, **self._args)
 
 
 class Optimiser(NLOPTOptimiser):
