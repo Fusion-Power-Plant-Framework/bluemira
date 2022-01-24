@@ -30,13 +30,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.equilibria.constraint_library as constraint_library
+import examples.equilibria.double_null_ST as DN_ST
 from bluemira.display.auto_config import plot_defaults
-from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_problems import BoundedCurrentCOP, UnconstrainedCurrentCOP
-from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardCoilsetIterator
 from bluemira.utilities.optimiser import Optimiser, OptimiserConstraint
 
@@ -71,144 +68,6 @@ R0 = 2.6
 Z0 = 0
 Bt = 1.9
 Ip = 16e6
-
-
-def init_grid():
-    """
-    Create the grid for the FBE solver.
-    """
-    r0, r1 = 0.2, 8
-    z0, z1 = -8, 8
-    nx, nz = 129, 257
-    grid = Grid(r0, r1, z0, z1, nx, nz)
-    return grid
-
-
-def init_profile():
-    """
-    Create the plasma profiles for the FBE solver.
-    """
-    pprime = np.array(
-        [
-            -850951,
-            -844143,
-            -782311,
-            -714610,
-            -659676,
-            -615987,
-            -572963,
-            -540556,
-            -509991,
-            -484261,
-            -466462,
-            -445186,
-            -433472,
-            -425413,
-            -416325,
-            -411020,
-            -410672,
-            -406795,
-            -398001,
-            -389309,
-            -378528,
-            -364607,
-            -346119,
-            -330297,
-            -312817,
-            -293764,
-            -267515,
-            -261466,
-            -591725,
-            -862663,
-        ]
-    )
-    ffprime = np.array(
-        [
-            7.23,
-            5.89,
-            4.72,
-            3.78,
-            3.02,
-            2.39,
-            1.86,
-            1.43,
-            1.01,
-            0.62,
-            0.33,
-            0.06,
-            -0.27,
-            -0.61,
-            -0.87,
-            -1.07,
-            -1.24,
-            -1.18,
-            -0.83,
-            -0.51,
-            -0.2,
-            0.08,
-            0.24,
-            0.17,
-            0.13,
-            0.1,
-            0.07,
-            0.05,
-            0.15,
-            0.28,
-        ]
-    )
-    profile = CustomProfile(pprime, ffprime, R_0=R0, B_0=Bt, Ip=Ip)
-    return profile
-
-
-def init_targets():
-    """
-    Create the set of isoflux targets for the FBE optimisation objective function.
-    """
-    x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
-    z_lcfs = np.array([0, 4.19, 0, -4.19])
-
-    lcfs_isoflux = IsofluxConstraint(x_lcfs, z_lcfs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
-
-    x_lfs = np.array([1.86, 2.24, 2.53, 2.90, 3.43, 4.28, 5.80, 6.70])
-    z_lfs = np.array([4.80, 5.38, 5.84, 6.24, 6.60, 6.76, 6.71, 6.71])
-    x_hfs = np.array([1.42, 1.06, 0.81, 0.67, 0.62, 0.62, 0.64, 0.60])
-    z_hfs = np.array([4.80, 5.09, 5.38, 5.72, 6.01, 6.65, 6.82, 7.34])
-
-    x_legs = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
-    z_legs = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
-
-    legs_isoflux = IsofluxConstraint(x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
-
-    constraint_set = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
-    core_constraints = MagneticConstraintSet([lcfs_isoflux])
-    return constraint_set, core_constraints
-
-
-def init_coilset():
-    """
-    Create the initial coilset.
-    """
-    # Make a coilset
-    coil_x = [1.05, 6.85, 6.85, 1.05, 3.2, 5.7, 5.3]
-    coil_z = [7.85, 4.75, 3.35, 6.0, 8.0, 7.8, 5.50]
-    coil_dx = [0.45, 0.5, 0.5, 0.3, 0.6, 0.5, 0.25]
-    coil_dz = [0.5, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5]
-    currents = [0, 0, 0, 0, 0, 0, 0]
-
-    circuits = []
-    for i in range(len(coil_x)):
-        coil = Coil(
-            coil_x[i],
-            coil_z[i],
-            dx=coil_dx[i] / 2,
-            dz=coil_dz[i] / 2,
-            current=currents[i],
-            ctype="PF",
-        )
-        circuit = SymmetricCircuit(coil)
-        circuits.append(circuit)
-    coilset = CoilSet(circuits)
-    return coilset
 
 
 def init_equilibrium(grid, coilset, targets, profile):
@@ -353,10 +212,10 @@ def run():
     """
     Main program to solve the specified FBE problem.
     """
-    grid = init_grid()
-    profile = init_profile()
-    targets, core_targets = init_targets()
-    coilset = init_coilset()
+    grid = DN_ST.init_grid()
+    profile = DN_ST.init_profile()
+    targets, core_targets = DN_ST.init_targets()
+    coilset = DN_ST.init_coilset()
     eq = init_equilibrium(grid, coilset, targets, profile)
 
     # Perform a fast initial unconstrained optimisation to create a

@@ -164,7 +164,7 @@ def init_profile():
     return profile
 
 
-def init_constraints():
+def init_targets():
     """
     Create the set of constraints for the FBE solver.
     """
@@ -184,7 +184,8 @@ def init_constraints():
     legs_isoflux = IsofluxConstraint(x_legs, z_legs, ref_x=x_lcfs[2], ref_z=z_lcfs[2])
 
     constraint_set = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
-    return constraint_set
+    core_constraints = MagneticConstraintSet([lcfs_isoflux])
+    return constraint_set, core_constraints
 
 
 def init_coilset():
@@ -424,7 +425,7 @@ def run(args):
     optimiser_name = args.optimiser_name
     grid = init_grid()
     profile = init_profile()
-    constraint_set = init_constraints()
+    constraint_set = init_targets()[0]
     coilset = init_coilset()
     eq = init_equilibrium(grid, coilset, constraint_set)
 
