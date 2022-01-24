@@ -182,9 +182,6 @@ class Solver(interface.FileProgramInterface):
         params_to_update: Optional[List[str]] = None,
     ):
 
-        if (not ENABLED) and (build_config.get("mode", "run").lower() != "mock"):
-            raise CodesError(f"{PROCESS} not (properly) installed")
-
         self.read_dir = read_dir
         self._params_to_update = (
             build_config.get("params_to_update", None)
@@ -207,6 +204,13 @@ class Solver(interface.FileProgramInterface):
             read_dir=read_dir,
             mappings=mappings,
         )
+
+        self._enabled_check(build_config.get("mode", "run").lower())
+
+    @staticmethod
+    def _enabled_check(mode):
+        if (not ENABLED) and (mode != "mock"):
+            raise CodesError(f"{PROCESS} not (properly) installed")
 
     def get_process_parameters(self, params: Union[List, str]):
         """

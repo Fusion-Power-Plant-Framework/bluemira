@@ -131,7 +131,8 @@ class TestRun:
         Test that the PROCESS runner accepts valid runmodes and calls the corresponding
         function.
         """
-        self.run_PROCESS(runmode)
+        with patch("bluemira.codes.process.run.Solver._enabled_check"):
+            self.run_PROCESS(runmode)
 
         # Check correct call was made.
         if runmode.upper() == "RUN":
