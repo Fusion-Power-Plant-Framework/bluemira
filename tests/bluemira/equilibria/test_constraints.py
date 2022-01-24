@@ -31,7 +31,7 @@ from bluemira.equilibria.constraints import (
     PsiBoundaryConstraint,
 )
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimiser import UnconstrainedCurrentOptimiser
+from bluemira.equilibria.opt_problems import UnconstrainedCurrentCOP
 
 
 # @pytest.mark.longrun
@@ -84,7 +84,7 @@ class TestWeightedConstraints:
             constraint_set(eq)
 
             # Test that weights have been applied
-            optimiser = UnconstrainedCurrentOptimiser(eq.coilset, gamma=1e-8)
+            optimiser = UnconstrainedCurrentCOP(eq.coilset, gamma=1e-8)
             optimiser(eq, constraint_set)
 
             assert np.allclose(optimiser.b, weights * constraint_set.b)

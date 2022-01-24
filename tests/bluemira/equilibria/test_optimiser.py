@@ -26,7 +26,8 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import PF_COIL_NAME, Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.optimiser import CoilsetOptimiser, PositionOptimiser
+from bluemira.equilibria.opt_problems import CoilsetPositionCOP
+from bluemira.equilibria.optimiser import PositionOptimiser
 from bluemira.geometry._deprecated_loop import Loop
 from tests.bluemira.equilibria.setup_methods import _coilset_setup, _make_square
 
@@ -241,7 +242,7 @@ class TestCoilsetOptimiser:
 
             cls.pfregions[coil.name] = rect
 
-        cls.optimiser = CoilsetOptimiser(cls.coilset, cls.pfregions)
+        cls.optimiser = CoilsetPositionCOP(cls.coilset, cls.pfregions)
 
     def test_modify_coilset(self):
         # Read
