@@ -23,7 +23,7 @@
 Grad-Shafranov operator classes
 """
 import numpy as np
-from numpy import linspace, ones, reshape
+from numpy import linspace, reshape
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import factorized
 
