@@ -22,7 +22,6 @@
 """
 Static API to optimisation library
 """
-import inspect
 from pprint import pformat
 
 import numpy as np
@@ -31,7 +30,7 @@ from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # n
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._nlopt_api import NLOPTOptimiser
 
-__all__ = ["approx_derivative", "Optimiser", "OptimiserObjective", "OptimiserConstraint"]
+__all__ = ["approx_derivative", "Optimiser"]
 
 
 def approx_derivative(
@@ -62,85 +61,6 @@ def approx_derivative(
     return _approx_derivative(
         func, x0, method=method, rel_step=rel_step, f0=f0, bounds=bounds, args=args
     )
-
-
-class OptimiserConstraint:
-    """
-    Data class to store information needed to apply a constraint
-    to an optimisation problem.
-
-    Parameters
-    ----------
-    f_constraint: callable
-        Constraint function to apply to problem.
-        For NLOpt constraints, onstraint functions should be of the form
-        f_constraint(cls, constraint, x, grad, f_constraint_args)
-    f_constraint_args: dict (default = None)
-        Additional arguments to pass to NLOpt constraint function when called.
-    tolerance: array
-        Array of tolerances to use when applying the optimisation constraint.
-    constraint_type: string (default: "inequality")
-        Type of constraint to apply, either "inequality" or "equality".
-    """
-
-    def __init__(
-        self,
-        f_constraint,
-        f_constraint_args=None,
-        tolerance=np.array([1e-6]),
-        constraint_type="inequality",
-    ):
-        self._tolerance = tolerance
-        self._constraint_type = constraint_type
-        self._f_constraint = f_constraint
-        self._args = f_constraint_args
-
-    def __call__(self, constraint, vector, grad):
-        """
-        Call to constraint function used by NLOpt, passing in arguments.
-        """
-        return self._f_constraint(constraint, vector, grad, **self._args)
-
-    def apply_constraint(self, opt_problem):
-        """
-        Apply constraint to a specified OptimisationProblem.
-        """
-        # Add optimisation problem to constraint arguments if needed by
-        # constraint function
-        if "opt_problem" in inspect.getargspec(self._f_constraint).args:
-            self._args["opt_problem"] = opt_problem
-
-        # Apply constraint to optimiser
-        if self._constraint_type == "inequality":
-            opt_problem.opt.add_ineq_constraints(self, self._tolerance)
-        elif self._constraint_type == "equality":
-            opt_problem.opt.add_eq_constraints(self, self._tolerance)
-
-
-class OptimiserObjective:
-    """
-    Data class to store information needed to apply a constraint
-    to an optimisation problem.
-
-    Parameters
-    ----------
-    f_objective: callable
-        Objective function to apply to problem.
-        For NLOpt objectives, objective functions should be of the form
-        f_objective(cls, x, grad, f_objective_args)
-    _args: dict (default = None)
-        Additional arguments to pass to NLOpt objective function when called.
-    """
-
-    def __init__(self, f_objective, f_objective_args=None):
-        self._f_objective = f_objective
-        self._args = f_objective_args
-
-    def __call__(self, vector, grad):
-        """
-        Call to objective function used by NLOpt, passing in arguments.
-        """
-        return self._f_objective(vector, grad, **self._args)
 
 
 class Optimiser(NLOPTOptimiser):

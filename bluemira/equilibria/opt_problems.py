@@ -32,12 +32,13 @@ from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.positioner import RegionMapper
-from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
-from bluemira.utilities.optimiser import (
-    Optimiser,
-    OptimiserConstraint,
-    OptimiserObjective,
+from bluemira.utilities.opt_problems import (
+    OptimisationConstraint,
+    OptimisationObjective,
+    OptimisationProblem,
 )
+from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
+from bluemira.utilities.optimiser import Optimiser
 
 __all__ = [
     "UnconstrainedCurrentCOP",
@@ -47,101 +48,13 @@ __all__ = [
 ]
 
 
-class OptimisationProblem:
-    def __init__(
-        self,
-        parameterisation,
-        optimiser: Optimiser,
-        objective: OptimiserObjective,
-        constraints: List[OptimiserConstraint],
-    ):
-        self._parameterisation = parameterisation
-        self.opt = optimiser
-        self._objective = objective
-        self._constraints = constraints
-
-    def set_up_optimiser(self, dimension: int, bounds: np.array):
-        """
-        Set up NLOpt-based optimiser with algorithm,  bounds, tolerances, and
-        constraint & objective functions.
-
-        Parameters
-        ----------
-        dimension: int
-            Number of independent variables in the state vector to be optimised.
-        bounds: tuple
-            Tuple containing lower and upper bounds on the state vector.
-        """
-        # Build NLOpt optimiser, with optimisation strategy and length
-        # of state vector
-        self.opt.build_optimiser(n_variables=dimension)
-
-        # Set up objective function for optimiser
-        self.opt.set_objective_function(self._objective)
-
-        # Apply constraints
-        self.set_constraints(self.opt, self._constraints)
-
-        # Set state vector bounds (current limits)
-        self.opt.set_lower_bounds(bounds[0])
-        self.opt.set_upper_bounds(bounds[1])
-
-    def set_constraints(
-        self, opt: Optimiser, opt_constraints: List[OptimiserConstraint]
-    ):
-        """
-        Updates the optimiser in-place to apply problem constraints.
-        To be overidden by child classes to apply specific constraints.
-
-        Parameters
-        ----------
-        opt: Optimiser
-            Optimiser on which to apply the constraints. Updated in place.
-        opt_constraints: iterable
-            Iterable of OptimiserConstraint objects containing optimisation
-            constraints to be applied to the Optimiser.
-
-        Notes
-        -----
-        Lambda functions are used here to ensure the CoilsetPositionCOP is passed
-        to the function, to allow any properties that are stored in the
-        CoilsetPositionCOP to be accessed at runtime.
-        """
-        for _opt_constraint in opt_constraints:
-            _opt_constraint.apply_constraint(self)
-        return opt
-
-    def initialise_state(self, parameterisation) -> np.array:
-        """
-        Initialises state vector to be passed to optimiser from object used
-        in parameterisation, at each optimise() call.
-        To be overridden as needed.
-        """
-        initial_state = parameterisation
-        return initial_state
-
-    def update_parametrisation(self, state: np.array):
-        """
-        Update parameterisation object using the state vector.
-        To be overridden as needed.
-        """
-        parameterisation = state
-        return parameterisation
-
-    def optimise(self):
-        initial_state = self.initialise_state(self._parameterisation)
-        opt_state = self._opt.optimise(initial_state)
-        self._parameterisation = self.update_parametrisation(opt_state)
-        return self._parameterisation
-
-
 class CoilsetOP(OptimisationProblem):
     def __init__(
         self,
         coilset: CoilSet,
         optimiser: Optimiser = None,
-        objective: OptimiserObjective = None,
-        constraints: List[OptimiserConstraint] = [],
+        objective: OptimisationObjective = None,
+        constraints: List[OptimisationConstraint] = [],
     ):
         super().__init__(coilset, optimiser, objective, constraints)
         self.scale = 1e6
@@ -347,7 +260,7 @@ class BoundedCurrentCOP(CoilsetOP):
         Dictionary containing arguments to pass to NLOpt optimiser.
         Defaults to using LD_SLSQP.
     opt_constraints: iterable (default = [])
-        Iterable of OptimiserConstraint objects containing optimisation
+        Iterable of OptimisationConstraint objects containing optimisation
         constraints held during optimisation.
     """
 
@@ -370,7 +283,7 @@ class BoundedCurrentCOP(CoilsetOP):
         max_currents=None,
     ):
         # noqa :N803
-        objective = OptimiserObjective(
+        objective = OptimisationObjective(
             objectives.regularised_lsq_objective, {"gamma": gamma}
         )
         super().__init__(coilset, optimiser, objective, opt_constraints)
@@ -435,7 +348,7 @@ class CoilsetPositionCOP(CoilsetOP):
         Defaults to using LN_SBPLX, terminating when the figure of
         merit < stop_val = 1.0, or max_eval =100.
     opt_constraints: iterable (default = [])
-        Iterable of OptimiserConstraint objects containing optimisation
+        Iterable of OptimisationConstraint objects containing optimisation
         constraints held during optimisation.
 
     Notes
@@ -463,7 +376,7 @@ class CoilsetPositionCOP(CoilsetOP):
         opt_constraints=[],
     ):
         # noqa :N803
-        opt_objective = OptimiserObjective(self.f_min_objective)
+        opt_objective = OptimisationObjective(self.f_min_objective)
         super().__init__(coilset, optimiser, opt_objective)
 
         # Create region map
@@ -608,7 +521,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         Defaults to using LN_SBPLX, terminating when the figure of
         merit < stop_val = 1.0, or max_eval = 100.
     opt_constraints: iterable (default = [])
-        Iterable of OptimiserConstraint objects containing optimisation
+        Iterable of OptimisationConstraint objects containing optimisation
         constraints held during optimisation.
 
     Notes
@@ -634,7 +547,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         opt_constraints=[],
     ):
         # noqa :N803
-        opt_objective = OptimiserObjective(self.f_min_objective)
+        opt_objective = OptimisationObjective(self.f_min_objective)
         super().__init__(sub_opt.coilset, optimiser, opt_objective)
 
         self.region_mapper = RegionMapper(pfregions)

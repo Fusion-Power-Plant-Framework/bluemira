@@ -36,7 +36,8 @@ from bluemira.equilibria.coils import Coil
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.opt_problems import BoundedCurrentCOP, UnconstrainedCurrentCOP
 from bluemira.equilibria.solve import DudsonConvergence, PicardCoilsetIterator
-from bluemira.utilities.optimiser import Optimiser, OptimiserConstraint
+from bluemira.utilities.opt_problems import OptimisationConstraint
+from bluemira.utilities.optimiser import Optimiser
 
 # %%[markdown]
 
@@ -156,11 +157,11 @@ def pre_optimise(eq, profile, targets):
 
 def init_opt_constraints():
     """
-    Create iterable of OptimiserConstraint objects to apply
+    Create iterable of OptimisationConstraint objects to apply
     during the coilset optimisation.
     """
     opt_constraints = []
-    constrain_core_isoflux_targets = OptimiserConstraint(
+    constrain_core_isoflux_targets = OptimisationConstraint(
         constraint_library.current_midplane_constraint,
         {"radius": 1.0},
         np.array([1e-4]),
