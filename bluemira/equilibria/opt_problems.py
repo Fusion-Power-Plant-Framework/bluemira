@@ -108,28 +108,7 @@ class OptimisationProblem:
         CoilsetPositionCOP to be accessed at runtime.
         """
         for _opt_constraint in opt_constraints:
-            if _opt_constraint._constraint_type == "inequality":
-                opt.add_ineq_constraints(
-                    lambda constraint, vector, grad: _opt_constraint._f_constraint(
-                        self,
-                        constraint,
-                        vector,
-                        grad,
-                        *_opt_constraint._f_constraint_args,
-                    ),
-                    _opt_constraint._tolerance,
-                )
-            elif _opt_constraint._constraint_type == "equality":
-                opt.add_eq_constraints(
-                    lambda constraint, vector, grad: _opt_constraint._f_constraint(
-                        self,
-                        constraint,
-                        vector,
-                        grad,
-                        *_opt_constraint._f_constraint_args,
-                    ),
-                    _opt_constraint._tolerance,
-                )
+            _opt_constraint.apply_constraint(self)
         return opt
 
     def initialise_state(self, parameterisation) -> np.array:

@@ -22,6 +22,7 @@
 """
 Static API to optimisation library
 """
+import inspect
 from pprint import pformat
 
 import numpy as np
@@ -74,7 +75,7 @@ class OptimiserConstraint:
         Constraint function to apply to problem.
         For NLOpt constraints, onstraint functions should be of the form
         f_constraint(cls, constraint, x, grad, f_constraint_args)
-    f_constraint_args: tuple (default = ())
+    f_constraint_args: dict (default = None)
         Additional arguments to pass to NLOpt constraint function when called.
     tolerance: array
         Array of tolerances to use when applying the optimisation constraint.
@@ -85,14 +86,35 @@ class OptimiserConstraint:
     def __init__(
         self,
         f_constraint,
-        f_constraint_args=(),
+        f_constraint_args=None,
         tolerance=np.array([1e-6]),
         constraint_type="inequality",
     ):
         self._tolerance = tolerance
         self._constraint_type = constraint_type
         self._f_constraint = f_constraint
-        self._f_constraint_args = f_constraint_args
+        self._args = f_constraint_args
+
+    def __call__(self, constraint, vector, grad):
+        """
+        Call to constraint function used by NLOpt, passing in arguments.
+        """
+        return self._f_constraint(constraint, vector, grad, **self._args)
+
+    def apply_constraint(self, opt_problem):
+        """
+        Apply constraint to a specified OptimisationProblem.
+        """
+        # Add optimisation problem to constraint arguments if needed by
+        # constraint function
+        if "opt_problem" in inspect.getargspec(self._f_constraint).args:
+            self._args["opt_problem"] = opt_problem
+
+        # Apply constraint to optimiser
+        if self._constraint_type == "inequality":
+            opt_problem.opt.add_ineq_constraints(self, self._tolerance)
+        elif self._constraint_type == "equality":
+            opt_problem.opt.add_eq_constraints(self, self._tolerance)
 
 
 class OptimiserObjective:
@@ -106,19 +128,18 @@ class OptimiserObjective:
         Objective function to apply to problem.
         For NLOpt objectives, objective functions should be of the form
         f_objective(cls, x, grad, f_objective_args)
-    _args: dict (default = {})
+    _args: dict (default = None)
         Additional arguments to pass to NLOpt objective function when called.
-    tolerance: array
-        Array of tolerances to use when applying the optimisation constraint.
-    objective_type: string (default: "min")
-        Controls whether to minimise or maximise objective; either "min" or "max".
     """
 
-    def __init__(self, f_objective, f_objective_args={}):
+    def __init__(self, f_objective, f_objective_args=None):
         self._f_objective = f_objective
         self._args = f_objective_args
 
     def __call__(self, vector, grad):
+        """
+        Call to objective function used by NLOpt, passing in arguments.
+        """
         return self._f_objective(vector, grad, **self._args)
 
 

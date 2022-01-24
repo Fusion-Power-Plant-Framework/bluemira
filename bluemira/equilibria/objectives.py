@@ -36,13 +36,12 @@ The objective function is minimised, so lower values are "better".
 Note that the gradient of the objective function is of the form:
 
 :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
-"""
+"""  # noqa (W505)
 
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.utilities.error import InternalOptError
 
 
 def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
@@ -78,45 +77,11 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
 
 
 # =============================================================================
-# Analytical objective functions
+# Figures of merit
 # =============================================================================
 
 
-def tikhonov(A, b, gamma):
-    """
-    Tikhonov regularisation of Ax-b problem.
-
-    \t:math:`\\textrm{minimise} || Ax - b ||^2 + ||{\\gamma} \\cdot x ||^2`\n
-    \t:math:`x = (A^T A + {\\gamma}^2 I)^{-1}A^T b`
-
-    Parameters
-    ----------
-    A: np.array(n, m)
-        The 2-D A matrix of responses
-    b: np.array(n)
-        The 1-D b vector of values
-    gamma: float
-        The Tikhonov regularisation parameter
-
-    Returns
-    -------
-    x: np.array(m)
-        The result vector
-    """
-    try:
-        return np.dot(
-            np.linalg.inv(np.dot(A.T, A) + gamma ** 2 * np.eye(A.shape[1])),
-            np.dot(A.T, b),
-        )
-    except np.linalg.LinAlgError:
-        bluemira_warn("Tikhonov singular matrix..!")
-        return np.dot(
-            np.linalg.pinv(np.dot(A.T, A) + gamma ** 2 * np.eye(A.shape[1])),
-            np.dot(A.T, b),
-        )
-
-
-def regularised_lsq_fom(x, A, b, gamma):
+def regularised_lsq_fom(x, a_mat, b_vec, gamma):
     """
     Figure of merit for the least squares problem Ax = b, with
     Tikhonov regularisation term. Normalised for the number of
@@ -128,9 +93,9 @@ def regularised_lsq_fom(x, A, b, gamma):
     ----------
     x : np.array(m)
         The 1-D x state vector.
-    A: np.array(n, m)
-        The 2-D A control matrix
-    b: np.array(n)
+    a_mat: np.array(n, m)
+        The 2-D a_mat control matrix A
+    b_vec: np.array(n)
         The 1-D b vector of target values
     gamma: float
         The Tikhonov regularisation parameter.
@@ -143,82 +108,10 @@ def regularised_lsq_fom(x, A, b, gamma):
     residual: np.array(n)
         Residual vector (Ax - b)
     """
-    residual = np.dot(A, x) - b
+    residual = np.dot(a_mat, x) - b_vec
     number_of_targets = np.float(len(residual))
     fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
 
     if not fom > 0:
         raise bluemira_warn("Least-squares objective function less than zero or nan.")
     return fom, residual
-
-
-def least_squares(A, b):
-    """
-    Least squares optimisation.
-
-    \t:math:`\\textrm{minimise} || Ax - b ||^{2}_{2}`\n
-    \t:math:`x = (A^T A)^{-1}A^T b`
-
-    Parameters
-    ----------
-    A: np.array(n, m)
-        The 2-D A matrix of responses
-    b: np.array(n)
-        The 1-D b vector of values
-
-    Returns
-    -------
-    x: np.array(m)
-        The result vector
-    """
-    return np.linalg.solve(A, b)
-
-
-# =============================================================================
-# Scipy interface
-# =============================================================================
-
-
-def process_scipy_result(res):
-    """
-    Handle a scipy.minimize OptimizeResult object. Process error codes, if any.
-
-    Parameters
-    ----------
-    res: OptimizeResult
-
-    Returns
-    -------
-    x: np.array
-        The optimal set of parameters (result of the optimisation)
-
-    Raises
-    ------
-    InternalOptError if an error code returned without a usable result.
-    """
-    if res.success:
-        return res.x
-
-    if not hasattr(res, "status"):
-        bluemira_warn("Scipy optimisation was not succesful. Failed without status.")
-        raise InternalOptError("\n".join([res.message, res.__str__()]))
-
-    elif res.status == 8:
-        # This can happen when scipy is not convinced that it has found a minimum.
-        bluemira_warn(
-            "\nOptimiser (scipy) found a positive directional derivative,\n"
-            "returning suboptimal result. \n"
-            "\n".join([res.message, res.__str__()])
-        )
-        return res.x
-
-    elif res.status == 9:
-        bluemira_warn(
-            "\nOptimiser (scipy) exceeded number of iterations, returning "
-            "suboptimal result. \n"
-            "\n".join([res.message, res.__str__()])
-        )
-        return res.x
-
-    else:
-        raise InternalOptError("\n".join([res.message, res.__str__()]))

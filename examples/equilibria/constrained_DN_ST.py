@@ -29,6 +29,7 @@ import copy
 import matplotlib.pyplot as plt
 import numpy as np
 
+import bluemira.equilibria.constraint_library as constraint_library
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.constraints import IsofluxConstraint, MagneticConstraintSet
@@ -37,12 +38,11 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_problems import BoundedCurrentCOP, UnconstrainedCurrentCOP
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import DudsonConvergence, PicardCoilsetIterator
-from bluemira.utilities.opt_tools import ConstraintLibrary
 from bluemira.utilities.optimiser import Optimiser, OptimiserConstraint
 
 # %%[markdown]
 
-# # Script to demonstrate constrained optimisation of coilset of a double null equilibrium
+# # Script to demonstrate constrained coilset optimisation of a double null equilibrium
 
 # %%
 
@@ -301,8 +301,8 @@ def init_opt_constraints():
     """
     opt_constraints = []
     constrain_core_isoflux_targets = OptimiserConstraint(
-        ConstraintLibrary.current_midplane_constraint,
-        (1.0,),
+        constraint_library.current_midplane_constraint,
+        {"radius": 1.0},
         np.array([1e-4]),
         "inequality",
     )
