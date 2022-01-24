@@ -147,16 +147,14 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         super()._extract_config(build_config)
 
         self._geom_path = build_config.get("geom_path", None)
-        if self._geom_path is None and self._runmode.name.lower() == "read":
+        has_geom_path = self._geom_path is not None
+        valid_geom_path = has_geom_path and os.path.exists(self._geom_path)
+        if self._runmode.name.lower() == "read" and not valid_geom_path:
             raise BuilderError(
-                "Must supply geom_path in build_config when using 'read' mode."
+                "Must supply a geom_path that at either points to the directory "
+                "containing the geometry parameterisation, or points to the geometry "
+                "parameterisation file, in build_config when using 'read' mode."
             )
-
-        if self._geom_path is not None and os.path.isdir(self._geom_path):
-            default_file_name = (
-                f"tf_coils_{self._param_class.__name__}_{self._params.n_TF}.json"
-            )
-            self._geom_path = os.sep.join([self._geom_path, default_file_name])
 
     def _derive_shape_params(self):
         shape_params = super()._derive_shape_params()
@@ -192,6 +190,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         self._reset_params(params)
         self._centreline = None
         self._wp_cross_section = self._make_wp_xs()
+
+        if self._geom_path is not None and os.path.isdir(self._geom_path):
+            default_file_name = (
+                f"tf_coils_{self._param_class.__name__}_{self._params.n_TF.value}.json"
+            )
+            self._geom_path = os.sep.join([self._geom_path, default_file_name])
 
     def run(self, separatrix, keep_out_zone=None):
         """
