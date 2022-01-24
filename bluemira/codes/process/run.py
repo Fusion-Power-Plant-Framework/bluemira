@@ -91,7 +91,7 @@ class Run(interface.Run):
         Clear the output files from PROCESS run directory.
         """
         for filename in self.parent.output_files:
-            filepath = os.sep.join([self._run_dir, filename])
+            filepath = os.sep.join([self.parent.run_dir, filename])
             if os.path.exists(filepath):
                 os.remove(filepath)
 
@@ -151,9 +151,9 @@ class Solver(interface.FileProgramInterface):
         If PROCESS is not being mocked and is not installed.
     """
 
+    run_dir: str
+    read_dir: str
     _params: bm_base.ParameterFrame
-    _run_dir: str
-    _read_dir: str
     _template_indat: str
     _params_to_update: List[str]
     _parameter_mapping: Dict[str, str]
@@ -204,6 +204,7 @@ class Solver(interface.FileProgramInterface):
             build_config.get("mode", "run"),
             binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
+            read_dir=read_dir,
             mappings=mappings,
         )
 

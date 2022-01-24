@@ -269,10 +269,10 @@ class Teardown(interface.Teardown):
         self.load_PROCESS_run(recv_all=True)
 
     def _read(self):
-        self.load_PROCESS_run(path=self.parent._read_dir, recv_all=False)
+        self.load_PROCESS_run(path=self.parent.read_dir, recv_all=False)
 
     def _readall(self):
-        self.load_PROCESS_run(path=self.parent._read_dir, recv_all=True)
+        self.load_PROCESS_run(path=self.parent.read_dir, recv_all=True)
 
     def _mock(self):
         self.mock_PROCESS_run()
@@ -285,7 +285,7 @@ class Teardown(interface.Teardown):
         ----------
             path: str, optional
                 path to PROCESS output file (MFILE.DAT) to load
-                uses `_run_dir` if not provided
+                uses `run_dir` if not provided
             recv_all: bool, optional
                 True - Read all PROCESS output with a mapping,
                 False - reads only PROCESS output with a mapping and recv = True.
@@ -311,8 +311,7 @@ class Teardown(interface.Teardown):
         ----------
             path: str, optional
                 path to PROCESS output file (MFILE.DAT) to load
-                uses `_run_dir` if not provided
-
+                uses `run_dir` if not provided
 
         Returns
         -------
@@ -320,7 +319,7 @@ class Teardown(interface.Teardown):
             The object representation of the output MFILE.DAT.
         """
         m_file = BMFile(
-            self._run_dir if path is None else path, self.parent._parameter_mapping
+            self.parent.run_dir if path is None else path, self.parent._parameter_mapping
         )
         self._check_feasible_solution(m_file)
         return m_file
@@ -332,7 +331,7 @@ class Teardown(interface.Teardown):
         bluemira_print("Mocking PROCESS systems code run")
 
         # Create mock PROCESS file.
-        path = self.parent._read_dir
+        path = self.parent.read_dir
         filename = os.sep.join([path, "mockPROCESS.json"])
         with open(filename, "r") as fh:
             process = json.load(fh)
@@ -349,19 +348,19 @@ class Teardown(interface.Teardown):
             If any resulting output files don't exist or are empty.
         """
         for filename in self.parent.output_files:
-            filepath = os.sep.join([self._run_dir, filename])
+            filepath = os.sep.join([self.parent.run_dir, filename])
             if os.path.exists(filepath):
                 with open(filepath) as fh:
                     if len(fh.readlines()) == 0:
                         message = (
                             f"PROCESS generated an empty {filename} "
-                            f"file in {self._run_dir} - check PROCESS logs."
+                            f"file in {self.parent.run_dir} - check PROCESS logs."
                         )
                         raise CodesError(message)
             else:
                 message = (
                     f"PROCESS run did not generate the {filename} "
-                    f"file in {self._run_dir} - check PROCESS logs."
+                    f"file in {self.parent.run_dir} - check PROCESS logs."
                 )
                 raise CodesError(message)
 

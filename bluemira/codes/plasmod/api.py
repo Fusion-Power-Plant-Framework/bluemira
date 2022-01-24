@@ -364,7 +364,7 @@ class Setup(interface.Setup):
         """
         Write input file
         """
-        self.io_manager._write(Path(self._run_dir, self.input_file))
+        self.io_manager._write(Path(self.parent.run_dir, self.input_file))
 
     def _run(self):
         """
@@ -400,9 +400,9 @@ class Run(interface.Run):
         super()._run_subprocess(
             [
                 self._binary,
-                Path(self._run_dir, self.parent.setup_obj.input_file),
-                Path(self._run_dir, self.parent.setup_obj.output_file),
-                Path(self._run_dir, self.parent.setup_obj.profiles_file),
+                Path(self.parent.run_dir, self.parent.setup_obj.input_file),
+                Path(self.parent.run_dir, self.parent.setup_obj.output_file),
+                Path(self.parent.run_dir, self.parent.setup_obj.profiles_file),
             ]
         )
 
@@ -418,8 +418,8 @@ class Teardown(interface.Teardown):
         """
         self.io_manager = Outputs()
         self.io_manager.read_output_files(
-            Path(self._run_dir, self.parent.setup_obj.output_file),
-            Path(self._run_dir, self.parent.setup_obj.profiles_file),
+            Path(self.parent.run_dir, self.parent.setup_obj.output_file),
+            Path(self.parent.run_dir, self.parent.setup_obj.profiles_file),
         )
         self.prepare_outputs()
 
@@ -427,10 +427,17 @@ class Teardown(interface.Teardown):
         """
         Mock plasmod teardown
         """
+        self.io_manager = Outputs(use_defaults=True)
+        self.prepare_outputs()
+
+    def _read(self):
+        """
+        Read plasmod teardown
+        """
         self.io_manager = Outputs()
         self.io_manager.read_output_files(
-            Path(self._run_dir, self.parent.setup_obj.output_file),
-            Path(self._run_dir, self.parent.setup_obj.profiles_file),
+            Path(self.parent.read_dir, self.parent.setup_obj.output_file),
+            Path(self.parent.read_dir, self.parent.setup_obj.profiles_file),
         )
         self.prepare_outputs()
 
@@ -459,6 +466,8 @@ class Solver(interface.FileProgramInterface):
         build configuration dictionary
     run_dir: str
         Plasmod run directory
+    read_dir: str
+        Directory to read in previous run
 
     Notes
     -----
@@ -475,6 +484,7 @@ class Solver(interface.FileProgramInterface):
         params,
         build_config=None,
         run_dir: Optional[str] = None,
+        read_dir: Optional[str] = None,
     ):
         super().__init__(
             PLASMOD,
@@ -482,6 +492,7 @@ class Solver(interface.FileProgramInterface):
             build_config.get("mode", "run"),
             binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
+            read_dir=read_dir,
             mappings=create_mapping(),
             problem_settings=build_config.get("problem_settings", None),
         )
