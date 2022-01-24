@@ -78,9 +78,9 @@ class GSOperator:
             The discretisation of the 2-D field in Z
         """
         d_x = (self.x_max - self.x_min) / (nx - 1)
-        d_z = (self.z_max - self.z_min) / (nz - 1)
+        _d_z = (nz - 1) / (self.z_max - self.z_min)
         x = linspace(self.x_min, self.x_max, nx)
-        d_x2, d_z2 = d_x ** 2, d_z ** 2
+        d_x2, _d_z2 = d_x ** 2, _d_z ** 2
 
         if self.force_symmetry:
             # Check if applied grid is symmetric
@@ -93,33 +93,41 @@ class GSOperator:
             nz = np.floor_divide(nz + 1, 2)
 
         A = lil_matrix((nx * nz, nx * nz))
-        A.setdiag(ones(nx * nz))
+        A.setdiag(1)
         # NOTE: nb.jit doesn't seem to help here :(
-        for i in range(1, nx - 1):
-            for j in range(1, nz - 1):
-                ind = i * nz + j
-                rp = 0.5 * (x[i + 1] + x[i])  # x_{i+1/2}
-                rm = 0.5 * (x[i] + x[i - 1])  # x_{i-1/2}
-                A[ind, ind] = -(x[i] / d_x2) * (1 / rp + 1 / rm) - 2 / d_z2  # j, l
-                A[ind, ind + nz] = (x[i] / d_x2) / rp  # j, l-1
-                A[ind, ind - nz] = (x[i] / d_x2) / rm  # j, l+1
-                A[ind, ind + 1] = 1 / d_z2  # j-1, l
-                A[ind, ind - 1] = 1 / d_z2  # j+1, l
-            # Apply symmetry boundary if desired
-            if self.force_symmetry:
-                # Apply ghost point method to apply symmetry to (d/dz^2) operator
-                # constributions close to symmetry plane.
-                # If symmetry boundary is centred halfway between cells,
-                # d(psi)/dz = 0 across midplane,
-                # else if symmetry boundary is centred on cells, d(psi)/dz
-                # is equal either side of midplane but reverses sign.
-                ind = i * nz + nz - 1
-                ghost_factor = 1 + nz % 2
+        i, j = np.meshgrid(np.arange(1, nx - 1), np.arange(1, nz - 1), indexing="ij")
+        i = i.ravel()
+        j = j.ravel()
+        ind = i * nz + j
+        rp = 2 / (x[i + 1] + x[i])  # x_{i+1/2}
+        rm = 2 / (x[i] + x[i - 1])  # x_{i-1/2}
+        xi_dx2 = x[i] / d_x2
+        n_xi_dx2_rprm = -xi_dx2 * (rp + rm)
+        xi_dx2_rp = xi_dx2 * rp
+        xi_dx2_rm = xi_dx2 * rm
 
-                A[ind, ind] = -(x[i] / d_x2) * (1 / rp + 1 / rm) - ghost_factor / d_z2
-                A[ind, ind - 1] = ghost_factor / d_z2
-                A[ind, ind + nz] = (x[i] / d_x2) / rp  # j, l-1
-                A[ind, ind - nz] = (x[i] / d_x2) / rm  # j, l+1
+        A[ind, ind] = n_xi_dx2_rprm - 2 * _d_z2  # j, l
+        A[ind, ind + nz] = xi_dx2_rp  # j, l-1
+        A[ind, ind - nz] = xi_dx2_rm  # j, l+1
+        A[ind, ind + 1] = _d_z2  # j-1, l
+        A[ind, ind - 1] = _d_z2  # j+1, l
+
+        # Apply symmetry boundary if desired
+        if self.force_symmetry:
+            # Apply ghost point method to apply symmetry to (d/dz^2) operator
+            # constributions close to symmetry plane.
+            # If symmetry boundary is centred halfway between cells,
+            # d(psi)/dz = 0 across midplane,
+            # else if symmetry boundary is centred on cells, d(psi)/dz
+            # is equal either side of midplane but reverses sign.
+            ind = i * nz + nz - 1
+            ghost_factor = 1 + nz % 2
+
+            A[ind, ind] = n_xi_dx2_rprm - ghost_factor * _d_z2
+            A[ind, ind - 1] = ghost_factor * _d_z2
+            A[ind, ind + nz] = xi_dx2_rp  # j, l-1
+            A[ind, ind - nz] = xi_dx2_rm  # j, l+1
+
         return A.tocsr()  # Compressed sparse row format
 
 
