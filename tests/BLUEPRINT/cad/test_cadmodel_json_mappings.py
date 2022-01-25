@@ -2,6 +2,7 @@ import filecmp
 import os
 
 from bluemira.base.file import get_bluemira_path
+from bluemira.utilities.tools import compare_dicts
 from BLUEPRINT.cad.cadtools import make_face, revolve
 from BLUEPRINT.cad.component import ComponentCAD
 from BLUEPRINT.cad.model import CADModel
