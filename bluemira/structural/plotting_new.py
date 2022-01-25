@@ -25,6 +25,13 @@ Structural module plotting tools
 import numpy as np
 from matplotlib.colors import DivergingNorm, Normalize
 
+from bluemira.structural.constants import (
+    DEFLECT_COLOR,
+    FLOAT_TYPE,
+    LOAD_INT_VECTORS,
+    LOAD_STR_VECTORS,
+    STRESS_COLOR,
+)
 from bluemira.utilities.plot_tools import Plot3D
 
 DEFAULT_PLOT_OPTIONS = {
@@ -35,15 +42,18 @@ DEFAULT_PLOT_OPTIONS = {
     "show_cross_sections": True,
     "annotate_nodes": True,
     "annotate_elements": True,
-    "node_options": {"marker": "o", "ms": 12, "color": "k"},
+    "node_options": {"marker": "o", "ms": 12, "color": "k", "alpha": 1},
     "symmetry_node_color": "g",
     "support_node_color": "r",
-    "element_options": {"linewidth": 3, "color": "k", "linestyle": "-"},
+    "element_options": {"linewidth": 3, "color": "k", "linestyle": "-", "alpha": 1},
     "show_as_grey": False,
 }
 
 
 def annotate_node(ax, node, text_size, color):
+    """
+    Annotate a node.
+    """
     name = f"N{node.id_number}"
     ax.text(
         node.x,
@@ -56,6 +66,9 @@ def annotate_node(ax, node, text_size, color):
 
 
 def annotate_element(ax, element, text_size, color):
+    """
+    Annotate an element.
+    """
     name = f"E{element.id_number}"
     ax.text(
         *element.mid_point,
@@ -65,7 +78,100 @@ def annotate_element(ax, element, text_size, color):
     )
 
 
+def arrow_scale(vector, max_length, max_force):
+    """
+    Scales an arrow such that, regardless of direction, it has a reasonable
+    size
+
+    Parameters
+    ----------
+    vector: np.array(3)
+        3-D vector of the arrow
+    max_length: float
+        The maximum length of the arrow
+    max_force: float
+        The maximum force value in the model (absolute)
+
+    Returns
+    -------
+    vector: np.array(3)
+        The scaled force arrow
+    """
+    v_norm = np.linalg.norm(vector)
+    if v_norm == 0:
+        return vector  # who cares? No numpy warning
+
+    scale = (max_length * np.abs(vector)) / max_force
+
+    return scale * vector / v_norm
+
+
+def _plot_force(ax, node, vector, color="r"):
+    """
+    Plots a single force arrow in 3-D to indicate a linear load
+
+    Parameters
+    ----------
+    ax: matplotlib Axes3D object
+        The ax on which to plot
+    node: Node object
+        The node or location at which the force occurs
+    vector: np.array(3)
+        The force direction vector
+    color: str
+        The color to plot the force as
+    """
+    ax.quiver(
+        node.x - vector[0], node.y - vector[1], node.z - vector[2], *vector, color=color
+    )
+
+
+def _plot_moment(ax, node, vector, color="r", support=False):
+    """
+    Plots a double "moment" arrow in 3-D to indicate a moment load. Offset the
+    moment arrows off from the nodes a little, to enable overlaps with forces.
+
+    Parameters
+    ----------
+    ax: matplotlib Axes3D object
+        The ax on which to plot
+    node: Node object
+        The node or location at which the force occurs
+    vector: np.array(3)
+        The force direction vector
+    color: str
+        The color to plot the force as
+    """
+    if support:
+        # Offsets the moment arrows a little so we can see overlaps with forces
+        vector *= 2
+        f1 = 0.5
+        f2 = 0.25
+    else:
+        f1 = 1
+        f2 = 0.5
+    ax.quiver(
+        node.x - vector[0],
+        node.y - vector[1],
+        node.z - vector[2],
+        *f1 * vector,
+        color=color,
+    )
+    ax.quiver(
+        node.x - vector[0],
+        node.y - vector[1],
+        node.z - vector[2],
+        *f2 * vector,
+        color=color,
+        arrow_length_ratio=0.6,
+    )
+
+
 class BasePlotter:
+    """
+    Base utility plotting class for structural models
+    """
+
     def __init__(self, geometry, ax=None, **kwargs):
         self.geometry = geometry
         if ax is None:
@@ -77,7 +183,7 @@ class BasePlotter:
 
     def plot_nodes(self):
         """
-        Plots all the nodes in the geometry
+        Plots all the nodes in the Geometry.
         """
         kwargs = self.options["node_options"].copy()
         default_color = kwargs.pop(
@@ -96,3 +202,51 @@ class BasePlotter:
 
             if self.options["annotate_nodes"]:
                 annotate_node(self.ax, node, self.text_size, color)
+
+    def plot_supports(self):
+        """
+        Plots all supports in the Geometry.
+        """
+        lengths = np.array([e.length for e in self.geometry.elements])
+        length = lengths.min() / 5
+        for node in self.geometry.nodes:
+            if node.supports.any():
+                for i, support in enumerate(node.supports):
+                    vector = length * LOAD_INT_VECTORS[i]
+                    if support and i < 3:
+                        # Linear support (single black arrow)
+                        _plot_force(self.ax, node, vector, color="k")
+                    elif support and i >= 3:
+                        # Moment support (double red arrow, offset to enable overlap)
+                        _plot_moment(self.ax, node, vector, support=True, color="g")
+
+    def plot_elements(self):
+        """
+        Plots all of the elements in the Geometry.
+        """
+        kwargs = self.options["node_options"].copy()
+        default_color = kwargs.pop(
+            "color", DEFAULT_PLOT_OPTIONS["element_options"]["color"]
+        )
+
+        for element in self.geometry.elements:
+            x = [element.node_1.x, element.node_2.x]
+            y = [element.node_1.y, element.node_2.y]
+            z = [element.node_1.z, element.node_2.z]
+
+            if self.options["show_stress"]:
+                color = STRESS_COLOR(self.color_normer(element.max_stress))
+            elif self.options["show_deflections"]:
+                color = DEFLECT_COLOR(self.color_normer(element.max_deflection))
+            else:
+                color = default_color
+
+            self.ax.plot(x, y, z, color=color, **kwargs)
+
+            if self.options["annotate_elements"]:
+                annotate_element(self.ax, element, self.text_size, color)
+
+            if self.options["interpolate"]:
+                ls = kwargs.pop("linestyle")
+                self.ax.plot(*element.shapes, linestyle="--", **kwargs)
+                kwargs["linestyle"] = ls
