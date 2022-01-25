@@ -25,6 +25,8 @@ Structural module plotting tools
 import numpy as np
 from matplotlib.colors import DivergingNorm, Normalize
 
+from bluemira.display import plot_3d
+from bluemira.display.plotter import PlotOptions
 from bluemira.structural.constants import (
     DEFLECT_COLOR,
     FLOAT_TYPE,
@@ -47,6 +49,7 @@ DEFAULT_PLOT_OPTIONS = {
     "support_node_color": "r",
     "element_options": {"linewidth": 3, "color": "k", "linestyle": "-", "alpha": 1},
     "show_as_grey": False,
+    "cross_section_options": {"color": "b"},
 }
 
 
@@ -183,7 +186,7 @@ class BasePlotter:
 
     def plot_nodes(self):
         """
-        Plots all the nodes in the Geometry.
+        Plots all the Nodes in the Geometry.
         """
         kwargs = self.options["node_options"].copy()
         default_color = kwargs.pop(
@@ -222,7 +225,7 @@ class BasePlotter:
 
     def plot_elements(self):
         """
-        Plots all of the elements in the Geometry.
+        Plots all of the Elements in the Geometry.
         """
         kwargs = self.options["node_options"].copy()
         default_color = kwargs.pop(
@@ -250,3 +253,19 @@ class BasePlotter:
                 ls = kwargs.pop("linestyle")
                 self.ax.plot(*element.shapes, linestyle="--", **kwargs)
                 kwargs["linestyle"] = ls
+
+    def plot_cross_sections(self):
+        """
+        Plots the cross-sections for each Element in the Geometry, rotated to
+        the mid-point of the Element.
+        """
+        for element in self.geometry.elements:
+            plot_options = PlotOptions(
+                show_wires=False,
+                show_faces=True,
+                face_options=self.options["cross_section_options"],
+            )
+            xs = element._cross_section.geometry.deepcopy()
+            xs.rotate()
+            xs.translate(*element.mid_point)
+            plot_3d([xs], ax=self.ax, show=False, options=[plot_options])
