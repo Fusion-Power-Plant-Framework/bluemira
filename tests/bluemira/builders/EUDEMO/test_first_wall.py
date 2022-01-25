@@ -20,7 +20,49 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import copy
 
-from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
+import numpy as np
+
+from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder, FullFirstWallBuilder
+
+
+class TestFullFirstWallBuilder:
+
+    _default_variables_map = {
+        "x1": {  # ib radius
+            "value": "r_fw_ib_in",
+        },
+        "x2": {  # ob radius
+            "value": "r_fw_ob_in",
+        },
+    }
+
+    _default_config = {
+        "param_class": "bluemira.builders.EUDEMO.first_wall::FirstWallPolySpline",
+        "variables_map": _default_variables_map,
+        "runmode": "mock",
+        "name": "First Wall",
+    }
+
+    _params = {
+        "Name": "First Wall Example",
+        "plasma_type": "SN",
+        "R_0": (9.0, "Input"),
+        "kappa_95": (1.6, "Input"),
+        "r_fw_ib_in": (5.8, "Input"),
+        "r_fw_ob_in": (12.1, "Input"),
+        "A": (3.1, "Input"),
+    }
+
+    def test_wall_is_cut_below_x_point_in_z_axis(self):
+        x_point = np.array([8, -2])
+
+        wall = FullFirstWallBuilder(
+            self._params, build_config=self._default_config, x_point=x_point
+        )
+
+        bounds = wall.wall.get_component("first_wall").shape.bounding_box
+        # significant delta in assertion as the wire is discrete, so cut is not exact
+        np.testing.assert_almost_equal(bounds.z_min, x_point[1], decimal=1)
 
 
 class TestFirstWallBuilder:
