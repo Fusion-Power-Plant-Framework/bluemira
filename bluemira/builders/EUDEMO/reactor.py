@@ -139,6 +139,7 @@ class EUDEMOReactor(Reactor):
         default_config = {
             "param_class": "PrincetonD",
             "variables_map": default_variables_map,
+            "geom_path": None,
             "runmode": "run",
             "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
             "problem_settings": {},
@@ -152,6 +153,16 @@ class EUDEMOReactor(Reactor):
         }
 
         config = self._process_design_stage_config(name, default_config)
+
+        if config["geom_path"] is None:
+            if config["runmode"] == "run":
+                default_geom_dir = self._file_manager.generated_data_dirs["geometry"]
+            else:
+                default_geom_dir = self._file_manager.reference_data_dirs["geometry"]
+            geom_name = f"tf_coils_{config['param_class']}_{self._params['n_TF']}.json"
+            geom_path = os.path.join(default_geom_dir, geom_name)
+
+            config["geom_path"] = geom_path
 
         builder = TFCoilsBuilder(self._params.to_dict(), config)
         self.register_builder(builder, name)

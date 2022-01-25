@@ -26,8 +26,7 @@ A collection of simple equilibrium physics calculations
 import numpy as np
 
 from bluemira.base.constants import MU_0
-from bluemira.equilibria.constants import PSI_NORM_TOL
-from bluemira.equilibria.find import _parse_OXp, find_flux_surf, in_plasma
+from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 
@@ -124,60 +123,6 @@ def calc_psib(psi_bd, R_0, Ip, li, c_ejima=0.4):
         The flux at the boundary at start of flat-top [V.s]
     """
     return psi_bd - 0.5 * MU_0 * R_0 * li * Ip - c_ejima * MU_0 * R_0 * Ip
-
-
-def calc_q(eq, psinorm=None, o_points=None, x_points=None):
-    """
-    Calculate the safety factor profile of the plasma core.
-
-    \t:math:`q=\\dfrac{rB_t}{XB_p}`
-
-    Parameters
-    ----------
-    eq: Equilibrium object
-        A plasma equilibrium object.
-    psinorm: np.array()
-        Normalised psi values at which to calculate q
-    o_points: list(Opoint, ..) (optional)
-        List of Opoint objects
-    x_points: list(Xpoint, ..) (optional)
-        List of Xpoint objects.
-
-    Returns
-    -------
-    q: np.array([n])
-        Safety factor of plasma core flux surfaces (from 0:n:1)
-
-    Notes
-    -----
-    For psinorm, 0 and 1 and "chopped" at PSI_NORM_TOL to avoid calculation
-    errors
-    This flux surface averaged approach is incorrect, but a reasonable estimate.
-    TODO: Fix this...
-    """
-    x, z, psi = eq.x, eq.z, eq.psi()
-    o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
-    if psinorm is None:
-        psin = np.linspace(0 + PSI_NORM_TOL, 1 - PSI_NORM_TOL, 20)
-    else:
-        psin = np.clip(psinorm, PSI_NORM_TOL, 1 - PSI_NORM_TOL)
-    if not hasattr(psin, "__len__"):
-        psin = [psin]
-    n = len(psin)
-    fluxsurfs = [
-        find_flux_surf(x, z, psi, pn, o_points=o_points, x_points=x_points)
-        for pn in psin
-    ]
-    q = np.zeros(n)
-    for i, (pn, fs) in enumerate(zip(psin, fluxsurfs)):
-        x_0, z_0 = np.mean(fs[0]), np.mean(fs[1])
-        r = np.abs(np.sqrt((fs[0] - x_0) ** 2 + (fs[1] - z_0) ** 2))
-        Bt = eq.fRBpol(pn) / fs[0]
-        Bp = eq.Bp(*fs)
-        q[i] = np.average(np.abs(r * Bt / (fs[0] * Bp)))
-    if len(q) == 1:
-        q = q[0]
-    return q
 
 
 def calc_qstar(R_0, A, B_0, kappa, Ip):

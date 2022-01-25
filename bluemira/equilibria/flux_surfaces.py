@@ -45,7 +45,6 @@ from bluemira.geometry._deprecated_tools import (
     join_intersect,
     loop_plane_intersect,
 )
-from bluemira.utilities.tools import cartesian_to_polar
 
 
 @nb.jit(nopython=True, cache=True)
@@ -284,13 +283,12 @@ class ClosedFluxSurface(FluxSurface):
         """
         x, z = self.loop.x, self.loop.z
         dx, dz = np.diff(x), np.diff(z)
-        r, _ = cartesian_to_polar(
-            x[:-1] + 0.5 * dx,
-            z[:-1] + 0.5 * dz,
-            self.major_radius,
-            self.loop.centroid[1],
-        )
-        return np.sum(self._dl(eq) * r / (x[:-1] + dx)) / (2 * np.pi)
+        x = x[:-1] + 0.5 * dx  # Segment centre-points
+        z = z[:-1] + 0.5 * dz
+        dl = np.hypot(dx, dz)  # Poloidal plane dl
+        Bp = eq.Bp(x, z)
+        Bt = eq.Bt(x)
+        return np.sum(dl * Bt / (Bp * x)) / (2 * np.pi)
 
 
 class OpenFluxSurface(FluxSurface):
