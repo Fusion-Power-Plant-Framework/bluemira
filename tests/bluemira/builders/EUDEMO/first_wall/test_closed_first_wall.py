@@ -72,6 +72,13 @@ class TestClosedFirstWallBuilder:
         assert len(xy_component) == 1
         assert len(xy_component[0].get_component("first_wall", first=False)) == 1
 
+    def test_physical_component_shape_is_closed(self):
+        builder = ClosedFirstWallBuilder(self._params, build_config=self._default_config)
+
+        component = builder(self._params)
+
+        assert component.get_component("first_wall").shape.is_closed()
+
     def test_component_height_derived_from_params(self):
         params = copy.deepcopy(self._params)
         params.update(

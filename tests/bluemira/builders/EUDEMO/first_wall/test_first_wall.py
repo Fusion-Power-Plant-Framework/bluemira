@@ -27,7 +27,7 @@ import numpy as np
 from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
 
 
-class TestFullFirstWallBuilder:
+class TestFirstWallBuilder:
 
     _default_variables_map = {
         "x1": {  # ib radius
@@ -55,7 +55,7 @@ class TestFullFirstWallBuilder:
         "A": (3.1, "Input"),
     }
 
-    def test_wall_is_cut_below_x_point_in_z_axis(self):
+    def test_wall_part_is_cut_below_x_point_in_z_axis(self):
         x_point = np.array([8, -2])
 
         wall = FirstWallBuilder(
