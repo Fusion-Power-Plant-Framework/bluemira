@@ -18,54 +18,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""
+Test for the closed first wall, without a divertor.
+"""
+
 import copy
 
-import numpy as np
-
-from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder, FullFirstWallBuilder
+from bluemira.builders.EUDEMO.first_wall import ClosedFirstWallBuilder
 
 
-class TestFullFirstWallBuilder:
-
-    _default_variables_map = {
-        "x1": {  # ib radius
-            "value": "r_fw_ib_in",
-        },
-        "x2": {  # ob radius
-            "value": "r_fw_ob_in",
-        },
-    }
-
-    _default_config = {
-        "param_class": "bluemira.builders.EUDEMO.first_wall::FirstWallPolySpline",
-        "variables_map": _default_variables_map,
-        "runmode": "mock",
-        "name": "First Wall",
-    }
-
-    _params = {
-        "Name": "First Wall Example",
-        "plasma_type": "SN",
-        "R_0": (9.0, "Input"),
-        "kappa_95": (1.6, "Input"),
-        "r_fw_ib_in": (5.8, "Input"),
-        "r_fw_ob_in": (12.1, "Input"),
-        "A": (3.1, "Input"),
-    }
-
-    def test_wall_is_cut_below_x_point_in_z_axis(self):
-        x_point = np.array([8, -2])
-
-        wall = FullFirstWallBuilder(
-            self._params, build_config=self._default_config, x_point=x_point
-        )
-
-        bounds = wall.wall.get_component("first_wall").shape.bounding_box
-        # significant delta in assertion as the wire is discrete, so cut is not exact
-        np.testing.assert_almost_equal(bounds.z_min, x_point[1], decimal=1)
-
-
-class TestFirstWallBuilder:
+class TestClosedFirstWallBuilder:
 
     _default_variables_map = {
         "x1": {  # ib radius
@@ -97,12 +59,12 @@ class TestFirstWallBuilder:
         config = copy.deepcopy(self._default_config)
         config["name"] = "New name"
 
-        builder = FirstWallBuilder(self._params, build_config=config)
+        builder = ClosedFirstWallBuilder(self._params, build_config=config)
 
         assert builder.name == "New name"
 
     def test_built_component_contains_physical_component_in_xz(self):
-        builder = FirstWallBuilder(self._params, build_config=self._default_config)
+        builder = ClosedFirstWallBuilder(self._params, build_config=self._default_config)
 
         component = builder(self._params)
 
@@ -116,7 +78,7 @@ class TestFirstWallBuilder:
             {"R_0": (10.0, "Input"), "kappa_95": (2.0, "Input"), "A": (2.0, "Input")}
         )
 
-        builder = FirstWallBuilder(self._params, build_config=self._default_config)
+        builder = ClosedFirstWallBuilder(self._params, build_config=self._default_config)
         component = builder(params)
 
         bounding_box = component.get_component("first_wall").shape.bounding_box
