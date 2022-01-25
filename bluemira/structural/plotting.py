@@ -262,25 +262,18 @@ class BasePlotter:
         """
         Plots all supports in the Geometry model
         """
-        for node in self.geometry.nodes:
-            if node.supports.any():
-                self._plot_support(node)
-
-    def _plot_support(self, node):
-        """
-        Plots the supports at a single Node in the Geometry model
-        """
-        # Get a small distance in the model
         lengths = np.array([e.length for e in self.geometry.elements])
         length = lengths.min() / 5
-        for i, support in enumerate(node.supports):
-            vector = length * LOAD_INT_VECTORS[i]
-            if support and i < 3:
-                # Linear support (single black arrow)
-                _plot_force(self.ax, node, vector, color="k")
-            elif support and i >= 3:
-                # Moment support (double red arrow, offset to enable overlap)
-                _plot_moment(self.ax, node, vector, support=True, color="g")
+        for node in self.geometry.nodes:
+            if node.supports.any():
+                for i, support in enumerate(node.supports):
+                    vector = length * LOAD_INT_VECTORS[i]
+                    if support and i < 3:
+                        # Linear support (single black arrow)
+                        _plot_force(self.ax, node, vector, color="k")
+                    elif support and i >= 3:
+                        # Moment support (double red arrow, offset to enable overlap)
+                        _plot_moment(self.ax, node, vector, support=True, color="g")
 
     def plot_elements(self):
         """

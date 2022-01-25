@@ -229,7 +229,11 @@ def get_midpoint(node1, node2):
     x, y, z: float, float, float
         The coordinates of the mid-point
     """
-    return (node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1.z + node2.z) / 2
+    return (
+        0.5 * (node1.x + node2.x),
+        0.5 * (node1.y + node2.y),
+        0.5 * (node1.z + node2.z),
+    )
 
 
 if __name__ == "__main__":
