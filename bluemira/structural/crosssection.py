@@ -263,6 +263,8 @@ class CircularBeam(CrossSection):
         self.j = np.pi * radius ** 4 / 2
         self.ry = radius / 2
         self.rz = radius / 2
+        self.qyy = 0  # Centred about (0, 0)
+        self.qzz = 0  # Centred about (0, 0)
         circle = make_circle(radius, center=(0, 0, 0), axis=(1, 0, 0))
         self.geometry = BluemiraFace(circle)
         self.y, self.z = circle.discretize(ndiscr=n_discr).yz
@@ -289,6 +291,8 @@ class CircularHollowBeam(CrossSection):
         self.j = np.pi / 2 * (r_outer ** 4 - r_inner ** 4)
         self.ry = np.sqrt((r_outer ** 2 + r_inner ** 2) / 4)
         self.rz = np.sqrt((r_outer ** 2 + r_inner ** 2) / 4)
+        self.qyy = 0  # Centred about (0, 0)
+        self.qzz = 0  # Centred about (0, 0)
 
         inner = make_circle(r_inner, center=(0, 0, 0), axis=(1, 0, 0))
         outer = make_circle(r_outer, center=(0, 0, 0), axis=(1, 0, 0))
@@ -327,6 +331,8 @@ class IBeam(CrossSection):
         self.j = (2 * b * t ** 3 + (d - s) * t ** 3) / 3
         self.ry = np.sqrt(self.i_yy / self.area)
         self.rz = np.sqrt(self.i_zz / self.area)
+        self.qyy = 0  # Centred about (0, 0)
+        self.qzz = 0  # Centred about (0, 0)
         self.make_geometry(base, depth, flange, web)
 
     @staticmethod
