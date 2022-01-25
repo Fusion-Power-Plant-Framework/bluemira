@@ -190,13 +190,13 @@ class CoilsetOP(OptimisationProblem):
 
         return current_bounds
 
-    def __call__(self, eq, constraints, psi_bndry=None):
+    def __call__(self, eq, targets, psi_bndry=None):
         """
         Parameters
         ----------
         eq: Equilibrium object
             The Equilibrium to be optimised
-        constraints: Constraints object
+        targets: MagneticConstraints object
             The Constraints to apply to the equilibrium. NOTE: these only
             include linearised constraints. Quadratic and/or non-linear
             constraints must be provided in the sub-classes
@@ -234,12 +234,10 @@ class UnconstrainedCurrentCOP(CoilsetOP):
         """
         # Scale the control matrix and constraint vector by weights.
         self.targets(self.eq, I_not_dI=False)
-        self.w = self.targets.w
-        self.A = self.w[:, np.newaxis] * self.targets.A
-        self.b = self.w * self.targets.b
+        _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
         # Optimise currents using analytic expression for optimum.
-        current_adjustment = tikhonov(self.A, self.b, self.gamma)
+        current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
 
         self.coilset.adjust_currents(current_adjustment)
         return self.coilset
@@ -322,11 +320,11 @@ class BoundedCurrentCOP(CoilsetOP):
         # Set up data needed in FoM evaluation.
         # Scale the control matrix and constraint vector by weights.
         self.targets(self.eq, I_not_dI=True)
-        weights = self.targets.w
+        _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
         self._objective._args["scale"] = self.scale
-        self._objective._args["a_mat"] = weights[:, np.newaxis] * self.targets.A
-        self._objective._args["b_vec"] = weights * self.targets.b
+        self._objective._args["a_mat"] = a_mat
+        self._objective._args["b_vec"] = b_vec
 
         # Optimise
         currents = self.opt.optimise(initial_currents)
@@ -499,10 +497,10 @@ class CoilsetPositionCOP(CoilsetOP):
         # Update target
         self.eq._remap_greens()
 
-        self.constraints(self.eq, I_not_dI=True, fixed_coils=False)
-        self.A = self.constraints.A
-        self.b = self.constraints.b
-        self.w = self.constraints.w
+        self.targets(self.eq, I_not_dI=True, fixed_coils=False)
+        self.A = self.targets.A
+        self.b = self.targets.b
+        self.w = self.targets.w
         self.A = self.w[:, np.newaxis] * self.A
         self.b *= self.w
 
@@ -647,9 +645,9 @@ class NestedCoilsetPositionCOP(CoilsetOP):
 
         # Update target
         self.eq._remap_greens()
-        self.constraints(self.eq, I_not_dI=True, fixed_coils=False)
+        self.targets(self.eq, I_not_dI=True, fixed_coils=False)
 
         # Calculate objective function
-        self.sub_opt(self.eq, self.constraints)
+        self.sub_opt(self.eq, self.targets)
         fom = self.sub_opt.opt.optimum_value
         return fom

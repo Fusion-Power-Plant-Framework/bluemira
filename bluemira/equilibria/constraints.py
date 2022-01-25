@@ -358,12 +358,23 @@ class MagneticConstraintSet(ABC):
 
         self.build_background()
         self.build_weight_matrix()
+        return
 
     def __len__(self):
         """
         The mathematical size of the constraint set.
         """
         return sum([len(c) for c in self.constraints])
+
+    def get_weighted_arrays(self):
+        """
+        Get [A] and [b] scaled by weight matrix.
+        Weight matrix assumed to be diagonal.
+        """
+        weights = self.w
+        weighted_A = weights[:, np.newaxis] * self.A
+        weighted_b = weights * self.b
+        return weights, weighted_A, weighted_b
 
     def build_weight_matrix(self):
         """
