@@ -67,6 +67,7 @@ def _transform_properties(izz, iyy, izy, alpha):
     # are about to be multiplied with E (often very big!)
     cos2alpha = np.cos(2 * alpha)
     sin2alpha = np.sin(2 * alpha)
+
     if np.abs(cos2alpha) < NEAR_ZERO:
         cos2alpha = 0.0
     if np.abs(sin2alpha) < NEAR_ZERO:
