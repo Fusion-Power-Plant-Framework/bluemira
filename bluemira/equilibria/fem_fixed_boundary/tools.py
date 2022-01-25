@@ -20,13 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import dolfin
-import numpy
+import numpy as np
+
 
 def func_to_dolfinFunction(J, V):
     f = dolfin.Function(V)
     p = V.ufl_element().degree()
     mesh = V.mesh()
-    points  = mesh.coordinates()
+    points = mesh.coordinates()
     # psi = u.compute_vertex_values()
     # psi = psi[:,numpy.newaxis]
     # x = numpy.concatenate((points,psi), 1)
@@ -41,7 +42,7 @@ def func_to_dolfinFunction(J, V):
         d2v = dolfin.dof_to_vertex_map(V1)
         new_data = [data[d2v[i]] for i in range(mesh.num_vertices())]
         f1.vector().set_local(new_data)
-        f = dolfin.interpolate(f1 ,V)
+        f = dolfin.interpolate(f1, V)
     else:
         d2v = dolfin.dof_to_vertex_map(V)
         new_data = [data[d2v[i]] for i in range(mesh.num_vertices())]

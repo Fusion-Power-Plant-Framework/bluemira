@@ -431,7 +431,6 @@ class Teardown(interface.Teardown):
         Mock plasmod teardown
         """
         self.io_manager = Outputs()
-        self.io_manager.i_flag = 1
         self.io_manager.read_output_files(
             Path(self._run_dir, self.parent.setup_obj.output_file),
             Path(self._run_dir, self.parent.setup_obj.profiles_file),

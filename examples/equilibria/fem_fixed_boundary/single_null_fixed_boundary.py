@@ -22,29 +22,25 @@
 """
 Testing the fixed-boundary equilibrium solver.
 """
-from bluemira.equilibria.shapes import JohnerLCFS
-
-from bluemira.base.config import Configuration
-
-from bluemira.equilibria.fem_fixed_boundary.plasma import Plasma
-from bluemira.equilibria.fem_fixed_boundary.dolfinSolver import GradShafranovLagrange
-import bluemira.equilibria.fem_fixed_boundary.tools as tools
-import bluemira.codes.plasmod.transport_solver as transport_solver
-
-from bluemira.mesh import meshing
-import bluemira.mesh.msh2xdmf as msh2xdmf
-
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.shell import BluemiraShell
-from bluemira.geometry.plane import BluemiraPlane
-
-import matplotlib.pyplot as plt
+import locale
 
 import dolfin
+import matplotlib.pyplot as plt
 import numpy as np
 
-import locale
-locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+import bluemira.codes.plasmod.transport_solver as transport_solver
+import bluemira.equilibria.fem_fixed_boundary.tools as tools
+import bluemira.mesh.msh2xdmf as msh2xdmf
+from bluemira.base.config import Configuration
+from bluemira.equilibria.fem_fixed_boundary.dolfinSolver import GradShafranovLagrange
+from bluemira.equilibria.fem_fixed_boundary.plasma import Plasma
+from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.mesh import meshing
+
+locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 
 # %% Geometry (EU-DEMO 2017)
 # Plasma shape creation

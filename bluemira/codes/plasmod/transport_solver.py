@@ -22,9 +22,11 @@
 """
 The bluemira transport solver module
 """
-from bluemira.equilibria.fem_fixed_boundary.transport_solver import TransportSolver
-from .api import Solver
 import scipy
+
+from bluemira.equilibria.fem_fixed_boundary.transport_solver import TransportSolver
+
+from .api import Solver
 
 
 class PlasmodTransportSolver(TransportSolver):

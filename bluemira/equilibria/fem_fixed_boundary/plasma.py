@@ -23,8 +23,12 @@
 Module containing the base Component class.
 """
 
-from bluemira.base.components import Component, MagneticComponent
+import math
 from typing import Any
+
+import bluemira.base.constants as const
+from bluemira.base.components import Component, MagneticComponent
+from bluemira.mesh import meshing, msh2xdmf
 
 
 class Plasma(MagneticComponent):
@@ -43,11 +47,11 @@ class Plasma(MagneticComponent):
         self._mhd_solver = mhd_solver
         self._gs_solver = gs_solver
 
-        def set_mhd_solver(self,solver):
-            self._mhd_solver = solver
+    def set_mhd_solver(self, solver):
+        self._mhd_solver = solver
 
-        def set_gs_solver(self,solver):
-            self._gs_solver = solver
+    def set_gs_solver(self, solver):
+        self._gs_solver = solver
 
     @property
     def _pprime(self):
@@ -109,9 +113,9 @@ class Plasma(MagneticComponent):
         self.Ap = self.shape.area
         wire_ext = self.shape.boundary[0]
         points = wire_ext.discretize(ndiscr=100, byedges=False)
-        Sp = 0.
+        Sp = 0.0
         # for p in points:
-            # Sp = Sp + ...
+        # Sp = Sp + ...
         # self.Sp = Sp
 
         self.Sp = 2 * math.pi * self.shape.center_of_mass[0] * self.lp

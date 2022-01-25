@@ -31,20 +31,20 @@ import enum
 # import for abstract class
 from abc import ABC, abstractmethod
 
+import bluemira.mesh.meshing as meshing
+
 # import freecad api
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
 
-import copy
-
-import bluemira.mesh.meshing as meshing
 
 class GeoMeshable(meshing.Meshable):
     """Extended Meshable class for BluemiraGeo objects"""
+
     def remove_mesh_options(self, recursive=False):
         """Remove mesh options for this object"""
         super().remove_mesh_options()
-        if hasattr(self, 'boundary'):
+        if hasattr(self, "boundary"):
             for obj in self.boundary:
                 if isinstance(obj, GeoMeshable):
                     obj.remove_mesh_options(recursive=True)
@@ -53,11 +53,12 @@ class GeoMeshable(meshing.Meshable):
         # Todo: improve the output of this function
         output = []
         output.append(self.mesh_options)
-        if hasattr(self, 'boundary'):
+        if hasattr(self, "boundary"):
             for obj in self.boundary:
                 if isinstance(obj, GeoMeshable):
                     output.append(obj.print_mesh_options(True))
         return output
+
 
 class _Orientation(enum.Enum):
     FORWARD = "Forward"

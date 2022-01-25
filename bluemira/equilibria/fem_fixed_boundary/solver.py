@@ -23,22 +23,23 @@
 Testing the fixed-boundary equilibrium solver.
 """
 
-from bluemira.equilibria.fem_fixed_boundary.plasma import Plasma
-import bluemira.equilibria.fem_fixed_boundary.tools as tools
-import bluemira.codes.plasmod as plasmod
-from dolfinSolver import GradShafranovLagrange
-from bluemira.mesh import meshing
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.shell import BluemiraShell
-from bluemira.geometry.plane import BluemiraPlane
-from bluemira.equilibria.shapes import JohnerLCFS
-import bluemira.display as display
-from bluemira.display.plotter import FacePlotter
-import matplotlib.pyplot as plt
-import bluemira.mesh.msh2xdmf as msh2xdmf
 import dolfin
+import matplotlib.pyplot as plt
 import numpy as np
+from dolfinSolver import GradShafranovLagrange
+
+import bluemira.codes.plasmod as plasmod
+import bluemira.display as display
+import bluemira.equilibria.fem_fixed_boundary.tools as tools
+import bluemira.mesh.msh2xdmf as msh2xdmf
+from bluemira.display.plotter import FacePlotter
+from bluemira.equilibria.fem_fixed_boundary.plasma import Plasma
 from bluemira.equilibria.find import find_flux_surf
+from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.mesh import meshing
 
 # creation of a plasma
 ## create a geometry

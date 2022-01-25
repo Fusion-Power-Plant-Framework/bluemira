@@ -27,12 +27,11 @@ import freecad  # noqa: F401
 import FreeCAD
 import Part
 
-import bluemira.geometry._freecadapi as fcapi
 import bluemira.geometry as geo
+import bluemira.geometry._freecadapi as fcapi
 
 # Defining my parameters
 import bluemira.geometry.tools
-
 from bluemira.mesh.meshing import Mesh
 
 r1 = 0
@@ -66,8 +65,7 @@ Points2 = [p7, p8, p5, p6]
 
 
 poly1 = geo.tools.make_polygon(Points, "poly1")
-ellip = geo.tools.make_ellipse([1,0,1], 1, 0.5, [1,0,0], [0,0,0.5],
-                               90, 180)
+ellip = geo.tools.make_ellipse([1, 0, 1], 1, 0.5, [1, 0, 0], [0, 0, 0.5], 90, 180)
 print(ellip.discretize(2))
 ser_poly1 = bluemira.geometry.tools.serialize_shape(poly1)
 print(ser_poly1)
@@ -116,6 +114,7 @@ buffer = m(shell1)
 print(m.get_gmsh_dict(buffer))
 
 import bluemira.mesh.msh2xdmf as msh2xdmf
+
 msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
 
 mesh, boundaries, subdomains, labels = msh2xdmf.import_mesh(

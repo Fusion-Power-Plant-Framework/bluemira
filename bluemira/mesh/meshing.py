@@ -21,6 +21,11 @@
 
 from __future__ import annotations
 
+import copy
+import locale
+import pprint
+from typing import Dict, Union
+
 # import mesher lib (gmsh)
 import gmsh
 
@@ -29,13 +34,9 @@ import bluemira.geometry as geo
 
 from .error import MeshOptionsError
 
-import copy
-import pprint
-import locale
 # locale import is to prevent wrong decimal separator when printing the mesh
 # (see locale.setlocale(locale.LC_ALL, 'en_US.UTF-8') in method _save_mesh)
 
-from typing import Dict, Union
 
 # Mesh options for the moment are limited to definition of mesh size for each point (
 # quantity called lcar to be consistent with gmsh) and the definition of physical
@@ -134,10 +135,7 @@ class Meshable:
 
 class Mesh:
     def __init__(
-        self,
-        modelname="Mesh",
-        terminal=1,
-        meshfile=["Mesh.geo_unrolled", "Mesh.msh"]
+        self, modelname="Mesh", terminal=1, meshfile=["Mesh.geo_unrolled", "Mesh.msh"]
     ):
         self.modelname = modelname
         self.terminal = terminal
@@ -145,7 +143,7 @@ class Mesh:
 
     def _check_meshfile(self, meshfile):
         """Check the mesh file input"""
-        #todo: should be implemented also a check on the file extension. Only a
+        # todo: should be implemented also a check on the file extension. Only a
         # limited type of file extensions is allowed by gmsh.
         if isinstance(meshfile, str):
             meshfile = [meshfile]
@@ -227,7 +225,7 @@ class Mesh:
                     _freecadGmsh.add_physical_group(
                         dict_dim[k],
                         self.get_gmsh_dict(buffer, "default")[other_dict[dict_dim[k]]],
-                        v['physical_group']
+                        v["physical_group"],
                     )
                 for o in v["boundary"]:
                     self._apply_physical_group(o)
@@ -256,11 +254,9 @@ class Mesh:
             if k in dict_dim.keys():
                 if "lcar" in v.keys():
                     if v["lcar"] is not None:
-                        points_tags = self.get_gmsh_dict(buffer, "gmsh")[
-                            other_dict[0]
-                        ]
+                        points_tags = self.get_gmsh_dict(buffer, "gmsh")[other_dict[0]]
                         if len(points_tags) > 0:
-                            points_lcar +=[(p[1], v["lcar"]) for p in points_tags]
+                            points_lcar += [(p[1], v["lcar"]) for p in points_tags]
                 for o in v["boundary"]:
                     points_lcar += self.__create_dict_for_mesh_size(o)
         points_lcar = sorted(points_lcar, key=lambda element: (element[0], element[1]))
@@ -268,7 +264,6 @@ class Mesh:
         points_lcar = dict(points_lcar)
         points_lcar = [(k, v) for k, v in points_lcar.items()]
         return points_lcar
-
 
     def __apply_fragment(
         self,
@@ -288,11 +283,11 @@ class Mesh:
     @staticmethod
     def _check_intersections(gmsh_dict):
         """Check intersection and add the necessary vertexes to the gmsh dict"""
-        if len(gmsh_dict['curve_tag'])>0:
-            gmsh_curve_tag = [(1, tag) for tag in gmsh_dict['curve_tag']]
+        if len(gmsh_dict["curve_tag"]) > 0:
+            gmsh_curve_tag = [(1, tag) for tag in gmsh_dict["curve_tag"]]
             new_points = _freecadGmsh._get_boundary(gmsh_curve_tag)
             new_points = list(set([tag[1] for tag in new_points]))
-            gmsh_dict['points_tag'] = new_points
+            gmsh_dict["points_tag"] = new_points
 
     @staticmethod
     def __iterate_gmsh_dict(buffer, function, *args):
@@ -511,7 +506,7 @@ class _freecadGmsh:
     def _save_mesh(meshfile="Mesh.geo_unrolled"):
 
         # ... and save it to disk
-        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+        locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
         gmsh.write(meshfile)
 
     @staticmethod
@@ -572,29 +567,34 @@ class _freecadGmsh:
                 points_tag.append(cntrpoints_tag[-1])
             elif type_ == "ArcOfCircle":
                 start_point = buffer[type_]["StartPoint"]
-                start_point_tag = gmsh.model.occ.addPoint( start_point[0],
-                                                           start_point[1], start_point[2])
+                start_point_tag = gmsh.model.occ.addPoint(
+                    start_point[0], start_point[1], start_point[2]
+                )
                 points_tag.append(start_point_tag)
                 end_point = buffer[type_]["EndPoint"]
-                end_point_tag = gmsh.model.occ.addPoint( end_point[0],
-                                                           end_point[1], end_point[2])
+                end_point_tag = gmsh.model.occ.addPoint(
+                    end_point[0], end_point[1], end_point[2]
+                )
                 points_tag.append(end_point_tag)
                 center = buffer[type_]["Center"]
                 center_tag = gmsh.model.occ.addPoint(center[0], center[1], center[2])
 
-                curve_tag.append(gmsh.model.occ.addCircleArc(
-                    start_point_tag,
-                    center_tag,
-                    end_point_tag))
+                curve_tag.append(
+                    gmsh.model.occ.addCircleArc(
+                        start_point_tag, center_tag, end_point_tag
+                    )
+                )
                 cntrpoints_tag.append(center_tag)
             elif type_ == "ArcOfEllipse":
                 start_point = buffer[type_]["StartPoint"]
-                start_point_tag = gmsh.model.occ.addPoint( start_point[0],
-                                                           start_point[1], start_point[2])
+                start_point_tag = gmsh.model.occ.addPoint(
+                    start_point[0], start_point[1], start_point[2]
+                )
                 points_tag.append(start_point_tag)
                 end_point = buffer[type_]["EndPoint"]
-                end_point_tag = gmsh.model.occ.addPoint( end_point[0],
-                                                           end_point[1], end_point[2])
+                end_point_tag = gmsh.model.occ.addPoint(
+                    end_point[0], end_point[1], end_point[2]
+                )
                 points_tag.append(end_point_tag)
                 print("Ellipse")
                 center = buffer[type_]["Center"]
@@ -605,11 +605,11 @@ class _freecadGmsh:
                 print(focus)
                 print(end_point)
                 focus_tag = gmsh.model.occ.addPoint(focus[0], focus[1], focus[2])
-                curve_tag.append(gmsh.model.occ.addEllipseArc(
-                    start_point_tag,
-                    center_tag,
-                    focus_tag,
-                    end_point_tag))
+                curve_tag.append(
+                    gmsh.model.occ.addEllipseArc(
+                        start_point_tag, center_tag, focus_tag, end_point_tag
+                    )
+                )
 
                 cntrpoints_tag.append(center_tag)
                 cntrpoints_tag.append(focus_tag)

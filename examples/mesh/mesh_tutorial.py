@@ -26,7 +26,16 @@ Some examples of using bluemira mesh module.
 # %%
 
 
+import dolfin
+import matplotlib.pyplot as plt
+
+import bluemira.display as display
+import bluemira.mesh.msh2xdmf as msh2xdmf
 from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.mesh import meshing
 
 # %%[markdown]
 # Creation of a simple geometry
@@ -34,16 +43,7 @@ from bluemira.equilibria.shapes import JohnerLCFS
 
 # %%
 
-from bluemira.equilibria.shapes import JohnerLCFS
-import bluemira.display as display
-from bluemira.mesh import meshing
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.shell import BluemiraShell
-from bluemira.geometry.plane import BluemiraPlane
 
-import bluemira.mesh.msh2xdmf as msh2xdmf
-import dolfin
-import matplotlib.pyplot as plt
 # %%[markdown]
 
 
@@ -51,16 +51,19 @@ import matplotlib.pyplot as plt
 # Create plasma geometry (Johner parametrization)
 R0 = 8.938
 A = 3.1
-a = R0/A
+a = R0 / A
 p = JohnerLCFS(
-    {"r_0":     {"value": 8.93},
-     "a":       {"value": a},
-     "kappa_u": {"value": 1.7534},
-     "kappa_l": {"value": 1.85},
-     "delta_u": {"value": 0.49},
-     "delta_l": {"value": 0.5}})
+    {
+        "r_0": {"value": 8.93},
+        "a": {"value": a},
+        "kappa_u": {"value": 1.7534},
+        "kappa_l": {"value": 1.85},
+        "delta_u": {"value": 0.49},
+        "delta_l": {"value": 0.5},
+    }
+)
 lcfs = p.create_shape(label="LCFS")
-lcfs.mesh_options = {'lcar': 0.3, 'physical_group': 'LCFS'}
+lcfs.mesh_options = {"lcar": 0.3, "physical_group": "LCFS"}
 plasma_face = BluemiraFace(lcfs, label="plasma_surface")
 plasma_face.mesh_options = {"lcar": 0.5, "physical_group": "plasma"}
 display.plot_2d(lcfs)
@@ -86,7 +89,7 @@ sol.mesh_options = {"lcar": 0.5, "physical_group": "sol"}
 # ax = fplotter.plot_2d(plasma_face, ax=ax, show=False)
 # fplotter.options.face_options= {'c':'red'}
 # ax = fplotter.plot_2d(sol, ax=ax, show=False)
-#plt.show()
+# plt.show()
 
 
 plane = BluemiraPlane(axis=[1, 0, 0], angle=90)

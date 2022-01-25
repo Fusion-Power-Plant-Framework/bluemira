@@ -23,8 +23,10 @@
 Grad-Shafranov solver
 """
 import dolfin
-import bluemira.equilibria.fem_fixed_boundary.tools as tools
 import numpy
+
+import bluemira.equilibria.fem_fixed_boundary.tools as tools
+
 
 class GradShafranovLagrange:
     """

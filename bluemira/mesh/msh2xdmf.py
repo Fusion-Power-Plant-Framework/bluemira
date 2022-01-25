@@ -21,15 +21,17 @@
 
 # from https://github.com/floiseau/msh2xdmf.git
 
-#todo: import msh2xdmf as external module
+# todo: import msh2xdmf as external module
 
 import argparse
-import meshio
 import os
-import numpy as np
 from configparser import ConfigParser
+
+import meshio
+import numpy as np
+
 try:
-    from dolfin import XDMFFile, Mesh, MeshValueCollection
+    from dolfin import Mesh, MeshValueCollection, XDMFFile
     from dolfin.cpp.mesh import MeshFunctionSizet
 except ImportError:
     print("Could not import dolfin. Continuing without Dolfin support.")
@@ -44,7 +46,7 @@ def msh2xdmf(mesh_name, dim=2, directory="."):
     """
 
     # Get the mesh name has prefix
-    prefix = mesh_name.split('.')[0]
+    prefix = mesh_name.split(".")[0]
     # Read the input mesh
     msh = meshio.read("{}/{}".format(directory, mesh_name))
     # Generate the domain XDMF file
@@ -108,9 +110,7 @@ def export_domain(msh, dim, directory, prefix):
     )
     # Export the XDMF mesh of the domain
     meshio.write(
-        "{}/{}_{}".format(directory, prefix, "domain.xdmf"),
-        domain,
-        file_format="xdmf"
+        "{}/{}_{}".format(directory, prefix, "domain.xdmf"), domain, file_format="xdmf"
     )
 
 
@@ -158,11 +158,11 @@ def export_boundaries(msh, dim, directory, prefix):
     meshio.write(
         "{}/{}_{}".format(directory, prefix, "boundaries.xdmf"),
         boundaries,
-        file_format="xdmf"
+        file_format="xdmf",
     )
 
 
-def export_association_table(msh, prefix='mesh', directory='.', verbose=True):
+def export_association_table(msh, prefix="mesh", directory=".", verbose=True):
     """
     Display the association between the physical group label and the mesh
     value.
@@ -177,7 +177,7 @@ def export_association_table(msh, prefix='mesh', directory='.', verbose=True):
 
     # Display
     if verbose:
-        print('\n' + topbot)
+        print("\n" + topbot)
         print(formatter.format("GMSH label", "MeshFunction value"))
         print(separator)
 
@@ -201,15 +201,15 @@ def export_association_table(msh, prefix='mesh', directory='.', verbose=True):
     file_content = ConfigParser()
     file_content["ASSOCIATION TABLE"] = association_table
     file_name = "{}/{}_{}".format(directory, prefix, "association_table.ini")
-    with open(file_name, 'w') as f:
+    with open(file_name, "w") as f:
         file_content.write(f)
 
 
 def import_mesh(
-        prefix="mesh",
-        subdomains=False,
-        dim=2,
-        directory=".",
+    prefix="mesh",
+    subdomains=False,
+    dim=2,
+    directory=".",
 ):
     """Function importing a dolfin mesh.
     Arguments:
@@ -230,8 +230,9 @@ def import_mesh(
     boundaries = "{}_boundaries.xdmf".format(prefix)
 
     # create 2 xdmf files if not converted before
-    if not os.path.exists("{}/{}".format(directory, domain)) or \
-       not os.path.exists("{}/{}".format(directory, boundaries)):
+    if not os.path.exists("{}/{}".format(directory, domain)) or not os.path.exists(
+        "{}/{}".format(directory, boundaries)
+    ):
         msh2xdmf("{}.msh".format(prefix), dim=dim, directory=directory)
 
     # Import the converted domain
@@ -241,17 +242,18 @@ def import_mesh(
     # Import the boundaries
     boundaries_mvc = MeshValueCollection("size_t", mesh, dim=dim)
     with XDMFFile("{}/{}".format(directory, boundaries)) as infile:
-        infile.read(boundaries_mvc, 'boundaries')
+        infile.read(boundaries_mvc, "boundaries")
     boundaries_mf = MeshFunctionSizet(mesh, boundaries_mvc)
     # Import the subdomains
     if subdomains:
         subdomains_mvc = MeshValueCollection("size_t", mesh, dim=dim)
         with XDMFFile("{}/{}".format(directory, domain)) as infile:
-            infile.read(subdomains_mvc, 'subdomains')
+            infile.read(subdomains_mvc, "subdomains")
         subdomains_mf = MeshFunctionSizet(mesh, subdomains_mvc)
     # Import the association table
     association_table_name = "{}/{}_{}".format(
-        directory, prefix, "association_table.ini")
+        directory, prefix, "association_table.ini"
+    )
     file_content = ConfigParser()
     file_content.read(association_table_name)
     association_table = dict(file_content["ASSOCIATION TABLE"])

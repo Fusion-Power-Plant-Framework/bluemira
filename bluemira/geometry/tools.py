@@ -808,6 +808,7 @@ def point_inside_shape(point, shape):
     """
     return cadapi.point_inside_shape(point, shape._shape)
 
+
 # # =============================================================================
 # # Serialize and Deserialize
 # # =============================================================================
