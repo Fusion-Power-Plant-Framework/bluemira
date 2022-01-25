@@ -96,7 +96,7 @@ def init_equilibrium(grid, coilset, targets, profile):
         li=None,
     )
     targets(eq)
-    optimiser = UnconstrainedCurrentCOP(coilset_temp, gamma=1e-7)
+    optimiser = UnconstrainedCurrentCOP(coilset_temp, eq, targets, gamma=1e-7)
     coilset_temp = optimiser(eq, targets)
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
@@ -137,7 +137,7 @@ def pre_optimise(eq, profile, targets):
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = UnconstrainedCurrentCOP(eq.coilset, gamma=1e-8)
+    optimiser = UnconstrainedCurrentCOP(eq.coilset, eq, targets, gamma=1e-8)
 
     program = PicardCoilsetIterator(
         eq,
@@ -169,21 +169,21 @@ def init_opt_constraints():
     )
     opt_constraints.append(constrain_core_isoflux_targets)
 
-    return opt_constraints
+    return []
 
 
-def set_coilset_optimiser(
-    coilset,
-):
+def set_coilset_optimiser(coilset, eq, magnetic_targets):
     """
     Create the optimiser to be used to optimise the coilset.
     """
     opt_constraints = init_opt_constraints()
     optimisation_options = {
-        "max_currents": 3.0e7,
+        "eq": eq,
+        "targets": magnetic_targets,
         "gamma": 1e-8,
+        "max_currents": 3.0e7,
         "optimiser": Optimiser(
-            algorithm_name="COBYLA",
+            algorithm_name="SLSQP",
             opt_conditions={"max_eval": 200},
             opt_parameters={"initial_step": 0.03},
         ),
@@ -224,7 +224,7 @@ def run():
     # self consistent initial state
     pre_optimise(eq, profile, targets)
 
-    optimiser = set_coilset_optimiser(eq.coilset)
+    optimiser = set_coilset_optimiser(eq.coilset, eq, targets)
     program = set_iterator(eq, profile, targets, optimiser)
     optimise_fbe(program)
     eq.plot()

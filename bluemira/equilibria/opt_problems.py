@@ -201,8 +201,8 @@ class CoilsetOP(OptimisationProblem):
             include linearised constraints. Quadratic and/or non-linear
             constraints must be provided in the sub-classes
         """
-        self.eq = eq
-        self.constraints = constraints
+        # self.eq = eq
+        # self.constraints = constraints
         return self.optimise()
 
 
@@ -213,8 +213,11 @@ class UnconstrainedCurrentCOP(CoilsetOP):
     Intended to replace Norm2Tikhonov as a Coilset optimiser.
     """
 
-    def __init__(self, coilset, gamma=1e-12):
+    def __init__(self, coilset, eq, targets, gamma=1e-12):
         super().__init__(coilset)
+
+        self.eq = eq
+        self.targets = targets
         self.gamma = gamma
 
     def optimise(self):
@@ -230,10 +233,10 @@ class UnconstrainedCurrentCOP(CoilsetOP):
         weights[i] = w[i] = sqrt(W[i,i]).
         """
         # Scale the control matrix and constraint vector by weights.
-        self.constraints(self.eq, I_not_dI=False)
-        self.w = self.constraints.w
-        self.A = self.w[:, np.newaxis] * self.constraints.A
-        self.b = self.w * self.constraints.b
+        self.targets(self.eq, I_not_dI=False)
+        self.w = self.targets.w
+        self.A = self.w[:, np.newaxis] * self.targets.A
+        self.b = self.w * self.targets.b
 
         # Optimise currents using analytic expression for optimum.
         current_adjustment = tikhonov(self.A, self.b, self.gamma)
@@ -267,6 +270,10 @@ class BoundedCurrentCOP(CoilsetOP):
     def __init__(
         self,
         coilset,
+        eq,
+        targets,
+        gamma=1e-8,
+        max_currents=None,
         optimiser=Optimiser(
             algorithm_name="SLSQP",
             opt_conditions={
@@ -278,11 +285,12 @@ class BoundedCurrentCOP(CoilsetOP):
             },
             opt_parameters={"initial_step": 0.03},
         ),
-        gamma=1e-8,
         opt_constraints=[],
-        max_currents=None,
     ):
         # noqa :N803
+
+        # Set objective function for this OptimisationProblem,
+        # and initialise
         objective = OptimisationObjective(
             objectives.regularised_lsq_objective, {"gamma": gamma}
         )
@@ -292,6 +300,11 @@ class BoundedCurrentCOP(CoilsetOP):
         bounds = self.get_current_bounds(max_currents)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
+
+        # Save additional parameters used to generate remaining
+        # objective/constraint arguments at runtime
+        self.eq = eq
+        self.targets = targets
 
     def optimise(self):
         """
@@ -308,12 +321,12 @@ class BoundedCurrentCOP(CoilsetOP):
 
         # Set up data needed in FoM evaluation.
         # Scale the control matrix and constraint vector by weights.
-        self.constraints(self.eq, I_not_dI=True)
-        weights = self.constraints.w
+        self.targets(self.eq, I_not_dI=True)
+        weights = self.targets.w
 
         self._objective._args["scale"] = self.scale
-        self._objective._args["a_mat"] = weights[:, np.newaxis] * self.constraints.A
-        self._objective._args["b_vec"] = weights * self.constraints.b
+        self._objective._args["a_mat"] = weights[:, np.newaxis] * self.targets.A
+        self._objective._args["b_vec"] = weights * self.targets.b
 
         # Optimise
         currents = self.opt.optimise(initial_currents)
@@ -376,8 +389,8 @@ class CoilsetPositionCOP(CoilsetOP):
         opt_constraints=[],
     ):
         # noqa :N803
-        opt_objective = OptimisationObjective(self.f_min_objective)
-        super().__init__(coilset, optimiser, opt_objective)
+        objective = OptimisationObjective(self.f_min_objective)
+        super().__init__(coilset, optimiser, objective, opt_constraints)
 
         # Create region map
         self.region_mapper = RegionMapper(pfregions)
