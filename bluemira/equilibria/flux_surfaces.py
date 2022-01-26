@@ -42,6 +42,7 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     check_linesegment,
     get_angle_between_points,
+    get_intersect,
     join_intersect,
     loop_plane_intersect,
 )
@@ -231,6 +232,53 @@ class ClosedFluxSurface(FluxSurface):
         arg_z_min = np.argmin(self.loop.z)
         x_z_min = self.loop.x[arg_z_min]
         return (self.major_radius - x_z_min) / self.minor_radius
+
+    @property
+    @lru_cache(1)
+    def zeta_upper(self):
+        """
+        Outer upper squareness of the ClosedFluxSurface.
+        """
+        z_max = np.max(self.loop.z)
+        arg_z_max = np.argmax(self.loop.z)
+        x_z_max = self.loop.x[arg_z_max]
+        x_max = np.max(self.loop.x)
+        arg_x_max = np.argmax(self.loop.x)
+        z_x_max = self.loop.z[arg_x_max]
+
+        a = z_max - z_x_max
+        b = x_max - x_z_max
+        alpha = np.arctan(a / b)
+        x_ellipse_inter, z_ellipse_inter = x_z_max + b * np.cos(
+            alpha
+        ), z_x_max + a * np.sin(alpha)
+        line = Loop([x_z_max, x_max], z=[z_x_max, z_max])
+        fs_inter = get_intersect(self.loop, line)
+        d_ab = np.hypot(fs_inter[0] - x_z_max, fs_inter[1] - z_x_max)
+        d_ac = np.hypot(x_ellipse_inter - x_z_max, z_ellipse_inter - z_x_max)
+        d_cd = np.hypot(x_max - x_z_max, z_max - z_x_max)
+
+        t = np.linspace(0, 2 * np.pi, 100)
+        x_el = x_z_max + b * np.cos(t)
+        z_el = z_x_max + a * np.sin(t)
+        ellipse = Loop(x=x_el, z=z_el)
+
+        ellipse.plot()
+        self.plot()
+        ax = plt.gca()
+        ax.plot([x_z_max, x_max], [z_x_max, z_max], marker="o")
+        ax.plot(x_ellipse_inter, z_ellipse_inter, "s", marker="x")
+        ax.plot(*fs_inter, marker="*")
+
+        return (d_ab - d_ac) / d_cd
+
+    @property
+    @lru_cache(1)
+    def zeta_lower(self):
+        """
+        Outer lower squareness of the ClosedFluxSurface.
+        """
+        pass
 
     @property
     @lru_cache(1)
