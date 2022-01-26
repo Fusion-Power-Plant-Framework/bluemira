@@ -334,7 +334,9 @@ class BasePlotter:
         """
         xss = []
         for element in self.geometry.elements:
-            plane = BluemiraPlane(base=element.mid_point, axis=element.space_vector)
+            plane = BluemiraPlane(
+                base=element.mid_point, axis=element.space_vector, angle=0
+            )
             plot_options = PlotOptions(
                 show_wires=False,
                 show_faces=True,
@@ -367,8 +369,8 @@ if __name__ == "__main__":
     geometry.add_element(1, 2, xs, mat)
 
     plotter = BasePlotter(geometry)
-    # plotter.plot_nodes()
-    # plotter.plot_supports()
-    # plotter.plot_elements()
+    plotter.plot_nodes()
+    plotter.plot_supports()
+    plotter.plot_elements()
     plotter.plot_cross_sections()
     plt.show()
