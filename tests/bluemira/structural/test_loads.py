@@ -19,12 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
 import pytest
 
 from bluemira.structural.constants import LOAD_TYPES
 from bluemira.structural.error import StructuralError
-from bluemira.structural.loads import distributed_load, node_load, point_load
+from bluemira.structural.loads import distributed_load, point_load
 
 
 class TestPointLoad:
