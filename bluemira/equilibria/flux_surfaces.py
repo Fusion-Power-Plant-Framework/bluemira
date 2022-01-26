@@ -235,6 +235,14 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
+    def zeta(self):
+        """
+        Average squareness of the ClosedFluxSurface.
+        """
+        return 0.5 * (self.zeta_upper + self.zeta_lower)
+
+    @property
+    @lru_cache(1)
     def zeta_upper(self):
         """
         Outer upper squareness of the ClosedFluxSurface.
@@ -284,7 +292,7 @@ class ClosedFluxSurface(FluxSurface):
         d_ab = np.hypot(xb - xa, zb - za)
         d_ac = np.hypot(xc - xa, zc - za)
         d_cd = np.hypot(xd - xc, zd - zc)
-        return (d_ab - d_ac) / d_cd
+        return float((d_ab - d_ac) / d_cd)
 
     @property
     @lru_cache(1)
@@ -509,7 +517,11 @@ def analyse_plasma_core(eq, n_points=50):
     psi_n = np.append(psi_n, 1.0)
     flux_surfaces = [ClosedFluxSurface(loop) for loop in loops]
     vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
-    vars += [f"{v}{end}" for end in ["", "_upper", "_lower"] for v in ["kappa", "delta"]]
+    vars += [
+        f"{v}{end}"
+        for end in ["", "_upper", "_lower"]
+        for v in ["kappa", "delta", "zeta"]
+    ]
     return CoreResults(
         psi_n,
         *[[getattr(fs, var) for fs in flux_surfaces] for var in vars],
@@ -531,11 +543,14 @@ class CoreResults:
     area: Iterable
     V: Iterable
     kappa: Iterable
-    kappa_upper: Iterable
-    kappa_lower: Iterable
     delta: Iterable
-    delta_lower: Iterable
+    zeta: Iterable
+    kappa_upper: Iterable
     delta_upper: Iterable
+    zeta_upper: Iterable
+    kappa_lower: Iterable
+    delta_lower: Iterable
+    zeta_lower: Iterable
     q: Iterable
     Delta_shaf: Iterable
 
