@@ -248,31 +248,7 @@ class ClosedFluxSurface(FluxSurface):
 
         a = z_max - z_x_max
         b = x_max - x_z_max
-        alpha = np.arctan(a / b)
-        u = np.arctan(0.5 * a / b)
-        cost_lahire = 1 - u ** 2 / (u ** 2 + 1)
-        sint_lahire = 2 * u / (u ** 2 + 1)
-        x_ellipse_inter = x_z_max + b * cost_lahire  # np.cos(alpha)
-        z_ellipse_inter = z_x_max + a * sint_lahire  # np.sin(alpha)
-        line = Loop([x_z_max, x_max], z=[z_x_max, z_max])
-        fs_inter = get_intersect(self.loop, line)
-        d_ab = np.hypot(fs_inter[0] - x_z_max, fs_inter[1] - z_x_max)
-        d_ac = np.hypot(x_ellipse_inter - x_z_max, z_ellipse_inter - z_x_max)
-        d_cd = np.hypot(x_max - x_z_max, z_max - z_x_max)
-
-        t = np.linspace(0, 2 * np.pi, 100)
-        x_el = x_z_max + b * np.cos(t)
-        z_el = z_x_max + a * np.sin(t)
-        ellipse = Loop(x=x_el, z=z_el)
-
-        ellipse.plot()
-        self.plot()
-        ax = plt.gca()
-        ax.plot([x_z_max, x_max], [z_x_max, z_max], marker="o")
-        ax.plot(x_ellipse_inter, z_ellipse_inter, "s", marker="X")
-        ax.plot(*fs_inter, marker="*")
-
-        return (d_ab - d_ac) / d_cd
+        return self._zeta_calc(a, b, x_z_max, z_x_max, x_max, z_max)
 
     @property
     @lru_cache(1)
@@ -280,7 +256,35 @@ class ClosedFluxSurface(FluxSurface):
         """
         Outer lower squareness of the ClosedFluxSurface.
         """
-        pass
+        z_min = np.min(self.loop.z)
+        arg_z_min = np.argmin(self.loop.z)
+        x_z_min = self.loop.x[arg_z_min]
+        x_max = np.max(self.loop.x)
+        arg_x_max = np.argmax(self.loop.x)
+        z_x_max = self.loop.z[arg_x_max]
+
+        a = z_min - z_x_max
+        b = x_max - x_z_min
+
+        return self._zeta_calc(a, b, x_z_min, z_x_max, x_max, z_min)
+
+    def _zeta_calc(self, a, b, xa, za, xd, zd):
+        """
+        Actual squareness calculation
+
+        Notes
+        -----
+        Squareness defined here w.r.t an ellipse intersection along a projected line
+        """
+        xc = xa + b * np.sqrt(0.5)
+        zc = za + a * np.sqrt(0.5)
+
+        line = Loop([xa, xd], z=[za, zd])
+        xb, zb = get_intersect(self.loop, line)
+        d_ab = np.hypot(xb - xa, zb - za)
+        d_ac = np.hypot(xc - xa, zc - za)
+        d_cd = np.hypot(xd - xc, zd - zc)
+        return (d_ab - d_ac) / d_cd
 
     @property
     @lru_cache(1)
