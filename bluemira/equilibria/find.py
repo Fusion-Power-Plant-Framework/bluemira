@@ -259,7 +259,7 @@ def triage_OX_points(f_psi, points):
     return o_points, x_points
 
 
-def find_OX_points(x, z, psi, limiter=None):  # noqa :N802
+def find_OX_points(x, z, psi, limiter=None, *, field_cut_off=1.0):  # noqa :N802
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -273,6 +273,8 @@ def find_OX_points(x, z, psi, limiter=None):  # noqa :N802
         The poloidal magnetic flux map [V.s/rad]
     limiter: Optional[Limiter]
         The limiter to use (if any)
+    field_cut_off: float
+        The field above which local minima are not searched [T]. Must be > 0.1 T
 
     Returns
     -------
@@ -296,6 +298,7 @@ def find_OX_points(x, z, psi, limiter=None):  # noqa :N802
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
     nx, nz = psi.shape  # Grid shape
     radius = min(0.5, 2 * np.hypot(d_x, d_z))  # Search radius
+    field_cut_off = max(100 * B_TOLERANCE, field_cut_off)
 
     # Splines for interpolation
     f_psi = RectBivariateSpline(x[:, 0], z[0, :], psi)
@@ -318,8 +321,8 @@ def find_OX_points(x, z, psi, limiter=None):  # noqa :N802
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
-        if f_Bp(x[i, j], z[i, j]) > 1.0:  # T
-            continue
+        if f_Bp(x[i, j], z[i, j]) > field_cut_off:
+            continue  # Unlikely to be a field null
 
         point = find_local_Bp_minima_cg(f_psi, x[i, j], z[i, j], radius)
 
