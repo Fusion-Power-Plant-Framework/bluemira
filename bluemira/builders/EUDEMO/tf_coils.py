@@ -135,14 +135,14 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     _design_problem: Optional[GeometryOptimisationProblem] = None
     _centreline: BluemiraWire
     _geom_path: Optional[str] = None
-    _keep_out_zone: BluemiraWire
-    _separatrix: BluemiraWire
+    _keep_out_zone: Optional[BluemiraWire] = None
+    _separatrix: Optional[BluemiraWire] = None
 
     def __init__(
         self,
         params,
         build_config: BuildConfig,
-        separatrix: BluemiraWire,
+        separatrix: Optional[BluemiraWire] = None,
         keep_out_zone: Optional[BluemiraWire] = None,
     ):
         super().__init__(
@@ -191,7 +191,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     def reinitialise(
         self,
         params,
-        separatrix: BluemiraWire,
+        separatrix: Optional[BluemiraWire] = None,
         keep_out_zone: Optional[BluemiraWire] = None,
     ) -> None:
         """
@@ -202,8 +202,24 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         params: Dict[str, Any]
             The parameterisation containing at least the required params for this
             Builder.
+        separatrix: Optional[BluemiraWire]
+            The separatrix to pass into constrained optimisation routines. Must be
+            provided if this Builder's runmode is set to run. By default, None.
+        keep_out_zone: Optional[BluemiraWire]
+            Exclusion zone, if any to apply to the build. By default None.
+
+        Raises
+        ------
+        BuilderError
+            If the runmode is set to run but a separatrix is not provided.
         """
         super().reinitialise(params)
+
+        if self.runmode == "run" and separatrix is None:
+            raise BuilderError(
+                "A separatrix must be provided as the runmode for this builder is set "
+                "to run"
+            )
 
         self._centreline = None
         self._wp_cross_section = self._make_wp_xs()
