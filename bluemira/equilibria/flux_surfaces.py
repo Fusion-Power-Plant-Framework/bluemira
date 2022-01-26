@@ -249,9 +249,11 @@ class ClosedFluxSurface(FluxSurface):
         a = z_max - z_x_max
         b = x_max - x_z_max
         alpha = np.arctan(a / b)
-        x_ellipse_inter, z_ellipse_inter = x_z_max + b * np.cos(
-            alpha
-        ), z_x_max + a * np.sin(alpha)
+        u = np.arctan(0.5 * a / b)
+        cost_lahire = 1 - u ** 2 / (u ** 2 + 1)
+        sint_lahire = 2 * u / (u ** 2 + 1)
+        x_ellipse_inter = x_z_max + b * cost_lahire  # np.cos(alpha)
+        z_ellipse_inter = z_x_max + a * sint_lahire  # np.sin(alpha)
         line = Loop([x_z_max, x_max], z=[z_x_max, z_max])
         fs_inter = get_intersect(self.loop, line)
         d_ab = np.hypot(fs_inter[0] - x_z_max, fs_inter[1] - z_x_max)
@@ -267,7 +269,7 @@ class ClosedFluxSurface(FluxSurface):
         self.plot()
         ax = plt.gca()
         ax.plot([x_z_max, x_max], [z_x_max, z_max], marker="o")
-        ax.plot(x_ellipse_inter, z_ellipse_inter, "s", marker="x")
+        ax.plot(x_ellipse_inter, z_ellipse_inter, "s", marker="X")
         ax.plot(*fs_inter, marker="*")
 
         return (d_ab - d_ac) / d_cd
