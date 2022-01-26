@@ -1453,7 +1453,7 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
                 # Outer limb radius
                 BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
                 # Height at which to stop the taper angle
-                BoundedVariable("z_in", 0.5, lower_bound=0.4, upper_bound=0.8),
+                BoundedVariable("z_in", 4.5, lower_bound=4, upper_bound=6),
                 # Upper limb flat section height
                 BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
                 # Lower limb flat section height
@@ -1497,9 +1497,9 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
             r_j,
         ) = self.variables.values
         axis = [0, -1, 0]
-        p1 = [x_mid, 0, z_mid_up]
-        p2 = [x_curve_start, 0, z_mid_up]
-        wires = [make_polygon([p1, p2], label="top_limb_inb")]
+        p1 = [x_mid, 0, z_in]
+        p2 = [x_mid, 0, z_mid_up]
+        wires = [make_polygon([p1, p2], label="inner_limb_mid_up")]
 
         # Top Curve
         if z_max_up - z_mid_up > 0.001:
@@ -1581,9 +1581,9 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
                 )
             )
 
-        p3 = [x_curve_start, 0, z_mid_down]
-        p4 = [x_mid, 0, z_mid_down]
-        wires.append(make_polygon([p3, p4], label="bot_limb_inb"))
+        p3 = [x_mid, 0, z_mid_down]
+        p4 = [x_mid, 0, -z_in]
+        wires.append(make_polygon([p3, p4], label="inner_limb_mid_down"))
 
         # Curved taper radius
         x_t = x_mid - x_in
@@ -1597,8 +1597,8 @@ class ResistiveCurvedPictureFrame(GeometryParameterisation):
             make_circle(
                 radius=r_taper,
                 center=(x_in + r_taper, 0, 0),
-                start_angle=180 + angle,
-                end_angle=180 - angle,
+                start_angle=180 - angle,
+                end_angle=180 + angle,
                 axis=axis,
                 label="inner_limb",
             )
