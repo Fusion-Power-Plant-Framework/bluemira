@@ -27,6 +27,7 @@ from matplotlib.colors import DivergingNorm, Normalize
 
 from bluemira.display import plot_3d
 from bluemira.display.plotter import PlotOptions
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.structural.constants import (
     DEFLECT_COLOR,
     FLOAT_TYPE,
@@ -184,6 +185,78 @@ class BasePlotter:
 
         self.options = {**DEFAULT_PLOT_OPTIONS, **kwargs}
 
+        # Cached size and plot hints
+        self._unit_length = None
+        self._force_size = None
+        self._size = None
+
+        self.color_normer = None
+
+    @property
+    def unit_length(self):
+        """
+        Calculates a characteristic unit length for the model: the minimum
+        element size
+        """
+        if self._unit_length is None:
+            lengths = np.zeros(self.geometry.n_elements)
+            for i, element in enumerate(self.geometry.elements):
+                lengths[i] = element.length
+            self._unit_length = np.min(lengths)
+
+        return self._unit_length
+
+    @property
+    def force_size(self):
+        """
+        Calculates a characteristic force vector length for plotting purposes
+
+        Returns
+        -------
+        f_length: float
+            The minimum and maximum forces
+        """
+        if self._force_size is None:
+            loads = []
+            for element in self.geometry.elements:
+                for load in element.loads:
+                    if load["type"] == "Element Load":
+                        loads.append(load["Q"])
+                    elif load["type"] == "Distributed Load":
+                        loads.append(load["w"] / element.length)
+
+            for node in self.geometry.nodes:
+                for load in node.loads:
+                    loads.append(load["Q"])
+
+            self._force_size = np.max(np.abs(loads))
+
+        return self._force_size
+
+    @property
+    def size(self):
+        """
+        Calculates the size of the model bounding box
+        """
+        if self._size is None:
+            xmax, xmin, ymax, ymin, zmax, zmin = self.geometry.bounds()
+
+            self._size = max([xmax - xmin, ymax - ymin, zmax - zmin])
+
+        return self._size
+
+    @property
+    def text_size(self):
+        """
+        Get a reasonable guess of the font size to use in plotting.
+
+        Returns
+        -------
+        size: float
+            The font size to use in plotting
+        """
+        return max(10, self.size // 30)
+
     def plot_nodes(self):
         """
         Plots all the Nodes in the Geometry.
@@ -239,7 +312,7 @@ class BasePlotter:
 
             if self.options["show_stress"]:
                 color = STRESS_COLOR(self.color_normer(element.max_stress))
-            elif self.options["show_deflections"]:
+            elif self.options["show_deflection"]:
                 color = DEFLECT_COLOR(self.color_normer(element.max_deflection))
             else:
                 color = default_color
@@ -259,13 +332,43 @@ class BasePlotter:
         Plots the cross-sections for each Element in the Geometry, rotated to
         the mid-point of the Element.
         """
+        xss = []
         for element in self.geometry.elements:
+            plane = BluemiraPlane(base=element.mid_point, axis=element.space_vector)
             plot_options = PlotOptions(
                 show_wires=False,
                 show_faces=True,
                 face_options=self.options["cross_section_options"],
+                # plane="yz",
             )
             xs = element._cross_section.geometry.deepcopy()
-            xs.rotate()
-            xs.translate(*element.mid_point)
-            plot_3d([xs], ax=self.ax, show=False, options=[plot_options])
+            xs.change_plane(plane)
+            xss.append(xs)
+            # xs.rotate()
+            # xs.translate(*element.mid_point)
+        plot_3d(xss, ax=self.ax, show=False)  # , options=[plot_options])
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    from bluemira.structural.crosssection import IBeam
+    from bluemira.structural.geometry import Geometry
+    from bluemira.structural.material import SS316
+
+    xs = IBeam(0.5, 0.25, 0.1, 0.1)
+    mat = SS316()
+
+    geometry = Geometry()
+    geometry.add_node(0, 0, 0)
+    geometry.add_node(1, 1, 1)
+    geometry.add_node(2, 1, 1)
+    geometry.add_element(0, 1, xs, mat)
+    geometry.add_element(1, 2, xs, mat)
+
+    plotter = BasePlotter(geometry)
+    # plotter.plot_nodes()
+    # plotter.plot_supports()
+    # plotter.plot_elements()
+    plotter.plot_cross_sections()
+    plt.show()

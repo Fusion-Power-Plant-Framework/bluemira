@@ -210,7 +210,7 @@ class Node:
         if isinstance(self, other.__class__):
             return self.distance_to_other(other) <= D_TOLERANCE
 
-        return NotImplementedError
+        return False
 
     __hash__ = None
 
@@ -234,9 +234,3 @@ def get_midpoint(node1, node2):
         0.5 * (node1.y + node2.y),
         0.5 * (node1.z + node2.z),
     )
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test()

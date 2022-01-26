@@ -22,34 +22,29 @@
 import numpy as np
 import pytest
 
-from bluemira.structural.node import Node
+from bluemira.structural.constants import LOAD_TYPES
+from bluemira.structural.error import StructuralError
+from bluemira.structural.loads import distributed_load, node_load, point_load
 
 
-class TestNode:
-    def test_distances(self):
-        n1 = Node(0, 0, 0, 0)
-        for _ in range(100):
-            v = 1000 * np.random.rand(3) - 1000
-            dx, dy, dz = v
-            n2 = Node(dx, dy, dz, 1)
-            assert np.isclose(n1.distance_to_other(n2), np.sqrt(np.sum(v ** 2)))
+class TestPointLoad:
+    def test_bad(self):
+        with pytest.raises(StructuralError):
+            point_load(100, 0.15, 5, "Fxy")
 
-    def test_assignment(self):
-        with pytest.raises(AttributeError):
-            node = Node(0, 0, 0, 0)
-            node.dummy = 4
-
-    def test_defaultsupports(self):
-        node = Node(0, 0, 0, 0)
-        assert not node.supports.all()
-        node.add_support(np.array([True, True, True, True, True, True]))
-        assert node.supports.all()
-        node.add_support(np.array([True, True, True, True, True, False]))
-        assert not node.supports[5]
-        assert node.supports[:5].all()
-        node.clear_supports()
-        assert not node.supports.all()
+    def test_good(self):
+        for load_type in LOAD_TYPES:
+            r = point_load(100, 0.14, 10, load_type)
+            assert len(r) == 12
 
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+class TestDistributedLoad:
+    def test_bad(self):
+        for string in ["Mx", "My", "Mz"]:
+            with pytest.raises(StructuralError):
+                distributed_load(0.3, 1, string)
+
+    def test_good(self):
+        for string in ["Fx", "Fy", "Fz"]:
+            r = distributed_load(0.3, 1, string)
+            assert len(r) == 12
