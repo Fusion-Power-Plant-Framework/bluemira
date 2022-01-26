@@ -23,7 +23,11 @@
 Geometry parameterisations
 """
 
+from __future__ import annotations
+
 import abc
+import json
+from typing import TextIO, Union
 
 import numpy as np
 from scipy.special import iv as bessel
@@ -64,7 +68,7 @@ class GeometryParameterisation(abc.ABC):
 
     __slots__ = ("name", "variables", "n_ineq_constraints")
 
-    def __init__(self, variables):
+    def __init__(self, variables: OptVariables):
         """
         Parameters
         ----------
@@ -196,6 +200,34 @@ class GeometryParameterisation(abc.ABC):
             CAD Wire of the geometry
         """
         pass
+
+    def to_json(self, file: str):
+        """
+        Write the json representation of the GeometryParameterisation to a file.
+
+        Parameters
+        ----------
+        file: str
+            The path to the file.
+        """
+        self.variables.to_json(file)
+
+    @classmethod
+    def from_json(cls, file: Union[str, TextIO]) -> GeometryParameterisation:
+        """
+        Create the GeometryParameterisation from a json file.
+
+        Parameters
+        ----------
+        file: Union[str, TextIO]
+            The path to the file, or an open file handle that supports reading.
+        """
+        if isinstance(file, str):
+            with open(file, "r") as fh:
+                return cls.from_json(fh)
+
+        var_dict = json.load(file)
+        return cls(var_dict)
 
 
 class PrincetonD(GeometryParameterisation):

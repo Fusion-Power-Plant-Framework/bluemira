@@ -44,6 +44,8 @@ It will give a message like this if everything is configured properly::
 
   Hi <user>! You've successfully authenticated, but GitHub does not provide shell access.
 
+If you have issues getting to this stage please refer to github's `ssh troubleshooting
+guide <https://docs.github.com/en/authentication/troubleshooting-ssh>`_.
 For other git websites (eg gitlab) it is exactly the same except you change the name of
 your key everywhere and the Host in the config file. The location to upload the key will
 be somewhere in your profile.

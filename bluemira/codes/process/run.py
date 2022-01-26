@@ -28,7 +28,7 @@ from __future__ import annotations
 import os
 import subprocess  # noqa :S404
 from enum import auto
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import bluemira.base as bm_base
 import bluemira.codes.interface as interface
@@ -197,3 +197,19 @@ class Solver(interface.FileProgramInterface):
             run_dir=run_dir,
             mappings=mappings,
         )
+
+    def get_process_parameters(self, params: Union[List, str]):
+        """
+        Get raw parameters from an MFILE
+        (mapped bluemira parameters will have bluemira names)
+
+        Parameters
+        ----------
+        params: Union[List, str]
+            parameter names to access
+
+        Returns
+        -------
+        values list
+        """
+        return self.teardown_obj.bm_file.extract_outputs(params)

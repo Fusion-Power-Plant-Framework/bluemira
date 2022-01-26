@@ -1167,7 +1167,6 @@ class FirstWall(ReactorSystem):
         self.profile = self.geom["2D profile"].inner
 
         self.hf_firstwall_params(self.profile)
-        self.make_2d_profile()
 
     # Output and plotting stuff
     def hf_save_as_csv(self, filename="hf_on_the_wall", metadata=""):

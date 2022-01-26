@@ -79,7 +79,6 @@ from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 # Neutronics imports
 from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
 from BLUEPRINT.nova.firstwall import FirstWallProfile
-from BLUEPRINT.nova.optimiser import StructuralOptimiser
 
 # BLUEPRINT.nova imports
 from BLUEPRINT.nova.stream import StreamFlow

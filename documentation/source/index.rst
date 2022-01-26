@@ -41,3 +41,4 @@ The documentation is divided into the following sections:
    Configuring SSH keys <ssh>
    Bluemira Parameterisations <parameterisations>
    Module API Reference <autoapi/index>
+   FAQs <faq>

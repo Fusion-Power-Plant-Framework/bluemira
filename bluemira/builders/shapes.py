@@ -95,6 +95,18 @@ class ParameterisedShapeBuilder(Builder):
         shape = self._param_class(shape_params)
         self._shape = shape
 
+    def save_shape(self, filename: str, **kwargs):
+        """
+        Save the shape to a json file.
+
+        Parameters
+        ----------
+        filename: str
+            The path to the file that the shape should be written to.
+        """
+        self._shape.to_json(file=filename, **kwargs)
+        bluemira_print(f"{self._name} shape saved to {filename}")
+
 
 class OptimisedShapeBuilder(ParameterisedShapeBuilder):
     """

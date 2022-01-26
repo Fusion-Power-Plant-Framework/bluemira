@@ -25,6 +25,8 @@ Tests for EU-DEMO build.
 
 import json
 import os
+import shutil
+import tempfile
 
 import numpy as np
 import pytest
@@ -35,7 +37,7 @@ from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.builders.EUDEMO.plasma import PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
-from bluemira.builders.EUDEMO.tf_coils import TFCoilsComponent
+from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder, TFCoilsComponent
 from bluemira.geometry.coordinates import Coordinates
 
 PARAMS_DIR = os.path.join(get_bluemira_root(), "tests", "bluemira", "builders", "EUDEMO")
@@ -99,7 +101,7 @@ class TestEUDEMO:
         """
         Test the results of the TF build.
         """
-        tf_builder = self.reactor.get_builder("TF Coils")
+        tf_builder: TFCoilsBuilder = self.reactor.get_builder("TF Coils")
         assert tf_builder is not None
         assert tf_builder.design_problem is not None
 
@@ -113,6 +115,21 @@ class TestEUDEMO:
         assert field is not None
         print(field)
         assert field == pytest.approx([0, -5.0031, 0])
+
+    def test_tf_save(self):
+        """
+        Test the TF coil geometry parameterisation can be saved.
+        """
+        tf_builder: TFCoilsBuilder = self.reactor.get_builder("TF Coils")
+        tempdir = tempfile.mkdtemp()
+        try:
+            the_path = os.sep.join([tempdir, "tf_coils_param.json"])
+            tf_builder.save_shape(the_path)
+            assert os.path.isfile(the_path)
+            with open(the_path, "r") as fh:
+                assert len(fh.readlines()) > 0
+        finally:
+            shutil.rmtree(tempdir)
 
     @pytest.mark.skipif(not tests.PLOTTING, reason="plotting disabled")
     def test_plot_xz(self):
