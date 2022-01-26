@@ -42,7 +42,6 @@ class TestMakeParameterisedPlasma:
                 "r_0": "R_0",
                 "a": "A",
             },
-            "segment_angle": 270.0,
         }
         builder = MakeParameterisedPlasma(params, build_config)
         component = builder()

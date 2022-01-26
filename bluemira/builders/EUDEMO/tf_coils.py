@@ -397,17 +397,32 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         return component
 
-    def build_xyz(self) -> Component:
+    def build_xyz(self, degree: float = 360.0) -> Component:
         """
         Build the x-y-z components of the TF coils.
+
+        Parameters
+        ----------
+        degree: float
+            The angle [°] around which to build the components, by default 360.0.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in 3D (xyz).
         """
         component = Component("xyz")
+
+        # Minimum angle per TF coil
+        min_tf_deg = 360.0 / self._params.n_TF.value
+        n_tf_draw = min(int(degree // min_tf_deg) + 1, self._params.n_TF.value)
+        degree = min_tf_deg * n_tf_draw
 
         # Winding pack
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
-        sectors = circular_pattern_component(winding_pack, self._params.n_TF.value)
+        sectors = circular_pattern_component(winding_pack, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         # Insulation
@@ -417,7 +432,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         ins_solid = boolean_cut(solid, wp_solid)[0]
         insulation = PhysicalComponent("Insulation", ins_solid)
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        sectors = circular_pattern_component(insulation, self._params.n_TF.value)
+        sectors = circular_pattern_component(insulation, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         # Casing
@@ -509,7 +524,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
-        sectors = circular_pattern_component(casing, self._params.n_TF.value)
+        sectors = circular_pattern_component(casing, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         return component

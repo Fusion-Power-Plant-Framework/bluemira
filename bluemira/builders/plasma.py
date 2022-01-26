@@ -23,7 +23,7 @@
 Built-in build steps for making a parameterised plasma
 """
 
-from typing import Dict, Optional, Type
+from typing import Dict, Type
 
 from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
@@ -43,14 +43,12 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
     _param_class: Type[GeometryParameterisation]
     _variables_map: Dict[str, str]
     _label: str
-    _segment_angle: float
     _boundary: BluemiraWire
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
         self._label = build_config.get("label", "LCFS")
-        self._segment_angle = build_config.get("segment_angle", 360.0)
 
     def reinitialise(self, params):
         """
@@ -117,28 +115,24 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
         return Component("xy").add_child(component)
 
-    def build_xyz(self, segment_angle: Optional[float] = None) -> PhysicalComponent:
+    def build_xyz(self, degree: float = 360.0) -> PhysicalComponent:
         """
         Build a PhysicalComponent with a BluemiraShell using the plasma boundary in 3D.
 
-        The 3D shell is created by revolving the boundary through the provided segment
-        angle. If the segment angle isn't given then the configured value for the Builder
-        is used.
+        The 3D shell is created by revolving the boundary through the angle provided
+        through the degree parameter.
 
         Parameters
         ----------
-        segment_angle: Optional[float]
-            The angle [°] around which to revolve the 3D geometry.
+        degree: float
+            The angle [°] around which to revolve the 3D geometry, by default 360.0.
 
         Returns
         -------
         result: PhysicalComponent
             The resulting component.
         """
-        if segment_angle is None:
-            segment_angle = self._segment_angle
-
-        shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=segment_angle)
+        shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=degree)
         component = PhysicalComponent(self._label, shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
 
