@@ -30,9 +30,9 @@ import numba as nb
 import numpy as np
 
 import bluemira.mesh.meshing as meshing
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -805,6 +805,7 @@ def point_inside_shape(point, shape):
     """
     return cadapi.point_inside_shape(point, shape._shape)
 
+
 # # =============================================================================
 # # Serialize and Deserialize
 # # =============================================================================
@@ -819,7 +820,7 @@ def serialize_shape(shape: BluemiraGeo):
         for obj in shape.boundary:
             output.append(serialize_shape(obj))
             dict = {"label": shape.label, "boundary": output}
-            if isinstance(shape, BluemiraGeo.GeoMeshable):
+            if isinstance(shape, GeoMeshable):
                 if shape.mesh_options is not None:
                     if shape.mesh_options.lcar is not None:
                         dict["lcar"] = shape.mesh_options.lcar
