@@ -167,6 +167,7 @@ def json_writer(data, file=None, return_output=False, *, cls=NumpyJSONEncoder, *
     if file is not None:
         with open(file, "w") as fh:
             fh.write(the_json)
+            fh.write("\n")
 
     if return_output:
         return the_json

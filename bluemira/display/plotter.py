@@ -420,7 +420,7 @@ class BasePlotter(ABC):
         if not self._check_options():
             self.ax = ax
         else:
-            self.initialize_plot_3d()
+            self.initialize_plot_3d(ax=ax)
             # this function can be common to 2D and 3D plot
             # self._data is used for 3D plot
             # self._data_to_plot is used for 2D plot
