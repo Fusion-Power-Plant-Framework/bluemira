@@ -6,11 +6,7 @@ from time import time
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.equilibria.constants import (
-    NBTI_J_MAX,
-    NB3SN_J_MAX,
-)
-from BLUEPRINT.nova.optimiser import StructuralOptimiser
+from bluemira.equilibria.constants import NB3SN_J_MAX, NBTI_J_MAX
 
 
 def TF_optimiser(TF, verbose, kwargs):
@@ -56,18 +52,6 @@ def EQ_optimiser(EQ, TF, params, exclusions, plot_flag):
         gif=False,
     )
     bluemira_print(f"optimisation time: {time()-t:.2f} s")
-
-
-# Note: This doesn't seem to get called from anywhere.
-def ATEC_optimiser(ATEC, TF, EQ):
-    """
-    Optimise the TF coil casing. WIP.
-    """
-    bluemira_print("Optimising coil structures.")
-    SO = StructuralOptimiser(ATEC, TF.cage, [s.eq for s in EQ.snapshots.values()])
-    t = time()
-    SO.optimise()
-    bluemira_print(f"Optimisation time: {time()-t:.2f} s")
 
 
 def FW_optimiser(FW, hf_limit, n_iteration_max):

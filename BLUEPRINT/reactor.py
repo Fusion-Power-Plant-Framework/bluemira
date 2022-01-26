@@ -188,8 +188,6 @@ class Reactor(ReactorSystem):
         self.callbacks = {
             "TF": TF_optimiser,
             "EQ": EQ_optimiser,
-            # The following wasn't used at the time of refactoring
-            # "ATEC": ATEC_optimiser,
             "FW": FW_optimiser,
         }
 
@@ -775,9 +773,6 @@ class Reactor(ReactorSystem):
         self.ATEC = CoilArchitectClass(self.params, to_atec)
 
         self.ATEC.build()
-        callback = self.callbacks.get("ATEC")
-        if callback is not None:
-            callback(self.ATEC, self.TF, self.EQ)
 
     def define_port_exclusions(self):
         """
