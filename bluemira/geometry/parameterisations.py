@@ -1536,7 +1536,7 @@ class SCCurvedPictureFrame(GeometryParameterisation):
                 # Lower limb flat section height
                 BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
                 # Upper limb max height
-                BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
+                BoundedVariable("z_max_up", 7.5, lower_bound=6, upper_bound=12),
                 # Lower limb max height
                 BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
                 # Corner/transition joint radius
@@ -1603,8 +1603,8 @@ class SCCurvedPictureFrame(GeometryParameterisation):
                 make_circle(
                     r_j,
                     (x_out - r_j, 0, z_mid_up - r_j),
-                    start_angle=90,
-                    end_angle=0,
+                    start_angle=0,
+                    end_angle=90,
                     axis=axis,
                     label="top_limb_outb",
                 )
@@ -1649,8 +1649,8 @@ class SCCurvedPictureFrame(GeometryParameterisation):
                 make_circle(
                     r_j,
                     (x_out - r_j, 0, z_mid_down + r_j),
-                    start_angle=0,
-                    end_angle=-90,
+                    start_angle=-90,
+                    end_angle=0,
                     axis=axis,
                     label="bottom_limb_outb",
                 )
@@ -2473,8 +2473,8 @@ class CurvedPictureFrame(GeometryParameterisation):
                 make_circle(
                     r_j,
                     (x_out - r_j, 0, z_mid_up - r_j),
-                    start_angle=90,
-                    end_angle=0,
+                    start_angle=0,
+                    end_angle=90,
                     axis=axis,
                     label="top_limb_outb",
                 )
@@ -2519,8 +2519,8 @@ class CurvedPictureFrame(GeometryParameterisation):
                 make_circle(
                     r_j,
                     (x_out - r_j, 0, z_mid_down + r_j),
-                    start_angle=0,
-                    end_angle=-90,
+                    start_angle=-90,
+                    end_angle=0,
                     axis=axis,
                     label="bottom_limb_outb",
                 )
