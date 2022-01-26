@@ -333,7 +333,14 @@ class FileProgramInterface:
         Parameters
         ----------
         mappings: dict
-            A list of keys wi
+            A dictionary of variables to change mappings.
+
+        Notes
+        -----
+            Only one of send or recv is needed. The mappings dictionary could look like:
+
+               {"var1": {"send": False, "recv": True}, "var2": {"recv": False}}
+
         """
         for key, val in mappings.items():
             try:
