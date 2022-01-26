@@ -26,7 +26,7 @@ dependencies:
   - gmsh=4.9.3
   - fenics=2019.1.0
   - MeshPy=2020.1
-  - meshio=4.5.5
+  - meshio=4.4.5
   - mshr=2019.1.0
   - wrapt=1.13.3
   - pythonocc-core=7.5.1
