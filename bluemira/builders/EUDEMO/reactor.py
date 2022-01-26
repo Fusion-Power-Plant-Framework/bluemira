@@ -164,20 +164,20 @@ class EUDEMOReactor(Reactor):
 
             config["geom_path"] = geom_path
 
-        builder = TFCoilsBuilder(self._params.to_dict(), config)
-        self.register_builder(builder, name)
-
         plasma = component_tree.get_component("Plasma")
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
 
-        component = super()._build_stage(name, separatrix=sep_shape)
+        builder = TFCoilsBuilder(self._params.to_dict(), config, separatrix=sep_shape)
+        self.register_builder(builder, name)
+
+        component = super()._build_stage(name)
 
         bluemira_print(f"Completed design stage: {name}")
 
         return component
 
-    def build_PF_coils(self, component_tree: Component, **kwargs):
+    def build_PF_coils(self, component_tree: Component):
         """
         Run the PF Coils build using the requested mode.
         """
