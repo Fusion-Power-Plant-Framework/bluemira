@@ -338,7 +338,7 @@ class BasePlotter:
         for element in self.geometry.elements:
             angle = get_angle_between_vectors([1, 0, 0], element.space_vector)
             plane = BluemiraPlane(
-                base=element.mid_point, axis=(0, 0, 1), angle=np.rad2deg(angle)
+                base=element.mid_point, axis=(0, 1, 0), angle=-np.rad2deg(angle)
             )
             plot_options = PlotOptions(
                 show_wires=False,
