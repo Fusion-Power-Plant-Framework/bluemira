@@ -95,6 +95,10 @@ class BluemiraPlane:
 
         Parameters
         ----------
+        matrix: np.ndarray
+            4 x 4 matrix from which to make the placement
+        label: str
+            Label of the plane
         """
         obj = cls.__new__(cls)
         obj._shape = cadapi.make_plane_from_matrix(matrix)
