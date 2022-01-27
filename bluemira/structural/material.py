@@ -23,7 +23,6 @@
 Simple FE material objects
 """
 from dataclasses import dataclass, field
-from functools import lru_cache
 from typing import Union
 
 from bluemira.materials.material import MassFractionMaterial
@@ -40,8 +39,8 @@ class StructuralMaterial:
 
     E: float
     nu: float
-    alpha: float
     rho: float
+    alpha: float
     sigma_y: float
     G: float = field(init=False, repr=True)
 
@@ -70,8 +69,8 @@ def make_structural_material(
     return StructuralMaterial(
         material.E(temperature),
         material.mu(temperature),
-        material.CTE(temperature),
         material.rho(temperature),
+        material.CTE(temperature),
         material.Sy(temperature),
     )
 
@@ -94,50 +93,20 @@ class Material(dict):
 
 # Just some simple materials to play with during tests and the like
 
+# Typical stainless steel properties
+SS316 = StructuralMaterial(200e9, 0.33, 8910, 18e-6, 360e6)
 
-class SS316(Material):
-    """
-    Typical stainless steel properties.
-    """
+# Forged SS316LN plates: OIS structural material as defined in 2MBS88 and
+# ITER SDC-MC DRG1 Annex A (values at 4K).
+FORGED_SS316LN = StructuralMaterial(205e9, 0.29, 8910, 10.36e-6, 800e6)
 
-    def __init__(self):
-        super().__init__(200e9, 0.33, 8910, 18e-6, 360e6)
+# Forged EK1/JJ1 strengthened austenitic steel plates: TF inner leg material
+# as defined in 2MBS88 and ITER SDC-MC DRG1 Annex A (values at 4K).
+FORGED_JJ1 = StructuralMaterial(205e9, 0.29, 8910, 10.38e-6, 1000e6)
 
+# Cast EC1 strengthened austenitic steel castings: TF outer leg material as
+# defined in 2MBS88 and ITER SDC-MC DRG1 Annex A (values at 4K).
+CAST_EC1 = StructuralMaterial(190e9, 0.29, 8910, 10.38e-6, 750e6)
 
-class Concrete(Material):
-    """
-    Typical concrete properties.
-    """
-
-    def __init__(self):
-        super().__init__(40e9, 0.3, 2400, 12e-6, 40e6)
-
-
-class ForgedSS316LN(Material):
-    """
-    Forged SS316LN plates: OIS structural material as defined in 2MBS88 and
-    ITER SDC-MC DRG1 Annex A (values at 4K).
-    """
-
-    def __init__(self):
-        super().__init__(205e9, 0.29, 8910, 10.36e-6, 800e6)
-
-
-class ForgedJJ1(Material):
-    """
-    Forged EK1/JJ1 strengthened austenitic steel plates: TF inner leg material
-    as defined in 2MBS88 and ITER SDC-MC DRG1 Annex A (values at 4K).
-    """
-
-    def __init__(self):
-        super().__init__(205e9, 0.29, 8910, 10.38e-6, 1000e6)
-
-
-class CastEC1(Material):
-    """
-    Cast EC1 strengthened austenitic steel castings: TF outer leg material as
-    defined in 2MBS88 and ITER SDC-MC DRG1 Annex A (values at 4K).
-    """
-
-    def __init__(self):
-        super().__init__(190e9, 0.29, 8910, 10.38e-6, 750e6)
+# Typical concrete properties
+CONCRETE = StructuralMaterial(40e9, 0.3, 2400, 12e-6, 40e6)
