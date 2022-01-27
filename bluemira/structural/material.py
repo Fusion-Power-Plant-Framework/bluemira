@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Simple FE material objects
+Simple structural material representations
 """
 from dataclasses import dataclass, field
 from typing import Optional, Union
@@ -95,7 +95,6 @@ class Material(dict):
 
 
 # Just some simple materials to play with during tests and the like
-
 
 SS316 = StructuralMaterial(
     200e9,
