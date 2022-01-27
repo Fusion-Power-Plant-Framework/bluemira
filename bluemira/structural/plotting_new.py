@@ -27,6 +27,7 @@ from matplotlib.colors import DivergingNorm, Normalize
 
 from bluemira.display import plot_3d
 from bluemira.display.plotter import PlotOptions
+from bluemira.geometry._deprecated_tools import get_angle_between_vectors
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.structural.constants import (
     DEFLECT_COLOR,
@@ -38,6 +39,7 @@ from bluemira.structural.constants import (
 from bluemira.utilities.plot_tools import Plot3D
 
 DEFAULT_PLOT_OPTIONS = {
+    "bound_scale": 1.1,
     "show_all_nodes": True,
     "show_stress": False,
     "show_deflection": False,
@@ -334,8 +336,9 @@ class BasePlotter:
         """
         xss = []
         for element in self.geometry.elements:
+            angle = get_angle_between_vectors([1, 0, 0], element.space_vector)
             plane = BluemiraPlane(
-                base=element.mid_point, axis=element.space_vector, angle=0
+                base=element.mid_point, axis=(0, 0, 1), angle=np.rad2deg(angle)
             )
             plot_options = PlotOptions(
                 show_wires=False,
@@ -346,9 +349,22 @@ class BasePlotter:
             xs = element._cross_section.geometry.deepcopy()
             xs.change_plane(plane)
             xss.append(xs)
-            # xs.rotate()
-            # xs.translate(*element.mid_point)
+
         plot_3d(xss, ax=self.ax, show=False)  # , options=[plot_options])
+
+    def _set_aspect_equal(self):
+        """
+        Hack to make matplotlib 3D look good. Draw a white bounding box around
+        the nodes
+        """
+        x_bb, y_bb, z_bb = self.geometry.bounding_box()
+
+        x_bb *= self.options["bound_scale"]
+        y_bb *= self.options["bound_scale"]
+        z_bb *= self.options["bound_scale"]
+
+        for x, y, z in zip(x_bb, y_bb, z_bb):
+            self.ax.plot([x], [y], [z], color="w")
 
 
 if __name__ == "__main__":
@@ -358,18 +374,23 @@ if __name__ == "__main__":
     from bluemira.structural.geometry import Geometry
     from bluemira.structural.material import SS316
 
-    xs = IBeam(0.5, 0.25, 0.1, 0.1)
+    xs = IBeam(0.25, 0.5, 0.1, 0.1)
 
     geometry = Geometry()
     geometry.add_node(0, 0, 0)
     geometry.add_node(1, 1, 1)
     geometry.add_node(2, 1, 1)
+    geometry.add_node(2, 1, 2)
+    geometry.add_node(3, 2, 2)
     geometry.add_element(0, 1, xs, SS316)
     geometry.add_element(1, 2, xs, SS316)
+    geometry.add_element(2, 3, xs, SS316)
+    geometry.add_element(3, 4, xs, SS316)
 
     plotter = BasePlotter(geometry)
     plotter.plot_nodes()
     plotter.plot_supports()
     plotter.plot_elements()
     plotter.plot_cross_sections()
+    plotter._set_aspect_equal()
     plt.show()
