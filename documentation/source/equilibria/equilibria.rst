@@ -13,26 +13,70 @@ Flux surface geometry
 ^^^^^^^^^^^^^^^^^^^^^
 
 Flux surface geometry parameters are defined with respect to the centre of the plasma,
-which is defined as ...
+which is defined as the centroid of the reference ellipse (assuming symmetry).
 
 .. figure:: flux_surface_geometry.png
    :name: fig:flux_surface_geometry
 
-   Diagram depicting a typical flux surface, showing how key quantities are calculated.
+   Diagram depicting a typical flux surface, showing how key shape characteristics are
+   calculated.
+
+Note that the centroid of the reference ellipse, :math:`C`, from which the shape characteristics are
+calculated, is neither the geometric centroid of the flux surface, nor the magnetic axis.
+
+As such, the shape characteristics of a flux surface are purely geometrical.
+
+The extrema of the flux surface are defined here (for convenience) as :math:`P_1, P_2, P_3, P_4`,
+starting from the outboard midplane and heading anti-clockwise.
+
+The major radius is calculated as:
+
+.. math::
+   :label: major_radius
+
+   R_0 = x_{P_{3}} + \dfrac{x_{P_{1}}-x_{P_{3}}}{2}
+
+The minor radius is calculated as:
+
+.. math::
+   :label: minor_radius
+
+   a = \dfrac{x_{P_{1}}-x_{P_{3}}}{2}
+
+The aspect ratio is calculated as:
+
+.. math::
+   :label: aspect_ratio
+
+   A = \dfrac{R_0}{a}
+
+The upper and lower elongations are calculated as:
+
+.. math::
+   :label: elongation
 
 
-Major radius
+   \begin{aligned}
+   \kappa_{u} =& \dfrac{z_{P_{2}}-z_C}{a}\\
+   \kappa_{l} = & \dfrac{z_C-z_{P_{4}}}{a}\end{aligned}
 
-Minor radius
+The upper and lower triangularities are calculated as:
 
-Aspect ratio
+.. math::
+   :label: triangularity
 
-Elongation
+   \begin{aligned}
+   \delta_{u}&=\dfrac{x_C-x_{P_{2}}}{a}
+   \delta_{l}&=\dfrac{x_C-x_{P_{4}}}{a}\end{aligned}
 
-Triangularity
+The outer upper and lower squarenesses are calculated as:
 
-Squareness
+.. math::
+   :label: squareness
 
+   \begin{aligned}
+   \zeta_{u}&=1\\
+   \zeta_{l}&=1\end{aligned}
 
 Theory
 ------
