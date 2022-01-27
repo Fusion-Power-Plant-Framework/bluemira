@@ -86,8 +86,8 @@ axis, :math:`O`.
    :label: shafranov_shift
 
    \begin{aligned}
-   \Delta_{shaf_{x}} &= x_{O} - R_{0}\\
-   \Delta_{shaf_{z}} &=z_{O} - z_{C}\end{aligned}
+   \Delta_{{shaf}_{x}} &= x_{O} - R_{0}\\
+   \Delta_{{shaf}_{z}} &=z_{O} - z_{C}\end{aligned}
 
 
 Theory
