@@ -1158,6 +1158,14 @@ def make_plane_from_matrix(matrix):
     ----------
     matrix: np.ndarray
         4 x 4 matrix from which to make the placement
+
+    Notes
+    -----
+    Matrix should be of the form:
+        [cos_11, cos_12, cos_13, dx]
+        [cos_21, cos_22, cos_23, dy]
+        [cos_31, cos_32, cos_33, dz]
+        [     0,      0,      0,  1]
     """
     if not matrix.shape == (4, 4):
         raise FreeCADError(f"Matrix must be of shape (4, 4), not: {matrix.shape}")
