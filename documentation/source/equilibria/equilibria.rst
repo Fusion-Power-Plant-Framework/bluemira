@@ -1,6 +1,39 @@
 equilibria
 ==========
 
+Conventions
+-----------
+
+Equilibrium coordinate conventions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+TBD
+
+Flux surface geometry
+^^^^^^^^^^^^^^^^^^^^^
+
+Flux surface geometry parameters are defined with respect to the centre of the plasma,
+which is defined as ...
+
+.. figure:: flux_surface_geometry.png
+   :name: fig:flux_surface_geometry
+
+   Diagram depicting a typical flux surface, showing how key quantities are calculated.
+
+
+Major radius
+
+Minor radius
+
+Aspect ratio
+
+Elongation
+
+Triangularity
+
+Squareness
+
+
 Theory
 ------
 
