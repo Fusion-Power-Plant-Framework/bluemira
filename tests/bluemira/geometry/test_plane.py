@@ -75,3 +75,12 @@ class TestPlane:
         for bad in bad_sets:
             with pytest.raises(GeometryError):
                 BluemiraPlane.from_3_points(*bad)
+
+    def test_instantiation_matrix(self):
+        xy_plane = BluemiraPlane([0, 0, 0], [0, 0, 1], 0.0)
+        matrix = xy_plane.to_matrix()
+        xy2_plane = BluemiraPlane.from_matrix(matrix)
+        assert np.allclose(matrix, xy2_plane.to_matrix())
+        assert np.isclose(xy_plane.angle, xy2_plane.angle)
+        assert np.allclose(xy_plane.base, xy2_plane.base)
+        assert np.allclose(xy_plane.axis, xy2_plane.axis)

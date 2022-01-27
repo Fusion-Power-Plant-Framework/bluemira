@@ -96,9 +96,10 @@ class BluemiraPlane:
         Parameters
         ----------
         """
-        cls._shape = cadapi.make_plane_from_matrix(matrix)
-        cls.label = label
-        return cls
+        obj = cls.__new__(cls)
+        obj._shape = cadapi.make_plane_from_matrix(matrix)
+        obj.label = label
+        return obj
 
     @property
     def base(self):
