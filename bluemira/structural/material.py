@@ -22,6 +22,58 @@
 """
 Simple FE material objects
 """
+from dataclasses import dataclass, field
+from functools import lru_cache
+from typing import Union
+
+from bluemira.materials.material import MassFractionMaterial
+from bluemira.materials.mixtures import HomogenisedMixture
+
+MaterialType = Union[MassFractionMaterial, HomogenisedMixture]
+
+
+@dataclass
+class StructuralMaterial:
+    """
+    Dataclass for a structural representation of a material.
+    """
+
+    E: float
+    nu: float
+    alpha: float
+    rho: float
+    sigma_y: float
+    G: float = field(init=False, repr=True)
+
+    def __post_init__(self):
+        self.G = self.E / (0.5 + 0.5 * self.nu)
+
+
+def make_structural_material(
+    material: MaterialType, temperature: float
+) -> StructuralMaterial:
+    """
+    Make a structural representation of a material.
+
+    Parameters
+    ----------
+    material: MaterialType
+        Material type to create a structural representation for
+    temperature: float
+        Temperature at which to make a structural representation of a material [K]
+
+    Returns
+    -------
+    struct_mat: StructuralMaterial
+        Structural representation of a material
+    """
+    return StructuralMaterial(
+        material.E(temperature),
+        material.mu(temperature),
+        material.CTE(temperature),
+        material.rho(temperature),
+        material.Sy(temperature),
+    )
 
 
 class Material(dict):
