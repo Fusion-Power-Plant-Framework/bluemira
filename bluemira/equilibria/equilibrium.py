@@ -1219,7 +1219,7 @@ class Equilibrium(MHDState):
                     )
                 )
             flux_surfaces.append(f_s)
-        q = [f_s.safety_factor(self) for f_s in flux_surfaces]
+        q = np.array([f_s.safety_factor(self) for f_s in flux_surfaces])
         if len(q) == 1:
             q = q[0]
         return q
