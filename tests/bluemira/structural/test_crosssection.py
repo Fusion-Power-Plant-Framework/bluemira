@@ -32,7 +32,6 @@ from bluemira.structural.crosssection import (
     RectangularBeam,
 )
 from bluemira.structural.error import StructuralError
-from bluemira.structural.material import CONCRETE, SS316
 
 
 class TestIbeam:
