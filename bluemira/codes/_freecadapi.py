@@ -1162,6 +1162,11 @@ def make_plane_from_matrix(matrix):
     if not matrix.shape == (4, 4):
         raise FreeCADError(f"Matrix must be of shape (4, 4), not: {matrix.shape}")
 
+    for i in range(3):
+        row = matrix[i, :3]
+        matrix[i, :3] = row / np.linalg.norm(row)
+    matrix[-1, :] = [0, 0, 0, 1]
+
     matrix = Base.Matrix(*matrix.flat)
     return Base.Placement(matrix)
 

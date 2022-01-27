@@ -101,10 +101,6 @@ class BluemiraPlane:
             Label of the plane
         """
         obj = cls.__new__(cls)
-        for i in range(3):
-            row = matrix[i, :3]
-            matrix[i, :3] = row / np.linalg.norm(row)
-        matrix[-1, :] = [0, 0, 0, 1]
         obj._shape = cadapi.make_plane_from_matrix(matrix)
         obj.label = label
         return obj
