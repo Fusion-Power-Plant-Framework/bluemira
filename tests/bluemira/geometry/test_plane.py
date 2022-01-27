@@ -80,7 +80,18 @@ class TestPlane:
         xy_plane = BluemiraPlane([0, 0, 0], [0, 0, 1], 0.0)
         matrix = xy_plane.to_matrix()
         xy2_plane = BluemiraPlane.from_matrix(matrix)
-        assert np.allclose(matrix, xy2_plane.to_matrix())
-        assert np.isclose(xy_plane.angle, xy2_plane.angle)
-        assert np.allclose(xy_plane.base, xy2_plane.base)
-        assert np.allclose(xy_plane.axis, xy2_plane.axis)
+        self._check_planes_equal(xy_plane, xy2_plane)
+
+        for _ in range(10):
+            plane = BluemiraPlane(np.random.rand(3), np.random.rand(3), np.random.rand())
+            matrix = plane.to_matrix()
+            plane2 = BluemiraPlane.from_matrix(matrix)
+            self._check_planes_equal(plane, plane2)
+            assert np.allclose(plane.axis, plane2.axis)
+
+    @staticmethod
+    def _check_planes_equal(plane, plane2):
+        assert np.allclose(plane.to_matrix(), plane2.to_matrix())
+        assert np.isclose(plane.angle, plane2.angle)
+        assert np.allclose(plane.base, plane2.base)
+        assert np.allclose(plane.axis, plane2.axis)
