@@ -69,7 +69,8 @@ The upper and lower triangularities are calculated as:
    \delta_{u}&=\dfrac{x_C-x_{P_{2}}}{a}
    \delta_{l}&=\dfrac{x_C-x_{P_{4}}}{a}\end{aligned}
 
-The outer upper and lower squarenesses are calculated as:
+The outer upper and lower squarenesses are calculated with respect to reference ellipse
+arcs:
 
 .. math::
    :label: squareness
@@ -77,6 +78,17 @@ The outer upper and lower squarenesses are calculated as:
    \begin{aligned}
    \zeta_{u}&=1\\
    \zeta_{l}&=1\end{aligned}
+
+The Shafranov shift is defined from the centroid of the reference ellipse to the magnetic
+axis, :math:`O`.
+
+.. math::
+   :label: shafranov_shift
+
+   \begin{aligned}
+   \Delta_{shaf_{x}} &= x_{O} - R_{0}\\
+   \Delta_{shaf_{z}} &=z_{O} - z_{C}\end{aligned}
+
 
 Theory
 ------

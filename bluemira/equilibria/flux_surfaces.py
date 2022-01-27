@@ -153,6 +153,17 @@ class ClosedFluxSurface(FluxSurface):
                 "Cannot make a ClosedFluxSurface from an open geometry."
             )
         super().__init__(geometry)
+        i_p1 = np.argmax(self.loop.x)
+        i_p2 = np.argmax(self.loop.z)
+        i_p3 = np.argmin(self.loop.x)
+        i_p4 = np.argmin(self.loop.z)
+        self._p1 = (self.loop.x[i_p1], self.loop.z[i_p1])
+        self._p2 = (self.loop.x[i_p2], self.loop.z[i_p2])
+        self._p3 = (self.loop.x[i_p3], self.loop.z[i_p3])
+        self._p4 = (self.loop.x[i_p4], self.loop.z[i_p4])
+
+        # Still debatable what convention to follow...
+        self._z_centre = 0.5 * (self.loop.z[i_p1] + self.loop.z[i_p3])
 
     @property
     @lru_cache(1)
@@ -160,8 +171,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Major radius of the ClosedFluxSurface.
         """
-        # debatable... could also be x_min + 0.5 * (x_max - x_min)
-        return self.loop.centroid[0]
+        return np.min(self.loop.x) + self.minor_radius
 
     @property
     @lru_cache(1)
@@ -193,7 +203,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Upper elongation of the ClosedFluxSurface.
         """
-        return (np.max(self.loop.z) - self.loop.centroid[1]) / self.minor_radius
+        return (np.max(self.loop.z) - self._z_centre) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -201,7 +211,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Lower elongation of the ClosedFluxSurface.
         """
-        return abs(np.min(self.loop.z) - self.loop.centroid[1]) / self.minor_radius
+        return abs(np.min(self.loop.z) - self._z_centre) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -217,9 +227,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Upper triangularity of the ClosedFluxSurface.
         """
-        arg_z_max = np.argmax(self.loop.z)
-        x_z_max = self.loop.x[arg_z_max]
-        return (self.major_radius - x_z_max) / self.minor_radius
+        return (self.major_radius - self._p2[0]) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -227,9 +235,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Lower triangularity of the ClosedFluxSurface.
         """
-        arg_z_min = np.argmin(self.loop.z)
-        x_z_min = self.loop.x[arg_z_min]
-        return (self.major_radius - x_z_min) / self.minor_radius
+        return (self.major_radius - self._p4[0]) / self.minor_radius
 
     @property
     @lru_cache(1)
@@ -264,7 +270,7 @@ class ClosedFluxSurface(FluxSurface):
             Vertical Shafranov shift
         """
         o_point = eq.get_OX_points()[0][0]  # magnetic axis
-        return o_point.x - self.major_radius, o_point.z - self.loop.centroid[1]
+        return o_point.x - self.major_radius, o_point.z - self._z_centre
 
     def safety_factor(self, eq):
         """
