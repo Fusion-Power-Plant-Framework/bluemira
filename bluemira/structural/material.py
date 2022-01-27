@@ -35,6 +35,19 @@ MaterialType = Union[MassFractionMaterial, HomogenisedMixture]
 class StructuralMaterial:
     """
     Dataclass for a structural representation of a material.
+
+    Parameters
+    ----------
+    E: float
+        Youngs modulus [Pa]
+    nu: float
+        Poisson ratio
+    rho: float
+        Density [kg/m^3]
+    sigma_y: float
+        Yield stress [Pa]
+    description: str
+        A description of the material
     """
 
     E: float

@@ -359,14 +359,13 @@ if __name__ == "__main__":
     from bluemira.structural.material import SS316
 
     xs = IBeam(0.5, 0.25, 0.1, 0.1)
-    mat = SS316()
 
     geometry = Geometry()
     geometry.add_node(0, 0, 0)
     geometry.add_node(1, 1, 1)
     geometry.add_node(2, 1, 1)
-    geometry.add_element(0, 1, xs, mat)
-    geometry.add_element(1, 2, xs, mat)
+    geometry.add_element(0, 1, xs, SS316)
+    geometry.add_element(1, 2, xs, SS316)
 
     plotter = BasePlotter(geometry)
     plotter.plot_nodes()
