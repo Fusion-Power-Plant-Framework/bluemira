@@ -29,8 +29,6 @@ from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel
 from bluemira.structural.plotting import GeometryPlotter
 
-SS316 = SS316()
-
 
 @pytest.mark.longrun
 class TestPlotting:

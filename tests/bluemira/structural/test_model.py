@@ -32,8 +32,6 @@ from bluemira.structural.loads import LoadCase
 from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel, check_matrix_condition
 
-SS316 = SS316()
-
 
 def test_illconditioned(caplog):
     # http://www.ti3.tu-harburg.de/paper/rump/NiRuOi11.pdf
@@ -132,7 +130,7 @@ class TestFEModel:
         model.add_support(0, True, True, True, True, True, True)
         model.add_support(2, False, True, True, False, False, False)
 
-        e_mat, i_xs = SS316["E"], i_beam.i_zz
+        e_mat, i_xs = SS316.E, i_beam.i_zz
         # Check element lengths
         for element in model.geometry.elements:
             assert element.length == length
@@ -219,7 +217,7 @@ class TestCantilever:
         model.add_node(0, 0, 0)
         model.add_node(-length, 0, 0)
         dummy_material = deepcopy(SS316)
-        dummy_material["E"] = 10e9
+        dummy_material.E = 10e9
         model.add_element(0, 1, rect_beam, dummy_material)
         model.add_support(0, True, True, True, True, True, True)
         self.model = model
@@ -236,7 +234,7 @@ class TestCantilever:
         load = -1000
         length = 4
         b = 3
-        e_mat = self.material["E"]
+        e_mat = self.material.E
         i_xs = self.cross_section.i_yy
         load_case = LoadCase()
         load_case.add_element_load(0, load, b / length, "Fz")
@@ -250,7 +248,7 @@ class TestCantilever:
     def test_end_load(self):
         load = 8000
         length = 34
-        e_mat = self.material["E"]
+        e_mat = self.material.E
         i_xs = self.cross_section.i_yy
         end_deflection = load * length ** 3 / (3 * e_mat * i_xs)
 
@@ -279,7 +277,7 @@ class TestCantilever:
 
         load = -41278
         length = 8
-        e_mat = self.material["E"]
+        e_mat = self.material.E
         i_xs = self.cross_section.i_yy
         end_deflection = -load * length ** 2 / (2 * e_mat * i_xs)
 
@@ -328,9 +326,9 @@ class TestCantilever:
         b = 3
         rect_beam = RectangularBeam(0.1, 0.1)
         dummy_material = deepcopy(SS316)
-        dummy_material["E"] = 10e9
+        dummy_material.E = 10e9
 
-        e_mat = dummy_material["E"]
+        e_mat = dummy_material.E
         i_xs = rect_beam.i_yy
 
         for node_coords in [
@@ -364,7 +362,7 @@ class TestCantilever:
     def test_node_load(self):
 
         load = 40000
-        e_mat = self.material["E"]
+        e_mat = self.material.E
         i_xs = self.cross_section.i_yy
         load_case = LoadCase()
         load_case.add_node_load(1, load, "Fz")
@@ -409,7 +407,7 @@ class TestDistributedLoads:
         rect_beam = RectangularBeam(0.05, 0.61867)
         w = 2000
 
-        e_mat = dummy_material["E"]
+        e_mat = dummy_material.E
         i_xs = rect_beam.i_yy
 
         for node_coords in [[length, 0, 0]]:
@@ -452,7 +450,7 @@ class TestDistributedLoads:
 
         rect_beam = RectangularBeam(0.5, 0.7)
         w = -2000
-        e_mat = SS316["E"]
+        e_mat = SS316.E
         i_xs = rect_beam.i_yy
 
         end_deflection = w * length ** 4 / (8 * e_mat * i_xs)
@@ -495,7 +493,7 @@ class TestLFrame:
         model.add_element(1, 2, rect_beam, SS316)
         self.length = length
         self.height = height
-        self.e_mat = SS316["E"]
+        self.e_mat = SS316.E
         self.i_xs = rect_beam.i_yy
 
         self.model = model

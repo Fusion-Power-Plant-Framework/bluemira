@@ -29,8 +29,6 @@ from bluemira.structural.crosssection import RectangularBeam
 from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel
 
-SS316 = SS316()
-
 plt.close("all")
 
 model = FiniteElementModel()

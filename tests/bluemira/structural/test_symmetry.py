@@ -31,8 +31,6 @@ from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel
 from bluemira.structural.transformation import cyclic_pattern
 
-SS316 = SS316()
-
 
 class TestCyclicSymmetry:
     def test_symmetry(self):

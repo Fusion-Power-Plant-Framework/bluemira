@@ -28,8 +28,6 @@ from bluemira.structural.crosssection import IBeam
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.material import SS316
 
-SS316 = SS316()
-
 
 @pytest.mark.longrun
 class TestKMatrix:
@@ -84,14 +82,14 @@ class TestMembership:
         assert len(self.geometry.elements) == 3
         assert elem_id == 0
         # Check the properties were modified
-        eiyy = i_300_300.i_yy * SS316["E"]
+        eiyy = i_300_300.i_yy * SS316.E
         assert self.geometry.elements[0]._properties["EIyy"] == eiyy
 
         elem_id = self.geometry.add_element(2, 3, i_300_300, SS316)
         assert len(self.geometry.elements) == 3
         assert elem_id == 2
         # Check the properties were modified
-        eiyy = i_300_300.i_yy * SS316["E"]
+        eiyy = i_300_300.i_yy * SS316.E
         assert self.geometry.elements[0]._properties["EIyy"] == eiyy
 
         elem_id = self.geometry.add_element(3, 4, i_300_300, SS316)

@@ -261,14 +261,14 @@ class Element:
             self.material = cross_section.material
         else:
             # Single material weight cross-section properties
-            e_mat, g_mat = material["E"], material["G"]
+            e_mat, g_mat = material.E, material.G
             properties["EA"] = e_mat * cross_section.area
             properties["EIyy"] = e_mat * cross_section.i_yy
             properties["EIzz"] = e_mat * cross_section.i_zz
             properties["GJ"] = g_mat * cross_section.j
             properties["ry"] = cross_section.ry
             properties["rz"] = cross_section.rz
-            properties["rho"] = material["rho"]
+            properties["rho"] = material.rho
             properties["A"] = cross_section.area
             self.material = material
         return properties
@@ -544,18 +544,18 @@ class Element:
             kappa_y = m_matrix[:, 1].reshape(-1, 1) @ np.ones((1, n_points))
 
             # Bending stresses (at all interp points, at all loop points)
-            sigma_z = -mat["E"] * y * kappa_z
-            sigma_y = -mat["E"] * z * kappa_y
+            sigma_z = -mat.E * y * kappa_z
+            sigma_y = -mat.E * z * kappa_y
 
             # Axial stress = E*axial strain (constant along Element)
             du = u[6] - u[0]
-            sigma_axial = mat["E"] * du / self.length
+            sigma_axial = mat.E * du / self.length
 
             stress = sigma_axial + sigma_y + sigma_z
             stresses.append(stress)
 
             argmax = np.argmax(np.abs(stress))
-            safety_factor = stress.flatten()[argmax] / mat["sigma_y"]
+            safety_factor = stress.flatten()[argmax] / mat.sigma_y
             safety_factors.append(safety_factor)
 
         part_index = int(np.argmax(np.abs(safety_factors)))
