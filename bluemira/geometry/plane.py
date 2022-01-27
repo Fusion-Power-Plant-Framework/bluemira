@@ -88,6 +88,18 @@ class BluemiraPlane:
         normal = v3 / np.sqrt(v3.dot(v3))
         return cls(point_1, normal, 0.0, label=label)
 
+    @classmethod
+    def from_matrix(cls, matrix, label=""):
+        """
+        Instantiate a BluemiraPlane from a 4 x 4 matrix
+
+        Parameters
+        ----------
+        """
+        cls._shape = cadapi.make_plane_from_matrix(matrix)
+        cls.label = label
+        return cls
+
     @property
     def base(self):
         """Plane's base vector"""

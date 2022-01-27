@@ -1150,6 +1150,22 @@ def make_plane(base, axis, angle):
     return Base.Placement(base, axis, angle)
 
 
+def make_plane_from_matrix(matrix):
+    """
+    Make a FreeCAD Placement from a 4 x 4 matrix.
+
+    Parameters
+    ----------
+    matrix: np.ndarray
+        Matrix from which to make the placement
+    """
+    if not matrix.shape == (4, 4):
+        raise FreeCADError(f"Matrix must be of shape (4, 4), not: {matrix.shape}")
+
+    matrix = Base.Matrix(*matrix.flat)
+    return Base.Placement(matrix)
+
+
 def move_plane(plane, vector):
     """
     Moves the FreeCAD Plane along the given vector
