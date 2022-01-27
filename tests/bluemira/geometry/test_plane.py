@@ -85,6 +85,7 @@ class TestPlane:
         for _ in range(10):
             plane = BluemiraPlane(np.random.rand(3), np.random.rand(3), np.random.rand())
             matrix = plane.to_matrix()
+            matrix[:3, :3] *= 2  # Test that it gets normalised
             plane2 = BluemiraPlane.from_matrix(matrix)
             self._check_planes_equal(plane, plane2)
             assert np.allclose(plane.axis, plane2.axis)
