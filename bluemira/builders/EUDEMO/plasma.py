@@ -152,7 +152,6 @@ class PlasmaBuilder(Builder):
         bluemira_print("Running Plasma equilibrium design problem")
         eq = self._create_equilibrium()
         self._analyse_equilibrium(eq)
-        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
 
     def read(self):
         """
@@ -161,7 +160,6 @@ class PlasmaBuilder(Builder):
         bluemira_print("Reading Plasma equilibrium design problem")
         eq = self._read_equilibrium()
         self._analyse_equilibrium(eq)
-        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
 
     def mock(self):
         """
@@ -296,7 +294,14 @@ class PlasmaBuilder(Builder):
 
     def _analyse_equilibrium(self, eq: Equilibrium):
         """
-        Analyse an equilibrium and store important values in the Plasma parameters.
+        Analyse an equilibrium and store important values in the Plasma parameters. Also
+        updates the equilibrium and boundary to ensure that they are kept synchronised
+        with the parameters.
+
+        Parameters
+        ----------
+        eq: Equilibrium
+            The equilibrium to analyse for use with this builder.
         """
         plasma_dict = eq.analyse_plasma()
 
@@ -316,7 +321,9 @@ class PlasmaBuilder(Builder):
             "shaf_shift": shaf,
         }
         self._params.update_kw_parameters(params, source="equilibria")
+
         self._equilibrium = eq
+        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
 
     def build(self) -> PlasmaComponent:
         """
