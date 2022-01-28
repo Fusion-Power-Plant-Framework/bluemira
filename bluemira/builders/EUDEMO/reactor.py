@@ -222,7 +222,7 @@ class EUDEMOReactor(Reactor):
             tf_coils.get_component("Casing").get_component("outer").shape.boundary[0]
         )
 
-        default_config = {"runmode": "run"}
+        default_config = {}
         config = self._process_design_stage_config(name, default_config)
 
         builder = ThermalShieldBuilder(

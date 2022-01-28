@@ -93,24 +93,6 @@ class ThermalShieldBuilder(Builder):
         self._tf_koz = tf_xz_koz
         self._vv_koz = vv_xz_koz
 
-    def run(self):
-        """
-        Run the design procedure to generate the thermal shield geometry.
-        """
-        pass
-
-    def read(self):
-        """
-        Read a thermal shield object in.
-        """
-        raise NotImplementedError
-
-    def mock(self):
-        """
-        Mock the build of the thermal shield
-        """
-        raise NotImplementedError
-
     def build(self) -> Component:
         """
         Build the thermal shield component.
