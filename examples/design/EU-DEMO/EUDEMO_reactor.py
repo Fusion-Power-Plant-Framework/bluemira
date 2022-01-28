@@ -216,7 +216,7 @@ build_config = {
         "runmode": "read",  # ["run", "read", "mock"]
     },
     "TF Coils": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
         "param_class": "TripleArc",
         "variables_map": {
             "x1": {
@@ -471,7 +471,10 @@ pf_coils.get_component("xy").plot_2d(ax=ax)
 # %%
 ax = tf_coils.get_component("xz").plot_2d(show=False)
 plasma.get_component("xz").plot_2d(ax=ax, show=False)
-pf_coils.get_component("xz").plot_2d(ax=ax)
+pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
+
+thermal_shield = component.get_component("Thermal Shield")
+thermal_shield.get_component("xz").plot_2d(ax=ax)
 
 
 # %%

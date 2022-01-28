@@ -23,13 +23,13 @@
 Built-in build steps for making a parameterised thermal shield.
 """
 
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import Builder
+from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
@@ -45,6 +45,7 @@ from bluemira.geometry.tools import (
     revolve_shape,
     slice_shape,
 )
+from bluemira.geometry.wire import BluemiraWire
 
 
 class ThermalShieldBuilder(Builder):
@@ -59,17 +60,48 @@ class ThermalShieldBuilder(Builder):
         "g_vv_ts",
         "n_TF",
     ]
+    _pf_kozs: List[BluemiraWire]
+    _tf_koz: BluemiraWire
+    _vv_koz: Optional[BluemiraWire]
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def __init__(
+        self,
+        params,
+        build_config: BuildConfig,
+        pf_coils_xz_kozs: List[BluemiraWire],
+        tf_xz_koz: BluemiraWire,
+        vv_xz_koz: Optional[BluemiraWire] = None,
+    ):
+        super().__init__(
+            params,
+            build_config,
+            pf_coils_xz_kozs=pf_coils_xz_kozs,
+            tf_xz_koz=tf_xz_koz,
+            vv_xz_koz=vv_xz_koz,
+        )
+
+    def reinitialise(self, params, pf_coils_xz_kozs, tf_xz_koz, vv_xz_koz=None) -> None:
         """
         Initialise the state of this builder ready for a new run.
         """
-        # Seems we need to override this so it isn't an abstract method
-        return super().reinitialise(params, **kwargs)
+        super().reinitialise(params)
+        self._pf_kozs = pf_coils_xz_kozs
+        self._tf_koz = tf_xz_koz
+        self._vv_koz = vv_xz_koz
 
-    def build(
-        self, label: str, pf_coils_xz_kozs, tf_xz_koz, vv_xz_koz=None, **kwargs
-    ) -> Component:
+    def run(self):
+        """
+        Run the design procedure to generate the thermal shield geometry.
+        """
+        pass
+
+    def read(self):
+        raise NotImplementedError
+
+    def mock(self):
+        raise NotImplementedError
+
+    def build(self) -> Component:
         """
         Build the thermal shield component.
 
@@ -78,13 +110,9 @@ class ThermalShieldBuilder(Builder):
         component: Component
             The Component built by this builder.
         """
-        super().build(**kwargs)
+        super().build()
 
-        self._pf_coils = pf_coils_xz_kozs
-        self._tf_koz = tf_xz_koz
-        self._vv_koz = vv_xz_koz
-
-        component = Component(name=label)
+        component = Component(name=self.name)
         component.add_child(self.build_xz())
         component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
@@ -95,7 +123,7 @@ class ThermalShieldBuilder(Builder):
         Build the x-z components of the thermal shield.
         """
         # Cryostat thermal shield
-        pf_xz = self._pf_coils
+        pf_xz = self._pf_kozs
         x, z = [], []
         for coil in pf_xz:
             bound_box = coil.bounding_box
