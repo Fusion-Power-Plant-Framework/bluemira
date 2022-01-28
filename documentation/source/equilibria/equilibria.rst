@@ -84,6 +84,9 @@ arcs:
 
    \zeta=\dfrac{P_{A}P_{B}-P_{A}P_{C}}{P_{C}P_{D}}
 
+Note that this calculation is done with respect to the reference ellipses of each quadrant
+(and their centroids). Typically, squareness values are of interest on the low-field side
+quadrants.
 
 The Shafranov shift is defined from the centroid of the reference ellipse to the magnetic
 axis, :math:`O`.
