@@ -135,6 +135,19 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     _design_problem: Optional[GeometryOptimisationProblem] = None
     _centreline: BluemiraWire
     _geom_path: Optional[str] = None
+    _keep_out_zone: Optional[BluemiraWire] = None
+    _separatrix: Optional[BluemiraWire] = None
+
+    def __init__(
+        self,
+        params,
+        build_config: BuildConfig,
+        separatrix: Optional[BluemiraWire] = None,
+        keep_out_zone: Optional[BluemiraWire] = None,
+    ):
+        super().__init__(
+            params, build_config, separatrix=separatrix, keep_out_zone=keep_out_zone
+        )
 
     @property
     def geom_path(self) -> str:
@@ -175,7 +188,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
         return shape_params
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def reinitialise(
+        self,
+        params,
+        separatrix: Optional[BluemiraWire] = None,
+        keep_out_zone: Optional[BluemiraWire] = None,
+    ) -> None:
         """
         Initialise the state of this builder ready for a new run.
 
@@ -184,12 +202,29 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         params: Dict[str, Any]
             The parameterisation containing at least the required params for this
             Builder.
-        """
-        super().reinitialise(params, **kwargs)
+        separatrix: Optional[BluemiraWire]
+            The separatrix to pass into constrained optimisation routines. Must be
+            provided if this Builder's runmode is set to run. By default, None.
+        keep_out_zone: Optional[BluemiraWire]
+            Exclusion zone, if any to apply to the build. By default None.
 
-        self._reset_params(params)
+        Raises
+        ------
+        BuilderError
+            If the runmode is set to run but a separatrix is not provided.
+        """
+        super().reinitialise(params)
+
+        if self.runmode == "run" and separatrix is None:
+            raise BuilderError(
+                "A separatrix must be provided as the runmode for this builder is set "
+                "to run"
+            )
+
         self._centreline = None
         self._wp_cross_section = self._make_wp_xs()
+        self._separatrix = separatrix
+        self._keep_out_zone = keep_out_zone
 
         if self._geom_path is not None and os.path.isdir(self._geom_path):
             default_file_name = (
@@ -197,7 +232,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             )
             self._geom_path = os.sep.join([self._geom_path, default_file_name])
 
-    def run(self, separatrix, keep_out_zone=None):
+    def run(self):
         """
         Run the specified design optimisation problem to generate the TF coil winding
         pack current centreline.
@@ -205,12 +240,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         super().run(
             params=self._params,
             wp_cross_section=self._wp_cross_section,
-            separatrix=separatrix,
-            keep_out_zone=keep_out_zone,
+            separatrix=self._separatrix,
+            keep_out_zone=self._keep_out_zone,
         )
         self._centreline = self._design_problem.parameterisation.create_shape()
 
-    def read(self, **kwargs):
+    def read(self):
         """
         Read in a file to set up a specified GeometryParameterisation and extract the
         current centreline.
@@ -221,7 +256,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             self._shape = self._param_class.from_json(fh)
         self._centreline = self._shape.create_shape()
 
-    def mock(self, **kwargs):
+    def mock(self):
         """
         Mock a design of TF coils using the original parameterisation of the current
         centreline.
@@ -233,7 +268,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         self._centreline = self._shape.create_shape()
 
-    def build(self, label: str = "TF Coils", **kwargs) -> TFCoilsComponent:
+    def build(self) -> TFCoilsComponent:
         """
         Build the TF Coils component.
 
@@ -242,7 +277,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component: TFCoilsComponent
             The Component built by this builder.
         """
-        super().build(**kwargs)
+        super().build()
 
         field_solver = self._make_field_solver()
         component = TFCoilsComponent(self.name, field_solver=field_solver)

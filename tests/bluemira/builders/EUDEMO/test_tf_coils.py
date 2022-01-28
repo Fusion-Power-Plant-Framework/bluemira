@@ -60,9 +60,14 @@ class TestTFCoils:
 
     def test_read_from_dir(self):
         builder = TFCoilsBuilder(self.params, self.build_config)
-        builder(self.params)
+        builder()
 
     def test_mock(self):
         self.build_config["runmode"] = "mock"
         builder = TFCoilsBuilder(self.params, self.build_config)
-        builder(self.params)
+        builder()
+
+    def test_run_no_separatrix(self):
+        self.build_config["runmode"] = "run"
+        with pytest.raises(BuilderError):
+            TFCoilsBuilder(self.params, self.build_config)
