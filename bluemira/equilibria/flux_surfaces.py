@@ -145,7 +145,7 @@ class ClosedFluxSurface(FluxSurface):
     Utility class for closed flux surfaces.
     """
 
-    __slots__ = ("_p1", "_p2", "_p3", "_p4")
+    __slots__ = ("_p1", "_p2", "_p3", "_p4", "_z_centre")
 
     def __init__(self, geometry):
         if not geometry.closed:
@@ -302,7 +302,7 @@ class OpenFluxSurface(FluxSurface):
     Utility class for handling open flux surface geometries.
     """
 
-    __slots__ = []
+    __slots__ = ()
 
     def __init__(self, loop):
         if loop.closed:
