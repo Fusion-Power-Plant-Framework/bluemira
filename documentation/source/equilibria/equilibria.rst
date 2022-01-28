@@ -55,10 +55,11 @@ The upper and lower elongations are calculated as:
 .. math::
    :label: elongation
 
-
    \begin{aligned}
    \kappa_{u} =& \dfrac{z_{P_{2}}-z_C}{a}\\
    \kappa_{l} = & \dfrac{z_C-z_{P_{4}}}{a}\end{aligned}
+
+By convention, lower elongation values are always given as positive.
 
 The upper and lower triangularities are calculated as:
 
@@ -69,15 +70,20 @@ The upper and lower triangularities are calculated as:
    \delta_{u}&=\dfrac{x_C-x_{P_{2}}}{a}
    \delta_{l}&=\dfrac{x_C-x_{P_{4}}}{a}\end{aligned}
 
+By convention, triangularities are signed, such that it is possible to have negative
+triangularity.
+
 The outer upper and lower squarenesses are calculated with respect to reference ellipse
 arcs:
+
+.. figure:: flux_surface_squareness.png
+   :name: fig:flux_surface_squareness
 
 .. math::
    :label: squareness
 
-   \begin{aligned}
-   \zeta_{u}&=1\\
-   \zeta_{l}&=1\end{aligned}
+   \zeta=\dfrac{P_{A}P_{B}-P_{A}P_{C}}{P_{C}P_{D}}
+
 
 The Shafranov shift is defined from the centroid of the reference ellipse to the magnetic
 axis, :math:`O`.
