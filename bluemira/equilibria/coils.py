@@ -24,6 +24,7 @@ Coil and coil grouping objects
 """
 
 from copy import deepcopy
+from re import split
 from typing import Any, Optional
 
 import matplotlib.pyplot as plt
@@ -888,9 +889,15 @@ class CoilGroup:
         cs_coils = [coil for coil in coils if coil.ctype == "CS"]
         other = [coil for coil in coils if coil.ctype not in ["PF", "CS"]]
 
-        pf_coils.sort(key=lambda x: x.name)
-        cs_coils.sort(key=lambda x: x.name)
-        other.sort(key=lambda x: x.name)
+        def sort_function(key):
+            return [
+                int(text) if text.isdigit() else text
+                for text in split(r"(\d+)", key.name)
+            ]
+
+        pf_coils.sort(key=sort_function)
+        cs_coils.sort(key=sort_function)
+        other.sort(key=sort_function)
 
         all_coils = pf_coils + cs_coils + other
 
