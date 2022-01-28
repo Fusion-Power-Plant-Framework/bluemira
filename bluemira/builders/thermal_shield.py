@@ -31,6 +31,7 @@ from scipy.spatial import ConvexHull
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
@@ -60,9 +61,11 @@ class ThermalShieldBuilder(Builder):
         "g_vv_ts",
         "n_TF",
     ]
+    _params: Configuration
     _pf_kozs: List[BluemiraWire]
     _tf_koz: BluemiraWire
     _vv_koz: Optional[BluemiraWire]
+    _cts_face: BluemiraFace
 
     def __init__(
         self,
@@ -79,6 +82,7 @@ class ThermalShieldBuilder(Builder):
             tf_xz_koz=tf_xz_koz,
             vv_xz_koz=vv_xz_koz,
         )
+        self._cts_face = None
 
     def reinitialise(self, params, pf_coils_xz_kozs, tf_xz_koz, vv_xz_koz=None) -> None:
         """
