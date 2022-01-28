@@ -86,7 +86,9 @@ arcs:
 
 Note that this calculation is done with respect to the reference ellipses of each quadrant
 (and their centroids). Typically, squareness values are of interest on the low-field side
-quadrants.
+quadrants. By this definition of squareness, :math:`\zeta=0.0` indicates a pure ellipse shape,
+:math:`\zeta=1.0` indicates a pure square shape, and negative values indicate a shape that
+that is "flatter" than an ellipse.
 
 The Shafranov shift is defined from the centroid of the reference ellipse to the magnetic
 axis, :math:`O`.
