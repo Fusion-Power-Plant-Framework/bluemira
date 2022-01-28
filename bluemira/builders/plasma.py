@@ -42,15 +42,17 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
 
     _param_class: Type[GeometryParameterisation]
     _variables_map: Dict[str, str]
+    _label: str
     _segment_angle: float
     _boundary: BluemiraWire
 
     def _extract_config(self, build_config: BuildConfig):
         super()._extract_config(build_config)
 
+        self._label = build_config.get("label", "LCFS")
         self._segment_angle = build_config.get("segment_angle", 360.0)
 
-    def reinitialise(self, params, **kwargs):
+    def reinitialise(self, params):
         """
         Create the GeometryParameterisation from the provided param_class and
         variables_map and extract the resulting shape as the plasma boundary.
@@ -61,45 +63,39 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
             The parameterisation containing at least the required params for this
             Builder.
         """
-        super().reinitialise(params, **kwargs)
+        super().reinitialise(params)
 
         self._boundary = self._shape.create_shape()
 
-    def build(self, label: str = "LCFS", **kwargs):
+    def build(self):
         """
         Build a plasma with a boundary shape defined by the parameterisation.
         """
-        component = super().build(**kwargs)
+        component = super().build()
 
-        component.add_child(self.build_xz(label=label))
-        component.add_child(self.build_xy(label=label))
-        component.add_child(self.build_xyz(label=label))
+        component.add_child(self.build_xz())
+        component.add_child(self.build_xy())
+        component.add_child(self.build_xyz())
 
         return component
 
-    def build_xz(self, *, label: str = "LCFS", **kwargs) -> Component:
+    def build_xz(self) -> Component:
         """
         Build a PhysicalComponent with a BluemiraFace using the provided plasma boundary
         in the xz plane.
 
-        Parameters
-        ----------
-        label: str
-            The label to apply to the resulting component, by default "LCFS".
-
         Returns
         -------
         result: Component
-            The resulting component representing the xz view of the LCFS.
+            The resulting component representing the xz view of the Plasma.
         """
-        # TODO: Specify a palette so that the plotting options are set up here.
-        face = BluemiraFace(self._boundary, label)
-        component = PhysicalComponent("LCFS", face)
+        face = BluemiraFace(self._boundary, self._label)
+        component = PhysicalComponent(self._label, face)
         component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
         return Component("xz").add_child(component)
 
-    def build_xy(self, *, label: str = "LCFS", **kwargs) -> Component:
+    def build_xy(self) -> Component:
         """
         Build a PhysicalComponent with a BluemiraFace using the plasma boundary in the
         xy plane.
@@ -107,44 +103,31 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
         The projection onto the xy plane is taken as the ring bound by the maximum and
         minimum values of the boundary in the radial direction.
 
-        Parameters
-        ----------
-        label: str
-            The label to apply to the resulting component, by default "LCFS".
-
         Returns
         -------
         result: PhysicalComponent
-            The resulting component representing the xy view of the LCFS.
+            The resulting component representing the xy view of the Plasma.
         """
-        # TODO: Specify a palette so that the plotting options are set up here.
         inner = make_circle(self._boundary.bounding_box.x_min, axis=[0, 1, 0])
         outer = make_circle(self._boundary.bounding_box.x_max, axis=[0, 1, 0])
 
-        face = BluemiraFace([outer, inner], label)
-        component = PhysicalComponent(label, face)
+        face = BluemiraFace([outer, inner], self._label)
+        component = PhysicalComponent(self._label, face)
         component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
 
         return Component("xy").add_child(component)
 
-    def build_xyz(
-        self,
-        *,
-        label: str = "LCFS",
-        segment_angle: Optional[float] = None,
-        **kwargs,
-    ) -> PhysicalComponent:
+    def build_xyz(self, segment_angle: Optional[float] = None) -> PhysicalComponent:
         """
         Build a PhysicalComponent with a BluemiraShell using the plasma boundary in 3D.
 
         The 3D shell is created by revolving the boundary through the provided segment
-        angle.
+        angle. If the segment angle isn't given then the configured value for the Builder
+        is used.
 
         Parameters
         ----------
-        label: str
-            The label to apply to the resulting component, by default "LCFS".
-        segment_angle: float
+        segment_angle: Optional[float]
             The angle [°] around which to revolve the 3D geometry.
 
         Returns
@@ -156,7 +139,7 @@ class MakeParameterisedPlasma(ParameterisedShapeBuilder):
             segment_angle = self._segment_angle
 
         shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=segment_angle)
-        component = PhysicalComponent(label, shell)
+        component = PhysicalComponent(self._label, shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
 
         return Component("xyz").add_child(component)

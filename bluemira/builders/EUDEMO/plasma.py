@@ -75,10 +75,6 @@ class PlasmaComponent(Component):
         """
         return self._equilibrium
 
-    @equilibrium.setter
-    def equilibrium(self, val: Equilibrium):
-        self._equilibrium = val
-
 
 class PlasmaBuilder(Builder):
     """
@@ -115,7 +111,8 @@ class PlasmaBuilder(Builder):
     ]
 
     _params: Configuration
-    _boundary: BluemiraWire
+    _boundary: Optional[BluemiraWire] = None
+    _equilibrium: Optional[Equilibrium] = None
     _plot_flag: bool
     _segment_angle: float
     _eqdsk_path: Optional[str] = None
@@ -146,6 +143,7 @@ class PlasmaBuilder(Builder):
         super().reinitialise(params)
 
         self._boundary = None
+        self._equilibrium = None
 
     def run(self):
         """
@@ -154,8 +152,6 @@ class PlasmaBuilder(Builder):
         bluemira_print("Running Plasma equilibrium design problem")
         eq = self._create_equilibrium()
         self._analyse_equilibrium(eq)
-        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
-        return {"equilibrium": eq}
 
     def read(self):
         """
@@ -164,8 +160,6 @@ class PlasmaBuilder(Builder):
         bluemira_print("Reading Plasma equilibrium design problem")
         eq = self._read_equilibrium()
         self._analyse_equilibrium(eq)
-        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
-        return {"equilibrium": eq}
 
     def mock(self):
         """
@@ -179,7 +173,7 @@ class PlasmaBuilder(Builder):
         for var, param in {"r_0": "R_0", "a": "A"}.items():
             shape.adjust_variable(var, self._params[param])
         self._boundary = shape.create_shape()
-        return {"equilibrium": None}
+        self._equilibrium = None
 
     def _ensure_boundary(self):
         """
@@ -300,7 +294,14 @@ class PlasmaBuilder(Builder):
 
     def _analyse_equilibrium(self, eq: Equilibrium):
         """
-        Analyse an equilibrium and store important values in the Plasma parameters.
+        Analyse an equilibrium and store important values in the Plasma parameters. Also
+        updates the equilibrium and boundary to ensure that they are kept synchronised
+        with the parameters.
+
+        Parameters
+        ----------
+        eq: Equilibrium
+            The equilibrium to analyse for use with this builder.
         """
         plasma_dict = eq.analyse_plasma()
 
@@ -321,14 +322,12 @@ class PlasmaBuilder(Builder):
         }
         self._params.update_kw_parameters(params, source="equilibria")
 
-    def build(self, equilibrium: Optional[Equilibrium] = None) -> PlasmaComponent:
+        self._equilibrium = eq
+        self._boundary = make_polygon(eq.get_LCFS().xyz, "LCFS")
+
+    def build(self) -> PlasmaComponent:
         """
         Build the plasma components.
-
-        Parameters
-        ----------
-        equilibrium: Optional[Equilibrium]
-            The equilibrium to be assigned to the top-level PlasmaComponent.
 
         Returns
         -------
@@ -337,25 +336,20 @@ class PlasmaBuilder(Builder):
         """
         super().build()
 
-        component = PlasmaComponent(self._name, equilibrium=equilibrium)
+        component = PlasmaComponent(self._name, equilibrium=self._equilibrium)
 
-        component.add_child(self.build_xz(equilibrium=equilibrium))
+        component.add_child(self.build_xz())
         component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
 
         return component
 
-    def build_xz(self, equilibrium: Optional[Equilibrium] = None) -> Component:
+    def build_xz(self) -> Component:
         """
         Build the xz representation of this plasma.
 
         Generates the LCFS from the _boundary defined on the builder and includes the
         separatrix from the equilibrium, if the equilibrium is provided.
-
-        Parameters
-        ----------
-        equilibrium: Optional[Equilibrium]
-            The equilibrium from which to extract the separatrix.
 
         Returns
         -------
@@ -372,8 +366,8 @@ class PlasmaBuilder(Builder):
 
         component = Component("xz")
 
-        if equilibrium is not None:
-            sep_loop = equilibrium.get_separatrix()
+        if self._equilibrium is not None:
+            sep_loop = self._equilibrium.get_separatrix()
             sep_wire = make_polygon(sep_loop.xyz, label="Separatrix")
             sep_component = PhysicalComponent("Separatrix", sep_wire)
             sep_component.plot_options.wire_options["color"] = BLUE_PALETTE["PL"]

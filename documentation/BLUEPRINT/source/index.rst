@@ -25,7 +25,6 @@ are executed to generate reactor designs.
 BLUEPRINT is comprised of various modules (*azulejos*):
 
 * **base**: a collection of utilities which make up the software backbone of the BLUEPRINT framework
-* **beams**: a simple 3-D frame finite element model for structural analysis
 * **cad**: a CAD toolbox and generator, which builds CAD artefacts for a given reactor.
 * **codes**: an interface library to run external modules:
 

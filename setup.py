@@ -15,34 +15,32 @@ with open("README.md", "r") as f:
     long = f.read()
 
 install_requires = [  # PYL = Version limited by python version
-    "aocxchange;python_version<='3.6'",  # 0.3.0
-    "asteval",  # 0.9.23
-    "click",  # 8.0.1
+    "asteval",  # 0.9.25
+    "click",  # 8.0.3
     "CoolProp",  # 6.4.1
-    "dataclasses;python_version<='3.6'",  # 0.8
-    "fortranformat",  # 1.0.1
-    "imageio",  # 2.9.0
-    "ipykernel",  # 5.5.3
+    "fortranformat",  # 1.1.1
+    "imageio",  # 2.13.5
+    "ipykernel",  # 6.6.1
     "matplotlib",  # 3.3.4   PYL
-    "natsort",  # 7.1.1
+    "natsort",  # 8.0.2
     "neutronics-material-maker==0.1.11",  # Crash on upgrade
     "nlopt",  # 2.7.0
     "numba",  # 0.53.1
     "numba-scipy",  # 0.3.0
     "numpy",  # 1.19.5   PYL
-    "pandas",  # 1.1.5    PYL
+    "pandas",  # 1.3.5    PYL
     "pyclipper",  # 1.2.1
-    "pypet",  # 0.5.1
+    "pypet",  # 0.6.0
     "pyquaternion",  # 0.9.9
-    "scikit-learn",  # 0.24.1
-    "seaborn",  # 0.11.1
+    "scikit-learn",  # 1.0.2
+    "seaborn",  # 0.11.2
     "sectionproperties",  # 1.0.8 (with scipy <= 1.5)
-    "Shapely",  # 1.7.1
-    "tables",  # 3.6.1
+    "Shapely",  # 1.8.0
+    "tables",  # 3.7.0
     "tabulate",  # 0.8.9
-    "trimesh",  # 3.9.14
+    "trimesh",  # 3.9.42
     "scipy",  # 1.4.1 Last OK version
-    "wrapt",  # 1.12.1
+    "wrapt",  # 1.13.3
 ]
 
 openmoc = [
@@ -65,24 +63,29 @@ process = [
 ]
 
 dev_requires = [
-    "black",  # 20.8b1
-    "flake8",  # 3.9.1
+    "black",  # 21.12b0
+    "flake8",  # 4.0.1
     "flake8-bandit",  # 2.1.2
     "flake8-docstrings",  # 1.6.0
-    "pep8-naming",  # 0.11.1
-    "pre-commit",  # 2.12.1
-    "pytest",  # 6.2.3
-    "pytest-cov",  # 2.11.1
+    "pep8-naming",  # 0.12.1
+    "pre-commit",  # 2.16.0
+    "pytest",  # 6.2.5
+    "pytest-cov",  # 3.0.0
     "pytest-html",  # 3.1.1
     "pytest-metadata",  # 1.11.0
-    "sphinx",  # 3.5.4
-    "sphinx-autoapi",  # 1.8.0
-    "sphinx-rtd-theme",  # 0.5.2
-    "versioneer",  # 0.19
+    "sphinx",  # 4.3.2
+    "sphinx-autoapi",  # 1.8.4
+    "sphinx-rtd-theme",  # 1.0.0
+    "versioneer",  # 0.21
+]
+
+examples = [
+    "notebook",  # 6.4.6
 ]
 
 extras_require = {
     "dev": dev_requires,
+    "examples": examples,
     "process": process,
     "openmoc": openmoc,
     "openmc": openmc,

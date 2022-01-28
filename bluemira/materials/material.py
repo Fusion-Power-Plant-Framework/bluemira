@@ -1074,7 +1074,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         b = self.b(B, temperature, eps)
         t = self.reduced_t(temperature, eps)
         # Ensure physical current density with max (j, 0)
-        # Limits of parametrisation likely to be encountered sooner
+        # Limits of parameterisation likely to be encountered sooner
         return max(
             (
                 self.c

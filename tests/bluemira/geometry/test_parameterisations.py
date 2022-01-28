@@ -19,6 +19,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import os
+import shutil
+import tempfile
+from typing import Type
+
 import numpy as np
 import pytest
 
@@ -36,6 +41,33 @@ from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
+
+
+@pytest.mark.parametrize(
+    "param_class",
+    [
+        PictureFrame,
+        PolySpline,
+        PrincetonD,
+        SextupleArc,
+        TaperedPictureFrame,
+        TripleArc,
+    ],
+)
+def test_read_write(param_class: Type[GeometryParameterisation]):
+    tempdir = tempfile.mkdtemp()
+    try:
+        the_path = os.sep.join([tempdir, f"{param_class.__name__}.json"])
+        param = param_class()
+        param.to_json(the_path)
+        new_param = param_class.from_json(the_path)
+        for attr in GeometryParameterisation.__slots__:
+            if attr == "variables":
+                assert new_param.variables._to_records() == param.variables._to_records()
+            else:
+                assert getattr(new_param, attr) == getattr(param, attr)
+    finally:
+        shutil.rmtree(tempdir)
 
 
 class TestGeometryParameterisation:

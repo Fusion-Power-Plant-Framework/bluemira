@@ -11,7 +11,7 @@ within prescribed limits.
 The first wall profile can be made either for the Single Null (SN) or the
 Double Null (DN) divertor configuration.
 
-For SN configurations, the charged particles are predominantly released in the outbard side
+For SN configurations, the charged particles are predominantly released in the outboard side
 (low magnetic field driving weak confinement), hence we assume the particle source to be in
 the Outboard Mid-Plane (OMP). The particle are then assumed to travel towards
 both Low Field Side (LFS), and High Field Side (HFS).
@@ -119,7 +119,7 @@ Procedure
 
  Each flux line intersects the first wall in at least one point.
  More likely there are several intersections but only the first one
- correspondes to a power contribution into the wall.
+ corresponds to a power contribution into the wall.
  Once a flux line hits the first wall for the first time, the rest
  of the wall is in its own shade, and it cannot be reached by the
  same flux line for a second time.
