@@ -413,8 +413,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         """
         component = Component("xyz")
 
-        # Minimum angle per TF coil
-        min_tf_deg = 360.0 / self._params.n_TF.value
+        # Minimum angle per TF coil (nudged by a tiny length since we start counting a
+        # sector at theta=0). This means we can draw a sector as 360 / n_TF and get one
+        # TF coil per sector. Python represents floats with 16 significant figures before
+        # getting round off, so adding on 1e-13 works here, in case someone sets n_TF
+        # to be 2.
+        min_tf_deg = (360.0 / self._params.n_TF.value) + 1e-13
         n_tf_draw = min(int(degree // min_tf_deg) + 1, self._params.n_TF.value)
         degree = min_tf_deg * n_tf_draw
 
