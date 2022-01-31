@@ -14,7 +14,6 @@ from .divertor_silhouette import (
 from .hcd import HCDSystem
 from .pfcoils import PoloidalFieldCoils
 from .plasma import Plasma
-from .powerbalance import BalanceOfPlant
 from .tfcoils import ToroidalFieldCoils
 from .thermalshield import ThermalShield
 from .vessel import VacuumVessel

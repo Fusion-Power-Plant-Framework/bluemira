@@ -86,7 +86,6 @@ from BLUEPRINT.nova.structure import CoilArchitect
 
 # BLUEPRINT system imports
 from BLUEPRINT.systems import (
-    BalanceOfPlant,
     BreedingBlanket,
     Cryostat,
     Divertor,
@@ -153,7 +152,6 @@ class Reactor(ReactorSystem):
     TF: Type[ToroidalFieldCoils]
     PF: Type[PoloidalFieldCoils]
     VV: Type[VacuumVessel]
-    BOP: Type[BalanceOfPlant]
     DIV: Type[Divertor]
     HCD: Type[HCDSystem]
     TFV: Type[FuelCycleAnalysis]
@@ -1129,46 +1127,6 @@ class Reactor(ReactorSystem):
             ["t_d", "Tritium doubling time", t, "years", None, "BLUEPRINT"],
         ]
         self.add_parameters(params)
-
-    def power_balance(self, plot=True):
-        """
-        Calculate the net electric output of the reactor, and its efficiency.
-
-        Parameters
-        ----------
-        plot: bool
-            If True, plot the Sankey diagram for the Reactor power balance
-        """
-        bluemira_print("Calculating reactor power balance.")
-        to_bop = {
-            "BB_P_in": self.BB.params.P_in,
-            "BB_dP": self.BB.params.dP,
-            "BB_T_in": self.BB.params.T_in,
-            "BB_T_out": self.BB.params.T_out,
-            "BBcoolant": self.BB.params.coolant,
-            "multiplier": self.BB.params.mult,
-            "f_decayheat": self.BB.params.f_dh,
-            "nrgm": self.BB.params.bb_e_mult,
-            "blkpfrac": self.BC.f_HGH,
-            "divpfrac": self.BC.div_n_frac,
-            "auxpfrac": self.BC.aux_n_frac,
-            "vvpfrac": self.BC.params.vvpfrac,
-            "P_hcd": self.HCD.get_heating_power(),
-            "P_hcd_ec": self.HCD.EC.params.P_h_ss,
-            "P_hcd_nb": self.HCD.NB.params.P_h_ss,
-            "P_hcd_el": self.HCD.get_electric_power(),
-        }
-        BalanceOfPlantClass = self.get_subsystem_class("BOP")
-        self.BOP = BalanceOfPlantClass(self.params, to_bop)
-
-        p_el_net, eta = self.BOP.build()
-        params = [
-            ["P_el_net", "Net electric power", p_el_net, "MW", None, "BLUEPRINT"],
-            ["eta_plant", "Plant efficiency", eta * 100, "%", None, "BLUEPRINT"],
-        ]
-        self.add_parameters(params)
-        if plot:
-            self.BOP.plot()
 
     def life_cycle(self, learning_strategy=None, availability_strategy=None):
         """
