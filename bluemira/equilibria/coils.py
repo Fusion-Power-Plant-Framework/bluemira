@@ -720,7 +720,7 @@ class Coil:
         """  # noqa :W505
         Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
-            a = MU_0 * self.current ** 2 / (4 * np.pi * self.x)
+            a = MU_0 * self.current**2 / (4 * np.pi * self.x)
             fx = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
 
         else:
@@ -1729,6 +1729,9 @@ class SymmetricCircuit(Circuit):
             The coil sub-division size
         """
         self.apply_coil_method("mesh_coil", d_coil)
+
+    def _points_inside_coil(self, x, z):
+        return self.coils[self.name + ".1"]._points_inside_coil(x, abs(z))
 
 
 class CoilSet(CoilGroup):

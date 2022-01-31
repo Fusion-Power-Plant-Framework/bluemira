@@ -102,7 +102,7 @@ def circular_coil_inductance_elliptic(radius, rc):
     """
     k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
     k = clip_nb(k, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    return MU_0 * (2 * radius - rc) * ((1 - k ** 2 / 2) * ellipk(k) - ellipe(k))
+    return MU_0 * (2 * radius - rc) * ((1 - k**2 / 2) * ellipk(k) - ellipe(k))
 
 
 def circular_coil_inductance_kirchhoff(radius, rc):
@@ -210,12 +210,12 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
         if x <= 0
     """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-    k2 = 4 * x * xc / a ** 2
+    k2 = 4 * x * xc / a**2
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     i1 = ellipk_nb(k2) / a
-    i2 = ellipe_nb(k2) / (a ** 3 * (1 - k2))
+    i2 = ellipe_nb(k2) / (a**3 * (1 - k2))
     return 2e-7 * (  # MU_0 / (2 * np.pi)
-        (z - zc) * (-i1 + i2 * ((z - zc) ** 2 + x ** 2 + xc ** 2)) / x
+        (z - zc) * (-i1 + i2 * ((z - zc) ** 2 + x**2 + xc**2)) / x
     )
 
 
@@ -252,13 +252,13 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):
         if x <= 0
     """
     a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-    k2 = 4 * x * xc / a ** 2
+    k2 = 4 * x * xc / a**2
     # Avoid NaN when coil on grid point
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     e, k = ellipe_nb(k2), ellipk_nb(k2)
     i1 = 4 * k / a
-    i2 = 4 * e / (a ** 3 * (1 - k2))
-    part_a = (z - zc) ** 2 + x ** 2 + xc ** 2
+    i2 = 4 * e / (a**3 * (1 - k2))
+    part_a = (z - zc) ** 2 + x**2 + xc**2
     part_b = -2 * x * xc
     return MU_0_4PI * xc * ((xc + x * part_a / part_b) * i2 - i1 * x / part_b)
 
@@ -295,13 +295,13 @@ def greens_all(xc, zc, x, z):
         if x <= 0
     """
     a = np.hypot((x + xc), (z - zc))
-    k2 = 4 * x * xc / a ** 2
+    k2 = 4 * x * xc / a**2
     # Avoid NaN when coil on grid point
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     e, k = ellipe_nb(k2), ellipk_nb(k2)
     i_1 = 4 * k / a
-    i_2 = 4 * e / (a ** 3 * (1 - k2))
-    a_part = (z - zc) ** 2 + x ** 2 + xc ** 2
+    i_2 = 4 * e / (a**3 * (1 - k2))
+    a_part = (z - zc) ** 2 + x**2 + xc**2
     b_part = -2 * x * xc
     g_bx = MU_0_4PI * xc * (z - zc) * (i_1 - i_2 * a_part) / b_part
     g_bz = MU_0_4PI * xc * ((xc + x * a_part / b_part) * i_2 - i_1 * x / b_part)

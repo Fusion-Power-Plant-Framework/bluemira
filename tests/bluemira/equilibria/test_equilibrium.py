@@ -206,7 +206,7 @@ class TestFields:
 
         Bp = eq.plasma_Bp
 
-        new_bp = np.sqrt(new_bx ** 2 + new_bz ** 2)
+        new_bp = np.sqrt(new_bx**2 + new_bz**2)
 
         levels = np.linspace(np.amin(new_bp), np.amax(new_bp), 20)
 

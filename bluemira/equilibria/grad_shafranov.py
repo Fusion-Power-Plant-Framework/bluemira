@@ -80,7 +80,7 @@ class GSOperator:
         d_x = (self.x_max - self.x_min) / (nx - 1)
         d_z = (self.z_max - self.z_min) / (nz - 1)
         x = linspace(self.x_min, self.x_max, nx)
-        d_x2, d_z2 = d_x ** 2, d_z ** 2
+        d_x2, d_z2 = d_x**2, d_z**2
 
         if self.force_symmetry:
             # Check if applied grid is symmetric

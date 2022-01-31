@@ -27,7 +27,6 @@ import numba as nb
 import numpy as np
 from matplotlib._contour import QuadContourGenerator
 from scipy.interpolate import RectBivariateSpline
-from scipy.optimize import minimize
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
@@ -60,7 +59,7 @@ class PsiPoint:
     Abstract object for psi-points with list indexing and point behaviour.
     """
 
-    __slots__ = ["x", "z", "psi"]
+    __slots__ = ("x", "z", "psi")
 
     def __init__(self, x, z, psi):
         self.x, self.z = x, z
@@ -95,7 +94,7 @@ class Xpoint(PsiPoint):
     X-point class.
     """
 
-    __slots__ = []
+    __slots__ = ()
     pass
 
 
@@ -104,7 +103,7 @@ class Opoint(PsiPoint):
     O-point class.
     """
 
-    __slots__ = []
+    __slots__ = ()
     pass
 
 
@@ -113,7 +112,7 @@ class Lpoint(PsiPoint):
     Limiter point class.
     """
 
-    __slots__ = []
+    __slots__ = ()
     pass
 
 
@@ -147,42 +146,6 @@ def find_local_minima(f):
             & (f < np.roll(f, -1, 1))
         )
     )
-
-
-def find_local_Bp_minima_scipy(f_Bp2, x0, z0, radius):  # noqa :N802
-    """
-    Find local Bp^2 minima on a grid (precisely) using a scipy optimiser.
-
-    Parameters
-    ----------
-    f_Bp2: callable
-        The function handle for Bp^2 interpolation
-    x0: float
-        The local grid minimum x coordinate
-    z0: float
-        The local grid minimum z coordinate
-    radius: float
-        The search radius
-
-    Returns
-    -------
-    x: Union[float, None]
-        The x coordinate of the minimum. None if the minimum is not valid.
-    z: float
-        The z coordinate of the minimum
-    """
-    x_0 = np.array([x0, z0])
-    # BFGS expensive with many grid points?
-    # bounds = [
-    #     [x0 - 2 * dx, x0 + 2 * dx],
-    #     [z0 - 2 * dz, z0 + 2 * dz],
-    # ]  # TODO: Implement and figure out why so slow
-    res = minimize(f_Bp2, x_0, method="BFGS", options={"disp": False})  # bounds=bounds,
-    if np.sqrt(res.fun) < B_TOLERANCE:
-        xn, zn = res.x[0], res.x[1]
-        if np.sqrt((x0 - xn) ** 2 + (z0 - zn) ** 2) < 5 * radius:
-            return [res.x[0], res.x[1]]
-    return None
 
 
 @nb.jit(nopython=True, cache=True)
@@ -285,7 +248,7 @@ def triage_OX_points(f_psi, points):
         d2dx2 = f_psi(xi, zi, dx=2, grid=False)
         d2dz2 = f_psi(xi, zi, dy=2, grid=False)
         d2dxdz = f_psi(xi, zi, dx=1, dy=1, grid=False)
-        s_value = d2dx2 * d2dz2 - d2dxdz ** 2
+        s_value = d2dx2 * d2dz2 - d2dxdz**2
 
         if s_value < 0:
             x_points.append(Xpoint(xi, zi, f_psi(xi, zi)[0][0]))
@@ -296,7 +259,7 @@ def triage_OX_points(f_psi, points):
     return o_points, x_points
 
 
-def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
+def find_OX_points(x, z, psi, limiter=None, *, field_cut_off=1.0):  # noqa :N802
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -308,11 +271,10 @@ def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
         The spatial z coordinates of the grid points [m]
     psi: np.array(N, M)
         The poloidal magnetic flux map [V.s/rad]
-    limiter: Union[None, Limiter]
+    limiter: Optional[Limiter]
         The limiter to use (if any)
-    x_min: Union[None, float]
-        The inner x cut-off point for searching O, X points (useful when using
-        big grids and avoiding singularities in the CS due to Greens functions)
+    field_cut_off: float
+        The field above which local minima are not searched [T]. Must be > 0.1 T
 
     Returns
     -------
@@ -334,80 +296,83 @@ def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
     """
     d_x, d_z = x[1, 0] - x[0, 0], z[0, 1] - z[0, 0]  # Grid resolution
     x_m, z_m = (x[0, 0] + x[-1, 0]) / 2, (z[0, 0] + z[0, -1]) / 2  # Grid centre
+    nx, nz = psi.shape  # Grid shape
+    radius = min(0.5, 2 * np.hypot(d_x, d_z))  # Search radius
+    field_cut_off = max(100 * B_TOLERANCE, field_cut_off)
 
-    if x_min is None:
-        f = RectBivariateSpline(x[:, 0], z[0, :], psi)  # Spline for psi interpolation
-    else:
-        # Truncate grid to avoid many OX points on solenoid (CREATE relic)
-        i_x = np.argmin(abs(x[:, 0] - x_min)) - 1
-        f = RectBivariateSpline(x[i_x:, 0], z[0, :], psi[i_x:, :])
-        x = x[i_x:0]
-        psi = psi[i_x:, :]
+    # Splines for interpolation
+    f_psi = RectBivariateSpline(x[:, 0], z[0, :], psi)
 
-    nx, nz = psi.shape  # Grid shape (including truncation)
+    def f_Bx(x, z):
+        return -f_psi(x, z, dy=1, grid=False) / x
 
-    radius = min(0.5, 2 * (d_x ** 2 + d_z ** 2))  # Search radius
+    def f_Bz(x, z):
+        return f_psi(x, z, dx=1, grid=False) / x
 
-    def f_bp(x_opt):
-        """
-        Poloidal field optimiser function handle
-        \t:math:`B_{p} = B_{x}^{2}+B_{z}^{2}`
+    def f_Bp(x, z):
+        return np.hypot(f_Bx(x, z), f_Bz(x, z))
 
-        Notes
-        -----
-        No points square-rooting here, we don't care about actual values.
-        """
-        return (-f(x_opt[0], x_opt[1], dy=1, grid=False) / x_opt[0]) ** 2 + (
-            f(x_opt[0], x_opt[1], dx=1, grid=False) / x_opt[0]
-        ) ** 2
+    Bp2 = f_Bx(x, z) ** 2 + f_Bz(x, z) ** 2
 
-    Bp2 = f_bp(np.array([x, z]))
+    i_local, j_local = find_local_minima(Bp2)
 
     points = []
-    for i, j in zip(*find_local_minima(Bp2)):
+    for i, j in zip(i_local, j_local):
         if i > nx - 3 or i < 3 or j > nz - 3 or j < 3:
             continue  # Edge points uninteresting and mess up S calculation.
 
-        if nx * nz <= 4225:  # scipy method faster on small grids
-            point = find_local_Bp_minima_scipy(f_bp, x[i, j], z[i, j], radius)
+        if f_Bp(x[i, j], z[i, j]) > field_cut_off:
+            continue  # Unlikely to be a field null
 
-        else:  # Local Newton/Powell CG method faster on large grids
-            point = find_local_Bp_minima_cg(f, x[i, j], z[i, j], radius)
+        point = find_local_Bp_minima_cg(f_psi, x[i, j], z[i, j], radius)
 
         if point:
             points.append(point)
 
     points = drop_space_duplicates(points)
 
-    o_points, x_points = triage_OX_points(f, points)
+    o_points, x_points = triage_OX_points(f_psi, points)
 
     if len(o_points) == 0:
         print("")  # stdout flusher
-        bluemira_warn("EQUILIBRIA::find_OX: No O-points found during an iteration.")
+        bluemira_warn(
+            "EQUILIBRIA::find_OX: No O-points found during an iteration. Defaulting to grid centre."
+        )
+        o_points = [Opoint(x_m, z_m, f_psi(x_m, z_m))]
         return o_points, x_points
 
-    def _cntr_sort(p):
-        return (p[0] - x_m) ** 2 + (p[1] - z_m) ** 2
+    # Sort O-points by centrality to the grid
+    o_points.sort(key=lambda o: (o.x - x_m) ** 2 + (o.z - z_m) ** 2)
 
-    def _psi_sort(p):
-        return (p[2] - psio) ** 2
-
-    o_points.sort(key=_cntr_sort)
-    x_op, z_op, psio = o_points[0]  # Primary O-point
-    useful_x, useless_x = [], []
     if limiter is not None:
-        limit_x = []
-        for lim in limiter:
-            limit_x.append(Lpoint(*lim, f(*lim)[0][0]))
+        limit_x = [Lpoint(*lim, f_psi(*lim)[0][0]) for lim in limiter]
         x_points.extend(limit_x)
 
+    if len(x_points) == 0:
+        # There is an O-point, but no X-points or L-points, so we will take the grid
+        # as a boundary
+        print("")  # stdout flusher
+        bluemira_warn(
+            "EQUILIBRIA::find_OX: No X-points found during an iteration, using grid boundary to limit the plasma."
+        )
+        x_grid_edge = np.concatenate([x[0, :], x[:, 0], x[-1, :], x[:, -1]])
+        z_grid_edge = np.concatenate([z[0, :], z[:, 0], z[-1, :], z[:, -1]])
+        x_points = [
+            Lpoint(xi, zi, f_psi(xi, zi)[0][0])
+            for xi, zi in zip(x_grid_edge, z_grid_edge)
+        ]
+
+    x_op, z_op, psio = o_points[0]  # Primary O-point
+    useful_x, useless_x = [], []
     for xp in x_points:
         x_xp, z_xp, psix = xp
-        xx, zz = np.linspace(x_op, x_xp), np.linspace(z_op, z_xp)
+        d_l = np.hypot(x_xp - x_op, z_xp - z_op)
+        n_line = int(d_l // radius) + 1
+        xx, zz = np.linspace(x_op, x_xp, n_line), np.linspace(z_op, z_xp, n_line)
         if psix < psio:
-            psi_ox = -f(xx, zz, grid=False)
+            psi_ox = -f_psi(xx, zz, grid=False)
         else:
-            psi_ox = f(xx, zz, grid=False)
+            psi_ox = f_psi(xx, zz, grid=False)
 
         if np.argmin(psi_ox) > 1:
             useless_x.append(xp)
@@ -419,7 +384,8 @@ def find_OX_points(x, z, psi, limiter=None, x_min=None):  # noqa :N802
 
         useful_x.append(xp)
 
-    useful_x.sort(key=_psi_sort)
+    # Sort X-points by proximity to O-point psi
+    useful_x.sort(key=lambda x: (x.psi - psio) ** 2)
     useful_x.extend(useless_x)
     return o_points, useful_x
 
@@ -457,7 +423,7 @@ def _parse_OXp(x, z, psi, o_points, x_points):  # noqa :N802
 
 def get_contours(x, z, array, value):
     """
-    Get the contours of a value in continous array.
+    Get the contours of a value in continuous array.
 
     Parameters
     ----------
@@ -597,7 +563,7 @@ def find_field_surf(x, z, Bp, field):
     surfaces = get_contours(x, z, Bp, field)
     err = []
     areas = []
-    for group in surfaces:  # Choisir la surface la plus "logique"
+    for group in surfaces:  # Choose the most "logical" surface
         err.append(f_min(*group.T))
         areas.append(get_area_2d(*group.T))
 

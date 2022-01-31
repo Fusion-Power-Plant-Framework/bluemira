@@ -65,8 +65,8 @@ def brc_integrand_full(psi, r_pc, r_j, z_k):
         The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc ** 2 - 2 * r_pc * r_j * cos_psi + r_j ** 2 + z_k ** 2)
-    return cos_psi * sqrt_term + r_pc * cos_psi ** 2 * np.log(
+    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
+    return cos_psi * sqrt_term + r_pc * cos_psi**2 * np.log(
         r_j - r_pc * cos_psi + sqrt_term
     )
 
@@ -93,7 +93,7 @@ def bzc_integrand_full_p1(psi, r_pc, r_j, z_k):
         The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc ** 2 - 2 * r_pc * r_j * cos_psi + r_j ** 2 + z_k ** 2)
+    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
     return -z_k * np.log(r_j - r_pc * cos_psi + sqrt_term) - r_pc * cos_psi * np.log(
         -z_k + sqrt_term
     )
@@ -124,7 +124,7 @@ def brc_integrand_p1(psi, r_pc, r_j, z_k):
         The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc ** 2 - 2 * r_pc * r_j * cos_psi + r_j ** 2 + z_k ** 2)
+    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
     return cos_psi * sqrt_term
 
 
@@ -150,8 +150,8 @@ def bf1_r_pccos2_integrand(psi, r_pc, r_j, z_k):
         The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc ** 2 - 2 * r_pc * r_j * cos_psi + r_j ** 2 + z_k ** 2)
-    return r_pc * cos_psi ** 2 * np.log(r_j - r_pc * cos_psi + sqrt_term)
+    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
+    return r_pc * cos_psi**2 * np.log(r_j - r_pc * cos_psi + sqrt_term)
 
 
 @jit_llc3
@@ -178,10 +178,10 @@ def bf1_r_pccos2_0_pi_integrand_p1(psi, r_pc, r_j):
     cos_psi = np.cos(psi)
     return (
         r_pc
-        * cos_psi ** 2
+        * cos_psi**2
         * np.log(
             (r_pc * cos_psi - r_j)
-            + np.sqrt((r_pc * cos_psi - r_j) ** 2 + r_pc ** 2 * np.sin(psi) ** 2)
+            + np.sqrt((r_pc * cos_psi - r_j) ** 2 + r_pc**2 * np.sin(psi) ** 2)
         )
     )
 
@@ -210,10 +210,10 @@ def bf1_r_pccos2_0_pi_integrand_p2(psi, r_pc, r_j):
     cos_psi = np.cos(psi)
     return (
         r_pc
-        * cos_psi ** 2
+        * cos_psi**2
         * np.log(
             (r_j - r_pc * cos_psi)
-            + np.sqrt((r_j - r_pc * cos_psi) ** 2 + r_pc ** 2 * np.sin(psi) ** 2)
+            + np.sqrt((r_j - r_pc * cos_psi) ** 2 + r_pc**2 * np.sin(psi) ** 2)
         )
     )
 
@@ -242,7 +242,7 @@ def bf1_zk_integrand(psi, r_pc, r_j, z_k):
         The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc ** 2 - 2 * r_pc * r_j * cos_psi + r_j ** 2 + z_k ** 2)
+    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
     return -z_k * np.log(r_j - r_pc * cos_psi + sqrt_term)
 
 
@@ -270,7 +270,7 @@ def bf2_integrand(psi, r_pc, r_j, z_k):
         The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc ** 2 - 2 * r_pc * r_j * cos_psi + r_j ** 2 + z_k ** 2)
+    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
     return -r_pc * cos_psi * np.log(-z_k + sqrt_term)
 
 
@@ -297,7 +297,7 @@ def bf2_0_pi_integrand(psi, r_pc, z_k):
     """
     cos_psi = np.cos(psi)
     return (
-        r_pc * cos_psi * np.log(z_k + np.sqrt(2 * r_pc ** 2 * (1 - cos_psi) + z_k ** 2))
+        r_pc * cos_psi * np.log(z_k + np.sqrt(2 * r_pc**2 * (1 - cos_psi) + z_k**2))
     )
 
 
@@ -326,7 +326,7 @@ def bf3_integrand(psi, r_pc, r_j, z_k):
     cos_psi = np.cos(psi)
     sin_psi = np.sin(psi)
     if sin_psi != 0:
-        sqrt_term = np.sqrt(r_pc ** 2 - 2 * r_pc * r_j * cos_psi + r_j ** 2 + z_k ** 2)
+        sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
         return (
             r_pc
             * sin_psi
@@ -707,7 +707,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         Convert from local to cylindrical coordinates.
         """
         x, y, z = point
-        rho = np.sqrt(x ** 2 + y ** 2)
+        rho = np.sqrt(x**2 + y**2)
         theta = np.arctan2(y, x)
         return np.array([rho, theta, z])
 

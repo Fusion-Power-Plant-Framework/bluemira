@@ -65,8 +65,8 @@ def test_biot_savart_loop():
     Bz *= current
     Bx2 *= current
     Bz2 *= current
-    Bp = np.sqrt(Bx ** 2 + Bz ** 2)
-    Bp2 = np.sqrt(Bx2 ** 2 + Bz ** 2)
+    Bp = np.sqrt(Bx**2 + Bz**2)
+    Bp2 = np.sqrt(Bx2**2 + Bz**2)
 
     # Relative errors
     err_Bx = np.abs(100 * (Bx - Bx2) / Bx)
@@ -102,8 +102,8 @@ def test_biot_savart_loop():
 
     bz_analytical = (
         (MU_0 / (4 * np.pi))
-        * (2 * np.pi * x_coil ** 2 * current)
-        / (centreline.T[2] ** 2 + x_coil ** 2) ** (3 / 2)
+        * (2 * np.pi * x_coil**2 * current)
+        / (centreline.T[2] ** 2 + x_coil**2) ** (3 / 2)
     )
 
     assert np.allclose(bz_analytical, bz_differential)
