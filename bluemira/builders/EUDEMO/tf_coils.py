@@ -36,7 +36,6 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
-from bluemira.display.displayer import show_cad
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
