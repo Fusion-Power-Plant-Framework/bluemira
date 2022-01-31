@@ -469,7 +469,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
 
         # Join the straight leg to the curvy bits
-        bb = inboard_casing.bounding_box
         x_min = np.min(centreline_points.x)
         idx = np.where(np.isclose(centreline_points.z, z_max_cl))[0]
         x_turn_top = np.min(centreline_points.x[idx])
