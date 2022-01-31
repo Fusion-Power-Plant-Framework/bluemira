@@ -1730,6 +1730,9 @@ class SymmetricCircuit(Circuit):
         """
         self.apply_coil_method("mesh_coil", d_coil)
 
+    def _points_inside_coil(self, x, z):
+        return self.coils[self.name + ".1"]._points_inside_coil(x, abs(z))
+
 
 class CoilSet(CoilGroup):
     """

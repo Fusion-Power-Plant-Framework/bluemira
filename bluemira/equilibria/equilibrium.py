@@ -556,7 +556,7 @@ class Equilibrium(MHDState):
         # Constructors
         self._jtor = jtor
         self._profiles = profiles
-        self._plasmacoil = None  # So calcular se for preciso
+        self._plasmacoil = None  # Only calculate if necessary
         self._o_points = None
         self._x_points = None
         self._solver = None
@@ -852,9 +852,8 @@ class Equilibrium(MHDState):
         if jtor is None:
             if psi is None:
                 psi = self.psi()
-            o_points, x_points = find_OX_points(
-                self.x, self.z, psi, limiter=self.limiter
-            )
+            o_points, x_points = self.get_OX_points(psi=psi, force_update=True)
+
             if not o_points:
                 raise EquilibriaError("No O-point found in equilibrium.")
             jtor = profiles.jtor(self.x, self.z, psi, o_points, x_points)
@@ -900,7 +899,7 @@ class Equilibrium(MHDState):
         if psi is None:
             psi = self.psi()
         # Speed optimisations
-        o_points, x_points = find_OX_points(self.x, self.z, psi, limiter=self.limiter)
+        o_points, x_points = self.get_OX_points(psi=psi, force_update=True)
         mask = in_plasma(self.x, self.z, psi, o_points=o_points, x_points=x_points)
         print("")  # flusher
 
@@ -1359,7 +1358,10 @@ class Equilibrium(MHDState):
             if psi is None:
                 psi = self.psi()
             self._o_points, self._x_points = find_OX_points(
-                self.x, self.z, psi, limiter=self.limiter
+                self.x,
+                self.z,
+                psi,
+                limiter=self.limiter,
             )
         return self._o_points, self._x_points
 
