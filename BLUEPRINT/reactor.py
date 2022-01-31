@@ -276,7 +276,7 @@ class Reactor(ReactorSystem):
         self.define_in_vessel_layout()
         self.estimate_IVC_powers()
         self.build_containments()
-        self.power_balance(plot=self.plot_flag)
+        # self.power_balance(plot=self.plot_flag)
         # self.analyse_maintenance()
         self.life_cycle()
         self.add_parameter(
