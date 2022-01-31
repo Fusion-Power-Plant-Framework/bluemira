@@ -57,7 +57,7 @@ pickleshare==0.7.5
 Pillow==9.0.0
 pluggy==1.0.0
 prometheus-client==0.12.0
-prompt-toolkit==3.0.24
+prompt-toolkit==3.0.26
 ptyprocess==0.7.0
 py==1.11.0
 pybind11==2.9.0
