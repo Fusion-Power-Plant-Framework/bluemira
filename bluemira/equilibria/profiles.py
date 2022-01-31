@@ -82,7 +82,7 @@ def singlepowerfunc(x, *args):
     \t:math:`g(x)=(1-x^{n})`
     """
     n = args[0]
-    return 1 - x ** n
+    return 1 - x**n
 
 
 @nb.jit(cache=True)
@@ -196,7 +196,7 @@ def luxonexp(x, *args):
     \t:math:`g(x)=\\text{exp}\\big(-\\alpha^2x^2\\big)`
     """
     alpha = args[0]
-    return np.exp(-(x ** 2) * alpha ** 2)
+    return np.exp(-(x**2) * alpha**2)
 
 
 class ShapeFunction:
@@ -389,13 +389,13 @@ class Profile:
         fvacuum = self.fvac()
         if not isinstance(psinorm, np.ndarray):
             val = self._scalar_denorm(self.ffprime, psinorm)
-            return np.sqrt(2 * val + fvacuum ** 2)
+            return np.sqrt(2 * val + fvacuum**2)
 
         p_vals, o_vals = self._reshape(psinorm)
 
         for i in range(len(p_vals)):
             val = self._scalar_denorm(self.ffprime, p_vals[i])
-            o_vals[i] = np.sqrt(2 * val + fvacuum ** 2)
+            o_vals[i] = np.sqrt(2 * val + fvacuum**2)
         return np.reshape(o_vals, psinorm.shape)
 
     @staticmethod
@@ -554,7 +554,7 @@ class BetaIpProfile(Profile):
             v_plasma = revolved_volume(*lcfs.d2)
             Bp = MU_0 * self.Ip / lcfs.length
             p_avg = volume_integral(pfunc, x, self.dx, self.dz) / v_plasma
-            beta_p_actual = 2 * MU_0 * p_avg / Bp ** 2
+            beta_p_actual = 2 * MU_0 * p_avg / Bp**2
 
             lambd_beta0 = -self.betap / beta_p_actual * self.R_0
 
@@ -562,7 +562,7 @@ class BetaIpProfile(Profile):
             # If there are no X-points, use less accurate beta_p constraint
             lambd_beta0 = (
                 -self.betap
-                * self.Ip ** 2
+                * self.Ip**2
                 * self.R_0
                 * MU_0
                 / (8 * np.pi)

@@ -971,7 +971,7 @@ class Equilibrium(MHDState):
         self.psi_func = RectBivariateSpline(self.x[:, 0], self.z[0, :], plasma_psi)
         self.plasma_Bx = self.plasmaBx(self.x, self.z)
         self.plasma_Bz = self.plasmaBz(self.x, self.z)
-        self.plasma_Bp = np.sqrt(self.plasma_Bx ** 2 + self.plasma_Bz ** 2)
+        self.plasma_Bp = np.sqrt(self.plasma_Bx**2 + self.plasma_Bz**2)
 
     def _int_dxdz(self, func):
         """
@@ -1065,7 +1065,7 @@ class Equilibrium(MHDState):
         zcur: float
             The vertical position of the effective current centre
         """  # noqa :W505
-        xcur = np.sqrt(1 / self._Ip * self._int_dxdz(self.x ** 2 * self._jtor))
+        xcur = np.sqrt(1 / self._Ip * self._int_dxdz(self.x**2 * self._jtor))
         zcur = 1 / self._Ip * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
 

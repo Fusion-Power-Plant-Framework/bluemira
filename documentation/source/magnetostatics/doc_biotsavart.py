@@ -15,7 +15,7 @@ z = np.linspace(-2, 2, 100)
 xx, zz = np.meshgrid(x, z)
 
 Bx, By, Bz = source.field(xx, 8 * np.ones_like(xx), zz)
-B = np.sqrt(Bx ** 2 + By ** 2 + Bz ** 2)
+B = np.sqrt(Bx**2 + By**2 + Bz**2)
 
 source.plot()
 ax = plt.gca()

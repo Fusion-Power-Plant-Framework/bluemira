@@ -248,7 +248,7 @@ def triage_OX_points(f_psi, points):
         d2dx2 = f_psi(xi, zi, dx=2, grid=False)
         d2dz2 = f_psi(xi, zi, dy=2, grid=False)
         d2dxdz = f_psi(xi, zi, dx=1, dy=1, grid=False)
-        s_value = d2dx2 * d2dz2 - d2dxdz ** 2
+        s_value = d2dx2 * d2dz2 - d2dxdz**2
 
         if s_value < 0:
             x_points.append(Xpoint(xi, zi, f_psi(xi, zi)[0][0]))

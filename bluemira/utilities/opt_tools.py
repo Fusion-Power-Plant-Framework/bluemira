@@ -56,13 +56,13 @@ def tikhonov(A, b, gamma):
     """
     try:
         return np.dot(
-            np.linalg.inv(np.dot(A.T, A) + gamma ** 2 * np.eye(A.shape[1])),
+            np.linalg.inv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
             np.dot(A.T, b),
         )
     except np.linalg.LinAlgError:
         bluemira_warn("Tikhonov singular matrix..!")
         return np.dot(
-            np.linalg.pinv(np.dot(A.T, A) + gamma ** 2 * np.eye(A.shape[1])),
+            np.linalg.pinv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
             np.dot(A.T, b),
         )
 

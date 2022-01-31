@@ -207,7 +207,7 @@ class TestSurfaceArea:
     def test_torus(self):
         major = 9
         minor = 3
-        area = 4 * np.pi ** 2 * major * minor
+        area = 4 * np.pi**2 * major * minor
 
         x, z = circle_seg(minor, h=(major, 0), npoints=500)
 
