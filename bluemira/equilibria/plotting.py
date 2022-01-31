@@ -226,7 +226,7 @@ def _annotate_coil(ax, coil, force=None, centre=None):
     if centre is not None:
         if coil.ctype == "PF":
             v = np.array([coil.x - centre[0], coil.z - centre[1]])
-            v /= np.sqrt(sum(v ** 2))
+            v /= np.sqrt(sum(v**2))
             d = 1 + np.sqrt(2) * coil.dx
             x += d * v[0] - drs * 1.5
             z += d * v[1]

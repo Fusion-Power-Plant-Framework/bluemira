@@ -100,7 +100,7 @@ class PathInterpolator(XZGeometryInterpolator):
     def _f_min(l_value, f_x, f_z, x, z):
         dx = f_x(l_value) - x
         dz = f_z(l_value) - z
-        return dx ** 2 + dz ** 2
+        return dx**2 + dz**2
 
     def to_xz(self, l_value):
         """

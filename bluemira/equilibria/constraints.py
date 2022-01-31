@@ -494,7 +494,7 @@ class AutoConstraints(MagneticConstraintSet):
 
         # Apply an appropriate constraint on the LCFS
         if psi_boundary is None:
-            arg_inner = np.argmin(x_boundary ** 2 + z_boundary ** 2)
+            arg_inner = np.argmin(x_boundary**2 + z_boundary**2)
             ref_x = x_boundary[arg_inner]
             ref_z = z_boundary[arg_inner]
 

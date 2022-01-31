@@ -336,7 +336,7 @@ class CunninghamConvergence(ConvergenceCriterion):
             True if the convergence criterion is met, else False.
         """
         d_j = j_old - j_new
-        conv = np.sum(d_j ** 2) / np.sum(j_new)
+        conv = np.sum(d_j**2) / np.sum(j_new)
         if print_status:
             bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: J_phi source convergence: {conv:e}"
