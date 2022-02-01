@@ -126,8 +126,10 @@ class TestClosedFluxSurface:
         assert np.isclose(fs.major_radius, R_0)
         assert np.isclose(fs._z_centre, z_0)
         assert np.isclose(fs.minor_radius, a)
+        assert np.isclose(fs.kappa, np.average([kappa_l, kappa_u]))
         assert np.isclose(fs.kappa_upper, kappa_u)
         assert np.isclose(fs.kappa_lower, kappa_l)
+        assert np.isclose(fs.delta, np.average([delta_l, delta_u]))
         assert np.isclose(fs.delta_upper, delta_u)
         assert np.isclose(fs.delta_lower, delta_l)
 
