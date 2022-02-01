@@ -28,7 +28,7 @@ number, going anti-clockwise as seen from above the machine:
 .. figure:: sectors.png
     :name: fig:sectors
 
-    Sector geometry and naming convention (green boxes) in ``bluemira``
+    Indicative sector angles and naming convention (green boxes) in ``bluemira``
 
 
 Unit convention
