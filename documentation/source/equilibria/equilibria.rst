@@ -21,7 +21,7 @@ which is defined as the centroid of the reference ellipse (assuming symmetry).
    Diagram depicting a typical flux surface, showing how key shape characteristics are
    calculated.
 
-Note that the centroid of the reference ellipse, :math:`C`, from which the shape characteristics are
+Note that the centroid of the reference ellipse, :math:`C\equiv(R_{0}, z_{0})`, from which the shape characteristics are
 calculated, is neither the geometric centroid of the flux surface, nor the magnetic axis.
 
 As such, the shape characteristics of a flux surface are purely geometrical.
@@ -35,6 +35,16 @@ The major radius is calculated as:
    :label: major_radius
 
    R_0 = x_{P_{3}} + \dfrac{x_{P_{1}}-x_{P_{3}}}{2}
+
+The vertical coordinate of the centroid :math:`C`, is taken as the average vertical coordinate
+of :math:`P_1` and :math:`P_3`. This is only relevant in the case of tilted flux surfaces,
+and only affects the calculation of the upper and lower elongation and the vertical Shafranov
+shift.
+
+.. math::
+   :label: z_0
+
+   z_0 = \dfrac{z_{P_{1}}+z_{P_{3}}}{2}
 
 The minor radius is calculated as:
 
@@ -57,8 +67,8 @@ The elongation, and upper and lower elongations are calculated as:
 
    \begin{aligned}
    \kappa =& \dfrac{z_{P_{2}}-z_{P_{4}}}{a}\\
-   \kappa_{u} =& \dfrac{z_{P_{2}}-z_C}{a}\\
-   \kappa_{l} = & \dfrac{z_C-z_{P_{4}}}{a}\end{aligned}
+   \kappa_{u} =& \dfrac{z_{P_{2}}-z_0}{a}\\
+   \kappa_{l} = & \dfrac{z_0-z_{P_{4}}}{a}\end{aligned}
 
 By convention, lower elongation values are always given as positive.
 
