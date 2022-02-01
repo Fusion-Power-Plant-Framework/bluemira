@@ -50,12 +50,13 @@ The aspect ratio is calculated as:
 
    A = \dfrac{R_0}{a}
 
-The upper and lower elongations are calculated as:
+The elongation, and upper and lower elongations are calculated as:
 
 .. math::
    :label: elongation
 
    \begin{aligned}
+   \kappa =& \dfrac{z_{P_{2}}-z_{P_{4}}}{a}\\
    \kappa_{u} =& \dfrac{z_{P_{2}}-z_C}{a}\\
    \kappa_{l} = & \dfrac{z_C-z_{P_{4}}}{a}\end{aligned}
 

@@ -195,7 +195,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         Average elongation of the ClosedFluxSurface.
         """
-        return 0.5 * (self.kappa_upper + self.kappa_lower)
+        return 0.5 * (np.max(self.loop.z) - np.min(self.loop.z)) / self.minor_radius
 
     @property
     @lru_cache(1)
