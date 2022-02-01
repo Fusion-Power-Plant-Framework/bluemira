@@ -36,6 +36,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
+from bluemira.display.displayer import show_cad
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
@@ -502,7 +503,10 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         joiner_bot = boolean_cut(joiner_bot, cutter)[0]
 
         # Cut away straight sweep before fusing to protect against degenerate faces
-        solid = boolean_cut(solid, inboard_casing)[0]
+        # Keep the largest piece
+        pieces = boolean_cut(solid, inboard_casing)
+        pieces.sort(key=lambda x: x.volume)
+        solid = pieces[-1]
 
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
@@ -618,7 +622,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         wires.sort(key=lambda wire: wire.length)
         if len(wires) != 4:
             raise BuilderError(
-                "Unexpected TF coil x-z cross-section. It is likely that a previous"
+                "Unexpected TF coil x-z cross-section. It is likely that a previous "
                 "boolean cutting operation failed to create a hollow solid."
             )
 
