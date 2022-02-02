@@ -179,3 +179,4 @@ tests/BLUEPRINT/geometry/test_data/testh-Loop
 tests/BLUEPRINT/geometry/test_data/testJ-MultiLoop
 tests/bluemira/test_generated_data
 plasmod_*.dat
+bluemira/geometry/test_shape.py
