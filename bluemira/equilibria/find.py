@@ -764,10 +764,10 @@ def get_legs(equilibrium):
         arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
         arg_inters.sort()
         if x_point.z < o_p.z:
-            # Lower single null
+            # Lower null
             func = operator.lt
         else:
-            # Upper single null
+            # Upper null
             func = operator.gt
 
         if len(arg_inters) > 2:
