@@ -24,6 +24,7 @@ Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
 
 import operator
+from collections import Iterable
 
 import numba as nb
 import numpy as np
@@ -733,11 +734,27 @@ def get_legs(equilibrium):
 
     Parameters
     ----------
+    equilibrium: Equilibrium
+        Equilibrium for which to find the separatrix legs
 
     Returns
     -------
     legs: List[Loop]
-        Geometries of the legs
+        Geometries of the legs, sorted as:
+            [lower inner,  # if present
+             lower outer,  # if present
+             upper inner,  # if present
+             upper outer,  # if present
+            ]
+
+    Raises
+    ------
+    EquilibriaError: if a strange number of legs would be found for an X-point
+
+    Notes
+    -----
+    Will return two legs in the case of a single null
+    Will return four legs in the case of a double null
     """
 
     def extract_leg(flux_line, x_point):
@@ -779,13 +796,13 @@ def get_legs(equilibrium):
     separatrix = equilibrium.get_separatrix()
     delta = 2 * equilibrium.grid.dx
 
-    if equilibrium.is_double_null:
+    if isinstance(separatrix, Iterable):
+        # Double null
         legs = []
         for half_sep in separatrix:
             for x_p in x_points[:2]:
                 leg = extract_leg(half_sep, x_p)
                 legs.append(leg)
-
     else:
         # Single null
         legs = extract_leg(separatrix, x_points[0])
