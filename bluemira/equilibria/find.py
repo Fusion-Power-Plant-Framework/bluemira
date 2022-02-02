@@ -728,7 +728,7 @@ def find_LCFS_separatrix(
     return lcfs, separatrix
 
 
-def get_legs(equilibrium):
+def get_legs(equilibrium, n_layers: int, dx_off: float):
     """
     Get the legs of a separatrix.
 
@@ -736,10 +736,14 @@ def get_legs(equilibrium):
     ----------
     equilibrium: Equilibrium
         Equilibrium for which to find the separatrix legs
+    n_layers: int
+        Number of flux surfaces to extract for each leg
+    dx_off: float
+        Total span in radial space of the flux surfaces to extract
 
     Returns
     -------
-    legs: List[Loop]
+    legs: Dict[str, List[Loop]]
         Geometries of the legs, sorted as:
             [lower inner,  # if present
              lower outer,  # if present
