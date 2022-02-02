@@ -30,7 +30,7 @@ import pytest
 from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
 from bluemira.builders.EUDEMO.first_wall import DivertorBuilder
-from bluemira.builders.EUDEMO.first_wall.divertor import Leg
+from bluemira.builders.EUDEMO.first_wall.divertor import LegPosition
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry.tools import make_polygon, signed_distance
 
@@ -76,15 +76,15 @@ class TestDivertorBuilder:
 
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
 
-        assert builder.leg_length[Leg.INNER] == 5
-        assert builder.leg_length[Leg.OUTER] == 10
+        assert builder.leg_length[LegPosition.INNER] == 5
+        assert builder.leg_length[LegPosition.OUTER] == 10
 
     def test_targets_intersect_separatrix(self):
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
 
         divertor = builder(self._default_params)
 
-        for leg in [Leg.INNER, Leg.OUTER]:
+        for leg in [LegPosition.INNER, LegPosition.OUTER]:
             target = divertor.get_component(f"target {leg}")
             assert signed_distance(target.shape, self.separatrix) == 0
 
@@ -94,7 +94,7 @@ class TestDivertorBuilder:
 
         divertor = builder(self.params)
 
-        for leg in [Leg.INNER, Leg.OUTER]:
+        for leg in [LegPosition.INNER, LegPosition.OUTER]:
             target = divertor.get_component(f"target {leg}")
             assert target.shape.length == 1.5
 
@@ -112,7 +112,8 @@ class TestDivertorBuilder:
 
         dome = divertor.get_component("dome")
         targets = [
-            divertor.get_component(f"target {leg}") for leg in [Leg.INNER, Leg.OUTER]
+            divertor.get_component(f"target {leg}")
+            for leg in [LegPosition.INNER, LegPosition.OUTER]
         ]
         assert signed_distance(dome.shape, targets[0].shape) == 0
         assert signed_distance(dome.shape, targets[1].shape) == 0

@@ -37,7 +37,7 @@ from bluemira.geometry.wire import BluemiraWire
 from BLUEPRINT.nova.stream import StreamFlow
 
 
-class Leg(enum.Enum):
+class LegPosition(enum.Enum):
     """
     Enum classifying divertor/separatrix leg positions
     """
@@ -65,7 +65,7 @@ def _equilibrium_to_stream_flow(equilibrium: Equilibrium) -> StreamFlow:
     return sf
 
 
-def get_legs(equilibrium: Equilibrium) -> Dict[Leg, List[BluemiraWire]]:
+def get_legs(equilibrium: Equilibrium) -> Dict[LegPosition, List[BluemiraWire]]:
     """
     Hacky implementation leveraging StreamFlow to find the legs of the
     given equilibrium's separatrix.
@@ -89,10 +89,10 @@ def get_legs(equilibrium: Equilibrium) -> Dict[Leg, List[BluemiraWire]]:
         return legs
 
     legs = {
-        Leg.INNER: _parse_legs(stream_flow.legs["inner"]),
-        Leg.OUTER: _parse_legs(stream_flow.legs["outer"]),
-        Leg.CORE1: _parse_legs(stream_flow.legs["core1"]),
-        Leg.CORE2: _parse_legs(stream_flow.legs["core2"]),
+        LegPosition.INNER: _parse_legs(stream_flow.legs["inner"]),
+        LegPosition.OUTER: _parse_legs(stream_flow.legs["outer"]),
+        LegPosition.CORE1: _parse_legs(stream_flow.legs["core1"]),
+        LegPosition.CORE2: _parse_legs(stream_flow.legs["core2"]),
     }
     return legs
 
@@ -126,8 +126,8 @@ class DivertorBuilder(Builder):
         self.equilibrium = equilibrium
         self.o_points, self.x_points = self._get_OX_points()
         self.leg_length = {
-            Leg.INNER: self.params["div_L2D_ib"],
-            Leg.OUTER: self.params["div_L2D_ob"],
+            LegPosition.INNER: self.params["div_L2D_ib"],
+            LegPosition.OUTER: self.params["div_L2D_ob"],
         }
         self.separatrix_legs = get_legs(self.equilibrium)
 
@@ -155,19 +155,23 @@ class DivertorBuilder(Builder):
         component = Component("xz")
 
         # Build the targets for each separatrix leg
-        inner_target = self.make_target(Leg.INNER, self._make_target_name(Leg.INNER))
-        outer_target = self.make_target(Leg.OUTER, self._make_target_name(Leg.OUTER))
+        inner_target = self.make_target(
+            LegPosition.INNER, self._make_target_name(LegPosition.INNER)
+        )
+        outer_target = self.make_target(
+            LegPosition.OUTER, self._make_target_name(LegPosition.OUTER)
+        )
         for target in [inner_target, outer_target]:
             component.add_child(target)
 
         # Build the dome based on target positions
-        inner_target_end = self._get_wire_lower_end(inner_target.shape)
-        outer_target_start = self._get_wire_lower_end(outer_target.shape)
+        inner_target_end = self._get_wire_lower_end_in_z(inner_target.shape)
+        outer_target_start = self._get_wire_lower_end_in_z(outer_target.shape)
         dome = self.make_dome(inner_target_end, outer_target_start, label="dome")
         component.add_child(dome)
         return component
 
-    def make_target(self, leg: Leg, label: str) -> PhysicalComponent:
+    def make_target(self, leg: LegPosition, label: str) -> PhysicalComponent:
         """
         Make a divertor target for a the given leg.
         """
@@ -239,18 +243,18 @@ class DivertorBuilder(Builder):
         dome[(0, 2), -1] = end_coord.T
         return PhysicalComponent(label, make_polygon(dome))
 
-    def _get_length_for_leg(self, leg: Leg):
+    def _get_length_for_leg(self, leg: LegPosition):
         """
         Retrieve the length of the given leg from the parameters.
         """
-        if leg is Leg.INNER:
+        if leg is LegPosition.INNER:
             return self.params.div_L2D_ib
-        elif leg is Leg.OUTER:
+        elif leg is LegPosition.OUTER:
             return self.params.div_L2D_ob
         raise ValueError(f"No length exists for leg '{leg}'.")
 
     def _get_sol_for_leg(
-        self, leg: Leg, layers: Iterable[int] = (0, -1)
+        self, leg: LegPosition, layers: Iterable[int] = (0, -1)
     ) -> BluemiraWire:
         """
         Get the selected scrape-off-leg layers from the separatrix legs.
@@ -271,7 +275,7 @@ class DivertorBuilder(Builder):
         )
 
     @staticmethod
-    def _make_target_name(leg: Leg) -> str:
+    def _make_target_name(leg: LegPosition) -> str:
         """
         Make the name (or label) for a target based on the given leg.
         """
