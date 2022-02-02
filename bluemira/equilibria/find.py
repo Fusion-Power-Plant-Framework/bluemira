@@ -23,6 +23,8 @@
 Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
 
+import operator
+
 import numba as nb
 import numpy as np
 from matplotlib._contour import QuadContourGenerator
@@ -32,7 +34,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry._deprecated_loop import Loop
-from bluemira.geometry._deprecated_tools import in_polygon
+from bluemira.geometry._deprecated_tools import in_polygon, join_intersect
 from bluemira.geometry.coordinates import get_area_2d
 
 __all__ = [
@@ -723,6 +725,55 @@ def find_LCFS_separatrix(
         loops.sort(key=lambda loop: -loop.length)
         separatrix = loops[:2]
     return lcfs, separatrix
+
+
+def get_legs(equilibrium):
+    """
+    Get the legs of a separatrix.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    legs: List[Loop]
+        Geometries of the legs
+    """
+    o_points, x_points = equilibrium.get_OX_points()
+    o_p = o_points[0]
+    separatrix = equilibrium.get_separatrix()
+
+    if equilibrium.is_double_null:
+        pass
+    else:
+        # Single null
+        x_p = x_points[0]
+        delta = 2 * equilibrium.grid.dx
+        radial_line = Loop(x=[x_p.x - delta, x_p.x + delta], z=[x_p.z, x_p.z])
+        arg_inters = join_intersect(separatrix, radial_line, get_arg=True)
+        arg_inters.sort()
+
+        if len(arg_inters) != 2:
+            EquilibriaError(
+                "Unexpected number of intersections with the separatrix around the X-point."
+            )
+
+        if x_p.z < o_p.z:
+            # Lower single null
+            func = operator.lt
+        else:
+            # Upper single null
+            func = operator.gt
+
+        legs = []
+        for arg in arg_inters:
+            if func(separatrix.z[arg + 1], separatrix.z[arg]):
+                leg = Loop.from_array(separatrix[arg:])
+            else:
+                leg = Loop.from_array(separatrix[: arg + 1])
+            legs.append(leg)
+
+        return legs
 
 
 def grid_2d_contour(x, z):

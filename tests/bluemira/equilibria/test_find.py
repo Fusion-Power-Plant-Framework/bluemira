@@ -31,6 +31,7 @@ from bluemira.equilibria.find import (
     _in_plasma,
     find_LCFS_separatrix,
     find_local_minima,
+    get_legs,
     inv_2x2_matrix,
 )
 
@@ -136,6 +137,20 @@ class TestInPlasma:
 
         result2 = _in_plasma(x, z, mask, lcfs)
         assert np.allclose(result, result2)
+
+
+class TestGetLegs:
+    def test_single_null(self):
+        filename = os.sep.join([DATA, "eqref_OOB.json"])
+        eq = Equilibrium.from_eqdsk(filename)
+        legs = get_legs(eq)
+        assert len(legs) == 2
+
+    def test_double_null(self):
+        filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
+        eq = Equilibrium.from_eqdsk(filename)
+        legs = get_legs(eq)
+        assert len(legs) == 4
 
 
 if __name__ == "__main__":
