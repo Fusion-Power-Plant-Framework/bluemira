@@ -27,10 +27,13 @@ Some examples of using bluemira mesh module.
 
 import os
 
+import bluemira.geometry.tools as tools
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.mesh import meshing
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.shell import BluemiraShell
+from bluemira.mesh import meshing
 
 HAS_MSH2XDMF = False
 try:
@@ -52,17 +55,24 @@ except ImportError as err:
 
 p = JohnerLCFS()
 lcfs = p.create_shape(label="LCFS")
-lcfs.mesh_options = {"lcar": 0.3, "physical_group": "LCFS"}
+lcfs.change_plane(BluemiraPlane(axis=[1.0, 0.0, 0.0], angle=-90))
+lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
 face = BluemiraFace(lcfs, label="plasma_surface")
-face.mesh_options = {"lcar": 0.1, "physical_group": "surface"}
+face.mesh_options = {"lcar": 1, "physical_group": "surface"}
 
+poly = tools.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], closed=True)
+poly.mesh_options = {"lcar": 0.75, "physical_group": "poly"}
+coil = BluemiraFace(poly)
+# coil.mesh_options = {"lcar": 1, "physical_group": "coil"}
+
+shell = BluemiraShell([face, coil])
 # %%[markdown]
 
 # Mesh creation
 
 # %%
 m = meshing.Mesh()
-buffer = m(face)
+buffer = m(shell)
 print(m.get_gmsh_dict(buffer))
 
 # %%[markdown]
@@ -88,7 +98,11 @@ if HAS_MSH2XDMF:
 
 # # %%
 # # If the mesh is made by 3D points, the plot with dolfin doesn't work
-# dolfin.plot(mesh)
+import dolfin
+import matplotlib.pyplot as plt
+
+dolfin.plot(mesh)
+plt.show()
 
 if HAS_MSH2XDMF:
     print(mesh.coordinates())
