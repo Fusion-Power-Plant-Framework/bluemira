@@ -739,41 +739,60 @@ def get_legs(equilibrium):
     legs: List[Loop]
         Geometries of the legs
     """
-    o_points, x_points = equilibrium.get_OX_points()
-    o_p = o_points[0]
-    separatrix = equilibrium.get_separatrix()
 
-    if equilibrium.is_double_null:
-        pass
-    else:
-        # Single null
-        x_p = x_points[0]
-        delta = 2 * equilibrium.grid.dx
-        radial_line = Loop(x=[x_p.x - delta, x_p.x + delta], z=[x_p.z, x_p.z])
-        arg_inters = join_intersect(separatrix, radial_line, get_arg=True)
+    def extract_leg(flux_line, x_point):
+        radial_line = Loop(
+            x=[x_point.x - delta, x_point.x + delta], z=[x_point.z, x_point.z]
+        )
+        arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
         arg_inters.sort()
-
-        if len(arg_inters) != 2:
-            EquilibriaError(
-                "Unexpected number of intersections with the separatrix around the X-point."
-            )
-
-        if x_p.z < o_p.z:
+        if x_point.z < o_p.z:
             # Lower single null
             func = operator.lt
         else:
             # Upper single null
             func = operator.gt
 
-        legs = []
-        for arg in arg_inters:
-            if func(separatrix.z[arg + 1], separatrix.z[arg]):
-                leg = Loop.from_array(separatrix[arg:])
-            else:
-                leg = Loop.from_array(separatrix[: arg + 1])
-            legs.append(leg)
+        if len(arg_inters) > 2:
+            EquilibriaError(
+                "Unexpected number of intersections with the separatrix around the X-point."
+            )
 
-        return legs
+        flux_legs = []
+        for arg in arg_inters:
+            if func(flux_line.z[arg + 1], flux_line.z[arg]):
+                leg = Loop.from_array(flux_line[arg:])
+            else:
+                leg = Loop.from_array(flux_line[: arg + 1])
+
+            # Make the leg flow away from the plasma core
+            if leg.argmin(x_point[:2]) > 3:
+                leg.reverse()
+
+            flux_legs.append(leg)
+        if len(flux_legs) == 1:
+            flux_legs = flux_legs[0]
+        return flux_legs
+
+    o_points, x_points = equilibrium.get_OX_points()
+    o_p = o_points[0]
+    separatrix = equilibrium.get_separatrix()
+    delta = 2 * equilibrium.grid.dx
+
+    if equilibrium.is_double_null:
+        legs = []
+        for half_sep in separatrix:
+            for x_p in x_points[:2]:
+                leg = extract_leg(half_sep, x_p)
+                legs.append(leg)
+
+    else:
+        # Single null
+        legs = extract_leg(separatrix, x_points[0])
+
+    # Sort [lower inner, lower outer, upper inner, upper outer]
+    legs.sort(key=lambda leg: leg.x[0] + leg.z[0])
+    return legs
 
 
 def grid_2d_contour(x, z):

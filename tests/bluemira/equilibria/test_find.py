@@ -145,12 +145,24 @@ class TestGetLegs:
         eq = Equilibrium.from_eqdsk(filename)
         legs = get_legs(eq)
         assert len(legs) == 2
+        x_point = eq.get_OX_points()[1][0]
+        self.assert_valid_leg(legs[0], x_point)
+        self.assert_valid_leg(legs[1], x_point)
 
     def test_double_null(self):
         filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
         eq = Equilibrium.from_eqdsk(filename)
         legs = get_legs(eq)
+        x_points = eq.get_OX_points()[1][:2]
+        x_points.sort(key=lambda xp: xp.z)
         assert len(legs) == 4
+        self.assert_valid_leg(legs[0], x_points[0])
+        self.assert_valid_leg(legs[1], x_points[0])
+        self.assert_valid_leg(legs[2], x_points[1])
+        self.assert_valid_leg(legs[3], x_points[1])
+
+    def assert_valid_leg(self, leg, x_point):
+        assert np.isclose(leg.z[0], x_point.z)
 
 
 if __name__ == "__main__":
