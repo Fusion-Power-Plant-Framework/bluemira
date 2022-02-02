@@ -23,7 +23,7 @@ Define builder for divertor
 """
 
 import enum
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Tuple
 
 import numpy as np
 
@@ -31,6 +31,7 @@ from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.geometry.tools import find_point_along_wire_at_length, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from BLUEPRINT.nova.stream import StreamFlow
@@ -96,35 +97,6 @@ def get_legs(equilibrium: Equilibrium) -> Dict[Leg, List[BluemiraWire]]:
     return legs
 
 
-def point_along_wire_at_length(wire: BluemiraWire, length: float):
-    """
-    Find the point that is a given length along a wire, and the
-    unit tanget vector along that point and its neighbour.
-
-    This method discretizes the wire in order to find the desired point.
-    Because of this, the error in this calculation will depend on the
-    discretization's step size.
-    """
-    # TODO(hsaunders1904): magic number here needs justification
-    coords = wire.discretize(ndiscr=2000)
-    segment_lengths = np.linalg.norm(np.diff(coords, axis=1), axis=0)
-    cumulative_lengths = np.cumsum(segment_lengths)
-    if length > cumulative_lengths[-1]:
-        raise ValueError(
-            "Given length ({length}) greater than wire length ({wire.length})."
-        )
-    index = np.searchsorted(cumulative_lengths, length)
-
-    tangent_vec = coords[:, index] - coords[:, index - 1]
-    unit_tangent_vec = tangent_vec / np.linalg.norm(tangent_vec)
-
-    # Could potentially use the calculated coordinate as the starting
-    # point for some sort of optimization/root finder if this needs to
-    # be more accurate in the future
-
-    return coords[:, index], unit_tangent_vec
-
-
 class DivertorBuilder(Builder):
     """
     Build an EUDEMO divertor.
@@ -181,11 +153,21 @@ class DivertorBuilder(Builder):
         Build the divertor's components in the xz-plane.
         """
         component = Component("xz")
-        for leg in [Leg.INNER, Leg.OUTER]:
-            component.add_child(self.make_target(leg, f"target {leg}"))
+
+        # Build the targets for each separatrix leg
+        inner_target = self.make_target(Leg.INNER, self._make_target_name(Leg.INNER))
+        outer_target = self.make_target(Leg.OUTER, self._make_target_name(Leg.OUTER))
+        for target in [inner_target, outer_target]:
+            component.add_child(target)
+
+        # Build the dome based on target positions
+        inner_target_end = self._get_wire_lower_end(inner_target.shape)
+        outer_target_start = self._get_wire_lower_end(outer_target.shape)
+        dome = self.make_dome(inner_target_end, outer_target_start, label="dome")
+        component.add_child(dome)
         return component
 
-    def make_target(self, leg: Leg, label: str) -> Component:
+    def make_target(self, leg: Leg, label: str) -> PhysicalComponent:
         """
         Make a divertor target for a the given leg.
         """
@@ -213,6 +195,50 @@ class DivertorBuilder(Builder):
         )
         return PhysicalComponent(label, make_polygon(target_coords))
 
+    def make_dome(
+        self, start: Tuple[float, float], end: Tuple[float, float], label: str
+    ):
+        """
+        Make a dome between the two given points
+        """
+        # Get the flux surface that crosses the through the start point
+        # We can use this surface to guide the shape of the dome
+        psi_start = self.equilibrium.psi(*start)
+        flux_surface = find_flux_surface_through_point(
+            self.equilibrium.x,
+            self.equilibrium.z,
+            self.equilibrium.psi(),
+            start[0],
+            start[1],
+            psi_start,
+        )
+
+        # Get the indices of the closest points on the surface to the
+        # start and end points
+        start_coord = np.array([[start[0]], [start[1]]])  # [[x], [z]]
+        end_coord = np.array([[end[0]], [end[1]]])
+        idx = np.array(
+            [
+                np.argmin(np.hypot(*(flux_surface - start_coord))),
+                np.argmin(np.hypot(*(flux_surface - end_coord))),
+            ]
+        )
+
+        # Make sure the start and end are in the right order
+        if idx[0] > idx[1]:
+            idx = idx[::-1]
+            dome_contour = flux_surface[:, idx[0] + 1 : idx[1]]
+            dome_contour = dome_contour[:, ::-1]
+        else:
+            dome_contour = flux_surface[:, idx[0] + 1 : idx[1]]
+
+        # Build the coords of the dome in 3-D (all(y == 0))
+        dome = np.zeros((3, dome_contour.shape[1] + 2))
+        dome[(0, 2), 0] = start_coord.T
+        dome[(0, 2), 1:-1] = dome_contour
+        dome[(0, 2), -1] = end_coord.T
+        return PhysicalComponent(label, make_polygon(dome))
+
     def _get_length_for_leg(self, leg: Leg):
         """
         Retrieve the length of the given leg from the parameters.
@@ -234,14 +260,6 @@ class DivertorBuilder(Builder):
             sol.append(self.separatrix_legs[leg][layer])
         return sol
 
-    @property
-    def separatrix(self):
-        # Use a cached property for now.
-        # We may want to pass in the separatrix directly, not an Equilibrium instance
-        if not hasattr(self, "_separatrix"):
-            self._separatrix = self.equilibrium.get_separatrix()
-        return self._separatrix
-
     def _get_OX_points(self):
         """
         Get the OX points from this object's equilibrium.
@@ -251,3 +269,24 @@ class DivertorBuilder(Builder):
             np.array([[point[0], point[1]] for point in o_points]),
             np.array([[point[0], point[1]] for point in x_points]),
         )
+
+    @staticmethod
+    def _make_target_name(leg: Leg) -> str:
+        """
+        Make the name (or label) for a target based on the given leg.
+        """
+        return f"target {leg}"
+
+    @staticmethod
+    def _get_wire_lower_end_in_z(wire: BluemiraWire) -> Tuple[float, float]:
+        """
+        Find the x and z coordinate of the wire end point that is
+        smallest in the z-direction
+        """
+        end_points = [
+            wire.boundary[0].Vertexes[0].Point,
+            wire.boundary[0].Vertexes[-1].Point,
+        ]
+        if end_points[0].z < end_points[1].z:
+            return end_points[0].x, end_points[0].z
+        return end_points[1].x, end_points[1].z

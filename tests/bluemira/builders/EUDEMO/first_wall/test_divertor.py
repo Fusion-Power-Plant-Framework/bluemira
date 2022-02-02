@@ -24,6 +24,7 @@ Tests for divertor builder classes
 import copy
 import os
 
+import numpy as np
 import pytest
 
 from bluemira.base.error import BuilderError
@@ -34,6 +35,11 @@ from bluemira.equilibria import Equilibrium
 from bluemira.geometry.tools import make_polygon, signed_distance
 
 DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+
+
+def get_turning_point_idxs(z: np.ndarray):
+    diff = np.diff(z)
+    return np.argwhere(diff[1:] * diff[:-1] < 0)
 
 
 class TestDivertorBuilder:
@@ -47,6 +53,7 @@ class TestDivertorBuilder:
     @classmethod
     def setup_class(cls):
         cls.eq = Equilibrium.from_eqdsk(os.path.join(DATA, "eqref_OOB.json"))
+        cls.separatrix = make_polygon(cls.eq.get_separatrix().xyz.T)
 
     def setup_method(self):
         self.params = copy.deepcopy(self._default_params)
@@ -74,13 +81,12 @@ class TestDivertorBuilder:
 
     def test_targets_intersect_separatrix(self):
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
-        separatrix = make_polygon(self.eq.get_separatrix().xyz.T)
 
         divertor = builder(self._default_params)
 
         for leg in [Leg.INNER, Leg.OUTER]:
             target = divertor.get_component(f"target {leg}")
-            assert signed_distance(target.shape, separatrix) == 0
+            assert signed_distance(target.shape, self.separatrix) == 0
 
     def test_div_Ltarg_sets_target_length(self):
         self.params.update({"div_Ltarg": 1.5})
@@ -91,3 +97,43 @@ class TestDivertorBuilder:
         for leg in [Leg.INNER, Leg.OUTER]:
             target = divertor.get_component(f"target {leg}")
             assert target.shape.length == 1.5
+
+    def test_dome_added_to_divertor(self):
+        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+
+        divertor = builder(self.params)
+
+        assert divertor.get_component("dome") is not None
+
+    def test_dome_intersects_targets(self):
+        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+
+        divertor = builder(self.params)
+
+        dome = divertor.get_component("dome")
+        targets = [
+            divertor.get_component(f"target {leg}") for leg in [Leg.INNER, Leg.OUTER]
+        ]
+        assert signed_distance(dome.shape, targets[0].shape) == 0
+        assert signed_distance(dome.shape, targets[1].shape) == 0
+
+    def test_dome_does_not_intersect_separatrix(self):
+        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+
+        divertor = builder(self.params)
+
+        dome = divertor.get_component("dome")
+        assert signed_distance(dome.shape, self.separatrix) < 0
+
+    def test_dome_has_turning_point_below_x_point(self):
+        # TODO(hsaunders): not sure about this test, what if the x-point
+        # is at the top of the plasma?
+        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        x_points, _ = self.eq.get_OX_points()
+
+        divertor = builder(self.params)
+
+        dome_coords = divertor.get_component("dome").shape.discretize()
+        turning_points = get_turning_point_idxs(dome_coords[2, :])
+        assert len(turning_points) == 1
+        assert dome_coords[2, turning_points[0]] < x_points[0].z
