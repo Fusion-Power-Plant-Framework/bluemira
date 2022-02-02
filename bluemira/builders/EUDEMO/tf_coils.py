@@ -420,7 +420,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         # to be 2.
         min_tf_deg = (360.0 / self._params.n_TF.value) + 1e-13
         n_tf_draw = min(int(degree // min_tf_deg) + 1, self._params.n_TF.value)
-        degree = min_tf_deg * n_tf_draw
+        degree = (360.0 / self._params.n_TF.value) * n_tf_draw
 
         # Winding pack
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
