@@ -21,6 +21,11 @@ caused our feature roadmap to slip. A lot of functionality that was present in  
 changes in the near future. We apologise in advance for these. Please do get in touch
 before starting to use any modules, so we can warn you of changes to come.
 
+Below is an overview of our development roadmap for 2022:
+
+![bluemira-roadmap](./documentation/source/bluemira-roadmap.png)
+
+
 ## Modules
 
 ``Bluemira`` is composed of various modules:
