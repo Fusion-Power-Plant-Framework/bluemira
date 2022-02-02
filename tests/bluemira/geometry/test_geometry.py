@@ -20,12 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import math
+import os
 
 import numpy as np
 import pytest
 from scipy.special import ellipe
 
 import bluemira.codes._freecadapi as cadapi
+from bluemira.base.file import get_bluemira_root
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -40,6 +42,8 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+
+DATA_PATH = os.sep.join([get_bluemira_root(), "tests/bluemira/geometry/test_data"])
 
 
 class TestGeometry:
@@ -461,6 +465,16 @@ class TestGeometry:
         face_cut = boolean_cut(test_input[0], test_input[1:])
         output = [(f.length, f.area) for f in face_cut]
         assert output == expected
+
+    def test_cut_faces_hard(self):
+        """
+        This isn't quite working
+        """
+        f1_name = os.sep.join([DATA_PATH, "face_tough_cut_1.STP"])
+        f2_name = os.sep.join([DATA_PATH, "face_tough_cut_2.STP"])
+        # ok I don't think we can load a STP file! but anyway...
+        result = boolean_fuse([f1_name, f2_name])
+        assert len(result) == 1
 
     @staticmethod
     def _compare_fc_bm(fc_shape, bm_shape):
