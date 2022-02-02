@@ -71,3 +71,12 @@ class TestTFCoils:
         self.build_config["runmode"] = "run"
         with pytest.raises(BuilderError):
             TFCoilsBuilder(self.params, self.build_config)
+
+    @pytest.mark.parametrize(
+        "degree,n_children", [(360, 18), (20, 1), (21, 2), (270, 14)]
+    )
+    def test_build_xyz(self, degree, n_children):
+        builder = TFCoilsBuilder(self.params, self.build_config)
+        builder.mock()
+        result = builder.build_xyz(degree=degree)
+        assert len(result.children) == n_children

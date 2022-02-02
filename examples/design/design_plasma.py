@@ -121,6 +121,6 @@ lcfs.show_cad()
 
 # %%
 plasma_builder: MakeParameterisedPlasma = design.get_builder("Plasma")
-lcfs = plasma_builder.build_xyz(segment_angle=270.0)
+lcfs = plasma_builder.build_xyz(degree=270.0)
 lcfs.display_cad_options.color = color
 lcfs.show_cad()

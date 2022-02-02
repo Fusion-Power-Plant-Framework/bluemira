@@ -114,7 +114,6 @@ class PlasmaBuilder(Builder):
     _boundary: Optional[BluemiraWire] = None
     _equilibrium: Optional[Equilibrium] = None
     _plot_flag: bool
-    _segment_angle: float
     _eqdsk_path: Optional[str] = None
     _default_runmode: str = "run"
 
@@ -129,7 +128,6 @@ class PlasmaBuilder(Builder):
             self._eqdsk_path = build_config["eqdsk_path"]
 
         self._plot_flag = build_config.get("plot_flag", False)
-        self._segment_angle = build_config.get("segment_angle", 360.0)
 
     def reinitialise(self, params) -> None:
         """
@@ -419,12 +417,17 @@ class PlasmaBuilder(Builder):
 
         return component
 
-    def build_xyz(self, segment_angle: Optional[float] = None) -> Component:
+    def build_xyz(self, degree: float = 360.0) -> Component:
         """
         Build the 3D representation of this plasma.
 
         Generates the LCFS from the _boundary defined on the builder by revolving around
         the z axis.
+
+        Parameters
+        ----------
+        degree: float
+            The angle [°] around which to build the components, by default 360.0.
 
         Returns
         -------
@@ -439,10 +442,7 @@ class PlasmaBuilder(Builder):
         """
         self._ensure_boundary()
 
-        if segment_angle is None:
-            segment_angle = self._segment_angle
-
-        shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=segment_angle)
+        shell = revolve_shape(self._boundary, direction=(0, 0, 1), degree=degree)
         component = PhysicalComponent("LCFS", shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
         component.display_cad_options.transparency = 0.5
