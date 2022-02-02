@@ -919,3 +919,36 @@ def get_shape_by_name(shape: BluemiraGeo, name: str):
         for o in shape.boundary:
             shapes += get_shape_by_name(o, name)
     return shapes
+
+
+# ======================================================================================
+# Find operations
+# ======================================================================================
+def find_point_along_wire_at_length(wire: BluemiraWire, length: float):
+    """
+    Find the point that is a given length along a wire, and the
+    unit tanget vector along that point and its neighbour.
+
+    This method discretizes the wire in order to find the desired point.
+    Hence, the error in this calculation will depend on the
+    discretization's step size.
+    """
+    # TODO(hsaunders1904): re-write this using primitives
+    # TODO(hsaunders1904): magic number here needs justification
+    coords = wire.discretize(ndiscr=2000)
+    segment_lengths = np.linalg.norm(np.diff(coords, axis=1), axis=0)
+    cumulative_lengths = np.cumsum(segment_lengths)
+    if length > cumulative_lengths[-1]:
+        raise ValueError(
+            "Given length ({length}) greater than wire length ({wire.length})."
+        )
+    index = np.searchsorted(cumulative_lengths, length)
+
+    tangent_vec = coords[:, index] - coords[:, index - 1]
+    unit_tangent_vec = tangent_vec / np.linalg.norm(tangent_vec)
+
+    # Could potentially use the calculated coordinate as the starting
+    # point for some sort of optimization/root finder if this needs to
+    # be more accurate in the future
+
+    return coords[:, index], unit_tangent_vec

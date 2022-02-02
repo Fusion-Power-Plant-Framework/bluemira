@@ -28,6 +28,7 @@ from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     extrude_shape,
+    find_point_along_wire_at_length,
     make_circle,
     make_polygon,
     offset_wire,
@@ -372,3 +373,16 @@ class TestPointInside:
 
         for point in out_points:
             assert not point_inside_shape(point, polygon)
+
+
+class TestPointAlongWire:
+    def test_point_along_wire_at_length_2d(self):
+        # Line in 2d: z = 3x - 4
+        coords = np.array([[1, 2, 3, 4, 5], [0, 0, 0, 0, 0], [-1, 2, 5, 8, 11]])
+        wire = make_polygon(coords)
+        desired_len = np.sqrt(2.5)
+
+        point, tangent_vec = find_point_along_wire_at_length(wire, desired_len)
+
+        np.testing.assert_almost_equal(point, [1.5, 0, 0.5], decimal=2)
+        np.testing.assert_allclose(tangent_vec, np.array([1, 0, 3]) / np.sqrt(10))

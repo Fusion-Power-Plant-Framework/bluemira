@@ -31,7 +31,7 @@ from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import find_point_along_wire_at_length, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from BLUEPRINT.nova.stream import StreamFlow
 
@@ -182,7 +182,7 @@ class DivertorBuilder(Builder):
         """
         component = Component("xz")
         for leg in [Leg.INNER, Leg.OUTER]:
-            component.add_child(self.make_target(leg, str(leg)))
+            component.add_child(self.make_target(leg, f"target {leg}"))
         return component
 
     def make_target(self, leg: Leg, label: str) -> Component:
@@ -199,7 +199,7 @@ class DivertorBuilder(Builder):
             ) from exc
 
         # We need to work out which SOL to use here
-        point, _ = point_along_wire_at_length(sol[0], leg_length)
+        point, _ = find_point_along_wire_at_length(sol[0], leg_length)
 
         # Just create some vertical targets for now. Eventually the
         # target angle will be set using a grazing-angle parameter
