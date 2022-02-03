@@ -29,6 +29,8 @@ install_requires = [  # PYL = Version limited by python version
     "numba-scipy",  # 0.3.0
     "numpy",  # 1.19.5   PYL
     "pandas",  # 1.3.5    PYL
+    "pint",
+    "periodictable",
     "pyclipper",  # 1.2.1
     "pypet",  # 0.6.0
     "pyquaternion",  # 0.9.9

@@ -26,6 +26,7 @@ A collection of generic physical constants, conversions, and miscellaneous const
 from typing import Dict, List, Union
 
 import numpy as np
+from periodictable import elements
 from pint import UnitRegistry
 
 ureg = UnitRegistry()
@@ -49,7 +50,7 @@ FLUX_DENSITY = METRE**-2 / SECOND
 C_LIGHT = ureg.Quantity("c").to_base_units().magnitude  # [m/s]
 
 # Vacuum permeability
-MU_0 = 4 * np.pi * 1e-7  # [T.m/A] or [V.s/(A.m)]
+MU_0 = ureg.Quantity("mu_0").to_base_units().magnitude  # [T.m/A] or [V.s/(A.m)]
 
 # Commonly used..
 MU_0_4PI = 1e-7  # [T.m/A] or [V.s/(A.m)]
@@ -91,16 +92,16 @@ T_HALFLIFE = 12.32  # [yr]
 T_LAMBDA = np.log(2) / T_HALFLIFE  # [1/yr]
 
 # Tritium molar mass,  [u] or [g/mol]
-T_MOLAR_MASS = ELECTRON_MOLAR_MASS + PROTON_MOLAR_MASS + 2 * NEUTRON_MOLAR_MASS
+T_MOLAR_MASS = elements.isotope("T").mass
 
 # Deuterium molar mass, [u] or [g/mol]
-D_MOLAR_MASS = ELECTRON_MOLAR_MASS + PROTON_MOLAR_MASS + NEUTRON_MOLAR_MASS
+D_MOLAR_MASS = elements.isotope("D").mass
 
 # Helium molar mass, [u] or [g/mol]
-HE_MOLAR_MASS = 2 * ELECTRON_MOLAR_MASS + 2 * PROTON_MOLAR_MASS + 2 * NEUTRON_MOLAR_MASS
+HE_MOLAR_MASS = elements.isotope("He").mass
 
 # Helium-3 molar mass, [u] or [g/mol]
-HE3_MOLAR_MASS = 2 * ELECTRON_MOLAR_MASS + 2 * PROTON_MOLAR_MASS + NEUTRON_MOLAR_MASS
+HE3_MOLAR_MASS = elements.isotope("3-He").mass
 
 # Absolute zero in Kelvin
 ABS_ZERO_K = 0  # [K]
