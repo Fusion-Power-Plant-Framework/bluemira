@@ -143,23 +143,30 @@ class TestGetLegs:
     def test_single_null(self):
         filename = os.sep.join([DATA, "eqref_OOB.json"])
         eq = Equilibrium.from_eqdsk(filename)
-        legs = get_legs(eq)
+        legs = get_legs(eq, 5, 0.2)
         assert len(legs) == 2
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
         x_point = eq.get_OX_points()[1][0]
-        self.assert_valid_leg(legs[0], x_point)
-        self.assert_valid_leg(legs[1], x_point)
+        for leg_group in legs.values():
+            for leg in leg_group:
+                self.assert_valid_leg(leg, x_point)
+                self.assert_valid_leg(leg, x_point)
 
     def test_double_null(self):
         filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
         eq = Equilibrium.from_eqdsk(filename)
-        legs = get_legs(eq)
+        legs = get_legs(eq, 5, 0.2)
         x_points = eq.get_OX_points()[1][:2]
         x_points.sort(key=lambda xp: xp.z)
         assert len(legs) == 4
-        self.assert_valid_leg(legs[0], x_points[0])
-        self.assert_valid_leg(legs[1], x_points[0])
-        self.assert_valid_leg(legs[2], x_points[1])
-        self.assert_valid_leg(legs[3], x_points[1])
+        for name, leg_group in legs.items():
+            if "lower" in name:
+                x_p = x_points[0]
+            else:
+                x_p = x_points[1]
+            for leg in leg_group:
+                self.assert_valid_leg(leg, x_p)
 
     def assert_valid_leg(self, leg, x_point):
         assert np.isclose(leg.z[0], x_point.z)
