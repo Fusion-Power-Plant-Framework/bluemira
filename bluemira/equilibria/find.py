@@ -728,6 +728,52 @@ def find_LCFS_separatrix(
     return lcfs, separatrix
 
 
+def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
+    radial_line = Loop(x=[x_cut - delta_x, x_cut + delta_x], z=[z_cut, z_cut])
+    arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
+    arg_inters.sort()
+    # Lower null vs upper null
+    func = operator.lt if z_cut < o_point_z else operator.gt
+
+    if len(arg_inters) > 2:
+        EquilibriaError(
+            "Unexpected number of intersections with the separatrix around the X-point."
+        )
+
+    flux_legs = []
+    for arg in arg_inters:
+        if func(flux_line.z[arg + 1], flux_line.z[arg]):
+            leg = Loop.from_array(flux_line[arg:])
+        else:
+            leg = Loop.from_array(flux_line[: arg + 1])
+
+        # Make the leg flow away from the plasma core
+        if leg.argmin((x_cut, z_cut)) > 3:
+            leg.reverse()
+
+        flux_legs.append(leg)
+    if len(flux_legs) == 1:
+        flux_legs = flux_legs[0]
+    return flux_legs
+
+
+def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_point_z):
+
+    offset_legs = []
+    for dx in dx_offsets:
+        x, z = ref_leg.x[0] + direction * dx, ref_leg.z[0]
+        xl, zl = find_flux_surface_through_point(
+            equilibrium.x,
+            equilibrium.z,
+            equilibrium.psi(),
+            x,
+            z,
+            equilibrium.psi(x, z),
+        )
+        offset_legs.append(_extract_leg(Loop(x=xl, z=zl), x, z, delta_x, o_point_z))
+    return offset_legs
+
+
 def get_legs(equilibrium, n_layers: int, dx_off: float):
     """
     Get the legs of a separatrix.
@@ -759,50 +805,6 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
     interpolation and local minimum finding tolerances.
     """
 
-    def extract_leg(flux_line, x_cut, z_cut):
-        radial_line = Loop(x=[x_cut - delta, x_cut + delta], z=[z_cut, z_cut])
-        arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
-        arg_inters.sort()
-        # Lower null vs upper null
-        func = operator.lt if z_cut < o_point.z else operator.gt
-
-        if len(arg_inters) > 2:
-            EquilibriaError(
-                "Unexpected number of intersections with the separatrix around the X-point."
-            )
-
-        flux_legs = []
-        for arg in arg_inters:
-            if func(flux_line.z[arg + 1], flux_line.z[arg]):
-                leg = Loop.from_array(flux_line[arg:])
-            else:
-                leg = Loop.from_array(flux_line[: arg + 1])
-
-            # Make the leg flow away from the plasma core
-            if leg.argmin((x_cut, z_cut)) > 3:
-                leg.reverse()
-
-            flux_legs.append(leg)
-        if len(flux_legs) == 1:
-            flux_legs = flux_legs[0]
-        return flux_legs
-
-    def extract_offsets(ref_leg, direction=-1):
-
-        offset_legs = []
-        for dx in dx_offsets:
-            x, z = ref_leg.x[0] + direction * dx, ref_leg.z[0]
-            xl, zl = find_flux_surface_through_point(
-                equilibrium.x,
-                equilibrium.z,
-                equilibrium.psi(),
-                x,
-                z,
-                equilibrium.psi(x, z),
-            )
-            offset_legs.append(extract_leg(Loop(x=xl, z=zl), x, z))
-        return offset_legs
-
     o_points, x_points = equilibrium.get_OX_points()
     o_point = o_points[0]
     x_points = x_points[:2]
@@ -818,9 +820,13 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
         legs = []
         for half_sep, direction in zip(separatrix, [-1, 1]):
             for x_p in x_points:
-                sep_leg = extract_leg(half_sep, x_p.x, x_p.z)
+                sep_leg = _extract_leg(half_sep, x_p.x, x_p.z, delta, o_point.z)
                 quadrant_legs = [sep_leg]
-                quadrant_legs.extend(extract_offsets(sep_leg, direction=direction))
+                quadrant_legs.extend(
+                    _extract_offsets(
+                        equilibrium, dx_offsets, sep_leg, direction, delta, o_point.z
+                    )
+                )
                 legs.append(quadrant_legs)
         leg_dict = {
             "lower_inner": legs[0],
@@ -831,12 +837,16 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
     else:
         # Single null
         x_point = x_points[0]
-        legs = extract_leg(separatrix, x_point.x, x_point.z)
+        legs = _extract_leg(separatrix, x_point.x, x_point.z, delta, o_point.z)
         legs.sort(key=lambda leg: leg.x[0])
         inner_leg, outer_leg = legs
         inner_legs, outer_legs = [inner_leg], [outer_leg]
-        inner_legs.extend(extract_offsets(inner_leg, direction=-1))
-        outer_legs.extend(extract_offsets(outer_leg, direction=1))
+        inner_legs.extend(
+            _extract_offsets(equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z)
+        )
+        outer_legs.extend(
+            _extract_offsets(equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z)
+        )
         location = "lower" if x_point.z < o_point.z else "upper"
         leg_dict = {
             f"{location}_inner": inner_legs,
