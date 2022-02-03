@@ -99,6 +99,7 @@ class BluemiraFace(BluemiraGeo):
             else:
                 raise DisjointedFace("Any or more than one face has been created.")
 
+        cadapi.fix_face(face)
         if check_reverse:
             return self._check_reverse(face)
         else:

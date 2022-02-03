@@ -1123,6 +1123,22 @@ def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
     wire.fix(precision, min_length, min_length)
 
 
+def fix_face(face, precision=EPS, min_length=MINIMUM_LENGTH):
+    """
+    Fix a face by removing any small edges and joining the remaining edges.
+
+    Parameters
+    ----------
+    wire: apiFace
+        Wire to fix
+    precision: float
+        General precision with which to work
+    min_length: float
+        Minimum edge length
+    """
+    face.fix(precision, min_length, min_length)
+
+
 # ======================================================================================
 # Plane manipulations
 # ======================================================================================
