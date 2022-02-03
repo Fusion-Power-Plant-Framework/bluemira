@@ -140,27 +140,36 @@ class TestInPlasma:
 
 
 class TestGetLegs:
-    def test_single_null(self):
+    @pytest.mark.parametrize("n_layers", [1, 3, 5])
+    def test_single_null(self, n_layers):
         filename = os.sep.join([DATA, "eqref_OOB.json"])
         eq = Equilibrium.from_eqdsk(filename)
-        legs = get_legs(eq, 5, 0.2)
+        legs = get_legs(eq, n_layers, 0.2)
         assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
         x_point = eq.get_OX_points()[1][0]
         for leg_group in legs.values():
+            assert len(leg_group) == n_layers
             for leg in leg_group:
                 self.assert_valid_leg(leg, x_point)
                 self.assert_valid_leg(leg, x_point)
 
-    def test_double_null(self):
+    @pytest.mark.parametrize("n_layers", [1, 3, 5])
+    def test_double_null(self, n_layers):
         filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
         eq = Equilibrium.from_eqdsk(filename)
-        legs = get_legs(eq, 5, 0.2)
+        n_layers = 5
+        legs = get_legs(eq, n_layers, 0.2)
         x_points = eq.get_OX_points()[1][:2]
         x_points.sort(key=lambda xp: xp.z)
         assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert "upper_inner" in legs
+        assert "upper_outer" in legs
         for name, leg_group in legs.items():
+            assert len(leg_group) == n_layers
             if "lower" in name:
                 x_p = x_points[0]
             else:
