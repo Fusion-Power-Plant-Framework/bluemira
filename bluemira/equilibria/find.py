@@ -755,8 +755,8 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
     Will return two legs in the case of a single null
     Will return four legs in the case of a double null
 
-    We can't rely on the X-point being contained within the two legs, due to interpolation
-    and local minimum finding tolerances.
+    We can't rely on the X-point being contained within the two legs, due to
+    interpolation and local minimum finding tolerances.
     """
 
     def extract_leg(flux_line, x_cut, z_cut):
