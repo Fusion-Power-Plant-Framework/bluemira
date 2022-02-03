@@ -30,7 +30,7 @@ import numpy as np
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.error import GeometryError
 
-__all__["BluemiraPlane"]
+__all__ = ["BluemiraPlane"]
 
 
 class BluemiraPlane:
