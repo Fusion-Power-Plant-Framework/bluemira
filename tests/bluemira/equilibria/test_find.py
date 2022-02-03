@@ -140,7 +140,7 @@ class TestInPlasma:
 
 
 class TestGetLegs:
-    @pytest.mark.parametrize("n_layers", [1, 3, 5])
+    @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_single_null(self, n_layers):
         filename = os.sep.join([DATA, "eqref_OOB.json"])
         eq = Equilibrium.from_eqdsk(filename)
@@ -155,7 +155,7 @@ class TestGetLegs:
                 self.assert_valid_leg(leg, x_point)
                 self.assert_valid_leg(leg, x_point)
 
-    @pytest.mark.parametrize("n_layers", [1, 3, 5])
+    @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_double_null(self, n_layers):
         filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
         eq = Equilibrium.from_eqdsk(filename)
