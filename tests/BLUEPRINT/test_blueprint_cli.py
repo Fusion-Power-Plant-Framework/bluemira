@@ -359,7 +359,7 @@ class TestCLI:
         # Test output folder created with specified reactorname.
         assert os.path.isdir(os.path.join(tempdir, "reactors", NEWNAME))
 
-        # Test reactor name overriden within config file values.
+        # Test reactor name overridden within config file values.
         path_to_config = temp_path_to_file(tempdir, NEWNAME, "config.json")
         with open(path_to_config, "r") as fh:
             data = json.load(fh)
@@ -369,7 +369,7 @@ class TestCLI:
 
         assert data["Name"] == NEWNAME
 
-        # Test reactor name overriden within params file values.
+        # Test reactor name overridden within params file values.
         path_to_params = temp_path_to_file(tempdir, NEWNAME, "params.json")
         with open(path_to_params, "r") as fh:
             data = json.load(fh)
@@ -379,7 +379,7 @@ class TestCLI:
 
         assert data["Name"] == NEWNAME
 
-        # Test reactor name overriden in filenames.
+        # Test reactor name overridden in filenames.
         # Note: CAD filenames covered by other tests and thus are not tested here.
         for filename_suffix in (
             "template.json",
