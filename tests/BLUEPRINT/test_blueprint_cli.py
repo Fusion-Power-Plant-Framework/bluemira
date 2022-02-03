@@ -47,12 +47,6 @@ INDIR = os.path.join(get_bluemira_root(), "tests", "BLUEPRINT", "cli", "test_ind
 OUTDIR = os.path.join(get_bluemira_root(), "tests", "BLUEPRINT", "cli", "test_outdir")
 NEWNAME = "CLI-TEST"
 
-# Initialise testing directories.
-Path(INDIR).mkdir(parents=True, exist_ok=True)
-Path(OUTDIR).mkdir(parents=True, exist_ok=True)
-R = SmokeTestSingleNullReactor(config, build_config, build_tweaks)
-R.config_to_json(INDIR)
-
 
 class DummyObjForReactor:
     Reactor = "test"
@@ -107,6 +101,20 @@ def mock_mode(func):
 
 
 class TestCLI:
+    @classmethod
+    def setup_class(cls):
+        Path(INDIR).mkdir(parents=True, exist_ok=True)
+        Path(OUTDIR).mkdir(parents=True, exist_ok=True)
+
+    @classmethod
+    def teardown_class(cls):
+        shutil.rmtree(INDIR)
+        shutil.rmtree(OUTDIR)
+
+    def setup_method(self):
+        self.reactor = SmokeTestSingleNullReactor(config, build_config, build_tweaks)
+        self.reactor.config_to_json(INDIR)
+
     @mock_mode
     def test_cli_build(
         self,
@@ -320,7 +328,7 @@ class TestCLI:
 
         # Make copy of reference data directory in tempdir.
         # Note: this is done to avoid a FileExists error from previous tests.
-        temp_reactor = copy.deepcopy(R)
+        temp_reactor = copy.deepcopy(self.reactor)
         source = os.path.join(
             get_bluemira_root(),
             "tests",
@@ -435,7 +443,7 @@ class TestCLI:
         runner = CliRunner()
 
         # Generate the input files for this test, using the generated data root.
-        temp_reactor = copy.deepcopy(R)
+        temp_reactor = copy.deepcopy(self.reactor)
         temp_reactor.build_config["generated_data_root"] = tempdir
         temp_indir = os.path.join(tempdir, "temp_indir")
         Path(temp_indir).mkdir(parents=True, exist_ok=True)
