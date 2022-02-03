@@ -1136,7 +1136,7 @@ def fix_face(face, precision=EPS, min_length=MINIMUM_LENGTH):
     min_length: float
         Minimum edge length
     """
-    face.fix(precision, min_length, min_length)
+    face.fix(precision, min_length, 2 * min_length)
 
 
 # ======================================================================================
