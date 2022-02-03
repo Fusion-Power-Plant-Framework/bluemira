@@ -763,12 +763,8 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
         radial_line = Loop(x=[x_cut - delta, x_cut + delta], z=[z_cut, z_cut])
         arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
         arg_inters.sort()
-        if z_cut < o_point.z:
-            # Lower null
-            func = operator.lt
-        else:
-            # Upper null
-            func = operator.gt
+        # Lower null vs upper null
+        func = operator.lt if z_cut < o_point.z else operator.gt
 
         if len(arg_inters) > 2:
             EquilibriaError(
@@ -791,15 +787,11 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
             flux_legs = flux_legs[0]
         return flux_legs
 
-    def extract_offsets(ref_leg, direction="inwards"):
-        if direction == "inwards":
-            sign = -1
-        else:
-            sign = 1
+    def extract_offsets(ref_leg, direction=-1):
 
         offset_legs = []
         for dx in dx_offsets:
-            x, z = ref_leg.x[0] + sign * dx, ref_leg.z[0]
+            x, z = ref_leg.x[0] + direction * dx, ref_leg.z[0]
             xl, zl = find_flux_surface_through_point(
                 equilibrium.x,
                 equilibrium.z,
@@ -824,7 +816,7 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
         separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
         x_points.sort(key=lambda x_point: x_point.z)
         legs = []
-        for half_sep, direction in zip(separatrix, ["inwards", "outwards"]):
+        for half_sep, direction in zip(separatrix, [-1, 1]):
             for x_p in x_points:
                 sep_leg = extract_leg(half_sep, x_p.x, x_p.z)
                 quadrant_legs = [sep_leg]
@@ -843,8 +835,8 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
         legs.sort(key=lambda leg: leg.x[0])
         inner_leg, outer_leg = legs
         inner_legs, outer_legs = [inner_leg], [outer_leg]
-        inner_legs.extend(extract_offsets(inner_leg, direction="inwards"))
-        outer_legs.extend(extract_offsets(outer_leg, direction="outwards"))
+        inner_legs.extend(extract_offsets(inner_leg, direction=-1))
+        outer_legs.extend(extract_offsets(outer_leg, direction=1))
         location = "lower" if x_point.z < o_point.z else "upper"
         leg_dict = {
             f"{location}_inner": inner_legs,

@@ -159,7 +159,6 @@ class TestGetLegs:
     def test_double_null(self, n_layers):
         filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
         eq = Equilibrium.from_eqdsk(filename)
-        n_layers = 5
         legs = get_legs(eq, n_layers, 0.2)
         x_points = eq.get_OX_points()[1][:2]
         x_points.sort(key=lambda xp: xp.z)
