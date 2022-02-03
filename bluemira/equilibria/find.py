@@ -744,12 +744,7 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
     Returns
     -------
     legs: Dict[str, List[Loop]]
-        Geometries of the legs, sorted as:
-            [lower inner,  # if present
-             lower outer,  # if present
-             upper inner,  # if present
-             upper outer,  # if present
-            ]
+        Dictionary of the legs with each key containing a list of geometries
 
     Raises
     ------
@@ -759,15 +754,16 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
     -----
     Will return two legs in the case of a single null
     Will return four legs in the case of a double null
+
+    We can't rely on the X-point being contained within the two legs, due to interpolation
+    and local minimum finding tolerances.
     """
 
-    def extract_leg(flux_line, x_point):
-        radial_line = Loop(
-            x=[x_point.x - delta, x_point.x + delta], z=[x_point.z, x_point.z]
-        )
+    def extract_leg(flux_line, x_cut, z_cut):
+        radial_line = Loop(x=[x_cut - delta, x_cut + delta], z=[z_cut, z_cut])
         arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
         arg_inters.sort()
-        if x_point.z < o_p.z:
+        if z_cut < o_point.z:
             # Lower null
             func = operator.lt
         else:
@@ -787,7 +783,7 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
                 leg = Loop.from_array(flux_line[: arg + 1])
 
             # Make the leg flow away from the plasma core
-            if leg.argmin(x_point[:2]) > 3:
+            if leg.argmin((x_cut, z_cut)) > 3:
                 leg.reverse()
 
             flux_legs.append(leg)
@@ -795,25 +791,67 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
             flux_legs = flux_legs[0]
         return flux_legs
 
+    def extract_offsets(ref_leg, direction="inwards"):
+        if direction == "inwards":
+            sign = -1
+        else:
+            sign = 1
+
+        offset_legs = []
+        for dx in dx_offsets:
+            x, z = ref_leg.x[0] + sign * dx, ref_leg.z[0]
+            xl, zl = find_flux_surface_through_point(
+                equilibrium.x,
+                equilibrium.z,
+                equilibrium.psi(),
+                x,
+                z,
+                equilibrium.psi(x, z),
+            )
+            offset_legs.append(extract_leg(Loop(x=xl, z=zl), x, z))
+        return offset_legs
+
     o_points, x_points = equilibrium.get_OX_points()
-    o_p = o_points[0]
+    o_point = o_points[0]
+    x_points = x_points[:2]
     separatrix = equilibrium.get_separatrix()
-    delta = 2 * equilibrium.grid.dx
+    delta = equilibrium.grid.dx
+    n_layers = max(2, n_layers)
+    dx_offsets = np.linspace(0, dx_off, n_layers)[1:]
 
     if isinstance(separatrix, Iterable):
-        # Double null
+        # Double null (sort in/out top/bottom)
+        separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
+        x_points.sort(key=lambda x_point: x_point.z)
         legs = []
-        for half_sep in separatrix:
-            for x_p in x_points[:2]:
-                leg = extract_leg(half_sep, x_p)
-                legs.append(leg)
+        for half_sep, direction in zip(separatrix, ["inwards", "outwards"]):
+            for x_p in x_points:
+                sep_leg = extract_leg(half_sep, x_p.x, x_p.z)
+                quadrant_legs = [sep_leg]
+                quadrant_legs.extend(extract_offsets(sep_leg, direction=direction))
+                legs.append(quadrant_legs)
+        leg_dict = {
+            "lower_inner": legs[0],
+            "lower_outer": legs[2],
+            "upper_inner": legs[1],
+            "upper_outer": legs[3],
+        }
     else:
         # Single null
-        legs = extract_leg(separatrix, x_points[0])
+        x_point = x_points[0]
+        legs = extract_leg(separatrix, x_point.x, x_point.z)
+        legs.sort(key=lambda leg: leg.x[0])
+        inner_leg, outer_leg = legs
+        inner_legs, outer_legs = [inner_leg], [outer_leg]
+        inner_legs.extend(extract_offsets(inner_leg, direction="inwards"))
+        outer_legs.extend(extract_offsets(outer_leg, direction="outwards"))
+        location = "lower" if x_point.z < o_point.z else "upper"
+        leg_dict = {
+            f"{location}_inner": inner_legs,
+            f"{location}_outer": outer_legs,
+        }
 
-    # Sort [lower inner, lower outer, upper inner, upper outer]
-    legs.sort(key=lambda leg: leg.x[0] + leg.z[0])
-    return legs
+    return leg_dict
 
 
 def grid_2d_contour(x, z):
