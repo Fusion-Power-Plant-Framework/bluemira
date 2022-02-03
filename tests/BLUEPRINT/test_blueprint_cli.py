@@ -130,7 +130,7 @@ class TestCLI:
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         result = runner.invoke(cli, flags)
         assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
@@ -153,7 +153,7 @@ class TestCLI:
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         result = runner.invoke(cli, flags)
         assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
@@ -193,7 +193,7 @@ class TestCLI:
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         flags = default_flags + switch_flag
         result = runner.invoke(cli, flags)
@@ -263,7 +263,7 @@ class TestCLI:
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         flags = default_flags + tarball_flag
         result = runner.invoke(cli, flags)
@@ -292,7 +292,7 @@ class TestCLI:
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         flags = default_flags + verbose_flag
         result = runner.invoke(cli, flags)
@@ -350,7 +350,7 @@ class TestCLI:
         Path(temp_indir).mkdir(parents=True, exist_ok=True)
         temp_reactor.config_to_json(temp_indir)
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         default_flags = ["-i", temp_indir, "-ri", REACTORNAME, "-o", tempdir]
         flags = default_flags + name_flags
         result = runner.invoke(cli, flags)
@@ -403,11 +403,11 @@ class TestCLI:
             assert os.path.isfile(path_to_file)
 
     @mock_mode
-    def test_cli_bproot_keyword(
+    def test_cli_bmroot_keyword(
         self, mock_build, mock_plot_xz, mock_plot_xy, mock_save_CAD_model, mock_rclass
     ):
         """
-        Test that the CLI can handle keyword replacement for the BLUEPRINT root
+        Test that the CLI can handle keyword replacement for the bluemira root
         directory.
         """
         runner = CliRunner()
@@ -418,7 +418,7 @@ class TestCLI:
         if os.path.exists(outdir_path):
             shutil.rmtree(outdir_path)
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", outdir_flag]
         result = runner.invoke(cli, flags)
         assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
@@ -449,7 +449,7 @@ class TestCLI:
         Path(temp_indir).mkdir(parents=True, exist_ok=True)
         temp_reactor.config_to_json(temp_indir)
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         flags = ["-i", temp_indir, "-ri", REACTORNAME]
         result = runner.invoke(cli, flags)
         assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
@@ -469,11 +469,11 @@ class TestCLI:
         tempdir,
     ):
         """
-        Test that BLUEPRINT can be rerun from the CLI when the force flag is on.
+        Test that bluemira can be rerun from the CLI when the force flag is on.
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         flags = default_flags + rerun_flag
         runner.invoke(cli, default_flags)  # First run
@@ -491,11 +491,11 @@ class TestCLI:
         tempdir,
     ):
         """
-        Test that BLUEPRINT can not be rerun from the CLI when the force flag is off.
+        Test that bluemira can not be rerun from the CLI when the force flag is off.
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         runner.invoke(cli, flags)  # First run
         result = runner.invoke(cli, flags)  # Rerun with force flag off
@@ -512,11 +512,11 @@ class TestCLI:
         tempdir,
     ):
         """
-        Test that the BLUEPRINT CLI fails correctly when an invalid flag is passed.
+        Test that the bluemira CLI fails correctly when an invalid flag is passed.
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         flags = default_flags + ["--this_flag_does_not_exist"]
         result = runner.invoke(cli, flags)
@@ -524,11 +524,11 @@ class TestCLI:
 
     def test_cli_invalid_inputs(self, tempdir):
         """
-        Test that the BLUEPRINT CLI fails correctly when invalid inputs are passed.
+        Test that the bluemira CLI fails correctly when invalid inputs are passed.
         """
         runner = CliRunner()
 
-        # Set flags and run BLUEPRINT cli.
+        # Set flags and run bluemira cli.
         default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
         run_flags = default_flags + [
             "this_file_does_not_exist.json",
