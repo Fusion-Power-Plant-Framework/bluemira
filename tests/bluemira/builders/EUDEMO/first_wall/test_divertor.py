@@ -82,7 +82,7 @@ class TestDivertorBuilder:
     def test_targets_intersect_separatrix(self):
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
 
-        divertor = builder(self._default_params)
+        divertor = builder()
 
         for leg in [LegPosition.INNER, LegPosition.OUTER]:
             target = divertor.get_component(f"target {leg}")
@@ -92,7 +92,7 @@ class TestDivertorBuilder:
         self.params.update({"div_Ltarg": 1.5})
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
 
-        divertor = builder(self.params)
+        divertor = builder()
 
         for leg in [LegPosition.INNER, LegPosition.OUTER]:
             target = divertor.get_component(f"target {leg}")
@@ -101,14 +101,14 @@ class TestDivertorBuilder:
     def test_dome_added_to_divertor(self):
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
 
-        divertor = builder(self.params)
+        divertor = builder()
 
         assert divertor.get_component("dome") is not None
 
     def test_dome_intersects_targets(self):
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
 
-        divertor = builder(self.params)
+        divertor = builder()
 
         dome = divertor.get_component("dome")
         targets = [
@@ -121,7 +121,7 @@ class TestDivertorBuilder:
     def test_dome_does_not_intersect_separatrix(self):
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
 
-        divertor = builder(self.params)
+        divertor = builder()
 
         dome = divertor.get_component("dome")
         assert signed_distance(dome.shape, self.separatrix) < 0
@@ -132,7 +132,7 @@ class TestDivertorBuilder:
         builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
         x_points, _ = self.eq.get_OX_points()
 
-        divertor = builder(self.params)
+        divertor = builder()
 
         dome_coords = divertor.get_component("dome").shape.discretize()
         turning_points = get_turning_point_idxs(dome_coords[2, :])

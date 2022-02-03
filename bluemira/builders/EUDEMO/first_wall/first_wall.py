@@ -81,7 +81,7 @@ class FirstWallBuilder(ParameterisedShapeBuilder):
         Build the component for the wall, excluding the divertor.
         """
         builder = ClosedFirstWallBuilder(params, build_config=build_config)
-        wall = builder(params)
+        wall = builder()
 
         wall_shape: BluemiraGeo = wall.get_component("first_wall").shape
         z_max = self.x_point[1]

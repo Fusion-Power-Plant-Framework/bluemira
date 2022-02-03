@@ -66,7 +66,7 @@ class TestClosedFirstWallBuilder:
     def test_built_component_contains_physical_component_in_xz(self):
         builder = ClosedFirstWallBuilder(self._params, build_config=self._default_config)
 
-        component = builder(self._params)
+        component = builder()
 
         xy_component = component.get_component("xz", first=False)
         assert len(xy_component) == 1
@@ -75,7 +75,7 @@ class TestClosedFirstWallBuilder:
     def test_physical_component_shape_is_closed(self):
         builder = ClosedFirstWallBuilder(self._params, build_config=self._default_config)
 
-        component = builder(self._params)
+        component = builder()
 
         assert component.get_component("first_wall").shape.is_closed()
 
@@ -85,8 +85,8 @@ class TestClosedFirstWallBuilder:
             {"R_0": (10.0, "Input"), "kappa_95": (2.0, "Input"), "A": (2.0, "Input")}
         )
 
-        builder = ClosedFirstWallBuilder(self._params, build_config=self._default_config)
-        component = builder(params)
+        builder = ClosedFirstWallBuilder(params, build_config=self._default_config)
+        component = builder()
 
         bounding_box = component.get_component("first_wall").shape.bounding_box
         # expected_height = 2*(R_0/A)*kappa_95 = 20
