@@ -28,10 +28,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.balance_of_plant.plotting import SuperSankey
-from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
+from bluemira.base.constants import (
+    HE3_MOLAR_MASS,
+    HE_MOLAR_MASS,
+    NEUTRON_MOLAR_MASS,
+    to_kelvin,
+)
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter import ParameterFrame
-from bluemira.utilities.tools import to_kelvin
 from BLUEPRINT.base.palettes import B_PAL_MAP
 from BLUEPRINT.systems.baseclass import ReactorSystem
 

@@ -39,6 +39,7 @@ from typing import Dict, List, Union
 import numpy as np
 import wrapt
 from pandas import DataFrame
+from pint import Unit
 from tabulate import tabulate
 
 from bluemira.base.error import ParameterError
@@ -186,7 +187,7 @@ class Parameter(wrapt.ObjectProxy):
 
     var: str
     name: Union[str, None]
-    unit: Union[str, None]
+    unit: Union[Unit, str, None]
     description: Union[str, None]
     _source: Union[str, None]
     mapping: Union[Dict[str, ParameterMapping], None]
@@ -198,7 +199,7 @@ class Parameter(wrapt.ObjectProxy):
         var: str,
         name: Union[str, None] = None,
         value: Union[str, float, int, None] = None,
-        unit: Union[str, None] = None,
+        unit: Union[Unit, str, None] = None,
         description: Union[str, None] = None,
         source: Union[str, bool] = None,
         mapping: Union[Dict[str, ParameterMapping], None] = None,
@@ -227,7 +228,7 @@ class Parameter(wrapt.ObjectProxy):
         super().__init__(value)
         self.var = var
         self.name = name
-        self.unit = unit
+        self._unit = self._unit_setup(unit)
         self.description = description
         self.mapping = mapping if mapping is not None else {}
 
@@ -325,6 +326,19 @@ class Parameter(wrapt.ObjectProxy):
         Get source_history
         """
         return self._source_history
+
+    @property
+    def unit(self):
+        return self._unit
+
+    def _unit_setup(self, unit: Union[Unit, str, None]):
+        if isinstance(unit, None):
+            bluemira_warn(f"{self.var} has no unit")
+        elif isinstance(unit, str):
+            unit = Unit("") if unit == "N/A" else Unit(unit)
+        elif not isinstance(unit, Unit):
+            raise ParameterError(f"Unknown unit type {type(unit)}")
+        self._unit = unit
 
     @property
     def value(self):
