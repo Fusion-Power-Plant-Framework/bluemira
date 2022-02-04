@@ -179,7 +179,7 @@ class Plane(GeomBase):
         Plane parameters.
         """
         i = self.parameters
-        return i[-1] / np.sqrt(sum([x ** 2 for x in i[:-1]]))
+        return i[-1] / np.sqrt(sum([x**2 for x in i[:-1]]))
 
     @property
     def n_hat(self):

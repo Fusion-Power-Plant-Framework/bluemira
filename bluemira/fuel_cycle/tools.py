@@ -70,7 +70,7 @@ def E_DT_fusion():  # noqa :N802
         \\Delta E = \\Delta m c^2
     """
     delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
-    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def E_DD_fusion():  # noqa :N802
@@ -100,7 +100,7 @@ def E_DD_fusion():  # noqa :N802
         ]
     )
     delta_m = np.average(delta_m)
-    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def n_DT_reactions(p_fus) -> float:

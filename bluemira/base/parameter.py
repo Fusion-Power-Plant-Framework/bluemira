@@ -94,6 +94,27 @@ class ParameterMapping:
         """
         return repr(self.to_dict())
 
+    def __setattr__(self, attr: str, value: Union[bool, str]):
+        """
+        Protect against additional attributes
+
+        Parameters
+        ----------
+        attr: str
+            Attribute to set (name can only be set on init)
+        value: Union[bool, str]
+            Value of attribute
+
+        """
+        if attr not in ["send", "recv", "name"] or (
+            hasattr(self, "name") and attr not in ["send", "recv"]
+        ):
+            raise KeyError(f"{attr} cannot be set for a {self.__class__.__name__}")
+        elif attr in ["send", "recv"] and not isinstance(value, bool):
+            raise ValueError(f"{attr} must be a bool")
+        else:
+            super().__setattr__(attr, value)
+
 
 class ParameterMappingEncoder(json.JSONEncoder):
     """

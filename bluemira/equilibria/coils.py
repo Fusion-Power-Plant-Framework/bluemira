@@ -24,6 +24,7 @@ Coil and coil grouping objects
 """
 
 from copy import deepcopy
+from re import split
 from typing import Any, Optional
 
 import matplotlib.pyplot as plt
@@ -719,7 +720,7 @@ class Coil:
         """  # noqa :W505
         Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
-            a = MU_0 * self.current ** 2 / (4 * np.pi * self.x)
+            a = MU_0 * self.current**2 / (4 * np.pi * self.x)
             fx = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
 
         else:
@@ -888,9 +889,15 @@ class CoilGroup:
         cs_coils = [coil for coil in coils if coil.ctype == "CS"]
         other = [coil for coil in coils if coil.ctype not in ["PF", "CS"]]
 
-        pf_coils.sort(key=lambda x: x.name)
-        cs_coils.sort(key=lambda x: x.name)
-        other.sort(key=lambda x: x.name)
+        def sort_function(key):
+            return [
+                int(text) if text.isdigit() else text
+                for text in split(r"(\d+)", key.name)
+            ]
+
+        pf_coils.sort(key=sort_function)
+        cs_coils.sort(key=sort_function)
+        other.sort(key=sort_function)
 
         all_coils = pf_coils + cs_coils + other
 
@@ -1722,6 +1729,9 @@ class SymmetricCircuit(Circuit):
             The coil sub-division size
         """
         self.apply_coil_method("mesh_coil", d_coil)
+
+    def _points_inside_coil(self, x, z):
+        return self.coils[self.name + ".1"]._points_inside_coil(x, abs(z))
 
 
 class CoilSet(CoilGroup):

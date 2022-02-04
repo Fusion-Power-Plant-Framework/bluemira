@@ -196,7 +196,7 @@ class TestEinsumCross:
         for i, v in enumerate([val2, val3], start=2):
             np.testing.assert_allclose(cross(v, v), np.cross(v, v))
 
-        np.testing.assert_allclose(cross(val, val), val ** 2)
+        np.testing.assert_allclose(cross(val, val), val**2)
 
     def test_raises(self):
         val = np.random.rand(5, 4)

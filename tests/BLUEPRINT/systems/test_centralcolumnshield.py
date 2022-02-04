@@ -92,12 +92,12 @@ def calc_analytic_area(xmid, zmid, radius, length, params):
     ratio = arc_x / r_seg
 
     # The full circle area
-    area_cut = pi * r_seg ** 2
+    area_cut = pi * r_seg**2
 
     # Calculate segment area if we intersect circle
     area_seg = 0.0
     if ratio < 1.0:
-        area_seg = (acos(ratio) - ratio * sqrt(1 - ratio ** 2)) * r_seg ** 2
+        area_seg = (acos(ratio) - ratio * sqrt(1 - ratio**2)) * r_seg**2
 
     if r_cut > xmid:
         # Past the midpoint, subtract the segment from circle
