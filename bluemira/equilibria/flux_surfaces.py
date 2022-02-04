@@ -42,6 +42,7 @@ from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry._deprecated_tools import (
     check_linesegment,
     get_angle_between_points,
+    get_intersect,
     join_intersect,
     loop_plane_intersect,
 )
@@ -230,6 +231,67 @@ class ClosedFluxSurface(FluxSurface):
         arg_z_min = np.argmin(self.loop.z)
         x_z_min = self.loop.x[arg_z_min]
         return (self.major_radius - x_z_min) / self.minor_radius
+
+    @property
+    @lru_cache(1)
+    def zeta(self):
+        """
+        Average squareness of the ClosedFluxSurface.
+        """
+        return 0.5 * (self.zeta_upper + self.zeta_lower)
+
+    @property
+    @lru_cache(1)
+    def zeta_upper(self):
+        """
+        Outer upper squareness of the ClosedFluxSurface.
+        """
+        z_max = np.max(self.loop.z)
+        arg_z_max = np.argmax(self.loop.z)
+        x_z_max = self.loop.x[arg_z_max]
+        x_max = np.max(self.loop.x)
+        arg_x_max = np.argmax(self.loop.x)
+        z_x_max = self.loop.z[arg_x_max]
+
+        a = z_max - z_x_max
+        b = x_max - x_z_max
+        return self._zeta_calc(a, b, x_z_max, z_x_max, x_max, z_max)
+
+    @property
+    @lru_cache(1)
+    def zeta_lower(self):
+        """
+        Outer lower squareness of the ClosedFluxSurface.
+        """
+        z_min = np.min(self.loop.z)
+        arg_z_min = np.argmin(self.loop.z)
+        x_z_min = self.loop.x[arg_z_min]
+        x_max = np.max(self.loop.x)
+        arg_x_max = np.argmax(self.loop.x)
+        z_x_max = self.loop.z[arg_x_max]
+
+        a = z_min - z_x_max
+        b = x_max - x_z_min
+
+        return self._zeta_calc(a, b, x_z_min, z_x_max, x_max, z_min)
+
+    def _zeta_calc(self, a, b, xa, za, xd, zd):
+        """
+        Actual squareness calculation
+
+        Notes
+        -----
+        Squareness defined here w.r.t an ellipse intersection along a projected line
+        """
+        xc = xa + b * np.sqrt(0.5)
+        zc = za + a * np.sqrt(0.5)
+
+        line = Loop([xa, xd], z=[za, zd])
+        xb, zb = get_intersect(self.loop, line)
+        d_ab = np.hypot(xb - xa, zb - za)
+        d_ac = np.hypot(xc - xa, zc - za)
+        d_cd = np.hypot(xd - xc, zd - zc)
+        return float((d_ab - d_ac) / d_cd)
 
     @property
     @lru_cache(1)
@@ -453,7 +515,11 @@ def analyse_plasma_core(eq, n_points=50):
     psi_n = np.append(psi_n, 1.0)
     flux_surfaces = [ClosedFluxSurface(loop) for loop in loops]
     vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
-    vars += [f"{v}{end}" for end in ["", "_upper", "_lower"] for v in ["kappa", "delta"]]
+    vars += [
+        f"{v}{end}"
+        for end in ["", "_upper", "_lower"]
+        for v in ["kappa", "delta", "zeta"]
+    ]
     return CoreResults(
         psi_n,
         *[[getattr(fs, var) for fs in flux_surfaces] for var in vars],
@@ -475,11 +541,14 @@ class CoreResults:
     area: Iterable
     V: Iterable
     kappa: Iterable
-    kappa_upper: Iterable
-    kappa_lower: Iterable
     delta: Iterable
-    delta_lower: Iterable
+    zeta: Iterable
+    kappa_upper: Iterable
     delta_upper: Iterable
+    zeta_upper: Iterable
+    kappa_lower: Iterable
+    delta_lower: Iterable
+    zeta_lower: Iterable
     q: Iterable
     Delta_shaf: Iterable
 
