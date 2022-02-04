@@ -198,9 +198,10 @@ class TestTaperedPictureFrame:
         p = TaperedPictureFrame()
         wire = p.create_shape()
         assert len(wire._boundary) == 4
-        p.adjust_variable("r", value=0)
+        p.adjust_variable("ri", value=0)
+        p.adjust_variable("ro", value=0)
         wire = p.create_shape()
-        assert len(wire._boundary) == 2
+        assert len(wire._boundary) == 4
 
 
 class TestSextupleArc:
