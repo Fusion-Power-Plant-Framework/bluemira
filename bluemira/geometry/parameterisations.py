@@ -32,7 +32,6 @@ from typing import TextIO, Union
 import numpy as np
 from scipy.special import iv as bessel
 
-from bluemira.display.plotter import plot_2d
 from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
@@ -1135,7 +1134,6 @@ class PictureFrameTools:
         shape: BluemiraWire
             CAD Wire of the geometry
         """
-
         p1 = [x_mid, 0, z_in]
         p2 = [x_mid, 0, z_mid_up]
         wires = [make_polygon([p1, p2], label="inner_limb_mid_up")]
