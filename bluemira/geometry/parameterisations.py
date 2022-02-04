@@ -1342,7 +1342,7 @@ class TaperedPictureFrame(GeometryParameterisation):
                     descr="Inboard corner radius",
                 ),
                 BoundedVariable(
-                    "ro", 2, lower_bound=1, upper_bound=5, descr="Outboard corner radius"
+                    "ro", 2, lower_bound=0, upper_bound=5, descr="Outboard corner radius"
                 ),
             ],
             frozen=True,
