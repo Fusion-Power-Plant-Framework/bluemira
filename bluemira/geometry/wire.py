@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from typing import List
 
-import numpy
+import numpy as np
 
 from bluemira.codes._freecadapi import (
     apiWire,
@@ -149,7 +149,7 @@ class BluemiraWire(BluemiraGeo):
 
     def discretize(
         self, ndiscr: int = 100, byedges: bool = False, dl: float = None
-    ) -> numpy.ndarray:
+    ) -> np.ndarray:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
         segment step.
@@ -159,7 +159,7 @@ class BluemiraWire(BluemiraGeo):
         Returns
         -------
         points: Coordinates
-            a numpy array with the x,y,z coordinates of the discretized points.
+            a np array with the x,y,z coordinates of the discretized points.
         """
         if byedges:
             points = discretize_by_edges(self._shape, ndiscr=ndiscr, dl=dl)
@@ -220,3 +220,17 @@ class BluemiraWire(BluemiraGeo):
                 change_placement(o, placement._shape)
             else:
                 o.change_placement(placement)
+
+    def start_point(self) -> np.ndarray:
+        """
+        Get the coordinates of the start of the wire.
+        """
+        point = self.boundary[0].Vertexes[0].Point
+        return np.array([point.x, point.y, point.z])
+
+    def end_point(self) -> np.ndarray:
+        """
+        Get the coordinates at the end of the wire.
+        """
+        point = self.boundary[0].Vertexes[-1].Point
+        return np.array([point.x, point.y, point.z])
