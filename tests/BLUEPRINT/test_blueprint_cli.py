@@ -535,8 +535,6 @@ class TestCLI:
         mock_save_CAD_model,
         tempdir,
     ):
-        runner = CliRunner()
-
         temp_datadir = tempfile.mkdtemp(dir=OUTDIR)
         shutil.copytree(
             os.sep.join([get_bluemira_root(), "data", "BLUEPRINT"]),
