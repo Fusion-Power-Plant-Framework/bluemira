@@ -100,6 +100,22 @@ def mock_mode(func):
     return wrapper_grouped_decorator
 
 
+def assert_invoke(
+    cli, indir, reactorname, outdir, expected_exit_code=0, extra_flags=None
+):
+    if extra_flags is None:
+        extra_flags = []
+
+    runner = CliRunner()
+
+    # Set flags and run bluemira cli.
+    flags = ["-i", indir, "-ri", reactorname, "-o", outdir] + extra_flags
+    result = runner.invoke(cli, flags)
+    assert result.exit_code == expected_exit_code, traceback.print_exception(
+        *result.exc_info
+    )
+
+
 class TestCLI:
     @classmethod
     def setup_class(cls):
@@ -151,12 +167,7 @@ class TestCLI:
         Test that the CLI correctly makes copies of the input files to the output
         directory.
         """
-        runner = CliRunner()
-
-        # Set flags and run bluemira cli.
-        flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
-        result = runner.invoke(cli, flags)
-        assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
+        assert_invoke(cli, INDIR, REACTORNAME, tempdir)
 
         # Test input files are copied to output directory and not removed.
         for filename_suffix in (
@@ -191,13 +202,7 @@ class TestCLI:
         """
         Test that the CLI returns the desired outputs and does not return others.
         """
-        runner = CliRunner()
-
-        # Set flags and run bluemira cli.
-        default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
-        flags = default_flags + switch_flag
-        result = runner.invoke(cli, flags)
-        assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
+        assert_invoke(cli, INDIR, REACTORNAME, tempdir, extra_flags=switch_flag)
 
         # Assign expected outputs from defaults and output switches.
         switch_dict = {
@@ -261,13 +266,7 @@ class TestCLI:
         """
         Test that the tarball CLI option works correctly.
         """
-        runner = CliRunner()
-
-        # Set flags and run bluemira cli.
-        default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
-        flags = default_flags + tarball_flag
-        result = runner.invoke(cli, flags)
-        assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
+        assert_invoke(cli, INDIR, REACTORNAME, tempdir, extra_flags=tarball_flag)
 
         # Test tarball flag successfully generates .tar file.
         path_to_file = temp_path_to_file(
@@ -290,13 +289,7 @@ class TestCLI:
         """
         Test that the verbose CLI option works correctly.
         """
-        runner = CliRunner()
-
-        # Set flags and run bluemira cli.
-        default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
-        flags = default_flags + verbose_flag
-        result = runner.invoke(cli, flags)
-        assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
+        assert_invoke(cli, INDIR, REACTORNAME, tempdir, extra_flags=verbose_flag)
 
         # Test verbose flag successfully activates verbose mode.
         path_to_file = temp_path_to_file(tempdir, REACTORNAME, "params.json")
@@ -324,8 +317,6 @@ class TestCLI:
         """
         Test that the reactornameout CLI option works correctly.
         """
-        runner = CliRunner()
-
         # Make copy of reference data directory in tempdir.
         # Note: this is done to avoid a FileExists error from previous tests.
         temp_reactor = copy.deepcopy(self.reactor)
@@ -350,11 +341,7 @@ class TestCLI:
         Path(temp_indir).mkdir(parents=True, exist_ok=True)
         temp_reactor.config_to_json(temp_indir)
 
-        # Set flags and run bluemira cli.
-        default_flags = ["-i", temp_indir, "-ri", REACTORNAME, "-o", tempdir]
-        flags = default_flags + name_flags
-        result = runner.invoke(cli, flags)
-        assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
+        assert_invoke(cli, temp_indir, REACTORNAME, tempdir, extra_flags=name_flags)
 
         # Test output folder created with specified reactorname.
         assert os.path.isdir(os.path.join(tempdir, "reactors", NEWNAME))
@@ -410,18 +397,13 @@ class TestCLI:
         Test that the CLI can handle keyword replacement for the bluemira root
         directory.
         """
-        runner = CliRunner()
-
         # Set temp outdir and ensure directory does not already exist.
         outdir_flag = os.path.join(BM_ROOT, "tests", "BLUEPRINT", "cli", "temp_outdir")
         outdir_path = outdir_flag.replace(BM_ROOT, get_bluemira_root())
         if os.path.exists(outdir_path):
             shutil.rmtree(outdir_path)
 
-        # Set flags and run bluemira cli.
-        flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", outdir_flag]
-        result = runner.invoke(cli, flags)
-        assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
+        assert_invoke(cli, INDIR, REACTORNAME, outdir_flag)
 
         # Test temp outdir was created correctly and clean up.
         assert os.path.isdir(outdir_path)
@@ -514,30 +496,34 @@ class TestCLI:
         """
         Test that the bluemira CLI fails correctly when an invalid flag is passed.
         """
-        runner = CliRunner()
-
-        # Set flags and run bluemira cli.
-        default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
-        flags = default_flags + ["--this_flag_does_not_exist"]
-        result = runner.invoke(cli, flags)
-        assert result.exit_code == 2, traceback.print_exception(*result.exc_info)
+        invalid_flag = "--this_flag_does_not_exist"
+        assert_invoke(
+            cli,
+            INDIR,
+            REACTORNAME,
+            tempdir,
+            extra_flags=[invalid_flag],
+            expected_exit_code=2,
+        )
 
     def test_cli_invalid_inputs(self, tempdir):
         """
         Test that the bluemira CLI fails correctly when invalid inputs are passed.
         """
-        runner = CliRunner()
-
-        # Set flags and run bluemira cli.
-        default_flags = ["-i", INDIR, "-ri", REACTORNAME, "-o", tempdir]
-        run_flags = default_flags + [
+        invalid_inputs = [
             "this_file_does_not_exist.json",
             "this_file_does_not_exist.json",
             "this_file_does_not_exist.json",
             "this_file_does_not_exist.json",
         ]
-        result = runner.invoke(cli, run_flags)
-        assert result.exit_code == 1, traceback.print_exception(*result.exc_info)
+        assert_invoke(
+            cli,
+            INDIR,
+            REACTORNAME,
+            tempdir,
+            extra_flags=invalid_inputs,
+            expected_exit_code=1,
+        )
 
     @mock_mode
     def test_datadir(
@@ -558,20 +544,17 @@ class TestCLI:
             dirs_exist_ok=True,
         )
 
+        indir = os.sep.join(
+            [get_bluemira_root(), "examples", "BLUEPRINT", "cli", "indir"]
+        )
+
         try:
-            flags = [
-                "-i",
-                os.sep.join(
-                    [get_bluemira_root(), "examples", "BLUEPRINT", "cli", "indir"]
-                ),
-                "-ri",
-                "EU-DEMO",
-                "-d",
-                temp_datadir,
-                "-o",
+            assert_invoke(
+                cli,
+                indir,
+                REACTORNAME,
                 tempdir,
-            ]
-            result = runner.invoke(cli, flags)
+                extra_flags=["-ri", "EU-DEMO", "-d", temp_datadir],
+            )
         finally:
             shutil.rmtree(temp_datadir)
-        assert result.exit_code == 0, traceback.print_exception(*result.exc_info)
