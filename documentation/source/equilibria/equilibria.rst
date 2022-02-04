@@ -1,6 +1,117 @@
 equilibria
 ==========
 
+Conventions
+-----------
+
+Equilibrium coordinate conventions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+TBD
+
+Flux surface geometry
+^^^^^^^^^^^^^^^^^^^^^
+
+Flux surface geometry parameters are defined with respect to the centre of the plasma,
+which is defined as the centroid of the reference ellipse (assuming symmetry).
+
+.. figure:: flux_surface_geometry.png
+   :name: fig:flux_surface_geometry
+
+   Diagram depicting a typical flux surface, showing how key shape characteristics are
+   calculated.
+
+Note that the centroid of the reference ellipse, :math:`C\equiv(R_{0}, z_{0})`, from which the shape characteristics are
+calculated, is neither the geometric centroid of the flux surface, nor the magnetic axis.
+
+As such, the shape characteristics of a flux surface are purely geometrical.
+
+The extrema of the flux surface are defined here (for convenience) as :math:`P_1, P_2, P_3, P_4`,
+starting from the outboard midplane and heading anti-clockwise.
+
+The major radius is calculated as:
+
+.. math::
+   :label: major_radius
+
+   R_0 = x_{P_{3}} + \dfrac{x_{P_{1}}-x_{P_{3}}}{2}
+
+The vertical coordinate of the centroid :math:`C`, is taken as the average vertical coordinate
+of :math:`P_1` and :math:`P_3`. This is only relevant in the case of tilted flux surfaces,
+and only affects the calculation of the upper and lower elongation and the vertical Shafranov
+shift.
+
+.. math::
+   :label: z_0
+
+   z_0 = \dfrac{z_{P_{1}}+z_{P_{3}}}{2}
+
+The minor radius is calculated as:
+
+.. math::
+   :label: minor_radius
+
+   a = \dfrac{x_{P_{1}}-x_{P_{3}}}{2}
+
+The aspect ratio is calculated as:
+
+.. math::
+   :label: aspect_ratio
+
+   A = \dfrac{R_0}{a}
+
+The elongation, and upper and lower elongations are calculated as:
+
+.. math::
+   :label: elongation
+
+   \begin{aligned}
+   \kappa =& \dfrac{z_{P_{2}}-z_{P_{4}}}{a}\\
+   \kappa_{u} =& \dfrac{z_{P_{2}}-z_0}{a}\\
+   \kappa_{l} = & \dfrac{z_0-z_{P_{4}}}{a}\end{aligned}
+
+By convention, lower elongation values are always given as positive.
+
+The upper and lower triangularities are calculated as:
+
+.. math::
+   :label: triangularity
+
+   \begin{aligned}
+   \delta_{u}&=\dfrac{x_C-x_{P_{2}}}{a}
+   \delta_{l}&=\dfrac{x_C-x_{P_{4}}}{a}\end{aligned}
+
+By convention, triangularities are signed, such that it is possible to have negative
+triangularity.
+
+The outer upper and lower squarenesses are calculated with respect to reference ellipse
+arcs:
+
+.. figure:: flux_surface_squareness.png
+   :name: fig:flux_surface_squareness
+
+.. math::
+   :label: squareness
+
+   \zeta=\dfrac{P_{A}P_{B}-P_{A}P_{C}}{P_{C}P_{D}}
+
+Note that this calculation is done with respect to the reference ellipses of each quadrant
+(and their centroids). Typically, squareness values are of interest on the low-field side
+quadrants. By this definition of squareness, :math:`\zeta=0.0` indicates a pure ellipse shape,
+:math:`\zeta=1.0` indicates a pure square shape, and negative values indicate a shape that
+that is "flatter" than an ellipse.
+
+The Shafranov shift is defined from the centroid of the reference ellipse to the magnetic
+axis, :math:`O`.
+
+.. math::
+   :label: shafranov_shift
+
+   \begin{aligned}
+   \Delta_{{shaf}_{x}} &= x_{O} - R_{0}\\
+   \Delta_{{shaf}_{z}} &=z_{O} - z_{C}\end{aligned}
+
+
 Theory
 ------
 
