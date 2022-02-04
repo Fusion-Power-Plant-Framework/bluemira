@@ -28,7 +28,7 @@ from __future__ import annotations
 import abc
 import enum
 import string
-from typing import Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
@@ -88,7 +88,7 @@ class Builder(abc.ABC):
     _params: ParameterFrame
     _design_problem = None
 
-    def __init__(self, params, build_config: BuildConfig, **kwargs):
+    def __init__(self, params: Dict[str, Any], build_config: BuildConfig, **kwargs):
         self._name = build_config["name"]
 
         self._validate_config(build_config)

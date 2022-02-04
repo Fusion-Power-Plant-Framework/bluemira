@@ -23,7 +23,8 @@ Define builder for divertor
 """
 
 import enum
-from typing import Any, Dict, Iterable, List, Tuple
+import operator
+from typing import Any, Callable, Dict, Iterable, List, Tuple
 
 import numpy as np
 
@@ -31,10 +32,10 @@ from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
+from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.tools import find_point_along_wire_at_length, make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from BLUEPRINT.nova.stream import StreamFlow
 
 
 class LegPosition(enum.Enum):
@@ -48,53 +49,12 @@ class LegPosition(enum.Enum):
     CORE2 = enum.auto()
 
 
-def _equilibrium_to_stream_flow(equilibrium: Equilibrium) -> StreamFlow:
-    """
-    Convert an equilibrium object to a StreamFlow.
-    """
-    import os
-    import tempfile
-
-    tmp_file_name = "tmp_eq.eqdsk"
-    tmp_path = os.path.join(tempfile.gettempdir(), "tmp_eq.eqdsk")
-    equilibrium.to_eqdsk(tmp_file_name, directory=tempfile.gettempdir())
-    try:
-        sf = StreamFlow(tmp_path + ".json")
-    finally:
-        os.remove(tmp_path + ".json")
-    return sf
-
-
-def get_legs(equilibrium: Equilibrium) -> Dict[LegPosition, List[BluemiraWire]]:
-    """
-    Hacky implementation leveraging StreamFlow to find the legs of the
-    given equilibrium's separatrix.
-    """
-    from bluemira.geometry.tools import make_polygon
-
-    stream_flow = _equilibrium_to_stream_flow(equilibrium)
-    stream_flow.sol()
-    stream_flow.get_legs()
-
-    def _parse_legs(sf_leg):
-        """
-        Convert the given list of leg 'structs' into BluemiraWires.
-        """
-        x_legs = sf_leg["X"]
-        z_legs = sf_leg["Z"]
-        legs = []
-        for x_leg, z_leg in zip(x_legs, z_legs):
-            leg = np.array([x_leg, np.zeros(x_leg.shape), z_leg])
-            legs.append(make_polygon(leg))
-        return legs
-
-    legs = {
-        LegPosition.INNER: _parse_legs(stream_flow.legs["inner"]),
-        LegPosition.OUTER: _parse_legs(stream_flow.legs["outer"]),
-        LegPosition.CORE1: _parse_legs(stream_flow.legs["core1"]),
-        LegPosition.CORE2: _parse_legs(stream_flow.legs["core2"]),
+def parse_legs(legs: Dict[str, List[Loop]]):
+    separatrix_legs = {
+        LegPosition.INNER: [make_polygon(loop.xyz) for loop in legs["lower_inner"]],
+        LegPosition.OUTER: [make_polygon(loop.xyz) for loop in legs["lower_outer"]],
     }
-    return legs
+    return separatrix_legs
 
 
 class DivertorBuilder(Builder):
@@ -106,6 +66,7 @@ class DivertorBuilder(Builder):
         "div_L2D_ib",
         "div_L2D_ob",
         "div_Ltarg",
+        "div_open",
     ]
     _required_config: List[str] = []
     _params: Configuration
@@ -116,6 +77,8 @@ class DivertorBuilder(Builder):
         params: Dict[str, Any],
         build_config: BuildConfig,
         equilibrium: Equilibrium,
+        inner_start_point: np.ndarray,
+        outer_end_point: np.ndarray,
         **kwargs,
     ):
         super().__init__(params, build_config, **kwargs)
@@ -123,13 +86,14 @@ class DivertorBuilder(Builder):
         self._shape = None
         self.boundary: BluemiraWire = None
 
+        self.inner_start_point = inner_start_point
+        self.outer_end_point = outer_end_point
         self.equilibrium = equilibrium
-        self.o_points, self.x_points = self._get_OX_points()
         self.leg_length = {
             LegPosition.INNER: self.params["div_L2D_ib"],
             LegPosition.OUTER: self.params["div_L2D_ob"],
         }
-        self.separatrix_legs = get_legs(self.equilibrium)
+        self.separatrix_legs = parse_legs(get_legs(self.equilibrium, 1, 0.2))
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -165,10 +129,35 @@ class DivertorBuilder(Builder):
             component.add_child(target)
 
         # Build the dome based on target positions
-        inner_target_end = self._get_wire_lower_end_in_z(inner_target.shape)
-        outer_target_start = self._get_wire_lower_end_in_z(outer_target.shape)
+        inner_target_end = self._get_wire_end_with_smallest(inner_target.shape, "z")
+        outer_target_start = self._get_wire_end_with_smallest(outer_target.shape, "z")
         dome = self.make_dome(inner_target_end, outer_target_start, label="dome")
         component.add_child(dome)
+
+        # Build the inner baffle
+        if self.params.div_open:
+            pass
+        else:
+            inner_target_outside_end = self._get_wire_end_with_largest(
+                inner_target.shape, "x"
+            )
+        inner_baffle = self.make_baffle(
+            "inner_baffle", self.inner_start_point, inner_target_outside_end, None
+        )
+        component.add_child(inner_baffle)
+
+        # Build the outer baffle
+        if self.params.div_open:
+            pass
+        else:
+            outer_target_outside_end = self._get_wire_end_with_largest(
+                outer_target.shape, "x"
+            )
+        inner_baffle = self.make_baffle(
+            "inner_baffle", self.outer_end_point, outer_target_outside_end, None
+        )
+        component.add_child(inner_baffle)
+
         return component
 
     def make_target(self, leg: LegPosition, label: str) -> PhysicalComponent:
@@ -217,8 +206,8 @@ class DivertorBuilder(Builder):
             psi_start,
         )
 
-        # Get the indices of the closest points on the surface to the
-        # start and end points
+        # Get the indices of the closest points on the flux surface to
+        # the input start and end points
         start_coord = np.array([[start[0]], [start[1]]])  # [[x], [z]]
         end_coord = np.array([[end[0]], [end[1]]])
         idx = np.array(
@@ -241,7 +230,41 @@ class DivertorBuilder(Builder):
         dome[(0, 2), 0] = start_coord.T
         dome[(0, 2), 1:-1] = dome_contour
         dome[(0, 2), -1] = end_coord.T
+
         return PhysicalComponent(label, make_polygon(dome))
+
+    def make_baffle(
+        self,
+        label: str,
+        start: np.ndarray,
+        end: np.ndarray,
+        initial_vec: np.ndarray,
+    ) -> PhysicalComponent:
+        """
+        Make a baffle.
+
+        Parameters
+        ----------
+        leg: LegPosition
+            The position of the leg the baffle should join to (e.g.,
+            inner).
+        start: np.ndarray(2, 1)
+            The position (in x-z) to start drawing the baffle from,
+            e.g., the outside end of a target.
+        end: np.ndarray(2, 1)
+            The position (in x-z) to stop drawing the baffle, e.g., the
+            postion to the upper part of the first wall.
+        initial_vec: np.ndarray(2, 1)
+            A vector specifying the direction the start of the baffle
+            should be drawn in, e.g., the orientation of a target.
+            This is converted to a unit vector, so the magnitude is
+            ignored.
+        """
+        # initial_unit_vec = initial_vec / np.hypot(initial_vec)
+
+        # Just generate the most basic baffle: a straight line
+        coords = np.array([[start[0], end[0]], [0, 0], [start[1], end[1]]])
+        return PhysicalComponent(label, make_polygon(coords))
 
     def _get_length_for_leg(self, leg: LegPosition):
         """
@@ -264,16 +287,6 @@ class DivertorBuilder(Builder):
             sol.append(self.separatrix_legs[leg][layer])
         return sol
 
-    def _get_OX_points(self):
-        """
-        Get the OX points from this object's equilibrium.
-        """
-        o_points, x_points = self.equilibrium.get_OX_points()
-        return (
-            np.array([[point[0], point[1]] for point in o_points]),
-            np.array([[point[0], point[1]] for point in x_points]),
-        )
-
     @staticmethod
     def _make_target_name(leg: LegPosition) -> str:
         """
@@ -282,15 +295,36 @@ class DivertorBuilder(Builder):
         return f"target {leg}"
 
     @staticmethod
-    def _get_wire_lower_end_in_z(wire: BluemiraWire) -> Tuple[float, float]:
+    def _get_wire_end_with_smallest(wire: BluemiraWire, axis: str) -> np.ndarray:
         """
-        Find the x and z coordinate of the wire end point that is
-        smallest in the z-direction
+        Get the coordinates of the end of a wire with largest value in
+        the given dimension
         """
-        end_points = [
-            wire.boundary[0].Vertexes[0].Point,
-            wire.boundary[0].Vertexes[-1].Point,
-        ]
-        if end_points[0].z < end_points[1].z:
-            return end_points[0].x, end_points[0].z
-        return end_points[1].x, end_points[1].z
+        return DivertorBuilder._get_wire_end(wire, axis, operator.lt)
+
+    @staticmethod
+    def _get_wire_end_with_largest(wire: BluemiraWire, axis: str) -> np.ndarray:
+        """
+        Get the coordinates of the end of a wire with largest value in
+        the given dimension
+        """
+        return DivertorBuilder._get_wire_end(wire, axis, operator.gt)
+
+    @staticmethod
+    def _get_wire_end(wire: BluemiraWire, axis: str, comp: Callable):
+        """
+        Get the coordinates of the end of a wire whose coordinate in the
+        given axis satisfies the comparision function.
+        """
+        allowed_axes = ["x", "z"]
+        if axis not in allowed_axes:
+            raise ValueError("Unrecognised axis '{}'. Must be one of '{}'.").format(
+                axis, "', '".join(allowed_axes)
+            )
+
+        start_point = wire.start_point()
+        end_point = wire.end_point()
+        axis_idx = 0 if axis == "x" else -1
+        if comp(start_point[axis_idx], end_point[axis_idx]):
+            return start_point[[0, -1]]
+        return end_point[[0, -1]]

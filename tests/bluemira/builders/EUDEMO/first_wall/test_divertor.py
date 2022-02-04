@@ -32,6 +32,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.builders.EUDEMO.first_wall import DivertorBuilder
 from bluemira.builders.EUDEMO.first_wall.divertor import LegPosition
 from bluemira.equilibria import Equilibrium
+from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.tools import make_polygon, signed_distance
 
 DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
@@ -48,19 +49,29 @@ class TestDivertorBuilder:
         "div_L2D_ib": (1.1, "Input"),
         "div_L2D_ob": (1.45, "Input"),
         "div_Ltarg": (0.5, "Input"),
+        "div_open": (False, "Input"),
     }
 
     @classmethod
     def setup_class(cls):
         cls.eq = Equilibrium.from_eqdsk(os.path.join(DATA, "eqref_OOB.json"))
         cls.separatrix = make_polygon(cls.eq.get_separatrix().xyz.T)
+        _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
 
     def setup_method(self):
         self.params = copy.deepcopy(self._default_params)
+        self.inner_start = np.array([5, 0, self.x_points[0]])
+        self.outer_end = np.array([11, 0, self.x_points[0]])
 
     def test_no_BuilderError_on_init_given_valid_params(self):
         try:
-            DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+            DivertorBuilder(
+                self.params,
+                {"name": "some_name"},
+                self.eq,
+                self.inner_start,
+                self.outer_end,
+            )
         except BuilderError:
             pytest.fail(str(BuilderError))
 
@@ -69,18 +80,28 @@ class TestDivertorBuilder:
         self.params.pop(required_param)
 
         with pytest.raises(BuilderError):
-            DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+            DivertorBuilder(
+                self.params,
+                {"name": "some_name"},
+                self.eq,
+                self.inner_start,
+                self.outer_end,
+            )
 
     def test_new_builder_sets_leg_lengths(self):
         self.params.update({"div_L2D_ib": 5, "div_L2D_ob": 10})
 
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+        )
 
         assert builder.leg_length[LegPosition.INNER] == 5
         assert builder.leg_length[LegPosition.OUTER] == 10
 
     def test_targets_intersect_separatrix(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+        )
 
         divertor = builder()
 
@@ -90,7 +111,9 @@ class TestDivertorBuilder:
 
     def test_div_Ltarg_sets_target_length(self):
         self.params.update({"div_Ltarg": 1.5})
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+        )
 
         divertor = builder()
 
@@ -99,14 +122,18 @@ class TestDivertorBuilder:
             assert target.shape.length == 1.5
 
     def test_dome_added_to_divertor(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+        )
 
         divertor = builder()
 
         assert divertor.get_component("dome") is not None
 
     def test_dome_intersects_targets(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+        )
 
         divertor = builder()
 
@@ -119,7 +146,9 @@ class TestDivertorBuilder:
         assert signed_distance(dome.shape, targets[1].shape) == 0
 
     def test_dome_does_not_intersect_separatrix(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+        )
 
         divertor = builder()
 
@@ -129,7 +158,9 @@ class TestDivertorBuilder:
     def test_dome_has_turning_point_below_x_point(self):
         # TODO(hsaunders): not sure about this test, what if the x-point
         # is at the top of the plasma?
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+        )
         x_points, _ = self.eq.get_OX_points()
 
         divertor = builder()

@@ -27,8 +27,12 @@ from typing import Any, Dict
 import numpy as np
 
 from bluemira.base.builder import BuildConfig, Component
+from bluemira.base.components import PhysicalComponent
 from bluemira.builders.EUDEMO.first_wall import ClosedFirstWallBuilder
+from bluemira.builders.EUDEMO.first_wall.divertor import DivertorBuilder
 from bluemira.builders.shapes import ParameterisedShapeBuilder
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
@@ -46,17 +50,25 @@ class FirstWallBuilder(ParameterisedShapeBuilder):
         self,
         params: Dict[str, Any],
         build_config: BuildConfig,
-        x_point: np.ndarray,
-        # separatrix: Loop,
+        equilibrium: Equilibrium,
         **kwargs,
     ):
         super().__init__(params, build_config, **kwargs)
 
-        self.x_point = x_point  # anything below z is divertor, anything above is wall
-        # self.separatrix: Loop = separatrix
+        self.equilibrium = equilibrium
+        _, self.x_points = find_OX_points(
+            self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
+        )
 
         self.wall_part: Component = self._build_wall_no_divertor(params, build_config)
-        self.divertor: Component = None
+
+        wall_shape = self.wall_part.shape
+        self.divertor: Component = self._build_divertor(
+            params,
+            build_config,
+            wall_shape.start_point()[[0, 2]],
+            wall_shape.end_point()[[0, 2]],
+        )
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -74,7 +86,11 @@ class FirstWallBuilder(ParameterisedShapeBuilder):
         """
         Build the component.
         """
-        pass
+        components = [self.wall_part, self.divertor]
+        component = Component("xz")
+        for comp in components:
+            component.add_child(comp)
+        return component
 
     def _build_wall_no_divertor(self, params: Dict[str, Any], build_config: BuildConfig):
         """
@@ -84,16 +100,30 @@ class FirstWallBuilder(ParameterisedShapeBuilder):
         wall = builder()
 
         wall_shape: BluemiraGeo = wall.get_component("first_wall").shape
-        z_max = self.x_point[1]
-        wall.get_component("first_wall").shape = self._cut_shape_in_z(wall_shape, z_max)
-        return wall
+        z_max = self.x_points[0][1]
+
+        cut_shape = self._cut_shape_in_z(wall_shape, z_max)
+        return PhysicalComponent("first_wall", cut_shape)
+
+    def _build_divertor(
+        self,
+        params: Dict[str, Any],
+        build_config,
+        start_coord: np.ndarray,
+        end_coord: np.ndarray,
+    ) -> Component:
+        builder = DivertorBuilder(
+            params, build_config, self.equilibrium, start_coord, end_coord
+        )
+        return builder()
 
     def _cut_shape_in_z(self, shape: BluemiraWire, z_max: float):
         """
         Remove the parts of the wire below the given value in the z-axis.
         """
-        # Create a box that surrounds the wall below the given z coordinate,
-        # then perform a boolean cut to remove that portion of the wall's shape.
+        # Create a box that surrounds the wall below the given z
+        # coordinate, then perform a boolean cut to remove that portion
+        # of the wall's shape.
         bounding_box = shape.bounding_box
         cut_box_points = np.array(
             [
