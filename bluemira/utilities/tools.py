@@ -36,13 +36,13 @@ from json import JSONDecoder, JSONEncoder, dumps
 from json.encoder import _make_iterencode
 from os import listdir
 from types import ModuleType
-from typing import Any, List, Type, Union
+from typing import Any, Type, Union
 from unittest.mock import patch
 
 import nlopt
 import numpy as np
 
-from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
+from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 
 # =====================================================

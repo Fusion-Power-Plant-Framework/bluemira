@@ -42,6 +42,7 @@ from pandas import DataFrame
 from pint import Unit
 from tabulate import tabulate
 
+from bluemira.base.constants import ureg
 from bluemira.base.error import ParameterError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.utilities.tools import json_writer
@@ -52,6 +53,16 @@ RecordList = List[List[Union[int, str, float]]]
 """
 Type for parameters when represented as a record list.
 """
+
+
+def _unitify(unit):
+    if isinstance(unit, Unit):
+        return unit
+    if isinstance(unit, str):
+        if "%" in unit:
+            raise NotImplementedError("Modification needed to support percentages")
+        return Unit("") if unit == "N/A" else Unit(unit)
+    raise TypeError(f"Unknown unit type {type(unit)}")
 
 
 @dataclass
@@ -343,11 +354,7 @@ class Parameter(wrapt.ObjectProxy):
     def _unit_setup(self, unit: Union[Unit, str, None]):
         if isinstance(unit, None):
             bluemira_warn(f"{self.var} has no unit")
-        elif isinstance(unit, str):
-            unit = Unit("") if unit == "N/A" else Unit(unit)
-        elif not isinstance(unit, Unit):
-            raise ParameterError(f"Unknown unit type {type(unit)}")
-        self._unit = unit
+        self._unit = _unitify(unit)
 
     @property
     def value(self):
@@ -1162,8 +1169,7 @@ class ParameterFrame:
         if isinstance(value, Parameter):
             self._set_modified_param(allow_new, _dict, attr, value, source, unit)
         elif isinstance(_dict.get(attr, None), Parameter):
-            value, unit = self._unit_conversion(value, unit, to=_dict[attr].unit)
-            _dict[attr].value = value
+            _dict[attr].value = self._unit_conversion(value, unit, to=_dict[attr].unit)
             _dict[attr].source = source
         else:
             # what other attributes need to be set?
@@ -1213,8 +1219,27 @@ class ParameterFrame:
             param.source = value.source
 
     @staticmethod
-    def _unit_conversion(value, unit_from, unit_to=None):
-        return value
+    def _unit_conversion(self, value, unit_from, unit_to=None):
+        if not isinstance(value, Parameter) and unit_to is None:
+            raise ParameterError("No unit to convert to")
+        elif isinstance(value, Parameter):
+            if unit_to is not None:
+                unit_to = _unitify(unit_to)
+                if unit_to != value.unit:
+                    raise ParameterError("Can't change unit of existing parameter")
+            else:
+                unit_to = value.unit
+
+            unit_from = _unitify(unit_from)
+
+            if unit_to == unit_from:
+                return value
+            value.value = ureg.Quantity(value.value, unit_from).to(unit_to).magnitude
+            return value
+        else:
+            unit_to = _unitify(unit_to)
+            unit_from = _unitify(unit_from)
+            return ureg.Quantity(value, unit_from).to(unit_to).magnitude
 
     def to_dict(self, verbose=False) -> dict:
         """
