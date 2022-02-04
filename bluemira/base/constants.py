@@ -147,7 +147,7 @@ def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.a
         The temperature [°C]
     """
     if np.any(np.less(kelvin, ABS_ZERO_K)):
-        ValueError("Negative temperature in K specified.")
+        raise ValueError("Negative temperature in K specified.")
     return ureg.Quantity(kelvin, ureg.kelvin).to("celsius").magnitude
 
 
@@ -166,7 +166,7 @@ def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.a
         The temperature [K]
     """
     if np.any(np.less(celsius, ABS_ZERO_C)):
-        ValueError("Negative temperature in K specified.")
+        raise ValueError("Negative temperature in K specified.")
     return ureg.Quantity(celsius, ureg.celsius).to("kelvin").magnitude
 
 
