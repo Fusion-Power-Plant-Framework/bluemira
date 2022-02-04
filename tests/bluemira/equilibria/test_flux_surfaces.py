@@ -110,9 +110,9 @@ class TestClosedFluxSurface:
         fs.close()
         fs = ClosedFluxSurface(fs)
         assert np.isclose(fs.kappa, kappa)
-        assert np.isclose(fs.kappa_lower, kappa)
-        assert np.isclose(fs.kappa_upper, kappa)
-        assert np.isclose(fs.delta_lower, fs.delta_upper)
+        assert np.isclose(fs.kappa_lower, kappa, rtol=1e-2)
+        assert np.isclose(fs.kappa_upper, kappa, rtol=1e-2)
+        assert np.isclose(fs.delta_lower, fs.delta_upper, rtol=1e-2)
         assert np.isclose(fs.zeta_lower, fs.zeta_upper)
 
     def test_johner(self):
