@@ -215,7 +215,7 @@ class StreamFlow:
         self.n = self.nx * self.nz
         self.dx = (self.x[-1] - self.x[0]) / (self.nx - 1)
         self.dz = (self.z[-1] - self.z[0]) / (self.nz - 1)
-        self.delta = np.sqrt(self.dx ** 2 + self.dz ** 2)
+        self.delta = np.sqrt(self.dx**2 + self.dz**2)
         self.x2d, self.z2d = np.meshgrid(self.x, self.z, indexing="ij")
 
     def set_field(self):
@@ -1051,11 +1051,11 @@ class StreamFlow:
         else:
             dx_sol = np.diff(x_sol)
             dz_sol = np.diff(z_sol)
-            l_2d = np.append(0, np.cumsum(np.sqrt(dx_sol ** 2 + dz_sol ** 2)))
+            l_2d = np.append(0, np.cumsum(np.sqrt(dx_sol**2 + dz_sol**2)))
             dt_sol = np.array([])
             expansion = self.expansion(x_sol, z_sol)
             for x, dx, dz, xi in zip(x_sol[1:], dx_sol, dz_sol, expansion):
-                d_lphi = xi * np.sqrt(dx ** 2 + dz ** 2)
+                d_lphi = xi * np.sqrt(dx**2 + dz**2)
                 dt_sol = np.append(dt_sol, d_lphi / (x + dx / 2))
             l_3d = np.append(
                 0,

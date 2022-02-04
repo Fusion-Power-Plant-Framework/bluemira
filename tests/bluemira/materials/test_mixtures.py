@@ -20,20 +20,22 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
 
+from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
+
 # =============================================================================
 # Material mixture utility classes
 # =============================================================================
-from bluemira.materials.constants import MATERIAL_BEAM_MAP
-from tests.bluemira.materials.materials_helpers import MATERIAL_CACHE
 
 
 class TestMatDict:
     def test_wp(self):
         tf = MATERIAL_CACHE.get_material("Toroidal_Field_Coil_2015")
-        mat_dict = tf.make_mat_dict(294)
 
-        for key in MATERIAL_BEAM_MAP.values():
-            assert key in mat_dict
+        assert isinstance(tf.E(294), float)
+        assert isinstance(tf.CTE(294), float)
+        assert isinstance(tf.rho(294), float)
+        assert isinstance(tf.mu(294), float)
+        assert isinstance(tf.Sy(294), float)
 
 
 if __name__ == "__main__":

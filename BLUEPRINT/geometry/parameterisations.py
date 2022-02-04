@@ -1649,7 +1649,7 @@ class PolySpline(Parameterisation):  # polybezier
         Calculate the basis function of a spline section.
         """
         n = 3  # spline order
-        return binom(n, v) * t ** v * (1 - t) ** (n - v)
+        return binom(n, v) * t**v * (1 - t) ** (n - v)
 
     @staticmethod
     def midpoints(p):

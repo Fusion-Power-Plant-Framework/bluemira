@@ -220,7 +220,7 @@ def flux_surface_johner_quadrants(
         z_ui = beta_neg * np.sin(theta)
     elif t_neg == 0.5:
         z_ui = np.linspace(0, kappa_u, n_pts)
-        x_ui = -1 + z_ui ** 2 * (1 - delta_u) / kappa_u ** 2
+        x_ui = -1 + z_ui**2 * (1 - delta_u) / kappa_u**2
     elif t_neg == 1:
         z_ui = np.linspace(0, kappa_u, n_pts)
         x_ui = -1 + z_ui * (1 - delta_u) / kappa_u
@@ -242,7 +242,7 @@ def flux_surface_johner_quadrants(
         z_li = beta_neg * np.sin(theta)
     elif t_neg == 0.5:
         z_li = np.linspace(-kappa_u, 0, n_pts)
-        x_li = -1 + z_li ** 2 * (1 - delta_l) / kappa_l ** 2
+        x_li = -1 + z_li**2 * (1 - delta_l) / kappa_l**2
     elif t_neg == 1:
         z_li = np.linspace(-kappa_l, 0, n_pts)
         x_li = -1 + z_li * (1 - delta_l) / kappa_l
@@ -264,7 +264,7 @@ def flux_surface_johner_quadrants(
         z_uo = beta_pos * np.sin(theta)
     elif t_pos == 0.5:
         z_uo = np.linspace(0, kappa_u, n_pts)
-        x_uo = -1 - z_uo ** 2 * (1 + delta_u) / kappa_u ** 2
+        x_uo = -1 - z_uo**2 * (1 + delta_u) / kappa_u**2
     elif t_pos == 1:
         z_uo = np.linspace(0, kappa_u, n_pts)
         x_uo = 1 - z_uo * (1 + delta_u) / kappa_u
@@ -286,7 +286,7 @@ def flux_surface_johner_quadrants(
         z_lo = beta_pos * np.sin(theta)
     elif t_pos == 0.5:
         z_lo = np.linspace(-kappa_l, 0, n_pts)
-        x_lo = -1 - z_lo ** 2 * (1 + delta_l) / kappa_l ** 2
+        x_lo = -1 - z_lo**2 * (1 + delta_l) / kappa_l**2
     elif t_pos == 1:
         z_lo = np.linspace(-kappa_l, 0, n_pts)
         x_lo = 1 - z_lo * (1 + delta_l) / kappa_l

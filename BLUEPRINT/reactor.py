@@ -999,7 +999,7 @@ class Reactor(ReactorSystem):
                 pf_fields, theta=np.pi / self.params.n_TF, p1=[0, 0, 0], p2=[0, 0, 1]
             )
             total_fields = tf_fields + pf_fields
-            peak_fields[i] = np.max(np.sqrt(np.sum(total_fields ** 2, axis=1)))
+            peak_fields[i] = np.max(np.sqrt(np.sum(total_fields**2, axis=1)))
 
         b_tf_peak = max(peak_fields)
         self.add_parameter(

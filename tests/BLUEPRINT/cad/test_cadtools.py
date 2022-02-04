@@ -519,7 +519,7 @@ class TestGetProperties:
         hollow_circle = boolean_cut(circle, circle2)
         hollow_cylinder = extrude(hollow_circle, vec=[0, 0, 1])
         properties = get_properties(hollow_cylinder)
-        true_volume = np.pi * (1 ** 2 - 0.5 ** 2)
+        true_volume = np.pi * (1**2 - 0.5**2)
         assert np.isclose(properties["Volume"], true_volume)
         assert np.isclose(properties["CoG"]["x"], 0.0)
         assert np.isclose(properties["CoG"]["y"], 0.0)

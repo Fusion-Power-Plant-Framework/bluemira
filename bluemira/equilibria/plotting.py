@@ -33,6 +33,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
 from bluemira.utilities.plot_tools import str_to_latex
@@ -225,7 +226,7 @@ def _annotate_coil(ax, coil, force=None, centre=None):
     if centre is not None:
         if coil.ctype == "PF":
             v = np.array([coil.x - centre[0], coil.z - centre[1]])
-            v /= np.sqrt(sum(v ** 2))
+            v /= np.sqrt(sum(v**2))
             d = 1 + np.sqrt(2) * coil.dx
             x += d * v[0] - drs * 1.5
             z += d * v[1]
@@ -429,6 +430,7 @@ class EquilibriumPlotter(Plotter):
 
         # Do some housework
         self.psi = self.eq.psi()
+
         self.o_points, self.x_points = self.eq.get_OX_points(self.psi, force_update=True)
 
         if self.x_points:
@@ -511,15 +513,22 @@ class EquilibriumPlotter(Plotter):
         increasing values going outwards from plasma core.
         """
         psi = calc_psi(psi_norm, self.op_psi, self.xp_psi)
-        self.ax.contour(
-            self.eq.x, self.eq.z, self.psi, levels=[psi], colors=color, zorder=9
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.ax.contour(
+                self.eq.x, self.eq.z, self.psi, levels=[psi], colors=color, zorder=9
+            )
 
     def plot_separatrix(self):
         """
         Plot the separatrix.
         """
-        separatrix = self.eq.get_separatrix()
+        try:
+            separatrix = self.eq.get_separatrix()
+        except EquilibriaError:
+            bluemira_warn("Unable to plot separatrix")
+            return
+
         if isinstance(separatrix, list):
             loops = separatrix
         else:

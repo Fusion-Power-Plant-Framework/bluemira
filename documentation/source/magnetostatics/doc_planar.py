@@ -16,7 +16,7 @@ z = np.linspace(-1, 5, 100)
 xx, zz = np.meshgrid(x, z)
 
 Bx, By, Bz = source.field(xx, np.zeros_like(xx), zz)
-B = np.sqrt(Bx ** 2 + By ** 2 + Bz ** 2)
+B = np.sqrt(Bx**2 + By**2 + Bz**2)
 source.plot()
 f, ax = plt.subplots()
 cm = ax.contourf(xx, zz, B, cmap="magma")

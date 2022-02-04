@@ -185,8 +185,14 @@ class PFCoilsBuilder(Builder):
     def build_xy(self):
         """
         Build the x-y components of the PF coils.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in the xy plane.
         """
         xy_comps = []
+        comp: PFCoilBuilder
         for comp in self.sub_components:
             xy_comps.append(comp.build_xy())
         component = Component("xy", children=xy_comps)
@@ -196,21 +202,38 @@ class PFCoilsBuilder(Builder):
     def build_xz(self):
         """
         Build the x-z components of the PF coils.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in the xz plane.
         """
         xz_comps = []
+        comp: PFCoilBuilder
         for comp in self.sub_components:
             xz_comps.append(comp.build_xz())
         component = Component("xz", children=xz_comps)
         bm_plot_tools.set_component_plane(component, "xz")
         return component
 
-    def build_xyz(self):
+    def build_xyz(self, degree: float = 360.0):
         """
         Build the x-y-z components of the PF coils.
+
+        Parameters
+        ----------
+        degree: float
+            The angle [°] around which to build the components, by default 360.0.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in 3D (xyz).
         """
         xyz_comps = []
+        comp: PFCoilBuilder
         for comp in self.sub_components:
-            xyz_comps.append(comp.build_xyz())
+            xyz_comps.append(comp.build_xyz(degree=degree))
         component = Component("xyz", children=xyz_comps)
         return component
 

@@ -150,7 +150,7 @@ class TestSqrtFittedSinks:
             y_interp = interpolation(t)[:-1]
             y_model = component.inventory[:-1]
             y_mean = np.mean(y_interp)
-            ss_tot = np.sum((y_interp - y_mean ** 2))
+            ss_tot = np.sum((y_interp - y_mean**2))
             ss_res = np.sum((y_interp - y_model) ** 2)
             r_2 = 1 - ss_res / ss_tot
 
