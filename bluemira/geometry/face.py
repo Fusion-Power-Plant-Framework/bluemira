@@ -30,6 +30,7 @@ from typing import List
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
+from bluemira.base.look_and_feel import bluemira_warn
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
@@ -99,7 +100,12 @@ class BluemiraFace(BluemiraGeo):
             else:
                 raise DisjointedFace("Any or more than one face has been created.")
 
-        cadapi.fix_face(face)
+        if not cadapi.is_valid(face):
+            bluemira_warn("Invalid face.. attempting to fix.")
+            cadapi.fix_face(face)
+            if not cadapi.is_valid(face):
+                bluemira_warn("This face is invalid and will causes problems later on.")
+
         if check_reverse:
             return self._check_reverse(face)
         else:
