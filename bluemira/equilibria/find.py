@@ -800,7 +800,6 @@ def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
     -----
     Will return two legs in the case of a single null
     Will return four legs in the case of a double null
-
     We can't rely on the X-point being contained within the two legs, due to
     interpolation and local minimum finding tolerances.
     """
