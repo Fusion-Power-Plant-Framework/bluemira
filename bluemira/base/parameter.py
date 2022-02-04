@@ -43,7 +43,7 @@ from pint import Unit
 from tabulate import tabulate
 
 from bluemira.base.error import ParameterError
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.utilities.tools import json_writer
 
 __all__ = ["Parameter", "ParameterFrame", "ParameterMapping"]
@@ -74,12 +74,18 @@ class ParameterMapping:
     name: str
     recv: bool = True
     send: bool = True
+    unit: str
 
     def to_dict(self):
         """
         Convert this object to a dictionary with attributes as values.
         """
-        return {"name": self.name, "recv": self.recv, "send": self.send}
+        return {
+            "name": self.name,
+            "recv": self.recv,
+            "send": self.send,
+            "unit": self.unit,
+        }
 
     @classmethod
     def from_dict(cls, the_dict) -> "ParameterMapping":
@@ -107,7 +113,7 @@ class ParameterMapping:
             Value of attribute
 
         """
-        if attr not in ["send", "recv", "name"] or (
+        if attr not in ["send", "recv", "name", "unit"] or (
             hasattr(self, "name") and attr not in ["send", "recv"]
         ):
             raise KeyError(f"{attr} cannot be set for a {self.__class__.__name__}")
@@ -213,7 +219,7 @@ class Parameter(wrapt.ObjectProxy):
             The parameter name.
         value: Union[str, float, int, None]
             The value of the parameter, by default None.
-        unit: Union[str, None]
+        unit: Union[Unit, str, None]
             The unit of the parameter, by default None.
         description: Union[str, None]
             The description of the parameter.
@@ -557,7 +563,7 @@ class Parameter(wrapt.ObjectProxy):
         )
         return (
             f"{self.name if self.name is not None else ''}"
-            f" [{self.unit if self.unit not in [None, 'N/A'] else '-'}]:"
+            f" [{self.unit if self.unit not in [None, 'N/A', ''] else '-'}]:"
             f" {self.var}"
             f"{' = ' + str(self.value) if self.value is not None else ''}"
             f"{' (' + self.description + ')' if self.description is not None else ''}"
@@ -691,16 +697,16 @@ class ParameterFrame:
         return params
 
     @staticmethod
-    def modify_source(source, param):
+    def modify_source(param: Union[Parameter, list, dict], source: str):
         """
         Modify the source term of a Parameter
 
         Parameters
         ----------
-        source: str
-            New source
         param: Union[Parameter, list, dict]
             Parameter that will have its source modified
+        source: str
+            New source
 
         Returns
         -------
@@ -744,11 +750,11 @@ class ParameterFrame:
 
         """
         if isinstance(value, Parameter) or not isinstance(value, (list, dict, tuple)):
-            value = self.modify_source(source, value)
+            value = self.modify_source(value, source)
         else:
             value = self.modify_source(
-                source,
                 Parameter(**value) if isinstance(value, dict) else Parameter(*value),
+                source,
             )
 
         if attr not in self.__class__.__default_params and not isinstance(
@@ -803,7 +809,7 @@ class ParameterFrame:
         var: str,
         name: str = None,
         value=None,
-        unit: Union[str, None] = None,
+        unit: Union[Unit, str, None] = None,
         description: Union[str, None] = None,
         source: Union[str, None] = None,
         mapping=None,
@@ -822,7 +828,7 @@ class ParameterFrame:
             The long parameter name, by default None.
         value: Union[str, float, int, None]
             The value of the parameter, by default None.
-        unit: Union[str, None]
+        unit: Union[Unit, str, None]
             The unit of the parameter, by default None.
         description: Union[str, None]
             The long description of the parameter, by default None.
@@ -890,9 +896,9 @@ class ParameterFrame:
         else:
             for param in record_list:
                 if isinstance(param, Parameter):
-                    self.add_parameter(self.modify_source(source, param))
+                    self.add_parameter(self.modify_source(param, source))
                 else:
-                    self.add_parameter(*self.modify_source(source, param))
+                    self.add_parameter(*self.modify_source(param, source))
 
     def set_parameter(self, var, value, source=None):
         """
@@ -908,7 +914,7 @@ class ParameterFrame:
             override value for source
 
         """
-        self.__setattr__(var, self.modify_source(source, value))
+        self.__setattr__(var, self.modify_source(value, source))
 
     def update_kw_parameters(self, kwargs, source=None):
         """
@@ -938,21 +944,26 @@ class ParameterFrame:
                 # Skip keys that aren't parameters, note this could mask typos!
                 continue
             if isinstance(var, dict):
-                src = var.get("source") if source is None else source
-                desc = var.get("description")
-                mapping = var.get("mapping")
+                src = var.get("source", None) if source is None else source
+                desc = var.get("description", None)
+                mapping = var.get("mapping", None)
                 var = var.get("value")
+                unit = var.get("unit", None)
             elif isinstance(var, Parameter):
                 src = var.source if source is None else source
                 desc = var.description
                 mapping = var.mapping
                 var = var.value
+                unit = var.unit
             else:
                 src = source
                 desc = None
                 mapping = None
+                unit = None
 
-            self.__setattr__(key, self.modify_source(src, var))
+            var = self._unit_conversion(self.modify_source(var, src), unit)
+
+            self.__setattr__(key, var)
             if desc is not None:
                 self.__dict__[key].description = desc
             if mapping is not None:
@@ -1110,7 +1121,7 @@ class ParameterFrame:
         except KeyError:
             raise KeyError(f"Var name {var} not present in ParameterFrame")
 
-    def __setattr__(self, attr, value, allow_new=False, defaults=False):
+    def __setattr__(self, attr, value, allow_new=False, *, defaults=False):
         """
         Set an attribute on the ParameterFrame
 
@@ -1124,7 +1135,7 @@ class ParameterFrame:
         ----------
         attr: str
             The var name of the Parameter in the ParameterFrame
-        value: Union[Parameter, tuple, list, str, float, int]
+        value: Union[Parameter, tuple, list, dict, str, float, int]
             The value of the Parameter to set
         allow_new: bool
             Whether or not to allow new Parameters (previously unset) in the
@@ -1132,52 +1143,74 @@ class ParameterFrame:
 
         Notes
         -----
-        If value is a two element list and the second element is a string
-        the second element is assumed to be the source and the first is the value
-        of the parameter.
+        If value is a two/three element list and the second element is a string
+        the first element is the value the second element is the source
+        of the parameter and the third is the current units of value.
 
         """
-        # Move as much of this as possible into Parameter
-        if defaults:
-            _dict = self.__default_params
-        else:
-            _dict = self.__dict__
+        _dict = self.__default_params if defaults else self.__dict__
 
         if not allow_new:
             if attr != "__dict__" and attr not in _dict:
                 raise ValueError(f"Attribute {attr} not defined in ParameterFrame.")
 
-        if (
-            isinstance(value, (list, tuple))
-            and len(value) == 2
-            and isinstance(value[1], (str, type(None)))
-        ):
-            source = value[1]
-            value = value[0]
-        elif isinstance(value, dict) and list(value.keys()) == ["value", "source"]:
-            source = value["source"]
-            value = value["value"]
-        else:
-            source = None
+        value, source, unit = self._from_iterable(value)
 
         if isinstance(value, Parameter):
-            if attr != value.var:
-                raise ValueError(
-                    f"Mismatch between parameter var {value.var} and attribute to be set {attr}."
-                )
-            if source is not None:
-                value.source = source
-            if allow_new:
-                _dict[attr] = value
-            else:
-                _dict[attr].value = value.value
-                _dict[attr].source = value.source
+            self._set_modified_param(allow_new, _dict, attr, value, source, unit)
         elif isinstance(_dict.get(attr, None), Parameter):
+            value, unit = self._unit_conversion(value, unit, to=_dict[attr].unit)
             _dict[attr].value = value
             _dict[attr].source = source
         else:
             # what other attributes need to be set?
+            bluemira_debug(
+                "Please send this to the bluemira maintainers:"
+                f"{attr=}, {value=}, type={type(value)}"
+            )
             super().__setattr__(attr, value)
+
+    @staticmethod
+    def _from_iterable(self, value):
+        if (
+            isinstance(value, (list, tuple))
+            and len(value) in [2, 3]
+            and isinstance(value[1], (str, type(None)))
+        ):
+            bluemira_debug("Consider using a dictionary for ordering safety")
+            if len(value) == 3:
+                unit = value[2]
+            source = value[1]
+            value = value[0]
+        elif isinstance(value, dict) and value.keys() <= {"value", "source", "unit"}:
+            source = value.get("source", None)
+            unit = value.get("unit", None)
+            value = value["value"]
+        else:
+            source = None
+            unit = None
+
+        return value, source, unit
+
+    def _set_modified_param(self, allow_new, _dict, attr, value, source, unit):
+        if attr != value.var:
+            raise ValueError(
+                f"Mismatch between parameter var {value.var} and attribute to be set {attr}."
+            )
+        if source is not None:
+            value.source = source
+
+        value = self._unit_conversion(value, unit)
+
+        if allow_new:
+            _dict[attr] = value
+        else:
+            param = _dict[attr]
+            param.value = value.value
+            param.source = value.source
+
+    def _unit_conversion(value, unit_from, unit_to=None):
+        return value
 
     def to_dict(self, verbose=False) -> dict:
         """
@@ -1317,7 +1350,7 @@ class ParameterFrame:
         Callback to convert suitable JSON objects (dictionaries) into
         ParameterMapping objects.
         """
-        if {"name", "send", "recv"} == set(dct.keys()):
+        if {"name", "send", "recv", "unit"} == set(dct.keys()):
             return ParameterMapping(**dct)
         return dct
 
