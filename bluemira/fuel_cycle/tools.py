@@ -192,48 +192,6 @@ def r_D_burn_DT(p_fus):  # noqa :N802
 # =============================================================================
 
 
-def pam3s_to_mols(flow_in_pam3_s):
-    """
-    Convert a flow in Pa.m^3/s to a flow in mols.
-
-    Parameters
-    ----------
-    flow_in_pam3_s: Union[float, np.array]
-        The flow in Pa.m^3/s to convert
-
-    Returns
-    -------
-    flow_in_mols: Union[float, np.array]
-        The flow in mol/s
-
-    Notes
-    -----
-    At 273.15 K for a diatomic gas
-    """
-    return flow_in_pam3_s / 2270
-
-
-def mols_to_pam3s(flow_in_mols):  # noqa :N802
-    """
-    Convert a flow in Pa.m^3/s to a flow in mols.
-
-    Parameters
-    ----------
-    flow_in_mols: Union[float, np.array]
-        The flow in mol/s to convert
-
-    Returns
-    -------
-    flow_in_pam3_s: Union[float, np.array]
-        The flow in Pa.m^3/s
-
-    Notes
-    -----
-    At 273.15 K for a diatomic gas
-    """
-    return flow_in_mols * 2270
-
-
 def find_noisy_locals(x, x_bins=50, mode="min"):
     """
     Find local minima or maxima in a noisy signal.

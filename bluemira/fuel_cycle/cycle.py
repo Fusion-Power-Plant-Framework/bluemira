@@ -26,7 +26,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, YR_TO_S
+from bluemira.base.constants import (
+    N_AVOGADRO,
+    T_LAMBDA,
+    T_MOLAR_MASS,
+    YR_TO_S,
+    pam3s_to_mols,
+)
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter import ParameterFrame
 from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
@@ -36,7 +42,6 @@ from bluemira.fuel_cycle.tools import (
     find_max_load_factor,
     find_noisy_locals,
     legal_limit,
-    pam3s_to_mols,
 )
 
 # TODO: Make the whole thing run in self.t (higher resolution, better plotting)
