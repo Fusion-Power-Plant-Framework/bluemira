@@ -110,28 +110,40 @@ class TestClosedFluxSurface:
         fs.close()
         fs = ClosedFluxSurface(fs)
         assert np.isclose(fs.kappa, kappa)
-        assert np.isclose(fs.kappa_lower, kappa)
-        assert np.isclose(fs.kappa_upper, kappa)
-        assert np.isclose(fs.delta_lower, fs.delta_upper)
+        assert np.isclose(fs.kappa_lower, kappa, rtol=1e-2)
+        assert np.isclose(fs.kappa_upper, kappa, rtol=1e-2)
+        assert np.isclose(fs.delta_lower, fs.delta_upper, rtol=1e-2)
         assert np.isclose(fs.zeta_lower, fs.zeta_upper)
 
-    def test_asymmetric(self):
+    def test_johner(self):
 
-        kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4 = (
+        R_0, z_0, a, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4 = (
+            7,
+            0,
+            2,
             1.9,
             1.6,
             0.4,
             0.33,
-            60,
-            30,
             -20,
             5,
+            60,
+            30,
         )
         fs = flux_surface_johner(
             7, 0, 2, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4, n=1000
         )
         fs.close()
         fs = ClosedFluxSurface(fs)
+        assert np.isclose(fs.major_radius, R_0)
+        assert np.isclose(fs._z_centre, z_0)
+        assert np.isclose(fs.minor_radius, a)
+        assert np.isclose(fs.kappa, np.average([kappa_l, kappa_u]))
+        assert np.isclose(fs.kappa_upper, kappa_u)
+        assert np.isclose(fs.kappa_lower, kappa_l)
+        assert np.isclose(fs.delta, np.average([delta_l, delta_u]))
+        assert np.isclose(fs.delta_upper, delta_u)
+        assert np.isclose(fs.delta_lower, delta_l)
         assert not np.isclose(fs.zeta_upper, fs.zeta_lower)
 
 
