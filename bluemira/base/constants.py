@@ -23,7 +23,7 @@
 A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
-from typing import Dict, List, Union
+from typing import List, Union
 
 import numpy as np
 from periodictable import elements
@@ -86,7 +86,10 @@ ELECTRON_MOLAR_MASS = (
 ).magnitude
 
 # Tritium half-life
-T_HALFLIFE = 12.32  # [yr]
+# https://www.nist.gov/pml/radiation-physics/radioactivity/radionuclide-half-life-measurements
+# http://www.lnhb.fr/nuclear-data/nuclear-data-table/
+# http://www.lnhb.fr/nuclides/H-3_tables.pdf
+T_HALFLIFE = 12.312  # [yr]
 
 # Tritium decay constant
 T_LAMBDA = np.log(2) / T_HALFLIFE  # [1/yr]
