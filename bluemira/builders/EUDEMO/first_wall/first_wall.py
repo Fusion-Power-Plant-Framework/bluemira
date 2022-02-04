@@ -30,7 +30,7 @@ from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.builders.EUDEMO.first_wall import ClosedFirstWallBuilder
 from bluemira.builders.EUDEMO.first_wall.divertor import DivertorBuilder
-from bluemira.builders.shapes import ParameterisedShapeBuilder
+from bluemira.builders.shapes import Builder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.base import BluemiraGeo
@@ -38,7 +38,7 @@ from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
-class FirstWallBuilder(ParameterisedShapeBuilder):
+class FirstWallBuilder(Builder):
     """
     Build a first wall with a divertor.
 
@@ -80,17 +80,17 @@ class FirstWallBuilder(ParameterisedShapeBuilder):
         """
         Create a basic shape for the wall's boundary.
         """
-        self.boundary = self._shape.create_shape()
+        pass
 
-    def build(self, **kwargs) -> Component:
+    def build(self) -> Component:
         """
         Build the component.
         """
+        parent_component = Component("xz")
         components = [self.wall_part, self.divertor]
-        component = Component("xz")
-        for comp in components:
-            component.add_child(comp)
-        return component
+        for component in components:
+            parent_component.add_child(component)
+        return parent_component
 
     def _build_wall_no_divertor(self, params: Dict[str, Any], build_config: BuildConfig):
         """
