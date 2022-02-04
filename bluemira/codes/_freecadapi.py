@@ -384,30 +384,6 @@ def make_ellipse(
     return Part.Wire(Part.Edge(output))
 
 
-def _wire_is_planar(wire):
-    """
-    Check if a wire is planar.
-    """
-    try:
-        face = Part.Face(wire)
-    except Part.OCCError:
-        return False
-    return isinstance(face.Surface, Part.Plane)
-
-
-def _wire_is_straight(wire):
-    """
-    Check if a wire is a straight line.
-    """
-    if len(wire.Edges) == 1:
-        edge = wire.Edges[0]
-        if len(edge.Vertexes) == 2:
-            straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
-            if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
-                return True
-    return False
-
-
 def offset_wire(
     wire: apiWire, thickness: float, join: str = "intersect", open_wire: bool = True
 ) -> apiWire:
@@ -855,42 +831,6 @@ def extrude_shape(shape, vec: tuple):
     return shape.extrude(vec)
 
 
-def _edges_tangent(edge_1, edge_2):
-    """
-    Check if two adjacent edges are tangent to one another.
-    """
-    angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
-        edge_2.tangentAt(edge_2.FirstParameter)
-    )
-    return np.isclose(
-        angle,
-        0.0,
-        rtol=1e-4,
-        atol=1e-4,
-    )
-
-
-def _wire_edges_tangent(wire):
-    """
-    Check that all consecutive edges in a wire are tangent
-    """
-    if len(wire.Edges) <= 1:
-        return True
-
-    else:
-        edges_tangent = []
-        for i in range(len(wire.Edges) - 1):
-            edge_1 = wire.Edges[i]
-            edge_2 = wire.Edges[i + 1]
-            edges_tangent.append(_edges_tangent(edge_1, edge_2))
-
-    if wire.isClosed():
-        # Check last and first edge tangency
-        edges_tangent.append(_edges_tangent(wire.Edges[-1], wire.Edges[0]))
-
-    return all(edges_tangent)
-
-
 def _split_wire(wire):
     """
     Split a wire into two parts.
@@ -1103,6 +1043,86 @@ def point_inside_shape(point, shape):
 
 
 # ======================================================================================
+# Geometry checking tools
+# ======================================================================================
+
+
+def _edges_tangent(edge_1, edge_2):
+    """
+    Check if two adjacent edges are tangent to one another.
+    """
+    angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
+        edge_2.tangentAt(edge_2.FirstParameter)
+    )
+    return np.isclose(
+        angle,
+        0.0,
+        rtol=1e-4,
+        atol=1e-4,
+    )
+
+
+def _wire_edges_tangent(wire):
+    """
+    Check that all consecutive edges in a wire are tangent
+    """
+    if len(wire.Edges) <= 1:
+        return True
+
+    else:
+        edges_tangent = []
+        for i in range(len(wire.Edges) - 1):
+            edge_1 = wire.Edges[i]
+            edge_2 = wire.Edges[i + 1]
+            edges_tangent.append(_edges_tangent(edge_1, edge_2))
+
+    if wire.isClosed():
+        # Check last and first edge tangency
+        edges_tangent.append(_edges_tangent(wire.Edges[-1], wire.Edges[0]))
+
+    return all(edges_tangent)
+
+
+def _wire_is_planar(wire):
+    """
+    Check if a wire is planar.
+    """
+    try:
+        face = Part.Face(wire)
+    except Part.OCCError:
+        return False
+    return isinstance(face.Surface, Part.Plane)
+
+
+def _wire_is_straight(wire):
+    """
+    Check if a wire is a straight line.
+    """
+    if len(wire.Edges) == 1:
+        edge = wire.Edges[0]
+        if len(edge.Vertexes) == 2:
+            straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
+            if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
+                return True
+    return False
+
+
+def _faces_are_coplanar(faces):
+    """
+    Check if a list of faces are all coplanar. First face is taken as the reference.
+    """
+    coplanar = []
+    for other in faces[1:]:
+        coplanar.append(faces[0].isCoplanar(other))
+    return all(coplanar)
+
+
+def _flip_plane_axis(shape):
+    result = shape.mirror(apiVector(0, 0, 0), apiVector(0, 0, 1))
+    return result
+
+
+# ======================================================================================
 # Geometry healing
 # ======================================================================================
 
@@ -1203,6 +1223,11 @@ def _colourise(
         node.transparency.setValue(transparency)
     for child in node.getChildren() or []:
         _colourise(child, options)
+
+
+# ======================================================================================
+# Geometry visualisation
+# ======================================================================================
 
 
 def show_cad(
