@@ -32,7 +32,6 @@ from typing import TextIO, Union
 import numpy as np
 from scipy.special import iv as bessel
 
-from bluemira.display.plotter import plot_2d
 from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
@@ -1407,26 +1406,6 @@ class TaperedPictureFrame(GeometryParameterisation):
         wires.append(make_polygon([p5, p6], label="outer_limb"))
 
         bot_leg = PictureFrameTools._make_flat_leg(axis, x2, x3, -z2, ri, ro, flip=True)
-        wires.append(bot_leg)
-        return BluemiraWire(wires, label=label)
-
-        axis = [0, -1, 0]
-        wires = []
-        inb_leg = PictureFrameTools._make_tapered_inner_leg(
-            axis, x1, x2, z1, z2 - ri, -z2 + ri
-        )
-        wires.append(inb_leg)
-
-        top_leg = PictureFrameTools._make_flat_leg(
-            axis, x2, x3, z2, ri, ro, flip=False, label="top_limb"
-        )
-        wires.append(top_leg)
-
-        wires.append(make_polygon([p5, p6], label="outer_limb"))
-
-        bot_leg = PictureFrameTools._make_flat_leg(
-            axis, x2, x3, -z2, ri, ro, flip=True, label="bot_limb"
-        )
         wires.append(bot_leg)
         return BluemiraWire(wires, label=label)
 
