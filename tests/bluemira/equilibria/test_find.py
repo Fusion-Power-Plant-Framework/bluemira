@@ -140,27 +140,47 @@ class TestInPlasma:
 
 
 class TestGetLegs:
+    @classmethod
+    def setup_class(cls):
+        filename = os.sep.join([DATA, "eqref_OOB.json"])
+        cls.sn_eq = Equilibrium.from_eqdsk(filename)
+        filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
+        cls.dn_eq = Equilibrium.from_eqdsk(filename)
+
     @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_single_null(self, n_layers):
-        filename = os.sep.join([DATA, "eqref_OOB.json"])
-        eq = Equilibrium.from_eqdsk(filename)
-        legs = get_legs(eq, n_layers, 0.2)
+        legs = get_legs(self.sn_eq, n_layers, 0.2)
         assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
-        x_point = eq.get_OX_points()[1][0]
+        x_point = self.sn_eq.get_OX_points()[1][0]
         for leg_group in legs.values():
             assert len(leg_group) == n_layers
             for leg in leg_group:
                 self.assert_valid_leg(leg, x_point)
                 self.assert_valid_leg(leg, x_point)
 
+    def test_single_single(self):
+        legs = get_legs(self.sn_eq, 1, 0.0)
+        assert len(legs) == 1
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x1 = legs["lower_inner"][0].x[0]
+        legs = get_legs(self.sn_eq, 1, 1.0)
+        assert len(legs) == 1
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x2 = legs["lower_inner"][0].x[0]
+        assert np.isclose(x1, x2)
+
     @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_double_null(self, n_layers):
-        filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
-        eq = Equilibrium.from_eqdsk(filename)
-        legs = get_legs(eq, n_layers, 0.2)
-        x_points = eq.get_OX_points()[1][:2]
+        legs = get_legs(self.dn_eq, n_layers, 0.2)
+        x_points = self.dn_eq.get_OX_points()[1][:2]
         x_points.sort(key=lambda xp: xp.z)
         assert len(legs) == 4
         assert "lower_inner" in legs

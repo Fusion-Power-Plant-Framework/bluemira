@@ -774,7 +774,7 @@ def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_poi
     return offset_legs
 
 
-def get_legs(equilibrium, n_layers: int, dx_off: float):
+def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
     """
     Get the legs of a separatrix.
 
@@ -810,8 +810,10 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
     x_points = x_points[:2]
     separatrix = equilibrium.get_separatrix()
     delta = equilibrium.grid.dx
-    n_layers = max(2, n_layers)
-    dx_offsets = np.linspace(0, dx_off, n_layers)[1:]
+    if n_layers == 1:
+        dx_offsets = None
+    else:
+        dx_offsets = np.linspace(0, dx_off, n_layers)[1:]
 
     if isinstance(separatrix, Iterable):
         # Double null (sort in/out top/bottom)
@@ -822,11 +824,12 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
             for x_p in x_points:
                 sep_leg = _extract_leg(half_sep, x_p.x, x_p.z, delta, o_point.z)
                 quadrant_legs = [sep_leg]
-                quadrant_legs.extend(
-                    _extract_offsets(
-                        equilibrium, dx_offsets, sep_leg, direction, delta, o_point.z
+                if dx_offsets:
+                    quadrant_legs.extend(
+                        _extract_offsets(
+                            equilibrium, dx_offsets, sep_leg, direction, delta, o_point.z
+                        )
                     )
-                )
                 legs.append(quadrant_legs)
         leg_dict = {
             "lower_inner": legs[0],
@@ -841,12 +844,15 @@ def get_legs(equilibrium, n_layers: int, dx_off: float):
         legs.sort(key=lambda leg: leg.x[0])
         inner_leg, outer_leg = legs
         inner_legs, outer_legs = [inner_leg], [outer_leg]
-        inner_legs.extend(
-            _extract_offsets(equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z)
-        )
-        outer_legs.extend(
-            _extract_offsets(equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z)
-        )
+        if dx_offsets:
+            inner_legs.extend(
+                _extract_offsets(
+                    equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
+                )
+            )
+            outer_legs.extend(
+                _extract_offsets(equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z)
+            )
         location = "lower" if x_point.z < o_point.z else "upper"
         leg_dict = {
             f"{location}_inner": inner_legs,
