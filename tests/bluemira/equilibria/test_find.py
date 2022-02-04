@@ -160,16 +160,16 @@ class TestGetLegs:
                 self.assert_valid_leg(leg, x_point)
                 self.assert_valid_leg(leg, x_point)
 
-    def test_single_single(self):
+    def test_single_one_layer(self):
         legs = get_legs(self.sn_eq, 1, 0.0)
-        assert len(legs) == 1
+        assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
         assert len(legs["lower_inner"]) == 1
         assert len(legs["lower_outer"]) == 1
         x1 = legs["lower_inner"][0].x[0]
         legs = get_legs(self.sn_eq, 1, 1.0)
-        assert len(legs) == 1
+        assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
         assert len(legs["lower_inner"]) == 1
@@ -195,6 +195,23 @@ class TestGetLegs:
                 x_p = x_points[1]
             for leg in leg_group:
                 self.assert_valid_leg(leg, x_p)
+
+    def test_double_one_layer(self):
+        legs = get_legs(self.dn_eq, 1, 0.0)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x1 = legs["lower_inner"][0].x[0]
+        legs = get_legs(self.dn_eq, 1, 1.0)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x2 = legs["lower_inner"][0].x[0]
+        assert np.isclose(x1, x2)
 
     def assert_valid_leg(self, leg, x_point):
         assert np.isclose(leg.z[0], x_point.z)

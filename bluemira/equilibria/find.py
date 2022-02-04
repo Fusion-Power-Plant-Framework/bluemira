@@ -816,7 +816,7 @@ def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
         dx_offsets = np.linspace(0, dx_off, n_layers)[1:]
 
     if isinstance(separatrix, Iterable):
-        # Double null (sort in/out top/bottom)
+        # Double null (sort in/out bottom/top)
         separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
         x_points.sort(key=lambda x_point: x_point.z)
         legs = []
@@ -824,7 +824,7 @@ def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
             for x_p in x_points:
                 sep_leg = _extract_leg(half_sep, x_p.x, x_p.z, delta, o_point.z)
                 quadrant_legs = [sep_leg]
-                if dx_offsets:
+                if dx_offsets is not None:
                     quadrant_legs.extend(
                         _extract_offsets(
                             equilibrium, dx_offsets, sep_leg, direction, delta, o_point.z
@@ -844,7 +844,7 @@ def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
         legs.sort(key=lambda leg: leg.x[0])
         inner_leg, outer_leg = legs
         inner_legs, outer_legs = [inner_leg], [outer_leg]
-        if dx_offsets:
+        if dx_offsets is not None:
             inner_legs.extend(
                 _extract_offsets(
                     equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
