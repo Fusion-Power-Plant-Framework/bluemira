@@ -335,6 +335,9 @@ class Parameter(wrapt.ObjectProxy):
 
     @property
     def unit(self):
+        """
+        The unit of the parameter
+        """
         return self._unit
 
     def _unit_setup(self, unit: Union[Unit, str, None]):
@@ -1209,6 +1212,7 @@ class ParameterFrame:
             param.value = value.value
             param.source = value.source
 
+    @staticmethod
     def _unit_conversion(value, unit_from, unit_to=None):
         return value
 
