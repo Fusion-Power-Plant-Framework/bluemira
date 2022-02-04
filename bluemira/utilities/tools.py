@@ -482,11 +482,21 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True, rtol=1e-5, atol=1e-8
     def dict_eq(value_1, value_2):
         return compare_dicts(value_1, value_2, almost_equal, verbose, rtol, atol)
 
+    def array_almost_eq(val1, val2):
+        return np.allclose(val1, val2, rtol, atol)
+
+    def num_almost_eq(val1, val2):
+        return np.isclose(val1, val2, rtol, atol)
+
+    def array_is_eq(val1, val2):
+        return (np.asarray(val1) == np.asarray(val2)).all()
+
     if almost_equal:
-        array_eq = lambda val1, val2: np.allclose(val1, val2, rtol, atol)
-        num_eq = lambda val1, val2: np.isclose(val1, val2, rtol, atol)
+        array_eq = array_almost_eq
+        num_eq = num_almost_eq
     else:
-        array_eq, num_eq = lambda val1, val2: (val1 == val2).all(), operator.eq
+        array_eq = array_is_eq
+        num_eq = operator.eq
 
     # Map the comparison functions to the keys based on the type of value in d1.
     comp_map = {

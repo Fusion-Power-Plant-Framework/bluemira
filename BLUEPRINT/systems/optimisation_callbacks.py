@@ -1,5 +1,7 @@
-"""Callbacks which can be used to perform optimisations on various
-components."""
+"""
+Callbacks which can be used to perform optimisations on various
+components.
+"""
 
 from time import time
 
@@ -10,16 +12,69 @@ from bluemira.equilibria.constants import NB3SN_J_MAX, NBTI_J_MAX
 
 
 def TF_optimiser(TF, verbose, kwargs):
-    """The optimisation step when building TF coils."""
+    """
+    The optimisation step when building TF coils.
+
+    Parameters
+    ----------
+    TF: ToroidalFieldCoils
+        The TF coils being optimised.
+    verbose: bool (default = True)
+        Verbosity of the scipy optimiser
+
+    Other Parameters
+    ----------------
+    ripple: bool
+        Whether or not to include a ripple constraint
+    ripple_limit: float
+        The maximum toroidal field ripple on the separatrix [%]
+    ny: intz
+        The number of current filaments in the y direction
+    nr: int
+        The number of current filaments in the radial direction
+    nrippoints: int
+        The number of points on the separatrix to check for ripple
+
+    """
     TF.shp.optimise(verbose=verbose, **kwargs)
 
 
 def TF_loader(TF, verbose, kwargs):
-    """Instead of optimising TF coils, load a previous optimisation."""
+    """
+    Instead of optimising TF coils, load a previous optimisation.
+
+    Parameters
+    ----------
+    TF: ToroidalFieldCoils
+        The TF coils being set from a previous run.
+    verbose: bool (default = True)
+        Verbosity of the scipy optimiser. Unused but present for
+        API-compatibility with `TF_optimiser`.
+    kwargs
+        Other keyword arguments.. Unused but present for
+        API-compatibility with `TF_optimiser`.
+
+    """
     TF.shp.load()
 
 
-def EQ_optimiser(EQ, TF, params, exclusions, plot_flag):
+def EQ_optimiser(EQ, TF, params, exclusions, plot_flag):  # noqa: N802
+    """
+    The optimisation step of building equilibrium objects.
+
+    Parameters
+    ----------
+    EQ
+        The Equilibrium object being optimised.
+    TF
+        The toroidal field coils being used in the optimisation.
+    params
+        The parameter frame for the reactor.
+    exclusions
+        Exclusion information (e.g., for ports)
+    plot_flag
+        Whether to produce plots.
+    """
     eta_pf_imax = 1.4  # Maximum current scaling for PF coil
     if params.PF_material == "NbTi":
         jmax = NBTI_J_MAX
