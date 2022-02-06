@@ -817,9 +817,9 @@ def serialize_shape(shape: BluemiraGeo):
 
     output = []
     if isinstance(shape, BluemiraGeo):
+        dict = {"label": shape.label, "boundary": output}
         for obj in shape.boundary:
             output.append(serialize_shape(obj))
-            dict = {"label": shape.label, "boundary": output}
             if isinstance(shape, GeoMeshable):
                 if shape.mesh_options is not None:
                     if shape.mesh_options.lcar is not None:

@@ -28,11 +28,13 @@ Some examples of using bluemira mesh module.
 import os
 
 import bluemira.geometry.tools as tools
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 
 HAS_MSH2XDMF = False
@@ -60,12 +62,34 @@ lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
 face = BluemiraFace(lcfs, label="plasma_surface")
 face.mesh_options = {"lcar": 1, "physical_group": "surface"}
 
-poly = tools.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], closed=True)
-poly.mesh_options = {"lcar": 0.75, "physical_group": "poly"}
-coil = BluemiraFace(poly)
-# coil.mesh_options = {"lcar": 1, "physical_group": "coil"}
+poly1 = tools.make_polygon(
+    [[0, 1, 1], [0, 0, 1], [0, 0, 0]], closed=False, label="poly1"
+)
+poly2 = tools.make_polygon(
+    [[1, 0, 0], [1, 1, 0], [0, 0, 0]], closed=False, label="poly2"
+)
+poly1.mesh_options = {"lcar": 0.75, "physical_group": "poly1"}
+poly2.mesh_options = {"lcar": 0.75, "physical_group": "poly2"}
+
+poly3 = tools.make_polygon(
+    [[0.25, 0.75, 0.75], [0.25, 0.25, 0.75], [0, 0, 0]], closed=False, label="poly3"
+)
+poly4 = tools.make_polygon(
+    [[0.75, 0.25, 0.25], [0.75, 0.75, 0.25], [0, 0, 0]], closed=False, label="poly4"
+)
+poly3.mesh_options = {"lcar": 0.75, "physical_group": "poly3"}
+poly4.mesh_options = {"lcar": 0.75, "physical_group": "poly4"}
+
+poly_out = BluemiraWire([poly1, poly2], label="poly_out")
+poly_in = BluemiraWire([poly3, poly4], label="poly_in")
+coil = BluemiraFace([poly_out, poly_in], label="coil")
+coil.mesh_options = {"lcar": 1, "physical_group": "coil"}
 
 shell = BluemiraShell([face, coil])
+
+comp = Component(name="comp")
+pcomp = PhysicalComponent(name="pcomp", shape=coil)
+
 # %%[markdown]
 
 # Mesh creation

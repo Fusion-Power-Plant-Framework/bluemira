@@ -25,6 +25,10 @@ Core functionality for the bluemira mesh module.
 
 from __future__ import annotations
 
+import copy
+import pprint
+from typing import TYPE_CHECKING, Dict, Union
+
 # import mesher lib (gmsh)
 import gmsh
 
@@ -33,10 +37,9 @@ import bluemira.geometry as geo
 
 from .error import MeshOptionsError
 
-import copy
-import pprint
-
-from typing import Dict, Union
+if TYPE_CHECKING:
+    from bluemira.base.components import Component
+    from bluemira.base.tools import serialize_component
 
 # Mesh options for the moment are limited to definition of mesh size for each point (
 # quantity called lcar to be consistent with gmsh) and the definition of physical
@@ -45,7 +48,6 @@ DEFAULT_MESH_OPTIONS = {
     "lcar": None,
     "physical_group": None,
 }
-
 
 MESH_DATA = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1, "surface_tag": 2}
 SUPPORTED_GEOS = ["BluemiraWire", "BluemiraFace", "BluemiraShell"]
@@ -215,7 +217,10 @@ class Mesh:
         """
         if not hasattr(obj, "ismeshed") or not obj.ismeshed:
             # object is serialized into a dictionary
-            buffer = geo.tools.serialize_shape(obj)
+            if isinstance(obj, Component):
+                buffer = serialize_component(obj)["shape"]
+            elif isinstance(obj, SUPPORTED_GEOS):
+                buffer = geo.tools.serialize_shape(obj)
             # Each object is recreated into gmsh. Here there is a trick: in order to
             # allow the correct mesh in case of intersection, the procedure
             # is made meshing the objects with increasing dimension.
