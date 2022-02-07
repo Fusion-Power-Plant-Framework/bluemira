@@ -153,10 +153,10 @@ class DivertorBuilder(Builder):
             outer_target_outside_end = self._get_wire_end_with_largest(
                 outer_target.shape, "x"
             )
-        inner_baffle = self.make_baffle(
-            "inner_baffle", self.outer_end_point, outer_target_outside_end, None
+        outer_baffle = self.make_baffle(
+            "outer_baffle", self.outer_end_point, outer_target_outside_end, None
         )
-        component.add_child(inner_baffle)
+        component.add_child(outer_baffle)
 
         return component
 
