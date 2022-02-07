@@ -31,7 +31,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
     The base object for all variable names and metadata in bluemira.
     Variables specified here should be physical in some way, and not represent
     how the code is being run.
-    Defaults are also specified here, and overidden later.
+    Defaults are also specified here, and overridden later.
     New variables should be defined here, with a corresponding entry in the
     ConfigurationSchema, and passed onwards as Parameter objects.
     """
