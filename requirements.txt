@@ -54,7 +54,7 @@ pandocfilters==1.5.0
 parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
-Pillow==9.0.0
+Pillow==9.0.1
 pluggy==1.0.0
 prometheus-client==0.13.1
 prompt-toolkit==3.0.26
@@ -68,7 +68,7 @@ pyparsing==3.0.7
 pypet==0.6.0
 pyquaternion==0.9.9
 pyrsistent==0.18.1
-pytest==6.2.5
+pytest==7.0.0
 python-dateutil==2.8.2
 pytools==2021.2.9
 pytz==2021.3
