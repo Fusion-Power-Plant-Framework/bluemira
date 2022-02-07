@@ -999,7 +999,14 @@ class PictureFrameTools:
 
     @staticmethod
     def _make_domed_leg(
-        axis, x_out, x_curve_start, x_mid, z_top, z_mid, flip=False, r_c=0, label=""
+        axis,
+        x_out,
+        x_curve_start,
+        x_mid,
+        z_top,
+        z_mid,
+        flip=False,
+        r_c=0,
     ):
         """
         Makes smooth dome for CP coils
@@ -1083,7 +1090,7 @@ class PictureFrameTools:
         return BluemiraWire(out_wire, label=label)
 
     @staticmethod
-    def _make_flat_leg(axis, x_in, x_out, z, r_i, r_o, flip=False, label=""):
+    def _make_flat_leg(axis, x_in, x_out, z, r_i, r_o, flip=False):
         """
         Makes a flat leg with the option of one end rounded
 
@@ -1262,14 +1269,26 @@ class PictureFrame(GeometryParameterisation):
         wires = [make_polygon([p2, p1], label="inner_limb")]
 
         top_leg = PictureFrameTools._make_flat_leg(
-            axis, x1, x2, z1, ri, ro, flip=False, label="top_limb"
+            axis,
+            x1,
+            x2,
+            z1,
+            ri,
+            ro,
+            flip=False,
         )
         wires.append(top_leg)
 
         wires.append(make_polygon([p6, p5], label="outer_limb"))
 
         bot_leg = PictureFrameTools._make_flat_leg(
-            axis, x1, x2, z2, ri, ro, flip=True, label="bot_limb"
+            axis,
+            x1,
+            x2,
+            z2,
+            ri,
+            ro,
+            flip=True,
         )
         wires.append(bot_leg)
         return BluemiraWire(wires, label=label)
@@ -1589,7 +1608,13 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         # Bottom leg is flat
 
         bot_leg = PictureFrameTools._make_flat_leg(
-            axis, x_mid, x_out, z_mid_down, 0, r_j, flip=True, label="bot_limb"
+            axis,
+            x_mid,
+            x_out,
+            z_mid_down,
+            0,
+            r_j,
+            flip=True,
         )
         wires.append(bot_leg)
 
@@ -1657,7 +1682,13 @@ class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
 
         # Top leg is flat
         top_leg = PictureFrameTools._make_flat_leg(
-            axis, x_mid, x_out, z_mid_up, 0, r_j, flip=False, label="top_limb"
+            axis,
+            x_mid,
+            x_out,
+            z_mid_up,
+            0,
+            r_j,
+            flip=False,
         )
         wires.append(top_leg)
 
@@ -2594,7 +2625,13 @@ class CurvedPictureFrame(GeometryParameterisation):
         # Bottom leg is flat
 
         bot_leg = PictureFrameTools._make_flat_leg(
-            axis, x_mid, x_out, z_mid_down, 0, r_j, flip=True, label="bot_limb"
+            axis,
+            x_mid,
+            x_out,
+            z_mid_down,
+            0,
+            r_j,
+            flip=True,
         )
         wires.append(bot_leg)
 
@@ -2671,7 +2708,13 @@ class BotDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
 
         # Top leg is flat
         top_leg = PictureFrameTools._make_flat_leg(
-            axis, x_mid, x_out, z_mid_up, 0, r_j, flip=False, label="top_limb"
+            axis,
+            x_mid,
+            x_out,
+            z_mid_up,
+            0,
+            r_j,
+            flip=False,
         )
         wires.append(top_leg)
 
