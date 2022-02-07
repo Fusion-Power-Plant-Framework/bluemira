@@ -24,10 +24,10 @@ Test for the closed first wall, without a divertor.
 
 import copy
 
-from bluemira.builders.EUDEMO.first_wall import ClosedFirstWallBuilder
+from bluemira.builders.EUDEMO.first_wall import WallBuilder
 
 
-class TestClosedFirstWallBuilder:
+class TestWall:
 
     _default_variables_map = {
         "x1": {  # ib radius
@@ -59,12 +59,12 @@ class TestClosedFirstWallBuilder:
         config = copy.deepcopy(self._default_config)
         config["name"] = "New name"
 
-        builder = ClosedFirstWallBuilder(self._params, build_config=config)
+        builder = WallBuilder(self._params, build_config=config)
 
         assert builder.name == "New name"
 
     def test_built_component_contains_physical_component_in_xz(self):
-        builder = ClosedFirstWallBuilder(self._params, build_config=self._default_config)
+        builder = WallBuilder(self._params, build_config=self._default_config)
 
         component = builder()
 
@@ -73,7 +73,7 @@ class TestClosedFirstWallBuilder:
         assert len(xy_component[0].get_component("first_wall", first=False)) == 1
 
     def test_physical_component_shape_is_closed(self):
-        builder = ClosedFirstWallBuilder(self._params, build_config=self._default_config)
+        builder = WallBuilder(self._params, build_config=self._default_config)
 
         component = builder()
 
@@ -85,7 +85,7 @@ class TestClosedFirstWallBuilder:
             {"R_0": (10.0, "Input"), "kappa_95": (2.0, "Input"), "A": (2.0, "Input")}
         )
 
-        builder = ClosedFirstWallBuilder(params, build_config=self._default_config)
+        builder = WallBuilder(params, build_config=self._default_config)
         component = builder()
 
         bounding_box = component.get_component("first_wall").shape.bounding_box

@@ -59,7 +59,7 @@ class FirstWallPolySpline(PolySpline):
         super().__init__(defaults)
 
 
-class ClosedFirstWallBuilder(ParameterisedShapeBuilder):
+class WallBuilder(ParameterisedShapeBuilder):
     """
     Builder class for the first wall of the reactor, closed with
     no divertor.

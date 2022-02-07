@@ -19,6 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from .closed import ClosedFirstWallBuilder, FirstWallPolySpline
 from .divertor import DivertorBuilder
 from .first_wall import FirstWallBuilder
+from .wall import FirstWallPolySpline, WallBuilder

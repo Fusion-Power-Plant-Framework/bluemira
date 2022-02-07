@@ -28,7 +28,7 @@ import os
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.builders.EUDEMO.first_wall import ClosedFirstWallBuilder
+from bluemira.builders.EUDEMO.first_wall import WallBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -269,7 +269,7 @@ class EUDEMOReactor(Reactor):
 
         config = self._process_design_stage_config(name, default_config)
 
-        builder = ClosedFirstWallBuilder(self._params.to_dict(), build_config=config)
+        builder = WallBuilder(self._params.to_dict(), build_config=config)
         self.register_builder(builder, name)
 
         component = super()._build_stage(name)

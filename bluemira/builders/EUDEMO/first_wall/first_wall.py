@@ -28,8 +28,8 @@ import numpy as np
 
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
-from bluemira.builders.EUDEMO.first_wall import ClosedFirstWallBuilder
 from bluemira.builders.EUDEMO.first_wall.divertor import DivertorBuilder
+from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_OX_points
@@ -96,7 +96,7 @@ class FirstWallBuilder(Builder):
         """
         Build the component for the wall, excluding the divertor.
         """
-        builder = ClosedFirstWallBuilder(params, build_config=build_config)
+        builder = WallBuilder(params, build_config=build_config)
         wall = builder()
 
         wall_shape: BluemiraGeo = wall.get_component("first_wall").shape
