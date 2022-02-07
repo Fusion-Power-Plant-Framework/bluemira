@@ -51,6 +51,10 @@ class TestDivertorBuilder:
         "div_Ltarg": (0.5, "Input"),
         "div_open": (False, "Input"),
     }
+    targets = [
+        DivertorBuilder.COMPONENT_INNER_TARGET,
+        DivertorBuilder.COMPONENT_OUTER_TARGET,
+    ]
 
     @classmethod
     def setup_class(cls):
@@ -105,8 +109,8 @@ class TestDivertorBuilder:
 
         divertor = builder()
 
-        for leg in [LegPosition.INNER, LegPosition.OUTER]:
-            target = divertor.get_component(f"target {leg}")
+        for leg in self.targets:
+            target = divertor.get_component(leg)
             assert signed_distance(target.shape, self.separatrix) == 0
 
     def test_div_Ltarg_sets_target_length(self):
@@ -117,8 +121,8 @@ class TestDivertorBuilder:
 
         divertor = builder()
 
-        for leg in [LegPosition.INNER, LegPosition.OUTER]:
-            target = divertor.get_component(f"target {leg}")
+        for leg in self.targets:
+            target = divertor.get_component(leg)
             assert target.shape.length == 1.5
 
     def test_dome_added_to_divertor(self):
@@ -128,7 +132,7 @@ class TestDivertorBuilder:
 
         divertor = builder()
 
-        assert divertor.get_component("dome") is not None
+        assert divertor.get_component(DivertorBuilder.COMPONENT_DOME) is not None
 
     def test_dome_intersects_targets(self):
         builder = DivertorBuilder(
@@ -137,11 +141,8 @@ class TestDivertorBuilder:
 
         divertor = builder()
 
-        dome = divertor.get_component("dome")
-        targets = [
-            divertor.get_component(f"target {leg}")
-            for leg in [LegPosition.INNER, LegPosition.OUTER]
-        ]
+        dome = divertor.get_component(DivertorBuilder.COMPONENT_DOME)
+        targets = [divertor.get_component(leg) for leg in self.targets]
         assert signed_distance(dome.shape, targets[0].shape) == 0
         assert signed_distance(dome.shape, targets[1].shape) == 0
 
@@ -152,7 +153,7 @@ class TestDivertorBuilder:
 
         divertor = builder()
 
-        dome = divertor.get_component("dome")
+        dome = divertor.get_component(DivertorBuilder.COMPONENT_DOME)
         assert signed_distance(dome.shape, self.separatrix) < 0
 
     def test_dome_has_turning_point_below_x_point(self):
@@ -165,7 +166,9 @@ class TestDivertorBuilder:
 
         divertor = builder()
 
-        dome_coords = divertor.get_component("dome").shape.discretize()
+        dome_coords = divertor.get_component(
+            DivertorBuilder.COMPONENT_DOME
+        ).shape.discretize()
         turning_points = get_turning_point_idxs(dome_coords[2, :])
         assert len(turning_points) == 1
         assert dome_coords[2, turning_points[0]] < x_points[0].z

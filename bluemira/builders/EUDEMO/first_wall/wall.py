@@ -65,6 +65,8 @@ class WallBuilder(ParameterisedShapeBuilder):
     no divertor.
     """
 
+    COMPONENT_WALL = "wall"
+
     _required_params: List[str] = [
         "plasma_type",
         "R_0",  # major radius
@@ -110,7 +112,8 @@ class WallBuilder(ParameterisedShapeBuilder):
         component = Component("xz")
         component.add_child(
             PhysicalComponent(
-                "first_wall", BluemiraWire(self.boundary, label="first_wall")
+                self.COMPONENT_WALL,
+                BluemiraWire(self.boundary, label=self.COMPONENT_WALL),
             )
         )
         component.plot_options.wire_options["color"] = BLUE_PALETTE["DIV"]

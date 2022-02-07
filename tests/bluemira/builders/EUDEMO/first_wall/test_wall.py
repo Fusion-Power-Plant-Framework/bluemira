@@ -70,14 +70,17 @@ class TestWall:
 
         xy_component = component.get_component("xz", first=False)
         assert len(xy_component) == 1
-        assert len(xy_component[0].get_component("first_wall", first=False)) == 1
+        wall_components = xy_component[0].get_component(
+            WallBuilder.COMPONENT_WALL, first=False
+        )
+        assert len(wall_components) == 1
 
     def test_physical_component_shape_is_closed(self):
         builder = WallBuilder(self._params, build_config=self._default_config)
 
         component = builder()
 
-        assert component.get_component("first_wall").shape.is_closed()
+        assert component.get_component(WallBuilder.COMPONENT_WALL).shape.is_closed()
 
     def test_component_height_derived_from_params(self):
         params = copy.deepcopy(self._params)
@@ -88,6 +91,8 @@ class TestWall:
         builder = WallBuilder(params, build_config=self._default_config)
         component = builder()
 
-        bounding_box = component.get_component("first_wall").shape.bounding_box
+        bounding_box = component.get_component(
+            WallBuilder.COMPONENT_WALL
+        ).shape.bounding_box
         # expected_height = 2*(R_0/A)*kappa_95 = 20
         assert bounding_box.z_max - bounding_box.z_min == 20.0

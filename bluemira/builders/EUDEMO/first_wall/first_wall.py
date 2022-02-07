@@ -42,9 +42,11 @@ class FirstWallBuilder(Builder):
     """
     Build a first wall with a divertor.
 
-    This class runs the builders for the first wall shape and the
-    divertor, then combines the two.
+    This class runs the builders for the wall shape and the divertor,
+    then combines the two.
     """
+
+    COMPONENT_FIRST_WALL = "first_wall"
 
     def __init__(
         self,
@@ -98,12 +100,11 @@ class FirstWallBuilder(Builder):
         """
         builder = WallBuilder(params, build_config=build_config)
         wall = builder()
-
-        wall_shape: BluemiraGeo = wall.get_component("first_wall").shape
+        wall_shape: BluemiraGeo = wall.get_component(WallBuilder.COMPONENT_WALL).shape
         z_max = self.x_points[0][1]
 
         cut_shape = self._cut_shape_in_z(wall_shape, z_max)
-        return PhysicalComponent("first_wall", cut_shape)
+        return PhysicalComponent(FirstWallBuilder.COMPONENT_FIRST_WALL, cut_shape)
 
     def _build_divertor(
         self,

@@ -62,6 +62,12 @@ class DivertorBuilder(Builder):
     Build an EUDEMO divertor.
     """
 
+    COMPONENT_INNER_BAFFLE = "inner_baffle"
+    COMPONENT_OUTER_BAFFLE = "outer_baffle"
+    COMPONENT_DOME = "dome"
+    COMPONENT_INNER_TARGET = "inner_target"
+    COMPONENT_OUTER_TARGET = "outer_target"
+
     _required_params = [
         "div_L2D_ib",
         "div_L2D_ob",
@@ -119,19 +125,17 @@ class DivertorBuilder(Builder):
         component = Component("xz")
 
         # Build the targets for each separatrix leg
-        inner_target = self.make_target(
-            LegPosition.INNER, self._make_target_name(LegPosition.INNER)
-        )
-        outer_target = self.make_target(
-            LegPosition.OUTER, self._make_target_name(LegPosition.OUTER)
-        )
+        inner_target = self.make_target(LegPosition.INNER, self.COMPONENT_INNER_TARGET)
+        outer_target = self.make_target(LegPosition.OUTER, self.COMPONENT_OUTER_TARGET)
         for target in [inner_target, outer_target]:
             component.add_child(target)
 
         # Build the dome based on target positions
         inner_target_end = self._get_wire_end_with_smallest(inner_target.shape, "z")
         outer_target_start = self._get_wire_end_with_smallest(outer_target.shape, "z")
-        dome = self.make_dome(inner_target_end, outer_target_start, label="dome")
+        dome = self.make_dome(
+            inner_target_end, outer_target_start, label=self.COMPONENT_DOME
+        )
         component.add_child(dome)
 
         # Build the inner baffle
@@ -142,7 +146,10 @@ class DivertorBuilder(Builder):
                 inner_target.shape, "x"
             )
         inner_baffle = self.make_baffle(
-            "inner_baffle", self.inner_start_point, inner_target_outside_end, None
+            self.COMPONENT_INNER_BAFFLE,
+            self.inner_start_point,
+            inner_target_outside_end,
+            None,
         )
         component.add_child(inner_baffle)
 
@@ -154,7 +161,10 @@ class DivertorBuilder(Builder):
                 outer_target.shape, "x"
             )
         outer_baffle = self.make_baffle(
-            "outer_baffle", self.outer_end_point, outer_target_outside_end, None
+            self.COMPONENT_OUTER_BAFFLE,
+            self.outer_end_point,
+            outer_target_outside_end,
+            None,
         )
         component.add_child(outer_baffle)
 
@@ -286,13 +296,6 @@ class DivertorBuilder(Builder):
         for layer in layers:
             sol.append(self.separatrix_legs[leg][layer])
         return sol
-
-    @staticmethod
-    def _make_target_name(leg: LegPosition) -> str:
-        """
-        Make the name (or label) for a target based on the given leg.
-        """
-        return f"target {leg}"
 
     @staticmethod
     def _get_wire_end_with_smallest(wire: BluemiraWire, axis: str) -> np.ndarray:
