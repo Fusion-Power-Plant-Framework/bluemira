@@ -26,6 +26,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+__all__ = ["BoundingBox"]
+
 
 @dataclass
 class BoundingBox:
