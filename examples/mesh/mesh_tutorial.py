@@ -36,6 +36,7 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
+from bluemira.geometry.compound import BluemiraCompound
 
 HAS_MSH2XDMF = False
 try:
@@ -88,7 +89,10 @@ coil.mesh_options = {"lcar": 1, "physical_group": "coil"}
 shell = BluemiraShell([face, coil])
 
 comp = Component(name="comp")
-pcomp = PhysicalComponent(name="pcomp", shape=coil)
+pcomp1 = PhysicalComponent(name="pcomp", shape=coil, parent=comp)
+pcomp2 = PhysicalComponent(name="pcomp", shape=face, parent=comp)
+
+compound = BluemiraCompound(boundary=[face, coil])
 
 # %%[markdown]
 
@@ -96,7 +100,7 @@ pcomp = PhysicalComponent(name="pcomp", shape=coil)
 
 # %%
 m = meshing.Mesh()
-buffer = m(shell)
+buffer = m(compound)
 print(m.get_gmsh_dict(buffer))
 
 # %%[markdown]

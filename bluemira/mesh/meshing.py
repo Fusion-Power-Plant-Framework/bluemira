@@ -37,10 +37,6 @@ import bluemira.geometry as geo
 
 from .error import MeshOptionsError
 
-if TYPE_CHECKING:
-    from bluemira.base.components import Component
-    from bluemira.base.tools import serialize_component
-
 # Mesh options for the moment are limited to definition of mesh size for each point (
 # quantity called lcar to be consistent with gmsh) and the definition of physical
 # groups.
@@ -50,7 +46,7 @@ DEFAULT_MESH_OPTIONS = {
 }
 
 MESH_DATA = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1, "surface_tag": 2}
-SUPPORTED_GEOS = ["BluemiraWire", "BluemiraFace", "BluemiraShell"]
+SUPPORTED_GEOS = ["BluemiraWire", "BluemiraFace", "BluemiraShell", "BluemiraCompound"]
 
 
 def get_default_options():
@@ -181,6 +177,7 @@ class Mesh:
         """
         Generate the mesh and save it to file.
         """
+
         if isinstance(obj, Meshable):
             # gmsh is inizialized
             _FreeCADGmsh._initialize_mesh(self.terminal, self.modelname)
@@ -217,31 +214,36 @@ class Mesh:
         """
         if not hasattr(obj, "ismeshed") or not obj.ismeshed:
             # object is serialized into a dictionary
-            if isinstance(obj, Component):
-                buffer = serialize_component(obj)["shape"]
-            elif isinstance(obj, SUPPORTED_GEOS):
+            if obj.__class__.__name__ in SUPPORTED_GEOS:
                 buffer = geo.tools.serialize_shape(obj)
+            else:
+                raise ValueError(f"Mesh procedure not implemented for {obj.__class__.__name__} type.")
             # Each object is recreated into gmsh. Here there is a trick: in order to
             # allow the correct mesh in case of intersection, the procedure
             # is made meshing the objects with increasing dimension.
             for d in range(1, dim + 1, 1):
-                for k, v in buffer.items():
-                    if k == "BluemiraWire":
-                        self.__convert_wire_to_gmsh(buffer, d)
-                    if k == "BluemiraFace":
-                        self.__convert_face_to_gmsh(buffer, d)
-                    if k == "BluemiraShell":
-                        self.__convert_shell_to_gmsh(buffer, d)
+                self.__convert_item_to_gmsh(buffer, d)
             obj.ismeshed = True
         else:
             print("Obj already meshed")
         return buffer
 
+    def __convert_item_to_gmsh(self, buffer, dim):
+        for k, v in buffer.items():
+            if k == "BluemiraWire":
+                self.__convert_wire_to_gmsh(buffer, dim)
+            if k == "BluemiraFace":
+                self.__convert_face_to_gmsh(buffer, dim)
+            if k == "BluemiraShell":
+                self.__convert_shell_to_gmsh(buffer, dim)
+            if k == "BluemiraCompound":
+                self.__convert_compound_to_gmsh(buffer, dim)
+
     def _apply_physical_group(self, buffer):
         """
         Function to apply physical groups
         """
-        dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2}
+        dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2, "BluemiraCompound": 2}
         other_dict = {0: "points_tag", 1: "curve_tag", 2: "surface_tag"}
         for k, v in buffer.items():
             if k in dict_dim.keys():
@@ -272,7 +274,7 @@ class Mesh:
         Function to create the correct dictionary format for the
         application of the mesh size.
         """
-        dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2}
+        dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2, "BluemiraCompound": 2}
         other_dict = {0: "points_tag", 1: "curve_tag", 2: "surface_tag"}
         points_lcar = []
         for k, v in buffer.items():
@@ -349,6 +351,13 @@ class Mesh:
                 for k, v1 in item.items():
                     if k == "BluemiraFace":
                         Mesh.__iterate_gmsh_dict(item, function, *args)
+
+        if "BluemiraCompound" in buffer:
+            boundary = buffer["BluemiraCompound"]["boundary"]
+            if "gmsh" in buffer["BluemiraCompound"]:
+                function(buffer["BluemiraCompound"]["gmsh"], *args)
+            for item in boundary:
+                Mesh.__iterate_gmsh_dict(item, function, *args)
 
     def __convert_wire_to_gmsh(self, buffer, dim=1):
         """
@@ -453,6 +462,30 @@ class Mesh:
                 elif dim == 2:
                     for item in boundary:
                         self.__convert_face_to_gmsh(item, dim)
+                else:
+                    pass
+
+    def __convert_compound_to_gmsh(self, buffer, dim):
+        """
+        Converts a compound to gmsh.
+        """
+        for type_, value in buffer.items():
+            if type_ == "BluemiraCompound":
+                boundary = value["boundary"]
+                if dim == 1:
+                    value["gmsh"] = {}
+                    for item in boundary:
+                        self.__convert_item_to_gmsh(item, dim)
+                        # get the dictionary of the Component defined in buffer
+                        # as default and gmsh format
+                        dict_gmsh = self.get_gmsh_dict(buffer, "gmsh")
+
+                        # fragment points_tag and curves
+                        all_ent = dict_gmsh["points_tag"] + dict_gmsh["curve_tag"]
+                        self.__apply_fragment(buffer, all_ent=all_ent)
+                elif dim == 2:
+                    for item in boundary:
+                        self.__convert_item_to_gmsh(item, dim)
                 else:
                     pass
 
