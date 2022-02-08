@@ -30,7 +30,6 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
-from bluemira.geometry.tools import make_polygon
 
 DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
 

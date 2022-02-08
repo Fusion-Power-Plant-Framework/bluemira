@@ -83,8 +83,7 @@ class DivertorBuilder(Builder):
         params: Dict[str, Any],
         build_config: BuildConfig,
         equilibrium: Equilibrium,
-        inner_start_point: np.ndarray,
-        outer_end_point: np.ndarray,
+        x_lims: Iterable[float],
         **kwargs,
     ):
         super().__init__(params, build_config, **kwargs)
@@ -92,14 +91,14 @@ class DivertorBuilder(Builder):
         self._shape = None
         self.boundary: BluemiraWire = None
 
-        self.inner_start_point = inner_start_point
-        self.outer_end_point = outer_end_point
+        self.x_lims = sorted(x_lims)
         self.equilibrium = equilibrium
         self.leg_length = {
             LegPosition.INNER: self.params["div_L2D_ib"],
             LegPosition.OUTER: self.params["div_L2D_ob"],
         }
-        self.separatrix_legs = parse_legs(get_legs(self.equilibrium, 1, 0.2))
+        self.separatrix_legs = parse_legs(get_legs(self.equilibrium))
+        _, self.x_points = self.equilibrium.get_OX_points()
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -114,11 +113,14 @@ class DivertorBuilder(Builder):
         pass
 
     def build(self, **kwargs) -> Component:
+        """
+        Build the divertor component.
+        """
         component = super().build(**kwargs)
         component.add_child(self.build_xz())
         return component
 
-    def build_xz(self, **kwargs) -> Component:
+    def build_xz(self) -> Component:
         """
         Build the divertor's components in the xz-plane.
         """
@@ -142,14 +144,12 @@ class DivertorBuilder(Builder):
         if self.params.div_open:
             pass
         else:
-            inner_target_outside_end = self._get_wire_end_with_largest(
-                inner_target.shape, "x"
-            )
+            inner_target_start = self._get_wire_end_with_largest(inner_target.shape, "x")
         inner_baffle = self.make_baffle(
-            self.COMPONENT_INNER_BAFFLE,
-            self.inner_start_point,
-            inner_target_outside_end,
-            None,
+            label=self.COMPONENT_INNER_BAFFLE,
+            start=np.array([self.x_lims[0], self.x_points[0].z]),
+            end=inner_target_start,
+            initial_vec=None,
         )
         component.add_child(inner_baffle)
 
@@ -157,14 +157,12 @@ class DivertorBuilder(Builder):
         if self.params.div_open:
             pass
         else:
-            outer_target_outside_end = self._get_wire_end_with_largest(
-                outer_target.shape, "x"
-            )
+            outer_target_end = self._get_wire_end_with_largest(outer_target.shape, "x")
         outer_baffle = self.make_baffle(
-            self.COMPONENT_OUTER_BAFFLE,
-            self.outer_end_point,
-            outer_target_outside_end,
-            None,
+            label=self.COMPONENT_OUTER_BAFFLE,
+            start=outer_target_end,
+            end=np.array([self.x_lims[1], self.x_points[0].z]),
+            initial_vec=None,
         )
         component.add_child(outer_baffle)
 

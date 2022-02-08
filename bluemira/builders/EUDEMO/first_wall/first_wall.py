@@ -22,7 +22,7 @@
 Builders for the first wall of the reactor, including divertor
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 
 import numpy as np
 
@@ -68,8 +68,7 @@ class FirstWallBuilder(Builder):
         self.divertor: Component = self._build_divertor(
             params,
             build_config,
-            wall_shape.start_point()[[0, 2]],
-            wall_shape.end_point()[[0, 2]],
+            [wall_shape.start_point()[0], wall_shape.end_point()[0]],
         )
 
     def reinitialise(self, params, **kwargs) -> None:
@@ -115,15 +114,12 @@ class FirstWallBuilder(Builder):
         return PhysicalComponent(FirstWallBuilder.COMPONENT_FIRST_WALL, cut_shape)
 
     def _build_divertor(
-        self,
-        params: Dict[str, Any],
-        build_config,
-        start_coord: np.ndarray,
-        end_coord: np.ndarray,
+        self, params: Dict[str, Any], build_config, x_lims: Iterable[float]
     ) -> Component:
-        builder = DivertorBuilder(
-            params, build_config, self.equilibrium, start_coord, end_coord
-        )
+        """
+        Build the divertor component.
+        """
+        builder = DivertorBuilder(params, build_config, self.equilibrium, x_lims)
         return builder()
 
     def _cut_shape_in_z(self, shape: BluemiraWire, z_max: float):

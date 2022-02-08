@@ -64,8 +64,7 @@ class TestDivertorBuilder:
 
     def setup_method(self):
         self.params = copy.deepcopy(self._default_params)
-        self.inner_start = np.array([5, 0, self.x_points[0]])
-        self.outer_end = np.array([11, 0, self.x_points[0]])
+        self.x_lims = [5, 11]
 
     def test_no_BuilderError_on_init_given_valid_params(self):
         try:
@@ -73,8 +72,7 @@ class TestDivertorBuilder:
                 self.params,
                 {"name": "some_name"},
                 self.eq,
-                self.inner_start,
-                self.outer_end,
+                self.x_lims,
             )
         except BuilderError:
             pytest.fail(str(BuilderError))
@@ -84,19 +82,13 @@ class TestDivertorBuilder:
         self.params.pop(required_param)
 
         with pytest.raises(BuilderError):
-            DivertorBuilder(
-                self.params,
-                {"name": "some_name"},
-                self.eq,
-                self.inner_start,
-                self.outer_end,
-            )
+            DivertorBuilder(self.params, {"name": "some_name"}, self.eq, self.x_lims)
 
     def test_new_builder_sets_leg_lengths(self):
         self.params.update({"div_L2D_ib": 5, "div_L2D_ob": 10})
 
         builder = DivertorBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
         )
 
         assert builder.leg_length[LegPosition.INNER] == 5
@@ -104,7 +96,7 @@ class TestDivertorBuilder:
 
     def test_targets_intersect_separatrix(self):
         builder = DivertorBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
         )
 
         divertor = builder()
@@ -116,7 +108,7 @@ class TestDivertorBuilder:
     def test_div_Ltarg_sets_target_length(self):
         self.params.update({"div_Ltarg": 1.5})
         builder = DivertorBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
         )
 
         divertor = builder()
@@ -127,7 +119,7 @@ class TestDivertorBuilder:
 
     def test_dome_added_to_divertor(self):
         builder = DivertorBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
         )
 
         divertor = builder()
@@ -136,7 +128,7 @@ class TestDivertorBuilder:
 
     def test_dome_intersects_targets(self):
         builder = DivertorBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
         )
 
         divertor = builder()
@@ -148,7 +140,7 @@ class TestDivertorBuilder:
 
     def test_dome_does_not_intersect_separatrix(self):
         builder = DivertorBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
         )
 
         divertor = builder()
@@ -160,7 +152,7 @@ class TestDivertorBuilder:
         # TODO(hsaunders): not sure about this test, what if the x-point
         # is at the top of the plasma?
         builder = DivertorBuilder(
-            self.params, {"name": "some_name"}, self.eq, self.inner_start, self.outer_end
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
         )
         x_points, _ = self.eq.get_OX_points()
 
@@ -172,3 +164,43 @@ class TestDivertorBuilder:
         turning_points = get_turning_point_idxs(dome_coords[2, :])
         assert len(turning_points) == 1
         assert dome_coords[2, turning_points[0]] < x_points[0].z
+
+    def test_inner_baffle_has_end_at_lower_x_limit(self):
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
+
+        divertor = builder()
+
+        inner_baffle = divertor.get_component(DivertorBuilder.COMPONENT_INNER_BAFFLE)
+        assert inner_baffle is not None
+        assert inner_baffle.shape.start_point()[0] == min(self.x_lims)
+
+    def test_outer_baffle_has_end_at_upper_x_limit(self):
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
+
+        divertor = builder()
+
+        inner_baffle = divertor.get_component(DivertorBuilder.COMPONENT_OUTER_BAFFLE)
+        assert inner_baffle is not None
+        assert inner_baffle.shape.end_point()[0] == max(self.x_lims)
+
+    @pytest.mark.parametrize("side", ("INNER", "OUTER"))
+    def test_baffle_and_target_intersect(self, side):
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
+
+        divertor = builder()
+
+        target = divertor.get_component(
+            getattr(DivertorBuilder, f"COMPONENT_{side}_TARGET")
+        )
+        baffle = divertor.get_component(
+            getattr(DivertorBuilder, f"COMPONENT_{side}_BAFFLE")
+        )
+        assert signed_distance(target.shape, baffle.shape) == 0
+
+    # TODO(hsaunders1904): tests for plasma with x-point on upper side
