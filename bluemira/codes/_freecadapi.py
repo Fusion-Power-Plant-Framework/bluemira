@@ -1118,7 +1118,8 @@ def _faces_are_coplanar(faces):
 
 
 def _flip_plane_axis(shape):
-    result = shape.mirror(apiVector(0, 0, 0), apiVector(0, 0, 1))
+    plane = shape.findPlane()
+    result = shape.mirror(shape.CenterOfMass, apiVector(0, 0, 1))
     return result
 
 
