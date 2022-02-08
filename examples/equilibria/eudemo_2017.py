@@ -31,14 +31,15 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 
 import json
 import os
+from copy import deepcopy
 
-import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython import get_ipython
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print, plot_defaults
+from bluemira.base.look_and_feel import bluemira_print
+from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.constraints import AutoConstraints
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
@@ -217,7 +218,7 @@ sof = Equilibrium(
     RB0=[R_0, B_0],
 )
 eof = Equilibrium(
-    coilset.copy(),
+    deepcopy(coilset),
     grid,
     Ip=I_p / 1e6,
     li=l_i,

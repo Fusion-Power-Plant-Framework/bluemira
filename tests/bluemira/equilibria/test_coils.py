@@ -80,9 +80,9 @@ class TestCoil:
             MU_0
             * 2
             * np.pi
-            * c.x ** 2
+            * c.x**2
             * c.current
-            / (4 * np.pi * (z ** 2 + c.x ** 2) ** (3 / 2)),
+            / (4 * np.pi * (z**2 + c.x**2) ** (3 / 2)),
         )
         assert round(abs(c.Bx(0.001, z) - Bx), 4) == 0
         assert round(abs(c.Bz(0.001, z) - Bz), 5) == 0
@@ -105,7 +105,7 @@ class TestCoil:
 
         gbx = c.control_Bx(x, z)
         gbz = c.control_Bz(x, z)
-        gbp = np.sqrt(gbx ** 2 + gbz ** 2)
+        gbp = np.sqrt(gbx**2 + gbz**2)
         gp = c.control_psi(x, z)
 
         f, ax = plt.subplots()
@@ -121,7 +121,7 @@ class TestCoil:
         f, ax = plt.subplots()
         gbxn = c.control_Bx(x, z)
         gbzn = c.control_Bz(x, z)
-        gbpn = np.sqrt(gbx ** 2 + gbz ** 2)
+        gbpn = np.sqrt(gbx**2 + gbz**2)
         gpn = c.control_psi(x, z)
 
         if tests.PLOTTING:
@@ -569,6 +569,19 @@ class TestMutualInductances:
         diag = np.diag_indices(3)
         m[diag] = 0.0
         assert np.allclose(m, test_m)
+
+
+class TestCoilSorting:
+    def test_sorting_coilset(self):
+        """Ensure sorting of coils properly handles numbers in the coil name."""
+        coils = [
+            Coil(5, 5, 0, dx=1.0, dz=1.0, name="CS_2"),
+            Coil(5, 5, 0, dx=1.0, dz=1.0, name="CS_10"),
+        ]
+        sorted_coils = CoilGroup.sort_coils(coils)
+        sorted_names = list(sorted_coils)
+        assert sorted_names[0] == "CS_2"
+        assert sorted_names[1] == "CS_10"
 
 
 if __name__ == "__main__":

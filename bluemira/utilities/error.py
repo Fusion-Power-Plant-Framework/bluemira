@@ -34,6 +34,14 @@ class UtilitiesError(BluemiraError):
     pass
 
 
+class PositionerError(UtilitiesError):
+    """
+    Error for positioner utilities
+    """
+
+    pass
+
+
 class OptUtilitiesError(UtilitiesError):
     """
     Error for optimisation utilities

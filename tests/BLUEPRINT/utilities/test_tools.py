@@ -43,9 +43,9 @@ class TestPowerLaw:
         result = np.array(law.error(2.1, 3.4))
         shouldbe = np.array(
             [
-                0.9 * 2.1 ** 2.5 * 3.4 ** 3.5,
-                0.7 * 2.1 ** 2.3 * 3.4 ** 3.2,
-                1.1 * 2.1 ** 2.7 * 3.4 ** 3.8,
+                0.9 * 2.1**2.5 * 3.4**3.5,
+                0.7 * 2.1**2.3 * 3.4**3.2,
+                1.1 * 2.1**2.7 * 3.4**3.8,
             ]
         )
         assert np.allclose(result, shouldbe), f"{result} != {shouldbe}"
@@ -57,9 +57,9 @@ class TestPowerLaw:
         result = np.array(law.error(5.1, 6.3))
         shouldbe = np.array(
             [
-                2.15 * np.exp(0) * 5.1 ** 2.5 * 6.3 ** 3.5,
-                2.15 * np.exp(-0.1) * 5.1 ** 2.3 * 6.3 ** 3.2,
-                2.15 * np.exp(0.1) * 5.1 ** 2.7 * 6.3 ** 3.8,
+                2.15 * np.exp(0) * 5.1**2.5 * 6.3**3.5,
+                2.15 * np.exp(-0.1) * 5.1**2.3 * 6.3**3.2,
+                2.15 * np.exp(0.1) * 5.1**2.7 * 6.3**3.8,
             ]
         )
         assert np.allclose(result, shouldbe), f"{result} != {shouldbe}"

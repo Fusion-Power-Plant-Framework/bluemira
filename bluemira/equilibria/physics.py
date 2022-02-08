@@ -26,8 +26,7 @@ A collection of simple equilibrium physics calculations
 import numpy as np
 
 from bluemira.base.constants import MU_0
-from bluemira.equilibria.constants import PSI_NORM_TOL
-from bluemira.equilibria.find import _parse_OXp, find_flux_surf, in_plasma
+from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 
@@ -126,60 +125,6 @@ def calc_psib(psi_bd, R_0, Ip, li, c_ejima=0.4):
     return psi_bd - 0.5 * MU_0 * R_0 * li * Ip - c_ejima * MU_0 * R_0 * Ip
 
 
-def calc_q(eq, psinorm=None, o_points=None, x_points=None):
-    """
-    Calculate the safety factor profile of the plasma core.
-
-    \t:math:`q=\\dfrac{rB_t}{XB_p}`
-
-    Parameters
-    ----------
-    eq: Equilibrium object
-        A plasma equilibrium object.
-    psinorm: np.array()
-        Normalised psi values at which to calculate q
-    o_points: list(Opoint, ..) (optional)
-        List of Opoint objects
-    x_points: list(Xpoint, ..) (optional)
-        List of Xpoint objects.
-
-    Returns
-    -------
-    q: np.array([n])
-        Safety factor of plasma core flux surfaces (from 0:n:1)
-
-    Notes
-    -----
-    For psinorm, 0 and 1 and "chopped" at PSI_NORM_TOL to avoid calculation
-    errors
-    This flux surface averaged approach is incorrect, but a reasonable estimate.
-    TODO: Fix this...
-    """
-    x, z, psi = eq.x, eq.z, eq.psi()
-    o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
-    if psinorm is None:
-        psin = np.linspace(0 + PSI_NORM_TOL, 1 - PSI_NORM_TOL, 20)
-    else:
-        psin = np.clip(psinorm, PSI_NORM_TOL, 1 - PSI_NORM_TOL)
-    if not hasattr(psin, "__len__"):
-        psin = [psin]
-    n = len(psin)
-    fluxsurfs = [
-        find_flux_surf(x, z, psi, pn, o_points=o_points, x_points=x_points)
-        for pn in psin
-    ]
-    q = np.zeros(n)
-    for i, (pn, fs) in enumerate(zip(psin, fluxsurfs)):
-        x_0, z_0 = np.mean(fs[0]), np.mean(fs[1])
-        r = np.abs(np.sqrt((fs[0] - x_0) ** 2 + (fs[1] - z_0) ** 2))
-        Bt = eq.fRBpol(pn) / fs[0]
-        Bp = eq.Bp(*fs)
-        q[i] = np.average(np.abs(r * Bt / (fs[0] * Bp)))
-    if len(q) == 1:
-        q = q[0]
-    return q
-
-
 def calc_qstar(R_0, A, B_0, kappa, Ip):
     """
     Calculates the kink safety factor at the plasma edge
@@ -206,7 +151,7 @@ def calc_qstar(R_0, A, B_0, kappa, Ip):
     q_star: float
         Kink safety factor
     """
-    return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa ** 2) / (MU_0 * R_0 * Ip)
+    return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa**2) / (MU_0 * R_0 * Ip)
 
 
 def calc_k0(psi_xx0, psi_zz0):
@@ -252,7 +197,7 @@ def calc_q0(R_0, B_0, jp0, psi_xx0, psi_zz0):
         The MHD safety factor on the plasma axis
     """
     k_0 = calc_k0(psi_xx0, psi_zz0)
-    return (B_0 / (MU_0 * R_0 * jp0)) * (1 + k_0 ** 2) / k_0
+    return (B_0 / (MU_0 * R_0 * jp0)) * (1 + k_0**2) / k_0
 
 
 def calc_volume(eq):
@@ -271,7 +216,7 @@ def calc_energy(eq):
     """
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
-    return volume_integral(Bp ** 2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
+    return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
 
 
 def calc_Li(eq):  # noqa :N802
@@ -281,7 +226,7 @@ def calc_Li(eq):  # noqa :N802
     \t:math:`L_i=\\dfrac{2W}{I_{p}^{2}}`
     """
     p_energy = calc_energy(eq)
-    return 2 * p_energy / eq._Ip ** 2
+    return 2 * p_energy / eq._Ip**2
 
 
 def calc_li(eq):
@@ -310,7 +255,7 @@ def calc_li3(eq):
     """
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
-    bpavg = volume_integral(Bp ** 2 * mask, eq.x, eq.dx, eq.dz)
+    bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
     return 2 * bpavg / (eq._R_0 * (MU_0 * eq._Ip) ** 2)
 
 
@@ -324,7 +269,7 @@ def calc_li3minargs(
     """
     if mask is None:
         mask = in_plasma(x, z, psi, o_points=o_points, x_points=x_points)
-    bpavg = volume_integral(Bp ** 2 * mask, x, dx, dz)
+    bpavg = volume_integral(Bp**2 * mask, x, dx, dz)
     return 2 * bpavg / (R_0 * (MU_0 * Ip) ** 2)
 
 
@@ -366,7 +311,7 @@ def calc_betap(eq):
         Ratio of plasma to magnetic pressure
     """
     p = eq.pressure_map()
-    return 4 / (MU_0 * eq._R_0 * eq._Ip ** 2) * volume_integral(p, eq.x, eq.dx, eq.dz)
+    return 4 / (MU_0 * eq._R_0 * eq._Ip**2) * volume_integral(p, eq.x, eq.dx, eq.dz)
 
 
 def calc_beta_t(eq):
@@ -386,7 +331,7 @@ def calc_beta_t(eq):
         Ratio of plasma to toroidal magnetic pressure
     """
     p_avg = calc_p_average(eq)
-    return 2 * MU_0 * p_avg / eq._B_0 ** 2
+    return 2 * MU_0 * p_avg / eq._B_0**2
 
 
 def calc_beta_p(eq):
@@ -409,7 +354,7 @@ def calc_beta_p(eq):
     p_avg = calc_p_average(eq)
     circumference = eq.get_LCFS().length
     Bp = MU_0 * eq._Ip / circumference
-    return 2 * MU_0 * p_avg / Bp ** 2
+    return 2 * MU_0 * p_avg / Bp**2
 
 
 def calc_summary(eq):
@@ -418,9 +363,9 @@ def calc_summary(eq):
     """
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
-    bpavg = volume_integral(Bp ** 2 * mask, eq.x, eq.dx, eq.dz)
+    bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
     energy = bpavg / (2 * MU_0)
-    li_true = 2 * energy / eq._Ip ** 2
+    li_true = 2 * energy / eq._Ip**2
     li = 2 * li_true / (MU_0 * eq._R_0)
     li3 = 2 * bpavg / (eq._R_0 * (MU_0 * eq._Ip) ** 2)
     volume = calc_volume(eq)
@@ -453,7 +398,7 @@ def beta(pressure, field):
     beta: float
         Ratio of plasma to magnetic pressure
     """
-    return np.mean(pressure) / (field ** 2 / 2 * MU_0)
+    return np.mean(pressure) / (field**2 / 2 * MU_0)
 
 
 def beta_p(pressure, Bp):

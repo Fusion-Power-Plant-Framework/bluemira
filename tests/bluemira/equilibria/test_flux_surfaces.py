@@ -34,6 +34,7 @@ from bluemira.equilibria.flux_surfaces import (
     OpenFluxSurface,
     PartialOpenFluxSurface,
 )
+from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner
 from bluemira.geometry._deprecated_loop import Loop
 
 TEST_PATH = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
@@ -101,6 +102,49 @@ class TestClosedFluxSurface:
         open_loop = Loop(x=[0, 4, 5, 8], z=[1, 2, 3, 4])
         with pytest.raises(FluxSurfaceError):
             _ = ClosedFluxSurface(open_loop)
+
+    def test_symmetric(self):
+        kappa = 1.5
+        delta = 0.4
+        fs = flux_surface_cunningham(7, 0, 1, kappa, delta, n=1000)
+        fs.close()
+        fs = ClosedFluxSurface(fs)
+        assert np.isclose(fs.kappa, kappa)
+        assert np.isclose(fs.kappa_lower, kappa, rtol=1e-2)
+        assert np.isclose(fs.kappa_upper, kappa, rtol=1e-2)
+        assert np.isclose(fs.delta_lower, fs.delta_upper, rtol=1e-2)
+        assert np.isclose(fs.zeta_lower, fs.zeta_upper)
+
+    def test_johner(self):
+
+        R_0, z_0, a, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4 = (
+            7,
+            0,
+            2,
+            1.9,
+            1.6,
+            0.4,
+            0.33,
+            -20,
+            5,
+            60,
+            30,
+        )
+        fs = flux_surface_johner(
+            7, 0, 2, kappa_u, kappa_l, delta_u, delta_l, a1, a2, a3, a4, n=1000
+        )
+        fs.close()
+        fs = ClosedFluxSurface(fs)
+        assert np.isclose(fs.major_radius, R_0)
+        assert np.isclose(fs._z_centre, z_0)
+        assert np.isclose(fs.minor_radius, a)
+        assert np.isclose(fs.kappa, np.average([kappa_l, kappa_u]))
+        assert np.isclose(fs.kappa_upper, kappa_u)
+        assert np.isclose(fs.kappa_lower, kappa_l)
+        assert np.isclose(fs.delta, np.average([delta_l, delta_u]))
+        assert np.isclose(fs.delta_upper, delta_u)
+        assert np.isclose(fs.delta_lower, delta_l)
+        assert not np.isclose(fs.zeta_upper, fs.zeta_lower)
 
 
 class TestFieldLine:

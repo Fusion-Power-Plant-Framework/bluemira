@@ -22,15 +22,18 @@
 """
 EU-DEMO build classes for TF Coils.
 """
+import os
 from copy import deepcopy
 from typing import List, Optional, Type
 
 import numpy as np
 
 import bluemira.utilities.plot_tools as bm_plot_tools
+from bluemira.base.builder import BuildConfig
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
@@ -131,15 +134,49 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
     _default_runmode: str = "run"
     _design_problem: Optional[GeometryOptimisationProblem] = None
     _centreline: BluemiraWire
+    _geom_path: Optional[str] = None
+    _keep_out_zone: Optional[BluemiraWire] = None
+    _separatrix: Optional[BluemiraWire] = None
+
+    def __init__(
+        self,
+        params,
+        build_config: BuildConfig,
+        separatrix: Optional[BluemiraWire] = None,
+        keep_out_zone: Optional[BluemiraWire] = None,
+    ):
+        super().__init__(
+            params, build_config, separatrix=separatrix, keep_out_zone=keep_out_zone
+        )
+
+    @property
+    def geom_path(self) -> str:
+        """
+        The path at which the geometry parameterisation can be written to or read from.
+        """
+        return self._geom_path
+
+    def _extract_config(self, build_config: BuildConfig):
+        super()._extract_config(build_config)
+
+        self._geom_path = build_config.get("geom_path", None)
+        has_geom_path = self._geom_path is not None
+        valid_geom_path = has_geom_path and os.path.exists(self._geom_path)
+        if self._runmode.name.lower() == "read" and not valid_geom_path:
+            raise BuilderError(
+                "Must supply a geom_path that at either points to the directory "
+                "containing the geometry parameterisation, or points to the geometry "
+                "parameterisation file, in build_config when using 'read' mode."
+            )
 
     def _derive_shape_params(self):
         shape_params = super()._derive_shape_params()
         # PROCESS doesn't output the radius of the current centroid on the inboard
         r_current_in_board = (
-            self.params.r_tf_in
-            + self.params.tk_tf_nose
-            + self.params.tk_tf_ins
-            + 0.5 * (self.params.tf_wp_width - 2 * self.params.tk_tf_ins)
+            self._params.r_tf_in
+            + self._params.tk_tf_nose
+            + self._params.tk_tf_ins
+            + 0.5 * (self._params.tf_wp_width - 2 * self._params.tk_tf_ins)
         )
         self._params.add_parameter(
             "r_tf_current_ib",
@@ -151,7 +188,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
         return shape_params
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def reinitialise(
+        self,
+        params,
+        separatrix: Optional[BluemiraWire] = None,
+        keep_out_zone: Optional[BluemiraWire] = None,
+    ) -> None:
         """
         Initialise the state of this builder ready for a new run.
 
@@ -160,14 +202,37 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         params: Dict[str, Any]
             The parameterisation containing at least the required params for this
             Builder.
-        """
-        super().reinitialise(params, **kwargs)
+        separatrix: Optional[BluemiraWire]
+            The separatrix to pass into constrained optimisation routines. Must be
+            provided if this Builder's runmode is set to run. By default, None.
+        keep_out_zone: Optional[BluemiraWire]
+            Exclusion zone, if any to apply to the build. By default None.
 
-        self._reset_params(params)
+        Raises
+        ------
+        BuilderError
+            If the runmode is set to run but a separatrix is not provided.
+        """
+        super().reinitialise(params)
+
+        if self.runmode == "run" and separatrix is None:
+            raise BuilderError(
+                "A separatrix must be provided as the runmode for this builder is set "
+                "to run"
+            )
+
         self._centreline = None
         self._wp_cross_section = self._make_wp_xs()
+        self._separatrix = separatrix
+        self._keep_out_zone = keep_out_zone
 
-    def run(self, separatrix, keep_out_zone=None):
+        if self._geom_path is not None and os.path.isdir(self._geom_path):
+            default_file_name = (
+                f"tf_coils_{self._param_class.__name__}_{self._params.n_TF.value}.json"
+            )
+            self._geom_path = os.sep.join([self._geom_path, default_file_name])
+
+    def run(self):
         """
         Run the specified design optimisation problem to generate the TF coil winding
         pack current centreline.
@@ -175,25 +240,35 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         super().run(
             params=self._params,
             wp_cross_section=self._wp_cross_section,
-            separatrix=separatrix,
-            keep_out_zone=keep_out_zone,
+            separatrix=self._separatrix,
+            keep_out_zone=self._keep_out_zone,
         )
         self._centreline = self._design_problem.parameterisation.create_shape()
 
-    def read(self, variables: dict):
+    def read(self):
         """
-        Read in a variable dictionary to set up a specified GeometryParameterisation.
+        Read in a file to set up a specified GeometryParameterisation and extract the
+        current centreline.
         """
-        parameterisation = self._param_class(variables)
-        self._centreline = parameterisation.create_shape()
+        bluemira_print(f"Reading TF Coil centreline shape from file {self._geom_path}")
 
-    def mock(self, centreline):
-        """
-        Mock a design of TF coils using a specified current centreline.
-        """
-        self._centreline = centreline
+        with open(self._geom_path, "r") as fh:
+            self._shape = self._param_class.from_json(fh)
+        self._centreline = self._shape.create_shape()
 
-    def build(self, label: str = "TF Coils", **kwargs) -> TFCoilsComponent:
+    def mock(self):
+        """
+        Mock a design of TF coils using the original parameterisation of the current
+        centreline.
+        """
+        bluemira_print(
+            "Mocking TF Coil centreline shape from parameterisation "
+            f"{self._shape.variables}"
+        )
+
+        self._centreline = self._shape.create_shape()
+
+    def build(self) -> TFCoilsComponent:
         """
         Build the TF Coils component.
 
@@ -202,7 +277,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component: TFCoilsComponent
             The Component built by this builder.
         """
-        super().build(**kwargs)
+        super().build()
 
         field_solver = self._make_field_solver()
         component = TFCoilsComponent(self.name, field_solver=field_solver)
@@ -322,17 +397,36 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         return component
 
-    def build_xyz(self) -> Component:
+    def build_xyz(self, degree: float = 360.0) -> Component:
         """
         Build the x-y-z components of the TF coils.
+
+        Parameters
+        ----------
+        degree: float
+            The angle [°] around which to build the components, by default 360.0.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in 3D (xyz).
         """
         component = Component("xyz")
+
+        # Minimum angle per TF coil (nudged by a tiny length since we start counting a
+        # sector at theta=0). This means we can draw a sector as 360 / n_TF and get one
+        # TF coil per sector. Python represents floats with 16 significant figures before
+        # getting round off, so adding on 1e-13 works here, in case someone sets n_TF
+        # to be 2.
+        min_tf_deg = (360.0 / self._params.n_TF.value) + 1e-13
+        n_tf_draw = min(int(degree // min_tf_deg) + 1, self._params.n_TF.value)
+        degree = (360.0 / self._params.n_TF.value) * n_tf_draw
 
         # Winding pack
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
-        sectors = circular_pattern_component(winding_pack, self._params.n_TF.value)
+        sectors = circular_pattern_component(winding_pack, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         # Insulation
@@ -342,7 +436,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         ins_solid = boolean_cut(solid, wp_solid)[0]
         insulation = PhysicalComponent("Insulation", ins_solid)
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        sectors = circular_pattern_component(insulation, self._params.n_TF.value)
+        sectors = circular_pattern_component(insulation, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         # Casing
@@ -355,7 +449,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         x_max = bb.x_max
 
         half_angle = np.pi / self.params.n_TF.value
-        y_in = self.params.r_tf_in * np.sin(half_angle)
+        y_in = self.params.r_tf_in * np.tan(half_angle)
         inner_xs_rect = make_polygon(
             [[x_min, x_max, x_max, x_min], [-y_in, -y_in, y_in, y_in], [0, 0, 0, 0]],
             closed=True,
@@ -394,8 +488,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
 
         # Join the straight leg to the curvy bits
-        bb = inboard_casing.bounding_box
-        x_min = bb.x_min
+        x_min = np.min(centreline_points.x)
         idx = np.where(np.isclose(centreline_points.z, z_max_cl))[0]
         x_turn_top = np.min(centreline_points.x[idx])
         idx = np.where(np.isclose(centreline_points.z, z_min_cl))[0]
@@ -427,6 +520,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         joiner_top = boolean_cut(joiner_top, cutter)[0]
         joiner_bot = boolean_cut(joiner_bot, cutter)[0]
 
+        # Cut away straight sweep before fusing to protect against degenerate faces
+        # Keep the largest piece
+        pieces = boolean_cut(solid, inboard_casing)
+        pieces.sort(key=lambda x: x.volume)
+        solid = pieces[-1]
+
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
         case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
@@ -434,7 +533,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
-        sectors = circular_pattern_component(casing, self._params.n_TF.value)
+        sectors = circular_pattern_component(casing, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         return component
@@ -497,9 +596,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             + self.params.tf_wp_width
             + self.params.tk_tf_front_ib
         )
-        half_angle = np.pi / self.params.n_TF.value
-        y_in = x_in * np.sin(half_angle)
-        y_out = x_out * np.sin(half_angle)
+        tan_half_angle = np.tan(np.pi / self.params.n_TF.value)
+        y_in = x_in * tan_half_angle
+        y_out = x_out * tan_half_angle
         inboard_wire = make_polygon(
             [
                 [x_in, x_out, x_out, x_in],
@@ -541,10 +640,24 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         wires.sort(key=lambda wire: wire.length)
         if len(wires) != 4:
             raise BuilderError(
-                "Unexpected TF coil x-z cross-section. It is likely that a previous"
+                "Unexpected TF coil x-z cross-section. It is likely that a previous "
                 "boolean cutting operation failed to create a hollow solid."
             )
 
         inner = BluemiraFace([wires[1], wires[0]])
         outer = BluemiraFace([wires[3], wires[2]])
         self._temp_casing = [inner, outer]
+
+    def save_shape(self, filename: str = None, **kwargs):
+        """
+        Save the shape to a json file.
+
+        Parameters
+        ----------
+        filename: str
+            The path to the file that the shape should be written to. By default this
+            will be the geom_path.
+        """
+        if filename is None:
+            filename = self._geom_path
+        super().save_shape(filename, **kwargs)

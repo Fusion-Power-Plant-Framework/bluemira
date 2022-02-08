@@ -58,6 +58,8 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 
+apiVertex = Part.Vertex  # noqa :N816
+apiVector = Base.Vector  # noqa :N816
 apiWire = Part.Wire  # noqa :N816
 apiFace = Part.Face  # noqa :N816
 apiShell = Part.Shell  # noqa :N816
@@ -1078,6 +1080,26 @@ def boolean_cut(shape, tools, split=True):
     else:
         raise ValueError(f"Cut function not implemented for {_type} objects.")
     return output
+
+
+def point_inside_shape(point, shape):
+    """
+    Whether or not a point is inside a shape.
+
+    Parameters
+    ----------
+    point: Iterable(3)
+        Coordinates of the point
+    shape: BluemiraGeo
+        Geometry to check with
+
+    Returns
+    -------
+    inside: bool
+        Whether or not the point is inside the shape
+    """
+    vector = apiVector(*point)
+    return shape.isInside(vector, EPS, True)
 
 
 # ======================================================================================

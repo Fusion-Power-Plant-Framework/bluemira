@@ -661,29 +661,6 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         """
         return self.name
 
-    def make_mat_dict(self, temperature):
-        """
-        Makes a material dictionary for use in simple beam FE solver
-
-        Parameters
-        ----------
-        temperature: float
-            The temperature in Kelvin
-
-        Returns
-        -------
-        mat_dict: dict
-            The simplified dictionary of material properties
-        """
-        mat_dict = {
-            "E": self.E(temperature) * 1e9,
-            "nu": self.mu(temperature),
-            "alpha": self.CTE(temperature),
-            "rho": self.rho(temperature),
-            "sigma_y": self.Sy(temperature),
-        }
-        return mat_dict
-
     def mu(self, temperature):
         """
         Poisson's ratio
@@ -932,7 +909,7 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         """
         a = self.c_0 / B * (1 - (temperature / self.tc_0) ** 1.7) ** self.gamma
         ii = B / self.Bc2(temperature)
-        b = ii ** self.alpha
+        b = ii**self.alpha
         # The below is an "elegant" dodge of numpy RuntimeWarnings encountered
         # when raising a negative number to a fractional power, which in this
         # parameterisation only occurs if a non-physical (<0) current density
@@ -1036,7 +1013,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         self.p = p
         self.q = q
 
-        self.eps_sh = self.c_a2 * self.eps_0a / np.sqrt(self.c_a1 ** 2 - self.c_a2 ** 2)
+        self.eps_sh = self.c_a2 * self.eps_0a / np.sqrt(self.c_a1**2 - self.c_a2**2)
 
     def Tc_star(self, B, eps):  # noqa :N802
         """
@@ -1074,17 +1051,17 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         b = self.b(B, temperature, eps)
         t = self.reduced_t(temperature, eps)
         # Ensure physical current density with max (j, 0)
-        # Limits of parametrisation likely to be encountered sooner
+        # Limits of parameterisation likely to be encountered sooner
         return max(
             (
                 self.c
                 / B
                 * self.s(eps)
                 * (1 - self._t152(temperature, eps))
-                * (1 - t ** 2)
-                * b ** self.p
+                * (1 - t**2)
+                * b**self.p
             )
-            * (1 - b ** self.q),
+            * (1 - b**self.q),
             0,
         )
 
@@ -1118,8 +1095,8 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         return 1 + 1 / (1 - self.c_a1 * self.eps_0a) * (
             self.c_a1
             * (
-                np.sqrt(self.eps_sh ** 2 + self.eps_0a ** 2)
-                - np.sqrt((eps - self.eps_sh) ** 2 + self.eps_0a ** 2)
+                np.sqrt(self.eps_sh**2 + self.eps_0a**2)
+                - np.sqrt((eps - self.eps_sh) ** 2 + self.eps_0a**2)
             )
             - self.c_a2 * eps
         )
@@ -1421,13 +1398,13 @@ class BePebbleBed(UnitCellCompound):
         return (
             1.81
             + 0.0012 * temperature
-            - 5e-7 * temperature ** 2
+            - 5e-7 * temperature**2
             + eps_vol
             * (
                 9.03
                 - 1.386e-3 * temperature
-                - 7.6e-6 * temperature ** 2
-                + 2.1e-9 * temperature ** 3
+                - 7.6e-6 * temperature**2
+                + 2.1e-9 * temperature**3
             )
         )
 

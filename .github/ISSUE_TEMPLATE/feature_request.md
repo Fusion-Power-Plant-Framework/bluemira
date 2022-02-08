@@ -6,7 +6,7 @@ assignees: ''
 
 ---
 
-Before requesting a new feature, please check the Issues to see if your idea already is already being discussed.
+Before requesting a new feature, please check the Issues to see if your idea is already being discussed.
 
 ## Description of issue / requirement to address
 

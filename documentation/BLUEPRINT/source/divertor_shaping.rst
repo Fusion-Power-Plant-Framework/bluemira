@@ -5,9 +5,9 @@ This document refers to the ``DivertorBuilder`` class in ``firstwall.py``.
 
 Overview
 --------
-The divertor profile shaping can be seen as a geometrical parametrisation.
-Such parametrisation is obtained via external geometrical inputs, and the
-according equilibrium configuraion. Specifically, separatrix and flux
+The divertor profile shaping can be seen as a geometrical parameterisation.
+Such parameterisation is obtained via external geometrical inputs, and the
+according equilibrium configuration. Specifically, separatrix and flux
 lines in the divertor region.
 The top limit is a xz plane passing through the x-point(s).
 
@@ -30,7 +30,7 @@ through two inputs:
 * xpt_inner_gap: Gap between x-point and inner wall
 
 From the first wall profile optimisation, if the aperture needs be wider to handle
-the heat loads, the abovementioned inputs are overwritten accordingly.
+the heat loads, the above-mentioned inputs are overwritten accordingly.
 
 Divertor target plates
 ----------------------
@@ -87,7 +87,7 @@ line and target plate:
 * theta_outer_target: Angle between flux line tangent at outer strike point and SOL side of outer target
 * theta_inner_target: Angle between flux line tangent at inner strike point and SOL side of inner target
 
-To be noticed, the abovementioned :math:`\theta` is not the glancing angle,
+To be noticed, the above-mentioned :math:`\theta` is not the glancing angle,
 commonly indicated with :math:`\gamma`, but its component over a poloidal plane.
 A further, and better description should accept the actual glancing angle as input.
 
@@ -121,7 +121,7 @@ interpolating either the separatrix or a specific flux line function.
 The curvature is tuned by changing the degree of the fitting polynomial, in order to
 keep the wall as close as possible to the scrape-off layer, and at the same time
 avoiding the intersection between flux lines and wall before they reach the divertor targets.
-The degree can vary between 1 and 3. Degree uqual to 1 corresponds to a straight line.
+The degree can vary between 1 and 3. Degree equal to 1 corresponds to a straight line.
 
 .. figure:: ../images/nova/degrees.png
    :name: fig:degrees

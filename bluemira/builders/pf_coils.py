@@ -120,15 +120,26 @@ class PFCoilBuilder:
         casing.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
         return Component(self.coil.name, children=[wp, ins, casing])
 
-    def build_xyz(self):
+    def build_xyz(self, degree: float = 360.0):
         """
         Build the x-y-z representation of a PF coil.
+
+        Parameters
+        ----------
+        degree: float
+            The angle [°] around which to build the components, by default 360.0.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in 3D (xyz).
         """
         # I doubt this is floating-point safe to collisions...
         c_xz = self.build_xz()
         components = []
+        c: PhysicalComponent
         for c in c_xz.children:
-            shape = revolve_shape(c.shape, degree=360)
+            shape = revolve_shape(c.shape, degree=degree)
             c_xyz = PhysicalComponent(c.name, shape)
             c_xyz.display_cad_options.color = c.plot_options.face_options["color"]
             components.append(c_xyz)

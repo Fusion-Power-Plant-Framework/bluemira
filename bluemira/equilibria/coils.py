@@ -24,6 +24,7 @@ Coil and coil grouping objects
 """
 
 from copy import deepcopy
+from re import split
 from typing import Any, Optional
 
 import matplotlib.pyplot as plt
@@ -465,7 +466,7 @@ class Coil:
 
         Returns
         -------
-        inside: np.array(dtype=np.bool)
+        inside: np.array(dtype=bool)
             The Boolean array of point indices inside/outside the coil boundary
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
@@ -724,7 +725,7 @@ class Coil:
         """  # noqa :W505
         Bx, Bz = eqcoil.Bx(self.x, self.z), eqcoil.Bz(self.x, self.z)
         if self.rc != 0:  # true divide errors for zero current coils
-            a = MU_0 * self.current ** 2 / (4 * np.pi * self.x)
+            a = MU_0 * self.current**2 / (4 * np.pi * self.x)
             fx = a * (np.log(8 * self.x / self.rc) - 1 + 0.25)
 
         else:
@@ -893,9 +894,15 @@ class CoilGroup:
         cs_coils = [coil for coil in coils if coil.ctype == "CS"]
         other = [coil for coil in coils if coil.ctype not in ["PF", "CS"]]
 
-        pf_coils.sort(key=lambda x: x.name)
-        cs_coils.sort(key=lambda x: x.name)
-        other.sort(key=lambda x: x.name)
+        def sort_function(key):
+            return [
+                int(text) if text.isdigit() else text
+                for text in split(r"(\d+)", key.name)
+            ]
+
+        pf_coils.sort(key=sort_function)
+        cs_coils.sort(key=sort_function)
+        other.sort(key=sort_function)
 
         all_coils = pf_coils + cs_coils + other
 
@@ -1379,7 +1386,7 @@ class PlasmaCoil:
         Map a Green's function across the grid at a point, without crashing or
         running out of memory.
         """
-        array = np.zeros_like(x, dtype=np.float)
+        array = np.zeros_like(x, dtype=float)
         for i, j in zip(self._ii, self._jj):
             current = self.j_tor[i, j] * self.grid.dx * self.grid.dz
             array += current * func(self.grid.x[i, j], self.grid.z[i, j], x, z)
@@ -1727,6 +1734,9 @@ class SymmetricCircuit(Circuit):
             The coil sub-division size
         """
         self.apply_coil_method("mesh_coil", d_coil)
+
+    def _points_inside_coil(self, x, z):
+        return self.coils[self.name + ".1"]._points_inside_coil(x, abs(z))
 
 
 class CoilSet(CoilGroup):
@@ -2199,6 +2209,6 @@ def make_mutual_inductance_matrix(coilset):
 
     for i, coil in enumerate(coils):
         radius = np.hypot(coil.dx, coil.dz)
-        M[i, i] = coil.n_turns ** 2 * circular_coil_inductance_elliptic(coil.x, radius)
+        M[i, i] = coil.n_turns**2 * circular_coil_inductance_elliptic(coil.x, radius)
 
     return M

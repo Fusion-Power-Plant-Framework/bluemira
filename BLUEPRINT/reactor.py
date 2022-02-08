@@ -79,7 +79,6 @@ from BLUEPRINT.geometry.parameterisations import flatD, negativeD
 # Neutronics imports
 from BLUEPRINT.neutronics.simpleneutrons import BlanketCoverage
 from BLUEPRINT.nova.firstwall import FirstWallProfile
-from BLUEPRINT.nova.optimiser import StructuralOptimiser
 
 # BLUEPRINT.nova imports
 from BLUEPRINT.nova.stream import StreamFlow
@@ -158,7 +157,6 @@ class Reactor(ReactorSystem):
     # Construction and calculation class declarations
     EQ: Type[AbInitioEquilibriumProblem]
     RB: Type[ReactorCrossSection]
-    SO: Type[StructuralOptimiser]
     CAD: Type[ReactorCAD]
     n_CAD: Type[ReactorCAD]
 
@@ -786,18 +784,6 @@ class Reactor(ReactorSystem):
 
         self.ATEC.build()
 
-    def optimise_coil_cage(self):
-        """
-        Optimise the TF coil casing. WIP.
-        """
-        bluemira_print("Optimising coil structures.")
-        self.SO = StructuralOptimiser(
-            self.ATEC, self.TF.cage, [s.eq for s in self.EQ.snapshots.values()]
-        )
-        t = time()
-        self.SO.optimise()
-        bluemira_print(f"Optimisation time: {time()-t:.2f} s")
-
     def define_port_exclusions(self):
         """
         Define exclusions zones for PF coils in the X-Z plane.
@@ -1023,7 +1009,7 @@ class Reactor(ReactorSystem):
                 pf_fields, theta=np.pi / self.params.n_TF, p1=[0, 0, 0], p2=[0, 0, 1]
             )
             total_fields = tf_fields + pf_fields
-            peak_fields[i] = np.max(np.sqrt(np.sum(total_fields ** 2, axis=1)))
+            peak_fields[i] = np.max(np.sqrt(np.sum(total_fields**2, axis=1)))
 
         b_tf_peak = max(peak_fields)
         self.add_parameter(

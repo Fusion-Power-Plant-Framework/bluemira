@@ -27,7 +27,8 @@ import numpy as np
 
 import bluemira.geometry as geo
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.display import plotter
+from bluemira.display import plot_3d, plotter
+from bluemira.utilities.plot_tools import Plot3D
 
 SQUARE_POINTS = np.array(
     [
@@ -108,6 +109,29 @@ class TestPlotOptions:
 
         for key, val in plotter.DEFAULT_PLOT_OPTIONS.items():
             assert getattr(the_options, key) != val
+
+
+class TestPlot3d:
+    """
+    Generic 3D plotting tests.
+    """
+
+    def test_plot_3d_same_axis(self):
+        ax_orig = Plot3D()
+        ax_1 = plot_3d(geo.tools.make_circle(), show=False, ax=ax_orig)
+        ax_2 = plot_3d(geo.tools.make_circle(radius=2), show=False, ax=ax_1)
+
+        assert ax_1 is ax_orig
+        assert ax_2 is ax_orig
+
+    def test_plot_3d_new_axis(self):
+        ax_orig = Plot3D()
+        ax_1 = plot_3d(geo.tools.make_circle(), show=False)
+        ax_2 = plot_3d(geo.tools.make_circle(radius=2), show=False)
+
+        assert ax_1 is not ax_2
+        assert ax_1 is not ax_orig
+        assert ax_2 is not ax_orig
 
 
 class TestPointsPlotter:

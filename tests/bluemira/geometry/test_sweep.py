@@ -198,6 +198,6 @@ class TestRevolve:
         face = BluemiraFace([outer, inner])
         solid = revolve_shape(face, degree=360)
 
-        true_volume = 2 * np.pi * x_c * (4 ** 2 - 2 ** 2)
+        true_volume = 2 * np.pi * x_c * (4**2 - 2**2)
         assert solid.is_valid()
         assert np.isclose(solid.volume, true_volume)
