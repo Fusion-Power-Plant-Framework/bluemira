@@ -29,7 +29,6 @@ from typing import List, Union
 import numpy as np
 
 from bluemira.equilibria.plotting import ConstraintPlotter
-from bluemira.equilibria.shapes import flux_surface_johner
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.tools import abs_rel_difference
 
