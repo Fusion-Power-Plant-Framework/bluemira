@@ -11,11 +11,6 @@ if [ ! -d freecad-source ]; then
   cd ..
 fi
 
-if [ ! -d pyside2-tools ]; then
-  echo "Missing pyside2-tools repo." >> /dev/stderr
-  exit 1
-fi
-
 if [ -d freecad-build ]; then
   echo "Removing previous FreeCAD build"
   rm -rf freecad-build
@@ -72,9 +67,8 @@ cmake -DBUILD_QT5=TRUE \
       -DBUILD_CLOUD=FALSE \
       -DPYTHON_EXECUTABLE=$(which python) \
       -DPYSIDE_INCLUDE_DIR=$PYTHON_PACKAGES_DIR/PySide2/include \
-      -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/libpyside2.abi3.so.5.14 \
-      -DCMAKE_PREFIX_PATH=/opt/qt514/lib/cmake \
-      -DCMAKE_CXX_FLAGS=-isystem\ /opt/qt514/include \
+      -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/libpyside2.cpython-38-x86_64-linux-gnu.so.5.14 \
+      -DCMAKE_PREFIX_PATH=/usr/local/Qt-5.14.2/lib/cmake \
       -DPYSIDE2UICBINARY=$PYTHON_PACKAGES_DIR/PySide2/uic \
       -DPYSIDE2RCCBINARY=$PYTHON_PACKAGES_DIR/PySide2/rcc \
       ../freecad-source
@@ -106,12 +100,3 @@ import FreeCAD as app" >> $PYTHON_FREECAD_DIR/__init__.py
 cp ../freecad-build/lib/*.so $PYTHON_FREECAD_DIR/lib
 cp ../freecad-build/Mod/Part/*.so $PYTHON_FREECAD_DIR/lib
 cp -r ../freecad-build/Mod/Part/BOPTools $PYTHON_FREECAD_DIR
-
-# Ensure pip installed PySide2 and shiboken2 are included in LD_LIBRARY_PATH
-
-if ! grep -Fq "export LD_LIBRARY_PATH=" $PYTHON_BIN_DIR/activate
-then
-  echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\
-  $PYTHON_PACKAGES_DIR/PySide2:$PYTHON_PACKAGES_DIR/shiboken2":/opt/qt514/lib \
-  > $PYTHON_BIN_DIR/activate
-fi
