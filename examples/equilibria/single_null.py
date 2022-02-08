@@ -35,8 +35,8 @@ from IPython import get_ipython
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.equilibria.profiles import DoublePowerFunc
-from bluemira.equilibria.run import AbInitioEquilibriumProblem
 from bluemira.geometry._deprecated_loop import Loop
 
 try:
@@ -167,7 +167,7 @@ EQ.plot(ax, edgecolor="r", facecolor="r", alpha=0.5)
 # *  field at coils         (B)
 # *  pulse length           (tau_flattop)
 #
-# The resulting equilbria will automatically be converged once the coil sizes
+# The resulting equilibria will automatically be converged once the coil sizes
 # have been fixed at their maximum
 # (sometimes problematic for end of flattop)
 
