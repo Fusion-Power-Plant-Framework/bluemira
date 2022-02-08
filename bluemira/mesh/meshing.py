@@ -27,7 +27,8 @@ from __future__ import annotations
 
 import copy
 import pprint
-from typing import TYPE_CHECKING, Dict, Union
+from typing import Dict, Union
+import inspect
 
 # import mesher lib (gmsh)
 import gmsh
@@ -54,6 +55,18 @@ def get_default_options():
     Returns the default display options.
     """
     return copy.deepcopy(DEFAULT_MESH_OPTIONS)
+
+
+def create_compound_from_component(comp):
+    boundary = []
+    if comp.is_leaf and hasattr(comp, "shape") and comp.shape:
+        boundary.append(comp.shape)
+    else:
+        for c in comp.children:
+            if hasattr(c, "shape") and c.shape:
+                boundary.append(c.shape)
+    compound = geo.compound.BluemiraCompound(label=comp.name, boundary=boundary)
+    return compound
 
 
 class MeshOptions:
@@ -177,6 +190,8 @@ class Mesh:
         """
         Generate the mesh and save it to file.
         """
+        if 'Component' in [c.__name__ for c in inspect.getmro(type(obj))]:
+            obj = create_compound_from_component(obj)
 
         if isinstance(obj, Meshable):
             # gmsh is inizialized

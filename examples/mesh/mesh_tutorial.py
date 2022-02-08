@@ -89,10 +89,9 @@ coil.mesh_options = {"lcar": 1, "physical_group": "coil"}
 shell = BluemiraShell([face, coil])
 
 comp = Component(name="comp")
-pcomp1 = PhysicalComponent(name="pcomp", shape=coil, parent=comp)
-pcomp2 = PhysicalComponent(name="pcomp", shape=face, parent=comp)
+pcomp1 = PhysicalComponent(name="pcomp1", shape=coil, parent=comp)
+pcomp2 = PhysicalComponent(name="pcomp2", shape=face, parent=comp)
 
-compound = BluemiraCompound(boundary=[face, coil])
 
 # %%[markdown]
 
@@ -100,7 +99,7 @@ compound = BluemiraCompound(boundary=[face, coil])
 
 # %%
 m = meshing.Mesh()
-buffer = m(compound)
+buffer = m(comp)
 print(m.get_gmsh_dict(buffer))
 
 # %%[markdown]
