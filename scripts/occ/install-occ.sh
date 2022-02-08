@@ -7,7 +7,7 @@ fi
 if [ ! -d pythonocc ]; then
   git clone git://github.com/tpaviot/pythonocc-core.git pythonocc
   cd pythonocc
-  git checkout 7.5.1
+  git checkout 1f1ef205d878c9a5fbca6f97eb8fe7b4a141db12
   cd ..
 fi
 
