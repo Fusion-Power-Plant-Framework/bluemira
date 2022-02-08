@@ -14,9 +14,9 @@ My github ssh connection doesnt connect
     For further ssh issues please see the github `troubleshooting guide
     <https://docs.github.com/en/authentication/troubleshooting-ssh>`_.
 
-The `pip install -U -e .[dev]` command has a cryptic error "zsh: no matches found: .[dev]"
+The ``pip install -U -e .[dev]`` command has a cryptic error "zsh: no matches found: .[dev]"
     On zsh the square brackets need to be escaped this can either be achieved with
-    backslashes `\\[dev\\]` or quotes "[dev]"
+    backslashes ``\\[dev\\]`` or quotes ``"[dev]"``
 
 On MacOS the `envsubst` command cannot be found
     MacOS is not currently a supported OS (it is not part of our CI system)
