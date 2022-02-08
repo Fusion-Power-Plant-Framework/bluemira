@@ -1107,27 +1107,26 @@ def _wire_is_straight(wire):
     return False
 
 
-# def _faces_are_coplanar(faces):
-#     """
-#     Check if a list of faces are all coplanar. First face is taken as the reference.
-#     """
-#     coplanar = []
-#     for other in faces[1:]:
-#         coplanar.append(faces[0].isCoplanar(other))
-#     return all(coplanar)
+def _faces_are_coplanar(faces):
+    """
+    Check if a list of faces are all coplanar. First face is taken as the reference.
+    """
+    coplanar = []
+    for other in faces[1:]:
+        coplanar.append(faces[0].isCoplanar(other))
+    return all(coplanar)
 
 
-# def _flip_plane_axis(shape):
-#     plane = shape.findPlane()
-#     axis = plane.Axis
-#     matrix = plane.Rotation.toMatrix()
-#     v1 = np.array(matrix.A11, matrix.A12, matrix.A13)
-#     v2 = np.array(matrix.A21, matrix.A22, matrix.A23)
-#     v3 = np.array(matrix.A31, matrix.A32, matrix.A33)
+def _flip_plane_axis(shape):
+    plane = shape.findPlane()
+    axis = plane.Axis
+    matrix = plane.Rotation.toMatrix()
+    v1 = np.array(matrix.A11, matrix.A12, matrix.A13)
+    v2 = np.array(matrix.A21, matrix.A22, matrix.A23)
+    v3 = np.array(matrix.A31, matrix.A32, matrix.A33)
 
-#     dcm
-#     result = shape.mirror(shape.CenterOfMass, apiVector(0, 0, 1))
-#     return result
+    result = shape.mirror(shape.CenterOfMass, apiVector(0, 0, 1))
+    return result
 
 
 # ======================================================================================
