@@ -21,3 +21,4 @@ fi
 mkdir build && cd build
 cmake -DOCE_INCLUDE_PATH=/usr/include/opencascade -DOCE_LIB_PATH=/usr/lib/x86_64-linux-gnu ..
 make -j$(nproc --ignore=2)
+make install
