@@ -27,11 +27,11 @@ import pytest
 from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.profiles import DoublePowerFunc
-from bluemira.equilibria.run import AbInitioEquilibriumProblem
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.tools import abs_rel_difference, compare_dicts
 
