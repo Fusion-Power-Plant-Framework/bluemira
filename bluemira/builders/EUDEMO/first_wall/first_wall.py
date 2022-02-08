@@ -88,6 +88,14 @@ class FirstWallBuilder(Builder):
         """
         Build the component.
         """
+        first_wall = Component(FirstWallBuilder.COMPONENT_FIRST_WALL)
+        first_wall.add_child(self.build_xz())
+        return first_wall
+
+    def build_xz(self) -> Component:
+        """
+        Build the component in the xz-plane.
+        """
         parent_component = Component("xz")
         components = [self.wall_part, self.divertor]
         for component in components:
