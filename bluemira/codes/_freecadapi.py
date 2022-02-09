@@ -934,7 +934,14 @@ def boolean_fuse(shapes):
 
     _type = type(shapes[0])
     _check_shapes_same_type(shapes)
-    _check_wire_face_coplanar(shapes)
+
+    if _is_wire_or_face(_type):
+        _check_shapes_coplanar(shapes)
+        if not _shapes_are_coaxis(shapes):
+            bluemira_warn(
+                "Boolean fuse on shapes that are do not have the same planar axis. Reversing."
+            )
+            _make_shapes_coaxis(shapes)
 
     try:
         if _type == apiWire:
@@ -1004,7 +1011,8 @@ def boolean_cut(shape, tools, split=True):
     if not isinstance(tools, list):
         tools = [tools]
 
-    _check_wire_face_coplanar([shape] + tools)
+    if _is_wire_or_face(_type):
+        _check_shapes_coplanar([shape] + tools)
 
     cut_shape = shape.cut(tools)
     if split:
@@ -1108,6 +1116,10 @@ def _wire_is_straight(wire):
     return False
 
 
+def _is_wire_or_face(shape_type):
+    return shape_type == apiWire or shape_type == apiFace
+
+
 def _check_shapes_same_type(shapes):
     """
     Check that all the shapes are of the same type.
@@ -1117,23 +1129,41 @@ def _check_shapes_same_type(shapes):
         raise ValueError(f"All instances in {shapes} must be of the same type.")
 
 
-def _check_wire_face_coplanar(shapes):
-    type_ = type(shapes[0])
-    if type_ == apiWire or type_ == apiFace:
-        if not _shapes_are_coplanar(shapes):
-            raise ValueError(
-                f"Shapes of type {type_} are not co-planar; this operation does not support non-co-planar wires or faces."
-            )
+def _check_shapes_coplanar(shapes):
+    if not _shapes_are_coplanar(shapes):
+        raise ValueError(
+            f"Shapes of type {type(shapes[0])} are not co-planar; this operation does not support non-co-planar wires or faces."
+        )
 
 
 def _shapes_are_coplanar(shapes):
     """
-    Check if a list of faces are all coplanar. First shape is taken as the reference.
+    Check if a list of shapes are all coplanar. First shape is taken as the reference.
     """
     coplanar = []
     for other in shapes[1:]:
         coplanar.append(shapes[0].isCoplanar(other))
     return all(coplanar)
+
+
+def _shapes_are_coaxis(shapes):
+    """
+    Check if a list of shapes are all co-axis. First shape is taken as the reference.
+    """
+    axis = shapes[0].findPlane().Axis
+    for shape in shapes[1:]:
+        other_axis = shape.findPlane().Axis
+        if not axis == other_axis:
+            return False
+    return True
+
+
+def _make_shapes_coaxis(shapes):
+    axis = shapes[0].findPlane().Axis
+    for shape in shapes[1:]:
+        other_axis = shape.findPlane().Axis
+        if not axis == other_axis:
+            shape.reverse()
 
 
 # ======================================================================================
