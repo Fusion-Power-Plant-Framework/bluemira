@@ -677,11 +677,7 @@ def _slice_solid(obj, normal_plane, shift):
     """
     Get the plane intersection wires of a face or solid
     """
-    results = obj.slice(Base.Vector(*normal_plane), shift)
-    for result in results:
-        if not result.Orientation == "Forward":
-            result.reverse()
-    return results
+    return obj.slice(Base.Vector(*normal_plane), shift)
 
 
 # ======================================================================================
