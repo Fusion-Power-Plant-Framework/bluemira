@@ -1140,18 +1140,6 @@ def _shapes_are_coplanar(shapes):
     return all(coplanar)
 
 
-def _shape_orientations_same(shapes):
-    """
-    Check if a list of shapes have the same orientation. First shape is taken as the
-    reference.
-    """
-    orientation = shapes[0].Orientation
-    for shape in shapes[1:]:
-        if shape.Orientation != orientation:
-            return False
-    return True
-
-
 # ======================================================================================
 # Geometry healing
 # ======================================================================================
