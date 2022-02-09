@@ -30,10 +30,7 @@ import pytest
 from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
-    BotDomeFlatInnerCurvedPictureFrame,
-    BotDomeTaperedInnerCurvedPictureFrame,
     FullDomeFlatInnerCurvedPictureFrame,
-    FullDomeTaperedInnerCurvedPictureFrame,
     GeometryParameterisation,
     PictureFrame,
     PolySpline,
@@ -223,6 +220,13 @@ class TestTaperedPictureFrame:
         p.adjust_variable("ro", value=0)
         wire = p.create_shape()
         assert len(wire._boundary) == 4
+
+
+class TestCurvedPictureFrame:
+    def test_length(self):
+        p = FullDomeFlatInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 55.64519, rtol=1e-4, atol=1e-5)
 
 
 class TestSextupleArc:
