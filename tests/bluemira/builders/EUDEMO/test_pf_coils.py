@@ -36,8 +36,19 @@ class TestMakeCoilMapper:
     @classmethod
     def setup_class(cls):
         cls.tracks = [
-            PrincetonD().create_shape(),
-            TaperedPictureFrame().create_shape(),
+            PrincetonD(
+                {"x1": {"value": 4}, "x2": {"value1": 14}, "dz": {"value": 0}}
+            ).create_shape(),
+            TaperedPictureFrame(
+                {
+                    "x1": {"value": 4, "upper_bound": 5},
+                    "x2": {"value": 5, "upper_bound": 6},
+                    "x3": {"value": 15, "upper_bound": 16},
+                    "r": {"value": 1},
+                    "z2": {"value": 8},
+                    "z3": {"value": 15, "upper_bound": 16},
+                }
+            ).create_shape(),
             TripleArc().create_shape(),
         ]
         exclusion1 = BluemiraFace(
