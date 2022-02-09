@@ -1159,6 +1159,9 @@ def _shapes_are_coaxis(shapes):
 
 
 def _make_shapes_coaxis(shapes):
+    """
+    Make a list of shapes co-axis by reversing. First shape is taken as the reference.
+    """
     axis = shapes[0].findPlane().Axis
     for shape in shapes[1:]:
         other_axis = shape.findPlane().Axis
