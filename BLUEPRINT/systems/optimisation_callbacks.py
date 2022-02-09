@@ -118,15 +118,14 @@ def FW_optimiser(FW, hf_limit, n_iteration_max):
     ----------
     FW: FirstWall
         The first wall system being optimised.
-
-    n_iteration_max: integer
-        Max number of iterations after which the optimiser is stopped.
     hf_limit: float
         Heat flux limit for the optimisation.
+    n_iteration_max: integer
+        Max number of iterations after which the optimiser is stopped.
     """
     # NOTE: Not an optimisation
-    FW.initial_profile = FW.make_preliminary_profile()
-    profile = FW.initial_profile
+    FW.preliminary_profile = FW.make_preliminary_profile()
+    profile = FW.preliminary_profile
     for _ in range(n_iteration_max):
         x_wall, z_wall, hf_wall = FW.hf_firstwall_params(profile)
 
