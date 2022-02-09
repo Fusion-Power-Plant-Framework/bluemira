@@ -44,7 +44,7 @@ class TestMakeCoilMapper:
             make_polygon([[6, 9, 9, 6], [0, 0, 0, 0], [0, 0, 20, 20]], closed=True)
         )
         exclusion2 = BluemiraFace(
-            make_polygon([[9, 9, 20, 20], [0, 0, 0, 0], [-1, -1, 1, 1]], closed=True)
+            make_polygon([[9, 20, 20, 9], [0, 0, 0, 0], [-1, -1, 1, 1]], closed=True)
         )
         cls.exclusions = [exclusion1, exclusion2]
 
