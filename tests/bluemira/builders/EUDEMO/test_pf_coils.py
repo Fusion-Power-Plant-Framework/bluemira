@@ -49,10 +49,10 @@ class TestMakeCoilMapper:
         cls.exclusions = [exclusion1, exclusion2]
 
         cls.coils = [
-            Coil(4, 9, current=1, j_max=1),
-            Coil(9, -9, current=1, j_max=1),
-            Coil(0, 12, current=1, j_max=1),
-            Coil(9, -10, current=1, j_max=1),
+            Coil(4, 9, current=1e6, j_max=1),
+            Coil(9, -9, current=1e6, j_max=1),
+            Coil(12, 0, current=1e6, j_max=1),
+            Coil(6, -10, current=1e6, j_max=1),
         ]
 
     def test_cuts(self):
