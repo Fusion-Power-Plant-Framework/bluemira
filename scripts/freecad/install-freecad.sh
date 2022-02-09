@@ -1,5 +1,15 @@
 set -e
 
+NJOBS=$(nproc --ignore=2)
+
+while getopts j: option
+do
+  case "${option}"
+  in
+    j) NJOBS=${OPTARG};;
+  esac
+done
+
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..
 fi
@@ -75,7 +85,7 @@ cmake -DBUILD_QT5=TRUE \
 
 # Crashes for me if I try to use more than one core (possibly OOM).
 # Also shouldn't force a specific number of build threads.
-make -j4
+make -j$NJOBS
 
 # FreeCAD doesn't give us much help when putting files into python, so mock up some
 # infrastructure in out site-packages directory.

@@ -1,5 +1,15 @@
 set -e
 
+NJOBS=$(nproc --ignore=2)
+
+while getopts j: option
+do
+  case "${option}"
+  in
+    j) NJOBS=${OPTARG};;
+  esac
+done
+
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
     cd ..
 fi
@@ -12,7 +22,7 @@ if [ ! -d qt5 ]; then
 fi
 
 cd qt5
-perl init-repository --module-subset=essential,deprecated
+perl init-repository -f --module-subset=essential,qtxmlpatterns,qtsvg
 export LLVM_INSTALL_DIR=/usr/lib/llvm-6.0
 cd ..
 
@@ -23,4 +33,4 @@ fi
 
 mkdir qt5-build && cd qt5-build
 ../qt5/configure -opensource -confirm-license -nomake examples -nomake tests
-make -j$(nproc --ignore=2)
+make -j$NJOBS

@@ -1,5 +1,15 @@
 set -e
 
+NJOBS=$(nproc --ignore=2)
+
+while getopts j: option
+do
+  case "${option}"
+  in
+    j) NJOBS=${OPTARG};;
+  esac
+done
+
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..
 fi
@@ -9,4 +19,4 @@ if [ ! -d coin/build ]; then
   exit 1
 fi
 
-cmake --build coin_build --target install --config Release -- -j4
+cmake --build coin_build --target install --config Release -- -j$NJOBS

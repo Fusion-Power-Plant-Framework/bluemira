@@ -1,5 +1,15 @@
 set -e
 
+NJOBS=$(nproc --ignore=2)
+
+while getopts j: option
+do
+  case "${option}"
+  in
+    j) NJOBS=${OPTARG};;
+  esac
+done
+
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..
 fi
@@ -18,7 +28,7 @@ if [ -d build ]; then
   rm -rf build
 fi
 
-mkdir pivy-build && cd pivy-build
-cmake ../pivy
-make -j$(nproc --ignore=2)
+mkdir build && cd build
+cmake ..
+make -j$NJOBS
 make install

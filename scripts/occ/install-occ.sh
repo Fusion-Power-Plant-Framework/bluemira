@@ -1,5 +1,15 @@
 set -e
 
+NJOBS=$(nproc --ignore=2)
+
+while getopts j: option
+do
+  case "${option}"
+  in
+    j) NJOBS=${OPTARG};;
+  esac
+done
+
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..
 fi
@@ -20,5 +30,5 @@ fi
 
 mkdir build && cd build
 cmake -DOCE_INCLUDE_PATH=/usr/include/opencascade -DOCE_LIB_PATH=/usr/lib/x86_64-linux-gnu ..
-make -j$(nproc --ignore=2)
+make -j$NJOBS
 make install
