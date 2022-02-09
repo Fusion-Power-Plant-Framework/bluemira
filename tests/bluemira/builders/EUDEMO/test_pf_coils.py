@@ -37,7 +37,7 @@ class TestMakeCoilMapper:
     def setup_class(cls):
         cls.tracks = [
             PrincetonD(
-                {"x1": {"value": 4}, "x2": {"value1": 14}, "dz": {"value": 0}}
+                {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
             ).create_shape(),
             TaperedPictureFrame(
                 {
