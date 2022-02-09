@@ -932,13 +932,12 @@ def boolean_fuse(shapes):
     if len(shapes) < 2:
         raise ValueError("At least 2 shapes must be given")
 
-    # check that all the shapes are of the same time
     _type = type(shapes[0])
-    if not all(isinstance(s, _type) for s in shapes):
-        raise ValueError(f"All instances in {shapes} must be of the same type.")
+    _check_shapes_same_type(shapes)
+    _check_wire_face_coplanar(shapes)
 
     try:
-        if _type == Part.Wire:
+        if _type == apiWire:
             merged_shape = BOPTools.SplitAPI.booleanFragments(shapes, "Split")
             if len(merged_shape.Wires) > len(shapes):
                 raise FreeCADError(
@@ -951,7 +950,7 @@ def boolean_fuse(shapes):
                 merged_shape = Part.Wire(merged_shape.Wires)
                 return merged_shape
 
-        elif _type == Part.Face:
+        elif _type == apiFace:
             merged_shape = shapes[0].fuse(shapes[1:])
             merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Faces) > 1:
@@ -960,7 +959,7 @@ def boolean_fuse(shapes):
                 )
             return merged_shape.Faces[0]
 
-        elif _type == Part.Solid:
+        elif _type == apiSolid:
             merged_shape = shapes[0].fuse(shapes[1:])
             merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Solids) > 1:
@@ -1005,17 +1004,19 @@ def boolean_cut(shape, tools, split=True):
     if not isinstance(tools, list):
         tools = [tools]
 
+    _check_wire_face_coplanar([shape] + tools)
+
     cut_shape = shape.cut(tools)
     if split:
         cut_shape = BOPTools.SplitAPI.slice(cut_shape, tools, mode="Split")
 
-    if _type == Part.Wire:
+    if _type == apiWire:
         output = cut_shape.Wires
-    elif _type == Part.Face:
+    elif _type == apiFace:
         output = cut_shape.Faces
-    elif _type == Part.Shell:
+    elif _type == apiShell:
         output = cut_shape.Shells
-    elif _type == Part.Solid:
+    elif _type == apiSolid:
         output = cut_shape.Solids
     else:
         raise ValueError(f"Cut function not implemented for {_type} objects.")
@@ -1107,26 +1108,44 @@ def _wire_is_straight(wire):
     return False
 
 
-def _faces_are_coplanar(faces):
+def _check_shapes_same_type(shapes):
     """
-    Check if a list of faces are all coplanar. First face is taken as the reference.
+    Check that all the shapes are of the same type.
+    """
+    _type = type(shapes[0])
+    if not all(isinstance(s, _type) for s in shapes):
+        raise ValueError(f"All instances in {shapes} must be of the same type.")
+
+
+def _check_wire_face_coplanar(shapes):
+    type_ = type(shapes[0])
+    if type_ == apiWire or type_ == apiFace:
+        if not _shapes_are_coplanar(shapes):
+            raise ValueError(
+                f"Shapes of type {type_} are not co-planar; this operation does not support non-co-planar wires or faces."
+            )
+
+
+def _shapes_are_coplanar(shapes):
+    """
+    Check if a list of faces are all coplanar. First shape is taken as the reference.
     """
     coplanar = []
-    for other in faces[1:]:
-        coplanar.append(faces[0].isCoplanar(other))
+    for other in shapes[1:]:
+        coplanar.append(shapes[0].isCoplanar(other))
     return all(coplanar)
 
 
-def _flip_plane_axis(shape):
-    plane = shape.findPlane()
-    axis = plane.Axis
-    matrix = plane.Rotation.toMatrix()
-    v1 = np.array(matrix.A11, matrix.A12, matrix.A13)
-    v2 = np.array(matrix.A21, matrix.A22, matrix.A23)
-    v3 = np.array(matrix.A31, matrix.A32, matrix.A33)
-
-    result = shape.mirror(shape.CenterOfMass, apiVector(0, 0, 1))
-    return result
+def _shape_orientations_same(shapes):
+    """
+    Check if a list of shapes have the same orientation. First shape is taken as the
+    reference.
+    """
+    orientation = shapes[0].Orientation
+    for shape in shapes[1:]:
+        if shape.Orientation != orientation:
+            return False
+    return True
 
 
 # ======================================================================================
