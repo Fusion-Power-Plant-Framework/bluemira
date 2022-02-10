@@ -1479,7 +1479,7 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 # Inner limb radius
@@ -1573,7 +1573,7 @@ class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 # Inner limb radius
@@ -1667,7 +1667,7 @@ class FullDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 # Inner limb radius
@@ -1771,7 +1771,7 @@ class TopDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 # Inner limb radius
@@ -1873,7 +1873,7 @@ class BotDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict={}):
+    def __init__(self, var_dict=None):
         variables = OptVariables(
             [
                 # Inner limb radius
