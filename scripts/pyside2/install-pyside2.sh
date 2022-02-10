@@ -22,4 +22,5 @@ if [ ! -d pyside-setup ]; then
 fi
 
 cd pyside-setup
+python3 setup.py build --qmake=/usr/local/Qt-5.14.2/bin/qmake --parallel=$NJOBS
 python3 setup.py install --qmake=/usr/local/Qt-5.14.2/bin/qmake --parallel=$NJOBS
