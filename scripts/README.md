@@ -25,10 +25,12 @@ sudo bash scripts/qt5/install-qt5.sh
 bash scripts/pyside2/install-pyside2.sh
 
 # Build and install coin (4.0.0)
+sudo bash scripts/coin/install-coin-deps.sh
 bash scripts/coin/build-coin.sh
 sudo bash scripts/coin/install-coin.sh
 
 # Build and install pivy (0.6.6)
+sudo bash scripts/pivy/install-pivy-deps.sh
 bash scripts/pivy/install-pivy.sh
 
 # Build and install freecad (0.19.3)
