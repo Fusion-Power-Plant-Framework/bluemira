@@ -34,3 +34,9 @@ functionality than ``BLUEPRINT`` or ``MIRA`` did. We are very actively working t
 a point where ``bluemira`` is greater than the sum of its parts. If you are interested in
 using ``bluemira`` as an "early adopter", please do get in touch with us so that we can
 help you.
+
+
+.. figure:: bluemira-roadmap.png
+    :name: fig:bluemira-roadmap
+
+    ``Bluemira`` development roadmap for 2022

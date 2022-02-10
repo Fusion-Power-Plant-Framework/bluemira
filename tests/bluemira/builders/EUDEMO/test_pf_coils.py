@@ -36,23 +36,34 @@ class TestMakeCoilMapper:
     @classmethod
     def setup_class(cls):
         cls.tracks = [
-            PrincetonD().create_shape(),
-            TaperedPictureFrame().create_shape(),
+            PrincetonD(
+                {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
+            ).create_shape(),
+            TaperedPictureFrame(
+                {
+                    "x1": {"value": 4, "upper_bound": 5},
+                    "x2": {"value": 5, "upper_bound": 6},
+                    "x3": {"value": 15, "upper_bound": 16},
+                    "r": {"value": 1},
+                    "z2": {"value": 8},
+                    "z3": {"value": 15, "upper_bound": 16},
+                }
+            ).create_shape(),
             TripleArc().create_shape(),
         ]
         exclusion1 = BluemiraFace(
             make_polygon([[6, 9, 9, 6], [0, 0, 0, 0], [0, 0, 20, 20]], closed=True)
         )
         exclusion2 = BluemiraFace(
-            make_polygon([[9, 9, 20, 20], [0, 0, 0, 0], [-1, -1, 1, 1]], closed=True)
+            make_polygon([[9, 20, 20, 9], [0, 0, 0, 0], [-1, -1, 1, 1]], closed=True)
         )
         cls.exclusions = [exclusion1, exclusion2]
 
         cls.coils = [
-            Coil(4, 9, current=1, j_max=1),
-            Coil(9, -9, current=1, j_max=1),
-            Coil(0, 12, current=1, j_max=1),
-            Coil(9, -10, current=1, j_max=1),
+            Coil(4, 9, current=1e6, j_max=1),
+            Coil(9, -9, current=1e6, j_max=1),
+            Coil(12, 0, current=1e6, j_max=1),
+            Coil(6, -10, current=1e6, j_max=1),
         ]
 
     def test_cuts(self):
