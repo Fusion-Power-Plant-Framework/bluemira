@@ -1,12 +1,14 @@
 set -e
 
 NJOBS=$(nproc --ignore=2)
+FORCE="false"
 
-while getopts j: option
+while getopts j:f option
 do
   case "${option}"
   in
     j) NJOBS=${OPTARG};;
+    f) FORCE="true";;
   esac
 done
 
@@ -24,8 +26,13 @@ fi
 cd pivy
 
 if [ -d build ]; then
-  echo "Removing previous pivy build"
-  rm -rf build
+  if ${FORCE}; then
+    echo "Removing previous pivy build"
+    rm -rf build
+  else
+    echo "Existing pivy build exists. Use the flag -f if you want to rebuild."
+    exit 1
+  fi
 fi
 
 mkdir build && cd build
