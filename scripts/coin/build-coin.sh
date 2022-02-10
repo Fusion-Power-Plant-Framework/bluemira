@@ -1,12 +1,14 @@
 set -e
 
 NJOBS=$(nproc --ignore=2)
+FORCE="false"
 
-while getopts j: option
+while getopts j:f option
 do
   case "${option}"
   in
     j) NJOBS=${OPTARG};;
+    f) FORCE="true";;
   esac
 done
 
@@ -22,8 +24,13 @@ if [ ! -d coin ]; then
 fi
 
 if [ -d coin_build ]; then
-  echo "Removing previous coin build"
-  rm -rf coin_build
+  if ${FORCE}; then
+    echo "Removing previous coin build"
+    rm -rf coin_build
+  else
+    echo "Existing coin build exists. Use the flag -f if you want to rebuild."
+    exit 1
+  fi
 fi
 
 cmake -Hcoin -Bcoin_build -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr/local \

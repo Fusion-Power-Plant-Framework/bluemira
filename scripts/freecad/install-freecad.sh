@@ -1,12 +1,14 @@
 set -e
 
 NJOBS=$(nproc --ignore=2)
+FORCE="false"
 
-while getopts j: option
+while getopts j:f option
 do
   case "${option}"
   in
     j) NJOBS=${OPTARG};;
+    f) FORCE="true"
   esac
 done
 
@@ -22,8 +24,13 @@ if [ ! -d freecad-source ]; then
 fi
 
 if [ -d freecad-build ]; then
-  echo "Removing previous FreeCAD build"
-  rm -rf freecad-build
+  if ${FORCE}; then
+    echo "Removing previous FreeCAD build."
+    rm -rf freecad-build
+  else
+    echo "Existing freecad build exists. Use the flag -f if you want to rebuild."
+    exit 1
+  fi
 fi
 
 PYTHON_VERSION=`python -c 'import sys; version=sys.version_info[:2]; print("{0}.{1}".format(*version))'`
