@@ -184,6 +184,10 @@ class ConfigurationSchema:
     tk_bb_bz: Parameter
     tk_bb_man: Parameter
 
+    # Divertor
+    div_pump_eta_el: Parameter
+    div_pump_eta_isen: Parameter
+
     # Component radial thicknesses (some vertical)
     tk_bb_ib: Parameter
     tk_bb_ob: Parameter

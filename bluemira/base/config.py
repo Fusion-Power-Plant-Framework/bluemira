@@ -196,6 +196,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tk_bb_bz', 'Breeding zone thickness', 1.0, 'm', None, 'Input'],
         ['tk_bb_man', 'Breeding blanket manifold thickness', 0.2, 'm', None, 'Input'],
 
+        # Divertor
+        ['div_pump_eta_el', 'Divertor pumping electrical efficiency', 0.87, 'N/A', None, 'Input (F. Cismondi)'],
+        ['div_pump_eta_isen', 'Divertor pumping isentropic efficiency', 0.99, 'N/A', None, 'Input (F. Cismondi)'],
+
         # Component radial thicknesses (some vertical)
         ['tk_bb_ib', 'Inboard blanket thickness', 0.8, 'm', None, 'Input'],
         ['tk_bb_ob', 'Outboard blanket thickness', 1.1, 'm', None, 'Input'],

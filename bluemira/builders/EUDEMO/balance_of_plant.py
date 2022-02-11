@@ -78,7 +78,7 @@ def run_power_balance(params):
     neutron_power_strat = NeutronPowerStrategy(
         f_blanket=0.9,
         f_divertor=0.05,
-        f_vessel=0.04,
+        f_vessel=params.vvpfrac.value,  # TODO: Change this parameter name
         f_other=0.01,
         energy_multiplication=params.bb_e_mult.value,
     )
@@ -112,8 +112,12 @@ def run_power_balance(params):
     else:
         raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
 
-    divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
-    parasitic_load_strat = ParasiticLoadStrategy()
+    divertor_pump_strat = H2OPumping(
+        f_pump=0.05,
+        eta_isentropic=params.div_pump_eta_isen.value,
+        eta_electric=params.div_pump_eta_el.value,
+    )
+    parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
 
     bop = BalanceOfPlant(
         params,
