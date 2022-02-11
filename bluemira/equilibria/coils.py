@@ -734,18 +734,27 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
     def __str__(self) -> str:
         """
-        TODO
+        Pretty coil printing.
         """
-        pass
+        ret_str = ""
+        for ind in range(len(self.x)):
+            ret_str += (
+                f"{self.name[ind]} X={self.x[ind]:.2f} m, Z={self.z[ind]:.2f} m, I={self.current[ind]/1e6:.2f} MA "
+                f"control={self.control}\n"
+            )
+        return ret_str[:-1]
 
     def __repr__(self) -> str:
         """
-        TODO
+        Pretty console coil rendering.
         """
-        pass
+        return f"{self.__class__.__name__}({self.__str__()})"
 
 
 class Coil(CoilGroup):
+
+    __slots__ = ()
+
     def __init__(
         self,
         x: float,
@@ -786,15 +795,3 @@ class Coil(CoilGroup):
             super().__setattr__(attr, value)
         else:
             raise ValueError(f"Length of value should be 1: {attr}={value}")
-
-    def __str__(self) -> str:
-        """
-        TODO
-        """
-        pass
-
-    def __repr__(self) -> str:
-        """
-        TODO
-        """
-        pass
