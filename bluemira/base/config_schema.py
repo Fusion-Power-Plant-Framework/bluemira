@@ -89,6 +89,7 @@ class ConfigurationSchema:
     f_ni: Parameter
     e_nbi: Parameter
     P_hcd_ss: Parameter
+    P_hcd_ss_el: Parameter
     q_control: Parameter
     g_cd_nb: Parameter
     eta_nb: Parameter
