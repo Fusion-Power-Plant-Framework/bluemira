@@ -1,0 +1,6 @@
+.venv
+.github
+conda
+data
+documentation
+examples
