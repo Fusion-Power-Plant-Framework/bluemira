@@ -343,7 +343,7 @@ class RadChargedPowerStrategy(FractionSplitStrategy):
 
         # Split first wall into blanket and auxiliary
         p_rad_sep_fw = p_core_rad_fw + p_sol_rad_fw + p_sol_charged_fw
-        p_rad_sep_blk = p_rad_sep_fw * (1 - self.f_fw_blk)
+        p_rad_sep_blk = p_rad_sep_fw * (1 - self.f_fw_aux)
         p_rad_sep_aux = p_rad_sep_fw - p_rad_sep_blk
         p_rad_sep_div = p_core_rad_div + p_sol_rad_div + p_sol_charged_div
         return p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux
