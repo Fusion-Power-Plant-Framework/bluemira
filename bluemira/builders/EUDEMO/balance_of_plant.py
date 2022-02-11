@@ -34,8 +34,47 @@ from bluemira.balance_of_plant.steady_state import (
     SuperheatedRankine,
 )
 
+__all__ = ["run_power_balance"]
+
+
+class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
+    """
+    S. Ciattaglia reference point from the mid-2010's
+    """
+
+    def __init__(self):
+        self.p_fusion_ref = 2037
+        self.p_cryo = 44
+        self.p_mag = 44
+        self.p_t_plant = 15.5
+        self.p_other = 31
+
+    def calculate(self, p_fusion):
+        """
+        Because we were told to do this. Nobody trusts models.
+        """
+        f_norm = p_fusion / self.p_fusion_ref
+        p_mag = f_norm * self.p_mag
+        p_cryo = f_norm * self.p_cryo
+        p_t_plant = f_norm * self.p_t_plant
+        p_other = f_norm * self.p_other
+        return p_mag, p_cryo, p_t_plant, p_other
+
 
 def run_power_balance(params):
+    """
+    Run a power balance model for a given set of parameters.
+
+    Parameters
+    ----------
+    params: ParameterFrame
+        The set of parameters for which to run the power balance
+
+    Returns
+    -------
+    bop: BalanceOfPlant
+        Balance of plant model
+    """
     neutron_power_strat = NeutronPowerStrategy(
         f_blanket=0.9,
         f_divertor=0.05,
@@ -85,3 +124,5 @@ def run_power_balance(params):
         bop_cycle,
         parasitic_load_strat,
     )
+    bop.build()
+    return bop
