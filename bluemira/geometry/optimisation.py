@@ -73,6 +73,8 @@ class GeometryOptimisationProblem(abc.ABC):
         """
         self.parameterisation.variables.set_values_from_norm(x)
 
+    # is there a reason this is not an abstract method?
+    # how do we know what form f_objective needs to take?
     f_objective = None
 
     def solve(self, x0=None):

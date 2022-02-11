@@ -21,4 +21,4 @@
 
 from .divertor import DivertorBuilder
 from .first_wall import FirstWallBuilder
-from .wall import FirstWallPolySpline, WallBuilder
+from .wall import WallBuilder, WallPolySpline

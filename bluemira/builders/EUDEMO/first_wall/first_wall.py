@@ -22,6 +22,7 @@
 Builders for the first wall of the reactor, including divertor
 """
 
+from copy import deepcopy
 from typing import Any, Dict, Iterable
 
 import numpy as np
@@ -36,6 +37,29 @@ from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
+
+_WALL_MODULE_REF = "bluemira.builders.EUDEMO.first_wall.wall"
+
+
+def _cut_shape_in_z(shape: BluemiraWire, z_max: float):
+    """
+    Remove the parts of the wire below the given value in the z-axis.
+    """
+    # Create a box that surrounds the wall below the given z
+    # coordinate, then perform a boolean cut to remove that portion
+    # of the wall's shape.
+    bounding_box = shape.bounding_box
+    cut_box_points = np.array(
+        [
+            [bounding_box.x_min, 0, bounding_box.z_min],
+            [bounding_box.x_min, 0, z_max],
+            [bounding_box.x_max, 0, z_max],
+            [bounding_box.x_max, 0, bounding_box.z_min],
+            [bounding_box.x_min, 0, bounding_box.z_min],
+        ]
+    )
+    cut_zone = make_polygon(cut_box_points, label="_shape_cut_exclusion")
+    return boolean_cut(shape, [cut_zone])[0]
 
 
 class FirstWallBuilder(Builder):
@@ -61,10 +85,11 @@ class FirstWallBuilder(Builder):
         _, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
+        self.wall_part: PhysicalComponent = self._build_wall_no_divertor(
+            params, build_config
+        )
 
-        self.wall_part: Component = self._build_wall_no_divertor(params, build_config)
-
-        wall_shape = self.wall_part.shape
+        wall_shape: BluemiraWire = self.wall_part.shape
         self.divertor: Component = self._build_divertor(
             params,
             build_config,
@@ -81,6 +106,10 @@ class FirstWallBuilder(Builder):
         """
         Create a basic shape for the wall's boundary.
         """
+        pass
+
+    def run(self):
+        """Run the builder design problem."""
         pass
 
     def build(self) -> Component:
@@ -105,12 +134,27 @@ class FirstWallBuilder(Builder):
         """
         Build the component for the wall, excluding the divertor.
         """
-        builder = WallBuilder(params, build_config=build_config)
+        build_config = deepcopy(build_config)
+        build_config.update(
+            {
+                "class": f"{_WALL_MODULE_REF}::WallBuilder",
+                "param_class": f"{_WALL_MODULE_REF}::WallPolySpline",
+                "problem_class": f"{_WALL_MODULE_REF}::MinimiseLength",
+                "label": "First wall",
+                "name": "First wall",
+            }
+        )
+
+        keep_out_zone = self._make_wall_keep_out_zone()
+        builder = WallBuilder(
+            params, build_config=build_config, keep_out_zones=(keep_out_zone,)
+        )
+
         wall = builder()
         wall_shape: BluemiraGeo = wall.get_component(WallBuilder.COMPONENT_WALL).shape
-        z_max = self.x_points[0][1]
 
-        cut_shape = self._cut_shape_in_z(wall_shape, z_max)
+        x_point_z = self.x_points[0].z
+        cut_shape = _cut_shape_in_z(wall_shape, x_point_z)
         return PhysicalComponent(FirstWallBuilder.COMPONENT_FIRST_WALL, cut_shape)
 
     def _build_divertor(
@@ -122,22 +166,13 @@ class FirstWallBuilder(Builder):
         builder = DivertorBuilder(params, build_config, self.equilibrium, x_lims)
         return builder()
 
-    def _cut_shape_in_z(self, shape: BluemiraWire, z_max: float):
+    def _make_wall_keep_out_zone(self) -> BluemiraWire:
         """
-        Remove the parts of the wire below the given value in the z-axis.
+        Create a "keep-out-zone" to be used as a constraint in the
+        shape optimiser
         """
-        # Create a box that surrounds the wall below the given z
-        # coordinate, then perform a boolean cut to remove that portion
-        # of the wall's shape.
-        bounding_box = shape.bounding_box
-        cut_box_points = np.array(
-            [
-                [bounding_box.x_min, 0, bounding_box.z_min],
-                [bounding_box.x_min, 0, z_max],
-                [bounding_box.x_max, 0, z_max],
-                [bounding_box.x_max, 0, bounding_box.z_min],
-                [bounding_box.x_min, 0, bounding_box.z_min],
-            ]
-        )
-        cut_zone = make_polygon(cut_box_points, label="_shape_cut_exclusion")
-        return boolean_cut(shape, [cut_zone])[0]
+        # The keep-out-zone is generated from the flux surface of the
+        # separatrix above the x-point
+        coords = self.equilibrium.get_separatrix().xyz
+        coords = coords[:, coords[2] > self.x_points[0].z]
+        return make_polygon(coords, closed=True)
