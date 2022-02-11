@@ -57,14 +57,18 @@ def run_power_balance(params):
             params.bb_p_outlet.value,
             params.bb_t_inlet.value,
             params.bb_t_outlet.value,
-            eta_isentropic=0.9,
-            eta_electric=0.87,
+            eta_isentropic=params.bb_pump_eta_isen.value,
+            eta_electric=params.bb_pump_eta_el.value,
         )
         bop_cycle = SuperheatedRankine(
             bb_t_out=params.bb_t_outlet.value, delta_t_turbine=20
         )
     elif params.blanket_type.value == "WCLL":
-        blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.99, eta_electric=0.87)
+        blanket_pump_strat = H2OPumping(
+            0.005,
+            eta_isentropic=params.bb_pump_eta_isen.value,
+            eta_electric=params.bb_pump_eta_el.value,
+        )
         bop_cycle = PredeterminedEfficiency(0.33)
     else:
         raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
