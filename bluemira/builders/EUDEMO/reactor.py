@@ -406,7 +406,7 @@ class EUDEMOReactor(Reactor):
 
         # TODO: register solver
         # TODO: hook up
-        output = run_power_balance(self._params)
+        # output = run_power_balance(self._params)
         # self._params.update_kw_parameters(output.to_dict())
 
         bluemira_print(f"Completed design stage: {name}")
