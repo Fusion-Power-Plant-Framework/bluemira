@@ -165,6 +165,10 @@ class ConfigurationSchema:
     tk_r_ob_bss: Parameter
     n_bb_inboard: Parameter
     n_bb_outboard: Parameter
+    bb_t_inlet: Parameter
+    bb_t_outlet: Parameter
+    bb_p_inlet: Parameter
+    bb_p_outlet: Parameter
 
     # ST Breeding blanket
     g_bb_fw: Parameter

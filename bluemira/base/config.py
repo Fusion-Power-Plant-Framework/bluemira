@@ -169,16 +169,18 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
 
         # Blanket
-        ["bb_e_mult", "Energy multiplication factor", 1.35, "dimensionless", None, "HCPB classic"],
-        ['bb_min_angle', 'Minimum module angle', 70, '°', 'Sharpest cut of a module possible', 'Input (Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany)'],
-        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "dimensionless", None, "Input (HCPB 2015 design description document 2MHDNB)"],
-        ["n_bb_inboard", "Number of inboard blanket segments", 2, "dimensionless", None, "Input"],
-        ["n_bb_outboard", "Number of outboard blanket segments", 3, "dimensionless", None, "Input"],
+        ["bb_e_mult", "Energy multiplication factor", 1.35, "N/A", None, "HCPB classic"],
+        ['bb_min_angle', 'Minimum module angle', 70, '°', 'Sharpest cut of a module possible', 'Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany'],
+        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "N/A", None, "HCPB 2015 design description document"],
+        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "N/A", None, "HCPB 2015 design description document"],
+        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "N/A", None, "HCPB 2015 design description document"],
+        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "N/A", None, "HCPB 2015 design description document"],
+        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "N/A", None, "HCPB 2015 design description document"],
+        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "N/A", None, "HCPB 2015 design description document"],
+        ["bb_t_inlet", "Breeding blanket inlet temperature", 300, "°C", "HCPB classic", "Input"],
+        ["bb_t_outlet", "Breeding blanket outlet temperature", 500, "°C", "HCPB classic", "Input"],
+        ["bb_p_inlet", "Breeding blanket inlet pressure", 8e6, "Pa", "HCPB classic", "Input"],
+        ["bb_p_outlet", "Breeding blanket outlet pressure", 7.5e6, "Pa", "HCPB classic", "Input"],
 
         # ST Breeding blanket
         ['g_bb_fw', 'Separation between the first wall and the breeding blanket', 0.05, 'm', None, 'Input'],

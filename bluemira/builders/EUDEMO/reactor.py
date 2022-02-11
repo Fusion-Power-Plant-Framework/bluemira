@@ -89,6 +89,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_cryostat(component))
         component.add_child(self.build_radiation_shield(component))
 
+        self.run_power_balance()
         bluemira_print("Reactor Design Complete!")
 
         return component
@@ -392,3 +393,11 @@ class EUDEMOReactor(Reactor):
         self.register_builder(builder)
 
         return super()._build_stage()
+        bluemira_print(f"Completed design stage: {name}")
+        return component
+
+    def run_power_balance(self):
+        """
+        Run the power balance for the reactor.
+        """
+        pass
