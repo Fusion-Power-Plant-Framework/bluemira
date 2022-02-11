@@ -106,6 +106,13 @@ class ConfigurationSchema:
     P_bd_in: Parameter
     condrad_cryo_heat: Parameter
 
+    # Radiation and charged particles
+    f_core_rad_fw: Parameter
+    f_sol_rad: Parameter
+    f_sol_rad_fw: Parameter
+    f_sol_ch_fw: Parameter
+    f_fw_aux: Parameter
+
     # First wall profile
     fw_psi_n: Parameter
     fw_dL_min: Parameter  # noqa :N815 - mixed case to match PROCESS

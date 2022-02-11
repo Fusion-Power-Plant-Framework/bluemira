@@ -22,7 +22,7 @@
 """
 Simple example of a 0-D steady-state balance of plant view.
 """
-
+# %%
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlant,
     H2OPumping,
@@ -35,6 +35,12 @@ from bluemira.balance_of_plant.steady_state import (
 )
 from bluemira.base.parameter import ParameterFrame
 
+# %%[markdown]
+
+# Let's set up a typical power balance model. We start by specifying some parameters we
+# want to use.
+
+# %%
 # fmt: off
 default_params = ParameterFrame([
     ['P_fus_DT', 'D-T fusion power', 1995, 'MW', None, 'Input'],
@@ -46,6 +52,12 @@ default_params = ParameterFrame([
 ])
 # fmt: on
 
+# %%[markdown]
+
+# We then weed to specify how we're going to treat the neutrons, radiation, and charged
+# particle loads. We do this by specifying "strategies".
+
+# %%
 neutron_power_strat = NeutronPowerStrategy(
     f_blanket=0.9,
     f_divertor=0.05,
@@ -58,13 +70,53 @@ rad_sep_strat = RadChargedPowerStrategy(
     f_sol_rad=0.75,
     f_sol_rad_fw=0.8,
     f_sol_ch_fw=0.8,
-    f_fw_blk=0.91,
+    f_fw_aux=0.09,
 )
+
+# %%[markdown]
+
+# Now we to specify how the in-vessel components are being cooled, to calculate pumping
+# powers, and the balance of plant cycle design.
+
+# %%
 blanket_pump_strat = HePumping(8, 7.5, 300, 500, eta_isentropic=0.9, eta_electric=0.87)
 bop_cycle = SuperheatedRankine(bb_t_out=500, delta_t_turbine=20)
 divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
-parasitic_load_strat = ParasiticLoadStrategy()
 
+# %%[markdown]
+
+# Maybe we don't have any good models to estimate some of the other parasitic loads. We
+# can set up a simple scaling with respect to a known reference point, by sub-classing
+# from the ABC and specifying some calculation in the `calculate` method.
+
+# %%
+class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
+    def __init__(self):
+        self.p_fusion_ref = 2037
+        self.p_cryo = 44
+        self.p_mag = 44
+        self.p_t_plant = 15.5
+        self.p_other = 31
+
+    def calculate(self, p_fusion):
+        """
+        Because we were told to do this. Nobody trusts models.
+        """
+        f_norm = p_fusion / self.p_fusion_ref
+        p_mag = f_norm * self.p_mag
+        p_cryo = f_norm * self.p_cryo
+        p_t_plant = f_norm * self.p_t_plant
+        p_other = f_norm * self.p_other
+        return p_mag, p_cryo, p_t_plant, p_other
+
+
+parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
+
+# %%[markdown]
+
+# Now, we put everything together and build it
+
+# %%
 HCPB_bop = BalanceOfPlant(
     default_params,
     rad_sep_strat=rad_sep_strat,
@@ -75,9 +127,30 @@ HCPB_bop = BalanceOfPlant(
     parasitic_load_strat=parasitic_load_strat,
 )
 HCPB_bop.build()
+
+# %%[markdown]
+
+# And we can take a look...
+
+# %%
 HCPB_bop.plot(title="HCPB blanket")
 
 
+# %%[markdown]
+
+# What about if we had a different blanket concept? The coolant is different, which means
+# the pumping loads will differ, and the power cycle will also be different. It's likely
+# that the energy multiplication is different too
+
+# %%
+
+neutron_power_strat = NeutronPowerStrategy(
+    f_blanket=0.9,
+    f_divertor=0.05,
+    f_vessel=0.04,
+    f_other=0.01,
+    energy_multiplication=1.25,
+)
 blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.99, eta_electric=0.87)
 bop_cycle = PredeterminedEfficiency(0.33)
 

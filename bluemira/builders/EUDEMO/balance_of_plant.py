@@ -44,11 +44,11 @@ def run_power_balance(params):
         energy_multiplication=params.bb_e_mult.value,
     )
     rad_sep_strat = RadChargedPowerStrategy(
-        f_core_rad_fw=0.9,
-        f_sol_rad=0.75,
-        f_sol_rad_fw=0.8,
-        f_sol_ch_fw=0.8,
-        f_fw_blk=0.91,
+        f_core_rad_fw=params.f_core_rad_fw.value,
+        f_sol_rad=params.f_sol_rad.value,
+        f_sol_rad_fw=params.f_sol_rad_fw.value,
+        f_sol_ch_fw=params.f_sol_ch_fw.value,
+        f_fw_aux=params.f_fw_aux.value,
     )
 
     if params.blanket_type.value == "HCPB":
@@ -73,4 +73,15 @@ def run_power_balance(params):
     else:
         raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
 
-    bop = BalanceOfPlant(params, rad_sep_strat, neutron_power_strat, blanket_pump_strat)
+    divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
+    parasitic_load_strat = ParasiticLoadStrategy()
+
+    bop = BalanceOfPlant(
+        params,
+        rad_sep_strat,
+        neutron_power_strat,
+        blanket_pump_strat,
+        divertor_pump_strat,
+        bop_cycle,
+        parasitic_load_strat,
+    )

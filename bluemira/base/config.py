@@ -116,6 +116,13 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['P_bd_in', 'total auxiliary injected power' , 0, 'MW', None, 'Input'],
         ['condrad_cryo_heat', "Conduction and radiation heat loads on cryogenic components", 0, 'MW', None, 'Input'],
 
+        # Radiation and charged particles
+        ['f_core_rad_fw', 'Fraction of core radiation power that is distributed to the blanket FW', 0.9, 'N/A', None, 'Input (MC guess)'],
+        ['f_sol_rad', 'Fraction of SOL power radiated', 0.75, 'N/A', 'The rest is assumed to be in the form of charged particles', 'Input (F. Maviglia standard)'],
+        ['f_sol_rad_fw', 'Fraction of radiated SOL power that is distributed to the blanket FW', 0.8, 'N/A', None, 'Input (MC guess)'],
+        ['f_sol_ch_fw', 'Fraction of SOL charged particle power that is distributed to the blanket FW', 0.8, 'N/A', None, 'Input (F. Maviglia standard)'],
+        ['f_fw_aux', 'Fraction of first wall power that goes into auxiliary systems', 0.09, 'N/A', None, 'Input (F. Maviglia standard)'],
+
         # First wall profile
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'dimensionless', None, 'Input'],
         ['fw_dL_min', 'Minimum FW module length', 0.75, 'm', None, 'Input'],

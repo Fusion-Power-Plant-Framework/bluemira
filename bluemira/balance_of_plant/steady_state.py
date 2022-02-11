@@ -305,16 +305,16 @@ class RadChargedPowerStrategy(FractionSplitStrategy):
         Fraction of radiated SOL power that is distributed to the first wall
     f_sol_ch_fw: float
         Fraction of SOL charged particle power that is distributed to the first wall
-    f_fw_blk: float
+    f_fw_aux: float
         Fraction of first power that actually goes into auxiliary systems
     """
 
-    def __init__(self, f_core_rad_fw, f_sol_rad, f_sol_rad_fw, f_sol_ch_fw, f_fw_blk):
+    def __init__(self, f_core_rad_fw, f_sol_rad, f_sol_rad_fw, f_sol_ch_fw, f_fw_aux):
         self.f_core_rad_fw = f_core_rad_fw
         self.f_sol_rad = f_sol_rad
         self.f_sol_rad_fw = f_sol_rad_fw
         self.f_sol_ch_fw = f_sol_ch_fw
-        self.f_fw_blk = f_fw_blk
+        self.f_fw_aux = f_fw_aux
 
     def split(self, p_radiation, p_separatrix):
         """
@@ -343,34 +343,37 @@ class RadChargedPowerStrategy(FractionSplitStrategy):
 
         # Split first wall into blanket and auxiliary
         p_rad_sep_fw = p_core_rad_fw + p_sol_rad_fw + p_sol_charged_fw
-        p_rad_sep_blk = p_rad_sep_fw * self.f_fw_blk
+        p_rad_sep_blk = p_rad_sep_fw * (1 - self.f_fw_blk)
         p_rad_sep_aux = p_rad_sep_fw - p_rad_sep_blk
         p_rad_sep_div = p_core_rad_div + p_sol_rad_div + p_sol_charged_div
         return p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux
 
 
-class ParasiticLoadStrategy:
+class ParasiticLoadStrategy(abc.ABC):
     """
-    Ciattaglia reference point from the mid 2010's...
+    Strategy for calculating the parasitic loads
     """
 
-    def __init__(self):
-        self.p_fusion_ref = 2037
-        self.p_cryo = 44
-        self.p_mag = 44
-        self.p_t_plant = 15.5
-        self.p_other = 31
+    def __init__(self, *args, **kwargs):
+        pass
 
-    def calculate(self, p_fusion):
+    @abc.abstractmethod
+    def calculate(*args, **kwargs):
         """
-        Because we were told to do this. Nobody trusts models.
+        Calculate the parasitic loads somehow
+
+        Returns
+        -------
+        p_mag: float
+            Parasitic loads to power the magnets
+        p_cryo: float
+            Parasitic loads to power the cryoplant
+        p_t_plant: float
+            Parasitic loads to power the tritium plant
+        p_other: float
+            Parasitic loads to power other miscellaneous things
         """
-        f_norm = p_fusion / self.p_fusion_ref
-        p_mag = f_norm * self.p_mag
-        p_cryo = f_norm * self.p_cryo
-        p_t_plant = f_norm * self.p_t_plant
-        p_other = f_norm * self.p_other
-        return p_mag, p_cryo, p_t_plant, p_other
+        pass
 
 
 class BalanceOfPlant:
