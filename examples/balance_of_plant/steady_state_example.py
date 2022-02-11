@@ -22,6 +22,7 @@
 """
 Simple example of a 0-D steady-state balance of plant view.
 """
+
 # %%
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlant,
