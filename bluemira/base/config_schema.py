@@ -169,6 +169,8 @@ class ConfigurationSchema:
     bb_t_outlet: Parameter
     bb_p_inlet: Parameter
     bb_p_outlet: Parameter
+    bb_pump_eta_el: Parameter
+    bb_pump_eta_isen: Parameter
 
     # ST Breeding blanket
     g_bb_fw: Parameter

@@ -53,9 +53,16 @@ def run_power_balance(params):
 
     if params.blanket_type.value == "HCPB":
         blanket_pump_strat = HePumping(
-            8, 7.5, 300, 500, eta_isentropic=0.9, eta_electric=0.87
+            params.bb_p_inlet.value,
+            params.bb_p_outlet.value,
+            params.bb_t_inlet.value,
+            params.bb_t_outlet.value,
+            eta_isentropic=0.9,
+            eta_electric=0.87,
         )
-        bop_cycle = SuperheatedRankine(bb_t_out=500, delta_t_turbine=20)
+        bop_cycle = SuperheatedRankine(
+            bb_t_out=params.bb_t_outlet.value, delta_t_turbine=20
+        )
     elif params.blanket_type.value == "WCLL":
         blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.99, eta_electric=0.87)
         bop_cycle = PredeterminedEfficiency(0.33)

@@ -181,6 +181,8 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ["bb_t_outlet", "Breeding blanket outlet temperature", 500, "°C", "HCPB classic", "Input"],
         ["bb_p_inlet", "Breeding blanket inlet pressure", 8e6, "Pa", "HCPB classic", "Input"],
         ["bb_p_outlet", "Breeding blanket outlet pressure", 7.5e6, "Pa", "HCPB classic", "Input"],
+        ["bb_pump_eta_el", "Breeding blanket pumping electrical efficiency", 0.87, "N/A", None, "Input (D.J. Ward, W.E. Han. Results of system studies for DEMO. Report of DEMO study, Task TW6-TRP-002. July 2007)"],
+        ["bb_pump_eta_isen", "Breeding blanket pumping isentropic efficiency", 0.9, "N/A", None, "Input (Fabio Cismondi 08/12/16)"],
 
         # ST Breeding blanket
         ['g_bb_fw', 'Separation between the first wall and the breeding blanket', 0.05, 'm', None, 'Input'],
