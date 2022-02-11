@@ -47,8 +47,8 @@ default_params = ParameterFrame([
     ['P_fus_DT', 'D-T fusion power', 1995, 'MW', None, 'Input'],
     ['P_fus_DD', 'D-D fusion power', 5, 'MW', None, 'Input'],
     ['P_rad', 'Radiation power', 400, 'MW', None, 'Input'],
-    ['P_hcd', "Heating and current drive power", 50, "MW", None, 'Input'],
-    ['P_hcd_el', "Heating and current drive electrical power", 150, "MW", None, 'Input'],
+    ['P_hcd_ss', "Steady-state heating and current drive power", 50, "MW", None, 'Input'],
+    ['P_hcd_ss_el', "Steady-state heating and current drive electrical power", 150, "MW", None, 'Input'],
     ['P_bb_decay', 'Blanket decay heat', 30, 'MW', None, 'Input'],
 ])
 # fmt: on
