@@ -1,2 +1,2 @@
-sudo apt-get update
-sudo apt-get install rapidjson-dev
+apt-get update
+apt-get install rapidjson-dev
