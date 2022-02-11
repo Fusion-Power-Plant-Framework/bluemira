@@ -33,6 +33,7 @@ from bluemira.builders.EUDEMO.blanket import BlanketBuilder
 from bluemira.builders.EUDEMO.divertor import DivertorBuilder
 from bluemira.builders.EUDEMO.ivc import InVesselComponentBuilder
 from bluemira.builders.EUDEMO.ivc.ivc import build_ivc_xz_shapes
+from bluemira.builders.EUDEMO.balance_of_plant import run_power_balance
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -400,4 +401,12 @@ class EUDEMOReactor(Reactor):
         """
         Run the power balance for the reactor.
         """
-        pass
+        name = "Balance of Plant"
+        bluemira_print(f"Starting design stage: {name}")
+
+        # TODO: register solver
+        # TODO: hook up
+        output = run_power_balance(self._params)
+        # self._params.update_kw_parameters(output.to_dict())
+
+        bluemira_print(f"Completed design stage: {name}")

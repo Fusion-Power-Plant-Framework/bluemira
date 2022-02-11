@@ -92,6 +92,10 @@ divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=
 
 # %%
 class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
+    """
+    This would be one way of defining the parasitic loads w.r.t. a known reference point.
+    """
+
     def __init__(self):
         self.p_fusion_ref = 2037
         self.p_cryo = 44

@@ -75,6 +75,7 @@ def run_power_balance(params):
     bop: BalanceOfPlant
         Balance of plant model
     """
+    # TODO: Get remaining hard-coded values hooked up
     neutron_power_strat = NeutronPowerStrategy(
         f_blanket=0.9,
         f_divertor=0.05,
