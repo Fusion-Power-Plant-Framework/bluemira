@@ -49,7 +49,6 @@ default_params = ParameterFrame([
     ['P_rad', 'Radiation power', 400, 'MW', None, 'Input'],
     ['P_hcd_ss', "Steady-state heating and current drive power", 50, "MW", None, 'Input'],
     ['P_hcd_ss_el', "Steady-state heating and current drive electrical power", 150, "MW", None, 'Input'],
-    ['P_bb_decay', 'Blanket decay heat', 30, 'MW', None, 'Input'],
 ])
 # fmt: on
 
@@ -65,6 +64,7 @@ neutron_power_strat = NeutronPowerStrategy(
     f_vessel=0.04,
     f_other=0.01,
     energy_multiplication=1.35,
+    decay_multiplication=1.0175,
 )
 rad_sep_strat = RadChargedPowerStrategy(
     f_core_rad_fw=0.9,
@@ -157,6 +157,7 @@ neutron_power_strat = NeutronPowerStrategy(
     f_vessel=0.04,
     f_other=0.01,
     energy_multiplication=1.25,
+    decay_multiplication=1.002,
 )
 blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.99, eta_electric=0.87)
 bop_cycle = PredeterminedEfficiency(0.33)

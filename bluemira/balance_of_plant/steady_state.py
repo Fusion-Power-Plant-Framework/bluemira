@@ -246,9 +246,19 @@ class NeutronPowerStrategy(FractionSplitStrategy):
         Fraction of neutron power going to other systems
     energy_multiplication: float
         Energy multiplication factor applied to blanket neutron power
+    decay_multiplication: float
+        Decay energy multiplication applied to the blanket neutron power
     """
 
-    def __init__(self, f_blanket, f_divertor, f_vessel, f_other, energy_multiplication):
+    def __init__(
+        self,
+        f_blanket,
+        f_divertor,
+        f_vessel,
+        f_other,
+        energy_multiplication,
+        decay_multiplication,
+    ):
         self.check_fractions([f_blanket, f_divertor, f_vessel, f_other])
         self.f_blanket = f_blanket
         self.f_divertor = f_divertor
@@ -258,7 +268,12 @@ class NeutronPowerStrategy(FractionSplitStrategy):
             raise BalanceOfPlantError(
                 "Energy multiplication factor cannot be less than 1.0"
             )
+        if decay_multiplication < 1.0:
+            raise BalanceOfPlantError(
+                "Decay multiplication factor cannot be less than 1.0"
+            )
         self.nrg_mult = energy_multiplication
+        self.dec_mult = decay_multiplication
 
     def split(self, neutron_power):
         """
@@ -281,13 +296,16 @@ class NeutronPowerStrategy(FractionSplitStrategy):
             Neutron power to auxiliary systems
         mult_power: float
             Energy multiplication power (in the blanket, sort of..)
+        decay_power: float
+            Decay power (in the blanket, sort of..)
         """
         blk_power = self.f_blanket * self.nrg_mult * neutron_power
         div_power = self.f_divertor * neutron_power
         vv_power = self.f_vessel * neutron_power
         aux_power = self.f_other * neutron_power
         mult_power = blk_power - self.f_blanket * neutron_power
-        return blk_power, div_power, vv_power, aux_power, mult_power
+        decay_power = (self.dec_mult - 1.0) * neutron_power
+        return blk_power, div_power, vv_power, aux_power, mult_power, decay_power
 
 
 class RadChargedPowerStrategy(FractionSplitStrategy):
@@ -449,13 +467,19 @@ class BalanceOfPlant:
         p_hcd = self.params.P_hcd_ss.value
         p_hcd_el = self.params.P_hcd_ss_el.value
         p_separatrix = p_charged - p_radiation + p_hcd
-        p_n_blk, p_n_div, p_n_vv, p_n_aux, p_nrgm = self.neutron_strat.split(p_neutron)
+        (
+            p_n_blk,
+            p_n_div,
+            p_n_vv,
+            p_n_aux,
+            p_nrgm,
+            p_blk_decay,
+        ) = self.neutron_strat.split(p_neutron)
         p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux = self.rad_sep_strat.split(
             p_radiation, p_separatrix
         )
         p_rad_sep_fw = p_rad_sep_blk + p_rad_sep_aux
 
-        p_blk_decay = self.params.P_bb_decay.value
         p_blanket = p_n_blk + p_blk_decay + p_rad_sep_blk
         p_blk_pump, p_blk_pump_el = self.blanket_pump_strat.pump(p_blanket)
         p_blanket += p_blk_pump

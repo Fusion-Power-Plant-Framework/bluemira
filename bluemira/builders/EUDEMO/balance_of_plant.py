@@ -81,7 +81,8 @@ def run_power_balance(params):
         f_divertor=0.05,
         f_vessel=params.vvpfrac.value,  # TODO: Change this parameter name
         f_other=0.01,
-        energy_multiplication=params.bb_e_mult.value,
+        energy_multiplication=params.e_mult.value,
+        decay_multiplication=params.e_decay_mult.value,
     )
     rad_sep_strat = RadChargedPowerStrategy(
         f_core_rad_fw=params.f_core_rad_fw.value,

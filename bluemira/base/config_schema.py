@@ -163,7 +163,6 @@ class ConfigurationSchema:
     xpt_height: Parameter
 
     # Blanket
-    bb_e_mult: Parameter
     bb_min_angle: Parameter
     tk_r_ib_bz: Parameter
     tk_r_ib_manifold: Parameter
@@ -304,6 +303,8 @@ class ConfigurationSchema:
     div_dpa: Parameter
     vv_dpa: Parameter
     tf_fluence: Parameter
+    e_mult: Parameter
+    e_decay_mult: Parameter
 
     # Central solenoid
     F_pf_zmax: Parameter
