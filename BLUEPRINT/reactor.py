@@ -420,7 +420,7 @@ class Reactor(ReactorSystem):
 
         a.coilset.assign_coil_materials("PF", j_max=j_pf, b_max=b_pf)
         a.coilset.assign_coil_materials("CS", j_max=j_cs, b_max=b_cs)
-        # CTM: Is this doing optimisations? I don't think so, but not sure...
+        # NOTE: Is this doing optimisations? I don't think so, but not sure...
         a.solve(plot=self.plot_flag)
         print("")  # stdout flusher
 
@@ -716,7 +716,6 @@ class Reactor(ReactorSystem):
             )
 
             self.TF.build(self.callbacks.get("TF"))
-        # CTM: Should we just be relying on this mode instead?
         elif self.build_config["tf_mode"] == "read":
             bluemira_print(
                 f'Loading {self.build_config["TF_type"]}-type TF coil shape' "."

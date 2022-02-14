@@ -1158,7 +1158,7 @@ class FirstWall(ReactorSystem):
             self.profile = self.inputs["profile"]
 
         elif self.inputs.get("FW_optimisation", False) and callback is not None:
-            callback(self, 0.2, 5)
+            callback(self, hf_limit=0.2, n_iteration_max=5)
 
         else:
             self.profile = self.make_preliminary_profile()

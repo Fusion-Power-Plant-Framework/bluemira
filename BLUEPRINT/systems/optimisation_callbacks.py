@@ -64,15 +64,15 @@ def EQ_optimiser(EQ, TF, params, exclusions, plot_flag):  # noqa: N802
 
     Parameters
     ----------
-    EQ
+    EQ: EquilibriumProblem
         The Equilibrium object being optimised.
-    TF
+    TF: ToroidalFieldCoils
         The toroidal field coils being used in the optimisation.
-    params
+    params: ParameterFrame
         The parameter frame for the reactor.
-    exclusions
+    exclusions: list(Loop, Loop, ..)
         Exclusion information (e.g., for ports)
-    plot_flag
+    plot_flag: bool
         Whether to produce plots.
     """
     eta_pf_imax = 1.4  # Maximum current scaling for PF coil
@@ -81,7 +81,7 @@ def EQ_optimiser(EQ, TF, params, exclusions, plot_flag):  # noqa: N802
     elif params.PF_material == "Nb3Sn":
         jmax = NB3SN_J_MAX
     else:
-        raise ValueError("Ainda nao!")
+        raise ValueError("Not yet!")
 
     offset = params.g_tf_pf + np.sqrt(eta_pf_imax * params.I_p / jmax) / 2
     tf_loop = TF.get_TF_track(offset)
@@ -123,7 +123,6 @@ def FW_optimiser(FW, hf_limit, n_iteration_max):
     n_iteration_max: integer
         Max number of iterations after which the optimiser is stopped.
     """
-    # NOTE: Not an optimisation
     FW.preliminary_profile = FW.make_preliminary_profile()
     profile = FW.preliminary_profile
     for _ in range(n_iteration_max):

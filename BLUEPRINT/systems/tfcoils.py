@@ -649,13 +649,15 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         return xloop
 
     def build(self, callback=None, verbose=True, **kwargs):
-        """
-        Carry out the optimisation of the TF coil centreline shape.
+        """Build the TF coil with or without optimisation of the TF coil
+        centreline shape (depending on the callback). No optimization
+        is performed unless a callback is passed!
 
         Parameters
         ----------
         callback: callable (optional)
-            A routine which, if present, performs the optimisation.
+            A routine which, if present, performs the optimisation. If
+            none is provided (default) then no optimisation is performed.
         verbose: bool (default = True)
             Verbosity of the scipy optimiser
 
@@ -671,6 +673,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             The number of current filaments in the radial direction
         nrippoints: int
             The number of points on the separatrix to check for ripple
+
         """
         # Handle kwargs and update corresponding attributes
         for attr in ["ripple", "ripple_limit", "nrippoints"]:
@@ -701,7 +704,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         self.sanity()
 
         # Update various loops and parameters with optimised result
-        # These should probably be moved into a separate method...
         self.store_info()
         self._generate_xz_plot_loops()
         self._generate_xy_plot_loops()
