@@ -1,3 +1,5 @@
+set -e
+
 add-apt-repository -y ppa:freecad-maintainers/freecad-stable
 apt-get update
 apt-get install -y \
