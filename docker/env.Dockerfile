@@ -4,7 +4,13 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get install -y python3-dev python3.8-venv build-essential cmake git
+    && apt-get install -y \
+        python3-dev \
+        python3.8-venv \
+        build-essential \
+        software-properties-common \
+        cmake \
+        git
 
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv ${VIRTUAL_ENV}
