@@ -846,8 +846,8 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
     def assign_material(
         self,
-        j_max: Optional[__ITERABLE_FLOAT] = NBTI_J_MAX,
-        b_max: Optional[__ITERABLE_FLOAT] = NBTI_B_MAX,
+        j_max: __ITERABLE_FLOAT = NBTI_J_MAX,
+        b_max: __ITERABLE_FLOAT = NBTI_B_MAX,
     ) -> None:
         """
         Assigns EM material properties to coil
@@ -859,12 +859,12 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         b_max: float (default None)
             Overwrite default constant material max field [T]
 
-        TODO fix is_num checks
         """
-        if not is_num(j_max):
-            raise EquilibriaError(f"j_max must be specified as a number, not: {j_max}")
-        if not is_num(b_max):
-            raise EquilibriaError(f"b_max must be specified as a number, not: {b_max}")
+        for jm, bm in zip(j_max, b_max):
+            if not is_num(j_max):
+                raise EquilibriaError(f"j_max must be specified as a number, not: {jm}")
+            if not is_num(b_max):
+                raise EquilibriaError(f"b_max must be specified as a number, not: {bm}")
 
         self.j_max = j_max
         self.b_max = b_max
