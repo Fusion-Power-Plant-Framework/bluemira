@@ -988,12 +988,7 @@ class PolySpline(GeometryParameterisation):
 
 class PictureFrameTools:
     """
-    Curved Pictureframe parameterisation with straight (flat) inner limb
-
-    Parameters
-    ----------
-    var_dict: Optional[dict]
-        Dictionary with which to update the default values of the parameterisation.
+    Tools Class containing methods to produce various PictureFrame variant limbs.
 
     """
 
@@ -1009,7 +1004,35 @@ class PictureFrameTools:
         r_c=0,
     ):
         """
-        Makes smooth dome for CP coils
+        Makes smooth dome for CP coils. This includes a initial straight section
+        and a main curved dome section, with a transitioning 'joint' between them,
+        producing smooth tanent curves.
+
+        Parameters
+        ----------
+        axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+        x_out: np.float
+            Radial position of outer edge of limb [m]
+
+        x_curve start: np.float
+            Radial position of straight-curve transition of limb [m]
+
+        x_mid: np.float
+            Radial position of inner edge of  upper/lower limb [m]
+
+        z_top: np.float
+            Vertical position of top of limb dome [m]
+
+        z_mid: np.float
+            Vertical position of flat section [m]
+
+        flip: bool
+            True if limb is lower limb of section, False if upper
+
+        r_c: np.float
+            Radius of corner transition. Nominally 0 [m]
 
         Returns
         -------
@@ -1018,21 +1041,21 @@ class PictureFrameTools:
 
         """
         # Define basic Top Curve (with no joint or corner transitions)
-
         out_wire = []
 
         # Define the basic main curve (with no joint or transitions curves)
         alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
         theta_leg_basic = 2 * (np.pi - 2 * alpha)
-        r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic / 2)
+        r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic * 0.5)
         z_top_r_leg = z_top + r_leg if flip else z_top - r_leg
         leg_centre = (x_out - 0.5 * (x_out - x_curve_start), 0, z_top_r_leg)
 
         # Transitioning Curve
-        sin_a = np.sin(theta_leg_basic / 2)
-        cos_a = np.cos(theta_leg_basic / 2)
+        sin_a = np.sin(theta_leg_basic * 0.5)
+        cos_a = np.cos(theta_leg_basic * 0.5)
         alpha_leg = (
-            np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c)) + theta_leg_basic / 2
+            np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c))
+            + theta_leg_basic * 0.5
         )
 
         # Joint Curve
@@ -1046,7 +1069,7 @@ class PictureFrameTools:
         )
 
         # Final total angular extent of main curve
-        theta_leg_final = alpha_leg - (theta_leg_basic / 2 - theta_j)
+        theta_leg_final = alpha_leg - (theta_leg_basic * 0.5 - theta_j)
 
         # Build straight section of leg
         p1 = [x_mid, 0, z_mid]
@@ -1087,7 +1110,30 @@ class PictureFrameTools:
     @staticmethod
     def _make_flat_leg(axis, x_in, x_out, z, r_i, r_o, flip=False):
         """
-        Makes a flat leg with the option of one end rounded
+        Makes a flat leg (top/bottom limb) with the option of one end rounded.
+
+        Parameters
+        ----------
+        axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+        x_in: np.float
+            Radial position of inner edge of limb [m]
+
+        x_out: np.float
+            Radial position of outer edge of limb [m]
+
+        z: np.float
+            Vertical position of limb [m]
+
+        r_i: np.float
+            Radius of inner corner [m]
+
+        r_o: np.float
+            Radius of outer corner [m]
+
+        flip: bool
+            True if limb is lower limb of section, False if upper
 
         Returns
         -------
@@ -1134,7 +1180,29 @@ class PictureFrameTools:
     @staticmethod
     def _make_tapered_inner_leg(axis, x_in, x_mid, z_in, z_mid_up, z_mid_down):
         """
-        Makes a tapered inboard leg using a circle arc taper
+        Makes a tapered inboard leg using a circle arc taper, symmetric about the
+        midplane with the tapering beginning at a certain height and reaching a
+        maximum taper at the midplane.
+
+        Parameters
+        ----------
+        axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+        x_in: np.float
+            Radial position of innermost point of limb [m]
+
+        x_mid: np.float
+            Radial position of outer edge of limb [m]
+
+        z_in: np.float
+            Vertical position of start of tapering [m]
+
+        z_mid_up: np.float
+            Vertical position of top of limb [m]
+
+        z_mid_down: np.float
+            Vertical position of bottom of limb [m]
 
         Returns
         -------
@@ -1238,29 +1306,14 @@ class PictureFrame(GeometryParameterisation):
 
         wires = [make_polygon([p1, p2], label="inner_limb")]
 
-        top_leg = PictureFrameTools._make_flat_leg(
-            axis,
-            x1,
-            x2,
-            z1,
-            ri,
-            ro,
-            flip=False,
-        )
+        top_leg = PictureFrameTools._make_flat_leg(axis, x1, x2, z1, ri, ro, flip=False)
         wires.append(top_leg)
 
         wires.append(make_polygon([p5, p6], label="outer_limb"))
 
-        bot_leg = PictureFrameTools._make_flat_leg(
-            axis,
-            x1,
-            x2,
-            z2,
-            ri,
-            ro,
-            flip=True,
-        )
+        bot_leg = PictureFrameTools._make_flat_leg(axis, x1, x2, z2, ri, ro, flip=True)
         wires.append(bot_leg)
+
         return BluemiraWire(wires, label=label)
 
 
@@ -1347,28 +1400,12 @@ class TaperedPictureFrame(GeometryParameterisation):
         )
         wires.append(inb_leg)
 
-        top_leg = PictureFrameTools._make_flat_leg(
-            axis,
-            x2,
-            x3,
-            z2,
-            ri,
-            ro,
-            flip=False,
-        )
+        top_leg = PictureFrameTools._make_flat_leg(axis, x2, x3, z2, ri, ro, flip=False)
         wires.append(top_leg)
 
         wires.append(make_polygon([p5, p6], label="outer_limb"))
 
-        bot_leg = PictureFrameTools._make_flat_leg(
-            axis,
-            x2,
-            x3,
-            -z2,
-            ri,
-            ro,
-            flip=True,
-        )
+        bot_leg = PictureFrameTools._make_flat_leg(axis, x2, x3, -z2, ri, ro, flip=True)
         wires.append(bot_leg)
         return BluemiraWire(wires, label=label)
 
