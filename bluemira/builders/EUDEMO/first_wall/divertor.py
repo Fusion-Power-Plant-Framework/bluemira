@@ -106,9 +106,15 @@ class DivertorBuilder(Builder):
         """
         return super().reinitialise(params, **kwargs)
 
-    def mock(self) -> Component:
+    def mock(self):
         """
-        Create a basic shape for the wall's boundary.
+        Mock a solution to the builder's design problem.
+        """
+        pass
+
+    def run(self):
+        """
+        Run the builder's design problem.
         """
         pass
 
