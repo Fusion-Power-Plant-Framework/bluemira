@@ -495,6 +495,38 @@ class CoilSizer:
 
 
 class CoilGroup(CoilFieldsMixin, abc.ABC):
+    """
+    Abstract base class for all groups of coils
+
+    A group of coils is defined as shaing a property eg current
+
+    Parameters
+    ----------
+    x: Union[float, Iterable[float]]
+        Coil geometric centre x coordinate [m]
+    z: Union[float, Iterable[float]]
+        Coil geometric centre z coordinate [m]
+    dx: Optional[Union[float, Iterable[float]]]
+        Coil radial half-width [m] from coil centre to edge (either side)
+    dz: Optional[Union[float, Iterable[float]]]
+        Coil vertical half-width [m] from coil centre to edge (either side)
+    current: Optional[Union[float, Iterable[float]] (default = 0)
+        Coil current [A]
+    name: Optional[Union[str, Iterable[str]]]]
+        The name of the coil
+    ctype: Optional[Union[str, CoilType, Iterable[Union[str, CoilType]]]
+        Type of coil see CoilType enum
+    j_max: Optional[Union[float, Iterable[float]]]
+        Maximum current density in the coil [MA/m^2]
+    b_max: Optional[Union[float, Iterable[float]]]
+        Maximum magnetic field at the coil [T]
+
+    Notes
+    -----
+    This class is not designed to be used directly as there are few
+    protections on input variables
+
+    """
 
     __ITERABLE_FLOAT = Union[float, Iterable[float]]
     __ITERABLE_COILTYPE = Union[str, CoilType, Iterable[Union[str, CoilType]]]
@@ -560,8 +592,11 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
             for ct in _inputs["ctype"]
         ]
         self._index = [CoilNumber.generate(ct) for ct in self.ctype]
-        # TODO deal with no name specified
-        self._name_map = {n: ind for n, ind in zip(_inputs["name"], self._index)}
+
+        self._name_map = {
+            f"{self._ctype[en].name}_{ind}" if n is None else n: ind
+            for en, n, ind in enumerate(zip(_inputs["name"], self._index))
+        }
 
         self._flag_sizefix = False
         self.__sizer = CoilSizer(self)
@@ -582,7 +617,10 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         -------
         Iterable
 
-        TODO deal with singular None
+        Notes
+        -----
+        Assumes init is specified correctly. No protection against singular None.
+        In that case will fail on lengthcheck.
         """
         return {
             name: (
@@ -757,18 +795,11 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._z[:] = new_position[:, 1]
         self.__sizer(self)
 
-    def adjust_position(
-        self, d_x: __ITERABLE_FLOAT, d_z: Optional[__ITERABLE_FLOAT] = None
-    ):
+    def adjust_position(self, d_xz: __ITERABLE_FLOAT):
         """
         Adjust position of each coil
         """
-        # TODO sanity check input
-        if d_z is None:
-            if True:
-                pass
-
-        self.position = np.stack([self.x + d_x, self.z + d_z], axis=1)
+        self.position = np.stack([self.x + d_xz[:, 0], self.z + d_xz[:, 1]], axis=1)
         self.__sizer(self)
 
     @property
