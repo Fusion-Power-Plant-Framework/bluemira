@@ -22,7 +22,6 @@
 """
 Plotting utilities for ReactorSystem objects
 """
-import os
 from itertools import cycle
 
 import matplotlib.pyplot as plt
