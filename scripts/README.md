@@ -7,7 +7,13 @@ only work on Linux (probably specifically Ubuntu 20.04):
 # Create and activate virtual environment
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y python3-dev python3.8-venv build-essential cmake
+sudo apt-get install -y \
+    python3-dev \
+    python3.8-venv \
+    build-essential \
+    software-properties-common \
+    cmake \
+    git
 python3 -m venv .venv
 source .venv/bin/activate
 
