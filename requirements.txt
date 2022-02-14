@@ -88,7 +88,7 @@ toml==0.10.2
 tornado==6.1
 traitlets==5.1.1
 trimesh==3.9.43
-typing-extensions==4.0.1
+typing-extensions==4.1.1
 wcwidth==0.2.5
 webencodings==0.5.1
 wrapt==1.13.3
