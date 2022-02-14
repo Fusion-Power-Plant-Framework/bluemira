@@ -134,6 +134,13 @@ mappings = {
     "P_hcd_ss": ParameterMapping("pinjalw", False, True),
     "eta_nb": ParameterMapping("etanbi", False, True),
     "e_mult": ParameterMapping("emult", False, True),
+    "bb_t_inlet": ParameterMapping("t_in_bb", False, True),
+    "bb_t_outlet": ParameterMapping("t_out_bb", False, True),
+    # TODO: What about water?
+    "bb_p_outlet": ParameterMapping("p_he", False, True),
+    # TODO: PROCESS uses dP as an input, not outlet-inlet
+    "bb_pump_eta_el": ParameterMapping("etahtp", False, True),
+    "bb_pump_eta_isen": ParameterMapping("etaiso", False, True),
     "tk_bb_ib": ParameterMapping("blnkith", True, True),
     "tk_bb_ob": ParameterMapping("blnkoth", True, True),
     "tk_sh_in": ParameterMapping("shldith", True, True),
