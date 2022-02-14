@@ -49,7 +49,7 @@ numba-scipy==0.3.0
 numexpr==2.8.1
 numpy==1.21.5
 packaging==21.3
-pandas==1.4.0
+pandas==1.4.1
 pandocfilters==1.5.0
 parso==0.8.3
 pexpect==4.8.0
