@@ -26,16 +26,14 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira import equilibria
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.display.plotter import plot_2d
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline
-from bluemira.geometry.tools import make_polygon, signed_distance_2D_polygon
+from bluemira.geometry.tools import signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 
@@ -103,8 +101,6 @@ class MinimiseLength(GeometryOptimisationProblem):
     Optimiser to minimize the length of a geometry parameterisation.
     """
 
-    n_iter = 0
-
     def __init__(
         self,
         parameterisation: GeometryParameterisation,
@@ -116,7 +112,6 @@ class MinimiseLength(GeometryOptimisationProblem):
         super().__init__(parameterisation, optimiser)
 
         self.n_koz_points = n_koz_points
-
         self.keep_out_zones = keep_out_zones
         if self.keep_out_zones is not None:
             self.koz_points = self._make_koz_points(keep_out_zones)
