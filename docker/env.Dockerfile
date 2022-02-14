@@ -51,9 +51,9 @@ RUN bash scripts/freecad/install-freecad-deps.sh \
     && bash scripts/freecad/install-freecad.sh
 
 # Build and install pythonocc (approx 7.5.2)
-# COPY scripts/occ/ ./scripts/occ/
-# RUN bash scripts/occ/install-occ-deps.sh \
-#     && bash scripts/occ/install-occ.sh
+COPY scripts/occ/ ./scripts/occ/
+RUN bash scripts/occ/install-occ-deps.sh \
+    && bash scripts/occ/install-occ.sh
 
 FROM base as dev-base
 
