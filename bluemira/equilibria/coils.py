@@ -58,6 +58,63 @@ class CoilType(Enum):
     NONE = auto()
 
 
+class CoilNumber:
+    """
+    Coil naming-numbering utility class. Coil naming convention is not enforced here.
+    """
+
+    __PF_counter: int = 1
+    __CS_counter: int = 1
+    __no_counter: int = 1
+
+    @staticmethod
+    def generate(ctype: CoilType) -> int:
+        """
+        Generate a coil name based on its type and indexing if specified. If no index is
+        specified, an encapsulated global counter assigns an index.
+
+        Parameters
+        ----------
+        coil: Any
+            Object to name
+
+        Returns
+        -------
+        name: str
+            Coil name
+        """
+        if ctype == CoilType.NONE:
+            idx = CoilNumber.__no_counter
+            CoilNumber.__no_counter += 1
+        elif ctype == CoilType.CS:
+            idx = CoilNumber.__CS_counter
+            CoilNumber.__CS_counter += 1
+        elif ctype == CoilType.PF:
+            idx = CoilNumber.__PF_counter
+            CoilNumber.__PF_counter += 1
+
+        return idx
+
+
+def _sum_all(func: Optional[callable] = None, *, axis: int = 0) -> callable:
+    """
+    Sum all outputs of a function on a given axis
+    """
+
+    def wrapper(*args, **kwargs):
+        ret = func(*args, **kwargs)
+        return ret.sum(axis=axis)
+
+    if func is None:
+
+        def decorator(func):
+            return update_wrapper(wrapper, func)
+
+        return decorator
+    else:
+        return update_wrapper(wrapper, func)
+
+
 class CoilFieldsMixin:
     def mesh_coil(self):
         pass
@@ -344,7 +401,7 @@ class CoilSizer:
 
     def _set_coil_attributes(self, coil):
         coil.rc = 0.5 * np.hypot(coil.dx, coil.dz)
-        coil.x_boundary, coil.z_boundary = self._make_boundary(
+        coil._x_boundary, coil._z_boundary = self._make_boundary(
             coil.x, coil.z, coil.dx, coil.dz
         )
 
@@ -431,9 +488,9 @@ class CoilSizer:
         Only rectangular coils
 
         """
-        xx, zz = np.ones(4) * x_c, np.ones(4) * z_c
-        x_boundary = xx + dx * np.array([-1, 1, 1, -1])
-        z_boundary = zz + dz * np.array([-1, -1, 1, 1])
+        xx, zz = np.ones((1, 4)) * x_c, np.ones((1, 4)) * z_c
+        x_boundary = xx + dx * np.atleast_2d([-1, 1, 1, -1])
+        z_boundary = zz + dz * np.atleast_2d([-1, -1, 1, 1])
         return x_boundary, z_boundary
 
 
@@ -441,22 +498,24 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
     __ITERABLE_FLOAT = Union[float, Iterable[float]]
     __ITERABLE_COILTYPE = Union[str, CoilType, Iterable[Union[str, CoilType]]]
+    __ANY_ITERABLE = Union[__ITERABLE_COILTYPE, __ITERABLE_FLOAT]
 
     __slots__ = (
         "__sizer",
+        "_b_max",
         "_ctype",
         "_current",
         "_dx",
         "_dz",
         "_flag_sizefix",
+        "_index",
+        "_j_max",
+        "_name_map",
+        "_rc",
         "_x",
         "_x_boundary",
         "_z",
         "_z_boundary",
-        "b_max",
-        "j_max",
-        "name",
-        "r_c",
     )
 
     def __init__(
@@ -472,32 +531,46 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         b_max: Optional[__ITERABLE_FLOAT] = None,
     ) -> None:
 
-        x, z, dx, dz, current, name, ctype, j_max, b_max = self._make_iterable(
-            x, z, dx, dz, current, name, ctype, j_max, b_max
-        )
+        _inputs = {
+            "x": x,
+            "z": z,
+            "dx": dx,
+            "dz": dz,
+            "current": current,
+            "name": name,
+            "ctype": ctype,
+            "j_max": j_max,
+            "b_max": b_max,
+        }
 
-        self._x = x
-        self._z = z
-        self._dx = dx
-        self._dz = dz
-        self._current = current
-        self.j_max = j_max
-        self.b_max = b_max
+        _inputs = self._make_iterable(_inputs)
 
-        no_name_ind = np.where(name is None)[0]
-        # name[no_name_ind] = CoilNamer.generate_name(self, None)
-        self.name = name
+        self._lengthcheck(_inputs)
 
-        # Immutable after init
-        self._ctype = tuple(
-            [CoilType[ctype] if isinstance(ct, str) else ct for ct in ctype]
-        )
+        self._x = _inputs["x"]
+        self._z = _inputs["z"]
+        self._dx = _inputs["dx"]
+        self._dz = _inputs["dz"]
+        self._current = _inputs["current"]
+        self._j_max = _inputs["j_max"]
+        self._b_max = _inputs["b_max"]
+
+        self._ctype = [
+            ct if isinstance(ct, CoilType) else CoilType[ctype]
+            for ct in _inputs["ctype"]
+        ]
+        self._index = [CoilNumber.generate(ct) for ct in self.ctype]
+        # TODO deal with no name specified
+        self._name_map = {n: ind for n, ind in zip(_inputs["name"], self._index)}
 
         self._flag_sizefix = False
         self.__sizer = CoilSizer(self)
         self.__sizer(self)
 
-    def _make_iterable(*args: Iterable[Any]) -> Iterable[Iterable[Any]]:
+    @staticmethod
+    def _make_iterable(
+        **kwargs: __ANY_ITERABLE,
+    ) -> Dict[str, Iterable[str, float, CoilType]]:
         """
         Converts all arguments to Iterables
 
@@ -509,27 +582,58 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         -------
         Iterable
 
+        TODO deal with singular None
         """
-        return (
-            arg
-            if isinstance(arg, Iterable)
-            else [arg]
-            if isinstance(arg, (str, type(None), CoilType))
-            else np.array(arg)
-            for arg in args
-        )
+        return {
+            name: (
+                arg
+                if isinstance(arg, Iterable)
+                else [arg]
+                if isinstance(arg, (str, CoilType))
+                else np.atleast_2d(arg, dtype=float)
+            )
+            for name, arg in kwargs.items()
+        }
+
+    @staticmethod
+    def _lengthcheck(ignore: Optional[List] = None, **kwargs: __ANY_ITERABLE) -> None:
+        """
+        Check length of iterables
+
+        Parameters
+        ----------
+        ignore: list
+            list of variables to ignore
+        **kwargs: dict
+            dictionary of arguments to check length of
+
+        Raises
+        ------
+        ValueError if not in ignore list and different length to 'x'
+
+        """
+        if ignore is None:
+            ignore = []
+
+        len_first = len(kwargs["x"])
+        for name, value in kwargs.items():
+            if name in ignore:
+                continue
+
+            if len(value) != len_first:
+                raise ValueError("lengthcheck")
 
     @property
     def x_boundary(self) -> np.array:
         """
-        TODO
+        Get x boundary of coil
         """
         return self._x_boundary
 
     @property
     def z_boundary(self) -> np.array:
         """
-        TODO
+        Get z boundary of coil
         """
         return self._z_boundary
 
@@ -559,115 +663,172 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
     @property
     def n_coils(self) -> int:
+        """
+        Get number of coils in group
+        """
         return len(self.x)
 
     @property
     def ctype(self) -> Union[CoilType, Iterable[CoilType]]:
         """
-        TODO
+        Get CoilType of coils
         """
         return self._ctype
 
     @property
-    def current(self) -> np.array:
+    def name(self):
+        """
+        Get names of coils
+        """
+        return self._name_map.keys()
+
+    @property
+    def rc(self):
         """
         TODO
+        """
+        return self._rc
+
+    @property
+    def j_max(self):
+        """
+        Get coil current density
+        """
+        return self._j_max
+
+    @j_max.setter
+    def j_max(self, new_j_max):
+        """
+        Set new coil current density
+        """
+        self._j_max[:] = new_j_max
+
+    @property
+    def b_max(self):
+        """
+        Get maximum magnetic field at each coil [T]
+        """
+        return self._b_max
+
+    @b_max.setter
+    def b_max(self, new_b_max):
+        """
+        Set maximum magnetic field at each coil [T]
+        """
+        self._b_max[:] = new_b_max
+
+    @property
+    def current(self) -> np.array:
+        """
+        Get coil current
         """
         return self._current
 
     @current.setter
     def current(self, new_current: __ITERABLE_FLOAT) -> None:
         """
-        TODO
+        Set coil current
         """
-        pass
+        # TODO sanity check input
+
+        self._current[:] = new_current
 
     def adjust_current(self, d_current: __ITERABLE_FLOAT) -> None:
         """
-        TODO
+        Modify current in each coil
         """
-        pass
+        # TODO sanity check input
+
+        self.current += d_current
 
     @property
     def position(self) -> np.array:
         """
-        TODO
+        Set position of each coil
         """
         return np.stack([self.x, self.z], axis=1)
 
     @position.setter
     def position(self, new_position: __ITERABLE_FLOAT):
         """
-        TODO
+        Set position of each coil
         """
-        pass
+        self._x[:] = new_position[:, 0]
+        self._z[:] = new_position[:, 1]
+        self.__sizer(self)
 
     def adjust_position(
         self, d_x: __ITERABLE_FLOAT, d_z: Optional[__ITERABLE_FLOAT] = None
     ):
         """
-        TODO
+        Adjust position of each coil
         """
-        pass
+        # TODO sanity check input
+        if d_z is None:
+            if True:
+                pass
+
+        self.position = np.stack([self.x + d_x, self.z + d_z], axis=1)
+        self.__sizer(self)
 
     @property
     def x(self) -> np.array:
         """
-        TODO
+        Get x coordinate of each coil
         """
         return self._x
 
     @x.setter
     def x(self, new_x: __ITERABLE_FLOAT) -> None:
         """
-        TODO
+        Set x coordinate of each coil
         """
-        self._x = new_x
+        self._x[:] = new_x
         self.__sizer(self)
 
     @property
     def z(self) -> np.array:
         """
-        TODO
+        Get z coordinate of each coil
         """
         return self._z
 
     @z.setter
     def z(self, new_z: __ITERABLE_FLOAT) -> None:
         """
-        TODO
+        Set z coordinate of each coil
         """
-        self._z = new_z
+        self._z[:] = new_z
         self.__sizer(self)
 
     @property
     def dx(self) -> np.array:
         """
-        TODO
+        Get dx coordinate of each coil
         """
         return self._dx
 
     @dx.setter
     def dx(self, new_dx: __ITERABLE_FLOAT) -> None:
         """
-        TODO
+        Set dx coordinate of each coil
         """
-        self._dx = new_dx
+        self._dx[:] = new_dx
         self.__sizer(self)
 
     @property
     def dz(self) -> np.array:
         """
-        TODO
+        Get dz coordinate of each coil
         """
         return self._dz
 
     @dz.setter
     def dz(self, new_dz: __ITERABLE_FLOAT) -> None:
         """
-        TODO
+        Set dz coordinate of each coil
         """
-        self._dz = new_dz
+        self._dz[:] = new_dz
         self.__sizer(self)
 
     def make_size(self, current: Optional[__ITERABLE_FLOAT] = None) -> None:
@@ -678,9 +839,10 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
     def fix_size(self) -> None:
         """
-        TODO
+        Fixes the size of all coils
         """
         self._flag_sizefix = True
+        self.__sizer.update(self)
 
     def assign_material(
         self,
@@ -696,6 +858,8 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
             Overwrite default constant material max current density [A/m^2]
         b_max: float (default None)
             Overwrite default constant material max field [T]
+
+        TODO fix is_num checks
         """
         if not is_num(j_max):
             raise EquilibriaError(f"j_max must be specified as a number, not: {j_max}")
@@ -723,11 +887,30 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         pass
 
-    def to_group_vecs(self):
+    def to_group_vecs(self) -> Iterable[np.array]:
         """
-        TODO
+        Collect CoilGroup Properties
+
+        Returns
+        -------
+        x: np.ndarray(n_coils)
+            The x-positions of coils
+        z: np.ndarray(n_coils)
+            The z-positions of coils.
+        dx: np.ndarray(n_coils)
+            The coil size in the x-direction.
+        dz: np.ndarray(n_coils)
+            The coil size in the z-direction.
+        currents: np.ndarray(n_coils)
+            The coil currents.
         """
-        pass
+        return (
+            self.x,
+            self.z,
+            self.dx,
+            self.dz,
+            self.current,
+        )
 
     def plot(self):
         """
@@ -773,26 +956,30 @@ class Coil(CoilGroup):
         # Only to force type check correctness
         super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
 
-    def __getattribute__(self, attr: str) -> Any:
-        """
-        Get attribute first element if Iterable and len == 1
-        """
-        val = super().__getattribute__(attr)
+    # def _wrap_properties(self):
+    # pass
+    # If attribute property wrap function to produce numbered output
 
-        if isinstance(val, Iterable) and len(val) == 1:
-            val = val[0]
+    # def __getattribute__(self, attr: str) -> Any:
+    #     """
+    #     Get attribute first element if Iterable and len == 1
+    #     """
+    #     val = super().__getattribute__(attr)
 
-        return val
+    #     if isinstance(val, Iterable) and len(val) == 1:
+    #         val = val[0]
+
+    #     return val
 
     def __setattr__(self, attr: str, value: Any) -> None:
 
         with suppress(AttributeError):
             old_attr = super().__getattribute__(attr)
             if not isinstance(value, Iterable) and len(old_attr) == 1:
-                if isinstance(value, str):
+                if isinstance(value, (str, CoilType)):
                     value = [value]
                 else:
-                    value = np.array(value)
+                    value = np.atleast_2d(value, dtype=float)
 
         if isinstance(value, Iterable) and len(value) == 1:
             super().__setattr__(attr, value)
