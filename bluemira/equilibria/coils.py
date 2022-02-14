@@ -27,8 +27,9 @@ import abc
 from contextlib import suppress
 from copy import deepcopy
 from enum import Enum, auto
+from functools import update_wrapper, wraps
 from re import split
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,6 +48,8 @@ from bluemira.magnetostatics.greens import (
 )
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.tools import is_num
+
+__all__ = ("CoilType", "Coil", "CoilSet", "Circuit", "SymmetricCircuit")
 
 
 class CoilType(Enum):
