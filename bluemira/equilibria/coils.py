@@ -676,7 +676,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
     @staticmethod
     def _make_iterable(
         **kwargs: __ANY_ITERABLE,
-    ) -> Dict[str, Iterable[str, float, CoilType]]:
+    ) -> Dict[str, Iterable[Union[str, float, CoilType]]]:
         """
         Converts all arguments to Iterables
 
