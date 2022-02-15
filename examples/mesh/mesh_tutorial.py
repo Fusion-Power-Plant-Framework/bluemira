@@ -36,7 +36,9 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
-from bluemira.geometry.compound import BluemiraCompound
+
+import dolfin
+import matplotlib.pyplot as plt
 
 HAS_MSH2XDMF = False
 try:
@@ -125,8 +127,6 @@ if HAS_MSH2XDMF:
 
 # # %%
 # # If the mesh is made by 3D points, the plot with dolfin doesn't work
-import dolfin
-import matplotlib.pyplot as plt
 
 dolfin.plot(mesh)
 plt.show()

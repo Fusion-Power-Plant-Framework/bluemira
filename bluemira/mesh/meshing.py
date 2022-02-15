@@ -58,6 +58,9 @@ def get_default_options():
 
 
 def create_compound_from_component(comp):
+    """
+    Creates a BluemiraCompound from the children's shapes of a component.
+    """
     boundary = []
     if comp.is_leaf and hasattr(comp, "shape") and comp.shape:
         boundary.append(comp.shape)
@@ -190,7 +193,7 @@ class Mesh:
         """
         Generate the mesh and save it to file.
         """
-        if 'Component' in [c.__name__ for c in inspect.getmro(type(obj))]:
+        if "Component" in [c.__name__ for c in inspect.getmro(type(obj))]:
             obj = create_compound_from_component(obj)
 
         if isinstance(obj, Meshable):
@@ -232,7 +235,9 @@ class Mesh:
             if obj.__class__.__name__ in SUPPORTED_GEOS:
                 buffer = geo.tools.serialize_shape(obj)
             else:
-                raise ValueError(f"Mesh procedure not implemented for {obj.__class__.__name__} type.")
+                raise ValueError(
+                    f"Mesh procedure not implemented for {obj.__class__.__name__} type."
+                )
             # Each object is recreated into gmsh. Here there is a trick: in order to
             # allow the correct mesh in case of intersection, the procedure
             # is made meshing the objects with increasing dimension.
@@ -258,7 +263,12 @@ class Mesh:
         """
         Function to apply physical groups
         """
-        dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2, "BluemiraCompound": 2}
+        dict_dim = {
+            "BluemiraWire": 1,
+            "BluemiraFace": 2,
+            "BluemiraShell": 2,
+            "BluemiraCompound": 2,
+        }
         other_dict = {0: "points_tag", 1: "curve_tag", 2: "surface_tag"}
         for k, v in buffer.items():
             if k in dict_dim.keys():
@@ -289,7 +299,12 @@ class Mesh:
         Function to create the correct dictionary format for the
         application of the mesh size.
         """
-        dict_dim = {"BluemiraWire": 1, "BluemiraFace": 2, "BluemiraShell": 2, "BluemiraCompound": 2}
+        dict_dim = {
+            "BluemiraWire": 1,
+            "BluemiraFace": 2,
+            "BluemiraShell": 2,
+            "BluemiraCompound": 2,
+        }
         other_dict = {0: "points_tag", 1: "curve_tag", 2: "surface_tag"}
         points_lcar = []
         for k, v in buffer.items():

@@ -24,7 +24,7 @@ Tool function and classes for the bluemira base module.
 """
 import bluemira.geometry as geo
 
-from .components import Component, MagneticComponent, PhysicalComponent
+from .components import Component, PhysicalComponent
 
 
 # # =============================================================================
