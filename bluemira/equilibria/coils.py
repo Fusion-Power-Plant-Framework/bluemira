@@ -26,7 +26,7 @@ Coil and coil grouping objects
 import abc
 from contextlib import suppress
 from copy import deepcopy
-from enum import Enum, auto
+from enum import Enum, EnumMeta, auto
 from functools import update_wrapper, wraps
 from re import split
 from typing import Any, Dict, Iterable, List, Optional, Union
@@ -52,7 +52,15 @@ from bluemira.utilities.tools import is_num
 __all__ = ("CoilType", "Coil", "CoilSet", "Circuit", "SymmetricCircuit")
 
 
-class CoilType(Enum):
+class CoilTypeEnumMeta(EnumMeta):
+    def __getitem__(self, name):
+        try:
+            return super().__getitem__(name)
+        except KeyError:
+            raise KeyError(f"Unknown CoilType {name}") from None
+
+
+class CoilType(Enum, metaclass=CoilTypeEnumMeta):
     PF = auto()
     CS = auto()
     NONE = auto()
@@ -144,7 +152,7 @@ class CoilFieldsMixin:
             self._quad_x = self.x.copy()
             self._quad_dx = self.dx.copy()
             self._quad_z = self.z.copy()
-            self._quad_dz = self.x.copy()
+            self._quad_dz = self.dz.copy()
 
             self._no_quads = np.arange(self.x.shape[0])
 
@@ -268,10 +276,13 @@ class CoilFieldsMixin:
 
             response = np.zeros(x.shape)
 
+            resp = response.reshape(-1)
+            ins = inside.reshape(-1)
+
             if np.any(~inside):
-                response[~inside] = greens_func(x[~inside], z[~inside])
+                resp[~ins] = greens_func(x[~inside], z[~inside]).reshape(-1)
             if np.any(inside):
-                response[inside] = semianalytic_func(x[inside], z[inside])
+                resp[ins] = semianalytic_func(x[inside], z[inside]).reshape(-1)
         else:
             response = greens_func(x, z)
 
@@ -658,7 +669,11 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self._b_max = _inputs["b_max"]
 
         self._ctype = [
-            ct if isinstance(ct, CoilType) else CoilType[ctype]
+            ct
+            if isinstance(ct, CoilType)
+            else CoilType["NONE"]
+            if isinstance(ct, np.ndarray) or ct is None
+            else CoilType[ct.upper()]
             for ct in _inputs["ctype"]
         ]
         self._index = [CoilNumber.generate(ct) for ct in self.ctype]
@@ -699,10 +714,10 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         return {
             name: (
-                arg
-                if isinstance(arg, Iterable)
-                else [arg]
+                [arg]
                 if isinstance(arg, (str, CoilType))
+                else arg
+                if isinstance(arg, Iterable)
                 else np.atleast_2d(np.array(arg, dtype=float))
             )
             for name, arg in kwargs.items()
@@ -734,7 +749,9 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
                 continue
 
             if len(value) != len_first:
-                raise ValueError("lengthcheck")
+                raise ValueError(
+                    f"{name} does not contain {len_first} elements: {value}"
+                )
 
     @property
     def x_boundary(self) -> np.array:
@@ -1116,6 +1133,14 @@ class Solenoid:
 
 
 def symmetrise_coilset():
+    pass
+
+
+def check_coilset_symmetric():
+    pass
+
+
+def make_mutual_inductance_matrix():
     pass
 
 

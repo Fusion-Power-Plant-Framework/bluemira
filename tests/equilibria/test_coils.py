@@ -31,6 +31,7 @@ from bluemira.equilibria.coils import (
     Coil,
     CoilGroup,
     CoilSet,
+    CoilType,
     SymmetricCircuit,
     check_coilset_symmetric,
     make_mutual_inductance_matrix,
@@ -45,38 +46,33 @@ class TestCoil:
     @classmethod
     def setup_class(cls):
         # make a default coil
-        cls.coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
-        cls.cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
-        cls.no_coil = Coil(4, 4, 10e6, ctype="asrgd", j_max=NBTI_J_MAX)
+        cls.coil = Coil(x=4, z=4, current=10e6, j_max=NBTI_J_MAX)
+        cls.cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
+        cls.no_coil = Coil(x=4, z=4, current=10e6, ctype=None, j_max=NBTI_J_MAX)
 
     @classmethod
     def teardown_cls(cls):
         plt.close("all")
 
     def test_name(self):
-        def extract_int(coil):
-            return int(coil.name.split("_")[-1])
 
-        def extract_prefix(coil):
-            return coil.name.split("_")[0]
+        assert self.coil.ctype[0] == CoilType.PF
+        assert self.cs_coil.ctype[0] == CoilType.CS
+        assert self.no_coil.ctype[0] == CoilType.NONE
+        coil = Coil(x=4, z=4, current=10e6, j_max=NBTI_J_MAX)
+        cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
+        no_coil = Coil(x=4, z=4, current=10e6, ctype="None", j_max=NBTI_J_MAX)
 
-        assert extract_prefix(self.coil) == PF_COIL_NAME.split("_")[0]
-        assert extract_prefix(self.cs_coil) == CS_COIL_NAME.split("_")[0]
-        assert extract_prefix(self.no_coil) == NO_COIL_NAME.split("_")[0]
-        coil = Coil(4, 4, 10e6, j_max=NBTI_J_MAX)
-        cs_coil = Coil(4, 4, 10e6, ctype="CS", j_max=NBTI_J_MAX)
-        no_coil = Coil(4, 4, 10e6, ctype="agd", j_max=NBTI_J_MAX)
-
-        assert extract_int(coil) == extract_int(self.coil) + 1
-        assert extract_int(cs_coil) == extract_int(self.cs_coil) + 1
-        assert extract_int(no_coil) == extract_int(self.no_coil) + 1
+        assert coil._index[0] == self.coil._index[0] + 1
+        assert cs_coil._index[0] == self.cs_coil._index[0] + 1
+        assert no_coil._index[0] == self.no_coil._index[0] + 1
 
     def test_field(self):
-        c = Coil(1, 0, current=1591550, dx=0, dz=0)  # Sollte 5 T am Achse erzeugen
+        c = Coil(x=1, z=0, current=1591550, dx=0, dz=0)  # Sollte 5 T am Achse erzeugen
         Bx, Bz = 0, MU_0 * c.current / (2 * c.x)
 
         assert c.Bx(0.001, 0) == Bx
-        assert round(abs(c.Bz(0.001, 0) - Bz), 5) == 0
+        assert np.round(abs(c.Bz(0.001, 0) - Bz), 5) == 0
         z = 4
         Bx, Bz = (
             0,
@@ -87,14 +83,14 @@ class TestCoil:
             * c.current
             / (4 * np.pi * (z**2 + c.x**2) ** (3 / 2)),
         )
-        assert round(abs(c.Bx(0.001, z) - Bx), 4) == 0
-        assert round(abs(c.Bz(0.001, z) - Bz), 5) == 0
+        assert np.round(abs(c.Bx(0.001, z) - Bx), 4) == 0
+        assert np.round(abs(c.Bz(0.001, z) - Bz), 5) == 0
         psi_single = c.psi(15, 15)
         c.mesh_coil(0.1)
-        assert round(abs(c.Bx(0.001, z) - Bx), 4) == 0
-        assert round(abs(c.Bz(0.001, z) - Bz), 3) == 0
+        assert np.round(abs(c.Bx(0.001, z) - Bx), 4) == 0
+        assert np.round(abs(c.Bz(0.001, z) - Bz), 3) == 0
         psi_multi = c.psi(15, 15)
-        assert round(abs(psi_single - psi_multi), 2) == 0
+        assert np.round(abs(psi_single - psi_multi), 2) == 0
 
     def test_mesh(self):
         xmin, xmax = 0.1, 20
@@ -174,16 +170,19 @@ class TestCoil:
         self.callable_tester(self.coil.psi)
 
     def test_point_in_coil(self):
-        coil = Coil(4, 4, current=10, dx=1, dz=2)
+        coil = Coil(x=4, z=4, current=10, dx=1, dz=2)
         inside_x = [3, 4, 5, 3, 4, 5, 3, 4, 5]
         inside_z = [2, 2, 2, 3, 3, 3, 6, 6, 6]
         inside = coil._points_inside_coil(inside_x, inside_z)
+
         assert np.alltrue(inside)
+
         outside_x = [0, 0, 0, 1, 1, 1, 10, 10, 10, 3, 3, 3]
         outside_z = [0, 4, 6, 0, 4, 6, 0, 4, 6, 1.9, 6.1, 10]
         outside = coil._points_inside_coil(outside_x, outside_z)
+
         assert np.all(~outside)
-        assert np.alltrue(coil._points_inside_coil(coil.x_corner, coil.z_corner))
+        assert np.alltrue(coil._points_inside_coil(coil.x_boundary, coil.z_boundary))
 
 
 @pytest.mark.longrun
