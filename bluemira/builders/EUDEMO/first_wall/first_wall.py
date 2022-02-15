@@ -70,7 +70,9 @@ class FirstWallBuilder(Builder):
     then combines the two.
     """
 
+    COMPONENT_DIVERTOR = "divertor"
     COMPONENT_FIRST_WALL = "first_wall"
+    COMPONENT_WALL = "wall"
 
     def __init__(
         self,
@@ -85,9 +87,7 @@ class FirstWallBuilder(Builder):
         _, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
-        self.wall_part: PhysicalComponent = self._build_wall_no_divertor(
-            params, build_config
-        )
+        self.wall_part: PhysicalComponent = self._build_wall(params, build_config)
 
         wall_shape: BluemiraWire = self.wall_part.shape
         self.divertor: Component = self._build_divertor(
@@ -130,7 +130,7 @@ class FirstWallBuilder(Builder):
             parent_component.add_child(component)
         return parent_component
 
-    def _build_wall_no_divertor(self, params: Dict[str, Any], build_config: BuildConfig):
+    def _build_wall(self, params: Dict[str, Any], build_config: BuildConfig):
         """
         Build the component for the wall, excluding the divertor.
         """
@@ -140,21 +140,22 @@ class FirstWallBuilder(Builder):
                 "class": f"{_WALL_MODULE_REF}::WallBuilder",
                 "param_class": f"{_WALL_MODULE_REF}::WallPolySpline",
                 "problem_class": f"{_WALL_MODULE_REF}::MinimiseLength",
-                "label": "First wall",
-                "name": "First wall",
+                "label": self.COMPONENT_WALL,
+                "name": self.COMPONENT_WALL,
             }
         )
 
+        # Keep-out-zone to stop the wall intersecting the plasma
         keep_out_zone = self._make_wall_keep_out_zone()
+        # Build a full, closed, wall shape
         builder = WallBuilder(
             params, build_config=build_config, keep_out_zones=(keep_out_zone,)
         )
-
         wall = builder()
-        wall_shape: BluemiraGeo = wall.get_component(WallBuilder.COMPONENT_WALL).shape
-
+        wall_boundary = wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY)
+        # Cut wall below x-point, a divertor will be put in the space
         x_point_z = self.x_points[0].z
-        cut_shape = _cut_shape_in_z(wall_shape, x_point_z)
+        cut_shape = _cut_shape_in_z(wall_boundary.shape, x_point_z)
         return PhysicalComponent(FirstWallBuilder.COMPONENT_FIRST_WALL, cut_shape)
 
     def _build_divertor(
@@ -163,6 +164,8 @@ class FirstWallBuilder(Builder):
         """
         Build the divertor component.
         """
+        build_config = deepcopy(build_config)
+        build_config.update({"name": self.COMPONENT_DIVERTOR})
         builder = DivertorBuilder(params, build_config, self.equilibrium, x_lims)
         return builder()
 

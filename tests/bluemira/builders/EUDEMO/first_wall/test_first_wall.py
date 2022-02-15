@@ -46,7 +46,7 @@ class TestFirstWallBuilder:
     }
 
     _default_config = {
-        "param_class": "bluemira.builders.EUDEMO.first_wall::FirstWallPolySpline",
+        "param_class": "bluemira.builders.EUDEMO.first_wall::WallPolySpline",
         "variables_map": _default_variables_map,
         "runmode": "mock",
         "name": "First Wall",
@@ -78,9 +78,29 @@ class TestFirstWallBuilder:
             self._params, build_config=self._default_config, equilibrium=self.eq
         )
 
-        shape = wall.wall_part.get_component("first_wall").shape
+        shape = wall.wall_part.get_component(FirstWallBuilder.COMPONENT_WALL).shape
         assert not shape.is_closed()
         # significant delta in assertion as the wire is discrete, so cut is not exact
         np.testing.assert_almost_equal(
             shape.bounding_box.z_min, self.x_points[0][1], decimal=1
         )
+
+    def test_contains_one_divertor_component_given_SN_plasma(self):
+        builder = FirstWallBuilder(
+            self._params, build_config=self._default_config, equilibrium=self.eq
+        )
+
+        wall = builder()
+
+        divertors = wall.get_component(FirstWallBuilder.COMPONENT_DIVERTOR, first=False)
+        assert len(divertors) == 1
+
+    def test_contains_one_wall_component(self):
+        builder = FirstWallBuilder(
+            self._params, build_config=self._default_config, equilibrium=self.eq
+        )
+
+        wall = builder()
+
+        walls = wall.get_component(FirstWallBuilder.COMPONENT_WALL, first=False)
+        assert len(walls) == 1

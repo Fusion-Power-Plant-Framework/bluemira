@@ -174,7 +174,7 @@ class WallBuilder(OptimisedShapeBuilder):
     divertor.
     """
 
-    COMPONENT_WALL = "wall"
+    COMPONENT_WALL_BOUNDARY = "wall_boundary"
 
     _required_params: List[str] = [
         "plasma_type",
@@ -241,8 +241,8 @@ class WallBuilder(OptimisedShapeBuilder):
         component = Component("xz")
         component.add_child(
             PhysicalComponent(
-                self.COMPONENT_WALL,
-                BluemiraWire(self.boundary, label=self.COMPONENT_WALL),
+                self.COMPONENT_WALL_BOUNDARY,
+                BluemiraWire(self.boundary, label=self.COMPONENT_WALL_BOUNDARY),
             )
         )
         component.plot_options.wire_options["color"] = BLUE_PALETTE["DIV"]

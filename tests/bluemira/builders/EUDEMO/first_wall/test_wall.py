@@ -25,6 +25,7 @@ Test for the closed first wall, without a divertor.
 import copy
 
 from bluemira.builders.EUDEMO.first_wall import WallBuilder
+from bluemira.builders.EUDEMO.first_wall.first_wall import _WALL_MODULE_REF
 
 
 class TestWall:
@@ -39,10 +40,11 @@ class TestWall:
     }
 
     _default_config = {
-        "param_class": "bluemira.builders.EUDEMO.first_wall::FirstWallPolySpline",
+        "param_class": f"{_WALL_MODULE_REF}::WallPolySpline",
         "variables_map": _default_variables_map,
         "runmode": "mock",
         "name": "First Wall",
+        "problem_class": f"{_WALL_MODULE_REF}::MinimiseLength",
     }
 
     _params = {
@@ -71,7 +73,7 @@ class TestWall:
         xy_component = component.get_component("xz", first=False)
         assert len(xy_component) == 1
         wall_components = xy_component[0].get_component(
-            WallBuilder.COMPONENT_WALL, first=False
+            WallBuilder.COMPONENT_WALL_BOUNDARY, first=False
         )
         assert len(wall_components) == 1
 
@@ -80,7 +82,9 @@ class TestWall:
 
         component = builder()
 
-        assert component.get_component(WallBuilder.COMPONENT_WALL).shape.is_closed()
+        assert component.get_component(
+            WallBuilder.COMPONENT_WALL_BOUNDARY
+        ).shape.is_closed()
 
     def test_component_height_derived_from_params(self):
         params = copy.deepcopy(self._params)
@@ -92,7 +96,7 @@ class TestWall:
         component = builder()
 
         bounding_box = component.get_component(
-            WallBuilder.COMPONENT_WALL
+            WallBuilder.COMPONENT_WALL_BOUNDARY
         ).shape.bounding_box
         # expected_height = 2*(R_0/A)*kappa_95 = 20
         assert bounding_box.z_max - bounding_box.z_min == 20.0
