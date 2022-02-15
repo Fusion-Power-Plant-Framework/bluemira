@@ -116,8 +116,32 @@ def _sum_all(func: Optional[callable] = None, *, axis: int = 0) -> callable:
 
 
 class CoilFieldsMixin:
-    def mesh_coil(self):
-        pass
+    def __init__(self, weighting=None):
+
+        # setup initial meshing
+        # quadratures
+        self.mesh_coil(weighting)
+
+    def _set_quad_weighting(self, weighting=None):
+        self._quad_weighting = (
+            np.ones(self.x.shape[0]) if weighting is None else weighting
+        )
+
+    def mesh_coil(self, weighting=None):
+        # each quadrature array = (quadrature, (x,z))
+
+        if weighting is None:
+            self._quad_x = self.x.copy()
+            self._quad_dx = self.dx.copy()
+            self._quad_z = self.z.copy()
+            self._quad_dz = self.x.copy()
+
+            self._noquads = np.arange(self.x.shape[0])
+
+        else:
+            raise NotImplementedError("TODO meshing")
+
+        self._set_quad_weighting(weighting)
 
     def psi(self, x, z):
         """
@@ -135,11 +159,11 @@ class CoilFieldsMixin:
         """
         Calculate poloidal flux at (x, z) due to a unit current
         """
-        if self.sub_coils is None:
-            return greens_psi(self.x, self.z, x, z, self.dx, self.dz) * self.n_turns
+        gpsi = greens_psi(self._quad_x, self._quad_z, x, z, self._quad_dx, self._quad_dz)
 
-        gpsi = [greens_psi(c.x, c.z, x, z, c.dx, c.dz) for c in self.sub_coils.values()]
-        return sum(gpsi) / self.n_filaments
+        # number of quadratures 5 for the first coil 6 for the second
+        # self._noquads = [0, 5, 11]
+        return np.add.reduceat(gpsi * self._quad_weighting, self._no_quads)
 
     def Bx(self, x, z):
         """
@@ -213,9 +237,7 @@ class CoilFieldsMixin:
         """
         Calculate poloidal magnetic field Bp at (x, z)
         """
-        return np.hypot(
-            self.control_Bx(x, z) * self.current, self.control_Bz(x, z) * self.current
-        )
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
     def _mix_control_method(self, x, z, greens_func, semianalytic_func):
         """
@@ -224,40 +246,77 @@ class CoilFieldsMixin:
         outside/inside the coil boundary.
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
-        if np.isclose(self.dx, 0.0) or np.isclose(self.dz, 0.0):
-            response = greens_func(x, z)
 
-        else:
-            inside = self._points_inside_coil(x, z)
-            response = np.zeros(x.shape)
+        lg_or = np.logical_or(self._quad_dx == 0, self._quad_dz == 0)
+
+        if False in lg_or:
+            # if dx or dz is not 0 and x,z inside coil
+            # TODO improve to remove inside coil calc if already known
+            inside = np.logical_and(self._points_inside_coil(x, z), not lg_or)
+
+            response = np.zeros(x.shape[1])
+
             if np.any(~inside):
                 response[~inside] = greens_func(x[~inside], z[~inside])
             if np.any(inside):
                 response[inside] = semianalytic_func(x[inside], z[inside])
-        if x.size == 1:
-            return response[0]
+        else:
+            response = greens_func(x, z)
+
         return response
+
+    def _points_inside_coil(self, x, z):
+        """
+        Determine which points lie inside or on the coil boundary.
+
+        Parameters
+        ----------
+        x: Union[float, np.array]
+            The x coordinates to check
+        z: Union[float, np.array]
+            The z coordinates to check
+
+        Returns
+        -------
+        inside: np.array(dtype=bool)
+            The Boolean array of point indices inside/outside the coil boundary
+        """
+        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
+        # Add an offset, to ensure points very near the edge are counted as
+        # being on the edge of a coil
+        atol = X_TOLERANCE
+        x_min, x_max = (
+            self._quad_x - self._quad_dx - atol,
+            self._quad_x + self._quad_dx + atol,
+        )
+        z_min, z_max = (
+            self._quad_z - self._quad_dz - atol,
+            self._quad_z + self._quad_dz + atol,
+        )
+        return (x >= x_min) & (x <= x_max) & (z >= z_min) & (z <= z_max)
 
     def _control_Bx_greens(self, x, z):
         """
         Calculate radial magnetic field Bx respose at (x, z) due to a unit
         current using Green's functions.
         """
-        if self.sub_coils is None:
-            return greens_Bx(self.x, self.z, x, z) * self.n_turns
+        return np.add.reduceat(
+            greens_Bx(self._quad_x, self._quad_z, x, z) * self._quad_weighting,
+            self._no_quads,
+        )
 
-        gx = [greens_Bx(c.x, c.z, x, z) for c in self.sub_coils.values()]
-        return sum(gx) / self.n_filaments
+        # return sum(gx) / self.n_filaments
 
     def _control_Bz_greens(self, x, z):
         """
         Calculate vertical magnetic field Bz at (x, z) due to a unit current
         """
-        if self.sub_coils is None:
-            return greens_Bz(self.x, self.z, x, z) * self.n_turns
+        return np.add.reduceat(
+            greens_Bz(self._quad_x, self._quad_z, x, z) * self._quad_weighting,
+            self._no_quads,
+        )
 
-        gz = [greens_Bz(c.x, c.z, x, z) for c in self.sub_coils.values()]
-        return sum(gz) / self.n_filaments
+        # return sum(gz) / self.n_filaments
 
     def _control_Bx_analytical(self, x, z):
         """
@@ -767,16 +826,12 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         """
         Set coil current
         """
-        # TODO sanity check input
-
         self._current[:] = new_current
 
     def adjust_current(self, d_current: __ITERABLE_FLOAT) -> None:
         """
         Modify current in each coil
         """
-        # TODO sanity check input
-
         self.current += d_current
 
     @property
