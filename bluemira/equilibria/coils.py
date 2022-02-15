@@ -255,7 +255,9 @@ class CoilFieldsMixin:
         with the semi-analytic function responses, as a function of position
         outside/inside the coil boundary.
         """
-        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
+        x, z = np.ascontiguousarray(np.atleast_2d(x)), np.ascontiguousarray(
+            np.atleast_2d(z)
+        )
 
         lg_or = np.logical_or(self._quad_dx == 0, self._quad_dz == 0)
 
@@ -264,7 +266,7 @@ class CoilFieldsMixin:
             # TODO improve to remove inside coil calc if already known
             inside = np.logical_and(self._points_inside_coil(x, z), not lg_or)
 
-            response = np.zeros(x.shape[1])
+            response = np.zeros(x.shape)
 
             if np.any(~inside):
                 response[~inside] = greens_func(x[~inside], z[~inside])
@@ -429,7 +431,7 @@ class CoilSizer:
         dz_specified = np.array([is_num(dz) for dz in self.dz], dtype=bool)
         dxdz_specified = dx_specified and dz_specified
 
-        if not any(np.logical_and(dxdz_specified, dx_specified != dz_specified)):
+        if any(np.logical_and(not dxdz_specified, dx_specified != dz_specified)):
             # Check that we don't have dx = None and dz = float or vice versa
             raise EquilibriaError("Must specify either dx and dz or neither.")
 
@@ -471,7 +473,7 @@ class CoilSizer:
             self._set_coil_attributes(coil)
 
     def _set_coil_attributes(self, coil):
-        coil.rc = 0.5 * np.hypot(coil.dx, coil.dz)
+        coil._rc = 0.5 * np.hypot(coil.dx, coil.dz)
         coil._x_boundary, coil._z_boundary = self._make_boundary(
             coil.x, coil.z, coil.dx, coil.dz
         )
@@ -637,15 +639,15 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
             "dx": dx,
             "dz": dz,
             "current": current,
-            "name": name,
+            "name": name if isinstance(name, Iterable) else [name],
             "ctype": ctype,
             "j_max": j_max,
             "b_max": b_max,
         }
 
-        _inputs = self._make_iterable(_inputs)
+        _inputs = self._make_iterable(**_inputs)
 
-        self._lengthcheck(_inputs)
+        self._lengthcheck(**_inputs)
 
         self._x = _inputs["x"]
         self._z = _inputs["z"]
@@ -663,7 +665,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
         self._name_map = {
             f"{self._ctype[en].name}_{ind}" if n is None else n: ind
-            for en, n, ind in enumerate(zip(_inputs["name"], self._index))
+            for en, (n, ind) in enumerate(zip(_inputs["name"], self._index))
         }
 
         self._flag_sizefix = False
@@ -701,7 +703,7 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
                 if isinstance(arg, Iterable)
                 else [arg]
                 if isinstance(arg, (str, CoilType))
-                else np.atleast_2d(arg, dtype=float)
+                else np.atleast_2d(np.array(arg, dtype=float))
             )
             for name, arg in kwargs.items()
         }
@@ -1023,11 +1025,9 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         Pretty coil printing.
         """
         ret_str = ""
-        for ind in range(len(self.x)):
-            ret_str += (
-                f"{self.name[ind]} X={self.x[ind]:.2f} m, Z={self.z[ind]:.2f} m, I={self.current[ind]/1e6:.2f} MA "
-                f"control={self.control}\n"
-            )
+        for ind, name in enumerate(self.name):
+            np.array
+            ret_str += f"{name}: X={self.x[ind][0]:.2f} m, Z={self.z[ind][0]:.2f} m, I={self.current[ind][0]/1e6:.2f} MA"
         return ret_str[:-1]
 
     def __repr__(self) -> str:
@@ -1040,6 +1040,8 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 class Coil(CoilGroup):
 
     __slots__ = ()
+
+    __safe_attrs = ("_flag_sizefix", "_CoilGroup__sizer")
 
     def __init__(
         self,
@@ -1075,13 +1077,48 @@ class Coil(CoilGroup):
 
         with suppress(AttributeError):
             old_attr = super().__getattribute__(attr)
-            if not isinstance(value, Iterable) and len(old_attr) == 1:
-                if isinstance(value, (str, CoilType)):
-                    value = [value]
-                else:
-                    value = np.atleast_2d(value, dtype=float)
+            if attr not in self.__safe_attrs:
+                if not isinstance(value, Iterable) and len(old_attr) == 1:
+                    if isinstance(value, (str, CoilType)):
+                        value = [value]
+                    else:
+                        value = np.atleast_2d(value, dtype=float)
 
-        if isinstance(value, Iterable) and len(value) == 1:
+        if attr in self.__safe_attrs or (
+            isinstance(value, Iterable) and len(value) == 1
+        ):
             super().__setattr__(attr, value)
         else:
             raise ValueError(f"Length of value should be 1: {attr}={value}")
+
+
+# TODO or To remove (for imports)
+
+
+class Circuit(CoilGroup):
+    pass
+
+
+class SymmetricCircuit(Circuit):
+    pass
+
+
+class CoilSet(CoilGroup):
+    pass
+
+
+class PlasmaCoil:
+    pass
+
+
+class Solenoid:
+    pass
+
+
+def symmetrise_coilset():
+    pass
+
+
+CS_COIL_NAME = "{}"
+PF_COIL_NAME = "{}"
+NO_COIL_NAME = "{}"
