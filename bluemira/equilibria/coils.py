@@ -413,29 +413,31 @@ class CoilSizer:
     """
 
     def __init__(self, coil):
-        raise NotImplementedError("TODO vectorise")
         self.update(coil)
 
-        dxdz_specified = is_num(self.dx) and is_num(self.dz)
+        dx_specified = np.array([is_num(dx) for dx in self.dx], dtype=bool)
+        dz_specified = np.array([is_num(dz) for dz in self.dz], dtype=bool)
+        dxdz_specified = dx_specified and dz_specified
 
-        if not dxdz_specified and not (self.dx is None and self.dz is None):
+        if not any(np.logical_and(dxdz_specified, dx_specified != dz_specified)):
             # Check that we don't have dx = None and dz = float or vice versa
             raise EquilibriaError("Must specify either dx and dz or neither.")
 
-        if dxdz_specified and not self.flag_sizefix:
-            # If dx and dz are specified, we presume the coil size should remain fixed
-            self.flag_sizefix = True
+        if any(dxdz_specified):
+            if not self.flag_sizefix:
+                # If dx and dz are specified, we presume the coil size should remain fixed
+                self.flag_sizefix = True
 
-        if dxdz_specified:
             self._set_coil_attributes(coil)
 
-        if not dxdz_specified and not self.j_max:
-            # Check there is a viable way to size the coil
-            raise EquilibriaError("Must specify either dx and dz or j_max.")
+        else:
+            if any(self.j_max == np.nan):
+                # Check there is a viable way to size the coil
+                raise EquilibriaError("Must specify either dx and dz or j_max.")
 
-        if not dxdz_specified and self.flag_sizefix:
-            # If dx and dz are not specified, we cannot fix the size of the coil
-            self.flag_sizefix = False
+            if self.flag_sizefix:
+                # If dx and dz are not specified, we cannot fix the size of the coil
+                self.flag_sizefix = False
 
         coil._flag_sizefix = self.flag_sizefix
 
@@ -500,17 +502,14 @@ class CoilSizer:
             If the coil size is not fixed.
         """
         self.update(coil)
-        if not all(self.flag_sizefix):
+        if not self.flag_sizefix:
             raise EquilibriaError(
                 "Cannot get the maximum current of a coil of an unspecified size."
             )
 
-        if self.j_max is None:
-            max_current = np.inf
-        else:
-            max_current = get_max_current(self.dx, self.dz, self.j_max)
-
-        return max_current
+        return np.where(
+            self.j_max == np.nan, np.inf, get_max_current(self.dx, self.dz, self.j_max)
+        )
 
     def _make_size(self, current=None):
         """
@@ -661,6 +660,9 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         self.__sizer = CoilSizer(self)
         self.__sizer(self)
 
+        # Meshing
+        super().__init__(None)
+
     @staticmethod
     def _make_iterable(
         **kwargs: __ANY_ITERABLE,
@@ -679,7 +681,9 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
         Notes
         -----
         Assumes init is specified correctly. No protection against singular None.
-        In that case will fail on lengthcheck.
+        A singular None will fail on lengthcheck.
+        String and CoilType are converted to lists everything else is a np.array
+        with dtype=float.
         """
         return {
             name: (
