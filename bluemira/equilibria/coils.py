@@ -116,6 +116,16 @@ def _sum_all(func: Optional[callable] = None, *, axis: int = 0) -> callable:
 
 
 class CoilFieldsMixin:
+
+    __slots__ = (
+        "_quad_dx",
+        "_quad_dz",
+        "_quad_x",
+        "_quad_z",
+        "_quad_weighting",
+        "_no_quads",
+    )
+
     def __init__(self, weighting=None):
 
         # setup initial meshing
@@ -136,7 +146,7 @@ class CoilFieldsMixin:
             self._quad_z = self.z.copy()
             self._quad_dz = self.x.copy()
 
-            self._noquads = np.arange(self.x.shape[0])
+            self._no_quads = np.arange(self.x.shape[0])
 
         else:
             raise NotImplementedError("TODO meshing")
