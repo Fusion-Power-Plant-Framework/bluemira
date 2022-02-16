@@ -71,7 +71,7 @@ class CentralColumnShield(Meshable, ReactorSystem):
 
     # fmt: off
     default_params = [
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
         ["g_ccs_vv_add", "Additional gap between the central column shield and the vacuum vessel", 0.0, "m", None, "Input"],
         ["g_ccs_fw", "Gap between the central column shield and the first wall", 0.05, "m", None, "Input"],
         ["g_ccs_div", "Gap between the central column shield and the divertor cassette", 0.05, "m", None, "Input"],

@@ -1078,12 +1078,12 @@ class FirstWall(ReactorSystem):
 
     # fmt: off
     base_default_params = [
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
-        ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
+        ["A", "Plasma aspect ratio", 3.1, "dimensionless", None, "Input"],
         ["psi_norm", "Normalised flux value of strike-point contours",
-         1, "N/A", None, "Input"],
+         1, "dimensionless", None, "Input"],
         ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
-        ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "N/A", None, "Input"],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.65, "dimensionless", None, "Input"],
         ['tk_fw_in', 'Inboard first wall thickness', 0.052, 'm', None, 'Input'],
         ['tk_fw_out', 'Outboard first wall thickness', 0.052, 'm', None, 'Input'],
         ['tk_fw_div', 'First wall thickness around divertor', 0.052, 'm', None, 'Input'],
@@ -1572,13 +1572,13 @@ class FirstWallSN(FirstWall):
     # fmt: off
     default_params = FirstWall.base_default_params + [
         ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
-        ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "N/A", None, "Input"],
+        ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.01, "dimensionless", None, "Input"],
         ["fw_lambda_q_near", "Lambda q near SOL", 0.05, "m", None, "Input"],
         ["fw_lambda_q_far", "Lambda q far SOL", 0.05, "m", None, "Input"],
-        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "N/A", None, "Input"],
-        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.25, "N/A", None, "Input"],
-        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target", 0.0, "N/A", "DN only", "Input"],
-        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target", 0.0, "N/A", "DN only", "Input"],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.75, "dimensionless", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.25, "dimensionless", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target", 0.0, "dimensionless", "DN only", "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target", 0.0, "dimensionless", "DN only", "Input"],
 
         # Parameters used in make_divertor_loop
         ["xpt_outer_gap", "Gap between x-point and outer wall", 1, "m", None, "Input"],
@@ -1728,7 +1728,7 @@ class FirstWallDN(FirstWall):
     default_params = FirstWall.base_default_params + [
         ['tk_sol_ib', 'Inboard SOL thickness', 0.225, 'm', None, 'Input'],
         ['tk_sol_ob', 'Outboard SOL thickness', 0.225, 'm', None, 'Input'],
-        ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "N/A", None, "Input"],
+        ["fw_psi_n", "Normalised psi boundary to fit FW to", 1, "dimensionless", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda_q near SOL omp", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda_q far SOL omp", 0.1, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda_q near SOL imp", 0.003, "m", None, "Input"],
@@ -1740,10 +1740,10 @@ class FirstWallDN(FirstWall):
         # These seem to be inconsistent with the above, or at least could be set as such
         # Do not appear to be used anyway
 
-        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "N/A", None, "Input"],
-        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "N/A", None, "Input"],
-        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target", 0.9 * 0.5, "N/A", "DN only", "Input"],
-        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target", 0.1 * 0.5, "N/A", "DN only", "Input"],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9 * 0.5, "dimensionless", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1 * 0.5, "dimensionless", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target", 0.9 * 0.5, "dimensionless", "DN only", "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target", 0.1 * 0.5, "dimensionless", "DN only", "Input"],
 
         # These are now deprecated, in favour of just doing the mupltication in the
         # inputs above

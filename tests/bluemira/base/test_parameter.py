@@ -270,21 +270,21 @@ class TestParameter:
 
 class TestParameterFrame:
     default_params = [
-        ["Name", "Reactor name", "Cambridge", "N/A", None, "Input"],
-        ["plasma_type", "Type of plasma", "SN", "N/A", None, "Input"],
-        ["op_mode", "Mode of operation", "Pulsed", "N/A", None, "Input"],
-        ["blanket_type", "Blanket type", "HCPB", "N/A", None, "Input"],
+        ["Name", "Reactor name", "Cambridge", "dimensionless", None, "Input"],
+        ["plasma_type", "Type of plasma", "SN", "dimensionless", None, "Input"],
+        ["op_mode", "Mode of operation", "Pulsed", "dimensionless", None, "Input"],
+        ["blanket_type", "Blanket type", "HCPB", "dimensionless", None, "Input"],
         [
             "n_TF",
             "Number of TF coils",
             16,
-            "N/A",
+            "dimensionless",
             None,
             "Input",
             {"PROCESS": ParameterMapping("n_tf", True, False)},
         ],
-        ["n_PF", "Number of PF coils", 6, "N/A", None, "Input"],
-        ["n_CS", "Number of CS coil divisions", 5, "N/A", None, "Input"],
+        ["n_PF", "Number of PF coils", 6, "dimensionless", None, "Input"],
+        ["n_CS", "Number of CS coil divisions", 5, "dimensionless", None, "Input"],
         [
             "TF_ripple_limit",
             "TF coil ripple limit",
@@ -298,7 +298,7 @@ class TestParameterFrame:
             "A",
             "Plasma aspect ratio",
             3.1,
-            "N/A",
+            "dimensionless",
             None,
             "Input",
             {"PROCESS": ParameterMapping("aspect", True, False)},
@@ -684,14 +684,16 @@ class TestReactorSystem:
         assert self.DIV.params.R_0 == 8.8
         assert self.DIV.params.R_0 == 8.8
 
-        self.DIV.add_parameter("n_TF", "Number of TF coils", 17, "N/A", None, "Input")
+        self.DIV.add_parameter(
+            "n_TF", "Number of TF coils", 17, "dimensionless", None, "Input"
+        )
         assert self.DIV.params.n_TF == 17
         assert self.DIV.params["n_TF"] == 17
 
     def test_add_parameters(self):
         p = [
-            ["n_TF", "Number of TF coils", 200, "N/A", None, "Input"],
-            ["n_PF", "Number of PF coils", 6, "N/A", None, "Input"],
+            ["n_TF", "Number of TF coils", 200, "dimensionless", None, "Input"],
+            ["n_PF", "Number of PF coils", 6, "dimensionless", None, "Input"],
         ]
         self.DIV.add_parameters(p)
         assert self.DIV.params.n_TF == 200

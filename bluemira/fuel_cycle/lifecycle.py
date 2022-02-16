@@ -48,7 +48,7 @@ class LifeCycle:
 
     # fmt: off
     default_params = [
-        ["A_global", "Global load factor", 0.3, "N/A", "Not always used", "Input"],
+        ["A_global", "Global load factor", 0.3, "dimensionless", "Not always used", "Input"],
         ["I_p", "Plasma current", 19, "MA", None, "Input"],
         ["bmd", "Blanket maintenance duration", 150, "days", "Full replacement intervention duration", "Input"],
         ["dmd", "Divertor maintenance duration", 90, "days", "Full replacement intervention duration", "Input"],

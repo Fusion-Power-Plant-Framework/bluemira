@@ -61,7 +61,7 @@ class TypicalSystem(ReactorSystem):
 
     # fmt: off  --> this is the flag for black to ignore this part of the code
     default_params = [
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
         ["coolant", "Coolant", "Water", None, "Divertor coolant type", "Common sense"],
         ["T_in", "Coolant inlet T", 80.0, "°C", "Coolant inlet T", None],
     ]
@@ -95,8 +95,8 @@ class TypicalSystem(ReactorSystem):
 # %%
 config = ParameterFrame(
     [
-        ["n_TF", "Number of TF coils", 18, "N/A", None, "Input"],
-        ["n_PF", "Number of PF coils", 8, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 18, "dimensionless", None, "Input"],
+        ["n_PF", "Number of PF coils", 8, "dimensionless", None, "Input"],
     ]
 )
 inputs = {"something": "random"}

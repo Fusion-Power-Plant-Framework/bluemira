@@ -61,8 +61,8 @@ class ThermalShield(ReactorSystem):
         ['g_ts_tf', 'Gap between TS and TF', 0.05, 'm', None, 'Input'],
         ['g_ts_tf_topbot', 'Vessel KOZ offset to TF coils on top and bottom edges', 0.11, 'm', None, 'Input'],
         ['pf_off', 'Cryostat TS PF offset', 0.3, 'm', None, 'Input'],
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
-        ['A', 'Plasma aspect ratio', 3.1, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
+        ['A', 'Plasma aspect ratio', 3.1, 'dimensionless', None, 'Input'],
         ['R_0', 'Major radius', 9, 'm', None, 'Input'],
         ['LPangle', 'Lower port inclination angle', -25, '°', None, 'Input'],
         ['e', 'Emissivity of TS surface', 0.05, 'N/a', '0.05=silvered surface', 'Input']
@@ -592,7 +592,7 @@ class SegmentedThermalShield(ReactorSystem):
 
     # fmt: off
     default_params = [
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['tk_ib_ts', 'Inboard TS thickness', 0.05, 'm', None, 'Input'],
         ['tk_ob_ts', 'Outboard TS thickness', 0.05, 'm', None, 'Input'],
         ['g_ib_ts_tf', 'Inboard gap between TS and TF', 0.05, 'm', None, 'Input'],

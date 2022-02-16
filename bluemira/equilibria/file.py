@@ -102,7 +102,7 @@ class EQDSKInterface:
         ["zbdry", "Z coordinates of the plasma boundary", None, "m", None, "eqfile"],
         ["xlim", "X coordinates of the limiters", None, "m", None, "eqfile"],
         ["zlim", "Z coordinates of the limiters", None, "m", None, "eqfile"],
-        ["ncoil", "Number of coils", None, "N/A", None, "eqfile"],
+        ["ncoil", "Number of coils", None, "dimensionless", None, "eqfile"],
         ["xc", "X coordinates of the coils", None, "m", None, "eqfile"],
         ["zc", "Z coordinates of the coils", None, "m", None, "eqfile"],
         ["dxc", "X half-thicknesses of the coils", None, "m", None, "eqfile"],

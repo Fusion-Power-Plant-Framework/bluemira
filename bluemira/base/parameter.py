@@ -61,7 +61,7 @@ def _unitify(unit):
     if isinstance(unit, str):
         if "%" in unit:
             raise NotImplementedError("Modification needed to support percentages")
-        return Unit("") if unit == "N/A" else Unit(unit)
+        return Unit("dimensionless") if unit is None else Unit(unit)
     raise TypeError(f"Unknown unit type {type(unit)}")
 
 
@@ -1235,6 +1235,7 @@ class ParameterFrame:
             if unit_to == unit_from:
                 return value
             value.value = ureg.Quantity(value.value, unit_from).to(unit_to).magnitude
+            value.source = "Unit Conversion"
             return value
         else:
             unit_to = _unitify(unit_to)

@@ -42,9 +42,9 @@ class PoloidalFieldCoils(Meshable, ReactorSystem):
     # fmt: off
     default_params = [
         ["R_0", "Major radius", 9, "m", None, "Input"],
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
-        ["n_PF", "Number of PF coils", 6, "N/A", None, "Input"],
-        ["n_CS", "Number of CS coil divisions", 5, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
+        ["n_PF", "Number of PF coils", 6, "dimensionless", None, "Input"],
+        ["n_CS", "Number of CS coil divisions", 5, "dimensionless", None, "Input"],
     ]
     # fmt: on
     CADConstructor = PFSystemCAD
