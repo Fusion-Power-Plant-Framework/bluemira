@@ -23,7 +23,7 @@
 Tool function and classes for the bluemira base module.
 """
 from bluemira.geometry.compound import BluemiraCompound
-
+from bluemira.geometry.tools import serialize_shape
 from .components import Component, PhysicalComponent
 
 
@@ -41,6 +41,7 @@ def create_compound_from_component(comp):
     compound = BluemiraCompound(label=comp.name, boundary=boundary)
     return compound
 
+
 # # =============================================================================
 # # Serialize and Deserialize
 # # =============================================================================
@@ -56,7 +57,7 @@ def serialize_component(comp: Component):
         for child in comp.children:
             output.append(serialize_component(child))
         if isinstance(comp, PhysicalComponent):
-            dict["shape"] = geo.tools.serialize_shape(comp.shape)
+            dict["shape"] = serialize_shape(comp.shape)
         return {str(type(comp).__name__): dict}
     else:
         raise NotImplementedError(f"Serialization non implemented for {type_}")

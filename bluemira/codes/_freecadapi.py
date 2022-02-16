@@ -50,7 +50,7 @@ from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_warn
 
 # import errors and warnings
 from bluemira.codes.error import FreeCADError
