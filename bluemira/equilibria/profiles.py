@@ -604,18 +604,15 @@ class CustomProfile(Profile):
         Force-Force prime profile f*df/dpsi(psi_N)
     R_0: float
         Reactor major radius [m]
-    B_0: float
+    B_0:
         Field at major radius [T]
-    Ip: Optional[float]
-        Plasma current [A]. If None, the plasma current will be calculated
-        from p' and ff'.
     """
 
     def __init__(
         self, pprime_func, ffprime_func, R_0, B_0, p_func=None, f_func=None, Ip=None
     ):
-        self._pprime = self.parse_to_callable(pprime_func)
-        self._ffprime = self.parse_to_callable(ffprime_func)
+        self.pprime = self.parse_to_callable(pprime_func)
+        self.ffprime = self.parse_to_callable(ffprime_func)
         self.p_func = self.parse_to_callable(p_func)
         self.f_func = self.parse_to_callable(f_func)
         self._fvac = R_0 * B_0
@@ -641,18 +638,6 @@ class CustomProfile(Profile):
             return None
         else:
             raise TypeError("Could not make input object a callable function.")
-
-    def pprime(self, pn):
-        """
-        dp/dpsi as a function of normalised psi
-        """
-        return self.scale * self._pprime(pn)
-
-    def ffprime(self, pn):
-        """
-        f*df/dpsi as a function of normalised psi
-        """
-        return self.scale * self._ffprime(pn)
 
     def jtor(self, x, z, psi, o_points, x_points):
         """
