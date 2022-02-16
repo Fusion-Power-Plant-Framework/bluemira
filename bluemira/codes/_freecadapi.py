@@ -1122,23 +1122,18 @@ def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
 
 
 # ======================================================================================
-# Plane manipulations
+# Placement manipulations
 # ======================================================================================
-
-# BluemiraPlane wraps Base.Placement not Part.Plane. These conversions become useful..
-# They are probably a bit broken... cos this stuff is a mess in FreeCAD
-
-
-def make_plane(base, axis, angle):
+def make_placement(base, axis, angle):
     """
     Make a FreeCAD Placement
 
     Parameters
     ----------
     base: Iterable
-        a vector representing the Plane's position
+        a vector representing the Placement local origin
     axis: Iterable
-        normal vector to the Plane
+        axis of rotation
     angle:
         rotation angle in degree
     """
@@ -1148,7 +1143,7 @@ def make_plane(base, axis, angle):
     return Base.Placement(base, axis, angle)
 
 
-def make_plane_from_matrix(matrix):
+def make_placement_from_matrix(matrix):
     """
     Make a FreeCAD Placement from a 4 x 4 matrix.
 
@@ -1177,26 +1172,26 @@ def make_plane_from_matrix(matrix):
     return Base.Placement(matrix)
 
 
-def move_plane(plane, vector):
+def move_placement(placement, vector):
     """
-    Moves the FreeCAD Plane along the given vector
+    Moves the FreeCAD Placement along the given vector
 
     Parameters
     ----------
-    plane: FreeCAD plane
-        the FreeCAD plane to be modified
+    placement: FreeCAD placement
+        the FreeCAD placement to be modified
     vector: Iterable
-        direction along which the plane is moved
+        direction along which the placement is moved
 
     Returns
     -------
     nothing:
-        The plane is directly modified.
+        The placement is directly modified.
     """
-    plane.move(Base.Vector(vector))
+    placement.move(Base.Vector(vector))
 
 
-def change_plane(geo, plane):
+def change_placement(geo, placement):
     """
     Change the placement of a FreeCAD object
 
@@ -1204,16 +1199,16 @@ def change_plane(geo, plane):
     ----------
     geo: FreeCAD object
         the object to be modified
-    plane: FreeCAD plane
-        the FreeCAD plane to be modified
+    placement: FreeCAD placement
+        the FreeCAD placement to be modified
 
     Returns
     -------
     nothing:
         The object is directly modified.
     """
-    new_placement = geo.Placement.multiply(plane)
-    new_base = plane.multVec(geo.Placement.Base)
+    new_placement = geo.Placement.multiply(placement)
+    new_base = placement.multVec(geo.Placement.Base)
     new_placement.Base = new_base
     geo.Placement = new_placement
 

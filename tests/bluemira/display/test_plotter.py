@@ -63,9 +63,9 @@ class TestPlotOptions:
 
     def test_options_plane_dict(self):
         """
-        Check the options can be obtained as a dictionary with a BluemiraPlane
+        Check the options can be obtained as a dictionary with a BluemiraPlacement
         """
-        the_plane = geo.plane.BluemiraPlane()
+        the_plane = geo.plane.BluemiraPlacement()
         the_options = plotter.PlotOptions(plane=the_plane)
         options_dict = the_options.as_dict()
         for key, val in options_dict.items():
@@ -103,7 +103,7 @@ class TestPlotOptions:
         the_options.wire_options = {}
         the_options.face_options = {}
         the_options.plane = "xy"
-        the_options.plane = geo.plane.BluemiraPlane()
+        the_options.plane = geo.plane.BluemiraPlacement()
         the_options.ndiscr = 20
         the_options.byedges = not plotter.DEFAULT_PLOT_OPTIONS["byedges"]
 

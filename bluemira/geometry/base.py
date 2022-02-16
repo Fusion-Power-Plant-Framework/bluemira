@@ -262,12 +262,12 @@ class BluemiraGeo(ABC, GeoMeshable):
         for o in self.boundary:
             o.rotate(base, direction, degree)
 
-    def change_plane(self, plane) -> None:
+    def change_placement(self, placement) -> None:
         """
-        Apply a plane transformation to the wire.
+        Change the placement of self
         """
         for o in self.boundary:
-            o.change_plane(plane)
+            o.change_placement(placement)
 
     def __repr__(self):  # noqa D105
         new = []

@@ -23,34 +23,34 @@ import numpy as np
 import pytest
 
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.placement import BluemiraPlacement
 
 
 class TestPlane:
     def test_instantiation_xy(self):
-        xy_plane = BluemiraPlane([0, 0, 0], [0, 0, 1], 0.0)
-        xy_plane_2 = BluemiraPlane.from_3_points([0, 0, 0], [1, -1, 0], [1, 1, 0])
+        xy_plane = BluemiraPlacement([0, 0, 0], [0, 0, 1], 0.0)
+        xy_plane_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, -1, 0], [1, 1, 0])
         assert xy_plane.axis == xy_plane_2.axis
         assert xy_plane.base == xy_plane_2.base
         assert xy_plane.angle == xy_plane_2.angle
 
     def test_instantiation_xz(self):
-        xz_plane = BluemiraPlane([0, 0, 0], [0, -1, 0], 0.0)
-        xz_plane_2 = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, -1], [1, 0, 1])
+        xz_plane = BluemiraPlacement([0, 0, 0], [0, -1, 0], 0.0)
+        xz_plane_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, -1], [1, 0, 1])
         assert xz_plane.axis == xz_plane_2.axis
         assert xz_plane.base == xz_plane_2.base
         assert xz_plane.angle == xz_plane_2.angle
 
     def test_instantiation_yz(self):
-        yz_plane = BluemiraPlane([0, 0, 0], [1, 0, 0], 0.0)
-        yz_plane_2 = BluemiraPlane.from_3_points([0, 0, 0], [0, 1, -1], [0, 1, 1])
+        yz_plane = BluemiraPlacement([0, 0, 0], [1, 0, 0], 0.0)
+        yz_plane_2 = BluemiraPlacement.from_3_points([0, 0, 0], [0, 1, -1], [0, 1, 1])
         assert yz_plane.axis == yz_plane_2.axis
         assert yz_plane.base == yz_plane_2.base
         assert yz_plane.angle == yz_plane_2.angle
 
     def test_instantiation_xyz(self):
-        xyz_plane = BluemiraPlane([0, 0, 0], [1, 1, 1], 0.0)
-        xyz_plane_2 = BluemiraPlane.from_3_points([0, 0, 0], [1, -1, 0], [1, 0, -1])
+        xyz_plane = BluemiraPlacement([0, 0, 0], [1, 1, 1], 0.0)
+        xyz_plane_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, -1, 0], [1, 0, -1])
         assert np.allclose(xyz_plane.axis, xyz_plane_2.axis)
         assert xyz_plane.base == xyz_plane_2.base
         assert xyz_plane.angle == xyz_plane_2.angle
@@ -74,19 +74,19 @@ class TestPlane:
         ]
         for bad in bad_sets:
             with pytest.raises(GeometryError):
-                BluemiraPlane.from_3_points(*bad)
+                BluemiraPlacement.from_3_points(*bad)
 
     def test_instantiation_matrix(self):
-        xy_plane = BluemiraPlane([0, 0, 0], [0, 0, 1], 0.0)
+        xy_plane = BluemiraPlacement([0, 0, 0], [0, 0, 1], 0.0)
         matrix = xy_plane.to_matrix()
-        xy2_plane = BluemiraPlane.from_matrix(matrix)
+        xy2_plane = BluemiraPlacement.from_matrix(matrix)
         self._check_planes_equal(xy_plane, xy2_plane)
 
         for _ in range(10):
-            plane = BluemiraPlane(np.random.rand(3), np.random.rand(3), np.random.rand())
+            plane = BluemiraPlacement(np.random.rand(3), np.random.rand(3), np.random.rand())
             matrix = plane.to_matrix()
             matrix[:3, :3] *= 2  # Test that it gets normalised
-            plane2 = BluemiraPlane.from_matrix(matrix)
+            plane2 = BluemiraPlacement.from_matrix(matrix)
             self._check_planes_equal(plane, plane2)
             assert np.allclose(plane.axis, plane2.axis)
 
