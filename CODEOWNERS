@@ -1,0 +1,13 @@
+# bluemira codeowners file
+
+# All PRs need to be approved by at least 1 member of TSVV-14
+
+*       @Fusion-Power-Plant-Framework/tsvv-14
+
+# Order is important; the last matching pattern takes the most
+# precedence. eg js-owner would own all *.js files. Directories and wildcards can be specified etc
+# no user can be used to default to global owner
+# *.js    @js-owner
+# *.go docs@example.com
+# /build/logs/ @doctocat @doctocat2
+# /build/info/
