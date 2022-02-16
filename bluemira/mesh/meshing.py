@@ -34,7 +34,6 @@ import inspect
 import gmsh
 
 # import bluemira modules
-import bluemira.geometry as geo
 
 from .error import MeshOptionsError
 
@@ -55,21 +54,6 @@ def get_default_options():
     Returns the default display options.
     """
     return copy.deepcopy(DEFAULT_MESH_OPTIONS)
-
-
-def create_compound_from_component(comp):
-    """
-    Creates a BluemiraCompound from the children's shapes of a component.
-    """
-    boundary = []
-    if comp.is_leaf and hasattr(comp, "shape") and comp.shape:
-        boundary.append(comp.shape)
-    else:
-        for c in comp.children:
-            if hasattr(c, "shape") and c.shape:
-                boundary.append(c.shape)
-    compound = geo.compound.BluemiraCompound(label=comp.name, boundary=boundary)
-    return compound
 
 
 class MeshOptions:
@@ -194,6 +178,7 @@ class Mesh:
         Generate the mesh and save it to file.
         """
         if "Component" in [c.__name__ for c in inspect.getmro(type(obj))]:
+            from bluemira.base.tools import create_compound_from_component
             obj = create_compound_from_component(obj)
 
         if isinstance(obj, Meshable):
@@ -230,10 +215,12 @@ class Mesh:
         """
         Function to mesh the object.
         """
+        from bluemira.geometry.tools import serialize_shape
+
         if not hasattr(obj, "ismeshed") or not obj.ismeshed:
             # object is serialized into a dictionary
             if obj.__class__.__name__ in SUPPORTED_GEOS:
-                buffer = geo.tools.serialize_shape(obj)
+                buffer = serialize_shape(obj)
             else:
                 raise ValueError(
                     f"Mesh procedure not implemented for {obj.__class__.__name__} type."

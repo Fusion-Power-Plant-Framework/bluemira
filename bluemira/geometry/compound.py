@@ -25,12 +25,7 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-# import from freecad
-import bluemira.codes._freecadapi as cadapi
-
-# import from bluemira
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.face import BluemiraFace
 
 
 class BluemiraCompound(BluemiraGeo):

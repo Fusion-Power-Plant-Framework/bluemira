@@ -22,10 +22,24 @@
 """
 Tool function and classes for the bluemira base module.
 """
-import bluemira.geometry as geo
+from bluemira.geometry.compound import BluemiraCompound
 
 from .components import Component, PhysicalComponent
 
+
+def create_compound_from_component(comp):
+    """
+    Creates a BluemiraCompound from the children's shapes of a component.
+    """
+    boundary = []
+    if comp.is_leaf and hasattr(comp, "shape") and comp.shape:
+        boundary.append(comp.shape)
+    else:
+        for c in comp.children:
+            if hasattr(c, "shape") and c.shape:
+                boundary.append(c.shape)
+    compound = BluemiraCompound(label=comp.name, boundary=boundary)
+    return compound
 
 # # =============================================================================
 # # Serialize and Deserialize
