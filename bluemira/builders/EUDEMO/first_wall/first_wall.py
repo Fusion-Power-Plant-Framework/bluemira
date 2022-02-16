@@ -68,6 +68,19 @@ class FirstWallBuilder(Builder):
 
     This class runs the builders for the wall shape and the divertor,
     then combines the two.
+
+    For a single-null plasma, the builder outputs a Component with the
+    structure:
+
+    first_wall (Component)
+    └── xz (Component)
+        ├── wall (PhysicalComponent)
+        └── divertor (Component)
+            ├── inner_target (PhysicalComponent)
+            ├── outer_target (PhysicalComponent)
+            ├── dome (PhysicalComponent)
+            ├── inner_baffle (PhysicalComponent)
+            └── outer_baffle (PhysicalComponent)
     """
 
     COMPONENT_DIVERTOR = "divertor"
@@ -87,9 +100,9 @@ class FirstWallBuilder(Builder):
         _, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
-        self.wall_part: PhysicalComponent = self._build_wall(params, build_config)
+        self.wall: PhysicalComponent = self._build_wall(params, build_config)
 
-        wall_shape: BluemiraWire = self.wall_part.shape
+        wall_shape: BluemiraWire = self.wall.shape
         self.divertor: Component = self._build_divertor(
             params,
             build_config,
@@ -125,9 +138,18 @@ class FirstWallBuilder(Builder):
         Build the component in the xz-plane.
         """
         parent_component = Component("xz")
-        components = [self.wall_part, self.divertor]
-        for component in components:
-            parent_component.add_child(component)
+
+        # Extract the xz components in the wall
+        # TODO(hsaunders1904): add "xz" to wall component
+        parent_component.add_child(self.wall)
+
+        # Extract the xz components in the divertor
+        divertor_xz_component = self.divertor.get_component("xz")
+        Component(
+            self.COMPONENT_DIVERTOR,
+            parent=parent_component,
+            children=divertor_xz_component.children,
+        )
         return parent_component
 
     def _build_wall(self, params: Dict[str, Any], build_config: BuildConfig):
@@ -156,7 +178,7 @@ class FirstWallBuilder(Builder):
         # Cut wall below x-point, a divertor will be put in the space
         x_point_z = self.x_points[0].z
         cut_shape = _cut_shape_in_z(wall_boundary.shape, x_point_z)
-        return PhysicalComponent(FirstWallBuilder.COMPONENT_FIRST_WALL, cut_shape)
+        return PhysicalComponent(FirstWallBuilder.COMPONENT_WALL, cut_shape)
 
     def _build_divertor(
         self, params: Dict[str, Any], build_config, x_lims: Iterable[float]

@@ -174,7 +174,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
                     duplicates += [child]
         if duplicates != []:
             raise ComponentError(
-                f"Components {duplicates} are already a children of {self}"
+                f"Components {duplicates} are already children of {self}"
             )
         self.children = list(self.children) + children
 
