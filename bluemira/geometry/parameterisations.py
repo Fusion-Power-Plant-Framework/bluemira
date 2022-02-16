@@ -1247,6 +1247,28 @@ class PictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+
+    axis: np.ndarray
+        [x,y,z] vector normal to plane of parameterisation
+
+    x1: np.float
+        Radial position of inner edge of upper/lower limb [m]
+
+    x2: np.float
+        Radial position of outer limb [m]
+
+    z1: np.float
+        Vertical position of top limb [m]
+
+    z2: np.float
+        Vertical position of top limb [m]
+
+    ri: np.float
+        Radius of inner corners [m]
+
+    ro: np.float
+        Radius of outer corners [m]
+
     """
 
     __slots__ = ()
@@ -1294,7 +1316,7 @@ class PictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of the Picture Frame geometry
         """
         x1, x2, z1, z2, ri, ro = self.variables.values
         p1 = [x1, 0, z1 - ri]
@@ -1325,6 +1347,30 @@ class TaperedPictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+
+    axis: np.ndarray
+        [x,y,z] vector normal to plane of parameterisation
+
+    x1: np.float
+        Radial position of innermost point of inner limb [m]
+
+    x2: np.float
+        Radial position of non-tapered section of inner limb [m]
+
+    x3: np.float
+        Radial position of outer limb [m]
+
+    z1: np.float
+        Vertical position of top of tapered section [m]
+
+    z2: np.float
+        Vertical position of top limb [m]
+
+    r_i: np.float
+        Radius of inner corner [m]
+
+    r_o: np.float
+        Radius of outer corner [m]
     """
 
     __slots__ = ()
@@ -1387,7 +1433,7 @@ class TaperedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of the Picture Frame based geometry with a tapered inboard leg
         """
         x1, x2, x3, z1, z2, ri, ro = self.variables.values
         p5 = [x3, 0, z2 - ro]
@@ -1414,6 +1460,35 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
     """
     Curved (Superconducting) picture-frame geometry parameterisation, with
     top and bottoms domed
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+    x_mid: np.float
+        Radial position of inner edge of  upper/lower limb [m]
+
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+
+    z_mid_up: np.float
+        Vertical position of flat section of upper limb [m]
+
+    z_mid_down: np.float
+        Vertical position of flat section of lower limb [m]
+
+    z_max_up: np.float
+        Vertical position of top of limb dome [m]
+
+    z_max_down: np.float
+        Vertical position of top of limb dome [m]
     """
 
     __slots__ = ()
@@ -1453,7 +1528,8 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of the Picture Frame based geometry with curved top and bottom limbs
+            and a flat inner limb
         """
         (
             x_mid,
@@ -1512,6 +1588,35 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
     top domed and bottom flat. Straight (non-tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+    x_mid: np.float
+        Radial position of inner edge of  upper/lower limb [m]
+
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+
+    z_mid_up: np.float
+        Vertical position of flat section of upper limb [m]
+
+    z_mid_down: np.float
+        Vertical position of lower limb [m]
+
+    z_max_up: np.float
+        Vertical position of top of upper limb dome [m]
+
+    r_j: np.float
+        Radius of corner [m]
     """
 
     __slots__ = ()
@@ -1551,7 +1656,8 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of Picture Frame based geometry with a curved top limb, flat bottom
+            limb and a flat inner limb
         """
         (
             x_mid,
@@ -1606,6 +1712,35 @@ class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
     top flat and bottom domed. Straight (non-tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+    x_mid: np.float
+        Radial position of inner edge of  upper/lower limb [m]
+
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+
+    z_mid_up: np.float
+        Vertical position of upper limb [m]
+
+    z_mid_down: np.float
+        Vertical position of flat section of lower limb [m]
+
+    z_max_down: np.float
+        Vertical position of bottom of lower limb dome [m]
+
+    r_j: np.float
+        Radius of corner [m]
     """
 
     __slots__ = ()
@@ -1645,7 +1780,8 @@ class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of Picture Frame based geometry with flat top, curved bottom and
+            a flat inner limb
         """
         (
             x_mid,
@@ -1700,6 +1836,38 @@ class FullDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
     top and bottom domed. Waisted (tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+    x_in: np.float
+        Radial position of innermost point of inner limb tapered section [m]
+
+    x_mid: np.float
+        Radial position of inner limb non-tapered section [m]
+
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+
+    z_mid_up: np.float
+        Vertical position of flat section of upper limb [m]
+
+    z_mid_down: np.float
+        Vertical position of flat section of lower limb [m]
+
+    z_max_up: np.float
+        Vertical position of top of limb dome [m]
+
+    z_max_down: np.float
+        Vertical position of top of limb dome [m]
     """
 
     __slots__ = ()
@@ -1743,7 +1911,8 @@ class FullDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of Picture Frame based geometry with a curved top limb and bottom
+            limbs and a tapered inner limb
         """
         (
             x_in,
@@ -1804,6 +1973,38 @@ class TopDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
     top domed and bottom flat. Waisted (tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+    x_in: np.float
+        Radial position of innermost point of inner limb tapered section [m]
+
+    x_mid: np.float
+        Radial position of inner limb non-tapered section [m]
+
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+
+    z_mid_up: np.float
+        Vertical position of flat section of upper limb [m]
+
+    z_mid_down: np.float
+        Vertical position of lower limb [m]
+
+    z_max_up: np.float
+        Vertical position of top of upper limb dome [m]
+
+    r_j: np.float
+        Radius of corner [m]
     """
 
     __slots__ = ()
@@ -1847,7 +2048,8 @@ class TopDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of of Picture Frame based geometry with a curved top limb, flat bottom
+            limb and a tapered inner limb
         """
         (
             x_in,
@@ -1906,6 +2108,38 @@ class BotDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
     """
     Curved picture-frame geometry parameterisation, with
     top flat and bottom domed. Waisted (tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+
+    x_in: np.float
+        Radial position of innermost point of inner limb tapered section [m]
+
+    x_mid: np.float
+        Radial position of inner limb non-tapered section [m]
+
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+
+    z_mid_up: np.float
+        Vertical position of upper limb [m]
+
+    z_mid_down: np.float
+        Vertical position of flat section of lower limb [m]
+
+    z_max_down: np.float
+        Vertical position of bottom of lower limb dome [m]
+
+    r_j: np.float
+        Radius of corner [m]
     """
 
     __slots__ = ()
@@ -1949,7 +2183,8 @@ class BotDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of of Picture Frame based geometry with a flat top limb, curved bottom
+            limb and a tapered inner limb
         """
         (
             x_in,
