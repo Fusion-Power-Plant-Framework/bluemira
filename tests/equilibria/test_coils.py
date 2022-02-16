@@ -100,7 +100,7 @@ class TestCoil:
         x_1_d = np.linspace(xmin, xmax, nx)
         z_1_d = np.linspace(zmin, zmax, nz)
         x, z = np.meshgrid(x_1_d, z_1_d, indexing="ij")
-        c = Coil(4, 0, current=1591550, dx=0.3, dz=1)
+        c = Coil(x=4, z=0, current=1591550, dx=0.3, dz=1)
 
         gbx = c.control_Bx(x, z)
         gbz = c.control_Bz(x, z)
@@ -194,11 +194,11 @@ class TestSemiAnalytic:
 
     @classmethod
     def setup_class(cls):
-        cls.coil = Coil(4, 4, current=10e6, dx=1, dz=2)
+        cls.coil = Coil(x=4, z=4, current=10e6, dx=1, dz=2)
         cls.coil.mesh_coil(0.2)
         cls.grid = Grid(0.1, 8, 0, 8, 100, 100)
-        cls.x_corner = np.append(cls.coil.x_corner, cls.coil.x_corner[0])
-        cls.z_corner = np.append(cls.coil.z_corner, cls.coil.z_corner[0])
+        cls.x_boundary = np.append(cls.coil.x_boundary, cls.coil.x_boundary[0])
+        cls.z_boundary = np.append(cls.coil.z_boundary, cls.coil.z_boundary[0])
 
     def teardown_method(self):
         plt.close("all")
