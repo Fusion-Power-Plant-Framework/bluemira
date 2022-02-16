@@ -35,9 +35,6 @@ import numpy as np
 
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry import bound_box
-from bluemira.geometry import plane as _plane
-from bluemira.geometry.coordinates import Coordinates, _parse_to_xyz_array
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
@@ -69,6 +66,8 @@ def get_default_options():
     """
     Returns the instance as a dictionary.
     """
+    from bluemira.geometry import plane as _plane
+
     output_dict = {}
     for k, v in DEFAULT_PLOT_OPTIONS.items():
         # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
@@ -150,6 +149,8 @@ class PlotOptions(DisplayOptions):
         """
         Returns the instance as a dictionary.
         """
+        from bluemira.geometry import plane as _plane
+
         output_dict = {}
         for k, v in self._options.items():
             # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
@@ -285,6 +286,8 @@ class BasePlotter(ABC):
 
     def set_plane(self, plane):
         """Set the plotting plane"""
+        from bluemira.geometry import plane as _plane
+
         if plane == "xy":
             # Base.Placement(origin, axis, angle)
             self.options._options["plane"] = _plane.BluemiraPlane()
@@ -366,6 +369,8 @@ class BasePlotter(ABC):
             self.ax.set_ylabel(UNIT_LABEL)
 
     def _set_aspect_3d(self):
+        from bluemira.geometry import bound_box
+
         # This was the only way I found to get 3-D plots to look right in matplotlib
         x_bb, y_bb, z_bb = bound_box.BoundingBox.from_xyz(*self._data.T).get_box_arrays()
         for x, y, z in zip(x_bb, y_bb, z_bb):
@@ -454,6 +459,8 @@ class PointsPlotter(BasePlotter):
         return True
 
     def _populate_data(self, points):
+        from bluemira.geometry.coordinates import _parse_to_xyz_array
+
         points = _parse_to_xyz_array(points).T
         self._data = points
         # apply rotation matrix given by options['plane']
@@ -722,4 +729,3 @@ class Plottable:
 
 register_plotter(list, PointsPlotter)
 register_plotter(np.ndarray, PointsPlotter)
-register_plotter(Coordinates, PointsPlotter)
