@@ -121,12 +121,12 @@ if HAS_MSH2XDMF:
         subdomains=True,
     )
 
-# # %%[markdown]
+# %%[markdown]
 
-# # Plot the mesh
+# Plot the mesh
 
-# # %%
-# # If the mesh is made by 3D points, the plot with dolfin doesn't work
+# %%
+# If the mesh is made by 3D points, the plot with dolfin doesn't work
 
 dolfin.plot(mesh)
 plt.show()

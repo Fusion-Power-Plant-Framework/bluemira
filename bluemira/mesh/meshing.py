@@ -173,7 +173,7 @@ class Mesh:
     def meshfile(self, meshfile):
         self._meshfile = self._check_meshfile(meshfile)
 
-    def __call__(self, obj):
+    def __call__(self, obj, dim=2):
         """
         Generate the mesh and save it to file.
         """
@@ -187,7 +187,7 @@ class Mesh:
             # Mesh the object. A dictionary with the geometrical and internal
             # information that are used by gmsh is returned. In particular,
             # a gmsh key is added to any meshed entity.
-            buffer = self.__mesh_obj(obj)
+            buffer = self.__mesh_obj(obj, dim=dim)
             # Check for possible intersection (only allowed at the boundary to adjust
             # the gmsh_dictionary
             Mesh.__iterate_gmsh_dict(buffer, Mesh._check_intersections)
@@ -211,7 +211,7 @@ class Mesh:
             raise ValueError("Only Meshable objects can be meshed")
         return buffer
 
-    def __mesh_obj(self, obj, dim=2):
+    def __mesh_obj(self, obj, dim):
         """
         Function to mesh the object.
         """
@@ -376,9 +376,9 @@ class Mesh:
             for item in boundary:
                 Mesh.__iterate_gmsh_dict(item, function, *args)
 
-    def __convert_wire_to_gmsh(self, buffer, dim=1):
+    def __convert_wire_to_gmsh(self, buffer, dim):
         """
-        Converts a wire to gmsh.
+        Converts a wire to gmsh. If dim is not equal to 1, wire is not meshed.
         """
         for type_, value in buffer.items():
             if type_ == "BluemiraWire":
@@ -394,7 +394,7 @@ class Mesh:
                     for item in boundary:
                         for btype_, bvalue in item.items():
                             if btype_ == "BluemiraWire":
-                                self.__convert_wire_to_gmsh(item)
+                                self.__convert_wire_to_gmsh(item, dim)
                             else:
                                 for curve in bvalue:
                                     curve_gmsh_dict = _FreeCADGmsh.create_gmsh_curve(
@@ -434,7 +434,7 @@ class Mesh:
                     for item in boundary:
                         for btype_, bvalue in item.items():
                             if btype_ == "BluemiraWire":
-                                self.__convert_wire_to_gmsh(item)
+                                self.__convert_wire_to_gmsh(item, dim)
 
                     # get the dictionary of the BluemiraWire defined in buffer
                     # as default and gmsh format
