@@ -26,34 +26,34 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.placement import BluemiraPlacement
 
 
-class TestPlane:
+class TestPlacement:
     def test_instantiation_xy(self):
-        xy_plane = BluemiraPlacement([0, 0, 0], [0, 0, 1], 0.0)
-        xy_plane_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, -1, 0], [1, 1, 0])
-        assert xy_plane.axis == xy_plane_2.axis
-        assert xy_plane.base == xy_plane_2.base
-        assert xy_plane.angle == xy_plane_2.angle
+        xy_placement = BluemiraPlacement([0, 0, 0], [0, 0, 1], 0.0)
+        xy_placement_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, -1, 0], [1, 1, 0])
+        assert xy_placement.axis == xy_placement_2.axis
+        assert xy_placement.base == xy_placement_2.base
+        assert xy_placement.angle == xy_placement_2.angle
 
     def test_instantiation_xz(self):
-        xz_plane = BluemiraPlacement([0, 0, 0], [0, -1, 0], 0.0)
-        xz_plane_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, -1], [1, 0, 1])
-        assert xz_plane.axis == xz_plane_2.axis
-        assert xz_plane.base == xz_plane_2.base
-        assert xz_plane.angle == xz_plane_2.angle
+        xz_placement = BluemiraPlacement([0, 0, 0], [0, -1, 0], 0.0)
+        xz_placement_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, -1], [1, 0, 1])
+        assert xz_placement.axis == xz_placement_2.axis
+        assert xz_placement.base == xz_placement_2.base
+        assert xz_placement.angle == xz_placement_2.angle
 
     def test_instantiation_yz(self):
-        yz_plane = BluemiraPlacement([0, 0, 0], [1, 0, 0], 0.0)
-        yz_plane_2 = BluemiraPlacement.from_3_points([0, 0, 0], [0, 1, -1], [0, 1, 1])
-        assert yz_plane.axis == yz_plane_2.axis
-        assert yz_plane.base == yz_plane_2.base
-        assert yz_plane.angle == yz_plane_2.angle
+        yz_placement = BluemiraPlacement([0, 0, 0], [1, 0, 0], 0.0)
+        yz_placement_2 = BluemiraPlacement.from_3_points([0, 0, 0], [0, 1, -1], [0, 1, 1])
+        assert yz_placement.axis == yz_placement_2.axis
+        assert yz_placement.base == yz_placement_2.base
+        assert yz_placement.angle == yz_placement_2.angle
 
     def test_instantiation_xyz(self):
-        xyz_plane = BluemiraPlacement([0, 0, 0], [1, 1, 1], 0.0)
-        xyz_plane_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, -1, 0], [1, 0, -1])
-        assert np.allclose(xyz_plane.axis, xyz_plane_2.axis)
-        assert xyz_plane.base == xyz_plane_2.base
-        assert xyz_plane.angle == xyz_plane_2.angle
+        xyz_placement = BluemiraPlacement([0, 0, 0], [1, 1, 1], 0.0)
+        xyz_placement_2 = BluemiraPlacement.from_3_points([0, 0, 0], [1, -1, 0], [1, 0, -1])
+        assert np.allclose(xyz_placement.axis, xyz_placement_2.axis)
+        assert xyz_placement.base == xyz_placement_2.base
+        assert xyz_placement.angle == xyz_placement_2.angle
 
     def test_colinear(self):
         bad_sets = [
@@ -77,22 +77,22 @@ class TestPlane:
                 BluemiraPlacement.from_3_points(*bad)
 
     def test_instantiation_matrix(self):
-        xy_plane = BluemiraPlacement([0, 0, 0], [0, 0, 1], 0.0)
-        matrix = xy_plane.to_matrix()
-        xy2_plane = BluemiraPlacement.from_matrix(matrix)
-        self._check_planes_equal(xy_plane, xy2_plane)
+        xy_placement = BluemiraPlacement([0, 0, 0], [0, 0, 1], 0.0)
+        matrix = xy_placement.to_matrix()
+        xy2_placement = BluemiraPlacement.from_matrix(matrix)
+        self._check_placements_equal(xy_placement, xy2_placement)
 
         for _ in range(10):
-            plane = BluemiraPlacement(np.random.rand(3), np.random.rand(3), np.random.rand())
-            matrix = plane.to_matrix()
+            placement = BluemiraPlacement(np.random.rand(3), np.random.rand(3), np.random.rand())
+            matrix = placement.to_matrix()
             matrix[:3, :3] *= 2  # Test that it gets normalised
-            plane2 = BluemiraPlacement.from_matrix(matrix)
-            self._check_planes_equal(plane, plane2)
-            assert np.allclose(plane.axis, plane2.axis)
+            placement2 = BluemiraPlacement.from_matrix(matrix)
+            self._check_placements_equal(placement, placement2)
+            assert np.allclose(placement.axis, placement2.axis)
 
     @staticmethod
-    def _check_planes_equal(plane, plane2):
-        assert np.allclose(plane.to_matrix(), plane2.to_matrix())
-        assert np.isclose(plane.angle, plane2.angle)
-        assert np.allclose(plane.base, plane2.base)
-        assert np.allclose(plane.axis, plane2.axis)
+    def _check_placements_equal(placement, placement2):
+        assert np.allclose(placement.to_matrix(), placement2.to_matrix())
+        assert np.isclose(placement.angle, placement2.angle)
+        assert np.allclose(placement.base, placement2.base)
+        assert np.allclose(placement.axis, placement2.axis)

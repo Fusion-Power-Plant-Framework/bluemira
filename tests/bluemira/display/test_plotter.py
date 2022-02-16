@@ -102,8 +102,8 @@ class TestPlotOptions:
         the_options.point_options = {}
         the_options.wire_options = {}
         the_options.face_options = {}
-        the_options.placement = "xy"
-        the_options.placement = geo.placement.BluemiraPlacement()
+        the_options.plane = "xy"
+        the_options.plane = geo.placement.BluemiraPlacement()
         the_options.ndiscr = 20
         the_options.byedges = not plotter.DEFAULT_PLOT_OPTIONS["byedges"]
 
