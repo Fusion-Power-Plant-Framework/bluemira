@@ -25,19 +25,18 @@ api for plotting using matplotlib
 from __future__ import annotations
 
 import copy
+import inspect
 import pprint
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union
 
 import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d as a3
 import numpy as np
 
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry import bound_box, face
+from bluemira.geometry import bound_box
 from bluemira.geometry import plane as _plane
-from bluemira.geometry import wire
 from bluemira.geometry.coordinates import Coordinates, _parse_to_xyz_array
 
 if TYPE_CHECKING:
@@ -474,174 +473,90 @@ class PointsPlotter(BasePlotter):
         self._set_aspect_3d()
 
 
-class WirePlotter(BasePlotter):
+class _PlotterRegistry:
     """
-    Base utility plotting class for bluemira wires
+    This class provides a registry of plotters that are associated with other bluemira
+    classes.
     """
 
-    _CLASS_PLOT_OPTIONS = {"show_points": False}
+    _registry: Dict[Type[Any], Type[BasePlotter]] = {}
 
-    def _check_obj(self, obj):
-        if not isinstance(obj, wire.BluemiraWire):
-            raise ValueError(f"{obj} must be a BluemiraWire")
-        return True
-
-    def _check_options(self):
-        # Check if nothing has to be plotted
-        if not self.options.show_points and not self.options.show_wires:
-            return False
-
-        return True
-
-    def _populate_data(self, wire):
-        self._pplotter = PointsPlotter(self.options)
-        new_wire = wire.deepcopy()
-        # # change of plane integrated in PointsPlotter2D. Not necessary here.
-        # new_wire.change_plane(self.options._options['plane'])
-        pointsw = new_wire.discretize(
-            ndiscr=self.options._options["ndiscr"],
-            byedges=self.options._options["byedges"],
-        ).T
-        self._pplotter._populate_data(pointsw)
-        self._data = pointsw
-        self._data_to_plot = self._pplotter._data_to_plot
-
-    def _make_plot_2d(self):
-        if self.options.show_wires:
-            self.ax.plot(*self._data_to_plot, **self.options.wire_options)
-
-        if self.options.show_points:
-            self._pplotter.ax = self.ax
-            self._pplotter._make_plot_2d()
-        self._set_aspect_2d()
-
-    def _make_plot_3d(self):
-        if self.options.show_wires:
-            self.ax.plot(*self._data.T, **self.options.wire_options)
-
-        if self.options.show_points:
-            self._pplotter.ax = self.ax
-            self._pplotter._make_plot_3d()
-        self._set_aspect_3d()
-
-
-class FacePlotter(BasePlotter):
-    """Base utility plotting class for bluemira faces"""
-
-    _CLASS_PLOT_OPTIONS = {"show_points": False, "show_wires": False}
-
-    def _check_obj(self, obj):
-        if not isinstance(obj, face.BluemiraFace):
-            raise ValueError(f"{obj} must be a BluemiraFace")
-        return True
-
-    def _check_options(self):
-        # Check if nothing has to be plotted
-        if (
-            not self.options.show_points
-            and not self.options.show_wires
-            and not self.options.show_faces
-        ):
-            return False
-
-        return True
-
-    def _populate_data(self, face):
-        self._data = []
-        self._wplotters = []
-        # TODO: the for must be done using face._shape.Wires because FreeCAD
-        #  re-orient the Wires in the correct way for display. Find another way to do
-        #  it (maybe adding this function to the freecadapi.
-        for w in face._shape.Wires:
-            boundary = wire.BluemiraWire(w)
-            wplotter = WirePlotter(self.options)
-            self._wplotters.append(wplotter)
-            wplotter._populate_data(boundary)
-            self._data.extend(wplotter._data.tolist())
-        self._data = np.array(self._data)
-
-        self._data_to_plot = [[], []]
-        for w in self._wplotters:
-            self._data_to_plot[0] += w._data_to_plot[0].tolist() + [None]
-            self._data_to_plot[1] += w._data_to_plot[1].tolist() + [None]
-
-    def _make_plot_2d(self):
-        if self.options.show_faces:
-            self.ax.fill(*self._data_to_plot, **self.options.face_options)
-
-        for w in self._wplotters:
-            w.ax = self.ax
-            w._make_plot_2d()
-        self._set_aspect_2d()
-
-    def _make_plot_3d(self):
-        if self.options.show_faces:
-            poly = a3.art3d.Poly3DCollection([self._data], **self.options.face_options)
-            self.ax.add_collection3d(poly)
-
-        for w in self._wplotters:
-            w.ax = self.ax
-            w._make_plot_3d()
-        self._set_aspect_3d()
-
-
-class ComponentPlotter(BasePlotter):
-    """Base utility plotting class for bluemira faces"""
-
-    _CLASS_PLOT_OPTIONS = {"show_points": False, "show_wires": False}
-
-    def _check_obj(self, obj):
-        import bluemira.base.components
-
-        if not isinstance(obj, bluemira.base.components.Component):
-            raise ValueError(f"{obj} must be a BluemiraComponent")
-        return True
-
-    def _check_options(self):
-        # Check if nothing has to be plotted
-        if (
-            not self.options.show_points
-            and not self.options.show_wires
-            and not self.options.show_faces
-        ):
-            return False
-
-        return True
-
-    def _populate_data(self, comp):
-        self._cplotters = []
-
-        def _populate_plotters(comp):
-            if comp.is_leaf:
-                options = (
-                    self.options if comp.plot_options is None else comp.plot_options
-                )
-                plotter = _get_plotter_class(comp.shape)(options)
-                plotter._populate_data(comp.shape)
-                self._cplotters.append(plotter)
-            else:
-                for child in comp.children:
-                    _populate_plotters(child)
-
-        _populate_plotters(comp)
-
-    def _make_plot_2d(self):
-        for plotter in self._cplotters:
-            plotter.ax = self.ax
-            plotter._make_plot_2d()
-        self._set_aspect_2d()
-
-    def _make_plot_3d(self):
+    @staticmethod
+    def register_plotter(
+        cls: Type[Any],
+        plotter: Type[BasePlotter],
+    ):
         """
-        Internal function that makes the plot. It should use self._data and
-        self._data_to_plot, so _populate_data should be called before.
-        """
-        for plotter in self._cplotters:
-            plotter.ax = self.ax
-            plotter._make_plot_3d()
+        Register the provided plotter with the provided class.
 
-    def _set_aspect_3d(self):
-        pass
+        Parameters
+        ----------
+        cls: Type[Any]
+            The class to register the plotter with.
+        plotter: Type[BasePlotter]
+            The plotter to use when plotting the class.
+        """
+        if not inspect.isclass(cls):
+            cls = type(cls)
+
+        if cls not in _PlotterRegistry._registry:
+            _PlotterRegistry._registry[cls] = plotter
+        else:
+            raise ValueError(f"Class {cls} already registered to use plotter {plotter}")
+
+    @staticmethod
+    def get_plotter(cls: Union[Any, Type[Any]]) -> Type[BasePlotter]:
+        """
+        Get the plotter that has been registered for the provided class.
+
+        Parameters
+        ----------
+        cls: Union[Any, Type[Any]]
+            The class to get the plotter for. If a non-class object is passed in
+            then the type of that object will be used to find the plotter.
+
+        Raises
+        ------
+        ValueError
+            If the provided class does not have a registered plotter.
+        """
+        if not inspect.isclass(cls):
+            cls = type(cls)
+
+        if cls in _PlotterRegistry._registry:
+            return _PlotterRegistry._registry[cls]
+        else:
+            for parent_cls in cls.__bases__:
+                return _PlotterRegistry.get_plotter(parent_cls)
+            raise ValueError(f"Class {cls} has not been registered with a plotter.")
+
+
+def register_plotter(cls: Type[Any], plotter: Type[BasePlotter]):
+    """
+    Add the provided class to the plotting registry and associate it with the provided
+    plotter.
+
+    Parameters
+    ----------
+    cls: Type[Any]
+        The class to register the plotter with.
+    plotter: Type[BasePlotter]
+        The plotter to use when plotting the class.
+    """
+    _PlotterRegistry.register_plotter(cls, plotter)
+
+
+def get_plotter(cls: Union[Any, Type[Any]]) -> Type[BasePlotter]:
+    """
+    Get the plotter associated with the provided class.
+
+    Parameters
+    ----------
+    cls: Union[Any, Type[Any]]
+        The class for which to get the plotter. If a non-class object is passed in then
+        the type of that object will be used to find the plotter.
+    """
+    return _PlotterRegistry.get_plotter(cls)
 
 
 def _validate_plot_inputs(parts, options):
@@ -668,21 +583,12 @@ def _get_plotter_class(part):
     """
     Get the plotting class for a BluemiraGeo object.
     """
-    import bluemira.base.components
-
-    if isinstance(part, (list, np.ndarray, Coordinates)):
-        plot_class = PointsPlotter
-    elif isinstance(part, wire.BluemiraWire):
-        plot_class = WirePlotter
-    elif isinstance(part, face.BluemiraFace):
-        plot_class = FacePlotter
-    elif isinstance(part, bluemira.base.components.Component):
-        plot_class = ComponentPlotter
-    else:
+    try:
+        return get_plotter(part)
+    except ValueError:
         raise DisplayError(
             f"{part} object cannot be plotted. No Plotter available for {type(part)}"
         )
-    return plot_class
 
 
 def plot_2d(
@@ -813,3 +719,8 @@ class Plottable:
             The axes that the plot has been displayed onto.
         """
         return self._plotter.plot_3d(self, ax=ax, show=show)
+
+
+register_plotter(list, PointsPlotter)
+register_plotter(np.ndarray, PointsPlotter)
+register_plotter(Coordinates, PointsPlotter)
