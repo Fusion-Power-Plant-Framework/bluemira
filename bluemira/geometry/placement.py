@@ -52,7 +52,7 @@ class BluemiraPlacement:
     def __init__(
         self, base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0], angle=0.0, label: str = ""
     ):
-        self._shape = cadapi.make_plane(base, axis, angle)
+        self._shape = cadapi.make_placement(base, axis, angle)
         self.label = label
 
     @classmethod
@@ -95,7 +95,7 @@ class BluemiraPlacement:
             Label of the placement
         """
         obj = cls.__new__(cls)
-        obj._shape = cadapi.make_plane_from_matrix(matrix)
+        obj._shape = cadapi.make_placement_from_matrix(matrix)
         obj.label = label
         return obj
 
@@ -154,7 +154,7 @@ class BluemiraPlacement:
 
     def move(self, vector):
         """Moves the Placement along the given vector"""
-        cadapi.move_plane(self._shape, vector)
+        cadapi.move_placement(self._shape, vector)
 
     def __repr__(self):  # noqa D105
         new = []

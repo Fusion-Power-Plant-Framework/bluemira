@@ -169,7 +169,7 @@ def set_component_placement(comp: Component, placement: Union[str, BluemiraPlace
             f"Not a valid placement {placement} - select either xy, xz, zy, or a BluemiraPlacement"
         )
 
-    comp.plot_options.plane = placement
+    comp.plot_options.placement = placement
     for child in comp.children:
         set_component_placement(child, placement)
 
