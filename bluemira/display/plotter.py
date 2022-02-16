@@ -475,8 +475,7 @@ class PointsPlotter(BasePlotter):
 
 class _PlotterRegistry:
     """
-    This class provides a registry of plotters that are associated with other bluemira
-    classes.
+    Provides a registry of plotters that are associated with other bluemira classes.
     """
 
     _registry: Dict[Type[Any], Type[BasePlotter]] = {}
