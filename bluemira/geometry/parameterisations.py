@@ -2048,8 +2048,8 @@ class TopDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of of Picture Frame based geometry with a curved top limb, flat bottom
-            limb and a tapered inner limb
+            CAD Wire of of Picture Frame based geometry with a curved top limb, flat
+            bottom limb and a tapered inner limb
         """
         (
             x_in,
@@ -2183,8 +2183,8 @@ class BotDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of of Picture Frame based geometry with a flat top limb, curved bottom
-            limb and a tapered inner limb
+            CAD Wire of of Picture Frame based geometry with a flat top limb, curved
+            bottom limb and a tapered inner limb
         """
         (
             x_in,
