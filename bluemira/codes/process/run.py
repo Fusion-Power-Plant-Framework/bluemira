@@ -52,6 +52,7 @@ class RunMode(interface.RunMode):
     READ = auto()
     READALL = auto()
     MOCK = auto()
+    NONE = auto()
 
 
 class Run(interface.Run):
@@ -140,6 +141,8 @@ class Solver(interface.FileProgramInterface):
     - "mock": Run bluemira without running PROCESS, using the default radial build based
         on EU-DEMO. This option should not be used if PROCESS is installed, except for
         testing purposes.
+    - "none": Do nothing. Useful when loading results from previous runs of Bluemira,
+        when overwriting data with PROCESS output would be undesirable.
     """
 
     _params: bm_base.ParameterFrame
