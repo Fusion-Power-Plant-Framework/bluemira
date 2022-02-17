@@ -128,7 +128,7 @@ class FirstWallBuilder(Builder):
         """
         Build the component.
         """
-        first_wall = Component(FirstWallBuilder.COMPONENT_FIRST_WALL)
+        first_wall = Component(self.name)
         first_wall.add_child(self.build_xz())
         return first_wall
 

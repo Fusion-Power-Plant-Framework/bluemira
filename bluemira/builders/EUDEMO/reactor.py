@@ -28,7 +28,7 @@ import os
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.builders.EUDEMO.first_wall import WallBuilder
+from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -262,14 +262,18 @@ class EUDEMOReactor(Reactor):
         }
 
         default_config = {
-            "param_class": "bluemira.builders.EUDEMO.first_wall::FirstWallPolySpline",
+            "name": self.FIRST_WALL,
+            "param_class": "bluemira.builders.EUDEMO.first_wall::WallPolySpline",
             "variables_map": default_variables_map,
             "runmode": "mock",
         }
 
         config = self._process_design_stage_config(name, default_config)
 
-        builder = WallBuilder(self._params.to_dict(), build_config=config)
+        plasma = component_tree.get_component(self.PLASMA)
+        builder = FirstWallBuilder(
+            self._params.to_dict(), build_config=config, equilibrium=plasma.equilibrium
+        )
         self.register_builder(builder, name)
 
         component = super()._build_stage(name)
