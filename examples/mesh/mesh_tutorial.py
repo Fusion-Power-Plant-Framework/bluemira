@@ -27,6 +27,9 @@ Some examples of using bluemira mesh module.
 
 import os
 
+import dolfin
+import matplotlib.pyplot as plt
+
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_root
@@ -36,9 +39,6 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
-
-import dolfin
-import matplotlib.pyplot as plt
 
 HAS_MSH2XDMF = False
 try:
@@ -120,16 +120,8 @@ if HAS_MSH2XDMF:
         directory=".",
         subdomains=True,
     )
+    dolfin.plot(mesh)
+    plt.show()
 
-# %%[markdown]
-
-# Plot the mesh
-
-# %%
-# If the mesh is made by 3D points, the plot with dolfin doesn't work
-
-dolfin.plot(mesh)
-plt.show()
-
-if HAS_MSH2XDMF:
-    print(mesh.coordinates())
+    if HAS_MSH2XDMF:
+        print(mesh.coordinates())

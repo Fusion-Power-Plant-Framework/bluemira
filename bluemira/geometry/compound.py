@@ -20,11 +20,17 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Wrapper for FreeCAD Part.Face objects
+Wrapper for FreeCAD Part.Compounds objects
 """
+# Note: this class is mainly used in the mesh module to allow the mesh of Components.
+#       Indeed, Component shape for meshing purpose is considered as the compound of
+#       all the component's children shapes.
+#       Please note that information as length, area, and volume, could not be relevant.
+#       They could be set to None or reimplemented, in case.
 
 from __future__ import annotations
 
+from bluemira.codes._freecadapi import apiCompound
 from bluemira.geometry.base import BluemiraGeo
 
 
@@ -35,5 +41,7 @@ class BluemiraCompound(BluemiraGeo):
         boundary_classes = [BluemiraGeo]
         super().__init__(boundary, label, boundary_classes)
 
-    def _shape(self):
-        return None
+    @property
+    def _shape(self) -> apiCompound:
+        """apiCompound: shape of the object as a single compound"""
+        return apiCompound([s._shape for s in self.boundary])
