@@ -125,7 +125,3 @@ if HAS_MSH2XDMF:
 
     if HAS_MSH2XDMF:
         print(mesh.coordinates())
-
-    arr = boundaries.array()
-    assert (arr == 2).sum() == 7
-    assert (arr == 3).sum() == 7

@@ -8,7 +8,24 @@ objects and functions.
 .. note:: Currently only a minor part of the gmsh potentiality has been
     implemented in the respective api.
 
-The meshing module of bluemira implements the following main classes:
+The meshing module of bluemira implements the following main classe:
 
 * :py:class:`bluemira.mesh.meshing.Mesh`
-* :py:class:`bluemira.mesh.meshing._FreeCADApi`
+* :py:class:`bluemira.mesh.meshign.Meshable`
+
+Meshable objects
+================
+All objects that inherit from Meshable are provided by a mesh_options dictionary
+in which the following properties can be specified:
+
+* lcar: characteristic mesh length size associated to the vertexes of the geometric
+  object
+
+* physical_group: label to group the model entities
+
+
+
+
+
+Geometry definition and Mesh assignment
+=======================================
