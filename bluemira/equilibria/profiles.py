@@ -654,13 +654,13 @@ class CustomProfile(Profile):
         """
         dp/dpsi as a function of normalised psi
         """
-        return self.scale * self._pprime(pn)
+        return -self.scale * self._pprime(pn)
 
     def ffprime(self, pn):
         """
         f*df/dpsi as a function of normalised psi
         """
-        return self.scale * self._ffprime(pn)
+        return -self.scale * self._ffprime(pn)
 
     def jtor(self, x, z, psi, o_points, x_points):
         """
@@ -673,7 +673,7 @@ class CustomProfile(Profile):
         psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points)
         self.psisep = psisep
         self.psiax = psiax
-        psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0, 1)
+        psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0.0, 1.0)
         jtor = x * self._pprime(psi_norm) + self._ffprime(psi_norm) / (x * MU_0)
         if mask is not None:
             jtor *= mask
