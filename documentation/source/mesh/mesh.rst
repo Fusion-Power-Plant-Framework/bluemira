@@ -24,8 +24,16 @@ in which the following properties can be specified:
 * physical_group: label to group the model entities
 
 
-
-
-
 Geometry definition and Mesh assignment
 =======================================
+
+.. code-block:: python
+
+        poly = tools.make_polygon(
+            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
+        )
+
+        poly.mesh_options = {"lcar": lcar, "physical_group": "poly"}
+
+        m = meshing.Mesh()
+        m(poly)
