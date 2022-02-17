@@ -873,8 +873,10 @@ def _in_plasma(x, z, mask, sep):
         The masking array where 1 denotes inside the zone, and 0 outside
     """
     n, m = x.shape
+    dx = 0.5 * abs(x[0, 1] - x[0, 0])
+    dz = 0.5 * abs(z[1, 0] - z[0, 0])
     for i in range(n):
         for j in range(m):
-            if in_polygon(x[i, j], z[i, j], sep):
+            if in_polygon(x[i, j] + dx, z[i, j] + dz, sep):
                 mask[i, j] = 1
     return mask
