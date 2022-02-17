@@ -77,7 +77,7 @@ class TestSTEquilibrium:
 
         R_0 = 3.639
         A = 1.667
-        i_p = 20975205.2  # (EQDSK)
+        i_p = self.jeq_dict["cplasma"]
 
         xc = np.array(
             [1.5, 1.5, 8.259059936102478, 8.259059936102478, 10.635505223274231]
@@ -179,8 +179,9 @@ class TestSTEquilibrium:
             convergence=criterion,
         )
         fbe_iterator()
+        self.eq = eq
         self._test_equilibrium_good(eq, psi_rtol=1e-3, li_rtol=1e-8)
-
+        self._test_profiles_good(eq)
         # Verify by removing symmetry constraint and checking convergence
         eq.force_symmetry = False
         eq.set_grid(grid)
@@ -188,7 +189,7 @@ class TestSTEquilibrium:
         # I probably exported the eq before it was regridded without symmetry..
         self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-4)
 
-        self._test_profiles_good()
+        self._test_profiles_good(eq)
 
     def _test_equilibrium_good(self, eq, psi_rtol, li_rtol):
         assert np.isclose(eq._Ip, abs(self.jeq_dict["cplasma"]))
@@ -199,33 +200,21 @@ class TestSTEquilibrium:
         assert np.isclose(li_bp, calc_li(eq), rtol=li_rtol)
         assert np.allclose(self.eq_blueprint.psi(), eq.psi(), rtol=psi_rtol)
 
-    def _test_profiles_good(self):
+    def _test_profiles_good(self, eq):
         jetto_pprime = self.jeq_dict["pprime"]
         jetto_ffprime = self.jeq_dict["ffprime"]
-        psi_n = np.linspace(0.0, 1.0, len(jetto_pprime))
 
-        R_0 = 3.639
-        A = 1.667
-        x = np.linspace(R_0, R_0 + R_0 / A, len(psi_n))
-        bm_pprime = self.profiles.pprime(psi_n)
-        bm_ffprime = self.profiles.ffprime(psi_n)
-        bm_jtor = x * bm_pprime + bm_ffprime / (x * MU_0)
-        jetto_jtor = x * jetto_pprime + jetto_ffprime / (x * MU_0)
-        import matplotlib.pyplot as plt
+        psi_n = self.jeq_dict["psinorm"]
+        bm_pprime_p = self.profiles.pprime(psi_n)
+        bm_ffprime_p = self.profiles.ffprime(psi_n)
 
-        f, ax = plt.subplots(3, 1)
-        ax[0].plot(psi_n, jetto_pprime, label="JETTO p'")
-        ax[1].plot(psi_n, jetto_ffprime, label="JETTO FF'")
-        ax[2].plot(psi_n, jetto_jtor, label="JETTO Jtor")
-        ax[0].plot(psi_n, bm_pprime, label="BLUEMIRA p'")
-        ax[1].plot(psi_n, bm_ffprime, label="BLUEMIRA FF'")
-        ax[2].plot(psi_n, bm_jtor, label="BLUEMIRA Jtor")
-        ax[0].legend()
-        ax[1].legend()
-        ax[2].legend()
-        plt.show()
-        # assert np.allclose(jetto_pprime, bm_pprime)
-        # assert np.allclose(jetto_ffprime, bm_ffprime)
+        bm_pprime = eq._profiles.pprime(psi_n)
+        bm_ffprime = eq._profiles.ffprime(psi_n)
+
+        assert np.allclose(np.abs(jetto_pprime), np.abs(bm_pprime))
+        assert np.allclose(np.abs(jetto_ffprime), np.abs(bm_ffprime))
+        assert np.allclose(np.abs(jetto_pprime), np.abs(bm_pprime_p))
+        assert np.allclose(np.abs(jetto_ffprime), np.abs(bm_ffprime_p))
 
     def _make_initial_psi(
         self,

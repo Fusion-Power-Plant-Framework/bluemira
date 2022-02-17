@@ -874,6 +874,7 @@ class Equilibrium(MHDState):
 
         self._Ip = self._int_dxdz(jtor)
         self._jtor = jtor
+        self._reassign_profiles(profiles)
 
     def solve_li(self, profiles, jtor=None, psi=None):
         """

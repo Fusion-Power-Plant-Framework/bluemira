@@ -654,13 +654,13 @@ class CustomProfile(Profile):
         """
         dp/dpsi as a function of normalised psi
         """
-        return -self.scale * self._pprime(pn)
+        return self.scale * self._pprime(pn)
 
     def ffprime(self, pn):
         """
         f*df/dpsi as a function of normalised psi
         """
-        return -self.scale * self._ffprime(pn)
+        return self.scale * self._ffprime(pn)
 
     def jtor(self, x, z, psi, o_points, x_points):
         """
@@ -674,13 +674,13 @@ class CustomProfile(Profile):
         self.psisep = psisep
         self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0.0, 1.0)
-        jtor = x * self._pprime(psi_norm) + self._ffprime(psi_norm) / (x * MU_0)
+        jtor = np.abs(x * self._pprime(psi_norm) + self._ffprime(psi_norm) / (x * MU_0))
         if mask is not None:
             jtor *= mask
         if self.Ip is not None:
             # This is a simple way to prescribe the plasma current
             Ip = self.int2d(jtor)
-            self.scale = self.Ip / Ip
+            self.scale = abs(self.Ip / Ip)
             jtor *= self.scale
         return jtor
 
@@ -689,7 +689,7 @@ class CustomProfile(Profile):
         Return pressure [Pa] at given value(s) of normalised psi
         """
         if self.p_func is not None:
-            return self.p_func(psinorm)
+            return self.scale * self.p_func(psinorm)
         return super().pressure(psinorm)
 
     def fRBpol(self, psinorm):
