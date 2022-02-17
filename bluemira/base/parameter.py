@@ -87,6 +87,11 @@ class ParameterMapping:
     send: bool = True
     unit: str = None
 
+    _frozen = ()
+
+    def __post_init__(self):
+        self._frozen = ["name", "unit"]
+
     def to_dict(self):
         """
         Convert this object to a dictionary with attributes as values.
@@ -124,8 +129,9 @@ class ParameterMapping:
             Value of attribute
 
         """
-        if attr not in ["send", "recv", "name", "unit"] or (
-            hasattr(self, "name") and attr not in ["send", "recv"]
+        if (
+            attr not in ["send", "recv", "name", "unit", "_frozen"]
+            or attr in self._frozen
         ):
             raise KeyError(f"{attr} cannot be set for a {self.__class__.__name__}")
         elif attr in ["send", "recv"] and not isinstance(value, bool):

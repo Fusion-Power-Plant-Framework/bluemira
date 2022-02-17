@@ -67,7 +67,7 @@ params = [
     ["tk_tf_ins", "TF coil ground insulation thickness", 0.08, "m", None, "Input"],
     ["tk_tf_insgap", "TF coil WP insertion gap", 0.1, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
     ["r_tf_in", "Inboard radius of the TF coil inboard leg", 3.2, "m", None, "PROCESS"],
-    ["ripple_limit", "Ripple limit constraint", 0.6, "%", None, "Input"],
+    ["ripple_limit", "Ripple limit constraint", 0.6, "dimensionless", None, "Input"],
 ]
 # fmt: on
 

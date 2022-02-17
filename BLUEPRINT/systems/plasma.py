@@ -57,7 +57,7 @@ class Plasma(Meshable, ReactorSystem):
         ['P_fus', 'Total fusion power', 2000, 'MW', None, 'Input'],
         ['kappa_95', '95th flux surface elongation', 1.59, 'dimensionless', None, 'Input'],
         ['delta_95', '95th flux surface triangularity', 0.333, 'dimensionless', None, 'Input'],
-        ['rho', 'Plasma density', 0.8, '10**20 /m^3', None, None],
+        ['rho', 'Plasma density', 80, 'um^-3', None, None],
         ['f_b', 'Burnup fraction', 0.03, 'dimensionless', None, None],
         ['V_p', 'Plasma volume', 2400, 'm^3', None, 'Input'],
         ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure', 1.3, 'dimensionless', None, 'Input'],
@@ -321,7 +321,7 @@ class Plasma(Meshable, ReactorSystem):
             The L-H transition power [MW]
         """
         a = self.params.R_0 / self.params.A
-        return P_LH(self.params.rho * 1e20, self.params.B_0, a, self.params.R_0)
+        return P_LH(self.params.rho * 1e21, self.params.B_0, a, self.params.R_0)
 
     @property
     def plasma_resistance(self):

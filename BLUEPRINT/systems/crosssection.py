@@ -69,7 +69,7 @@ class ReactorCrossSection(ReactorSystem):
         ['A', 'Plasma aspect ratio', 3.1, 'dimensionless', None, 'Input'],
         ['R_0', 'Major radius', 9, 'm', None, 'Input'],
         ["kappa_95", "95th percentile plasma elongation", 1.6, "dimensionless", None, "Input"],
-        ['npoints', 'Number of points', 500, 'dimensionless/', None, 'Default'],
+        ['npoints', 'Number of points', 500, 'dimensionless', None, 'Default'],
         ['plasma_type', 'Type of plasma', 'SN', 'dimensionless', None, 'Input'],
         ['fw_psi_n', 'Normalised psi boundary to fit FW to', 1.07, 'dimensionless', None, 'Input'],
         ['fw_dx', 'Minimum distance of FW to separatrix', 0.225, 'm', None, 'Input'],

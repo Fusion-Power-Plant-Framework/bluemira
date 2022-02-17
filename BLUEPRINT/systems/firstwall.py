@@ -1747,8 +1747,8 @@ class FirstWallDN(FirstWall):
 
         # These are now deprecated, in favour of just doing the mupltication in the
         # inputs above
-        # ["p_rate_omp", "power sharing omp", 0.9, "%", None, "Input"],
-        # ["p_rate_imp", "power sharing imp", 0.1, "%", None, "Input"],
+        # ["p_rate_omp", "power sharing omp", 0.9, "dimensionless", None, "Input"],
+        # ["p_rate_imp", "power sharing imp", 0.1, "dimensionless", None, "Input"],
 
         ["hf_limit", "heat flux material limit", 0.5, "MW/m^2", None, "Input"],
         # External inputs to draw the divertor

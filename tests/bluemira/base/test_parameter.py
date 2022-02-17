@@ -32,7 +32,14 @@ class Dummy(ReactorSystem):
     # Var_name    Name    Value     Unit        Description        Source
     inputs: dict
     default_params = [
-        ["coolant", "Coolant", "Water", None, "Divertor coolant type", "Common sense"],
+        [
+            "coolant",
+            "Coolant",
+            "Water",
+            "dimensionless",
+            "Divertor coolant type",
+            "Common sense",
+        ],
         ["T_in", "Coolant inlet T", 80, "°C", "Coolant inlet T", None],
         ["T_out", "Coolant outlet T", 120, "°C", "Coolant inlet T", None],
         ["P_in", "Coolant inlet P", 8, "MPa", "Coolant inlet P", None],
@@ -289,7 +296,7 @@ class TestParameterFrame:
             "TF_ripple_limit",
             "TF coil ripple limit",
             0.6,
-            "%",
+            "dimensionless",
             None,
             "Input",
             {"PROCESS": ParameterMapping("ripmax", True, False)},
