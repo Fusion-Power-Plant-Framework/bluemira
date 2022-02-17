@@ -187,6 +187,8 @@ class TestSTEquilibrium:
         # I probably exported the eq before it was regridded without symmetry..
         self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-4)
 
+        self._test_profiles_good()
+
     def _test_equilibrium_good(self, eq, psi_rtol, li_rtol):
         lcfs_area = eq.get_LCFS().area
         assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area)
@@ -194,6 +196,15 @@ class TestSTEquilibrium:
         li_bp = calc_li(self.eq_blueprint)
         assert np.isclose(li_bp, calc_li(eq), rtol=li_rtol)
         assert np.allclose(self.eq_blueprint.psi(), eq.psi(), rtol=psi_rtol)
+
+    def _test_profiles_good(self):
+        jetto_pprime = self.jeq_dict["pprime"]
+        jetto_ffprime = self.jeq_dict["ffprime"]
+        psi_n = np.linspace(0.0, 1.0, len(jetto_pprime))
+        bm_pprime = self.profiles.pprime(psi_n)
+        bm_ffprime = self.profiles.ffprime(psi_n)
+        assert np.allclose(jetto_pprime, bm_pprime)
+        assert np.allclose(jetto_ffprime, bm_ffprime)
 
     def _make_initial_psi(
         self,
