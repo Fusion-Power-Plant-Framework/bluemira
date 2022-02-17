@@ -100,9 +100,8 @@ class FirstWallBuilder(Builder):
         _, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
-        self.wall: PhysicalComponent = self._build_wall(params, build_config)
-
-        wall_shape: BluemiraWire = self.wall.shape
+        self.wall: Component = self._build_wall(params, build_config)
+        wall_shape = self.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
         self.divertor: Component = self._build_divertor(
             params,
             build_config,
@@ -140,21 +139,29 @@ class FirstWallBuilder(Builder):
         parent_component = Component("xz")
 
         # Extract the xz components in the wall
-        # TODO(hsaunders1904): add "xz" to wall component
-        parent_component.add_child(self.wall)
+        wall_xz = self.wall.get_component("xz")
+        Component(
+            self.COMPONENT_WALL,
+            parent=parent_component,
+            children=list(wall_xz.children),
+        )
 
         # Extract the xz components in the divertor
         divertor_xz_component = self.divertor.get_component("xz")
         Component(
             self.COMPONENT_DIVERTOR,
             parent=parent_component,
-            children=divertor_xz_component.children,
+            children=list(divertor_xz_component.children),
         )
         return parent_component
 
     def _build_wall(self, params: Dict[str, Any], build_config: BuildConfig):
         """
         Build the component for the wall, excluding the divertor.
+
+        This uses the WallBuilder class to create a (optionally
+        optimised) first wall shape. It then cuts the wall below the
+        equilibrium's x-point, to make space for a divertor.
         """
         build_config = deepcopy(build_config)
         build_config.update(
@@ -174,18 +181,31 @@ class FirstWallBuilder(Builder):
             params, build_config=build_config, keep_out_zones=(keep_out_zone,)
         )
         wall = builder()
-        wall_boundary = wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY)
-        # Cut wall below x-point, a divertor will be put in the space
+
+        # Cut wall below x-point in xz, a divertor will be put in the
+        # space
+        wall_xz = wall.get_component("xz")
+        wall_boundary = wall_xz.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY)
         x_point_z = self.x_points[0].z
         cut_shape = _cut_shape_in_z(wall_boundary.shape, x_point_z)
-        return PhysicalComponent(FirstWallBuilder.COMPONENT_WALL, cut_shape)
+
+        # Replace the "uncut" wall boundary with the new shape
+        wall_xz.prune_child(WallBuilder.COMPONENT_WALL_BOUNDARY)
+        wall_xz.add_child(
+            PhysicalComponent(WallBuilder.COMPONENT_WALL_BOUNDARY, cut_shape)
+        )
+        return wall
 
     def _build_divertor(
         self, params: Dict[str, Any], build_config, x_lims: Iterable[float]
     ) -> Component:
         """
-        Build the divertor component.
+        Build divertor component below the first x-point in the
+        separatrix of the equilibrium.
         """
+        # This currently only supports building a divertor at the lower
+        # end of the plasma. We will need to add a 'Location' switch
+        # here when we start supporting double-null plasmas
         build_config = deepcopy(build_config)
         build_config.update({"name": self.COMPONENT_DIVERTOR})
         builder = DivertorBuilder(params, build_config, self.equilibrium, x_lims)

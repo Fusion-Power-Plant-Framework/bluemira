@@ -28,6 +28,7 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
+from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 
@@ -73,12 +74,12 @@ class TestFirstWallBuilder:
         cls.eq = Equilibrium.from_eqdsk(os.path.join(DATA, "eqref_OOB.json"))
         _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
 
-    def test_wall_part_is_cut_below_x_point_in_z_axis(self):
-        wall = FirstWallBuilder(
+    def test_wall_boundary_is_cut_below_x_point_in_z_axis(self):
+        first_wall = FirstWallBuilder(
             self._params, build_config=self._default_config, equilibrium=self.eq
         )
 
-        shape = wall.wall_part.get_component(FirstWallBuilder.COMPONENT_WALL).shape
+        shape = first_wall.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
         assert not shape.is_closed()
         # significant delta in assertion as the wire is discrete, so cut is not exact
         np.testing.assert_almost_equal(

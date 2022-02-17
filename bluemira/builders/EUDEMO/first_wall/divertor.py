@@ -45,11 +45,17 @@ class LegPosition(enum.Enum):
 
     INNER = enum.auto()
     OUTER = enum.auto()
-    CORE1 = enum.auto()
-    CORE2 = enum.auto()
 
 
-def parse_legs(legs: Dict[str, List[Loop]]):
+def get_separatrix_legs(
+    equilibrium: Equilibrium,
+) -> Dict[LegPosition, List[BluemiraWire]]:
+    """
+    Find the separatrix legs for the given equilibrium.
+    """
+    # A flag specifying which end of the plasma (i.e., upper or lower)
+    # we want the legs from will need to be added
+    legs = get_legs(equilibrium)
     separatrix_legs = {
         LegPosition.INNER: [make_polygon(loop.xyz) for loop in legs["lower_inner"]],
         LegPosition.OUTER: [make_polygon(loop.xyz) for loop in legs["lower_outer"]],
@@ -89,7 +95,6 @@ class DivertorBuilder(Builder):
         super().__init__(params, build_config, **kwargs)
 
         self._shape = None
-        self.boundary: BluemiraWire = None
 
         self.x_lims = sorted(x_lims)
         self.equilibrium = equilibrium
@@ -97,7 +102,7 @@ class DivertorBuilder(Builder):
             LegPosition.INNER: self.params["div_L2D_ib"],
             LegPosition.OUTER: self.params["div_L2D_ob"],
         }
-        self.separatrix_legs = parse_legs(get_legs(self.equilibrium))
+        self.separatrix_legs = get_separatrix_legs(self.equilibrium)
         _, self.x_points = self.equilibrium.get_OX_points()
 
     def reinitialise(self, params, **kwargs) -> None:
@@ -148,7 +153,7 @@ class DivertorBuilder(Builder):
 
         # Build the inner baffle
         if self.params.div_open:
-            pass
+            raise NotImplementedError("Open divertor baffles not yet supported")
         else:
             inner_target_start = self._get_wire_end_with_largest(inner_target.shape, "x")
         inner_baffle = self.make_baffle(
