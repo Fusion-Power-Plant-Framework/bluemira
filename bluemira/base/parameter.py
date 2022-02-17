@@ -85,7 +85,7 @@ class ParameterMapping:
     name: str
     recv: bool = True
     send: bool = True
-    unit: str
+    unit: str = None
 
     def to_dict(self):
         """
@@ -194,7 +194,7 @@ class Parameter(wrapt.ObjectProxy):
     __slots__ = (
         "var",
         "name",
-        "unit",
+        "_unit",
         "description",
         "_source",
         "mapping",
@@ -256,6 +256,36 @@ class Parameter(wrapt.ObjectProxy):
         else:
             self._value_history = []
             self._source_history = []
+
+    def __dir__(self):
+        """
+        Add missing methods
+        """
+        _dir = set(
+            super().__dir__()
+            + list(self.__slots__)
+            + [
+                "__deepcopy__",
+                "__array__",
+                "_history_keys",
+                "value_history",
+                "source_history",
+                "unit",
+                "_unit_setup",
+                "value",
+                "value",
+                "source",
+                "source",
+                "_update_history",
+                "from_json",
+                "_full_slots",
+                "_get_k",
+                "to_dict",
+                "to_list",
+                "history",
+            ]
+        )
+        return _dir
 
     def __deepcopy__(self, memo):
         """
@@ -351,10 +381,8 @@ class Parameter(wrapt.ObjectProxy):
         """
         return self._unit
 
-    def _unit_setup(self, unit: Union[Unit, str, None]):
-        if isinstance(unit, None):
-            bluemira_warn(f"{self.var} has no unit")
-        self._unit = _unitify(unit)
+    def _unit_setup(self, unit: Union[Unit, str]):
+        return _unitify(unit)
 
     @property
     def value(self):
@@ -632,16 +660,21 @@ class ParameterFrame:
 
             sv = cls.add_parameter
             sv_set = cls.__setattr__
+            sv_mod = cls._set_modified_param
 
             cls.__setattr__ = cls.__setattr
             cls.__setattr = sv_set
             cls.add_parameter = cls._add_parameter
             cls._add_parameter = sv
+            cls._set_modified_param = cls.__set_modified_param
+            cls.__set_modified_param = sv_mod
 
             cls.add_parameters(cls, params)
 
             cls._add_parameter = cls.add_parameter
             cls.add_parameter = sv
+            cls.__set_modified_param = cls._set_modified_param
+            cls._set_modified_param = sv_mod
             cls.__setattr = cls.__setattr__
             cls.__setattr__ = sv_set
 
@@ -674,7 +707,25 @@ class ParameterFrame:
 
     @classmethod
     def __setattr(cls, *args, **kwargs):
+        """
+        TODO remove when defaults removed
+        """
         return cls.__setattr(cls, *args, **kwargs)
+
+    @classmethod
+    def __set_modified_param(cls, *args, **kwargs):
+        """
+        TODO remove when defaults removed
+        """
+        return cls.__set_modified_param(cls, *args, **kwargs)
+
+    @classmethod
+    def _add_parameter(cls, *args, **kwargs):
+        """
+        Add parameter as a class method for defaults.
+        TODO remove when defaults removed
+        """
+        return cls._add_parameter(cls, *args, **kwargs)
 
     @classmethod
     def from_template(cls, param_vars: List[str]) -> "ParameterFrame":
@@ -805,13 +856,6 @@ class ParameterFrame:
         return sorted(
             [list(self.__dict__[key].to_list()) for key in self.__dict__.keys()]
         )
-
-    @classmethod
-    def _add_parameter(cls, *args, **kwargs):
-        """
-        Add parameter as a class method for defaults.
-        """
-        return cls._add_parameter(cls, *args, **kwargs)
 
     def add_parameter(
         self,
