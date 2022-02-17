@@ -564,6 +564,12 @@ class Parameter(wrapt.ObjectProxy):
             The string representation of the Parameter.
 
         """
+        name = self.name if self.name is not None else ""
+        unit = "-" if self.unit.__str__() == "dimensionless" else self.unit
+        description = (
+            " (" + self.description + ")" if self.description is not None else ""
+        )
+        value = " = " + str(self.value) if self.value is not None else ""
         mapping_str = (
             "\n    {"
             + ", ".join([repr(k) + ": " + str(v) for k, v in self.mapping.items()])
@@ -571,14 +577,7 @@ class Parameter(wrapt.ObjectProxy):
             if self.mapping != {}
             else ""
         )
-        return (
-            f"{self.name if self.name is not None else ''}"
-            f" [{self.unit if self.unit not in [None, 'N/A', ''] else '-'}]:"
-            f" {self.var}"
-            f"{' = ' + str(self.value) if self.value is not None else ''}"
-            f"{' (' + self.description + ')' if self.description is not None else ''}"
-            f"{mapping_str}"
-        )
+        return f"{name} [{unit}]: {self.var}{value}{description}{mapping_str}"
 
 
 class ParameterFrame:

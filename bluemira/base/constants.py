@@ -30,6 +30,7 @@ from periodictable import elements
 from pint import UnitRegistry
 
 ureg = UnitRegistry()
+ureg.default_format = "~P"
 
 SECOND = ureg.second
 METRE = ureg.metre
