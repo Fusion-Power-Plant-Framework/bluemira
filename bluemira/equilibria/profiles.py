@@ -674,7 +674,7 @@ class CustomProfile(Profile):
         self.psisep = psisep
         self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0, 1)
-        jtor = x * self.pprime(psi_norm) + self.ffprime(psi_norm) / (x * MU_0)
+        jtor = x * self._pprime(psi_norm) + self._ffprime(psi_norm) / (x * MU_0)
         if mask is not None:
             jtor *= mask
         if self.Ip is not None:
