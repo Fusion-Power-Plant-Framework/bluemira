@@ -26,16 +26,17 @@ Core functionality for the bluemira mesh module.
 from __future__ import annotations
 
 import copy
+import inspect
 import pprint
 from typing import Dict, Union
-import inspect
 
 # import mesher lib (gmsh)
 import gmsh
 
+from .error import MeshOptionsError
+
 # import bluemira modules
 
-from .error import MeshOptionsError
 
 # Mesh options for the moment are limited to definition of mesh size for each point (
 # quantity called lcar to be consistent with gmsh) and the definition of physical
@@ -179,6 +180,7 @@ class Mesh:
         """
         if "Component" in [c.__name__ for c in inspect.getmro(type(obj))]:
             from bluemira.base.tools import create_compound_from_component
+
             obj = create_compound_from_component(obj)
 
         if isinstance(obj, Meshable):

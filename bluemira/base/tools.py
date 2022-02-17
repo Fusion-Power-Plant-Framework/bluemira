@@ -24,6 +24,7 @@ Tool function and classes for the bluemira base module.
 """
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.tools import serialize_shape
+
 from .components import Component, PhysicalComponent
 
 
