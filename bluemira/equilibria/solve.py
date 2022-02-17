@@ -761,7 +761,8 @@ class PicardBaseIterator(ABC):
             self.eq.x, self.eq.z, self.eq.psi(), o_points, x_points
         )
 
-        # self.profiles.scale = 1.0  # Converged, Ip is right, no need to scale anymore
+        # self.profiles.scale = 1.0  # This is pretty questionable, but we can recover
+        # the input custom profiles this way
         self.eq._reassign_profiles(self.profiles)
 
 

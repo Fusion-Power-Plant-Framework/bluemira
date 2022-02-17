@@ -26,7 +26,6 @@ BLUEPRINT -> bluemira ST equilibrium recursion test
 import os
 import numpy as np
 import pytest
-from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria import (
     Equilibrium,
@@ -201,6 +200,14 @@ class TestSTEquilibrium:
         assert np.allclose(self.eq_blueprint.psi(), eq.psi(), rtol=psi_rtol)
 
     def _test_profiles_good(self, eq):
+        """
+        Test the profiles are the same shape. Normalisation won't be one: JETTO is
+        fixed boundary and has a different plasma volume.
+        """
+
+        def scale(profile):
+            return np.abs(profile) / np.max(np.abs(profile))
+
         jetto_pprime = self.jeq_dict["pprime"]
         jetto_ffprime = self.jeq_dict["ffprime"]
 
@@ -210,11 +217,15 @@ class TestSTEquilibrium:
 
         bm_pprime = eq._profiles.pprime(psi_n)
         bm_ffprime = eq._profiles.ffprime(psi_n)
+        assert np.allclose(bm_pprime, bm_pprime_p)
+        assert np.allclose(bm_ffprime, bm_ffprime_p)
 
-        assert np.allclose(np.abs(jetto_pprime), np.abs(bm_pprime))
-        assert np.allclose(np.abs(jetto_ffprime), np.abs(bm_ffprime))
-        assert np.allclose(np.abs(jetto_pprime), np.abs(bm_pprime_p))
-        assert np.allclose(np.abs(jetto_ffprime), np.abs(bm_ffprime_p))
+        jetto_pprime = scale(jetto_pprime)
+        jetto_ffprime = scale(jetto_ffprime)
+        bm_pprime = scale(bm_pprime)
+        bm_ffprime = scale(bm_ffprime)
+        assert np.allclose(jetto_pprime, bm_pprime)
+        assert np.allclose(jetto_ffprime, bm_ffprime)
 
     def _make_initial_psi(
         self,
