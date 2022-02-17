@@ -63,7 +63,7 @@ lcfs = p.create_shape(label="LCFS")
 lcfs.change_plane(BluemiraPlane(axis=[1.0, 0.0, 0.0], angle=-90))
 lcfs.mesh_options = {"lcar": 0.75, "physical_group": "LCFS"}
 face = BluemiraFace(lcfs, label="plasma_surface")
-face.mesh_options = {"lcar": 1, "physical_group": "surface"}
+face.mesh_options = {"lcar": 0.5, "physical_group": "surface"}
 
 poly1 = tools.make_polygon(
     [[0, 1, 1], [0, 0, 1], [0, 0, 0]], closed=False, label="poly1"
@@ -71,8 +71,8 @@ poly1 = tools.make_polygon(
 poly2 = tools.make_polygon(
     [[1, 0, 0], [1, 1, 0], [0, 0, 0]], closed=False, label="poly2"
 )
-poly1.mesh_options = {"lcar": 0.75, "physical_group": "poly1"}
-poly2.mesh_options = {"lcar": 0.75, "physical_group": "poly2"}
+poly1.mesh_options = {"lcar": 0.25, "physical_group": "poly1"}
+poly2.mesh_options = {"lcar": 0.25, "physical_group": "poly2"}
 
 poly3 = tools.make_polygon(
     [[0.25, 0.75, 0.75], [0.25, 0.25, 0.75], [0, 0, 0]], closed=False, label="poly3"
@@ -125,3 +125,7 @@ if HAS_MSH2XDMF:
 
     if HAS_MSH2XDMF:
         print(mesh.coordinates())
+
+    arr = boundaries.array()
+    assert (arr == 2).sum() == 7
+    assert (arr == 3).sum() == 7
