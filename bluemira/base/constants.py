@@ -27,10 +27,11 @@ from typing import List, Union
 
 import numpy as np
 from periodictable import elements
-from pint import UnitRegistry
+from pint import UnitRegistry, set_application_registry
 
 ureg = UnitRegistry()
 ureg.default_format = "~P"
+set_application_registry(ureg)
 
 SECOND = ureg.second
 METRE = ureg.metre
@@ -43,6 +44,7 @@ DENSITY = KILOGRAM / METRE**3
 PART_DENSITY = METRE**-3
 FLUX_DENSITY = METRE**-2 / SECOND
 
+ureg.define("displacements per atom  = dimensionless = dpa")
 # =============================================================================
 # Physical constants
 # =============================================================================

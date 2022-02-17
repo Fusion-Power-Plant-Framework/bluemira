@@ -305,7 +305,7 @@ class Plasma(Meshable, ReactorSystem):
         p = [
             ["A_p", "Plasma cross-sectional area", self.geom["LCFS"].area, "m^2", None, None],
             ["V_p", "Plasma volume", loop_volume(*self.geom["LCFS"].d2), "m^3", None, None],
-            ["res_plasma", "Plasma resistance", self.plasma_resistance, "Ohm", None, "Uckan et al."],
+            ["res_plasma", "Plasma resistance", self.plasma_resistance, "ohm", None, "Uckan et al."],
             ["P_LH", "L-H transition power", self.calc_p_lh(), "MW", "Martin scaling", None]
         ]
         # fmt: on

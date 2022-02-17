@@ -1166,7 +1166,7 @@ class ParameterFrame:
         value, source, unit = self._from_iterable(value)
 
         if isinstance(value, Parameter):
-            self._set_modified_param(allow_new, _dict, attr, value, source, unit)
+            self._set_modified_param(allow_new, _dict, attr, value, source, value.unit)
         elif isinstance(_dict.get(attr, None), Parameter):
             _dict[attr].value = self._unit_conversion(value, unit, to=_dict[attr].unit)
             _dict[attr].source = source
@@ -1179,7 +1179,7 @@ class ParameterFrame:
             super().__setattr__(attr, value)
 
     @staticmethod
-    def _from_iterable(self, value):
+    def _from_iterable(value):
         if (
             isinstance(value, (list, tuple))
             and len(value) in [2, 3]
@@ -1218,7 +1218,7 @@ class ParameterFrame:
             param.source = value.source
 
     @staticmethod
-    def _unit_conversion(self, value, unit_from, unit_to=None):
+    def _unit_conversion(value, unit_from, unit_to=None):
         if not isinstance(value, Parameter) and unit_to is None:
             raise ParameterError("No unit to convert to")
         elif isinstance(value, Parameter):

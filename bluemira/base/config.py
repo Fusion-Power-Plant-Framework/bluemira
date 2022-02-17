@@ -66,7 +66,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['delta', 'Last closed surface plasma triangularity', 0.5, 'dimensionless', None, 'Input'],
         ['T_e', 'Average plasma electron temperature', 13, 'keV', None, 'Input'],
         ['Z_eff', 'Effective particle radiation atomic mass', 2.2, 'a.u.', None, 'Input'],
-        ['res_plasma', 'Plasma resistance', 0, 'Ohm', None, 'Calculated'],
+        ['res_plasma', 'Plasma resistance', 0, 'ohm', None, 'Calculated'],
         ['V_p', 'Plasma volume', 2400, 'm^3', None, 'Calculated'],
         ['l_i', 'Normalised internal plasma inductance', 0.8, 'dimensionless', None, 'Input'],
         ['I_p', 'Plasma current', 19, 'MA', None, 'PLASMOD'],
@@ -131,7 +131,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['div_L2D_ib', 'Inboard divertor leg length', 1.1, 'm', None, 'Input'],
         ['div_L2D_ob', 'Outboard divertor leg length', 1.45, 'm', None, 'Input'],
         ['div_graze_angle', 'Divertor SOL grazing angle', 1.5, '°', None, 'Input'],
-        ['div_psi_o', 'Divertor flux offset', 0.5, 'n/a', None, 'Input'],
+        ['div_psi_o', 'Divertor flux offset', 0.5, 'dimensionless', None, 'Input'],
         ['div_Ltarg', 'Divertor target length', 0.5, 'm', None, 'Input'],
         ['div_open', 'Divertor open/closed configuration', False, 'dimensionless', None, 'Input'],
         ['g_vv_div_add', 'Additional divertor/VV gap', 0, 'm', None, 'Input'],
@@ -287,7 +287,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['blk_2_dpa', 'Second blanket life limit (EUROfer)', 50, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['vv_dpa', 'Vacuum vessel life limit (SS316-LN-IG)', 3.25, 'dpa', None, 'Input (RCC-Mx or whatever it is called)'],
-        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'n/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
+        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'N/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
 
         # Central solenoid
         ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],
@@ -317,7 +317,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['a_max', 'Maximum operational load factor', 0.5, 'dimensionless', 'Can be violated', 'Input'],
 
         # Tritium fuelling and vacuum system
-        ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Input (Discussions with Chris Day and Yannick Hörstensmeyer)'],
+        ['m_gas', 'Gas puff flow rate', 50, 'Pa m^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Input (Discussions with Chris Day and Yannick Hörstensmeyer)'],
 
         # Maintenance
         ['bmd', 'Blanket maintenance duration', 150, 'days', 'Full replacement intervention duration', 'Input'],
