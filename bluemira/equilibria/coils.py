@@ -25,13 +25,15 @@ Coil and coil grouping objects
 
 import abc
 from contextlib import suppress
-from copy import deepcopy
+
+# from copy import deepcopy
 from enum import Enum, EnumMeta, auto
-from functools import update_wrapper, wraps
-from re import split
+from functools import update_wrapper
+
+# from re import split
 from typing import Any, Dict, Iterable, List, Optional, Union
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import MU_0
@@ -49,10 +51,17 @@ from bluemira.magnetostatics.greens import (
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.tools import is_num
 
+# from scipy.interpolate import RectBivariateSpline
+
+
 __all__ = ("CoilType", "Coil", "CoilSet", "Circuit", "SymmetricCircuit")
 
 
 class CoilTypeEnumMeta(EnumMeta):
+    """
+    Allow override of KeyError error string
+    """
+
     def __getitem__(self, name):
         try:
             return super().__getitem__(name)
@@ -61,6 +70,10 @@ class CoilTypeEnumMeta(EnumMeta):
 
 
 class CoilType(Enum, metaclass=CoilTypeEnumMeta):
+    """
+    CoilType Enum
+    """
+
     PF = auto()
     CS = auto()
     NONE = auto()
@@ -451,7 +464,8 @@ class CoilSizer:
 
         if any(dxdz_specified):
             if not self.flag_sizefix:
-                # If dx and dz are specified, we presume the coil size should remain fixed
+                # If dx and dz are specified, we presume the coil size should
+                # remain fixed
                 self.flag_sizefix = True
 
             self._set_coil_attributes(coil)
@@ -1058,6 +1072,31 @@ class CoilGroup(CoilFieldsMixin, abc.ABC):
 
 
 class Coil(CoilGroup):
+    """
+    Singular coil
+
+    Parameters
+    ----------
+    x: float
+        Coil geometric centre x coordinate [m]
+    z: float
+        Coil geometric centre z coordinate [m]
+    dx: Optional[float]
+        Coil radial half-width [m] from coil centre to edge (either side)
+    dz: Optional[float]
+        Coil vertical half-width [m] from coil centre to edge (either side)
+    current: Optional[float] (default = 0)
+        Coil current [A]
+    name: Optional[str]
+        The name of the coil
+    ctype: Optional[Union[str, CoilType]]
+        Type of coil see CoilType enum
+    j_max: Optional[float]
+        Maximum current density in the coil [MA/m^2]
+    b_max: Optional[float]
+        Maximum magnetic field at the coil [T]
+
+    """
 
     __slots__ = ()
 
@@ -1078,23 +1117,10 @@ class Coil(CoilGroup):
         # Only to force type check correctness
         super().__init__(x, z, dx, dz, current, name, ctype, j_max, b_max)
 
-    # def _wrap_properties(self):
-    # pass
-    # If attribute property wrap function to produce numbered output
-
-    # def __getattribute__(self, attr: str) -> Any:
-    #     """
-    #     Get attribute first element if Iterable and len == 1
-    #     """
-    #     val = super().__getattribute__(attr)
-
-    #     if isinstance(val, Iterable) and len(val) == 1:
-    #         val = val[0]
-
-    #     return val
-
     def __setattr__(self, attr: str, value: Any) -> None:
-
+        """
+        Set attribute with some protection for singular values
+        """
         with suppress(AttributeError):
             old_attr = super().__getattribute__(attr)
             if attr not in self.__safe_attrs:
@@ -1116,37 +1142,66 @@ class Coil(CoilGroup):
 
 
 class Circuit(CoilGroup):
+    """
+    Dummy
+    """
+
     pass
 
 
 class SymmetricCircuit(Circuit):
+    """
+    Dummy
+    """
+
     pass
 
 
 class CoilSet(CoilGroup):
+    """
+    Dummy
+    """
+
     pass
 
 
 class PlasmaCoil:
+    """
+    Dummy
+    """
+
     pass
 
 
 class Solenoid:
+    """
+    Dummy
+    """
+
     pass
 
 
 def symmetrise_coilset():
+    """
+    Dummy
+    """
     pass
 
 
 def check_coilset_symmetric():
+    """
+    Dummy
+    """
     pass
 
 
 def make_mutual_inductance_matrix():
+    """
+    Dummy
+    """
     pass
 
 
-CS_COIL_NAME = "{}"
-PF_COIL_NAME = "{}"
-NO_COIL_NAME = "{}"
+CS_COIL_NAME = "{}"  # noqa: F401
+PF_COIL_NAME = "{}"  # noqa: F401
+NO_COIL_NAME = "{}"  # noqa: F401
