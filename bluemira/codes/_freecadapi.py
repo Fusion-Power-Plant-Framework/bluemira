@@ -1080,14 +1080,14 @@ def _wire_edges_tangent(wire):
 
     else:
         edges_tangent = []
-        for i in range(len(wire.Edges) - 1):
-            edge_1 = wire.Edges[i]
-            edge_2 = wire.Edges[i + 1]
+        for i in range(len(wire.OrderedEdges) - 1):
+            edge_1 = wire.OrderedEdges[i]
+            edge_2 = wire.OrderedEdges[i + 1]
             edges_tangent.append(_edges_tangent(edge_1, edge_2))
 
     if wire.isClosed():
         # Check last and first edge tangency
-        edges_tangent.append(_edges_tangent(wire.Edges[-1], wire.Edges[0]))
+        edges_tangent.append(_edges_tangent(wire.OrderedEdges[-1], wire.OrderedEdges[0]))
 
     return all(edges_tangent)
 
