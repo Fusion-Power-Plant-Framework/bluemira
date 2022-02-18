@@ -18,7 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
+"""
+Define shapes & builders for the wall components of EUDEMO's first wall
+"""
 import copy
 from typing import Any, Dict, Iterable, List
 
@@ -48,8 +50,7 @@ class WallPolySpline(PolySpline):
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
         "z2": {"value": 0},
-        # height = kappa_95*(R_0/A)*2
-        "height": {"value": 1.6 * (9 / 3.1) * 2},
+        "height": {"value": 9.3},
         "top": {"value": 0.5},
         "upper": {"value": 0.7},
         "dz": {"value": 0},
@@ -81,7 +82,7 @@ class WallPolySpline(PolySpline):
         )
         self.adjust_variable("z2", 0, lower_bound=-0.9, upper_bound=0.9)
         self.adjust_variable(
-            "height", height + 0.001, lower_bound=height, upper_bound=50
+            "height", height, lower_bound=height - 0.001, upper_bound=50
         )
         self.adjust_variable("top", 0.5, lower_bound=0.05, upper_bound=0.75)
         self.adjust_variable("upper", 0.5, lower_bound=0.2, upper_bound=0.7)
@@ -158,10 +159,12 @@ class MinimiseLength(GeometryOptimisationProblem):
         return signed_distance_2D_polygon(s.T, self.koz_points.T).T
 
     def calculate_length(self, x):
+        """Calculate the length of the shape being optimised"""
         self.update_parameterisation(x)
         return self.parameterisation.create_shape().length
 
     def f_objective(self, x, grad):
+        """The objective function for the optimiser"""
         length = self.calculate_length(x)
         if grad.size > 0:
             self.optimiser.approx_derivative(self.calculate_length, x, f0=length)
@@ -195,7 +198,7 @@ class WallBuilder(OptimisedShapeBuilder):
         keep_out_zones: Iterable[BluemiraWire] = None,
     ):
         # boundary should be set by run/mock/read, it is used by the build methods
-        self.boundary: BluemiraWire = None
+        self.boundary: BluemiraWire
         # _keep_out_zones should be set by reinitialize
         self._keep_out_zones: Iterable[BluemiraWire] = []
 
@@ -211,7 +214,8 @@ class WallBuilder(OptimisedShapeBuilder):
         self._keep_out_zones = keep_out_zones
 
     def read(self):
-        raise NotImplementedError()
+        """Read the result of the design problem from file."""
+        return super().read()
 
     def run(self):
         """
@@ -258,5 +262,6 @@ class WallBuilder(OptimisedShapeBuilder):
         return params
 
     def _derive_height(self) -> float:
+        """Derive the height of the shape from relevant parameters"""
         r_minor = self._params.R_0 / self._params.A
         return (self._params.kappa_95 * r_minor) * 2

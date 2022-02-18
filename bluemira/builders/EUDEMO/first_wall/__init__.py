@@ -18,7 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
+"""
+Module containing builders for the EUDEMO first wall components
+"""
 from .divertor import DivertorBuilder
 from .first_wall import FirstWallBuilder
 from .wall import WallBuilder, WallPolySpline

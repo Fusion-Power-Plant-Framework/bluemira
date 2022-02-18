@@ -105,7 +105,7 @@ class TestDivertorBuilder:
             target = divertor.get_component(leg)
             assert signed_distance(target.shape, self.separatrix) == 0
 
-    def test_div_Ltarg_sets_target_length(self):
+    def test_target_length_set_by_parameter(self):
         self.params.update({"div_Ltarg": 1.5})
         builder = DivertorBuilder(
             self.params, {"name": "some_name"}, self.eq, self.x_lims

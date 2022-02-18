@@ -34,7 +34,6 @@ from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_OX_points
-from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.tools import boolean_cut, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 

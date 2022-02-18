@@ -33,7 +33,6 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
-from bluemira.geometry._deprecated_loop import Loop
 from bluemira.geometry.tools import find_point_along_wire_at_length, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
@@ -340,60 +339,3 @@ class DivertorBuilder(Builder):
         if comp(start_point[axis_idx], end_point[axis_idx]):
             return start_point[[0, -1]]
         return end_point[[0, -1]]
-
-
-if __name__ == "__main__":
-    import os
-
-    import matplotlib.pyplot as plt
-
-    from bluemira.base.file import get_bluemira_path, get_bluemira_root
-    from bluemira.display.plotter import plot_2d
-
-    DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
-    eq_filename = os.path.join(DATA, "eqref_OOB.json")
-    eq = Equilibrium.from_eqdsk(eq_filename)
-    # eq.plot()  # throws exception
-
-    _, x_points = eq.get_OX_points()
-    # # print(ox_points)
-
-    fig, ax = plt.subplots()
-    # o_points_x = [p.x for p in ox_points[0]]
-    # o_points_y = [p.z for p in ox_points[0]]
-    # x_points_x = [p.x for p in ox_points[1]]
-    # x_points_y = [p.z for p in ox_points[1]]
-    # ax.plot(o_points_x, o_points_y, color="blue", marker="o", linestyle="none")
-    # ax.plot(x_points_x, x_points_y, color="g", marker="x", linestyle="none")
-
-    separatrix = eq.get_separatrix()
-    separatrix.plot(ax=ax, linestyle="--", linewidth=0.3)
-    # separatrix[0].plot(ax=ax, linestyle="--", linewidth=0.3)
-    # separatrix[1].plot(ax=ax, linestyle="--", linewidth=0.3)
-    # # plt.show()
-
-    params = {
-        "Name": "Divertor example",
-        "div_L2D_ib": (1.1, "Input"),
-        "div_L2D_ob": (1.45, "Input"),
-        "div_Ltarg": (0.5, "Input"),
-        "div_open": (False, "Input"),
-    }
-    build_config = {"name": "divertor", "runmode": "mock"}
-
-    div = DivertorBuilder(
-        params,
-        build_config=build_config,
-        equilibrium=eq,
-        x_lims=[x_points[0].x - 4, x_points[0].x + 4],
-    )
-    component = div()
-    component.plot_2d(ax=ax)
-
-    # for leg_set in div.separatrix_legs.values():
-    #     plot_2d(leg_set[0], ax=ax, show=False)
-    # plot_2d(leg_set[1], ax=ax, show=False, color="g")
-
-    plt.show()
-
-    # div.make_target(LegPosition.INNER)
