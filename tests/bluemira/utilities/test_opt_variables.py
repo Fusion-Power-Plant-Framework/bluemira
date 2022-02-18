@@ -19,13 +19,17 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
+import os
+import shutil
+import tempfile
+
 import numpy as np
+import pytest
 
 from bluemira.utilities.opt_variables import (
     BoundedVariable,
-    OptVariablesError,
     OptVariables,
+    OptVariablesError,
 )
 
 
@@ -80,16 +84,15 @@ class TestBoundedVariable:
 
 
 class TestOptVariables:
-    @classmethod
-    def setup_class(cls):
+    def setup_method(self):
         v1 = BoundedVariable("a", 2, 0, 3)
         v2 = BoundedVariable("b", 0, -1, 1)
         v3 = BoundedVariable("c", -1, -10, 10)
-        cls.vars = OptVariables([v1, v2, v3])
+        self.vars = OptVariables([v1, v2, v3])
         v1 = BoundedVariable("a", 2, 0, 3)
         v2 = BoundedVariable("b", 0, -1, 1)
         v3 = BoundedVariable("c", -1, -10, 10)
-        cls.vars_frozen = OptVariables([v1, v2, v3], frozen=True)
+        self.vars_frozen = OptVariables([v1, v2, v3], frozen=True)
 
     def test_init(self):
         assert self.vars.n_free_variables == 3
@@ -107,15 +110,14 @@ class TestOptVariables:
 
     def test_remove(self):
         self.vars.remove_variable("c")
-        assert self.vars.n_free_variables == 3
-        assert len(self.vars.values) == 4
-        assert np.allclose(self.vars.values, np.array([2, 0, 4, 1]))
+        assert len(self.vars.values) == 2
+        assert np.allclose(self.vars.values, np.array([2, 0]))
 
     def test_fix(self):
         self.vars.fix_variable("a", value=100)
         assert self.vars.values[0] == 100
         assert self.vars.n_free_variables == 2
-        assert np.allclose(self.vars.values, np.array([100, 0, 4, 1]))
+        assert np.allclose(self.vars.values, np.array([100, 0, -1]))
 
     def test_getitem(self):
         assert self.vars["a"] == self.vars._var_dict["a"]
@@ -161,6 +163,16 @@ class TestOptVariables:
                 {"a": {"value": -2, "lower_bound": -1, "upper_bound": -3}},
                 strict_bounds=False,
             )
+
+    def test_read_write(self):
+        tempdir = tempfile.mkdtemp()
+        try:
+            the_path = os.sep.join([tempdir, "opt_var_test.json"])
+            self.vars.to_json(the_path)
+            new_vars = OptVariables.from_json(the_path)
+            new_vars._to_records() == self.vars._to_records()
+        finally:
+            shutil.rmtree(tempdir)
 
 
 if __name__ == "__main__":

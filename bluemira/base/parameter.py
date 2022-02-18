@@ -94,6 +94,27 @@ class ParameterMapping:
         """
         return repr(self.to_dict())
 
+    def __setattr__(self, attr: str, value: Union[bool, str]):
+        """
+        Protect against additional attributes
+
+        Parameters
+        ----------
+        attr: str
+            Attribute to set (name can only be set on init)
+        value: Union[bool, str]
+            Value of attribute
+
+        """
+        if attr not in ["send", "recv", "name"] or (
+            hasattr(self, "name") and attr not in ["send", "recv"]
+        ):
+            raise KeyError(f"{attr} cannot be set for a {self.__class__.__name__}")
+        elif attr in ["send", "recv"] and not isinstance(value, bool):
+            raise ValueError(f"{attr} must be a bool")
+        else:
+            super().__setattr__(attr, value)
+
 
 class ParameterMappingEncoder(json.JSONEncoder):
     """
@@ -208,7 +229,7 @@ class Parameter(wrapt.ObjectProxy):
         self.name = name
         self.unit = unit
         self.description = description
-        self.mapping = mapping
+        self.mapping = mapping if mapping is not None else {}
 
         self._source = source
         if value is not None:
@@ -514,18 +535,18 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         mapping_str = (
-            " {"
+            "\n    {"
             + ", ".join([repr(k) + ": " + str(v) for k, v in self.mapping.items()])
             + "}"
-            if self.mapping is not None
+            if self.mapping != {}
             else ""
         )
         return (
-            f"{self.var}"
+            f"{self.name if self.name is not None else ''}"
+            f" [{self.unit if self.unit not in [None, 'N/A'] else '-'}]:"
+            f" {self.var}"
             f"{' = ' + str(self.value) if self.value is not None else ''}"
-            f"{' ' + self.unit if self.unit is not None else ''}"
-            f"{' (' + self.name + ')' if self.name is not None else ''}"
-            f"{' : ' + self.description if self.description is not None else ''}"
+            f"{' (' + self.description + ')' if self.description is not None else ''}"
             f"{mapping_str}"
         )
 

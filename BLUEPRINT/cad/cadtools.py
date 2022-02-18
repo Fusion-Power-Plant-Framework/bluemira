@@ -48,10 +48,7 @@ try:
         brepgprop_VolumeProperties,
     )
     from OCC.Core.BRepMesh import BRepMesh_IncrementalMesh
-    from OCC.Core.BRepOffsetAPI import (
-        BRepOffsetAPI_MakePipe,
-        BRepOffsetAPI_ThruSections,
-    )
+    from OCC.Core.BRepOffsetAPI import BRepOffsetAPI_MakePipe, BRepOffsetAPI_ThruSections
     from OCC.Core.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 
     # from OCC.Display.SimpleGui import init_display
@@ -971,7 +968,7 @@ class MixedFaceMaker:
 
         Returns
         -------
-        vertices: np.array(dtype=np.int)
+        vertices: np.array(dtype=int)
             The vertices of the loop which are polygonic
         """
         # find long segment indices
@@ -1013,7 +1010,7 @@ class MixedFaceMaker:
                 vertices.extend([index])
             else:
                 vertices.extend([index, index + 1])
-        vertices = np.unique(np.array(vertices, dtype=np.int))
+        vertices = np.unique(np.array(vertices, dtype=int))
         return vertices
 
     def get_polygon_sequences(self, vertices):
@@ -1022,7 +1019,7 @@ class MixedFaceMaker:
 
         Parameters
         ----------
-        vertices: np.array(dtype=np.int)
+        vertices: np.array(dtype=int)
             The vertices of the loop which are polygonic
 
         Returns
@@ -1958,9 +1955,3 @@ def boolean_fuse(shape1, shape2):
     except AttributeError:
         pass
     return shp
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

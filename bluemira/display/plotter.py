@@ -38,6 +38,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry import bound_box, face
 from bluemira.geometry import plane as _plane
 from bluemira.geometry import wire
+from bluemira.geometry.coordinates import Coordinates, _parse_to_xyz_array
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
@@ -419,7 +420,7 @@ class BasePlotter(ABC):
         if not self._check_options():
             self.ax = ax
         else:
-            self.initialize_plot_3d()
+            self.initialize_plot_3d(ax=ax)
             # this function can be common to 2D and 3D plot
             # self._data is used for 3D plot
             # self._data_to_plot is used for 2D plot
@@ -454,11 +455,12 @@ class PointsPlotter(BasePlotter):
         return True
 
     def _populate_data(self, points):
+        points = _parse_to_xyz_array(points).T
         self._data = points
         # apply rotation matrix given by options['plane']
-        self.rot = self.options.plane.to_matrix().T
-        self.temp_data = np.c_[self._data, np.ones(len(self._data))]
-        self._data_to_plot = self.temp_data.dot(self.rot).T
+        rot = self.options.plane.to_matrix().T
+        temp_data = np.c_[self._data, np.ones(len(self._data))]
+        self._data_to_plot = temp_data.dot(rot).T
         self._data_to_plot = self._data_to_plot[0:2]
 
     def _make_plot_2d(self):
@@ -499,7 +501,7 @@ class WirePlotter(BasePlotter):
         pointsw = new_wire.discretize(
             ndiscr=self.options._options["ndiscr"],
             byedges=self.options._options["byedges"],
-        )
+        ).T
         self._pplotter._populate_data(pointsw)
         self._data = pointsw
         self._data_to_plot = self._pplotter._data_to_plot
@@ -668,7 +670,7 @@ def _get_plotter_class(part):
     """
     import bluemira.base.components
 
-    if isinstance(part, (list, np.ndarray)):
+    if isinstance(part, (list, np.ndarray, Coordinates)):
         plot_class = PointsPlotter
     elif isinstance(part, wire.BluemiraWire):
         plot_class = WirePlotter

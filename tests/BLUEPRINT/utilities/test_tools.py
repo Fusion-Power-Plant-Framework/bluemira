@@ -19,20 +19,22 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
+import pytest
+
+from BLUEPRINT.geometry.geomtools import polyarea
+from BLUEPRINT.utilities.tools import _apply_rule  # noqa
+from BLUEPRINT.utilities.tools import _apply_rules  # noqa
+from BLUEPRINT.utilities.tools import _split_rule  # noqa
 from BLUEPRINT.utilities.tools import (
     PowerLawScaling,
-    nested_dict_search,
-    expand_nested_list,
-    _split_rule,  # noqa
-    _apply_rule,  # noqa
-    _apply_rules,  # noqa
-    maximum,
     ellipse,
+    expand_nested_list,
+    maximum,
+    nested_dict_search,
 )
-from BLUEPRINT.geometry.geomtools import polyarea
 
 
 class TestPowerLaw:
@@ -41,9 +43,9 @@ class TestPowerLaw:
         result = np.array(law.error(2.1, 3.4))
         shouldbe = np.array(
             [
-                0.9 * 2.1 ** 2.5 * 3.4 ** 3.5,
-                0.7 * 2.1 ** 2.3 * 3.4 ** 3.2,
-                1.1 * 2.1 ** 2.7 * 3.4 ** 3.8,
+                0.9 * 2.1**2.5 * 3.4**3.5,
+                0.7 * 2.1**2.3 * 3.4**3.2,
+                1.1 * 2.1**2.7 * 3.4**3.8,
             ]
         )
         assert np.allclose(result, shouldbe), f"{result} != {shouldbe}"
@@ -55,9 +57,9 @@ class TestPowerLaw:
         result = np.array(law.error(5.1, 6.3))
         shouldbe = np.array(
             [
-                2.15 * np.exp(0) * 5.1 ** 2.5 * 6.3 ** 3.5,
-                2.15 * np.exp(-0.1) * 5.1 ** 2.3 * 6.3 ** 3.2,
-                2.15 * np.exp(0.1) * 5.1 ** 2.7 * 6.3 ** 3.8,
+                2.15 * np.exp(0) * 5.1**2.5 * 6.3**3.5,
+                2.15 * np.exp(-0.1) * 5.1**2.3 * 6.3**3.2,
+                2.15 * np.exp(0.1) * 5.1**2.7 * 6.3**3.8,
             ]
         )
         assert np.allclose(result, shouldbe), f"{result} != {shouldbe}"

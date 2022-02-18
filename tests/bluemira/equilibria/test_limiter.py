@@ -20,8 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 
-import pytest
 import numpy as np
+import pytest
+
 from bluemira.equilibria.limiter import Limiter
 
 

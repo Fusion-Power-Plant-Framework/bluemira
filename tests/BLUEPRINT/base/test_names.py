@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
 
-
 from BLUEPRINT.base.names import name_long_short, name_short_long
 
 

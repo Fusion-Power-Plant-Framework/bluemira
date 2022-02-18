@@ -18,15 +18,17 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import math
+
 import pytest
-from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
+
 from BLUEPRINT.cad.cadtools import get_properties
+from BLUEPRINT.cad.centralcolumnshieldCAD import CentralColumnShieldCAD
 from BLUEPRINT.systems.centralcolumnshield import CentralColumnShield
 from tests.BLUEPRINT.systems.test_centralcolumnshield import (
-    setup_cc_params,
     setup_cc_inputs,
+    setup_cc_params,
 )
-import math
 
 
 class TestCentralColumnShieldCAD:
@@ -79,7 +81,7 @@ class TestCentralColumnShieldCAD:
         vv_inner_r = self.xmid - self.length / 2.0 + vv_offset
         vv_outer_r = self.xmid
         vv_height = self.length - 2.0 * vv_offset
-        vv_vol = math.pi * vv_height * (vv_outer_r ** 2 - vv_inner_r ** 2)
+        vv_vol = math.pi * vv_height * (vv_outer_r**2 - vv_inner_r**2)
 
         # Volume of first wall cutaway is half-circle of revolution
         # Formula is:
@@ -88,8 +90,8 @@ class TestCentralColumnShieldCAD:
         fw_offset = self.ccs.params.g_ccs_fw
         fw_minor_r = self.radius + fw_offset
         fw_major_r = self.xmid
-        fw_vol = (math.pi * fw_minor_r ** 2) * (math.pi * fw_major_r)
-        fw_vol -= 4 / 3 * math.pi * fw_minor_r ** 3
+        fw_vol = (math.pi * fw_minor_r**2) * (math.pi * fw_major_r)
+        fw_vol -= 4 / 3 * math.pi * fw_minor_r**3
 
         # Volume of central column shield is difference
         vol = vv_vol - fw_vol

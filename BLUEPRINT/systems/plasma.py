@@ -344,7 +344,7 @@ class Plasma(Meshable, ReactorSystem):
             2.15e-9
             * self.config["Z_eff"]
             * self.params.R_0
-            / (kappa * a ** 2 * (self.params.T_e / 10) ** 1.5)
+            / (kappa * a**2 * (self.params.T_e / 10) ** 1.5)
         )  # [Ohms]
 
         rpfac = 4.3 - 0.6 * self.params.R_0 / a
@@ -373,7 +373,7 @@ class Plasma(Meshable, ReactorSystem):
             * self.params.res_plasma
             * f_ohm
             * f_sawtooth_control
-            * 10 ** 6
+            * 10**6
         )
         return v_burn
 
@@ -423,9 +423,3 @@ class PlasmaPlotter(ReactorSystemPlotter):
         """
         kwargs["alpha"] = kwargs.get("alpha", 0.15)
         super().plot_xy(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

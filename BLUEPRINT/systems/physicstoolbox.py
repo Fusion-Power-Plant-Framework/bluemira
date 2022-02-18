@@ -88,9 +88,9 @@ def estimate_kappa95(A, m_s_limit):
         -d
         - c * A
         - np.sqrt(
-            (c ** 2 - 4 * a * b) * A ** 2
+            (c**2 - 4 * a * b) * A**2
             + (2 * d * c - 4 * a * e) * A
-            + d ** 2
+            + d**2
             - 4 * a * f
             + 4 * a * m_s_limit
         )
@@ -98,7 +98,7 @@ def estimate_kappa95(A, m_s_limit):
 
     # Include power correction for more conservative extrapolation from low
     # number of data points
-    return kappa_95 ** 0.98
+    return kappa_95**0.98
 
 
 # TODO UPDATE:  EF says this is wrong or not the best
@@ -135,7 +135,7 @@ def plasma_resistance(R_0, A, z_eff, kappa, t_e):
         The expression is valid for aspect ratios in the range 2.5 to 4.
     """  # noqa :W505
     a = R_0 / A
-    r_plasma = 2.15e-9 * z_eff * R_0 / (kappa * a ** 2 * (t_e / 10) ** 1.5)
+    r_plasma = 2.15e-9 * z_eff * R_0 / (kappa * a**2 * (t_e / 10) ** 1.5)
     rpfac = 4.3 - 0.6 * R_0 / a
     return r_plasma * rpfac
 
@@ -181,7 +181,7 @@ def joule_heating(rho, length, area, current):
     P: float
         The total resistive Joule heating in the conductor [W]
     """
-    return rho * length / area * current ** 2
+    return rho * length / area * current**2
 
 
 def IPB98y2(Ip, b_tor, p_sep, n19, R_0, A, kappa):  # noqa :N802
@@ -353,7 +353,7 @@ def E_DT_fusion():  # noqa :N802
         \\Delta E = \\Delta m c^2
     """
     delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
-    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def E_DD_fusion():  # noqa :N802
@@ -383,7 +383,7 @@ def E_DD_fusion():  # noqa :N802
         ]
     )
     delta_m = np.average(delta_m)
-    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def n_DT_reactions(p_fus: Union[int, float]) -> float:

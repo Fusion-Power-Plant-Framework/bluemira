@@ -24,23 +24,25 @@ BLUEPRINT -> bluemira ST equilibrium recursion test
 """
 
 import os
+
 import numpy as np
 import pytest
+
 from bluemira.base.file import get_bluemira_root
 from bluemira.equilibria import (
-    Equilibrium,
-    CustomProfile,
-    Grid,
-    CoilSet,
-    MagneticConstraintSet,
-    IsofluxConstraint,
-    Norm2Tikhonov,
     Coil,
-    SymmetricCircuit,
+    CoilSet,
+    CustomProfile,
+    Equilibrium,
+    Grid,
+    IsofluxConstraint,
+    MagneticConstraintSet,
+    Norm2Tikhonov,
     PicardDeltaIterator,
+    SymmetricCircuit,
 )
-from bluemira.equilibria.physics import calc_li
 from bluemira.equilibria.file import EQDSKInterface
+from bluemira.equilibria.physics import calc_li
 from bluemira.equilibria.solve import DudsonConvergence
 
 
@@ -181,19 +183,20 @@ class TestSTEquilibrium:
         self.eq = eq
         self._test_equilibrium_good(eq, psi_rtol=1e-3, li_rtol=1e-8)
         self._test_profiles_good(eq)
+
         # Verify by removing symmetry constraint and checking convergence
         eq.force_symmetry = False
         eq.set_grid(grid)
         fbe_iterator()
         # I probably exported the eq before it was regridded without symmetry..
-        self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-4)
+        self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-3)
 
         self._test_profiles_good(eq)
 
     def _test_equilibrium_good(self, eq, psi_rtol, li_rtol):
         assert np.isclose(eq._Ip, abs(self.jeq_dict["cplasma"]))
         lcfs_area = eq.get_LCFS().area
-        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area)
+        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area, rtol=1e-3)
 
         li_bp = calc_li(self.eq_blueprint)
         assert np.isclose(li_bp, calc_li(eq), rtol=li_rtol)

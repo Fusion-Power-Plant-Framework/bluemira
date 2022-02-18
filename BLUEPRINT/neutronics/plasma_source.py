@@ -26,8 +26,9 @@ For more information / citation see
 [here](https://doi.org/10.1016/j.fusengdes.2012.02.025)
 """
 
-import numpy as np
 import math
+
+import numpy as np
 from scipy.interpolate import griddata
 
 
@@ -120,7 +121,7 @@ class PlasmaSource:
             radius = bin_width * idx
             ion_density = self.ion_density(radius)
             ion_temperature = self.ion_temperature(radius)
-            strength_at_radius = ion_density ** 2 * self.dt_cross_section(
+            strength_at_radius = ion_density**2 * self.dt_cross_section(
                 ion_temperature
             )
             ion_kt_at_radius = math.sqrt(ion_temperature * 0.001)
@@ -348,5 +349,5 @@ class PlasmaSource:
         """
         ion_density = self.ion_density(radius)
         ion_temperature = self.ion_temperature(radius)
-        source_strength = ion_density ** 2 * self.dt_cross_section(ion_temperature)
+        source_strength = ion_density**2 * self.dt_cross_section(ion_temperature)
         return source_strength

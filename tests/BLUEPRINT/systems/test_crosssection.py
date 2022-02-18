@@ -18,18 +18,17 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import matplotlib.pyplot as plt
 import os
+
+import matplotlib.pyplot as plt
 import pytest
 
-from bluemira.base.parameter import ParameterFrame
-
+import tests
 from bluemira.base.file import get_bluemira_root
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.nova.firstwall import FirstWallProfile
 from BLUEPRINT.nova.stream import StreamFlow
 from BLUEPRINT.systems.crosssection import ReactorCrossSection
-
-import tests
 
 
 class TestReactorCrossSection:

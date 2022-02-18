@@ -20,27 +20,26 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-from matplotlib import pyplot as plt
 import pytest
+from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.loop import Loop
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.geomtools import (
-    inloop,
-    circle_line_intersect,
-    loop_volume,
-    circle_seg,
     circle_arc,
-    project_point_axis,
-    polyarea,
-    loop_surface,
-    lineq,
+    circle_line_intersect,
+    circle_seg,
     get_normal_vector,
-    make_box_xz,
     index_of_point_on_loop,
+    inloop,
+    lineq,
+    loop_surface,
+    loop_volume,
+    make_box_xz,
+    polyarea,
+    project_point_axis,
 )
-
+from BLUEPRINT.geometry.loop import Loop
 
 TEST = get_bluemira_path("BLUEPRINT/geometry/test_data", subfolder="tests")
 
@@ -208,7 +207,7 @@ class TestSurfaceArea:
     def test_torus(self):
         major = 9
         minor = 3
-        area = 4 * np.pi ** 2 * major * minor
+        area = 4 * np.pi**2 * major * minor
 
         x, z = circle_seg(minor, h=(major, 0), npoints=500)
 

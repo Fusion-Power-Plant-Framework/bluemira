@@ -146,15 +146,23 @@ class Inputs(PlasmodParameters):
     Class for Plasmod inputs
     """
 
-    f_int = ff.FortranRecordWriter("a20,i10")
-    f_float = ff.FortranRecordWriter("a20,e16.9")
+    f_int = ff.FortranRecordWriter("a20,  i10")
+    f_float = ff.FortranRecordWriter("a20, e17.9")
 
     def __init__(self, new_inputs=None):
-        super().__init__()
-
         self._options = self.get_default_plasmod_inputs()
 
         self.modify(new_inputs)
+
+    def modify(self, new_inputs):
+        """
+        Modify and check models
+
+        Parameters
+        ----------
+        new_inputs: dict
+        """
+        super().modify(new_inputs)
         self._check_models()
 
     def _write(self, filename):
@@ -210,7 +218,6 @@ class Outputs(PlasmodParameters):
     """Class for Plasmod outputs"""
 
     def __init__(self):
-        super().__init__()
         self._options = self.get_default_plasmod_outputs()
 
     def get_default_plasmod_outputs(self):
@@ -257,7 +264,7 @@ class Outputs(PlasmodParameters):
             for row in csv.reader(fd, delimiter="\t"):
                 output_key, *output_value = row[0].split()
                 output[output_key] = (
-                    np.array(output_value, dtype=np.float)
+                    np.array(output_value, dtype=float)
                     if len(output_value) > 1
                     else float(output_value[0])
                 )
@@ -328,24 +335,26 @@ class Setup(interface.Setup):
     def __init__(self, parent, *args, problem_settings=None, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
-        self.prepare_inputs(problem_settings if problem_settings is not None else {})
+        self._problem_settings = problem_settings if problem_settings is not None else {}
         self.input_file = "plasmod_input.dat"
         self.output_file = "plasmod_outputs.dat"
         self.profiles_file = "plasmod_profiles.dat"
+        self.io_manager = Inputs({**self._get_new_inputs(), **self._problem_settings})
 
-    def prepare_inputs(self, problem_settings):
+    def update_inputs(self):
         """
-        Prepare inputs for plasmod
+        Update plasmod inputs
+        """
+        self.io_manager.modify({**self._get_new_inputs(), **self._problem_settings})
 
-        Parameters
-        ----------
-        problem_settings: dict
-            dictionary of extra arguments to override unmapped or default values
+    def _get_new_inputs(self):
+        """
+        Get new key mappings from the ParameterFrame.
         """
         _inputs = {}
         for pl_key, bm_key in self._send_mapping.items():
             _inputs[pl_key] = self.params.get(bm_key)
-        self.io_manager = Inputs({**_inputs, **problem_settings})
+        return _inputs
 
     def write_input(self):
         """
@@ -357,12 +366,14 @@ class Setup(interface.Setup):
         """
         Run plasmod setup
         """
+        self.update_inputs()
         self.write_input()
 
     def _mock(self):
         """
         Mock plasmod setup
         """
+        self.update_inputs()
         self.write_input()
 
 
@@ -477,6 +488,13 @@ class Solver(interface.FileProgramInterface):
             mappings=create_mapping(),
             problem_settings=build_config.get("problem_settings", None),
         )
+
+    @property
+    def problem_settings(self):
+        """
+        Get problem settings dictionary
+        """
+        return self.setup_obj._problem_settings
 
     def get_scalar(self, scalar):
         """

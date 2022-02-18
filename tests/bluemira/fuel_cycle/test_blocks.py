@@ -19,20 +19,22 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
 import json
-import numpy as np
+import os
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 from scipy.interpolate import interp1d
+
 import tests
 from bluemira.base.file import get_bluemira_path
+from bluemira.fuel_cycle.blocks import FuelCycleComponent
 from bluemira.fuel_cycle.tools import (
     convert_flux_to_flow,
     fit_sink_data,
     piecewise_sqrt_threshold,
 )
-from bluemira.fuel_cycle.blocks import FuelCycleComponent
 
 
 class TestFuelCycleComponent:
@@ -148,7 +150,7 @@ class TestSqrtFittedSinks:
             y_interp = interpolation(t)[:-1]
             y_model = component.inventory[:-1]
             y_mean = np.mean(y_interp)
-            ss_tot = np.sum((y_interp - y_mean ** 2))
+            ss_tot = np.sum((y_interp - y_mean**2))
             ss_res = np.sum((y_interp - y_model) ** 2)
             r_2 = 1 - ss_res / ss_tot
 

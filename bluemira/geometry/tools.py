@@ -32,6 +32,7 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
@@ -57,10 +58,31 @@ def convert(apiobj, label=""):
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
+def _make_vertex(point):
+    """
+    Make a vertex.
+
+    Parameters
+    ----------
+    point: Iterable
+        Coordinates of the point
+
+    Returns
+    -------
+    vertex: apiVertex
+        Vertex at the point
+    """
+    if not len(point) == 3:
+        raise GeometryError("Points must be of dimension 3.")
+
+    return cadapi.apiVertex(*point)
+
+
 def make_polygon(
     points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
-    """Make a polygon from a set of points.
+    """
+    Make a polygon from a set of points.
 
     Parameters
     ----------
@@ -78,6 +100,7 @@ def make_polygon(
     wire: BluemiraWire
         a bluemira wire that contains the polygon
     """
+    points = Coordinates(points).T
     return BluemiraWire(cadapi.make_polygon(points, closed), label=label)
 
 
@@ -105,6 +128,7 @@ def make_bspline(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
+    points = Coordinates(points).T
     return BluemiraWire(cadapi.make_bspline(points, closed), label=label)
 
 
@@ -129,15 +153,16 @@ def make_bezier(
     wire: BluemiraWire
         a bluemira wire that contains the bspline
     """
+    points = Coordinates(points).T
     return BluemiraWire(cadapi.make_bezier(points, closed), label=label)
 
 
 def make_circle(
     radius=1.0,
-    center=[0.0, 0.0, 0.0],
+    center=(0.0, 0.0, 0.0),
     start_angle=0.0,
     end_angle=360.0,
-    axis=[0.0, 0.0, 1.0],
+    axis=(0.0, 0.0, 1.0),
     label: str = "",
 ) -> BluemiraWire:
     """
@@ -147,14 +172,14 @@ def make_circle(
     ----------
     radius: float, default =1.0
         Radius of the circle
-    center: Iterable, default = [0, 0, 0]
+    center: Iterable, default = (0, 0, 0)
         Center of the circle
     start_angle: float, default = 0.0
         Start angle of the arc [degrees]
     end_angle: float, default = 360.0
         End angle of the arc [degrees]. If start_angle == end_angle, a circle is created,
         otherwise a circle arc is created
-    axis: Iterable, default = [0, 0, 1]
+    axis: Iterable, default = (0, 0, 1)
         Normal vector to the circle plane. It defines the clockwise/anticlockwise
         circle orientation according to the right hand rule.
     label: str
@@ -193,11 +218,11 @@ def make_circle_arc_3P(p1, p2, p3, label: str = ""):  # noqa: N802
 
 
 def make_ellipse(
-    center=[0.0, 0.0, 0.0],
+    center=(0.0, 0.0, 0.0),
     major_radius=2.0,
     minor_radius=1.0,
-    major_axis=[1, 0, 0],
-    minor_axis=[0, 1, 0],
+    major_axis=(1, 0, 0),
+    minor_axis=(0, 1, 0),
     start_angle=0.0,
     end_angle=360.0,
     label: str = "",
@@ -207,15 +232,15 @@ def make_ellipse(
 
     Parameters
     ----------
-    center: Iterable, default = [0, 0, 0]
+    center: Iterable, default = (0, 0, 0)
         Center of the ellipse
     major_radius: float, default = 2
         Major radius of the ellipse
     minor_radius: float, default = 2
         Minor radius of the ellipse (float). Default to 2.
-    major_axis: Iterable, default = [1, 0, 0]
+    major_axis: Iterable, default = (1, 0, 0)
         Major axis direction
-    minor_axis: Iterable, default = [0, 1, 0]
+    minor_axis: Iterable, default = (0, 1, 0)
         Minor axis direction
     start_angle:  float, default = 0
         Start angle of the arc [degrees]
@@ -301,8 +326,8 @@ def offset_wire(
 # # =============================================================================
 def revolve_shape(
     shape,
-    base: tuple = (0.0, 0.0, 0.0),
-    direction: tuple = (0.0, 0.0, 1.0),
+    base: Iterable = (0.0, 0.0, 0.0),
+    direction: Iterable = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
 ):
@@ -313,9 +338,9 @@ def revolve_shape(
     ----------
     shape: BluemiraGeo
         The shape to be revolved
-    base: tuple (x,y,z), default = (0.0, 0.0, 0.0)
+    base: Iterable (x,y,z), default = (0.0, 0.0, 0.0)
         Origin location of the revolution
-    direction: tuple (x,y,z), default = (0.0, 0.0, 1.0)
+    direction: Iterable (x,y,z), default = (0.0, 0.0, 1.0)
         The direction vector
     degree: double, default = 180
         revolution angle
@@ -425,9 +450,51 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
         between geo1 and geo2. The distance between those points
         is the minimum distance given by dist.
     """
-    shape1 = geo1._shape
-    shape2 = geo2._shape
+    # Check geometry for vertices
+    if isinstance(geo1, Iterable):
+        shape1 = _make_vertex(geo1)
+    else:
+        shape1 = geo1._shape
+    if isinstance(geo2, Iterable):
+        shape2 = _make_vertex(geo2)
+    else:
+        shape2 = geo2._shape
     return cadapi.dist_to_shape(shape1, shape2)
+
+
+def slice_shape(shape: BluemiraGeo, plane):
+    """
+    Calculate the plane intersection points with an object
+
+    Parameters
+    ----------
+    obj: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
+        obj to intersect with a plane
+    plane: BluemiraPlane
+
+    Returns
+    -------
+    Wire: Union[List[np.ndarray], None]
+        returns array of intersection points
+    Face, Solid, Shell: Union[List[BluemiraWire], None]
+        list of intersections lines
+
+    Notes
+    -----
+    Degenerate cases such as tangets to solid or faces do not return intersections
+    if the shape and plane are acting at the Placement base.
+    Further investigation needed.
+
+    """
+    _slice = cadapi.slice_shape(shape._shape, plane.base, plane.axis)
+
+    if isinstance(_slice, np.ndarray) and _slice.size > 0:
+        return _slice
+
+    _slice = [convert(obj) for obj in _slice]
+
+    if len(_slice) > 0:
+        return _slice
 
 
 def circular_pattern(
@@ -717,3 +784,22 @@ def boolean_cut(shape, tools):
         return [convert(obj, shape.label) for obj in cut_shape]
 
     return convert(cut_shape, shape.label)
+
+
+def point_inside_shape(point, shape):
+    """
+    Whether or not a point is inside a shape.
+
+    Parameters
+    ----------
+    point: Iterable(3)
+        Coordinates of the point
+    shape: BluemiraGeo
+        Geometry to check with
+
+    Returns
+    -------
+    inside: bool
+        Whether or not the point is inside the shape
+    """
+    return cadapi.point_inside_shape(point, shape._shape)

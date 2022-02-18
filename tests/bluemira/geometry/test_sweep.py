@@ -23,16 +23,16 @@ import numpy as np
 import pytest
 
 from bluemira.codes.error import FreeCADError
-from bluemira.geometry.tools import (
-    make_polygon,
-    make_circle,
-    revolve_shape,
-    sweep_shape,
-    offset_wire,
-)
+from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD, TripleArc
-from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.tools import (
+    make_circle,
+    make_polygon,
+    offset_wire,
+    revolve_shape,
+    sweep_shape,
+)
 
 
 class TestSweep:
@@ -198,6 +198,6 @@ class TestRevolve:
         face = BluemiraFace([outer, inner])
         solid = revolve_shape(face, degree=360)
 
-        true_volume = 2 * np.pi * x_c * (4 ** 2 - 2 ** 2)
+        true_volume = 2 * np.pi * x_c * (4**2 - 2**2)
         assert solid.is_valid()
         assert np.isclose(solid.volume, true_volume)

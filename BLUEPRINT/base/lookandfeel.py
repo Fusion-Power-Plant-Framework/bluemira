@@ -60,9 +60,3 @@ def color_kwargs(**kwargs):
         colors = ["grey"]
     colors = cycle(colors)
     return colors
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

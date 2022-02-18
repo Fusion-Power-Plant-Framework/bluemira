@@ -24,9 +24,10 @@ Module containing the bluemira Design class.
 """
 
 import abc
-from typing import Dict, List, Optional, Type, Union
+import copy
+from typing import Dict, Optional, Set, Type, Union
 
-from bluemira.base.builder import Builder, BuildConfig
+from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import BuilderError
@@ -43,7 +44,7 @@ class DesignABC(abc.ABC):
     the analysis results and reactor components.
     """
 
-    _required_params: List[str] = ["Name"]
+    _required_params: Set[str]
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
@@ -54,10 +55,18 @@ class DesignABC(abc.ABC):
         build_config: Dict[str, BuildConfig],
     ):
         print_banner()
-        self._build_config = build_config
+        self._build_config = copy.deepcopy(build_config)
         self._extract_build_config(params)
+        self._validate_params(params)
         self._params = Configuration.from_template(self._required_params)
         self._params.update_kw_parameters(params)
+
+    @property
+    def required_params(self) -> Set[str]:
+        """
+        The names of the parameters that are required to run this design.
+        """
+        return self._required_params
 
     @property
     def params(self) -> Configuration:
@@ -125,7 +134,7 @@ class DesignABC(abc.ABC):
         else:
             raise BuilderError(f"Builder {name} already exists in {self}.")
 
-    def _build_stage(self, name: str, **kwargs):
+    def _build_stage(self, name: str) -> Component:
         """
         Build the requested stage and update the design's parameters.
 
@@ -139,7 +148,7 @@ class DesignABC(abc.ABC):
         component: Component
             The resulting component from the build.
         """
-        component = self._builders[name](self._params.to_dict(), **kwargs)
+        component = self._builders[name]()
         self._params.update_kw_parameters(self._builders[name].params.to_dict())
 
         return component
@@ -147,10 +156,27 @@ class DesignABC(abc.ABC):
     @abc.abstractmethod
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
         """
-        Extracts the builders from the config, which must be an ordered dictionary
-        mapping the name of the builder to the corresponding options.
+        Extract the builders and associated required parameter names from the config,
+        which must be an ordered dictionary mapping the name of the builder to the
+        corresponding options.
         """
         self._builders = {}
+        self._required_params = {"Name"}
+
+    def _validate_params(self, params: Dict[str, Union[int, float, str]]):
+        """
+        Validate that the provided parameters are as expected.
+        """
+        missing_params = {
+            param_name
+            for param_name in self._required_params
+            if param_name not in params
+        }
+
+        if len(missing_params) > 0:
+            raise BuilderError(
+                f"Required parameters {', '.join(sorted(missing_params))} not provided to Design"
+            )
 
 
 class Design(DesignABC):
@@ -161,7 +187,7 @@ class Design(DesignABC):
     analysis results and reactor components.
     """
 
-    _required_params: List[str] = ["Name"]
+    _required_params: Set[str]
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
@@ -198,19 +224,19 @@ class Design(DesignABC):
                 class_name, default_module="bluemira.builders"
             )
             self.register_builder(builder_class(params, val), key)
-            self._required_params += self._builders[key]._required_params
+            self._required_params |= set(self._builders[key]._required_params)
 
 
 class Reactor(DesignABC):
     """
     The Reactor class allows a Design to be implemented directly in the code. This can
     simplify some of logic when compared with the configurable Design class, in
-    particularwhen passing around Component information. As such, individual Reactor
+    particular when passing around Component information. As such, individual Reactor
     instances must implement their own `run` method. The Reactor class also provides
     managed output via a FileManager to aid the persistence of input and output data.
     """
 
-    _required_params: List[str] = list(Configuration().keys())
+    _required_params: Set[str]
     _params: Configuration
     _build_config: BuildConfig
     _builders: Dict[str, Builder]
@@ -239,6 +265,11 @@ class Reactor(DesignABC):
     def _extract_build_config(self, params: Dict[str, Union[int, float, str]]):
         super()._extract_build_config(params)
 
+        # For now the params can come from any parameters defined in Configuration.
+        # In the future we probably want to register the Builders early and get the
+        # parameters that the Builders need.
+        self._required_params |= set(Configuration().keys())
+
         self._reference_data_root: str = self._build_config.get(
             "reference_data_root", f"{BM_ROOT}/data"
         )
@@ -266,7 +297,7 @@ class Reactor(DesignABC):
         return config
 
     @property
-    def file_manager(self):
+    def file_manager(self) -> FileManager:
         """
         The FileManager instance associated with this Reactor.
         """
@@ -279,3 +310,9 @@ class Reactor(DesignABC):
         Perform a bulk update of the parameters from the given source.
         """
         self._params.update_kw_parameters(params, source=source)
+
+    def _validate_params(self, params: Dict[str, Union[int, float, str]]):
+        """
+        Validation of Reactor parameters is currently not supported.
+        """
+        pass

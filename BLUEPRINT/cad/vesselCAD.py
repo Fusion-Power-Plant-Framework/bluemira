@@ -222,9 +222,3 @@ class SegmentedVesselCAD(OnionCAD, ComponentCAD):
 
             # Add the TS shapes
             self.add_shape(profile_vv, name=name)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

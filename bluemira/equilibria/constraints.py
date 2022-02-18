@@ -23,7 +23,6 @@
 Plasma magnetic constraint objects and auto-generation tools
 """
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from dataclasses import dataclass
 from typing import List, Union
 
@@ -437,12 +436,6 @@ class MagneticConstraintSet(ABC):
                 constraint.target_value = psi_bndry
         self.build_target()
 
-    def copy(self):
-        """
-        Get a deep copy of the MagneticConstraintSet instance.
-        """
-        return deepcopy(self)
-
     def plot(self, ax=None):
         """
         Plots constraints
@@ -501,7 +494,7 @@ class AutoConstraints(MagneticConstraintSet):
 
         # Apply an appropriate constraint on the LCFS
         if psi_boundary is None:
-            arg_inner = np.argmin(x_boundary ** 2 + z_boundary ** 2)
+            arg_inner = np.argmin(x_boundary**2 + z_boundary**2)
             ref_x = x_boundary[arg_inner]
             ref_z = z_boundary[arg_inner]
 

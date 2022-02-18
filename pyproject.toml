@@ -25,3 +25,10 @@ exclude = '''
 "omit" = [
   "BLUEPRINT/_version.py"
 ]
+
+[tool.isort]
+line_length = 89
+profile = "black"
+skip_gitignore = true
+known_first_party = ["BLUEPRINT", "bluemira"]
+force_to_top = ["freecad"]

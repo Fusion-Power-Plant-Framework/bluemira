@@ -19,20 +19,21 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import tests
 from bluemira.base.constants import MU_0
 from bluemira.display.auto_config import plot_defaults
-from bluemira.geometry._deprecated_tools import make_circle_arc
 from bluemira.geometry._deprecated_loop import Loop
+from bluemira.geometry._deprecated_tools import make_circle_arc
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.greens import (
-    greens_all,
     circular_coil_inductance_elliptic,
     circular_coil_inductance_kirchhoff,
+    greens_all,
 )
-from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-import tests
 
 
 def test_biot_savart_loop():
@@ -64,8 +65,8 @@ def test_biot_savart_loop():
     Bz *= current
     Bx2 *= current
     Bz2 *= current
-    Bp = np.sqrt(Bx ** 2 + Bz ** 2)
-    Bp2 = np.sqrt(Bx2 ** 2 + Bz ** 2)
+    Bp = np.sqrt(Bx**2 + Bz**2)
+    Bp2 = np.sqrt(Bx2**2 + Bz**2)
 
     # Relative errors
     err_Bx = np.abs(100 * (Bx - Bx2) / Bx)
@@ -101,8 +102,8 @@ def test_biot_savart_loop():
 
     bz_analytical = (
         (MU_0 / (4 * np.pi))
-        * (2 * np.pi * x_coil ** 2 * current)
-        / (centreline.T[2] ** 2 + x_coil ** 2) ** (3 / 2)
+        * (2 * np.pi * x_coil**2 * current)
+        / (centreline.T[2] ** 2 + x_coil**2) ** (3 / 2)
     )
 
     assert np.allclose(bz_analytical, bz_differential)

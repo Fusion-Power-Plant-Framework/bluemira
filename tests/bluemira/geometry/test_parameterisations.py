@@ -19,24 +19,61 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import pytest
-import numpy as np
+import os
+import shutil
+import tempfile
+from typing import Type
 
-from bluemira.utilities.error import OptVariablesError
-from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
+import numpy as np
+import pytest
+
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
+    BotDomeFlatInnerCurvedPictureFrame,
+    BotDomeTaperedInnerCurvedPictureFrame,
+    FullDomeFlatInnerCurvedPictureFrame,
+    FullDomeTaperedInnerCurvedPictureFrame,
     GeometryParameterisation,
-    PrincetonD,
-    TripleArc,
-    SextupleArc,
     PictureFrame,
     PolySpline,
+    PrincetonD,
+    SextupleArc,
     TaperedPictureFrame,
+    TopDomeFlatInnerCurvedPictureFrame,
+    TopDomeTaperedInnerCurvedPictureFrame,
+    TripleArc,
 )
 from bluemira.geometry.tools import make_polygon
-from bluemira.geometry._deprecated_tools import get_perimeter
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.error import OptVariablesError
+from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
+
+
+@pytest.mark.parametrize(
+    "param_class",
+    [
+        PictureFrame,
+        PolySpline,
+        PrincetonD,
+        SextupleArc,
+        TaperedPictureFrame,
+        TripleArc,
+    ],
+)
+def test_read_write(param_class: Type[GeometryParameterisation]):
+    tempdir = tempfile.mkdtemp()
+    try:
+        the_path = os.sep.join([tempdir, f"{param_class.__name__}.json"])
+        param = param_class()
+        param.to_json(the_path)
+        new_param = param_class.from_json(the_path)
+        for attr in GeometryParameterisation.__slots__:
+            if attr == "variables":
+                assert new_param.variables._to_records() == param.variables._to_records()
+            else:
+                assert getattr(new_param, attr) == getattr(param, attr)
+    finally:
+        shutil.rmtree(tempdir)
 
 
 class TestGeometryParameterisation:
@@ -86,17 +123,6 @@ class TestPrincetonD:
     def test_error(self):
         with pytest.raises(GeometryParameterisationError):
             PrincetonD._princeton_d(10, 3, 0)
-
-    def test_parameterisation(self):
-        p = PrincetonD()
-        p.adjust_variable("x1", 4, lower_bound=3, upper_bound=5)
-        p.adjust_variable("x2", 16, lower_bound=10, upper_bound=20)
-        p.adjust_variable("dz", 0, lower_bound=0, upper_bound=0)
-
-        wire = p.create_shape()
-        array = p.create_array(n_points=200)
-
-        assert np.isclose(wire.length, get_perimeter(*array), rtol=1e-3)
 
     def test_bad_behaviour(self):
         p = PrincetonD()
@@ -178,9 +204,52 @@ class TestTaperedPictureFrame:
         p = TaperedPictureFrame()
         wire = p.create_shape()
         assert len(wire._boundary) == 4
-        p.adjust_variable("r", value=0)
+        p.adjust_variable("ri", value=0)
+        p.adjust_variable("ro", value=0)
         wire = p.create_shape()
-        assert len(wire._boundary) == 2
+        assert len(wire._boundary) == 4
+
+
+class TestFullDomeFlatInnerCurvedPictureFrame:
+    def test_length(self):
+        p = FullDomeFlatInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 55.64519, rtol=1e-4, atol=1e-5)
+
+
+class TestFullDomeTaperedInnerCurvedPictureFrame:
+    def test_length(self):
+        p = FullDomeTaperedInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 53.732, rtol=1e-4, atol=1e-5)
+
+
+class TestTopDomeFlatInnerCurvedPictureFrame:
+    def test_length(self):
+        p = TopDomeFlatInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 51.707, rtol=1e-4, atol=1e-5)
+
+
+class TestBotDomeTaperedInnerCurvedPictureFrame:
+    def test_length(self):
+        p = BotDomeTaperedInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 49.794, rtol=1e-4, atol=1e-5)
+
+
+class TestTopDomeTaperedInnerCurvedPictureFrame:
+    def test_length(self):
+        p = TopDomeTaperedInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 49.794, rtol=1e-4, atol=1e-5)
+
+
+class TestBotDomeFlatInnerCurvedPictureFrame:
+    def test_length(self):
+        p = BotDomeFlatInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 51.707, rtol=1e-4, atol=1e-5)
 
 
 class TestSextupleArc:

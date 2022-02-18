@@ -23,15 +23,21 @@
 Optimisation variable class.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
+from __future__ import annotations
+
+import json
 from operator import attrgetter
+from typing import Dict, TextIO, Union
+
+import matplotlib.pyplot as plt
+import numpy as np
 from pandas import DataFrame
 from tabulate import tabulate
-from bluemira.base.look_and_feel import bluemira_warn
 
-from bluemira.utilities.error import OptVariablesError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.palettes import BLUEMIRA_PALETTE
+from bluemira.utilities.error import OptVariablesError
+from bluemira.utilities.tools import json_writer
 
 
 def normalise_value(value, lower_bound, upper_bound):
@@ -74,6 +80,26 @@ def denormalise_value(v_norm, lower_bound, upper_bound):
         Denormalised value w.r.t. bounds
     """
     return lower_bound + v_norm * (upper_bound - lower_bound)
+
+
+class BoundedVariableEncoder(json.JSONEncoder):
+    """
+    A JSONEncoder for serialising BoundedVariable instances.
+    """
+
+    def default(self, obj):
+        """
+        Serialises a Bounded Variable by extracting the value, lower_bound, upper_bound,
+        and fixed properties.
+        """
+        if isinstance(obj, BoundedVariable):
+            return {
+                "value": obj.value,
+                "lower_bound": obj.lower_bound,
+                "upper_bound": obj.upper_bound,
+                "fixed": obj.fixed,
+            }
+        return super().default(obj)
 
 
 class BoundedVariable:
@@ -476,7 +502,7 @@ class OptVariables:
         if name not in self._var_dict.keys():
             raise OptVariablesError(f"Variable {name} not in OptVariables instance.")
 
-    def __getitem__(self, name):
+    def __getitem__(self, name) -> BoundedVariable:
         """
         Dictionary-like access to variables.
 
@@ -580,6 +606,38 @@ class OptVariables:
             + "\n    ".join([repr(var) for var in self._var_dict.values()])
             + "\n)"
         )
+
+    def to_json(self, file: str, **kwargs):
+        """
+        Write the json representation of these OptVariables to a file.
+
+        Parameters
+        ----------
+        file: str
+            The path to the file.
+        """
+        cls = kwargs.pop("cls", None)
+        if cls is None:
+            cls = BoundedVariableEncoder
+        json_writer(self._var_dict, file, cls=cls, **kwargs)
+
+    @classmethod
+    def from_json(cls, file: Union[str, TextIO], frozen=False) -> OptVariables:
+        """
+        Create an OptVariables instance from a json file.
+
+        Parameters
+        ----------
+        file: Union[str, TextIO]
+            The path to the file, or an open file handle that supports reading.
+        """
+        if isinstance(file, str):
+            with open(file, "r") as fh:
+                return cls.from_json(fh)
+
+        var_dict: Dict = json.load(file)
+        new_vars = [BoundedVariable(key, **val) for key, val in var_dict.items()]
+        return cls(new_vars, frozen=frozen)
 
     def plot(self):
         """

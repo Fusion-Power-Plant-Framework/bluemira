@@ -24,21 +24,22 @@ A collection of plotting tools.
 """
 
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.path import Path
-from matplotlib.patches import Patch, PathPatch
-from mpl_toolkits.mplot3d.art3d import PathPatch3D
-from mpl_toolkits.mplot3d import Axes3D
-import imageio
 from typing import Union
 
-from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
-from bluemira.base.components import Component
-from bluemira.base.file import get_bluemira_path
-import bluemira.display.error as bm_display_error
-from bluemira.geometry.plane import BluemiraPlane
+import imageio
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Patch, PathPatch
+from matplotlib.path import Path
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
+import bluemira.display.error as bm_display_error
+from bluemira.base.components import Component
+from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
+from bluemira.geometry.plane import BluemiraPlane
 
 __all__ = [
     "str_to_latex",
@@ -154,8 +155,6 @@ def coordinates_to_path(x, z):
     """
     Convert coordinates to path vertices.
     """
-    from bluemira.geometry._deprecated_tools import check_ccw
-
     if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
@@ -208,8 +207,6 @@ class BluemiraPathPatch3D(PathPatch3D):
     # Thank you StackOverflow
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
     def __init__(self, path, normal, translation=None, color="b", **kwargs):
-        from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2
-
         Patch.__init__(self, **kwargs)
 
         if translation is None:

@@ -27,11 +27,12 @@ https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594?saml_referrer=
 including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
-import numpy as np
 import numba as nb
+import numpy as np
+
 from bluemira.base.constants import MU_0_4PI
-from bluemira.magnetostatics.tools import process_xyz_array
 from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
+from bluemira.magnetostatics.tools import process_xyz_array
 
 __all__ = ["TrapezoidalPrismCurrentSource"]
 
@@ -68,10 +69,10 @@ def primitive_sxn_bound(cos_theta, sin_theta, r, q, t):
     """
     # First compute the divisors of each of the terms to determine if there
     # are singularities
-    divisor_1 = cos_theta * np.sqrt(t ** 2 + q ** 2)
-    divisor_2 = cos_theta * np.sqrt(r ** 2 * cos_theta ** 2 + q ** 2)
+    divisor_1 = cos_theta * np.sqrt(t**2 + q**2)
+    divisor_2 = cos_theta * np.sqrt(r**2 * cos_theta**2 + q**2)
     divisor_3 = q * np.sqrt(
-        t ** 2 + 2 * r * t * sin_theta * cos_theta + (r ** 2 + q ** 2) * cos_theta ** 2
+        t**2 + 2 * r * t * sin_theta * cos_theta + (r**2 + q**2) * cos_theta**2
     )
 
     # All singularities resolve to 0?
@@ -81,7 +82,7 @@ def primitive_sxn_bound(cos_theta, sin_theta, r, q, t):
     if divisor_2 != 0:
         result += r * cos_theta * np.arcsinh((t + r * cos_theta * sin_theta) / divisor_2)
     if divisor_3 != 0:
-        result += q * np.arctan((q ** 2 * sin_theta - t * r * cos_theta) / divisor_3)
+        result += q * np.arctan((q**2 * sin_theta - t * r * cos_theta) / divisor_3)
 
     return result
 
@@ -143,18 +144,18 @@ def primitive_szn_bound(cos_theta, sin_theta, r, ll, t):
     Singularities all resolve to: lim(ln(1)) --> 0
     """
     sqrt_term = np.sqrt(
-        t ** 2 * cos_theta ** 2
-        + ll ** 2
+        t**2 * cos_theta**2
+        + ll**2
         + 2 * r * ll * sin_theta * cos_theta
-        + r ** 2 * cos_theta ** 2
+        + r**2 * cos_theta**2
     )
 
     # First compute the divisors of each of the terms to determine if there
     # are singularities
-    divisor_1 = cos_theta * np.sqrt(t ** 2 + r ** 2 * cos_theta ** 2)
-    divisor_2 = cos_theta * np.sqrt(t ** 2 + ll ** 2)
+    divisor_1 = cos_theta * np.sqrt(t**2 + r**2 * cos_theta**2)
+    divisor_2 = cos_theta * np.sqrt(t**2 + ll**2)
     divisor_3 = np.sqrt(
-        ll ** 2 + 2 * ll * r * sin_theta * cos_theta + r ** 2 * cos_theta ** 2
+        ll**2 + 2 * ll * r * sin_theta * cos_theta + r**2 * cos_theta**2
     )
     divisor_4 = r * cos_theta * sqrt_term
     divisor_5 = ll * sqrt_term
@@ -168,7 +169,7 @@ def primitive_szn_bound(cos_theta, sin_theta, r, ll, t):
     if divisor_2 != 0:
         result -= t * np.arcsinh((ll * sin_theta + r * cos_theta) / divisor_2)
     if divisor_3 != 0:
-        result -= r * cos_theta ** 2 * np.arcsinh((t * cos_theta) / divisor_3)
+        result -= r * cos_theta**2 * np.arcsinh((t * cos_theta) / divisor_3)
     if divisor_4 != 0:
         result -= (
             r

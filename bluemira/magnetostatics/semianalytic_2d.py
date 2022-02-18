@@ -23,10 +23,11 @@
 Semi-analytic methods for Bx, Bz, and psi for circular coils of rectangular
 cross-section.
 """
-import numpy as np
 import numba as nb
+import numpy as np
+
 from bluemira.base.constants import EPS
-from bluemira.magnetostatics.tools import jit_llc5, jit_llc7, integrate, n_integrate
+from bluemira.magnetostatics.tools import integrate, jit_llc5, jit_llc7, n_integrate
 from bluemira.utilities.tools import is_num
 
 __all__ = ["semianalytic_Bx", "semianalytic_Bz", "semianalytic_psi"]
@@ -39,7 +40,7 @@ def _partial_x_integrand(phi, rr, zz):
     splitting up the integrands.
     """
     cos_phi = np.cos(phi)
-    r0 = np.sqrt(rr ** 2 + 1 - 2 * rr * cos_phi + zz ** 2)
+    r0 = np.sqrt(rr**2 + 1 - 2 * rr * cos_phi + zz**2)
 
     if abs(zz) < EPS:
         if abs(rr - 1.0) < EPS:
@@ -79,7 +80,7 @@ def _partial_z_integrand(phi, rr, zz):
 
     sin_phi = np.sin(phi)
     cos_phi = np.cos(phi)
-    r0 = np.sqrt(rr ** 2 + 1 - 2 * rr * cos_phi + zz ** 2)
+    r0 = np.sqrt(rr**2 + 1 - 2 * rr * cos_phi + zz**2)
 
     # F1
     result = zz * np.log(r0 + rr - cos_phi) - cos_phi * np.log(r0 + zz)
@@ -246,7 +247,7 @@ def _full_psi_integrand(x, phi, xc, zc, z, d_xc, d_zc):
     z = z - zc
     r1, r2 = (xc - d_xc) / x, (xc + d_xc) / x
     z1, z2 = (-d_zc - z) / x, (d_zc - z) / x
-    return x ** 2 * (
+    return x**2 * (
         _partial_z_integrand(phi, r1, z1)
         - _partial_z_integrand(phi, r1, z2)
         - _partial_z_integrand(phi, r2, z1)

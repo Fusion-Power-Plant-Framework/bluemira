@@ -23,16 +23,18 @@
 Generic plot utilities, figure and gif operations
 """
 import os
-import numpy as np
+
 import imageio
 import matplotlib.pyplot as plt
-from matplotlib.path import Path
+import numpy as np
 from matplotlib.patches import Patch, PathPatch
-from mpl_toolkits.mplot3d.art3d import PathPatch3D
+from matplotlib.path import Path
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import PathPatch3D
 from scipy.interpolate import interp1d
+
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
+from bluemira.geometry.coordinates import rotation_matrix_v1v2
 
 
 def makegif(folder, figname, formatt="png", clean=True):
@@ -85,48 +87,6 @@ def savefig(f, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
         pass
 
 
-def gsymbolify(string):
-    """
-    Returns a string to a latex printable greek letter if detected
-
-    Parameters
-    ----------
-    string: str
-        The string to add Greek symbols to
-
-    Returns
-    -------
-    string: str
-        The modified string. Returns input if no changes made
-    """
-    if string in GREEK_ALPHABET or string in GREEK_ALPHABET_CAPS:
-        return "\\" + string
-    else:
-        return string
-
-
-def mathify(string):
-    """
-    Creates a new string which can be printed in LaTEX nicely
-
-    Parameters
-    ----------
-    string: str
-        The string to be converted
-
-    Returns
-    -------
-    string: str
-        The mathified string
-
-    'I_m_p' ==> '$I_{m_{p}}$'
-    """
-    s = string.split("_")
-    s = [gsymbolify(sec) for sec in s]
-    ss = "".join(["_" + "{" + lab for i, lab in enumerate(s[1:])])
-    return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
-
-
 def weather_front(d2, n=10, scale=True, ends=True, **kwargs):
     """
     Plots a "weather front" on a design space plot
@@ -154,7 +114,7 @@ def weather_front(d2, n=10, scale=True, ends=True, **kwargs):
     asp = 1
     dy *= s
     dx = dx / asp
-    mag = np.sqrt(dx ** 2 + dy ** 2)
+    mag = np.sqrt(dx**2 + dy**2)
     dx /= mag
     dy /= mag
     x = xn[i::i]
@@ -189,7 +149,7 @@ def pathify(polygon):
     analytic methods have the proper coordinate order, no need to sort.
     """
     vertices = np.concatenate(
-        [np.asarray(polygon.exterior)] + [np.asarray(r) for r in polygon.interiors]
+        [polygon.exterior.coords] + [r.coords for r in polygon.interiors]
     )
     vertices = vertices[:, 0:2]
     codes = np.concatenate(
@@ -264,30 +224,4 @@ class BPPathPatch3D(PathPatch3D):
         """
         Get a rotation matrix based off two vectors.
         """
-        v1 /= np.linalg.norm(v1)
-        v2 /= np.linalg.norm(v2)
-
-        cos_angle = np.dot(v1, v2)
-        d = np.cross(v1, v2)
-        sin_angle = np.linalg.norm(d)
-
-        if sin_angle == 0:
-            matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
-        else:
-            d /= sin_angle
-
-            eye = np.eye(3)
-            ddt = np.outer(d, d)
-            skew = np.array(
-                [[0, d[2], -d[1]], [-d[2], 0, d[0]], [d[1], -d[0], 0]], dtype=np.float64
-            )
-
-            matrix = ddt + cos_angle * (eye - ddt) + sin_angle * skew
-
-        return matrix
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()
+        return rotation_matrix_v1v2(v1, v2)

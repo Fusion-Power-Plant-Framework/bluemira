@@ -1,6 +1,117 @@
 equilibria
 ==========
 
+Conventions
+-----------
+
+Equilibrium coordinate conventions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+TBD
+
+Flux surface geometry
+^^^^^^^^^^^^^^^^^^^^^
+
+Flux surface geometry parameters are defined with respect to the centre of the plasma,
+which is defined as the centroid of the reference ellipse (assuming symmetry).
+
+.. figure:: flux_surface_geometry.png
+   :name: fig:flux_surface_geometry
+
+   Diagram depicting a typical flux surface, showing how key shape characteristics are
+   calculated.
+
+Note that the centroid of the reference ellipse, :math:`C\equiv(R_{0}, z_{0})`, from which the shape characteristics are
+calculated, is neither the geometric centroid of the flux surface, nor the magnetic axis.
+
+As such, the shape characteristics of a flux surface are purely geometrical.
+
+The extrema of the flux surface are defined here (for convenience) as :math:`P_1, P_2, P_3, P_4`,
+starting from the outboard midplane and heading anti-clockwise.
+
+The major radius is calculated as:
+
+.. math::
+   :label: major_radius
+
+   R_0 = x_{P_{3}} + \dfrac{x_{P_{1}}-x_{P_{3}}}{2}
+
+The vertical coordinate of the centroid :math:`C`, is taken as the average vertical coordinate
+of :math:`P_1` and :math:`P_3`. This is only relevant in the case of tilted flux surfaces,
+and only affects the calculation of the upper and lower elongation and the vertical Shafranov
+shift.
+
+.. math::
+   :label: z_0
+
+   z_0 = \dfrac{z_{P_{1}}+z_{P_{3}}}{2}
+
+The minor radius is calculated as:
+
+.. math::
+   :label: minor_radius
+
+   a = \dfrac{x_{P_{1}}-x_{P_{3}}}{2}
+
+The aspect ratio is calculated as:
+
+.. math::
+   :label: aspect_ratio
+
+   A = \dfrac{R_0}{a}
+
+The elongation, and upper and lower elongations are calculated as:
+
+.. math::
+   :label: elongation
+
+   \begin{aligned}
+   \kappa =& \dfrac{z_{P_{2}}-z_{P_{4}}}{a}\\
+   \kappa_{u} =& \dfrac{z_{P_{2}}-z_0}{a}\\
+   \kappa_{l} = & \dfrac{z_0-z_{P_{4}}}{a}\end{aligned}
+
+By convention, lower elongation values are always given as positive.
+
+The upper and lower triangularities are calculated as:
+
+.. math::
+   :label: triangularity
+
+   \begin{aligned}
+   \delta_{u}&=\dfrac{x_C-x_{P_{2}}}{a}
+   \delta_{l}&=\dfrac{x_C-x_{P_{4}}}{a}\end{aligned}
+
+By convention, triangularities are signed, such that it is possible to have negative
+triangularity.
+
+The outer upper and lower squarenesses are calculated with respect to reference ellipse
+arcs:
+
+.. figure:: flux_surface_squareness.png
+   :name: fig:flux_surface_squareness
+
+.. math::
+   :label: squareness
+
+   \zeta=\dfrac{P_{A}P_{B}-P_{A}P_{C}}{P_{C}P_{D}}
+
+Note that this calculation is done with respect to the reference ellipses of each quadrant
+(and their centroids). Typically, squareness values are of interest on the low-field side
+quadrants. By this definition of squareness, :math:`\zeta=0.0` indicates a pure ellipse shape,
+:math:`\zeta=1.0` indicates a pure square shape, and negative values indicate a shape that
+that is "flatter" than an ellipse.
+
+The Shafranov shift is defined from the centroid of the reference ellipse to the magnetic
+axis, :math:`O`.
+
+.. math::
+   :label: shafranov_shift
+
+   \begin{aligned}
+   \Delta_{{shaf}_{x}} &= x_{O} - R_{0}\\
+   \Delta_{{shaf}_{z}} &=z_{O} - z_{C}\end{aligned}
+
+
 Theory
 ------
 
@@ -304,12 +415,12 @@ Plasma profiles
 ^^^^^^^^^^^^^^^
 
 The 1-D plasma profiles for toroidal current density and pressure are determined by the
-flux functions :math:`FF'` and :math:`p'`. 
+flux functions :math:`FF'` and :math:`p'`.
 
 Two approaches to determining the flux functions are available:
 
 * ``CustomProfile`` can be used to set the flux functions to fixed values, regardless of
-  the plasma geometry. This is useful when loading experimental profiles, or using 
+  the plasma geometry. This is useful when loading experimental profiles, or using
   profiles from 1.5-D transport and fixed boundary equilibrium solvers.
 
 * ``BetaIpProfile`` can be used to constrain plasma integral parameters :math:`\beta_p`,
@@ -323,43 +434,43 @@ Two approaches to determining the flux functions are available:
   is to constrain the plasma current, :math:`I_p`, the ratio of the plasma
   pressure to the poloidal magnetic field pressure, :math:`\beta_{p}`, and
   the normalised internal plasma inductance, :math:`l_i`.
-  
+
   .. math::
      :label: Ip
-  
+
      I_p = \int_{\Omega_p} J_{\phi} d\Omega_p
-  
+
   .. math::
      :label: betap
-  
+
      \beta_p = \frac{\langle p \rangle}{B_p^2/2\mu_0} = \frac{4}{\mu_0R_0I_p^2}\int_{\Omega_p} p d\Omega_p
-  
+
   .. math::
      :label: li
-  
+
      l_i = \frac{4}{\mu_0R_0I_p^2}\int_{\Omega_p} \frac{\lvert\lvert B_p^2\rvert\rvert}{2\mu_0} d\Omega_p
-  
+
   From Equations :eq:`Jphi` and :eq:`betap`, following an approach
   taken in [Jeon_2015]_, we can determine two
   of the unknowns, :math:`\lambda` and :math:`\beta_0`, thus ensuring that
   the :math:`I_p` and :math:`\beta_p` constraints are met, as in done in
   e.g. [Jeon_2015]_, [Dudson_2019]_.
-  
+
   To enforce the :math:`l_i` constraint, one must determine the shape
   parameters, :math:`\boldsymbol{\alpha}`, of the selected flux function. As the
   plasma shape is irregular and varies during each iteration of the
   Grad-Shafranov solution, a minimisation problem is set up during each
   Grad-Shafranov iteration, in order to find the optimal shape parameter
   vector [1]_, :math:`\boldsymbol{\alpha^{*}}`:
-  
+
   .. math::
      :label: liopt
-  
+
      \begin{aligned}
      \boldsymbol{\alpha^{*}}~=~& \underset{\boldsymbol{\alpha}}{\text{minimise}}:
      & & \bigg{\lvert}l_{i_{target}}-\frac{4}{\mu_0 R_0 I_p^2}\int_{\Omega_p}\frac{\lvert\lvert B_p^2\rvert\rvert}{2\mu_0} d\Omega_p \bigg{\rvert}\\
      \end{aligned}
-  
+
   Constraints may be applied to :math:`\boldsymbol{\alpha}` in order to impose
   certain current and/or pressure profiles, and to improve convergence.
 
@@ -380,7 +491,7 @@ constraints.
    :language: python
 
 .. Note::
-   We recommend you sub-class ``MagneticConstraintSet`` such that a parametric set of 
+   We recommend you sub-class ``MagneticConstraintSet`` such that a parametric set of
    magnetic constraints applicable to your problem can directly be used. Some common
    plasma LCFS shape parameterisations are provided to assist you.
 
@@ -393,7 +504,7 @@ up-down and in-out asymmetric boundary shapes.
 
 .. literalinclude:: doc_parametric_constraints.py
    :language: python
- 
+
 A set of :math:`n_T` constraints are applied on the calculated plasma
 boundary, in the form of :math:`\psi`, :math:`B_x`, and :math:`B_z`
 constraints. The :math:`\psi` values are set to a desired value,
@@ -405,7 +516,7 @@ to ensure that the positions of the divertor strike points remain more
 or less fixed over the course of a pulse. Equations :eq:`psiXZ`,
 :eq:`BxXZ`, and :eq:`BzXZ` are used to set up an equation of the
 form:
-  
+
 .. math::
    :label: Ax-b
 
@@ -423,7 +534,7 @@ where:
 -  :math:`\mathbf{b_{p}}` is a :math:`n_T` vector of the contribution of
    the passive currents (including the plasma) to the desired
    constraints.
- 
+
 A general, unconstrained solution to this minimisation problem proves
 useful during the first few stages of non-linear iterations. As Zakharov
 [Zakharov_1973]_ and Lackner [Lackner_1976]_ note, the problem of the
@@ -658,23 +769,23 @@ current optimiser.
 Circuits
 ********
 
-If one wants to run the solver for double null equilibria, it might be 
+If one wants to run the solver for double null equilibria, it might be
 expected that such an equilbrium should be symmetrical about :math:`z = 0`.
-In this case, it makes sense for the coil positions to be up-down symmetric 
-and for them to carry the same current. In reality, these coils might be in an actual circuit 
-that allows them to be controlled simultaneously and maintain proportional currents. 
-To replicate this setup, a Circuit class treating a pair of up-down symmetric 
-coils as one has been developed. We instantiate a Circuit by specifying the position, 
-dimensions, and current of a coil in the upper hlaf plane. A *virtual* coil (with the same parameterisation 
-except mirrored position) is then considered in calculations by the equilibrium solver. 
-This second coil is considered identical in every way to the coil in the 
-upper half plane except with negative :math:`z` position. 
+In this case, it makes sense for the coil positions to be up-down symmetric
+and for them to carry the same current. In reality, these coils might be in an actual circuit
+that allows them to be controlled simultaneously and maintain proportional currents.
+To replicate this setup, a Circuit class treating a pair of up-down symmetric
+coils as one has been developed. We instantiate a Circuit by specifying the position,
+dimensions, and current of a coil in the upper hlaf plane. A *virtual* coil (with the same parameterisation
+except mirrored position) is then considered in calculations by the equilibrium solver.
+This second coil is considered identical in every way to the coil in the
+upper half plane except with negative :math:`z` position.
 
 A Coilset object can then be populated with Circuits such that when the solver
-intends to use a coil from this coilset for a calculation, it will take into 
+intends to use a coil from this coilset for a calculation, it will take into
 consideration a second identical coil that will influence the result. In particular,
 this is useful when calculating fields semi-analytically or through the use of Green's functions
-and can be used throughout the solver to reduce the number of degrees of 
+and can be used throughout the solver to reduce the number of degrees of
 freedom by halving the number of currents used to populate matrices used in optimisation calculations.
 Throughout each iteration of the solver, each *virtual* coil in the lower
 half plane will maintain the same current as its symmetrical counterpart,

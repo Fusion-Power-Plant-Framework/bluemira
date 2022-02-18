@@ -26,9 +26,10 @@ Perform the EU-DEMO design.
 import os
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.parameter import ParameterFrame
+from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.codes import run_systems_code
@@ -54,6 +55,7 @@ class EUDEMOReactor(Reactor):
         self.run_systems_code()
         component.add_child(self.build_plasma())
         component.add_child(self.build_TF_coils(component))
+        component.add_child(self.build_PF_coils(component))
 
         bluemira_print("Reactor Design Complete!")
 
@@ -137,6 +139,7 @@ class EUDEMOReactor(Reactor):
         default_config = {
             "param_class": "PrincetonD",
             "variables_map": default_variables_map,
+            "geom_path": None,
             "runmode": "run",
             "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthOpt",
             "problem_settings": {},
@@ -151,15 +154,50 @@ class EUDEMOReactor(Reactor):
 
         config = self._process_design_stage_config(name, default_config)
 
-        builder = TFCoilsBuilder(self._params.to_dict(), config)
-        self.register_builder(builder, name)
+        if config["geom_path"] is None:
+            if config["runmode"] == "run":
+                default_geom_dir = self._file_manager.generated_data_dirs["geometry"]
+            else:
+                default_geom_dir = self._file_manager.reference_data_dirs["geometry"]
+            geom_name = f"tf_coils_{config['param_class']}_{self._params['n_TF']}.json"
+            geom_path = os.path.join(default_geom_dir, geom_name)
+
+            config["geom_path"] = geom_path
 
         plasma = component_tree.get_component("Plasma")
         sep_comp: PhysicalComponent = plasma.get_component("xz").get_component("LCFS")
         sep_shape = sep_comp.shape.boundary[0]
 
-        component = super()._build_stage(name, separatrix=sep_shape)
+        builder = TFCoilsBuilder(self._params.to_dict(), config, separatrix=sep_shape)
+        self.register_builder(builder, name)
+
+        component = super()._build_stage(name)
 
         bluemira_print(f"Completed design stage: {name}")
 
+        return component
+
+    def build_PF_coils(self, component_tree: Component):
+        """
+        Run the PF Coils build using the requested mode.
+        """
+        name = "PF Coils"
+
+        default_eqdsk_dir = self._file_manager.reference_data_dirs["equilibria"]
+        default_eqdsk_name = f"{self._params.Name.value}_eqref.json"
+        default_eqdsk_path = os.path.join(default_eqdsk_dir, default_eqdsk_name)
+
+        default_config = {
+            "runmode": "read",
+            "eqdsk_path": default_eqdsk_path,
+        }
+
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = PFCoilsBuilder(self._params.to_dict(), config)
+        self.register_builder(builder, name)
+
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
         return component

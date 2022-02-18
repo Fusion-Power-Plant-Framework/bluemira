@@ -19,17 +19,19 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import filecmp
 import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import matplotlib.pyplot as plt
-import filecmp
+
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
+from BLUEPRINT.geometry.geomtools import circle_seg, rotate_matrix
 from BLUEPRINT.geometry.loop import Loop
 from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.geometry.geomtools import rotate_matrix, circle_seg
 
 
 class TestShell:

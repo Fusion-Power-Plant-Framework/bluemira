@@ -22,26 +22,28 @@
 """
 Testing routines for different TF coil optimisations
 """
+
 import os
-import time
-from BLUEPRINT.geometry.geomtools import make_box_xz
-import pytest
-import matplotlib.pyplot as plt
-import tests
-import numpy as np
 import shutil
 import tempfile
+import time
+from copy import copy
+
+import matplotlib.pyplot as plt
+import numpy as np
 import OCC
+import pytest
 
-
-from bluemira.base.parameter import ParameterFrame
-
+import tests
 from bluemira.base.file import get_bluemira_path
-from BLUEPRINT.geometry.loop import Loop
-from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
+from bluemira.base.look_and_feel import bluemira_error
+from bluemira.base.parameter import ParameterFrame
 from bluemira.equilibria.shapes import flux_surface_manickam
 from BLUEPRINT.cad.cadtools import get_properties
-from bluemira.base.look_and_feel import bluemira_error
+from BLUEPRINT.geometry.geomtools import make_box_xz
+from BLUEPRINT.geometry.loop import Loop
+from BLUEPRINT.systems.optimisation_callbacks import TF_optimiser
+from BLUEPRINT.systems.tfcoils import ToroidalFieldCoils
 
 
 # Make temporary sub-directory for tests.
@@ -113,7 +115,7 @@ class TestTFCoil:
 
         tf = ToroidalFieldCoils(self.parameters, self.to_tf)
         tic = time.time()
-        tf.optimise()
+        tf.build(TF_optimiser)
         tock = time.time() - tic
 
         if tests.PLOTTING:
@@ -194,10 +196,28 @@ class TestTaperedPictureFrameTF:
         ),
         reason="OCC volume bug",
     )
+    def test_without_callback(self, tempdir):
+        self.to_tf["write_folder"] = tempdir
+        tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
+        tf1.build(TF_optimiser)
+        tf1_state = tf1.__getstate__()
+        tf2 = ToroidalFieldCoils(self.parameters, self.to_tf)
+        tf2.build()
+        assert tf1_state != tf2.__getstate__()
+        tf3 = copy(tf1)
+        tf3.build()
+        np.testing.assert_equal(tf1_state, tf3.__getstate__())
+
+    @pytest.mark.skipif(
+        not (
+            hasattr(OCC, "PYTHONOCC_VERSION_MAJOR") and OCC.PYTHONOCC_VERSION_MAJOR >= 7
+        ),
+        reason="OCC volume bug",
+    )
     def test_tapered_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        tf1.optimise()
+        tf1.build(TF_optimiser)
 
         # Test CAD Model
 
@@ -296,7 +316,7 @@ class TestSCPictureFrameTF:
     def test_pictureframe_SC_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        tf1.optimise()
+        tf1.build(TF_optimiser)
 
         # Test CAD Model
 
@@ -382,7 +402,7 @@ class TestCurvedPictureframeTF:
     def test_curved_pictureframe_SC_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        tf1.optimise()
+        tf1.build(TF_optimiser)
 
         # Test CAD Model
 
@@ -476,7 +496,7 @@ class TestResistiveCurvedPictureframeTF:
     def test_curved_pictureframe_R_TF(self, tempdir):
         self.to_tf["write_folder"] = tempdir
         tf1 = ToroidalFieldCoils(self.parameters, self.to_tf)
-        tf1.optimise()
+        tf1.build(TF_optimiser)
 
         # Test CAD Model
 

@@ -22,20 +22,17 @@
 """
 Toroidal field system
 """
-import numpy as np
-import matplotlib.pyplot as plt
 from typing import Type
-from scipy.interpolate import interp1d
-from scipy.interpolate import InterpolatedUnivariateSpline
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 
 from bluemira.base.constants import MU_0
-from bluemira.base.parameter import ParameterFrame
 from bluemira.base.look_and_feel import bluemira_warn
-
-from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
-from BLUEPRINT.systems.baseclass import ReactorSystem
+from bluemira.base.parameter import ParameterFrame
 from BLUEPRINT.base.error import SystemsError
-from BLUEPRINT.geometry.offset import offset_smc, offset
+from BLUEPRINT.cad.coilCAD import TFCoilCAD
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference_loop,
     boolean_2d_union,
@@ -44,9 +41,11 @@ from BLUEPRINT.geometry.boolean import (
 )
 from BLUEPRINT.geometry.geomtools import length, lengthnorm, make_box_xz, rainbow_seg
 from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring
-from BLUEPRINT.geometry.shell import Shell, MultiShell
+from BLUEPRINT.geometry.offset import offset, offset_smc
 from BLUEPRINT.geometry.shape import Shape
-from BLUEPRINT.cad.coilCAD import TFCoilCAD
+from BLUEPRINT.geometry.shell import MultiShell, Shell
+from BLUEPRINT.nova.coilcage import HelmholtzCage as CoilCage
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.mixins import Meshable
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 
@@ -183,7 +182,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             read_directory=self.inputs["read_folder"],
             write_directory=self.inputs["write_folder"],
         )
-
         # The outer point of the TF coil inboard in the mid-plane
         r_tf_inboard_out = (
             self.params.r_tf_in
@@ -650,12 +648,16 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.cage.set_coil(xloop["cl"])  # update coil cage
         return xloop
 
-    def optimise(self, verbose=True, **kwargs):
-        """
-        Carry out the optimisation of the TF coil centreline shape.
+    def build(self, callback=None, verbose=True, **kwargs):
+        """Build the TF coil with or without optimisation of the TF coil
+        centreline shape (depending on the callback). No optimization
+        is performed unless a callback is passed!
 
         Parameters
         ----------
+        callback: callable (optional)
+            A routine which, if present, performs the optimisation. If
+            none is provided (default) then no optimisation is performed.
         verbose: bool (default = True)
             Verbosity of the scipy optimiser
 
@@ -671,6 +673,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             The number of current filaments in the radial direction
         nrippoints: int
             The number of points on the separatrix to check for ripple
+
         """
         # Handle kwargs and update corresponding attributes
         for attr in ["ripple", "ripple_limit", "nrippoints"]:
@@ -691,7 +694,10 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Perform optimisation with geometric and magnetic constraints
         self.ripple = True
         self.shp.args = (self.ripple, self.ripple_limit)
-        self.shp.optimise(verbose=verbose, **kwargs)
+
+        # Perform an optimisation (if desired)
+        if callback is not None:
+            callback(self, verbose, kwargs)
 
         self.shp.write()
         self.cage.loop_ripple()

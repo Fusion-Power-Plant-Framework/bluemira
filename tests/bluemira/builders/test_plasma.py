@@ -23,10 +23,9 @@
 Tests for plasma builders
 """
 
+import tests
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.plasma import MakeParameterisedPlasma
-
-import tests
 
 
 class TestMakeParameterisedPlasma:
@@ -43,10 +42,9 @@ class TestMakeParameterisedPlasma:
                 "r_0": "R_0",
                 "a": "A",
             },
-            "segment_angle": 270.0,
         }
         builder = MakeParameterisedPlasma(params, build_config)
-        component = builder(params)
+        component = builder()
         assert component is not None
         assert isinstance(component, Component)
         assert len(component.children) == 3

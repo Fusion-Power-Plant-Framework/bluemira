@@ -366,9 +366,3 @@ class BuildRMDB:
     def store_dp(self, dp):
         self.RMDB = pd.concat([self.RMDB, dp], ignore_index=True)
         return
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

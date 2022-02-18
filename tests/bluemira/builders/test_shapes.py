@@ -23,25 +23,27 @@
 Tests for shape builders
 """
 
-import pytest
+import os
+import shutil
+import tempfile
 
 import numpy as np
-from bluemira.base.components import PhysicalComponent
-
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
-
-from bluemira.builders.shapes import MakeParameterisedShape, MakeOptimisedShape
+import pytest
 
 import tests
+from bluemira.base.components import PhysicalComponent
+from bluemira.builders.shapes import MakeOptimisedShape, MakeParameterisedShape
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
 
 
 class TestMakeParameterisedShape:
-    def test_builder(self):
-        params = {
+    @classmethod
+    def setup_class(cls):
+        cls.params = {
             "r_tf_in_centre": (5.0, "Input"),
             "r_tf_out_centre": (9.0, "Input"),
         }
-        build_config = {
+        cls.build_config = {
             "name": "TF Coils",
             "param_class": "PrincetonD",
             "variables_map": {
@@ -50,33 +52,51 @@ class TestMakeParameterisedShape:
                     "value": "r_tf_out_centre",
                     "lower_bound": 8.0,
                 },
-                "dz": 0.0,
+                "dz": {"value": 0.0, "fixed": True},
             },
             "label": "Shape",
         }
-        builder = MakeParameterisedShape(params, build_config)
-        component = builder(params)
+        cls.builder = MakeParameterisedShape(cls.params, cls.build_config)
+        cls.component = cls.builder()
 
-        assert component is not None
+    def test_builder_output(self):
+        """
+        Test the builder has generated the appropriate output
+        """
+        assert self.component is not None
 
-        name = build_config["name"]
-        label = build_config["label"]
+        name = self.build_config["name"]
+        label = self.build_config["label"]
 
-        assert component.name == name
+        assert self.component.name == name
 
-        child: PhysicalComponent = component.get_component("Shape")
+        child: PhysicalComponent = self.component.get_component("Shape")
         assert child is not None
         assert child.shape.label == label
 
         discr = child.shape.discretize()
-        assert min(discr.T[0]) == pytest.approx(params["r_tf_in_centre"][0], abs=1e-3)
-        assert max(discr.T[0]) == pytest.approx(params["r_tf_out_centre"][0], abs=1e-3)
-        assert np.average(discr.T[1]) == pytest.approx(
-            build_config["variables_map"]["dz"], abs=1e-3
+        assert min(discr.x) == pytest.approx(self.params["r_tf_in_centre"][0], abs=1e-3)
+        assert max(discr.x) == pytest.approx(self.params["r_tf_out_centre"][0], abs=1e-3)
+        assert np.average(discr.z) == pytest.approx(
+            self.build_config["variables_map"]["dz"]["value"], abs=1e-2
         )
 
         if tests.PLOTTING:
-            component.plot_2d()
+            self.component.plot_2d()
+
+    def test_save_shape(self):
+        """
+        Test we can save the generated shape.
+        """
+        tempdir = tempfile.mkdtemp()
+        try:
+            the_path = os.sep.join([tempdir, "shape_param.json"])
+            self.builder.save_shape(the_path)
+            assert os.path.isfile(the_path)
+            with open(the_path, "r") as fh:
+                assert len(fh.readlines()) > 0
+        finally:
+            shutil.rmtree(tempdir)
 
 
 class MinimiseLength(GeometryOptimisationProblem):
@@ -128,7 +148,7 @@ class TestMakeOptimisedShape:
                     "value": "r_tf_out_centre",
                     "lower_bound": 8.0,
                 },
-                "dz": 0.0,
+                "dz": {"value": 0.0, "fixed": True},
             },
             "problem_class": problem_class,
             "algorithm_name": "SLSQP",
@@ -136,7 +156,7 @@ class TestMakeOptimisedShape:
             "label": "Shape",
         }
         builder = MakeOptimisedShape(params, build_config)
-        component = builder(params)
+        component = builder()
 
         assert component is not None
 
@@ -150,14 +170,14 @@ class TestMakeOptimisedShape:
         assert child.shape.label == label
 
         discr = child.shape.discretize()
-        assert min(discr.T[0]) == pytest.approx(
+        assert min(discr.x) == pytest.approx(
             build_config["variables_map"]["x1"]["upper_bound"], abs=1e-3
         )
-        assert max(discr.T[0]) == pytest.approx(
+        assert max(discr.x) == pytest.approx(
             build_config["variables_map"]["x2"]["lower_bound"], abs=1e-3
         )
-        assert np.average(discr.T[1]) == pytest.approx(
-            build_config["variables_map"]["dz"], abs=1e-3
+        assert np.average(discr.z) == pytest.approx(
+            build_config["variables_map"]["dz"]["value"], abs=1e-2
         )
 
         if tests.PLOTTING:

@@ -22,8 +22,9 @@
 """
 Partially randomised fusion reactor load signal object and tools
 """
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.base.constants import S_TO_YR, YR_TO_S
 from bluemira.fuel_cycle.timeline_tools import LogNormalAvailabilityStrategy
 

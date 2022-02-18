@@ -1,7 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
+import numpy as np
 
+from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 source = TrapezoidalPrismCurrentSource(
     origin=[1, 1, 1],  # the centroid of the current source
@@ -21,7 +21,7 @@ xx, yy = np.meshgrid(x, y)
 
 # Calculate field values in global x, y, z Cartesian coordinates.
 Bx, By, Bz = source.field(xx, yy, np.ones_like(xx))
-B = np.sqrt(Bx ** 2 + By ** 2 + Bz ** 2)
+B = np.sqrt(Bx**2 + By**2 + Bz**2)
 
 source.plot()
 ax = plt.gca()

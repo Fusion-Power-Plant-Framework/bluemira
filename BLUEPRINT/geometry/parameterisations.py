@@ -33,7 +33,7 @@ from scipy.special import binom
 from scipy.special import iv as bessel
 
 from bluemira.geometry._deprecated_tools import innocent_smoothie
-from BLUEPRINT.base.error import GeometryError
+from bluemira.geometry.error import GeometryError
 from BLUEPRINT.geometry.geomtools import circle_seg, clock, qrotate, xz_interp
 
 
@@ -1649,7 +1649,7 @@ class PolySpline(Parameterisation):  # polybezier
         Calculate the basis function of a spline section.
         """
         n = 3  # spline order
-        return binom(n, v) * t ** v * (1 - t) ** (n - v)
+        return binom(n, v) * t**v * (1 - t) ** (n - v)
 
     @staticmethod
     def midpoints(p):
@@ -1904,9 +1904,3 @@ class BackwardPolySpline(PolySpline):  # polybezier
 
         self._plot_po(ax, points)
         ax.set_aspect("equal")
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

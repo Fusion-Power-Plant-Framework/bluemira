@@ -23,23 +23,21 @@
 Built-in build steps for making parameterised TF coils.
 """
 
-import numpy as np
 from copy import deepcopy
-import matplotlib.pyplot as plt
-import matplotlib
 
-from bluemira.base.look_and_feel import bluemira_debug_flush
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_debug_flush
 from bluemira.display import plot_2d
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.optimisation import GeometryOptimisationProblem
+from bluemira.geometry.tools import offset_wire, signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
-from bluemira.geometry.tools import (
-    offset_wire,
-    signed_distance_2D_polygon,
-)
+from bluemira.magnetostatics.circuits import HelmholtzCage
 
 
 class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
@@ -123,9 +121,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         Make a set of points at which to evaluate the KOZ constraint
         """
-        return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200)[
-            :, [0, 2]
-        ]
+        return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200).xz
 
     def _make_ripple_points(self, separatrix):
         """
@@ -141,7 +137,8 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             raise BuilderError(
                 "Ripple points on faces made from multiple wires not yet supported."
             )
-        points = separatrix.discretize(ndiscr=self.n_rip_points).T
+        points = separatrix.discretize(ndiscr=self.n_rip_points)
+        points.set_ccw((0, 1, 0))
         # Real argument to making the points the inputs... but then the plot would look
         # sad! :D
         # Can speed this up a lot if you know about your problem... I.e. with a princeton
@@ -149,16 +146,6 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
 
         # idx = np.where(points[0] > self.params.R_0.value)[0]
         # points = points[:, idx]
-
-        # Yet again... CCW default one of the main motivations of Loop
-        from bluemira.geometry._deprecated_tools import check_ccw
-
-        xpl, ypl, zpl = points
-        if not check_ccw(xpl, zpl):
-            xpl = xpl[::-1]
-            ypl = ypl[::-1]
-            zpl = zpl[::-1]
-        points = np.array([xpl, ypl, zpl])
         return points
 
     def _make_single_circuit(self, wire):
@@ -192,14 +179,8 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
             w.discretize(byedges=True, dl=wire.length / 200) for w in current_wires
         ]
 
-        # We need all arrays to be CCW, this will hopefully go away with a fix for #482
-        from bluemira.geometry._deprecated_tools import check_ccw
-
         for c in current_arrays:
-            if not check_ccw(c[:, 0], c[:, 2]):
-                c[:, 0] = c[:, 0][::-1]
-                c[:, 1] = c[:, 1][::-1]
-                c[:, 2] = c[:, 2][::-1]
+            c.set_ccw((0, 1, 0))
 
         radius = 0.5 * BluemiraFace(self.wp_cross_section).area / (self.nx * self.ny)
         filament = BiotSavartFilament(
@@ -252,7 +233,7 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
         """
         self.update_cage(x)
         shape = self.parameterisation.create_shape()
-        s = shape.discretize(ndiscr=self.n_koz_points)[:, [0, 2]]
+        s = shape.discretize(ndiscr=self.n_koz_points).xz
         return signed_distance_2D_polygon(s, self.koz_points)
 
     def f_constrain_koz(self, constraint, x, grad):
@@ -322,17 +303,15 @@ class RippleConstrainedLengthOpt(GeometryOptimisationProblem):
                 wire_options={"color": "k", "linewidth": 0.5},
             )
 
-        xpl, zpl = self.ripple_points[0], self.ripple_points[2]
         rv = self.ripple_values
-
         norm = matplotlib.colors.Normalize()
         norm.autoscale(rv)
         cm = matplotlib.cm.viridis
         sm = matplotlib.cm.ScalarMappable(cmap=cm, norm=norm)
         sm.set_array([])
         ax.scatter(
-            xpl,
-            zpl,
+            self.ripple_points.x,
+            self.ripple_points.z,
             color=cm(norm(rv)),
         )
         color_bar = plt.gcf().colorbar(sm)

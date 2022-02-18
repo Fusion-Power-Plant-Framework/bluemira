@@ -247,7 +247,7 @@ def ellipse(a, b, n=100):
     """
     k = a / b
     x = np.linspace(-a, a, n)
-    y = ((a ** 2 - x ** 2) / k ** 2) ** 0.5
+    y = ((a**2 - x**2) / k**2) ** 0.5
     x = np.append(x, x[:-1][::-1])
     y = np.append(y, -y[:-1][::-1])
     return x, y
@@ -390,9 +390,3 @@ def maximum(val, val_min):
     else:
         val = val_min if val < val_min else val
     return val
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

@@ -23,17 +23,18 @@
 Building CAD routines
 """
 import numpy as np
+
 from BLUEPRINT.base.palettes import BLUE
-from BLUEPRINT.cad.component import ComponentCAD
-from BLUEPRINT.cad.mixins import PlugChopper
 from BLUEPRINT.cad.cadtools import (
-    revolve,
-    extrude,
-    make_compound,
     boolean_cut,
     boolean_fuse,
+    extrude,
+    make_compound,
     make_face,
+    revolve,
 )
+from BLUEPRINT.cad.component import ComponentCAD
+from BLUEPRINT.cad.mixins import PlugChopper
 
 
 class RadiationCAD(PlugChopper, ComponentCAD):
@@ -148,9 +149,3 @@ class RadiationCAD(PlugChopper, ComponentCAD):
             plugs.append(plug)
         self.add_shape(rs, name="Radiation shield")
         self.plugs_for_neutronics(plugs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

@@ -23,22 +23,19 @@
 Picard iteration procedures for equilibria (and their infinite variations)
 """
 from abc import ABC, abstractmethod
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.utilities.error import ExternalOptError
-from bluemira.utilities.plot_tools import save_figure, make_gif
-from bluemira.equilibria.constants import (
-    PSI_REL_TOL,
-    DPI_GIF,
-    PLT_PAUSE,
-)
+from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import (
-    bluemira_print_flush,
     bluemira_print,
+    bluemira_print_flush,
     bluemira_warn,
 )
-from bluemira.base.file import try_get_bluemira_path
+from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE, PSI_REL_TOL
+from bluemira.utilities.error import ExternalOptError
+from bluemira.utilities.plot_tools import make_gif, save_figure
 
 __all__ = [
     "DudsonConvergence",
@@ -339,7 +336,7 @@ class CunninghamConvergence(ConvergenceCriterion):
             True if the convergence criterion is met, else False.
         """
         d_j = j_old - j_new
-        conv = np.sum(d_j ** 2) / np.sum(j_new)
+        conv = np.sum(d_j**2) / np.sum(j_new)
         if print_status:
             bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: J_phi source convergence: {conv:e}"

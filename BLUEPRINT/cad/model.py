@@ -30,7 +30,8 @@ from itertools import cycle
 import numpy as np
 from matplotlib.colors import to_rgb
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.utilities.tools import json_writer
 from BLUEPRINT.base.names import name_short_long
 from BLUEPRINT.base.palettes import BLUE
 from BLUEPRINT.cad.cadtools import (
@@ -231,6 +232,52 @@ class CADModel:
             filename = os.sep.join([filepath, name])
             part.save_as_STL(filename, scale=scale)
 
+    def save_component_names_as_json(self, filename):
+        """
+        Save the mapping of system to components as JSON format.
+
+        Each system maps to a list of tuples, where is tuple contains
+        a string holding the component name, and a unique ID that is
+        equivalent to the order in which components are written to STP
+        file in assembly mode.
+
+        Parameters
+        ----------
+        filename: str
+            Name of file in which to save.
+        """
+        # Populate the silo dict with all CAD components and their data
+        if self.silo is None:
+            self.pattern("sector")
+
+        # Only get the name data
+        component_dict = {}
+        current_id = 0
+        for system, component in self.silo.items():
+
+            # Replace spaces with underscores for parity with STP output
+            sysname = system.replace(" ", "_")
+
+            # Get sub component names with spaces replaced
+            names = [sub_name.replace(" ", "_") for sub_name in component["names"]]
+
+            # Generate ids
+            start_id = current_id + 1
+            end_id = start_id + len(names)
+            ids = list(range(start_id, end_id))
+            current_id = end_id - 1
+
+            # Make tuples of names and ids
+            sub_components = list(zip(names, ids))
+
+            # Save mapping of system to subcomponents
+            component_dict[sysname] = sub_components
+
+        if not filename.endswith(".json"):
+            filename += ".json"
+        bluemira_print(f"Writing {filename}")
+        json_writer(component_dict, filename)
+
 
 class Patterner:
     """
@@ -399,9 +446,3 @@ class Patterner:
         self.silo[partname]["names"].append(name)
         self.silo[partname]["colors"].append(color)
         self.silo[partname]["transparencies"].append(transp)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

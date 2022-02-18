@@ -53,7 +53,7 @@ class TestForceField:
         xc, zc = self.coilset.coils["PF_2"].x, self.coilset.coils["PF_2"].z
         i1 = i2 = 10e6
         a = ((x + xc) ** 2 + (z - zc) ** 2) ** 0.5
-        k = 4 * x * xc / a ** 2
+        k = 4 * x * xc / a**2
         fz = (
             (MU_0 * i1 * i2 * (z - zc) * np.sqrt(k))
             / (4 * np.sqrt(x * xc))

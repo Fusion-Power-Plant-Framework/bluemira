@@ -30,9 +30,10 @@ import bluemira.codes._freecadapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.error import DisjointedSolid
 from bluemira.geometry.shell import BluemiraShell
 
-from bluemira.geometry.error import DisjointedSolid
+__all__ = ["BluemiraSolid"]
 
 
 class BluemiraSolid(BluemiraGeo):

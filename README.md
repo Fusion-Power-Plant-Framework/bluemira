@@ -8,7 +8,7 @@ incorporates several modules, some of which rely on other codes, to carry out a 
 typical conceptual fusion reactor design activities.
 
 ``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see
-[publications](#Publications)).
+[publications](#publications)).
 
 ## Work in Progress!
 
@@ -20,6 +20,11 @@ caused our feature roadmap to slip. A lot of functionality that was present in  
 `Bluemira` is very much under active development, and will likely be subject to API
 changes in the near future. We apologise in advance for these. Please do get in touch
 before starting to use any modules, so we can warn you of changes to come.
+
+Below is an overview of our development roadmap for 2022:
+
+![bluemira-roadmap](./documentation/source/bluemira-roadmap.png)
+
 
 ## Modules
 
@@ -39,7 +44,7 @@ before starting to use any modules, so we can warn you of changes to come.
 * `utilities`: collection of utility toolboxes for file IO, databases,
   machine learning, and misc.
 
-## Publications [](#Publications)
+## Publications
 
 The ``bluemira`` code and its modules are described in the following publications:
 
@@ -63,7 +68,7 @@ The ``MIRA`` code and its modules are described in the following publications:
 
 ## Terms of use
 
-``Bluemira`` is [released under the LGPLv2.1 license](LICENSE.md), but we also ask that
+``Bluemira`` is [released under the LGPLv2.1 license](LICENSE), but we also ask that
 you show professional courtesy when using this code:
 
 1. Since you are benefiting from work on ``bluemira``, we ask that you submit any
@@ -81,7 +86,7 @@ you show professional courtesy when using this code:
    all the authors get the credit they deserve by citing the relevant ``bluemira``,
    ``BLUEPRINT``, and ``MIRA`` papers.
 
-For a full list of existing publications, see [here](#Publications).
+For a full list of existing publications, see [here](#publications).
 
 ## Code of conduct
 
@@ -89,7 +94,7 @@ See [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Installation
 
-See our [getting started guide](documentation/source/started.rst).
+See our [installation guide](https://bluemira.readthedocs.io/en/develop/installation.html).
 
 ## Developing
 

@@ -167,6 +167,7 @@ def json_writer(data, file=None, return_output=False, *, cls=NumpyJSONEncoder, *
     if file is not None:
         with open(file, "w") as fh:
             fh.write(the_json)
+            fh.write("\n")
 
     if return_output:
         return the_json
@@ -442,7 +443,7 @@ def set_random_seed(seed_number: int):
     nlopt.srand(seed_number)
 
 
-def compare_dicts(d1, d2, almost_equal=False, verbose=True):
+def compare_dicts(d1, d2, almost_equal=False, verbose=True, rtol=1e-5, atol=1e-8):
     """
     Compares two dictionaries. Will print information about the differences
     between the two to the console. Dictionaries are compared by length, keys,
@@ -458,6 +459,10 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True):
         Whether or not to use np.isclose and np.allclose for numbers and arrays
     verbose: bool (default = True)
         Whether or not to print to the console
+    rtol: float
+        The relative tolerance parameter, used if ``almost_eqaul`` is True
+    atol: float
+        The abosulte tolerance parameter, used if ``almost_eqaul`` is True
 
     Returns
     -------
@@ -475,17 +480,28 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True):
     # Define functions to use for comparison in either the array, dict, or
     # numeric cases.
     def dict_eq(value_1, value_2):
-        return compare_dicts(value_1, value_2, almost_equal, verbose)
+        return compare_dicts(value_1, value_2, almost_equal, verbose, rtol, atol)
+
+    def array_almost_eq(val1, val2):
+        return np.allclose(val1, val2, rtol, atol)
+
+    def num_almost_eq(val1, val2):
+        return np.isclose(val1, val2, rtol, atol)
+
+    def array_is_eq(val1, val2):
+        return (np.asarray(val1) == np.asarray(val2)).all()
 
     if almost_equal:
-        array_eq, num_eq = np.allclose, np.isclose
+        array_eq = array_almost_eq
+        num_eq = num_almost_eq
     else:
-        array_eq, num_eq = lambda val1, val2: (val1 == val2).all(), operator.eq
+        array_eq = array_is_eq
+        num_eq = operator.eq
 
     # Map the comparison functions to the keys based on the type of value in d1.
     comp_map = {
         key: array_eq
-        if isinstance(val, np.ndarray)
+        if isinstance(val, (np.ndarray, list))
         else dict_eq
         if isinstance(val, dict)
         else num_eq

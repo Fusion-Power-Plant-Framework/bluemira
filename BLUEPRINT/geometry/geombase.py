@@ -30,9 +30,10 @@ from copy import deepcopy
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.constants import D_TOLERANCE as TOLERANCE
+from bluemira.geometry.coordinates import rotation_matrix_v1v2
+from bluemira.geometry.error import GeometryError
 from bluemira.utilities.tools import json_writer
-from BLUEPRINT.base.error import GeometryError
-from BLUEPRINT.geometry.constants import TOLERANCE
 
 # =============================================================================
 # Type check static methods - Eventually make part of GeomBase object?
@@ -137,27 +138,7 @@ class GeomBase:
         """
         Get a rotation matrix based on two vectors.
         """
-        v1 /= np.linalg.norm(v1)
-        v2 /= np.linalg.norm(v2)
-
-        cos_angle = np.dot(v1, v2)
-        d = np.cross(v1, v2)
-        sin_angle = np.linalg.norm(d)
-
-        if sin_angle == 0:
-            matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
-        else:
-            d /= sin_angle
-
-            eye = np.eye(3)
-            ddt = np.outer(d, d)
-            skew = np.array(
-                [[0, d[2], -d[1]], [-d[2], 0, d[0]], [d[1], -d[0], 0]], dtype=np.float64
-            )
-
-            matrix = ddt + cos_angle * (eye - ddt) + sin_angle * skew
-
-        return matrix
+        return rotation_matrix_v1v2(v1, v2)
 
     def copy(self):
         """
@@ -257,7 +238,7 @@ class Plane(GeomBase):
         Plane parameters.
         """
         i = self.parameters
-        return i[-1] / np.sqrt(sum([x ** 2 for x in i[:-1]]))
+        return i[-1] / np.sqrt(sum([x**2 for x in i[:-1]]))
 
     @property
     def n_hat(self):
@@ -367,9 +348,3 @@ def make_plane(point, norm):
         return make_xy_plane(point)
     else:
         raise NotImplementedError
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

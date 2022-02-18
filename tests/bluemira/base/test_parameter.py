@@ -64,6 +64,25 @@ class DummyPF(ReactorSystem):
         self._init_params(self.inputs)
 
 
+class TestParameterMapping:
+    def test_value_change(self):
+        pm = ParameterMapping("Name", send=True, recv=False)
+
+        with pytest.raises(ValueError):
+            pm.send = "A string"
+
+        with pytest.raises(KeyError):
+            pm.name = "NewName"
+
+        with pytest.raises(KeyError):
+            pm.mynewattr = "Hello"
+
+        pm.send = False
+        pm.recv = True
+        assert not pm.send
+        assert pm.recv
+
+
 class TestParameter:
     p = Parameter(
         "r_0",
@@ -74,7 +93,10 @@ class TestParameter:
         "Input",
         {"PROCESS": ParameterMapping("rmajor", False, True)},
     )
-    p_str = "r_0 = 9 m (Major radius) : marjogrgrbg {'PROCESS': {'name': 'rmajor', 'recv': False, 'send': True}}"
+    p_str = (
+        "Major radius [m]: r_0 = 9 (marjogrgrbg)\n"
+        "    {'PROCESS': {'name': 'rmajor', 'recv': False, 'send': True}}"
+    )
     g = Parameter(
         "B_0",
         "Toroidal field at R_0",
@@ -83,7 +105,7 @@ class TestParameter:
         "Toroidal field at the centre of the plasma",
         "Input",
     )
-    g_str = "B_0 = 5.7 T (Toroidal field at R_0) : Toroidal field at the centre of the plasma"
+    g_str = "Toroidal field at R_0 [T]: B_0 = 5.7 (Toroidal field at the centre of the plasma)"
 
     def test_p(self, capsys):
         # make a copy of p

@@ -26,6 +26,7 @@ import json
 import os
 import re
 from collections import namedtuple
+from typing import List, Union
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -166,7 +167,7 @@ class BMFile(MFile):
         ]:
             if val in tf.keys():
                 rb.add_parameter(tf.get_param(val))
-        # No mapping for PRECOMP, TFCTH, FWITH, FWOTH, RMINOR
+        # No mapping for PRECOMP, TFCTH, RMINOR
         # (given mapping not valid)
         rtfin = rb["r_cs_in"] + rb["tk_cs"] + rb["precomp"] + rb["g_cs_tf"]
         r_ts_ib_in = rtfin + rb["tk_tf_inboard"] + rb["g_ts_tf"] + rb["tk_ts"]
@@ -184,10 +185,22 @@ class BMFile(MFile):
         # fmt:on
         self.params["Radial Build"] = rb
 
-    def extract_outputs(self, outputs):
+    def extract_outputs(self, outputs: Union[List, str]):
         """
-        Searches MFile for variable
-        Outputs defined in bluemira variable names
+        Searches MFile for variable.
+
+        Outputs defined in bluemira variable names if they are mapped
+        otherwise process variable names are the default
+
+        Parameters
+        ----------
+        outputs: Union[List, str]
+            parameter names to access
+
+        Returns
+        -------
+        List of values
+
         """
         out = []
         if isinstance(outputs, str):
@@ -203,10 +216,12 @@ class BMFile(MFile):
                 found = self._find_var_in_frame(var, out)
 
             if not found:
+                process_var = self.btop_mapping.get(var, var)
+                bluemira_var = "N/A" if var == process_var else var
                 out.append(0.0)
                 bluemira_warn(
-                    f'bluemira variable "{var}" a.k.a. '
-                    f'PROCESS variable "{self.btop_mapping[var]}" '
+                    f'bluemira variable "{bluemira_var}" a.k.a. '
+                    f'PROCESS variable "{process_var}" '
                     "not found in PROCESS output. Value set to 0.0."
                 )
         return out
@@ -242,70 +257,71 @@ class Teardown(interface.Teardown):
     """
 
     def _run(self):
-        self._check_PROCESS_output()
+        self._check_PROCESS_output_files()
 
         # Load PROCESS results into bluemira
-        self._load_PROCESS(self.read_mfile(), recv_all=False)
+        self.load_PROCESS_run(recv_all=False)
 
     def _runinput(self):
-        self._check_PROCESS_output()
+        self._check_PROCESS_output_files()
 
         # Load PROCESS results into bluemira
-        self._load_PROCESS(self.read_mfile(), recv_all=True)
+        self.load_PROCESS_run(recv_all=True)
 
     def _read(self):
-        self.get_PROCESS_run(path=self.parent._read_dir, recv_all=False)
+        self.load_PROCESS_run(path=self.parent._read_dir, recv_all=False)
 
     def _readall(self):
-        self.get_PROCESS_run(path=self.parent._read_dir, recv_all=True)
+        self.load_PROCESS_run(path=self.parent._read_dir, recv_all=True)
 
     def _mock(self):
         self.mock_PROCESS_run()
 
-    def get_PROCESS_run(self, path, recv_all=False):
-        """
-        Loads an existing PROCESS file (read-only). Not to be used when running PROCESS.
-        """
-        bluemira_print("Loading PROCESS systems code run.")
-
-        # Load the PROCESS MFile & read selected output
-        params_to_recv = (
-            self.parent._parameter_mapping if recv_all else self.parent._recv_mapping
-        )
-        self._load_PROCESS(BMFile(path, params_to_recv), recv_all)
-
-    def _load_PROCESS(self, bm_file: BMFile, recv_all: bool = False):
+    def load_PROCESS_run(self, path: str = None, recv_all: bool = False):
         """
         Loads a PROCESS output file (MFILE.DAT) and extract some or all its output data
 
         Parameters
         ----------
-            bm_file: BMFile
-                PROCESS output file (MFILE.DAT) to load
+            path: str, optional
+                path to PROCESS output file (MFILE.DAT) to load
+                uses `_run_dir` if not provided
             recv_all: bool, optional
                 True - Read all PROCESS output with a mapping,
                 False - reads only PROCESS output with a mapping and recv = True.
                 Default, False
         """
+        bluemira_print("Loading PROCESS MFILE.DAT")
+
         # Load all PROCESS vars mapped with a bluemira input
+        self.bm_file = self.read_mfile(path)
         var = (
             self.parent._parameter_mapping.values()
             if recv_all
             else self.parent._recv_mapping.values()
         )
-        param = bm_file.extract_outputs(var)
+        param = self.bm_file.extract_outputs(var)
         self.parent.params.update_kw_parameters(dict(zip(var, param)), source=PROCESS)
 
-    def read_mfile(self):
+    def read_mfile(self, path: str = None):
         """
         Read the MFILE.DAT from the PROCESS run_dir.
+
+        Parameters
+        ----------
+            path: str, optional
+                path to PROCESS output file (MFILE.DAT) to load
+                uses `_run_dir` if not provided
+
 
         Returns
         -------
         mfile: BMFile
             The object representation of the output MFILE.DAT.
         """
-        m_file = BMFile(self._run_dir, self.parent._parameter_mapping)
+        m_file = BMFile(
+            self._run_dir if path is None else path, self.parent._parameter_mapping
+        )
         self._check_feasible_solution(m_file)
         return m_file
 
@@ -323,7 +339,7 @@ class Teardown(interface.Teardown):
 
         self.parent.params.update_kw_parameters(process, source=f"{PROCESS} (Mock)")
 
-    def _check_PROCESS_output(self):
+    def _check_PROCESS_output_files(self):
         """
         Check that PROCESS has produced valid (non-zero lined) output.
 
@@ -341,14 +357,12 @@ class Teardown(interface.Teardown):
                             f"PROCESS generated an empty {filename} "
                             f"file in {self._run_dir} - check PROCESS logs."
                         )
-                        bluemira_warn(message)
                         raise CodesError(message)
             else:
                 message = (
                     f"PROCESS run did not generate the {filename} "
                     f"file in {self._run_dir} - check PROCESS logs."
                 )
-                bluemira_warn(message)
                 raise CodesError(message)
 
     @staticmethod
@@ -372,7 +386,6 @@ class Teardown(interface.Teardown):
                 f"PROCESS did not find a feasible solution. ifail = {error_code}."
                 " Check PROCESS logs."
             )
-            bluemira_warn(message)
             raise CodesError(message)
 
 

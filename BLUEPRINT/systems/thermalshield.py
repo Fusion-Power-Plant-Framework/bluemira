@@ -23,24 +23,23 @@
 Thermal shield system
 """
 from itertools import cycle
-import matplotlib.pyplot as plt
-import numpy as np
 from typing import Type
 
-from bluemira.base.parameter import ParameterFrame
+import matplotlib.pyplot as plt
+import numpy as np
 
-from BLUEPRINT.cad.shieldCAD import ThermalShieldCAD, SegmentedThermalShieldCAD
-from BLUEPRINT.geometry.loop import Loop, MultiLoop
-from BLUEPRINT.geometry.shell import Shell
-from BLUEPRINT.systems.baseclass import ReactorSystem
+from bluemira.base.parameter import ParameterFrame
+from BLUEPRINT.cad.shieldCAD import SegmentedThermalShieldCAD, ThermalShieldCAD
 from BLUEPRINT.geometry.boolean import (
     boolean_2d_difference,
     boolean_2d_union,
     simplify_loop,
 )
-from BLUEPRINT.geometry.loop import point_loop_cast, make_ring
 from BLUEPRINT.geometry.geombase import Plane
 from BLUEPRINT.geometry.geomtools import loop_plane_intersect
+from BLUEPRINT.geometry.loop import Loop, MultiLoop, make_ring, point_loop_cast
+from BLUEPRINT.geometry.shell import Shell
+from BLUEPRINT.systems.baseclass import ReactorSystem
 from BLUEPRINT.systems.plotting import ReactorSystemPlotter
 from BLUEPRINT.utilities.tools import get_max_PF
 
@@ -277,7 +276,7 @@ class ThermalShield(ReactorSystem):
             + inputs["TFsection"]["winding_pack"]["depth"]
         )
         x_b, y_b = 0.5 * tf_w / np.tan(beta), 0.5 * tf_w
-        x_bp = np.sqrt(y_b ** 2 + x_b ** 2)
+        x_bp = np.sqrt(y_b**2 + x_b**2)
         x_oi = x_bp + self.params.g_ts_tf / np.sin(beta)
         x_inner = pf1_ro + self.params.g_ts_pf
         y_inner = np.tan(beta) * (x_inner - x_oi)
@@ -1237,9 +1236,3 @@ class ThermalShieldPlotter(ReactorSystemPlotter):
             alpha2 = alpha * 0.5
             kwargs["alpha"] = [alpha2] + [alpha] * (len(plot_objects) - 1)
         super().plot_xz(plot_objects, ax=ax, **kwargs)
-
-
-if __name__ == "__main__":
-    from BLUEPRINT import test
-
-    test()

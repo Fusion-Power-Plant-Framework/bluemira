@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import pytest
-from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
+
 from BLUEPRINT.cad.cadtools import get_properties
-from tests.BLUEPRINT.systems.test_firstwall import load_firstwall_sn, load_firstwall_dn
+from BLUEPRINT.cad.firstwallCAD import FirstWallCAD
+from tests.BLUEPRINT.systems.test_firstwall import load_firstwall_dn, load_firstwall_sn
 
 
 def check_cad(system_cad, n_shapes, ref_volumes=None):
