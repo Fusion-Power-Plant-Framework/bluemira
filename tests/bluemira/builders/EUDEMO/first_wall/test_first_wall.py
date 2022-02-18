@@ -105,3 +105,20 @@ class TestFirstWallBuilder:
 
         walls = wall.get_component(FirstWallBuilder.COMPONENT_WALL, first=False)
         assert len(walls) == 1
+
+    def test_component_tree_structure(self):
+        builder = FirstWallBuilder(
+            self._params, build_config=self._default_config, equilibrium=self.eq
+        )
+
+        first_wall = builder()
+
+        assert first_wall.is_root
+        xz = first_wall.get_component("xz")
+        assert xz is not None
+        assert xz.depth == 1
+        divertor_xz = xz.get_component(FirstWallBuilder.COMPONENT_DIVERTOR)
+        assert divertor_xz.depth == 2
+        wall_xz = xz.get_component(FirstWallBuilder.COMPONENT_WALL)
+        assert wall_xz is not None
+        assert wall_xz.depth == 2

@@ -71,15 +71,16 @@ class FirstWallBuilder(Builder):
     For a single-null plasma, the builder outputs a Component with the
     structure:
 
-    first_wall (Component)
-    └── xz (Component)
-        ├── wall (PhysicalComponent)
-        └── divertor (Component)
-            ├── inner_target (PhysicalComponent)
-            ├── outer_target (PhysicalComponent)
-            ├── dome (PhysicalComponent)
-            ├── inner_baffle (PhysicalComponent)
-            └── outer_baffle (PhysicalComponent)
+        first_wall (Component)
+        └── xz (Component)
+            └── wall (Component)
+                └── wall_boundary (PhysicalComponent)
+            └── divertor (Component)
+                ├── inner_target (PhysicalComponent)
+                ├── outer_target (PhysicalComponent)
+                ├── dome (PhysicalComponent)
+                ├── inner_baffle (PhysicalComponent)
+                └── outer_baffle (PhysicalComponent)
     """
 
     COMPONENT_DIVERTOR = "divertor"
