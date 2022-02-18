@@ -8,7 +8,7 @@ if [[ $(basename $PWD) == *"bluemira"* ]]; then
 fi
 
 if [ ! -d msh2xdmf ]; then
-  git clone git@github.com:floiseau/msh2xdmf.git
+  git clone https://github.com/floiseau/msh2xdmf.git
   cd msh2xdmf
   git checkout b562903
   cd ..
