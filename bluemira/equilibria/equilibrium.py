@@ -1212,7 +1212,7 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm) * np.abs(self._profiles.scale)
+        return self._profiles.fRBpol(psinorm)
 
     def fvac(self):
         """
