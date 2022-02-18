@@ -128,8 +128,14 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
 
         if in_polygon(x, z, np.array([[p0[0], p0[2]], [p1[0], p1[2]], [p2[0], p2[2]]])):
             # print("in here now")
-            angle = 2 * np.pi - angle
-            print(p0, angle)
+            # angle = 2 * np.pi - angle
+            print(p0, np.rad2deg(angle))
+            if np.isclose(angle, np.pi / 2):
+                angle += 2 * np.pi
+            else:
+                angle = -(angle - 2 * np.pi)
+
+            # angle = np.pi-angle
 
         # if (abs(angle) > np.pi/2) and (distance_between_points(p0, r1) > distance_between_points(p0, r2)):
         #     print("in")
