@@ -37,6 +37,7 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.display.plotter import plot_2d
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -423,6 +424,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         degree = (360.0 / self._params.n_TF.value) * n_tf_draw
 
         # Winding pack
+        plot_2d(self._centreline)
+        plot_2d(self._wp_cross_section, plane="xy")
+        print(self._centreline.is_valid())
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
