@@ -329,8 +329,8 @@ class DivertorBuilder(Builder):
         """
         allowed_axes = ["x", "z"]
         if axis not in allowed_axes:
-            raise ValueError("Unrecognised axis '{}'. Must be one of '{}'.").format(
-                axis, "', '".join(allowed_axes)
+            raise ValueError(
+                f"Unrecognised axis '{axis}'. Must be one of: {allowed_axes}."
             )
 
         start_point = wire.start_point()
