@@ -321,6 +321,7 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         self.origin = origin
 
         length = np.linalg.norm(ds)
+        self._halflength = 0.5 * length
         # Normalised direction cosine matrix
         self.dcm = np.array([t_vec, ds / length, normal])
         self.length = 0.5 * (length - breadth * np.tan(alpha) - breadth * np.tan(beta))
@@ -388,20 +389,20 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         """
         Calculate extrema points of the current source for plotting and debugging.
         """
-        b = self.length
+        b = self._halflength
         c = self.depth
         d = self.breadth
         # Lower rectangle
-        p1 = np.array([-d, -b, -c])
-        p2 = np.array([d, -b - 2 * d * np.tan(self.beta), -c])
-        p3 = np.array([d, -b - 2 * d * np.tan(self.beta), c])
-        p4 = np.array([-d, -b, c])
+        p1 = np.array([-d, -b + d * np.tan(self.beta), -c])
+        p2 = np.array([d, -b - d * np.tan(self.beta), -c])
+        p3 = np.array([d, -b - d * np.tan(self.beta), c])
+        p4 = np.array([-d, -b + d * np.tan(self.beta), c])
 
         # Upper rectangle
-        p5 = np.array([-d, b, -c])
-        p6 = np.array([d, b + 2 * d * np.tan(self.alpha), -c])
-        p7 = np.array([d, b + 2 * d * np.tan(self.alpha), c])
-        p8 = np.array([-d, b, c])
+        p5 = np.array([-d, b - d * np.tan(self.alpha), -c])
+        p6 = np.array([d, b + d * np.tan(self.alpha), -c])
+        p7 = np.array([d, b + d * np.tan(self.alpha), c])
+        p8 = np.array([-d, b - d * np.tan(self.alpha), c])
 
         points_array = []
         points = [
