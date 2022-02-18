@@ -304,7 +304,13 @@ class CoilFieldsMixin:
 
         return response
 
-    def _points_inside_coil(self, x, z):
+    def _points_inside_coil(
+        self,
+        x: Union[float, np.array],
+        z: Union[float, np.array],
+        *,
+        atol: float = X_TOLERANCE,
+    ):
         """
         Determine which points lie inside or on the coil boundary.
 
@@ -314,6 +320,9 @@ class CoilFieldsMixin:
             The x coordinates to check
         z: Union[float, np.array]
             The z coordinates to check
+        atol: Optional[float]
+            Add an offset, to ensure points very near the edge are counted as
+            being on the edge of a coil
 
         Returns
         -------
@@ -321,9 +330,7 @@ class CoilFieldsMixin:
             The Boolean array of point indices inside/outside the coil boundary
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
-        # Add an offset, to ensure points very near the edge are counted as
-        # being on the edge of a coil
-        atol = X_TOLERANCE
+
         x_min, x_max = (
             self._quad_x - self._quad_dx - atol,
             self._quad_x + self._quad_dx + atol,

@@ -25,9 +25,6 @@ from matplotlib import pyplot as plt
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.coils import (
-    CS_COIL_NAME,
-    NO_COIL_NAME,
-    PF_COIL_NAME,
     Coil,
     CoilGroup,
     CoilSet,
