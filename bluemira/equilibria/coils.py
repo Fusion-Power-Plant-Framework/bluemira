@@ -135,9 +135,12 @@ class CoilFieldsMixin:
     )
 
     def __init__(self, weighting=None):
+        if type(self) == CoilFieldsMixin:
+            raise TypeError("Can't be initialised directly")
 
         # setup initial meshing
         # quadratures
+
         self.mesh_coil(weighting)
 
     def _set_quad_weighting(self, weighting=None):
