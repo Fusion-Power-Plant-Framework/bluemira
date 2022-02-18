@@ -358,18 +358,14 @@ class Mesh:
             if "gmsh" in buffer["BluemiraFace"]:
                 function(buffer["BluemiraFace"]["gmsh"], *args)
             for item in boundary:
-                for k, v1 in item.items():
-                    if k == "BluemiraWire":
-                        Mesh.__iterate_gmsh_dict(item, function, *args)
+                Mesh.__iterate_gmsh_dict(item, function, *args)
 
         if "BluemiraShell" in buffer:
             boundary = buffer["BluemiraShell"]["boundary"]
             if "gmsh" in buffer["BluemiraShell"]:
                 function(buffer["BluemiraShell"]["gmsh"], *args)
             for item in boundary:
-                for k, v1 in item.items():
-                    if k == "BluemiraFace":
-                        Mesh.__iterate_gmsh_dict(item, function, *args)
+                Mesh.__iterate_gmsh_dict(item, function, *args)
 
         if "BluemiraCompound" in buffer:
             boundary = buffer["BluemiraCompound"]["boundary"]
