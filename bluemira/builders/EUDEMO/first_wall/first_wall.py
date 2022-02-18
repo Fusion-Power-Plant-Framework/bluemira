@@ -216,8 +216,8 @@ class FirstWallBuilder(Builder):
         Create a "keep-out-zone" to be used as a constraint in the
         shape optimiser
         """
-        # The keep-out-zone is generated from the flux surface of the
-        # separatrix above the x-point
-        coords = self.equilibrium.get_separatrix().xyz
+        # Generate keep-out-zone from the last close flux surface
+        lcfs = self.equilibrium.get_LCFS().xyz
+        return make_polygon(lcfs, closed=True)
         coords = coords[:, coords[2] > self.x_points[0].z]
         return make_polygon(coords, closed=True)
