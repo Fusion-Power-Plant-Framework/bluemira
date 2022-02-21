@@ -153,8 +153,8 @@ class PlotOptions(DisplayOptions):
         """
         output_dict = {}
         for k, v in self._options.items():
-            # FreeCAD Plane that is contained in BluemiraPlacement cannot be deepcopied by
-            # copy.deepcopy. For this reason, its deepcopy method must to be used in
+            # FreeCAD Plane that is contained in BluemiraPlacement cannot be deepcopied
+            # by copy.deepcopy. For this reason, its deepcopy method must to be used in
             # this case.
             if isinstance(v, _placement.BluemiraPlacement):
                 output_dict[k] = v.deepcopy()
@@ -346,7 +346,7 @@ class BasePlotter(ABC):
         self.ax.set_aspect("equal")
 
     def _set_label_2d(self):
-        # TODO: BluemiraPlacement stuff.... I feel like the axis may not be the plane normal
+        # TODO: BluemiraPlacement stuff. I feel like the axis may not be the plane normal
         # and this makes me very sad. The workaround here is by creating the planes from
         # strs, but we're unlikely to recognise a user-input BluemiraPlacement.
         # Note that the angle argument gets used to rotate the data for reasons I still
