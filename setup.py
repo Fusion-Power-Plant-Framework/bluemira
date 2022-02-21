@@ -16,6 +16,7 @@ with open("README.md", "r") as f:
 
 install_requires = [  # PYL = Version limited by python version
     "asteval",  # 0.9.25
+    "Babel",
     "click",  # 8.0.3
     "CoolProp",  # 6.4.1
     "fortranformat",  # 1.1.1

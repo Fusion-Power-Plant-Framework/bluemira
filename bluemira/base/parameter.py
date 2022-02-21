@@ -55,13 +55,17 @@ Type for parameters when represented as a record list.
 """
 
 
-def _unitify(unit):
+def _unitify(unit: Union[str, Unit]) -> Unit:
+    """
+    Convert string to pint Unit and have custom error messages
+    """
+
     if isinstance(unit, Unit):
         return unit
     if isinstance(unit, str):
         if "%" in unit:
             raise NotImplementedError("Modification needed to support percentages")
-        return Unit("dimensionless") if unit is None else Unit(unit)
+        return Unit(unit)
     raise TypeError(f"Unknown unit type {type(unit)}")
 
 
@@ -153,6 +157,8 @@ class ParameterMappingEncoder(json.JSONEncoder):
         """
         if isinstance(obj, ParameterMapping):
             return obj.to_dict()
+        if isinstance(obj, Unit):
+            return str(obj)
         return json.JSONEncoder.default(self, obj)
 
 
@@ -197,6 +203,7 @@ class Parameter(wrapt.ObjectProxy):
     All operations you would normally do with for instance an 'int' will work the same
     """
 
+    _concise_keys = {"value", "source", "unit"}
     __slots__ = (
         "var",
         "name",
@@ -267,31 +274,30 @@ class Parameter(wrapt.ObjectProxy):
         """
         Add missing methods
         """
-        _dir = set(
-            super().__dir__()
-            + list(self.__slots__)
-            + [
-                "__deepcopy__",
-                "__array__",
-                "_history_keys",
-                "value_history",
-                "source_history",
-                "unit",
-                "_unit_setup",
-                "value",
-                "value",
-                "source",
-                "source",
-                "_update_history",
-                "from_json",
-                "_full_slots",
-                "_get_k",
-                "to_dict",
-                "to_list",
-                "history",
-            ]
+        return sorted(
+            set(
+                super().__dir__()
+                + list(self.__slots__)
+                + [
+                    "__array__",
+                    "__deepcopy__",
+                    "_full_slots",
+                    "_get_k",
+                    "_history_keys",
+                    "_unit_setup",
+                    "_update_history",
+                    "from_json",
+                    "history",
+                    "source",
+                    "source_history",
+                    "to_dict",
+                    "to_list",
+                    "unit",
+                    "value",
+                    "value_history",
+                ]
+            )
         )
-        return _dir
 
     def __deepcopy__(self, memo):
         """
@@ -388,6 +394,9 @@ class Parameter(wrapt.ObjectProxy):
         return self._unit
 
     def _unit_setup(self, unit: Union[Unit, str]):
+        """
+        Initialise Parameter Units
+        """
         return _unitify(unit)
 
     @property
@@ -483,9 +492,10 @@ class Parameter(wrapt.ObjectProxy):
             new_cls._source_history = source_history
         return new_cls
 
-    def _full_slots(self):
+    @classmethod
+    def _full_slots(cls):
         """
-        Return a list of slots including 'value'.
+        Return a list of slots including '__wrapped__'.
 
         Returns
         -------
@@ -494,9 +504,16 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         wrp = "__wrapped__"
-        slots_copy = list(self.__slots__)
+        slots_copy = list(cls.__slots__)
         slots_copy.insert(2, wrp)
         return slots_copy
+
+    @classmethod
+    def _attrnames(cls):
+        """
+        List of initialisation attribute names
+        """
+        return [cls._get_k(k) for k in cls._full_slots()]
 
     @staticmethod
     def _get_k(name):
@@ -599,7 +616,7 @@ class Parameter(wrapt.ObjectProxy):
 
         """
         name = self.name if self.name is not None else ""
-        unit = "-" if self.unit.__str__() == "dimensionless" else self.unit
+        unit = "-" if self.unit.__str__() == "dimensionless" else f"{self.unit:~P}"
         description = (
             " (" + self.description + ")" if self.description is not None else ""
         )
@@ -969,7 +986,9 @@ class ParameterFrame:
             variable name
         value: Union[Parameter, int, float, str ...]
             new value of parameter
-        source: str
+        unit: Optional[Union[Unit, str]]
+            value unit
+        source: Optional[str]
             override value for source
 
         """
@@ -1312,7 +1331,11 @@ class ParameterFrame:
             }
         else:
             return {
-                key: {"value": parameter.value, "source": parameter.source}
+                key: {
+                    "value": parameter.value,
+                    "unit": parameter.unit,
+                    "source": parameter.source,
+                }
                 for (key, parameter) in self.__dict__.items()
             }
 
@@ -1458,7 +1481,7 @@ class ParameterFrame:
         else:
             the_data = json.loads(data, object_hook=cls.parameter_mapping_hook)
             if any(
-                not isinstance(v, dict) or list(v.keys()) == ["value", "source"]
+                not isinstance(v, dict) or v.keys() == Parameter._concise_keys
                 for v in the_data.values()
             ):
                 raise ValueError(
@@ -1485,11 +1508,12 @@ class ParameterFrame:
         else:
             the_data = json.loads(data)
             if any(
-                isinstance(v, dict) and list(v.keys()) != ["value", "source"]
+                isinstance(v, dict) and v.keys() != Parameter._concise_keys
                 for v in the_data.values()
             ):
                 raise ValueError(
-                    f"Setting the values on a {self.__class__.__name__} using set_values_from_json requires a concise json format."
+                    f"Setting the values on a {self.__class__.__name__}"
+                    " using set_values_from_json requires a concise json format."
                 )
             self.update_kw_parameters(the_data, source=source)
 
