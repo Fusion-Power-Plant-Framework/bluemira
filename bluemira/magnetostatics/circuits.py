@@ -27,7 +27,7 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import distance_between_points, rotation_matrix
-from bluemira.geometry.coordinates import get_normal_vector
+from bluemira.geometry.coordinates import get_area_3d, get_normal_vector
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
@@ -113,35 +113,36 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
         v2 /= np.linalg.norm(v2)
         cos_angle = np.dot(v1, v2)
         angle = np.arccos(np.clip(cos_angle, -1, 1))
-        # if angle >= 3*np.pi/4:
-        #     print("in here1")
-        #     angle = 2*np.pi-angle
-        # elif angle <= -3*np.pi/4:
-        #     print("in here")
-        #     angle = -2*np.pi + angle
 
         d = distance_between_points(p0, p1)
-        r1 = p1 + 0.1 * d * (-v1 + v2) / np.linalg.norm(-v1 + v2)
-        x, z = r1[0], r1[2]
+        v_norm = np.linalg.norm(-v1 + v2)
+        if np.isclose(v_norm, 0):
+            return 0.5 * angle
 
-        from bluemira.geometry._deprecated_tools import in_polygon
+        r1 = p1 + 0.1 * d * (-v1 + v2) / v_norm
 
-        if in_polygon(x, z, np.array([[p0[0], p0[2]], [p1[0], p1[2]], [p2[0], p2[2]]])):
-            # print("in here now")
-            # angle = 2 * np.pi - angle
-            print(p0, np.rad2deg(angle))
+        if self._point_in_triangle(r1, p0, p1, p2):
             if np.isclose(angle, np.pi / 2):
                 angle += 2 * np.pi
             else:
                 angle = -(angle - 2 * np.pi)
-
-            # angle = np.pi-angle
-
-        # if (abs(angle) > np.pi/2) and (distance_between_points(p0, r1) > distance_between_points(p0, r2)):
-        #     print("in")
-        #     angle = np.pi - angle
-
         return 0.5 * angle
+
+    @staticmethod
+    def _point_in_triangle(point, p0, p1, p2):
+        area = 0.5 * np.linalg.norm(np.cross(p1 - p0, p2 - p0))
+        alpha = np.linalg.norm(np.cross(p1 - point, p2 - point)) / (2 * area)
+        beta = np.linalg.norm(np.cross(p2 - point, p0 - point)) / (2 * area)
+        gamma = 1.0 - alpha - beta
+        if (
+            (0 < alpha < 1)
+            and (0 < beta < 1)
+            and (0 < gamma < 1)
+            and (np.isclose(alpha + beta + gamma, 1.0))
+        ):
+            return True
+        else:
+            return False
 
 
 class HelmholtzCage(SourceGroup):
