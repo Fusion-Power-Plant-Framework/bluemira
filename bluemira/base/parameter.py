@@ -416,21 +416,34 @@ class Parameter(wrapt.ObjectProxy):
         """
         Overwrite mapping, enforcing type
         """
+
+        def get_types():
+            return set(map(type, mapping.values()))
+
+        error_str = "mapping should of type Dict[str, ParameterMapping]: {}"
+
         if mapping in [None, {}]:
             self._mapping = {}
-            return
-
-        if isinstance(mapping, dict):
-            val_types = set(map(type, mapping.values()))
-            if len(val_types) == 1 and issubclass(list(val_types)[0], ParameterMapping):
-                self._mapping = (
-                    {**self._mapping, **mapping} if hasattr(self, "mapping") else mapping
-                )
-                return
-
-        raise TypeError(
-            f"mapping should be a dictionary with ParameterMapping values: {mapping}"
-        )
+        elif isinstance(mapping, dict):
+            try:
+                val_types = get_types()
+                if dict in val_types:
+                    for k, v in mapping.items():
+                        if isinstance(v, dict):
+                            mapping[k] = ParameterMapping(**v)
+                val_types = get_types()
+                if len(val_types) == 1 and ParameterMapping in val_types:
+                    self._mapping = (
+                        {**self._mapping, **mapping}
+                        if hasattr(self, "mapping")
+                        else mapping
+                    )
+                else:
+                    raise TypeError(error_str.format(mapping))
+            except TypeError:
+                raise TypeError(error_str.format(mapping))
+        else:
+            raise TypeError(error_str.format(mapping))
 
     @property
     def value(self):
