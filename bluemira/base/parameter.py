@@ -224,7 +224,7 @@ class Parameter(wrapt.ObjectProxy):
     unit: Union[Unit, str, None]
     description: Union[str, None]
     _source: Union[str, None]
-    mapping: Union[Dict[str, ParameterMapping], None]
+    _mapping: Dict[str, ParameterMapping]
     _value_history: Union[list, None]
     _source_history: Union[list, None]
 
@@ -264,7 +264,7 @@ class Parameter(wrapt.ObjectProxy):
         self.name = name
         self._unit = self._unit_setup(unit)
         self.description = description
-        self.mapping = mapping if mapping is not None else {}
+        self.mapping = mapping
 
         self._source = source
         if value is not None:
@@ -420,9 +420,10 @@ class Parameter(wrapt.ObjectProxy):
             if len(val_types) == 1 and isinstance(list(val_types)[0], ParameterMapping):
                 self._mapping = {**self.mapping, **mapping}
                 return
-            elif len(val_types) == 0:
-                self._mapping = mapping
-                return
+
+        if mapping in [None, {}]:
+            self._mapping = {}
+            return
 
         raise TypeError(
             f"mapping should be a dictionary with ParameterMapping values: {mapping}"
