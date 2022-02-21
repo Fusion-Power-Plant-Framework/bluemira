@@ -234,7 +234,7 @@ class Mesh:
                 self.__convert_item_to_gmsh(buffer, d)
             obj.ismeshed = True
         else:
-            print("Obj already meshed")
+            bluemira_print("Object already meshed")
         return buffer
 
     def __convert_item_to_gmsh(self, buffer, dim):
