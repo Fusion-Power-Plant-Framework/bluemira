@@ -46,7 +46,7 @@ from bluemira.base.parameter import ParameterFrame
 from bluemira.codes import run_systems_code
 
 # Equilibria imports
-from bluemira.equilibria import AbInitioEquilibriumProblem
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.equilibria.constants import (
     NB3SN_B_MAX,
     NB3SN_J_MAX,
