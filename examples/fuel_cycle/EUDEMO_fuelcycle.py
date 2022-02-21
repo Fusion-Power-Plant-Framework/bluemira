@@ -171,7 +171,7 @@ m_cryodistillation = 1.8
 tfv_config = ParameterFrame([
     ['TBR', 'Tritium breeding ratio', TBR, 'dimensionless', None, 'Input'],
     ['f_b', 'Burn-up fraction', 0.015, 'dimensionless', None, 'Input'],
-    ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+    ['m_gas', 'Gas puff flow rate', 50, 'Pa m^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
     ['A_global', 'Load factor', A_global, 'dimensionless', None, 'Silent input'],
     ['r_learn', 'Learning rate', 1, 'dimensionless', None, 'Silent input'],
     ['t_pump', 'Time in DIR loop', t_pump, 's', 'Time between exit from plasma and entry into plasma through DIR loop', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
