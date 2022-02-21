@@ -20,7 +20,8 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Constrained and unconstrained optimisation tools for coilset design
+Constrained and unconstrained optimisation tools for coilset design.
+Deprecated in favour of OptimisationProblems in opt_problems.py.
 """
 
 from typing import Type

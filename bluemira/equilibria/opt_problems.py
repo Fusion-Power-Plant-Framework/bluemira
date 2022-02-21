@@ -20,14 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Constrained and unconstrained optimisation tools for coilset design
+Constrained and unconstrained optimisation tools for coilset design.
 """
 
 from typing import List
 
 import numpy as np
 
-import bluemira.equilibria.objectives as objectives
+import bluemira.equilibria.opt_objectives as objectives
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
@@ -190,19 +190,13 @@ class CoilsetOP(OptimisationProblem):
 
         return current_bounds
 
-    def __call__(self, eq, targets, psi_bndry=None):
+    def __call__(self, eq=None, targets=None, psi_bndry=None):
         """
         Parameters
         ----------
-        eq: Equilibrium object
-            The Equilibrium to be optimised
-        targets: MagneticConstraints object
-            The Constraints to apply to the equilibrium. NOTE: these only
-            include linearised constraints. Quadratic and/or non-linear
-            constraints must be provided in the sub-classes
+        Dummy input parameters for consistency with deprecated interface
+        in Iterators.
         """
-        # self.eq = eq
-        # self.constraints = constraints
         return self.optimise()
 
 
@@ -428,9 +422,9 @@ class CoilsetPositionCOP(CoilsetOP):
         initial_mapped_state = np.concatenate(
             (initial_mapped_positions, initial_currents)
         )
+        self.iter = 0
 
         # Optimise
-        self.iter = 0
         state = self.opt.optimise(initial_mapped_state)
 
         # Call objective function final time on optimised state

@@ -23,6 +23,7 @@
 Generic OptimisationProblem, OptimisationConstraint and OptimisationObjective interfaces.
 """
 import inspect
+from abc import ABC, abstractmethod
 from typing import List
 
 import numpy as np
@@ -123,7 +124,7 @@ class OptimisationObjective:
         opt_problem.opt.set_objective_function(self)
 
 
-class OptimisationProblem:
+class OptimisationProblem(ABC):
     """
     Generic OptimisationProblem to be subclassed for defining optimisation
     routines in Bluemira.
@@ -209,9 +210,15 @@ class OptimisationProblem:
         parameterisation = state
         return parameterisation
 
+    @abstractmethod
     def optimise(self):
         """
         Optimisation routine used to return an optimised parameterisation.
+
+        Returns
+        -------
+        self._parameterisation:
+            Optimised parameterisation object.
         """
         initial_state = self.initialise_state(self._parameterisation)
         opt_state = self._opt.optimise(initial_state)

@@ -41,7 +41,7 @@ and on the position of the inboard midplane.
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.equilibria.constraint_library as constraint_library
+import bluemira.equilibria.opt_constraints as opt_constraints
 import examples.equilibria.double_null_ST as double_null_ST
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.opt_problems import BoundedCurrentCOP, UnconstrainedCurrentCOP
@@ -53,47 +53,55 @@ from bluemira.utilities.optimiser import Optimiser
 
 # # OptimisationProblem
 
-# The `OptimisationProblem` class is intended to be the general base class for defining optimisation
-# problems across Bluemira.
+# The `OptimisationProblem` class is intended to be the general base class for defining
+# optimisation problems across Bluemira.
 
 # It is constructed from the following four objects:
 # - `parameterisation`
 #     - Object storing data that is updated during the optimisation to be carried out.
 # - `optimiser: Optimiser`
-#     - `Optimiser` object specifying the numerical algorithm used to optimise an array representing
-#       the parameterisation state. Usually based on NLOpt.
+#     - `Optimiser` object specifying the numerical algorithm used to optimise an array
+#        representing the parameterisation state. Usually based on NLOpt.
 # - `objective: OptimisationObjective`
-#     - OptimisationObjective object, specifying objective function to be minimised during optimisation.
+#     - OptimisationObjective object, specifying objective function to be minimised
+#       during optimisation.
 # - `constraints: List[OptimisationConstraint]`
-#     - List of `OptimisationConstraints`, specifying the set of constraints that must be satisfied during
-#       the numerical optimisation.
+#     - List of `OptimisationConstraints`, specifying the set of constraints that must
+#       be satisfied during the numerical optimisation.
 
 
-# The goal of the `OptimisationProblem` is to be able to return an optimised parameterisation, judged according to
-# the provided objective, subject to the set of constraints, using a numerical search algorithm defined in the optimiser.
+# The goal of the `OptimisationProblem` is to be able to return an optimised
+# parameterisation, judged according to the provided objective, subject to
+# the set of constraints, using a numerical search algorithm defined in the optimiser.
 
-# Crucially, it provides an `optimise()` method that returns this optimised parameterisation. Subclasses may override
-# this `optimise()` method, but must still return an optimised parametrisation when `optimise()` is called on the OptimisationProblem.
+# Crucially, it provides an `optimise()` method that returns this optimised
+# parameterisation. Subclasses may override this `optimise()` method, but must still
+# return an optimised parametrisation when `optimise()` is called
+# on the OptimisationProblem.
 
-# A `CoilsetOP` is a subclass of `OptimisationProblem`, intended for problems where the
-# parameterisation is a `CoilSet` object, which provides some useful additional methods for getting and
-# setting coilset state vectors/arrays.
+# A `CoilsetOP` is a subclass of `OptimisationProblem`, intended for problems where
+# the parameterisation is a `CoilSet` object, which provides some useful additional
+# methods for getting and setting coilset state vectors/arrays.
 
-# Subclasses of `CoilsetOP`, such as `BoundedCurrentCOP` or `NestedCoilsetPositionCOP`, can be made to bind a `CoilsetOP` to a specific objective function,
-# which is often useful for performance reasons where some data in the OptimisationProblem does not need to be updated at every iteration.
+# Subclasses of `CoilsetOP`, such as `BoundedCurrentCOP` or `NestedCoilsetPositionCOP`,
+# can be made to bind a `CoilsetOP` to a specific objective function, which is often
+# useful for performance reasons where some data in the OptimisationProblem
+# does not need to be updated at every iteration.
 
 # # Example
-# We will present an example problem where we take an existing `CoilsetOP`subclass, `BoundedCurrentCOP`,
-# and apply some additional constraints that must be held during the optimisation.
+# We will present an example problem where we take an existing `CoilsetOP`subclass,
+# `BoundedCurrentCOP`, and apply some additional constraints that
+# must be held during the optimisation.
 #
-# As the objective function for the `BoundedCurrentCOP` OptimisationProblem is already specified,
-# we only need to provide the `coilset` (parameterisation), `Optimiser`, `OptimisationConstraints`, and any additional arguments
-# that are used in the `BoundedCurrentCOP` objective function.
+# As the objective function for the `BoundedCurrentCOP` OptimisationProblem is already
+# specified, we only need to provide the `coilset` (parameterisation), `Optimiser`,
+# `OptimisationConstraints`, and any additional arguments that are used in the
+# `BoundedCurrentCOP` objective function.
 
 # ### Parametrisation
 
-# We first define the parameterisation to be used in the OptimisationProblem. This is just the starting `coilset`
-# in this case.
+# We first define the parameterisation to be used in the OptimisationProblem.
+# This is just the starting `coilset` in this case.
 
 # %%
 coilset = double_null_ST.init_coilset()
@@ -102,19 +110,20 @@ coilset = double_null_ST.init_coilset()
 
 # ### Optimiser
 
-# We next define the `Optimiser` to be used. There is no one-size-fits-all approach here, as the best
-# optimiser for a given problem will depend strongly on the OptimisationObjective and OptimisationConstraints
-# being applied in the problem.
+# We next define the `Optimiser` to be used. There is no one-size-fits-all approach
+# here, as the best optimiser for a given problem will depend strongly on the
+# OptimisationObjective and OptimisationConstraints being applied in the problem.
 
-# `Optimiser` is currently only a wrapper for NLOpt based optimisers, and as such, the range of algorithms
-# that may be chosen is determined by those available in the NLOpt library.
-# Not all algorithms will work for all objectives - some require gradient information, for example -
-# and some require additional parameters. Check the NLOpt API documentation for more details.
+# `Optimiser` is currently only a wrapper for NLOpt based optimisers, and as such,
+# the range of algorithms that may be chosen is determined by those available in
+# the NLOpt library. Not all algorithms will work for all objectives - some
+# require gradient information, for example - and some require additional parameters.
+# Check the NLOpt API documentation for more details.
 
-# Care must also be taken to ensure the termination criteria for the optimisation are suitable.
-# Otherwise, the optimisation may never stop running if tolerances are too tight, or may stop early
-# and return poorly optimised states if the maximum number of evaluations is too low or tolerances
-# are too large.
+# Care must also be taken to ensure the termination criteria for the optimisation
+# are suitable. Otherwise, the optimisation may never stop running if tolerances
+# are too tight, or may stop early and return poorly optimised states if the
+# maximum number of evaluations is too low or tolerances are too large.
 
 # %%
 optimiser = Optimiser(
@@ -128,10 +137,11 @@ optimiser = Optimiser(
 # ### Constraints
 
 # We next define the list of `OptimisationConstraints` to apply.
-# In this case, we wish to apply a constraint to prevent solutions where the plasma boundary at
-# the inboard midplane of the plasma is prevented from moving inside a provided radius.
+# In this case, we wish to apply a constraint to prevent solutions where the
+# plasma boundary at the inboard midplane of the plasma is prevented from moving
+# inside a provided radius.
 
-# We will use `bluemira.equilibria.constraint_library.current_midplane_constraint`
+# We will use `bluemira.equilibria.opt_constraints.current_midplane_constraint`
 # as our constraint function here to do this.
 
 # ```python
@@ -160,33 +170,39 @@ optimiser = Optimiser(
 #     return constraint
 # ```
 
-# The first three arguments here are expected by NLOpt, and must always be present in constraint functions.
+# The first three arguments here are expected by NLOpt, and must always be present in
+# constraint functions.
 # - constraint
-#     - np.array storing constraint information. During the optimisation, `constraint[:]<=0` is considered
-#       to represent the constraint being satisfied, and `constraint[:]>0` represents the constraint being
-#       violated.
+#     - np.array storing constraint information. During the optimisation,
+#       `constraint[:]<=0` is considered to represent the constraint being satisfied,
+#       and `constraint[:]>0` represents the constraint being violated.
 # - vector
-#     - np.array representing the state vector that is optimised during the numerical optimisation.
+#     - np.array representing the state vector that is optimised during the
+#       numerical optimisation.
 # - grad
-#     - np.array representing Jacobian for the constraint function. This must always be present in the arguments,
-#       but only needs to be calculated if the `Optimiser` is employing an algorithm that requires derivative
-#       information.
+#     - np.array representing Jacobian for the constraint function. This must always
+#       be present in the arguments, but only needs to be calculated if the `Optimiser`
+#       is employing an algorithm that requires derivative information.
 
-# The fourth, `opt_problem`, is optional, and provides an interface to the `OptimisationProblem` the constraint
-# is applied to. This may be useful for performance reasons, where data needed by the `constraint` does not need to be updated every
-# iteration of the optimisation. Where possible, explicit arguments should be provided to the `OptimisationProblem`, however
+# The fourth, `opt_problem`, is optional, and provides an interface to the
+# `OptimisationProblem` the constraint is applied to. This may be useful for performance
+# reasons, where data needed by the `constraint` does not need to be updated every
+# iteration of the optimisation. Where possible, explicit arguments should be provided to
+# the `OptimisationProblem`, however.
 
-# The remaining arguments are explicit arguments that can be passed to the constraint to control its behaviour.
+# The remaining arguments are explicit arguments that can be passed to the constraint to
+# control its behaviour.
 
-# This constraint function can be passed to a `OptimisationConstraint` object, along with explicit arguments,
-# constraint tolerances, and constraint type, that is used by NLOpt when applying the constraint.
+# This constraint function can be passed to a `OptimisationConstraint` object, along with
+# explicit arguments, constraint tolerances, and constraint type, that is used by
+# NLOpt when applying the constraint.
 
 # User specified constraints can be supplied here, if so desired.
 
 # %%
 opt_constraints = [
     OptimisationConstraint(
-        f_constraint=constraint_library.current_midplane_constraint,
+        f_constraint=opt_constraints.current_midplane_constraint,
         f_constraint_args={"radius": 1.0},
         tolerance=np.array([1e-4]),
         constraint_type="inequality",
@@ -247,12 +263,14 @@ opt_problem = BoundedCurrentCOP(
 
 # # Iterators
 
-# The `CoilsetOP` is only used to optimise the coilset state at fixed plasma psi; the Grad-Shafranov
-# equation for the plasma is not guaranteed to still be satisfied after the coilset state is optimised.
+# The `CoilsetOP` is only used to optimise the coilset state at fixed plasma psi;
+# the Grad-Shafranov equation for the plasma is not guaranteed to still be satisfied
+# after the coilset state is optimised.
 
-# Picard iteration is therefore used to find a self-consistent solution, employed by `Iterator` objects.
-# `PicardCoilsetIterator` specifies a scheme in which a Grad-Shafranov iteration is used to update the plasma psi
-# alternate with Coilset optimisation at fixed plasma psi until the psi converges for the `Equilbrium`.
+# Picard iteration is therefore used to find a self-consistent solution, employed
+# by `Iterator` objects. `PicardCoilsetIterator` specifies a scheme in which a
+# Grad-Shafranov iteration is used to update the plasma psi alternate with Coilset
+# optimisation at fixed plasma psi until the psi converges for the `Equilbrium`.
 
 # %%
 
@@ -269,10 +287,11 @@ constrained_iterator = PicardCoilsetIterator(
 
 # %%[markdown]
 
-# However, a poor initial `Equilibrium` (with corresponding `coilset`) will lead to difficulties
-# during the Picard iteration used to find a self-consistent solution. It is therefore useful to
-# perform a coarser fast pre-optimisation to try find a self-consistent state within the basin of
-# convergence of the full constrained `OptimisationProblem`.
+# However, a poor initial `Equilibrium` (with corresponding `coilset`) will lead
+# to difficulties during the Picard iteration used to find a self-consistent solution.
+# It is therefore useful to perform a coarser fast pre-optimisation to try find a
+# self-consistent state within the basin of convergence of the
+# full constrained `OptimisationProblem`.
 
 # %%
 
@@ -291,10 +310,11 @@ unconstrained_iterator = PicardCoilsetIterator(
 # %%[markdown]
 
 # # FBE Optimisation
-# We have now initialised the necessary objects to perform the optimisation of the `coilset` state.
+# We have now initialised the necessary objects to perform the optimisation of the
+# `coilset` state.
 
-# We first plot the initial `Equilibrium` state - as the initial coilset for this example has no current
-# in the coils, it is predictably extremely poor!
+# We first plot the initial `Equilibrium` state - as the initial coilset for this
+# example has no current in the coils, it is predictably extremely poor!
 
 # %%
 
@@ -306,11 +326,12 @@ unconstrained_iterator.constraints.plot(ax=ax)
 
 # ### Pre-optimisation
 
-# Constrained optimisation of this poor initial state would be difficult, as local optimisers
-# would likely struggle to find the basin of convergence of the desired state.
+# Constrained optimisation of this poor initial state would be difficult, as
+# local optimisers would likely struggle to find the basin of convergence of
+# the desired state.
 
-# We therefore perform a fast pre-optimisation to get closer to a physical state that satisfies
-# our constrained optimisation problem.
+# We therefore perform a fast pre-optimisation to get closer to a physical
+# state that satisfies our constrained optimisation problem.
 
 # %%
 
@@ -325,8 +346,9 @@ plt.show()
 
 # ### Constrained Optimisation
 
-# Now we have a better starting `Equilibrium` for our constrained optimisation scheme, we can apply
-# it to try to find a solution that satisfies the optimisation problem including our additional constraints.
+# Now we have a better starting `Equilibrium` for our constrained optimisation
+# scheme, we can apply it to try to find a solution that satisfies the
+# optimisation problem including our additional constraints.
 
 # %%
 
