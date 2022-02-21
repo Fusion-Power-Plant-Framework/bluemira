@@ -23,6 +23,7 @@ import bluemira.geometry.tools as tools
 from bluemira.base.file import get_bluemira_root
 from bluemira.geometry.face import BluemiraFace
 from bluemira.mesh import meshing
+from bluemira.utilities.tools import bluemira_warn
 
 HAS_MSH2XDMF = False
 try:

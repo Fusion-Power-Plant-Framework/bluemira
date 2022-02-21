@@ -33,6 +33,8 @@ from typing import Dict, Union
 # import mesher lib (gmsh)
 import gmsh
 
+from bluemira.base.look_and_feel import bluemira_print
+
 from .error import MeshOptionsError
 
 # import bluemira modules
