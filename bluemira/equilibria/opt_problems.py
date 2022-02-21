@@ -20,7 +20,20 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Constrained and unconstrained optimisation tools for coilset design.
+OptimisationProblems for coilset design.
+
+New optimisation schemes for the coilset can be provided by subclassing
+from CoilsetOP, which is an abstract base class for OptimisationProblems
+that use a coilset as their parameterisation object.
+
+Subclasses must provide an optimise() method that returns an optimised
+coilset according to a given optimisation objective function.
+As the exact form of the state vector that is optimised is often
+specific to each objective function, each subclass of CoilsetOP is
+generally also specific to a given objective function, since
+the method used to map the coilset object to the state vector
+(and additional required arguments) will generally differ in each case.
+
 """
 
 from typing import List
@@ -49,6 +62,34 @@ __all__ = [
 
 
 class CoilsetOP(OptimisationProblem):
+    """
+    Abstract base class for OptimisationProblems for the coilset.
+    Provides helper methods and utilities for OptimisationProblems
+    using a coilset as their parameterisation object.
+
+    Subclasses should provide an optimise() method that
+    returns an optimised coilset object, optimised according
+    to a specific objective function for that subclass.
+
+    Parameters
+    ----------
+    coilset: Coilset
+        Coilset to be optimised.
+    optimiser: Optimiser (default: None)
+        Optimiser object to use for constrained optimisation.
+        Does not need to be provided if not used by
+        optimise(), such as for purely unconstrained
+        optimisation.
+    objective: OptimisationObjective (default: None)
+        OptimisationObjective storing objective information to
+        provide to the Optimiser.
+    constraints: List[OptimisationConstraint] (default: [])
+        Optional list of OptimisationConstraint objects storing
+        information about constraints that must be satisfied
+        during the coilset optimisation, to be provided to the
+        Optimiser.
+    """
+
     def __init__(
         self,
         coilset: CoilSet,
@@ -208,8 +249,13 @@ class UnconstrainedCurrentCOP(CoilsetOP):
     """
 
     def __init__(self, coilset, eq, targets, gamma=1e-12):
+        # Initialise. As an unconstrained optimisation scheme is
+        # used, there is no need for NLOpt, and the objective
+        # can be specified in the optimise method directly.
         super().__init__(coilset)
 
+        # Save additional parameters used to generate remaining
+        # objective/constraint arguments at runtime
         self.eq = eq
         self.targets = targets
         self.gamma = gamma
@@ -226,13 +272,14 @@ class UnconstrainedCurrentCOP(CoilsetOP):
         function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
         weights[i] = w[i] = sqrt(W[i,i]).
         """
-        # Scale the control matrix and constraint vector by weights.
+        # Scale the control matrix and magnetic field targets vector by weights.
         self.targets(self.eq, I_not_dI=False)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
         # Optimise currents using analytic expression for optimum.
         current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
 
+        # Update parameterisation (coilset).
         self.coilset.adjust_currents(current_adjustment)
         return self.coilset
 
@@ -381,6 +428,9 @@ class CoilsetPositionCOP(CoilsetOP):
         opt_constraints=[],
     ):
         # noqa :N803
+
+        # Set objective function for this OptimisationProblem,
+        # and initialise
         objective = OptimisationObjective(self.f_min_objective)
         super().__init__(coilset, optimiser, objective, opt_constraints)
 

@@ -372,9 +372,9 @@ class MagneticConstraintSet(ABC):
         Weight matrix assumed to be diagonal.
         """
         weights = self.w
-        weighted_A = weights[:, np.newaxis] * self.A
+        weighted_a = weights[:, np.newaxis] * self.A
         weighted_b = weights * self.b
-        return weights, weighted_A, weighted_b
+        return weights, weighted_a, weighted_b
 
     def build_weight_matrix(self):
         """
