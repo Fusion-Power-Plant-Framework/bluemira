@@ -75,7 +75,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ['tk_tf_case_out_out', 'TF coil case thickness on the outboard outside', 0.4, 'm', None, 'Calc'],
         ['tf_wp_width', 'TF coil winding pack radial width', 0.76, 'm', 'Including insulation', 'PROCESS'],
         ['tf_wp_depth', 'TF coil winding pack depth (in y)', 1.05, 'm', 'Including insulation', 'PROCESS'],
-        ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
+        ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'PROCESS'],
         ['r_tf_in', 'Inboard radius of the TF coil inboard leg', 3.2, 'm', None, 'PROCESS'],
         ['TF_ripple_limit', 'TF coil ripple limit', 0.6, 'dimensionless', None, 'Input'],
         ['h_cp_top', 'Height of the Tapered Section', 4.199, 'm', None, 'PROCESS'],

@@ -52,7 +52,7 @@ params = [
     ["ripple_limit", "Ripple limit constraint", 0.6, "dimensionless", None, "Input"],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
     ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
-    ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
+    ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'PROCESS'],
 
 ]
 # fmt: on

@@ -52,11 +52,11 @@ params = [
     ["npts", "Number of points", 200, "dimensionless", "Used for vessel and plasma", "Input"],
     ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
     ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
-    ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
+    ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'PROCESS'],
     ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'dimensionless', None, 'Input'],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
     ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
-    ['tk_tf_inboard', 'TF coil inboard thickness', 0.4505, 'm', None, 'Input', 'PROCESS'],
+    ['tk_tf_inboard', 'TF coil inboard thickness', 0.4505, 'm', None, 'PROCESS'],
 ]
 # fmt: on
 
