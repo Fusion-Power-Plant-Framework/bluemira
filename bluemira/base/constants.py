@@ -174,6 +174,32 @@ def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.a
     return ureg.Quantity(celsius, ureg.celsius).to("kelvin").magnitude
 
 
+def from_keV(
+    value: Union[float, np.array, List[float]],
+    to: str = "celsius",
+    *,
+    _from: str = "keV"
+):
+    """
+    Convert a temperature in Celsius to Kelvin.
+
+    Parameters
+    ----------
+    value: Union[float, np.array, List[float]]
+        The temperature to convert [keV]
+    to: str
+        Unit to convert to eg celsius or kelvin
+    from: str
+        allows modification of keV prefix to eg eV or MeV etc
+
+    Returns
+    -------
+    temp: Union[float, np.array]
+        The temperature
+    """
+    return (ureg.Quantity(value, _from) / ureg.Quantity("k_B")).to(to).magnitude
+
+
 def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
     """
     Convert a density in kg/m3 to g/cm3

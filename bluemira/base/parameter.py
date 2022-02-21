@@ -735,6 +735,7 @@ class ParameterFrame:
             sv = cls.add_parameter
             sv_set = cls.__setattr__
             sv_mod = cls._set_modified_param
+            sv_unit = cls._unit_conversion
 
             cls.__setattr__ = cls.__setattr
             cls.__setattr = sv_set
@@ -742,6 +743,8 @@ class ParameterFrame:
             cls._add_parameter = sv
             cls._set_modified_param = cls.__set_modified_param
             cls.__set_modified_param = sv_mod
+            cls._unit_conversion = cls.__unit_conversion
+            cls.__unit_conversion = sv_unit
 
             cls.add_parameters(cls, params)
 
@@ -749,6 +752,8 @@ class ParameterFrame:
             cls.add_parameter = sv
             cls.__set_modified_param = cls._set_modified_param
             cls._set_modified_param = sv_mod
+            cls.__unit_conversion = cls._unit_conversion
+            cls._unit_conversion = sv_unit
             cls.__setattr = cls.__setattr__
             cls.__setattr__ = sv_set
 
@@ -775,6 +780,13 @@ class ParameterFrame:
         TODO remove when defaults removed
         """
         return cls.__set_modified_param(cls, *args, **kwargs)
+
+    @classmethod
+    def __unit_conversion(cls, *args, **kwargs):
+        """
+        TODO remove when defaults removed
+        """
+        return cls.__unit_conversion(cls, *args, **kwargs)
 
     @classmethod
     def _add_parameter(cls, *args, **kwargs):
@@ -1354,8 +1366,7 @@ class ParameterFrame:
             if value.mapping != {} and attr == value.var:
                 _dict[attr].mapping = value.mapping
 
-    @staticmethod
-    def _unit_conversion(value, unit_from, unit_to=None, force=False, source=None):
+    def _unit_conversion(self, value, unit_from, unit_to=None, force=False, source=None):
         """
         TODO
         """
@@ -1374,7 +1385,7 @@ class ParameterFrame:
 
                 if unit_to == unit_from:
                     return value
-                value.value = ureg.Quantity(value.value, unit_from).to(unit_to).magnitude
+                value.value = self.__raw_unit_converter(value.value, unit_from, unit_to)
                 value.source = (
                     f"{source if source is not None else ''}: "
                     f"Units converted from {unit_from.format_babel()} to {unit_to.format_babel()}"
@@ -1383,9 +1394,14 @@ class ParameterFrame:
         elif None not in [unit_to, unit_from]:
             unit_to = _unitify(unit_to)
             unit_from = _unitify(unit_from)
-            return ureg.Quantity(value, unit_from).to(unit_to).magnitude
+            return self.__raw_unit_converter(value, unit_from, unit_to)
         else:
             return value
+
+    @staticmethod
+    def __raw_unit_converter(value, unit_from, unit_to):
+        # TODO if temperature conversion use constants converters
+        return ureg.Quantity(value, unit_from).to(unit_to).magnitude
 
     def to_dict(self, verbose=False) -> dict:
         """
