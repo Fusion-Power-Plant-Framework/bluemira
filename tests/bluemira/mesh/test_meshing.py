@@ -34,7 +34,7 @@ try:
 
     HAS_MSH2XDMF = True
 except ImportError as err:
-    print(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
+    bluemira_warn(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
 
 
 class TestMeshing:
