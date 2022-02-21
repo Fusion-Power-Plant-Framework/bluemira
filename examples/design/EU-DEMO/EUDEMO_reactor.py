@@ -33,7 +33,7 @@ from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
-from bluemira.base.parameter import ParameterMappingEncoder
+from bluemira.base.parameter import ParameterEncoder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
@@ -119,7 +119,7 @@ json_writer(
     params,
     f"{get_bluemira_root()}/examples/design/EU-DEMO/template.json",
     indent=2,
-    cls=ParameterMappingEncoder,
+    cls=ParameterEncoder,
     ensure_ascii=True,
 )
 
@@ -171,7 +171,7 @@ json_writer(
     config,
     f"{get_bluemira_root()}/examples/design/EU-DEMO/params.json",
     indent=2,
-    cls=ParameterMappingEncoder,
+    cls=ParameterEncoder,
     ensure_ascii=False,
 )
 

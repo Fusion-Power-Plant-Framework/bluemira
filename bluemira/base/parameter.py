@@ -94,9 +94,9 @@ class ParameterMapping:
     _frozen = ()
 
     def __post_init__(self):
-        self._frozen = ["name", "unit"]
+        self._frozen = ("name", "unit", "_frozen")
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         """
         Convert this object to a dictionary with attributes as values.
         """
@@ -104,11 +104,11 @@ class ParameterMapping:
             "name": self.name,
             "recv": self.recv,
             "send": self.send,
-            "unit": self.unit,
+            "unit": self.unit.format_babel(),
         }
 
     @classmethod
-    def from_dict(cls, the_dict) -> "ParameterMapping":
+    def from_dict(cls, the_dict: Dict) -> "ParameterMapping":
         """
         Create a ParameterMapping using a dictionary with attributes as values.
         """
@@ -144,7 +144,7 @@ class ParameterMapping:
             super().__setattr__(attr, value)
 
 
-class ParameterMappingEncoder(json.JSONEncoder):
+class ParameterEncoder(json.JSONEncoder):
     """
     Class to handle serialisation of ParameterMapping objects to JSON.
     """
@@ -666,6 +666,23 @@ class ParameterFrame:
         cls.set_template_parameters(cls.params)
 
     @classmethod
+    def set_template_parameters(cls, params: RecordList):
+        """
+        Fills the template parameters from the minimal content of the provided parameter
+        records list.
+
+        Parameters
+        ----------
+        params: RecordList
+            The parameter record list to use to populate the template.
+        """
+        for param in params:
+            cls._template_params[param[0]] = {
+                "name": param[1],
+                "unit": param[3],
+            }
+
+    @classmethod
     def set_default_parameters(cls, params):
         """
         Set the default parameters for all reactor objects.
@@ -677,6 +694,7 @@ class ParameterFrame:
         params: list
             default parameters
 
+        TODO remove when defaults removed
         """
         if not cls.__defaults_set:
             cls.__defaults_setting = True
@@ -712,23 +730,6 @@ class ParameterFrame:
         cls.__defaults_set = True
 
     @classmethod
-    def set_template_parameters(cls, params: RecordList):
-        """
-        Fills the template parameters from the minimal content of the provided parameter
-        records list.
-
-        Parameters
-        ----------
-        params: RecordList
-            The parameter record list to use to populate the template.
-        """
-        for param in params:
-            cls._template_params[param[0]] = {
-                "name": param[1],
-                "unit": param[3],
-            }
-
-    @classmethod
     def __setattr(cls, *args, **kwargs):
         """
         TODO remove when defaults removed
@@ -749,6 +750,23 @@ class ParameterFrame:
         TODO remove when defaults removed
         """
         return cls._add_parameter(cls, *args, **kwargs)
+
+    @classmethod
+    def _clean(cls):
+        """
+        Clean ParameterFrame to remove all defaults
+        from the internal state saving.
+        TODO remove when defaults removed
+        """
+        cls.__default_params = {}
+        cls.__defaults_set = False
+
+    def _reinit(self):
+        """
+        Reinitialise class with defaults.
+        TODO remove when defaults removed
+        """
+        self.__dict__ = copy.deepcopy(self.__default_params)
 
     @classmethod
     def from_template(cls, param_vars: List[str]) -> "ParameterFrame":
@@ -856,21 +874,6 @@ class ParameterFrame:
         ]
         for instance in instances:
             instance.__setattr__(attr, value, allow_new=True)
-
-    @classmethod
-    def _clean(cls):
-        """
-        Clean ParameterFrame to remove all defaults
-        from the internal state saving.
-        """
-        cls.__default_params = {}
-        cls.__defaults_set = False
-
-    def _reinit(self):
-        """
-        Reinitialise class with defaults.
-        """
-        self.__dict__ = copy.deepcopy(self.__default_params)
 
     def to_records(self):
         """
@@ -1442,7 +1445,7 @@ class ParameterFrame:
             the_dict,
             output_path,
             return_output,
-            cls=ParameterMappingEncoder,
+            cls=ParameterEncoder,
             **kwargs,
         )
 
