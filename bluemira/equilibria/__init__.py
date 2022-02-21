@@ -23,8 +23,8 @@
 The bluemira equilibria module
 """
 
-from .coils import Coil, CoilSet, SymmetricCircuit
-from .constraints import (
+from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.constraints import (
     AutoConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
@@ -32,11 +32,15 @@ from .constraints import (
     PsiBoundaryConstraint,
     PsiConstraint,
 )
-from .equilibrium import Breakdown, Equilibrium
-from .find import find_flux_surfs, find_LCFS_separatrix, find_OX_points
-from .grid import Grid
-from .limiter import Limiter
-from .optimiser import (
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
+from bluemira.equilibria.find import (
+    find_flux_surfs,
+    find_LCFS_separatrix,
+    find_OX_points,
+)
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.limiter import Limiter
+from bluemira.equilibria.optimiser import (
     BoundedCurrentOptimiser,
     CoilsetOptimiser,
     FBIOptimiser,
@@ -45,9 +49,13 @@ from .optimiser import (
     PositionOptimiser,
     UnconstrainedCurrentOptimiser,
 )
-from .profiles import BetaIpProfile, CustomProfile
-from .shapes import flux_surface_cunningham, flux_surface_johner, flux_surface_manickam
-from .solve import (
+from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
+from bluemira.equilibria.shapes import (
+    flux_surface_cunningham,
+    flux_surface_johner,
+    flux_surface_manickam,
+)
+from bluemira.equilibria.solve import (
     PicardAbsIterator,
     PicardCoilsetIterator,
     PicardDeltaIterator,
