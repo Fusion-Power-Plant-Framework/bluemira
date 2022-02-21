@@ -25,9 +25,8 @@ Three-dimensional current source terms.
 
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._deprecated_tools import distance_between_points, rotation_matrix
-from bluemira.geometry.coordinates import get_area_3d, get_normal_vector
+from bluemira.geometry.coordinates import get_normal_vector
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
@@ -130,19 +129,19 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
 
     @staticmethod
     def _point_in_triangle(point, p0, p1, p2):
+        """
+        Determine whether a point lies inside a 3-D triangle.
+        """
         area = 0.5 * np.linalg.norm(np.cross(p1 - p0, p2 - p0))
         alpha = np.linalg.norm(np.cross(p1 - point, p2 - point)) / (2 * area)
         beta = np.linalg.norm(np.cross(p2 - point, p0 - point)) / (2 * area)
         gamma = 1.0 - alpha - beta
-        if (
+        return (
             (0 < alpha < 1)
             and (0 < beta < 1)
             and (0 < gamma < 1)
             and (np.isclose(alpha + beta + gamma, 1.0))
-        ):
-            return True
-        else:
-            return False
+        )
 
 
 class HelmholtzCage(SourceGroup):
