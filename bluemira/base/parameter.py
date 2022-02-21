@@ -292,6 +292,7 @@ class Parameter(wrapt.ObjectProxy):
                     "_update_history",
                     "from_json",
                     "history",
+                    "mapping",
                     "source",
                     "source_history",
                     "to_dict",
@@ -415,15 +416,17 @@ class Parameter(wrapt.ObjectProxy):
         """
         Overwrite mapping, enforcing type
         """
-        if isinstance(mapping, dict):
-            val_types = set(map(type, mapping.values()))
-            if len(val_types) == 1 and isinstance(list(val_types)[0], ParameterMapping):
-                self._mapping = {**self.mapping, **mapping}
-                return
-
         if mapping in [None, {}]:
             self._mapping = {}
             return
+
+        if isinstance(mapping, dict):
+            val_types = set(map(type, mapping.values()))
+            if len(val_types) == 1 and issubclass(list(val_types)[0], ParameterMapping):
+                self._mapping = (
+                    {**self._mapping, **mapping} if hasattr(self, "mapping") else mapping
+                )
+                return
 
         raise TypeError(
             f"mapping should be a dictionary with ParameterMapping values: {mapping}"

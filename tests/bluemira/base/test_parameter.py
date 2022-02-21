@@ -309,6 +309,28 @@ class TestParameter:
         p += 5
         assert len(caplog.messages) == 0
 
+    def test_mappingtype_enforcement(self):
+
+        p = Parameter("p", "param", 1.0, "m", source="Input")
+
+        for val in ("string", {"A": "dict"}):
+            with pytest.raises(TypeError):
+                p.mapping = val
+
+        mapping = ParameterMapping("param_name", send=True, recv=True, unit="T")
+        p.mapping = {"MYCODE": mapping}
+
+        assert p.mapping["MYCODE"] == mapping
+
+        p.mapping = {"MYOTHERCODE": mapping}
+
+        assert p.mapping["MYCODE"] == mapping
+        assert p.mapping["MYOTHERCODE"] == mapping
+
+        del p.mapping["MYOTHERCODE"]
+
+        assert p.mapping.keys() == set(["MYCODE"])
+
 
 def _converted_helper(test_pm, source):
     """
