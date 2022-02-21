@@ -977,9 +977,12 @@ class ParameterFrame:
                 if isinstance(param, Parameter):
                     self.add_parameter(self.modify_source(param, source))
                 else:
+                    plen = len(Parameter.__slots__)
+                    if len(param) not in [plen - 1, plen - 2, plen + 1]:
+                        raise ValueError
                     self.add_parameter(*self.modify_source(param, source))
 
-    def set_parameter(self, var, value, source=None):
+    def set_parameter(self, var, value, unit=None, source=None):
         """
         Updates only the value of a parameter in the ParameterFrame
 
@@ -1021,37 +1024,35 @@ class ParameterFrame:
 
         """
         for key, var in kwargs.items():
+            desc = None
             if key not in self.__dict__:
                 # Skip keys that aren't parameters, note this could mask typos!
+                bluemira_debug(
+                    f"Parameter '{key}' not in {self.__class__.__name__}, skipping"
+                )
                 continue
-            if isinstance(var, dict):
-                src = var.get("source", None) if source is None else source
-                desc = var.get("description", None)
-                mapping = var.get("mapping", None)
-                var = var.get("value")
-                unit = var.get("unit", None)
-            elif isinstance(var, Parameter):
-                src = var.source if source is None else source
+            if not isinstance(var, Parameter):
+                if isinstance(var, dict):
+                    var = var.copy()
+                    var["unit"] = var.get("unit", self.__dict__[key].unit)
+                    var["var"] = var.get("var", key)
+                    var = Parameter(**self.modify_source(var, source))
+                    desc = var.description
+                elif isinstance(var, (tuple, list)):
+                    if len(var) == len(Parameter.__slots__) - 2:
+                        var = Parameter(*var)
+                        desc = var.description
+                    var = self.modify_source(var, source)
+                elif source is not None:
+                    var = var, source
+            elif source is not None:
+                var.source = source
                 desc = var.description
-                mapping = var.mapping
-                var = var.value
-                unit = var.unit
-            else:
-                src = source
-                desc = None
-                mapping = None
-                unit = None
-
-            var = self._unit_conversion(self.modify_source(var, src), unit)
 
             self.__setattr__(key, var)
+
             if desc is not None:
-                self.__dict__[key].description = desc
-            if mapping is not None:
-                for code, val in mapping.items():
-                    if isinstance(val, dict):
-                        mapping[code] = ParameterMapping.from_dict(val)
-                self.__dict__[key].mapping = mapping
+                getattr(self, key).description = desc
 
     def items(self):
         """
@@ -1238,16 +1239,30 @@ class ParameterFrame:
         value, source, unit = self._from_iterable(value)
 
         if isinstance(value, Parameter):
-            self._set_modified_param(allow_new, _dict, attr, value, source, value.unit)
+            self._set_modified_param(_dict, attr, value, source, value.unit, allow_new)
         elif isinstance(_dict.get(attr, None), Parameter):
-            _dict[attr].value = self._unit_conversion(value, unit, to=_dict[attr].unit)
-            _dict[attr].source = source
+            _dict[attr].value = self._unit_conversion(
+                value, unit, unit_to=_dict[attr].unit
+            )
+            if source is None:
+                src = None
+            else:
+                src = source
+                src += (
+                    f": Units converted from {Unit(unit).format_babel()} to {_dict[attr].unit.format_babel()}"
+                    if unit is not None and Unit(unit) != _dict[attr].unit
+                    else ""
+                )
+
+            _dict[attr].source = src
         else:
             # what other attributes need to be set?
-            bluemira_debug(
-                "Please send this to the bluemira maintainers:"
-                f"{attr=}, {value=}, type={type(value)}"
-            )
+            if attr not in ["__dict__"]:
+                bluemira_debug(
+                    "Please send this to the bluemira maintainers:\n"
+                    "ParameterFrame type catching\n"
+                    f"{attr=}, {value=}, type={type(value)}"
+                )
             super().__setattr__(attr, value)
 
     @staticmethod
@@ -1258,60 +1273,86 @@ class ParameterFrame:
             and isinstance(value[1], (str, type(None)))
         ):
             bluemira_debug("Consider using a dictionary for ordering safety")
-            if len(value) == 3:
-                unit = value[2]
+            unit = value[2] if len(value) == 3 else None
             source = value[1]
             value = value[0]
-        elif isinstance(value, dict) and value.keys() <= {"value", "source", "unit"}:
+        elif isinstance(value, dict) and value.keys() <= set(Parameter._attrnames()):
             source = value.get("source", None)
             unit = value.get("unit", None)
             value = value["value"]
         else:
+            if isinstance(value, list):
+                value = Parameter(*value)
             source = None
             unit = None
 
         return value, source, unit
 
-    def _set_modified_param(self, allow_new, _dict, attr, value, source, unit):
+    def _set_modified_param(self, _dict, attr, value, source, unit, allow_new):
+        """
+        TODO
+        """
         if attr != value.var:
-            raise ValueError(
+            # may just want to copy over value of parameter
+            bluemira_debug(
                 f"Mismatch between parameter var {value.var} and attribute to be set {attr}."
             )
+
         if source is not None:
             value.source = source
 
-        value = self._unit_conversion(value, unit)
+        value = self._unit_conversion(
+            value,
+            unit,
+            unit_to=value.unit if allow_new else _dict[attr].unit,
+            force=True,
+            source=value.source,
+        )
 
         if allow_new:
+            if attr != value.var:
+                raise ValueError(
+                    f"Mismatch between parameter var {value.var} and attribute to be set {attr}."
+                )
             _dict[attr] = value
         else:
-            param = _dict[attr]
-            param.value = value.value
-            param.source = value.source
+            _dict[attr].value = value.value
+            _dict[attr].source = value.source
+            if value.mapping != {} and attr == value.var:
+                _dict[attr].mapping = value.mapping
 
     @staticmethod
-    def _unit_conversion(value, unit_from, unit_to=None):
+    def _unit_conversion(value, unit_from, unit_to=None, force=False, source=None):
+        """
+        TODO
+        """
         if not isinstance(value, Parameter) and unit_to is None:
             raise ParameterError("No unit to convert to")
         elif isinstance(value, Parameter):
             if unit_to is not None:
                 unit_to = _unitify(unit_to)
-                if unit_to != value.unit:
+                if unit_to != value.unit and not force:
                     raise ParameterError("Can't change unit of existing parameter")
             else:
                 unit_to = value.unit
 
-            unit_from = _unitify(unit_from)
+            if unit_from is not None:
+                unit_from = _unitify(unit_from)
 
-            if unit_to == unit_from:
-                return value
-            value.value = ureg.Quantity(value.value, unit_from).to(unit_to).magnitude
-            value.source = "Unit Conversion"
+                if unit_to == unit_from:
+                    return value
+                value.value = ureg.Quantity(value.value, unit_from).to(unit_to).magnitude
+                value.source = (
+                    f"{source if source is not None else ''}: "
+                    f"Units converted from {unit_from.format_babel()} to {unit_to.format_babel()}"
+                )
             return value
-        else:
+        elif None not in [unit_to, unit_from]:
             unit_to = _unitify(unit_to)
             unit_from = _unitify(unit_from)
             return ureg.Quantity(value, unit_from).to(unit_to).magnitude
+        else:
+            return value
 
     def to_dict(self, verbose=False) -> dict:
         """
