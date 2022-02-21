@@ -584,7 +584,7 @@ class TestParameterFrame:
             self.params.R_0 = self.params.get_param("B_0")
         assert (
             str(ex_info.value)
-            == "Mismatch between parameter var B_0 and attribute to be set R_0."
+            == "Cannot convert from 'tesla' ([mass] / [current] / [time] ** 2) to 'meter' ([length])"
         )
 
     def test_starstar(self):

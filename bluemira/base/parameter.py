@@ -59,7 +59,6 @@ def _unitify(unit: Union[str, Unit]) -> Unit:
     """
     Convert string to pint Unit and have custom error messages
     """
-
     if isinstance(unit, Unit):
         return unit
     if isinstance(unit, str):
@@ -94,6 +93,9 @@ class ParameterMapping:
     _frozen = ()
 
     def __post_init__(self):
+        """
+        Freeze the dataclass
+        """
         self._frozen = ("name", "unit", "_frozen")
 
     def to_dict(self) -> Dict:
@@ -104,7 +106,9 @@ class ParameterMapping:
             "name": self.name,
             "recv": self.recv,
             "send": self.send,
-            "unit": self.unit.format_babel(),
+            "unit": self.unit.format_babel()
+            if isinstance(self.unit, Unit)
+            else self.unit,
         }
 
     @classmethod
@@ -210,7 +214,7 @@ class Parameter(wrapt.ObjectProxy):
         "_unit",
         "description",
         "_source",
-        "mapping",
+        "_mapping",
         "_value_history",
         "_source_history",
     )
@@ -398,6 +402,31 @@ class Parameter(wrapt.ObjectProxy):
         Initialise Parameter Units
         """
         return _unitify(unit)
+
+    @property
+    def mapping(self):
+        """
+        Get mapping
+        """
+        return self._mapping
+
+    @mapping.setter
+    def mapping(self, mapping):
+        """
+        Overwrite mapping, enforcing type
+        """
+        if isinstance(mapping, dict):
+            val_types = set(map(type, mapping.values()))
+            if len(val_types) == 1 and isinstance(list(val_types)[0], ParameterMapping):
+                self._mapping = {**self.mapping, **mapping}
+                return
+            elif len(val_types) == 0:
+                self._mapping = mapping
+                return
+
+        raise TypeError(
+            f"mapping should be a dictionary with ParameterMapping values: {mapping}"
+        )
 
     @property
     def value(self):
