@@ -609,6 +609,13 @@ class TestParameterFrame:
             == "Cannot convert from 'tesla' ([mass] / [current] / [time] ** 2) to 'meter' ([length])"
         )
 
+    def test_mismatched_attr_name(self):
+        with pytest.raises(ValueError):
+            ParameterFrame({"B_O": self.params.R_0})
+
+        with pytest.raises(ValueError):
+            ParameterFrame().add_parameters({"B_O": self.params.R_0})
+
     def test_starstar(self):
         def starstar(pf):
             t = {}

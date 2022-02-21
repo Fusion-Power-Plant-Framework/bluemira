@@ -1016,7 +1016,7 @@ class ParameterFrame:
             specified value, by default None (i.e. the value is left unchanged).
         """
         if isinstance(record_list, dict):
-            self.update_kw_parameters(record_list, source=source)
+            self.update_kw_parameters(record_list, source=source, allow_new=True)
         else:
             for param in record_list:
                 if isinstance(param, Parameter):
@@ -1045,7 +1045,7 @@ class ParameterFrame:
         """
         self.__setattr__(var, self.modify_source(value, source))
 
-    def update_kw_parameters(self, kwargs, source=None):
+    def update_kw_parameters(self, kwargs, source=None, *, allow_new=False):
         """
         Handles dictionary keys like update
 
@@ -1070,7 +1070,7 @@ class ParameterFrame:
         """
         for key, var in kwargs.items():
             desc = None
-            if key not in self.__dict__:
+            if key not in self.__dict__ and not allow_new:
                 # Skip keys that aren't parameters, note this could mask typos!
                 bluemira_debug(
                     f"Parameter '{key}' not in {self.__class__.__name__}, skipping"
@@ -1080,7 +1080,7 @@ class ParameterFrame:
                 if isinstance(var, dict):
                     var = var.copy()
                     var["unit"] = var.get("unit", self.__dict__[key].unit)
-                    var["var"] = var.get("var", key)
+                    var["var"] = key
                     var = Parameter(**self.modify_source(var, source))
                     desc = var.description
                 elif isinstance(var, (tuple, list)):
@@ -1094,7 +1094,7 @@ class ParameterFrame:
                 var.source = source
                 desc = var.description
 
-            self.__setattr__(key, var)
+            self.__setattr__(key, var, allow_new=allow_new)
 
             if desc is not None:
                 getattr(self, key).description = desc
