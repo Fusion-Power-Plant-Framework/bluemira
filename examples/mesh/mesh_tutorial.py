@@ -23,8 +23,6 @@
 Some examples of using bluemira mesh module.
 """
 
-# %%
-
 import os
 
 import dolfin
@@ -52,11 +50,7 @@ try:
 except ImportError as err:
     print(f"Unable to import msh2xdmf, dolfin examples will not run: {err}")
 
-# %%[markdown]
-
 # Creation of a simple geometry
-
-# %%
 
 p = JohnerLCFS()
 lcfs = p.create_shape(label="LCFS")
@@ -94,22 +88,14 @@ comp = Component(name="comp")
 pcomp1 = PhysicalComponent(name="pcomp1", shape=coil, parent=comp)
 pcomp2 = PhysicalComponent(name="pcomp2", shape=face, parent=comp)
 
-
-# %%[markdown]
-
 # Mesh creation
 
-# %%
 m = meshing.Mesh()
 buffer = m(comp)
 print(m.get_gmsh_dict(buffer))
 
-# %%[markdown]
-
 # Convert the mesh in xdmf for reading in fenics. Note that this requires the msh2xdmf
 # module to be available.
-
-# %%
 
 if HAS_MSH2XDMF:
     msh2xdmf.msh2xdmf("Mesh.msh", dim=2, directory=".")
