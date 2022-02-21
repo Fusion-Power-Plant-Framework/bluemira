@@ -669,14 +669,9 @@ class _FreeCADGmsh:
                     end_point[0], end_point[1], end_point[2]
                 )
                 points_tag.append(end_point_tag)
-                print("Ellipse")
                 center = buffer[type_]["Center"]
-                print(start_point)
-                print(center)
                 center_tag = gmsh.model.occ.addPoint(center[0], center[1], center[2])
                 focus = buffer[type_]["Focus1"]
-                print(focus)
-                print(end_point)
                 focus_tag = gmsh.model.occ.addPoint(focus[0], focus[1], focus[2])
                 curve_tag.append(
                     gmsh.model.occ.addEllipseArc(
