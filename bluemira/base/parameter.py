@@ -404,14 +404,14 @@ class Parameter(wrapt.ObjectProxy):
         return _unitify(unit)
 
     @property
-    def mapping(self):
+    def mapping(self) -> Dict[str, ParameterMapping]:
         """
         Get mapping
         """
         return self._mapping
 
     @mapping.setter
-    def mapping(self, mapping):
+    def mapping(self, mapping: Dict[str, ParameterMapping]) -> None:
         """
         Overwrite mapping, enforcing type
         """
