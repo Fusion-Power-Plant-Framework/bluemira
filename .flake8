@@ -165,4 +165,5 @@ ignore_names =
     *LFS*,
     *HFS*,
     *_OX_*,
-    *_F
+    *_F,
+    *eV,

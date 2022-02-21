@@ -37,11 +37,6 @@ from bluemira.base.look_and_feel import (
 from bluemira.codes.error import CodesError
 
 
-def convert_units(param, value, unit):
-    cval = value * Unit(unit)
-    return cval.to(param.unit).magnitude
-
-
 def _get_mapping(
     params, code_name: str, send_recv: Literal["send", "recv"], override: bool = False
 ) -> Dict[str, str]:
