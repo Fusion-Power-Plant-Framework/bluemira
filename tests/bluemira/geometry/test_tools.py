@@ -319,7 +319,9 @@ class TestSolidFacePlaneIntersect:
         extruded = extrude_shape(face, (0, 1, 0))
 
         _slice_xy = slice_shape(extruded, self.xy_plane)
-        _slice_xz = slice_shape(extruded, BluemiraPlacement(base=[0, 1, 0], axis=[0, 1, 0]))
+        _slice_xz = slice_shape(
+            extruded, BluemiraPlacement(base=[0, 1, 0], axis=[0, 1, 0])
+        )
 
         assert len(_slice_xy) == 2
         assert len(_slice_xz) == 2

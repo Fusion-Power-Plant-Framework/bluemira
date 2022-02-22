@@ -164,7 +164,9 @@ def coordinates_to_path(x, z):
 
 
 def set_component_placement(comp: Component, placement: Union[str, BluemiraPlacement]):
-    if placement not in ["xy", "xz", "zy"] and not isinstance(placement, BluemiraPlacement):
+    if placement not in ["xy", "xz", "zy"] and not isinstance(
+        placement, BluemiraPlacement
+    ):
         raise bm_display_error.DisplayError(
             f"Not a valid placement {placement} - select either xy, xz, zy, or a BluemiraPlacement"
         )
