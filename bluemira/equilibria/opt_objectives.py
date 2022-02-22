@@ -40,8 +40,47 @@ Note that the gradient of the objective function is of the form:
 
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.utilities.optimiser import approx_derivative
+
+
+def ad_objective(vector, grad, objective, objective_args, ad_args=None):
+    """
+    Objective function that calculates gradient information via
+    automatic differentiation of the figure of merit returned from a
+    provided objective.
+
+    If the provided objective already provides gradient information,
+    it will be overwritten by the approximated gradient.
+
+    Parameters
+    ----------
+    vector: np.array(n_C)
+        State vector of the array of coil currents.
+    grad: np.array
+        Local gradient of objective function used by LD NLOPT algorithms.
+        Updated in-place.
+    objective: function
+        Objective function for which a numerical approximation for
+        derivative information will be calculated.
+    objective_args: dict
+        Arguments to pass to objective function during call.
+    ad_args: dict
+        Optional keyword arguments to pass to derivative approximation
+        function.
+
+    Returns
+    -------
+    fom: Value of objective function (figure of merit).
+    """
+    fom = objective(vector, grad, **objective_args)
+    if grad.size > 0:
+        grad[:] = approx_derivative(
+            objective, vector, args=objective_args, f0=fom, **ad_args
+        )
+    bluemira_print_flush(f"EQUILIBRIA Coilset iteration figure of merit = {fom:.2e}")
+    return fom
 
 
 def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):

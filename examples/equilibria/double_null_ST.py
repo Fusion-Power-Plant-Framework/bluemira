@@ -262,8 +262,8 @@ def init_equilibrium(grid, coilset, constraint_set):
         li=None,
     )
     constraint_set(eq)
-    optimiser = UnconstrainedCurrentCOP(coilset_temp, gamma=1e-7)
-    coilset_temp = optimiser(eq, constraint_set)
+    optimiser = UnconstrainedCurrentCOP(coilset_temp, eq, constraint_set, gamma=1e-7)
+    coilset_temp = optimiser()
 
     coilset.set_control_currents(coilset_temp.get_control_currents())
 
@@ -303,7 +303,7 @@ def pre_optimise(eq, profile, constraint_set):
     Run a simple unconstrained optimisation to improve the
     initial equilibrium for the main optimiser.
     """
-    optimiser = UnconstrainedCurrentCOP(eq.coilset, gamma=1e-8)
+    optimiser = UnconstrainedCurrentCOP(eq.coilset, eq, constraint_set, gamma=1e-8)
 
     program = PicardCoilsetIterator(
         eq,
@@ -323,6 +323,8 @@ def pre_optimise(eq, profile, constraint_set):
 
 def set_coilset_optimiser(
     coilset,
+    eq,
+    targets,
     optimiser_name,
     optimisation_options,
     suboptimiser_name="BoundedCurrentCOP",
@@ -335,21 +337,23 @@ def set_coilset_optimiser(
     if optimiser_name in ["Norm2Tikhonov"]:
         optimiser = Norm2Tikhonov(**optimisation_options)
     if optimiser_name in ["UnconstrainedCurrentCOP"]:
-        optimiser = UnconstrainedCurrentCOP(coilset, **optimisation_options)
+        optimiser = UnconstrainedCurrentCOP(coilset, eq, targets, **optimisation_options)
     elif optimiser_name in ["BoundedCurrentCOP"]:
-        optimiser = BoundedCurrentCOP(coilset, **optimisation_options)
+        optimiser = BoundedCurrentCOP(coilset, eq, targets, **optimisation_options)
     elif optimiser_name in ["CoilsetPositionCOP"]:
         optimiser = CoilsetPositionCOP(
-            coilset, pfregions=pfregions, **optimisation_options
+            coilset, eq, targets, pfregions=pfregions, **optimisation_options
         )
     elif optimiser_name in ["NestedCoilsetPositionCOP"]:
         sub_optimiser = set_coilset_optimiser(
             coilset,
+            eq,
+            targets,
             optimiser_name=suboptimiser_name,
             optimisation_options=suboptimisation_options,
         )
         optimiser = NestedCoilsetPositionCOP(
-            sub_optimiser, pfregions=pfregions, **optimisation_options
+            sub_optimiser, eq, targets, pfregions=pfregions, **optimisation_options
         )
     return optimiser
 
@@ -435,7 +439,7 @@ def run(args):
         pre_optimise(eq, profile, constraint_set)
     if optimiser_name is not None:
         options = default_optimiser_options(optimiser_name)
-        optimiser = set_coilset_optimiser(eq.coilset, **options)
+        optimiser = set_coilset_optimiser(eq.coilset, eq, constraint_set, **options)
         program = set_iterator(eq, profile, constraint_set, optimiser)
         optimise_fbe(program)
     eq.plot()

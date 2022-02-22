@@ -134,6 +134,40 @@ optimiser = Optimiser(
 
 # %%[markdown]
 
+# ### Additional parameters
+
+# `BoundedCurrentCOP` requires two additional parameters for generating arguments for
+# its `OptimisationObjective` during its `optimise()` call. The `OptimisationObjective`
+# figure of merit for `BoundedCurrentCOP` is the regularised least-squares deviation of a
+# provided Equilibrium from a set of magnetic field targets (eg. isoflux targets).
+
+# We use a default set of isoflux targets here for this example.
+
+# %%
+
+magnetic_targets, magnetic_core_targets = double_null_ST.init_targets()
+
+# %%[markdown]
+
+# We also specify an initial Equilibrium state to be used in the optimisation.
+
+# %%
+
+grid = double_null_ST.init_grid()
+profile = double_null_ST.init_profile()
+eq = Equilibrium(
+    coilset,
+    grid,
+    force_symmetry=True,
+    vcontrol=None,
+    psi=None,
+    profiles=profile,
+    Ip=16e6,
+    li=None,
+)
+
+# %%[markdown]
+
 # ### Constraints
 
 # We next define the list of `OptimisationConstraints` to apply.
@@ -203,46 +237,11 @@ optimiser = Optimiser(
 opt_constraints = [
     OptimisationConstraint(
         f_constraint=opt_constraints.current_midplane_constraint,
-        f_constraint_args={"radius": 1.0},
+        f_constraint_args={"eq": eq, "radius": 1.0},
         tolerance=np.array([1e-4]),
         constraint_type="inequality",
     )
 ]
-
-# %%[markdown]
-
-# ### Additional parameters
-
-# `BoundedCurrentCOP` requires two additional parameters for generating arguments for
-# its `OptimisationObjective` during its `optimise()` call. The `OptimisationObjective`
-# figure of merit for `BoundedCurrentCOP` is the regularised least-squares deviation of a
-# provided Equilibrium from a set of magnetic field targets (eg. isoflux targets).
-
-# We use a default set of isoflux targets here for this example.
-
-# %%
-
-magnetic_targets, magnetic_core_targets = double_null_ST.init_targets()
-
-# %%[markdown]
-
-# We also specify an initial Equilibrium state to be used in the optimisation.
-
-# %%
-
-grid = double_null_ST.init_grid()
-profile = double_null_ST.init_profile()
-eq = Equilibrium(
-    coilset,
-    grid,
-    force_symmetry=True,
-    vcontrol=None,
-    psi=None,
-    profiles=profile,
-    Ip=16e6,
-    li=None,
-)
-
 # %%[markdown]
 
 # We now have all the requirements to specify our `CoilsetOP`, and can now initialise it:

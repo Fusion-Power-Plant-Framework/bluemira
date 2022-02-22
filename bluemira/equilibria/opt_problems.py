@@ -41,7 +41,6 @@ from typing import List
 import numpy as np
 
 import bluemira.equilibria.opt_objectives as objectives
-from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.positioner import RegionMapper
@@ -98,8 +97,10 @@ class CoilsetOP(OptimisationProblem):
         constraints: List[OptimisationConstraint] = [],
     ):
         super().__init__(coilset, optimiser, objective, constraints)
-        self.scale = 1e6
-        self.initial_state, self.substates = self.read_coilset_state(self.coilset)
+        self.scale = 1e6  # current_scale
+        self.initial_state, self.substates = self.read_coilset_state(
+            self.coilset, self.scale
+        )
         self.x0, self.z0, self.I0 = np.array_split(self.initial_state, self.substates)
 
     @property
@@ -110,7 +111,8 @@ class CoilsetOP(OptimisationProblem):
     def coilset(self, value: CoilSet):
         self._parameterisation = value
 
-    def read_coilset_state(self, coilset):
+    @staticmethod
+    def read_coilset_state(coilset, current_scale):
         """
         Reads the input coilset and generates the state vector as an array to represent
         it.
@@ -130,12 +132,13 @@ class CoilsetOP(OptimisationProblem):
         """
         substates = 3
         x, z = coilset.get_positions()
-        currents = coilset.get_control_currents() / self.scale
+        currents = coilset.get_control_currents() / current_scale
 
         coilset_state = np.concatenate((x, z, currents))
         return coilset_state, substates
 
-    def set_coilset_state(self, coilset_state):
+    @staticmethod
+    def set_coilset_state(coilset, coilset_state, current_scale):
         """
         Set the optimiser coilset from a provided state vector.
 
@@ -151,12 +154,13 @@ class CoilsetOP(OptimisationProblem):
         # SymmetricCircuits, it appears...
         # positions = list(zip(x, z))
         # self.coilset.set_positions(positions)
-        for i, coil in enumerate(self.coilset.coils.values()):
+        for i, coil in enumerate(coilset.coils.values()):
             coil.x = x[i]
             coil.z = z[i]
-        self.coilset.set_control_currents(currents * self.scale)
+        coilset.set_control_currents(currents * current_scale)
 
-    def get_state_bounds(self, x_bounds, z_bounds, current_bounds):
+    @staticmethod
+    def get_state_bounds(x_bounds, z_bounds, current_bounds):
         """
         Set bounds on the state vector from provided bounds on the substates.
 
@@ -181,7 +185,8 @@ class CoilsetOP(OptimisationProblem):
         bounds = np.array([lower_bounds, upper_bounds])
         return bounds
 
-    def get_current_bounds(self, max_currents):
+    @staticmethod
+    def get_current_bounds(coilset, max_currents, scale):
         """
         Gets the current vector bounds. Must be called prior to optimise.
 
@@ -201,14 +206,14 @@ class CoilsetOP(OptimisationProblem):
             Tuple of arrays containing lower and upper bounds for currents
             permitted in each control coil.
         """
-        n_control_currents = len(self.coilset.get_control_currents())
+        n_control_currents = len(coilset.get_control_currents())
         scaled_input_current_limits = np.inf * np.ones(n_control_currents)
 
         if max_currents is not None:
             input_current_limits = np.asarray(max_currents)
             input_size = np.size(np.asarray(input_current_limits))
             if input_size == 1 or input_size == n_control_currents:
-                scaled_input_current_limits = input_current_limits / self.scale
+                scaled_input_current_limits = input_current_limits / scale
             else:
                 raise EquilibriaError(
                     "Length of max_currents array provided to optimiser is not"
@@ -216,7 +221,7 @@ class CoilsetOP(OptimisationProblem):
                 )
 
         # Get the current limits from coil current densities
-        coilset_current_limits = self.coilset.get_max_currents(0.0)
+        coilset_current_limits = coilset.get_max_currents(0.0)
         if len(coilset_current_limits) != n_control_currents:
             raise EquilibriaError(
                 "Length of array containing coilset current limits"
@@ -336,7 +341,7 @@ class BoundedCurrentCOP(CoilsetOP):
         super().__init__(coilset, optimiser, objective, opt_constraints)
 
         # Set up optimiser
-        bounds = self.get_current_bounds(max_currents)
+        bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
@@ -371,7 +376,7 @@ class BoundedCurrentCOP(CoilsetOP):
         currents = self.opt.optimise(initial_currents)
 
         coilset_state = np.concatenate((self.x0, self.z0, currents))
-        self.set_coilset_state(coilset_state)
+        self.set_coilset_state(self.coilset, coilset_state, self.scale)
         return self.coilset
 
 
@@ -414,7 +419,11 @@ class CoilsetPositionCOP(CoilsetOP):
     def __init__(
         self,
         coilset,
+        eq,
+        targets,
         pfregions,
+        max_currents=None,
+        gamma=1e-8,
         optimiser=Optimiser(
             algorithm_name="SBPLX",
             opt_conditions={
@@ -423,26 +432,39 @@ class CoilsetPositionCOP(CoilsetOP):
             },
             opt_parameters={},
         ),
-        max_currents=None,
-        gamma=1e-8,
         opt_constraints=[],
     ):
         # noqa :N803
 
-        # Set objective function for this OptimisationProblem,
-        # and initialise
-        objective = OptimisationObjective(self.f_min_objective)
-        super().__init__(coilset, optimiser, objective, opt_constraints)
-
         # Create region map
         self.region_mapper = RegionMapper(pfregions)
 
-        # Store inputs
-        self.max_currents = max_currents
-        self.gamma = gamma
+        # Store inputs (optional, but useful for constraints)
+        self.eq = eq
+        self.targets = targets
+
+        # Set objective function for this OptimisationProblem,
+        # and initialise
+        objective = OptimisationObjective(
+            objectives.ad_objective,
+            {"objective": self.get_state_figure_of_merit, "objective_args": {}},
+        )
+        super().__init__(coilset, optimiser, objective, opt_constraints)
+
+        # Set up bounds
+        bounds = self.get_mapped_state_bounds(self.region_mapper, max_currents)
+        # Add bounds information to help automatic differentiation of objective
+        self._objective._args["ad_args"] = {"bounds": bounds}
+        self._objective._args["objective_args"] = {
+            "coilset": coilset,
+            "eq": eq,
+            "targets": targets,
+            "region_mapper": self.region_mapper,
+            "current_scale": self.scale,
+            "gamma": gamma,
+        }
 
         # Set up optimiser
-        bounds = self.get_mapped_state_bounds(self.region_mapper, self.max_currents)
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
@@ -452,7 +474,7 @@ class CoilsetPositionCOP(CoilsetOP):
         """
         # Get mapped position bounds from RegionMapper
         _, lower_lmap_bounds, upper_lmap_bounds = region_mapper.get_Lmap(self.coilset)
-        current_bounds = self.get_current_bounds(max_currents)
+        current_bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
 
         lower_bounds = np.concatenate((lower_lmap_bounds, current_bounds[0]))
         upper_bounds = np.concatenate((upper_lmap_bounds, current_bounds[1]))
@@ -466,13 +488,12 @@ class CoilsetPositionCOP(CoilsetOP):
         Returns np.ndarray of optimised currents in each coil [A].
         """
         # Get initial state and apply region mapping to coil positions.
-        initial_state, _ = self.read_coilset_state(self.coilset)
+        initial_state, _ = self.read_coilset_state(self.coilset, self.scale)
         _, _, initial_currents = np.array_split(initial_state, self.substates)
         initial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
         initial_mapped_state = np.concatenate(
             (initial_mapped_positions, initial_currents)
         )
-        self.iter = 0
 
         # Optimise
         state = self.opt.optimise(initial_mapped_state)
@@ -484,38 +505,10 @@ class CoilsetPositionCOP(CoilsetOP):
         self.get_state_figure_of_merit(state)
         return self.coilset
 
-    def f_min_objective(self, vector, grad):
-        """
-        Objective function for nlopt optimisation (minimisation),
-        consisting of a least-squares objective with Tikhonov
-        regularisation term, which updates the gradient in-place.
-
-        Parameters
-        ----------
-        vector: np.array(n_C)
-            State vector of the array of coil currents.
-        grad: np.array
-            Local gradient of objective function used by LD NLOPT algorithms.
-            Updated in-place.
-
-        Returns
-        -------
-        fom: Value of objective function (figure of merit).
-        """
-        self.iter += 1
-        fom = self.get_state_figure_of_merit(vector)
-        if grad.size > 0:
-            grad[:] = self.opt.approx_derivative(
-                self.get_state_figure_of_merit,
-                vector,
-                f0=fom,
-            )
-        bluemira_print_flush(
-            f"EQUILIBRIA Coilset iter {self.iter}: figure of merit = {fom:.2e}"
-        )
-        return fom
-
-    def get_state_figure_of_merit(self, vector):
+    @staticmethod
+    def get_state_figure_of_merit(
+        vector, grad, coilset, eq, targets, region_mapper, current_scale, gamma
+    ):
         """
         Calculates figure of merit from objective function,
         consisting of a least-squares objective with Tikhonov
@@ -530,26 +523,25 @@ class CoilsetPositionCOP(CoilsetOP):
         -------
         fom: Value of objective function (figure of merit).
         """
-        mapped_x, mapped_z, currents = np.array_split(vector, self.substates)
+        # eq, targets, scale, substates, coilset, region_mapper
+        mapped_x, mapped_z, currents = np.array_split(vector, 3)
         mapped_positions = np.concatenate((mapped_x, mapped_z))
-        self.region_mapper.set_Lmap(mapped_positions)
-        x_vals, z_vals = self.region_mapper.get_xz_arrays()
+        region_mapper.set_Lmap(mapped_positions)
+        x_vals, z_vals = region_mapper.get_xz_arrays()
         coilset_state = np.concatenate((x_vals, z_vals, currents))
 
-        self.set_coilset_state(coilset_state)
+        CoilsetOP.set_coilset_state(coilset, coilset_state, current_scale)
 
         # Update target
-        self.eq._remap_greens()
+        eq._remap_greens()
 
-        self.targets(self.eq, I_not_dI=True, fixed_coils=False)
-        self.A = self.targets.A
-        self.b = self.targets.b
-        self.w = self.targets.w
-        self.A = self.w[:, np.newaxis] * self.A
-        self.b *= self.w
+        # Set up data needed in FoM evaluation.
+        # Scale the control matrix and constraint vector by weights.
+        targets(eq, I_not_dI=True, fixed_coils=False)
+        _, a_mat, b_vec = targets.get_weighted_arrays()
 
         # Calculate objective function
-        fom, err = regularised_lsq_fom(currents * self.scale, self.A, self.b, self.gamma)
+        fom, err = regularised_lsq_fom(currents * current_scale, a_mat, b_vec, gamma)
         return fom
 
 
@@ -590,6 +582,8 @@ class NestedCoilsetPositionCOP(CoilsetOP):
     def __init__(
         self,
         sub_opt,
+        eq,
+        targets,
         pfregions,
         optimiser=Optimiser(
             algorithm_name="SBPLX",
@@ -602,17 +596,39 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         opt_constraints=[],
     ):
         # noqa :N803
-        opt_objective = OptimisationObjective(self.f_min_objective)
-        super().__init__(sub_opt.coilset, optimiser, opt_objective)
 
+        # Create region map
         self.region_mapper = RegionMapper(pfregions)
 
-        # Set up optimiser
+        # Store inputs (optional, but useful for constraints)
+        self.eq = eq
+        self.targets = targets
+
+        # Set objective function for this OptimisationProblem,
+        # and initialise
+        objective = OptimisationObjective(
+            objectives.ad_objective,
+            {"objective": self.get_state_figure_of_merit, "objective_args": {}},
+        )
+        super().__init__(sub_opt.coilset, optimiser, objective, opt_constraints)
+
+        # Set up bounds
         _, lower_bounds, upper_bounds = self.region_mapper.get_Lmap(self.coilset)
         bounds = (lower_bounds, upper_bounds)
+        # Add bounds information to help automatic differentiation of objective
+        self._objective._args["ad_args"] = {"bounds": bounds}
+        self._objective._args["objective_args"] = {
+            "coilset": self.coilset,
+            "eq": eq,
+            "targets": targets,
+            "region_mapper": self.region_mapper,
+            "current_scale": self.scale,
+            "initial_currents": self.I0,
+            "sub_opt": sub_opt,
+        }
+        # Set up optimiser
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
-        self.sub_opt = sub_opt
 
     def optimise(self):
         """
@@ -621,12 +637,12 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         Returns optimised coilset object.
         """
         # Get initial currents, and trim to within current bounds.
-        initial_state, substates = self.read_coilset_state(self.coilset)
-        _, _, self.currents = np.array_split(initial_state, substates)
+        initial_state, substates = self.read_coilset_state(self.coilset, self.scale)
+        _, _, initial_currents = np.array_split(initial_state, substates)
         intial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
 
         # Optimise
-        self.iter = 0
+        self._objective._args["objective_args"]["initial_currents"] = initial_currents
         positions = self.opt.optimise(intial_mapped_positions)
 
         # Call objective function final time on optimised state
@@ -636,38 +652,18 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         self.get_state_figure_of_merit(positions)
         return self.coilset
 
-    def f_min_objective(self, vector, grad):
-        """
-        Objective function for nlopt optimisation (minimisation),
-        fetched from the current optimiser provided at each
-        trial set of coil positions.
-
-        Parameters
-        ----------
-        vector: np.array(n_C)
-            State vector of the array of coil currents.
-        grad: np.array
-            Local gradient of objective function used by LD NLOPT algorithms.
-            Updated in-place.
-
-        Returns
-        -------
-        fom: Value of objective function (figure of merit).
-        """
-        self.iter += 1
-        fom = self.get_state_figure_of_merit(vector)
-        if grad.size > 0:
-            grad[:] = self.opt.approx_derivative(
-                self.get_state_figure_of_merit,
-                vector,
-                f0=fom,
-            )
-        bluemira_print_flush(
-            f"EQUILIBRIA Coilset iter {self.iter}: figure of merit = {fom:.2e}"
-        )
-        return fom
-
-    def get_state_figure_of_merit(self, vector):
+    @staticmethod
+    def get_state_figure_of_merit(
+        vector,
+        grad,
+        coilset,
+        eq,
+        targets,
+        region_mapper,
+        current_scale,
+        initial_currents,
+        sub_opt,
+    ):
         """
         Calculates figure of merit, returned from the current
         optimiser at each trial coil position.
@@ -675,23 +671,23 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         Parameters
         ----------
         vector: np.array(n_C)
-            State vector of the array of coil currents.
+            State vector of the array of coil positions.
 
         Returns
         -------
         fom: Value of objective function (figure of merit).
         """
-        self.region_mapper.set_Lmap(vector)
-        x_vals, z_vals = self.region_mapper.get_xz_arrays()
+        region_mapper.set_Lmap(vector)
+        x_vals, z_vals = region_mapper.get_xz_arrays()
         positions = np.concatenate((x_vals, z_vals))
-        coilset_state = np.concatenate((positions, self.currents))
-        self.set_coilset_state(coilset_state)
+        coilset_state = np.concatenate((positions, initial_currents))
+        CoilsetOP.set_coilset_state(coilset, coilset_state, current_scale)
 
-        # Update target
-        self.eq._remap_greens()
-        self.targets(self.eq, I_not_dI=True, fixed_coils=False)
+        # Update targets
+        eq._remap_greens()
+        targets(eq, I_not_dI=True, fixed_coils=False)
 
         # Calculate objective function
-        self.sub_opt(self.eq, self.targets)
-        fom = self.sub_opt.opt.optimum_value
+        sub_opt()
+        fom = sub_opt.opt.optimum_value
         return fom

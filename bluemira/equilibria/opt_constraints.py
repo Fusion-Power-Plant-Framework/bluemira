@@ -50,8 +50,6 @@ Note that the gradient (Jacobian) of the constraint function is of the form:
 The grad and constraint matrices must be assigned in place.
 """  # noqa (W505)
 
-import numpy as np
-
 
 def objective_constraint(constraint, vector, grad, objective_function, maximum_fom=1.0):
     """
@@ -69,9 +67,7 @@ def objective_constraint(constraint, vector, grad, objective_function, maximum_f
     return constraint
 
 
-def current_midplane_constraint(
-    constraint, vector, grad, opt_problem, radius, inboard=True
-):
+def current_midplane_constraint(constraint, vector, grad, eq, radius, inboard=True):
     """
     Constraint function to constrain the inboard or outboard midplane
     of the plasma during optimisation.
@@ -84,9 +80,8 @@ def current_midplane_constraint(
         Boolean controlling whether to constrain the inboard (if True) or
         outboard (if False) side of the plasma midplane.
     """
-    coilset_state = np.concatenate((opt_problem.x0, opt_problem.z0, vector))
-    opt_problem.set_coilset_state(coilset_state)
-    lcfs = opt_problem.eq.get_LCFS()
+    eq.coilset.set_control_currents(vector * 1e6)
+    lcfs = eq.get_LCFS()
     if inboard:
         constraint[:] = radius - min(lcfs.x)
     else:
