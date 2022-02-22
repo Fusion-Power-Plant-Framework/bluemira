@@ -221,7 +221,7 @@ class Parameter(wrapt.ObjectProxy):
 
     var: str
     name: Union[str, None]
-    unit: Union[Unit, str, None]
+    _unit: Union[Unit, str, None]
     description: Union[str, None]
     _source: Union[str, None]
     _mapping: Dict[str, ParameterMapping]
