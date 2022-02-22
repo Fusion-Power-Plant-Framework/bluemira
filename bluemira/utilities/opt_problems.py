@@ -43,7 +43,7 @@ class OptimisationConstraint:
     f_constraint: callable
         Constraint function to apply to problem.
         For NLOpt constraints, constraint functions should be of the form
-        f_constraint(constraint, x, grad, *f_constraint_args)
+        f_constraint(constraint, x, grad, f_constraint_args)
     f_constraint_args: dict (default = None)
         Additional arguments to pass to NLOpt constraint function when called.
     tolerance: array
@@ -96,7 +96,7 @@ class OptimisationObjective:
     f_objective: callable
         Objective function to apply to problem.
         For NLOpt objectives, objective functions should be of the form
-        f_objective(cls, x, grad, f_objective_args)
+        f_objective(x, grad, f_objective_args)
     f_objective_args: dict (default = None)
         Additional arguments to pass to NLOpt objective function when called.
     """
