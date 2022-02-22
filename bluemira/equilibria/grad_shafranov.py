@@ -93,7 +93,6 @@ class GSOperator:
 
         A = lil_matrix((nx * nz, nx * nz))
         A.setdiag(1)
-        # NOTE: nb.jit doesn't seem to help here :(
 
         i, j = np.meshgrid(np.arange(1, nx - 1), np.arange(1, nz - 1), indexing="ij")
         i = i.ravel()
