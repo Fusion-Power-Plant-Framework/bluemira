@@ -358,7 +358,6 @@ class MagneticConstraintSet(ABC):
 
         self.build_background()
         self.build_weight_matrix()
-        return
 
     def __len__(self):
         """
