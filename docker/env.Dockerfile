@@ -66,6 +66,7 @@ FROM base as env
 RUN useradd -ms /bin/bash user
 
 COPY --from=base --chown=user /opt/venv/ /opt/venv/
+RUN chown user:user /opt/venv
 
 USER user
 WORKDIR /home/user
@@ -75,6 +76,7 @@ FROM dev-base AS dev
 RUN useradd -ms /bin/bash user
 
 COPY --from=dev-base --chown=user /opt/venv/ /opt/venv/
+RUN chown user:user /opt/venv
 
 USER user
 WORKDIR /home/user
