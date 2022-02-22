@@ -42,8 +42,8 @@ class OptimisationConstraint:
     ----------
     f_constraint: callable
         Constraint function to apply to problem.
-        For NLOpt constraints, onstraint functions should be of the form
-        f_constraint(cls, constraint, x, grad, f_constraint_args)
+        For NLOpt constraints, constraint functions should be of the form
+        f_constraint(constraint, x, grad, *f_constraint_args)
     f_constraint_args: dict (default = None)
         Additional arguments to pass to NLOpt constraint function when called.
     tolerance: array
@@ -126,8 +126,30 @@ class OptimisationObjective:
 
 class OptimisationProblem(ABC):
     """
-    Generic OptimisationProblem to be subclassed for defining optimisation
+    Abstract base class to be subclassed for defining optimisation
     routines in Bluemira.
+
+    Subclasses should provide an optimise() method that
+    returns an optimised coilset object, optimised according
+    to a specific objective function for that subclass.
+
+    Parameters
+    ----------
+    parameterisation: any
+        Object storing parameterisation data to be optimised.
+    optimiser: Optimiser (default: None)
+        Optimiser object to use for constrained optimisation.
+        Does not need to be provided if not used by
+        optimise(), such as for purely unconstrained
+        optimisation.
+    objective: OptimisationObjective (default: None)
+        OptimisationObjective storing objective information to
+        provide to the Optimiser.
+    constraints: List[OptimisationConstraint] (default: [])
+        Optional list of OptimisationConstraint objects storing
+        information about constraints that must be satisfied
+        during the optimisation, to be provided to the
+        Optimiser.
     """
 
     def __init__(
