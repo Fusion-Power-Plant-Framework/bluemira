@@ -48,6 +48,8 @@ from bluemira.geometry.coordinates import Coordinates
 # import from error
 from bluemira.geometry.error import MixedOrientationWireError, NotClosedWire
 
+__all__ = ["BluemiraWire"]
+
 
 class BluemiraWire(BluemiraGeo):
     """Bluemira Wire class."""

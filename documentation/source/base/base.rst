@@ -9,3 +9,4 @@ The ``base`` module contains the core functionality to represent objects used fo
    :caption: Contents:
 
    parameter
+   components

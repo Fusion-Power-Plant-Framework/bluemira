@@ -1,0 +1,100 @@
+cff-version: 1.2.0
+authors:
+  - family-names: Coleman
+    given-names: M.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+    affiliation: EUROfusion Consortium, Boltzmannstr.2, Garching, 85748, Germany
+
+  - family-names: Cook
+    given-names: J. E.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Franza
+    given-names: F.
+    affiliation: Karlsruher Institut f&uuml;r Technologie, Hermann-von-Helmholtz-Platz 1, 76344 Eggenstein-Leopoldshafen, Germany
+
+  - family-names: Maione
+    given-names: I. A.
+    affiliation: Karlsruher Institut f&uuml;r Technologie, Hermann-von-Helmholtz-Platz 1, 76344 Eggenstein-Leopoldshafen, Germany
+
+  - family-names: McIntosh
+    given-names: S.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+    affiliation: ITER Organization, Route de Vinon-sur-Verdon, CS 90 046, 13067 St Paul Lez Durance Cedex, France
+
+  - family-names: Morris
+    given-names: J.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Short
+    given-names: D.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Blair
+    given-names: A. I.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Bluteau
+    given-names: M.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Brooks
+    given-names: H.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Desai
+    given-names: S.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Foord
+    given-names: M.
+    affiliation: Agile Abstractions, Northampton, United Kingdom
+
+  - family-names: Johnson
+    given-names: M.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Kahn
+    given-names: S.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Humphrey
+    given-names: L.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: MacMackin
+    given-names: C.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Saunders
+    given-names: H.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Vaccaro
+    given-names: D.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+message: "If you use this software, please cite it using these references."
+references:
+  - type: article
+    title: "BLUEPRINT: A novel approach to fusion reactor design"
+    authors:
+      - family-names: Coleman
+        given-names: M
+      - family-names: McIntosh
+        given-names: S
+    doi: https://doi.org/10.1016/j.fusengdes.2018.12.036
+    year: 2019
+    volume: 139
+    journal: Fusion Engineering and Design
+  - type: article
+    title: "Development and Validation of a Computational Tool for Fusion Reactors' System Analysis"
+    authors:
+      - family-names: Franza
+        given-names: F
+    doi: https://doi.org/10.5445/IR/1000095873
+    year: 2019
+title: "bluemira"
+license: LGPL-2.1+
+repository-code: "https://github.com/Fusion-Power-Plant-Framework/bluemira"
+website: "https://bluemira.readthedocs.io/en/develop"

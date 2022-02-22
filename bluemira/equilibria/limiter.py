@@ -23,7 +23,6 @@
 Limiter object class
 """
 
-from copy import deepcopy
 from itertools import cycle
 
 import numpy as np
@@ -82,9 +81,3 @@ class Limiter:
         Plots the Limiter object
         """
         return LimiterPlotter(self, ax)
-
-    def copy(self):
-        """
-        Get a deep copy of the Limiter object.
-        """
-        return deepcopy(self)

@@ -116,7 +116,7 @@ show_cad(cylinder, DisplayCADOptions(color="blue", transparency=0.1))
 # %%[markdown]
 # ## Matryoshka structure
 
-# Bluemira geometries are structured in a commonly used "Matryoska" or
+# Bluemira geometries are structured in a commonly used "Matryoshka" or
 # "Russian doll"-like structure.
 
 # Solid -> Shell -> Face -> Wire
@@ -162,8 +162,7 @@ x = 5 * np.cos(theta)
 y = np.zeros(6)
 z = 5 * np.sin(theta)
 
-# TODO: transpose in API
-points = np.array([x, y, z]).T
+points = np.array([x, y, z])
 pentagon = make_polygon(points)
 
 plot_2d(pentagon)
@@ -184,10 +183,9 @@ x = np.linspace(0, 10, 1000)
 y = 0.5 * np.sin(x) + 3 * np.cos(x) ** 2
 z = np.zeros(1000)
 
-# TODO: Transpose in user API
-points = np.array([x, y, z]).T
+points = np.array([x, y, z])
 spline = make_bspline(points)
-points = np.array([x, y + 3, z]).T
+points = np.array([x, y + 3, z])
 polygon = make_polygon(points)
 
 show_cad(
@@ -210,7 +208,7 @@ radius = 2
 part_circle = make_circle(radius=radius, start_angle=0, end_angle=270)
 
 points = np.array([[radius, 0, 0], [0, 0, -radius], [0, 0, 0]])
-closure = make_polygon(points.T)
+closure = make_polygon(points)
 
 my_shape = BluemiraWire([part_circle, closure])
 
@@ -230,7 +228,7 @@ show_cad(BluemiraFace(my_shape))
 
 # %%
 # Make a hollow cylinder, by revolving a rectangle
-points = np.array([[4, 5, 5, 4], [0, 0, 0, 0], [2, 2, 3, 3]]).T
+points = np.array([[4, 5, 5, 4], [0, 0, 0, 0], [2, 2, 3, 3]])
 rectangle = BluemiraFace(make_polygon(points, closed=True))
 
 hollow_cylinder = revolve_shape(
@@ -242,7 +240,7 @@ show_cad(hollow_cylinder)
 # %%
 # Sweep a profile along a path
 
-points = np.array([[4.5, 4.5], [0, 3], [2.5, 2.5]]).T
+points = np.array([[4.5, 4.5], [0, 3], [2.5, 2.5]])
 straight_line = make_polygon(points)
 quarter_turn = make_circle(center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_angle=90)
 path = BluemiraWire([straight_line, quarter_turn])
@@ -266,7 +264,7 @@ points = np.array(
     ]
 )
 
-box_1 = BluemiraFace(make_polygon(points.T, closed=True))
+box_1 = BluemiraFace(make_polygon(points, closed=True))
 box_1 = extrude_shape(box_1, (0, 2, 0))
 
 points = np.array(
@@ -277,7 +275,7 @@ points = np.array(
     ]
 )
 
-box_2 = BluemiraFace(make_polygon(points.T, closed=True))
+box_2 = BluemiraFace(make_polygon(points, closed=True))
 box_2 = extrude_shape(box_2, (0, 1, 0))
 
 fused_boxes = boolean_fuse([box_1, box_2])

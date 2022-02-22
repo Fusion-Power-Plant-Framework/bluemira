@@ -31,6 +31,7 @@ from bluemira.geometry.tools import (
     make_circle,
     make_polygon,
     offset_wire,
+    point_inside_shape,
     revolve_shape,
     signed_distance,
     signed_distance_2D_polygon,
@@ -332,3 +333,40 @@ class TestSolidFacePlaneIntersect:
         solid = extrude_shape(face, (1, 2, 3))
         _slice_solid = slice_shape(solid, BluemiraPlane(axis=[3, 2, 1]))
         assert len(_slice_solid) == 1
+
+
+class TestPointInside:
+    def test_simple(self):
+        polygon = BluemiraFace(
+            make_polygon({"x": [-2, 2, 2, -2, -2, -2], "z": [-2, -2, 2, 2, 1.5, -2]})
+        )
+        in_points = [
+            [-1, 0, -1],
+            [-1, 0, 0],
+            [-1, 0, 1],
+            [0, 0, -1],
+            [0, 0, 0],
+            [0, 0, 1],
+            [1, 0, -1],
+            [1, 0, 0],
+            [1, 0, 1],
+        ]
+        for point in in_points:
+            assert point_inside_shape(point, polygon)
+
+        out_points = [
+            [-3, 0, -3],
+            [-3, 0, 0],
+            [-3, 0, 3],
+            [0, 0, -3],
+            [3, 0, 3],
+            [3, 0, -3],
+            [2.005, 0, 0],
+            [2.001, 0, -1.9999],
+            # TODO: This is not very good FreeCAD..
+            # [2.00000009, 0, 0],
+            # [-2.0000000001, 0, -1.999999999999],
+        ]
+
+        for point in out_points:
+            assert not point_inside_shape(point, polygon)

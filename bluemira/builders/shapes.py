@@ -78,7 +78,7 @@ class ParameterisedShapeBuilder(Builder):
             shape_params[key] = val
         return shape_params
 
-    def reinitialise(self, params, **kwargs):
+    def reinitialise(self, params):
         """
         Create the GeometryParameterisation from the provided param_class and
         variables_map.
@@ -89,11 +89,23 @@ class ParameterisedShapeBuilder(Builder):
             The parameterisation containing at least the required params for this
             Builder.
         """
-        super().reinitialise(params, **kwargs)
+        super().reinitialise(params)
 
         shape_params = self._derive_shape_params()
         shape = self._param_class(shape_params)
         self._shape = shape
+
+    def save_shape(self, filename: str, **kwargs):
+        """
+        Save the shape to a json file.
+
+        Parameters
+        ----------
+        filename: str
+            The path to the file that the shape should be written to.
+        """
+        self._shape.to_json(file=filename, **kwargs)
+        bluemira_print(f"{self._name} shape saved to {filename}")
 
 
 class OptimisedShapeBuilder(ParameterisedShapeBuilder):
@@ -181,7 +193,7 @@ class SimpleBuilderMixin:
 
         self._label: str = build_config["label"]
 
-    def build(self, **kwargs) -> Component:
+    def build(self) -> Component:
         """
         Build the components from parameterised shapes using the provided configuration
         and parameterisation.
@@ -191,7 +203,7 @@ class SimpleBuilderMixin:
         component: Component
             The Component built by this builder.
         """
-        component = super().build(**kwargs)
+        component = super().build()
 
         component.add_child(
             PhysicalComponent(self._label, self._shape.create_shape(label=self._label))

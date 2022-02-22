@@ -23,8 +23,6 @@
 Plasma profile objects, shape functions, and associated tools
 """
 
-from copy import deepcopy
-
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
@@ -84,7 +82,7 @@ def singlepowerfunc(x, *args):
     \t:math:`g(x)=(1-x^{n})`
     """
     n = args[0]
-    return 1 - x ** n
+    return 1 - x**n
 
 
 @nb.jit(cache=True)
@@ -198,7 +196,7 @@ def luxonexp(x, *args):
     \t:math:`g(x)=\\text{exp}\\big(-\\alpha^2x^2\\big)`
     """
     alpha = args[0]
-    return np.exp(-(x ** 2) * alpha ** 2)
+    return np.exp(-(x**2) * alpha**2)
 
 
 class ShapeFunction:
@@ -391,13 +389,13 @@ class Profile:
         fvacuum = self.fvac()
         if not isinstance(psinorm, np.ndarray):
             val = self._scalar_denorm(self.ffprime, psinorm)
-            return np.sqrt(2 * val + fvacuum ** 2)
+            return np.sqrt(2 * val + fvacuum**2)
 
         p_vals, o_vals = self._reshape(psinorm)
 
         for i in range(len(p_vals)):
             val = self._scalar_denorm(self.ffprime, p_vals[i])
-            o_vals[i] = np.sqrt(2 * val + fvacuum ** 2)
+            o_vals[i] = np.sqrt(2 * val + fvacuum**2)
         return np.reshape(o_vals, psinorm.shape)
 
     @staticmethod
@@ -467,12 +465,6 @@ class Profile:
         Plot the Profile object
         """
         return ProfilePlotter(self, ax=ax)
-
-    def copy(self):
-        """
-        Get a deep copy of the Profile object
-        """
-        return deepcopy(self)
 
 
 class BetaIpProfile(Profile):
@@ -562,7 +554,7 @@ class BetaIpProfile(Profile):
             v_plasma = revolved_volume(*lcfs.d2)
             Bp = MU_0 * self.Ip / lcfs.length
             p_avg = volume_integral(pfunc, x, self.dx, self.dz) / v_plasma
-            beta_p_actual = 2 * MU_0 * p_avg / Bp ** 2
+            beta_p_actual = 2 * MU_0 * p_avg / Bp**2
 
             lambd_beta0 = -self.betap / beta_p_actual * self.R_0
 
@@ -570,7 +562,7 @@ class BetaIpProfile(Profile):
             # If there are no X-points, use less accurate beta_p constraint
             lambd_beta0 = (
                 -self.betap
-                * self.Ip ** 2
+                * self.Ip**2
                 * self.R_0
                 * MU_0
                 / (8 * np.pi)
@@ -612,15 +604,18 @@ class CustomProfile(Profile):
         Force-Force prime profile f*df/dpsi(psi_N)
     R_0: float
         Reactor major radius [m]
-    B_0:
+    B_0: float
         Field at major radius [T]
+    Ip: Optional[float]
+        Plasma current [A]. If None, the plasma current will be calculated
+        from p' and ff'.
     """
 
     def __init__(
         self, pprime_func, ffprime_func, R_0, B_0, p_func=None, f_func=None, Ip=None
     ):
-        self.pprime = self.parse_to_callable(pprime_func)
-        self.ffprime = self.parse_to_callable(ffprime_func)
+        self._pprime = self.parse_to_callable(pprime_func)
+        self._ffprime = self.parse_to_callable(ffprime_func)
         self.p_func = self.parse_to_callable(p_func)
         self.f_func = self.parse_to_callable(f_func)
         self._fvac = R_0 * B_0
@@ -646,6 +641,18 @@ class CustomProfile(Profile):
             return None
         else:
             raise TypeError("Could not make input object a callable function.")
+
+    def pprime(self, pn):
+        """
+        dp/dpsi as a function of normalised psi
+        """
+        return self.scale * self._pprime(pn)
+
+    def ffprime(self, pn):
+        """
+        f*df/dpsi as a function of normalised psi
+        """
+        return self.scale * self._ffprime(pn)
 
     def jtor(self, x, z, psi, o_points, x_points):
         """

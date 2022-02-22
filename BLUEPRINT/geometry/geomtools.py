@@ -231,7 +231,7 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
     dx = x2 - x1
     if dx == 0:
         x = np.array([x1, x1])
-        t2 = r ** 2 - (x1 - x_c) ** 2
+        t2 = r**2 - (x1 - x_c) ** 2
         if t2 < 0:
             bluemira_warn("No intersection between line and circle!")
             return None
@@ -244,7 +244,7 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
     dy = y2 - y1
     if dy == 0:
         z = np.array([y1, y1])
-        t2 = r ** 2 - (y1 - z_c) ** 2
+        t2 = r**2 - (y1 - z_c) ** 2
         if t2 < 0:
             bluemira_warn("No intersection between line and circle!")
             return None
@@ -254,14 +254,14 @@ def circle_line_intersect(x_c, z_c, r, x1, y1, x2, y2):
         x = np.array([x_c - t, x_c + t])
         return x, z
 
-    dr2 = dx ** 2 + dy ** 2
+    dr2 = dx**2 + dy**2
     det = x1 * y2 - x2 * y1
-    delta = r ** 2 * dr2 - det ** 2
+    delta = r**2 * dr2 - det**2
     if delta < 0:
         bluemira_warn("No intersection between line and circle!")
         return None
 
-    t = np.sqrt(r ** 2 * dr2 - det ** 2)
+    t = np.sqrt(r**2 * dr2 - det**2)
     t1 = np.sign(dy) * dx * t
     x = np.array([det * dy + t1, det * dy - t1]) / dr2
     z = np.array([-det * dx + np.abs(dy) * t, -det * dx - np.abs(dy) * t]) / dr2
@@ -666,7 +666,7 @@ def tangent(x, z):
     Returns tangent vectors along an anticlockwise X, Z loop
     """
     d_x, d_z = np.gradient(x), np.gradient(z)
-    mag = np.sqrt(d_x ** 2 + d_z ** 2)
+    mag = np.sqrt(d_x**2 + d_z**2)
     index = mag > 0
     d_x, d_z, mag = d_x[index], d_z[index], mag[index]  # clear duplicates
     t_x, t_z = d_x / mag, d_z / mag

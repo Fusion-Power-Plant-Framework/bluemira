@@ -30,6 +30,8 @@ import numpy as np
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.error import GeometryError
 
+__all__ = ["BluemiraPlane"]
+
 
 class BluemiraPlane:
     """
@@ -87,6 +89,23 @@ class BluemiraPlane:
 
         normal = v3 / np.sqrt(v3.dot(v3))
         return cls(point_1, normal, 0.0, label=label)
+
+    @classmethod
+    def from_matrix(cls, matrix, label=""):
+        """
+        Instantiate a BluemiraPlane from a 4 x 4 matrix
+
+        Parameters
+        ----------
+        matrix: np.ndarray
+            4 x 4 matrix from which to make the placement
+        label: str
+            Label of the plane
+        """
+        obj = cls.__new__(cls)
+        obj._shape = cadapi.make_plane_from_matrix(matrix)
+        obj.label = label
+        return obj
 
     @property
     def base(self):

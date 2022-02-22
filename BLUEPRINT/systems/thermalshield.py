@@ -276,7 +276,7 @@ class ThermalShield(ReactorSystem):
             + inputs["TFsection"]["winding_pack"]["depth"]
         )
         x_b, y_b = 0.5 * tf_w / np.tan(beta), 0.5 * tf_w
-        x_bp = np.sqrt(y_b ** 2 + x_b ** 2)
+        x_bp = np.sqrt(y_b**2 + x_b**2)
         x_oi = x_bp + self.params.g_ts_tf / np.sin(beta)
         x_inner = pf1_ro + self.params.g_ts_pf
         y_inner = np.tan(beta) * (x_inner - x_oi)

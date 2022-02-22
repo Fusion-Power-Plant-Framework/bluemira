@@ -62,7 +62,7 @@ class TestCheckLineSegment:
         a = [0, 0]
         b = [1, 0]
         c = [0.5, 0.0]
-        assert check_linesegment(a, np.array(b), c) is True
+        assert check_linesegment(np.array(a), np.array(b), np.array(c)) is True
         a = [0.0, 0.0]
         b = [0.001, 0.0]
         c = [0.0005, 0.0]

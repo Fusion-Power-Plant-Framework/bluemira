@@ -23,18 +23,21 @@
 Perform the EU-DEMO reactor design.
 """
 
+# %%
 import pprint as pprint
 
-# %%
 import matplotlib.pyplot as plt
 
+from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter import ParameterMappingEncoder
-from bluemira.builders.EUDEMO.plasma import PlasmaComponent
+from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
+from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
+from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
 from bluemira.codes import plot_PROCESS
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
@@ -209,7 +212,7 @@ build_config = {
     "reference_data_root": "!BM_ROOT!/data",
     "generated_data_root": "!BM_ROOT!/generated_data",
     "PROCESS": {
-        "runmode": "read",  # ["run", "read", "mock"]
+        "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
         "runmode": "read",  # ["run", "read", "mock"]
@@ -237,6 +240,9 @@ build_config = {
             "nx": 2,
             "ny": 2,
         },
+    },
+    "PF Coils": {
+        "runmode": "read",
     },
 }
 
@@ -342,9 +348,8 @@ print(component.tree())
 
 # %%
 plasma: PlasmaComponent = component.get_component("Plasma")
-
-# %%
 tf_coils = component.get_component("TF Coils")
+pf_coils = component.get_component("PF Coils")
 
 # %%[markdown]
 # ### Saving the Equilibrium
@@ -428,6 +433,19 @@ tf_coils.get_component("xz").plot_2d()
 tf_coils.get_component("xyz").show_cad()
 
 # %%[markdown]
+# ### Saving the Geometry Parametrisation
+#
+# If we've run a design with a build stage in the "run" runmode then we may want to save
+# the resulting geometry parameterisation to a file so that it can be read back in,
+# saving time in future runs if we are only making downstream changes. This can be done
+# by using the `save_shape` method on the `TFCoilsBuilder`.
+
+# %%
+tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
+if tf_coils_builder.runmode == "run":
+    tf_coils_builder.save_shape()
+
+# %%[markdown]
 # ### Plotting the TF Coils Design Problem
 #
 # In the same way that we got the design problem from our Plasma Builder used in the
@@ -435,10 +453,11 @@ tf_coils.get_component("xyz").show_cad()
 # Coils build.
 
 # %%
-design_problem: RippleConstrainedLengthOpt
-design_problem = reactor.get_builder("TF Coils").design_problem
-design_problem.plot()
-plt.show()
+tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
+if tf_coils_builder.runmode == "run":
+    design_problem: RippleConstrainedLengthOpt = tf_coils_builder.design_problem
+    design_problem.plot()
+    plt.show()
 
 # %%[markdown]
 # ### Visualising the Reactor
@@ -448,11 +467,24 @@ plt.show()
 
 # %%
 ax = tf_coils.get_component("xy").plot_2d(show=False)
-plasma.get_component("xy").plot_2d(ax=ax)
+plasma.get_component("xy").plot_2d(ax=ax, show=False)
+pf_coils.get_component("xy").plot_2d(ax=ax)
 
 # %%
 ax = tf_coils.get_component("xz").plot_2d(show=False)
-plasma.get_component("xz").plot_2d(ax=ax)
+plasma.get_component("xz").plot_2d(ax=ax, show=False)
+pf_coils.get_component("xz").plot_2d(ax=ax)
+
 
 # %%
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
+
+# %%
+component = Component("Segment View")
+plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
+tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
+pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
+component.add_child(plasma_builder.build_xyz(degree=270))
+component.add_child(tf_coils_builder.build_xyz(degree=270))
+component.add_child(pf_coils_builder.build_xyz(degree=270))
+component.show_cad()

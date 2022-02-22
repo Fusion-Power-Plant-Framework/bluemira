@@ -75,3 +75,24 @@ class TestPlane:
         for bad in bad_sets:
             with pytest.raises(GeometryError):
                 BluemiraPlane.from_3_points(*bad)
+
+    def test_instantiation_matrix(self):
+        xy_plane = BluemiraPlane([0, 0, 0], [0, 0, 1], 0.0)
+        matrix = xy_plane.to_matrix()
+        xy2_plane = BluemiraPlane.from_matrix(matrix)
+        self._check_planes_equal(xy_plane, xy2_plane)
+
+        for _ in range(10):
+            plane = BluemiraPlane(np.random.rand(3), np.random.rand(3), np.random.rand())
+            matrix = plane.to_matrix()
+            matrix[:3, :3] *= 2  # Test that it gets normalised
+            plane2 = BluemiraPlane.from_matrix(matrix)
+            self._check_planes_equal(plane, plane2)
+            assert np.allclose(plane.axis, plane2.axis)
+
+    @staticmethod
+    def _check_planes_equal(plane, plane2):
+        assert np.allclose(plane.to_matrix(), plane2.to_matrix())
+        assert np.isclose(plane.angle, plane2.angle)
+        assert np.allclose(plane.base, plane2.base)
+        assert np.allclose(plane.axis, plane2.axis)

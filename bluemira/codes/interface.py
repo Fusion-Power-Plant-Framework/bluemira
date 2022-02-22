@@ -137,8 +137,18 @@ class Setup(Task):
         self._parameter_mapping = get_recv_mapping(params, NAME, recv_all=True)
         self._params = type(params).from_template(self._parameter_mapping.values())
         self._params.update_kw_parameters(params.to_dict(verbose=True))
-        self._recv_mapping = get_recv_mapping(params, NAME)
-        self._send_mapping = get_send_mapping(params, NAME)
+        self.__recv_mapping = get_recv_mapping(params, NAME)
+        self.__send_mapping = get_send_mapping(params, NAME)
+
+    @property
+    def _recv_mapping(self):
+        self.__recv_mapping = get_recv_mapping(self.params, self.parent.NAME)
+        return self.__recv_mapping
+
+    @property
+    def _send_mapping(self):
+        self.__send_mapping = get_send_mapping(self.params, self.parent.NAME)
+        return self.__send_mapping
 
     @property
     def params(self) -> bm_base.ParameterFrame:
@@ -315,6 +325,31 @@ class FileProgramInterface:
         The ParameterFrame corresponding to this run.
         """
         return self.setup_obj._send_mapping
+
+    def modify_mappings(self, mappings: Dict[str, Dict[str, bool]]):
+        """
+        Modify the send/recieve mappings of a key
+
+        Parameters
+        ----------
+        mappings: dict
+            A dictionary of variables to change mappings.
+
+        Notes
+        -----
+            Only one of send or recv is needed. The mappings dictionary could look like:
+
+               {"var1": {"send": False, "recv": True}, "var2": {"recv": False}}
+
+        """
+        for key, val in mappings.items():
+            try:
+                p_map = getattr(self.params, key).mapping[self.NAME]
+            except (AttributeError, KeyError):
+                bluemira_warn(f"No mapping known for {key} in {self.NAME}")
+            else:
+                for sr_key, sr_val in val.items():
+                    setattr(p_map, sr_key, sr_val)
 
     def run(self, *args, **kwargs):
         """

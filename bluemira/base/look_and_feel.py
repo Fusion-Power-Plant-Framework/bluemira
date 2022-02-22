@@ -229,7 +229,10 @@ def _bm_print(string, width=73):
     ss: str
         The text string of the boxed text
     """
-    strings = string.splitlines()
+    strings = [
+        " " if s == "\n" and i != 0 else s[:-1] if s.endswith("\n") else s
+        for i, s in enumerate(string.splitlines(keepends=True))
+    ]
     bw = width - 4
     t = [
         wrap(s, width=bw, replace_whitespace=False, drop_whitespace=False)

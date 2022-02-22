@@ -23,7 +23,11 @@
 Geometry parameterisations
 """
 
+from __future__ import annotations
+
 import abc
+import json
+from typing import TextIO, Union
 
 import numpy as np
 from scipy.special import iv as bessel
@@ -64,7 +68,7 @@ class GeometryParameterisation(abc.ABC):
 
     __slots__ = ("name", "variables", "n_ineq_constraints")
 
-    def __init__(self, variables):
+    def __init__(self, variables: OptVariables):
         """
         Parameters
         ----------
@@ -196,6 +200,34 @@ class GeometryParameterisation(abc.ABC):
             CAD Wire of the geometry
         """
         pass
+
+    def to_json(self, file: str):
+        """
+        Write the json representation of the GeometryParameterisation to a file.
+
+        Parameters
+        ----------
+        file: str
+            The path to the file.
+        """
+        self.variables.to_json(file)
+
+    @classmethod
+    def from_json(cls, file: Union[str, TextIO]) -> GeometryParameterisation:
+        """
+        Create the GeometryParameterisation from a json file.
+
+        Parameters
+        ----------
+        file: Union[str, TextIO]
+            The path to the file, or an open file handle that supports reading.
+        """
+        if isinstance(file, str):
+            with open(file, "r") as fh:
+                return cls.from_json(fh)
+
+        var_dict = json.load(file)
+        return cls(var_dict)
 
 
 class PrincetonD(GeometryParameterisation):
@@ -954,6 +986,251 @@ class PolySpline(GeometryParameterisation):
         return p1, p2
 
 
+class PictureFrameTools:
+    """
+    Tools Class containing methods to produce various PictureFrame variant limbs.
+    """
+
+    @staticmethod
+    def _make_domed_leg(
+        axis,
+        x_out,
+        x_curve_start,
+        x_mid,
+        z_top,
+        z_mid,
+        flip=False,
+        r_c=0.0,
+    ):
+        """
+        Makes smooth dome for CP coils. This includes a initial straight section
+        and a main curved dome section, with a transitioning 'joint' between them,
+        producing smooth tangent curves.
+
+        Parameters
+        ----------
+        axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+        x_out: np.float
+            Radial position of outer edge of limb [m]
+        x_curve start: np.float
+            Radial position of straight-curve transition of limb [m]
+        x_mid: np.float
+            Radial position of inner edge of  upper/lower limb [m]
+        z_top: np.float
+            Vertical position of top of limb dome [m]
+        z_mid: np.float
+            Vertical position of flat section [m]
+        flip: bool
+            True if limb is lower limb of section, False if upper
+        r_c: np.float
+            Radius of corner transition. Nominally 0 [m]
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire domed picture frame coil outer leg. This include the
+            top/bottom and the outer section, but not the inboard one.
+        """
+        # Definition of the geometrical quantities to build the wires
+        # - #
+        # Main dome curve (with no joint or transitions curves)
+        alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
+        theta_leg_basic = 2 * (np.pi - 2 * alpha)
+        r_leg = 0.5 * (x_out - x_curve_start) / np.sin(theta_leg_basic * 0.5)
+        z_top_r_leg = z_top + r_leg if flip else z_top - r_leg
+        leg_centre = (x_out - 0.5 * (x_out - x_curve_start), 0, z_top_r_leg)
+
+        # Dome-outboard straight section transitioning curve
+        sin_a = np.sin(theta_leg_basic * 0.5)
+        cos_a = np.cos(theta_leg_basic * 0.5)
+        alpha_leg = (
+            np.arcsin(np.abs(r_leg * sin_a - r_c) / (r_leg - r_c))
+            + theta_leg_basic * 0.5
+        )
+
+        # Dome-inboard section trainsition curve
+        r_j = min(x_curve_start - x_mid, 0.8)
+        theta_j = np.arccos((r_leg * cos_a + r_j) / (r_leg + r_j))
+        z_mid_r_j = z_mid - r_j if flip else z_mid + r_j
+        joint_curve_centre = (
+            leg_centre[0] - (r_leg + r_j) * np.sin(theta_j),
+            0,
+            z_mid_r_j,
+        )
+
+        # Final total angular extent of main curve
+        theta_leg_final = alpha_leg - (theta_leg_basic * 0.5 - theta_j)
+
+        # Straight section of leg
+        p1 = [x_mid, 0, z_mid]
+        p2 = [leg_centre[0] - (r_leg + r_j) * np.sin(theta_j), 0, z_mid]
+        # - #
+
+        # Bluemira wire generation
+        # - #
+        # Outboard straight section
+        out_wire = []
+        if not flip:
+            out_wire.append(make_polygon([p1, p2]))
+        else:
+            out_wire.append(make_polygon([p2, p1]))
+
+        # Dome-inboard section trainsition curve
+        out_wire.append(
+            make_circle(
+                radius=r_j,
+                center=joint_curve_centre,
+                start_angle=90 - np.rad2deg(theta_j) if flip else -90,
+                end_angle=90 if flip else np.rad2deg(theta_j) - 90,
+                axis=axis,
+                label="bottom_limb_joint" if flip else "top_limb_joint",
+            )
+        )
+
+        # Dome-outboard transition curve
+        angle2 = np.rad2deg(theta_leg_final)
+        start2 = 90 + np.rad2deg(theta_j)
+        out_wire.append(
+            make_circle(
+                radius=r_leg,
+                center=leg_centre,
+                start_angle=-start2 if flip else start2 - angle2,
+                end_angle=angle2 - start2 if flip else start2,
+                axis=axis,
+                label="bottom_limb_dome" if flip else "top_limb_dome",
+            )
+        )
+        # - #
+
+        label = "bot_limb_dome" if flip else "top_limb_dome"
+
+        return BluemiraWire(out_wire, label=label)
+
+    @staticmethod
+    def _make_flat_leg(axis, x_in, x_out, z, r_i, r_o, flip=False):
+        """
+        Makes a flat leg (top/bottom limb) with the option of one end rounded.
+
+        Parameters
+        ----------
+        axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+        x_in: np.float
+            Radial position of inner edge of limb [m]
+        x_out: np.float
+            Radial position of outer edge of limb [m]
+        z: np.float
+            Vertical position of limb [m]
+        r_i: np.float
+            Radius of inner corner [m]
+        r_o: np.float
+            Radius of outer corner [m]
+        flip: bool
+            True if limb is lower limb of section, False if upper
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
+        wires = []
+        # Set corner radius centres
+        c_i = [x_in + r_i, 0.0, z + r_i if flip else z - r_i]
+        c_o = [x_out - r_o, 0.0, z + r_o if flip else z - r_o]
+
+        # Inner Corner
+        if r_i != 0.0:
+            wires.append(
+                make_circle(
+                    r_i,
+                    c_i,
+                    start_angle=180 if flip else 90,
+                    end_angle=270 if flip else 180,
+                    axis=axis,
+                    label="inner_bot_corner" if flip else "inner_top_corner",
+                )
+            )
+        # Straight Section
+        p1 = [x_in + r_i, 0.0, z]
+        p2 = [x_out - r_o, 0.0, z]
+        wires.append(make_polygon([p1, p2], label="bot_limb" if flip else "top_limb"))
+        # Outer corner
+        if r_o != 0.0:
+            wires.append(
+                make_circle(
+                    r_o,
+                    c_o,
+                    start_angle=270 if flip else 0,
+                    end_angle=0 if flip else 90,
+                    axis=axis,
+                    label="outer_bot_corner" if flip else "outer top corner",
+                )
+            )
+        label = "bot_limb" if flip else "top_limb"
+
+        return BluemiraWire(wires, label=label)
+
+    @staticmethod
+    def _make_tapered_inner_leg(axis, x_in, x_mid, z_in, z_mid_up, z_mid_down):
+        """
+        Makes a tapered inboard leg using a circle arc taper, symmetric about the
+        midplane with the tapering beginning at a certain height and reaching a
+        maximum taper at the midplane.
+
+        Parameters
+        ----------
+        axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+        x_in: np.float
+            Radial position of innermost point of limb [m]
+        x_mid: np.float
+            Radial position of outer edge of limb [m]
+        z_in: np.float
+            Vertical position of start of tapering [m]
+        z_mid_up: np.float
+            Vertical position of top of limb [m]
+        z_mid_down: np.float
+            Vertical position of bottom of limb [m]
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the TF coil inboard geometry.
+        """
+        # Top straight section
+        p1 = [x_mid, 0, z_in]
+        p2 = [x_mid, 0, z_mid_up]
+        wires = [make_polygon([p1, p2], label="inner_limb_mid_up")]
+
+        # Curved taper radius
+        x_t = x_mid - x_in
+        alpha = np.arctan(z_in / (x_t))
+        theta_t = np.pi - 2 * alpha
+        r_taper = z_in / np.sin(theta_t)
+
+        # Curved taper angle
+        angle = np.rad2deg(np.arcsin(z_in / r_taper))
+        wires.append(
+            make_circle(
+                radius=r_taper,
+                center=(x_in + r_taper, 0, 0),
+                start_angle=180 - angle,
+                end_angle=180 + angle,
+                axis=axis,
+                label="inner_limb",
+            )
+        )
+
+        # Bottom straight section
+        p3 = [x_mid, 0, -z_in]
+        p4 = [x_mid, 0, z_mid_down]
+        wires.append(make_polygon([p3, p4], label="inner_limb_mid_down"))
+
+        label = "inner_limb"
+        return BluemiraWire(wires, label=label)
+
+
 class PictureFrame(GeometryParameterisation):
     """
     Picture-frame geometry parameterisation.
@@ -962,6 +1239,20 @@ class PictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+    axis: np.ndarray
+        [x,y,z] vector normal to plane of parameterisation
+    x1: np.float
+        Radial position of inner edge of upper/lower limb [m]
+    x2: np.float
+        Radial position of outer limb [m]
+    z1: np.float
+        Vertical position of top limb [m]
+    z2: np.float
+        Vertical position of top limb [m]
+    ri: np.float
+        Radius of inner corners [m]
+    ro: np.float
+        Radius of outer corners [m]
     """
 
     __slots__ = ()
@@ -983,9 +1274,9 @@ class PictureFrame(GeometryParameterisation):
                 ),
                 BoundedVariable(
                     "ri",
-                    0.1,
+                    1,
                     lower_bound=0,
-                    upper_bound=0.2,
+                    upper_bound=2,
                     descr="Inboard corner radius",
                 ),
                 BoundedVariable(
@@ -1009,78 +1300,25 @@ class PictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of the Picture Frame geometry
         """
         x1, x2, z1, z2, ri, ro = self.variables.values
         p1 = [x1, 0, z1 - ri]
         p2 = [x1, 0, z2 + ri]
-        c1 = [x1 + ri, 0, z2 + ri]
-        p3 = [x1 + ri, 0, z2]
-        p4 = [x2 - ro, 0, z2]
-        c2 = [x2 - ro, 0, z2 + ro]
         p5 = [x2, 0, z2 + ro]
         p6 = [x2, 0, z1 - ro]
-        c3 = [x2 - ro, 0, z1 - ro]
-        p7 = [x2 - ro, 0, z1]
-        p8 = [x1 + ri, 0, z1]
-        c4 = [x1 + ri, 0, z1 - ri]
+
         axis = [0, -1, 0]
 
         wires = [make_polygon([p1, p2], label="inner_limb")]
 
-        if ri != 0.0:
-            wires.append(
-                make_circle(
-                    ri,
-                    c1,
-                    start_angle=180,
-                    end_angle=270,
-                    axis=axis,
-                    label="inner_lower_corner",
-                )
-            )
-
-        wires.append(make_polygon([p3, p4], label="lower_limb"))
-
-        if ro != 0.0:
-            wires.append(
-                make_circle(
-                    ro,
-                    c2,
-                    start_angle=270,
-                    end_angle=360,
-                    axis=axis,
-                    label="outer_lower_corner",
-                )
-            )
+        top_leg = PictureFrameTools._make_flat_leg(axis, x1, x2, z1, ri, ro, flip=False)
+        wires.append(top_leg)
 
         wires.append(make_polygon([p5, p6], label="outer_limb"))
 
-        if ro != 0.0:
-            wires.append(
-                make_circle(
-                    ro,
-                    c3,
-                    start_angle=0,
-                    end_angle=90,
-                    axis=axis,
-                    label="outer_upper_corner",
-                )
-            )
-
-        wires.append(make_polygon([p7, p8], label="upper_limb"))
-
-        if ri != 0.0:
-            wires.append(
-                make_circle(
-                    ri,
-                    c4,
-                    start_angle=90,
-                    end_angle=180,
-                    axis=axis,
-                    label="inner_upper_corner",
-                )
-            )
+        bot_leg = PictureFrameTools._make_flat_leg(axis, x1, x2, z2, ri, ro, flip=True)
+        wires.append(bot_leg)
 
         return BluemiraWire(wires, label=label)
 
@@ -1093,6 +1331,22 @@ class TaperedPictureFrame(GeometryParameterisation):
     ----------
     var_dict: Optional[dict]
         Dictionary with which to update the default values of the parameterisation.
+    axis: np.ndarray
+        [x,y,z] vector normal to plane of parameterisation
+    x1: np.float
+        Radial position of innermost point of inner limb [m]
+    x2: np.float
+        Radial position of non-tapered section of inner limb [m]
+    x3: np.float
+        Radial position of outer limb [m]
+    z1: np.float
+        Vertical position of top of tapered section [m]
+    z2: np.float
+        Vertical position of top limb [m]
+    r_i: np.float
+        Radius of inner corner [m]
+    r_o: np.float
+        Radius of outer corner [m]
     """
 
     __slots__ = ()
@@ -1114,28 +1368,28 @@ class TaperedPictureFrame(GeometryParameterisation):
                     "x3", 6.5, lower_bound=6, upper_bound=10, descr="Outer limb radius"
                 ),
                 BoundedVariable(
-                    "z1_frac",
-                    0.5,
-                    lower_bound=0.4,
-                    upper_bound=0.8,
-                    descr="Fraction of height at which to start taper angle",
-                ),
-                BoundedVariable(
-                    "z2",
+                    "z1",
                     6.5,
                     lower_bound=6,
                     upper_bound=8,
                     descr="Height at which to stop the taper angle",
                 ),
                 BoundedVariable(
-                    "z3",
+                    "z2",
                     7,
                     lower_bound=6,
                     upper_bound=9,
                     descr="Upper/lower limb height",
                 ),
                 BoundedVariable(
-                    "r", 0.5, lower_bound=0, upper_bound=1, descr="Corner radius"
+                    "ri",
+                    0.0,
+                    lower_bound=0,
+                    upper_bound=0.2,
+                    descr="Inboard corner radius",
+                ),
+                BoundedVariable(
+                    "ro", 2, lower_bound=0, upper_bound=5, descr="Outboard corner radius"
                 ),
             ],
             frozen=True,
@@ -1155,45 +1409,757 @@ class TaperedPictureFrame(GeometryParameterisation):
         Returns
         -------
         shape: BluemiraWire
-            CAD Wire of the geometry
+            CAD Wire of the Picture Frame based geometry with a tapered inboard leg
         """
-        x1, x2, x3, z1_frac, z2, z3, r = self.variables.values
-        z1 = z1_frac * z2
-        p1 = [x3 - r, 0, z3]
-        p2 = [x2, 0, z3]
-        p3 = [x2, 0, z2]
-        p4 = [x1, 0, z1]
-        p5 = [x1, 0, -z1]
-        p6 = [x2, 0, -z2]
-        p7 = [x2, 0, -z3]
-        p8 = [x3 - r, 0, -z3]
-        c1 = [x3 - r, 0, -z3 + r]
-        p9 = [x3, 0, -z3 + r]
-        p10 = [x3, 0, z3 - r]
-        c2 = [x3 - r, 0, z3 - r]
+        x1, x2, x3, z1, z2, ri, ro = self.variables.values
+        p5 = [x3, 0, z2 - ro]
+        p6 = [x3, 0, -z2 + ro]
+
+        axis = [0, -1, 0]
+        wires = []
+        inb_leg = PictureFrameTools._make_tapered_inner_leg(
+            axis, x1, x2, z1, z2 - ri, -z2 + ri
+        )
+        wires.append(inb_leg)
+
+        top_leg = PictureFrameTools._make_flat_leg(axis, x2, x3, z2, ri, ro, flip=False)
+        wires.append(top_leg)
+
+        wires.append(make_polygon([p5, p6], label="outer_limb"))
+
+        bot_leg = PictureFrameTools._make_flat_leg(axis, x2, x3, -z2, ri, ro, flip=True)
+        wires.append(bot_leg)
+        return BluemiraWire(wires, label=label)
+
+
+class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved (Superconducting) picture-frame geometry parameterisation, with
+    top and bottoms domed
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+    x_mid: np.float
+        Radial position of inner edge of  upper/lower limb [m]
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+    z_mid_up: np.float
+        Vertical position of flat section of upper limb [m]
+    z_mid_down: np.float
+        Vertical position of flat section of lower limb [m]
+    z_max_up: np.float
+        Vertical position of top of limb dome [m]
+    z_max_down: np.float
+        Vertical position of top of limb dome [m]
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_mid", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 2.5, lower_bound=2.4, upper_bound=2.6),
+                # Outer limb radius
+                BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                # Upper limb max height
+                BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
+                # Lower limb max height
+                BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the Picture Frame based geometry with curved top and bottom limbs
+            and a flat inner limb
+        """
+        (
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_mid_up,
+            z_mid_down,
+            z_max_up,
+            z_max_down,
+        ) = self.variables.values
+        axis = [0, -1, 0]
+        wires = []
+
+        p3 = [x_mid, 0, z_mid_down]
+        p4 = [x_mid, 0, z_mid_up]
+        wires.append(make_polygon([p3, p4], label="inb_limb"))
+
+        # Top Curve
+        top_leg_curve = PictureFrameTools._make_domed_leg(
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_up,
+            z_mid_up,
+            flip=False,
+            r_c=0,
+        )
+
+        wires.append(top_leg_curve)
+
+        # Outer leg
+        px = [x_out, 0, z_mid_up]
+        po = [x_out, 0, z_mid_down]
+        wires.append(make_polygon([px, po], label="outer_limb"))
+
+        # Bottom Curve
+
+        bot_leg_curve = PictureFrameTools._make_domed_leg(
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_down,
+            z_mid_down,
+            flip=True,
+            r_c=0,
+        )
+
+        wires.append(bot_leg_curve)
+
+        return BluemiraWire(wires, label=label)
+
+
+class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved picture-frame geometry parameterisation, with
+    top domed and bottom flat. Straight (non-tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+    x_mid: np.float
+        Radial position of inner edge of  upper/lower limb [m]
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+    z_mid_up: np.float
+        Vertical position of flat section of upper limb [m]
+    z_mid_down: np.float
+        Vertical position of lower limb [m]
+    z_max_up: np.float
+        Vertical position of top of upper limb dome [m]
+    r_j: np.float
+        Radius of corner [m]
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_mid", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 2.5, lower_bound=2.4, upper_bound=2.6),
+                # Outer limb radius
+                BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                # Upper limb max height
+                BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
+                # Corner/transition joint radius
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=0.8),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of Picture Frame based geometry with a curved top limb, flat bottom
+            limb and a flat inner limb
+        """
+        (
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_mid_up,
+            z_mid_down,
+            z_max_up,
+            r_j,
+        ) = self.variables.values
+        axis = [0, -1, 0]
+        p1 = [x_mid, 0, z_mid_down]
+        p2 = [x_mid, 0, z_mid_up]
+        wires = [make_polygon([p1, p2], label="inner_limb")]
+
+        # Top Curve
+        top_leg_curve = PictureFrameTools._make_domed_leg(
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_up,
+            z_mid_up,
+            flip=False,
+            r_c=0,
+        )
+
+        wires.append(top_leg_curve)
+
+        # Outer leg
+        px = [x_out, 0, z_mid_up]
+        po = [x_out, 0, z_mid_down + r_j]
+        wires.append(make_polygon([px, po], label="outer_limb"))
+
+        # Bottom leg is flat
+
+        bot_leg = PictureFrameTools._make_flat_leg(
+            axis,
+            x_mid,
+            x_out,
+            z_mid_down,
+            0,
+            r_j,
+            flip=True,
+        )
+        wires.append(bot_leg)
+
+        return BluemiraWire(wires, label=label)
+
+
+class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved picture-frame geometry parameterisation, with
+    top flat and bottom domed. Straight (non-tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+    x_mid: np.float
+        Radial position of inner edge of  upper/lower limb [m]
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+    z_mid_up: np.float
+        Vertical position of upper limb [m]
+    z_mid_down: np.float
+        Vertical position of flat section of lower limb [m]
+    z_max_down: np.float
+        Vertical position of bottom of lower limb dome [m]
+    r_j: np.float
+        Radius of corner [m]
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_mid", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 2.5, lower_bound=2.4, upper_bound=2.6),
+                # Outer limb radius
+                BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                # Lower limb max height
+                BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
+                # Corner/transition joint radius
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=0.8),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of Picture Frame based geometry with flat top, curved bottom and
+            a flat inner limb
+        """
+        (
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_mid_up,
+            z_mid_down,
+            z_max_down,
+            r_j,
+        ) = self.variables.values
+        axis = [0, -1, 0]
+        p1 = [x_mid, 0, z_mid_down]
+        p2 = [x_mid, 0, z_mid_up]
+        wires = [make_polygon([p1, p2], label="inner_limb")]
+
+        # Top leg is flat
+        top_leg = PictureFrameTools._make_flat_leg(
+            axis,
+            x_mid,
+            x_out,
+            z_mid_up,
+            0,
+            r_j,
+            flip=False,
+        )
+        wires.append(top_leg)
+
+        # Outer leg
+        px = [x_out, 0, z_mid_up - r_j]
+        po = [x_out, 0, z_mid_down]
+        wires.append(make_polygon([px, po], label="outer_limb"))
+
+        # Bottom Curve
+
+        bot_leg_curve = PictureFrameTools._make_domed_leg(
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_down,
+            z_mid_down,
+            flip=True,
+            r_c=0,
+        )
+
+        wires.append(bot_leg_curve)
+
+        return BluemiraWire(wires, label=label)
+
+
+class FullDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved picture-frame geometry parameterisation, with
+    top and bottom domed. Waisted (tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+    x_in: np.float
+        Radial position of innermost point of inner limb tapered section [m]
+    x_mid: np.float
+        Radial position of inner limb non-tapered section [m]
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+    z_mid_up: np.float
+        Vertical position of flat section of upper limb [m]
+    z_mid_down: np.float
+        Vertical position of flat section of lower limb [m]
+    z_max_up: np.float
+        Vertical position of top of limb dome [m]
+    z_max_down: np.float
+        Vertical position of top of limb dome [m]
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_in", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Middle limb radius
+                BoundedVariable("x_mid", 1.55, lower_bound=1.5, upper_bound=1.6),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 2.5, lower_bound=2.4, upper_bound=2.6),
+                # Outer limb radius
+                BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
+                # Height at which to stop the taper angle
+                BoundedVariable("z_in", 4.5, lower_bound=4, upper_bound=6),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                # Upper limb max height
+                BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
+                # Lower limb max height
+                BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of Picture Frame based geometry with a curved top limb and bottom
+            limbs and a tapered inner limb
+        """
+        (
+            x_in,
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_in,
+            z_mid_up,
+            z_mid_down,
+            z_max_up,
+            z_max_down,
+        ) = self.variables.values
         axis = [0, -1, 0]
 
-        wires = [make_polygon([p1, p2, p3, p4, p5, p6, p7, p8], label="inner_limb")]
+        wires = []
+        inb_leg = PictureFrameTools._make_tapered_inner_leg(
+            axis, x_in, x_mid, z_in, z_mid_up, z_mid_down
+        )
+        wires.append(inb_leg)
+        # Top Curve
+        top_leg_curve = PictureFrameTools._make_domed_leg(
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_up,
+            z_mid_up,
+            flip=False,
+            r_c=0,
+        )
 
-        if r != 0.0:
-            wires.append(
-                make_circle(
-                    r,
-                    c1,
-                    start_angle=270,
-                    end_angle=360,
-                    axis=axis,
-                    label="lower_corner",
-                )
-            )
+        wires.append(top_leg_curve)
 
-        wires.append(make_polygon([p9, p10], label="outer_limb"))
+        # Outer leg
+        px = [x_out, 0, z_mid_up]
+        po = [x_out, 0, z_mid_down]
+        wires.append(make_polygon([px, po], label="outer_limb"))
 
-        if r != 0.0:
-            wires.append(
-                make_circle(
-                    r, c2, start_angle=0, end_angle=90, axis=axis, label="upper_corner"
-                )
-            )
+        # Bottom Curve
+
+        bot_leg_curve = PictureFrameTools._make_domed_leg(
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_down,
+            z_mid_down,
+            flip=True,
+            r_c=0,
+        )
+
+        wires.append(bot_leg_curve)
+
+        return BluemiraWire(wires, label=label)
+
+
+class TopDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved picture-frame geometry parameterisation, with
+    top domed and bottom flat. Waisted (tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+    x_in: np.float
+        Radial position of innermost point of inner limb tapered section [m]
+    x_mid: np.float
+        Radial position of inner limb non-tapered section [m]
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+    z_mid_up: np.float
+        Vertical position of flat section of upper limb [m]
+    z_mid_down: np.float
+        Vertical position of lower limb [m]
+    z_max_up: np.float
+        Vertical position of top of upper limb dome [m]
+    r_j: np.float
+        Radius of corner [m]
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_in", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Middle limb radius
+                BoundedVariable("x_mid", 1.55, lower_bound=1.5, upper_bound=1.6),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 2.5, lower_bound=2.4, upper_bound=2.6),
+                # Outer limb radius
+                BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
+                # Height at which to stop the taper angle
+                BoundedVariable("z_in", 4.5, lower_bound=4, upper_bound=6),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                # Upper limb max height
+                BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
+                # Corner/transition joint radius
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=0.8),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of of Picture Frame based geometry with a curved top limb, flat
+            bottom limb and a tapered inner limb
+        """
+        (
+            x_in,
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_in,
+            z_mid_up,
+            z_mid_down,
+            z_max_up,
+            r_j,
+        ) = self.variables.values
+        axis = [0, -1, 0]
+
+        wires = []
+        inb_leg = PictureFrameTools._make_tapered_inner_leg(
+            axis, x_in, x_mid, z_in, z_mid_up, z_mid_down
+        )
+        wires.append(inb_leg)
+        # Top Curve
+        top_leg_curve = PictureFrameTools._make_domed_leg(
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_up,
+            z_mid_up,
+            flip=False,
+            r_c=0,
+        )
+
+        wires.append(top_leg_curve)
+
+        # Outer leg
+        px = [x_out, 0, z_mid_up]
+        po = [x_out, 0, z_mid_down + r_j]
+        wires.append(make_polygon([px, po], label="outer_limb"))
+
+        # Bottom leg is flat
+
+        bot_leg = PictureFrameTools._make_flat_leg(
+            axis,
+            x_mid,
+            x_out,
+            z_mid_down,
+            0,
+            r_j,
+            flip=True,
+        )
+        wires.append(bot_leg)
+
+        return BluemiraWire(wires, label=label)
+
+
+class BotDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
+    """
+    Curved picture-frame geometry parameterisation, with
+    top flat and bottom domed. Waisted (tapered) inner limb
+
+    Parameters
+    ----------
+    var_dict: Optional[dict]
+        Dictionary with which to update the default values of the parameterisation.
+    axis: np.ndarray
+            [x,y,z] vector normal to plane of parameterisation
+    x_in: np.float
+        Radial position of innermost point of inner limb tapered section [m]
+    x_mid: np.float
+        Radial position of inner limb non-tapered section [m]
+    x_out: np.float
+        Radial position of outer edge of limb [m]
+    x_curve start: np.float
+        Radial position of straight-curve transition of limb [m]
+    z_mid_up: np.float
+        Vertical position of upper limb [m]
+    z_mid_down: np.float
+        Vertical position of flat section of lower limb [m]
+    z_max_down: np.float
+        Vertical position of bottom of lower limb dome [m]
+    r_j: np.float
+        Radius of corner [m]
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = OptVariables(
+            [
+                # Inner limb radius
+                BoundedVariable("x_in", 0.4, lower_bound=0.3, upper_bound=0.5),
+                # Middle limb radius
+                BoundedVariable("x_mid", 1.55, lower_bound=1.5, upper_bound=1.6),
+                # Curve start radius
+                BoundedVariable("x_curve_start", 2.5, lower_bound=2.4, upper_bound=2.6),
+                # Outer limb radius
+                BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
+                # Height at which to stop the taper angle
+                BoundedVariable("z_in", 4.5, lower_bound=4, upper_bound=6),
+                # Upper limb flat section height
+                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                # Lower limb flat section height
+                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                # Lower limb max height
+                BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
+                # Corner/transition joint radius
+                BoundedVariable("r_j", 0.5, lower_bound=0, upper_bound=0.8),
+            ],
+            frozen=True,
+        )
+        variables.adjust_variables(var_dict)
+        super().__init__(variables)
+
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the curved picture frame.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of of Picture Frame based geometry with a flat top limb, curved
+            bottom limb and a tapered inner limb
+        """
+        (
+            x_in,
+            x_mid,
+            x_curve_start,
+            x_out,
+            z_in,
+            z_mid_up,
+            z_mid_down,
+            z_max_down,
+            r_j,
+        ) = self.variables.values
+
+        axis = [0, -1, 0]
+        wires = []
+        inb_leg = PictureFrameTools._make_tapered_inner_leg(
+            axis, x_in, x_mid, z_in, z_mid_up, z_mid_down
+        )
+        wires.append(inb_leg)
+
+        # Top leg is flat
+        top_leg = PictureFrameTools._make_flat_leg(
+            axis,
+            x_mid,
+            x_out,
+            z_mid_up,
+            0,
+            r_j,
+            flip=False,
+        )
+        wires.append(top_leg)
+
+        # Outer leg
+        px = [x_out, 0, z_mid_up - r_j]
+        po = [x_out, 0, z_mid_down]
+        wires.append(make_polygon([px, po], label="outer_limb"))
+
+        # Bottom Curve
+
+        bot_leg_curve = PictureFrameTools._make_domed_leg(
+            axis,
+            x_out,
+            x_curve_start,
+            x_mid,
+            z_max_down,
+            z_mid_down,
+            flip=True,
+            r_c=0,
+        )
+
+        wires.append(bot_leg_curve)
 
         return BluemiraWire(wires, label=label)

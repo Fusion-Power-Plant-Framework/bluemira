@@ -916,6 +916,42 @@
     "unit": "m",
     "source": "PROCESS"
   },
+  "r_pf_corner": {
+    "name": "Corner radius of the PF coil winding pack",
+    "value": 0.05,
+    "unit": "m",
+    "source": "Input"
+  },
+  "tk_pf_insulation": {
+    "name": "Thickness of the PF coil insulation",
+    "value": 0.05,
+    "unit": "m",
+    "source": "Input"
+  },
+  "tk_pf_casing": {
+    "name": "Thickness of the PF coil casing",
+    "value": 0.07,
+    "unit": "m",
+    "source": "Input"
+  },
+  "r_cs_corner": {
+    "name": "Corner radius of the CS coil winding pack",
+    "value": 0.05,
+    "unit": "m",
+    "source": "Input"
+  },
+  "tk_cs_insulation": {
+    "name": "Thickness of the CS coil insulation",
+    "value": 0.05,
+    "unit": "m",
+    "source": "Input"
+  },
+  "tk_cs_casing": {
+    "name": "Thickness of the CS coil casing",
+    "value": 0.07,
+    "unit": "m",
+    "source": "Input"
+  },
   "hf_limit": {
     "name": "heat flux material limit",
     "value": 0.5,

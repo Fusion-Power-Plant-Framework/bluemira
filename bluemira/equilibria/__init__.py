@@ -46,7 +46,6 @@ from .optimiser import (
     UnconstrainedCurrentOptimiser,
 )
 from .profiles import BetaIpProfile, CustomProfile
-from .run import AbInitioEquilibriumProblem
 from .shapes import flux_surface_cunningham, flux_surface_johner, flux_surface_manickam
 from .solve import (
     PicardAbsIterator,

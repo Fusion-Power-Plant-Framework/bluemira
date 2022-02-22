@@ -91,7 +91,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['tau_e', 'Energy confinement time', 3, 's', None, 'PLASMOD'],
         ['v_burn', 'Loop voltage during burn', 0.05, 'V', None, 'PROCESS'],
         ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', 0.5, 'N/A', None, 'equilibria'],
-        ["C_Ejima", "Ejima constant", 0.4, "N/A", None, "Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982)"],
+        ["C_Ejima", "Ejima constant", 0.4, "N/A", None, "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))"],
         ["m_s_limit", "Margin to vertical stability", 0.3, "N/A", None, "Input"],
 
         # Heating and current drive
@@ -160,13 +160,13 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
         # Blanket
         ["bb_e_mult", "Energy multiplication factor", 1.35, "N/A", None, "HCPB classic"],
-        ['bb_min_angle', 'Minimum module angle', 70, '°', 'Sharpest cut of a module possible', 'Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany'],
-        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "N/A", None, "HCPB 2015 design description document"],
-        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "N/A", None, "HCPB 2015 design description document"],
+        ['bb_min_angle', 'Minimum module angle', 70, '°', 'Sharpest cut of a module possible', 'Input (Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany)'],
+        ["tk_r_ib_bz", "Thickness ratio of the inboard blanket breeding zone", 0.309, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ib_manifold", "Thickness ratio of the inboard blanket manifold", 0.114, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ib_bss", "Thickness ratio of the inboard blanket back supporting structure", 0.577, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_bz", "Thickness ratio of the outboard blanket breeding zone", 0.431, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_manifold", "Thickness ratio of the outboard blanket manifold", 0.071, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
+        ["tk_r_ob_bss", "Thickness ratio of the outboard blanket back supporting structure", 0.498, "N/A", None, "Input (HCPB 2015 design description document 2MHDNB)"],
 
         # ST Breeding blanket
         ['g_bb_fw', 'Separation between the first wall and the breeding blanket', 0.05, 'm', None, 'Input'],
@@ -223,6 +223,14 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
         ['r_tf_curve', "Start of the upper curve of domed picture frame shale", 3., 'm', None, 'Input'],
 
+        # PF coils
+        ['r_pf_corner', 'Corner radius of the PF coil winding pack', 0.05, 'm', None, 'Input'],
+        ['tk_pf_insulation', 'Thickness of the PF coil insulation', 0.05, 'm', None, 'Input'],
+        ['tk_pf_casing', 'Thickness of the PF coil casing', 0.07, 'm', None, 'Input'],
+        ['r_cs_corner', 'Corner radius of the CS coil winding pack', 0.05, 'm', None, 'Input'],
+        ['tk_cs_insulation', 'Thickness of the CS coil insulation', 0.05, 'm', None, 'Input'],
+        ['tk_cs_casing', 'Thickness of the CS coil casing', 0.07, 'm', None, 'Input'],
+
         # Coil structures
         ['x_g_support', 'TF coil gravity support radius', 13, 'm', None, 'Input'],
         ['w_g_support', 'TF coil gravity support width', 0.75, 'm', None, 'Input'],
@@ -272,14 +280,14 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         # Vacuum vessel
         ['vv_dtk', 'VV double-walled thickness', 0.2, 'm', None, 'Input'],
         ['vv_stk', 'VV single-walled thickness', 0.06, 'm', None, 'Input'],
-        ['vvpfrac', 'Fraction of neutrons deposited in VV', 0.04, 'N/A', 'simpleneutrons needs a correction for VV n absorbtion', 'Bachmanns only value'],
+        ['vvpfrac', 'Fraction of neutrons deposited in VV', 0.04, 'N/A', 'simpleneutrons needs a correction for VV n absorbtion', 'Input (Bachmann, probably thanks to P. Pereslavtsev)'],
 
         # Neutronics
-        ['blk_1_dpa', 'Starter blanket life limit (EUROfer)', 20, 'dpa', 'https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
-        ['blk_2_dpa', 'Second blanket life limit (EUROfer)', 50, 'dpa', 'https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
-        ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', 'https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf', 'Input'],
-        ['vv_dpa', 'Vacuum vessel life limit (SS316-LN-IG)', 3.25, 'dpa', 'RCC-Mx or whatever it is called', 'Input'],
-        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'n/m^2', 'https://ieeexplore.ieee.org/document/6374236/', 'Input'],
+        ['blk_1_dpa', 'Starter blanket life limit (EUROfer)', 20, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
+        ['blk_2_dpa', 'Second blanket life limit (EUROfer)', 50, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
+        ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
+        ['vv_dpa', 'Vacuum vessel life limit (SS316-LN-IG)', 3.25, 'dpa', None, 'Input (RCC-Mx or whatever it is called)'],
+        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'n/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
 
         # Central solenoid
         ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],
@@ -309,7 +317,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['a_max', 'Maximum operational load factor', 0.5, 'N/A', 'Can be violated', 'Input'],
 
         # Tritium fuelling and vacuum system
-        ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+        ['m_gas', 'Gas puff flow rate', 50, 'Pam^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Input (Discussions with Chris Day and Yannick Hörstensmeyer)'],
 
         # Maintenance
         ['bmd', 'Blanket maintenance duration', 150, 'days', 'Full replacement intervention duration', 'Input'],
@@ -332,13 +340,10 @@ class Configuration(ConfigurationSchema, ParameterFrame):
 
     def _ck_duplicates(self):
         """
-        Vérifie que il n'y a pas de paramètres doubles
+        Check there are no duplicate parameters
         """
         if not len(set(self.keys())) == len(self.keys()):
-            raise KeyError(
-                "Attention: Lá t'as fait une connerie.. T'as mis "
-                "deux fois le même nom de paramètre."
-            )
+            raise KeyError("Careful: there are duplicate parameters.")
 
 
 class SingleNull(Configuration):

@@ -31,6 +31,7 @@ from bluemira.equilibria.find import (
     _in_plasma,
     find_LCFS_separatrix,
     find_local_minima,
+    get_legs,
     inv_2x2_matrix,
 )
 
@@ -136,6 +137,84 @@ class TestInPlasma:
 
         result2 = _in_plasma(x, z, mask, lcfs)
         assert np.allclose(result, result2)
+
+
+class TestGetLegs:
+    @classmethod
+    def setup_class(cls):
+        filename = os.sep.join([DATA, "eqref_OOB.json"])
+        cls.sn_eq = Equilibrium.from_eqdsk(filename)
+        filename = os.sep.join([DATA, "DN-DEMO_eqref.json"])
+        cls.dn_eq = Equilibrium.from_eqdsk(filename)
+
+    @pytest.mark.parametrize("n_layers", [2, 3, 5])
+    def test_single_null(self, n_layers):
+        legs = get_legs(self.sn_eq, n_layers, 0.2)
+        assert len(legs) == 2
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        x_point = self.sn_eq.get_OX_points()[1][0]
+        for leg_group in legs.values():
+            assert len(leg_group) == n_layers
+            for leg in leg_group:
+                self.assert_valid_leg(leg, x_point)
+                self.assert_valid_leg(leg, x_point)
+
+    def test_single_one_layer(self):
+        legs = get_legs(self.sn_eq, 1, 0.0)
+        assert len(legs) == 2
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x1 = legs["lower_inner"][0].x[0]
+        legs = get_legs(self.sn_eq, 1, 1.0)
+        assert len(legs) == 2
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x2 = legs["lower_inner"][0].x[0]
+        assert np.isclose(x1, x2)
+
+    @pytest.mark.parametrize("n_layers", [2, 3, 5])
+    def test_double_null(self, n_layers):
+        legs = get_legs(self.dn_eq, n_layers, 0.2)
+        x_points = self.dn_eq.get_OX_points()[1][:2]
+        x_points.sort(key=lambda xp: xp.z)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert "upper_inner" in legs
+        assert "upper_outer" in legs
+        for name, leg_group in legs.items():
+            assert len(leg_group) == n_layers
+            if "lower" in name:
+                x_p = x_points[0]
+            else:
+                x_p = x_points[1]
+            for leg in leg_group:
+                self.assert_valid_leg(leg, x_p)
+
+    def test_double_one_layer(self):
+        legs = get_legs(self.dn_eq, 1, 0.0)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x1 = legs["lower_inner"][0].x[0]
+        legs = get_legs(self.dn_eq, 1, 1.0)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x2 = legs["lower_inner"][0].x[0]
+        assert np.isclose(x1, x2)
+
+    def assert_valid_leg(self, leg, x_point):
+        assert np.isclose(leg.z[0], x_point.z)
 
 
 if __name__ == "__main__":

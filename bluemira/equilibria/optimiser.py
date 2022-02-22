@@ -22,7 +22,7 @@
 """
 Constrained and unconstrained optimisation tools for coilset design
 """
-from copy import deepcopy
+
 from typing import Type
 
 import matplotlib.pyplot as plt
@@ -115,12 +115,6 @@ class EquilibriumOptimiser:
         self.n_C = eq.coilset.n_coils
         return self.optimise()
 
-    def copy(self):
-        """
-        Get a deep copy of the EquilibriumOptimiser.
-        """
-        return deepcopy(self)
-
 
 class Norm2Tikhonov(EquilibriumOptimiser):
     """
@@ -146,8 +140,8 @@ class Norm2Tikhonov(EquilibriumOptimiser):
         x = self.x.reshape(-1, 1)
         b = self.b.reshape(len(self.b), 1)
         err = np.dot(self.A, x) - b
-        self.rms_error = np.sqrt(np.mean(err ** 2 + (self.gamma * self.x) ** 2))
-        self.rss_error = np.sum(err ** 2) + np.sum((self.gamma * self.x) ** 2)
+        self.rms_error = np.sqrt(np.mean(err**2 + (self.gamma * self.x) ** 2))
+        self.rss_error = np.sum(err**2) + np.sum((self.gamma * self.x) ** 2)
 
 
 class PositionOptimiser:
@@ -362,7 +356,7 @@ class PositionOptimiser:
         opt.set_upper_bounds(ub)
 
         self.bounds = np.array(
-            [np.zeros(self.n_L, dtype=np.int), np.ones(self.n_L, dtype=np.int)]
+            [np.zeros(self.n_L, dtype=int), np.ones(self.n_L, dtype=int)]
         )
 
         if self.flag_CS:
@@ -734,7 +728,7 @@ class ForceFieldConstrainer:
             grad
         """
         B, dB = self.eq.force_field.calc_field(vector * self.scale)  # noqa :N803
-        dB /= self.scale ** 2
+        dB /= self.scale**2
         if grad.size > 0:
             grad[:] = dB
         constraint[:] = B - self.B_max
@@ -1075,12 +1069,6 @@ class BreakdownOptimiser(SanityReporter, ForceFieldConstrainer):
         Update the current vector bounds. Must be called prior to optimise
         """
         self.I_max = max_currents / self.scale
-
-    def copy(self):
-        """
-        Get a deep copy of the BreakdownOptimiser.
-        """
-        return deepcopy(self)
 
 
 class CoilsetOptimiserBase:

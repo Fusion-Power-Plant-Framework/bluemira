@@ -70,7 +70,7 @@ def E_DT_fusion():  # noqa :N802
         \\Delta E = \\Delta m c^2
     """
     delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
-    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def E_DD_fusion():  # noqa :N802
@@ -100,7 +100,7 @@ def E_DD_fusion():  # noqa :N802
         ]
     )
     delta_m = np.average(delta_m)
-    return delta_m * C_LIGHT ** 2 * AMU_TO_KG * J_TO_EV
+    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def n_DT_reactions(p_fus) -> float:
@@ -268,7 +268,7 @@ def find_noisy_locals(x, x_bins=50, mode="min"):
     y_bins = [x[i : i + bin_size] for i in range(0, n, bin_size)]
 
     local_m = np.zeros(len(y_bins))
-    local_mid_x = np.zeros(len(y_bins), dtype=np.int)
+    local_mid_x = np.zeros(len(y_bins), dtype=int)
     for i, y_bin in enumerate(y_bins):
         local_m[i] = peak(y_bin)
         local_mid_x[i] = arg_peak(y_bin) + i * bin_size

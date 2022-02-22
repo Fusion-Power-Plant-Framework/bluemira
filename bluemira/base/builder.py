@@ -32,7 +32,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 from bluemira.base.components import Component
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter import ParameterFrame
 
 __all__ = ["Builder", "BuildConfig"]
@@ -94,38 +94,22 @@ class Builder(abc.ABC):
         self._validate_config(build_config)
         self._extract_config(build_config)
         self._params = ParameterFrame.from_template(self._required_params)
-        self.reinitialise(params)
+        self.reinitialise(params, **kwargs)
 
-    def __call__(self, params, *args, **kwargs) -> Component:
+    def __call__(self) -> Component:
         """
-        Perform the full build process, including reinitialisation, using the provided
-        parameters.
-
-        Parameters
-        ----------
-        params: Dict[str, Any]
-            The parameterisation containing at least the required params for this
-            Builder.
+        Perform the full build process using the current parameterisation of the builder.
 
         Returns
         -------
         component: Component
             The Component build by this builder.
         """
-        bluemira_print(f"Reinitialising and running full build chain for {self.name}")
-        self.reinitialise(params)
-        run_result = {}
+        bluemira_print(f"Running full build chain for {self.name}")
         if hasattr(self, "_runmode"):
             bluemira_print(f"Designing {self.name} using runmode: {self.runmode}")
-            run_result = self._runmode(self, *args, **kwargs) or {}
-            if not isinstance(run_result, dict):
-                bluemira_warn(
-                    "Result of builder runmode expected to be a dict or None. "
-                    f"Got {run_result} for builder {self.name} "
-                    "- defaulting to an empty dictionary."
-                )
-                run_result = {}
-        return self.build(**run_result)
+            self._runmode(self)
+        return self.build()
 
     @abc.abstractmethod
     def reinitialise(self, params, **kwargs) -> None:
@@ -142,7 +126,7 @@ class Builder(abc.ABC):
         self._reset_params(params)
 
     @abc.abstractmethod
-    def build(self, **kwargs) -> Component:
+    def build(self) -> Component:
         """
         Runs this Builder's build process to populate the required Components.
 
@@ -194,19 +178,19 @@ class Builder(abc.ABC):
         """
         return self._design_problem
 
-    def run(self, *args, **kwargs):
+    def run(self):
         """
         Optional abstract method to run a design problem while building.
         """
         raise NotImplementedError
 
-    def read(self, *args, **kwargs):
+    def read(self):
         """
         Optional abstract method to read the result of a design problem while building.
         """
         raise NotImplementedError
 
-    def mock(self, *args, **kwargs):
+    def mock(self):
         """
         Optional abstract method to mock a design problem while building.
         """

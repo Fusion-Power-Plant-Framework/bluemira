@@ -58,6 +58,8 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 
+apiVertex = Part.Vertex  # noqa :N816
+apiVector = Base.Vector  # noqa :N816
 apiWire = Part.Wire  # noqa :N816
 apiFace = Part.Face  # noqa :N816
 apiShell = Part.Shell  # noqa :N816
@@ -1080,6 +1082,26 @@ def boolean_cut(shape, tools, split=True):
     return output
 
 
+def point_inside_shape(point, shape):
+    """
+    Whether or not a point is inside a shape.
+
+    Parameters
+    ----------
+    point: Iterable(3)
+        Coordinates of the point
+    shape: BluemiraGeo
+        Geometry to check with
+
+    Returns
+    -------
+    inside: bool
+        Whether or not the point is inside the shape
+    """
+    vector = apiVector(*point)
+    return shape.isInside(vector, EPS, True)
+
+
 # ======================================================================================
 # Geometry healing
 # ======================================================================================
@@ -1126,6 +1148,35 @@ def make_plane(base, axis, angle):
     axis = Base.Vector(axis)
 
     return Base.Placement(base, axis, angle)
+
+
+def make_plane_from_matrix(matrix):
+    """
+    Make a FreeCAD Placement from a 4 x 4 matrix.
+
+    Parameters
+    ----------
+    matrix: np.ndarray
+        4 x 4 matrix from which to make the placement
+
+    Notes
+    -----
+    Matrix should be of the form:
+        [cos_11, cos_12, cos_13, dx]
+        [cos_21, cos_22, cos_23, dy]
+        [cos_31, cos_32, cos_33, dz]
+        [     0,      0,      0,  1]
+    """
+    if not matrix.shape == (4, 4):
+        raise FreeCADError(f"Matrix must be of shape (4, 4), not: {matrix.shape}")
+
+    for i in range(3):
+        row = matrix[i, :3]
+        matrix[i, :3] = row / np.linalg.norm(row)
+    matrix[-1, :] = [0, 0, 0, 1]
+
+    matrix = Base.Matrix(*matrix.flat)
+    return Base.Placement(matrix)
 
 
 def move_plane(plane, vector):
