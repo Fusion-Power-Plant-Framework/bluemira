@@ -101,7 +101,7 @@ class OptimisationObjective:
         Additional arguments to pass to NLOpt objective function when called.
     """
 
-    def __init__(self, f_objective, f_objective_args={}):
+    def __init__(self, f_objective, f_objective_args=None):
         self._f_objective = f_objective
         self._args = f_objective_args
 

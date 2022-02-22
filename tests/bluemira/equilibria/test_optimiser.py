@@ -242,20 +242,26 @@ class TestCoilsetOptimiser:
 
             cls.pfregions[coil.name] = rect
 
-        cls.optimiser = CoilsetPositionCOP(cls.coilset, cls.pfregions)
+        cls.optimiser = CoilsetPositionCOP(cls.coilset, None, None, cls.pfregions)
 
     def test_modify_coilset(self):
         # Read
-        coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
+        coilset_state, substates = self.optimiser.read_coilset_state(
+            self.coilset, self.optimiser.scale
+        )
         # Modify vectors
         x, z, currents = np.array_split(coilset_state, substates)
         x += 1.1
         z += 0.6
         currents += 0.99
         updated_coilset_state = np.concatenate((x, z, currents))
-        self.optimiser.set_coilset_state(updated_coilset_state)
+        self.optimiser.set_coilset_state(
+            self.optimiser.coilset, updated_coilset_state, self.optimiser.scale
+        )
 
-        coilset_state, substates = self.optimiser.read_coilset_state(self.coilset)
+        coilset_state, substates = self.optimiser.read_coilset_state(
+            self.coilset, self.optimiser.scale
+        )
         state_x, state_z, state_i = np.array_split(coilset_state, substates)
         assert np.allclose(state_x, x)
         assert np.allclose(state_z, z)
@@ -275,7 +281,9 @@ class TestCoilsetOptimiser:
         assert n_control_currents == len(user_current_limits)
         assert n_control_currents == len(coilset_current_limits)
 
-        optimiser_current_bounds = self.optimiser.get_current_bounds(user_max_current)
+        optimiser_current_bounds = self.optimiser.get_current_bounds(
+            self.optimiser.coilset, user_max_current, self.optimiser.scale
+        )
         assert np.allclose(bounds[0], optimiser_current_bounds[0])
         assert np.allclose(bounds[1], optimiser_current_bounds[1])
 
