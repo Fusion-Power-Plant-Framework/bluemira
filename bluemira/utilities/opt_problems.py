@@ -97,7 +97,7 @@ class OptimisationObjective:
         Objective function to apply to problem.
         For NLOpt objectives, objective functions should be of the form
         f_objective(cls, x, grad, f_objective_args)
-    _args: dict (default = None)
+    f_objective_args: dict (default = None)
         Additional arguments to pass to NLOpt objective function when called.
     """
 

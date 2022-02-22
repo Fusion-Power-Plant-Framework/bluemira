@@ -42,6 +42,8 @@ import numpy as np
 
 import bluemira.equilibria.opt_objectives as objectives
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.constraints import MagneticConstraintSet
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.utilities.opt_problems import (
@@ -121,6 +123,9 @@ class CoilsetOP(OptimisationProblem):
         ----------
         coilset: Coilset
             Coilset to be read into the state vector.
+        current_scale: float
+            Factor to scale coilset currents down by for population of coilset_state.
+            Used to minimise round-off errors in optimisation.
 
         Returns
         -------
@@ -144,9 +149,15 @@ class CoilsetOP(OptimisationProblem):
 
         Parameters
         ----------
+        coilset: Coilset
+            Coilset to set from state vector.
         coilset_state: np.array
             State vector representing degrees of freedom of the coilset,
             to be used to update the coilset.
+        current_scale: float
+            Factor to scale state vector currents up by when setting
+            coilset currents.
+            Used to minimise round-off errors in optimisation.
         """
         x, z, currents = np.array_split(coilset_state, 3)
 
@@ -162,12 +173,10 @@ class CoilsetOP(OptimisationProblem):
     @staticmethod
     def get_state_bounds(x_bounds, z_bounds, current_bounds):
         """
-        Set bounds on the state vector from provided bounds on the substates.
+        Get bounds on the state vector from provided bounds on the substates.
 
         Parameters
         ----------
-        opt: nlopt.opt
-            Optimiser on which to set the bounds.
         x_bounds: tuple
             Tuple containing lower and upper bounds on the radial coil positions.
         z_bounds: tuple
@@ -177,8 +186,9 @@ class CoilsetOP(OptimisationProblem):
 
         Returns
         -------
-        opt: nlopt.opt
-            Optimiser updated in-place with bounds set.
+        bounds: np.array
+            Array containing state vectors representing lower and upper bounds
+            for coilset state degrees of freedom.
         """
         lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
@@ -186,12 +196,14 @@ class CoilsetOP(OptimisationProblem):
         return bounds
 
     @staticmethod
-    def get_current_bounds(coilset, max_currents, scale):
+    def get_current_bounds(coilset, max_currents, current_scale):
         """
-        Gets the current vector bounds. Must be called prior to optimise.
+        Gets the scaled current vector bounds. Must be called prior to optimise.
 
         Parameters
         ----------
+        coilset: Coilset
+            Coilset to fetch current bounds for.
         max_currents: float or np.ndarray
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
@@ -199,6 +211,8 @@ class CoilsetOP(OptimisationProblem):
             If the coils have current density limits that are more restrictive than these
             coil currents, the smaller current limit of the two will be used for each
             coil.
+        current_scale: float
+            Factor to scale coilset currents down when returning scaled current limits.
 
         Returns
         -------
@@ -213,7 +227,7 @@ class CoilsetOP(OptimisationProblem):
             input_current_limits = np.asarray(max_currents)
             input_size = np.size(np.asarray(input_current_limits))
             if input_size == 1 or input_size == n_control_currents:
-                scaled_input_current_limits = input_current_limits / scale
+                scaled_input_current_limits = input_current_limits / current_scale
             else:
                 raise EquilibriaError(
                     "Length of max_currents array provided to optimiser is not"
@@ -221,6 +235,7 @@ class CoilsetOP(OptimisationProblem):
                 )
 
         # Get the current limits from coil current densities
+        # TODO: Ensure consistent scaling when fetching from coilset
         coilset_current_limits = coilset.get_max_currents(0.0)
         if len(coilset_current_limits) != n_control_currents:
             raise EquilibriaError(
@@ -248,12 +263,30 @@ class CoilsetOP(OptimisationProblem):
 
 class UnconstrainedCurrentCOP(CoilsetOP):
     """
-    Unconstrained norm-2 optimisation with Tikhonov regularisation
+    Unconstrained norm-2 optimisation of coil currents
+    with Tikhonov regularisation.
 
-    Intended to replace Norm2Tikhonov as a Coilset optimiser.
+    Intended to replace Norm2Tikhonov as a CoilsetOP.
+
+    Parameters
+    ----------
+    coilset: CoilSet
+        Coilset to optimise.
+    eq: Equilibrium
+        Equilibrium object used to update magnetic field targets.
+    targets: MagneticConstraintSet
+        Set of magnetic field targets to use in objective function.
+    gamma: float (default = 1e-12)
+        Tikhonov regularisation parameter in units of [A⁻¹].
     """
 
-    def __init__(self, coilset, eq, targets, gamma=1e-12):
+    def __init__(
+        self,
+        coilset: CoilSet,
+        eq: Equilibrium,
+        targets: MagneticConstraintSet,
+        gamma=1e-12,
+    ):
         # Initialise. As an unconstrained optimisation scheme is
         # used, there is no need for NLOpt, and the objective
         # can be specified in the optimise method directly.
@@ -291,34 +324,42 @@ class UnconstrainedCurrentCOP(CoilsetOP):
 
 class BoundedCurrentCOP(CoilsetOP):
     """
-    NLOpt based optimiser for coil currents subject to maximum current bounds.
+    Coilset OptimisationProblem for coil currents subject to maximum current bounds.
+
+    Coilset currents optimised using objectives.regularised_lsq_objective as
+    objective function.
 
     Parameters
     ----------
     coilset: CoilSet
-        Coilset used to get coil current limits and number of coils.
+        Coilset to optimise.
+    eq: Equilibrium
+        Equilibrium object used to update magnetic field targets.
+    targets: MagneticConstraintSet
+        Set of magnetic field targets to use in objective function.
+    gamma: float (default = 1e-8)
+        Tikhonov regularisation parameter in units of [A⁻¹].
     max_currents float or np.array(len(coilset._ccoils)) (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    gamma: float (default = 1e-8)
-        Tikhonov regularisation parameter in units of [A⁻¹].
-    opt_args: dict
-        Dictionary containing arguments to pass to NLOpt optimiser.
-        Defaults to using LD_SLSQP.
-    opt_constraints: iterable (default = [])
-        Iterable of OptimisationConstraint objects containing optimisation
-        constraints held during optimisation.
+    optimiser: Optimiser
+        Optimiser object to use for constrained optimisation.
+    constraints: List[OptimisationConstraint] (default: [])
+        Optional list of OptimisationConstraint objects storing
+        information about constraints that must be satisfied
+        during the coilset optimisation, to be provided to the
+        optimiser.
     """
 
     def __init__(
         self,
-        coilset,
-        eq,
-        targets,
+        coilset: CoilSet,
+        eq: Equilibrium,
+        targets: MagneticConstraintSet,
         gamma=1e-8,
         max_currents=None,
-        optimiser=Optimiser(
+        optimiser: Optimiser = Optimiser(
             algorithm_name="SLSQP",
             opt_conditions={
                 "xtol_rel": 1e-4,
@@ -329,7 +370,7 @@ class BoundedCurrentCOP(CoilsetOP):
             },
             opt_parameters={"initial_step": 0.03},
         ),
-        opt_constraints=[],
+        opt_constraints: List[OptimisationConstraint] = [],
     ):
         # noqa :N803
 
@@ -354,8 +395,10 @@ class BoundedCurrentCOP(CoilsetOP):
         """
         Optimiser handle. Used in __call__
 
-        Returns np.ndarray of optimised currents
-        in each coil [A].
+        Returns
+        -------
+        self.coilset: CoilSet
+            Optimised CoilSet object.
         """
         # Get initial currents.
         initial_currents = self.coilset.get_control_currents() / self.scale
@@ -382,14 +425,20 @@ class BoundedCurrentCOP(CoilsetOP):
 
 class CoilsetPositionCOP(CoilsetOP):
     """
-    NLOpt based optimiser for coilsets (currents and positions)
-    subject to maximum current and position bounds.
+    Coilset OptimisationProblem for coil currents and positions
+    subject to maximum current bounds and positions bounded within
+    a provided region.
+
     Coil currents and positions are optimised simultaneously.
 
     Parameters
     ----------
     coilset: CoilSet
-        Coilset used to get coil current limits and number of coils.
+        Coilset to optimise.
+    eq: Equilibrium
+        Equilibrium object used to update magnetic field targets.
+    targets: MagneticConstraintSet
+        Set of magnetic field targets to use in objective function.
     pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
         Dictionary of loops that specify convex hull regions inside which
         each PF control coil position is to be optimised.
@@ -400,13 +449,13 @@ class CoilsetPositionCOP(CoilsetOP):
         for all coils.
     gamma: float (default = 1e-8)
         Tikhonov regularisation parameter in units of [A⁻¹].
-    opt_args: dict
-        Dictionary containing arguments to pass to NLOpt optimiser.
-        Defaults to using LN_SBPLX, terminating when the figure of
-        merit < stop_val = 1.0, or max_eval =100.
-    opt_constraints: iterable (default = [])
-        Iterable of OptimisationConstraint objects containing optimisation
-        constraints held during optimisation.
+    optimiser: Optimiser
+        Optimiser object to use for constrained optimisation.
+    constraints: List[OptimisationConstraint] (default: [])
+        Optional list of OptimisationConstraint objects storing
+        information about constraints that must be satisfied
+        during the coilset optimisation, to be provided to the
+        optimiser.
 
     Notes
     -----
@@ -418,10 +467,10 @@ class CoilsetPositionCOP(CoilsetOP):
 
     def __init__(
         self,
-        coilset,
-        eq,
-        targets,
-        pfregions,
+        coilset: CoilSet,
+        eq: Equilibrium,
+        targets: MagneticConstraintSet,
+        pfregions: dict,
         max_currents=None,
         gamma=1e-8,
         optimiser=Optimiser(
@@ -468,9 +517,26 @@ class CoilsetPositionCOP(CoilsetOP):
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
-    def get_mapped_state_bounds(self, region_mapper, max_currents):
+    def get_mapped_state_bounds(self, region_mapper: RegionMapper, max_currents):
         """
-        Get coilset state bounds after position mapping.
+        Get mapped bounds on the coilset state vector from the coil regions and
+        maximum coil currents.
+
+        Parameters
+        ----------
+        region_mapper: RegionMapper
+            RegionMapper mapping coil positions within the allowed optimisation
+            regions.
+        max_currents float or np.array(len(coilset._ccoils)) (default = None)
+            Maximum allowed current for each independent coil current in coilset [A].
+            If specified as a float, the float will set the maximum allowed current
+            for all coils.
+
+        Returns
+        -------
+        bounds: np.array
+            Array containing state vectors representing lower and upper bounds
+            for coilset state degrees of freedom.
         """
         # Get mapped position bounds from RegionMapper
         _, lower_lmap_bounds, upper_lmap_bounds = region_mapper.get_Lmap(self.coilset)
@@ -485,7 +551,10 @@ class CoilsetPositionCOP(CoilsetOP):
         """
         Optimiser handle. Used in __call__
 
-        Returns np.ndarray of optimised currents in each coil [A].
+        Returns
+        -------
+        self.coilset: CoilSet
+            Optimised CoilSet object.
         """
         # Get initial state and apply region mapping to coil positions.
         initial_state, _ = self.read_coilset_state(self.coilset, self.scale)
@@ -507,7 +576,14 @@ class CoilsetPositionCOP(CoilsetOP):
 
     @staticmethod
     def get_state_figure_of_merit(
-        vector, grad, coilset, eq, targets, region_mapper, current_scale, gamma
+        vector,
+        grad,
+        coilset: CoilSet,
+        eq: Equilibrium,
+        targets: MagneticConstraintSet,
+        region_mapper: RegionMapper,
+        current_scale: float,
+        gamma: float,
     ):
         """
         Calculates figure of merit from objective function,
@@ -516,14 +592,31 @@ class CoilsetPositionCOP(CoilsetOP):
 
         Parameters
         ----------
-        vector: np.array(n_C)
-            State vector of the array of coil currents.
+        vector: np.array
+            State vector. Numpy array formed by concatenation of coil radial
+            coordinates, coil vertical coordinates, and (scaled) coil currents.
+        grad: np.array
+            Dummy variable for NLOpt calls. Not updated.
+        coilset: CoilSet
+            CoilSet to update using state vector.
+        eq: Equilibrium
+            Equilibrium object used to update magnetic field targets.
+        targets: MagneticConstraintSet
+            Set of magnetic field targets to optimise Equilibrium towards,
+            using least-squares objective with Tikhonov regularisation.
+        region_mapper: RegionMapper
+            RegionMapper mapping coil positions within the allowed optimisation
+            regions.
+        current_scale: float
+            Scale factor to scale currents in state vector up by to
+            give currents in [A].
+        gamma: float
+            Tikhonov regularisation parameter in units of [A⁻¹].
 
         Returns
         -------
         fom: Value of objective function (figure of merit).
         """
-        # eq, targets, scale, substates, coilset, region_mapper
         mapped_x, mapped_z, currents = np.array_split(vector, 3)
         mapped_positions = np.concatenate((mapped_x, mapped_z))
         region_mapper.set_Lmap(mapped_positions)
@@ -547,44 +640,48 @@ class CoilsetPositionCOP(CoilsetOP):
 
 class NestedCoilsetPositionCOP(CoilsetOP):
     """
-    NLOpt based optimiser for coilsets (currents and positions)
-    subject to maximum current and position bounds. Performs a
-    nested optimisation for coil currents within each position
-    optimisation function call.
+    Coilset OptimisationProblem for coil currents and positions
+    subject to maximum current bounds and positions bounded within
+    a provided region. Performs a nested optimisation for coil
+    currents within each position optimisation function call.
 
     Parameters
     ----------
-    sub_opt: EquilibriumOptimiser
-        Optimiser to use for the optimisation of coil currents at each trial
-        set of coil positions. sub_opt.coilset must exist, and will be
-        modified during the optimisation.
+    sub_opt: CoilsetOP
+        Coilset OptimisationProblem to use for the optimisation of
+        coil currents at each trial set of coil positions.
+        sub_opt.coilset must exist, and will be modified
+        during the optimisation.
+    eq: Equilibrium
+        Equilibrium object used to update magnetic field targets.
+    targets: MagneticConstraintSet
+        Set of magnetic field targets to use in objective function.
     pfregions: dict(coil_name:Loop, coil_name:Loop, ...)
         Dictionary of loops that specify convex hull regions inside which
         each PF control coil position is to be optimised.
         The loop objects must be 2d in x,z in units of [m].
-    opt_args: dict
-        Dictionary containing arguments to pass to NLOpt optimiser
-        used in position optimisation.
-        Defaults to using LN_SBPLX, terminating when the figure of
-        merit < stop_val = 1.0, or max_eval = 100.
-    opt_constraints: iterable (default = [])
-        Iterable of OptimisationConstraint objects containing optimisation
-        constraints held during optimisation.
+    optimiser: Optimiser
+        Optimiser object to use for constrained optimisation.
+    constraints: List[OptimisationConstraint] (default: [])
+        Optional list of OptimisationConstraint objects storing
+        information about constraints that must be satisfied
+        during the coilset optimisation, to be provided to the
+        optimiser.
 
     Notes
     -----
-        Setting stopval and maxeval is the most reliable way to stop optimisation
-        at the desired figure of merit and number of iterations respectively.
-        Some NLOpt optimisers display unexpected behaviour when setting xtol and
-        ftol, and may not terminate as expected when those criteria are reached.
+    Setting stopval and maxeval is the most reliable way to stop optimisation
+    at the desired figure of merit and number of iterations respectively.
+    Some NLOpt optimisers display unexpected behaviour when setting xtol and
+    ftol, and may not terminate as expected when those criteria are reached.
     """
 
     def __init__(
         self,
-        sub_opt,
-        eq,
-        targets,
-        pfregions,
+        sub_opt: CoilsetOP,
+        eq: Equilibrium,
+        targets: MagneticConstraintSet,
+        pfregions: dict,
         optimiser=Optimiser(
             algorithm_name="SBPLX",
             opt_conditions={
@@ -593,7 +690,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
             },
             opt_parameters={},
         ),
-        opt_constraints=[],
+        opt_constraints: List[OptimisationConstraint] = [],
     ):
         # noqa :N803
 
@@ -634,7 +731,10 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         """
         Optimiser handle. Used in __call__
 
-        Returns optimised coilset object.
+        Returns
+        -------
+        self.coilset: CoilSet
+            Optimised CoilSet object.
         """
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset, self.scale)
@@ -656,13 +756,13 @@ class NestedCoilsetPositionCOP(CoilsetOP):
     def get_state_figure_of_merit(
         vector,
         grad,
-        coilset,
-        eq,
-        targets,
-        region_mapper,
-        current_scale,
+        coilset: CoilSet,
+        eq: Equilibrium,
+        targets: MagneticConstraintSet,
+        region_mapper: RegionMapper,
+        current_scale: float,
         initial_currents,
-        sub_opt,
+        sub_opt: CoilsetOP,
     ):
         """
         Calculates figure of merit, returned from the current
@@ -672,6 +772,26 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         ----------
         vector: np.array(n_C)
             State vector of the array of coil positions.
+        grad: np.array
+            Dummy variable for NLOpt calls. Not updated.
+        coilset: CoilSet
+            CoilSet to update using state vector.
+        eq: Equilibrium
+            Equilibrium object used to update magnetic field targets.
+        targets: MagneticConstraintSet
+            Set of magnetic field targets to update for use in sub_opt.
+        region_mapper: RegionMapper
+            RegionMapper mapping coil positions within the allowed optimisation
+            regions.
+        current_scale: float
+            Scale factor to scale currents in state vector up by to
+            give currents in [A].
+        initial_currents: np.array
+            Array containing initial (scaled) coil currents prior to passing
+            to sub_opt
+        sub_opt: CoilsetOP
+            Coilset OptimisationProblem used to optimise the array of coil
+            currents at each trial position.
 
         Returns
         -------

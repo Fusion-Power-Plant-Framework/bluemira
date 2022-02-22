@@ -48,6 +48,10 @@ Note that the gradient (Jacobian) of the constraint function is of the form:
             \\end{bmatrix}
 
 The grad and constraint matrices must be assigned in place.
+
+If grad is not updated, the constraint can still be used for derivative-free
+optimisaiton algorithms, but will need to be updated or approximated for use
+in derivative based algorithms, such as those utilising gradient descent.
 """  # noqa (W505)
 
 
@@ -74,6 +78,8 @@ def current_midplane_constraint(constraint, vector, grad, eq, radius, inboard=Tr
 
     Parameters
     ----------
+    eq: Equilibrium
+        Equilibrium to use to fetch last closed flux surface from.
     radius: float
         Toroidal radius at which to constrain the plasma midplane.
     inboard: bool (default=True)
