@@ -1353,7 +1353,23 @@ class ParameterFrame:
 
     def _set_modified_param(self, _dict, attr, value, source, unit, allow_new):
         """
-        TODO
+        Set a value to of an existing parameter, modifying it in place
+
+        Parameters
+        ----------
+        _dict: dict
+            dictionary object containing parameters
+        attr: str
+            parameter name
+        value: Any
+            Parameter value
+        source: str
+            source of value
+        unit: Union[str, Unit]
+            unit to convert to
+        allow_new: bool
+            allow new paramters to be added
+
         """
         if attr != value.var:
             # may just want to copy over value of parameter
@@ -1386,7 +1402,25 @@ class ParameterFrame:
 
     def _unit_conversion(self, value, unit_from, unit_to=None, force=False, source=None):
         """
-        TODO
+        Convert the value of a parameter to a different unit
+
+        Parameters
+        ----------
+        value: Any
+            A value of convert
+        unit_from: Union[str, Unit]
+            unit to convert from
+        unit_to: Optional[Union[str, Unit]]
+            unit to convert to (default for parameter used if not available)
+        force: bool
+            forcibly convert to new unit
+        source: str
+            source of new parameter
+
+        Returns
+        -------
+        value: Any
+
         """
         if not isinstance(value, Parameter) and unit_to is None:
             raise ParameterError("No unit to convert to")
