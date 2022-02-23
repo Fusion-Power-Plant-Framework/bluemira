@@ -86,7 +86,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         ["tk_tf_ob_casing", "TF outboard leg conductor casing thickness", 0.1, "m", None, "PROCESS"],
         ["r_tf_curve", "Radial position of the CP-leg conductor joint", 1.5, "m", None, "PROCESS"],
         ['h_tf_max_in', 'Plasma side TF coil maximum height', 11.5, 'm', None, 'PROCESS'],
-        ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'dimensionless', None, 'PROCESS'],
+        ['r_tf_in_centre', 'Inboard TF leg centre radius', 3.7, 'm', None, 'PROCESS'],
         ['tk_tf_inboard', 'TF coil inboard thickness', 1, 'm', None, 'Input'],
         ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.8934, "m", None, "PROCESS"],
         ['h_tf_min_in', 'Plasma side TF coil min height', -6.5, 'm', None, 'PROCESS'],

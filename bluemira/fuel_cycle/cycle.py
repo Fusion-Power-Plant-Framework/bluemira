@@ -93,7 +93,7 @@ class EUDEMOFuelCycleModel:
     default_params = [
         ['TBR', 'Tritium breeding ratio', 1.05, 'dimensionless', None, 'Default'],
         ['f_b', 'Burn-up fraction', 0.015, 'dimensionless', None, 'Default'],
-        ['m_gas', 'Gas puff flow rate', 50, 'P am^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
+        ['m_gas', 'Gas puff flow rate', 50, 'Pa m^3/s', 'To maintain detachment - no chance of fusion from gas injection', 'Discussions with Chris Day and Yannick Hörstenmeyer'],
         ['A_global', 'Load factor', 0.3, 'dimensionless', None, 'Default'],
         ['r_learn', 'Learning rate', 1, 'dimensionless', None, 'Default'],
         ['t_pump', 'Time in DIR loop', 100, 's', 'Time between exit from plasma and entry into plasma through DIR loop', 'Discussions with Chris Day and Yannick Hörstenmeyer'],

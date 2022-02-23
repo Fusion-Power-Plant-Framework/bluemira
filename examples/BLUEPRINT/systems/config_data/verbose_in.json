@@ -2,28 +2,28 @@
   "Name": {
     "name": "Reactor name",
     "value": "My reactor",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "plasma_type": {
     "name": "Type of plasma",
     "value": "SN",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "reactor_type": {
     "name": "Type of reactor",
     "value": "SN",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "op_mode": {
     "name": "Mode of operation",
     "value": "Pulsed",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -44,28 +44,28 @@
   "blanket_type": {
     "name": "Blanket type",
     "value": "HCPB",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "n_TF": {
     "name": "Number of TF coils",
     "value": 16,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "n_PF": {
     "name": "Number of PF coils",
     "value": 6,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "n_CS": {
     "name": "Number of CS coil divisions",
     "value": 5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -79,14 +79,14 @@
   "Av": {
     "name": "Reactor availability",
     "value": 0.3,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "A": {
     "name": "Plasma aspect ratio",
     "value": 3.1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -107,7 +107,7 @@
   "f_ni": {
     "name": "Non-inductive current drive fraction",
     "value": 0.1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -135,21 +135,21 @@
   "q_95": {
     "name": "Plasma safety factor",
     "value": 3.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "kappa_95": {
     "name": "95th percentile plasma elongation",
     "value": 1.6,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "delta_95": {
     "name": "95th percentile plasma triangularity",
     "value": 0.333,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -184,7 +184,7 @@
   "l_i": {
     "name": "Normalised internal plasma inductance",
     "value": 0.8,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -219,14 +219,14 @@
   "f_DD_fus": {
     "name": "Fraction of D-D fusion in total fusion",
     "value": 0.0025,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD"
   },
   "H_star": {
     "name": "H factor (radiation corrected)",
     "value": 1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD"
   },
@@ -282,28 +282,28 @@
   "f_bs": {
     "name": "Bootstrap fraction",
     "value": 0.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD"
   },
   "beta_N": {
     "name": "Normalised ratio of plasma pressure to magnetic pressure",
     "value": 2.7,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD"
   },
   "beta_p": {
     "name": "Ratio of plasma pressure to poloidal magnetic pressure",
     "value": 0.04,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD"
   },
   "beta": {
     "name": "Total ratio of plasma pressure to magnetic pressure",
     "value": 0.04,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD"
   },
@@ -324,14 +324,14 @@
   "shaf_shift": {
     "name": "Shafranov shift of plasma (geometric=>magnetic)",
     "value": 0.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "equilibria"
   },
   "fw_psi_n": {
     "name": "Normalised psi boundary to fit FW to",
     "value": 1.07,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -415,7 +415,7 @@
   "n_div_cassettes": {
     "name": "Number of divertor cassettes per sector",
     "value": 3,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Common decision"
   },
@@ -695,14 +695,14 @@
   "r_tf_in_centre": {
     "name": "Inboard TF leg centre radius",
     "value": 3.7,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PROCESS"
   },
   "r_tf_out_centre": {
     "name": "Outboard TF leg centre radius",
     "value": 16.2,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PROCESS"
   },
@@ -807,7 +807,7 @@
   "vvpfrac": {
     "name": "Fraction of neutrons deposited in VV",
     "value": 0.04,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "simpleneutrons needs a correction for VV n absorbtion",
     "source": "Bachmanns only value"
   },
@@ -870,21 +870,21 @@
   "CS_material": {
     "name": "Conducting material to use for the CS modules",
     "value": "Nb3Sn",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "PF_material": {
     "name": "Conducting material to use for the PF coils",
     "value": "NbTi",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
   "n_cr_lab": {
     "name": "Number of cryostat labyrinth levels",
     "value": 2,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -898,7 +898,7 @@
   "n_rs_lab": {
     "name": "Number of radiation shield labyrinth levels",
     "value": 4,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -933,14 +933,14 @@
   "a_min": {
     "name": "Minimum operational load factor",
     "value": 0.1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "Otherwise nobody pays",
     "source": "Input"
   },
   "a_max": {
     "name": "Maximum operational load factor",
     "value": 0.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "Can be violated",
     "source": "Input"
   },
@@ -968,7 +968,7 @@
   "RMTFI": {
     "name": "RM Technical Feasibility Index",
     "value": 1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "Default value. Should not really be 1",
     "source": "Input"
   }

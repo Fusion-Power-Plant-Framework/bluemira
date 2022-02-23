@@ -184,7 +184,7 @@ form and then adjusted for a specific analysis via the concise form.
     >>> from bluemira.base import ParameterFrame, ParameterMapping
     >>> record_list = [
     ...     ["R_0", "Major radius", 9, "m", None, "Input", {"PROCESS": ParameterMapping("rmajor", True, False)}],
-    ...     ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input", {"PROCESS": ParameterMapping("aspect", True, True)}],
+    ...     ["A", "Plasma aspect ratio", 3.1, "dimensionless", None, "Input", {"PROCESS": ParameterMapping("aspect", True, True)}],
     ... ]
     >>> params = ParameterFrame(record_list)
     >>> print(params)
@@ -206,7 +206,7 @@ form and then adjusted for a specific analysis via the concise form.
     ...     "A": {
     ...         "name": "Plasma aspect ratio",
     ...         "value": 3.1,
-    ...         "unit": "N/A",
+    ...         "unit": "dimensionless",
     ...         "description": None,
     ...         "source": "Input",
     ...         "mapping": {

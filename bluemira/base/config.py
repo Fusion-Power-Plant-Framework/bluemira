@@ -90,7 +90,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['beta', 'Total ratio of plasma pressure to magnetic pressure', 0.04, 'dimensionless', None, 'PLASMOD'],
         ['tau_e', 'Energy confinement time', 3, 's', None, 'PLASMOD'],
         ['v_burn', 'Loop voltage during burn', 0.05, 'V', None, 'PROCESS'],
-        ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', 0.5, 'dimensionless', None, 'equilibria'],
+        ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', 0.5, 'm', None, 'equilibria'],
         ["C_Ejima", "Ejima constant", 0.4, "dimensionless", None, "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))"],
         ["m_s_limit", "Margin to vertical stability", 0.3, "dimensionless", None, "Input"],
 
@@ -131,7 +131,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['div_L2D_ib', 'Inboard divertor leg length', 1.1, 'm', None, 'Input'],
         ['div_L2D_ob', 'Outboard divertor leg length', 1.45, 'm', None, 'Input'],
         ['div_graze_angle', 'Divertor SOL grazing angle', 1.5, '°', None, 'Input'],
-        ['div_psi_o', 'Divertor flux offset', 0.5, 'dimensionless', None, 'Input'],
+        ['div_psi_o', 'Divertor flux offset', 0.5, 'm', None, 'Input'],
         ['div_Ltarg', 'Divertor target length', 0.5, 'm', None, 'Input'],
         ['div_open', 'Divertor open/closed configuration', False, 'dimensionless', None, 'Input'],
         ['g_vv_div_add', 'Additional divertor/VV gap', 0, 'm', None, 'Input'],

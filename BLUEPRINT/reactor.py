@@ -340,7 +340,7 @@ class Reactor(ReactorSystem):
 
         derived_params = {
             "f_DD_fus": self.params.P_fus_DD / self.params.P_fus,
-            "beta_n": normalise_beta(
+            "beta_N": normalise_beta(
                 self.params.beta,
                 self.params.R_0 / self.params.A,
                 self.params.B_0,

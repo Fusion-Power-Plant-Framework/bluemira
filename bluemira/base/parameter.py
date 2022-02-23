@@ -1081,7 +1081,12 @@ class ParameterFrame:
         source and the value are taken (unless the source is overridden)
 
         """
-        for key, var in kwargs.items():
+        kwarg_items = (
+            [(key, kwargs.get_param(key)) for key in kwargs.keys()]
+            if isinstance(kwargs, ParameterFrame)
+            else kwargs.items()
+        )
+        for key, var in kwarg_items:
             desc = None
             if key not in self.__dict__ and not allow_new:
                 # Skip keys that aren't parameters, note this could mask typos!

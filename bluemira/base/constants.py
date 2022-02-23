@@ -46,6 +46,7 @@ PART_DENSITY = METRE**-3
 FLUX_DENSITY = METRE**-2 / SECOND
 
 ureg.define("displacements_per_atom  = dimensionless = dpa")
+ureg.define("full_power_year = year = fpy")
 # =============================================================================
 # Physical constants
 # =============================================================================
