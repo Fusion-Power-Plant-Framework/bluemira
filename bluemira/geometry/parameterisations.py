@@ -1069,24 +1069,20 @@ class PictureFrameTools:
 
         # Bluemira wire generation
         # - #
+        # Dome-inboard section transition curve
+        joint_curve = make_circle(
+            radius=r_j,
+            center=joint_curve_centre,
+            start_angle=90 - np.rad2deg(theta_j) if flip else -90,
+            end_angle=90 if flip else np.rad2deg(theta_j) - 90,
+            axis=axis,
+            label="bottom_limb_joint" if flip else "top_limb_joint",
+        )
         # Outboard straight section
         out_wire = []
         if not flip:
             out_wire.append(make_polygon([p1, p2]))
-        else:
-            out_wire.append(make_polygon([p2, p1]))
-
-        # Dome-inboard section trainsition curve
-        out_wire.append(
-            make_circle(
-                radius=r_j,
-                center=joint_curve_centre,
-                start_angle=90 - np.rad2deg(theta_j) if flip else -90,
-                end_angle=90 if flip else np.rad2deg(theta_j) - 90,
-                axis=axis,
-                label="bottom_limb_joint" if flip else "top_limb_joint",
-            )
-        )
+            out_wire.append(joint_curve)
 
         # Dome-outboard transition curve
         angle2 = np.rad2deg(theta_leg_final)
@@ -1095,14 +1091,16 @@ class PictureFrameTools:
             make_circle(
                 radius=r_leg,
                 center=leg_centre,
-                start_angle=-start2 if flip else start2 - angle2,
-                end_angle=angle2 - start2 if flip else start2,
-                axis=axis,
+                start_angle=start2 - angle2 if flip else -start2,
+                end_angle=start2 if flip else angle2 - start2,
+                axis=[0, 1, 0],
                 label="bottom_limb_dome" if flip else "top_limb_dome",
             )
         )
         # - #
-
+        if flip:
+            out_wire.append(joint_curve)
+            out_wire.append(make_polygon([p2, p1]))
         label = "bot_limb_dome" if flip else "top_limb_dome"
 
         return BluemiraWire(out_wire, label=label)
@@ -1145,8 +1143,8 @@ class PictureFrameTools:
                 make_circle(
                     r_i,
                     c_i,
-                    start_angle=180 if flip else 90,
-                    end_angle=270 if flip else 180,
+                    start_angle=90 if flip else 180,
+                    end_angle=180 if flip else 270,
                     axis=axis,
                     label="inner_bot_corner" if flip else "inner_top_corner",
                 )
@@ -1154,21 +1152,25 @@ class PictureFrameTools:
         # Straight Section
         p1 = [x_in + r_i, 0.0, z]
         p2 = [x_out - r_o, 0.0, z]
-        wires.append(make_polygon([p1, p2], label="bot_limb" if flip else "top_limb"))
+        if flip:
+            wires.append(make_polygon([p2, p1], label="bot_limb"))
+        else:
+            wires.append(make_polygon([p1, p2], label="top_limb"))
         # Outer corner
         if r_o != 0.0:
             wires.append(
                 make_circle(
                     r_o,
                     c_o,
-                    start_angle=270 if flip else 0,
-                    end_angle=0 if flip else 90,
+                    start_angle=0 if flip else 270,
+                    end_angle=90 if flip else 0,
                     axis=axis,
                     label="outer_bot_corner" if flip else "outer top corner",
                 )
             )
         label = "bot_limb" if flip else "top_limb"
-
+        if flip:
+            wires.reverse()
         return BluemiraWire(wires, label=label)
 
     @staticmethod
@@ -1198,10 +1200,10 @@ class PictureFrameTools:
         shape: BluemiraWire
             CAD Wire of the TF coil inboard geometry.
         """
-        # Top straight section
-        p1 = [x_mid, 0, z_in]
-        p2 = [x_mid, 0, z_mid_up]
-        wires = [make_polygon([p1, p2], label="inner_limb_mid_up")]
+        # Bottom straight section
+        p1 = [x_mid, 0, -z_in]
+        p2 = [x_mid, 0, z_mid_down]
+        wires = [make_polygon([p2, p1], label="inner_limb_mid_down")]
 
         # Curved taper radius
         x_t = x_mid - x_in
@@ -1222,10 +1224,10 @@ class PictureFrameTools:
             )
         )
 
-        # Bottom straight section
-        p3 = [x_mid, 0, -z_in]
-        p4 = [x_mid, 0, z_mid_down]
-        wires.append(make_polygon([p3, p4], label="inner_limb_mid_down"))
+        # Top straight section
+        p3 = [x_mid, 0, z_in]
+        p4 = [x_mid, 0, z_mid_up]
+        wires.append(make_polygon([p3, p4], label="inner_limb_mid_up"))
 
         label = "inner_limb"
         return BluemiraWire(wires, label=label)
@@ -1308,14 +1310,14 @@ class PictureFrame(GeometryParameterisation):
         p5 = [x2, 0, z2 + ro]
         p6 = [x2, 0, z1 - ro]
 
-        axis = [0, -1, 0]
+        axis = [0, 1, 0]
 
-        wires = [make_polygon([p1, p2], label="inner_limb")]
+        wires = [make_polygon([p2, p1], label="inner_limb")]
 
         top_leg = PictureFrameTools._make_flat_leg(axis, x1, x2, z1, ri, ro, flip=False)
         wires.append(top_leg)
 
-        wires.append(make_polygon([p5, p6], label="outer_limb"))
+        wires.append(make_polygon([p6, p5], label="outer_limb"))
 
         bot_leg = PictureFrameTools._make_flat_leg(axis, x1, x2, z2, ri, ro, flip=True)
         wires.append(bot_leg)
@@ -1415,7 +1417,7 @@ class TaperedPictureFrame(GeometryParameterisation):
         p5 = [x3, 0, z2 - ro]
         p6 = [x3, 0, -z2 + ro]
 
-        axis = [0, -1, 0]
+        axis = [0, 1, 0]
         wires = []
         inb_leg = PictureFrameTools._make_tapered_inner_leg(
             axis, x1, x2, z1, z2 - ri, -z2 + ri

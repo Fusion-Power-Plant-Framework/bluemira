@@ -27,6 +27,7 @@ from typing import Type
 import numpy as np
 import pytest
 
+from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     BotDomeFlatInnerCurvedPictureFrame,
@@ -169,6 +170,20 @@ class TestPictureFrame:
         length = 2 * (12 + 16)
         assert np.isclose(wire.length, length)
 
+    def test_ordering(self):
+        p = PictureFrame(
+            {
+                "x1": {"value": 4},
+                "x2": {"value": 16},
+                "z1": {"value": 8},
+                "z2": {"value": -8},
+                "ri": {"value": 1, "upper_bound": 1},
+                "ro": {"value": 1},
+            }
+        )
+        wire = p.create_shape()
+        assert _wire_edges_tangent(wire._shape)
+
 
 class TestTripleArc:
     def test_circle(self):
@@ -222,6 +237,11 @@ class TestFullDomeTaperedInnerCurvedPictureFrame:
         p = FullDomeTaperedInnerCurvedPictureFrame()
         wire = p.create_shape()
         assert np.isclose(wire.length, 53.732, rtol=1e-4, atol=1e-5)
+
+    def test_ordering(self):
+        p = FullDomeTaperedInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert _wire_edges_tangent(wire._shape)
 
 
 class TestTopDomeFlatInnerCurvedPictureFrame:
