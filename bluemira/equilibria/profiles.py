@@ -614,8 +614,8 @@ class CustomProfile(Profile):
     def __init__(
         self, pprime_func, ffprime_func, R_0, B_0, p_func=None, f_func=None, Ip=None
     ):
-        self._pprime = self.parse_to_callable(pprime_func)
-        self._ffprime = self.parse_to_callable(ffprime_func)
+        self._pprime_in = self.parse_to_callable(pprime_func)
+        self._ffprime_in = self.parse_to_callable(ffprime_func)
         self.p_func = self.parse_to_callable(p_func)
         self.f_func = self.parse_to_callable(f_func)
         self._fvac = R_0 * B_0
@@ -646,13 +646,13 @@ class CustomProfile(Profile):
         """
         dp/dpsi as a function of normalised psi
         """
-        return self.scale * self._pprime(pn)
+        return self.scale * self._pprime_in(pn)
 
     def ffprime(self, pn):
         """
         f*df/dpsi as a function of normalised psi
         """
-        return self.scale * self._ffprime(pn)
+        return self.scale * self._ffprime_in(pn)
 
     def jtor(self, x, z, psi, o_points, x_points):
         """
@@ -666,7 +666,7 @@ class CustomProfile(Profile):
         self.psisep = psisep
         self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0.0, 1.0)
-        jtor = x * self._pprime(psi_norm) + self._ffprime(psi_norm) / (x * MU_0)
+        jtor = x * self._pprime_in(psi_norm) + self._ffprime_in(psi_norm) / (x * MU_0)
         if mask is not None:
             jtor *= mask
         if self.Ip is not None:
