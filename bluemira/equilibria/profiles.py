@@ -689,7 +689,7 @@ class CustomProfile(Profile):
         Return f=R*Bt at given value(s) of normalised psi
         """
         if self.f_func is not None:
-            return self.f_func(psinorm)
+            return self.scale * self.f_func(psinorm)
         return super().fRBpol(psinorm)
 
     @classmethod
