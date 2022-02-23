@@ -681,7 +681,7 @@ class CustomProfile(Profile):
         Return pressure [Pa] at given value(s) of normalised psi
         """
         if self.p_func is not None:
-            return self.p_func(psinorm)
+            return self.scale * self.p_func(psinorm)
         return super().pressure(psinorm)
 
     def fRBpol(self, psinorm):
