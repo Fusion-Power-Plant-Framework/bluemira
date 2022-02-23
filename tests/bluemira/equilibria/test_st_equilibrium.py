@@ -222,6 +222,7 @@ class TestSTEquilibrium:
         bm_ffprime = eq._profiles.ffprime(psi_n)
         assert np.allclose(bm_pprime, bm_pprime_p)
         assert np.allclose(bm_ffprime, bm_ffprime_p)
+        assert np.isclose(max(bm_ffprime) / max(jetto_ffprime), eq._profiles.scale)
 
         jetto_pprime = scale(jetto_pprime)
         jetto_ffprime = scale(jetto_ffprime)
