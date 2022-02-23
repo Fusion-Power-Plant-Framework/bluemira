@@ -34,7 +34,7 @@ import json
 import os
 from dataclasses import dataclass
 from functools import wraps
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import wrapt
@@ -88,7 +88,7 @@ class ParameterMapping:
     name: str
     recv: bool = True
     send: bool = True
-    unit: str = None
+    unit: Optional[str] = None
 
     _frozen = ()
 
@@ -1391,30 +1391,43 @@ class ParameterFrame:
         if not isinstance(value, Parameter) and unit_to is None:
             raise ParameterError("No unit to convert to")
         elif isinstance(value, Parameter):
-            if unit_to is not None:
-                unit_to = _unitify(unit_to)
-                if unit_to != value.unit and not force:
-                    raise ParameterError("Can't change unit of existing parameter")
-            else:
-                unit_to = value.unit
-
-            if unit_from is not None:
-                unit_from = _unitify(unit_from)
-
-                if unit_to == unit_from:
-                    return value
-                value.value = self.__raw_unit_converter(value.value, unit_from, unit_to)
-                value.source = (
-                    f"{source if source is not None else ''}: "
-                    f"Units converted from {unit_from.format_babel()} to {unit_to.format_babel()}"
-                )
-            return value
+            return self.__modify_value(
+                unit_from,
+                self.__get_unit_to(unit_to, value.unit, force),
+                value,
+                source,
+                self.__raw_unit_converter,
+            )
         elif None not in [unit_to, unit_from]:
             unit_to = _unitify(unit_to)
             unit_from = _unitify(unit_from)
             return self.__raw_unit_converter(value, unit_from, unit_to)
         else:
             return value
+
+    @staticmethod
+    def __get_unit_to(unit_to, current, force):
+        if unit_to is not None:
+            unit_to = _unitify(unit_to)
+            if unit_to != current and not force:
+                raise ParameterError("Can't change unit of existing parameter")
+        else:
+            unit_to = current
+        return unit_to
+
+    @staticmethod
+    def __modify_value(unit_from, unit_to, value, source, converter):
+        if unit_from is not None:
+            unit_from = _unitify(unit_from)
+
+            if unit_to == unit_from:
+                return value
+            value.value = converter(value.value, unit_from, unit_to)
+            value.source = (
+                f"{source if source is not None else ''}: "
+                f"Units converted from {unit_from.format_babel()} to {unit_to.format_babel()}"
+            )
+        return value
 
     @staticmethod
     def __raw_unit_converter(value, unit_from, unit_to):
