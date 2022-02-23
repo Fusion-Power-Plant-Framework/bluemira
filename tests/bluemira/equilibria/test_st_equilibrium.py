@@ -24,6 +24,7 @@ BLUEPRINT -> bluemira ST equilibrium recursion test
 """
 
 import os
+from copy import deepcopy
 
 import numpy as np
 import pytest
@@ -181,7 +182,7 @@ class TestSTEquilibrium:
         )
         fbe_iterator()
         self.eq = eq
-        self._test_equilibrium_good(eq, psi_rtol=1e-3, li_rtol=1e-8)
+        self._test_equilibrium_good(eq, psi_rtol=1e-2, li_rtol=1e-2)
         self._test_profiles_good(eq)
 
         # Verify by removing symmetry constraint and checking convergence
@@ -196,7 +197,7 @@ class TestSTEquilibrium:
     def _test_equilibrium_good(self, eq, psi_rtol, li_rtol):
         assert np.isclose(eq._Ip, abs(self.jeq_dict["cplasma"]))
         lcfs_area = eq.get_LCFS().area
-        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area, rtol=1e-3)
+        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area, rtol=1e-2)
 
         li_bp = calc_li(self.eq_blueprint)
         assert np.isclose(li_bp, calc_li(eq), rtol=li_rtol)
@@ -223,6 +224,7 @@ class TestSTEquilibrium:
         assert np.allclose(bm_pprime, bm_pprime_p)
         assert np.allclose(bm_ffprime, bm_ffprime_p)
         assert np.isclose(max(bm_ffprime) / max(jetto_ffprime), eq._profiles.scale)
+        assert np.isclose(max(bm_pprime) / max(jetto_pprime), eq._profiles.scale)
 
         jetto_pprime = scale(jetto_pprime)
         jetto_ffprime = scale(jetto_ffprime)
@@ -241,7 +243,7 @@ class TestSTEquilibrium:
         plasma_current,
         tikhonov_gamma,
     ):
-        coilset_temp = coilset.copy()
+        coilset_temp = deepcopy(coilset)
         dummy = Coil(
             x=x_current,
             z=z_current,
