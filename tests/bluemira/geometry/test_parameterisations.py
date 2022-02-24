@@ -238,11 +238,6 @@ class TestFullDomeTaperedInnerCurvedPictureFrame:
         wire = p.create_shape()
         assert np.isclose(wire.length, 53.732, rtol=1e-4, atol=1e-5)
 
-    def test_ordering(self):
-        p = FullDomeTaperedInnerCurvedPictureFrame()
-        wire = p.create_shape()
-        assert _wire_edges_tangent(wire._shape)
-
 
 class TestTopDomeFlatInnerCurvedPictureFrame:
     def test_length(self):
