@@ -424,26 +424,20 @@ class Parameter(wrapt.ObjectProxy):
 
         if mapping in [None, {}]:
             self._mapping = {}
+            return
         elif isinstance(mapping, dict):
-            try:
-                val_types = get_types()
-                if dict in val_types:
-                    for k, v in mapping.items():
-                        if isinstance(v, dict):
-                            mapping[k] = ParameterMapping(**v)
-                val_types = get_types()
-                if len(val_types) == 1 and ParameterMapping in val_types:
-                    self._mapping = (
-                        {**self._mapping, **mapping}
-                        if hasattr(self, "mapping")
-                        else mapping
-                    )
-                else:
-                    raise TypeError(error_str.format(mapping))
-            except TypeError:
-                raise TypeError(error_str.format(mapping))
-        else:
-            raise TypeError(error_str.format(mapping))
+            val_types = get_types()
+            if dict in val_types:
+                for k, v in mapping.items():
+                    if isinstance(v, dict):
+                        mapping[k] = ParameterMapping(**v)
+            val_types = get_types()
+            if len(val_types) == 1 and ParameterMapping in val_types:
+                self._mapping = (
+                    {**self._mapping, **mapping} if hasattr(self, "mapping") else mapping
+                )
+                return
+        raise TypeError(error_str.format(mapping))
 
     @property
     def value(self):
