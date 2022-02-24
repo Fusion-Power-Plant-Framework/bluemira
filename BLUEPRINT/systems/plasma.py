@@ -321,7 +321,7 @@ class Plasma(Meshable, ReactorSystem):
             The L-H transition power [MW]
         """
         a = self.params.R_0 / self.params.A
-        return P_LH(self.params.rho * 1e20, self.params.B_0, a, self.params.R_0)
+        return P_LH(self.params.rho * 1e18, self.params.B_0, a, self.params.R_0)
 
     @property
     def plasma_resistance(self):
