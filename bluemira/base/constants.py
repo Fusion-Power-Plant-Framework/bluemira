@@ -139,7 +139,7 @@ S_TO_YR = ureg.Quantity(1, ureg.second).to("year").magnitude
 
 def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.array]:
     """
-    Convert a temperature in Celsius to Kelvin.
+    Convert a temperature in Kelvin to Celsius.
 
     Parameters
     ----------
@@ -182,7 +182,7 @@ def from_keV(
     _from: str = "keV"
 ):
     """
-    Convert a temperature in Celsius to Kelvin.
+    Convert a temperature in keV to Celsius.
 
     Parameters
     ----------
@@ -258,7 +258,7 @@ def pam3s_to_mols(flow_in_pam3_s):
 
 def mols_to_pam3s(flow_in_mols):  # noqa :N802
     """
-    Convert a flow in Pa.m^3/s to a flow in mols.
+    Convert a flow in mols to a flow in Pa.m^3/s.
 
     Parameters
     ----------

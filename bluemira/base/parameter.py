@@ -278,7 +278,7 @@ class Parameter(wrapt.ObjectProxy):
         """
         Add missing methods
         """
-        return sorted(
+        return list(
             set(
                 super().__dir__()
                 + list(self.__slots__)
