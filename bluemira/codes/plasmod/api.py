@@ -351,15 +351,6 @@ class Setup(interface.Setup):
         """
         self.io_manager.modify({**self._get_new_inputs(), **self._problem_settings})
 
-    def _get_new_inputs(self):
-        """
-        Get new key mappings from the ParameterFrame.
-        """
-        _inputs = {}
-        for pl_key, bm_key in self._send_mapping.items():
-            _inputs[pl_key] = self.params.get(bm_key)
-        return _inputs
-
     def write_input(self):
         """
         Write input file

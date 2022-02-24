@@ -139,6 +139,25 @@ class Setup(Task):
         self.__recv_mapping = get_recv_mapping(params, NAME)
         self.__send_mapping = get_send_mapping(params, NAME)
 
+    def _get_new_inputs(self, remapper=None):
+        """
+        Get new key mappings from the ParameterFrame.
+
+        TODO unit conversion
+        """
+        _inputs = {}
+        for prog_key, bm_key in self._send_mapping.items():
+            if callable(remapper):
+                prog_key = remapper(prog_key)
+                if isinstance(prog_key, list):
+                    for key in prog_key:
+                        _inputs[key] = self.params.get(bm_key)
+                    continue
+
+            _inputs[prog_key] = self.params.get(bm_key)
+
+        return _inputs
+
     @property
     def _recv_mapping(self):
         self.__recv_mapping = get_recv_mapping(self.params, self.parent.NAME)

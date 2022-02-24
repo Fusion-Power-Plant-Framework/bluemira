@@ -41,7 +41,6 @@ def systems_code_solver(
     run_dir: str,
     read_dir: Optional[str] = None,
     template_indat=None,
-    params_to_update=None,
     module: Optional[str] = "PROCESS",
 ) -> FileProgramInterface:
     """
@@ -70,10 +69,6 @@ def systems_code_solver(
     Returns
     -------
     Solver object: FileProgramInterface
-
-    Returns
-    -------
-    solver: FileProgramInterface
         The solver that has been run.
 
     Raises
