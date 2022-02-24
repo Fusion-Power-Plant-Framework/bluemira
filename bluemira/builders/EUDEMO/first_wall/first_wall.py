@@ -171,6 +171,12 @@ class FirstWallBuilder(Builder):
                 "problem_class": f"{_WALL_MODULE_REF}::MinimiseLength",
                 "label": self.COMPONENT_WALL,
                 "name": self.COMPONENT_WALL,
+                "opt_conditions": {
+                    "ftol_rel": 1e-6,
+                    "xtol_rel": 1e-8,
+                    "xtol_abs": 1e-8,
+                    "max_eval": 100,
+                },
             }
         )
 

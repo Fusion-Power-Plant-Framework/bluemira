@@ -34,7 +34,11 @@ from bluemira.base.config import Configuration
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline
+from bluemira.geometry.parameterisations import (
+    GeometryParameterisation,
+    PolySpline,
+    PrincetonD,
+)
 from bluemira.geometry.tools import signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
@@ -97,6 +101,33 @@ class WallPolySpline(PolySpline):
         self.fix_variable("flat", 0)
 
 
+class WallPrincetonD(PrincetonD):
+
+    _defaults = {
+        "x1": {"value": 5.8},
+        "x2": {"value": 12.1},
+        "dz": {"value": 0},
+    }
+
+    def __init__(self, var_dict=None):
+        if var_dict is None:
+            var_dict = {}
+        defaults = copy.deepcopy(self._defaults)
+        defaults.update(var_dict)
+        super().__init__(defaults)
+
+        ib_radius = self.variables["x1"].value
+        ob_radius = self.variables["x2"].value
+        # TODO(hsaunders1904): tighter constraints on these values
+        self.adjust_variable(
+            "x1", ib_radius, lower_bound=ib_radius - 3.5, upper_bound=ib_radius + 3.5
+        )
+        self.adjust_variable(
+            "x2", ob_radius, lower_bound=ob_radius - 3.5, upper_bound=ob_radius + 3.5
+        )
+        self.adjust_variable("dz", 0, lower_bound=-3, upper_bound=3)
+
+
 class MinimiseLength(GeometryOptimisationProblem):
     """
     Optimiser to minimize the length of a geometry parameterisation.
@@ -106,24 +137,34 @@ class MinimiseLength(GeometryOptimisationProblem):
         self,
         parameterisation: GeometryParameterisation,
         optimiser: Optimiser,
-        keep_out_zones=None,
-        n_koz_points=100,
-        koz_con_tol=1e-3,
+        keep_out_zones: Iterable[BluemiraWire] = None,
+        n_koz_points: int = 100,
+        koz_con_tol: float = 1e-3,
     ):
         super().__init__(parameterisation, optimiser)
 
         self.n_koz_points = n_koz_points
         self.keep_out_zones = keep_out_zones
         if self.keep_out_zones is not None:
-            self.koz_points = self._make_koz_points(keep_out_zones)
+            self.koz_points = self._make_koz_points(
+                self.keep_out_zones, self.n_koz_points
+            )
             self.optimiser.add_ineq_constraints(
                 self.f_constrain_koz,
-                koz_con_tol * np.ones(n_koz_points),
+                koz_con_tol * np.ones(self.n_koz_points),
             )
 
-    def _make_koz_points(self, keep_out_zones: Iterable[BluemiraWire]):
+    def _make_koz_points(
+        self, keep_out_zones: Iterable[BluemiraWire], n_points: int
+    ) -> np.ndarray:
         """
-        Make a set of points at which to evaluate the KOZ constraint
+        Generate a set of points that combine the given keep-out-zones,
+        to use as constraints in the optimisation problem.
+
+        Returns
+        -------
+        coords: np.ndarray[2, n_points]
+            Coordinate of the keep-out-zone points in the xz plane.
         """
         shape_discretizations = []
         for zone in keep_out_zones:
@@ -131,16 +172,22 @@ class MinimiseLength(GeometryOptimisationProblem):
             shape_discretizations.append(d)
 
         coords = np.concatenate(shape_discretizations)
-
         hull = ConvexHull(coords.T)
-        return coords[:, hull.vertices]
+
+        # The hull vertices do not give a closed shape, so add the first
+        # point to the end of the array to close it
+        hull_coords = np.empty((coords.shape[0], len(hull.vertices) + 1))
+        hull_coords[:, 0:-1] = coords[:, hull.vertices]
+        hull_coords[:, -1] = coords[:, hull.vertices[0]]
+        return hull_coords
+
+        # return coords[:, hull.vertices]
 
     def f_constrain_koz(self, constraint, x, grad):
         """
         Geometry constraint function to the keep-out-zone
         """
         constraint[:] = self.calculate_signed_distance(x)
-
         if grad.size > 0:
             grad[:] = self.optimiser.approx_derivative(
                 self.calculate_signed_distance, x, constraint
@@ -253,15 +300,18 @@ class WallBuilder(OptimisedShapeBuilder):
         bm_plot_tools.set_component_plane(component, "xz")
         return component
 
-    def _derive_shape_params(self):
-        """
-        Calculate derived parameters for the GeometryParameterisation.
-        """
-        params = super()._derive_shape_params()
-        params["height"] = {"value": self._derive_height()}
-        return params
+    # TODO(hsaunders1904): 'height' is not a parameter for all shapes so
+    # setting it here doesn't make sense, and prevent the use of shapes
+    # that do not have a height parameter
+    # def _derive_shape_params(self):
+    #     """
+    #     Calculate derived parameters for the GeometryParameterisation.
+    #     """
+    #     params = super()._derive_shape_params()
+    #     # params["height"] = {"value": self._derive_height()}
+    #     return params
 
-    def _derive_height(self) -> float:
-        """Derive the height of the shape from relevant parameters"""
-        r_minor = self._params.R_0 / self._params.A
-        return (self._params.kappa_95 * r_minor) * 2
+    # def _derive_height(self) -> float:
+    #     """Derive the height of the shape from relevant parameters"""
+    #     r_minor = self._params.R_0 / self._params.A
+    #     return (self._params.kappa_95 * r_minor) * 2
