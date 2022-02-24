@@ -1155,9 +1155,10 @@ class PictureFrameTools:
         if flip:
             wires.append(make_polygon([p2, p1], label="bot_limb"))
         else:
-            wires.append(make_polygon([p1, p2], label="top_limb"))
+            wires.append(make_polygon([p1, p2], label="bot_limb"))
         # Outer corner
         if r_o != 0.0:
+
             wires.append(
                 make_circle(
                     r_o,
@@ -1168,9 +1169,12 @@ class PictureFrameTools:
                     label="outer_bot_corner" if flip else "outer top corner",
                 )
             )
-        label = "bot_limb" if flip else "top_limb"
+
         if flip:
             wires.reverse()
+
+        label = "bot_limb" if flip else "top_limb"
+
         return BluemiraWire(wires, label=label)
 
     @staticmethod
@@ -1657,7 +1661,7 @@ class TopDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
         # Bottom leg is flat
 
         bot_leg = PictureFrameTools._make_flat_leg(
-            axis,
+            [0, 1, 0],
             x_mid,
             x_out,
             z_mid_down,
@@ -1753,7 +1757,7 @@ class BotDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
 
         # Top leg is flat
         top_leg = PictureFrameTools._make_flat_leg(
-            axis,
+            [0, 1, 0],
             x_mid,
             x_out,
             z_mid_up,
@@ -2027,7 +2031,7 @@ class TopDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
         # Bottom leg is flat
 
         bot_leg = PictureFrameTools._make_flat_leg(
-            axis,
+            [0, 1, 0],
             x_mid,
             x_out,
             z_mid_down,
@@ -2134,7 +2138,7 @@ class BotDomeTaperedInnerCurvedPictureFrame(GeometryParameterisation):
 
         # Top leg is flat
         top_leg = PictureFrameTools._make_flat_leg(
-            axis,
+            [0, 1, 0],
             x_mid,
             x_out,
             z_mid_up,
