@@ -205,6 +205,7 @@ class DesignABC(abc.ABC):
         corresponding options.
         """
         self._builders = {}
+        self._solvers = {}
         self._required_params = {"Name"}
 
     def _validate_params(self, params: Dict[str, Union[int, float, str]]):
