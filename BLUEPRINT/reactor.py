@@ -292,13 +292,13 @@ class Reactor(ReactorSystem):
         """
         Runs, reads, or mocks the systems code according to the build config dictionary.
         """
-        PROCESS_output: ParameterFrame = run_systems_code(
+        PROCESS_solver = run_systems_code(
             self.params,
             self.build_config,
             self.file_manager.generated_data_dirs["systems_code"],
             self.file_manager.reference_data_dirs["systems_code"],
         )
-        self.params.update_kw_parameters(PROCESS_output.to_dict())
+        self.params.update_kw_parameters(PROCESS_solver.params.to_dict())
 
     def estimate_kappa_95(self):
         """

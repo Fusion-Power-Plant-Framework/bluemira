@@ -28,7 +28,6 @@ import os
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter import ParameterFrame
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -78,13 +77,14 @@ class EUDEMOReactor(Reactor):
         # run_systems_code interface is updated to have a more general runmode value.
         config["process_mode"] = config.pop("runmode")
 
-        output: ParameterFrame = run_systems_code(
+        solver = run_systems_code(
             self._params,
             config,
             self._file_manager.generated_data_dirs["systems_code"],
             self._file_manager.reference_data_dirs["systems_code"],
         )
-        self._params.update_kw_parameters(output.to_dict())
+        self.register_solver(solver, name)
+        self._params.update_kw_parameters(solver.params.to_dict())
 
         bluemira_print(f"Completed design stage: {name}")
 
