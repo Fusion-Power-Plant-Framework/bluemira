@@ -229,6 +229,21 @@ class Teardown(Task):
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent)
 
+    def prepare_outputs(self, outputs: Dict, source: Optional[str] = None):
+        """
+        TODO?
+        """
+        for bm_key, value in outputs.items():
+            code_unit = (
+                self.parent.params.get_param(bm_key).mapping[self.parent.NAME].unit
+            )
+            if code_unit is not None:
+                outputs[bm_key] = {"value": value, "unit": code_unit}
+
+        self.parent.params.update_kw_parameters(
+            outputs, source=source if source is not None else f"{self.parent.NAME}"
+        )
+
 
 class FileProgramInterface:
     """An external code wrapper"""

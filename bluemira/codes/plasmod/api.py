@@ -436,7 +436,7 @@ class Teardown(interface.Teardown):
         """
         Prepare outputs for ParameterFrame
         """
-        self.parent.params.update_kw_parameters(
+        super().prepare_outputs(
             {
                 bm_key: getattr(self.io_manager, pl_key)
                 for pl_key, bm_key in self.parent._recv_mapping.items()

@@ -301,7 +301,8 @@ class Teardown(interface.Teardown):
             else self.parent._recv_mapping.values()
         )
         param = self.bm_file.extract_outputs(var)
-        self.parent.params.update_kw_parameters(dict(zip(var, param)), source=PROCESS)
+
+        self.prepare_outputs(dict(zip(var, param)), source=PROCESS)
 
     def read_mfile(self, path: str = None):
         """
@@ -336,7 +337,7 @@ class Teardown(interface.Teardown):
         with open(filename, "r") as fh:
             process = json.load(fh)
 
-        self.parent.params.update_kw_parameters(process, source=f"{PROCESS} (Mock)")
+        self.prepare_outputs(process, source=f"{PROCESS} (Mock)")
 
     def _check_PROCESS_output_files(self):
         """
