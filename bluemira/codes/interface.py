@@ -26,8 +26,9 @@ from __future__ import annotations
 
 import string
 import subprocess  # noqa :S404
+from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
@@ -245,7 +246,7 @@ class Teardown(Task):
         )
 
 
-class FileProgramInterface:
+class FileProgramInterface(ABC):
     """An external code wrapper"""
 
     _setup = Setup
@@ -412,3 +413,20 @@ class FileProgramInterface:
         self._runner(self.setup_obj, *args, **kwargs)
         self._runner(self.run_obj, *args, **kwargs)
         self._runner(self.teardown_obj, *args, **kwargs)
+
+    @abstractmethod
+    def get_raw_variables(self, params: Union[List, str]):
+        """
+        Get raw parameters from an external code
+        (mapped bluemira parameters will have bluemira names)
+
+        Parameters
+        ----------
+        params: Union[List, str]
+            parameter names to access
+
+        Returns
+        -------
+        values list
+        """
+        pass

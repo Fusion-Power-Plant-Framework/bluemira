@@ -213,9 +213,9 @@ class Solver(interface.FileProgramInterface):
         if (not ENABLED) and (mode != "mock"):
             raise CodesError(f"{PROCESS} not (properly) installed")
 
-    def get_process_parameters(self, params: Union[List, str]):
+    def get_raw_variables(self, params: Union[List, str]):
         """
-        Get raw parameters from an MFILE
+        Get raw variables from an MFILE
         (mapped bluemira parameters will have bluemira names)
 
         Parameters
