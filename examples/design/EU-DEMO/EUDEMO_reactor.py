@@ -224,13 +224,20 @@ build_config = {
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
-        "param_class": "PictureFrame",
+        "param_class": "TripleArc",
         "variables_map": {
-            "x1": {"value": "r_tf_in_centre", "fixed": True},
-            "x2": {"value": 15, "lower_bound": 9},
-            "z1": {"value": 15, "lower_bound": 13},
-            "z2": {"value": -15, "upper_bound": -13},
-            "ri": {"value": 0, "fixed": True},
+            "x1": {
+                "value": "r_tf_in_centre",
+                "fixed": True,
+            },
+            "f1": {
+                "value": 4,
+                "lower_bound": 4,
+            },
+            "f2": {
+                "value": 4,
+                "lower_bound": 4,
+            },
         },
         "algorithm_name": "COBYLA",
         "problem_settings": {
