@@ -25,13 +25,15 @@ Bluemira External Codes Wrapper
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from bluemira.base.builder import BuildConfig
-from bluemira.base.parameter import ParameterFrame
 from bluemira.codes import process
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import FileProgramInterface
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter import ParameterFrame
 
 
 def run_systems_code(
