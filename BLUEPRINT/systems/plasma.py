@@ -322,7 +322,7 @@ class Plasma(Meshable, ReactorSystem):
         """
         a = self.params.R_0 / self.params.A
         return P_LH(
-            raw_uc(self.params.rho, self.params.rho.unit, "m^3"),
+            raw_uc(self.params.rho, self.params.rho.unit, "m^-3"),
             self.params.B_0,
             a,
             self.params.R_0,
