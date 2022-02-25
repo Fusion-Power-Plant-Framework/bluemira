@@ -27,10 +27,7 @@ import os
 
 import bluemira.codes.interface as interface
 from bluemira.codes.error import CodesError
-
-# PROCESS imports
 from bluemira.codes.process.api import DEFAULT_INDAT, InDat, update_obsolete_vars
-from bluemira.codes.process.constants import NAME as PROCESS
 
 
 class PROCESSInputWriter(InDat):

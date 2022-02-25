@@ -27,10 +27,11 @@ from __future__ import annotations
 import string
 import subprocess  # noqa :S404
 from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 
-import bluemira.base as bm_base
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.utilities import (
     LogPipe,
@@ -139,9 +140,19 @@ class Setup(Task):
         self.__recv_mapping = get_recv_mapping(params, NAME)
         self.__send_mapping = get_send_mapping(params, NAME)
 
-    def _get_new_inputs(self, remapper=None):
+    def _get_new_inputs(self, remapper: Optional[callable] = None):
         """
         Get new key mappings from the ParameterFrame.
+
+        Parameters
+        ----------
+        remapper: callable
+            a function for remapping variable names. Useful for renaming old variables
+
+        Returns
+        -------
+        _inputs: dict
+            key value pairs of external program variable names and values
 
         TODO unit conversion
         """
@@ -151,12 +162,19 @@ class Setup(Task):
                 prog_key = remapper(prog_key)
                 if isinstance(prog_key, list):
                     for key in prog_key:
-                        _inputs[key] = self.params.get(bm_key)
+                        _inputs[key] = self._convert_units(self.params.get_param(bm_key))
                     continue
 
-            _inputs[prog_key] = self.params.get(bm_key)
+            _inputs[prog_key] = self._convert_units(self.params.get_param(bm_key))
 
         return _inputs
+
+    def _convert_units(self, param):
+        code_unit = param.mapping[self.parent.NAME].unit
+        if code_unit is not None:
+            return raw_uc(param.value, param.unit, code_unit)
+        else:
+            return param.value
 
     @property
     def _recv_mapping(self):

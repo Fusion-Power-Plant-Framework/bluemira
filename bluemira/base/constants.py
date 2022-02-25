@@ -172,7 +172,7 @@ def raw_uc(
     if unit_from.is_compatible_with("eV") and unit_to in [ureg.kelvin, CELSIUS]:
         return from_eV(value, to=unit_to, _from=unit_from)
     elif unit_from in [ureg.kelvin, CELSIUS] and np.any(
-        np.less(unit_from, ABS_ZERO[unit_from])
+        np.less(value, ABS_ZERO[unit_from])
     ):
         raise ValueError("Negative temperature in K specified.")
     return ureg.Quantity(value, unit_from).to(unit_to).magnitude
