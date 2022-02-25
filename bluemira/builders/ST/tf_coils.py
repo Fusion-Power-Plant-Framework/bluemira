@@ -36,13 +36,15 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
-from bluemira.codes._freecadapi import _wire_edges_tangent
-from bluemira.display import plot_2d, show_cad
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.display.plotter import plot_2d
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.placement import BluemiraPlacement
+from bluemira.geometry.parameterisations import (
+    GeometryParameterisation,
+    PictureFrameTools,
+)
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -425,13 +427,19 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         degree = (360.0 / self._params.n_TF.value) * n_tf_draw
 
         # Winding pack
-        if not _wire_edges_tangent(self._centreline):
-            wires = []
-            for wire in self._centreline._wires:
-                plot_2d(wire)
-
+        if not _wire_edges_tangent(self._centreline._shape):
+            wp_wires = []
+            for wp_wire in self._centreline._wires:
+                wp_wire = BluemiraWire(wp_wire)
+                plot_2d(wp_wire)
+                wp_wire = sweep_shape(
+                    self._wp_cross_section, wp_wire, label=wp_wire.label
+                )
+                wp_wires.append(wp_wire)
+                show_cad(wp_wires, DisplayCADOptions(color="blue", transparency=0.1))
         else:
             wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
+        wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
         sectors = circular_pattern_component(winding_pack, n_tf_draw, degree=degree)
@@ -481,7 +489,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # This is because the bounding box of a solid is not to be trusted
         cut_wires = slice_shape(
-            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         cut_wires.sort(key=lambda wire: wire.length)
         boundary = cut_wires[-1]
@@ -643,7 +651,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-z cross-section from a 3-D volume.
         """
         wires = slice_shape(
-            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         wires.sort(key=lambda wire: wire.length)
         if len(wires) != 4:
