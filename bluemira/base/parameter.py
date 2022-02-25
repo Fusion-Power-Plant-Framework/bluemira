@@ -42,7 +42,7 @@ from pandas import DataFrame
 from pint import Unit
 from tabulate import tabulate
 
-from bluemira.base.constants import ureg
+from bluemira.base.constants import raw_uc
 from bluemira.base.error import ParameterError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.utilities.tools import json_writer
@@ -1397,78 +1397,8 @@ class ParameterFrame:
                 )
             _dict[attr] = value
         else:
-            _dict[attr].value = value.value
-            _dict[attr].source = value.source
-            if value.mapping != {} and attr == value.var:
-                _dict[attr].mapping = value.mapping
+            super().__setattr__(attr, value)
 
-    def _unit_conversion(self, value, unit_from, unit_to=None, force=False, source=None):
-        """
-        Convert the value of a parameter to a different unit
-
-        Parameters
-        ----------
-        value: Any
-            A value of convert
-        unit_from: Union[str, Unit]
-            unit to convert from
-        unit_to: Optional[Union[str, Unit]]
-            unit to convert to (default for parameter used if not available)
-        force: bool
-            forcibly convert to new unit
-        source: str
-            source of new parameter
-
-        Returns
-        -------
-        value: Any
-
-        """
-        if not isinstance(value, Parameter) and unit_to is None:
-            raise ParameterError("No unit to convert to")
-        elif isinstance(value, Parameter):
-            return self.__modify_value(
-                unit_from,
-                self.__get_unit_to(unit_to, value.unit, force),
-                value,
-                source,
-                self.__raw_unit_converter,
-            )
-        elif None not in [unit_to, unit_from]:
-            unit_to = _unitify(unit_to)
-            unit_from = _unitify(unit_from)
-            return self.__raw_unit_converter(value, unit_from, unit_to)
-        else:
-            return value
-
-    @staticmethod
-    def __get_unit_to(unit_to, current, force):
-        if unit_to is not None:
-            unit_to = _unitify(unit_to)
-            if unit_to != current and not force:
-                raise ParameterError("Can't change unit of existing parameter")
-        else:
-            unit_to = current
-        return unit_to
-
-    @staticmethod
-    def __modify_value(unit_from, unit_to, value, source, converter):
-        if unit_from is not None:
-            unit_from = _unitify(unit_from)
-
-            if unit_to == unit_from:
-                return value
-            value.value = converter(value.value, unit_from, unit_to)
-            value.source = (
-                f"{source if source is not None else ''}: "
-                f"Units converted from {unit_from.format_babel()} to {unit_to.format_babel()}"
-            )
-        return value
-
-    @staticmethod
-    def __raw_unit_converter(value, unit_from, unit_to):
-        # TODO if temperature conversion use constants converters
-        return ureg.Quantity(value, unit_from).to(unit_to).magnitude
 
     def to_dict(self, verbose=False) -> dict:
         """

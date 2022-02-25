@@ -122,6 +122,8 @@ ABS_ZERO_K = 0  # [K]
 # Absolute zero in Celsius
 ABS_ZERO_C = ureg.Quantity(0, ureg.kelvin).to("celsius").magnitude  # [°C]
 
+ABS_ZERO = {ureg.kelvin: ABS_ZERO_K, CELSIUS: ABS_ZERO_C}
+
 # =============================================================================
 # Conversions
 # =============================================================================
@@ -142,6 +144,40 @@ YR_TO_S = ureg.Quantity(1, ureg.year).to("s").magnitude
 S_TO_YR = ureg.Quantity(1, ureg.second).to("year").magnitude
 
 
+def raw_uc(
+    value: Union[int, float, np.array],
+    unit_from: Union[str, ureg.Unit],
+    unit_to: Union[str, ureg.Unit],
+) -> Union[int, float, np.array]:
+    """
+    Raw unit converter
+
+    Converts a value from one unit to another
+
+    Parameters
+    ----------
+    value: Union[int, float, np.array]
+        value to convert
+    unit_from: Union[str, Unit]
+        unit to convert from
+    unit_to: Union[str, Unit]
+        unit to convert to
+
+    Returns
+    -------
+    converted value
+
+    """
+    unit_from, unit_to = ureg.Unit(unit_from), ureg.Unit(unit_to)
+    if unit_from.is_compatible_with("eV") and unit_to in [ureg.kelvin, CELSIUS]:
+        return from_eV(value, to=unit_to, _from=unit_from)
+    elif unit_from in [ureg.kelvin, CELSIUS] and np.any(
+        np.less(unit_from, ABS_ZERO[unit_from])
+    ):
+        raise ValueError("Negative temperature in K specified.")
+    return ureg.Quantity(value, unit_from).to(unit_to).magnitude
+
+
 def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.array]:
     """
     Convert a temperature in Kelvin to Celsius.
@@ -156,9 +192,7 @@ def to_celsius(kelvin: Union[float, np.array, List[float]]) -> Union[float, np.a
     temp_in_celsius: Union[float, np.array]
         The temperature [°C]
     """
-    if np.any(np.less(kelvin, ABS_ZERO_K)):
-        raise ValueError("Negative temperature in K specified.")
-    return ureg.Quantity(kelvin, ureg.kelvin).to("celsius").magnitude
+    return raw_uc(kelvin, ureg.kelvin, CELSIUS)
 
 
 def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.array]:
@@ -175,19 +209,20 @@ def to_kelvin(celsius: Union[float, np.array, List[float]]) -> Union[float, np.a
     temp_in_kelvin: Union[float, np.array]
         The temperature [K]
     """
-    if np.any(np.less(celsius, ABS_ZERO_C)):
-        raise ValueError("Negative temperature in K specified.")
-    return ureg.Quantity(celsius, ureg.celsius).to("kelvin").magnitude
+    return raw_uc(celsius, CELSIUS, ureg.kelvin)
 
 
-def from_keV(
+def from_eV(
     value: Union[float, np.array, List[float]],
     to: str = "celsius",
     *,
     _from: str = "keV"
 ):
     """
-    Convert a temperature in keV to Celsius.
+    Convert a temperature in eV to Celsius.
+
+    The conversion to and from can be modified.
+    Value is divided by the boltzmann constant (k_B).
 
     Parameters
     ----------
@@ -220,7 +255,7 @@ def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, n
     density_gcm3 : Union[float, np.array]
         The density [g/cm3]
     """
-    return density / 1000.0
+    return raw_uc(density, "kg m^3", "g cm^3")
 
 
 def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
@@ -237,7 +272,7 @@ def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, n
     density_kgm3 : Union[float, np.array]
         The density [kg/m3]
     """
-    return density * 1000.0
+    return raw_uc(density, "g cm^3", "kg m^3")
 
 
 def pam3s_to_mols(flow_in_pam3_s):
