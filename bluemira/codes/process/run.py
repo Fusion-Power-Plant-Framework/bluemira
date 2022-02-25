@@ -30,9 +30,10 @@ import subprocess  # noqa :S404
 from enum import auto
 from typing import Dict, List, Optional, Union
 
-import bluemira.base as bm_base
 import bluemira.codes.interface as interface
+from bluemira.base.builder import BuildConfig
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.parameter import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import DEFAULT_INDAT, ENABLED
 from bluemira.codes.process.constants import BINARY
@@ -151,9 +152,9 @@ class Solver(interface.FileProgramInterface):
         If PROCESS is not being mocked and is not installed.
     """
 
-    run_dir: str
-    read_dir: str
-    _params: bm_base.ParameterFrame
+    _params: ParameterFrame
+    _run_dir: str
+    _read_dir: str
     _template_indat: str
     _params_to_update: List[str]
     _parameter_mapping: Dict[str, str]
@@ -174,8 +175,8 @@ class Solver(interface.FileProgramInterface):
 
     def __init__(
         self,
-        params: bm_base.ParameterFrame,
-        build_config: bm_base.BuildConfig,
+        params: ParameterFrame,
+        build_config: BuildConfig,
         run_dir: str,
         read_dir: Optional[str] = None,
         template_indat: Optional[str] = None,

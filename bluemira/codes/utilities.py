@@ -28,12 +28,12 @@ import os
 import threading
 from typing import Dict, Literal
 
-import bluemira.base as bm_base
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
     bluemira_error_clean,
     bluemira_print_clean,
 )
+from bluemira.base.parameter import ParameterFrame, ParameterMapping
 from bluemira.codes.error import CodesError
 from bluemira.utilities.tools import get_module
 
@@ -145,8 +145,8 @@ def get_send_mapping(params, code_name, send_all=False):
 
 def add_mapping(
     code_name: str,
-    params: bm_base.ParameterFrame,
-    mapping: Dict[str, bm_base.ParameterMapping],
+    params: ParameterFrame,
+    mapping: Dict[str, ParameterMapping],
 ):
     """
     Adds mappings for a given code to a ParameterFrame.
