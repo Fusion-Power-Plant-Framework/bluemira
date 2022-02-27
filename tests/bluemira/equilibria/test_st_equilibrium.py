@@ -43,7 +43,6 @@ from bluemira.equilibria import (
     SymmetricCircuit,
 )
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.physics import calc_li
 from bluemira.equilibria.solve import DudsonConvergence
 
 
