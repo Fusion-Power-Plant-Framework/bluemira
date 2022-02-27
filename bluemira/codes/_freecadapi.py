@@ -939,7 +939,7 @@ def boolean_fuse(shapes):
         _check_shapes_coplanar(shapes)
         if not _shapes_are_coaxis(shapes):
             bluemira_warn(
-                "Boolean fuse on shapes that are do not have the same planar axis. Reversing."
+                "Boolean fuse on shapes that do not have the same planar axis. Reversing."
             )
             _make_shapes_coaxis(shapes)
 
@@ -1132,7 +1132,7 @@ def _check_shapes_same_type(shapes):
 def _check_shapes_coplanar(shapes):
     if not _shapes_are_coplanar(shapes):
         raise ValueError(
-            f"Shapes of type {type(shapes[0])} are not co-planar; this operation does not support non-co-planar wires or faces."
+            f"Shapes are not co-planar; this operation does not support non-co-planar wires or faces."
         )
 
 
