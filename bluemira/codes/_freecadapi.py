@@ -1132,7 +1132,7 @@ def _check_shapes_same_type(shapes):
 def _check_shapes_coplanar(shapes):
     if not _shapes_are_coplanar(shapes):
         raise ValueError(
-            f"Shapes are not co-planar; this operation does not support non-co-planar wires or faces."
+            "Shapes are not co-planar; this operation does not support non-co-planar wires or faces."
         )
 
 
