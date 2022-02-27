@@ -182,7 +182,7 @@ class TestSTEquilibrium:
         )
         fbe_iterator()
         self.eq = eq
-        self._test_equilibrium_good(eq, psi_rtol=1e-2, li_rtol=1e-2)
+        self._test_equilibrium_good(eq)
         self._test_profiles_good(eq)
 
         # Verify by removing symmetry constraint and checking convergence
@@ -190,18 +190,15 @@ class TestSTEquilibrium:
         eq.set_grid(grid)
         fbe_iterator()
         # I probably exported the eq before it was regridded without symmetry..
-        self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-3)
+        self._test_equilibrium_good(eq)
 
         self._test_profiles_good(eq)
 
-    def _test_equilibrium_good(self, eq, psi_rtol, li_rtol):
+    def _test_equilibrium_good(self, eq):
         assert np.isclose(eq._Ip, abs(self.jeq_dict["cplasma"]))
-        lcfs_area = eq.get_LCFS().area
-        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area, rtol=1e-2)
-
-        li_bp = calc_li(self.eq_blueprint)
-        assert np.isclose(li_bp, calc_li(eq), rtol=li_rtol)
-        assert np.allclose(self.eq_blueprint.psi(), eq.psi(), rtol=psi_rtol)
+        lcfs = eq.get_LCFS()
+        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs.area, rtol=1e-2)
+        assert np.isclose(lcfs.centroid[-1], 0.0)
 
     def _test_profiles_good(self, eq):
         """

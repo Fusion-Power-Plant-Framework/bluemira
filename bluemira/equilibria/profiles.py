@@ -646,13 +646,13 @@ class CustomProfile(Profile):
         """
         dp/dpsi as a function of normalised psi
         """
-        return self.scale * self._pprime_in(pn)
+        return abs(self.scale) * self._pprime_in(pn)
 
     def ffprime(self, pn):
         """
         f*df/dpsi as a function of normalised psi
         """
-        return self.scale * self._ffprime_in(pn)
+        return abs(self.scale) * self._ffprime_in(pn)
 
     def jtor(self, x, z, psi, o_points, x_points):
         """
@@ -681,7 +681,7 @@ class CustomProfile(Profile):
         Return pressure [Pa] at given value(s) of normalised psi
         """
         if self.p_func is not None:
-            return self.scale * self.p_func(psinorm)
+            return abs(self.scale) * self.p_func(psinorm)
         return super().pressure(psinorm)
 
     def fRBpol(self, psinorm):
@@ -689,7 +689,7 @@ class CustomProfile(Profile):
         Return f=R*Bt at given value(s) of normalised psi
         """
         if self.f_func is not None:
-            return self.scale * self.f_func(psinorm)
+            return abs(self.scale) * self.f_func(psinorm)
         return super().fRBpol(psinorm)
 
     @classmethod
