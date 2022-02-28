@@ -134,7 +134,7 @@ optimiser = Optimiser(
 
 # %%[markdown]
 
-# ### Additional parameters
+# ### Additional Parameters
 
 # `BoundedCurrentCOP` requires two additional parameters for generating arguments for
 # its `OptimisationObjective` during its `optimise()` call. The `OptimisationObjective`
@@ -234,6 +234,7 @@ eq = Equilibrium(
 # User specified constraints can be supplied here, if so desired.
 
 # %%
+
 opt_constraints = [
     OptimisationConstraint(
         f_constraint=opt_constraints.current_midplane_constraint,
