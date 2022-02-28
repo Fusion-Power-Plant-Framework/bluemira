@@ -479,7 +479,6 @@ class CoilsetPositionCOP(CoilsetOP):
                 "stop_val": 1.0,
                 "max_eval": 100,
             },
-            opt_parameters={},
         ),
         opt_constraints=None,
     ):
@@ -688,7 +687,6 @@ class NestedCoilsetPositionCOP(CoilsetOP):
                 "stop_val": 1.0,
                 "max_eval": 100,
             },
-            opt_parameters={},
         ),
         opt_constraints: List[OptimisationConstraint] = None,
     ):
