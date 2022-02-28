@@ -23,17 +23,23 @@
 Module containing the bluemira Design class.
 """
 
+from __future__ import annotations
+
 import abc
 import copy
+import typing
 from typing import Dict, Optional, Set, Type, Union
 
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component
 from bluemira.base.config import Configuration
-from bluemira.base.error import BuilderError
+from bluemira.base.error import DesignError
 from bluemira.base.file import BM_ROOT, FileManager
 from bluemira.base.look_and_feel import bluemira_print, print_banner
 from bluemira.utilities.tools import get_class_from_module
+
+if typing.TYPE_CHECKING:
+    from bluemira.codes.interface import FileProgramInterface
 
 
 class DesignABC(abc.ABC):
@@ -48,6 +54,7 @@ class DesignABC(abc.ABC):
     _params: Configuration
     _build_config: Dict[str, BuildConfig]
     _builders: Dict[str, Builder]
+    _solvers: Dict[str, FileProgramInterface]
 
     def __init__(
         self,
@@ -97,6 +104,43 @@ class DesignABC(abc.ABC):
         component = Component(self._params.Name)
         return component
 
+    def get_solver(self, solver_name: str) -> FileProgramInterface:
+        """
+        Get the solver with the corresponding solver_name.
+
+        Parameters
+        ----------
+        solver_name: str
+            The name of the solver to get.
+
+        Returns
+        -------
+        solver: FileProgramInterface
+            The solver corresponding to the provided name.
+        """
+        return self._solvers[solver_name]
+
+    def register_solver(self, solver: FileProgramInterface, name: str):
+        """
+        Add this solver to the internal solver registry.
+
+        Parameters
+        ----------
+        solver: FileProgramInterface
+            The solver to be registered.
+        name: str
+            The name to register this solver with.
+
+        Raises
+        ------
+        DesignError
+            If name already exists in the registry.
+        """
+        if name not in self._solvers:
+            self._solvers[name] = solver
+        else:
+            raise DesignError(f"Solver {name} already exists in {self}.")
+
     def get_builder(self, builder_name: str) -> Builder:
         """
         Get the builder with the corresponding builder_name.
@@ -126,13 +170,13 @@ class DesignABC(abc.ABC):
 
         Raises
         ------
-        BuilderError
+        DesignError
             If name already exists in the registry.
         """
         if name not in self._builders:
             self._builders[name] = builder
         else:
-            raise BuilderError(f"Builder {name} already exists in {self}.")
+            raise DesignError(f"Builder {name} already exists in {self}.")
 
     def _build_stage(self, name: str) -> Component:
         """
@@ -161,6 +205,7 @@ class DesignABC(abc.ABC):
         corresponding options.
         """
         self._builders = {}
+        self._solvers = {}
         self._required_params = {"Name"}
 
     def _validate_params(self, params: Dict[str, Union[int, float, str]]):
@@ -174,7 +219,7 @@ class DesignABC(abc.ABC):
         }
 
         if len(missing_params) > 0:
-            raise BuilderError(
+            raise DesignError(
                 f"Required parameters {', '.join(sorted(missing_params))} not provided to Design"
             )
 

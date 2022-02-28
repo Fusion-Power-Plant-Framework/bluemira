@@ -45,7 +45,7 @@ from bluemira.codes.plasmod.mapping import (  # noqa: N812
 )
 from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
 from bluemira.display.displayer import ComponentDisplayer
-from bluemira.equilibria.run import AbInitioEquilibriumProblem
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.utilities.tools import json_writer
 
 # %%[markdown]

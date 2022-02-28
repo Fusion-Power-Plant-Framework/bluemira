@@ -25,21 +25,25 @@ Bluemira External Codes Wrapper
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-import bluemira.base as bm_base
 from bluemira.codes import process
 from bluemira.codes.error import CodesError
+from bluemira.codes.interface import FileProgramInterface
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter import ParameterFrame
 
 
 def run_systems_code(
-    params: bm_base.ParameterFrame,
-    build_config: bm_base.BuildConfig,
+    params: ParameterFrame,
+    build_config: BuildConfig,
     run_dir: str,
     read_dir: Optional[str] = None,
     template_indat=None,
     params_to_update=None,
-) -> bm_base.ParameterFrame:
+) -> FileProgramInterface:
     """
     Runs, reads or mocks PROCESS according to the build configuration dictionary.
 
@@ -74,6 +78,11 @@ def run_systems_code(
         on EU-DEMO. This option should not be used if PROCESS is installed, except for
         testing purposes.
 
+    Returns
+    -------
+    solver: FileProgramInterface
+        The solver that has been run.
+
     Raises
     ------
     CodesError
@@ -90,4 +99,4 @@ def run_systems_code(
         params, build_config, run_dir, read_dir, template_indat, params_to_update
     )
     solver.run()
-    return solver.params
+    return solver
