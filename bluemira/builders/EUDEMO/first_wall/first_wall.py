@@ -37,8 +37,6 @@ from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 
-_WALL_MODULE_REF = "bluemira.builders.EUDEMO.first_wall.wall"
-
 
 def _cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWire:
     """
@@ -174,20 +172,11 @@ class FirstWallBuilder(Builder):
         equilibrium's x-point, to make space for a divertor.
         """
         build_config = deepcopy(build_config)
+
         build_config.update(
             {
-                "algorithm_name": "SLSQP",
-                "class": f"{_WALL_MODULE_REF}::WallBuilder",
                 "label": self.COMPONENT_WALL,
                 "name": self.COMPONENT_WALL,
-                "opt_conditions": {
-                    "ftol_rel": 1e-6,
-                    "xtol_rel": 1e-8,
-                    "xtol_abs": 1e-8,
-                    "max_eval": 100,
-                },
-                "param_class": f"{_WALL_MODULE_REF}::WallPrincetonD",
-                "problem_class": f"{_WALL_MODULE_REF}::MinimiseLength",
             }
         )
 
