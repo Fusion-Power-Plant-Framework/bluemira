@@ -22,10 +22,13 @@
 Test the complete first wall builder, including divertor.
 """
 
+import copy
 import os
 
 import numpy as np
+import pytest
 
+from bluemira.base.error import BuilderError
 from bluemira.base.file import get_bluemira_path
 from bluemira.builders.EUDEMO.first_wall import FirstWallBuilder
 from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
@@ -33,6 +36,7 @@ from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 
 DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+WALL_MODULE_REF = "bluemira.builders.EUDEMO.first_wall.wall"
 
 
 class TestFirstWallBuilder:
@@ -47,20 +51,21 @@ class TestFirstWallBuilder:
     }
 
     _default_config = {
-        "param_class": "bluemira.builders.EUDEMO.first_wall::WallPolySpline",
-        "variables_map": _default_variables_map,
-        "runmode": "mock",
         "name": "First Wall",
+        "param_class": f"{WALL_MODULE_REF}::WallPrincetonD",
+        "problem_class": f"{WALL_MODULE_REF}::MinimiseLength",
+        "runmode": "mock",
+        "variables_map": _default_variables_map,
     }
 
     _params = {
         "Name": "First Wall Example",
         "plasma_type": "SN",
-        # Wall shale opts
+        # Wall shape opts
         "R_0": (9.0, "Input"),
-        "kappa_95": (1.6 * (14 / 9), "Input"),
-        "r_fw_ib_in": (5.8, "Input"),
-        "r_fw_ob_in": (12.1, "Input"),
+        "kappa_95": (2.4, "Input"),
+        "r_fw_ib_in": (5, "Input"),
+        "r_fw_ob_in": (13, "Input"),
         "A": (3.1, "Input"),
         # Divertor opts
         "div_L2D_ib": (1.1, "Input"),
@@ -122,3 +127,12 @@ class TestFirstWallBuilder:
         wall_xz = xz.get_component(FirstWallBuilder.COMPONENT_WALL)
         assert wall_xz is not None
         assert wall_xz.depth == 2
+
+    def test_BuilderError_if_wall_does_not_enclose_x_point(self):
+        params = copy.deepcopy(self._params)
+        params.update({"r_fw_ib_in": 7, "r_fw_ob_in": 9})
+
+        with pytest.raises(BuilderError):
+            FirstWallBuilder(
+                params, build_config=self._default_config, equilibrium=self.eq
+            )

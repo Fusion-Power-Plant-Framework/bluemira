@@ -29,6 +29,7 @@ import numpy as np
 
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
+from bluemira.base.error import BuilderError
 from bluemira.builders.EUDEMO.first_wall.divertor import DivertorBuilder
 from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
 from bluemira.builders.shapes import Builder
@@ -194,7 +195,11 @@ class FirstWallBuilder(Builder):
         wall_xz = wall.get_component("xz")
         wall_boundary = wall_xz.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY)
         x_point_z = self.x_points[0].z
-        cut_shape = _cut_shape_in_z(wall_boundary.shape, x_point_z)
+        if wall_boundary.shape.bounding_box.z_min >= x_point_z:
+            raise BuilderError(
+                "First wall boundary does not inclose separatrix x-point."
+            )
+        cut_shape = _cut_wall_below_x_point(wall_boundary.shape, x_point_z)
 
         # Replace the "uncut" wall boundary with the new shape
         wall_xz.prune_child(WallBuilder.COMPONENT_WALL_BOUNDARY)
