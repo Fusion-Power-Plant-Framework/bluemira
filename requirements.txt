@@ -16,7 +16,7 @@ defusedxml==0.7.1
 entrypoints==0.4
 fortranformat==1.2.0
 gmsh-interop==2021.1.1
-imageio==2.16.0
+imageio==2.16.1
 importlib-metadata==4.11.1
 importlib-resources==5.4.0
 iniconfig==1.1.1
