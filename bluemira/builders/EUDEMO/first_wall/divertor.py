@@ -24,7 +24,7 @@ Define builder for divertor
 
 import enum
 import operator
-from typing import Any, Callable, Dict, Iterable, List, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Sequence, Tuple
 
 import numpy as np
 
@@ -88,7 +88,7 @@ class DivertorBuilder(Builder):
         params: Dict[str, Any],
         build_config: BuildConfig,
         equilibrium: Equilibrium,
-        x_lims: Iterable[float],
+        x_lims: Sequence[float],
         **kwargs,
     ):
         super().__init__(params, build_config, **kwargs)
@@ -150,31 +150,9 @@ class DivertorBuilder(Builder):
         )
         component.add_child(dome)
 
-        # Build the inner baffle
-        if self.params.div_open:
-            raise NotImplementedError("Open divertor baffles not yet supported")
-        else:
-            inner_target_start = self._get_wire_end_with_largest(inner_target.shape, "x")
-        inner_baffle = self.make_baffle(
-            label=self.COMPONENT_INNER_BAFFLE,
-            start=np.array([self.x_lims[0], self.x_points[0].z]),
-            end=inner_target_start,
-            initial_vec=None,
-        )
-        component.add_child(inner_baffle)
-
-        # Build the outer baffle
-        if self.params.div_open:
-            outer_target_end = self._get_wire_end_with_smallest(outer_target.shape, "x")
-        else:
-            outer_target_end = self._get_wire_end_with_largest(outer_target.shape, "x")
-        outer_baffle = self.make_baffle(
-            label=self.COMPONENT_OUTER_BAFFLE,
-            start=outer_target_end,
-            end=np.array([self.x_lims[1], self.x_points[0].z]),
-            initial_vec=None,
-        )
-        component.add_child(outer_baffle)
+        # Build the baffles
+        component.add_child(self._make_inner_baffle(inner_target.shape))
+        component.add_child(self._make_outer_baffle(outer_target.shape))
 
         return component
 
@@ -182,20 +160,13 @@ class DivertorBuilder(Builder):
         """
         Make a divertor target for a the given leg.
         """
-        sols = self._get_sol_for_leg(leg)
-        try:
-            leg_length = self._get_length_for_leg(leg)
-        except ValueError as exc:
-            raise ValueError(
-                f"Cannot make target for leg '{leg}'. Only inner and outer legs "
-                "supported."
-            ) from exc
+        sols = self._get_sols_for_leg(leg)
+        leg_length = self._get_length_for_leg(leg)
+        # Just use the first scrape-off layer for now
+        point, _ = find_point_along_wire_at_length(sols[0], leg_length)
 
-        # We need to work out which SOL to use here
-        point, _ = find_point_along_wire_at_length(sol[0], leg_length)
-
-        # Just create some vertical targets for now. Eventually the
-        # target angle will be set using a grazing-angle parameter
+        # Create some vertical targets for now. Eventually the target
+        # angle will be derived from the grazing-angle parameter
         target_length = self.params.div_Ltarg
         target_coords = np.array(
             [
@@ -206,9 +177,7 @@ class DivertorBuilder(Builder):
         )
         return PhysicalComponent(label, make_polygon(target_coords))
 
-    def make_dome(
-        self, start: Tuple[float, float], end: Tuple[float, float], label: str
-    ):
+    def make_dome(self, start: Sequence[float], end: Sequence[float], label: str):
         """
         Make a dome between the two given points
         """
@@ -243,7 +212,7 @@ class DivertorBuilder(Builder):
         else:
             dome_contour = flux_surface[:, idx[0] + 1 : idx[1]]
 
-        # Build the coords of the dome in 3-D (all(y == 0))
+        # Build the coords of the dome in 3D (all(y == 0))
         dome = np.zeros((3, dome_contour.shape[1] + 2))
         dome[(0, 2), 0] = start_coord.T
         dome[(0, 2), 1:-1] = dome_contour
@@ -254,9 +223,8 @@ class DivertorBuilder(Builder):
     def make_baffle(
         self,
         label: str,
-        start: np.ndarray,
-        end: np.ndarray,
-        initial_vec: np.ndarray,
+        start: Sequence[float],
+        end: Sequence[float],
     ) -> PhysicalComponent:
         """
         Make a baffle.
@@ -266,23 +234,44 @@ class DivertorBuilder(Builder):
         leg: LegPosition
             The position of the leg the baffle should join to (e.g.,
             inner).
-        start: np.ndarray(2, 1)
+        start: Sequence
             The position (in x-z) to start drawing the baffle from,
             e.g., the outside end of a target.
-        end: np.ndarray(2, 1)
+        end: Sequence
             The position (in x-z) to stop drawing the baffle, e.g., the
             postion to the upper part of the first wall.
-        initial_vec: np.ndarray(2, 1)
-            A vector specifying the direction the start of the baffle
-            should be drawn in, e.g., the orientation of a target.
-            This is converted to a unit vector, so the magnitude is
-            ignored.
         """
-        # initial_unit_vec = initial_vec / np.hypot(initial_vec)
-
         # Just generate the most basic baffle: a straight line
         coords = np.array([[start[0], end[0]], [0, 0], [start[1], end[1]]])
         return PhysicalComponent(label, make_polygon(coords))
+
+    def _make_inner_baffle(self, target: BluemiraWire) -> PhysicalComponent:
+        """
+        Build the inner baffle to join with the given target.
+        """
+        if self.params.div_open:
+            raise NotImplementedError("Open divertor baffles not yet supported")
+        else:
+            inner_target_start = self._get_wire_end_with_largest(target, "x")
+        return self.make_baffle(
+            label=self.COMPONENT_INNER_BAFFLE,
+            start=np.array([self.x_lims[0], self.x_points[0].z]),
+            end=inner_target_start,
+        )
+
+    def _make_outer_baffle(self, target: BluemiraWire) -> PhysicalComponent:
+        """
+        Build the outer baffle to join with the given target.
+        """
+        if self.params.div_open:
+            raise NotImplementedError("Open divertor baffles not yet supported")
+        else:
+            outer_target_end = self._get_wire_end_with_largest(target, "x")
+        return self.make_baffle(
+            label=self.COMPONENT_OUTER_BAFFLE,
+            start=outer_target_end,
+            end=np.array([self.x_lims[1], self.x_points[0].z]),
+        )
 
     def _get_length_for_leg(self, leg: LegPosition):
         """
@@ -292,18 +281,17 @@ class DivertorBuilder(Builder):
             return self.params.div_L2D_ib
         elif leg is LegPosition.OUTER:
             return self.params.div_L2D_ob
-        raise ValueError(f"No length exists for leg '{leg}'.")
 
-    def _get_sol_for_leg(
+    def _get_sols_for_leg(
         self, leg: LegPosition, layers: Iterable[int] = (0, -1)
-    ) -> BluemiraWire:
+    ) -> List[BluemiraWire]:
         """
         Get the selected scrape-off-leg layers from the separatrix legs.
         """
-        sol = []
+        sols = []
         for layer in layers:
-            sol.append(self.separatrix_legs[leg][layer])
-        return sol
+            sols.append(self.separatrix_legs[leg][layer])
+        return sols
 
     @staticmethod
     def _get_wire_end_with_smallest(wire: BluemiraWire, axis: str) -> np.ndarray:
