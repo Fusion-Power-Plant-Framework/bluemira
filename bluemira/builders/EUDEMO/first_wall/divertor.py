@@ -182,7 +182,7 @@ class DivertorBuilder(Builder):
         """
         Make a divertor target for a the given leg.
         """
-        sol = self._get_sol_for_leg(leg)
+        sols = self._get_sol_for_leg(leg)
         try:
             leg_length = self._get_length_for_leg(leg)
         except ValueError as exc:

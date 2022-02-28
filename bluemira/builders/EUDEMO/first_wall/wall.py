@@ -55,11 +55,12 @@ class WallPolySpline(PolySpline):
         "x2": {"value": 12.1},
         "z2": {"value": 0},
         "height": {"value": 9.3},
-        "top": {"value": 0.5},
-        "upper": {"value": 0.7},
-        "dz": {"value": 0},
-        "flat": {"value": 0},
-        "tilt": {"value": 0},
+        "top": {"value": 0.4},
+        "upper": {"value": 0.3},
+        "dz": {"value": -0.5},
+        "tilt": {"value": -10},
+        "lower": {"value": 0.3},
+        "bottom": {"value": 0.1},
     }
 
     def __init__(self, var_dict=None):
@@ -71,7 +72,15 @@ class WallPolySpline(PolySpline):
 
         ib_radius = self.variables["x1"].value
         ob_radius = self.variables["x2"].value
+        z2 = self.variables["z2"].value
         height = self.variables["height"].value
+        top = self.variables["top"].value
+        upper = self.variables["upper"].value
+        dz = self.variables["dz"].value
+        tilt = self.variables["tilt"].value
+        lower = self.variables["lower"].value
+        bottom = self.variables["bottom"].value
+
         self.adjust_variable(
             "x1",
             ib_radius,
@@ -84,16 +93,16 @@ class WallPolySpline(PolySpline):
             lower_bound=ob_radius - 0.001,
             upper_bound=ob_radius * 1.1,
         )
-        self.adjust_variable("z2", 0, lower_bound=-0.9, upper_bound=0.9)
+        self.adjust_variable("z2", z2, lower_bound=-0.9, upper_bound=0.9)
         self.adjust_variable(
             "height", height, lower_bound=height - 0.001, upper_bound=50
         )
-        self.adjust_variable("top", 0.5, lower_bound=0.05, upper_bound=0.75)
-        self.adjust_variable("upper", 0.5, lower_bound=0.2, upper_bound=0.7)
-        self.adjust_variable("lower", lower_bound=0.2, upper_bound=0.7)
-        self.adjust_variable("bottom", lower_bound=0.05, upper_bound=0.75)
-        self.adjust_variable("dz", 0, lower_bound=-5, upper_bound=5)
-        self.adjust_variable("tilt", 0, lower_bound=-25, upper_bound=25)
+        self.adjust_variable("top", top, lower_bound=0.05, upper_bound=0.75)
+        self.adjust_variable("upper", upper, lower_bound=0.2, upper_bound=0.7)
+        self.adjust_variable("dz", dz, lower_bound=-5, upper_bound=5)
+        self.adjust_variable("tilt", tilt, lower_bound=-25, upper_bound=25)
+        self.adjust_variable("lower", lower, lower_bound=0.2, upper_bound=0.7)
+        self.adjust_variable("bottom", bottom, lower_bound=0.05, upper_bound=0.75)
 
         # Fix 'flat' to avoid drawing the PolySpline's outer straight.
         # The straight is often optimised to near-zero length, which
@@ -106,7 +115,7 @@ class WallPrincetonD(PrincetonD):
     _defaults = {
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
-        "dz": {"value": 0},
+        "dz": {"value": -0.5},
     }
 
     def __init__(self, var_dict=None):
@@ -125,7 +134,9 @@ class WallPrincetonD(PrincetonD):
         self.adjust_variable(
             "x2", ob_radius, lower_bound=ob_radius - 3.5, upper_bound=ob_radius + 3.5
         )
-        self.adjust_variable("dz", 0, lower_bound=-3, upper_bound=3)
+        self.adjust_variable(
+            "dz", self.variables["dz"].value, lower_bound=-3, upper_bound=3
+        )
 
 
 class MinimiseLength(GeometryOptimisationProblem):
@@ -170,18 +181,20 @@ class MinimiseLength(GeometryOptimisationProblem):
         for zone in keep_out_zones:
             d = zone.discretize(byedges=True, dl=zone.length / 200).xz
             shape_discretizations.append(d)
-
-        coords = np.concatenate(shape_discretizations)
+        coords = np.hstack(shape_discretizations)
         hull = ConvexHull(coords.T)
 
         # The hull vertices do not give a closed shape, so add the first
-        # point to the end of the array to close it
+        # point to the end of the array to close it.
+        # If we do not close the shape, we may not get the results we
+        # expect from the signed distance function
         hull_coords = np.empty((coords.shape[0], len(hull.vertices) + 1))
         hull_coords[:, 0:-1] = coords[:, hull.vertices]
         hull_coords[:, -1] = coords[:, hull.vertices[0]]
         return hull_coords
 
         # return coords[:, hull.vertices]
+        return hull_coords
 
     def f_constrain_koz(self, constraint, x, grad):
         """
@@ -300,18 +313,18 @@ class WallBuilder(OptimisedShapeBuilder):
         bm_plot_tools.set_component_plane(component, "xz")
         return component
 
-    # TODO(hsaunders1904): 'height' is not a parameter for all shapes so
-    # setting it here doesn't make sense, and prevent the use of shapes
-    # that do not have a height parameter
-    # def _derive_shape_params(self):
-    #     """
-    #     Calculate derived parameters for the GeometryParameterisation.
-    #     """
-    #     params = super()._derive_shape_params()
-    #     # params["height"] = {"value": self._derive_height()}
-    #     return params
+    # TODO(hsaunders1904): 'height' is not a parameter for all shapes.
+    # Does is make sense to derive it within this class?
+    def _derive_shape_params(self):
+        """
+        Calculate derived parameters for the GeometryParameterisation.
+        """
+        params = super()._derive_shape_params()
+        if issubclass(self._param_class, PolySpline):
+            params["height"] = {"value": self._derive_polyspline_height()}
+        return params
 
-    # def _derive_height(self) -> float:
-    #     """Derive the height of the shape from relevant parameters"""
-    #     r_minor = self._params.R_0 / self._params.A
-    #     return (self._params.kappa_95 * r_minor) * 2
+    def _derive_polyspline_height(self) -> float:
+        """Derive the height of the shape from relevant parameters"""
+        r_minor = self._params.R_0 / self._params.A
+        return (self._params.kappa_95 * r_minor) * 2

@@ -25,7 +25,8 @@ Test for the closed first wall, without a divertor.
 import copy
 
 from bluemira.builders.EUDEMO.first_wall import WallBuilder
-from bluemira.builders.EUDEMO.first_wall.first_wall import _WALL_MODULE_REF
+
+WALL_MODULE_REF = "bluemira.builders.EUDEMO.first_wall.wall"
 
 
 class TestWall:
@@ -40,11 +41,11 @@ class TestWall:
     }
 
     _default_config = {
-        "param_class": f"{_WALL_MODULE_REF}::WallPolySpline",
+        "param_class": f"{WALL_MODULE_REF}::WallPolySpline",
         "variables_map": _default_variables_map,
         "runmode": "mock",
         "name": "First Wall",
-        "problem_class": f"{_WALL_MODULE_REF}::MinimiseLength",
+        "problem_class": f"{WALL_MODULE_REF}::MinimiseLength",
     }
 
     _params = {
@@ -86,7 +87,7 @@ class TestWall:
             WallBuilder.COMPONENT_WALL_BOUNDARY
         ).shape.is_closed()
 
-    def test_component_height_derived_from_params_in_mock_mode(self):
+    def test_component_height_derived_from_params_given_mock_mode_with_PolySpline(self):
         params = copy.deepcopy(self._params)
         params.update(
             {"R_0": (10.0, "Input"), "kappa_95": (2.0, "Input"), "A": (2.0, "Input")}
