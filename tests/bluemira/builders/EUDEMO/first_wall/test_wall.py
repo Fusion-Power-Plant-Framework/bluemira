@@ -19,55 +19,53 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-Test for the closed first wall, without a divertor.
+Tests for EUDEMO wall builder (without a divertor).
 """
 
 import copy
+
+import pytest
 
 from bluemira.builders.EUDEMO.first_wall import WallBuilder
 
 WALL_MODULE_REF = "bluemira.builders.EUDEMO.first_wall.wall"
 
-
-class TestWall:
-
-    _default_variables_map = {
+CONFIG = {
+    "param_class": f"{WALL_MODULE_REF}::WallPolySpline",
+    "variables_map": {
         "x1": {  # ib radius
             "value": "r_fw_ib_in",
         },
         "x2": {  # ob radius
             "value": "r_fw_ob_in",
         },
-    }
+    },
+    "runmode": "mock",
+    "name": "First Wall",
+    "problem_class": f"{WALL_MODULE_REF}::MinimiseLength",
+}
+PARAMS = {
+    "Name": "First Wall Example",
+    "plasma_type": "SN",
+    "R_0": (9.0, "Input"),
+    "kappa_95": (1.6, "Input"),
+    "r_fw_ib_in": (5.8, "Input"),
+    "r_fw_ob_in": (12.1, "Input"),
+    "A": (3.1, "Input"),
+}
 
-    _default_config = {
-        "param_class": f"{WALL_MODULE_REF}::WallPolySpline",
-        "variables_map": _default_variables_map,
-        "runmode": "mock",
-        "name": "First Wall",
-        "problem_class": f"{WALL_MODULE_REF}::MinimiseLength",
-    }
 
-    _params = {
-        "Name": "First Wall Example",
-        "plasma_type": "SN",
-        "R_0": (9.0, "Input"),
-        "kappa_95": (1.6, "Input"),
-        "r_fw_ib_in": (5.8, "Input"),
-        "r_fw_ob_in": (12.1, "Input"),
-        "A": (3.1, "Input"),
-    }
-
+class TestWallBuilder:
     def test_builder_has_name_from_config(self):
-        config = copy.deepcopy(self._default_config)
+        config = copy.deepcopy(CONFIG)
         config["name"] = "New name"
 
-        builder = WallBuilder(self._params, build_config=config)
+        builder = WallBuilder(PARAMS, build_config=config)
 
         assert builder.name == "New name"
 
     def test_built_component_contains_physical_component_in_xz(self):
-        builder = WallBuilder(self._params, build_config=self._default_config)
+        builder = WallBuilder(PARAMS, build_config=CONFIG)
 
         component = builder()
 
@@ -79,7 +77,7 @@ class TestWall:
         assert len(wall_components) == 1
 
     def test_physical_component_shape_is_closed(self):
-        builder = WallBuilder(self._params, build_config=self._default_config)
+        builder = WallBuilder(PARAMS, build_config=CONFIG)
 
         component = builder()
 
@@ -87,13 +85,15 @@ class TestWall:
             WallBuilder.COMPONENT_WALL_BOUNDARY
         ).shape.is_closed()
 
-    def test_component_height_derived_from_params_given_mock_mode_with_PolySpline(self):
-        params = copy.deepcopy(self._params)
+    def test_height_derived_from_params_given_PolySpline_mock_mode(self):
+        params = copy.deepcopy(PARAMS)
         params.update(
             {"R_0": (10.0, "Input"), "kappa_95": (2.0, "Input"), "A": (2.0, "Input")}
         )
+        config = copy.deepcopy(CONFIG)
+        config.update({"param_class": f"{WALL_MODULE_REF}::WallPolySpline"})
 
-        builder = WallBuilder(params, build_config=self._default_config)
+        builder = WallBuilder(params, build_config=config)
         component = builder()
 
         bounding_box = component.get_component(
@@ -101,3 +101,16 @@ class TestWall:
         ).shape.bounding_box
         # expected_height = 2*(R_0/A)*kappa_95 = 20
         assert bounding_box.z_max - bounding_box.z_min == 20.0
+
+    def test_component_width_matches_params_given_PrincetonD_mock_mode(self):
+        config = copy.deepcopy(CONFIG)
+        config.update({"param_class": f"{WALL_MODULE_REF}::WallPrincetonD"})
+        builder = WallBuilder(PARAMS, build_config=config)
+
+        component = builder()
+
+        bounding_box = component.get_component(
+            WallBuilder.COMPONENT_WALL_BOUNDARY
+        ).shape.bounding_box
+        width = bounding_box.x_max - bounding_box.x_min
+        assert width == pytest.approx(12.1 - 5.8)

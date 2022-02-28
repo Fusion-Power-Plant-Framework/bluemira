@@ -58,9 +58,9 @@ class WallPolySpline(PolySpline):
         "top": {"value": 0.4},
         "upper": {"value": 0.3},
         "dz": {"value": -0.5},
-        "tilt": {"value": -10},
-        "lower": {"value": 0.3},
-        "bottom": {"value": 0.1},
+        "tilt": {"value": 0},
+        "lower": {"value": 0.5},
+        "bottom": {"value": 0.2},
     }
 
     def __init__(self, var_dict=None):
@@ -84,14 +84,14 @@ class WallPolySpline(PolySpline):
         self.adjust_variable(
             "x1",
             ib_radius,
-            lower_bound=ib_radius - 0.1,
+            lower_bound=ib_radius - 2,
             upper_bound=ib_radius * 1.1,
         )
         self.adjust_variable(
             "x2",
             value=ob_radius,
-            lower_bound=ob_radius - 0.001,
-            upper_bound=ob_radius * 1.1,
+            lower_bound=ob_radius * 0.9,
+            upper_bound=ob_radius + 2,
         )
         self.adjust_variable("z2", z2, lower_bound=-0.9, upper_bound=0.9)
         self.adjust_variable(
@@ -127,12 +127,11 @@ class WallPrincetonD(PrincetonD):
 
         ib_radius = self.variables["x1"].value
         ob_radius = self.variables["x2"].value
-        # TODO(hsaunders1904): tighter constraints on these values
         self.adjust_variable(
-            "x1", ib_radius, lower_bound=ib_radius - 3.5, upper_bound=ib_radius + 3.5
+            "x1", ib_radius, lower_bound=ib_radius - 2, upper_bound=ib_radius * 1.02
         )
         self.adjust_variable(
-            "x2", ob_radius, lower_bound=ob_radius - 3.5, upper_bound=ob_radius + 3.5
+            "x2", ob_radius, lower_bound=ob_radius * 0.98, upper_bound=ob_radius + 2
         )
         self.adjust_variable(
             "dz", self.variables["dz"].value, lower_bound=-3, upper_bound=3
@@ -193,12 +192,9 @@ class MinimiseLength(GeometryOptimisationProblem):
         hull_coords[:, -1] = coords[:, hull.vertices[0]]
         return hull_coords
 
-        # return coords[:, hull.vertices]
-        return hull_coords
-
     def f_constrain_koz(self, constraint, x, grad):
         """
-        Geometry constraint function to the keep-out-zone
+        Geometry constraint function to the keep-out-zone.
         """
         constraint[:] = self.calculate_signed_distance(x)
         if grad.size > 0:
@@ -219,12 +215,12 @@ class MinimiseLength(GeometryOptimisationProblem):
         return signed_distance_2D_polygon(s.T, self.koz_points.T).T
 
     def calculate_length(self, x):
-        """Calculate the length of the shape being optimised"""
+        """Calculate the length of the shape being optimised."""
         self.update_parameterisation(x)
         return self.parameterisation.create_shape().length
 
     def f_objective(self, x, grad):
-        """The objective function for the optimiser"""
+        """The objective function for the optimiser."""
         length = self.calculate_length(x)
         if grad.size > 0:
             self.optimiser.approx_derivative(self.calculate_length, x, f0=length)
@@ -260,7 +256,7 @@ class WallBuilder(OptimisedShapeBuilder):
         # boundary should be set by run/mock/read, it is used by the build methods
         self.boundary: BluemiraWire
         # _keep_out_zones should be set by reinitialize
-        self._keep_out_zones: Iterable[BluemiraWire] = []
+        self._keep_out_zones: Iterable[BluemiraWire]
 
         super().__init__(params, build_config, keep_out_zones=keep_out_zones)
 
@@ -314,7 +310,7 @@ class WallBuilder(OptimisedShapeBuilder):
         return component
 
     # TODO(hsaunders1904): 'height' is not a parameter for all shapes.
-    # Does is make sense to derive it within this class?
+    # Does it make sense to derive it within this class?
     def _derive_shape_params(self):
         """
         Calculate derived parameters for the GeometryParameterisation.
@@ -325,6 +321,6 @@ class WallBuilder(OptimisedShapeBuilder):
         return params
 
     def _derive_polyspline_height(self) -> float:
-        """Derive the height of the shape from relevant parameters"""
+        """Derive the PolySpline height from relevant parameters."""
         r_minor = self._params.R_0 / self._params.A
         return (self._params.kappa_95 * r_minor) * 2
