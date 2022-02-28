@@ -96,7 +96,7 @@ jobs:
       run: |
         pytest --cov=BLUEPRINT \
                --cov-report html:htmlcov_BLUEPRINT \
-               tests/BLUEPRINT --reactor
+               tests/BLUEPRINT --reactor --private
 
     - name: Run pytest bluemira
       shell: bash -l {0}
@@ -104,7 +104,7 @@ jobs:
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
                --cov-report xml \
-               tests/bluemira --reactor
+               tests/bluemira --reactor --private
 
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v2
