@@ -140,7 +140,8 @@ class WallPrincetonD(PrincetonD):
 
 class MinimiseLength(GeometryOptimisationProblem):
     """
-    Optimiser to minimize the length of a geometry parameterisation.
+    Optimiser to minimise the length of a geometry parameterisation with
+    constraints in the form of a "keep-out zone".
     """
 
     def __init__(
@@ -178,7 +179,7 @@ class MinimiseLength(GeometryOptimisationProblem):
         """
         shape_discretizations = []
         for zone in keep_out_zones:
-            d = zone.discretize(byedges=True, dl=zone.length / 200).xz
+            d = zone.discretize(byedges=True, ndiscr=n_points).xz
             shape_discretizations.append(d)
         coords = np.hstack(shape_discretizations)
         hull = ConvexHull(coords.T)

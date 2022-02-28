@@ -173,13 +173,7 @@ class FirstWallBuilder(Builder):
         equilibrium's x-point, to make space for a divertor.
         """
         build_config = deepcopy(build_config)
-
-        build_config.update(
-            {
-                "label": self.COMPONENT_WALL,
-                "name": self.COMPONENT_WALL,
-            }
-        )
+        build_config.update({"label": self.COMPONENT_WALL, "name": self.COMPONENT_WALL})
 
         # Keep-out zone to constrain the wall around the plasma
         keep_out_zones = self._make_wall_keep_out_zones(geom_offset=0.2, psi_n=1.05)
