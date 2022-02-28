@@ -243,6 +243,7 @@ opt_constraints = [
         constraint_type="inequality",
     )
 ]
+
 # %%[markdown]
 
 # We now have all the requirements to specify our `CoilsetOP`, and can now initialise it:
