@@ -21,6 +21,17 @@
 """
 ST equilibrium attempt
 """
+
+# %%[markdown]
+
+# # Script to demonstrate optimisation of coilset of a double null equilibrium
+
+# # Imports
+
+# Import necessary Equilbrium module definitions.
+
+# %%
+
 import argparse
 import copy
 
@@ -43,12 +54,6 @@ from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardCoilsetIterator, PicardDeltaIterator
 from bluemira.geometry._deprecated_loop import Loop
 from bluemira.utilities.optimiser import Optimiser
-
-# %%[markdown]
-
-# # Script to demonstrate optimisation of coilset of a double null equilibrium
-
-# %%
 
 # Clean up and make plots look good
 plt.close("all")
@@ -76,6 +81,14 @@ Z0 = 0
 Bt = 1.9
 Ip = 16e6
 
+# %%[markdown]
+
+# # Input Definitions
+
+# ## Grid
+
+# %%
+
 
 def init_grid():
     """
@@ -86,6 +99,13 @@ def init_grid():
     nx, nz = 129, 257
     grid = Grid(r0, r1, z0, z1, nx, nz)
     return grid
+
+
+# %%[markdown]
+
+# ## Plasma Profiles
+
+# %%
 
 
 def init_profile():
@@ -164,6 +184,13 @@ def init_profile():
     return profile
 
 
+# %%[markdown]
+
+# ## Magnetic Field Targets
+
+# %%
+
+
 def init_targets():
     """
     Create the set of constraints for the FBE solver.
@@ -186,6 +213,13 @@ def init_targets():
     constraint_set = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
     core_constraints = MagneticConstraintSet([lcfs_isoflux])
     return constraint_set, core_constraints
+
+
+# %%[markdown]
+
+# ## Initial CoilSet
+
+# %%
 
 
 def init_coilset():
@@ -215,6 +249,13 @@ def init_coilset():
     return coilset
 
 
+# %%[markdown]
+
+# ## Initial allowed PF regions (if needed)
+
+# %%
+
+
 def init_pfregions(coilset):
     """
     Initialises regions in which coil position optimisation will be limited to.
@@ -237,6 +278,13 @@ def init_pfregions(coilset):
 
         pfregions[coil.name] = rect
     return pfregions
+
+
+# %%[markdown]
+
+# ## Initial Equilibrium
+
+# %%
 
 
 def init_equilibrium(grid, coilset, constraint_set):
@@ -282,6 +330,15 @@ def init_equilibrium(grid, coilset, constraint_set):
     return eq
 
 
+# %%[markdown]
+
+# # Optimisation
+
+# ## Handle to Iterator call
+
+# %%
+
+
 def optimise_fbe(program):
     """
     Run the iterator to optimise the FBE.
@@ -296,6 +353,13 @@ def optimise_fbe(program):
         program.eq.plot(ax=ax)
         program.constraints.plot(ax=ax)
     return
+
+
+# %%[markdown]
+
+# ## Specification of initial coarse optimisation routine
+
+# %%
 
 
 def pre_optimise(eq, profile, constraint_set):
@@ -319,6 +383,13 @@ def pre_optimise(eq, profile, constraint_set):
 
     eq = optimise_fbe(program)
     return eq
+
+
+# %%[markdown]
+
+# ## Specification of primary CoilSet OptimisationProblem to solve
+
+# %%
 
 
 def set_coilset_optimiser(
@@ -358,6 +429,13 @@ def set_coilset_optimiser(
     return optimiser
 
 
+# %%[markdown]
+
+# ## Specification of Equilibrium Iterator
+
+# %%
+
+
 def set_iterator(eq, profile, constraint_set, optimiser):
     """
     Create the iterator to be used to solve the FBE.
@@ -377,6 +455,13 @@ def set_iterator(eq, profile, constraint_set, optimiser):
         program = PicardDeltaIterator(*iterator_args, **iterator_kwargs)
 
     return program
+
+
+# %%[markdown]
+
+# ## Selection of OptimisationProblem specific options
+
+# %%
 
 
 def default_optimiser_options(optimiser_name):
@@ -422,6 +507,13 @@ def default_optimiser_options(optimiser_name):
     return options
 
 
+# %%[markdown]
+
+# ## Main program
+
+# %%
+
+
 def run(args):
     """
     Main program to solve the specified FBE problem.
@@ -446,11 +538,19 @@ def run(args):
     plt.show()
 
 
+# %%[markdown]
+
+# ## Argument parsing
+
+# Parse command line to control OptimisationProblem to use in example.
+
+# %%
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--optimiser_name",
-        help="Name of optimiser to use",
+        help="Name of Coilset OptimisationProblem to use",
         choices=[
             "Norm2Tikhonov",
             "UnconstrainedCurrentCOP",
