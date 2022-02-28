@@ -25,10 +25,7 @@ Three-dimensional current source terms.
 
 import numpy as np
 
-from bluemira.geometry._deprecated_tools import (
-    get_angle_between_vectors,
-    rotation_matrix,
-)
+from bluemira.geometry._deprecated_tools import distance_between_points, rotation_matrix
 from bluemira.geometry.coordinates import get_normal_vector
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.tools import process_loop_array, process_xyz_array
@@ -62,17 +59,34 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
     def __init__(self, shape, breadth, depth, current):
         self.shape = process_loop_array(shape)
         normal = get_normal_vector(*self.shape.T)
+        closed = np.allclose(self.shape[-1], self.shape[0])
 
-        # Set up geometry, calculating all trapezoial prism sources
+        # Set up geometry, calculating all trapezoidal prism sources
         self.d_l = np.diff(self.shape, axis=0)
-        self.midpoints = self.shape[:-1, :] + self.d_l / 2
+        self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
         sources = []
-        beta = get_angle_between_vectors(self.d_l[-1], self.d_l[0]) / 2
+
+        if closed:
+            beta = self._get_half_angle(
+                self.midpoints[-1], self.shape[0], self.midpoints[0]
+            )
+        else:
+            beta = 0.0
 
         for i, (midpoint, d_l) in enumerate(zip(self.midpoints, self.d_l)):
-            angle = get_angle_between_vectors(self.d_l[i - 1], d_l, signed=True)
 
-            alpha = angle / 2
+            if i != len(self.midpoints) - 1:
+                alpha = self._get_half_angle(
+                    midpoint, self.shape[i + 1], self.midpoints[i + 1]
+                )
+            else:
+                if closed:
+                    alpha = self._get_half_angle(
+                        midpoint, self.shape[-1], self.midpoints[0]
+                    )
+                else:
+                    alpha = 0.0
+
             d_l_norm = d_l / np.linalg.norm(d_l)
             t_vec = np.cross(d_l_norm, normal)
 
@@ -90,6 +104,44 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             sources.append(source)
             beta = alpha
         super().__init__(sources)
+
+    def _get_half_angle(self, p0, p1, p2):
+        v1 = p1 - p0
+        v2 = p2 - p1
+        v1 /= np.linalg.norm(v1)
+        v2 /= np.linalg.norm(v2)
+        cos_angle = np.dot(v1, v2)
+        angle = np.arccos(np.clip(cos_angle, -1, 1))
+
+        d = distance_between_points(p0, p1)
+        v_norm = np.linalg.norm(-v1 + v2)
+        if np.isclose(v_norm, 0):
+            return 0.5 * angle
+
+        r1 = p1 + 0.1 * d * (-v1 + v2) / v_norm
+
+        if self._point_in_triangle(r1, p0, p1, p2):
+            if np.isclose(angle, np.pi / 2):
+                angle += 2 * np.pi
+            else:
+                angle = -(angle - 2 * np.pi)
+        return 0.5 * angle
+
+    @staticmethod
+    def _point_in_triangle(point, p0, p1, p2):
+        """
+        Determine whether a point lies inside a 3-D triangle.
+        """
+        area = 0.5 * np.linalg.norm(np.cross(p1 - p0, p2 - p0))
+        alpha = np.linalg.norm(np.cross(p1 - point, p2 - point)) / (2 * area)
+        beta = np.linalg.norm(np.cross(p2 - point, p0 - point)) / (2 * area)
+        gamma = 1.0 - alpha - beta
+        return (
+            (0 < alpha < 1)
+            and (0 < beta < 1)
+            and (0 < gamma < 1)
+            and (np.isclose(alpha + beta + gamma, 1.0))
+        )
 
 
 class HelmholtzCage(SourceGroup):
