@@ -36,7 +36,7 @@ import numpy as np
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry import bound_box, face
-from bluemira.geometry import plane as _plane
+from bluemira.geometry import placement as _placement
 from bluemira.geometry import wire
 from bluemira.geometry.coordinates import Coordinates, _parse_to_xyz_array
 
@@ -72,10 +72,10 @@ def get_default_options():
     """
     output_dict = {}
     for k, v in DEFAULT_PLOT_OPTIONS.items():
-        # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
+        # FreeCAD Plane that is contained in BluemiraPlacement cannot be deepcopied by
         # copy.deepcopy. For this reason, its deepcopy method must be used in
         # this case.
-        if isinstance(v, _plane.BluemiraPlane):
+        if isinstance(v, _placement.BluemiraPlacement):
             output_dict[k] = v.deepcopy()
         else:
             output_dict[k] = copy.deepcopy(v)
@@ -153,10 +153,10 @@ class PlotOptions(DisplayOptions):
         """
         output_dict = {}
         for k, v in self._options.items():
-            # FreeCAD Plane that is contained in BluemiraPlane cannot be deepcopied by
-            # copy.deepcopy. For this reason, its deepcopy method must to be used in
+            # FreeCAD Plane that is contained in BluemiraPlacement cannot be deepcopied
+            # by copy.deepcopy. For this reason, its deepcopy method must to be used in
             # this case.
-            if isinstance(v, _plane.BluemiraPlane):
+            if isinstance(v, _placement.BluemiraPlacement):
                 output_dict[k] = v.deepcopy()
             else:
                 output_dict[k] = copy.deepcopy(v)
@@ -282,24 +282,24 @@ class BasePlotter(ABC):
             PlotOptions(**self._CLASS_PLOT_OPTIONS) if options is None else options
         )
         self.options.modify(**kwargs)
-        self.set_plane(self.options._options["plane"])
+        self.set_placement(self.options._options["plane"])
 
-    def set_plane(self, plane):
+    def set_placement(self, plane):
         """Set the plotting plane"""
         if plane == "xy":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = _plane.BluemiraPlane()
+            self.options._options["plane"] = _placement.BluemiraPlacement()
         elif plane == "xz":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = _plane.BluemiraPlane(
+            self.options._options["plane"] = _placement.BluemiraPlacement(
                 axis=(1.0, 0.0, 0.0), angle=-90.0
             )
         elif plane == "zy":
             # Base.Placement(origin, axis, angle)
-            self.options._options["plane"] = _plane.BluemiraPlane(
+            self.options._options["plane"] = _placement.BluemiraPlacement(
                 axis=(0.0, 1.0, 0.0), angle=90.0
             )
-        elif isinstance(plane, _plane.BluemiraPlane):
+        elif isinstance(plane, _placement.BluemiraPlacement):
             self.options._options["plane"] = plane
         else:
             DisplayError(f"{plane} is not a valid plane")
@@ -346,9 +346,9 @@ class BasePlotter(ABC):
         self.ax.set_aspect("equal")
 
     def _set_label_2d(self):
-        # TODO: BluemiraPlane stuff.... I feel like the axis may not be the plane normal
+        # TODO: BluemiraPlacement stuff. I feel like the axis may not be the plane normal
         # and this makes me very sad. The workaround here is by creating the planes from
-        # strs, but we're unlikely to recognise a user-input BluemiraPlane.
+        # strs, but we're unlikely to recognise a user-input BluemiraPlacement.
         # Note that the angle argument gets used to rotate the data for reasons I still
         # do not understand, hence why the axis here is not the plane normal..
         axis = np.abs(self.options.plane.axis)
@@ -497,7 +497,7 @@ class WirePlotter(BasePlotter):
         self._pplotter = PointsPlotter(self.options)
         new_wire = wire.deepcopy()
         # # change of plane integrated in PointsPlotter2D. Not necessary here.
-        # new_wire.change_plane(self.options._options['plane'])
+        # new_wire.change_placement(self.options._options['plane'])
         pointsw = new_wire.discretize(
             ndiscr=self.options._options["ndiscr"],
             byedges=self.options._options["byedges"],
