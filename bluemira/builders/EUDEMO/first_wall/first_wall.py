@@ -176,9 +176,8 @@ class FirstWallBuilder(Builder):
         build_config = deepcopy(build_config)
         build_config.update(
             {
+                "algorithm_name": "SLSQP",
                 "class": f"{_WALL_MODULE_REF}::WallBuilder",
-                "param_class": f"{_WALL_MODULE_REF}::WallPolySpline",
-                "problem_class": f"{_WALL_MODULE_REF}::MinimiseLength",
                 "label": self.COMPONENT_WALL,
                 "name": self.COMPONENT_WALL,
                 "opt_conditions": {
@@ -187,6 +186,8 @@ class FirstWallBuilder(Builder):
                     "xtol_abs": 1e-8,
                     "max_eval": 100,
                 },
+                "param_class": f"{_WALL_MODULE_REF}::WallPrincetonD",
+                "problem_class": f"{_WALL_MODULE_REF}::MinimiseLength",
             }
         )
 
