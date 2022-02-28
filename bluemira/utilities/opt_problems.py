@@ -145,7 +145,7 @@ class OptimisationProblem(ABC):
     objective: OptimisationObjective (default: None)
         OptimisationObjective storing objective information to
         provide to the Optimiser.
-    constraints: List[OptimisationConstraint] (default: [])
+    constraints: List[OptimisationConstraint]
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the optimisation, to be provided to the
@@ -211,8 +211,9 @@ class OptimisationProblem(ABC):
         to the function, to allow any properties that are stored in the
         CoilsetPositionCOP to be accessed at runtime.
         """
-        for _opt_constraint in opt_constraints:
-            _opt_constraint.apply_constraint(self)
+        if opt_constraints is not None:
+            for _opt_constraint in opt_constraints:
+                _opt_constraint.apply_constraint(self)
         return opt
 
     def initialise_state(self, parameterisation) -> np.array:

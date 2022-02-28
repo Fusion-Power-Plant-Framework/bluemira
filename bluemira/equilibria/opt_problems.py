@@ -84,7 +84,7 @@ class CoilsetOP(OptimisationProblem):
     objective: OptimisationObjective (default: None)
         OptimisationObjective storing objective information to
         provide to the Optimiser.
-    constraints: List[OptimisationConstraint] (default: [])
+    constraints: List[OptimisationConstraint] (default: None)
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the
@@ -96,7 +96,7 @@ class CoilsetOP(OptimisationProblem):
         coilset: CoilSet,
         optimiser: Optimiser = None,
         objective: OptimisationObjective = None,
-        constraints: List[OptimisationConstraint] = [],
+        constraints: List[OptimisationConstraint] = None,
     ):
         super().__init__(coilset, optimiser, objective, constraints)
         self.scale = 1e6  # current_scale
@@ -345,7 +345,7 @@ class BoundedCurrentCOP(CoilsetOP):
         for all coils.
     optimiser: Optimiser
         Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: [])
+    constraints: List[OptimisationConstraint] (default: None)
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the
@@ -370,7 +370,7 @@ class BoundedCurrentCOP(CoilsetOP):
             },
             opt_parameters={"initial_step": 0.03},
         ),
-        opt_constraints: List[OptimisationConstraint] = [],
+        opt_constraints: List[OptimisationConstraint] = None,
     ):
         # noqa :N803
 
@@ -451,7 +451,7 @@ class CoilsetPositionCOP(CoilsetOP):
         Tikhonov regularisation parameter in units of [A⁻¹].
     optimiser: Optimiser
         Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: [])
+    constraints: List[OptimisationConstraint] (default: None)
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the
@@ -481,7 +481,7 @@ class CoilsetPositionCOP(CoilsetOP):
             },
             opt_parameters={},
         ),
-        opt_constraints=[],
+        opt_constraints=None,
     ):
         # noqa :N803
 
@@ -662,7 +662,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
         The loop objects must be 2d in x,z in units of [m].
     optimiser: Optimiser
         Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: [])
+    constraints: List[OptimisationConstraint] (default: None)
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the
@@ -690,7 +690,7 @@ class NestedCoilsetPositionCOP(CoilsetOP):
             },
             opt_parameters={},
         ),
-        opt_constraints: List[OptimisationConstraint] = [],
+        opt_constraints: List[OptimisationConstraint] = None,
     ):
         # noqa :N803
 
