@@ -34,8 +34,7 @@ from typing import Dict, Union
 import gmsh
 
 from bluemira.base.look_and_feel import bluemira_print
-
-from .error import MeshOptionsError
+from bluemira.mesh.error import MeshOptionsError
 
 # import bluemira modules
 

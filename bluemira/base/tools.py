@@ -22,10 +22,9 @@
 """
 Tool function and classes for the bluemira base module.
 """
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.tools import serialize_shape
-
-from .components import Component, PhysicalComponent
 
 
 def create_compound_from_component(comp):
