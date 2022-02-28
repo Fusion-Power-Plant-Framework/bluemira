@@ -23,7 +23,7 @@ Builders for the first wall of the reactor, including divertor
 """
 
 from copy import deepcopy
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, List
 
 import numpy as np
 
@@ -34,13 +34,13 @@ from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_OX_points
-from bluemira.geometry.tools import boolean_cut, make_polygon
+from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 
 _WALL_MODULE_REF = "bluemira.builders.EUDEMO.first_wall.wall"
 
 
-def _cut_shape_in_z(shape: BluemiraWire, z_max: float):
+def _cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWire:
     """
     Remove the parts of the wire below the given value in the z-axis.
     """
@@ -51,14 +51,24 @@ def _cut_shape_in_z(shape: BluemiraWire, z_max: float):
     cut_box_points = np.array(
         [
             [bounding_box.x_min, 0, bounding_box.z_min],
-            [bounding_box.x_min, 0, z_max],
-            [bounding_box.x_max, 0, z_max],
+            [bounding_box.x_min, 0, x_point_z],
+            [bounding_box.x_max, 0, x_point_z],
             [bounding_box.x_max, 0, bounding_box.z_min],
             [bounding_box.x_min, 0, bounding_box.z_min],
         ]
     )
     cut_zone = make_polygon(cut_box_points, label="_shape_cut_exclusion")
-    return boolean_cut(shape, [cut_zone])[0]
+    # For a single-null, we expect three 'pieces' from the cut: the
+    # upper wall shape and the two separatrix legs
+    pieces = boolean_cut(shape, [cut_zone])
+
+    wall_piece = pieces[np.argmax([p.center_of_mass.z for p in pieces])]
+    if wall_piece.center_of_mass.z < x_point_z:
+        raise ValueError(
+            "Could not cut wall shape below x-point. "
+            "No parts of the wall found above x-point."
+        )
+    return wall_piece
 
 
 class FirstWallBuilder(Builder):
@@ -180,11 +190,12 @@ class FirstWallBuilder(Builder):
             }
         )
 
-        # Keep-out-zone to stop the wall intersecting the plasma
-        keep_out_zone = self._make_wall_keep_out_zone()
+        # Keep-out zone to constrain the wall around the plasma
+        keep_out_zones = self._make_wall_keep_out_zones(geom_offset=0.2, psi_n=1.05)
+
         # Build a full, closed, wall shape
         builder = WallBuilder(
-            params, build_config=build_config, keep_out_zones=(keep_out_zone,)
+            params, build_config=build_config, keep_out_zones=keep_out_zones
         )
         wall = builder()
 
@@ -217,13 +228,28 @@ class FirstWallBuilder(Builder):
         builder = DivertorBuilder(params, build_config, self.equilibrium, x_lims)
         return builder()
 
-    def _make_wall_keep_out_zone(self) -> BluemiraWire:
+    def _make_wall_keep_out_zones(self, geom_offset, psi_n) -> List[BluemiraWire]:
         """
-        Create a "keep-out-zone" to be used as a constraint in the
-        shape optimiser
+        Create a "keep-out zone" to be used as a constraint in the
+        shape optimiser.
         """
-        # Generate keep-out-zone from the last close flux surface
-        lcfs = self.equilibrium.get_LCFS().xyz
-        return make_polygon(lcfs, closed=True)
-        coords = coords[:, coords[2] > self.x_points[0].z]
-        return make_polygon(coords, closed=True)
+        geom_offset_zone = self._make_geometric_keep_out_zone(geom_offset)
+        flux_surface_zone = self._make_flux_surface_keep_out_zone(psi_n)
+        return [geom_offset_zone, flux_surface_zone]
+
+    def _make_geometric_keep_out_zone(self, offset: float) -> BluemiraWire:
+        """
+        Make a "keep-out zone" from a geometric offset of the LCFS.
+        """
+        lcfs = make_polygon(self.equilibrium.get_LCFS().xyz, closed=True)
+        return offset_wire(lcfs, offset, join="arc")
+
+    def _make_flux_surface_keep_out_zone(self, psi_n: float) -> BluemiraWire:
+        """
+        Make a "keep-out zone" from an equilibrium's flux surface.
+        """
+        flux_surface_zone = self.equilibrium.get_flux_surface(psi_n)
+        flux_surface_zone = make_polygon(flux_surface_zone.xyz, closed=True)
+        # Remove the "legs" from the keep-out zone, we want the wall to
+        # intersect these
+        return _cut_wall_below_x_point(flux_surface_zone, self.x_points[0].z)
