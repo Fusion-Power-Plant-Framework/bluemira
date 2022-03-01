@@ -382,30 +382,6 @@ def make_ellipse(
     return Part.Wire(Part.Edge(output))
 
 
-def _wire_is_planar(wire):
-    """
-    Check if a wire is planar.
-    """
-    try:
-        face = Part.Face(wire)
-    except Part.OCCError:
-        return False
-    return isinstance(face.Surface, Part.Plane)
-
-
-def _wire_is_straight(wire):
-    """
-    Check if a wire is a straight line.
-    """
-    if len(wire.Edges) == 1:
-        edge = wire.Edges[0]
-        if len(edge.Vertexes) == 2:
-            straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
-            if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
-                return True
-    return False
-
-
 def offset_wire(
     wire: apiWire, thickness: float, join: str = "intersect", open_wire: bool = True
 ) -> apiWire:
@@ -697,7 +673,7 @@ def _slice_wire(wire, normal_plane, shift, *, BIG_NUMBER=1e5):
 
 def _slice_solid(obj, normal_plane, shift):
     """
-    Get the plane intersection points of a face or solid
+    Get the plane intersection wires of a face or solid
     """
     return obj.slice(Base.Vector(*normal_plane), shift)
 
@@ -853,42 +829,6 @@ def extrude_shape(shape, vec: tuple):
     return shape.extrude(vec)
 
 
-def _edges_tangent(edge_1, edge_2):
-    """
-    Check if two adjacent edges are tangent to one another.
-    """
-    angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
-        edge_2.tangentAt(edge_2.FirstParameter)
-    )
-    return np.isclose(
-        angle,
-        0.0,
-        rtol=1e-4,
-        atol=1e-4,
-    )
-
-
-def _wire_edges_tangent(wire):
-    """
-    Check that all consecutive edges in a wire are tangent
-    """
-    if len(wire.Edges) <= 1:
-        return True
-
-    else:
-        edges_tangent = []
-        for i in range(len(wire.Edges) - 1):
-            edge_1 = wire.Edges[i]
-            edge_2 = wire.Edges[i + 1]
-            edges_tangent.append(_edges_tangent(edge_1, edge_2))
-
-    if wire.isClosed():
-        # Check last and first edge tangency
-        edges_tangent.append(_edges_tangent(wire.Edges[-1], wire.Edges[0]))
-
-    return all(edges_tangent)
-
-
 def _split_wire(wire):
     """
     Split a wire into two parts.
@@ -990,13 +930,19 @@ def boolean_fuse(shapes):
     if len(shapes) < 2:
         raise ValueError("At least 2 shapes must be given")
 
-    # check that all the shapes are of the same time
     _type = type(shapes[0])
-    if not all(isinstance(s, _type) for s in shapes):
-        raise ValueError(f"All instances in {shapes} must be of the same type.")
+    _check_shapes_same_type(shapes)
+
+    if _is_wire_or_face(_type):
+        _check_shapes_coplanar(shapes)
+        if not _shapes_are_coaxis(shapes):
+            bluemira_warn(
+                "Boolean fuse on shapes that do not have the same planar axis. Reversing."
+            )
+            _make_shapes_coaxis(shapes)
 
     try:
-        if _type == Part.Wire:
+        if _type == apiWire:
             merged_shape = BOPTools.SplitAPI.booleanFragments(shapes, "Split")
             if len(merged_shape.Wires) > len(shapes):
                 raise FreeCADError(
@@ -1009,7 +955,7 @@ def boolean_fuse(shapes):
                 merged_shape = Part.Wire(merged_shape.Wires)
                 return merged_shape
 
-        elif _type == Part.Face:
+        elif _type == apiFace:
             merged_shape = shapes[0].fuse(shapes[1:])
             merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Faces) > 1:
@@ -1018,7 +964,7 @@ def boolean_fuse(shapes):
                 )
             return merged_shape.Faces[0]
 
-        elif _type == Part.Solid:
+        elif _type == apiSolid:
             merged_shape = shapes[0].fuse(shapes[1:])
             merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Solids) > 1:
@@ -1063,17 +1009,20 @@ def boolean_cut(shape, tools, split=True):
     if not isinstance(tools, list):
         tools = [tools]
 
+    if _is_wire_or_face(_type):
+        _check_shapes_coplanar([shape] + tools)
+
     cut_shape = shape.cut(tools)
     if split:
         cut_shape = BOPTools.SplitAPI.slice(cut_shape, tools, mode="Split")
 
-    if _type == Part.Wire:
+    if _type == apiWire:
         output = cut_shape.Wires
-    elif _type == Part.Face:
+    elif _type == apiFace:
         output = cut_shape.Faces
-    elif _type == Part.Shell:
+    elif _type == apiShell:
         output = cut_shape.Shells
-    elif _type == Part.Solid:
+    elif _type == apiSolid:
         output = cut_shape.Solids
     else:
         raise ValueError(f"Cut function not implemented for {_type} objects.")
@@ -1098,6 +1047,124 @@ def point_inside_shape(point, shape):
     """
     vector = apiVector(*point)
     return shape.isInside(vector, EPS, True)
+
+
+# ======================================================================================
+# Geometry checking tools
+# ======================================================================================
+
+
+def _edges_tangent(edge_1, edge_2):
+    """
+    Check if two adjacent edges are tangent to one another.
+    """
+    angle = edge_1.tangentAt(edge_1.LastParameter).getAngle(
+        edge_2.tangentAt(edge_2.FirstParameter)
+    )
+    return np.isclose(
+        angle,
+        0.0,
+        rtol=1e-4,
+        atol=1e-4,
+    )
+
+
+def _wire_edges_tangent(wire):
+    """
+    Check that all consecutive edges in a wire are tangent
+    """
+    if len(wire.Edges) <= 1:
+        return True
+
+    else:
+        edges_tangent = []
+        for i in range(len(wire.OrderedEdges) - 1):
+            edge_1 = wire.OrderedEdges[i]
+            edge_2 = wire.OrderedEdges[i + 1]
+            edges_tangent.append(_edges_tangent(edge_1, edge_2))
+
+    if wire.isClosed():
+        # Check last and first edge tangency
+        edges_tangent.append(_edges_tangent(wire.OrderedEdges[-1], wire.OrderedEdges[0]))
+
+    return all(edges_tangent)
+
+
+def _wire_is_planar(wire):
+    """
+    Check if a wire is planar.
+    """
+    try:
+        face = Part.Face(wire)
+    except Part.OCCError:
+        return False
+    return isinstance(face.Surface, Part.Plane)
+
+
+def _wire_is_straight(wire):
+    """
+    Check if a wire is a straight line.
+    """
+    if len(wire.Edges) == 1:
+        edge = wire.Edges[0]
+        if len(edge.Vertexes) == 2:
+            straight = dist_to_shape(edge.Vertexes[0], edge.Vertexes[1])[0]
+            if np.isclose(straight, wire.Length, rtol=EPS, atol=1e-8):
+                return True
+    return False
+
+
+def _is_wire_or_face(shape_type):
+    return shape_type == apiWire or shape_type == apiFace
+
+
+def _check_shapes_same_type(shapes):
+    """
+    Check that all the shapes are of the same type.
+    """
+    _type = type(shapes[0])
+    if not all(isinstance(s, _type) for s in shapes):
+        raise ValueError(f"All instances in {shapes} must be of the same type.")
+
+
+def _check_shapes_coplanar(shapes):
+    if not _shapes_are_coplanar(shapes):
+        raise ValueError(
+            "Shapes are not co-planar; this operation does not support non-co-planar wires or faces."
+        )
+
+
+def _shapes_are_coplanar(shapes):
+    """
+    Check if a list of shapes are all coplanar. First shape is taken as the reference.
+    """
+    coplanar = []
+    for other in shapes[1:]:
+        coplanar.append(shapes[0].isCoplanar(other))
+    return all(coplanar)
+
+
+def _shapes_are_coaxis(shapes):
+    """
+    Check if a list of shapes are all co-axis. First shape is taken as the reference.
+    """
+    axis = shapes[0].findPlane().Axis
+    for shape in shapes[1:]:
+        other_axis = shape.findPlane().Axis
+        if not axis == other_axis:
+            return False
+    return True
+
+
+def _make_shapes_coaxis(shapes):
+    """
+    Make a list of shapes co-axis by reversing. First shape is taken as the reference.
+    """
+    axis = shapes[0].findPlane().Axis
+    for shape in shapes[1:]:
+        other_axis = shape.findPlane().Axis
+        if not axis == other_axis:
+            shape.reverse()
 
 
 # ======================================================================================
@@ -1225,6 +1292,11 @@ def _colourise(
         node.transparency.setValue(transparency)
     for child in node.getChildren() or []:
         _colourise(child, options)
+
+
+# ======================================================================================
+# Geometry visualisation
+# ======================================================================================
 
 
 def show_cad(
