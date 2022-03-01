@@ -1490,7 +1490,7 @@ class ParameterFrame:
             return {
                 key: {
                     "value": parameter.value,
-                    "unit": parameter.unit,
+                    "unit": parameter.unit.format_babel(),
                     "source": parameter.source,
                 }
                 for (key, parameter) in self.__dict__.items()

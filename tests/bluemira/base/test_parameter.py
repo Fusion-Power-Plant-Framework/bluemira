@@ -806,6 +806,21 @@ class TestParameterFrame:
         with pytest.raises(DimensionalityError):
             params_copy.update_kw_parameters(p)
 
+    def test_set_parameter(self):
+        params_copy = self.params.copy()
+        params_copy.set_parameter("n_CS", 10, "dimensionless", "hello")
+
+        assert params_copy.n_CS.value == 10
+        assert params_copy.n_CS.source == "hello"
+
+        params_copy.set_parameter(
+            "n_CS",
+            Parameter(var="n_CS", value=15, unit="dimensionless", source="hello2"),
+        )
+
+        assert params_copy.n_CS.value == 15
+        assert params_copy.n_CS.source == "hello2"
+
 
 class TestReactorSystem:
 
