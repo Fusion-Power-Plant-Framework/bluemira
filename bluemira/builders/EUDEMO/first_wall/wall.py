@@ -37,7 +37,7 @@ from bluemira.geometry.wire import BluemiraWire
 class WallPolySpline(PolySpline):
     """
     Defines the geometry for reactor first wall, without a divertor,
-    based on a PolySpline
+    based on the PolySpline parameterisation.
     """
 
     _defaults = {
@@ -101,6 +101,10 @@ class WallPolySpline(PolySpline):
 
 
 class WallPrincetonD(PrincetonD):
+    """
+    Defines the geometry for reactor first wall, without a divertor,
+    based on the PrincetonD parameterisation.
+    """
 
     _defaults = {
         "x1": {"value": 5.8},

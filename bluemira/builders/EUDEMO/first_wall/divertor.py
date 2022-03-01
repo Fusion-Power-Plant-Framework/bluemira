@@ -24,7 +24,7 @@ Define builder for divertor
 
 import enum
 import operator
-from typing import Any, Callable, Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Sequence
 
 import numpy as np
 
