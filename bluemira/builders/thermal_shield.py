@@ -195,10 +195,12 @@ class ThermalShieldBuilder(Builder):
         bm_plot_tools.set_component_plane(component, "xy")
         return component
 
-    def build_xyz(self):
+    def build_xyz(self, degree=360.0) -> Component:
         """
         Build the x-y-z components of the thermal shield.
         """
+        n_ts_draw = max(1, int(degree // self._params.n_TF.value))
+        degree = (360.0 / self._params.n_TF.value) * n_ts_draw
         # Cryostat thermal shield
         component = Component("xyz")
         cts_face = self._cts_face.deepcopy()
@@ -210,7 +212,7 @@ class ThermalShieldBuilder(Builder):
         )
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
-        sectors = circular_pattern_component(cryostat_ts, self._params.n_TF.value)
+        sectors = circular_pattern_component(cryostat_ts, n_ts_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         return component
