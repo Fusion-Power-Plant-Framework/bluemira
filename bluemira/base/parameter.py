@@ -1048,7 +1048,14 @@ class ParameterFrame:
             override value for source
 
         """
-        self.__setattr__(var, self.modify_source(value, source))
+        if isinstance(value, Parameter):
+            if source is None:
+                source = value.source
+            if unit is None:
+                unit = value.unit
+            value = value.value
+
+        self.__setattr__(var, Parameter(var=var, value=value, unit=unit, source=source))
 
     def update_kw_parameters(self, kwargs, source=None, *, allow_new=False):
         """
