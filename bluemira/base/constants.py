@@ -23,6 +23,7 @@
 A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
+from functools import lru_cache
 from typing import List, Union
 
 import numpy as np
@@ -257,7 +258,11 @@ def pam3s_to_mols(flow_in_pam3_s):
     -----
     At 273.15 K for a diatomic gas
     """
-    return flow_in_pam3_s / 2270
+    return (
+        (ureg.Quantity(flow_in_pam3_s, "Pa m^3") / _pam3_mol_const())
+        .to_base_units()
+        .magnitude
+    )
 
 
 def mols_to_pam3s(flow_in_mols):  # noqa :N802
@@ -278,7 +283,18 @@ def mols_to_pam3s(flow_in_mols):  # noqa :N802
     -----
     At 273.15 K for a diatomic gas
     """
-    return flow_in_mols * 2270
+    return (
+        (ureg.Quantity(flow_in_mols, "mole") * _pam3_mol_const())
+        .to_base_units()
+        .magnitude
+    )
+
+
+@lru_cache(1)
+def _pam3_mol_const():
+    return ureg.Quantity("molar_gas_constant") * ureg.Quantity(0, ureg.celsius).to(
+        "kelvin"
+    )
 
 
 # =============================================================================
