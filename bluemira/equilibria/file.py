@@ -91,7 +91,7 @@ class EQDSKInterface:
         ["bcentre", "Magnetic field at the reference radius", None, "T", None, "eqfile"],
         ["cplasma", "Plasma current", None, "A", None, "eqfile"],
         ["fpol", "Poloidal current function f = R*B on 1-D flux grid", None, "T.m", None, "eqfile"],
-        ["pressure", "Plasma pressure function on 1-D flux grid", None, "N.t/m^2", None, "eqfile"],
+        ["pressure", "Plasma pressure function on 1-D flux grid", None, "N/m^2", None, "eqfile"],
         ["ffprime", "FF' function on 1-D flux grid", None, "m.T^2/V.s/rad", None, "eqfile"],
         ["pprime", "P' function on 1-D flux grid", None, "N/m^2/V.s/rad", None, "eqfile"],
         ["psi", "Poloidal magnetic flux on the 2-D grid", None, "V.s/rad", None, "eqfile"],
