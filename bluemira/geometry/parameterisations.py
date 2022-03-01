@@ -32,7 +32,6 @@ from typing import TextIO, Union
 import numpy as np
 from scipy.special import iv as bessel
 
-from bluemira.display.plotter import plot_2d
 from bluemira.geometry._deprecated_tools import distance_between_points
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
@@ -1041,7 +1040,6 @@ class PictureFrameTools:
             CAD Wire of the geometry
 
         """
-
         # Define the basic main curve (with no joint or transitions curves)
         alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
         theta_leg_basic = 2 * (np.pi - 2 * alpha)

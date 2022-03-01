@@ -552,6 +552,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             The component grouping the results in 3D (xyz).
         """
         wp_wires = []
+        wire_prev = None
         for wp_wire in self._centreline.boundary:
 
             print(wp_wire.label)
@@ -560,7 +561,6 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             x_s_xmin = x_s.bounding_box.x_min
             sweep_start = tuple(wp_wire.discretize(100)[:, 0].reshape(1, -1)[0])
             x_shift = x_s_xmin - sweep_start[0]
-            z_shift = x_s.bounding_box.z_min
 
             if not _wire_edges_tangent(BluemiraWire([wire_prev, wp_wire])):
                 if wp_wire.label in ["top_limb"]:
