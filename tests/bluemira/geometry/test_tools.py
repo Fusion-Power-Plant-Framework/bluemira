@@ -382,7 +382,23 @@ class TestPointAlongWire:
         wire = make_polygon(coords)
         desired_len = np.sqrt(2.5)
 
-        point, tangent_vec = find_point_along_wire_at_length(wire, desired_len)
+        point = find_point_along_wire_at_length(wire, desired_len)
 
         np.testing.assert_almost_equal(point, [1.5, 0, 0.5], decimal=2)
-        np.testing.assert_allclose(tangent_vec, np.array([1, 0, 3]) / np.sqrt(10))
+
+    def test_point_along_wire_at_length_3d(self):
+        circle = make_circle(radius=1, axis=[1, 1, 1])
+        semi_circle = make_circle(radius=1, axis=[1, 1, 1], end_angle=180)
+
+        point = find_point_along_wire_at_length(circle, np.pi)
+
+        np.testing.assert_almost_equal(point, semi_circle.end_point(), decimal=2)
+
+    @pytest.mark.parametrize("len_offset", [0.1, 1, 10, 200])
+    def test_ValueError_if_length_gt_wire_length(self, len_offset):
+        coords = np.array([[1, 2, 3, 4, 5], [0, 0, 0, 0, 0], [-1, 2, 5, 8, 11]])
+        wire = make_polygon(coords)
+        wire_length = wire.length
+
+        with pytest.raises(ValueError):
+            find_point_along_wire_at_length(wire, wire_length + len_offset)

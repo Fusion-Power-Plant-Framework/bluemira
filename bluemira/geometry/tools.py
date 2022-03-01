@@ -924,18 +924,32 @@ def get_shape_by_name(shape: BluemiraGeo, name: str):
 # ======================================================================================
 # Find operations
 # ======================================================================================
-def find_point_along_wire_at_length(wire: BluemiraWire, length: float):
+def find_point_along_wire_at_length(
+    wire: BluemiraWire, length: float, ndiscr: int = 2000
+) -> np.ndarray:
     """
-    Find the point that is a given length along a wire, and the
-    unit tanget vector along that point and its neighbour.
+    Find the coordinates of the point that is, from the start of the
+    wire, a given length along the wire.
 
     This method discretizes the wire in order to find the desired point.
     Hence, the error in this calculation will depend on the
     discretization's step size.
+
+    Parameters
+    ----------
+    wire: BluemiraWire
+        The wire to find the point along the length of.
+    length: float
+        The length along the wire to find the coordinates of.
+    ndiscr: int
+        The number of points to discretize the wire into.
+
+    Returns
+    -------
+    coords: np.ndarray[float, (3,)]
+        The coordinate of the point at the given length along the wire.
     """
-    # TODO(hsaunders1904): re-write this using primitives
-    # TODO(hsaunders1904): magic number here needs justification
-    coords = wire.discretize(ndiscr=2000)
+    coords = wire.discretize(ndiscr=ndiscr)
     segment_lengths = np.linalg.norm(np.diff(coords, axis=1), axis=0)
     cumulative_lengths = np.cumsum(segment_lengths)
     if length > cumulative_lengths[-1]:
@@ -944,11 +958,7 @@ def find_point_along_wire_at_length(wire: BluemiraWire, length: float):
         )
     index = np.searchsorted(cumulative_lengths, length)
 
-    tangent_vec = coords[:, index] - coords[:, index - 1]
-    unit_tangent_vec = tangent_vec / np.linalg.norm(tangent_vec)
-
     # Could potentially use the calculated coordinate as the starting
     # point for some sort of optimization/root finder if this needs to
     # be more accurate in the future
-
-    return coords[:, index], unit_tangent_vec
+    return coords[:, index]

@@ -163,7 +163,7 @@ class DivertorBuilder(Builder):
         sols = self._get_sols_for_leg(leg)
         leg_length = self._get_length_for_leg(leg)
         # Just use the first scrape-off layer for now
-        point, _ = find_point_along_wire_at_length(sols[0], leg_length)
+        point = find_point_along_wire_at_length(sols[0], leg_length)
 
         # Create some vertical targets for now. Eventually the target
         # angle will be derived from the grazing-angle parameter
