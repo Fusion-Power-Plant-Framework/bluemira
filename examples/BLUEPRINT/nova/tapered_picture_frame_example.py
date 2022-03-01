@@ -48,7 +48,7 @@ params = [
     ["tk_tf_insgap", "TF coil WP insertion gap", 0.0, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
     ["r_tf_in", "Inner Radius of the TF coil inboard leg", 0.176, "m", None, "PROCESS"],
     ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
-    ['TF_ripple_limit', 'TF coil ripple limit', 1.0, 'dimensionless', None, 'Input'],
+    ['TF_ripple_limit', 'TF coil ripple limit', 1.0, '%', None, 'Input'],
     ["npts", "Number of points", 200, "dimensionless", "Used for vessel and plasma", "Input"],
     ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
     ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],

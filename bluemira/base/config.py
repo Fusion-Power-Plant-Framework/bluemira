@@ -51,7 +51,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['n_PF', 'Number of PF coils', 6, 'dimensionless', None, 'Input'],
         ['n_CS', 'Number of CS coil divisions', 5, 'dimensionless', None, 'Input'],
-        ['TF_ripple_limit', 'TF coil ripple limit', 0.6, 'dimensionless', None, 'Input'],
+        ['TF_ripple_limit', 'TF coil ripple limit', 0.6, '%', None, 'Input'],
         ['Av', 'Reactor availability', 0.3, 'dimensionless', None, 'Input'],
         ['A', 'Plasma aspect ratio', 3.1, 'dimensionless', None, 'Input'],
         ['R_0', 'Major radius', 9, 'm', None, 'Input'],

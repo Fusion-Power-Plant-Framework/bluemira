@@ -45,7 +45,7 @@ params = [
     ["tk_tf_ins", "TF coil ground insulation thickness", 0.008, "m", None, "Input"],
     ["tk_tf_insgap", "TF coil WP insertion gap", 1.0E-7, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
     ["r_tf_in", "Inboard radius of the TF coil inboard leg", 0.148, "m", None, "PROCESS"],
-    ["TF_ripple_limit", "Ripple limit constraint", 0.65, "dimensionless", None, "Input"],
+    ["TF_ripple_limit", "Ripple limit constraint", 0.65, "%", None, "Input"],
     ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.75, "m", None, "PROCESS"],
     ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
     ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],

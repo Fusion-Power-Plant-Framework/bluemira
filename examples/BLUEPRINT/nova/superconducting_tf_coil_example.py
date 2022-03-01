@@ -49,7 +49,7 @@ params = [
     ["tk_tf_insgap", "TF coil WP insertion gap", 1.0E-7, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
     ["r_tf_in", "Inboard radius of the TF coil inboard leg", 0.148, "m", None, "PROCESS"],
     ["tf_wp_depth", 'TF coil winding pack depth (in y)', 0.3644, 'm', 'Including insulation', 'PROCESS'],
-    ["ripple_limit", "Ripple limit constraint", 0.6, "dimensionless", None, "Input"],
+    ["ripple_limit", "Ripple limit constraint", 0.6, "%", None, "Input"],
     ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
     ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
     ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'PROCESS'],

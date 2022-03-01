@@ -110,12 +110,16 @@ class TestUnitify:
     def test_convert_string_to_unit(self):
         uf = _unitify("MW")
         pu = Unit("MW")
+
         assert isinstance(uf, Unit)
         assert isinstance(pu, Unit)
         assert uf == pu
 
-        with pytest.raises(NotImplementedError):
-            _unitify("M%")
+        mperc = _unitify("M%")
+        mperc_u = Unit("M%")
+        assert isinstance(mperc, Unit)
+        assert isinstance(mperc_u, Unit)
+        assert mperc == mperc_u
 
         with pytest.raises(TypeError):
             _unitify(None)
@@ -428,7 +432,7 @@ class TestParameterFrame:
             "TF_ripple_limit",
             "TF coil ripple limit",
             0.6,
-            "dimensionless",
+            "%",
             None,
             "Input",
             {"PROCESS": ParameterMapping("ripmax", True, False)},

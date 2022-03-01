@@ -114,7 +114,7 @@
   "TF_ripple_limit": {
     "name": "TF coil ripple limit",
     "value": 0.6,
-    "unit": "dimensionless",
+    "unit": "%",
     "description": null,
     "source": "Input",
     "mapping": {

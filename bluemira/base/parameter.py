@@ -62,8 +62,6 @@ def _unitify(unit: Union[str, Unit]) -> Unit:
     if isinstance(unit, Unit):
         return unit
     if isinstance(unit, str):
-        if "%" in unit:
-            raise NotImplementedError("Modification needed to support percentages")
         return Unit(unit)
     raise TypeError(f"Unknown unit type {type(unit)}")
 

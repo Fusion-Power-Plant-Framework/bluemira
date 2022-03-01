@@ -400,7 +400,7 @@ class BalanceOfPlant(ReactorSystem):
              ['P_T', 'Tritium plant power', p_t_plant, 'MW', None, 'BLUEPRINT'],
              ['P_MAG', 'Magnet power', p_mag, 'MW', None, 'BLUEPRINT'],
              ['P_oth', 'Miscellaneous power', p_other, 'MW', None, 'BLUEPRINT'],
-             ['eta_plant', 'Global plant efficiency', etaplant, 'dimensionless', None, 'BLUEPRINT']]
+             ['eta_plant', 'Global plant efficiency', etaplant * 100, '%', None, 'BLUEPRINT']]
         # fmt: on
 
         self.add_parameters(p)
