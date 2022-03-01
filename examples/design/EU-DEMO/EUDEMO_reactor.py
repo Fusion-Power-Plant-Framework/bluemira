@@ -39,6 +39,7 @@ from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
+from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import plot_PROCESS
 from bluemira.codes.plasmod.mapping import (  # noqa: N812
     create_mapping as create_PLASMOD_mappings,
@@ -487,6 +488,7 @@ component = Component("Segment View")
 plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
+thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shield")
 component.add_child(plasma_builder.build_xyz(degree=270))
 component.add_child(tf_coils_builder.build_xyz(degree=270))
 component.add_child(pf_coils_builder.build_xyz(degree=270))
