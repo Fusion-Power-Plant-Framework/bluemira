@@ -180,18 +180,18 @@ class TestSTEquilibrium:
             convergence=criterion,
         )
         fbe_iterator()
-        self._test_equilibrium_good(eq, psi_rtol=1e-3, li_rtol=1e-8)
+        self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-2)
 
         # Verify by removing symmetry constraint and checking convergence
         eq.force_symmetry = False
         eq.set_grid(grid)
         fbe_iterator()
         # I probably exported the eq before it was regridded without symmetry..
-        self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-4)
+        self._test_equilibrium_good(eq, psi_rtol=1e-1, li_rtol=1e-3)
 
     def _test_equilibrium_good(self, eq, psi_rtol, li_rtol):
         lcfs_area = eq.get_LCFS().area
-        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area)
+        assert np.isclose(self.eq_blueprint.get_LCFS().area, lcfs_area, rtol=1e-3)
 
         li_bp = calc_li(self.eq_blueprint)
         assert np.isclose(li_bp, calc_li(eq), rtol=li_rtol)

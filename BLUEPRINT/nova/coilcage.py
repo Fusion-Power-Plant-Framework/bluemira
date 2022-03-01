@@ -359,7 +359,7 @@ class HelmholtzCage:
         l_vector = 0
         for i in range(len(self.bsl.ref_loop) - 1):
             l_vector += np.dot(vec_potential[i], self.bsl.ref_d_l.T[i])
-        stored_energy = 0.5 * self.current ** 2 * self.n_TF * l_vector
+        stored_energy = 0.5 * self.current**2 * self.n_TF * l_vector
         return stored_energy
 
     def tf_forces(self, point, current, f_bx, f_bz, method="function"):

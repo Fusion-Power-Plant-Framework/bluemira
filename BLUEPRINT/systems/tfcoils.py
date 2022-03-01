@@ -182,7 +182,6 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             read_directory=self.inputs["read_folder"],
             write_directory=self.inputs["write_folder"],
         )
-
         # The outer point of the TF coil inboard in the mid-plane
         r_tf_inboard_out = (
             self.params.r_tf_in
@@ -649,12 +648,16 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             self.cage.set_coil(xloop["cl"])  # update coil cage
         return xloop
 
-    def optimise(self, verbose=True, **kwargs):
-        """
-        Carry out the optimisation of the TF coil centreline shape.
+    def build(self, callback=None, verbose=True, **kwargs):
+        """Build the TF coil with or without optimisation of the TF coil
+        centreline shape (depending on the callback). No optimization
+        is performed unless a callback is passed!
 
         Parameters
         ----------
+        callback: callable (optional)
+            A routine which, if present, performs the optimisation. If
+            none is provided (default) then no optimisation is performed.
         verbose: bool (default = True)
             Verbosity of the scipy optimiser
 
@@ -670,6 +673,7 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
             The number of current filaments in the radial direction
         nrippoints: int
             The number of points on the separatrix to check for ripple
+
         """
         # Handle kwargs and update corresponding attributes
         for attr in ["ripple", "ripple_limit", "nrippoints"]:
@@ -690,7 +694,10 @@ class ToroidalFieldCoils(Meshable, ReactorSystem):
         # Perform optimisation with geometric and magnetic constraints
         self.ripple = True
         self.shp.args = (self.ripple, self.ripple_limit)
-        self.shp.optimise(verbose=verbose, **kwargs)
+
+        # Perform an optimisation (if desired)
+        if callback is not None:
+            callback(self, verbose, kwargs)
 
         self.shp.write()
         self.cage.loop_ripple()

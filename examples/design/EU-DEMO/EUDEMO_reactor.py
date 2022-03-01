@@ -28,12 +28,14 @@ import pprint as pprint
 
 import matplotlib.pyplot as plt
 
+from bluemira.base.components import Component
 from bluemira.base.config import Configuration
 from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter import ParameterMappingEncoder
-from bluemira.builders.EUDEMO.plasma import PlasmaComponent
+from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
+from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
@@ -43,7 +45,7 @@ from bluemira.codes.plasmod.mapping import (  # noqa: N812
 )
 from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
 from bluemira.display.displayer import ComponentDisplayer
-from bluemira.equilibria.run import AbInitioEquilibriumProblem
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.utilities.tools import json_writer
 
 # %%[markdown]
@@ -479,3 +481,13 @@ thermal_shield.get_component("xz").plot_2d(ax=ax)
 
 # %%
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
+
+# %%
+component = Component("Segment View")
+plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
+tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
+pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
+component.add_child(plasma_builder.build_xyz(degree=270))
+component.add_child(tf_coils_builder.build_xyz(degree=270))
+component.add_child(pf_coils_builder.build_xyz(degree=270))
+component.show_cad()

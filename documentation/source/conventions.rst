@@ -19,6 +19,18 @@ systems, the radial coordinate in the cylindrical coordinate system is denoted w
     system (:math:`r, \theta, \phi`, red), and cylindrical coordinate system
     (:math:`x, \phi, z`, blue).
 
+Tokamaks are largely axisymmetric devices and usually have some form of cyclic symmetry.
+In ``bluemira``, by convention, tokamak sectors are numbered :math:`1 .. n`, with the first
+sector ranging from :math:`0 .. 360/n_{TF}` degrees, and subsequent sectors in increasing
+number, going anti-clockwise as seen from above the machine:
+
+
+.. figure:: sectors.png
+    :name: fig:sectors
+
+    Indicative sector angles and naming convention (green boxes) in ``bluemira``
+
+
 Unit convention
 ^^^^^^^^^^^^^^^
 

@@ -29,12 +29,18 @@ import pytest
 
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
+    BotDomeFlatInnerCurvedPictureFrame,
+    BotDomeTaperedInnerCurvedPictureFrame,
+    FullDomeFlatInnerCurvedPictureFrame,
+    FullDomeTaperedInnerCurvedPictureFrame,
     GeometryParameterisation,
     PictureFrame,
     PolySpline,
     PrincetonD,
     SextupleArc,
     TaperedPictureFrame,
+    TopDomeFlatInnerCurvedPictureFrame,
+    TopDomeTaperedInnerCurvedPictureFrame,
     TripleArc,
 )
 from bluemira.geometry.tools import make_polygon
@@ -198,9 +204,52 @@ class TestTaperedPictureFrame:
         p = TaperedPictureFrame()
         wire = p.create_shape()
         assert len(wire._boundary) == 4
-        p.adjust_variable("r", value=0)
+        p.adjust_variable("ri", value=0)
+        p.adjust_variable("ro", value=0)
         wire = p.create_shape()
-        assert len(wire._boundary) == 2
+        assert len(wire._boundary) == 4
+
+
+class TestFullDomeFlatInnerCurvedPictureFrame:
+    def test_length(self):
+        p = FullDomeFlatInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 55.64519, rtol=1e-4, atol=1e-5)
+
+
+class TestFullDomeTaperedInnerCurvedPictureFrame:
+    def test_length(self):
+        p = FullDomeTaperedInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 53.732, rtol=1e-4, atol=1e-5)
+
+
+class TestTopDomeFlatInnerCurvedPictureFrame:
+    def test_length(self):
+        p = TopDomeFlatInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 51.707, rtol=1e-4, atol=1e-5)
+
+
+class TestBotDomeTaperedInnerCurvedPictureFrame:
+    def test_length(self):
+        p = BotDomeTaperedInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 49.794, rtol=1e-4, atol=1e-5)
+
+
+class TestTopDomeTaperedInnerCurvedPictureFrame:
+    def test_length(self):
+        p = TopDomeTaperedInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 49.794, rtol=1e-4, atol=1e-5)
+
+
+class TestBotDomeFlatInnerCurvedPictureFrame:
+    def test_length(self):
+        p = BotDomeFlatInnerCurvedPictureFrame()
+        wire = p.create_shape()
+        assert np.isclose(wire.length, 51.707, rtol=1e-4, atol=1e-5)
 
 
 class TestSextupleArc:

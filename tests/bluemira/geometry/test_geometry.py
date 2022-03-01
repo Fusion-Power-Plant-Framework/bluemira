@@ -111,7 +111,7 @@ class TestGeometry:
         assert eccentricity == edge.Curve.Eccentricity
 
         # theoretical length
-        expected_length = 4 * major_radius * ellipe(eccentricity ** 2)
+        expected_length = 4 * major_radius * ellipe(eccentricity**2)
         assert pytest.approx(edge.Length) == expected_length
 
         # WARNING: it seems that FreeCAD implements in a different way
@@ -525,7 +525,7 @@ class TestGeometry:
         solid_2 = revolve_shape(face_2, degree=360)
         solid = boolean_cut(solid, solid_2)[0]
 
-        true_volume = 2 * np.pi * x_c * (4 ** 2 - 2 ** 2)
+        true_volume = 2 * np.pi * x_c * (4**2 - 2**2)
         assert solid.is_valid()
         assert np.isclose(solid.volume, true_volume)
 
@@ -544,7 +544,7 @@ class TestGeometry:
 
         solid = boolean_cut(solid, solid_2)[0]
 
-        true_volume = 2 * np.pi * x_c * (np.pi * (radius ** 2 - (0.5 * radius) ** 2))
+        true_volume = 2 * np.pi * x_c * (np.pi * (radius**2 - (0.5 * radius) ** 2))
         assert solid.is_valid()
         assert np.isclose(solid.volume, true_volume)
 
@@ -685,7 +685,7 @@ class TestShapeTransformations:
         scale_factor = 3
         area = self.face.area
         self.face.scale(scale_factor)
-        assert np.isclose(self.face.area, scale_factor ** 2 * area)
+        assert np.isclose(self.face.area, scale_factor**2 * area)
         assert self.face.label == "test_face"
         assert self.face.boundary[0].label == "test_wire"
 
@@ -693,7 +693,7 @@ class TestShapeTransformations:
         scale_factor = 3
         volume = self.solid.volume
         self.solid.scale(scale_factor)
-        assert np.isclose(self.solid.volume, scale_factor ** 3 * volume)
+        assert np.isclose(self.solid.volume, scale_factor**3 * volume)
         assert self.solid.label == "test_solid"
 
 

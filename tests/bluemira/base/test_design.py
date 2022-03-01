@@ -29,7 +29,7 @@ import pytest
 
 import tests
 from bluemira.base.design import Design
-from bluemira.base.error import BuilderError
+from bluemira.base.error import DesignError
 
 
 class TestDesign:
@@ -85,5 +85,5 @@ class TestDesign:
     def test_params_validation(self):
         bad_params = copy.deepcopy(self.params)
         bad_params.pop("Name")
-        with pytest.raises(BuilderError):
+        with pytest.raises(DesignError):
             Design(bad_params, self.build_config)

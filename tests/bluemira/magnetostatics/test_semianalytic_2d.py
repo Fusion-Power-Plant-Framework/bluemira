@@ -113,7 +113,7 @@ class TestSemiAnalyticBxBz:
         bz_array = semianalytic_Bz(xc, zc, x, z, dx, dz)
         bx_array *= current
         bz_array *= current
-        bp = np.sqrt(bx_results ** 2 + bz_results ** 2)
+        bp = np.sqrt(bx_results**2 + bz_results**2)
 
         assert np.allclose(bp_fe, bp, rtol=1e-2)
         assert np.allclose(bp_paper, bp, rtol=1e-4)

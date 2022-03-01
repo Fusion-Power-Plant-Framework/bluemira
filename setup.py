@@ -67,6 +67,7 @@ dev_requires = [
     "flake8",  # 4.0.1
     "flake8-bandit",  # 2.1.2
     "flake8-docstrings",  # 1.6.0
+    "flake8-absolute-import",
     "pep8-naming",  # 0.12.1
     "pre-commit",  # 2.16.0
     "pytest",  # 6.2.5

@@ -36,7 +36,7 @@ from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import (
     boolean_cut,
     boolean_fuse,
@@ -179,7 +179,7 @@ class ThermalShieldBuilder(Builder):
         Build the x-y components of the thermal shield.
         """
         # Cryostat thermal shield
-        mid_plane = BluemiraPlane()
+        mid_plane = BluemiraPlacement()
         intersections = slice_shape(self._cts_face.boundary[0], mid_plane)
         r_values = np.array(intersections)[:, 0]
         r_in = np.min(r_values)

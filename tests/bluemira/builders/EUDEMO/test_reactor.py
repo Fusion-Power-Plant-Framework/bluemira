@@ -35,7 +35,8 @@ import tests
 from bluemira.base.components import Component
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import get_log_level, set_log_level
-from bluemira.builders.EUDEMO.plasma import PlasmaComponent
+from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
+from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder, TFCoilsComponent
 from bluemira.geometry.coordinates import Coordinates
@@ -169,3 +170,14 @@ class TestEUDEMO:
                 self.component.get_component("TF Coils").get_component("xyz"),
             ],
         ).show_cad()
+
+    def test_show_segment_cad(self):
+        component = Component("Segment View")
+        plasma_builder: PlasmaBuilder = self.reactor.get_builder("Plasma")
+        tf_coils_builder: TFCoilsBuilder = self.reactor.get_builder("TF Coils")
+        pf_coils_builder: PFCoilsBuilder = self.reactor.get_builder("PF Coils")
+        component.add_child(plasma_builder.build_xyz(degree=270))
+        component.add_child(tf_coils_builder.build_xyz(degree=270))
+        component.add_child(pf_coils_builder.build_xyz(degree=270))
+        if tests.PLOTTING:
+            component.show_cad()

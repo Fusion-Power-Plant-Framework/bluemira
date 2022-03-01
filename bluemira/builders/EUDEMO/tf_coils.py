@@ -40,7 +40,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -397,17 +397,36 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         return component
 
-    def build_xyz(self) -> Component:
+    def build_xyz(self, degree: float = 360.0) -> Component:
         """
         Build the x-y-z components of the TF coils.
+
+        Parameters
+        ----------
+        degree: float
+            The angle [°] around which to build the components, by default 360.0.
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in 3D (xyz).
         """
         component = Component("xyz")
+
+        # Minimum angle per TF coil (nudged by a tiny length since we start counting a
+        # sector at theta=0). This means we can draw a sector as 360 / n_TF and get one
+        # TF coil per sector. Python represents floats with 16 significant figures before
+        # getting round off, so adding on 1e-13 works here, in case someone sets n_TF
+        # to be 2.
+        min_tf_deg = (360.0 / self._params.n_TF.value) + 1e-13
+        n_tf_draw = min(int(degree // min_tf_deg) + 1, self._params.n_TF.value)
+        degree = (360.0 / self._params.n_TF.value) * n_tf_draw
 
         # Winding pack
         wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
-        sectors = circular_pattern_component(winding_pack, self._params.n_TF.value)
+        sectors = circular_pattern_component(winding_pack, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         # Insulation
@@ -417,7 +436,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         ins_solid = boolean_cut(solid, wp_solid)[0]
         insulation = PhysicalComponent("Insulation", ins_solid)
         insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        sectors = circular_pattern_component(insulation, self._params.n_TF.value)
+        sectors = circular_pattern_component(insulation, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         # Casing
@@ -430,7 +449,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         x_max = bb.x_max
 
         half_angle = np.pi / self.params.n_TF.value
-        y_in = self.params.r_tf_in * np.sin(half_angle)
+        y_in = self.params.r_tf_in * np.tan(half_angle)
         inner_xs_rect = make_polygon(
             [[x_min, x_max, x_max, x_min], [-y_in, -y_in, y_in, y_in], [0, 0, 0, 0]],
             closed=True,
@@ -454,7 +473,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         # This is because the bounding box of a solid is not to be trusted
         cut_wires = slice_shape(
-            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         cut_wires.sort(key=lambda wire: wire.length)
         boundary = cut_wires[-1]
@@ -469,8 +488,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
 
         # Join the straight leg to the curvy bits
-        bb = inboard_casing.bounding_box
-        x_min = bb.x_min
+        x_min = np.min(centreline_points.x)
         idx = np.where(np.isclose(centreline_points.z, z_max_cl))[0]
         x_turn_top = np.min(centreline_points.x[idx])
         idx = np.where(np.isclose(centreline_points.z, z_min_cl))[0]
@@ -502,6 +520,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         joiner_top = boolean_cut(joiner_top, cutter)[0]
         joiner_bot = boolean_cut(joiner_bot, cutter)[0]
 
+        # Cut away straight sweep before fusing to protect against degenerate faces
+        # Keep the largest piece
+        pieces = boolean_cut(solid, inboard_casing)
+        pieces.sort(key=lambda x: x.volume)
+        solid = pieces[-1]
+
         case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bot])
         outer_ins_solid = BluemiraSolid(ins_solid.boundary[0])
         case_solid_hollow = boolean_cut(case_solid, outer_ins_solid)[0]
@@ -509,7 +533,7 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
 
         casing = PhysicalComponent("Casing", case_solid_hollow)
         casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
-        sectors = circular_pattern_component(casing, self._params.n_TF.value)
+        sectors = circular_pattern_component(casing, n_tf_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         return component
@@ -572,9 +596,9 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
             + self.params.tf_wp_width
             + self.params.tk_tf_front_ib
         )
-        half_angle = np.pi / self.params.n_TF.value
-        y_in = x_in * np.sin(half_angle)
-        y_out = x_out * np.sin(half_angle)
+        tan_half_angle = np.tan(np.pi / self.params.n_TF.value)
+        y_in = x_in * tan_half_angle
+        y_out = x_out * tan_half_angle
         inboard_wire = make_polygon(
             [
                 [x_in, x_out, x_out, x_in],
@@ -611,12 +635,12 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         Make the casing x-z cross-section from a 3-D volume.
         """
         wires = slice_shape(
-            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+            solid, BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         wires.sort(key=lambda wire: wire.length)
         if len(wires) != 4:
             raise BuilderError(
-                "Unexpected TF coil x-z cross-section. It is likely that a previous"
+                "Unexpected TF coil x-z cross-section. It is likely that a previous "
                 "boolean cutting operation failed to create a hollow solid."
             )
 
