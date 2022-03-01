@@ -219,7 +219,7 @@ build_config = {
         "runmode": "read",  # ["run", "read", "mock"]
     },
     "TF Coils": {
-        "runmode": "run",  # ["run", "read", "mock"]
+        "runmode": "read",  # ["run", "read", "mock"]
         "param_class": "TripleArc",
         "variables_map": {
             "x1": {
@@ -492,4 +492,5 @@ thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shie
 component.add_child(plasma_builder.build_xyz(degree=270))
 component.add_child(tf_coils_builder.build_xyz(degree=270))
 component.add_child(pf_coils_builder.build_xyz(degree=270))
+component.add_child(thermal_shield_builder.build_xyz(degree=270))
 component.show_cad()

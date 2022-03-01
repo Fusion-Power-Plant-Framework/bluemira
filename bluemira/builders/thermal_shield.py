@@ -199,16 +199,18 @@ class ThermalShieldBuilder(Builder):
         """
         Build the x-y-z components of the thermal shield.
         """
-        n_ts_draw = max(1, int(degree // self._params.n_TF.value))
+        n_ts_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
         degree = (360.0 / self._params.n_TF.value) * n_ts_draw
         # Cryostat thermal shield
         component = Component("xyz")
         cts_face = self._cts_face.deepcopy()
         base = (0, 0, 0)
         direction = (0, 0, 1)
-        cts_face.rotate(base=base, direction=direction, degree=-180 / self.params.n_TF)
         cts = revolve_shape(
-            cts_face, base=base, direction=direction, degree=360 / self.params.n_TF
+            cts_face,
+            base=base,
+            direction=direction,
+            degree=360 / self._params.n_TF.value,
         )
         cryostat_ts = PhysicalComponent("Cryostat TS", cts)
         cryostat_ts.display_cad_options.color = BLUE_PALETTE["TS"][0]
