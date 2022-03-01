@@ -149,7 +149,7 @@ class BluemiraWire(BluemiraGeo):
 
     def discretize(
         self, ndiscr: int = 100, byedges: bool = False, dl: float = None
-    ) -> np.ndarray:
+    ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
         segment step.
