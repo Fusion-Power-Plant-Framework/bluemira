@@ -1646,7 +1646,7 @@
   "tf_fluence": {
     "name": "Insulation fluence limit for ITER equivalent to 10 MGy",
     "value": 3.2e+21,
-    "unit": "N/m^2",
+    "unit": "1/m^2",
     "description": "http://ieeexplore.ieee.org/document/6374236/",
     "source": "Input",
     "mapping": null

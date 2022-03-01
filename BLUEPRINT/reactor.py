@@ -1162,7 +1162,7 @@ class Reactor(ReactorSystem):
         p_el_net, eta = self.BOP.build()
         params = [
             ["P_el_net", "Net electric power", p_el_net, "MW", None, "BLUEPRINT"],
-            ["eta_plant", "Plant efficiency", eta, "dimensionless", None, "BLUEPRINT"],
+            ["eta_plant", "Plant efficiency", eta * 100, "%", None, "BLUEPRINT"],
         ]
         self.add_parameters(params)
         if plot:
