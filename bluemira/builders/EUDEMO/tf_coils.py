@@ -38,6 +38,7 @@ from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.display import plot_2d, show_cad
+from bluemira.display.displayer import DisplayCADOptions
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
@@ -425,13 +426,8 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         degree = (360.0 / self._params.n_TF.value) * n_tf_draw
 
         # Winding pack
-        if not _wire_edges_tangent(self._centreline):
-            wires = []
-            for wire in self._centreline._wires:
-                plot_2d(wire)
 
-        else:
-            wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
+        wp_solid = sweep_shape(self._wp_cross_section, self._centreline)
         winding_pack = PhysicalComponent("Winding pack", wp_solid)
         winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
         sectors = circular_pattern_component(winding_pack, n_tf_draw, degree=degree)
@@ -545,6 +541,58 @@ class TFCoilsBuilder(OptimisedShapeBuilder):
         component.add_children(sectors, merge_trees=True)
 
         return component
+
+    def build_nontangent_xyz(self, centreline, xs):
+        """
+        Builds the xyz components for the TF coil for shapes with sharp corners
+
+        Returns
+        -------
+        component: Component
+            The component grouping the results in 3D (xyz).
+        """
+        wp_wires = []
+        for wp_wire in self._centreline.boundary:
+
+            print(wp_wire.label)
+            plot_2d(wp_wire)
+            x_s = deepcopy(self._wp_cross_section)
+            x_s_xmin = x_s.bounding_box.x_min
+            sweep_start = tuple(wp_wire.discretize(100)[:, 0].reshape(1, -1)[0])
+            x_shift = x_s_xmin - sweep_start[0]
+            z_shift = x_s.bounding_box.z_min
+
+            if not _wire_edges_tangent(BluemiraWire([wire_prev, wp_wire])):
+                if wp_wire.label in ["top_limb"]:
+
+                    x_s.rotate(base=x_s.center_of_mass, direction=(0, 1, 0), degree=90)
+                    x_s.translate((0, 0, sweep_start[2]))
+                    x_s.translate((x_shift, 0, 0))
+                elif wp_wire.label in ["bot_limb"]:
+
+                    x_s.rotate(base=x_s.center_of_mass, direction=(0, 1, 0), degree=90)
+                    x_s.translate((0, 0, sweep_start[2]))
+                    x_s.translate((x_shift, 0, 0))
+
+                elif wp_wire.label in ["outer_limb"]:
+
+                    x_s.rotate(base=x_s.center_of_mass, direction=(0, 1, 0), degree=90)
+                    x_s.translate(
+                        (
+                            sweep_start[0] - x_s.center_of_mass.x,
+                            0,
+                            -x_s.center_of_mass.z + sweep_start[2],
+                        )
+                    )
+                    x_s.translate((0, 0, x_s.bounding_box.x_max - sweep_start[0]))
+
+                wp_wire_cad = sweep_shape(x_s, wp_wire, label=wp_wire.label)
+            else:
+                wp_wire_cad = sweep_shape(x_s, wp_wire, label=wp_wire.label)
+            wire_prev = wp_wire
+
+            wp_wires.append(wp_wire_cad)
+            show_cad(wp_wires, DisplayCADOptions(color="blue", transparency=0.1))
 
     def _make_field_solver(self):
         """

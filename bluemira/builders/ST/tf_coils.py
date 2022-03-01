@@ -36,8 +36,10 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.builders.shapes import OptimisedShapeBuilder
+from bluemira.codes._freecadapi import _wire_edges_tangent
+from bluemira.display import plot_2d, show_cad
+from bluemira.display.displayer import DisplayCADOptions
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.display.plotter import plot_2d
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeometryOptimisationProblem
 from bluemira.geometry.parameterisations import (

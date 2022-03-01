@@ -45,7 +45,7 @@ from bluemira.codes.plasmod.mapping import (  # noqa: N812
 )
 from bluemira.codes.process.mapping import mappings as PROCESS_mappings  # noqa: N812
 from bluemira.display.displayer import ComponentDisplayer
-from bluemira.equilibria.run import AbInitioEquilibriumProblem
+from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
 from bluemira.utilities.tools import json_writer
 
 # %%[markdown]
@@ -215,16 +215,19 @@ build_config = {
         "runmode": "mock",  # ["run", "read", "mock"]
     },
     "Plasma": {
-        "runmode": "read",  # ["run", "read", "mock"]
+        "runmode": "mock",  # ["run", "read", "mock"]
     },
     "TF Coils": {
         "runmode": "run",  # ["run", "read", "mock"]
-        "param_class": "PictureFrame",
+        "param_class": "FullDomeFlatInnerCurvedPictureFrame",
         "variables_map": {
-            "x1": {"value": "r_tf_in_centre", "fixed": True},
-            "x2": {"value": 15, "lower_bound": 9},
-            "z1": {"value": 15, "lower_bound": 13},
-            "z2": {"value": -15, "upper_bound": -13},
+            "x_mid": {"value": "r_tf_in_centre", "fixed": True},
+            "x_curve_start": {"value": 1.8, "fixed": True},
+            "x_out": {"value": 15, "lower_bound": 12, "upper_bound": 16},
+            "z_mid_up": {"value": 7.5, "fixed": True},
+            "z_mid_down": {"value": -7.5, "fixed": True},
+            "z_max_up": {"value": 9, "lower_bound": 8},
+            "z_max_down": {"value": -9, "upper_bound": -8},
         },
         "algorithm_name": "COBYLA",
         "problem_settings": {
