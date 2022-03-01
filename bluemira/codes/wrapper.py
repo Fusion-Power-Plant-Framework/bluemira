@@ -27,8 +27,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from bluemira.codes import process
-from bluemira.codes.error import CodesError
 from bluemira.codes.interface import FileProgramInterface
 from bluemira.codes.utilities import get_code_interface
 
