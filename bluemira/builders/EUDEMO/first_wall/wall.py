@@ -22,10 +22,9 @@
 Define shapes & builders for the wall components of EUDEMO's first wall
 """
 import copy
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
-from scipy.spatial import ConvexHull
 
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Component
@@ -148,26 +147,24 @@ class MinimiseLength(GeometryOptimisationProblem):
         self,
         parameterisation: GeometryParameterisation,
         optimiser: Optimiser,
-        keep_out_zones: Iterable[BluemiraWire] = None,
+        keep_out_zone: BluemiraWire = None,
         n_koz_points: int = 100,
         koz_con_tol: float = 1e-3,
     ):
         super().__init__(parameterisation, optimiser)
 
         self.n_koz_points = n_koz_points
-        self.keep_out_zones = keep_out_zones
-        if self.keep_out_zones is not None:
+        self.keep_out_zone = keep_out_zone
+        if self.keep_out_zone is not None:
             self.koz_points = self._make_koz_points(
-                self.keep_out_zones, self.n_koz_points
+                self.keep_out_zone, self.n_koz_points
             )
             self.optimiser.add_ineq_constraints(
                 self.f_constrain_koz,
                 koz_con_tol * np.ones(self.n_koz_points),
             )
 
-    def _make_koz_points(
-        self, keep_out_zones: Iterable[BluemiraWire], n_points: int
-    ) -> np.ndarray:
+    def _make_koz_points(self, keep_out_zone: BluemiraWire, n_points: int) -> np.ndarray:
         """
         Generate a set of points that combine the given keep-out-zones,
         to use as constraints in the optimisation problem.
@@ -177,21 +174,7 @@ class MinimiseLength(GeometryOptimisationProblem):
         coords: np.ndarray[2, n_points]
             Coordinate of the keep-out-zone points in the xz plane.
         """
-        shape_discretizations = []
-        for zone in keep_out_zones:
-            d = zone.discretize(byedges=True, ndiscr=n_points).xz
-            shape_discretizations.append(d)
-        coords = np.hstack(shape_discretizations)
-        hull = ConvexHull(coords.T)
-
-        # The hull vertices do not give a closed shape, so add the first
-        # point to the end of the array to close it.
-        # If we do not close the shape, we may not get the results we
-        # expect from the signed distance function
-        hull_coords = np.empty((coords.shape[0], len(hull.vertices) + 1))
-        hull_coords[:, 0:-1] = coords[:, hull.vertices]
-        hull_coords[:, -1] = coords[:, hull.vertices[0]]
-        return hull_coords
+        return keep_out_zone.discretize(byedges=True, ndiscr=n_points).xz
 
     def f_constrain_koz(self, constraint, x, grad):
         """
@@ -252,23 +235,23 @@ class WallBuilder(OptimisedShapeBuilder):
         self,
         params: Dict[str, Any],
         build_config: BuildConfig,
-        keep_out_zones: Iterable[BluemiraWire] = None,
+        keep_out_zone: BluemiraWire = None,
     ):
         # boundary should be set by run/mock/read, it is used by the build methods
         self.boundary: BluemiraWire
-        # _keep_out_zones should be set by reinitialize
-        self._keep_out_zones: Iterable[BluemiraWire]
+        # _keep_out_zone should be set by reinitialize
+        self._keep_out_zone: Optional[BluemiraWire]
 
-        super().__init__(params, build_config, keep_out_zones=keep_out_zones)
+        super().__init__(params, build_config, keep_out_zone=keep_out_zone)
 
     def reinitialise(
-        self, params: Dict[str, Any], keep_out_zones: Iterable[BluemiraWire] = None
+        self, params: Dict[str, Any], keep_out_zone: BluemiraWire = None
     ) -> None:
         """
         Initialise the state of this builder ready for a new run.
         """
         super().reinitialise(params)
-        self._keep_out_zones = keep_out_zones
+        self._keep_out_zone = keep_out_zone
 
     def read(self):
         """Read the result of the design problem from file."""
@@ -278,7 +261,7 @@ class WallBuilder(OptimisedShapeBuilder):
         """
         Run the design problem for wall builder.
         """
-        super().run(keep_out_zones=self._keep_out_zones)
+        super().run(keep_out_zone=self._keep_out_zone)
         self.boundary = self._shape.create_shape()
 
     def mock(self):

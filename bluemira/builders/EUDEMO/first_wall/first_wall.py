@@ -23,9 +23,10 @@ Builders for the first wall of the reactor, including divertor
 """
 
 from copy import deepcopy
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Sequence
 
 import numpy as np
+from scipy.spatial import ConvexHull
 
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
@@ -176,11 +177,11 @@ class FirstWallBuilder(Builder):
         build_config.update({"label": self.COMPONENT_WALL, "name": self.COMPONENT_WALL})
 
         # Keep-out zone to constrain the wall around the plasma
-        keep_out_zones = self._make_wall_keep_out_zones(geom_offset=0.2, psi_n=1.05)
+        keep_out_zone = self._make_wall_keep_out_zone(geom_offset=0.2, psi_n=1.05)
 
         # Build a full, closed, wall shape
         builder = WallBuilder(
-            params, build_config=build_config, keep_out_zones=keep_out_zones
+            params, build_config=build_config, keep_out_zone=keep_out_zone
         )
         wall = builder()
 
@@ -203,7 +204,7 @@ class FirstWallBuilder(Builder):
         return wall
 
     def _build_divertor(
-        self, params: Dict[str, Any], build_config, x_lims: Iterable[float]
+        self, params: Dict[str, Any], build_config, x_lims: Sequence[float]
     ) -> Component:
         """
         Build divertor component below the first x-point in the
@@ -217,14 +218,24 @@ class FirstWallBuilder(Builder):
         builder = DivertorBuilder(params, build_config, self.equilibrium, x_lims)
         return builder()
 
-    def _make_wall_keep_out_zones(self, geom_offset, psi_n) -> List[BluemiraWire]:
+    def _make_wall_keep_out_zone(self, geom_offset, psi_n) -> BluemiraWire:
         """
         Create a "keep-out zone" to be used as a constraint in the
         shape optimiser.
         """
         geom_offset_zone = self._make_geometric_keep_out_zone(geom_offset)
         flux_surface_zone = self._make_flux_surface_keep_out_zone(psi_n)
-        return [geom_offset_zone, flux_surface_zone]
+
+        shape_discretizations = []
+        for zone in [geom_offset_zone, flux_surface_zone]:
+            d = zone.discretize(byedges=True, ndiscr=200).xz
+            shape_discretizations.append(d)
+        coords = np.hstack(shape_discretizations)
+
+        hull = ConvexHull(coords.T)
+        hull_coords = np.zeros((3, len(hull.vertices)))
+        hull_coords[(0, 2), :] = coords[:, hull.vertices]
+        return make_polygon(hull_coords, closed=True)
 
     def _make_geometric_keep_out_zone(self, offset: float) -> BluemiraWire:
         """
