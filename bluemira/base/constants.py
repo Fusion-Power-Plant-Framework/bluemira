@@ -169,10 +169,27 @@ def raw_uc(
 
     """
     unit_from, unit_to = ureg.Unit(unit_from), ureg.Unit(unit_to)
-    if unit_from.is_compatible_with("eV") and unit_to in [ureg.kelvin, CELSIUS]:
+    if unit_from.is_compatible_with("eV") and unit_to.is_compatible_with("kelvin"):
         return from_eV(value, to=unit_to, _from=unit_from)
-    elif unit_from in [ureg.kelvin, CELSIUS] and np.any(
-        np.less(value, ABS_ZERO[unit_from])
+    elif (
+        unit_from.is_compatible_with("Pa m^3") and unit_to.is_compatible_with("mol")
+    ) or (
+        unit_from.is_compatible_with("Pa m^3/s") and unit_to.is_compatible_with("mol/s")
+    ):
+        return pam3s_to_mols(value)
+    elif (
+        unit_from.is_compatible_with("mol") and unit_to.is_compatible_with("Pa m^3")
+    ) or (
+        unit_from.is_compatible_with("mol/s") and unit_to.is_compatible_with("Pa m^3/s")
+    ):
+        return mols_to_pam3s(value)
+    elif unit_from.is_compatible_with("kelvin") and np.any(
+        np.less(
+            value,
+            ABS_ZERO.get(
+                unit_from, ureg.Quantity(0, ureg.kelvin).to(unit_from).magnitude
+            ),
+        )
     ):
         raise ValueError("Negative temperature in K specified.")
     return ureg.Quantity(value, unit_from).to(unit_to).magnitude
