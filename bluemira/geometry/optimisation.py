@@ -119,7 +119,9 @@ class MinimiseLength(GeometryOptimisationProblem):
         """The objective function for the optimiser."""
         length = self.calculate_length(x)
         if grad.size > 0:
-            self.optimiser.approx_derivative(self.calculate_length, x, f0=length)
+            grad[:] = self.optimiser.approx_derivative(
+                self.calculate_length, x, f0=length
+            )
         return length
 
     def calculate_length(self, x):
