@@ -103,7 +103,7 @@
   "LPangle": {
     "name": "Lower port inclination angle",
     "value": -30,
-    "unit": "\u00b0",
+    "unit": "°",
     "source": "Input"
   },
   "Name": {
@@ -355,7 +355,7 @@
   "Z_eff": {
     "name": "Effective particle radiation atomic mass",
     "value": 2.2,
-    "unit": "a.u.",
+    "unit": "amu",
     "source": "Input",
     "mapping": {
       "PROCESS": {
@@ -395,7 +395,7 @@
   "bb_min_angle": {
     "name": "Minimum module angle",
     "value": 70,
-    "unit": "\u00b0",
+    "unit": "°",
     "source": "Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany",
     "description": "Sharpest cut of a module possible"
   },
@@ -525,7 +525,7 @@
   "div_graze_angle": {
     "name": "Divertor SOL grazing angle",
     "value": 1.5,
-    "unit": "\u00b0",
+    "unit": "°",
     "source": "Input"
   },
   "div_open": {
@@ -658,7 +658,7 @@
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
     "value": 25,
-    "unit": "\u00b0",
+    "unit": "°",
     "source": "Input"
   },
   "fw_dL_max": {
@@ -1419,7 +1419,7 @@
   "tf_fluence": {
     "name": "Insulation fluence limit for ITER equivalent to 10 MGy",
     "value": 3.2e+21,
-    "unit": "N/m^2",
+    "unit": "1/m^2",
     "source": "Input",
     "description": "http://ieeexplore.ieee.org/document/6374236/"
   },

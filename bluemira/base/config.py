@@ -65,7 +65,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['delta_95', '95th percentile plasma triangularity', 0.333, 'dimensionless', None, 'Input'],
         ['delta', 'Last closed surface plasma triangularity', 0.5, 'dimensionless', None, 'Input'],
         ['T_e', 'Average plasma electron temperature', 13, 'keV', None, 'Input'],
-        ['Z_eff', 'Effective particle radiation atomic mass', 2.2, 'a.u.', None, 'Input'],
+        ['Z_eff', 'Effective particle radiation atomic mass', 2.2, 'amu', None, 'Input'],
         ['res_plasma', 'Plasma resistance', 0, 'ohm', None, 'Calculated'],
         ['V_p', 'Plasma volume', 2400, 'm^3', None, 'Calculated'],
         ['l_i', 'Normalised internal plasma inductance', 0.8, 'dimensionless', None, 'Input'],
@@ -287,7 +287,7 @@ class Configuration(ConfigurationSchema, ParameterFrame):
         ['blk_2_dpa', 'Second blanket life limit (EUROfer)', 50, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['div_dpa', 'Divertor life limit (CuCrZr)', 5, 'dpa', None, 'Input (https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf)'],
         ['vv_dpa', 'Vacuum vessel life limit (SS316-LN-IG)', 3.25, 'dpa', None, 'Input (RCC-Mx or whatever it is called)'],
-        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, 'N/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
+        ['tf_fluence', 'Insulation fluence limit for ITER equivalent to 10 MGy', 3.2e21, '1/m^2', None, 'Input (https://ieeexplore.ieee.org/document/6374236/)'],
 
         # Central solenoid
         ['F_pf_zmax', 'Maximum vertical force on a single PF coil', 450, 'MN', None, 'Input'],

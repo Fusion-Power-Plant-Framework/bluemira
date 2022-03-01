@@ -262,7 +262,7 @@
   "Z_eff": {
     "name": "Effective particle radiation atomic mass",
     "value": 2.2,
-    "unit": "a.u.",
+    "unit": "amu",
     "description": null,
     "source": "Input",
     "mapping": {

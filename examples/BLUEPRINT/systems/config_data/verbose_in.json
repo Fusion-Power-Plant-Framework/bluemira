@@ -163,14 +163,14 @@
   "Z_eff": {
     "name": "Effective particle radiation atomic mass",
     "value": 2.2,
-    "unit": "a.u.",
+    "unit": "amu",
     "description": null,
     "source": "Input"
   },
   "res_plasma": {
     "name": "Plasma resistance",
     "value": 0,
-    "unit": "Ohm",
+    "unit": "ohm",
     "description": null,
     "source": "Calculated"
   },
@@ -359,14 +359,14 @@
   "div_graze_angle": {
     "name": "Divertor SOL grazing angle",
     "value": 1.5,
-    "unit": "\u00b0",
+    "unit": "°",
     "description": null,
     "source": "Input"
   },
   "div_psi_o": {
     "name": "Divertor flux offset",
     "value": 0.5,
-    "unit": "n/a",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input"
   },
@@ -394,7 +394,7 @@
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
     "value": 25,
-    "unit": "\u00c3\u201a\u00c2\u00b0",
+    "unit": "°",
     "description": null,
     "source": "Input"
   },
@@ -408,7 +408,7 @@
   "LPangle": {
     "name": "Lower port inclination angle",
     "value": -30,
-    "unit": "\u00b0",
+    "unit": "°",
     "description": null,
     "source": "Input"
   },
@@ -422,7 +422,7 @@
   "bb_min_angle": {
     "name": "Minimum module angle",
     "value": 70,
-    "unit": "\u00b0",
+    "unit": "°",
     "description": "Sharpest cut of a module possible",
     "source": "Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany"
   },
@@ -842,7 +842,7 @@
   "tf_fluence": {
     "name": "Insulation fluence limit for ITER equivalent to 10 MGy",
     "value": 3.2e+21,
-    "unit": "n/m^2",
+    "unit": "1/m^2",
     "description": "http://ieeexplore.ieee.org/document/6374236/",
     "source": "Input"
   },
@@ -947,7 +947,7 @@
   "m_gas": {
     "name": "Gas puff flow rate",
     "value": 50,
-    "unit": "Pam^3/s",
+    "unit": "Pa m^3/s",
     "description": "To maintain detachment - no chance of fusion from gas injection",
     "source": "Discussions with Chris Day and Yannick H\u00f6rstenmeyer"
   },

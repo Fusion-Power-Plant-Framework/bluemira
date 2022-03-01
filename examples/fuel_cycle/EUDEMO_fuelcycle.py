@@ -83,7 +83,7 @@ lifecycle_config = ParameterFrame([
     ["div_dpa", "Divertor life limit (CuCrZr)", 5, "dpa",
      "https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf", "Input"],
     ["vv_dpa", "Vacuum vessel life limit (SS316-LN-IG)", 3.25, "dpa", "RCC-Mx or whatever it is called", "Input"],
-    ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "N/m^2",
+    ["tf_fluence", "Insulation fluence limit for ITER equivalent to 10 MGy", 3.2e21, "1/m^2",
      "https://ieeexplore.ieee.org/document/6374236/", "Input"],
 ])
 # fmt:on
