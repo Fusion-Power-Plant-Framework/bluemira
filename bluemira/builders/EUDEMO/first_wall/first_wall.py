@@ -23,7 +23,7 @@ Builders for the first wall of the reactor, including divertor
 """
 
 from copy import deepcopy
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Iterable, Sequence
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -227,14 +227,22 @@ class FirstWallBuilder(Builder):
     def _make_wall_keep_out_zone(self, geom_offset, psi_n) -> BluemiraWire:
         """
         Create a "keep-out zone" to be used as a constraint in the
-        shape optimiser.
+        wall shape optimiser.
         """
         geom_offset_zone = self._make_geometric_keep_out_zone(geom_offset)
         flux_surface_zone = self._make_flux_surface_keep_out_zone(psi_n)
+        return self._convex_hull_wires([geom_offset_zone, flux_surface_zone])
 
+    def _convex_hull_wires(
+        self, wires: Iterable[BluemiraWire], ndiscr=200
+    ) -> BluemiraWire:
+        """
+        Perform a convex hull around the given wires and return the hull
+        as a new wire.
+        """
         shape_discretizations = []
-        for zone in [geom_offset_zone, flux_surface_zone]:
-            d = zone.discretize(byedges=True, ndiscr=200).xz
+        for wire in wires:
+            d = wire.discretize(byedges=True, ndiscr=ndiscr).xz
             shape_discretizations.append(d)
         coords = np.hstack(shape_discretizations)
 
