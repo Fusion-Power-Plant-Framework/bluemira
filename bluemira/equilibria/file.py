@@ -93,7 +93,7 @@ class EQDSKInterface:
         ["fpol", "Poloidal current function f = R*B on 1-D flux grid", None, "T.m", None, "eqfile"],
         ["pressure", "Plasma pressure function on 1-D flux grid", None, "N.t/m^2", None, "eqfile"],
         ["ffprime", "FF' function on 1-D flux grid", None, "m.T^2/V.s/rad", None, "eqfile"],
-        ["pprime", "P' function on 1-D flux grid", None, "N.t/m^2/V.s/rad", None, "eqfile"],
+        ["pprime", "P' function on 1-D flux grid", None, "N/m^2/V.s/rad", None, "eqfile"],
         ["psi", "Poloidal magnetic flux on the 2-D grid", None, "V.s/rad", None, "eqfile"],
         ["qpsi", "Safety factor values on the 1-D flux grid", None, "dimensionless", None, "eqfile"],
         ["nbdry", "Number of boundary points", None, "dimensionless", None, "eqfile"],
