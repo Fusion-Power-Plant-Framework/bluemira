@@ -24,23 +24,14 @@ Define shapes & builders for the wall components of EUDEMO's first wall
 import copy
 from typing import Any, Dict, List, Optional
 
-import numpy as np
-
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
 from bluemira.builders.shapes import OptimisedShapeBuilder
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.optimisation import GeometryOptimisationProblem
-from bluemira.geometry.parameterisations import (
-    GeometryParameterisation,
-    PolySpline,
-    PrincetonD,
-)
-from bluemira.geometry.tools import signed_distance_2D_polygon
+from bluemira.geometry.parameterisations import PolySpline, PrincetonD
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.optimiser import Optimiser
 
 
 class WallPolySpline(PolySpline):
@@ -135,80 +126,6 @@ class WallPrincetonD(PrincetonD):
         self.adjust_variable(
             "dz", self.variables["dz"].value, lower_bound=-3, upper_bound=3
         )
-
-
-class MinimiseLength(GeometryOptimisationProblem):
-    """
-    Optimiser to minimise the length of a geometry parameterisation with
-    constraints in the form of a "keep-out zone".
-    """
-
-    def __init__(
-        self,
-        parameterisation: GeometryParameterisation,
-        optimiser: Optimiser,
-        keep_out_zone: BluemiraWire = None,
-        n_koz_points: int = 100,
-        koz_con_tol: float = 1e-3,
-    ):
-        super().__init__(parameterisation, optimiser)
-
-        self.n_koz_points = n_koz_points
-        self.keep_out_zone = keep_out_zone
-        if self.keep_out_zone is not None:
-            self.koz_points = self._make_koz_points(
-                self.keep_out_zone, self.n_koz_points
-            )
-            self.optimiser.add_ineq_constraints(
-                self.f_constrain_koz,
-                koz_con_tol * np.ones(self.n_koz_points),
-            )
-
-    def _make_koz_points(self, keep_out_zone: BluemiraWire, n_points: int) -> np.ndarray:
-        """
-        Generate a set of points that combine the given keep-out-zones,
-        to use as constraints in the optimisation problem.
-
-        Returns
-        -------
-        coords: np.ndarray[2, n_points]
-            Coordinate of the keep-out-zone points in the xz plane.
-        """
-        return keep_out_zone.discretize(byedges=True, ndiscr=n_points).xz
-
-    def f_constrain_koz(self, constraint, x, grad):
-        """
-        Geometry constraint function to the keep-out-zone.
-        """
-        constraint[:] = self.calculate_signed_distance(x)
-        if grad.size > 0:
-            grad[:] = self.optimiser.approx_derivative(
-                self.calculate_signed_distance, x, constraint
-            )
-        return constraint
-
-    def calculate_signed_distance(self, x):
-        """
-        Calculate the signed distances from the parameterised shape to
-        the keep-out zone.
-        """
-        self.update_parameterisation(x)
-
-        shape = self.parameterisation.create_shape()
-        s = shape.discretize(ndiscr=self.n_koz_points).xz
-        return signed_distance_2D_polygon(s.T, self.koz_points.T).T
-
-    def calculate_length(self, x):
-        """Calculate the length of the shape being optimised."""
-        self.update_parameterisation(x)
-        return self.parameterisation.create_shape().length
-
-    def f_objective(self, x, grad):
-        """The objective function for the optimiser."""
-        length = self.calculate_length(x)
-        if grad.size > 0:
-            self.optimiser.approx_derivative(self.calculate_length, x, f0=length)
-        return length
 
 
 class WallBuilder(OptimisedShapeBuilder):

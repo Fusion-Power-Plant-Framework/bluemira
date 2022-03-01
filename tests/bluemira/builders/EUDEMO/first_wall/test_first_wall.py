@@ -36,6 +36,7 @@ from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 
 DATA = get_bluemira_path("bluemira/equilibria/test_data", subfolder="tests")
+OPTIMISER_MODULE_REF = "bluemira.geometry.optimisation"
 WALL_MODULE_REF = "bluemira.builders.EUDEMO.first_wall.wall"
 
 
@@ -53,7 +54,7 @@ class TestFirstWallBuilder:
     _default_config = {
         "name": "First Wall",
         "param_class": f"{WALL_MODULE_REF}::WallPrincetonD",
-        "problem_class": f"{WALL_MODULE_REF}::MinimiseLength",
+        "problem_class": f"{OPTIMISER_MODULE_REF}::MinimiseLength",
         "runmode": "mock",
         "variables_map": _default_variables_map,
     }
