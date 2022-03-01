@@ -106,16 +106,14 @@ class FirstWallBuilder(Builder):
     ):
         super().__init__(params, build_config, **kwargs)
 
+        self.wall: Component
+        self.divertor: Component
+
+        self._init_params = params
+        self._build_config = build_config
         self.equilibrium = equilibrium
         _, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
-        )
-        self.wall: Component = self._build_wall(params, build_config)
-        wall_shape = self.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
-        self.divertor: Component = self._build_divertor(
-            params,
-            build_config,
-            [wall_shape.start_point()[0], wall_shape.end_point()[0]],
         )
 
     def reinitialise(self, params, **kwargs) -> None:
@@ -138,6 +136,14 @@ class FirstWallBuilder(Builder):
         """
         Build the component.
         """
+        self.wall = self._build_wall(self._init_params, self._build_config)
+        wall_shape = self.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
+        self.divertor = self._build_divertor(
+            self._init_params,
+            self._build_config,
+            [wall_shape.start_point()[0], wall_shape.end_point()[0]],
+        )
+
         first_wall = Component(self.name)
         first_wall.add_child(self.build_xz())
         return first_wall

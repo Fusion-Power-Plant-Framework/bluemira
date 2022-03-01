@@ -81,11 +81,13 @@ class TestFirstWallBuilder:
         _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
 
     def test_wall_boundary_is_cut_below_x_point_in_z_axis(self):
-        first_wall = FirstWallBuilder(
+        builder = FirstWallBuilder(
             self._params, build_config=self._default_config, equilibrium=self.eq
         )
 
-        shape = first_wall.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
+        first_wall = builder()
+
+        shape = first_wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
         assert not shape.is_closed()
         # significant delta in assertion as the wire is discrete, so cut is not exact
         np.testing.assert_almost_equal(
@@ -132,8 +134,9 @@ class TestFirstWallBuilder:
     def test_BuilderError_if_wall_does_not_enclose_x_point(self):
         params = copy.deepcopy(self._params)
         params.update({"r_fw_ib_in": 7, "r_fw_ob_in": 9})
+        builder = FirstWallBuilder(
+            params, build_config=self._default_config, equilibrium=self.eq
+        )
 
         with pytest.raises(BuilderError):
-            FirstWallBuilder(
-                params, build_config=self._default_config, equilibrium=self.eq
-            )
+            builder()
