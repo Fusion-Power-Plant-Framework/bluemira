@@ -148,9 +148,7 @@ class TestDivertorBuilder:
         dome = divertor.get_component(DivertorBuilder.COMPONENT_DOME)
         assert signed_distance(dome.shape, self.separatrix) < 0
 
-    def test_dome_has_turning_point_below_x_point(self):
-        # TODO(hsaunders): not sure about this test, what if the x-point
-        # is at the top of the plasma?
+    def test_SN_lower_dome_has_turning_point_below_x_point(self):
         builder = DivertorBuilder(
             self.params, {"name": "some_name"}, self.eq, self.x_lims
         )
@@ -202,5 +200,3 @@ class TestDivertorBuilder:
             getattr(DivertorBuilder, f"COMPONENT_{side}_BAFFLE")
         )
         assert signed_distance(target.shape, baffle.shape) == 0
-
-    # TODO(hsaunders1904): tests for plasma with x-point on upper side

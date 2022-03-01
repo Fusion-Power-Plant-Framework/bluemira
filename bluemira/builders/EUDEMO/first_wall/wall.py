@@ -214,8 +214,6 @@ class WallBuilder(OptimisedShapeBuilder):
         bm_plot_tools.set_component_plane(component, "xz")
         return component
 
-    # TODO(hsaunders1904): 'height' is not a parameter for all shapes.
-    # Does it make sense to derive it within this class?
     def _derive_shape_params(self):
         """
         Calculate derived parameters for the GeometryParameterisation.
