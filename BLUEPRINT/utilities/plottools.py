@@ -114,7 +114,7 @@ def weather_front(d2, n=10, scale=True, ends=True, **kwargs):
     asp = 1
     dy *= s
     dx = dx / asp
-    mag = np.sqrt(dx ** 2 + dy ** 2)
+    mag = np.sqrt(dx**2 + dy**2)
     dx /= mag
     dy /= mag
     x = xn[i::i]
@@ -149,7 +149,7 @@ def pathify(polygon):
     analytic methods have the proper coordinate order, no need to sort.
     """
     vertices = np.concatenate(
-        [np.asarray(polygon.exterior)] + [np.asarray(r) for r in polygon.interiors]
+        [polygon.exterior.coords] + [r.coords for r in polygon.interiors]
     )
     vertices = vertices[:, 0:2]
     codes = np.concatenate(

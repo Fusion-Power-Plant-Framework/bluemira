@@ -113,7 +113,7 @@ class TestSemiAnalyticBxBz:
         bz_array = semianalytic_Bz(xc, zc, x, z, dx, dz)
         bx_array *= current
         bz_array *= current
-        bp = np.sqrt(bx_results ** 2 + bz_results ** 2)
+        bp = np.sqrt(bx_results**2 + bz_results**2)
 
         assert np.allclose(bp_fe, bp, rtol=1e-2)
         assert np.allclose(bp_paper, bp, rtol=1e-4)
@@ -160,9 +160,9 @@ class TestPoloidalFieldBenchmark:
     def load_data(filename):
         with open(filename, "r") as file:
             data = json.load(file)
-            x = np.array(data["x"], dtype=np.float)
-            z = np.array(data["z"], dtype=np.float)
-            B = np.array(data["B"], dtype=np.float)
+            x = np.array(data["x"], dtype=float)
+            z = np.array(data["z"], dtype=float)
+            B = np.array(data["B"], dtype=float)
 
         return x, z, B
 

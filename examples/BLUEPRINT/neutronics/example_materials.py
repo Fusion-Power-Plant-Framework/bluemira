@@ -881,7 +881,7 @@ clad.create_dataset("chi", data=chi)
 void = material_group.create_group("Void")
 
 sigma_t = numpy.array([0.0] * 7)
-sigma_s = numpy.array([0.0] * 7 ** 2)
+sigma_s = numpy.array([0.0] * 7**2)
 sigma_f = numpy.array([0.0] * 7)
 nu_sigma_f = numpy.array([0.0] * 7)
 chi = numpy.array([0.0] * 7)

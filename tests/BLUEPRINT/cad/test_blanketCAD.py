@@ -59,9 +59,9 @@ class TestBananaBlanket:
         norm = pi * self.h / self.blanket.params.n_TF
 
         # Cylinders
-        v1 = norm * self.r1 ** 2
-        v2 = norm * self.r2 ** 2
-        v3 = norm * self.r3 ** 2
+        v1 = norm * self.r1**2
+        v2 = norm * self.r2**2
+        v3 = norm * self.r3**2
 
         # Breeding zone
         v_bz = v2 - v1
@@ -116,13 +116,13 @@ class TestImmersionBlanket:
         norm = pi / self.blanket.params.n_TF
 
         # Breeding zone is a hollow cylinder
-        v1 = norm * self.h_bz * self.r1 ** 2
-        v2 = norm * self.h_bz * self.r3 ** 2
+        v1 = norm * self.h_bz * self.r1**2
+        v2 = norm * self.h_bz * self.r3**2
         v_bz = v2 - v1
 
         # Manifold (upper, lower) is also hollow cylinder
-        v1 = norm * self.h_man * self.r2 ** 2
-        v2 = norm * self.h_man * self.r3 ** 2
+        v1 = norm * self.h_man * self.r2**2
+        v2 = norm * self.h_man * self.r3**2
         v_man = v2 - v1
 
         return [v_bz, v_man, v_man]

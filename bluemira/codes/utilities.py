@@ -67,11 +67,9 @@ def _get_mapping(
     mapping = {}
     for key in params.keys():
         param = params.get_param(key)
-        has_mapping = param.mapping is not None and code_name in param.mapping
-        map_param = has_mapping and (
+        if code_name in param.mapping and (
             override or getattr(param.mapping[code_name], send_recv)
-        )
-        if map_param:
+        ):
             mapping[param.mapping[code_name].name] = key
     return mapping
 
@@ -145,11 +143,8 @@ def add_mapping(
     """
     for key in params.keys():
         param = params.get_param(key)
-        if param.var in mapping:
-            if param.mapping is None:
-                param.mapping = {code_name: mapping[param.var]}
-            elif code_name not in param.mapping:
-                param.mapping[code_name] = mapping[param.var]
+        if param.var in mapping and code_name not in param.mapping:
+            param.mapping[code_name] = mapping[param.var]
 
 
 class LogPipe(threading.Thread):

@@ -38,7 +38,8 @@ import bluemira.display.error as bm_display_error
 from bluemira.base.components import Component
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
+from bluemira.geometry.placement import BluemiraPlacement
 
 __all__ = [
     "str_to_latex",
@@ -154,8 +155,6 @@ def coordinates_to_path(x, z):
     """
     Convert coordinates to path vertices.
     """
-    from bluemira.geometry._deprecated_tools import check_ccw
-
     if not check_ccw(x, z):
         x = x[::-1]
         z = z[::-1]
@@ -164,13 +163,13 @@ def coordinates_to_path(x, z):
     return Path(vertices, codes)
 
 
-def set_component_plane(comp: Component, plane: Union[str, BluemiraPlane]):
-    if plane not in ["xy", "xz", "zy"] and not isinstance(plane, BluemiraPlane):
+def set_component_plane(comp: Component, plane: Union[str, BluemiraPlacement]):
+    if plane not in ["xy", "xz", "zy"] and not isinstance(plane, BluemiraPlacement):
         raise bm_display_error.DisplayError(
-            f"Not a valid plane {plane} - select either xy, xz, zy, or a BluemiraPlane"
+            f"Not a valid placement {plane} - select either xy, xz, zy, or a BluemiraPlacement"
         )
 
-    comp.plot_options.plane = plane
+    comp.plot_options.placement = plane
     for child in comp.children:
         set_component_plane(child, plane)
 
@@ -208,8 +207,6 @@ class BluemiraPathPatch3D(PathPatch3D):
     # Thank you StackOverflow
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
     def __init__(self, path, normal, translation=None, color="b", **kwargs):
-        from bluemira.geometry._deprecated_tools import rotation_matrix_v1v2
-
         Patch.__init__(self, **kwargs)
 
         if translation is None:

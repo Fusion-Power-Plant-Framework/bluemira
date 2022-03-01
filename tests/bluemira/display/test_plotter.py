@@ -27,7 +27,8 @@ import numpy as np
 
 import bluemira.geometry as geo
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.display import plotter
+from bluemira.display import plot_3d, plotter
+from bluemira.utilities.plot_tools import Plot3D
 
 SQUARE_POINTS = np.array(
     [
@@ -60,17 +61,17 @@ class TestPlotOptions:
             else:
                 assert val == plotter.DEFAULT_PLOT_OPTIONS[key]
 
-    def test_options_plane_dict(self):
+    def test_options_placement_dict(self):
         """
-        Check the options can be obtained as a dictionary with a BluemiraPlane
+        Check the options can be obtained as a dictionary with a BluemiraPlacement
         """
-        the_plane = geo.plane.BluemiraPlane()
-        the_options = plotter.PlotOptions(plane=the_plane)
+        the_placement = geo.placement.BluemiraPlacement()
+        the_options = plotter.PlotOptions(placement=the_placement)
         options_dict = the_options.as_dict()
         for key, val in options_dict.items():
-            if key == "plane":
+            if key == "placement":
                 assert val != plotter.DEFAULT_PLOT_OPTIONS[key]
-                assert val is not the_plane
+                assert val is not the_placement
             else:
                 assert val == plotter.DEFAULT_PLOT_OPTIONS[key]
 
@@ -102,12 +103,35 @@ class TestPlotOptions:
         the_options.wire_options = {}
         the_options.face_options = {}
         the_options.plane = "xy"
-        the_options.plane = geo.plane.BluemiraPlane()
+        the_options.plane = geo.placement.BluemiraPlacement()
         the_options.ndiscr = 20
         the_options.byedges = not plotter.DEFAULT_PLOT_OPTIONS["byedges"]
 
         for key, val in plotter.DEFAULT_PLOT_OPTIONS.items():
             assert getattr(the_options, key) != val
+
+
+class TestPlot3d:
+    """
+    Generic 3D plotting tests.
+    """
+
+    def test_plot_3d_same_axis(self):
+        ax_orig = Plot3D()
+        ax_1 = plot_3d(geo.tools.make_circle(), show=False, ax=ax_orig)
+        ax_2 = plot_3d(geo.tools.make_circle(radius=2), show=False, ax=ax_1)
+
+        assert ax_1 is ax_orig
+        assert ax_2 is ax_orig
+
+    def test_plot_3d_new_axis(self):
+        ax_orig = Plot3D()
+        ax_1 = plot_3d(geo.tools.make_circle(), show=False)
+        ax_2 = plot_3d(geo.tools.make_circle(radius=2), show=False)
+
+        assert ax_1 is not ax_2
+        assert ax_1 is not ax_orig
+        assert ax_2 is not ax_orig
 
 
 class TestPointsPlotter:

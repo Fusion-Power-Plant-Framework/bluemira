@@ -222,9 +222,7 @@ print_outputs(plasmod_solver)
 # #### Changing the transport model
 
 # %%
-problem_settings["i_modeltype"] = "GYROBOHM_2"
-plasmod_solver.setup_obj.prepare_inputs(problem_settings)
-
+plasmod_solver.problem_settings["i_modeltype"] = "GYROBOHM_2"
 plasmod_solver.run()
 print_outputs(plasmod_solver)
 
@@ -236,10 +234,9 @@ print_outputs(plasmod_solver)
 # %%
 plasmod_solver.params.q_95 = (3.5, "input")
 
-problem_settings["pfus_req"] = 2000.0
-problem_settings["i_equiltype"] = "q95_sawtooth"
-problem_settings["q_control"] = 50.0
-plasmod_solver.setup_obj.prepare_inputs(problem_settings)
+plasmod_solver.problem_settings["pfus_req"] = 2000.0
+plasmod_solver.problem_settings["i_equiltype"] = "q95_sawtooth"
+plasmod_solver.problem_settings["q_control"] = 50.0
 
 plasmod_solver.run()
 print_outputs(plasmod_solver)
@@ -249,7 +246,19 @@ print_outputs(plasmod_solver)
 # plasmod calculates the argon concentration to fulfill the constraint
 
 # %%
-problem_settings["qdivt_sup"] = 10.0
-plasmod_solver.setup_obj.prepare_inputs(problem_settings)
+plasmod_solver.problem_settings["qdivt_sup"] = 10.0
 plasmod_solver.run()
 print_outputs(plasmod_solver)
+
+# %%[markdown]
+# #### Changing the mapping sending or recieving
+# The mapping can be changed on a given parameter or set of parameters.
+# Notice how the value of `q_95` doesn't change in the output
+# even though its value has in the parameter (the previous value of 3.5 is used).
+
+# %%
+plasmod_solver.modify_mappings({"q_95": {"send": False}})
+plasmod_solver.params.q_95 = (5, "input")
+plasmod_solver.run()
+print_outputs(plasmod_solver)
+print("\nq_95 value history\n", plasmod_solver.params.q_95.history())

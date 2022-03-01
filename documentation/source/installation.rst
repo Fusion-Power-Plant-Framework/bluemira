@@ -41,7 +41,7 @@ following steps in a mac or Ubuntu command terminal.
     source ~/.miniforge-init.sh
     conda activate bluemira
     # If you are going to be developing bluemira
-    python -m pip install --no-cache-dir -e .[dev]
+    python -m pip install --no-cache-dir -e .'[dev]'
     pre-commit install -f
 
 When you want to activate your ``bluemira`` environment after closing your terminal (or
@@ -53,6 +53,8 @@ after ``conda deactivate``) then you can initialise miniforge and activate your
     source ~/.miniforge-init.sh
     conda activate bluemira
 
+Please refer to our :ref:`FAQ <faq>` if you run into issues.
+
 Installing PROCESS
 ------------------
 
@@ -62,16 +64,17 @@ inquire about access can be found `here <https://ccfe.ukaea.uk/resources/process
 
 .. note::
 
-    ``PROCESS`` requires gfortran-9, which is not the default version on Ubuntu 18.04. In
-    order to make this more recent gfortran version available, if you are using Ubuntu
-    18.04 you then must first run:
+    The ``PROCESS`` build requires gfortran-9, gcc and make.
+    gfortran-9 is not the default version on Ubuntu 18.04.
+    In order to install the dependencies and make this more recent gfortran version available,
+    if you are using Ubuntu 18.04, you must first run:
 
     .. code-block:: bash
 
         sudo apt-get update
         sudo apt-get install -y software-properties-common
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-        sudo apt-get update && sudo apt-get install -y gfortran-9
+        sudo apt-get update && sudo apt-get install -y gfortran-9 gcc make
         sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 30
 
 In order install ``PROCESS`` in your ``bluemira`` environment, run the following:

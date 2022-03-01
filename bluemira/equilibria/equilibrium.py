@@ -24,6 +24,7 @@ Plasma MHD equilibrium and state objects
 """
 import os
 from enum import Enum
+from typing import Iterable
 
 import numpy as np
 import tabulate
@@ -57,7 +58,6 @@ from bluemira.equilibria.physics import (
     calc_li,
     calc_li3minargs,
     calc_psi_norm,
-    calc_q,
     calc_q0,
     calc_summary,
 )
@@ -556,7 +556,7 @@ class Equilibrium(MHDState):
         # Constructors
         self._jtor = jtor
         self._profiles = profiles
-        self._plasmacoil = None  # So calcular se for preciso
+        self._plasmacoil = None  # Only calculate if necessary
         self._o_points = None
         self._x_points = None
         self._solver = None
@@ -684,8 +684,6 @@ class Equilibrium(MHDState):
         nbdry = lcfs.d2.shape[1]
         x_c, z_c, dxc, dzc, currents = self.coilset.to_group_vecs()
 
-        profile_scale = np.abs(self._profiles.scale)
-
         result = {
             "nx": n_x,
             "nz": n_z,
@@ -704,9 +702,9 @@ class Equilibrium(MHDState):
             "cplasma": self._Ip,
             "psi": psi,
             "fpol": self.fRBpol(psinorm),
-            "ffprime": self.ffprime(psinorm) * profile_scale,
-            "pprime": self.pprime(psinorm) * profile_scale,
-            "pressure": self.pressure(psinorm) * profile_scale,
+            "ffprime": self.ffprime(psinorm),
+            "pprime": self.pprime(psinorm),
+            "pressure": self.pressure(psinorm),
             "pnorm": psinorm,
             "nbdry": nbdry,
             "xbdry": lcfs["x"],
@@ -852,9 +850,8 @@ class Equilibrium(MHDState):
         if jtor is None:
             if psi is None:
                 psi = self.psi()
-            o_points, x_points = find_OX_points(
-                self.x, self.z, psi, limiter=self.limiter
-            )
+            o_points, x_points = self.get_OX_points(psi=psi, force_update=True)
+
             if not o_points:
                 raise EquilibriaError("No O-point found in equilibrium.")
             jtor = profiles.jtor(self.x, self.z, psi, o_points, x_points)
@@ -900,7 +897,7 @@ class Equilibrium(MHDState):
         if psi is None:
             psi = self.psi()
         # Speed optimisations
-        o_points, x_points = find_OX_points(self.x, self.z, psi, limiter=self.limiter)
+        o_points, x_points = self.get_OX_points(psi=psi, force_update=True)
         mask = in_plasma(self.x, self.z, psi, o_points=o_points, x_points=x_points)
         print("")  # flusher
 
@@ -972,7 +969,7 @@ class Equilibrium(MHDState):
         self.psi_func = RectBivariateSpline(self.x[:, 0], self.z[0, :], plasma_psi)
         self.plasma_Bx = self.plasmaBx(self.x, self.z)
         self.plasma_Bz = self.plasmaBz(self.x, self.z)
-        self.plasma_Bp = np.sqrt(self.plasma_Bx ** 2 + self.plasma_Bz ** 2)
+        self.plasma_Bp = np.sqrt(self.plasma_Bx**2 + self.plasma_Bz**2)
 
     def _int_dxdz(self, func):
         """
@@ -1066,7 +1063,7 @@ class Equilibrium(MHDState):
         zcur: float
             The vertical position of the effective current centre
         """  # noqa :W505
-        xcur = np.sqrt(1 / self._Ip * self._int_dxdz(self.x ** 2 * self._jtor))
+        xcur = np.sqrt(1 / self._Ip * self._int_dxdz(self.x**2 * self._jtor))
         zcur = 1 / self._Ip * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
 
@@ -1199,7 +1196,30 @@ class Equilibrium(MHDState):
         """
         Get the safety factor at given psinorm.
         """
-        return calc_q(self, psinorm, o_points=o_points, x_points=x_points)
+        if o_points is None or x_points is None:
+            o_points, x_points = self.get_OX_points()
+        if not isinstance(psinorm, Iterable):
+            psinorm = [psinorm]
+        psinorm = sorted(psinorm)
+
+        psi = self.psi()
+        flux_surfaces = []
+        for psi_n in psinorm:
+            if psi_n < PSI_NORM_TOL:
+                psi_n = PSI_NORM_TOL
+            if psi_n > 1 - PSI_NORM_TOL:
+                f_s = ClosedFluxSurface(self.get_LCFS(psi))
+            else:
+                f_s = ClosedFluxSurface(
+                    self.get_flux_surface(
+                        psi_n, psi, o_points=o_points, x_points=x_points
+                    )
+                )
+            flux_surfaces.append(f_s)
+        q = np.array([f_s.safety_factor(self) for f_s in flux_surfaces])
+        if len(q) == 1:
+            q = q[0]
+        return q
 
     def fRBpol(self, psinorm):
         """
@@ -1336,7 +1356,10 @@ class Equilibrium(MHDState):
             if psi is None:
                 psi = self.psi()
             self._o_points, self._x_points = find_OX_points(
-                self.x, self.z, psi, limiter=self.limiter
+                self.x,
+                self.z,
+                psi,
+                limiter=self.limiter,
             )
         return self._o_points, self._x_points
 

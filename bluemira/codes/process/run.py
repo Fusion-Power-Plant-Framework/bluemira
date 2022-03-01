@@ -28,7 +28,7 @@ from __future__ import annotations
 import os
 import subprocess  # noqa :S404
 from enum import auto
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import bluemira.base as bm_base
 import bluemira.codes.interface as interface
@@ -52,6 +52,7 @@ class RunMode(interface.RunMode):
     READ = auto()
     READALL = auto()
     MOCK = auto()
+    NONE = auto()
 
 
 class Run(interface.Run):
@@ -140,6 +141,8 @@ class Solver(interface.FileProgramInterface):
     - "mock": Run bluemira without running PROCESS, using the default radial build based
         on EU-DEMO. This option should not be used if PROCESS is installed, except for
         testing purposes.
+    - "none": Do nothing. Useful when loading results from previous runs of Bluemira,
+        when overwriting data with PROCESS output would be undesirable.
     """
 
     _params: bm_base.ParameterFrame
@@ -194,3 +197,19 @@ class Solver(interface.FileProgramInterface):
             run_dir=run_dir,
             mappings=mappings,
         )
+
+    def get_process_parameters(self, params: Union[List, str]):
+        """
+        Get raw parameters from an MFILE
+        (mapped bluemira parameters will have bluemira names)
+
+        Parameters
+        ----------
+        params: Union[List, str]
+            parameter names to access
+
+        Returns
+        -------
+        values list
+        """
+        return self.teardown_obj.bm_file.extract_outputs(params)

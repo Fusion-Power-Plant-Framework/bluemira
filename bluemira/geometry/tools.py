@@ -24,14 +24,15 @@ Useful functions for bluemira geometries.
 """
 
 from copy import deepcopy
-from typing import Iterable, List, Union
+from typing import Iterable, List, Type, Union
 
 import numba as nb
 import numpy as np
 
+import bluemira.mesh.meshing as meshing
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
-from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.base import BluemiraGeo, GeoMeshable
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -58,10 +59,31 @@ def convert(apiobj, label=""):
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
+def _make_vertex(point):
+    """
+    Make a vertex.
+
+    Parameters
+    ----------
+    point: Iterable
+        Coordinates of the point
+
+    Returns
+    -------
+    vertex: apiVertex
+        Vertex at the point
+    """
+    if not len(point) == 3:
+        raise GeometryError("Points must be of dimension 3.")
+
+    return cadapi.apiVertex(*point)
+
+
 def make_polygon(
     points: Union[list, np.ndarray], label: str = "", closed: bool = False
 ) -> BluemiraWire:
-    """Make a polygon from a set of points.
+    """
+    Make a polygon from a set of points.
 
     Parameters
     ----------
@@ -429,8 +451,15 @@ def distance_to(geo1: BluemiraGeo, geo2: BluemiraGeo):
         between geo1 and geo2. The distance between those points
         is the minimum distance given by dist.
     """
-    shape1 = geo1._shape
-    shape2 = geo2._shape
+    # Check geometry for vertices
+    if isinstance(geo1, Iterable):
+        shape1 = _make_vertex(geo1)
+    else:
+        shape1 = geo1._shape
+    if isinstance(geo2, Iterable):
+        shape2 = _make_vertex(geo2)
+    else:
+        shape2 = geo2._shape
     return cadapi.dist_to_shape(shape1, shape2)
 
 
@@ -442,7 +471,7 @@ def slice_shape(shape: BluemiraGeo, plane):
     ----------
     obj: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
         obj to intersect with a plane
-    plane: BluemiraPlane
+    plane: BluemiraPlacement
 
     Returns
     -------
@@ -756,3 +785,137 @@ def boolean_cut(shape, tools):
         return [convert(obj, shape.label) for obj in cut_shape]
 
     return convert(cut_shape, shape.label)
+
+
+def point_inside_shape(point, shape):
+    """
+    Whether or not a point is inside a shape.
+
+    Parameters
+    ----------
+    point: Iterable(3)
+        Coordinates of the point
+    shape: BluemiraGeo
+        Geometry to check with
+
+    Returns
+    -------
+    inside: bool
+        Whether or not the point is inside the shape
+    """
+    return cadapi.point_inside_shape(point, shape._shape)
+
+
+# # =============================================================================
+# # Serialize and Deserialize
+# # =============================================================================
+def serialize_shape(shape: BluemiraGeo):
+    """
+    Serialize a BluemiraGeo object.
+    """
+    type_ = type(shape)
+
+    output = []
+    if isinstance(shape, BluemiraGeo):
+        dict = {"label": shape.label, "boundary": output}
+        for obj in shape.boundary:
+            output.append(serialize_shape(obj))
+            if isinstance(shape, GeoMeshable):
+                if shape.mesh_options is not None:
+                    if shape.mesh_options.lcar is not None:
+                        dict["lcar"] = shape.mesh_options.lcar
+                    if shape.mesh_options.physical_group is not None:
+                        dict["physical_group"] = shape.mesh_options.physical_group
+        return {str(type(shape).__name__): dict}
+    elif isinstance(shape, cadapi.apiWire):
+        return cadapi.serialize_shape(shape)
+    else:
+        raise NotImplementedError(f"Serialization non implemented for {type_}")
+
+
+def deserialize_shape(buffer: dict):
+    """
+    Deserialize a BluemiraGeo object obtained from serialize_shape.
+
+    Parameters
+    ----------
+    buffer
+        Object serialization as stored by serialize_shape
+
+    Returns
+    -------
+        The deserialized BluemiraGeo object.
+    """
+    supported_types = [BluemiraWire, BluemiraFace, BluemiraShell]
+
+    def _extract_mesh_options(shape_dict: dict):
+        mesh_options = None
+        if "lcar" in shape_dict:
+            if mesh_options is None:
+                mesh_options = meshing.MeshOptions()
+            mesh_options.lcar = shape_dict["lcar"]
+        if "physical_group" in shape_dict:
+            if mesh_options is None:
+                mesh_options = meshing.MeshOptions()
+            mesh_options.physical_group = shape_dict["physical_group"]
+        return mesh_options
+
+    def _extract_shape(shape_dict: dict, shape_type: Type[BluemiraGeo]):
+        label = shape_dict["label"]
+        boundary = shape_dict["boundary"]
+
+        temp_list = []
+        for item in boundary:
+            if issubclass(shape_type, BluemiraWire):
+                for k in item:
+                    if k == shape_type.__name__:
+                        shape = deserialize_shape(item)
+                    else:
+                        shape = cadapi.deserialize_shape(item)
+                    temp_list.append(shape)
+            else:
+                temp_list.append(deserialize_shape(item))
+
+        mesh_options = _extract_mesh_options(shape_dict)
+
+        shape = shape_type(label=label, boundary=temp_list)
+        if mesh_options is not None:
+            shape.mesh_options = mesh_options
+        return shape
+
+    for type_, v in buffer.items():
+        for supported_types in supported_types:
+            if type_ == supported_types.__name__:
+                return _extract_shape(v, BluemiraWire)
+        else:
+            raise NotImplementedError(f"Deserialization non implemented for {type_}")
+
+
+# # =============================================================================
+# # shape utils
+# # =============================================================================
+def get_shape_by_name(shape: BluemiraGeo, name: str):
+    """
+    Search through the boundary of the shape and get any shapes with a label
+    corresponding to the provided name. Includes the shape itself if the name matches
+    its label.
+
+    Parameters
+    ----------
+    shape: BluemiraGeo
+        The shape to search for the provided name.
+    name: str
+        The name to search for.
+
+    Returns
+    -------
+    shapes: List[BluemiraGeo]
+        The shapes known to the provided shape that correspond to the provided name.
+    """
+    shapes = []
+    if hasattr(shape, "label") and shape.label == name:
+        shapes.append(shape)
+    if hasattr(shape, "boundary"):
+        for o in shape.boundary:
+            shapes += get_shape_by_name(o, name)
+    return shapes

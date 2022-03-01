@@ -23,43 +23,50 @@
 Tests for the design module.
 """
 
+import copy
+
+import pytest
+
 import tests
 from bluemira.base.design import Design
+from bluemira.base.error import DesignError
 
 
 class TestDesign:
+    build_config = {
+        "Plasma": {
+            "class": "MakeParameterisedShape",
+            "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
+            "variables_map": {
+                "r_0": "R_0",
+                "a": "A",
+            },
+            "label": "Shape",
+        },
+        "TF Coils": {
+            "class": "MakeParameterisedShape",
+            "param_class": "PrincetonD",
+            "variables_map": {
+                "x1": "r_tf_in_centre",
+                "x2": {
+                    "value": "r_tf_out_centre",
+                    "lower_bound": 8.0,
+                },
+                "dz": 0.0,
+            },
+            "label": "Shape",
+        },
+    }
+    params = {
+        "Name": "Test Design",
+        "R_0": (9.0, "Input"),
+        "A": (3.5, "Input"),
+        "r_tf_in_centre": (5.0, "Input"),
+        "r_tf_out_centre": (15.0, "Input"),
+    }
+
     def test_builders(self):
-        build_config = {
-            "Plasma": {
-                "class": "MakeParameterisedShape",
-                "param_class": "bluemira.equilibria.shapes::JohnerLCFS",
-                "variables_map": {
-                    "r_0": "R_0",
-                    "a": "A",
-                },
-                "label": "Shape",
-            },
-            "TF Coils": {
-                "class": "MakeParameterisedShape",
-                "param_class": "PrincetonD",
-                "variables_map": {
-                    "x1": "r_tf_in_centre",
-                    "x2": {
-                        "value": "r_tf_out_centre",
-                        "lower_bound": 8.0,
-                    },
-                    "dz": 0.0,
-                },
-                "label": "Shape",
-            },
-        }
-        params = {
-            "R_0": (9.0, "Input"),
-            "A": (3.5, "Input"),
-            "r_tf_in_centre": (5.0, "Input"),
-            "r_tf_out_centre": (15.0, "Input"),
-        }
-        design = Design(params, build_config)
+        design = Design(self.params, self.build_config)
         component = design.run()
 
         assert component is not None
@@ -74,3 +81,9 @@ class TestDesign:
 
         if tests.PLOTTING:
             component.plot_2d()
+
+    def test_params_validation(self):
+        bad_params = copy.deepcopy(self.params)
+        bad_params.pop("Name")
+        with pytest.raises(DesignError):
+            Design(bad_params, self.build_config)

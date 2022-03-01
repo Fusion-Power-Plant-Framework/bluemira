@@ -35,9 +35,9 @@ from bluemira.geometry.parameterisations import PrincetonD
 # %%[markdown]
 # ## Setup
 #
-# Creation of a closed wire and respective face and discretization points.
+# Creation of a closed wire and respective face and discretisation points.
 #
-# PrincetonD parametrisation is used as example.
+# PrincetonD parameterisation is used as example.
 #
 # Note: the curve is generated on the x-z plane
 

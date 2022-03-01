@@ -10,7 +10,6 @@ Modules
 
    cli <blueprint_cli>
    base
-   beams
    cad
    geometry
    materials

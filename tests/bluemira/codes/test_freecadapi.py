@@ -136,7 +136,7 @@ class TestFreecadapi:
         wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
         scaled_wire = cadapi.scale_shape(wire.copy(), factor)
         face: Part.Face = Part.Face(scaled_wire)
-        assert cadapi.area(face) == 1.0 * factor ** 2
+        assert cadapi.area(face) == 1.0 * factor**2
         assert cadapi.length(face) == cadapi.length(scaled_wire) == 4.0 * factor
         face_from_wire = Part.Face(wire)
         scaled_face = cadapi.scale_shape(face_from_wire.copy(), factor)

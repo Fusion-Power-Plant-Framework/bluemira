@@ -25,13 +25,3 @@ Constants for use in the materials package.
 
 T_DEFAULT = 293.15  # Default temperature for all liquids [K]
 P_DEFAULT = 101325  # Default pressure for all liquids [Pa]
-
-
-# Sigh.. cba to fix
-MATERIAL_BEAM_MAP = {
-    "rho": "rho",
-    "mu": "nu",
-    "CTE": "alpha",
-    "E": "E",
-    "Sy": "sigma_y",
-}

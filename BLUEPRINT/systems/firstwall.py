@@ -1150,15 +1150,15 @@ class FirstWall(ReactorSystem):
         self.x_imp_lcfs = np.min(loop_plane_intersect(self.lcfs, self.mid_plane).T[0])
 
     # Actual run
-    def build(self):
+    def build(self, callback=None):
         """
         Build the 2D profile
         """
         if "profile" in self.inputs:
             self.profile = self.inputs["profile"]
 
-        elif self.inputs.get("FW_optimisation", False):
-            self.profile = self.optimise_fw_profile()
+        elif self.inputs.get("FW_optimisation", False) and callback is not None:
+            callback(self, hf_limit=0.2, n_iteration_max=5)
 
         else:
             self.profile = self.make_preliminary_profile()
@@ -1167,7 +1167,6 @@ class FirstWall(ReactorSystem):
         self.profile = self.geom["2D profile"].inner
 
         self.hf_firstwall_params(self.profile)
-        self.make_2d_profile()
 
     # Output and plotting stuff
     def hf_save_as_csv(self, filename="hf_on_the_wall", metadata=""):
@@ -1249,44 +1248,6 @@ class FirstWall(ReactorSystem):
         return x_wall, z_wall, hf_wall
 
     # Geometry creation and modification methods
-
-    def optimise_fw_profile(self, hf_limit=0.2, n_iteration_max=5):
-        """
-        Optimises the initial preliminary profile in terms of heat flux.
-        The divertor will be attached to this profile.
-
-        Parameters
-        ----------
-        n_iteration_max: integer
-            Max number of iterations after which the optimiser is stopped.
-        hf_limit: float
-            Heat flux limit for the optimisation.
-
-        Returns
-        -------
-        profile: Loop
-            Optimised profile
-        """
-        # NOTE: Not an optimisation
-        initial_profile = self.make_preliminary_profile()
-        self.preliminary_profile = initial_profile
-
-        profile = initial_profile
-        for _ in range(n_iteration_max):
-
-            x_wall, z_wall, hf_wall = self.hf_firstwall_params(profile)
-
-            for x_hf, z_hf, hf in zip(x_wall, z_wall, hf_wall):
-                if hf > hf_limit:
-                    profile = self.modify_fw_profile(profile, x_hf, z_hf)
-
-            heat_flux_max = max(hf_wall)
-            print(heat_flux_max)
-            self.optimised_profile = profile
-            if heat_flux_max < hf_limit:
-                break
-
-        return profile
 
     def attach_divertor(self, fw_loop, divertor_loops):
         """

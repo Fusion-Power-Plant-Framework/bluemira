@@ -5,7 +5,7 @@ The documentation is divided into the following sections:
 
 *  :ref:`getting-started`, where you can learn more about the code and how to install it
 *  :ref:`bluemira-modules`, where you can learn more about the individual modules
-*  :ref:`dev-docs`, where you can the API reference, and more developer-focussed documentation
+*  :ref:`dev-docs`, where you can find the API reference, and more developer-focused documentation
 
 
 .. toctree::
@@ -28,6 +28,7 @@ The documentation is divided into the following sections:
     2-D fixed and free boundary equilibrium solvers <equilibria/equilibria>
     Fuel cycle model <fuel_cycle/fuel_cycle>
     Geometry module <geometry/geometry>
+    Mesh modules <mesh/mesh>
     3-D magnetostatics <magnetostatics/magnetostatics>
     Materials <materials/materials>
     Radiation transport solvers <radiation_transport/radiation_transport>
@@ -41,3 +42,4 @@ The documentation is divided into the following sections:
    Configuring SSH keys <ssh>
    Bluemira Parameterisations <parameterisations>
    Module API Reference <autoapi/index>
+   FAQs <faq>
