@@ -262,10 +262,18 @@ class EUDEMOReactor(Reactor):
         }
 
         default_config = {
+            "algorithm_name": "SLSQP",
             "name": self.FIRST_WALL,
-            "param_class": "bluemira.builders.EUDEMO.first_wall::WallPolySpline",
+            "opt_conditions": {
+                "ftol_rel": 1e-6,
+                "max_eval": 100,
+                "xtol_abs": 1e-8,
+                "xtol_rel": 1e-8,
+            },
+            "param_class": "bluemira.builders.EUDEMO.first_wall::WallPrincetonD",
+            "problem_class": "bluemira.geometry.optimisation::MinimiseLength",
+            "runmode": "run",
             "variables_map": default_variables_map,
-            "runmode": "mock",
         }
 
         config = self._process_design_stage_config(name, default_config)

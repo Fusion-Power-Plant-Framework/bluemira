@@ -23,4 +23,4 @@ Module containing builders for the EUDEMO first wall components
 """
 from .divertor import DivertorBuilder
 from .first_wall import FirstWallBuilder
-from .wall import WallBuilder, WallPolySpline
+from .wall import WallBuilder, WallPolySpline, WallPrincetonD
