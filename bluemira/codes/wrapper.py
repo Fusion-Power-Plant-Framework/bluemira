@@ -32,7 +32,6 @@ from bluemira.codes.error import CodesError
 from bluemira.codes.interface import FileProgramInterface
 from bluemira.codes.utilities import get_code_interface
 
-
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter import ParameterFrame
