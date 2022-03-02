@@ -22,7 +22,6 @@
 import numpy as np
 import pytest
 
-from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.optimisation import GeometryOptimisationProblem, MinimiseLength
 from bluemira.geometry.parameterisations import PictureFrame, TripleArc
 from bluemira.geometry.tools import make_circle
