@@ -167,6 +167,10 @@ class DivertorBuilder(Builder):
     def make_dome(self, start: Sequence[float], end: Sequence[float], label: str):
         """
         Make a dome between the two given points
+
+        The dome shape follows a constant line of flux that is closest
+        to the input start coordinate. Finally, the nearset point on the
+        flux surface to the end point and the end point are joined.
         """
         # Get the flux surface that crosses the through the start point
         # We can use this surface to guide the shape of the dome
