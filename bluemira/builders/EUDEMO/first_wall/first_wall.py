@@ -23,7 +23,7 @@ Builders for the first wall of the reactor, including divertor
 """
 
 from copy import deepcopy
-from typing import Any, Dict, Iterable, Sequence
+from typing import Any, Dict, Iterable
 
 import numpy as np
 from scipy.spatial import ConvexHull
