@@ -32,6 +32,7 @@ from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
@@ -258,6 +259,28 @@ class EUDEMOReactor(Reactor):
         config = self._process_design_stage_config(name, default_config)
 
         builder = CryostatBuilder(self._params.to_dict(), config, cts_xz=cts)
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
+        return component
+
+    def build_radiation_shield(self, component_tree: Component):
+        """
+        Run the radiation shield build.
+        """
+        name = "Radiation Shield"
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = RadiationShieldBuilder(
+            self._params.to_dict(),
+            config,
+        )
         self.register_builder(builder, name)
         component = super()._build_stage(name)
 

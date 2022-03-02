@@ -26,8 +26,9 @@ Radiation shield builder
 from typing import List
 
 import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import Builder
+from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -46,7 +47,7 @@ class RadiationShieldBuilder(Builder):
     Builder for the radiation shield
     """
 
-    required_params: List[str] = [
+    _required_params: List[str] = [
         "tk_rs",
         "g_cr_rs",
         "o_p_rs",
@@ -55,15 +56,29 @@ class RadiationShieldBuilder(Builder):
         "rs_l_gap",
         "n_TF",
     ]
+    _params: Configuration
+    _cryo_vv_xz: BluemiraFace
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def __init__(
+        self,
+        params,
+        build_config: BuildConfig,
+        cryo_vv_xz: BluemiraFace,
+    ):
+        super().__init__(
+            params,
+            build_config,
+            cryo_vv_xz=cryo_vv_xz,
+        )
+
+    def reinitialise(self, params, cryo_vv_xz) -> None:
         """
         Initialise the state of this builder ready for a new run.
         """
-        # Seems we need to override this so it isn't an abstract method
-        return super().reinitialise(params, **kwargs)
+        super().reinitialise(params)
+        self._cryo_vv_xz = cryo_vv_xz
 
-    def build(self, label: str, cryostat_vv, **kwargs) -> Component:
+    def build(self) -> Component:
         """
         Build the radiation shield component.
 
@@ -72,11 +87,9 @@ class RadiationShieldBuilder(Builder):
         component: Component
             The Component built by this builder.
         """
-        super().build(**kwargs)
+        super().build()
 
-        self._cryo_vv = cryostat_vv
-
-        component = Component(name=label)
+        component = Component(name=self.name)
         component.add_child(self.build_xz())
         component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
@@ -129,7 +142,7 @@ class RadiationShieldBuilder(Builder):
         bm_plot_tools.set_component_plane(component, "xy")
         return component
 
-    def build_xyz(self):
+    def build_xyz(self, degree=360.0):
         """
         Build the x-y-z components of the radiation shield.
         """
@@ -137,7 +150,6 @@ class RadiationShieldBuilder(Builder):
         rs_face = self._rs_face.deepcopy()
         base = (0, 0, 0)
         direction = (0, 0, 1)
-        rs_face.rotate(base=base, direction=direction, degree=-180 / self.params.n_TF)
         shape = revolve_shape(
             rs_face, base=base, direction=direction, degree=360 / self.params.n_TF
         )

@@ -39,6 +39,7 @@ from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.tf_coils import RippleConstrainedLengthOpt
 from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import plot_PROCESS
@@ -481,6 +482,8 @@ thermal_shield = component.get_component("Thermal Shield")
 thermal_shield.get_component("xz").plot_2d(ax=ax)
 cryostat = component.get_component("Cryostat")
 cryostat.get_component("xz").plot_2d(ax=ax)
+radiation_shield = component.get_component("Radiation Shield")
+radiation_shield.get_component("xz").plot_2d(ax=ax)
 
 # %%
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
@@ -492,9 +495,13 @@ tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
 thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shield")
 cryostat_builder: CryostatBuilder = reactor.get_builder("Cryostat")
+radiation_shield_builder: RadiationShieldBuilder = reactor.get_builder(
+    "Radiation Shield"
+)
 component.add_child(plasma_builder.build_xyz(degree=270))
 component.add_child(tf_coils_builder.build_xyz(degree=270))
 component.add_child(pf_coils_builder.build_xyz(degree=270))
 component.add_child(thermal_shield_builder.build_xyz(degree=270))
 component.add_child(cryostat_builder.build_xyz(degree=270))
+component.add_child(radiation_shield_builder.build_xyz(degree=270))
 component.show_cad()
