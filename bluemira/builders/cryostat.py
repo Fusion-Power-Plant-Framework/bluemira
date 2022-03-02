@@ -106,7 +106,7 @@ class CryostatBuilder(Builder):
 
         x_inner = [x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in]
         z_inner = [z_top, z_top, z_mid, z_mid, z_bot, z_bot]
-        x_outer = [x_in, x_gs_kink + tk, x_out + tk, x_out + tk, x_in]
+        x_outer = [x_in, x_gs_kink + tk, x_gs_kink + tk, x_out + tk, x_out + tk, x_in]
         z_outer = [
             z_bot - tk,
             z_bot - tk,
@@ -150,11 +150,11 @@ class CryostatBuilder(Builder):
         degree = (360.0 / self._params.n_TF.value) * n_cr_draw
 
         component = Component("xyz")
-        vv_face = self._cts_xz.deepcopy()
+        cr_face = self._cryo_vv.deepcopy()
         base = (0, 0, 0)
         direction = (0, 0, 1)
         shape = revolve_shape(
-            vv_face, base=base, direction=direction, degree=360 / self._params.n_TF.value
+            cr_face, base=base, direction=direction, degree=360 / self._params.n_TF.value
         )
 
         cryostat_vv = PhysicalComponent("Cryostat TS", shape)
