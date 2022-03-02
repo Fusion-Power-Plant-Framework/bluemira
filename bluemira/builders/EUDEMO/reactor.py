@@ -46,6 +46,7 @@ class EUDEMOReactor(Reactor):
     PLASMA = "Plasma"
     TF_COILS = "TF Coils"
     PF_COILS = "PF Coils"
+    THERMAL_SHIELD = "Thermal Shield"
     FIRST_WALL = "First Wall"
 
     def run(self) -> Component:
@@ -219,7 +220,7 @@ class EUDEMOReactor(Reactor):
         """
         Run the thermal shield build.
         """
-        name = "Thermal Shield"
+        name = self.THERMAL_SHIELD
 
         bluemira_print(f"Starting design stage: {name}")
 
@@ -247,6 +248,8 @@ class EUDEMOReactor(Reactor):
         component = super()._build_stage(name)
 
         bluemira_print(f"Completed design stage: {name}")
+
+        return component
 
     def build_first_wall(self, component_tree: Component, **kwargs):
         """
