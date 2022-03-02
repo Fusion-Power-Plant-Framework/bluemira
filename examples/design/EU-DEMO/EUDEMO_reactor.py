@@ -34,6 +34,7 @@ from bluemira.base.error import ParameterError
 from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.parameter import ParameterMappingEncoder
+from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder, PlasmaComponent
 from bluemira.builders.EUDEMO.reactor import EUDEMOReactor
@@ -478,7 +479,8 @@ pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
 thermal_shield = component.get_component("Thermal Shield")
 thermal_shield.get_component("xz").plot_2d(ax=ax)
-
+cryostat = component.get_component("Cryostat")
+cryostat.get_component("xz").plot_2d(ax=ax)
 
 # %%
 ComponentDisplayer().show_cad(component.get_component("xyz", first=False))
@@ -489,7 +491,7 @@ plasma_builder: PlasmaBuilder = reactor.get_builder("Plasma")
 tf_coils_builder: TFCoilsBuilder = reactor.get_builder("TF Coils")
 pf_coils_builder: PFCoilsBuilder = reactor.get_builder("PF Coils")
 thermal_shield_builder: ThermalShieldBuilder = reactor.get_builder("Thermal Shield")
-cryostat_builder = reactor.get_builder("Cryostat")
+cryostat_builder: CryostatBuilder = reactor.get_builder("Cryostat")
 component.add_child(plasma_builder.build_xyz(degree=270))
 component.add_child(tf_coils_builder.build_xyz(degree=270))
 component.add_child(pf_coils_builder.build_xyz(degree=270))
