@@ -1530,13 +1530,15 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
                 # Outer limb radius
                 BoundedVariable("x_out", 9.5, lower_bound=9.4, upper_bound=9.8),
                 # Upper limb flat section height
-                BoundedVariable("z_mid_up", 7.5, lower_bound=6, upper_bound=8),
+                BoundedVariable("z_mid_up", 9.5, lower_bound=8, upper_bound=10.5),
                 # Lower limb flat section height
-                BoundedVariable("z_mid_down", -7.5, lower_bound=-8, upper_bound=-6),
+                BoundedVariable("z_mid_down", -9.5, lower_bound=-10.5, upper_bound=-8),
                 # Upper limb max height
                 BoundedVariable("z_max_up", 11, lower_bound=6, upper_bound=12),
                 # Lower limb max height
                 BoundedVariable("z_max_down", -11, lower_bound=-12, upper_bound=-6),
+                # Corner/transition joint radius
+                BoundedVariable("r_c", 0.1, lower_bound=0.099, upper_bound=0.11),
             ],
             frozen=True,
         )
@@ -1566,12 +1568,13 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
             z_mid_down,
             z_max_up,
             z_max_down,
+            r_c,
         ) = self.variables.values
         axis = [0, -1, 0]
         wires = []
 
-        p3 = [x_mid, 0, z_mid_down]
-        p4 = [x_mid, 0, z_mid_up]
+        p3 = [x_mid, 0, z_mid_down + r_c]
+        p4 = [x_mid, 0, z_mid_up - r_c]
         wires.append(make_polygon([p3, p4], label="inb_limb"))
 
         # Top Curve
@@ -1588,11 +1591,6 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
 
         wires.append(top_leg_curve)
 
-        # Outer leg
-        px = [x_out, 0, z_mid_up]
-        po = [x_out, 0, z_mid_down]
-        wires.append(make_polygon([px, po], label="outer_limb"))
-
         # Bottom Curve
 
         bot_leg_curve = PictureFrameTools._make_domed_leg(
@@ -1605,6 +1603,11 @@ class FullDomeFlatInnerCurvedPictureFrame(GeometryParameterisation):
             flip=True,
             r_c=0,
         )
+
+        # Outer leg
+        px = top_leg_curve.discretize(100)[:, -1]
+        po = bot_leg_curve.discretize(100)[:, 0]
+        wires.append(make_polygon([px, po], label="outer_limb"))
 
         wires.append(bot_leg_curve)
 
