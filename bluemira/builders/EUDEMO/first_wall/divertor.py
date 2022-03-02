@@ -68,6 +68,8 @@ class DivertorBuilder(Builder):
 
     The builder outputs a component with the structure:
 
+    .. code-block::
+
         divertor (Component)
         └── xz (Component)
             ├── inner_target (PhysicalComponent)

@@ -139,6 +139,8 @@ class WallBuilder(OptimisedShapeBuilder):
 
     The builder outputs a component with the structure:
 
+    .. code-block::
+
         wall (Component)
         └── xz (Component)
             └── wall_boundary (PhysicalComponent)

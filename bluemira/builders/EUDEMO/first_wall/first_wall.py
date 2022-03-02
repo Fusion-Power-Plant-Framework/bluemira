@@ -81,6 +81,8 @@ class FirstWallBuilder(Builder):
     For a single-null plasma, the builder outputs a Component with the
     structure:
 
+    .. code-block::
+
         first_wall (Component)
         └── xz (Component)
             └── wall (Component)
