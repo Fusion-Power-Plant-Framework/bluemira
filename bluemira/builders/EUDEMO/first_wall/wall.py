@@ -136,6 +136,12 @@ class WallBuilder(OptimisedShapeBuilder):
     """
     Builder class for the wall of the reactor, this does not include the
     divertor.
+
+    The builder outputs a component with the structure:
+
+        wall (Component)
+        └── xz (Component)
+            └── wall_boundary (PhysicalComponent)
     """
 
     COMPONENT_WALL_BOUNDARY = "wall_boundary"

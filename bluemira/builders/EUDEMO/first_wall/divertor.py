@@ -65,6 +65,16 @@ def get_separatrix_legs(
 class DivertorBuilder(Builder):
     """
     Build an EUDEMO divertor.
+
+    The builder outputs a component with the structure:
+
+        divertor (Component)
+        └── xz (Component)
+            ├── inner_target (PhysicalComponent)
+            ├── outer_target (PhysicalComponent)
+            ├── dome (PhysicalComponent)
+            ├── inner_baffle (PhysicalComponent)
+            └── outer_baffle (PhysicalComponent)
     """
 
     COMPONENT_INNER_BAFFLE = "inner_baffle"
