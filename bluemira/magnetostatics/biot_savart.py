@@ -217,11 +217,11 @@ class BiotSavartFilament(CurrentSource):
         Parameters
         ----------
         angle: float
-            The rotation degree [rad]
+            The rotation degree [degree]
         axis: Union[np.array(3), str]
             The axis of rotation
         """
-        r = rotation_matrix(angle, axis)
+        r = rotation_matrix(np.deg2rad(angle), axis).T
         self.points = self.points @ r
         self.d_l = self.d_l @ r
         self.mid_points = self.mid_points @ r

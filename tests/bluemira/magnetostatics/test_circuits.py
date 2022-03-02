@@ -189,9 +189,6 @@ class TestCariddiBenchmark:
         cls.cage = cage
 
     def test_cariddi(self):
-        # ripple = []
-        # for xr, zr in zip(self.x_rip[1:19], self.z_rip[1:19]):
-        #     ripple.append(self.cage.ripple(xr, 0, zr))
 
         ripple = self.cage.ripple(self.x_rip[1:19], np.zeros(18), self.z_rip[1:19])
 

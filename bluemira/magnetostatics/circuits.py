@@ -163,9 +163,7 @@ class HelmholtzCage(SourceGroup):
         """
         Pattern the CurrentSource axisymmetrically.
         """
-        angles = np.pi / self.n_TF + np.linspace(
-            0, 2 * np.pi, int(self.n_TF), endpoint=False
-        )
+        angles = np.linspace(0, 360, int(self.n_TF), endpoint=False)
         sources = []
         for angle in angles:
             source = circuit.copy()
@@ -195,10 +193,10 @@ class HelmholtzCage(SourceGroup):
         point = np.array([x, y, z])
         ripple_field = np.zeros(2)
         n = np.array([0, 1, 0])
-        planes = [np.pi / self.n_TF, 0]  # rotate (inline, ingap)
+        planes = [0, np.pi / self.n_TF]  # rotate (inline, ingap)
 
         for i, theta in enumerate(planes):
-            r_matrix = rotation_matrix(theta)
+            r_matrix = rotation_matrix(theta).T
             sr = np.dot(point, r_matrix)
             nr = np.dot(n, r_matrix)
             field = self.field(*sr)
