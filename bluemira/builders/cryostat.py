@@ -30,6 +30,7 @@ import numpy as np
 import bluemira.utilities.plot_tools as bm_plot_tools
 from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.config import Configuration
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -41,7 +42,7 @@ class CryostatBuilder(Builder):
     Builder for the cryostat
     """
 
-    required_params: List[str] = [
+    _required_params: List[str] = [
         "tk_cr_vv",
         "g_cr_ts",
         "o_p_cr",
@@ -50,6 +51,7 @@ class CryostatBuilder(Builder):
         "n_TF",
         "x_g_support",
     ]
+    _params: Configuration
     _cts_xz: BluemiraFace
 
     def __init__(
@@ -61,7 +63,7 @@ class CryostatBuilder(Builder):
         super().__init__(
             params,
             build_config,
-            cts_xz,
+            cts_xz=cts_xz,
         )
 
     def reinitialise(self, params, cts_xz) -> None:
@@ -96,11 +98,11 @@ class CryostatBuilder(Builder):
         x_in = 0
         x_out, z_top = self._get_extrema()
         z_gs = -15  # TODO: Get from gravity support
-        x_gs_kink = self.params.x_g_support - 2  # TODO: Get from a parameter
+        x_gs_kink = self._params.x_g_support.value - 2  # TODO: Get from a parameter
         well_depth = 5  # TODO: Get from a parameter
-        z_mid = z_gs - self.params.g_cr_ts
+        z_mid = z_gs - self._params.g_cr_ts.value
         z_bot = z_mid - well_depth
-        tk = self.params.tk_cr_vv.value
+        tk = self._params.tk_cr_vv.value
 
         x_inner = [x_in, x_out, x_out, x_gs_kink, x_gs_kink, x_in]
         z_inner = [z_top, z_top, z_mid, z_mid, z_bot, z_bot]
@@ -148,11 +150,11 @@ class CryostatBuilder(Builder):
         degree = (360.0 / self._params.n_TF.value) * n_cr_draw
 
         component = Component("xyz")
-        vv_face = self._cts_face.deepcopy()
+        vv_face = self._cts_xz.deepcopy()
         base = (0, 0, 0)
         direction = (0, 0, 1)
         shape = revolve_shape(
-            vv_face, base=base, direction=direction, degree=360 / self.params.n_TF
+            vv_face, base=base, direction=direction, degree=360 / self._params.n_TF.value
         )
 
         cryostat_vv = PhysicalComponent("Cryostat TS", shape)
@@ -163,9 +165,9 @@ class CryostatBuilder(Builder):
         return component
 
     def _get_extrema(self):
-        bound_box = self._cts.bounding_box
+        bound_box = self._cts_xz.bounding_box
         z_max = bound_box.z_max
         x_max = bound_box.x_max
-        x_out = x_max + self.params.g_cr_ts
-        z_top = z_max + self.params.g_cr_ts
+        x_out = x_max + self._params.g_cr_ts.value
+        z_top = z_max + self._params.g_cr_ts.value
         return x_out, z_top

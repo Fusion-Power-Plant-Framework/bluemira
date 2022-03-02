@@ -58,6 +58,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
         component.add_child(self.build_thermal_shield(component))
+        component.add_child(self.build_cryostat(component))
 
         bluemira_print("Reactor Design Complete!")
 
@@ -241,6 +242,9 @@ class EUDEMOReactor(Reactor):
         return component
 
     def build_cryostat(self, component_tree: Component):
+        """
+        Run the cryostat vacuum vessel build.
+        """
         name = "Cryostat"
 
         bluemira_print(f"Starting design stage: {name}")
@@ -248,9 +252,15 @@ class EUDEMOReactor(Reactor):
         thermal_shield = component_tree.get_component("Thermal Shield").get_component(
             "xz"
         )
+        cts = thermal_shield.get_component("Cryostat TS").shape.boundary[0]
 
         default_config = {}
         config = self._process_design_stage_config(name, default_config)
 
-        builder = CryostatBuilder(self._params.to_dict(), config)
+        builder = CryostatBuilder(self._params.to_dict(), config, cts_xz=cts)
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
         return component
