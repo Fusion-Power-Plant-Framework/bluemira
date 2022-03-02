@@ -102,7 +102,8 @@ class RadiationShieldBuilder(Builder):
         cryo_vv = self._cryo_vv_xz
         base = (0, 0, 0)
         direction = (0, 0, 1)
-        cryo_vv_rot = cryo_vv.deepcopy().rotate(base, direction, degree=180)
+        cryo_vv_rot = cryo_vv.deepcopy()
+        cryo_vv_rot.rotate(base, direction, degree=180)
         full_cryo_vv = boolean_fuse([cryo_vv, cryo_vv_rot])
         cryo_vv_outer = full_cryo_vv.boundary[0]
         rs_inner = offset_wire(cryo_vv_outer, self.params.g_cr_rs)
@@ -115,7 +116,7 @@ class RadiationShieldBuilder(Builder):
         z_min, z_max = bound_box.z_min - 1.0, bound_box.z_max + 1.0
         x = [0, 0, x_min, x_min]
         z = [z_min, z_max, z_max, z_min]
-        cutter = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
+        cutter = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         rs_half = boolean_cut(rs_full, cutter)[0]
         self._rs_face = rs_half
 
@@ -146,17 +147,20 @@ class RadiationShieldBuilder(Builder):
         """
         Build the x-y-z components of the radiation shield.
         """
+        n_rs_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        degree = (360.0 / self._params.n_TF.value) * n_rs_draw
+
         component = Component("xyz")
         rs_face = self._rs_face.deepcopy()
         base = (0, 0, 0)
         direction = (0, 0, 1)
         shape = revolve_shape(
-            rs_face, base=base, direction=direction, degree=360 / self.params.n_TF
+            rs_face, base=base, direction=direction, degree=360 / self._params.n_TF.value
         )
 
         rs_body = PhysicalComponent("Body", shape)
         rs_body.display_cad_options.color = BLUE_PALETTE["RS"][0]
-        sectors = circular_pattern_component(rs_body, self._params.n_TF.value)
+        sectors = circular_pattern_component(rs_body, n_rs_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         return component
