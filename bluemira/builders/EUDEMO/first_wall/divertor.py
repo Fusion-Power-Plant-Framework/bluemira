@@ -220,11 +220,13 @@ class DivertorBuilder(Builder):
         """
         Make a baffle.
 
+        The baffle shape is a straight line between the given start and
+        end points.
+
         Parameters
         ----------
-        leg: LegPosition
-            The position of the leg the baffle should join to (e.g.,
-            inner).
+        label: str
+            The label to give the returned Component.
         start: Sequence
             The position (in x-z) to start drawing the baffle from,
             e.g., the outside end of a target.
@@ -232,7 +234,6 @@ class DivertorBuilder(Builder):
             The position (in x-z) to stop drawing the baffle, e.g., the
             postion to the upper part of the first wall.
         """
-        # Just generate the most basic baffle: a straight line
         coords = np.array([[start[0], end[0]], [0, 0], [start[1], end[1]]])
         return PhysicalComponent(label, make_polygon(coords))
 
