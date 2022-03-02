@@ -221,6 +221,7 @@ class FirstWallBuilder(Builder):
         # here when we start supporting double-null plasmas
         build_config = deepcopy(build_config)
         build_config.update({"name": self.COMPONENT_DIVERTOR})
+        build_config.pop("runmode", None)
         builder = DivertorBuilder(params, build_config, self.equilibrium, x_lims)
         return builder()
 

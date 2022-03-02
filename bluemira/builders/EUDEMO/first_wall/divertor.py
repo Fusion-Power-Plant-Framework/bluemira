@@ -81,7 +81,6 @@ class DivertorBuilder(Builder):
     ]
     _required_config: List[str] = []
     _params: Configuration
-    _default_runmode: str = "mock"
 
     def __init__(
         self,
@@ -109,18 +108,6 @@ class DivertorBuilder(Builder):
         Initialise the state of this builder ready for a new run.
         """
         return super().reinitialise(params, **kwargs)
-
-    def mock(self):
-        """
-        Mock a solution to the builder's design problem.
-        """
-        pass
-
-    def run(self):
-        """
-        Run the builder's design problem.
-        """
-        pass
 
     def build(self, **kwargs) -> Component:
         """
