@@ -60,6 +60,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_PF_coils(component))
         component.add_child(self.build_thermal_shield(component))
         component.add_child(self.build_cryostat(component))
+        component.add_child(self.build_radiation_shield(component))
 
         bluemira_print("Reactor Design Complete!")
 
@@ -274,12 +275,16 @@ class EUDEMOReactor(Reactor):
 
         bluemira_print(f"Starting design stage: {name}")
 
+        cryostat = component_tree.get_component("Cryostat").get_component("xz")
+        cryo_vv_xz = cryostat.get_component("Cryostat VV").shape
+
         default_config = {}
         config = self._process_design_stage_config(name, default_config)
 
         builder = RadiationShieldBuilder(
             self._params.to_dict(),
             config,
+            cryo_vv_xz=cryo_vv_xz,
         )
         self.register_builder(builder, name)
         component = super()._build_stage(name)

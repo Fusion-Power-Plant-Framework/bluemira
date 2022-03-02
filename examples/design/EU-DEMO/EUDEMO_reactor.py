@@ -479,9 +479,9 @@ plasma.get_component("xz").plot_2d(ax=ax, show=False)
 pf_coils.get_component("xz").plot_2d(ax=ax, show=False)
 
 thermal_shield = component.get_component("Thermal Shield")
-thermal_shield.get_component("xz").plot_2d(ax=ax)
+thermal_shield.get_component("xz").plot_2d(ax=ax, show=False)
 cryostat = component.get_component("Cryostat")
-cryostat.get_component("xz").plot_2d(ax=ax)
+cryostat.get_component("xz").plot_2d(ax=ax, show=False)
 radiation_shield = component.get_component("Radiation Shield")
 radiation_shield.get_component("xz").plot_2d(ax=ax)
 

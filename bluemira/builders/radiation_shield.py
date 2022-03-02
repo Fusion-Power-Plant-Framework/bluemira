@@ -99,7 +99,7 @@ class RadiationShieldBuilder(Builder):
         """
         Build the x-z components of the radiation shield.
         """
-        cryo_vv = self._cryo_vv
+        cryo_vv = self._cryo_vv_xz
         base = (0, 0, 0)
         direction = (0, 0, 1)
         cryo_vv_rot = cryo_vv.deepcopy().rotate(base, direction, degree=180)
@@ -129,7 +129,7 @@ class RadiationShieldBuilder(Builder):
         """
         Build the x-y components of the radiation shield.
         """
-        x_max = self._cryo_vv.bounding_box.x_max
+        x_max = self._cryo_vv_xz.bounding_box.x_max
         r_in = x_max + self.params.g_cr_rs
         r_out = r_in + self.params.tk_rs
         inner = make_circle(radius=r_in)

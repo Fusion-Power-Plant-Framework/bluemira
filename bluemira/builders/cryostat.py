@@ -157,7 +157,7 @@ class CryostatBuilder(Builder):
             cr_face, base=base, direction=direction, degree=360 / self._params.n_TF.value
         )
 
-        cryostat_vv = PhysicalComponent("Cryostat TS", shape)
+        cryostat_vv = PhysicalComponent("Cryostat VV", shape)
         cryostat_vv.display_cad_options.color = BLUE_PALETTE["CR"][0]
         sectors = circular_pattern_component(cryostat_vv, n_cr_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
