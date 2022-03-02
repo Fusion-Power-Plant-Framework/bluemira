@@ -109,12 +109,12 @@ class FirstWallBuilder(Builder):
         self.wall: Component
         self.divertor: Component
 
-        self._init_params = params
-        self._build_config = build_config
         self.equilibrium = equilibrium
         _, self.x_points = find_OX_points(
             self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
         )
+        self._wall_builder = self._init_wall_builder(params, build_config)
+        self._divertor_builder = self._init_divertor_builder(params, build_config)
 
     def reinitialise(self, params, **kwargs) -> None:
         """
@@ -136,12 +136,10 @@ class FirstWallBuilder(Builder):
         """
         Build the component.
         """
-        self.wall = self._build_wall(self._init_params, self._build_config)
+        self.wall = self._build_wall()
         wall_shape = self.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
-        self.divertor = self._build_divertor(
-            self._init_params,
-            self._build_config,
-            [wall_shape.start_point()[0], wall_shape.end_point()[0]],
+        self.divertor = self._divertor_builder(
+            x_lims=[wall_shape.start_point()[0], wall_shape.end_point()[0]],
         )
 
         first_wall = Component(self.name)
@@ -171,7 +169,31 @@ class FirstWallBuilder(Builder):
         )
         return parent_component
 
-    def _build_wall(self, params: Dict[str, Any], build_config: BuildConfig):
+    def _init_wall_builder(
+        self, params: Dict[str, Any], build_config: BuildConfig
+    ) -> WallBuilder:
+        """
+        Initialize the wall builder.
+        """
+        build_config = deepcopy(build_config)
+        build_config.update({"name": self.COMPONENT_WALL})
+        keep_out_zone = self._make_wall_keep_out_zone(geom_offset=0.2, psi_n=1.05)
+        return WallBuilder(
+            params, build_config=build_config, keep_out_zone=keep_out_zone
+        )
+
+    def _init_divertor_builder(
+        self, params: Dict[str, Any], build_config: BuildConfig
+    ) -> DivertorBuilder:
+        """
+        Initialize the divertor builder.
+        """
+        build_config = deepcopy(build_config)
+        build_config.update({"name": self.COMPONENT_DIVERTOR})
+        build_config.pop("runmode", None)
+        return DivertorBuilder(params, build_config, self.equilibrium)
+
+    def _build_wall(self):
         """
         Build the component for the wall, excluding the divertor.
 
@@ -179,17 +201,8 @@ class FirstWallBuilder(Builder):
         optimised) first wall shape. It then cuts the wall below the
         equilibrium's x-point, to make space for a divertor.
         """
-        build_config = deepcopy(build_config)
-        build_config.update({"label": self.COMPONENT_WALL, "name": self.COMPONENT_WALL})
-
-        # Keep-out zone to constrain the wall around the plasma
-        keep_out_zone = self._make_wall_keep_out_zone(geom_offset=0.2, psi_n=1.05)
-
         # Build a full, closed, wall shape
-        builder = WallBuilder(
-            params, build_config=build_config, keep_out_zone=keep_out_zone
-        )
-        wall = builder()
+        wall = self._wall_builder()
 
         # Cut wall below x-point in xz, a divertor will be put in the
         # space
@@ -208,22 +221,6 @@ class FirstWallBuilder(Builder):
             PhysicalComponent(WallBuilder.COMPONENT_WALL_BOUNDARY, cut_shape)
         )
         return wall
-
-    def _build_divertor(
-        self, params: Dict[str, Any], build_config, x_lims: Sequence[float]
-    ) -> Component:
-        """
-        Build divertor component below the first x-point in the
-        separatrix of the equilibrium.
-        """
-        # This currently only supports building a divertor at the lower
-        # end of the plasma. We will need to add a 'Location' switch
-        # here when we start supporting double-null plasmas
-        build_config = deepcopy(build_config)
-        build_config.update({"name": self.COMPONENT_DIVERTOR})
-        build_config.pop("runmode", None)
-        builder = DivertorBuilder(params, build_config, self.equilibrium, x_lims)
-        return builder()
 
     def _make_wall_keep_out_zone(self, geom_offset, psi_n) -> BluemiraWire:
         """

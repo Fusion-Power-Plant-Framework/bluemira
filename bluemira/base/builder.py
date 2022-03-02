@@ -96,7 +96,7 @@ class Builder(abc.ABC):
         self._params = ParameterFrame.from_template(self._required_params)
         self.reinitialise(params, **kwargs)
 
-    def __call__(self) -> Component:
+    def __call__(self, **kwargs) -> Component:
         """
         Perform the full build process using the current parameterisation of the builder.
 
@@ -109,7 +109,7 @@ class Builder(abc.ABC):
         if hasattr(self, "_runmode"):
             bluemira_print(f"Designing {self.name} using runmode: {self.runmode}")
             self._runmode(self)
-        return self.build()
+        return self.build(**kwargs)
 
     @abc.abstractmethod
     def reinitialise(self, params, **kwargs) -> None:

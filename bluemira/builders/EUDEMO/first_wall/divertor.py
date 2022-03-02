@@ -87,14 +87,12 @@ class DivertorBuilder(Builder):
         params: Dict[str, Any],
         build_config: BuildConfig,
         equilibrium: Equilibrium,
-        x_lims: Sequence[float],
         **kwargs,
     ):
         super().__init__(params, build_config, **kwargs)
 
         self._shape = None
 
-        self.x_lims = sorted(x_lims)
         self.equilibrium = equilibrium
         self.leg_length = {
             LegPosition.INNER: self.params["div_L2D_ib"],
@@ -109,15 +107,15 @@ class DivertorBuilder(Builder):
         """
         return super().reinitialise(params, **kwargs)
 
-    def build(self, **kwargs) -> Component:
+    def build(self, x_lims: Sequence[float], **kwargs) -> Component:
         """
         Build the divertor component.
         """
         component = super().build(**kwargs)
-        component.add_child(self.build_xz())
+        component.add_child(self.build_xz(x_lims))
         return component
 
-    def build_xz(self) -> Component:
+    def build_xz(self, x_lims: Sequence[float]) -> Component:
         """
         Build the divertor's components in the xz-plane.
         """
@@ -138,8 +136,8 @@ class DivertorBuilder(Builder):
         component.add_child(dome)
 
         # Build the baffles
-        component.add_child(self._make_inner_baffle(inner_target.shape))
-        component.add_child(self._make_outer_baffle(outer_target.shape))
+        component.add_child(self._make_inner_baffle(inner_target.shape, min(x_lims)))
+        component.add_child(self._make_outer_baffle(outer_target.shape, max(x_lims)))
 
         return component
 
@@ -237,7 +235,9 @@ class DivertorBuilder(Builder):
         coords = np.array([[start[0], end[0]], [0, 0], [start[1], end[1]]])
         return PhysicalComponent(label, make_polygon(coords))
 
-    def _make_inner_baffle(self, target: BluemiraWire) -> PhysicalComponent:
+    def _make_inner_baffle(
+        self, target: BluemiraWire, x_lim: float
+    ) -> PhysicalComponent:
         """
         Build the inner baffle to join with the given target.
         """
@@ -247,11 +247,13 @@ class DivertorBuilder(Builder):
             inner_target_start = self._get_wire_end_with_largest(target, "x")
         return self.make_baffle(
             label=self.COMPONENT_INNER_BAFFLE,
-            start=np.array([self.x_lims[0], self.x_points[0].z]),
+            start=np.array([x_lim, self.x_points[0].z]),
             end=inner_target_start,
         )
 
-    def _make_outer_baffle(self, target: BluemiraWire) -> PhysicalComponent:
+    def _make_outer_baffle(
+        self, target: BluemiraWire, x_lim: float
+    ) -> PhysicalComponent:
         """
         Build the outer baffle to join with the given target.
         """
@@ -262,7 +264,7 @@ class DivertorBuilder(Builder):
         return self.make_baffle(
             label=self.COMPONENT_OUTER_BAFFLE,
             start=outer_target_end,
-            end=np.array([self.x_lims[1], self.x_points[0].z]),
+            end=np.array([x_lim, self.x_points[0].z]),
         )
 
     def _get_length_for_leg(self, leg: LegPosition):
