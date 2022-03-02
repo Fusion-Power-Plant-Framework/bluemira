@@ -253,3 +253,4 @@ class EUDEMOReactor(Reactor):
         config = self._process_design_stage_config(name, default_config)
 
         builder = CryostatBuilder(self._params.to_dict(), config)
+        return component
