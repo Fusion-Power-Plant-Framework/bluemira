@@ -28,6 +28,7 @@ import os
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.design import Reactor
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
@@ -238,3 +239,17 @@ class EUDEMOReactor(Reactor):
         bluemira_print(f"Completed design stage: {name}")
 
         return component
+
+    def build_cryostat(self, component_tree: Component):
+        name = "Cryostat"
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        thermal_shield = component_tree.get_component("Thermal Shield").get_component(
+            "xz"
+        )
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = CryostatBuilder(self._params.to_dict(), config)

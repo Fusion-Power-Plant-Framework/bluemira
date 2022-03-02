@@ -28,7 +28,7 @@ from typing import List
 import numpy as np
 
 import bluemira.utilities.plot_tools as bm_plot_tools
-from bluemira.base.builder import Builder
+from bluemira.base.builder import BuildConfig, Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.EUDEMO.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
@@ -50,15 +50,28 @@ class CryostatBuilder(Builder):
         "n_TF",
         "x_g_support",
     ]
+    _cts_xz: BluemiraFace
 
-    def reinitialise(self, params, **kwargs) -> None:
+    def __init__(
+        self,
+        params,
+        build_config: BuildConfig,
+        cts_xz: BluemiraFace,
+    ):
+        super().__init__(
+            params,
+            build_config,
+            cts_xz,
+        )
+
+    def reinitialise(self, params, cts_xz) -> None:
         """
         Initialise the state of this builder ready for a new run.
         """
-        # Seems we need to override this so it isn't an abstract method
-        return super().reinitialise(params, **kwargs)
+        super().reinitialise(params)
+        self._cts_xz = cts_xz
 
-    def build(self, label: str, cryostat_ts, **kwargs) -> Component:
+    def build(self) -> Component:
         """
         Build the cryostat component.
 
@@ -67,11 +80,9 @@ class CryostatBuilder(Builder):
         component: Component
             The Component built by this builder.
         """
-        super().build(**kwargs)
+        super().build()
 
-        self._cts = cryostat_ts
-
-        component = Component(name=label)
+        component = Component(name=self.name)
         component.add_child(self.build_xz())
         component.add_child(self.build_xy())
         component.add_child(self.build_xyz())
@@ -129,22 +140,24 @@ class CryostatBuilder(Builder):
         bm_plot_tools.set_component_plane(component, "xy")
         return component
 
-    def build_xyz(self):
+    def build_xyz(self, degree=360.0):
         """
         Build the x-y-z components of the cryostat.
         """
+        n_cr_draw = max(1, int(degree // (360 // self._params.n_TF.value)))
+        degree = (360.0 / self._params.n_TF.value) * n_cr_draw
+
         component = Component("xyz")
         vv_face = self._cts_face.deepcopy()
         base = (0, 0, 0)
         direction = (0, 0, 1)
-        vv_face.rotate(base=base, direction=direction, degree=-180 / self.params.n_TF)
         shape = revolve_shape(
             vv_face, base=base, direction=direction, degree=360 / self.params.n_TF
         )
 
         cryostat_vv = PhysicalComponent("Cryostat TS", shape)
         cryostat_vv.display_cad_options.color = BLUE_PALETTE["CR"][0]
-        sectors = circular_pattern_component(cryostat_vv, self._params.n_TF.value)
+        sectors = circular_pattern_component(cryostat_vv, n_cr_draw, degree=degree)
         component.add_children(sectors, merge_trees=True)
 
         return component
