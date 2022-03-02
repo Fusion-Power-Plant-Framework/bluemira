@@ -31,6 +31,7 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.EUDEMO.pf_coils import PFCoilsBuilder
 from bluemira.builders.EUDEMO.plasma import PlasmaBuilder
 from bluemira.builders.EUDEMO.tf_coils import TFCoilsBuilder
+from bluemira.builders.thermal_shield import ThermalShieldBuilder
 from bluemira.codes import run_systems_code
 from bluemira.codes.process import NAME as PROCESS
 
@@ -55,6 +56,7 @@ class EUDEMOReactor(Reactor):
         component.add_child(self.build_plasma())
         component.add_child(self.build_TF_coils(component))
         component.add_child(self.build_PF_coils(component))
+        component.add_child(self.build_thermal_shield(component))
 
         bluemira_print("Reactor Design Complete!")
 
@@ -200,4 +202,39 @@ class EUDEMOReactor(Reactor):
         component = super()._build_stage(name)
 
         bluemira_print(f"Completed design stage: {name}")
+        return component
+
+    def build_thermal_shield(self, component_tree: Component):
+        """
+        Run the thermal shield build.
+        """
+        name = "Thermal Shield"
+
+        bluemira_print(f"Starting design stage: {name}")
+
+        # Prepare inputs
+        pf_coils = component_tree.get_component("PF Coils").get_component("xz")
+        pf_kozs = [
+            coil.get_component("casing").shape.boundary[0] for coil in pf_coils.children
+        ]
+        tf_coils = component_tree.get_component("TF Coils").get_component("xz")
+        tf_koz = (
+            tf_coils.get_component("Casing").get_component("outer").shape.boundary[0]
+        )
+
+        default_config = {}
+        config = self._process_design_stage_config(name, default_config)
+
+        builder = ThermalShieldBuilder(
+            self._params.to_dict(),
+            config,
+            pf_coils_xz_kozs=pf_kozs,
+            tf_xz_koz=tf_koz,
+            vv_xz_koz=None,
+        )
+        self.register_builder(builder, name)
+        component = super()._build_stage(name)
+
+        bluemira_print(f"Completed design stage: {name}")
+
         return component
