@@ -63,6 +63,7 @@ apiFace = Part.Face  # noqa :N816
 apiShell = Part.Shell  # noqa :N816
 apiSolid = Part.Solid  # noqa :N816
 apiShape = Part.Shape  # noqa :N816
+apiPlane = Part.Plane  # noqa :N816
 apiCompound = Part.Compound  # noqa :N816
 
 # ======================================================================================
@@ -1332,6 +1333,49 @@ def change_placement(geo, placement):
     geo.Placement = new_placement
 
 
+# ======================================================================================
+# Plane creation and manipulations
+# ======================================================================================
+def make_plane(base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0]):
+    """
+    Creates a FreeCAD plane with a given location and normal
+
+    Parameters
+    ----------
+    base: Iterable
+        a reference point in the plane
+    axis: Iterable
+        normal vector to the plane
+    """
+    base = Base.Vector(base)
+    axis = Base.Vector(axis)
+
+    return Part.Plane(base, axis)
+
+
+def make_plane_from_3_points(
+    point1=[0.0, 0.0, 0.0], point2=[1.0, 0.0, 0.0], point3=[0.0, 1.0, 0.0]
+):
+    """
+    Creates a FreeCAD plane defined by three non-linear points
+
+    Parameters
+    ----------
+    point: Iterable
+        a reference point in the plane
+    axis: Iterable
+        normal vector to the plane
+    """
+    point1 = Base.Vector(point1)
+    point2 = Base.Vector(point2)
+    point3 = Base.Vector(point3)
+
+    return Base.Plane(point1, point2, point3)
+
+
+# ======================================================================================
+# Geometry visualisation
+# ======================================================================================
 def _colourise(
     node: coin.SoNode,
     options: Dict,
@@ -1344,11 +1388,6 @@ def _colourise(
         node.transparency.setValue(transparency)
     for child in node.getChildren() or []:
         _colourise(child, options)
-
-
-# ======================================================================================
-# Geometry visualisation
-# ======================================================================================
 
 
 def show_cad(
