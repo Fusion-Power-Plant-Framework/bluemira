@@ -1055,6 +1055,9 @@ class ParameterFrame:
                 unit = value.unit
             value = value.value
 
+        if unit is None:
+            unit = self.get_param(var).unit
+
         self.__setattr__(var, Parameter(var=var, value=value, unit=unit, source=source))
 
     def update_kw_parameters(self, kwargs, source=None, *, allow_new=False):

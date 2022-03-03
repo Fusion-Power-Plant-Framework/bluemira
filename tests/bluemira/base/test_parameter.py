@@ -821,6 +821,11 @@ class TestParameterFrame:
         assert params_copy.n_CS.value == 15
         assert params_copy.n_CS.source == "hello2"
 
+        # No unit provided
+        params_copy.set_parameter("n_CS", 10, source="hello")
+        assert params_copy.n_CS.value == 10
+        assert params_copy.n_CS.source == "hello"
+
 
 class TestReactorSystem:
 
