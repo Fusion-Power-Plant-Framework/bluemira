@@ -23,8 +23,8 @@
 The bluemira equilibria module
 """
 
-from .coils import Coil, CoilSet, SymmetricCircuit
-from .eq_constraints import (
+from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.eq_constraints import (
     AutoConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
@@ -32,21 +32,28 @@ from .eq_constraints import (
     PsiBoundaryConstraint,
     PsiConstraint,
 )
-from .equilibrium import Breakdown, Equilibrium
-from .find import find_flux_surfs, find_LCFS_separatrix, find_OX_points
-from .grid import Grid
-from .limiter import Limiter
-from .opt_problems import (
+from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
+from bluemira.equilibria.find import (
+    find_flux_surfs,
+    find_LCFS_separatrix,
+    find_OX_points,
+)
+from bluemira.equilibria.grid import Grid
+from bluemira.equilibria.limiter import Limiter
+from bluemira.equilibria.opt_problems import (
     BoundedCurrentCOP,
     CoilsetPositionCOP,
     NestedCoilsetPositionCOP,
     UnconstrainedCurrentCOP,
 )
-from .optimiser import FBIOptimiser, Norm2Tikhonov, PositionOptimiser
-from .profiles import BetaIpProfile, CustomProfile
-from .run import AbInitioEquilibriumProblem
-from .shapes import flux_surface_cunningham, flux_surface_johner, flux_surface_manickam
-from .solve import (
+from bluemira.equilibria.optimiser import FBIOptimiser, Norm2Tikhonov, PositionOptimiser
+from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
+from bluemira.equilibria.shapes import (
+    flux_surface_cunningham,
+    flux_surface_johner,
+    flux_surface_manickam,
+)
+from bluemira.equilibria.solve import (
     PicardAbsIterator,
     PicardCoilsetIterator,
     PicardDeltaIterator,

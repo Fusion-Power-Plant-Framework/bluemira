@@ -43,10 +43,6 @@ from bluemira.equilibria.constants import (
     NBTI_B_MAX,
     NBTI_J_MAX,
 )
-from bluemira.equilibria.eq_constraints import (
-    EUDEMODoubleNullConstraints,
-    EUDEMOSingleNullConstraints,
-)
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.limiter import Limiter
