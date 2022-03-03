@@ -127,10 +127,10 @@ class OptimisationObjective:
 class OptimisationProblem(ABC):
     """
     Abstract base class to be subclassed for defining optimisation
-    routines in Bluemira.
+    routines in bluemira.
 
     Subclasses should provide an optimise() method that
-    returns an optimised coilset object, optimised according
+    returns an optimised parameterisation object, optimised according
     to a specific objective function for that subclass.
 
     Parameters
@@ -186,7 +186,7 @@ class OptimisationProblem(ABC):
         # Apply constraints
         self.apply_constraints(self.opt, self._constraints)
 
-        # Set state vector bounds (current limits)
+        # Set state vector bounds
         self.opt.set_lower_bounds(bounds[0])
         self.opt.set_upper_bounds(bounds[1])
 
@@ -204,12 +204,6 @@ class OptimisationProblem(ABC):
         opt_constraints: iterable
             Iterable of OptimisationConstraint objects containing optimisation
             constraints to be applied to the Optimiser.
-
-        Notes
-        -----
-        Lambda functions are used here to ensure the CoilsetPositionCOP is passed
-        to the function, to allow any properties that are stored in the
-        CoilsetPositionCOP to be accessed at runtime.
         """
         if opt_constraints is not None:
             for _opt_constraint in opt_constraints:

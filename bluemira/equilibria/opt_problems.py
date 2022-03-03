@@ -614,7 +614,8 @@ class CoilsetPositionCOP(CoilsetOP):
 
         Returns
         -------
-        fom: Value of objective function (figure of merit).
+        fom: float
+            Value of objective function (figure of merit).
         """
         mapped_x, mapped_z, currents = np.array_split(vector, 3)
         mapped_positions = np.concatenate((mapped_x, mapped_z))
@@ -793,7 +794,8 @@ class NestedCoilsetPositionCOP(CoilsetOP):
 
         Returns
         -------
-        fom: Value of objective function (figure of merit).
+        fom: float
+            Value of objective function (figure of merit).
         """
         region_mapper.set_Lmap(vector)
         x_vals, z_vals = region_mapper.get_xz_arrays()

@@ -34,7 +34,7 @@ and on the position of the inboard midplane.
 
 # # Imports
 
-# Import necessary Equilbrium module definitions.
+# Import necessary equilbria module definitions.
 
 # %%
 
