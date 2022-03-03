@@ -5,6 +5,7 @@ argon2-cffi==21.3.0
 argon2-cffi-bindings==21.2.0
 asteval==0.9.26
 attrs==21.4.0
+Babel==2.9.1
 backcall==0.2.0
 bleach==4.1.0
 cffi==1.15.0
@@ -55,7 +56,9 @@ parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
 Pillow==9.0.1
+Pint==0.18
 pluggy==1.0.0
+periodictable==1.6.0
 prometheus-client==0.13.1
 prompt-toolkit==3.0.28
 ptyprocess==0.7.0

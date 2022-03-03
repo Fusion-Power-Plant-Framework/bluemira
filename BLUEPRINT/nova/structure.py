@@ -64,7 +64,7 @@ class CoilArchitect(ReactorSystem):
     inputs: dict
     # fmt: off
     default_params = [
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['tk_tf_nose', 'TF coil inboard nose thickness', 0.6, 'm', None, 'Input'],
         ['tk_tf_wp', 'TF coil winding pack thickness', 0.5, 'm', 'Excluding insulation', 'PROCESS'],
         ['tk_tf_front_ib', 'TF coil inboard steel front plasma-facing', 0.04, 'm', None, 'Input'],

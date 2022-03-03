@@ -39,13 +39,13 @@ OUTDIR = os.path.join(
 
 FRAME_LIST = [
     # [var, name, value, unit, description, source{name, recv, send}]
-    ["a", None, 0, None, None, None],
-    ["b", None, 1, None, None, None, None],
-    ["c", None, 2, None, None, None, {"PROCESS": ParameterMapping("cp", False, False)}],
-    ["d", None, 3, None, None, None, {"PROCESS": ParameterMapping("dp", False, True)}],
-    ["e", None, 4, None, None, None, {"PROCESS": ParameterMapping("ep", True, False)}],
-    ["f", None, 5, None, None, None, {"PROCESS": ParameterMapping("fp", True, True)}],
-    ["g", None, 6, None, None, None, {"FAKE_CODE": ParameterMapping("gp", True, True)}],
+    ["a", None, 0, "", None, None],
+    ["b", None, 1, "", None, None, None],
+    ["c", None, 2, "", None, None, {"PROCESS": ParameterMapping("cp", False, False)}],
+    ["d", None, 3, "", None, None, {"PROCESS": ParameterMapping("dp", False, True)}],
+    ["e", None, 4, "", None, None, {"PROCESS": ParameterMapping("ep", True, False)}],
+    ["f", None, 5, "", None, None, {"PROCESS": ParameterMapping("fp", True, True)}],
+    ["g", None, 6, "", None, None, {"FAKE_CODE": ParameterMapping("gp", True, True)}],
 ]
 
 

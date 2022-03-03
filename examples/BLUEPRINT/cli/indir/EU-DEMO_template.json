@@ -2,7 +2,7 @@
   "Name": {
     "name": "Reactor name",
     "value": "Cambridge",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -10,7 +10,7 @@
   "plasma_type": {
     "name": "Type of plasma",
     "value": "SN",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -18,7 +18,7 @@
   "reactor_type": {
     "name": "Type of reactor",
     "value": "SN",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -26,7 +26,7 @@
   "op_mode": {
     "name": "Mode of operation",
     "value": "Pulsed",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -76,7 +76,7 @@
   "blanket_type": {
     "name": "Blanket type",
     "value": "HCPB",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -84,7 +84,7 @@
   "n_TF": {
     "name": "Number of TF coils",
     "value": 16,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -98,7 +98,7 @@
   "n_PF": {
     "name": "Number of PF coils",
     "value": 6,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -106,7 +106,7 @@
   "n_CS": {
     "name": "Number of CS coil divisions",
     "value": 5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -128,7 +128,7 @@
   "Av": {
     "name": "Reactor availability",
     "value": 0.3,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -136,7 +136,7 @@
   "A": {
     "name": "Plasma aspect ratio",
     "value": 3.1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -178,7 +178,7 @@
   "q_95": {
     "name": "Plasma safety factor",
     "value": 3.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -192,7 +192,7 @@
   "kappa_95": {
     "name": "95th percentile plasma elongation",
     "value": 1.6,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -206,7 +206,7 @@
   "kappa": {
     "name": "Last closed surface plasma elongation",
     "value": 1.792,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -220,7 +220,7 @@
   "delta_95": {
     "name": "95th percentile plasma triangularity",
     "value": 0.333,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -234,7 +234,7 @@
   "delta": {
     "name": "Last closed surface plasma triangularity",
     "value": 0.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -262,7 +262,7 @@
   "Z_eff": {
     "name": "Effective particle radiation atomic mass",
     "value": 2.2,
-    "unit": "a.u.",
+    "unit": "amu",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -276,7 +276,7 @@
   "res_plasma": {
     "name": "Plasma resistance",
     "value": 0,
-    "unit": "Ohm",
+    "unit": "ohm",
     "description": null,
     "source": "Calculated",
     "mapping": null
@@ -298,7 +298,7 @@
   "l_i": {
     "name": "Normalised internal plasma inductance",
     "value": 0.8,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -368,7 +368,7 @@
   "f_DD_fus": {
     "name": "Fraction of D-D fusion in total fusion",
     "value": 0.0025,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD",
     "mapping": null
@@ -376,7 +376,7 @@
   "H_star": {
     "name": "H factor (radiation corrected)",
     "value": 1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD",
     "mapping": {
@@ -488,7 +488,7 @@
   "f_bs": {
     "name": "Bootstrap fraction",
     "value": 0.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD",
     "mapping": {
@@ -502,7 +502,7 @@
   "beta_N": {
     "name": "Normalised ratio of plasma pressure to magnetic pressure",
     "value": 2.7,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD",
     "mapping": null
@@ -510,7 +510,7 @@
   "beta_p": {
     "name": "Ratio of plasma pressure to poloidal magnetic pressure",
     "value": 0.04,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD",
     "mapping": {
@@ -524,7 +524,7 @@
   "beta": {
     "name": "Total ratio of plasma pressure to magnetic pressure",
     "value": 0.04,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PLASMOD",
     "mapping": {
@@ -566,7 +566,7 @@
   "shaf_shift": {
     "name": "Shafranov shift of plasma (geometric=>magnetic)",
     "value": 0.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "equilibria",
     "mapping": null
@@ -574,7 +574,7 @@
   "C_Ejima": {
     "name": "Ejima constant",
     "value": 0.4,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982)",
     "mapping": {
@@ -588,7 +588,7 @@
   "m_s_limit": {
     "name": "Margin to vertical stability",
     "value": 0.3,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -596,7 +596,7 @@
   "f_ni": {
     "name": "Non-inductive current drive fraction",
     "value": 0.1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": {
@@ -654,7 +654,7 @@
   "eta_nb": {
     "name": "NB electrical efficiency",
     "value": 0.3,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "Check units!",
     "source": "Input",
     "mapping": {
@@ -684,7 +684,7 @@
   "eta_ec": {
     "name": "EC electrical efficiency",
     "value": 0.35,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "Check units!",
     "source": "Input",
     "mapping": null
@@ -700,7 +700,7 @@
   "fw_psi_n": {
     "name": "Normalised psi boundary to fit FW to",
     "value": 1.07,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -732,7 +732,7 @@
   "div_graze_angle": {
     "name": "Divertor SOL grazing angle",
     "value": 1.5,
-    "unit": "\u00b0",
+    "unit": "°",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -740,7 +740,7 @@
   "div_psi_o": {
     "name": "Divertor flux offset",
     "value": 0.5,
-    "unit": "n/a",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -756,7 +756,7 @@
   "div_open": {
     "name": "Divertor open/closed configuration",
     "value": false,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -780,7 +780,7 @@
   "fw_a_max": {
     "name": "Maximum angle between FW modules",
     "value": 25,
-    "unit": "\u00c3\u201a\u00c2\u00b0",
+    "unit": "°",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -796,7 +796,7 @@
   "LPangle": {
     "name": "Lower port inclination angle",
     "value": -30,
-    "unit": "\u00b0",
+    "unit": "°",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -804,7 +804,7 @@
   "n_div_cassettes": {
     "name": "Number of divertor cassettes per sector",
     "value": 3,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Common decision",
     "mapping": null
@@ -812,7 +812,7 @@
   "bb_e_mult": {
     "name": "Energy multiplication factor",
     "value": 1.35,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "HCPB classic",
     "mapping": {
@@ -826,7 +826,7 @@
   "bb_min_angle": {
     "name": "Minimum module angle",
     "value": 70,
-    "unit": "\u00b0",
+    "unit": "°",
     "description": "Sharpest cut of a module possible",
     "source": "Lorenzo Boccaccini said this in a meeting in 2015, Garching, Germany",
     "mapping": null
@@ -834,7 +834,7 @@
   "tk_r_ib_bz": {
     "name": "Thickness ratio of the inboard blanket breeding zone",
     "value": 0.309,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "HCPB 2015 design description document",
     "mapping": null
@@ -842,7 +842,7 @@
   "tk_r_ib_manifold": {
     "name": "Thickness ratio of the inboard blanket manifold",
     "value": 0.114,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "HCPB 2015 design description document",
     "mapping": null
@@ -850,7 +850,7 @@
   "tk_r_ib_bss": {
     "name": "Thickness ratio of the inboard blanket back supporting structure",
     "value": 0.577,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "HCPB 2015 design description document",
     "mapping": null
@@ -858,7 +858,7 @@
   "tk_r_ob_bz": {
     "name": "Thickness ratio of the outboard blanket breeding zone",
     "value": 0.431,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "HCPB 2015 design description document",
     "mapping": null
@@ -866,7 +866,7 @@
   "tk_r_ob_manifold": {
     "name": "Thickness ratio of the outboard blanket manifold",
     "value": 0.071,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "HCPB 2015 design description document",
     "mapping": null
@@ -874,7 +874,7 @@
   "tk_r_ob_bss": {
     "name": "Thickness ratio of the outboard blanket back supporting structure",
     "value": 0.498,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "HCPB 2015 design description document",
     "mapping": null
@@ -1356,7 +1356,7 @@
   "r_tf_in_centre": {
     "name": "Inboard TF leg centre radius",
     "value": 3.7,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PROCESS",
     "mapping": {
@@ -1440,7 +1440,7 @@
   "r_tf_out_centre": {
     "name": "Outboard TF leg centre radius",
     "value": 16.2,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "PROCESS",
     "mapping": {
@@ -1606,7 +1606,7 @@
   "vvpfrac": {
     "name": "Fraction of neutrons deposited in VV",
     "value": 0.04,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "simpleneutrons needs a correction for VV n absorbtion",
     "source": "Bachmanns only value",
     "mapping": null
@@ -1646,7 +1646,7 @@
   "tf_fluence": {
     "name": "Insulation fluence limit for ITER equivalent to 10 MGy",
     "value": 3.2e+21,
-    "unit": "n/m^2",
+    "unit": "1/m^2",
     "description": "http://ieeexplore.ieee.org/document/6374236/",
     "source": "Input",
     "mapping": null
@@ -1678,7 +1678,7 @@
   "CS_material": {
     "name": "Conducting material to use for the CS modules",
     "value": "Nb3Sn",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -1686,7 +1686,7 @@
   "PF_material": {
     "name": "Conducting material to use for the PF coils",
     "value": "NbTi",
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -1694,7 +1694,7 @@
   "n_cr_lab": {
     "name": "Number of cryostat labyrinth levels",
     "value": 2,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -1710,7 +1710,7 @@
   "n_rs_lab": {
     "name": "Number of radiation shield labyrinth levels",
     "value": 4,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": null,
     "source": "Input",
     "mapping": null
@@ -1750,7 +1750,7 @@
   "a_min": {
     "name": "Minimum operational load factor",
     "value": 0.1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "Otherwise nobody pays",
     "source": "Input",
     "mapping": null
@@ -1758,7 +1758,7 @@
   "a_max": {
     "name": "Maximum operational load factor",
     "value": 0.5,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "Can be violated",
     "source": "Input",
     "mapping": null
@@ -1766,7 +1766,7 @@
   "m_gas": {
     "name": "Gas puff flow rate",
     "value": 50,
-    "unit": "Pam^3/s",
+    "unit": "P am^3/s",
     "description": "To maintain detachment - no chance of fusion from gas injection",
     "source": "Discussions with Chris Day and Yannick H\u00f6rstenmeyer",
     "mapping": null
@@ -1790,7 +1790,7 @@
   "RMTFI": {
     "name": "RM Technical Feasibility Index",
     "value": 1,
-    "unit": "N/A",
+    "unit": "dimensionless",
     "description": "Default value. Should not really be 1",
     "source": "Input",
     "mapping": null

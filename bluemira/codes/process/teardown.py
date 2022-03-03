@@ -100,7 +100,7 @@ class BMFile(MFile):
             unit = re.search(r"\((\w+)\)", lin[0]).group(1)
             val = val.replace("(" + unit + ")", "")
         except AttributeError:
-            unit = "N/A"
+            unit = "dimensionless"
         return val, unit
 
     def unitsplit(self, dictionary):
@@ -124,7 +124,7 @@ class BMFile(MFile):
                 desc, unit = self.defs[key][0], convert_unit_p_to_b(self.defs[key][1])
             except KeyError:
                 desc = key + ": PROCESS variable description not found"
-                unit = "N/A"
+                unit = "dimensionless"
             param.append([key, desc, val, unit, None, PROCESS])
         return bm_base.ParameterFrame(param)
 

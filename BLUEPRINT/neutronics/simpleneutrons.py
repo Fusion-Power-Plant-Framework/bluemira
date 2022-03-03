@@ -199,12 +199,12 @@ class BlanketCoverage(ReactorSystem):
 
     # fmt: off
     default_params = [
-        ["blanket_type", "Blanket type", "HCPB", "N/A", None, "Input"],
-        ['plasma_type', 'Type of plasma', 'SN', 'N/A', None, 'Input'],
-        ["vvpfrac", "Fraction of neutrons deposited in VV", 0.04, "N/A",
+        ["blanket_type", "Blanket type", "HCPB", "dimensionless", None, "Input"],
+        ['plasma_type', 'Type of plasma', 'SN', 'dimensionless', None, 'Input'],
+        ["vvpfrac", "Fraction of neutrons deposited in VV", 0.04, "dimensionless",
             "simpleneutrons needs a correction for VV n absorbtion", None],
         ["R_0", "Major radius", 9, "m", None, "Input"],
-        ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+        ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
     ]
     # fmt: on
 

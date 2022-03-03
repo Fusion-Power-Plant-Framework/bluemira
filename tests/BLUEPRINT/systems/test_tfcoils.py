@@ -66,7 +66,7 @@ class TestTFCoil:
         params = [
             ["R_0", "Major radius", 9, "m", None, "Input"],
             ["B_0", "Toroidal field at R_0", 6, "T", None, "Input"],
-            ["n_TF", "Number of TF coils", 16, "N/A", None, "Input"],
+            ["n_TF", "Number of TF coils", 16, "dimensionless", None, "Input"],
             ["rho_j", "TF coil WP current density", 18.25, "MA/m^2", None, "Input"],
             ["tk_tf_nose", "TF coil inboard nose thickness", 0.6, "m", None, "Input"],
             ["tk_tf_wp", "TF coil winding pack thickness", 0.5, "m", None, "PROCESS"],
@@ -75,7 +75,7 @@ class TestTFCoil:
             ["tk_tf_insgap", "TF coil WP insertion gap", 0.1, "m", "Backfilled with epoxy resin (impregnation)", "Input"],
             ["r_tf_in", "Inboard radius of the TF coil inboard leg", 3.2, "m", None, "PROCESS"],
             ["ripple_limit", "Ripple limit constraint", 0.6, "%", None, "Input"],
-            ['tk_tf_inboard', 'TF coil inboard thickness', 1.14, 'm', None, 'Input', 'PROCESS'],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 1.14, 'm', None, 'PROCESS'],
         ]
         # fmt: on
 
@@ -147,7 +147,7 @@ class TestTaperedPictureFrameTF:
         params = [
             ["R_0", "Major radius", 3.42, "m", None, "Input"],
             ["B_0", "Toroidal field at R_0", 2.2, "T", None, "Input"],
-            ["n_TF", "Number of TF coils", 12, "N/A", None, "Input"],
+            ["n_TF", "Number of TF coils", 12, "dimensionless", None, "Input"],
             ["tk_tf_nose", "Bucking Cylinder Thickness", 0.17, "m", None, "Input"],
             ["tk_tf_wp", "TF coil winding pack thickness", 0.4505, "m", None, "PROCESS"],
             ["tk_tf_front_ib", "TF coil inboard steel front plasma-facing", 0.02252, "m", None, "Input"],  # casthi
@@ -156,14 +156,14 @@ class TestTaperedPictureFrameTF:
             ["r_tf_in", "Inner Radius of the TF coil inboard leg", 0.176, "m", None, "PROCESS"],
             ["r_tf_inboard_out", "Outboard Radius of the TF coil inboard leg tapered region", 0.6265, "m", None, "PROCESS"],
             ['TF_ripple_limit', 'TF coil ripple limit', 1.0, '%', None, 'Input'],
-            ["npts", "Number of points", 200, "N/A", "Used for vessel and plasma", "Input"],
+            ["npts", "Number of points", 200, "dimensionless", "Used for vessel and plasma", "Input"],
             ["h_cp_top", "Height of the Tapered Section", 6.199, "m", None, "PROCESS"],
             ["r_cp_top", "Radial Position of Top of taper", 0.8934, "m", None, "PROCESS"],
-            ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
-            ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'N/A', None, 'Input'],
+            ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'PROCESS'],
+            ['tf_taper_frac', "Height of straight portion as fraction of total tapered section height", 0.5, 'dimensionless', None, 'Input'],
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
-            ['tk_tf_inboard', 'TF coil inboard thickness', 0.4505, 'm', None, 'Input', 'PROCESS'],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 0.4505, 'm', None, 'PROCESS'],
         ]
         # fmt: on
         cls.parameters = ParameterFrame(params)
@@ -273,7 +273,7 @@ class TestSCPictureFrameTF:
         params = [
             ["R_0", "Major radius", 3.639, "m", None, "Input"],
             ["B_0", "Toroidal field at R_0", 2.0, "T", None, "Input"],
-            ["n_TF", "Number of TF coils", 12, "N/A", None, "Input"],
+            ["n_TF", "Number of TF coils", 12, "dimensionless", None, "Input"],
             ["tk_tf_nose", "TF coil inboard nose thickness", 0.0377, "m", None, "Input"],
             ['tk_tf_side', 'TF coil inboard case minimum side wall thickness', 0.02, 'm', None, 'Input'],
             ["tk_tf_wp", "TF coil winding pack thickness", 0.569, "m", None, "PROCESS"],
@@ -285,7 +285,7 @@ class TestSCPictureFrameTF:
             ["ripple_limit", "Ripple limit constraint", 0.6, "%", None, "Input"],
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ['r_tf_inboard_corner', "Corner Radius of TF coil inboard legs", 0.0, 'm', None, 'Input'],
-            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'PROCESS'],
 
         ]
         # fmt: on
@@ -359,7 +359,7 @@ class TestCurvedPictureframeTF:
         params = [
             ["R_0", "Major radius", 3.639, "m", None, "Input"],
             ["B_0", "Toroidal field at R_0", 2.0, "T", None, "Input"],
-            ["n_TF", "Number of TF coils", 12, "N/A", None, "Input"],
+            ["n_TF", "Number of TF coils", 12, "dimensionless", None, "Input"],
             ["tk_tf_nose", "TF coil inboard nose thickness", 0.0377, "m", None, "Input"],
             ['tk_tf_side', 'TF coil inboard case minimum side wall thickness', 0.02, 'm', None, 'Input'],
             ["tk_tf_wp", "TF coil winding pack thickness", 0.569, "m", None, "PROCESS"],
@@ -372,7 +372,7 @@ class TestCurvedPictureframeTF:
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
             ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
-            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'PROCESS'],
             ['h_tf_min_in', 'Plasma side TF coil min height', -12.0, 'm', None, 'PROCESS'],
         ]
         # fmt: on
@@ -449,7 +449,7 @@ class TestResistiveCurvedPictureframeTF:
         params = [
             ["R_0", "Major radius", 3.639, "m", None, "Input"],
             ["B_0", "Toroidal field at R_0", 2.0, "T", None, "Input"],
-            ["n_TF", "Number of TF coils", 12, "N/A", None, "Input"],
+            ["n_TF", "Number of TF coils", 12, "dimensionless", None, "Input"],
             ["tk_tf_nose", "TF coil inboard nose thickness", 0.17, "m", None, "Input"],
             ['tk_tf_side', 'TF coil inboard case minimum side wall thickness', 0.02, 'm', None, 'Input'],
             ["tk_tf_wp", "TF coil winding pack thickness", 0.569, "m", None, "PROCESS"],
@@ -464,8 +464,8 @@ class TestResistiveCurvedPictureframeTF:
             ['r_tf_outboard_corner', "Corner Radius of TF coil outboard legs", 0.8, 'm', None, 'Input'],
             ['h_tf_max_in', 'Plasma side TF coil maximum height', 12.0, 'm', None, 'PROCESS'],
             ["r_tf_curve", "Radial position of the CP-leg conductor joint", 2.5, "m", None, "PROCESS"],
-            ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'Input', 'PROCESS'],
-            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'Input', 'PROCESS'],
+            ['tk_tf_outboard', 'TF coil outboard thickness', 1, 'm', None, 'PROCESS'],
+            ['tk_tf_inboard', 'TF coil inboard thickness', 0.6267, 'm', None, 'PROCESS'],
             ["tk_tf_ob_casing", "TF leg conductor casing general thickness", 0.1, "m", None, "PROCESS"],
             ['h_tf_min_in', 'Plasma side TF coil min height', -12.0, 'm', None, 'PROCESS'],
         ]

@@ -23,6 +23,7 @@
 BLUEPRINT -> bluemira ST equilibrium recursion test
 """
 
+import copy
 import os
 
 import numpy as np
@@ -207,7 +208,7 @@ class TestSTEquilibrium:
         plasma_current,
         tikhonov_gamma,
     ):
-        coilset_temp = coilset.copy()
+        coilset_temp = copy.deepcopy(coilset)
         dummy = Coil(
             x=x_current,
             z=z_current,

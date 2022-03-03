@@ -47,15 +47,15 @@ class ChargedParticleSolver:
     # fmt: off
     default_params = [
         ['P_sep_particle', 'Separatrix power', 150, 'MW', None, 'Input'],
-        ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "N/A", None, "Input"],
+        ["f_p_sol_near", "near scrape-off layer power rate", 0.50, "dimensionless", None, "Input"],
         ["fw_lambda_q_near_omp", "Lambda q near SOL at the outboard", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_omp", "Lambda q far SOL at the outboard", 0.05, "m", None, "Input"],
         ["fw_lambda_q_near_imp", "Lambda q near SOL at the inboard", 0.003, "m", None, "Input"],
         ["fw_lambda_q_far_imp", "Lambda q far SOL at the inboard", 0.05, "m", None, "Input"],
-        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9, "N/A", None, "Input"],
-        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1, "N/A", None, "Input"],
-        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "N/A", None, "Input"],
-        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0, "N/A", None, "Input"],
+        ["f_lfs_lower_target", "Fraction of SOL power deposited on the LFS lower target", 0.9, "dimensionless", None, "Input"],
+        ["f_hfs_lower_target", "Fraction of SOL power deposited on the HFS lower target", 0.1, "dimensionless", None, "Input"],
+        ["f_lfs_upper_target", "Fraction of SOL power deposited on the LFS upper target (DN only)", 0, "dimensionless", None, "Input"],
+        ["f_hfs_upper_target", "Fraction of SOL power deposited on the HFS upper target (DN only)", 0, "dimensionless", None, "Input"],
     ]
     # fmt: on
 

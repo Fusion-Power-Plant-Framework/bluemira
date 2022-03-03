@@ -16,6 +16,7 @@ with open("README.md", "r") as f:
 
 install_requires = [  # PYL = Version limited by python version
     "asteval",  # 0.9.25
+    "Babel",
     "click",  # 8.0.3
     "CoolProp",  # 6.4.1
     "fortranformat",  # 1.1.1
@@ -29,6 +30,8 @@ install_requires = [  # PYL = Version limited by python version
     "numba-scipy",  # 0.3.0
     "numpy",  # 1.19.5   PYL
     "pandas",  # 1.3.5    PYL
+    "pint",
+    "periodictable",
     "pyclipper",  # 1.2.1
     "pypet",  # 0.6.0
     "pyquaternion",  # 0.9.9
