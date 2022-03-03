@@ -25,7 +25,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.constraints import (
+from bluemira.equilibria.eq_constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,

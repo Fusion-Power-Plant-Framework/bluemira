@@ -40,7 +40,7 @@ import numpy as np
 
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.constraints import IsofluxConstraint, MagneticConstraintSet
+from bluemira.equilibria.eq_constraints import IsofluxConstraint, MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_problems import (

@@ -40,7 +40,7 @@ Note that the gradient of the objective function is of the form:
 
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.utilities.optimiser import approx_derivative
 
@@ -152,5 +152,5 @@ def regularised_lsq_fom(x, a_mat, b_vec, gamma):
     fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
 
     if not fom > 0:
-        raise bluemira_warn("Least-squares objective function less than zero or nan.")
+        raise EquilibriaError("Least-squares objective function less than zero or nan.")
     return fom, residual

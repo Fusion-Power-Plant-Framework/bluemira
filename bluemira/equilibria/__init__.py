@@ -23,8 +23,8 @@
 The bluemira equilibria module
 """
 
-from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.constraints import (
+from .coils import Coil, CoilSet, SymmetricCircuit
+from .eq_constraints import (
     AutoConstraints,
     FieldNullConstraint,
     IsofluxConstraint,

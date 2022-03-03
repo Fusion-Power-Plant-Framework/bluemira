@@ -42,7 +42,7 @@ import numpy as np
 
 import bluemira.equilibria.opt_objectives as objectives
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.constraints import MagneticConstraintSet
+from bluemira.equilibria.eq_constraints import MagneticConstraintSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.positioner import RegionMapper
