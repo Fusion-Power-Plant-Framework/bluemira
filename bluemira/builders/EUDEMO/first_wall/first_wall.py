@@ -140,9 +140,11 @@ class FirstWallBuilder(Builder):
         """
         self.wall = self._build_wall()
         wall_shape = self.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
-        self.divertor = self._divertor_builder(
-            x_lims=[wall_shape.start_point()[0], wall_shape.end_point()[0]],
-        )
+        self._divertor_builder.x_limits = [
+            wall_shape.start_point()[0],
+            wall_shape.end_point()[0],
+        ]
+        self.divertor = self._divertor_builder()
 
         first_wall = Component(self.name)
         first_wall.add_child(self.build_xz())
@@ -193,7 +195,14 @@ class FirstWallBuilder(Builder):
         build_config = deepcopy(build_config)
         build_config.update({"name": self.COMPONENT_DIVERTOR})
         build_config.pop("runmode", None)
-        return DivertorBuilder(params, build_config, self.equilibrium)
+        return DivertorBuilder(
+            params,
+            build_config,
+            equilibrium=self.equilibrium,
+            # no limits for now, we need to build the wall shape before
+            # we know them
+            x_limits=[],
+        )
 
     def _build_wall(self):
         """

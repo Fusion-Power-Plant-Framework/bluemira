@@ -31,6 +31,7 @@ import numpy as np
 from bluemira.base.builder import BuildConfig, Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.config import Configuration
+from bluemira.base.error import BuilderError
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
 from bluemira.geometry.tools import find_point_along_wire_at_length, make_polygon
@@ -99,13 +100,14 @@ class DivertorBuilder(Builder):
         params: Dict[str, Any],
         build_config: BuildConfig,
         equilibrium: Equilibrium,
-        **kwargs,
+        x_limits: Sequence[float],
     ):
-        super().__init__(params, build_config, **kwargs)
+        super().__init__(params, build_config)
 
         self._shape = None
 
         self.equilibrium = equilibrium
+        self.x_limits = x_limits
         self.leg_length = {
             LegPosition.INNER: self.params["div_L2D_ib"],
             LegPosition.OUTER: self.params["div_L2D_ob"],
@@ -119,18 +121,21 @@ class DivertorBuilder(Builder):
         """
         return super().reinitialise(params, **kwargs)
 
-    def build(self, x_lims: Sequence[float], **kwargs) -> Component:
+    def build(self) -> Component:
         """
         Build the divertor component.
         """
-        component = super().build(**kwargs)
-        component.add_child(self.build_xz(x_lims))
+        component = super().build()
+        component.add_child(self.build_xz())
         return component
 
-    def build_xz(self, x_lims: Sequence[float]) -> Component:
+    def build_xz(self) -> Component:
         """
         Build the divertor's components in the xz-plane.
         """
+        if not self.x_limits:
+            raise BuilderError("Divertor's x-limits not set.")
+
         component = Component("xz")
 
         # Build the targets for each separatrix leg
@@ -148,9 +153,12 @@ class DivertorBuilder(Builder):
         component.add_child(dome)
 
         # Build the baffles
-        component.add_child(self._make_inner_baffle(inner_target.shape, min(x_lims)))
-        component.add_child(self._make_outer_baffle(outer_target.shape, max(x_lims)))
-
+        component.add_child(
+            self._make_inner_baffle(inner_target.shape, min(self.x_limits))
+        )
+        component.add_child(
+            self._make_outer_baffle(outer_target.shape, max(self.x_limits))
+        )
         return component
 
     def make_target(self, leg: LegPosition, label: str) -> PhysicalComponent:

@@ -72,29 +72,34 @@ class TestDivertorBuilder:
                 self.params,
                 {"name": "some_name"},
                 self.eq,
+                self.x_lims,
             )
-        except BuilderError as exc:
-            pytest.fail(str(exc))
+        except BuilderError:
+            pytest.fail(str(BuilderError))
 
     @pytest.mark.parametrize("required_param", DivertorBuilder._required_params)
     def test_BuilderError_given_required_param_missing(self, required_param):
         self.params.pop(required_param)
 
         with pytest.raises(BuilderError):
-            DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+            DivertorBuilder(self.params, {"name": "some_name"}, self.eq, self.x_lims)
 
     def test_new_builder_sets_leg_lengths(self):
         self.params.update({"div_L2D_ib": 5, "div_L2D_ob": 10})
 
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
         assert builder.leg_length[LegPosition.INNER] == 5
         assert builder.leg_length[LegPosition.OUTER] == 10
 
     def test_targets_intersect_separatrix(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
         for leg in self.targets:
             target = divertor.get_component(leg)
@@ -102,25 +107,31 @@ class TestDivertorBuilder:
 
     def test_target_length_set_by_parameter(self):
         self.params.update({"div_Ltarg": 1.5})
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
         for leg in self.targets:
             target = divertor.get_component(leg)
             assert target.shape.length == 1.5
 
     def test_dome_added_to_divertor(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
         assert divertor.get_component(DivertorBuilder.COMPONENT_DOME) is not None
 
     def test_dome_intersects_targets(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
         dome = divertor.get_component(DivertorBuilder.COMPONENT_DOME)
         targets = [divertor.get_component(leg) for leg in self.targets]
@@ -128,18 +139,22 @@ class TestDivertorBuilder:
         assert signed_distance(dome.shape, targets[1].shape) == 0
 
     def test_dome_does_not_intersect_separatrix(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
         dome = divertor.get_component(DivertorBuilder.COMPONENT_DOME)
         assert signed_distance(dome.shape, self.separatrix) < 0
 
     def test_SN_lower_dome_has_turning_point_below_x_point(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
         x_points, _ = self.eq.get_OX_points()
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
         dome_coords = divertor.get_component(
             DivertorBuilder.COMPONENT_DOME
@@ -149,28 +164,34 @@ class TestDivertorBuilder:
         assert dome_coords[2, turning_points[0]] < x_points[0].z
 
     def test_inner_baffle_has_end_at_lower_x_limit(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
         inner_baffle = divertor.get_component(DivertorBuilder.COMPONENT_INNER_BAFFLE)
         assert inner_baffle is not None
         assert inner_baffle.shape.start_point()[0] == min(self.x_lims)
 
     def test_outer_baffle_has_end_at_upper_x_limit(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
-        inner_baffle = divertor.get_component(DivertorBuilder.COMPONENT_OUTER_BAFFLE)
-        assert inner_baffle is not None
-        assert inner_baffle.shape.end_point()[0] == max(self.x_lims)
+        outer_baffle = divertor.get_component(DivertorBuilder.COMPONENT_OUTER_BAFFLE)
+        assert outer_baffle is not None
+        assert outer_baffle.shape.end_point()[0] == max(self.x_lims)
 
     @pytest.mark.parametrize("side", ("INNER", "OUTER"))
     def test_baffle_and_target_intersect(self, side):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+        builder = DivertorBuilder(
+            self.params, {"name": "some_name"}, self.eq, self.x_lims
+        )
 
-        divertor = builder(x_lims=self.x_lims)
+        divertor = builder()
 
         target = divertor.get_component(
             getattr(DivertorBuilder, f"COMPONENT_{side}_TARGET")
@@ -180,8 +201,22 @@ class TestDivertorBuilder:
         )
         assert signed_distance(target.shape, baffle.shape) == 0
 
-    def test_TypeError_if_x_lim_not_passed_to_call(self):
-        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq)
+    def test_setting_x_limits_after_init_sets_start_and_end_points(self):
+        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq, [])
 
-        with pytest.raises(TypeError):
+        builder.x_limits = self.x_lims
+        divertor = builder()
+
+        inner_baffle = divertor.get_component(DivertorBuilder.COMPONENT_INNER_BAFFLE)
+        assert inner_baffle is not None
+        assert inner_baffle.shape.start_point()[0] == min(self.x_lims)
+        outer_baffle = divertor.get_component(DivertorBuilder.COMPONENT_OUTER_BAFFLE)
+        assert outer_baffle is not None
+        assert outer_baffle.shape.end_point()[0] == max(self.x_lims)
+
+    @pytest.mark.parametrize("x_lims", [[], None, ()])
+    def test_BuilderError_on_call_given_x_limits_empty(self, x_lims):
+        builder = DivertorBuilder(self.params, {"name": "some_name"}, self.eq, x_lims)
+
+        with pytest.raises(BuilderError):
             builder()
