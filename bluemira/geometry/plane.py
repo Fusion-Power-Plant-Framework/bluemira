@@ -25,10 +25,7 @@ Wrapper for FreeCAD Placement objects
 
 from __future__ import annotations
 
-import numpy as np
-
 import bluemira.codes._freecadapi as cadapi
-from bluemira.geometry.error import GeometryError
 
 __all__ = ["BluemiraPlane"]
 
@@ -67,7 +64,6 @@ class BluemiraPlane:
         label: str
             Label of the plane
         """
-
         plane = BluemiraPlane()
         plane._shape = cadapi.make_plane(point_1, point_2, point_3)
         plane.label = label
