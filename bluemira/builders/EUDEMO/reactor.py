@@ -51,13 +51,7 @@ class EUDEMOReactor(Reactor):
 
     def run(self) -> Component:
         """
-        Run the EU-DEMO reactor build process. Performs the following tasks:
-
-        - Run the (PROCESS) systems code
-        - Build the 'Plasma'
-        - Build the 'TF Coils'
-        - Build the 'PF Coils'
-        - Build the 'First Wall'
+        Run the EU-DEMO reactor build process.
         """
         component = super().run()
 
