@@ -105,6 +105,9 @@ class BluemiraPlane:
         """Moves the Plane along the given vector"""
         self.base = self.base + np.array(vector)
 
+    def to_face(self, length=10, height=10):
+        pass
+
     def __repr__(self):  # noqa D105
         new = []
         new.append(f"([{type(self).__name__}] = Label: {self.label}")
