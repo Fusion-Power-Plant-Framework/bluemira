@@ -36,7 +36,12 @@ from bluemira.builders.EUDEMO.first_wall.wall import WallBuilder
 from bluemira.builders.shapes import Builder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_OX_points
-from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    boolean_cut,
+    convex_hull_wires_2d,
+    make_polygon,
+    offset_wire,
+)
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -62,8 +67,8 @@ def _cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWi
     # upper wall shape and the two separatrix legs
     pieces = boolean_cut(shape, [cut_zone])
 
-    wall_piece = pieces[np.argmax([p.center_of_mass.z for p in pieces])]
-    if wall_piece.center_of_mass.z < x_point_z:
+    wall_piece = pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
+    if wall_piece.center_of_mass[2] < x_point_z:
         raise ValueError(
             "Could not cut wall shape below x-point. "
             "No parts of the wall found above x-point."
@@ -240,25 +245,9 @@ class FirstWallBuilder(Builder):
         """
         geom_offset_zone = self._make_geometric_keep_out_zone(geom_offset)
         flux_surface_zone = self._make_flux_surface_keep_out_zone(psi_n)
-        return self._convex_hull_wires([geom_offset_zone, flux_surface_zone])
-
-    def _convex_hull_wires(
-        self, wires: Iterable[BluemiraWire], ndiscr=200
-    ) -> BluemiraWire:
-        """
-        Perform a convex hull around the given wires and return the hull
-        as a new wire.
-        """
-        shape_discretizations = []
-        for wire in wires:
-            d = wire.discretize(byedges=True, ndiscr=ndiscr).xz
-            shape_discretizations.append(d)
-        coords = np.hstack(shape_discretizations)
-
-        hull = ConvexHull(coords.T)
-        hull_coords = np.zeros((3, len(hull.vertices)))
-        hull_coords[(0, 2), :] = coords[:, hull.vertices]
-        return make_polygon(hull_coords, closed=True)
+        return convex_hull_wires_2d(
+            [geom_offset_zone, flux_surface_zone], ndiscr=200, plane="xz"
+        )
 
     def _make_geometric_keep_out_zone(self, offset: float) -> BluemiraWire:
         """
