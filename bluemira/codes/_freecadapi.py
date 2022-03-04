@@ -468,7 +468,7 @@ def volume(obj) -> float:
 
 def center_of_mass(obj) -> np.ndarray:
     """Object's center of mass"""
-    return _get_api_attr(obj, "CenterOfMass")
+    return vector_to_numpy(_get_api_attr(obj, "CenterOfMass"))
 
 
 def is_null(obj):

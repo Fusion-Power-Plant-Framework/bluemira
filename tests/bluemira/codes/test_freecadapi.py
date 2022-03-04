@@ -128,7 +128,9 @@ class TestFreecadapi:
     def test_center_of_mass(self):
         wire: Part.Wire = cadapi.make_polygon(self.square_points, True)
         face: Part.Face = Part.Face(wire)
-        comparison = cadapi.center_of_mass(wire) == np.array((0.5, 0.5, 0.0))
+        com = cadapi.center_of_mass(wire)
+        comparison = com == np.array((0.5, 0.5, 0.0))
+        assert isinstance(com, np.ndarray)
         assert comparison.all()
 
     def test_scale_shape(self):
