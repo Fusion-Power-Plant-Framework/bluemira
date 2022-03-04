@@ -65,7 +65,7 @@ class BluemiraPlane:
             Label of the plane
         """
         plane = BluemiraPlane()
-        plane._shape = cadapi.make_plane(point_1, point_2, point_3)
+        plane._shape = cadapi.make_plane_from_3_points(point_1, point_2, point_3)
         plane.label = label
         return plane
 
@@ -104,6 +104,9 @@ class BluemiraPlane:
     def move(self, vector):
         """Moves the Plane along the given vector"""
         self.base += cadapi.Base.Vector(vector)
+
+    def to_face(self, length=10, height=10):
+        pass
 
     def __repr__(self):  # noqa D105
         new = []
