@@ -33,7 +33,7 @@ class TestWire:
 
         start_point = wire.start_point()
 
-        np.testing.assert_equal(start_point, np.array([0, 0, -5]))
+        np.testing.assert_equal(start_point, np.array([[0], [0], [-5]]))
 
     def test_end_point(self):
         n_coords = 10
@@ -44,4 +44,4 @@ class TestWire:
 
         end_point = wire.end_point()
 
-        np.testing.assert_equal(end_point, np.array([2, 0, 0]))
+        np.testing.assert_equal(end_point, np.array([[2], [0], [0]]))

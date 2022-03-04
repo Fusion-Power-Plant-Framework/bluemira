@@ -221,16 +221,16 @@ class BluemiraWire(BluemiraGeo):
             else:
                 o.change_placement(placement)
 
-    def start_point(self) -> np.ndarray:
+    def start_point(self) -> Coordinates:
         """
         Get the coordinates of the start of the wire.
         """
         point = self.boundary[0].Vertexes[0].Point
-        return np.array([point.x, point.y, point.z])
+        return Coordinates([point.x, point.y, point.z])
 
-    def end_point(self) -> np.ndarray:
+    def end_point(self) -> Coordinates:
         """
         Get the coordinates at the end of the wire.
         """
         point = self.boundary[0].Vertexes[-1].Point
-        return np.array([point.x, point.y, point.z])
+        return Coordinates([point.x, point.y, point.z])

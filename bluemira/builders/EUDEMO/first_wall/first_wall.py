@@ -146,8 +146,8 @@ class FirstWallBuilder(Builder):
         self.wall = self._build_wall()
         wall_shape = self.wall.get_component(WallBuilder.COMPONENT_WALL_BOUNDARY).shape
         self._divertor_builder.x_limits = [
-            wall_shape.start_point()[0],
-            wall_shape.end_point()[0],
+            wall_shape.start_point().x[0],
+            wall_shape.end_point().x[0],
         ]
         self.divertor = self._divertor_builder()
 

@@ -337,7 +337,6 @@ class DivertorBuilder(Builder):
 
         start_point = wire.start_point()
         end_point = wire.end_point()
-        axis_idx = 0 if axis == "x" else -1
-        if comp(start_point[axis_idx], end_point[axis_idx]):
-            return start_point[[0, -1]]
-        return end_point[[0, -1]]
+        if comp(getattr(start_point, axis), getattr(end_point, axis)):
+            return start_point.xz.flatten()
+        return end_point.xz.flatten()
