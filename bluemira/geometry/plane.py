@@ -25,8 +25,6 @@ Wrapper for FreeCAD Placement objects
 
 from __future__ import annotations
 
-import numpy as np
-
 import bluemira.codes._freecadapi as cadapi
 
 __all__ = ["BluemiraPlane"]
