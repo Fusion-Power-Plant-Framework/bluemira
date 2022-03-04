@@ -86,6 +86,12 @@ OUT_mappings = {
     "r_vv_ob_in": ("r_vv_ob_in", "m"),
     "r_tf_out_centre": ("r_tf_outboard_mid", "m"),
     "g_vv_ts": ("gapds", "m"),
+    "TF_res_bus": ("tfbusres", "m"),
+    "TF_E_tot": ("estotftgj", "GJ"),
+    "TF_respc_ob": ("tflegres", "ohm"),
+    "TF_currpt_ob": ("cpttf", "A"),
+    "P_bd_in": ("pinjmw", "MW"),
+    "condrad_cryo_heat": ("qss/1.0D6", "MW"),
 }
 
 IO_mappings = {
