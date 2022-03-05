@@ -28,7 +28,7 @@ from __future__ import annotations
 import math
 
 # import typing
-from typing import Dict, Iterable, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import freecad  # noqa: F401
 import FreeCAD
@@ -468,25 +468,25 @@ def volume(obj) -> float:
 
 def center_of_mass(obj) -> np.ndarray:
     """Object's center of mass"""
-    return _get_api_attr(obj, "CenterOfMass")
+    return vector_to_numpy(_get_api_attr(obj, "CenterOfMass"))
 
 
-def is_null(obj):
+def is_null(obj) -> bool:
     """True if obj is null"""
     return _get_api_attr(obj, "isNull")()
 
 
-def is_closed(obj):
+def is_closed(obj) -> bool:
     """True if obj is closed"""
     return _get_api_attr(obj, "isClosed")()
 
 
-def is_valid(obj):
+def is_valid(obj) -> bool:
     """True if obj is valid"""
     return _get_api_attr(obj, "isValid")()
 
 
-def bounding_box(obj):
+def bounding_box(obj) -> Tuple[float, float, float, float, float, float]:
     """Object's bounding box"""
     box = _get_api_attr(obj, "BoundBox")
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
