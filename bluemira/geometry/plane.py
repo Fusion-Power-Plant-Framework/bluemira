@@ -25,6 +25,8 @@ Wrapper for FreeCAD Placement objects
 
 from __future__ import annotations
 
+import numpy as np
+
 import bluemira.codes._freecadapi as cadapi
 
 __all__ = ["BluemiraPlane"]
@@ -104,9 +106,6 @@ class BluemiraPlane:
     def move(self, vector):
         """Moves the Plane along the given vector"""
         self.base = self.base + np.array(vector)
-
-    def to_face(self, length=10, height=10):
-        pass
 
     def __repr__(self):  # noqa D105
         new = []
