@@ -1373,6 +1373,47 @@ def make_plane_from_3_points(
     return Base.Plane(point1, point2, point3)
 
 
+def face_from_plane(plane: Part.Plane, width: float, height: float):
+    """
+    Creates a FreeCAD face from a Plane with specified height and width.
+
+    Note
+    ----
+    Face is centered on the Plane Position. With respect to the global coordinate
+    system, the face placement is given by a simple rotation of the z axis.
+
+    Parameters
+    ----------
+    plane: Part.Plane
+        the reference plane
+    width: float
+        output face width
+    height: float
+        output face height
+    """
+    # as suggested in https://forum.freecadweb.org/viewtopic.php?t=46418
+    axis = plane.Axis
+    pos = plane.Position
+    dir_z = Base.Vector(0, 0, 1)
+
+    plane = Part.Plane()
+    corners = [
+        Base.Vector(-width / 2, -height / 2, 0),
+        Base.Vector(width / 2, -height / 2, 0),
+        Base.Vector(width / 2, height / 2, 0),
+        Base.Vector(-width / 2, height / 2, 0),
+    ]
+    border = Part.makePolygon(corners + [corners[0]])  # will return a closed Wire
+    wall = Part.Face(plane, border)
+
+    if dir_z == axis:
+        wall.Placement = Base.Placement(pos, dir_z, 0)
+    else:
+        wall.Placement = Base.Placement(pos, axis.cross(dir_z), axis.getAngle(dir_z))
+
+    return wall
+
+
 # ======================================================================================
 # Geometry visualisation
 # ======================================================================================
