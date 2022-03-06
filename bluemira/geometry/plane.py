@@ -28,6 +28,7 @@ from __future__ import annotations
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
+from bluemira.geometry.face import BluemiraFace
 
 __all__ = ["BluemiraPlane"]
 
@@ -127,3 +128,12 @@ class BluemiraPlane:
     def deepcopy(self, label=None):
         """Make a deepcopy of the BluemiraPlane"""
         return self.copy()
+
+    def to_face(self, width: float, height: float, label: str = ""):
+        """
+        Convert the plane to a face with dimension (width, height) and centered into
+        the plane position.
+        """
+        face = cadapi.face_from_plane(self._shape, width, height)
+        bmface = BluemiraFace._create(face, label)
+        return bmface
