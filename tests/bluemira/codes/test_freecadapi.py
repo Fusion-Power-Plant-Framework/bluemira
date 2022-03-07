@@ -184,7 +184,7 @@ class TestFreecadapi:
 
         start_point = cadapi.start_point(wire)
 
-        isinstance(start_point, np.ndarray)
+        assert isinstance(start_point, np.ndarray)
         np.testing.assert_equal(start_point, np.array([0, 0, 0]))
 
     def test_end_point_given_polygon(self):
@@ -192,5 +192,5 @@ class TestFreecadapi:
 
         end_point = cadapi.end_point(wire)
 
-        isinstance(end_point, np.ndarray)
+        assert isinstance(end_point, np.ndarray)
         np.testing.assert_equal(end_point, np.array([1, 1, 0]))
