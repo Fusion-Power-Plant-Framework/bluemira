@@ -1,4 +1,4 @@
-bandit==1.7.2
+bandit==1.7.4
 black==22.1.0
 coverage[toml]==6.3.2
 flake8==4.0.1
