@@ -36,6 +36,22 @@ from bluemira.codes.ukaea_powerbalance.constants import NAME as POWERBALANCE
 from bluemira.codes.ukaea_powerbalance.mapping import mappings
 
 
+class Inputs:
+    """
+    Dummy class for an IO manager
+    """
+
+    pass
+
+
+class Outputs:
+    """
+    Dummy class for an IO manager
+    """
+
+    pass
+
+
 class RunMode(interface.RunMode):
     """
     RunModes for powerbalance
