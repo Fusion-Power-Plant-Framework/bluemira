@@ -393,7 +393,7 @@ class TestPointAlongWire:
 
         point = find_point_along_wire_at_length(circle, np.pi)
 
-        np.testing.assert_almost_equal(point, semi_circle.end_point(), decimal=2)
+        np.testing.assert_almost_equal(point, semi_circle.end_point().T[0], decimal=2)
 
     @pytest.mark.parametrize("len_offset", [0.1, 1, 10, 200])
     def test_ValueError_given_length_gt_wire_length(self, len_offset):
@@ -406,7 +406,7 @@ class TestPointAlongWire:
 
 
 class TestConvexHullWires2d:
-    def test_ValueError_given_no_wires_empty(self):
+    def test_ValueError_given_wires_empty(self):
         with pytest.raises(ValueError):
             convex_hull_wires_2d([], 10)
 
