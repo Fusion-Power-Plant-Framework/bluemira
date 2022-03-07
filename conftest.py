@@ -89,7 +89,7 @@ def pytest_configure(config):
         "integration": config.option.integration,
     }
     if options["private"] and try_get_bluemira_private_data_root() is None:
-        bluemira_warn("You cannot run private tests. Disabling this test flag.")
+        raise ValueError("You cannot run private tests. Disabling this test flag.")
         options["private"] = not options["private"]
 
     strings = []
