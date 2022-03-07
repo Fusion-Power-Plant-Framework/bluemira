@@ -32,7 +32,7 @@ from bluemira.codes.wrapper import (
 
 __all__ = [
     "plot_radial_build",
-    "powerbalance_build",
+    "powerbalance_solver",
     "systems_code_solver",
     "transport_code_solver",
 ]
