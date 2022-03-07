@@ -193,9 +193,3 @@ class FuelCycleComponent:
             bluemira_warn("Need to run component first.")
             self.run()
         return self.m_out
-
-
-if __name__ == "__main__":
-    from bluemira import test
-
-    test(plotting=True)
