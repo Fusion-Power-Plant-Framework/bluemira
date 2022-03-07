@@ -34,13 +34,14 @@ from bluemira.codes._freecadapi import (
     change_placement,
     discretize,
     discretize_by_edges,
+    end_point,
     rotate_shape,
     scale_shape,
+    start_point,
     translate_shape,
     wire_closure,
 )
 
-# import from bluemira
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.coordinates import Coordinates
@@ -225,12 +226,10 @@ class BluemiraWire(BluemiraGeo):
         """
         Get the coordinates of the start of the wire.
         """
-        point = self.boundary[0].Vertexes[0].Point
-        return Coordinates([point.x, point.y, point.z])
+        return Coordinates(start_point(self._shape))
 
     def end_point(self) -> Coordinates:
         """
-        Get the coordinates at the end of the wire.
+        Get the coordinates of the end of the wire.
         """
-        point = self.boundary[0].Vertexes[-1].Point
-        return Coordinates([point.x, point.y, point.z])
+        return Coordinates(end_point(self._shape))

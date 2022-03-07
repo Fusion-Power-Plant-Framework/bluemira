@@ -20,11 +20,12 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import numpy as np
 
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.tools import make_bezier, make_circle, make_polygon
 
 
 class TestWire:
-    def test_start_point(self):
+    def test_start_point_given_polygon(self):
         n_coords = 10
         coords = np.zeros((3, n_coords))
         coords[0, :] = np.linspace(0, 2, n_coords)
@@ -33,9 +34,10 @@ class TestWire:
 
         start_point = wire.start_point()
 
+        assert isinstance(start_point, Coordinates)
         np.testing.assert_equal(start_point, np.array([[0], [0], [-5]]))
 
-    def test_end_point(self):
+    def test_end_point_given_polygon(self):
         n_coords = 10
         coords = np.zeros((3, n_coords))
         coords[0, :] = np.linspace(0, 2, n_coords)
@@ -44,4 +46,37 @@ class TestWire:
 
         end_point = wire.end_point()
 
+        assert isinstance(end_point, Coordinates)
         np.testing.assert_equal(end_point, np.array([[2], [0], [0]]))
+
+    def test_start_point_eq_end_point_given_circle(self):
+        wire = make_circle(radius=2, center=(0, 0, 0))
+
+        start_point = wire.start_point()
+        end_point = wire.end_point()
+
+        assert start_point == end_point
+
+    def test_start_point_given_bezier(self):
+        n_coords = 11
+        coords = np.zeros((3, n_coords))
+        coords[0, :] = np.linspace(-5, 5, n_coords)
+        coords[1, :] = np.linspace(0.1, 0.2, n_coords)
+        coords[2, :] = np.linspace(100, 90, n_coords)
+        wire = make_bezier(coords)
+
+        start_point = wire.start_point()
+
+        np.testing.assert_equal(start_point, np.array([[-5], [0.1], [100]]))
+
+    def test_end_point_given_bezier(self):
+        n_coords = 11
+        coords = np.zeros((3, n_coords))
+        coords[0, :] = np.linspace(-5, 5, n_coords)
+        coords[1, :] = np.linspace(0.1, 0.2, n_coords)
+        coords[2, :] = np.linspace(100, 90, n_coords)
+        wire = make_bezier(coords)
+
+        start_point = wire.end_point()
+
+        np.testing.assert_equal(start_point, np.array([[5], [0.2], [90]]))
