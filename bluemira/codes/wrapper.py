@@ -153,7 +153,7 @@ def powerbalance_solver(
     module: Optional[str] = "UKAEA_POWERBALANCE",
 ) -> FileProgramInterface:
     """
-    PowerBalance solver
+    Powerbalance solver
 
     Parameters
     ----------
