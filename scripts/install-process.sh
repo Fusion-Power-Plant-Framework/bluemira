@@ -16,7 +16,7 @@ fi
 if [ ! -d process ]; then
   git clone git@git.ccfe.ac.uk:process/process.git
   cd process
-  git checkout v2.2.0
+  git checkout develop
   cd ..
 fi
 

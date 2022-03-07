@@ -525,7 +525,7 @@ class EquilibriumPlotter(Plotter):
         """
         try:
             separatrix = self.eq.get_separatrix()
-        except EquilibriaError:
+        except Exception:
             bluemira_warn("Unable to plot separatrix")
             return
 
