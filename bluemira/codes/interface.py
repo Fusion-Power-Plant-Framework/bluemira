@@ -330,6 +330,7 @@ class FileProgramInterface(ABC):
         mode = runmode.upper().translate(str.maketrans("", "", string.whitespace))
         self._runner = self._runmode[mode]
 
+    @property
     def _run_dir(self):
         """
         Run directory
