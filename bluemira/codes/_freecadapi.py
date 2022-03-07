@@ -63,6 +63,7 @@ apiFace = Part.Face  # noqa :N816
 apiShell = Part.Shell  # noqa :N816
 apiSolid = Part.Solid  # noqa :N816
 apiShape = Part.Shape  # noqa :N816
+apiPlacement = Base.Placement  # noqa : N816
 apiPlane = Part.Plane  # noqa :N816
 apiCompound = Part.Compound  # noqa :N816
 
@@ -1396,7 +1397,6 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
     pos = plane.Position
     dir_z = Base.Vector(0, 0, 1)
 
-    plane = Part.Plane()
     corners = [
         Base.Vector(-width / 2, -height / 2, 0),
         Base.Vector(width / 2, -height / 2, 0),
@@ -1418,6 +1418,22 @@ def plane_from_shape(shape):
     """Return a plane if the shape is planar"""
     plane = shape.findPlane()
     return plane
+
+
+def placement_from_plane(plane):
+    """
+    Return a placement from a plane with
+    """
+    axis = plane.Axis
+    pos = plane.Position
+    dir_z = Base.Vector(0, 0, 1)
+
+    if dir_z == axis:
+        placement = make_placement(pos, dir_z, 0)
+    else:
+        placement = make_placement(pos, axis.cross(dir_z), axis.getAngle(dir_z))
+
+    return placement
 
 
 # ======================================================================================

@@ -29,6 +29,7 @@ import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.placement import BluemiraPlacement
 
 __all__ = ["BluemiraPlane"]
 
@@ -137,3 +138,9 @@ class BluemiraPlane:
         face = cadapi.face_from_plane(self._shape, width, height)
         bmface = BluemiraFace._create(face, label)
         return bmface
+
+    def to_placement(self):
+        """
+        Convert the plane into a placement
+        """
+        return BluemiraPlacement._create(cadapi.placement_from_plane(self._shape))

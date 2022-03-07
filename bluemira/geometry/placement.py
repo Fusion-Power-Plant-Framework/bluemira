@@ -177,3 +177,15 @@ class BluemiraPlacement:
     def deepcopy(self, label=None):
         """Make a deepcopy of the BluemiraPlacement"""
         return self.copy()
+
+    @classmethod
+    def _create(cls, obj: cadapi.apiPlacement, label="") -> BluemiraPlacement:
+        """Create a placement from a cadapi Placement"""
+        if isinstance(obj, cadapi.apiPlacement):
+            placement = BluemiraPlacement(label=label)
+            placement._shape = obj
+            return placement
+
+        raise TypeError(
+            f"Only Base.Placement objects can be used to create a {cls} instance"
+        )
