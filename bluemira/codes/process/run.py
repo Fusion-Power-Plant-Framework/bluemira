@@ -177,7 +177,7 @@ class Solver(interface.FileProgramInterface):
         self,
         params: ParameterFrame,
         build_config: BuildConfig,
-        run_dir: str,
+        run_dir: Optional[str] = None,
         read_dir: Optional[str] = None,
         template_indat: Optional[str] = None,
         params_to_update: Optional[List[str]] = None,

@@ -108,7 +108,6 @@ class BMFile(MFile):
         Splits description of variable and returns dict of key, (value, unit)
         """
         p = namedtuple("PROCESSparameter", ["Descr", "Unit"])
-        dictionary = {}
         for key, val in dictionary.items():
             val, unit = self.linesplit(val)
             dictionary[key] = p(val, unit)
