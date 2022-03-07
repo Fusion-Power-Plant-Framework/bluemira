@@ -132,7 +132,7 @@ class BluemiraPlane:
     def to_face(self, width: float, height: float, label: str = ""):
         """
         Convert the plane to a face with dimension (width, height) and centered into
-        the plane position.
+        the plane base position.
         """
         face = cadapi.face_from_plane(self._shape, width, height)
         bmface = BluemiraFace._create(face, label)

@@ -1370,7 +1370,7 @@ def make_plane_from_3_points(
     point2 = Base.Vector(point2)
     point3 = Base.Vector(point3)
 
-    return Base.Plane(point1, point2, point3)
+    return Part.Plane(point1, point2, point3)
 
 
 def face_from_plane(plane: Part.Plane, width: float, height: float):
