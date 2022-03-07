@@ -120,18 +120,12 @@ class Solver(interface.FileProgramInterface):
     template_indat: str
         Path to the template IN.DAT file to be used for the run.
         Default, the value specified by DEFAULT_INDAT.
-    params_to_update: list
-        A list of parameter names compatible with the ParameterFrame class.
-        If provided, parameters included in this list will be modified to write their
-        values to PROCESS inputs, while all others will be modified to not be written to
-        the PROCESS inputs. By default, None.
 
     Notes
     -----
     - "run": Run PROCESS within a bluemira run to generate an radial build.
         Creates a new input file from a template IN.DAT modified with updated parameters
-        from the bluemira run mapped with send=True. If params_to_update are provided
-        then these will be modified to have send=True.
+        from the bluemira run mapped with send=True.
     - "runinput": Run PROCESS from an unmodified input file (IN.DAT), generating the
         radial build to use as the input to the bluemira run. Overrides the send
         mapping of all parameters to be False.
@@ -156,7 +150,6 @@ class Solver(interface.FileProgramInterface):
     _run_dir: str
     _read_dir: str
     _template_indat: str
-    _params_to_update: List[str]
     _parameter_mapping: Dict[str, str]
     _recv_mapping: Dict[str, str]
     _send_mapping: Dict[str, str]
@@ -180,15 +173,9 @@ class Solver(interface.FileProgramInterface):
         run_dir: Optional[str] = None,
         read_dir: Optional[str] = None,
         template_indat: Optional[str] = None,
-        params_to_update: Optional[List[str]] = None,
     ):
 
         self.read_dir = read_dir
-        self._params_to_update = (
-            build_config.get("params_to_update", None)
-            if params_to_update is None
-            else params_to_update
-        )
 
         self._template_indat = (
             build_config.get("process_indat", DEFAULT_INDAT)

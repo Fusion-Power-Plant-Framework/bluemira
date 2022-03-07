@@ -60,11 +60,6 @@ def systems_code_solver(
         read in
     template_indat: str
         Path to the template file to be used for the run.
-    params_to_update: list
-        A list of parameter names compatible with the ParameterFrame class.
-        If provided, parameters included in this list will be modified to write their
-        values to the inputs, while all others will be modified to not be written to
-        the inputs. By default, None.
 
     Returns
     -------
@@ -82,9 +77,7 @@ def systems_code_solver(
     # #####################################
     syscode = get_code_interface(module)
 
-    return syscode.Solver(
-        params, build_config, run_dir, read_dir, template_indat, params_to_update
-    )
+    return syscode.Solver(params, build_config, run_dir, read_dir, template_indat)
 
 
 def plot_radial_build(

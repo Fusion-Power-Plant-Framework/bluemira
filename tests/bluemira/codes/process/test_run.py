@@ -266,7 +266,6 @@ class TestRun:
         """
         self.params.add_parameters(FRAME_LIST)
 
-        self.build_config["params_to_update"] = None
         self.run_PROCESS("RUN")
 
         # Check the right amount of calls were made to add_parameter.
