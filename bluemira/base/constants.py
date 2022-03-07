@@ -294,7 +294,7 @@ def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, n
 
 def pam3s_to_mols(flow_in_pam3_s):
     """
-    Convert a flow in Pa.m^3/s to a flow in mols.
+    Convert a flow in Pa.m^3/s to a flow in mol/s.
 
     Parameters
     ----------
@@ -319,7 +319,7 @@ def pam3s_to_mols(flow_in_pam3_s):
 
 def mols_to_pam3s(flow_in_mols):  # noqa :N802
     """
-    Convert a flow in mols to a flow in Pa.m^3/s.
+    Convert a flow in mol/s to a flow in Pa.m^3/s.
 
     Parameters
     ----------
