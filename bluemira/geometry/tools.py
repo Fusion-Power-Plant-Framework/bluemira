@@ -332,8 +332,8 @@ def convex_hull_wires_2d(
 
     The operation performs discretisations on the input wires.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     wires: Sequence[BluemiraWire]
         The wires to draw a hull around.
     ndiscr: int
@@ -342,8 +342,8 @@ def convex_hull_wires_2d(
         The plane to perform the hull in. One of: 'xz', 'xy', 'yz'.
         Default is 'xz'.
 
-    Returns:
-    --------
+    Returns
+    -------
     hull: BluemiraWire
         A wire forming a convex hull around the input wires in the given
         plane.

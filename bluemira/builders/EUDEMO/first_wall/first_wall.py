@@ -23,10 +23,9 @@ Builders for the first wall of the reactor, including divertor
 """
 
 from copy import deepcopy
-from typing import Any, Dict, Iterable
+from typing import Any, Dict
 
 import numpy as np
-from scipy.spatial import ConvexHull
 
 from bluemira.base.builder import BuildConfig, Component
 from bluemira.base.components import PhysicalComponent
