@@ -84,7 +84,7 @@ Shapely==1.8.1.post1
 six==1.16.0
 tables==3.7.0
 tabulate==0.8.9
-terminado==0.13.1
+terminado==0.13.2
 testpath==0.6.0
 threadpoolctl==3.1.0
 toml==0.10.2
