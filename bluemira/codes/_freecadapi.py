@@ -1414,6 +1414,12 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
     return wall
 
 
+def plane_from_shape(shape):
+    """Return a plane if the shape is planar"""
+    plane = shape.findPlane()
+    return plane
+
+
 # ======================================================================================
 # Geometry visualisation
 # ======================================================================================

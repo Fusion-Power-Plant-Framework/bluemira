@@ -66,5 +66,6 @@ class TestPlacement:
         ly = 10
         bmface = plane.to_face(lx, ly)
         np.testing.assert_almost_equal(bmface.center_of_mass, plane.base)
-        assert bmface.length == 2 * (lx + ly)
-        assert bmface.area == lx * ly
+        np.testing.assert_almost_equal(
+            np.array([bmface.length, bmface.area]), np.array([2 * (lx + ly), lx * ly])
+        )
