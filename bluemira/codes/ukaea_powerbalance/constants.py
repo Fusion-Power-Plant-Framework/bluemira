@@ -25,3 +25,4 @@ Constants for the UKAEA PowerBalance integration.
 
 NAME = "UKAEA_POWERBALANCE"
 BINARY = "powerbalance"
+MODEL_NAME = "Tokamak.Interdependencies"
