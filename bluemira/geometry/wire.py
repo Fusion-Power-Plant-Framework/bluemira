@@ -31,7 +31,7 @@ import numpy
 
 from bluemira.codes._freecadapi import (
     apiWire,
-    change_plane,
+    change_placement,
     discretize,
     discretize_by_edges,
     rotate_shape,
@@ -213,10 +213,10 @@ class BluemiraWire(BluemiraGeo):
             else:
                 o.rotate(base, direction, degree)
 
-    def change_plane(self, plane):
-        """Apply a plane transformation to the wire"""
+    def change_placement(self, placement):
+        """Changes the object placement"""
         for o in self.boundary:
             if isinstance(o, apiWire):
-                change_plane(o, plane._shape)
+                change_placement(o, placement._shape)
             else:
-                o.change_plane(plane)
+                o.change_placement(placement)

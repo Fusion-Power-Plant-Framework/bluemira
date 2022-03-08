@@ -33,7 +33,8 @@ from typing import Dict, List, Optional, Union
 import bluemira.base as bm_base
 import bluemira.codes.interface as interface
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.codes.process.api import DEFAULT_INDAT
+from bluemira.codes.error import CodesError
+from bluemira.codes.process.api import DEFAULT_INDAT, ENABLED
 from bluemira.codes.process.constants import BINARY
 from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.codes.process.mapping import mappings
@@ -90,7 +91,7 @@ class Run(interface.Run):
         Clear the output files from PROCESS run directory.
         """
         for filename in self.parent.output_files:
-            filepath = os.sep.join([self._run_dir, filename])
+            filepath = os.sep.join([self.parent.run_dir, filename])
             if os.path.exists(filepath):
                 os.remove(filepath)
 
@@ -143,11 +144,16 @@ class Solver(interface.FileProgramInterface):
         testing purposes.
     - "none": Do nothing. Useful when loading results from previous runs of Bluemira,
         when overwriting data with PROCESS output would be undesirable.
+
+    Raises
+    ------
+    CodesError
+        If PROCESS is not being mocked and is not installed.
     """
 
+    run_dir: str
+    read_dir: str
     _params: bm_base.ParameterFrame
-    _run_dir: str
-    _read_dir: str
     _template_indat: str
     _params_to_update: List[str]
     _parameter_mapping: Dict[str, str]
@@ -175,8 +181,8 @@ class Solver(interface.FileProgramInterface):
         template_indat: Optional[str] = None,
         params_to_update: Optional[List[str]] = None,
     ):
-        self._read_dir = read_dir
 
+        self.read_dir = read_dir
         self._params_to_update = (
             build_config.get("params_to_update", None)
             if params_to_update is None
@@ -195,8 +201,16 @@ class Solver(interface.FileProgramInterface):
             build_config.get("mode", "run"),
             binary=build_config.get("binary", BINARY),
             run_dir=run_dir,
+            read_dir=read_dir,
             mappings=mappings,
         )
+
+        self._enabled_check(build_config.get("mode", "run").lower())
+
+    @staticmethod
+    def _enabled_check(mode):
+        if (not ENABLED) and (mode != "mock"):
+            raise CodesError(f"{PROCESS} not (properly) installed")
 
     def get_process_parameters(self, params: Union[List, str]):
         """

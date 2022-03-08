@@ -524,7 +524,7 @@ class Equilibrium(MHDState):
     Ip: float (optional) default = 0
         Plasma current [A]
     li: None or float (default None)
-        Normalised plasma internal inductance [N/A]
+        Normalised plasma internal inductance [-]
     RB0: float (optional) default = None
         Major radius vacuum R_0*B_T,0 - used when loading eqdsks
     jtor: np.array or None

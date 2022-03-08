@@ -122,5 +122,5 @@ class Setup(interface.Setup):
                     else:
                         writer.add_parameter(new_mapping, param.value)
 
-        filename = os.path.join(self._run_dir, "IN.DAT")
+        filename = os.path.join(self.parent.run_dir, "IN.DAT")
         writer.write_in_dat(output_filename=filename)

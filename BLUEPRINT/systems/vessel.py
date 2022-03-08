@@ -57,7 +57,7 @@ class VacuumVessel(Meshable, ReactorSystem):
     # fmt: off
     default_params = [
         ['cl_ts', 'Clearance to TS', 0.05, 'm', None, 'Input'],
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['LPangle', 'Lower port inclination angle', -25, '°', None, 'Input'],
         ['g_cr_vv', 'Gap between Cryostat and VV ports', 0.2, 'm', None, 'Input'],
         ['vv_dtk', 'VV double-walled thickness', 0.2, 'm', None, 'Input'],
@@ -362,7 +362,7 @@ class SegmentedVaccumVessel(Meshable, ReactorSystem):
 
     # fmt: off
     default_params = [
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
         ['tk_vv_in', 'Inboard VV thickness', 0.30, 'm', None, 'Input'],
         ['tk_vv_out', 'Outboard VV thickness', 0.60, 'm', None, 'Input'],
         ['g_ib_vv_ts', 'Inboard gap between VV and TS', 0.05, 'm', None, 'Input'],

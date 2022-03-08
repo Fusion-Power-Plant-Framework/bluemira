@@ -30,7 +30,7 @@ repos:
     hooks:
     - id: flake8
       verbose: True
-      additional_dependencies: [flake8-docstrings,  pep8-naming, flake8-bandit]
+      additional_dependencies: [flake8-docstrings,  pep8-naming, flake8-bandit, bandit==1.7.2]
       args: [--exit-zero]
 
 -   repo: local

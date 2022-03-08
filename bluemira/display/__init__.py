@@ -25,7 +25,7 @@ Display and plotting module
 
 from bluemira.display.auto_config import plot_defaults
 
-from . import displayer, plotter
+from . import displayer, plotter  # noqa: ABS101
 
 plot_defaults()
 

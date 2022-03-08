@@ -43,7 +43,7 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn, print_ban
 from bluemira.base.parameter import ParameterFrame
 
 # PROCESS imports
-from bluemira.codes import run_systems_code
+from bluemira.codes import systems_code_solver
 
 # Equilibria imports
 from bluemira.equilibria._deprecated_run import AbInitioEquilibriumProblem
@@ -292,13 +292,15 @@ class Reactor(ReactorSystem):
         """
         Runs, reads, or mocks the systems code according to the build config dictionary.
         """
-        PROCESS_output: ParameterFrame = run_systems_code(
+        PROCESS_solver = systems_code_solver(
             self.params,
             self.build_config,
             self.file_manager.generated_data_dirs["systems_code"],
             self.file_manager.reference_data_dirs["systems_code"],
         )
-        self.params.update_kw_parameters(PROCESS_output.to_dict())
+
+        PROCESS_solver.run()
+        self.params.update_kw_parameters(PROCESS_solver.params.to_dict())
 
     def estimate_kappa_95(self):
         """
@@ -340,7 +342,7 @@ class Reactor(ReactorSystem):
 
         derived_params = {
             "f_DD_fus": self.params.P_fus_DD / self.params.P_fus,
-            "beta_n": normalise_beta(
+            "beta_N": normalise_beta(
                 self.params.beta,
                 self.params.R_0 / self.params.A,
                 self.params.B_0,
@@ -452,18 +454,18 @@ class Reactor(ReactorSystem):
 
         # fmt: off
         params = [['I_p', 'Plasma current', d['Ip'] / 1e6, 'MA', None, 'equilibria'],
-                  ['q_95', 'Plasma safety factor', d['q_95'], 'N/A', None, 'equilibria'],
+                  ['q_95', 'Plasma safety factor', d['q_95'], 'dimensionless', None, 'equilibria'],
                   ['Vp', 'Plasma volume', d['V'], 'm^3', None, 'equilibria'],
                   ['beta_p', 'Ratio of plasma pressure to poloidal magnetic pressure',
-                  d['beta_p'], 'N/A', None, 'equilibria'],
-                  ['li', 'Normalised plasma internal inductance', d['li'], 'N/A', None, 'equilibria'],
-                  ['li3', 'Normalised plasma internal inductance (ITER def)', d['li(3)'], 'N/A', None, 'equilibria'],
+                  d['beta_p'], 'dimensionless', None, 'equilibria'],
+                  ['li', 'Normalised plasma internal inductance', d['li'], 'dimensionless', None, 'equilibria'],
+                  ['li3', 'Normalised plasma internal inductance (ITER def)', d['li(3)'], 'dimensionless', None, 'equilibria'],
                   ['Li', 'Plasma internal inductance', d['Li'], 'H', None, 'equilibria'],
                   ['Wp', 'Plasma energy', d['W'] / 1e6, 'MJ', None, 'equilibria'],
-                  ['delta_95', '95th percentile plasma triangularity', d['delta_95'], 'N/A', None, 'equilibria'],
-                  ['kappa_95', '95th percentile plasma elongation', d['kappa_95'], 'N/A', None, 'equilibria'],
-                  ['delta', 'Plasma triangularity', d['delta'], 'N/A', None, 'equilibria'],
-                  ['kappa', 'Plasma elongation', d['kappa'], 'N/A', None, 'equilibria'],
+                  ['delta_95', '95th percentile plasma triangularity', d['delta_95'], 'dimensionless', None, 'equilibria'],
+                  ['kappa_95', '95th percentile plasma elongation', d['kappa_95'], 'dimensionless', None, 'equilibria'],
+                  ['delta', 'Plasma triangularity', d['delta'], 'dimensionless', None, 'equilibria'],
+                  ['kappa', 'Plasma elongation', d['kappa'], 'dimensionless', None, 'equilibria'],
                   ['shaf_shift', 'Shafranov shift of plasma (geometric=>magnetic)', shaf, 'm', None, 'equilibria'],
                   ['lambda_q', 'Scrape-off layer power decay length', lq, 'm', None, 'Eich scaling']]
         # fmt: on
@@ -929,7 +931,7 @@ class Reactor(ReactorSystem):
             "potential_TBR",
             "Potential TBR",
             self.BC.TBR,
-            "N/A",
+            "dimensionless",
             None,
             "BLUEPRINT simpleneutrons",
         )
@@ -950,7 +952,12 @@ class Reactor(ReactorSystem):
         # Re-estimate TBR now all penetrations installed
         self.BC.calculate()
         self.add_parameter(
-            "TBR", "Estimated TBR", self.BC.TBR, "N/A", None, "BLUEPRINT simpleneutrons"
+            "TBR",
+            "Estimated TBR",
+            self.BC.TBR,
+            "dimensionless",
+            None,
+            "BLUEPRINT simpleneutrons",
         )
 
     def calculate_TF_coil_peak_field(self):
@@ -1025,7 +1032,7 @@ class Reactor(ReactorSystem):
         # fmt: off
         params = [['bmd', 'Blanket mainteance duration', rm.FM, 'days', None, 'BLUEPRINT'],
                   ['dmd', 'Divertor maintenance duration', rm.DM, 'days', None, 'BLUEPRINT'],
-                  ['RMTFI', 'RM Technical Feasibility Index', rm.RMTFI, 'N/A', None, 'BLUEPRINT']]
+                  ['RMTFI', 'RM Technical Feasibility Index', rm.RMTFI, 'dimensionless', None, 'BLUEPRINT']]
         # fmt: on
         self.add_parameters(params)
 
@@ -1156,7 +1163,7 @@ class Reactor(ReactorSystem):
 
         p_el_net, eta = self.BOP.build()
         params = [
-            ["P_el_net", "Net electric power", p_el_net, "MWe", None, "BLUEPRINT"],
+            ["P_el_net", "Net electric power", p_el_net, "MW", None, "BLUEPRINT"],
             ["eta_plant", "Plant efficiency", eta * 100, "%", None, "BLUEPRINT"],
         ]
         self.add_parameters(params)

@@ -626,7 +626,9 @@ class SanityReporter:
         table["B [T]"] = B
         table["B_max [T]"] = self.eq.coilset.get_max_fields()
         table["F_z [MN]"] = F[:, 1]
-        table["F_z_max [MN]"] = [self.PF_Fz_max] * self.n_PF + ["N/A"] * self.n_CS
+        table["F_z_max [MN]"] = [self.PF_Fz_max] * self.n_PF + [
+            "dimensionless"
+        ] * self.n_CS
         keys = list(table.keys())
         df = DataFrame(list(table.values()), index=keys).transpose()
         row = {k: "" for k in keys}

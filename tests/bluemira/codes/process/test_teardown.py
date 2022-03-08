@@ -22,7 +22,7 @@
 import pytest
 
 from bluemira.codes.process import teardown
-from bluemira.codes.process.api import PROCESS_ENABLED
+from bluemira.codes.process.api import ENABLED as PROCESS_ENABLED
 from bluemira.codes.process.mapping import mappings
 from tests.bluemira.codes.process import INDIR
 

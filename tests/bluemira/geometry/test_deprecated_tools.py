@@ -760,7 +760,7 @@ class TestCoordsConversion:
         face, converted_face = method(self, *loop.xyz)
         assert face.area == converted_face.area
         assert face.volume == converted_face.volume
-        assert face.center_of_mass == converted_face.center_of_mass
+        np.testing.assert_equal(face.center_of_mass, converted_face.center_of_mass)
 
     @pytest.mark.parametrize(
         "filename,method",

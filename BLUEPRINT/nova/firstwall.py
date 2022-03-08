@@ -63,11 +63,11 @@ class FirstWallProfile(ReactorSystem):
     inputs: dict
     # fmt: off
     default_params = [
-        ['plasma_type', 'Type of plasma', 'SN', 'N/A', None, 'Input'],
-        ['n_TF', 'Number of TF coils', 16, 'N/A', None, 'Input'],
-        ["A", "Plasma aspect ratio", 3.1, "N/A", None, "Input"],
+        ['plasma_type', 'Type of plasma', 'SN', 'dimensionless', None, 'Input'],
+        ['n_TF', 'Number of TF coils', 16, 'dimensionless', None, 'Input'],
+        ["A", "Plasma aspect ratio", 3.1, "dimensionless", None, "Input"],
         ["R_0", "Major radius", 9, "m", None, "Input"],
-        ["kappa_95", "95th percentile plasma elongation", 1.6, "N/A", None, "Input"],
+        ["kappa_95", "95th percentile plasma elongation", 1.6, "dimensionless", None, "Input"],
         ["fw_dL_min", "Minimum FW module length", 0.75, "m", None, "Input"],
         ["fw_dL_max", "Maximum FW module length", 3, "m", None, "Input"],
         ["fw_a_max", "Maximum angle between FW modules", 20, "°", None, "Input"],
@@ -539,7 +539,7 @@ class DivertorProfile(ReactorSystem):
     inputs: dict
     # fmt: off
     default_params = [
-        ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.07, "N/A", None, "Input"],
+        ["fw_psi_n", "Normalised psi boundary to fit FW to", 1.07, "dimensionless", None, "Input"],
         ["fw_dx", "Minimum distance of FW to separatrix", 0.225, "m", None, "Input"],
         ["div_L2D_ib", "Inboard divertor leg length", 1.1, "m", None, "Input"],
         ["div_L2D_ob", "Outboard divertor leg length", 1.3, "m", None, "Input"],
@@ -547,11 +547,11 @@ class DivertorProfile(ReactorSystem):
         ["div_psi_o", "Divertor flux offset", 0.5, "m", None, "Input"],
         ["div_Ltarg", "Divertor target length", 0.5, "m", None, "Input"],
         ["tk_div", "Divertor thickness", 0.5, "m", None, "Input"],
-        ["dx_div", "Don't know", 0, "N/A", None, "Input"],
+        ["dx_div", "Don't know", 0, "dimensionless", None, "Input"],
         ["bb_gap", "Gap to breeding blanket", 0.05, "m", None, "Input"],
-        ["Xfw", "Don't know", 0, "N/A", None, "Input"],
-        ["Zfw", "Don't know", 0, "N/A", None, "Input"],
-        ["psi_fw", "Don't know", 0, "N/A", None, "Input"],
+        ["Xfw", "Don't know", 0, "dimensionless", None, "Input"],
+        ["Zfw", "Don't know", 0, "dimensionless", None, "Input"],
+        ["psi_fw", "Don't know", 0, "dimensionless", None, "Input"],
         ["c_rm", "Remote maintenance clearance", 0.05, "m", "Distance between IVCs", "Input"],
     ]
     # fmt: on

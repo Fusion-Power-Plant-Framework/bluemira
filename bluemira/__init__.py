@@ -23,6 +23,6 @@
 Initialise the bluemira package.
 """
 
-from ._version import get_versions
+from ._version import get_versions  # noqa: ABS101
 
 __version__ = get_versions()["version"]

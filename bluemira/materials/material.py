@@ -36,18 +36,11 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     import neutronics_material_maker as nmm
 
+from bluemira.base.constants import gcm3_to_kgm3, to_celsius, to_kelvin
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.utilities.tools import (
-    array_or_num,
-    gcm3_to_kgm3,
-    is_num,
-    json_writer,
-    list_array,
-    to_celsius,
-    to_kelvin,
-)
+from bluemira.utilities.tools import array_or_num, is_num, json_writer, list_array
 
 # Set any custom symbols for use in asteval
 asteval_user_symbols = {

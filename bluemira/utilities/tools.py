@@ -36,13 +36,13 @@ from json import JSONDecoder, JSONEncoder, dumps
 from json.encoder import _make_iterencode
 from os import listdir
 from types import ModuleType
-from typing import Any, List, Type, Union
+from typing import Any, Type, Union
 from unittest.mock import patch
 
 import nlopt
 import numpy as np
 
-from bluemira.base.constants import ABS_ZERO_C, ABS_ZERO_K, E_I, E_IJ, E_IJK
+from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 
 # =====================================================
@@ -777,93 +777,6 @@ def get_class_from_module(name: str, default_module: str = "") -> Type:
 
     bluemira_debug(f"Loaded class {output.__name__}")
     return output
-
-
-# ======================================================================================
-# Materials related conversion functions
-# ======================================================================================
-
-
-def to_kelvin(
-    temp_in_celsius: Union[float, np.array, List[float]]
-) -> Union[float, np.array]:
-    """
-    Convert a temperature in Celsius to Kelvin.
-
-    Parameters
-    ----------
-    temp_in_celsius: Union[float, np.array, List[float]]
-        The temperature to convert [°C]
-
-    Returns
-    -------
-    temp_in_kelvin: Union[float, np.array]
-        The temperature [K]
-    """
-    if (is_num(temp_in_celsius) and temp_in_celsius < ABS_ZERO_C) or np.any(
-        np.less(temp_in_celsius, ABS_ZERO_C)
-    ):
-        raise ValueError("Negative temperature in K specified.")
-    return array_or_num(list_array(temp_in_celsius) - ABS_ZERO_C)
-
-
-def to_celsius(
-    temp_in_kelvin: Union[float, np.array, List[float]]
-) -> Union[float, np.array]:
-    """
-    Convert a temperature in Celsius to Kelvin.
-
-    Parameters
-    ----------
-    temp_in_kelvin: Union[float, np.array, List[float]]
-        The temperature to convert [K]
-
-    Returns
-    -------
-    temp_in_celsius: Union[float, np.array]
-        The temperature [°C]
-    """
-    if (is_num(temp_in_kelvin) and temp_in_kelvin < ABS_ZERO_K) or np.any(
-        np.less(temp_in_kelvin, ABS_ZERO_K)
-    ):
-        raise ValueError("Negative temperature in K specified.")
-    return array_or_num(list_array(temp_in_kelvin) + ABS_ZERO_C)
-
-
-def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
-    """
-    Convert a density in kg/m3 to g/cm3
-
-    Parameters
-    ----------
-    density : Union[float, np.array, List[float]]
-        The density [kg/m3]
-
-    Returns
-    -------
-    density_gcm3 : Union[float, np.array]
-        The density [g/cm3]
-    """
-    if density is not None:
-        return array_or_num(list_array(density) / 1000.0)
-
-
-def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
-    """
-    Convert a density in g/cm3 to kg/m3
-
-    Parameters
-    ----------
-    density : Union[float, np.array, List[float]]
-        The density [g/cm3]
-
-    Returns
-    -------
-    density_kgm3 : Union[float, np.array]
-        The density [kg/m3]
-    """
-    if density is not None:
-        return array_or_num(list_array(density) * 1000.0)
 
 
 def list_array(list_: Any) -> np.ndarray:

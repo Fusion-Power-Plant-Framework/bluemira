@@ -462,7 +462,7 @@ def find_flux_surfs(x, z, psi, psinorm, o_points=None, x_points=None):
     psi: np.array(N, M)
         The poloidal magnetic flux map [V.s/rad]
     psinorm: float
-        The normalised psi value of the desired flux surface [N/A]
+        The normalised psi value of the desired flux surface [-]
     o_points, x_points: list(Opoints, ..), list(Xpoint, ..) or None
         The O- and X-points to use to calculate psinorm (saves time if you
         have them)
@@ -496,7 +496,7 @@ def find_flux_surf(x, z, psi, psinorm, o_points=None, x_points=None):
     psi: np.array(N, M)
         The poloidal magnetic flux map [V.s/rad]
     psinorm: float
-        The normalised psi value of the desired flux surface [N/A]
+        The normalised psi value of the desired flux surface [-]
     o_points, x_points: list(Opoints, ..), list(Xpoint, ..) or None
         The O- and X-points to use to calculate psinorm (saves time if you
         have them)
