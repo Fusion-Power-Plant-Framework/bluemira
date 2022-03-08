@@ -109,8 +109,6 @@ class RunMode(interface.RunMode):
 
 
 class Setup(interface.Setup):
-    _default_config = toml.load(ukaea_pbm_conf.config_default)
-    _default_param_dir = ukaea_pbm_param.DEFAULT_PARAM_DIR
     """
     Setup class for PowerBalance
 
@@ -128,6 +126,9 @@ class Setup(interface.Setup):
         passed to parent setup task
 
     """
+
+    _default_config = toml.load(ukaea_pbm_conf.config_default)
+    _default_param_dir = ukaea_pbm_param.DEFAULT_PARAM_DIR
 
     # TODO get inputs update inputs write inputs io_manager
     # file names
@@ -235,10 +236,16 @@ class Setup(interface.Setup):
         self._generate_hcd_profiles(_profile_dir, _plasma_tuple)
 
     def write_input(self):
+        """
+        Writes input files to run directory
+        """
         _params_dir = os.path.join(self.parent.run_dir, "ukaea_pbm_parameters")
         self.io_manager.save_to_directory(_params_dir)
 
     def update_inputs(self):
+        """
+        Update input values
+        """
         self.io_manager.modify({**self._get_new_inputs(), **self._problem_settings})
 
     def _run(self):
