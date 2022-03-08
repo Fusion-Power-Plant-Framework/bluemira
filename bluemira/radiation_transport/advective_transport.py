@@ -322,8 +322,18 @@ class ChargedParticleSolver:
         self._make_flux_surfaces_ib()
 
         # Find the intersections of the flux surfaces with the first wall
-        for flux_surface in self.flux_surfaces:
-            flux_surface.clip(first_wall)
+        for no, flux_surface in enumerate(self.flux_surfaces):
+            try:
+                flux_surface.clip(first_wall)
+            except ValueError:
+                bluemira_warn(
+                    f"No intersection detected betwenn wall and flux_surface {no}"
+                )
+                if no > len(self.flux_surfaces_ib_lfs) and no < len(
+                    self.flux_surfaces_ob_lfs
+                ):
+                    self.flux_surfaces_ob_lfs.pop(no)
+                    self.flux_surfaces_ob_hfs.pop(no)
 
         (
             x_omp,
