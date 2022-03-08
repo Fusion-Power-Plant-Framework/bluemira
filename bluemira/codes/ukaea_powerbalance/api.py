@@ -30,6 +30,7 @@ from enum import auto
 from pathlib import Path
 from typing import Optional
 
+import pandas
 import power_balance.cli as ukaea_pbm
 import power_balance.configs as ukaea_pbm_conf
 import power_balance.core as ukaea_pbm_core
@@ -39,10 +40,11 @@ import power_balance.profiles as ukaea_pbm_prof
 import toml
 
 import bluemira.codes.interface as interface
+from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug  # , bluemira_warn
 
 # from bluemira.codes.error import CodesError
-from bluemira.codes.ukaea_powerbalance.constants import BINARY
+from bluemira.codes.ukaea_powerbalance.constants import BINARY, MODEL_NAME
 from bluemira.codes.ukaea_powerbalance.constants import NAME as POWERBALANCE
 from bluemira.codes.ukaea_powerbalance.mapping import mappings
 
@@ -53,7 +55,26 @@ class PowerBalanceSolutions:
     """
 
     def __init__(self, output_directory):
-        pass
+        _hdf5_file = os.path.join(output_directory, "data", "session.hdf5")
+        _hdf5_key = MODEL_NAME.lower()
+        self._data_frame = pandas.read_hdf(_hdf5_file, _hdf5_key)
+        self._metadata = pandas.HDFStore(_hdf5_file).get_storer(_hdf5_key).attrs
+
+    @property
+    def open_modelica_version(self):
+        return self._metadata["om_version"]
+
+    @property
+    def power_balance_version(self):
+        return self._metadata["pbm_version"]
+
+    @property
+    def datetime(self):
+        return self._metadata["time"]
+
+    @property
+    def data(self):
+        return self._data_frame
 
 
 class Inputs(ukaea_pbm_param.PBMParameterSet):
@@ -90,12 +111,16 @@ class Inputs(ukaea_pbm_param.PBMParameterSet):
         return f"{self.__class__.__name__}({pprint.pformat(self._parameters)}" + "\n)"
 
 
-class Outputs:
+class Outputs(PowerBalanceSolutions):
     """
     Dummy class for an IO manager
     """
 
-    pass
+    filepath = get_bluemira_path("codes/ukaea_powerbalance")
+    def_outdir = Path(filepath, "default")
+
+    def __init__(self, output_dir=None):
+        super().__init__(output_dir or self.def_outdir)
 
 
 class RunMode(interface.RunMode):
@@ -300,40 +325,19 @@ class Teardown(interface.Teardown):
         """
         Run powerbalance teardown
         """
-        self.io_manager = Outputs()
-        self.io_manager.read_output_files(
-            Path(self.parent.run_dir, self.parent.setup_obj.output_file),
-        )
-        self.prepare_outputs()
+        self.io_manager = Outputs(self.parent.run_dir)
 
     def _mock(self):
         """
         Mock powerbalance teardown
         """
-        self.io_manager = Outputs(use_defaults=True)
-        self.prepare_outputs()
+        self.io_manager = Outputs()
 
     def _read(self):
         """
         Read powerbalance teardown
         """
         self.io_manager = Outputs()
-        self.io_manager.read_output_files(
-            Path(self.parent.read_dir, self.parent.setup_obj.output_file),
-        )
-        self.prepare_outputs()
-
-    def prepare_outputs(self):
-        """
-        Prepare outputs for ParameterFrame
-        """
-        super().prepare_outputs(
-            {
-                bm_key: getattr(self.io_manager, pb_key)
-                for pb_key, bm_key in self.parent._recv_mapping.items()
-            },
-            source=POWERBALANCE,
-        )
 
 
 class Solver(interface.FileProgramInterface):
