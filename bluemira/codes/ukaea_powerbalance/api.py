@@ -62,18 +62,22 @@ class PowerBalanceSolutions:
 
     @property
     def open_modelica_version(self):
+        """Open Modelica version"""
         return self._metadata["om_version"]
 
     @property
     def power_balance_version(self):
+        """Power Balance Models version"""
         return self._metadata["pbm_version"]
 
     @property
     def datetime(self):
+        """Run time"""
         return self._metadata["time"]
 
     @property
     def data(self):
+        """Solutions data frame"""
         return self._data_frame
 
 
