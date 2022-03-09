@@ -33,7 +33,7 @@ jobs:
         path: './bluemira_private_data'
 
     - name: Move bluemira_private_data
-      working-directory: "~/work"
+      working-directory: "/home/runner/work"
       run: |
           mv ~/work/bluemira/bluemira/bluemira_private_data ~/work/bluemira_private_data
 
