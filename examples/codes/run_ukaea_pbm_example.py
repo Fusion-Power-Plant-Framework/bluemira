@@ -28,9 +28,7 @@ import logging
 
 import bluemira.codes.ukaea_powerbalance as power_balance
 from bluemira.base.config import Configuration
-from bluemira.base.logs import set_log_level
 from bluemira.codes.ukaea_powerbalance.constants import MODEL_NAME
-from bluemira.codes.ukaea_powerbalance.mapping import mappings
 
 logging.basicConfig()
 logging.getLogger("PowerBalance").setLevel(logging.DEBUG)

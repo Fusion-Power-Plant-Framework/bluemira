@@ -46,7 +46,7 @@ from bluemira.base.look_and_feel import bluemira_debug  # , bluemira_warn
 from bluemira.codes.error import CodesError
 
 # from bluemira.codes.error import CodesError
-from bluemira.codes.ukaea_powerbalance.constants import BINARY, MODEL_NAME
+from bluemira.codes.ukaea_powerbalance.constants import MODEL_NAME
 from bluemira.codes.ukaea_powerbalance.constants import NAME as POWERBALANCE
 from bluemira.codes.ukaea_powerbalance.mapping import mappings
 
