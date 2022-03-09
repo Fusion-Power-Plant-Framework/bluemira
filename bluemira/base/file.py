@@ -74,8 +74,9 @@ def try_get_bluemira_private_data_root() -> str:
     root = get_bluemira_root()
     code_root = os.path.split(root)[0]
     try:
-        bluemira_warn(code_root)
-        bluemira_warn(_get_relpath(code_root, "bluemira-private-data"))
+        raise TypeError(
+            f"{code_root}  {_get_relpath(code_root, 'bluemira-private-data')}"
+        )
         return _get_relpath(code_root, "bluemira-private-data")
     except ValueError:
         return None
