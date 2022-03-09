@@ -33,9 +33,9 @@ jobs:
         path: './bluemira_private_data'
 
     - name: Move bluemira_private_data
-      working-directory: "/home/runner/work"
+      working-directory: "/home/runner/work/"
       run: |
-          mv ~/work/bluemira/bluemira/bluemira_private_data ~/work/bluemira_private_data
+          mv ~/work/bluemira/bluemira/bluemira_private_data ~/work/bluemira/bluemira_private_data
 
     - name: Cache pip
       uses: actions/cache@v2
