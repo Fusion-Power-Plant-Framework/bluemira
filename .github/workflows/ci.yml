@@ -30,7 +30,7 @@ jobs:
       with:
         repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
         ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
-        path: './bluemira_private_data'
+        path: '../../bluemira_private_data'
 
     - name: Cache pip
       uses: actions/cache@v2
