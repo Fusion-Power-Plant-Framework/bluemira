@@ -4,6 +4,20 @@
 
 *       @Fusion-Power-Plant-Framework/tsvv-14
 
+# Module code owners
+
+/bluemira/base/ @je-cook @DanShort12 @hsaunders1904
+/tests/base/ @je-cook @DanShort12 @hsaunders1904
+/examples/base/ @je-cook @DanShort12 @hsaunders1904
+
+# Trying wildcard out
+*/magnetostatics/ @CoronelBuendia @ivanmaione
+
+
+/bluemira/equilibria/ @CoronelBuendia @je-cook @alexanderianblair
+/tests/equilibria/ @CoronelBuendia @je-cook @alexanderianblair
+/examples/equilibria/ @CoronelBuendia @je-cook @alexanderianblair
+
 # Order is important; the last matching pattern takes the most
 # precedence. eg js-owner would own all *.js files. Directories and wildcards can be specified etc
 # no user can be used to default to global owner
