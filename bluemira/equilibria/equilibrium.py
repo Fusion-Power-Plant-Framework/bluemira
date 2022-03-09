@@ -865,6 +865,7 @@ class Equilibrium(MHDState):
 
         self._Ip = self._int_dxdz(jtor)
         self._jtor = jtor
+        self._reassign_profiles(profiles)
 
     def solve_li(self, profiles, jtor=None, psi=None):
         """
@@ -1225,7 +1226,7 @@ class Equilibrium(MHDState):
         """
         Get f = R*Bt at specified values of normalised psi.
         """
-        return self._profiles.fRBpol(psinorm) * np.abs(self._profiles.scale)
+        return self._profiles.fRBpol(psinorm)
 
     def fvac(self):
         """
