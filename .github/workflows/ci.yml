@@ -26,12 +26,16 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Checkout bluemira-private-data
-      working-directory: '~/work'
       uses: actions/checkout@v2
       with:
         repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
         ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
         path: './bluemira_private_data'
+
+    - name: Move bluemira_private_data
+      working-directory: "~/work"
+      run: |
+          mv ~/work/bluemira/bluemira/bluemira_private_data ~/work/bluemira_private_data
 
     - name: Cache pip
       uses: actions/cache@v2
