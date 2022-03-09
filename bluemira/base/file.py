@@ -73,13 +73,7 @@ def try_get_bluemira_private_data_root() -> str:
     """
     root = get_bluemira_root()
     code_root = os.path.split(root)[0]
-    from bluemira.base.look_and_feel import bluemira_warn
-
-    try:
-        bluemira_warn(f"{code_root}  {_get_relpath(code_root, 'bluemira-private-data')}")
-        return _get_relpath(code_root, "bluemira-private-data")
-    except ValueError:
-        return None
+    _get_relpath(code_root, "bluemira-private-data")
 
 
 def get_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
