@@ -144,7 +144,7 @@ class TestArbitraryPlanarXSCircuit:
     def setup_class(cls):
         pd_inputs = {"x1": {"value": 4}, "x2": {"value": 16}, "dz": {"value": 0}}
         pd = PrincetonD(pd_inputs).create_shape()
-        ta_inputs = {
+        pf_inputs = {
             "x1": {"value": 5},
             "x2": {"value": 10},
             "z1": {"value": -10},
@@ -152,8 +152,8 @@ class TestArbitraryPlanarXSCircuit:
             "ri": {"value": 0.4},
             "ro": {"value": 1},
         }
-        ta = TripleArc(ta_inputs).create_shape()
-        pf_inputs = {
+        pf = PictureFrame(pf_inputs).create_shape()
+        ta_inputs = {
             "x1": {"value": 4},
             "dz": {"value": 0},
             "sl": {"value": 6.5},
@@ -162,7 +162,7 @@ class TestArbitraryPlanarXSCircuit:
             "a1": {"value": 20},
             "a2": {"value": 40},
         }
-        pf = PictureFrame(pf_inputs).create_shape()
+        ta = TripleArc(ta_inputs).create_shape()
         shapes = [pd, ta, pf]
         open_coordinates = []
         closed_coordinates = []
